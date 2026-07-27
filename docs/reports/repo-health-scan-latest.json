@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-27T14:35:39.431Z",
+  "generatedAt": "2026-07-27T18:38:56.638Z",
   "git": {
-    "sha": "f0b9db1f7a15ae4acda9c43a4ad4ef8d95a36901",
+    "sha": "7fdd0851fb0474a3c208541993e8847b8b3ff6b8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2470,11 +2470,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 932442
+        "bytes": 933778
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 831177
+        "bytes": 833399
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2486,7 +2486,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 192974
+        "bytes": 197070
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2533,6 +2533,10 @@
         "bytes": 127662
       },
       {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 118165
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 117471
       },
@@ -2543,10 +2547,6 @@
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 115960
-      },
-      {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 115874
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2592,7 +2592,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19793
+        "lines": 19827
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2600,7 +2600,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18158
+        "lines": 18174
       },
       {
         "file": "server/statistics-service.ts",
@@ -2608,7 +2608,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5687
+        "lines": 5764
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2655,12 +2655,12 @@
         "lines": 2673
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "lines": 2609
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2633
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2603
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "lines": 2609
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",

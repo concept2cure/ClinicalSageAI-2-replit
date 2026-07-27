@@ -101,7 +101,7 @@ const OPTIONAL_TABLES = [
  * table tiers above, a subsystem is judged whole/partial/absent together,
  * because a half-provisioned regulated surface is worse than an absent one.
  *
- * Authoring: the twelve tables the five db/migrations/2026*_authoring_* files
+ * Authoring: the eleven tables the four db/migrations/20260725_authoring_* files
  * create. This list is the readiness half of the contract whose provisioning
  * half is scripts/db/authoring-subsystem.mjs (AUTHORING_SUBSYSTEM_TABLES) — keep
  * the two in sync. A PARTIAL subsystem (e.g. the loop tables without their audit
@@ -122,11 +122,6 @@ const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_audit_trail',
   'authoring_signatures',
   'authoring_workflow_steps',
-  // Durable Y.js/CRDT state for the collaborative editor (C2C-COLLAB-001).
-  // Its absence is not cosmetic: server/services/hocuspocus-server.ts stores and
-  // loads every collaborative edit here, so a deployment without it silently
-  // discards regulated authoring content on document unload or restart.
-  'authoring_document_yjs_state',
   // Section-level permission grants (C2C-AUTHOR-002). canEditSection consults it
   // for the per-user AUTHOR/REVIEWER matrix, and a permission store that cannot
   // be read denies every write — so its absence takes authoring down rather than

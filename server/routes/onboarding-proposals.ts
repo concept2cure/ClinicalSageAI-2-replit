@@ -4,15 +4,19 @@
  *   POST /api/onboarding/ingest   (multipart: field `file`)
  *
  * Reads ONE uploaded onboarding document and returns the values AnA could
- * verify from it, for a human to review. This route is deliberately READ-ONLY:
- * it touches no database and writes nothing. Its output is a set of
- * *suggestions*; committing any of them is a separate, governed, human-driven
- * step (see docs/architecture/ANA_ONBOARDING_P2P3_SPEC.md).
+ * verify from it, for a human to review. Its output is a set of *suggestions*;
+ * applying any of them is a separate, governed, human-driven step
+ * (see docs/architecture/ANA_ONBOARDING_P2P3_SPEC.md).
+ *
+ * Ingest makes NO regulated write: the only thing it persists is the server's
+ * own record of what it proposed (`onboarding_proposal_runs`), which exists so
+ * the commit can re-read its own extraction rather than trust the client's copy.
  *
  * Honesty posture:
  *  - The document buffer is held in memory for the duration of the request and
- *    is never persisted, so an onboarding upload does not silently become
- *    tenant data.
+ *    is never persisted — neither the file nor its text becomes tenant data.
+ *    Only the extracted field proposals are stored, and only until the run is
+ *    committed or expires.
  *  - Every returned value carries a provenance excerpt that was VERIFIED to
  *    occur in the document (see services/onboarding/proposal-extraction.ts);
  *    unverifiable values are dropped and reported in `warnings`.
@@ -37,7 +41,7 @@ import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
 import { extractUploadedText } from '../services/projects/extract-text';
 import { extractOnboardingProposals } from '../services/onboarding/proposal-extraction';
-import { discardRun, resolveApprovals, saveRun } from '../services/onboarding/proposal-store';
+import { markRunCommitted, resolveApprovals, saveRun } from '../services/onboarding/proposal-store';
 import { MIN_REASON_FOR_CHANGE_LEN, requiresEsignature } from '../services/ana-ri/part11-governance';
 
 /** The governed command name this route performs. Registered in
@@ -112,7 +116,7 @@ router.post('/ingest', upload.single('file'), async (req: Request, res: Response
     const result = await extractOnboardingProposals({ text, fileName: file.originalname || 'document' });
     // Record the server's OWN extraction so a later commit can re-read it
     // instead of trusting the client's copy (see services/onboarding/proposal-store).
-    const runId = saveRun({ userId: callerId(req)!, organizationId: callerOrgId(req)! }, result);
+    const runId = await saveRun(req, { userId: callerId(req)!, organizationId: callerOrgId(req)! }, result);
     return res.json({ success: true, data: { ...result, runId } });
   } catch (err) {
     log.error('onboarding ingest failed', { err: err instanceof Error ? err.message : String(err) });
@@ -204,7 +208,7 @@ router.post('/commit', async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, error: 'Nothing was approved to apply.' });
   }
 
-  const outcome = resolveApprovals({ userId, organizationId: orgId }, runId, approvals);
+  const outcome = await resolveApprovals(req, { userId, organizationId: orgId }, runId, approvals);
   if (!outcome.ok) return res.status(410).json({ success: false, error: outcome.error });
 
   const applied: Array<{ targetField: string; ok: boolean; error?: string }> = [];
@@ -284,7 +288,9 @@ router.post('/commit', async (req: Request, res: Response) => {
       },
     });
 
-    discardRun(runId); // nothing lingers after use
+    // Mark committed: the run can never be resolved again, while the proposals
+    // the human declined stay inspectable until the expiry sweep.
+    await markRunCommitted(req, { userId, organizationId: orgId }, runId);
     return res.json({
       success: true,
       data: {

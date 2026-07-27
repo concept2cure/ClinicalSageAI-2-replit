@@ -22,6 +22,7 @@ import {
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
 } from './types';
 import { httpsRequest, insertTransmittal, patchTransmittal, buildMultipart, sha256hex } from './rest-gateway-helpers';
+import { platformTransmittalRecord } from './acknowledgement';
 
 interface SugamCredentials {
   endpointUrl: string;
@@ -158,8 +159,15 @@ export class CdscoSugamGateway implements SubmissionGateway {
     if (rows.length === 0)
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     const r = rows[0];
-    return { transmittalId, transmissionId: r.transmission_id, contentType: 'text/plain',
-      buffer: Buffer.from(`CDSCO SUGAM Acknowledgement\nTracking ID: ${r.transmission_id}\nStatus: ${r.status}\nReceived: ${r.ack_received_at?.toISOString() ?? 'pending'}\n`, 'utf8'),
-      receivedAt: r.ack_received_at ?? new Date() };
+        // Not an agency acknowledgement — this platform's own record of the
+    // transmission, titled as such. See ./acknowledgement.ts.
+    return platformTransmittalRecord({
+      transmittalId,
+      transmissionId: r.transmission_id,
+      gatewayLabel: 'CDSCO SUGAM (cdsco_sugam)',
+      status: r.status,
+      ackReceivedAt: r.ack_received_at,
+      extra: { 'Tracking ID': r.transmission_id },
+    });
   }
 }

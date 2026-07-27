@@ -93,6 +93,49 @@ const FILES = [
   // client_visibility) + lifecycle_phase index. Fully idempotent
   // (ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS, no data statements).
   'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+  // ── Risk-Based Monitoring lineage (added 2026-07-27) ──────────────────────
+  // These five migration files exist in migrations/ and create the ENTIRE rbm_*
+  // schema, but none was on any durable apply path: not here, not in the Drizzle
+  // journaled baseline (shared/schema.ts defines no rbm_* table), not in
+  // migrations/meta. Yet the RBM/RBQM module writes to these tables on every
+  // action — rbm-actuator, metric-ingestion, site-risk-engine, the mdx-rbm* routes
+  // and the AnA tools all issue INSERT/UPDATE/SELECT against rbm_*. So the whole
+  // module has only ever addressed tables that existed on the ephemeral Neon
+  // preview branch a PR created and then deleted; on any real database those
+  // writes hit a table that is not there. This list is the only durable path, so
+  // it is where the gap gets closed.
+  //
+  // ORDER MATTERS. rbm_surfaces creates the eight base tables; the rest either
+  // create a table referencing them or backfill a column on one:
+  //   kri_values        -> rbm_kri_values (FK rbm_kris)
+  //   patient_profiles  -> rbm_patient_profiles (the cohort scorer's store)
+  //   metric_ingestion  -> rbm_data_runs + rbm_metric_observations (the load path)
+  //   not_evaluated     -> backfills status on rbm_kris / rbm_qtls
+  //
+  // All five are idempotent (every CREATE TABLE / CREATE INDEX / ADD COLUMN is
+  // IF NOT EXISTS; the backfill is to_regclass-guarded and re-runnable), none
+  // opens its own transaction, and none contains DROP or TRUNCATE — safe under
+  // this script's repeated-run contract.
+  'migrations/20260629_rbm_surfaces.sql',
+  'migrations/20260630_rbm_kri_values.sql',
+  'migrations/20260701_rbm_patient_profiles.sql',
+  'migrations/20260726_rbm_metric_ingestion.sql',
+  'migrations/20260726_rbm_not_evaluated_backfill.sql',
+  // ── Collaboration state (added 2026-07-27) ────────────────────────────────
+  // Durable Y.js CRDT state for the /collab socket. Fully self-contained: one
+  // CREATE TABLE IF NOT EXISTS that references nothing, plus an ON DELETE
+  // CASCADE FK to authoring_documents added only inside a to_regclass guard.
+  // Listed after the authoring entries so that on a fresh database — where
+  // applyAuthoringSubsystem() has already run — the guard finds the table and
+  // the cascade actually lands, instead of leaving CRDT state that outlives the
+  // document it belongs to.
+  //
+  // Without this entry the collaboration server has nowhere to persist: its
+  // store reports the table missing, onLoadDocument refuses the connection, and
+  // the subsystem is off anyway until ENABLE_COLLAB_CRDT is set. Listing it
+  // here is what makes turning that flag on a configuration change rather than
+  // a schema migration.
+  'db/migrations/20260727_collab_document_state.sql',
 ];
 
 // The four db/migrations/20260725_authoring_* files that back the IND authoring

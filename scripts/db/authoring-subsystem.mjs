@@ -1,17 +1,19 @@
 /**
- * Authoring subsystem provisioning — the five db/migrations files that back the
+ * Authoring subsystem provisioning — the four db/migrations files that back the
  * flagship IND authoring loop (server/routes/authoring.router.ts), applied AS A
  * SINGLE ATOMIC UNIT.
  *
+ * (Durable CRDT state is NOT part of this unit. It lives in its own table,
+ * created by db/migrations/20260727_collab_document_state.sql and applied on the
+ * apply-c2c path — see server/services/hocuspocus-server.ts.)
+ *
  * WHY A UNIT. The loop-tables file stands up document/section/freeze/PIN
  * storage; the audit-trail and signature/workflow files stand up the 21 CFR
- * Part 11 evidence those same operations MUST produce; the Y.js-state file
- * stands up the durable storage the collaborative editor writes through
- * (C2C-COLLAB-001 — without it every CRDT edit is lost on unload/restart).
+ * Part 11 evidence those same operations MUST produce.
  * Provisioning the loop tables ALONE yields a working freeze with no audit row
  * and an e-sign that fails outright — a half-provisioned Part 11 surface that is
  * WORSE than tables plainly absent (ledger C-11 / C-14 / C-15, and the cession
- * note this supersedes in apply-c2c-migrations.mjs). So the five files apply in
+ * note this supersedes in apply-c2c-migrations.mjs). So the four files apply in
  * one transaction: all present, or none.
  *
  * WHY THEY NEED THEIR OWN PATH. They live in db/migrations/ but are NOT
@@ -46,24 +48,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * The five files, in dependency order. The loop-tables file creates
+ * The four files, in dependency order. The loop-tables file creates
  * authoring_documents / authoring_sections that later files reference; the
  * freeze-binding file ALTERs the authoring_signatures table the signatures file
- * creates, so it MUST follow it. The Y.js-state file carries a composite
- * (doc_id, tenant_id) FK onto authoring_documents(id, tenant_id), so it must
- * follow the loop-tables file that creates that UNIQUE target.
- * Repo-relative (joined against repoRoot).
+ * creates, so it MUST follow it. Repo-relative (joined against repoRoot).
  */
 export const AUTHORING_SUBSYSTEM_FILES = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
   'db/migrations/20260725_authoring_audit_trail.sql',
   'db/migrations/20260725_authoring_signatures_and_workflow.sql',
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',
-  'db/migrations/20260727_authoring_document_yjs_state.sql',
 ];
 
 /**
- * Tables the five files create (the freeze-binding file only ALTERs
+ * Tables the four files create (the freeze-binding file only ALTERs
  * authoring_signatures, adding no table). This is the readiness contract:
  * server/db/ensureCoreTables.ts holds the SAME list as AUTHORING_SUBSYSTEM_TABLES
  * and fails /readyz closed when any of them is absent. Keep the two in sync.
@@ -75,10 +73,8 @@ export const AUTHORING_SUBSYSTEM_FILES = [
  * already run and will never revisit a new table — an RLS-less table under
  * RLS_ENFORCE is readable across tenants, i.e. every tenant's section grants.
  *
- * The twin literal in server/db/ensureCoreTables.ts carries the SAME twelve
- * entries, so /readyz gates on doc_permissions too. (That sync was completed
- * when the CRDT and section-authorization changes were integrated — each was
- * authored against a tree that had only its own addition.)
+ * The twin literal in server/db/ensureCoreTables.ts carries the SAME eleven
+ * entries, so /readyz gates on doc_permissions too.
  */
 export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_documents',
@@ -91,10 +87,6 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_audit_trail',
   'authoring_signatures',
   'authoring_workflow_steps',
-  // Durable Y.js/CRDT state for the collaborative editor (C2C-COLLAB-001).
-  // Absent, every collaborative edit is silently lost on unload/restart, so it
-  // belongs to the unit rather than being optional.
-  'authoring_document_yjs_state',
   // Section-level permission grants (C2C-AUTHOR-002). Created by the loop-tables
   // migration with tenant_id + composite (doc_id, tenant_id) / (section_id,
   // tenant_id) FKs. Listed here so the helper applies tenant_isolation_policy to
@@ -153,7 +145,7 @@ function tenantPolicySql(table) {
 
 /**
  * Apply the authoring subsystem as one atomic unit against `pool` (a connected
- * `pg` Pool): the five migration files, then tenant-isolation RLS on every table
+ * `pg` Pool): the four migration files, then tenant-isolation RLS on every table
  * they create. On any failure the whole transaction is rolled back, leaving the
  * subsystem ABSENT rather than half-provisioned — the state readiness reports
  * honestly, and the state recoverable by simply re-running this.

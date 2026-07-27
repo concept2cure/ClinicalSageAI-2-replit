@@ -1411,8 +1411,12 @@ router.post('/sections', async (req: Request, res: Response) => {
       [sectionId, doc_id, code, title, content, order_index, tenantId]
     );
 
-    // Create initial revision
+    // Genesis revision: this content, by this author.
     await createRevision(sectionId, content, createdBy, tenantId);
+    await createAuditTrail(req, doc_id, sectionId, 'CREATE', null, content ?? null, req.body?.changeReason ?? null, {
+      code,
+      title,
+    });
 
     res.status(201).json({
       success: true,
@@ -1463,8 +1467,24 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       updates.push(`content = $${paramCount}`);
       values.push(content);
 
-      // Create revision for content changes
-      await createRevision(sectionId, currentSection.rows[0].content, updatedByUser, tenantId);
+      // A revision row means "this content, by this author, as of this time".
+      //
+      // It used to snapshot the PRIOR content under the CURRENT editor's id:
+      // createRevision(sectionId, currentSection.rows[0].content, updatedByUser, …).
+      // With one author editing repeatedly the byline happened to be right; it
+      // went wrong exactly when authorship changed hands — the multi-author
+      // case attribution exists to serve. Alice writes "0.35"; Bob corrects it
+      // to "0.25"; the trail then held two rows BOTH containing Alice's text,
+      // one labelled Bob, and Bob's actual edit had no row at all until a third
+      // party touched the section. An inspector asking "who changed 0.35 to
+      // 0.25?" was answered with Bob's name against the 0.35 text — the exact
+      // inverse of the truth — and "who wrote the current text?" had no answer
+      // anywhere in the system.
+      //
+      // POST /sections already recorded (new content, author). This makes the
+      // edit path agree with it: the prior content is not lost, it is the
+      // preceding row.
+      await createRevision(sectionId, content, updatedByUser, tenantId);
     }
 
     if (title !== undefined) {
@@ -1500,6 +1520,36 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
 
     const result = await pool.query(updateQuery, values);
 
+    // Part 11 change record: operation, actor, before/after content, a SHA-256
+    // of each side, reason, IP, user agent, session.
+    //
+    // No content-mutating authoring path wrote one of these. The migration that
+    // provisions authoring_audit_trail states that this router "has always
+    // written a rich audit record … for every authoring mutation"; the table
+    // received rows only for pins, freeze, e-sign and the legacy wrapper, and
+    // the legacy wrapper hardcodes beforeContent=null, afterContent=null and
+    // changeReason='Legacy audit event' — so before_content, after_content and
+    // both content hashes were NULL on every row in the table, for every event
+    // type. The only trace of an edit was a doc_revisions row, and that row was
+    // mis-attributed (see the revision write above).
+    //
+    // Deliberately AFTER the UPDATE and not fatal: the edit has already
+    // committed, and throwing here would report failure for a change that
+    // landed. The write is awaited so a failure is logged rather than lost, and
+    // createAuditTrail swallows its own errors.
+    if (content !== undefined) {
+      await createAuditTrail(
+        req,
+        result.rows[0]?.doc_id,
+        sectionId,
+        'UPDATE',
+        currentSection.rows[0].content ?? null,
+        content ?? null,
+        typeof req.body?.changeReason === 'string' ? req.body.changeReason : null,
+        { titleChanged: title !== undefined },
+      );
+    }
+
     res.json({
       success: true,
       section: result.rows[0],
@@ -1531,7 +1581,18 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
         u.name as created_by_name,
         u.email as created_by_email
        FROM doc_revisions r
-       LEFT JOIN users u ON u.id = r.created_by::uuid
+       -- users.id is a serial (shared/schema.ts, migrations/0000_sweet_joseph.sql)
+       -- and doc_revisions.created_by is TEXT holding String(req.user.id). The
+       -- previous join was u.id = r.created_by::uuid — integer = uuid, which
+       -- Postgres rejects at PARSE time (42883), so this endpoint returned 500
+       -- on every call regardless of how many revisions existed, and the client
+       -- rendered that failure as "No prior revisions".
+       --
+       -- Comparing as text is the codebase's established shape for joining a
+       -- typed id to a free-text reference column (see the sources ↔ citations
+       -- join): it cannot raise 22P02 on a non-numeric created_by, it simply
+       -- fails to match and the LEFT JOIN yields a null name.
+       LEFT JOIN users u ON u.id::text = r.created_by
        WHERE r.section_id = $1 AND r.tenant_id = $2
        ORDER BY r.created_at DESC
        LIMIT $3`,
@@ -1592,10 +1653,6 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       [sectionId, tenantId]
     );
 
-    if (currentSection.rowCount && ((currentSection.rowCount ?? 0) > 0)) {
-      await createRevision(sectionId, currentSection.rows[0].content, revertedBy, tenantId);
-    }
-
     // Update section with revision content
     const result = await pool.query(
       `UPDATE authoring_sections
@@ -1603,6 +1660,26 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
        WHERE id = $2 AND tenant_id = $3
        RETURNING *`,
       [revision.content, sectionId, tenantId]
+    );
+
+    // The revert is itself an authored state: this content, restored by this
+    // actor, now. Written AFTER the update for the same reason as the edit
+    // path, and it replaces a pre-update createRevision that stored the
+    // content being replaced under the reverter's name — the same
+    // misattribution the edit path had.
+    if (currentSection.rowCount && ((currentSection.rowCount ?? 0) > 0)) {
+      await createRevision(sectionId, revision.content, revertedBy, tenantId);
+    }
+
+    await createAuditTrail(
+      req,
+      result.rows[0]?.doc_id,
+      sectionId,
+      'REVERT',
+      currentSection.rows[0]?.content ?? null,
+      revision.content ?? null,
+      `Reverted to revision ${rev_id}`,
+      { revisionId: rev_id, revisionCreatedAt: revision.created_at },
     );
 
     res.json({

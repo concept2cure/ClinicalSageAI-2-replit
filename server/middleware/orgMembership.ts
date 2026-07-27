@@ -48,7 +48,7 @@ const membershipCacheKey = (userId: number, organizationId: number): string =>
   `${userId}|${organizationId}`;
 
 /** Mirror of server/auth.ts parseFiniteInt — accepts number | numeric string. */
-function parseFiniteInt(value: unknown): number | null {
+export function parseFiniteInt(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
   if (typeof value === 'string' && value.trim() !== '') {
     const parsed = Number.parseInt(value, 10);
@@ -86,7 +86,7 @@ export function invalidateOrgMembershipCache(
   }
 }
 
-type OrgMembershipCheckResult = 'member' | 'revoked' | 'indeterminate';
+export type OrgMembershipCheckResult = 'member' | 'revoked' | 'indeterminate';
 
 /**
  * Query organization_users for a live membership row. The db module is
@@ -206,4 +206,53 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
       });
       next();
     });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Transport-agnostic core
+//
+// `enforceOrgMembership` above is Express-shaped: it decides, and it answers on
+// a Response. The collaboration WebSocket
+// (server/services/hocuspocus-server.ts) has no Request/Response pair and needs
+// a different policy on 'indeterminate', so it consults the check directly.
+//
+// These deliberately reuse THIS module's cache rather than keeping their own.
+// One cache means `invalidateOrgMembershipCache` — called from the invite /
+// remove / role-change routes — takes effect on a live collaboration session
+// too, which a second cache would silently break.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Synchronous cache probe. Returns the cached decision, or null when there is
+ * no live entry.
+ */
+export function peekOrgMembership(userId: number, organizationId: number): boolean | null {
+  const cached = orgMembershipCache.get(membershipCacheKey(userId, organizationId));
+  if (cached && cached.expiresAt > Date.now()) return cached.isMember;
+  return null;
+}
+
+/**
+ * Check membership, consulting the cache first. `indeterminate` is never
+ * cached — the caller decides what an unverifiable membership means, and the
+ * next check should get a real answer as soon as the database recovers.
+ *
+ * Callers differ on purpose. HTTP treats 'indeterminate' as allow (an infra
+ * blip must not take the whole API down, and the handler behind it still
+ * applies its own tenant filters). The collaboration socket treats it as
+ * refuse, because a socket that opens has unmediated read and write access to
+ * a document's full CRDT state with no downstream guard behind it.
+ */
+export async function checkOrgMembership(
+  userId: number,
+  organizationId: number
+): Promise<OrgMembershipCheckResult> {
+  const cached = peekOrgMembership(userId, organizationId);
+  if (cached !== null) return cached ? 'member' : 'revoked';
+
+  const result = await queryOrgMembership(userId, organizationId);
+  if (result !== 'indeterminate') {
+    cacheMembership(membershipCacheKey(userId, organizationId), result === 'member');
+  }
+  return result;
 }

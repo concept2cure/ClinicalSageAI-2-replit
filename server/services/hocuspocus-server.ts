@@ -1,213 +1,218 @@
 /**
  * Hocuspocus Server — Y.js CRDT WebSocket backend for real-time collaboration.
  *
- * Integrates with Express HTTP server to handle WebSocket upgrades at /collab.
- * Provides:
- * - Conflict-free real-time editing via Y.js
- * - Multi-cursor awareness (names, colors, positions)
- * - Durable document persistence to PostgreSQL (authoring_document_yjs_state)
- * - Access-token authentication AND per-document, per-tenant authorization
- * - Room isolation: a room IS an authoring_documents row, and that row's
- *   tenant_id must equal the tenant on the caller's verified token
+ * Serves WebSocket upgrades at /collab. Provides conflict-free real-time
+ * editing via Y.js, multi-cursor awareness, durable per-tenant document state,
+ * and per-document authorization.
  *
- * SECURITY (C2C-COLLAB-001). This endpoint used to treat *authentication* as if
- * it were *authorization*. `onAuthenticate` verified only the JWT signature:
+ * ─────────────────────────────────────────────────────────────────────────────
+ * WHAT THIS FILE USED TO CLAIM, AND WHAT WAS ACTUALLY TRUE
  *
- *   - no token-class check, so a refresh / MFA-partial token authenticated;
- *   - no tenant binding, so the verified org claim was never read;
- *   - no document authorization — `documentName` was never resolved to a row —
- *     so ANY authenticated user in ANY organization could join and edit ANY
- *     document room simply by naming it;
- *   - two fail-OPEN fallbacks outside production: an "Anonymous" identity when
- *     no token was presented, and a "Dev User" identity AFTER signature
- *     verification FAILED — i.e. a forged token authenticated.
+ * The header claimed "Document persistence to PostgreSQL", "JWT-based
+ * authentication" and "Room isolation per artifact". Read against the code:
  *
- * The room is now authorized against the database before the connection is
- * established, using ONLY the verified principal. `documentName` is treated as
- * untrusted input: it is the *subject* of the authorization query, never a
- * source of identity or tenancy. Because `authoring_documents.id` is a primary
- * key, a given document id maps to exactly one tenant, so every connection that
- * passes this gate carries the same tenant — which is what makes the shared
- * per-room Y.Doc safe.
+ *  1. TRANSPORT — `attachHocuspocusToServer` passed the raw `net.Socket` from
+ *     the HTTP 'upgrade' event straight to `handleConnection`, which requires
+ *     an already-handshaken `ws.WebSocket`. No 101 response was ever written,
+ *     so no browser WebSocket ever opened; hocuspocus then called `.ping()`,
+ *     `.readyState` and `removeListener('pong')` on an object with none of
+ *     those semantics. **Not one connection had ever been established.** The
+ *     break went unnoticed because nothing imports `@hocuspocus/provider` —
+ *     the authoring surface uses the REST presence/locking service instead and
+ *     says so.
  *
- * DURABILITY (C2C-COLLAB-001 #3). `onStoreDocument` / `onLoadDocument` used to
- * only log, despite the header comment above claiming persistence: Y.js state
- * was never written to or read from PostgreSQL, so all collaborative content
- * was lost on document unload (debounce/timeout) or process restart. They now
- * read and write a checksummed, versioned snapshot in
- * `authoring_document_yjs_state`, scoped by the VERIFIED tenant carried in the
- * per-connection context — never by anything the client sent.
+ *  2. PERSISTENCE — `onStoreDocument` wrote a log line and returned;
+ *     `onLoadDocument` returned the in-memory Y.Doc it was handed. Nothing was
+ *     written, nothing restored. Not "persistence not yet verified": no
+ *     persistence existed.
  *
- * @compliance 21 CFR Part 11 §11.10(d) limiting system access to authorized
- *             individuals; §11.10(c) protection of records throughout their
- *             retention period.
+ *  3. AUTHORIZATION — `documentName` was accepted verbatim and never checked
+ *     against anything. Any authenticated user could open any document.
+ *
+ *  4. TOKEN CLASS — the signature was verified but the token's class was not,
+ *     so a refresh / MFA-challenge / MFA-partial token authenticated a
+ *     collaborator. The HTTP path rejects those via `nonAccessTokenReason`;
+ *     this path did not, which is exactly the MFA bypass that guard exists to
+ *     prevent.
+ *
+ *  5. MEMBERSHIP — the org claim was trusted for the token's whole TTL. Worse
+ *     here than on HTTP: a WebSocket is long-lived, so a revoked user kept
+ *     write access for as long as the socket stayed open, not merely until the
+ *     next request.
+ *
+ *  6. DEV IDENTITIES — a missing token produced an "Anonymous" user and, more
+ *     dangerously, a token that FAILED verification fell through to a "Dev
+ *     User" identity. Both were keyed on `NODE_ENV !== 'production'`, and
+ *     staging runs `NODE_ENV=staging` (see ENV_SUFFIX_MAP in
+ *     server/utils/jwtVerify.ts). Staging accepted anonymous collaborators and
+ *     silently upgraded forged tokens to a working identity.
+ *
+ * All six are fixed below. `authenticateToken` set the precedent for the last
+ * one: "Dev auto-auth removed. All requests must provide a valid JWT. To test
+ * locally, create a user via POST /api/auth/signup then login normally."
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * FLAG
+ *
+ * Off by default behind ENABLE_COLLAB_CRDT. No client opens a /collab socket
+ * today, and an unused WebSocket endpoint on the public HTTP server is
+ * attack surface with no user. Flag off ⇒ not attached at all, so an upgrade
+ * request is refused rather than half-served — the same posture as
+ * ENABLE_CLINICAL_REGULATORY_GRAPH.
  */
 
 import { Hocuspocus } from '@hocuspocus/server';
-import type { IncomingMessage } from 'http';
-import type { Server as HttpServer } from 'http';
-import type { WebSocket } from 'ws';
-import crypto from 'node:crypto';
+import type { IncomingMessage, Server as HttpServer } from 'http';
+import type { Duplex } from 'stream';
+import { WebSocketServer, type WebSocket } from 'ws';
 import * as Y from 'yjs';
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
-// Twin-safe imports. `../middleware/auth` has a stale compiled `auth.js`
-// counterpart that some resolvers bind instead of `auth.ts`, silently dropping
-// the security controls; `tokenType.ts` and `withTenantConnection.ts` have no
-// such twin, so the controls below are provable under every resolver.
 import { nonAccessTokenReason } from '../middleware/tokenType';
-import { withTenantConnection } from '../db/withTenantConnection';
+import { checkOrgMembership, parseFiniteInt } from '../middleware/orgMembership';
+import {
+  authoringDocIdOf,
+  authorizeResource,
+  parseDocumentName,
+  type CollabResource,
+} from './collab/collab-authorization';
+import { loadCollabState, storeCollabState } from './collab/collab-state.store';
 
 const log = createScopedLogger('hocuspocus');
 
 let hocuspocusInstance: Hocuspocus | null = null;
+let webSocketServer: WebSocketServer | null = null;
 
-/** A document room name must be a bare UUID — the `authoring_documents.id`. */
-const DOCUMENT_NAME_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** True when the collaboration socket is switched on for this process. */
+export function isCollabEnabled(): boolean {
+  return process.env.ENABLE_COLLAB_CRDT === 'true';
+}
 
 /**
- * The claims this module reads off a verified access token. Structurally
- * compatible with `TokenClassClaims` so `nonAccessTokenReason` applies.
+ * The context every post-authentication hook receives. It is exactly what
+ * `onAuthenticate` returns — hocuspocus merges the returned object into the
+ * per-document hook payload's `context`.
+ *
+ * `tenantId` here is not the caller's claim: it is the tenant the document was
+ * proven to belong to, established by the authorization query.
  */
+interface CollabContext {
+  user: { id: string; name: string; email: string; color: string };
+  tenantId: number;
+  resource: CollabResource;
+}
+
+/** Shape hocuspocus turns into a `permission-denied` message for the client. */
+function denied(reason: string): Error & { reason: string } {
+  return Object.assign(new Error(reason), { reason });
+}
+
+function readContext(raw: unknown): CollabContext | null {
+  const ctx = raw as Partial<CollabContext> | undefined;
+  if (!ctx || typeof ctx.tenantId !== 'number' || !ctx.resource) return null;
+  return ctx as CollabContext;
+}
+
 interface CollabTokenClaims {
-  type?: string;
-  role?: string | null;
-  mfaPending?: boolean;
-  organizationId?: string | number;
-  orgId?: string | number;
   userId?: string | number;
   sub?: string | number;
   id?: string | number;
   name?: string;
   username?: string;
   email?: string;
-}
-
-/** The verified principal + room binding carried into every later hook. */
-export interface CollabConnectionContext {
-  user: { id: string; name: string; email: string; color: string };
-  /** Integer organization id taken from the VERIFIED token, never the client. */
-  tenantId: number;
-  /** The authorized `authoring_documents.id`. */
-  docId: string;
+  organizationId?: string | number;
+  orgId?: string | number;
+  type?: string;
+  role?: string | null;
+  mfaPending?: boolean;
 }
 
 /**
- * Authorization error. Hocuspocus turns a thrown error into a
- * `permission-denied` message and refuses the connection, so every failure
- * path here is fail-closed.
- */
-export class CollabAuthorizationError extends Error {
-  readonly reason: string;
-  constructor(reason: string, message?: string) {
-    super(message ?? reason);
-    this.name = 'CollabAuthorizationError';
-    this.reason = reason;
-  }
-}
-
-/**
- * Resolve a collaboration connection to a verified principal and an authorized
- * document, or throw.
+ * Authenticate one client for one document.
  *
- * Mirrors the canonical HTTP access path in `server/middleware/auth.ts`
- * (`authenticateToken`): verify signature with rotation → reject non-access
- * token classes → require a subject claim → derive the org from the verified
- * claim. It then adds the piece the HTTP path gets from its route handlers and
- * this endpoint never had: authorization of the requested resource.
+ * Every rejection is a throw, because hocuspocus turns a thrown error into a
+ * permission-denied message for that document and leaves the rest of the
+ * connection alone. Reasons are coarse on purpose — a client learns that it
+ * may not open the document, not whether the document exists.
  *
- * Exported so the negative cases (cross-tenant, forged, non-access, anonymous)
- * are directly testable without standing up a WebSocket server.
+ * Exported for tests: this is the security boundary of the whole subsystem and
+ * deserves direct coverage rather than coverage through a live socket.
  */
-export async function authorizeCollabConnection(
-  token: string | undefined | null,
-  documentName: string,
-): Promise<CollabConnectionContext> {
-  // 1. A credential is REQUIRED in every environment. There is deliberately no
-  //    non-production anonymous path: this process shape is the same one that
-  //    runs in staging/pilot, and a fail-open that depends on NODE_ENV is one
-  //    misconfigured env var away from being production behaviour.
-  if (!token) {
-    throw new CollabAuthorizationError('authentication-required', 'Authentication required');
+export async function authenticateCollabConnection({
+  token,
+  documentName,
+}: {
+  token: string;
+  documentName: string;
+}): Promise<CollabContext> {
+  // 1. The requested resource must be one we know how to authorize. Parsing
+  //    first means an unknown or malformed name never reaches Postgres.
+  const resource = parseDocumentName(documentName);
+  if (!resource) {
+    log.warn('Refused collaboration for an unrecognised documentName', { documentName });
+    throw denied('unknown-document');
   }
 
-  // 2. Signature verification (with rotation). A failure is terminal — there is
-  //    no "dev user" fallback, so a FORGED token can never authenticate.
+  if (!token) throw denied('authentication-required');
+
+  // 2. Signature and expiry. No fallback identity on failure, in any
+  //    environment: an unverifiable token is not a user.
   let payload: CollabTokenClaims;
   try {
     payload = verifyJwtWithRotation<CollabTokenClaims>(token);
   } catch {
-    throw new CollabAuthorizationError('invalid-token', 'Invalid authentication token');
+    throw denied('invalid-token');
   }
 
   // 3. Token class. Refresh / MFA-challenge / MFA-partial tokens are signed
-  //    with the same secret as access tokens; accepting one here would let a
-  //    half-authenticated session edit regulated content and bypass MFA.
+  //    with the same secret as access tokens and must never open a session.
   const nonAccess = nonAccessTokenReason(payload);
   if (nonAccess) {
-    throw new CollabAuthorizationError('invalid-token', `Token is not an access token (${nonAccess})`);
+    log.warn('Refused collaboration for a non-access token', { documentName, nonAccess });
+    throw denied('invalid-token-class');
   }
 
-  // 4. Subject, from the verified claims only.
-  const subjectClaim = payload.userId ?? payload.sub ?? payload.id;
-  const subject =
-    subjectClaim === undefined || subjectClaim === null ? '' : String(subjectClaim).trim();
-  if (!subject || subject === '0') {
-    throw new CollabAuthorizationError('invalid-token', 'Token missing required subject claim');
+  const subject = String(payload.userId ?? payload.sub ?? payload.id ?? '');
+  if (!subject) throw denied('invalid-token');
+
+  // 4. Tenant. A collaboration socket is inherently tenant-scoped — there is
+  //    no "platform-level" document to open — so unlike the HTTP path a token
+  //    without a usable org claim is refused rather than passed through.
+  const organizationId = parseFiniteInt(payload.organizationId ?? payload.orgId);
+  const userId = parseFiniteInt(subject);
+  if (organizationId === null) throw denied('no-tenant');
+
+  // 5. Live membership. A socket outlives the request that opened it, so the
+  //    claim minted at login is re-checked against the same cache the HTTP
+  //    middleware uses — a user removed from the org cannot ride an old token
+  //    into a long-lived editing session.
+  //
+  //    'indeterminate' (database unreachable) is NOT waved through here the
+  //    way it is on HTTP. It does not need to be: step 6 needs the same
+  //    database and fails closed, so a database outage already means no new
+  //    collaboration. Refusing here just makes that explicit.
+  if (userId !== null) {
+    const membership = await checkOrgMembership(userId, organizationId);
+    if (membership !== 'member') {
+      log.warn('Refused collaboration — organization membership not confirmed', {
+        documentName,
+        userId,
+        organizationId,
+        membership,
+      });
+      throw denied('membership-revoked');
+    }
   }
 
-  // 5. Tenant, from the verified claims only. NEVER defaulted — an access token
-  //    with no organization claim cannot prove which tenant's documents it may
-  //    open, so it is refused rather than silently attached to some org.
-  const orgClaim = payload.organizationId ?? payload.orgId;
-  const tenantId = Number(orgClaim);
-  if (orgClaim === undefined || orgClaim === null || orgClaim === '' || !Number.isInteger(tenantId)) {
-    throw new CollabAuthorizationError('forbidden', 'Token missing required organization claim');
-  }
-
-  // 6. The room name is untrusted input. Reject anything that is not a bare
-  //    document UUID before it reaches the query.
-  if (typeof documentName !== 'string' || !DOCUMENT_NAME_RE.test(documentName)) {
-    throw new CollabAuthorizationError('forbidden', 'Unknown document');
-  }
-
-  // 7. AUTHORIZATION. Resolve the room to a real row scoped by the VERIFIED
-  //    tenant. Zero rows means either "no such document" or "belongs to another
-  //    organization" — both are refused, and the caller cannot tell them apart.
-  //    withTenantConnection sets app.current_tenant_id on the connection so the
-  //    tenant_isolation_policy (FORCE RLS) recognises the scope; the explicit
-  //    tenant_id predicate holds even with RLS in shadow mode.
-  let authorized = false;
-  try {
-    authorized = await withTenantConnection(
-      { tenantId, caller: 'hocuspocus.onAuthenticate' },
-      async client => {
-        const result = await client.query(
-          'SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-          [documentName, tenantId],
-        );
-        return (result.rowCount ?? 0) > 0;
-      },
-    );
-  } catch (err) {
-    // Fail CLOSED: an unreachable or erroring database must never be read as
-    // "authorized".
-    log.error('[Hocuspocus] Document authorization lookup failed — refusing connection', {
+  // 6. The document itself. Fails closed on anything unverifiable.
+  const authorization = await authorizeResource(resource, organizationId);
+  if (authorization !== 'authorized') {
+    log.warn('Refused collaboration — document not authorized for this tenant', {
       documentName,
-      tenantId,
-      error: err instanceof Error ? err.message : String(err),
+      organizationId,
+      authorization,
     });
-    throw new CollabAuthorizationError('forbidden', 'Document authorization unavailable');
-  }
-
-  if (!authorized) {
-    log.warn('[Hocuspocus] Refused collaboration join: document not in caller organization', {
-      documentName,
-      tenantId,
-      userId: subject,
-    });
-    throw new CollabAuthorizationError('forbidden', 'Document not found or access denied');
+    throw denied('forbidden-document');
   }
 
   return {
@@ -217,127 +222,9 @@ export async function authorizeCollabConnection(
       email: payload.email || '',
       color: getColorForUser(subject),
     },
-    tenantId,
-    docId: documentName,
+    tenantId: organizationId,
+    resource,
   };
-}
-
-/**
- * Re-derive the verified room binding inside a later hook.
- *
- * `onAuthenticate`'s return value is merged into the per-connection context
- * Hocuspocus hands to `onLoadDocument` (via `createDocument`) and to
- * `onStoreDocument` (captured at update time by the store debouncer, so the
- * verified tenant is still present for the final flush after the socket closes).
- * Anything missing from it means the hook ran without a proven principal, which
- * must never result in a read or a write.
- */
-function requireCollabContext(context: unknown, documentName: string): { tenantId: number; docId: string; actor: string } {
-  const ctx = (context ?? {}) as Partial<CollabConnectionContext>;
-  const tenantId = typeof ctx.tenantId === 'number' ? ctx.tenantId : NaN;
-  const docId = typeof ctx.docId === 'string' ? ctx.docId : '';
-  if (!Number.isInteger(tenantId) || !docId) {
-    throw new CollabAuthorizationError('forbidden', 'Collaboration context is not authorized');
-  }
-  // Defence in depth: the persisted row is keyed by the AUTHORIZED doc id, so a
-  // context that does not describe the document being loaded/stored is refused
-  // rather than allowed to read or overwrite the wrong row.
-  if (documentName && documentName !== docId) {
-    throw new CollabAuthorizationError('forbidden', 'Collaboration context does not match document');
-  }
-  return { tenantId, docId, actor: ctx.user?.id ?? '' };
-}
-
-/**
- * Load the durable Y.js snapshot for an authorized room.
- *
- * Throws on database failure. Hocuspocus responds to a rejected
- * `onLoadDocument` by closing the connections and unloading the document —
- * which is the correct outcome: serving an EMPTY doc after a failed read would
- * let the next `onStoreDocument` overwrite good persisted state with nothing.
- */
-export async function loadCollabDocumentState(
-  context: unknown,
-  documentName: string,
-): Promise<Y.Doc | null> {
-  const { tenantId, docId } = requireCollabContext(context, documentName);
-
-  const row = await withTenantConnection(
-    { tenantId, caller: 'hocuspocus.onLoadDocument' },
-    async client => {
-      const result = await client.query(
-        'SELECT state, checksum, version FROM authoring_document_yjs_state WHERE doc_id = $1 AND tenant_id = $2',
-        [docId, tenantId],
-      );
-      return (result.rows[0] ?? null) as { state: unknown; checksum: string; version: number } | null;
-    },
-  );
-
-  if (!row) return null;
-
-  const state = toBuffer(row.state);
-  const checksum = crypto.createHash('sha256').update(state).digest('hex');
-  if (row.checksum && checksum !== row.checksum) {
-    // Do NOT silently deserialize a snapshot that does not match its recorded
-    // digest — that is corruption of a regulated record, not a warning.
-    throw new Error(
-      `[Hocuspocus] Stored Y.js state failed checksum verification for document ${docId}`,
-    );
-  }
-
-  const doc = new Y.Doc();
-  Y.applyUpdate(doc, new Uint8Array(state));
-  log.debug('[Hocuspocus] Loaded persisted document state', {
-    docId,
-    tenantId,
-    version: row.version,
-    bytes: state.length,
-  });
-  return doc;
-}
-
-/** Persist the Y.js snapshot for an authorized room. */
-export async function storeCollabDocumentState(
-  context: unknown,
-  documentName: string,
-  document: Y.Doc,
-): Promise<void> {
-  const { tenantId, docId, actor } = requireCollabContext(context, documentName);
-
-  const state = Buffer.from(Y.encodeStateAsUpdate(document));
-  const checksum = crypto.createHash('sha256').update(state).digest('hex');
-
-  await withTenantConnection(
-    { tenantId, caller: 'hocuspocus.onStoreDocument' },
-    async client => {
-      await client.query(
-        `INSERT INTO authoring_document_yjs_state
-           (doc_id, tenant_id, state, version, checksum, updated_by, updated_at)
-         VALUES ($1, $2, $3, 1, $4, $5, NOW())
-         ON CONFLICT (doc_id, tenant_id) DO UPDATE SET
-           state = EXCLUDED.state,
-           checksum = EXCLUDED.checksum,
-           version = authoring_document_yjs_state.version + 1,
-           updated_by = EXCLUDED.updated_by,
-           updated_at = NOW()`,
-        [docId, tenantId, state, checksum, actor || null],
-      );
-    },
-  );
-
-  log.debug('[Hocuspocus] Persisted document state', { docId, tenantId, bytes: state.length });
-}
-
-/** Normalise a BYTEA column value (Buffer / Uint8Array / hex string) to a Buffer. */
-function toBuffer(value: unknown): Buffer {
-  if (Buffer.isBuffer(value)) return value;
-  if (value instanceof Uint8Array) return Buffer.from(value);
-  if (typeof value === 'string') {
-    return value.startsWith('\\x')
-      ? Buffer.from(value.slice(2), 'hex')
-      : Buffer.from(value, 'binary');
-  }
-  throw new Error('[Hocuspocus] Unsupported BYTEA representation for stored Y.js state');
 }
 
 /**
@@ -354,33 +241,74 @@ export function createHocuspocusServer(): Hocuspocus {
     maxDebounce: 10000,
     quiet: process.env.NODE_ENV === 'production',
 
-    async onAuthenticate({ token, documentName }: { token: string; documentName: string }) {
-      // Everything returned here is merged into the per-connection context that
-      // onLoadDocument / onStoreDocument receive — that is how the VERIFIED
-      // tenant reaches persistence without ever round-tripping through the
-      // client.
-      return authorizeCollabConnection(token, documentName);
-    },
+    onAuthenticate: authenticateCollabConnection,
 
     async onConnect({ documentName }: { documentName: string }) {
-      // NOTE: Hocuspocus fires onConnect BEFORE onAuthenticate, so no verified
-      // identity exists yet. Nothing may be authorized from here.
-      log.debug(`[Hocuspocus] Connection opened for document: ${documentName}`);
+      log.debug(`[Hocuspocus] User connected to document: ${documentName}`);
     },
 
     async onDisconnect({ documentName }: { documentName: string }) {
       log.debug(`[Hocuspocus] User disconnected from document: ${documentName}`);
     },
 
-    async onStoreDocument({ documentName, document, context }: any) {
-      await storeCollabDocumentState(context, documentName, document);
+    /**
+     * Restore persisted state onto the fresh Y.Doc hocuspocus created.
+     *
+     * Returning the document unchanged — the previous behaviour — is what a
+     * brand-new document looks like, so a failure to load was indistinguishable
+     * from "nobody has edited this yet". A load error therefore throws: a
+     * client that cannot be given the document's real state must be refused,
+     * not handed a blank one it will then happily overwrite.
+     */
+    async onLoadDocument({ documentName, document, context }: any) {
+      const ctx = readContext(context);
+      if (!ctx) throw denied('unauthenticated-load');
+
+      const result = await loadCollabState(ctx.tenantId, documentName);
+      if (result.status === 'missing') {
+        throw denied('collab-store-unavailable');
+      }
+      if (result.status === 'found') {
+        Y.applyUpdate(document, new Uint8Array(result.document.state));
+        log.debug('[Hocuspocus] Restored persisted state', {
+          documentName,
+          sizeBytes: result.document.sizeBytes,
+        });
+      }
+      return document;
     },
 
-    async onLoadDocument({ documentName, document, context }: any) {
-      const loaded = await loadCollabDocumentState(context, documentName);
-      // Returning null leaves the freshly-created (empty) document in place —
-      // the correct state for a room that has never been edited.
-      return loaded ?? document;
+    /**
+     * Persist the document. Hocuspocus debounces this (2s, 10s max) and calls
+     * it once more when the last client disconnects, so the store sees edit
+     * bursts as a handful of writes rather than one per keystroke.
+     */
+    async onStoreDocument({ documentName, document, context }: any) {
+      const ctx = readContext(context);
+      if (!ctx) {
+        log.error('[Hocuspocus] Refusing to store a document with no authenticated context', {
+          documentName,
+        });
+        return;
+      }
+
+      const state = Buffer.from(Y.encodeStateAsUpdate(document));
+      const stateVector = Buffer.from(Y.encodeStateVector(document));
+      const result = await storeCollabState({
+        tenantId: ctx.tenantId,
+        documentName,
+        state,
+        stateVector,
+        authoringDocId: authoringDocIdOf(ctx.resource),
+        updatedBy: ctx.user.id,
+      });
+
+      if (result.status === 'stored') {
+        log.debug('[Hocuspocus] Stored document state', {
+          documentName,
+          sizeBytes: state.byteLength,
+        });
+      }
     },
   });
 
@@ -388,21 +316,46 @@ export function createHocuspocusServer(): Hocuspocus {
 }
 
 /**
- * Attach Hocuspocus to an existing HTTP server for WebSocket upgrades.
- * Handles upgrade requests at the /collab path.
+ * Attach Hocuspocus to an existing HTTP server for WebSocket upgrades at
+ * /collab. No-op unless ENABLE_COLLAB_CRDT is on.
+ *
+ * The upgrade must be completed by a real WebSocket server before hocuspocus
+ * sees it. `handleConnection` takes a handshaken `ws.WebSocket` — it calls
+ * `.ping()`, reads `.readyState` against ws's numeric constants, and subscribes
+ * to 'message' and 'pong'. Handing it the raw `net.Socket` from the 'upgrade'
+ * event (the previous behaviour) skipped the handshake entirely: the client
+ * never received its 101 and the connection could not exist. `noServer: true`
+ * plus an explicit `handleUpgrade` is the composition ws documents for sharing
+ * one HTTP server across several upgrade paths, which this server does —
+ * Socket.io owns its own.
  */
 export function attachHocuspocusToServer(httpServer: HttpServer): void {
+  if (!isCollabEnabled()) {
+    log.debug('[Hocuspocus] CRDT collaboration disabled (ENABLE_COLLAB_CRDT is not "true")');
+    return;
+  }
+
   const hocuspocus = createHocuspocusServer();
+  const wss = new WebSocketServer({ noServer: true });
+  webSocketServer = wss;
 
-  httpServer.on('upgrade', (request: IncomingMessage, socket: any, head: Buffer) => {
-    const url = request.url || '';
+  wss.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+    // ws throws on an unhandled 'error' and would take the process with it.
+    socket.on('error', err => {
+      log.warn('[Hocuspocus] WebSocket error', { error: err.message });
+    });
+    hocuspocus.handleConnection(socket, request, {});
+  });
 
-    // Only handle /collab WebSocket upgrades. The socket carries no privileges
-    // until onAuthenticate above authorizes it against a real document row.
-    if (url.startsWith('/collab')) {
-      hocuspocus.handleConnection(socket as WebSocket, request, {});
-    }
-    // Let other upgrade handlers (Socket.io, etc.) handle their own paths
+  httpServer.on('upgrade', (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+    // Only /collab is ours. Every other path belongs to another upgrade
+    // handler on the same server, so it must be left untouched rather than
+    // destroyed — destroying it here would break Socket.io.
+    if (!(request.url || '').startsWith('/collab')) return;
+
+    wss.handleUpgrade(request, socket, head, ws => {
+      wss.emit('connection', ws, request);
+    });
   });
 
   log.debug('[Hocuspocus] CRDT collaboration server attached at /collab');
@@ -422,4 +375,4 @@ function getColorForUser(userId: string): string {
   return COLLAB_COLORS[Math.abs(hash) % COLLAB_COLORS.length];
 }
 
-export { hocuspocusInstance };
+export { hocuspocusInstance, webSocketServer };

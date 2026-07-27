@@ -95,6 +95,12 @@ function sftpSizedRequest() {
     environment: 'production' as const,
     submissionType: 'original',
     metadata: { applicationId: 'IND123456', sequence: '0001', environment: 'production' },
+      authorization: {
+        kind: 'governed-http' as const,
+        actorUserId: 1,
+        reason: 'gateway suite exercises the governed transmit path',
+        reauthVerifiedAt: new Date(),
+      },
   };
 }
 

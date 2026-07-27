@@ -1,5 +1,5 @@
 /**
- * AnA agentic onboarding — server-side proposal store (P3 prerequisite).
+ * AnA agentic onboarding — server-side proposal store (P3 trust boundary).
  *
  * WHY THIS EXISTS
  * A commit endpoint that accepts a client-supplied payload of
@@ -10,8 +10,8 @@
  * is the defect (it is why the first commit endpoint was removed rather than
  * patched).
  *
- * The fix is that the server must commit only what IT proposed. Ingest records
- * its own extraction here under a run id; commit re-reads that record and takes
+ * So the server commits only what IT proposed. Ingest records its own
+ * extraction here; commit re-reads that record and takes
  * value/provenance/confidence from the SERVER's copy. The client may only:
  *   - reference proposal ids the server actually produced,
  *   - supply a human-edited replacement value (recorded as humanEdited, with
@@ -20,69 +20,67 @@
  * Everything a Part 11 record asserts about AnA's extraction therefore comes
  * from the server, never from the request body.
  *
- * DURABILITY (documented limitation, not a hidden one)
- * Runs live in memory with a short TTL, because a proposal set is a working
- * artifact of one review session, not a regulated record — the durable record
- * is the audit entry written at commit time. Consequences, stated plainly:
- *   - a server restart or a different node ends an in-flight review; the client
- *     is told to re-upload rather than being silently given a stale set;
- *   - nothing is retained after commit or expiry, so an abandoned onboarding
- *     upload leaves no tenant data behind.
- * A durable, RLS-scoped table is the follow-up if proposals ever need to
- * outlive a session or be inspected after the fact.
+ * DURABILITY
+ * Runs are persisted (`onboarding_proposal_runs`), so a review survives a
+ * restart or a different node, and the suggestions a human REJECTED stay
+ * inspectable — committed values are already in the sha256-chained audit trail,
+ * but declined ones would otherwise leave no trace. Rows are removed on commit
+ * or expiry, and the uploaded document and its text are never stored: only the
+ * extracted field proposals.
+ *
+ * Reads/writes go through `requestDb(req)` so the request's RLS session vars
+ * apply and Postgres enforces the tenant boundary beneath the app-layer checks.
  *
  * @module server/services/onboarding/proposal-store
  */
 
 import { randomUUID } from 'crypto';
+import { and, eq, lt } from 'drizzle-orm';
+import type { Request } from 'express';
+import { requestDb } from '../../db/requestDb';
+import { onboardingProposalRuns } from '@shared/schema';
 import type { OnboardingIngestResult, OnboardingProposalField } from '@shared/types/onboarding-ingest';
 
-/** A review session is short; abandoned runs must not accumulate. */
-const TTL_MS = 30 * 60 * 1000;
-/** Hard cap so a burst of uploads cannot grow memory without bound. */
-const MAX_RUNS = 500;
+/** A review session is short; abandoned runs must not linger. */
+export const RUN_TTL_MS = 30 * 60 * 1000;
 
-interface StoredRun {
-  runId: string;
-  /** Owner — a run is readable only by the user+org that created it. */
+export interface RunOwner {
   userId: number;
   organizationId: number;
-  /** The server's own extraction, keyed by proposal id. */
-  fields: Map<string, OnboardingProposalField>;
-  sources: OnboardingIngestResult['sources'];
-  createdAt: number;
 }
 
-const runs = new Map<string, StoredRun>();
-
-function sweep(now: number): void {
-  for (const [id, run] of runs) {
-    if (now - run.createdAt > TTL_MS) runs.delete(id);
-  }
-  // If still over cap, drop the oldest runs first.
-  if (runs.size > MAX_RUNS) {
-    const oldest = [...runs.values()].sort((a, b) => a.createdAt - b.createdAt);
-    for (const run of oldest.slice(0, runs.size - MAX_RUNS)) runs.delete(run.runId);
-  }
-}
-
-/** Record an ingest run and return its id. Called only by the ingest route. */
-export function saveRun(
-  owner: { userId: number; organizationId: number },
+/** Record an ingest run and return its opaque id. Called only by ingest. */
+export async function saveRun(
+  req: Request,
+  owner: RunOwner,
   result: OnboardingIngestResult,
-  now: number = Date.now(),
-): string {
-  sweep(now);
+): Promise<string> {
+  const rdb = requestDb(req);
   const runId = randomUUID();
-  const fields = new Map<string, OnboardingProposalField>();
-  for (const g of result.groups) for (const f of g.fields) fields.set(f.id, f);
-  runs.set(runId, {
+  const fields = result.groups.flatMap((g) => g.fields);
+
+  // Opportunistic sweep: drop this org's expired runs so abandoned uploads do
+  // not accumulate. Cheap (indexed) and keeps retention honest without a cron.
+  try {
+    await rdb
+      .delete(onboardingProposalRuns)
+      .where(
+        and(
+          eq(onboardingProposalRuns.organizationId, owner.organizationId),
+          lt(onboardingProposalRuns.expiresAt, new Date()),
+        ),
+      );
+  } catch {
+    /* sweeping is best-effort — never fail an ingest over housekeeping */
+  }
+
+  await rdb.insert(onboardingProposalRuns).values({
     runId,
-    userId: owner.userId,
     organizationId: owner.organizationId,
-    fields,
-    sources: result.sources,
-    createdAt: now,
+    userId: owner.userId,
+    proposals: fields,
+    sources: result.sources ?? [],
+    expiresAt: new Date(Date.now() + RUN_TTL_MS),
   });
   return runId;
 }
@@ -105,25 +103,46 @@ export interface ResolveOutcome {
   unknownIds: string[];
 }
 
+/** Identical message for "not yours" and "not found" — never confirm that
+ *  someone else's run exists. */
+const GONE = 'That review session has expired. Please upload the document again.';
+
 /**
- * Resolve a caller's approval list against the server's own record.
- * A run is visible only to the user+org that created it, so one tenant can
- * never commit another's extraction.
+ * Resolve a caller's approval list against the server's own record. The lookup
+ * is constrained to the caller's own org AND user, so one tenant can never
+ * commit another's extraction.
  */
-export function resolveApprovals(
-  owner: { userId: number; organizationId: number },
+export async function resolveApprovals(
+  req: Request,
+  owner: RunOwner,
   runId: string,
   approvals: Array<{ id: string; value?: string | null }>,
-  now: number = Date.now(),
-): ResolveOutcome {
-  const run = runs.get(runId);
-  if (!run || now - run.createdAt > TTL_MS) {
-    return { ok: false, error: 'That review session has expired. Please upload the document again.', approvals: [], unknownIds: [] };
+): Promise<ResolveOutcome> {
+  if (!runId) return { ok: false, error: GONE, approvals: [], unknownIds: [] };
+
+  const rdb = requestDb(req);
+  const [run] = await rdb
+    .select({
+      proposals: onboardingProposalRuns.proposals,
+      expiresAt: onboardingProposalRuns.expiresAt,
+      committedAt: onboardingProposalRuns.committedAt,
+    })
+    .from(onboardingProposalRuns)
+    .where(
+      and(
+        eq(onboardingProposalRuns.runId, runId),
+        eq(onboardingProposalRuns.organizationId, owner.organizationId),
+        eq(onboardingProposalRuns.userId, owner.userId),
+      ),
+    );
+
+  // Expired, already committed, or belonging to someone else all look the same.
+  if (!run || run.committedAt || new Date(run.expiresAt).getTime() < Date.now()) {
+    return { ok: false, error: GONE, approvals: [], unknownIds: [] };
   }
-  if (run.userId !== owner.userId || run.organizationId !== owner.organizationId) {
-    // Non-leaky: same message as a missing run — never confirm someone else's run exists.
-    return { ok: false, error: 'That review session has expired. Please upload the document again.', approvals: [], unknownIds: [] };
-  }
+
+  const stored = Array.isArray(run.proposals) ? (run.proposals as OnboardingProposalField[]) : [];
+  const byId = new Map(stored.map((f) => [f.id, f]));
 
   const resolved: ResolvedApproval[] = [];
   const unknownIds: string[] = [];
@@ -131,7 +150,7 @@ export function resolveApprovals(
 
   for (const a of approvals) {
     const id = typeof a?.id === 'string' ? a.id : '';
-    const proposal = id ? run.fields.get(id) : undefined;
+    const proposal = id ? byId.get(id) : undefined;
     if (!proposal) {
       if (id) unknownIds.push(id);
       continue;
@@ -150,12 +169,23 @@ export function resolveApprovals(
   return { ok: true, approvals: resolved, unknownIds };
 }
 
-/** Drop a run once it has been committed — nothing lingers after use. */
-export function discardRun(runId: string): void {
-  runs.delete(runId);
-}
-
-/** Test seam. */
-export function __resetRuns(): void {
-  runs.clear();
+/**
+ * Mark a run committed. Retained briefly (until the expiry sweep) so the
+ * proposals a human declined remain inspectable alongside the audit entry for
+ * the ones they approved; a committed run can never be resolved again.
+ */
+export async function markRunCommitted(req: Request, owner: RunOwner, runId: string): Promise<void> {
+  try {
+    await requestDb(req)
+      .update(onboardingProposalRuns)
+      .set({ committedAt: new Date() })
+      .where(
+        and(
+          eq(onboardingProposalRuns.runId, runId),
+          eq(onboardingProposalRuns.organizationId, owner.organizationId),
+        ),
+      );
+  } catch {
+    /* the governed write already succeeded and is audited — never fail on this */
+  }
 }

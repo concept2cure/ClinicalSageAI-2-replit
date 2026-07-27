@@ -507,6 +507,30 @@ import { POST_APPROVAL_TOOLS } from './postApprovalTools';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Onboarding (read-only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lets a client ask AnA, in conversation, what its workspace still needs and
+ * what a document could contribute — WITHOUT giving the model a way to write.
+ *
+ * Deliberately read-only. There is no `onboarding_commit` tool and there will
+ * not be one: a model-callable commit could self-invoke inside the agentic loop,
+ * which would defeat the human-approval gate the whole onboarding flow is built
+ * on. Applying proposals stays a human action through the governed endpoint.
+ */
+export const SUMMARIZE_ONBOARDING_READINESS: AnaTool = {
+  name: 'summarize_onboarding_readiness',
+  description:
+    "Report which onboarding fields this organization's profile already has and which are still blank, and explain what a client can upload to fill the gaps. Read-only: it inspects the org profile and never changes it. Use when a client asks what setup they still need, or what a document could help with. To actually apply values from a document, direct the client to the 'Set up from a document' flow — extraction proposes, the client reviews and approves, and only then is anything written.",
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FDA Postmarket Surveillance Tools (live openFDA)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1261,8 +1285,12 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
 
 export const TRANSMIT_SUBMISSION: AnaTool = {
   name: 'transmit_submission',
+  // The description states the refusal, because a tool whose description
+  // promises transmission will be called for transmission and its refusal
+  // reported to the user as a failure. It does not transmit — see the handler
+  // in AnaToolExecutor.ts and the gateway guard in submission-gateways/index.ts.
   description:
-    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, or Health Canada CESG). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
+    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
   input_schema: {
     type: 'object',
     properties: {
@@ -2503,6 +2531,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_INTELLIGENCE_FLOWS,
   // War Game Simulation — FDA auditor pressure-testing of intelligence flow output
   START_WAR_GAME,
+  // Onboarding — read-only look at what a document could contribute to setup.
+  SUMMARIZE_ONBOARDING_READINESS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers
