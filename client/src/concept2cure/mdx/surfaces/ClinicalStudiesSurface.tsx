@@ -29,6 +29,7 @@ import {
 } from '../hooks/useClinicalStudies';
 import { useRbqm } from '../hooks/useRbqm';
 import { useStudyDesign } from '../hooks/useStudyDesign';
+import { useStudyDetail } from '../hooks/useStudyDetail';
 import { readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 
@@ -100,6 +101,7 @@ export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSur
 
   const selected = rows.find((s) => s.id === selectedId) ?? null;
   const detail = useStudySummary(selected ? selected.id : null);
+  const records = useStudyDetail(selected ? selected.id : null);
 
   /* RBQM is project-scoped. Prefer the surface's project; fall back to
      the selected study's own program_id so a study opened from the
@@ -279,6 +281,120 @@ export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSur
               </div>
             )}
           </DataGate>
+
+          <div className="section-head" style={{ marginTop: 16 }}>
+            <h2 style={{ fontSize: 14 }}>Sites</h2>
+          </div>
+          <DataGate state={records.sites} label="study sites" onRetry={records.refresh}
+            emptyHint="No investigational sites are recorded for this study yet.">
+            {(sites) => (
+              <div className="ctable">
+                <div className="ctable-head" style={{ gridTemplateColumns: '80px 1.4fr 1fr 90px 90px 80px' }}>
+                  <div>Site</div><div>Name / PI</div><div>Country</div><div>IRB</div><div>Enrolled</div><div>Active</div>
+                </div>
+                {sites.map((s) => (
+                  <div key={s.id} className="ctable-row" style={{ gridTemplateColumns: '80px 1.4fr 1fr 90px 90px 80px' }}>
+                    <div className="ctable-strong">{s.siteNumber}</div>
+                    <div>
+                      <div>{s.siteName}</div>
+                      {s.principalInvestigator && (
+                        <div style={{ color: 'var(--text-400)', fontSize: 12 }}>{s.principalInvestigator}</div>
+                      )}
+                    </div>
+                    <div>{s.country ?? '—'}</div>
+                    <div style={{ textTransform: 'capitalize' }}>{s.irbStatus ?? '—'}</div>
+                    <div className="mono small-mono">{s.enrolledCount}</div>
+                    <div>{s.activated ? I.check : '—'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DataGate>
+
+          <div className="section-head" style={{ marginTop: 16 }}>
+            <h2 style={{ fontSize: 14 }}>Protocol deviations</h2>
+          </div>
+          <DataGate state={records.deviations} label="protocol deviations" onRetry={records.refresh}
+            emptyHint="No protocol deviations are logged for this study yet.">
+            {(devs) => (
+              <div className="ctable">
+                <div className="ctable-head" style={{ gridTemplateColumns: '100px 120px 1.6fr 90px 90px' }}>
+                  <div>Date</div><div>Category</div><div>Description</div><div>Resolved</div><div>CAPA</div>
+                </div>
+                {devs.slice(0, 25).map((d) => (
+                  <div key={d.id} className="ctable-row" style={{ gridTemplateColumns: '100px 120px 1.6fr 90px 90px' }}>
+                    <div className="mono small-mono">{d.deviationDate ? d.deviationDate.slice(0, 10) : '—'}</div>
+                    <div>
+                      <span className={`status-pill ${d.category === 'major' ? 'serious' : 'draft'}`} style={{ textTransform: 'capitalize' }}>
+                        {d.category.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div>{d.description}</div>
+                    <div>{d.resolved ? I.check : <span style={{ color: 'var(--warning)' }}>open</span>}</div>
+                    <div>{d.capaRequired ? 'Required' : '—'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DataGate>
+
+          <div className="section-head" style={{ marginTop: 16 }}>
+            <h2 style={{ fontSize: 14 }}>Adverse events</h2>
+          </div>
+          <DataGate state={records.aes} label="adverse events" onRetry={records.refresh}
+            emptyHint="No adverse events are logged for this study yet.">
+            {(aes) => (
+              <div className="ctable">
+                <div className="ctable-head" style={{ gridTemplateColumns: '100px 1.4fr 80px 80px 110px 90px 90px' }}>
+                  <div>Date</div><div>Term</div><div>Serious</div><div>UADE</div><div>Device-rel.</div><div>Severity</div><div>FDA</div>
+                </div>
+                {aes.slice(0, 25).map((a) => (
+                  <div key={a.id} className="ctable-row" style={{ gridTemplateColumns: '100px 1.4fr 80px 80px 110px 90px 90px' }}>
+                    <div className="mono small-mono">{a.aeDate ? a.aeDate.slice(0, 10) : '—'}</div>
+                    <div>
+                      <div className="ctable-strong">{a.preferredTerm ?? a.aeId}</div>
+                      {a.outcome && <div style={{ color: 'var(--text-400)', fontSize: 12, textTransform: 'capitalize' }}>{a.outcome.replace(/_/g, ' ')}</div>}
+                    </div>
+                    <div>{a.serious ? <span className="status-pill serious">serious</span> : '—'}</div>
+                    <div>{a.unanticipated ? <span className="status-pill serious">UADE</span> : '—'}</div>
+                    <div style={{ textTransform: 'capitalize' }}>{a.deviceRelated ?? '—'}</div>
+                    <div style={{ textTransform: 'capitalize' }}>{a.severity ?? '—'}</div>
+                    <div>{a.reportedToFda ? I.check : '—'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DataGate>
+
+          <div className="section-head" style={{ marginTop: 16 }}>
+            <h2 style={{ fontSize: 14 }}>Endpoints</h2>
+          </div>
+          <DataGate state={records.endpoints} label="endpoints" onRetry={records.refresh}
+            emptyHint="No endpoints are recorded for this study yet.">
+            {(eps) => (
+              <div className="ctable">
+                <div className="ctable-head" style={{ gridTemplateColumns: '100px 1.6fr 90px 1fr 90px' }}>
+                  <div>Kind</div><div>Name</div><div>Met</div><div>Observed / target</div><div>p-value</div>
+                </div>
+                {eps.map((e) => (
+                  <div key={e.id} className="ctable-row" style={{ gridTemplateColumns: '100px 1.6fr 90px 1fr 90px' }}>
+                    <div style={{ textTransform: 'capitalize' }}>{e.kind}</div>
+                    <div className="ctable-strong">{e.name}</div>
+                    <div>
+                      {e.met === true ? <span className="status-pill final">met</span>
+                        : e.met === false ? <span className="status-pill serious">not met</span>
+                        : <span style={{ color: 'var(--text-500)' }}>pending</span>}
+                    </div>
+                    <div className="mono small-mono">
+                      {e.observedValue ?? '—'}{e.targetValue ? ` / ${e.targetValue}` : ''}
+                    </div>
+                    <div className="mono small-mono">{e.pValue ?? '—'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DataGate>
+
           <div className="page-actions" style={{ marginTop: 12 }}>
             <button
               className="btn ghost small"
