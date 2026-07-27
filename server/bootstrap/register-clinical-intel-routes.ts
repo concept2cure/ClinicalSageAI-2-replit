@@ -48,23 +48,24 @@ export async function registerClinicalIntelRoutes({
     });
   }
 
-  // ── Documents Gateway (unified + sourceLinks + intelligence) ──
+  // ── Documents Gateway (unified + intelligence) ──
+  // sourceLinks was removed with the `source_citations` table it fronted: the
+  // table never had DDL anywhere in the repo (every call 42P01'd), and its id
+  // space was incoherent — the AI-edit writer inserted concept2cure_artifacts
+  // ids where this route's reads expected documents ids. Recorded section→source
+  // lineage lives in authoring_citations (cite-source API + Source Tracer).
   try {
-    const [documentsUnified, sourceLinksRoutes, documentIntelligenceRoutes] = await Promise.all([
+    const [documentsUnified, documentIntelligenceRoutes] = await Promise.all([
       import('../routes/documents-unified'),
-      import('../routes/sourceLinks'),
       import('../routes/document-intelligence-routes'),
     ]);
 
     const documentsGateway = express.Router();
     documentsGateway.use(documentsUnified.default);
-    documentsGateway.use(sourceLinksRoutes.default);
     documentsGateway.use(documentIntelligenceRoutes.default);
 
     app.use('/api/documents', documentsGateway);
-    console.log(
-      '✅ Documents gateway mounted at /api/documents (unified + sourceLinks + intelligence)'
-    );
+    console.log('✅ Documents gateway mounted at /api/documents (unified + intelligence)');
   } catch (error) {
     console.error('Failed to mount consolidated documents gateway routes:', error);
   }
@@ -161,7 +162,7 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount docs routes:', error);
   }
 
-  // ── Source tracer (sentence-level provenance read-model, 21 CFR Part 11) ──
+  // ── Source tracer (recorded source lineage per authored section, Part 11) ──
   try {
     const sourceTracerModule = await import('../routes/source-tracer-routes');
     app.use('/api/source-tracer', authenticateToken, sourceTracerModule.default());
