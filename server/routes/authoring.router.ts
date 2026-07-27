@@ -154,41 +154,79 @@ const pool = getPool();
 // FAILS CLOSED. Any error now denies the edit instead of rejecting into the
 // middleware. Previously the throw escaped `router.use`, so the request neither
 // passed nor was refused — it simply never got an answer.
+/**
+ * Whether object-level section-permission enforcement is active.
+ *
+ * G-01: this was OPT-IN (off unless AUTH_ENFORCE_SECTION_PERMS=1), so the
+ * least-privilege control shipped disabled and — because doc_permissions did not
+ * exist and the predicate was broken — could not even be switched on. It is now
+ * DEFAULT-ON in the environments that carry regulated work:
+ *   - production: ALWAYS enforced (the opt-out is not honoured here);
+ *   - staging:    enforced by default; AUTH_ENFORCE_SECTION_PERMS=0 disables;
+ *   - dev / test: OFF by default so suites that predate object permissions are
+ *                 unaffected, ON when a run sets AUTH_ENFORCE_SECTION_PERMS=1.
+ */
+function sectionPermsEnforced(): boolean {
+  if (process.env.NODE_ENV === 'production') return true;
+  const flag = process.env.AUTH_ENFORCE_SECTION_PERMS;
+  if (flag === '1') return true;
+  if (flag === '0') return false;
+  return process.env.NODE_ENV === 'staging';
+}
+
 async function canEditSection(
   req: Request,
   sectionId: string | string[] | undefined
 ): Promise<boolean> {
-  if (process.env.AUTH_ENFORCE_SECTION_PERMS !== '1') return true;
-  const email = ((req.headers as any)['x-user-email'] || '').toString();
+  if (!sectionPermsEnforced()) return true;
+
+  // Actor + tenant from the VERIFIED principal, never client headers. The
+  // middleware sanitises x-user-email/x-roles from the same claims, but a gate
+  // must not depend on a mutable header at all (see requireAny / ledger C-18).
+  const email = (req.user?.email || '').toString().toLowerCase();
+  let tenantId: number;
+  try {
+    tenantId = getTenantId(req);
+  } catch {
+    return false; // no verified tenant ⇒ no edit
+  }
   if (!email) return false;
 
   try {
-    // Document status APPROVED blocks edits regardless
+    // Document status APPROVED blocks edits regardless. Tenant-scoped, and an
+    // unknown/foreign section (no row) denies.
     const d = (
       await pool.query(
-        `
-      SELECT d.status FROM authoring_documents d
-      JOIN authoring_sections s ON s.doc_id = d.id
-      WHERE s.id = $1`,
-        [sectionId]
+        `SELECT d.status FROM authoring_documents d
+         JOIN authoring_sections s ON s.doc_id = d.id AND s.tenant_id = d.tenant_id
+         WHERE s.id = $1 AND s.tenant_id = $2`,
+        [sectionId, tenantId]
       )
     ).rows[0];
-    if (d?.status === 'APPROVED') return false;
+    if (!d) return false;
+    if (d.status === 'APPROVED') return false;
 
-    // Allow QA/RA_CMC override
-    const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
+    // QA/RA_CMC override, from the verified roles claim.
+    const roles = (Array.isArray(req.user?.roles) ? req.user!.roles : [])
+      .map((r) => String(r).toUpperCase());
     if (roles.includes('QA') || roles.includes('RA_CMC')) return true;
 
-    // Otherwise check doc_permissions (doc-level or section-level)
+    // Otherwise require a doc- or section-level grant. FIXED PREDICATE (G-01):
+    // the branches are parenthesised, both anchored on the TARGET section ($1)
+    // and the caller's TENANT ($3), and a doc-level grant is section_id IS NULL.
+    // The prior unparenthesised OR let any doc-level grant on ANY document
+    // authorise a section of a DIFFERENT document, across tenants.
     const row = (
       await pool.query(
-        `
-      SELECT 1 FROM doc_permissions p
-      JOIN authoring_sections s ON s.doc_id = p.doc_id
-      WHERE s.id = $1 AND p.email = $2 AND p.role IN ('AUTHOR','REVIEWER')
-         OR (p.section_id IS NULL AND p.doc_id = s.doc_id AND p.email = $2 AND p.role IN ('AUTHOR','REVIEWER'))
-      LIMIT 1`,
-        [sectionId, email]
+        `SELECT 1 FROM doc_permissions p
+         JOIN authoring_sections s ON s.doc_id = p.doc_id AND s.tenant_id = p.tenant_id
+         WHERE s.id = $1
+           AND p.tenant_id = $3
+           AND p.email = $2
+           AND p.role IN ('AUTHOR','REVIEWER')
+           AND (p.section_id = s.id OR p.section_id IS NULL)
+         LIMIT 1`,
+        [sectionId, email, tenantId]
       )
     ).rows[0];
     return !!row;
@@ -223,9 +261,19 @@ const requireAny = (roles: string[]) => {
   };
 };
 
-// Guard for section changes & token refresh
+// Guard for section CONTENT mutations only. `req.path` here is the remainder
+// after the matched '/sections/:sectionId' mount ('/' for the section itself,
+// '/revert' etc. for subresources). Editing the section (PATCH) and reverting
+// it to a prior revision (POST /revert) change the regulated content and
+// require edit permission. Collaboration subresources — comment, cite, tokens —
+// are deliberately NOT gated by EDIT permission: a reviewer must be able to
+// annotate without authoring rights, and they were never gated while
+// enforcement was off, so this stays monotonic as enforcement turns on.
 router.use('/sections/:sectionId', async (req: Request, res: Response, next: any) => {
-  if (['PATCH', 'POST', 'DELETE'].includes(req.method)) {
+  const isContentMutation =
+    (req.method === 'PATCH' && req.path === '/') ||
+    (req.method === 'POST' && req.path === '/revert');
+  if (isContentMutation) {
     const ok = await canEditSection(req, req.params.sectionId);
     if (!ok) return res.status(403).json({ error: 'No edit permission for this section' });
   }
@@ -1161,6 +1209,28 @@ router.post('/docs', async (req: Request, res: Response) => {
          WHERE template_id = $3 AND tenant_id = $2`,
         [docId, tenantId, template_id]
       );
+    }
+
+    // G-01: grant the creator a document-level AUTHOR permission so that once
+    // section-permission enforcement is active they can edit the document they
+    // just created without a separate grant step. Best-effort: document creation
+    // must not fail if the permission store is absent (an un-provisioned dev /
+    // test harness) — the grant is only consulted when enforcement is on, and
+    // canEditSection fails closed regardless.
+    const creatorEmail = getActorEmail(req);
+    if (creatorEmail) {
+      try {
+        await pool.query(
+          `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+           VALUES ($1, NULL, $2, 'AUTHOR', $3)`,
+          [docId, creatorEmail.toLowerCase(), tenantId]
+        );
+      } catch (grantErr) {
+        console.warn(
+          '[authoring] creator auto-grant skipped',
+          grantErr instanceof Error ? grantErr.message : grantErr
+        );
+      }
     }
 
     res.status(201).json({
@@ -4538,12 +4608,27 @@ router.post(
     try {
       const { email, role, section_id } = req.body || {};
       if (!email || !role) return res.status(400).json({ error: 'email and role required' });
+      let tenantId: number;
+      try {
+        tenantId = getTenantId(req);
+      } catch {
+        return res.status(403).json({ error: 'Tenant context required' });
+      }
+      // The document being granted on must belong to the caller's tenant, or the
+      // grant would create a cross-tenant permission row (defence above the
+      // composite FK, and a clean 404 instead of a constraint 500).
+      const owns = (
+        await pool.query(
+          `SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
+          [req.params.docId, tenantId]
+        )
+      ).rows[0];
+      if (!owns) return res.status(404).json({ error: 'Document not found' });
       const ins = (
         await pool.query(
-          `
-      INSERT INTO doc_permissions (doc_id, section_id, email, role)
-      VALUES ($1, $2, $3, $4) RETURNING *`,
-          [req.params.docId, section_id || null, email, role]
+          `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [req.params.docId, section_id || null, String(email).toLowerCase(), role, tenantId]
         )
       ).rows[0];
       res.json(ins);
@@ -4556,10 +4641,17 @@ router.post(
 
 router.get('/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
+    let tenantId: number;
+    try {
+      tenantId = getTenantId(req);
+    } catch {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const rows = (
       await pool.query(
-        `SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions WHERE doc_id=$1 ORDER BY created_at DESC`,
-        [req.params.docId]
+        `SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions
+         WHERE doc_id = $1 AND tenant_id = $2 ORDER BY created_at DESC`,
+        [req.params.docId, tenantId]
       )
     ).rows;
     res.json(rows);

@@ -120,6 +120,9 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+      // Object-level permission store: the creator auto-grant in POST /docs
+      // writes to it. Present so the grant lands rather than best-effort-skipping.
+      'db/migrations/20260728_doc_permissions.sql',
     ],
   });
   h.db = jdb.db;

@@ -84,6 +84,13 @@ const FILES = [
   // on to_regclass; likewise lands for real now that the subsystem is
   // provisioned ahead of this loop.
   'migrations/20260726_authoring_citation_source_usage.sql',
+  // Object-level authoring permission store (G-01). Creates doc_permissions with
+  // the same composite tenant-parent FK the other authoring children carry. Its
+  // FK is pg_constraint-guarded on authoring_documents_id_tenant_key, which the
+  // authoring subsystem (provisioned above, before this loop) creates — so on a
+  // fresh DB the constraint lands for real. Without this table the section-edit
+  // permission control cannot be enabled (42P01) and the grant endpoints 500.
+  'db/migrations/20260728_doc_permissions.sql',
   // Industry-context tailoring: organization_industry_profiles +
   // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
   // EXISTS, no data statements).
