@@ -72,7 +72,8 @@ import {
   requiresEsignature,
   validateSignoff,
   buildSignatureRequiredResult,
-  loadPart11Enforce,
+  isRegulatedProfile,
+  resolvePart11Enforce,
   type Part11Signoff,
 } from './part11-governance';
 import {
@@ -4668,18 +4669,27 @@ export async function executeCommands(
     }
   }
 
-  // ── Load per-tenant Part 11 enforcement flag once per dispatch ──
-  // Stamps ctx.part11Enforce from organizations.settings.anaPart11Enforce.
-  // Fail-soft: any DB error → not enforced (existing behavior preserved).
+  // ── Resolve Part 11 enforcement once per dispatch ──
+  // Outside the regulated profile this mirrors the legacy fail-soft flag
+  // (default OFF). Under C2C_REGULATED_PROFILE=1 it defaults ON and a
+  // settings-read failure fails CLOSED for governed commands (G-04), so a DB
+  // fault or an unset tenant flag can no longer silently remove the gate.
+  const regulated = isRegulatedProfile();
+  let part11ReadFailed = false;
   if (
     ctx.part11Enforce === undefined &&
     ctx.organizationId !== undefined &&
     Number.isFinite(ctx.organizationId)
   ) {
     try {
-      ctx.part11Enforce = pool ? await loadPart11Enforce(pool, ctx.organizationId) : false;
+      const verdict = await resolvePart11Enforce(pool, ctx.organizationId, { regulated });
+      ctx.part11Enforce = verdict.enforced;
+      part11ReadFailed = verdict.readFailed;
     } catch {
-      ctx.part11Enforce = false;
+      // resolvePart11Enforce does not throw, but stay defensive: under the
+      // regulated profile an unexpected fault must not disable the gate.
+      ctx.part11Enforce = regulated;
+      part11ReadFailed = regulated;
     }
   }
 
@@ -4691,13 +4701,28 @@ export async function executeCommands(
       // ── Part 11 gate: governed record-altering commands fail closed unless
       // this dispatch carries a valid sign-off. Tiered — reason-for-change
       // always; high-impact actions additionally require an e-signature. ──
-      if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
-        const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
-        if (!v.ok) {
-          const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
-          results.push(blocked);
-          console.log(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
+      if (requiresPart11Signoff(cmd.command)) {
+        // G-04: under the regulated profile a settings-read failure blocks the
+        // governed command outright — the gate cannot be dropped by a DB fault.
+        // (Outside the profile part11ReadFailed is never true.)
+        if (regulated && part11ReadFailed) {
+          results.push({
+            success: false,
+            action: cmd.command,
+            message:
+              'Part 11 governance policy could not be loaded; refusing this governed command under the regulated profile (fail closed).',
+          });
+          console.log(`[AnA Command] Blocked ${cmd.command}: PART11_POLICY_UNAVAILABLE`);
           continue;
+        }
+        if (ctx.part11Enforce) {
+          const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
+          if (!v.ok) {
+            const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
+            results.push(blocked);
+            console.log(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
+            continue;
+          }
         }
       }
       try {

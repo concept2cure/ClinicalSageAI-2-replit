@@ -3,7 +3,7 @@
  * fail-closed validation, and the structured "signature required" result. Pure.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   requiresPart11Signoff,
   requiresEsignature,
@@ -12,8 +12,20 @@ import {
   PART11_GOVERNED_COMMANDS,
   PART11_ESIGN_COMMANDS,
   MIN_REASON_FOR_CHANGE_LEN,
+  isRegulatedProfile,
+  resolvePart11Enforce,
   type Part11Signoff,
 } from '../part11-governance.js';
+
+type FakePool = { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> };
+const poolReturning = (settings: unknown): FakePool => ({
+  query: async () => ({ rows: [{ settings }] }),
+});
+const poolThatThrows = (): FakePool => ({
+  query: async () => {
+    throw new Error('settings read failed');
+  },
+});
 
 describe('requiresPart11Signoff', () => {
   it('gates record-altering mutations', () => {
@@ -102,5 +114,59 @@ describe('governed set hygiene', () => {
     for (const c of PART11_GOVERNED_COMMANDS) {
       expect(c).not.toMatch(/^(list|search|get|load|check|view)_/);
     }
+  });
+});
+
+describe('isRegulatedProfile', () => {
+  const prior = process.env.C2C_REGULATED_PROFILE;
+  afterEach(() => {
+    if (prior === undefined) delete process.env.C2C_REGULATED_PROFILE;
+    else process.env.C2C_REGULATED_PROFILE = prior;
+  });
+  it('is true only when C2C_REGULATED_PROFILE=1', () => {
+    process.env.C2C_REGULATED_PROFILE = '1';
+    expect(isRegulatedProfile()).toBe(true);
+    process.env.C2C_REGULATED_PROFILE = '0';
+    expect(isRegulatedProfile()).toBe(false);
+    delete process.env.C2C_REGULATED_PROFILE;
+    expect(isRegulatedProfile()).toBe(false);
+  });
+});
+
+describe('resolvePart11Enforce (G-04)', () => {
+  it('outside the regulated profile, mirrors the legacy fail-soft flag', async () => {
+    expect(await resolvePart11Enforce(poolReturning({ anaPart11Enforce: true }), 1, { regulated: false }))
+      .toEqual({ enforced: true, readFailed: false });
+    // absent setting → not enforced
+    expect(await resolvePart11Enforce(poolReturning({}), 1, { regulated: false }))
+      .toEqual({ enforced: false, readFailed: false });
+    // read failure → not enforced, and NOT flagged (legacy fail-soft)
+    expect(await resolvePart11Enforce(poolThatThrows(), 1, { regulated: false }))
+      .toEqual({ enforced: false, readFailed: false });
+  });
+
+  it('under the regulated profile, defaults ON and only an explicit false opts out', async () => {
+    // absent setting → enforced
+    expect(await resolvePart11Enforce(poolReturning({}), 1, { regulated: true }))
+      .toEqual({ enforced: true, readFailed: false });
+    // explicit true → enforced
+    expect(await resolvePart11Enforce(poolReturning({ anaPart11Enforce: true }), 1, { regulated: true }))
+      .toEqual({ enforced: true, readFailed: false });
+    // explicit false → opted out
+    expect(await resolvePart11Enforce(poolReturning({ anaPart11Enforce: false }), 1, { regulated: true }))
+      .toEqual({ enforced: false, readFailed: false });
+  });
+
+  it('under the regulated profile, a settings-read failure FAILS CLOSED', async () => {
+    expect(await resolvePart11Enforce(poolThatThrows(), 1, { regulated: true }))
+      .toEqual({ enforced: true, readFailed: true });
+  });
+
+  it('under the regulated profile, a missing pool handle FAILS CLOSED', async () => {
+    expect(await resolvePart11Enforce(null, 1, { regulated: true }))
+      .toEqual({ enforced: true, readFailed: true });
+    // outside the profile, no pool → not enforced
+    expect(await resolvePart11Enforce(null, 1, { regulated: false }))
+      .toEqual({ enforced: false, readFailed: false });
   });
 });

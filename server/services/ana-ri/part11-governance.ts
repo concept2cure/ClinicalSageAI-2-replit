@@ -194,3 +194,60 @@ export async function loadPart11Enforce(
     return false;
   }
 }
+
+/**
+ * True when this deployment runs under the immutable REGULATED PROFILE
+ * (C2C_REGULATED_PROFILE=1). Under it, Part 11 governance must not be silently
+ * removable by configuration or a database fault (G-04): enforcement DEFAULTS
+ * ON and a settings-read failure FAILS CLOSED for governed commands. Outside the
+ * profile the legacy opt-in behaviour (loadPart11Enforce) is preserved, so
+ * enabling this is a deliberate per-deployment decision rather than a silent
+ * behaviour change.
+ */
+export function isRegulatedProfile(): boolean {
+  return process.env.C2C_REGULATED_PROFILE === '1';
+}
+
+export interface Part11EnforcementVerdict {
+  /** Whether the governed-command gate is active for this dispatch. */
+  enforced: boolean;
+  /** True when the org-settings read threw — the caller must fail closed. */
+  readFailed: boolean;
+}
+
+/**
+ * Resolve Part 11 enforcement with an explicit read-failure signal (G-04).
+ *
+ * - Regulated profile: DEFAULT enforced (only an explicit `anaPart11Enforce:
+ *   false` opts a tenant out), and a settings-read failure yields
+ *   `enforced: true, readFailed: true` — the gate cannot be dropped by a DB
+ *   outage, the fail-soft hole the finding named.
+ * - Outside the profile: mirrors {@link loadPart11Enforce} (default OFF,
+ *   read failure → not enforced), so existing behaviour is unchanged.
+ */
+export async function resolvePart11Enforce(
+  pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> } | null | undefined,
+  organizationId: number,
+  opts: { regulated: boolean }
+): Promise<Part11EnforcementVerdict> {
+  const { regulated } = opts;
+  if (!pool) {
+    // No database handle: under the regulated profile we cannot prove a tenant
+    // opted out, so we enforce (and mark the read as failed for the receipt).
+    return { enforced: regulated, readFailed: regulated };
+  }
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    return { enforced: regulated, readFailed: false };
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
+      [organizationId]
+    );
+    const flag = rows[0]?.settings?.anaPart11Enforce;
+    const enforced = regulated ? flag !== false : flag === true;
+    return { enforced, readFailed: false };
+  } catch {
+    return { enforced: regulated, readFailed: regulated };
+  }
+}
