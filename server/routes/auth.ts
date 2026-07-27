@@ -64,7 +64,16 @@ async function auditAuthEvent(entry: {
 }
 import { sql } from 'drizzle-orm';
 import { eq, and } from 'drizzle-orm';
-import { users, organizations, organizationUsers } from '../../shared/schema';
+import {
+  users,
+  organizations,
+  organizationUsers,
+  organizationIndustryProfiles,
+} from '../../shared/schema';
+import {
+  primaryIndustryForIndustryMode,
+  pathwaysForUseCases,
+} from '../services/industry-context/signup-profile';
 import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import * as emailOtpService from '../services/emailOtpService';
@@ -170,6 +179,20 @@ const signupSchema = z.object({
   ]),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
+  // Optional industry-context signals — used to seed the governed
+  // organization_industry_profiles row (best-effort, never fails signup).
+  mdxSpecialization: z
+    .enum([
+      'medical_device',
+      'ivd_diagnostics',
+      'both',
+      'samd',
+      'companion_diagnostic',
+      'combination_product',
+    ])
+    .optional(),
+  primaryUseCases: z.array(z.string().max(64)).max(20).optional(),
+  defaultMarkets: z.array(z.string().max(16)).max(20).optional(),
 });
 
 /**
@@ -753,7 +776,16 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    const { password, companyName, industryMode, firstName, lastName } = parsed.data;
+    const {
+      password,
+      companyName,
+      industryMode,
+      firstName,
+      lastName,
+      mdxSpecialization,
+      primaryUseCases,
+      defaultMarkets,
+    } = parsed.data;
     const email = parsed.data.email.trim().toLowerCase();
 
     // Enforce enterprise password policy (NIST 800-63B)
@@ -839,6 +871,31 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
 
       return { org, user };
     });
+
+    // Seed the governed org industry profile from the signup signals so the
+    // effective-context resolver has a real organization layer from day one.
+    // Best-effort: a failure here must never fail signup — the resolver
+    // fails open to biopharma defaults when the profile row is absent.
+    try {
+      await db
+        .insert(organizationIndustryProfiles)
+        .values({
+          organizationId: result.org.id,
+          primaryIndustry: primaryIndustryForIndustryMode(industryMode),
+          mdxSpecialization: mdxSpecialization ?? null,
+          defaultMarkets: defaultMarkets ?? [],
+          defaultPathways: pathwaysForUseCases(primaryUseCases),
+          // default_approval_rigor left null — the resolver derives a
+          // per-industry default (see defaultRigorForPrimaryIndustry).
+          updatedBy: result.user.id,
+        })
+        .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
+    } catch (err) {
+      logger.warn('Org industry profile seed failed (non-fatal)', {
+        organizationId: result.org.id,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
 
     const token = jwt.sign(
       {
