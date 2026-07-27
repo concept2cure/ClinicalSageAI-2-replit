@@ -2,8 +2,10 @@
  * POST /api/onboarding/ingest — read-only onboarding proposal ingest (P2).
  *
  * Locks: tenant context required, unsupported/empty files rejected honestly,
- * verified proposals returned, and — the property that matters — the route
- * NEVER persists the uploaded document or writes anything.
+ * verified proposals returned, and — the property that matters — the uploaded
+ * document is never persisted. Ingest stores only the server's own record of
+ * what it proposed, so the governed commit can re-read its own extraction
+ * rather than trust the client's copy.
  */
 import express from 'express';
 import request from 'supertest';
@@ -37,8 +39,38 @@ vi.mock('../../services/onboarding/proposal-extraction', () => ({
   extractOnboardingProposals: (...a: unknown[]) => extractProposalsMock(...a),
 }));
 
-// Governed-commit collaborators. The proposal STORE is deliberately real —
-// it is the trust boundary under test.
+
+// The proposal store is mocked with a faithful in-memory stand-in: its trust
+// boundary (forged ids, cross-org runs, expiry) is proven in
+// services/onboarding/__tests__/proposal-store.test.ts against the real query
+// shape. These tests prove the ROUTE consults it correctly.
+const runs = new Map<string, any[]>();
+vi.mock('../../services/onboarding/proposal-store', () => ({
+  saveRun: async (_req: unknown, _owner: unknown, result: any) => {
+    const id = `run-${runs.size + 1}`;
+    runs.set(id, result.groups.flatMap((g: any) => g.fields));
+    return id;
+  },
+  resolveApprovals: async (_req: unknown, _owner: unknown, runId: string, approvals: any[]) => {
+    const stored = runs.get(runId);
+    if (!stored) return { ok: false, error: 'That review session has expired.', approvals: [], unknownIds: [] };
+    const out: any[] = [];
+    const unknownIds: string[] = [];
+    for (const a of approvals) {
+      const p = stored.find((f: any) => f.id === a.id);
+      if (!p) { unknownIds.push(a.id); continue; }
+      const edited = typeof a.value === 'string' ? a.value.trim() : '';
+      const original = (p.extractedValue ?? '').trim();
+      const value = edited || original;
+      if (!value) continue;
+      out.push({ proposal: p, value, humanEdited: edited.length > 0 && edited !== original });
+    }
+    return { ok: true, approvals: out, unknownIds };
+  },
+  markRunCommitted: async () => {},
+}));
+
+// Governed-commit collaborators.
 const auditMock = vi.fn();
 const updateSetMock = vi.fn();
 vi.mock('../../services/auditService', () => ({

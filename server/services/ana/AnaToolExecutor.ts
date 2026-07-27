@@ -1396,6 +1396,21 @@ registerToolHandler('search_clinical_evidence', async (input) => {
   }
 });
 
+// Onboarding readiness — READ-ONLY. Reports which onboarding fields the org
+// profile already has and what a document could fill. There is deliberately no
+// commit counterpart: a model-callable commit could self-invoke in the agentic
+// loop and defeat the human-approval gate, so applying proposals stays a human
+// action through the governed endpoint.
+registerToolHandler('summarize_onboarding_readiness', async (_input, ctx) => {
+  const orgId = Number(ctx?.organizationId);
+  if (!Number.isFinite(orgId) || orgId <= 0) {
+    return 'I need to know which workspace you are in before I can check what setup is outstanding.';
+  }
+  const { summarizeOnboardingReadiness } = await import('../onboarding/onboarding-readiness');
+  const readiness = await summarizeOnboardingReadiness(orgId);
+  return readiness.summary;
+});
+
 // Search Device Adverse Events — live FDA MAUDE via openFDA passthrough.
 registerToolHandler('search_device_adverse_events', async (input) => {
   const maxResults = Math.min((input.max_results as number) || 50, 100);

@@ -19790,3 +19790,37 @@ export type AiPlacementPolicy = InferSelectModel<typeof aiPlacementPolicies>;
    db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql.
    Do not reintroduce a second evidence lineage here.
    ════════════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════════════
+   AnA onboarding — proposal runs (durable record of what AnA proposed).
+
+   The governed onboarding commit may only apply what the SERVER extracted, so
+   an ingest run records its own proposals here and the commit re-reads them.
+   Persisting them (rather than holding them in memory) means a review survives
+   a restart, and — the part that matters for an audit — the suggestions a human
+   REJECTED remain inspectable, not just the ones they approved. Committed
+   values are already recorded per-field in the sha256-chained audit trail.
+
+   Tenant-scoped by organization_id so RLS applies; rows are deleted once a run
+   is committed or expires, so an abandoned onboarding upload leaves nothing
+   behind. Document text is never stored — only the extracted proposals.
+   ════════════════════════════════════════════════════════════════════════ */
+export const onboardingProposalRuns = pgTable('onboarding_proposal_runs', {
+  id: serial('id').primaryKey(),
+  /** Opaque id handed to the client; the commit references this, never a row id. */
+  runId: text('run_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  /** The user whose review session this is — a run is visible only to them. */
+  userId: integer('user_id').notNull(),
+  /** The server's own extraction: OnboardingProposalField[] keyed by id. */
+  proposals: jsonb('proposals').notNull(),
+  /** Source documents this run read (file names + sizes; never content). */
+  sources: jsonb('sources'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  /** After this instant the run is refused rather than served stale. */
+  expiresAt: timestamp('expires_at').notNull(),
+  /** Set when the run's approved fields were committed, for post-hoc review. */
+  committedAt: timestamp('committed_at'),
+});
