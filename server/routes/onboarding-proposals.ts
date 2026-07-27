@@ -132,6 +132,21 @@ const ORG_PROFILE_COLUMN = new Map<string, 'name' | 'clientType' | 'industryMode
   ['org_profile.industryMode', 'industryMode'],
 ]);
 const VALID_CLIENT_TYPES = new Set(['medtech', 'biotech', 'pharma', 'diagnostics', 'cro', 'health']);
+
+/** Mirrors organizations-routes.ts `profilePatchSchema`. Returns an error
+ *  message when the value would be rejected by the canonical governed write,
+ *  so this path can never persist profile data that one would refuse. */
+function validateProfileValue(column: 'name' | 'clientType' | 'industryMode', value: string): string | null {
+  if (column === 'clientType') {
+    return VALID_CLIENT_TYPES.has(value.toLowerCase()) ? null : 'Unrecognized client type.';
+  }
+  if (column === 'name') {
+    if (value.length < 2 || value.length > 120) return 'Organization name must be 2–120 characters.';
+    return null;
+  }
+  if (value.length < 2 || value.length > 64) return 'Industry must be 2–64 characters.';
+  return null;
+}
 const ADMIN_ROLES = new Set(['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin']);
 
 function isOrgAdmin(req: Request): boolean {
@@ -183,8 +198,12 @@ router.post('/commit', async (req: Request, res: Response) => {
       });
       continue;
     }
-    if (column === 'clientType' && !VALID_CLIENT_TYPES.has(a.value.toLowerCase())) {
-      applied.push({ targetField: a.proposal.targetField, ok: false, error: `Unrecognized client type.` });
+    // Same constraints the governed PATCH /organizations/:id/profile enforces —
+    // a human edit must not be able to put data into the shared organization
+    // record through this path that the canonical path would reject.
+    const invalid = validateProfileValue(column, a.value);
+    if (invalid) {
+      applied.push({ targetField: a.proposal.targetField, ok: false, error: invalid });
       continue;
     }
     updates[column] = column === 'clientType' ? a.value.toLowerCase() : a.value;

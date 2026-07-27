@@ -59,6 +59,35 @@ describe('extractOnboardingProposals — verified provenance', () => {
     expect(res.warnings.join(' ')).toMatch(/could not be found/i);
   });
 
+  it('DROPS a value the excerpt does not actually support, even when the excerpt is genuine', async () => {
+    // The subtle attack: pair an invented value with a REAL quote about
+    // something else. Checking only that the excerpt exists would let this pass
+    // and present "Invented Corp" as verified provenance.
+    routeMock.mockResolvedValue(
+      reply([
+        {
+          targetField: 'org_profile.name',
+          value: 'Invented Corp',
+          confidence: 0.97,
+          excerpt: 'Meridian Therapeutics, Inc. is a clinical-stage biotech company',
+        },
+      ]),
+    );
+    const res = await extractOnboardingProposals({ text: DOC, fileName: 'profile.pdf' });
+    expect(res.groups).toHaveLength(0);
+    expect(res.warnings.join(' ')).toMatch(/did not actually contain the value/i);
+  });
+
+  it('keeps a derived value the excerpt does contain (e.g. a client type)', async () => {
+    routeMock.mockResolvedValue(
+      reply([
+        { targetField: 'org_profile.clientType', value: 'biotech', confidence: 0.85, excerpt: 'is a clinical-stage biotech company focused on oncology' },
+      ]),
+    );
+    const res = await extractOnboardingProposals({ text: DOC, fileName: 'profile.pdf' });
+    expect(res.groups.flatMap((g) => g.fields)[0].value).toBe('biotech');
+  });
+
   it('drops a value with a missing or too-short excerpt rather than showing it unsourced', async () => {
     routeMock.mockResolvedValue(
       reply([

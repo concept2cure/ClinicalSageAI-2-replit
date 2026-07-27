@@ -187,6 +187,7 @@ export async function extractOnboardingProposals(input: ExtractInput): Promise<O
   const haystack = norm(excerptSource);
   const fields: OnboardingProposalField[] = [];
   let droppedUnverified = 0;
+  let droppedUnsupported = 0;
   let droppedUnknownField = 0;
   const seen = new Set<string>();
 
@@ -201,11 +202,25 @@ export async function extractOnboardingProposals(input: ExtractInput): Promise<O
     const excerpt = typeof r.excerpt === 'string' ? r.excerpt.trim() : '';
     if (!value) return;
 
-    // PROVENANCE VERIFICATION — the excerpt must really occur in the document.
-    // A model that invents a value almost always invents its citation too, and
-    // that citation will not be found here.
-    if (excerpt.length < MIN_EXCERPT_CHARS || !haystack.includes(norm(excerpt))) {
+    // PROVENANCE VERIFICATION — two checks, both required.
+    //
+    // 1. The excerpt must really occur in the document. A model that invents a
+    //    value usually invents its citation too, and that citation is not found.
+    // 2. The excerpt must actually SUPPORT the value. Checking only (1) leaves
+    //    the hole open: a model can pair an invented value with a genuine quote
+    //    about something else, and the value would be presented as "verified"
+    //    and carried into the audit with provenance it never had. So the value
+    //    must appear within the span the model claims to have read it from.
+    //    Derived values still satisfy this naturally when the model quotes the
+    //    phrase containing them (clientType 'biotech' ⊂ "clinical-stage biotech
+    //    company"); anything it cannot point at is dropped rather than guessed.
+    const normExcerpt = norm(excerpt);
+    if (excerpt.length < MIN_EXCERPT_CHARS || !haystack.includes(normExcerpt)) {
       droppedUnverified += 1;
+      return;
+    }
+    if (!normExcerpt.includes(norm(value))) {
+      droppedUnsupported += 1;
       return;
     }
     // One proposal per target field — keep the first, which the model ordered
@@ -234,6 +249,11 @@ export async function extractOnboardingProposals(input: ExtractInput): Promise<O
   if (droppedUnverified > 0) {
     warnings.push(
       `${droppedUnverified} suggested value${droppedUnverified === 1 ? ' was' : 's were'} discarded because the quoted source text could not be found in ${fileName}.`,
+    );
+  }
+  if (droppedUnsupported > 0) {
+    warnings.push(
+      `${droppedUnsupported} suggested value${droppedUnsupported === 1 ? ' was' : 's were'} discarded because the quoted source text did not actually contain the value.`,
     );
   }
   if (droppedUnknownField > 0) {

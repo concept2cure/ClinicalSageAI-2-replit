@@ -235,6 +235,18 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
     expect(auditMock).not.toHaveBeenCalled();
   });
 
+  it('rejects a human edit that the canonical governed PATCH would reject', async () => {
+    const runId = await ingestAsAdmin();
+    // A one-character name violates the 2–120 rule enforced by
+    // PATCH /organizations/:id/profile; this path must not be a way around it.
+    const res = await commit({ runId, approvals: [{ id: 'p0-org_profile.name', value: 'X' }], reason: 'reviewed' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.writes).toEqual([]);
+    expect(res.body.data.applied[0]).toMatchObject({ ok: false });
+    expect(res.body.data.applied[0].error).toMatch(/2–120|2-120/);
+    expect(updateSetMock).not.toHaveBeenCalled();
+  });
+
   it('reports a field with no governed write path instead of writing it elsewhere', async () => {
     extractProposalsMock.mockResolvedValue({
       groups: [
