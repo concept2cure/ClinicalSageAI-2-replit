@@ -11,20 +11,15 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { ectdSequences, submissionLeaves, shadowReviewRuns, shadowReviewFindings } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
-
-// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
-// aborts boot on Node >= 22.7 module-syntax detection).
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
 const logger = createScopedLogger('shadow-review-service');
-const PROMPTS_DIR = path.join(moduleDir, '..', 'ai-gateway', 'prompts');
 
 export type ReviewLens = 'fda_filing' | 'ema_d120' | 'pmda' | 'nb_mdr' | 'nb_ivdr';
 export type FindingSeverity = 'critical' | 'major' | 'minor' | 'info';

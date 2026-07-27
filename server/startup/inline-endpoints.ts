@@ -14,6 +14,7 @@
 import type { Express, NextFunction, Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../utils/logger';
+import { getSchemaReadiness, getSchemaReadinessDetail } from './readiness-state';
 
 const logger = createScopedLogger('inline-endpoints');
 
@@ -70,6 +71,13 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
       deps.database = 'down';
     }
 
+    // Schema — a reachable DB with missing critical tables/extensions is NOT
+    // ready. The boot-time verification (startup/services.ts) records its
+    // verdict; 'unknown' (not yet verified / dev DB-less path) does not fail
+    // readiness, only a positive 'missing' verdict does.
+    const schema = getSchemaReadiness();
+    deps.schema = schema === 'missing' ? 'down' : schema === 'ready' ? 'ok' : 'skipped';
+
     // Redis + Bull action-queue worker tier. Only required when Redis is
     // configured; otherwise the platform runs on in-memory fallbacks, so we
     // skip (treat as healthy) rather than fail readiness.
@@ -102,7 +110,9 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
       .map(([name]) => name);
 
     if (failed.length > 0) {
-      return res.status(503).json({ ready: false, failed, dependencies: deps });
+      const body: Record<string, unknown> = { ready: false, failed, dependencies: deps };
+      if (deps.schema === 'down') body.schemaDetail = getSchemaReadinessDetail();
+      return res.status(503).json(body);
     }
     return res.json({ ready: true, dependencies: deps });
   });

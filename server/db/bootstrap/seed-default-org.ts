@@ -42,13 +42,28 @@ export async function seedOrganizations(client: PoolClient): Promise<void> {
 
 /**
  * Whether to seed the GA demo admin. The demo user carries a publicly-known
- * password hash, so private / single-tenant installs must be able to opt out.
- * Default preserves existing dev + hosted behavior (seeds unless explicitly
- * disabled); self-host deployments set SEED_DEMO_USER=false.
+ * password hash (bcrypt of "pass-word"), so it must never appear on a real
+ * production deployment by accident.
+ *
+ * Production is FAIL-CLOSED: the seed runs only when SEED_DEMO_USER is
+ * explicitly truthy (true/1/yes/on). Unset or blank disables it — so a
+ * hand-configured prod deploy that forgets the flag does NOT get a
+ * known-password admin over real data.
+ *
+ * Non-production keeps the convenience default: seed unless explicitly
+ * disabled (false/0/no/off), so local dev and demo environments are unchanged.
  */
 function demoUserSeedDisabled(): boolean {
   const raw = (process.env.SEED_DEMO_USER ?? '').trim().toLowerCase();
-  return raw === 'false' || raw === '0' || raw === 'no' || raw === 'off';
+  const explicitlyOff = raw === 'false' || raw === '0' || raw === 'no' || raw === 'off';
+  if (explicitlyOff) return true;
+
+  if (process.env.NODE_ENV === 'production') {
+    const explicitlyOn = raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on';
+    return !explicitlyOn; // prod: disabled unless explicitly opted in
+  }
+
+  return false; // non-prod: seed unless explicitly disabled
 }
 
 /**

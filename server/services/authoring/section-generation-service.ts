@@ -14,20 +14,15 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, coauthorDocuments } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
-
-// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
-// aborts boot on Node >= 22.7 module-syntax detection).
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
 const logger = createScopedLogger('section-generation-service');
-const PROMPTS_DIR = path.join(moduleDir, '..', 'ai-gateway', 'prompts');
 
 export class AuthoringError extends Error {
   constructor(public code: 'NOT_FOUND' | 'PROVIDER_UNAVAILABLE', message: string) {

@@ -35,6 +35,15 @@ BEGIN
     FROM information_schema.columns c
     WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
       AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
+      -- Only BASE TABLES: ALTER TABLE ... ENABLE ROW LEVEL SECURITY errors on a
+      -- view/matview (a tenant-scoped view inherits isolation from its base
+      -- tables). Without this a view like v_fact_drift_candidates aborts the run.
+      AND EXISTS (
+        SELECT 1 FROM information_schema.tables t
+        WHERE t.table_schema = c.table_schema
+          AND t.table_name = c.table_name
+          AND t.table_type = 'BASE TABLE'
+      )
       -- Only tables not already covered by 0021 (i.e. created afterwards).
       AND NOT EXISTS (
         SELECT 1 FROM pg_policies p

@@ -64,6 +64,12 @@ import {
 } from './providers/org-placement';
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { getContentClassifier } from '../ai-governance/classification/index.js';
+import {
+  extractRequestText,
+  decideSensitiveDataPlacement,
+  getPiiEnforcement,
+} from './pii-screen.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -532,6 +538,44 @@ export class AIGateway {
         '[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.'
       );
       return this.buildDeterministicResponse(request, requestId, startTime);
+    }
+
+    // PHI/PII placement screen. When piiDetection is enabled, classify the
+    // request content and (under 'block' enforcement) refuse to send protected
+    // data to a provider without a zero-data-retention guarantee. Always
+    // records a structured signal when detected; never logs raw content.
+    if (this.config.policy.piiDetection) {
+      try {
+        const text = extractRequestText(request);
+        if (text.trim()) {
+          const classification = await getContentClassifier().classify(text);
+          if (classification.phi || classification.pii) {
+            const placement = resolvePlacement(selectedModel.provider);
+            const decision = decideSensitiveDataPlacement({
+              classification,
+              zeroDataRetention: placement.zeroDataRetention,
+              enforcement: getPiiEnforcement(),
+              provider: selectedModel.provider,
+            });
+            log.warn('[ai-gateway] sensitive-data screen', {
+              classes: classification.classes,
+              provider: selectedModel.provider,
+              zeroDataRetention: placement.zeroDataRetention,
+              blocked: decision.block,
+            });
+            if (decision.block) {
+              throw new GatewayPolicyError(decision.reason || 'Blocked by PHI/PII placement policy');
+            }
+          }
+        }
+      } catch (err) {
+        // A real block must propagate; a classifier failure must not take the
+        // request down (fail-open on the classifier itself, closed on findings).
+        if (err instanceof GatewayPolicyError) throw err;
+        log.warn('[ai-gateway] sensitive-data screen skipped (classifier error)', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
 
     // Execute with fallback. Track tried MODELS (not just providers) so

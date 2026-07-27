@@ -25,17 +25,12 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { createScopedLogger } from '../utils/logger';
 import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
 import { installRlsEnforcement, assertRlsEnforcementForProduction } from './rlsEnforcement';
-
-// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
-// aborts boot on Node >= 22.7 module-syntax detection).
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 const logger = createScopedLogger('database');
 
@@ -266,7 +261,11 @@ export async function runMigrations(): Promise<void> {
 
   try {
     logger.info('Running database migrations...');
-    const migrationsFolder = path.resolve(moduleDir, '../../migrations');
+    // cwd-anchored, not __dirname: this file ships inside the esbuild bundle
+    // (dist/index.js), where __dirname is undefined under ESM. Both dev (cwd =
+    // repo root) and prod (WORKDIR /app, migrations/ copied into the image)
+    // put the migrations at <cwd>/migrations.
+    const migrationsFolder = path.resolve(process.cwd(), 'migrations');
     await migrate(db, { migrationsFolder });
     logger.info('Database migrations completed successfully');
   } catch (error: any) {

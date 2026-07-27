@@ -5,6 +5,9 @@
  * for GA-ready persistence.
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+
 // Minimal shape of the database pool that this module relies on. Both the
 // real pg pool and the in-memory fallback below satisfy this interface.
 interface MaudPool {
@@ -15,11 +18,13 @@ interface MaudPool {
   }>;
 }
 
-// Import the database pool - with fallback if not available
+// Import the database pool - with fallback if not available.
+// Top-level await import (not require) so this resolves under ESM/the bundle;
+// require is not defined in ES module scope.
 let pool: MaudPool;
 try {
-  const db = require('./runtime');
-  pool = db.pool || db.default;
+  const db = await import('./runtime.js');
+  pool = ((db as { pool?: MaudPool }).pool ?? (db as { default?: MaudPool }).default) as MaudPool;
 } catch (error) {
   console.warn('Database pool not available, using fallback implementation');
   // Create a mock pool for environments without database support
@@ -328,15 +333,9 @@ export async function getAvailableAlgorithms(): Promise<MAUDAlgorithm[]> {
  */
 export async function runMaudMigration(): Promise<boolean> {
   try {
-    // Read the migration file. Resolved from process.cwd() (the repo root in
-    // both dev and prod) rather than __dirname / import.meta so this hybrid
-    // require()-style module stays loadable under Node >= 22.7 module-syntax
-    // detection (same approach as services/ocr/tesseractOcrService.ts). The
-    // old server-relative path pointed at the pre-consolidation migrations
-    // directory that no longer exists; the file lives in
-    // db/migrations/_consolidated/ since the migration consolidation.
-    const fs = require('fs');
-    const path = require('path');
+    // Read the migration file. Resolve from the working directory (cwd = app
+    // root in dev and prod) rather than __dirname, which is undefined under
+    // ESM/the bundle.
     const migrationPath = path.resolve(
       process.cwd(),
       'db/migrations/_consolidated/20250512-create-maud-validations-table.sql'

@@ -17,7 +17,7 @@ import { recordGovernedAction, verifyReauth } from './c2c/actions';
 import { getGateway } from '../services/ai-gateway';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { PROMPTS_DIR } from '../services/ai-gateway/prompts-dir';
 import {
   createInvestigatorTx,
   listInvestigators,
@@ -36,10 +36,6 @@ import {
   recordFcoiSignatureInvalidation,
   recordFcoiReview,
 } from '../services/fcoi-metrics';
-
-// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
-// aborts boot on Node >= 22.7 module-syntax detection).
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 const router = Router();
 
@@ -342,7 +338,7 @@ router.post('/disclosures/:id/ai-review', async (req, res) => {
     let aiRecommendations: unknown[] = [];
     try {
       const prompt = await fs.readFile(
-        path.join(moduleDir, '..', 'services', 'ai-gateway', 'prompts', 'fcoi-completeness-review', 'v1.0.md'),
+        path.join(PROMPTS_DIR, 'fcoi-completeness-review', 'v1.0.md'),
         'utf8',
       );
       const response = await getGateway().route({

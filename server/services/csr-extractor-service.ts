@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
@@ -10,6 +10,9 @@ import { getOpenAIClient } from './openai-client';
 
 import { createScopedLogger } from '../utils/logger';
 const logger = createScopedLogger('csr-extractor');
+
+// ESM has no module-scope __dirname; recreate it from import.meta.url.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const openaiService: any = openaiServiceModule;
 
@@ -181,7 +184,7 @@ class CSRExtractorService {
     try {
       // Use Python's PyMuPDF via child process for PDF extraction
       // This is a more robust solution than JavaScript PDF libraries
-      const extractionScript = path.join(moduleDir, '..', 'scripts', 'extract_pdf_sections.py');
+      const extractionScript = path.join(__dirname, '..', 'scripts', 'extract_pdf_sections.py');
 
       if (!fs.existsSync(extractionScript)) {
         // Create extraction script if it doesn't exist
@@ -190,10 +193,6 @@ import sys
 import json
 import fitz  # PyMuPDF
 import re
-
-// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
-// aborts boot on Node >= 22.7 module-syntax detection).
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 def extract_pdf_with_sections(pdf_path):
     """Extract text from PDF with section header identification."""

@@ -46,6 +46,12 @@ interface DocCanvasProps {
   storageKey?: string;
   market?: Market;
   onExport?: () => void;
+  /* Optional durable-persistence seam. When a parent that owns a real backend
+     document supplies this, edits are written through it (e.g. PATCH
+     /api/c2c/documents/:id/sections/:key) and the footer reports true save
+     state. Without it the canvas caches to localStorage only and says so
+     honestly ("Saved on this device") rather than implying server persistence. */
+  onSave?: (html: string) => void | Promise<void>;
 }
 
 /* ── Helpers ───────────────────────────────────────────────────── */
@@ -68,12 +74,24 @@ function countWords(el: HTMLElement | null): number {
   return txt ? txt.split(/\s+/).filter(Boolean).length : 0;
 }
 
+/* Honest save-state labels. 'saved' and 'local' are both durable-green, but only
+   a backend-persisted write may claim "All changes saved"; localStorage-only
+   work is labelled device-local so a regulated author is never misled into
+   thinking a draft reached the server. */
+type SaveState = 'saved' | 'saving' | 'error' | 'local';
+const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
+  saved:  { dot: 'var(--success)', label: 'All changes saved' },
+  saving: { dot: 'var(--warning)', label: 'Saving…' },
+  error:  { dot: 'var(--error)',   label: 'Save failed — kept on this device' },
+  local:  { dot: 'var(--success)', label: 'Saved on this device' },
+};
+
 /* ── DocCanvas ─────────────────────────────────────────────────── */
 
-export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, market, onExport }: DocCanvasProps) {
+export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, market, onExport, onSave }: DocCanvasProps) {
   const bodyRef  = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [saved,  setSaved]  = useState(true);
+  const [saveState, setSaveState] = useState<SaveState>(onSave ? 'saved' : 'local');
   const [words,  setWords]  = useState(0);
   const [track,  setTrack]  = useState(false);
   const [style,  setStyle]  = useState('p');
@@ -102,17 +120,25 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
 
   /* ── Save (debounced 800 ms) ─────────────────────────────── */
   const save = useCallback(() => {
-    setSaved(false);
+    setSaveState('saving');
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
+    timerRef.current = setTimeout(async () => {
       const el = bodyRef.current;
-      if (el) {
-        localStorage.setItem('dc::' + key, el.innerHTML);
-        setWords(countWords(el));
+      if (!el) return;
+      const html = el.innerHTML;
+      // Always keep a local cache so a reload never loses in-progress work.
+      try { localStorage.setItem('dc::' + key, html); } catch { /* storage full */ }
+      setWords(countWords(el));
+      if (onSave) {
+        // A real backend document is wired — write through and report the truth.
+        try { await onSave(html); setSaveState('saved'); }
+        catch { setSaveState('error'); }
+      } else {
+        // No backend binding for this surface yet — cached on this device only.
+        setSaveState('local');
       }
-      setSaved(true);
     }, 800);
-  }, [key]);
+  }, [key, onSave]);
 
   /* ── Formatting ─────────────────────────────────────────── */
   const exec = (cmd: string, val?: string) => {
@@ -278,8 +304,8 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
       {/* ── Footer ────────────────────────────────────────────── */}
       <div className="dc-foot" style={{display:'flex',alignItems:'center',gap:10,padding:'6px 16px',background:'var(--bg-000)',borderTop:'1px solid var(--border)',flexShrink:0,fontSize:10,color:'var(--text-400)'}}>
         <span style={{display:'flex',alignItems:'center',gap:5}}>
-          <span style={{width:6,height:6,borderRadius:'50%',background:saved ? 'var(--success)' : 'var(--warning)',display:'inline-block'}}/>
-          {saved ? 'All changes saved' : 'Saving…'}
+          <span style={{width:6,height:6,borderRadius:'50%',background:SAVE_META[saveState].dot,display:'inline-block'}}/>
+          {SAVE_META[saveState].label}
         </span>
         <span style={{color:'var(--bg-200)'}}>{'·'}</span>
         <span>{words.toLocaleString()} words</span>
