@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import {
   evaluateProtocol, emptyDraft, blockers, type ProtocolDraft,
 } from '../mdx-protocol-rules';
-import { getArchetype } from '../mdx-study-archetypes';
+import { getArchetype, allArchetypes } from '../mdx-study-archetypes';
 
 /**
  * A draft with every required section and question filled, plus extra text.
@@ -106,12 +106,22 @@ describe('completeness rules', () => {
     expect(ids).not.toContain('core.design_question_unanswered');
   });
 
-  it('says outright when the archetype guidance is only outline-level', () => {
-    // Otherwise a writer treats a starting frame as a reviewed specification.
-    const ids = ruleIds(completeDraft('carryover'));
-    expect(ids).toContain('core.outline_depth');
-    const full = ruleIds(completeDraft('precision', 'medical decision point, lots'));
-    expect(full).not.toContain('core.outline_depth');
+  it('flags outline-level guidance for exactly the archetypes still at outline depth', () => {
+    // The registry used to be half scaffold, and this rule fired on the outline
+    // archetypes so a writer would not treat a starting frame as a reviewed
+    // specification. The archetype-depth work brought every archetype to full,
+    // so the rule is now DORMANT — retained (like archetypesNeedingDetail) to fire
+    // the day a scaffold archetype is added, and tied here to registry truth
+    // rather than to a hardcoded id that a depth change silently invalidates.
+    const outlineIds = allArchetypes().filter(a => a.detail === 'outline').map(a => a.id);
+    for (const id of outlineIds) {
+      expect(ruleIds(completeDraft(id)), id).toContain('core.outline_depth');
+    }
+    // And it stays silent for full archetypes — which is currently the whole
+    // registry, including the once-outline carryover.
+    expect(ruleIds(completeDraft('carryover'))).not.toContain('core.outline_depth');
+    expect(ruleIds(completeDraft('precision', 'medical decision point, lots')))
+      .not.toContain('core.outline_depth');
   });
 });
 
