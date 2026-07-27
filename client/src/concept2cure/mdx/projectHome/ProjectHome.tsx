@@ -11,6 +11,7 @@ import type { Program } from '../data/programs';
 import { useProgramDetail } from '../hooks/useMdxPrograms';
 import { useWorkbenchTasks } from '../hooks/useWorkbench';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 interface GovernanceRow {
   role: string;
@@ -34,7 +35,10 @@ function deriveGovernance(
   const teamRows: GovernanceRow[] = (team ?? [])
     .slice(0, 4)
     .map((m, i) => ({
-      role: m.role ?? KIT_ROLES[i + 1] ?? 'Member',
+      /* A real team member with no recorded role is a "Member" — never
+         a role borrowed from the kit's example team, which would put a
+         fictional title against a real person's name. */
+      role: m.role ?? 'Member',
       name: m.name ?? 'Unassigned',
       sig:  'pending' as const,
     }));
@@ -174,27 +178,31 @@ export function ProjectHome({
   const livePh = detail.detail
     ? deriveGovernance(detail.detail.leadUserName, detail.detail.teamMembers)
     : null;
-  const sourceGovernance = livePh ?? PH_GOVERNANCE;
+  const sourceGovernance = useSampleRows(livePh, PH_GOVERNANCE);
   const programCode = program.code.split(' ')[0];
   const liveProgramTasks = allTasks.tasks?.filter(
     (t) => t.prog === programCode || t.prog === program.id,
   ) ?? null;
-  const sourceTasks = liveProgramTasks ?? PH_TASKS.map((t) => ({
-    id: t.id,
-    title: t.title,
-    sect: t.section,
-    due: t.due,
-    tone: t.tone,
-    assignee: t.who,
-  }));
+  const sourceTasks = useSampleRows(
+    liveProgramTasks,
+    PH_TASKS.map((t) => ({
+      id: t.id,
+      title: t.title,
+      sect: t.section,
+      due: t.due,
+      tone: t.tone,
+      assignee: t.who,
+    })),
+  );
 
-  /* Live milestones / RIM recs / change-impact / activity. Each panel
-     falls back to kit content during load + on error so the surface
-     never renders blank — but live data wins as soon as it arrives. */
-  const sourceMilestones = extras.milestones ?? PH_MILESTONES;
-  const sourceRimRecs    = extras.rimRecs    ?? PH_RIM_RECS;
-  const sourceImpact     = extras.changeImpactFormatted ?? PH_CHANGE_IMPACT;
-  const sourceActivity   = extras.activityFormatted ?? PH_ACTIVITY;
+  /* Live milestones / RIM recs / change-impact / activity. Live data
+     wins whenever present; otherwise each panel renders empty, and the
+     kit content appears only in explicit sample mode. A programme with
+     no milestones must not display another product's. */
+  const sourceMilestones = useSampleRows(extras.milestones, PH_MILESTONES);
+  const sourceRimRecs    = useSampleRows(extras.rimRecs, PH_RIM_RECS);
+  const sourceImpact     = useSampleRows(extras.changeImpactFormatted, PH_CHANGE_IMPACT);
+  const sourceActivity   = useSampleRows(extras.activityFormatted, PH_ACTIVITY);
 
   return (
     <div className="ph-root" data-screen-label={`MDX · Project Home · ${program.title}`}>

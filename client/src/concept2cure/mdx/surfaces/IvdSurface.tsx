@@ -27,6 +27,7 @@ import {
 } from '../hooks/useIvd';
 import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface IvdSurfaceProps {
   program: Program | null;
@@ -52,15 +53,19 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
   /* Live IVDR data — org-scoped lists + program-scoped GSPR matrix. Each
      falls back to the kit fixture on load/error so the surface is usable
      even before any IVDR record exists for the tenant. */
-  const classifications = useIvdClassifications();
-  const validations = useIvdValidations();
-  const clinical = useIvdClinicalEvidence();
+  /* All four panels now follow the programme named in the header. They
+     previously read the whole organisation while the header named one
+     device, so a user could attribute another assay's Class C
+     determination, LoD or sensitivity to the device in front of them. */
+  const classifications = useIvdClassifications(programId);
+  const validations = useIvdValidations(programId);
+  const clinical = useIvdClinicalEvidence(programId);
   const gspr = useIvdGsprMatrix(programId);
 
-  const sourceClass = classifications.rows ?? IVD_CLASSIFICATIONS;
-  const sourceValid = validations.rows ?? IVD_VALIDATIONS;
-  const sourceClinical = clinical.rows ?? IVD_CLINICAL;
-  const sourceGspr = gspr.rows ?? IVD_GSPR;
+  const sourceClass = useSampleRows(classifications.rows, IVD_CLASSIFICATIONS);
+  const sourceValid = useSampleRows(validations.rows, IVD_VALIDATIONS);
+  const sourceClinical = useSampleRows(clinical.rows, IVD_CLINICAL);
+  const sourceGspr = useSampleRows(gspr.rows, IVD_GSPR);
 
   const usingFixture = !classifications.rows && !validations.rows && !clinical.rows;
 

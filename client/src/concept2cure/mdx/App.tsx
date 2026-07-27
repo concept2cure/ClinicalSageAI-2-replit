@@ -231,7 +231,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         surface = <UdiSurface onAskAna={askAna} />;
         break;
       case 'postmarket':
-        surface = <PostmarketSurface onAskAna={askAna} />;
+        surface = <PostmarketSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'analytics':
         surface = <AnalyticsSurface onAskAna={askAna} />;

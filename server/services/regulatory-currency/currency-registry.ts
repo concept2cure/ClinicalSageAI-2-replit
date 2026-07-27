@@ -236,6 +236,112 @@ export function severityRank(severity: DriftSeverity): number {
   return DRIFT_SEVERITY_ORDER.indexOf(severity);
 }
 
+/* ── Time-resolved status ─────────────────────────────────────────────
+   `mandatory_upcoming` is a claim about the future, and a stored one
+   goes wrong the moment its date arrives. This registry had two facts
+   in exactly that state — EU EUDAMED (effective 2026-05-28) and PMDA
+   eCTD v4.0 (2026-04-01) — still labelled "upcoming" months later. The
+   AnA tool that surfaces these is instructed to "report the status
+   verbatim", so it would have told a user EUDAMED was not yet mandatory
+   when it had been for two months.
+
+   That is the exact failure this module exists to prevent, turned on
+   itself. Editing the two entries would fix today and re-break on the
+   next date to pass, so the promotion is derived instead.
+
+   `asOf` is an explicit parameter, never a wall-clock read, so the
+   module keeps its "identical input → identical output" guarantee.
+   Callers pass the current date at the boundary. */
+
+/**
+ * The status of `fact` as at `asOf`.
+ *
+ * Promotes `mandatory_upcoming` to `in_force` once the effective date
+ * has arrived. Every other status is returned unchanged: a vacatur or
+ * rescission does not expire, and `in_force` needs no promotion.
+ *
+ * @param asOf ISO date (YYYY-MM-DD). A malformed or missing value
+ *             returns the stored status — when we cannot establish
+ *             "now", asserting that a future obligation has landed is
+ *             the more dangerous of the two errors.
+ */
+export function statusAsOf(fact: RegulatoryFact, asOf: string): CurrencyStatus {
+  if (fact.status !== 'mandatory_upcoming') return fact.status;
+  if (!ISO_DATE_RE.test(asOf) || !ISO_DATE_RE.test(fact.effectiveDate)) return fact.status;
+  /* Lexicographic comparison is exact for zero-padded ISO dates and
+     avoids timezone drift entirely — parsing to Date would shift the
+     boundary by up to a day depending on the runtime's zone. */
+  return asOf >= fact.effectiveDate ? 'in_force' : fact.status;
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/* ── Verification freshness ───────────────────────────────────────────
+   `lastVerified` is the load-bearing honesty claim in this module: it
+   asserts a human checked the fact against `sourceUrl` on that date.
+   Every entry currently carries the same date, so the whole registry was
+   verified in one pass — which is fine on the day and decays silently
+   afterwards. A fact nobody has re-checked in a year still presents as
+   authoritative, and the AnA prompt tells the model to cite it.
+
+   Age is therefore reported alongside the fact so a consumer can caveat
+   rather than assert. This does not guess whether a fact is *wrong* —
+   only how long since anyone confirmed it is right. */
+
+/**
+ * Days between `fact.lastVerified` and `asOf`, or null when either date
+ * is unusable. Negative values (a lastVerified in the future) are
+ * returned as-is rather than clamped — that is a data-entry error worth
+ * surfacing, not smoothing over.
+ */
+export function verificationAgeDays(fact: RegulatoryFact, asOf: string): number | null {
+  if (!ISO_DATE_RE.test(asOf) || !ISO_DATE_RE.test(fact.lastVerified)) return null;
+  const MS_PER_DAY = 86_400_000;
+  /* Both parsed as UTC midnight, so the difference is a whole number of
+     days regardless of the runtime's timezone. */
+  const a = Date.parse(`${asOf}T00:00:00Z`);
+  const v = Date.parse(`${fact.lastVerified}T00:00:00Z`);
+  if (Number.isNaN(a) || Number.isNaN(v)) return null;
+  return Math.round((a - v) / MS_PER_DAY);
+}
+
+/**
+ * Default re-verification interval, in days.
+ *
+ * Six months: long enough that routine guidance churn does not flag the
+ * whole registry every quarter, short enough that a fact cannot go more
+ * than two guidance cycles without someone looking at it. This is a
+ * review prompt, not a correctness claim.
+ */
+export const VERIFICATION_MAX_AGE_DAYS = 180;
+
+/**
+ * Whether `fact` is overdue for re-verification as at `asOf`.
+ *
+ * An unusable date returns `true`: a fact whose verification date cannot
+ * be read is precisely one that should be looked at, and treating it as
+ * fresh would be the unsafe default.
+ */
+export function isVerificationStale(
+  fact: RegulatoryFact,
+  asOf: string,
+  maxAgeDays: number = VERIFICATION_MAX_AGE_DAYS,
+): boolean {
+  const age = verificationAgeDays(fact, asOf);
+  if (age === null) return true;
+  return age > maxAgeDays;
+}
+
+/**
+ * `fact` with its status resolved as at `asOf`. Returns the original
+ * object when nothing changed, so callers can cheaply detect promotion
+ * by identity.
+ */
+export function factAsOf(fact: RegulatoryFact, asOf: string): RegulatoryFact {
+  const resolved = statusAsOf(fact, asOf);
+  return resolved === fact.status ? fact : { ...fact, status: resolved };
+}
+
 /**
  * Map a fact's status to a drift severity. A VOID rule (vacated/rescinded/void) is
  * the most dangerous — the platform may still "know" it. Future mandatory changes
@@ -266,6 +372,13 @@ export interface FactQuery {
   topic?: string;
   jurisdiction?: Jurisdiction;
   segment?: ClientSegment;
+  /**
+   * ISO date to resolve statuses against. When supplied, a
+   * `mandatory_upcoming` fact whose effective date has arrived is
+   * returned as `in_force` — see {@link statusAsOf}. Omit only when the
+   * caller genuinely wants the stored value (migrations, fixtures).
+   */
+  asOf?: string;
 }
 
 /**
@@ -273,13 +386,14 @@ export interface FactQuery {
  * fresh array (possibly empty) and never throws on unknown/empty inputs.
  */
 export function findFacts(query: FactQuery = {}): RegulatoryFact[] {
-  const { topic, jurisdiction, segment } = query;
-  return REGULATORY_FACTS.filter((fact) => {
+  const { topic, jurisdiction, segment, asOf } = query;
+  const matched = REGULATORY_FACTS.filter((fact) => {
     if (jurisdiction && fact.jurisdiction !== jurisdiction) return false;
     if (segment && !fact.appliesTo.includes(segment)) return false;
     if (topic !== undefined && !matchesTopic(fact, topic)) return false;
     return true;
   });
+  return asOf ? matched.map((f) => factAsOf(f, asOf)) : matched;
 }
 
 /** A fact paired with its computed drift severity, for the change-radar. */

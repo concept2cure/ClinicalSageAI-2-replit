@@ -28,6 +28,7 @@ import { useAdmin } from '../hooks/useAdmin';
 import { useGatewayStatus, type GatewayStatusRow } from '../hooks/useGatewayStatus';
 import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface AdminSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
@@ -56,6 +57,10 @@ const GATEWAY_META: Record<string, { agency: string; label: string; envPrefix: s
 
 /** Shown when the live status fetch hasn't resolved, so the section still lists
  *  the gateways (status rendered as "unavailable" rather than a false negative). */
+/* Not a data fixture — the static catalogue of gateways the platform
+   supports, every one marked unconfigured. When the status endpoint is
+   unreachable the rows render with an explicit "Status unavailable"
+   badge, so this lists capabilities without asserting any tenant state. */
 const FALLBACK_GATEWAYS: GatewayStatusRow[] = [
   { region: 'fda',  gateway: 'esg',           transport: 'as2',  configured: false, environment: 'production' },
   { region: 'ema',  gateway: 'cesp',          transport: 'rest', configured: false, environment: 'production' },
@@ -66,14 +71,14 @@ const FALLBACK_GATEWAYS: GatewayStatusRow[] = [
 
 export function AdminSurface({ onAskAna }: AdminSurfaceProps) {
   const live = useAdmin();
-  const kpis = live.kpis ?? ADM_KPIS;
-  const members = live.members ?? ADM_MEMBERS;
-  const roles = live.roles ?? ADM_ROLES;
-  const grants = live.grants ?? ADM_GRANTS;
-  const apiKeys = live.apiKeys ?? ADM_API_KEYS;
-  const audit = live.audit ?? ADM_AUDIT;
-  const settings = live.settings ?? ADM_SETTINGS;
-  const sso = live.sso ?? ADM_SSO;
+  const kpis = useSampleRows(live.kpis, ADM_KPIS);
+  const members = useSampleRows(live.members, ADM_MEMBERS);
+  const roles = useSampleRows(live.roles, ADM_ROLES);
+  const grants = useSampleRows(live.grants, ADM_GRANTS);
+  const apiKeys = useSampleRows(live.apiKeys, ADM_API_KEYS);
+  const audit = useSampleRows(live.audit, ADM_AUDIT);
+  const settings = useSampleRows(live.settings, ADM_SETTINGS);
+  const sso = useSampleValue(live.sso, ADM_SSO);
   const gateways = useGatewayStatus('production');
   const documents = ADM_DOCUMENTS as unknown as KitDocument[];
   const frameworks = ADM_DOC_FRAMEWORKS as unknown as KitDocFramework[];
@@ -482,7 +487,26 @@ export function AdminSurface({ onAskAna }: AdminSurfaceProps) {
         </section>
       )}
 
-      {tab === 'sso' && (
+      {/* SSO configuration is a single object, not a list. When the
+          tenant has none it renders an explicit empty state — a shell of
+          blank identity-provider fields would read as a real, misconfigured
+          connection. */}
+      {tab === 'sso' && !sso && (
+        <div className="data-gate" role="status">
+          <div className="data-gate-inner">
+            <span className="data-gate-icon" aria-hidden>{I.key}</span>
+            <div className="data-gate-copy">
+              <span className="data-gate-title">No identity provider connected</span>
+              <span className="data-gate-detail">
+                Connect a SAML or OIDC provider to manage sign-in and SCIM
+                provisioning for this organization.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'sso' && sso && (
         <div className="adm-sso-grid">
           <article className="adm-conn" data-state="connected">
             <div className="adm-conn-head">

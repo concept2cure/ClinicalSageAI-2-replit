@@ -21,6 +21,7 @@ import {
   workflowTemplates,
   workflowHistory,
   unifiedDocuments,
+  workflowDocumentVersions,
   documentAuditLogs,
 } from '../../../shared/schema/unified_workflow';
 import { users } from '../../../shared/schema';
@@ -94,6 +95,18 @@ export interface PendingApproval {
   requestedByName: string;
   /** Optional due date sourced from workflows.metadata.due if the caller set one. */
   dueDate: Date | null;
+  /**
+   * Row id in workflow_document_versions for the document's current
+   * version, or null when no version row exists.
+   *
+   * 21 CFR Part 11 §11.50(a) requires a signature to identify what was
+   * signed, so POST /api/esignature/sign takes a documentId *and* a
+   * versionId — signing "the document" without pinning the revision is
+   * not a compliant signature. Resolving it here means an approval UI
+   * can offer signing without a second round-trip, and can disable
+   * signing outright (rather than guessing a version) when it is null.
+   */
+  versionId: number | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -446,6 +459,44 @@ export class ApprovalOrchestrator {
       initiatorRows.map(r => [r.id, r.name]),
     );
 
+    /* Resolve the current version row for every document in this batch,
+       in one round-trip. `unified_documents.latest_version` holds the
+       version *number*; the signature endpoint needs the version row's
+       primary key, so join through the unique (document_id, version)
+       index. Documents with no version row yield no entry and the
+       approval reports versionId: null — the UI then disables signing
+       rather than pinning a signature to a revision we cannot name. */
+    const docIds = Array.from(new Set(activeWorkflows.map(w => w.documentId)));
+    let versionRows: Array<{ documentId: number; versionId: number }> = [];
+    if (docIds.length) {
+      try {
+        versionRows = await db
+          .select({
+            documentId: workflowDocumentVersions.documentId,
+            versionId: workflowDocumentVersions.id,
+          })
+          .from(workflowDocumentVersions)
+          .innerJoin(
+            unifiedDocuments,
+            and(
+              eq(unifiedDocuments.id, workflowDocumentVersions.documentId),
+              eq(unifiedDocuments.latestVersion, workflowDocumentVersions.version),
+            ),
+          )
+          .where(inArray(workflowDocumentVersions.documentId, docIds));
+      } catch {
+        /* Version resolution is an enhancement to the approval list, not
+           a precondition for it. A deployment without the versions table
+           still gets its pending approvals; those approvals simply
+           report versionId: null and the UI disables signing. Failing
+           the whole list here would hide every approver's queue. */
+        versionRows = [];
+      }
+    }
+    const versionByDoc = new Map<number, number>(
+      versionRows.map(r => [r.documentId, r.versionId]),
+    );
+
     // Enrich with document titles and step names + human initiator name + due date
     const results: PendingApproval[] = [];
     for (const approval of userApprovals) {
@@ -492,6 +543,7 @@ export class ApprovalOrchestrator {
         requestedByUserId: wf.startedBy,
         requestedByName: initiatorName,
         dueDate,
+        versionId: versionByDoc.get(wf.documentId) ?? null,
       });
     }
 
