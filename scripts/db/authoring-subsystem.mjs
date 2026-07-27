@@ -67,6 +67,20 @@ export const AUTHORING_SUBSYSTEM_FILES = [
  * authoring_signatures, adding no table). This is the readiness contract:
  * server/db/ensureCoreTables.ts holds the SAME list as AUTHORING_SUBSYSTEM_TABLES
  * and fails /readyz closed when any of them is absent. Keep the two in sync.
+ *
+ * doc_permissions (C2C-AUTHOR-002) backs the section-level write gate in
+ * server/routes/authoring.router.ts. It MUST be in this list: the loop is what
+ * installs tenant_isolation_policy, and on the apply-c2c path (adding the
+ * subsystem to an already-provisioned database) 0021_enable_rls_everywhere has
+ * already run and will never revisit a new table — an RLS-less table under
+ * RLS_ENFORCE is readable across tenants, i.e. every tenant's section grants.
+ *
+ * SYNC DEBT (declared, not hidden): the twin literal in
+ * server/db/ensureCoreTables.ts still lists ten tables and is owned elsewhere,
+ * so /readyz does not yet gate on doc_permissions. That is a weaker readiness
+ * contract than this one, never a weaker isolation guarantee — provisioning and
+ * RLS are driven from THIS list. Adding the eleventh entry there is a one-line
+ * follow-up (its prose says "the ten tables" and needs the same bump).
  */
 export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_documents',
@@ -83,6 +97,12 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
   // Absent, every collaborative edit is silently lost on unload/restart, so it
   // belongs to the unit rather than being optional.
   'authoring_document_yjs_state',
+  // Section-level permission grants (C2C-AUTHOR-002). Created by the loop-tables
+  // migration with tenant_id + composite (doc_id, tenant_id) / (section_id,
+  // tenant_id) FKs. Listed here so the helper applies tenant_isolation_policy to
+  // it — 0021 has already run on the apply-c2c path and would never revisit a
+  // newly-added table, which would leave the grant store cross-tenant readable.
+  'doc_permissions',
 ];
 
 /**

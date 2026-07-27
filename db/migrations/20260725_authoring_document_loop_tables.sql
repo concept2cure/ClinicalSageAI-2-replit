@@ -203,3 +203,58 @@ BEGIN
     ALTER TABLE public.authoring_citations ADD CONSTRAINT authoring_citations_section_tenant_fkey FOREIGN KEY (section_id, tenant_id) REFERENCES public.authoring_sections (id, tenant_id) ON DELETE CASCADE;
   END IF;
 END $$;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Section-level authoring permissions (C2C-AUTHOR-001 / C2C-AUTHOR-002).
+--
+-- WHY THIS EXISTS
+-- server/routes/authoring.router.ts has always queried `doc_permissions` from
+-- the section write gate (canEditSection) and written to it from
+-- POST /docs/:docId/permissions — and NOTHING in the repository created it. It
+-- was carried in scripts/ci/unbacked-tables-baseline.json as a phantom. The
+-- consequence was not a cosmetic gap: the fine-grained gate could only ever
+-- deny (relation does not exist → fail closed), so the feature flag that turns
+-- per-user section permissions ON could never be turned on, which is exactly
+-- why the insecure allow-all default survived.
+--
+-- SHAPE is derived from the code's own usage, same method as the tables above:
+-- the INSERT column list (doc_id, section_id, email, role, tenant_id) and the
+-- gate's predicates (`p.section_id IS NULL` = a grant over the whole document;
+-- role in AUTHOR/REVIEWER).
+--
+-- TENANT KEY is INTEGER, matching every other authoring table and the app RLS
+-- policy (`tenant_id = current_setting(...)::INT`). RLS itself is NOT declared
+-- here — this file creates tables only; scripts/db/authoring-subsystem.mjs
+-- applies tenant_isolation_policy to every table of the unit, and
+-- migrations/0021_enable_rls_everywhere.sql covers the install-fresh path.
+--
+-- The composite FK follows the tenant-consistent-parentage rule established in
+-- the DO-block above: a grant cannot structurally point at another tenant's
+-- document. It is declared here, AFTER that block, because it depends on the
+-- UNIQUE (id, tenant_id) the block adds to authoring_documents.
+--
+-- ROLLBACK:  DROP TABLE IF EXISTS doc_permissions;
+-- ═══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS doc_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  doc_id UUID NOT NULL,
+  -- NULL = a document-level grant covering every section of the document.
+  section_id UUID,
+  email TEXT NOT NULL,
+  role TEXT NOT NULL,
+  tenant_id INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT doc_permissions_doc_tenant_fkey
+    FOREIGN KEY (doc_id, tenant_id)
+    REFERENCES public.authoring_documents (id, tenant_id) ON DELETE CASCADE,
+  -- MATCH SIMPLE: a NULL section_id (document-level grant) is exempt, while a
+  -- section-scoped grant must point at a section of the SAME tenant.
+  CONSTRAINT doc_permissions_section_tenant_fkey
+    FOREIGN KEY (section_id, tenant_id)
+    REFERENCES public.authoring_sections (id, tenant_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS doc_permissions_doc_idx
+  ON doc_permissions (doc_id, tenant_id);
+-- The gate looks a grant up by tenant + grantee on every section write.
+CREATE INDEX IF NOT EXISTS doc_permissions_grantee_idx
+  ON doc_permissions (tenant_id, email);
