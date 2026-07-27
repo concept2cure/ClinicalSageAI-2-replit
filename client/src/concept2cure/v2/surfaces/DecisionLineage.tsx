@@ -1,15 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
-  LINEAGE_GRAPHS,
+  // Canonical reference config (kept — not fixture DATA): the node-type display
+  // map (label/icon/tone per nodeType) and the regulatory-framework catalog.
   LINEAGE_NODE_TYPES,
-  LINEAGE_CHAIN,
   LINEAGE_FRAMEWORKS,
   type LineageGraph,
   type LineageNode,
   type LineageNodeTypeConfig,
+  type LineageChain,
 } from '../fixtures/decision-lineage-data';
 import '../styles/project-home-v2.css';
 
@@ -34,20 +36,31 @@ function dlActionLabel(a: string): string {
 
 export function DecisionLineage({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  /* live ?? fixture — adopt the org's seeded decision trails when GET
-     /api/decision-lineage returns the full LineageGraph display shape
-     ({ rootEntityType, rootEntityId, artifactLabel, nodes, edges, metadata }),
-     else keep the codebase fixture so the trail is never empty. The fixture
-     also renders while the live fetch is in flight (no empty-flash). */
-  const { data: graphs, sample } = useLiveList<LineageGraph>(
+  /* Real-data standard: the org's governed decision trails are read live from
+     GET /api/decision-lineage (server/routes/decision-lineage.routes.ts →
+     c2c_decision_lineage, org-scoped), which returns exactly the LineageGraph
+     display shape ({ rootEntityType, rootEntityId, artifactLabel, nodes, edges,
+     metadata }). Real rows, an honest empty, or an honest error — never a
+     fixture. `rows` is a fresh [] while loading and on error, so all derived
+     values below are null-safe and only the real branch renders content. */
+  const { rows: graphs, loading, error, empty } = useLiveRows<LineageGraph>(
     '/api/decision-lineage',
-    LINEAGE_GRAPHS,
   );
+  /* Hash-chain integrity is verified live from GET
+     /api/decision-lineage/verify-chain (server/routes/decision-lineage.ts →
+     auditService.verifyChain()); the aside renders its real result, an honest
+     empty, or an honest error. */
+  const chainState = useLiveData<LineageChain>('/api/decision-lineage/verify-chain');
+  const chain = chainState.data;
   const NT = LINEAGE_NODE_TYPES;
-  const chain = LINEAGE_CHAIN;
 
   const [sel, setSel] = useState(0);
-  const g: LineageGraph = graphs[sel] || graphs[0];
+  const g: LineageGraph | undefined = graphs[sel] || graphs[0];
+
+  // Export runner state — which format is in flight, and the last error (shown
+  // inline by the export controls). The surface has no toast; keep it contained.
+  const [exportBusy, setExportBusy] = useState('');
+  const [exportErr, setExportErr] = useState('');
 
   const nodes: LineageNode[] = (g && g.nodes) || [];
   const md = (g && g.metadata) || { totalDecisions: 0, totalApprovals: 0, totalRejections: 0, totalDelegations: 0 };
@@ -125,14 +138,44 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
           re: "Nothing is lost while it's in flight -- the trail captures every handoff, including the delegation, so accountability is never ambiguous.",
         };
 
-  const exportOne = (fmt: string) => {
-    ask(
-      'Export the decision lineage for ' +
-        (g.artifactLabel || 'this artifact') +
-        ' as ' +
-        fmt.toUpperCase() +
-        ' for the submission audit package.',
-    );
+  // exportOne — REAL, awaited export. Streams the immutable lineage from
+  // GET /api/decision-lineage/:entityType/:entityId/export?format=…, which the
+  // server logs as an auditable action (lineage_export), and downloads the
+  // returned file. The entity ids come from the adopted graph (g.rootEntityType
+  // / g.rootEntityId) — nothing is fabricated. On failure an inline message is
+  // shown and no file is produced.
+  const exportOne = async (fmt: string) => {
+    if (!g) { setExportErr('No lineage graph is loaded to export.'); return; }
+    setExportErr('');
+    setExportBusy(fmt);
+    try {
+      const url =
+        '/api/decision-lineage/' +
+        encodeURIComponent(g.rootEntityType) + '/' + encodeURIComponent(String(g.rootEntityId)) +
+        '/export?format=' + encodeURIComponent(fmt);
+      const res = await apiRequest('GET', url);
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        setExportErr((j && (j.error || j.message)) || ('Export failed (HTTP ' + res.status + ').'));
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const m = /filename="?([^";]+)"?/.exec(cd);
+      const filename = (m && m[1]) || ('decision-lineage-' + g.rootEntityId + '.' + fmt);
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objUrl);
+    } catch (e) {
+      setExportErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setExportBusy('');
+    }
   };
 
   return (
@@ -140,7 +183,6 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       <div className="dl-head">
         <div className="dl-eyebrow">
           <span className="dl-kicker">Governed decision lineage</span>
-          <SampleTag sample={sample} />
         </div>
         <h1 className="dl-title">Decision lineage &amp; provenance</h1>
         <div className="dl-sub">
@@ -149,6 +191,25 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         </div>
       </div>
 
+      {loading ? (
+        <div className="scaf-note" style={{ padding: '28px 14px' }}>
+          Loading the governed decision trails…
+        </div>
+      ) : error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the decision lineage"
+          hint="The governed decision-trail registry didn't respond. These are the organization's immutable, Part-11 hash-chained artifact decision trails — sign in and retry, or check the service is reachable."
+        />
+      ) : empty || !g ? (
+        <EmptyState
+          icon={I.gitBranch}
+          title="No governed decision trails yet"
+          hint="Once an artifact moves through review — created, evidence linked, approved, signed, then locked — its immutable, hash-chained decision trail appears here, ready for the submission audit package."
+        />
+      ) : (
+        <>
       {/* artifact picker */}
       <div className="dl-picker">
         {graphs.map((x, i) => {
@@ -298,32 +359,52 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         {/* aside: chain integrity + compliance + export */}
         <aside className="dl-aside">
           <div className="dl-verify">
-            <div className="dl-verify-hd">
-              <span
-                className={
-                  'dl-verify-dot ' + (chain.chainIntegrity === 'VERIFIED' ? 'ok' : 'bad')
-                }
+            {chainState.loading ? (
+              <div className="scaf-note" style={{ padding: '8px 2px' }}>
+                Verifying the hash chain…
+              </div>
+            ) : chainState.error ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't verify the hash chain"
+                hint="The tamper-evident audit chain didn't respond. Sign in and retry, or check the audit service is reachable."
               />
-              <span className="dl-verify-t">
-                Hash chain {chain.chainIntegrity === 'VERIFIED' ? 'verified' : 'unverified'}
-              </span>
-            </div>
-            <p className="dl-verify-b">
-              {(chain.entriesVerified || 0).toLocaleString()} audit entries cryptographically
-              verified -- tamper-evident. Any alteration to a past record breaks the chain and is
-              detected.
-            </p>
-            <div className="dl-verify-meta">
-              <span>Verified {dlTime(chain.verifiedAt)}</span>
-              <span
-                className={
-                  'dl-verify-status ' +
-                  (chain.complianceStatus === 'COMPLIANT' ? 'ok' : 'bad')
-                }
-              >
-                {chain.complianceStatus || '--'}
-              </span>
-            </div>
+            ) : !chain ? (
+              <EmptyState
+                icon={I.shieldCheck}
+                title="Chain verification not available yet"
+              />
+            ) : (
+              <>
+                <div className="dl-verify-hd">
+                  <span
+                    className={
+                      'dl-verify-dot ' + (chain.chainIntegrity === 'VERIFIED' ? 'ok' : 'bad')
+                    }
+                  />
+                  <span className="dl-verify-t">
+                    Hash chain {chain.chainIntegrity === 'VERIFIED' ? 'verified' : 'unverified'}
+                  </span>
+                </div>
+                <p className="dl-verify-b">
+                  {(chain.entriesVerified || 0).toLocaleString()} audit entries cryptographically
+                  verified -- tamper-evident. Any alteration to a past record breaks the chain and
+                  is detected.
+                </p>
+                <div className="dl-verify-meta">
+                  <span>Verified {dlTime(chain.verifiedAt)}</span>
+                  <span
+                    className={
+                      'dl-verify-status ' +
+                      (chain.complianceStatus === 'COMPLIANT' ? 'ok' : 'bad')
+                    }
+                  >
+                    {chain.complianceStatus || '--'}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="dl-metrics">
@@ -362,10 +443,14 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
             <button
               className="dl-cta"
               onClick={() => {
+                // FLAG (mock action): routes to the AnA composer via onAsk; it
+                // does NOT call a real e-signature / record endpoint
+                // (/api/esignature or /api/decision-lineage/record). Left for the
+                // actions pass — not half-wired.
                 ask(
                   'Route the ' +
-                    (g.artifactLabel || 'artifact') +
-                    ' §2.5 for the final Part-11 electronic signature to lock the record.',
+                    (g?.artifactLabel || 'artifact') +
+                    ' for the final Part-11 electronic signature to lock the record.',
                 );
               }}
             >
@@ -377,23 +462,35 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
             <div className="dl-export-hd">Export for the audit package</div>
             <div className="dl-export-btns">
               {(['json', 'csv', 'xml'] as const).map((f) => (
-                <button key={f} className="dl-export-b" onClick={() => exportOne(f)}>
-                  {f.toUpperCase()}
+                <button
+                  key={f}
+                  className="dl-export-b"
+                  disabled={exportBusy !== ''}
+                  onClick={() => exportOne(f)}
+                >
+                  {exportBusy === f ? 'Exporting…' : f.toUpperCase()}
                 </button>
               ))}
             </div>
+            {exportErr && (
+              <p className="dl-export-note" role="alert" style={{ color: 'var(--err, #c0392b)' }}>
+                Couldn’t export — {exportErr} Nothing was downloaded.
+              </p>
+            )}
             <p className="dl-export-note">
-              Exports the immutable lineage (XML is eCTD-compatible). The export is itself logged
-              as an auditable action.
+              Exports the immutable lineage (XML is eCTD-compatible). The dedicated export
+              endpoint logs each export as an auditable action.
             </p>
           </div>
         </aside>
       </div>
+        </>
+      )}
 
       <p className="dl-foot">
         Lineage is sourced from the tamper-proof audit log -- records are written when the action
-        occurs and hash-chained per FDA 21 CFR Part 11 §11.10(e). Connect the backend to verify
-        this project's live chain and export the signed package.
+        occurs and hash-chained per FDA 21 CFR Part 11 §11.10(e). The trail and its chain
+        verification above are read live from this project's governed records.
       </p>
     </div>
   );

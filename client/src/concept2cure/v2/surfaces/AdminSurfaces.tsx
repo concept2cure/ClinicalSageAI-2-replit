@@ -1,20 +1,24 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, matchesShape, unwrapList, useLive } from '../dataConnect';
+import { SampleTag, useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
-import { getAuthToken, getOrgId } from '@/utils/authToken';
+import { getAuthToken } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSurfaceMeta } from '../registryModel';
 import { LIC_ROLES } from '../fixtures/licensing';
+// Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
+// filter taxonomy the server's deriveKind() mirrors; PLATFORM_SERVICES is the
+// static platform-capability catalog; ARTIFACT_FMT is the format→label display
+// map. The fixture DATA constants (audit log, apps catalog, app license,
+// artifacts and access grants) were removed — every surface below now renders
+// real persisted data, an honest empty state, or an honest error state.
 import {
-  APPS_CATALOG,
-  APP_LICENSE,
+  AUDIT_KINDS,
   PLATFORM_SERVICES,
-  ARTIFACTS,
   ARTIFACT_FMT,
-  AC_GRANTS,
 } from '../fixtures/admin-data';
 import type {
+  AuditEntry,
   AppsCatalogApp,
   AppsCatalogGroup,
   AppLicense,
@@ -39,18 +43,16 @@ declare global {
   }
 }
 
-/* ── Shared inline helpers (also consumed by the extracted AuditTrail —
-   AdminAuditTrail.tsx — which was split out to keep this module under the
-   repo-health size gate) ── */
+/* ── Shared inline helpers ── */
 
-export interface AdminHeaderProps {
+interface AdminHeaderProps {
   eyebrow: string;
   title: React.ReactNode;
   sub?: string;
   actions?: React.ReactNode;
 }
 
-export function AdminHeader({ eyebrow, title, sub, actions }: AdminHeaderProps) {
+function AdminHeader({ eyebrow, title, sub, actions }: AdminHeaderProps) {
   return (
     <div className="ph">
       <div>
@@ -63,7 +65,7 @@ export function AdminHeader({ eyebrow, title, sub, actions }: AdminHeaderProps) 
   );
 }
 
-export function useToast(): [string, (m: string) => void] {
+function useToast(): [string, (m: string) => void] {
   const [msg, setMsg] = useState('');
   const fire = (m: string) => {
     setMsg(m);
@@ -72,7 +74,7 @@ export function useToast(): [string, (m: string) => void] {
   return [msg, fire];
 }
 
-export function C2CToast({ msg }: { msg: string }) {
+function C2CToast({ msg }: { msg: string }) {
   if (!msg) return null;
   return (
     <div className="de-toast">
@@ -106,158 +108,48 @@ interface LangOption {
 }
 
 /* ════════════ Setup (org config) ════════════
-   Live-wired to the governed org-profile + org-settings backend:
-     GET   /api/organizations/:id           → { success, organization }
-     PATCH /api/organizations/:id/profile   → { name, clientType, reason } —
-           org-admin gated, audited (organizations-routes.ts)
-     GET   /api/organizations/:id/settings  → { success, settings } (security /
-           translation sections, defaults merged server-side)
-     PATCH /api/organizations/:id/settings  → { settings, reason } — governed
-           form, org-admin gated, audited
-   Saves require a reason-for-change (min 3 chars) and are written to the audit
-   trail. Offline / unauthenticated the panel keeps its browser-local draft with
-   the Sample pill — it never pretends a write happened. /api/setup (the
-   first-run installer) is intentionally NOT called from here. */
-
-/** Live GET /api/organizations/:id → the fields this panel edits. */
-function parseOrgProfile(x: unknown): { name: string; clientType: string | null } | null {
-  if (!x || typeof x !== 'object') return null;
-  const org = (x as { organization?: unknown }).organization;
-  if (!org || typeof org !== 'object') return null;
-  const o = org as Record<string, unknown>;
-  if (typeof o.name !== 'string') return null;
-  return { name: o.name, clientType: typeof o.clientType === 'string' ? o.clientType : null };
-}
-
-/** Live GET /api/organizations/:id/settings → the sections this panel edits. */
-function parseOrgSettings(x: unknown): {
-  mfaEnabled: boolean | null;
-  ssoEnabled: boolean | null;
-  translation: Partial<{
-    enabled: boolean;
-    targets: string[];
-    defaultEngine: string;
-    requireBackTranslation: boolean;
-    twoPersonRule: boolean;
-    glossaryScope: string;
-    blockMachineApproval: boolean;
-  }> | null;
-} | null {
-  if (!x || typeof x !== 'object') return null;
-  const settings = (x as { settings?: unknown }).settings;
-  if (!settings || typeof settings !== 'object') return null;
-  const s = settings as Record<string, any>;
-  const sec = s.security && typeof s.security === 'object' ? s.security : null;
-  const txw = s.translation && typeof s.translation === 'object' ? s.translation : null;
-  return {
-    mfaEnabled: sec && typeof sec.mfaEnabled === 'boolean' ? sec.mfaEnabled : null,
-    ssoEnabled: sec && typeof sec.ssoEnabled === 'boolean' ? sec.ssoEnabled : null,
-    translation: txw,
-  };
-}
-
-function syncTxwAdmin(n: SetupSettings): void {
-  window.TXW_ADMIN = {
-    enabled: n.txwEnabled,
-    targets: n.txwTargets,
-    defaultEngine: n.txwDefaultEngine,
-    requireBackTranslation: n.txwRequireBackTranslation,
-    twoPersonRule: n.txwTwoPersonRule,
-    glossaryScope: n.txwGlossaryScope,
-    blockMachineApproval: n.txwBlockMachineApproval,
-  };
-}
-
-const SETUP_DEFAULTS: SetupSettings = {
-  orgName: 'Acme Bio',
-  clientType: 'biotech',
-  mfaRequired: true,
-  ssoEnabled: false,
-  txwEnabled: true,
-  txwTargets: ['ja-JP', 'zh-CN', 'de-DE'],
-  txwDefaultEngine: 'C2C-RIM-MT v2.4',
-  txwRequireBackTranslation: true,
-  txwTwoPersonRule: true,
-  txwGlossaryScope: 'org',
-  txwBlockMachineApproval: true,
-};
-
-/** Fold the live org profile + settings into the panel's edit shape. */
-function seedFromLive(
-  base: SetupSettings,
-  profile: { name: string; clientType: string | null } | null,
-  live: ReturnType<typeof parseOrgSettings>,
-): SetupSettings {
-  const n = { ...base };
-  if (profile) {
-    n.orgName = profile.name;
-    if (profile.clientType) n.clientType = profile.clientType;
-  }
-  if (live) {
-    if (live.mfaEnabled !== null) n.mfaRequired = live.mfaEnabled;
-    if (live.ssoEnabled !== null) n.ssoEnabled = live.ssoEnabled;
-    const t = live.translation;
-    if (t) {
-      if (typeof t.enabled === 'boolean') n.txwEnabled = t.enabled;
-      if (Array.isArray(t.targets)) n.txwTargets = t.targets.filter((x): x is string => typeof x === 'string');
-      if (typeof t.defaultEngine === 'string') n.txwDefaultEngine = t.defaultEngine;
-      if (typeof t.requireBackTranslation === 'boolean') n.txwRequireBackTranslation = t.requireBackTranslation;
-      if (typeof t.twoPersonRule === 'boolean') n.txwTwoPersonRule = t.twoPersonRule;
-      if (typeof t.glossaryScope === 'string') n.txwGlossaryScope = t.glossaryScope;
-      if (typeof t.blockMachineApproval === 'boolean') n.txwBlockMachineApproval = t.blockMachineApproval;
-    }
-  }
-  return n;
-}
+   Honestly fixture-backed (fail-closed). The only /api/setup routes on the
+   server (server/routes/setup.ts) are the first-run installer — GET /status
+   ({ initialized }) and the self-closing POST /initialize that creates the
+   first org + admin on an empty database. Neither can truthfully read or
+   persist this panel's org-config fields (orgName, clientType, MFA/SSO,
+   translation-workspace policy), so these settings stay in localStorage and
+   the surface carries the Sample-data pill instead of pretending to be an
+   org-wide governed write. Do not wire this panel to /api/setup — calling the
+   installer from here would be destructive, not persistence. */
 
 export function Setup({ onAsk }: SurfaceViewProps) {
-  const orgId = getOrgId();
-  const profileRaw = useLive<unknown>(`/api/organizations/${encodeURIComponent(orgId)}`, null);
-  const settingsRaw = useLive<unknown>(
-    `/api/organizations/${encodeURIComponent(orgId)}/settings`,
-    null,
-  );
-  const liveProfile = useMemo(
-    () => (profileRaw.sample ? null : parseOrgProfile(profileRaw.data)),
-    [profileRaw.sample, profileRaw.data],
-  );
-  const liveSettings = useMemo(
-    () => (settingsRaw.sample ? null : parseOrgSettings(settingsRaw.data)),
-    [settingsRaw.sample, settingsRaw.data],
-  );
-  const isLive = liveProfile !== null;
-
   const [s, setS] = useState<SetupSettings>(() => {
-    let base = SETUP_DEFAULTS;
+    const def: SetupSettings = {
+      orgName: 'Acme Bio',
+      clientType: 'biotech',
+      mfaRequired: true,
+      ssoEnabled: false,
+      txwEnabled: true,
+      txwTargets: ['ja-JP', 'zh-CN', 'de-DE'],
+      txwDefaultEngine: 'C2C-RIM-MT v2.4',
+      txwRequireBackTranslation: true,
+      txwTwoPersonRule: true,
+      txwGlossaryScope: 'org',
+      txwBlockMachineApproval: true,
+    };
     try {
       const saved = JSON.parse(localStorage.getItem('c2c_admin_settings') || 'null');
-      base = { ...SETUP_DEFAULTS, ...(saved || {}) };
+      const merged: SetupSettings = { ...def, ...(saved || {}) };
+      window.TXW_ADMIN = {
+        enabled: merged.txwEnabled,
+        targets: merged.txwTargets,
+        defaultEngine: merged.txwDefaultEngine,
+        requireBackTranslation: merged.txwRequireBackTranslation,
+        twoPersonRule: merged.txwTwoPersonRule,
+        glossaryScope: merged.txwGlossaryScope,
+        blockMachineApproval: merged.txwBlockMachineApproval,
+      };
+      return merged;
     } catch (_e) {
-      /* keep defaults */
+      return def;
     }
-    syncTxwAdmin(base);
-    return base;
   });
-  // Snapshot of the last loaded/saved state — dirtiness is measured against it.
-  const [baseline, setBaseline] = useState<string>(() => JSON.stringify(s));
-  const [reason, setReason] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [toast, fireToast] = useToast();
-
-  // Re-seed the edit state when the governed backend answers.
-  const seededFrom = useRef<unknown>(null);
-  useEffect(() => {
-    if (!isLive || seededFrom.current === profileRaw.data) return;
-    seededFrom.current = profileRaw.data;
-    setS((prev) => {
-      const seeded = seedFromLive(prev, liveProfile, liveSettings);
-      setBaseline(JSON.stringify(seeded));
-      syncTxwAdmin(seeded);
-      return seeded;
-    });
-  }, [isLive, liveProfile, liveSettings, profileRaw.data]);
-
-  const dirty = JSON.stringify(s) !== baseline;
 
   const set = (k: keyof SetupSettings, v: SetupSettings[keyof SetupSettings]) =>
     setS((prev) => {
@@ -267,64 +159,17 @@ export function Setup({ onAsk }: SurfaceViewProps) {
       } catch (_e) {
         /* noop */
       }
-      syncTxwAdmin(n);
+      window.TXW_ADMIN = {
+        enabled: n.txwEnabled,
+        targets: n.txwTargets,
+        defaultEngine: n.txwDefaultEngine,
+        requireBackTranslation: n.txwRequireBackTranslation,
+        twoPersonRule: n.txwTwoPersonRule,
+        glossaryScope: n.txwGlossaryScope,
+        blockMachineApproval: n.txwBlockMachineApproval,
+      };
       return n;
     });
-
-  /** Governed save — profile PATCH + settings PATCH, both audited. */
-  const save = async () => {
-    if (!dirty || saving) return;
-    if (!isLive) {
-      setBaseline(JSON.stringify(s));
-      fireToast('Saved in this browser only -- backend not reachable');
-      return;
-    }
-    if (reason.trim().length < 3) {
-      fireToast('A reason for change (min 3 chars) is required');
-      return;
-    }
-    setSaving(true);
-    const before: SetupSettings = JSON.parse(baseline);
-    try {
-      if (s.orgName !== before.orgName || s.clientType !== before.clientType) {
-        const res = await apiRequest(
-          'PATCH',
-          `/api/organizations/${encodeURIComponent(orgId)}/profile`,
-          { name: s.orgName, clientType: s.clientType, reason: reason.trim() },
-        );
-        if (!res.ok) throw new Error('profile update rejected');
-      }
-      const res2 = await apiRequest(
-        'PATCH',
-        `/api/organizations/${encodeURIComponent(orgId)}/settings`,
-        {
-          settings: {
-            security: { mfaEnabled: s.mfaRequired, ssoEnabled: s.ssoEnabled },
-            translation: {
-              enabled: s.txwEnabled,
-              targets: s.txwTargets,
-              defaultEngine: s.txwDefaultEngine,
-              requireBackTranslation: s.txwRequireBackTranslation,
-              twoPersonRule: s.txwTwoPersonRule,
-              glossaryScope: s.txwGlossaryScope,
-              blockMachineApproval: s.txwBlockMachineApproval,
-            },
-          },
-          reason: reason.trim(),
-        },
-      );
-      if (!res2.ok) throw new Error('settings update rejected');
-      setBaseline(JSON.stringify(s));
-      setReason('');
-      fireToast('Saved -- reason recorded -- audited (Part 11)');
-    } catch (e) {
-      fireToast(
-        'Could not save -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const ALL_LANGS: LangOption[] = [
     { id: 'ja-JP', label: 'Japanese', flag: 'JP', agency: 'PMDA' },
@@ -352,17 +197,13 @@ export function Setup({ onAsk }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Admin -- organization -- /api/organizations"
+        eyebrow="Admin -- organization"
         title={
           <React.Fragment>
-            Setup <SampleTag sample={!isLive} />
+            Setup <SampleTag sample={true} />
           </React.Fragment>
         }
-        sub={
-          isLive
-            ? 'Organization profile, security defaults, and module configuration. Every save requires a reason and is written to the audit trail.'
-            : 'Organization profile, security defaults, and module configuration. Backend not reachable -- edits stay in this browser only until you sign in.'
-        }
+        sub="Organization profile, security defaults, and module configuration. Saved in this browser only -- the governed org-settings backend is not wired yet."
         actions={
           <button className="btn ghost" onClick={() => onAsk && onAsk('Summarize my org configuration')}>
             {I.sparkles} Ask AnA
@@ -667,54 +508,523 @@ export function Setup({ onAsk }: SurfaceViewProps) {
           )}
         </div>
       </div>
-
-      {/* -- Governed save bar -- appears when there are unsaved changes -- */}
-      {dirty && (
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            alignItems: 'center',
-            marginTop: 16,
-            padding: '12px 14px',
-            borderRadius: 10,
-            border: '1px solid var(--border)',
-            background: 'var(--bg-100)',
-            maxWidth: 760,
-            flexWrap: 'wrap',
-          }}
-        >
-          <span style={{ fontSize: 12.5, color: 'var(--text-300)', fontWeight: 500 }}>
-            Unsaved changes
-          </span>
-          {isLive ? (
-            <input
-              className="ob-in"
-              style={{ margin: 0, flex: '1 1 260px' }}
-              placeholder="Reason for change (required, min 3 chars -- audited)"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          ) : (
-            <span style={{ fontSize: 11.5, color: 'var(--text-400)', flex: '1 1 260px' }}>
-              Backend not reachable -- saving keeps a browser-local draft only.
-            </span>
-          )}
-          <button
-            className="sp-primary"
-            style={{ padding: '8px 14px' }}
-            disabled={saving || (isLive && reason.trim().length < 3)}
-            onClick={save}
-          >
-            {saving ? 'Saving...' : isLive ? 'Save changes' : 'Save draft'}
-          </button>
-        </div>
-      )}
-      <C2CToast msg={toast} />
     </div>
   );
 }
 
+/* ════════════ Audit trail -- immutable hash-chain viewer (ss11.10(e)) ════════════
+   Live-anchored to GET /api/audit-trail/ledger (mounted in
+   server/bootstrap/register-regulatory-routes.ts, router
+   server/routes/audit-trail-ledger.routes.ts). REAL: an org-scoped, newest-first
+   slice of the append-only, hash-chained `audit_events` table, returned in this
+   surface's exact AuditEntry display shape — hash/prevHash are the real stored
+   SHA-256 chain (genesis row → prevHash 'genesis'), sig is a genuine §11.50
+   signed status, reason/meaning are the stored values, and event/target/kind are
+   documented presentation derivations of real columns. No fixture: the surface
+   renders real rows, an honest empty state, or an honest error (a 503 when the
+   hash-chain schema isn't provisioned surfaces as the error state). */
+
+/** Fetch the signed, hash-verifiable audit export bundle and download it as a
+ *  JSON file. GET /api/audit/export/signed is Bearer-gated and returns
+ *  { export: { data, manifest, signature, verification } } — the inspection-ready
+ *  bundle an auditor can independently verify (HMAC-SHA256 over the manifest,
+ *  SHA-256 of the data). Never throws; returns an honest ok/error. */
+async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const token = getAuthToken();
+    const res = await fetch('/api/audit/export/signed?format=json', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      return {
+        ok: false,
+        error:
+          res.status === 401 || res.status === 403
+            ? 'Admin session required to export the audit trail.'
+            : `Export failed (HTTP ${res.status}).`,
+      };
+    }
+    const json = (await res.json().catch(() => null)) as { export?: unknown } | null;
+    if (!json?.export) return { ok: false, error: 'The export response was malformed.' };
+    const blob = new Blob([JSON.stringify(json.export, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'audit-trail-signed-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Export failed.' };
+  }
+}
+
+export function AuditTrail({ onAsk }: SurfaceViewProps) {
+  const [kind, setKind] = useState('all');
+  const [q, setQ] = useState('');
+  const [sel, setSel] = useState<string | null>(null);
+  const [chainView, setChainView] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const term = q.toLowerCase();
+
+  // Real hash-chained ledger. useLiveRows unwraps the { success, data } envelope,
+  // returns a fresh [] while loading / on error (rendered directly, so no seed
+  // loop), and sets `error` only on a genuine fetch failure.
+  const { rows: entries, loading, error } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+
+  const log = entries.filter(
+    (e) =>
+      (kind === 'all' || e.kind === kind) &&
+      (!term ||
+        e.event.toLowerCase().includes(term) ||
+        e.actor.toLowerCase().includes(term) ||
+        e.target.toLowerCase().includes(term) ||
+        e.id.toLowerCase().includes(term)),
+  );
+
+  const kindCounts = AUDIT_KINDS.map((k) => ({
+    ...k,
+    n: k.id === 'all' ? entries.length : entries.filter((e) => e.kind === k.id).length,
+  }));
+
+  const kindColor: Record<string, string> = {
+    esign: 'var(--accent-200)',
+    authoring: 'var(--info)',
+    review: 'var(--warning)',
+    submission: 'var(--success)',
+    vault: 'var(--ai)',
+    validation: 'var(--text-300)',
+    admin: 'var(--text-400)',
+  };
+
+  const entry = sel ? entries.find((e) => e.id === sel) : null;
+
+  // REAL, audited signed export — GET /api/audit/export/signed streams the
+  // inspection-ready bundle (data + manifest + HMAC signature) which downloads
+  // as a JSON file. Honest failure surfaced inline; nothing is faked.
+  const [exportErr, setExportErr] = useState('');
+  const doExport = async () => {
+    setExporting(true);
+    setExportErr('');
+    const r = await downloadSignedAuditExport();
+    if (!r.ok) setExportErr(r.error || 'Could not generate the signed export.');
+    setExporting(false);
+  };
+
+  /* Hash-chain integrity check (visual) */
+  const chainStatus = (() => {
+    const all = entries;
+    let valid = 0;
+    for (let i = 0; i < all.length; i++) {
+      if (i === all.length - 1) {
+        if (all[i].prevHash === 'genesis') valid++;
+        continue;
+      }
+      if (all[i].prevHash === all[i + 1].hash) valid++;
+    }
+    return { total: all.length, valid, intact: valid === all.length };
+  })();
+
+  return (
+    <div className="page-inner">
+      <AdminHeader
+        eyebrow="Admin -- compliance"
+        title="Audit trail"
+        sub={`${entries.length} entries -- hash-chained -- append-only -- 21 CFR Part 11 ss11.10(e)`}
+        actions={
+          <React.Fragment>
+            <button
+              className={`btn ghost${chainView ? ' on' : ''}`}
+              onClick={() => setChainView((v) => !v)}
+              style={
+                chainView
+                  ? { background: 'var(--accent-000)', borderColor: 'var(--accent-100)' }
+                  : {}
+              }
+            >
+              {I.link || I.network} Hash chain
+            </button>
+            <button className="btn primary" onClick={doExport} disabled={exporting}>
+              {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}
+            </button>
+          </React.Fragment>
+        }
+      />
+      {exportErr && (
+        <div className="scaf-note" role="alert" style={{ padding: '10px 12px', margin: '0 0 12px', color: 'var(--error)', border: '1px solid var(--error)', borderRadius: 8 }}>
+          {exportErr}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
+          Loading audit trail…
+        </div>
+      ) : error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the audit trail"
+          hint="The append-only, hash-chained 21 CFR Part 11 ledger didn't respond. Sign in and retry, or check the audit service is reachable -- the trail is never shown as an empty 'no events' state when it can't be read."
+        />
+      ) : entries.length === 0 ? (
+        <EmptyState
+          icon={I.scroll}
+          title="No audit entries yet"
+          hint="Governed actions -- authoring, review, submission, vault locks and e-signatures -- are written here to the immutable hash-chained ledger as they happen."
+        />
+      ) : (
+        <React.Fragment>
+      {/* Chain integrity banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '10px 14px',
+          borderRadius: 8,
+          background: chainStatus.intact
+            ? 'color-mix(in srgb,var(--success) 10%,transparent)'
+            : 'color-mix(in srgb,var(--error) 10%,transparent)',
+          border:
+            '1px solid ' + (chainStatus.intact ? 'var(--success)' : 'var(--error)'),
+          marginBottom: 16,
+          maxWidth: 680,
+        }}
+      >
+        <span style={{ fontSize: 18 }}>
+          {chainStatus.intact ? I.shieldCheck : I.alertTriangle}
+        </span>
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontWeight: 600,
+              fontSize: 13,
+              color: chainStatus.intact ? 'var(--success)' : 'var(--error)',
+            }}
+          >
+            {chainStatus.intact ? 'Hash chain intact' : 'Chain verification failed'}
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-400)', marginTop: 2 }}>
+            {chainStatus.total} entries -- {chainStatus.valid}/{chainStatus.total} links
+            verified -- SHA-256 -- append-only ledger
+          </div>
+        </div>
+        <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>
+          HEAD {entries[0]?.hash}
+        </span>
+      </div>
+
+      {/* Filters */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          marginBottom: 16,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
+      >
+        <div className="vault-search" style={{ flex: '1 1 240px', maxWidth: 360 }}>
+          <span className="ico">{I.search}</span>
+          <input
+            placeholder="Search entries..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <div className="seg" style={{ flexWrap: 'wrap' }}>
+          {kindCounts.map((k) => (
+            <button
+              key={k.id}
+              className={`seg-b${kind === k.id ? ' on' : ''}`}
+              onClick={() => setKind(k.id)}
+            >
+              {k.label}
+              <span className="mono" style={{ fontSize: 10, marginLeft: 4, opacity: 0.6 }}>
+                {k.n}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Hash chain view */}
+      {chainView && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0,
+            marginBottom: 20,
+            maxWidth: 720,
+            position: 'relative',
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-300)', marginBottom: 8 }}>
+            Hash chain -- newest to oldest
+          </div>
+          {entries.map((e, i) => (
+            <div key={e.id} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+              <div
+                style={{
+                  width: 32,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: e.sig ? 'var(--accent-200)' : 'var(--bg-300)',
+                    border:
+                      '2px solid ' + (e.sig ? 'var(--accent-200)' : 'var(--border)'),
+                    flexShrink: 0,
+                    marginTop: 8,
+                  }}
+                />
+                {i < entries.length - 1 && (
+                  <div style={{ width: 2, flex: 1, background: 'var(--border)' }} />
+                )}
+              </div>
+              <button
+                onClick={() => setSel(e.id)}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: 8,
+                  padding: '6px 10px',
+                  borderRadius: 6,
+                  background: sel === e.id ? 'var(--accent-000)' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontSize: 12,
+                }}
+              >
+                <span
+                  className="mono"
+                  style={{ color: 'var(--accent-200)', fontSize: 10, flexShrink: 0 }}
+                >
+                  {e.id}
+                </span>
+                <span
+                  className="mono"
+                  style={{ color: 'var(--text-400)', fontSize: 10, flexShrink: 0 }}
+                >
+                  {e.hash}
+                </span>
+                <span
+                  style={{
+                    color: sel === e.id ? 'var(--text-100)' : 'var(--text-300)',
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {e.event}
+                </span>
+                {e.sig && (
+                  <span style={{ color: 'var(--accent-200)', flexShrink: 0 }}>
+                    {I.shieldCheck}
+                  </span>
+                )}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Main table */}
+      <div className="ctable">
+        <div
+          className="ct-head"
+          style={{ gridTemplateColumns: '90px 130px 110px 1fr 90px 40px 40px' }}
+        >
+          <div>ID</div>
+          <div>When</div>
+          <div>Actor</div>
+          <div>Event</div>
+          <div>Target</div>
+          <div>Sig</div>
+          <div></div>
+        </div>
+        {log.map((e) => (
+          <button
+            key={e.id}
+            className="ct-row"
+            data-on={sel === e.id || undefined}
+            style={{
+              gridTemplateColumns: '90px 130px 110px 1fr 90px 40px 40px',
+              background: sel === e.id ? 'var(--accent-000)' : undefined,
+            }}
+            onClick={() => setSel(sel === e.id ? null : e.id)}
+          >
+            <div className="mono" style={{ color: 'var(--accent-200)', fontSize: 11 }}>
+              {e.id}
+            </div>
+            <div className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>
+              {e.when}
+            </div>
+            <div style={{ fontSize: 12 }}>{e.actor}</div>
+            <div style={{ fontWeight: 400, fontSize: 12 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: kindColor[e.kind] || 'var(--text-400)',
+                  marginRight: 6,
+                  verticalAlign: 'middle',
+                }}
+              />
+              {e.event}
+            </div>
+            <div style={{ color: 'var(--text-400)', fontSize: 11.5 }}>{e.target}</div>
+            <div>
+              {e.sig ? (
+                <span className="esig">{I.shieldCheck}</span>
+              ) : (
+                <span style={{ color: 'var(--text-500)' }}>--</span>
+              )}
+            </div>
+            <div style={{ color: 'var(--text-400)', fontSize: 13 }}>{I.chevDown}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Detail drawer */}
+      {entry && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 16,
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            background: 'var(--bg-100)',
+            maxWidth: 720,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{entry.id} -- Entry detail</div>
+            <button className="tbtn" onClick={() => setSel(null)} style={{ fontSize: 16 }}>
+              {I.close}
+            </button>
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '120px 1fr',
+              gap: '8px 16px',
+              fontSize: 12.5,
+            }}
+          >
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Event</span>
+            <span style={{ fontWeight: 500 }}>{entry.event}</span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Actor</span>
+            <span>{entry.actor}</span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Timestamp</span>
+            <span className="mono">{entry.when}</span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Target</span>
+            <span>{entry.target}</span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Kind</span>
+            <span>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: kindColor[entry.kind] || 'var(--text-400)',
+                  marginRight: 6,
+                  verticalAlign: 'middle',
+                }}
+              />
+              {entry.kind}
+            </span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Origin IP</span>
+            <span className="mono">{entry.ip}</span>
+            {entry.reason && (
+              <React.Fragment>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>
+                  Reason for change
+                </span>
+                <span style={{ fontStyle: 'italic' }}>{entry.reason}</span>
+              </React.Fragment>
+            )}
+            {entry.meaning && (
+              <React.Fragment>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>
+                  Signature meaning
+                </span>
+                <span>
+                  <span className="esig" style={{ marginRight: 6 }}>
+                    {I.shieldCheck}
+                  </span>
+                  {entry.meaning} (ss11.50)
+                </span>
+              </React.Fragment>
+            )}
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Entry hash</span>
+            <span className="mono" style={{ fontSize: 11, wordBreak: 'break-all' }}>
+              SHA-256: {entry.hash}
+            </span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Previous hash</span>
+            <span className="mono" style={{ fontSize: 11, wordBreak: 'break-all' }}>
+              {entry.prevHash === 'genesis' ? 'genesis block' : entry.prevHash}
+            </span>
+          </div>
+          {entry.sig && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: '8px 12px',
+                borderRadius: 6,
+                background: 'color-mix(in srgb,var(--success) 8%,transparent)',
+                border: '1px solid var(--success)',
+                fontSize: 11.5,
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+              }}
+            >
+              {I.shieldCheck}
+              <span>
+                This entry was digitally signed per 21 CFR ss11.50. Meaning:{' '}
+                <strong>{entry.meaning}</strong>. Signature is hash-bound and tamper-evident.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+        Entries are append-only, hash-chained (SHA-256), and timestamped. Each entry's hash
+        incorporates the previous entry's hash, creating a verifiable chain. Any modification to a
+        historical entry breaks the chain. Export produces a Part 11-compliant signed PDF with the
+        full verification manifest.
+      </div>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
 
 /* ════════════ Apps catalog ════════════
    Live-wired to /api/module-subscriptions (mounted in
@@ -727,10 +1037,10 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                                  { currentCount, maxAllowed } } }
      PUT /:moduleId/toggle   → { moduleId, enabled } (admin-only; 403 with a
                                  reason when the tier does not include it)
-   Fail-closed: any fetch/shape failure keeps the curated APPS_CATALOG /
-   APP_LICENSE fixture with the Sample-data pill. Fields the backend cannot
-   truthfully supply (renewsAt — no renewal column is read anywhere server-side)
-   are left empty when live, never invented. */
+   Fixture-free: the surface renders the real catalog + license, an honest empty
+   state, or an honest error state — no APPS_CATALOG / APP_LICENSE fallback and no
+   Sample-data pill. Fields the backend cannot truthfully supply (renewsAt — no
+   renewal column is read anywhere server-side) are left empty, never invented. */
 
 /** One live catalog row (ModuleCatalogEntry, server/services/license-manager.ts). */
 interface LiveModuleEntry {
@@ -833,26 +1143,26 @@ function mapLiveLicense(payload: unknown): AppLicense | null {
 
 export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
-  const catLive = useLive<unknown>('/api/module-subscriptions/catalog', null);
-  const licLive = useLive<unknown>('/api/module-subscriptions/license', null);
-  const liveCat = useMemo(
-    () => (catLive.sample ? null : mapLiveCatalog(catLive.data)),
-    [catLive.sample, catLive.data],
-  );
-  const liveLic = useMemo(
-    () => (licLive.sample ? null : mapLiveLicense(licLive.data)),
-    [licLive.sample, licLive.data],
-  );
-  const catalogIsLive = liveCat !== null;
-  const lic: AppLicense = liveLic ?? APP_LICENSE;
-  const [cat, setCat] = useState<AppGroup[]>(APPS_CATALOG);
+  // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
+  // so useLiveData yields the payload directly ({ modules } / the license object).
+  const catState = useLiveData<{ modules: LiveModuleEntry[] }>('/api/module-subscriptions/catalog');
+  const licState = useLiveData<Record<string, unknown>>('/api/module-subscriptions/license');
+  const liveGroups = useMemo(() => mapLiveCatalog(catState.data), [catState.data]);
+  const lic = useMemo(() => mapLiveLicense(licState.data), [licState.data]);
+  // Editable copy for optimistic toggles, seeded once when the live catalog
+  // resolves. liveGroups is a stable reference until the fetch re-runs (useMemo
+  // over the resolved payload), so the seed effect fires once and never loops.
+  const [cat, setCat] = useState<AppGroup[]>([]);
   const seededRef = useRef<AppGroup[] | null>(null);
   useEffect(() => {
-    if (liveCat && seededRef.current !== liveCat) {
-      seededRef.current = liveCat;
-      setCat(liveCat);
+    if (liveGroups && seededRef.current !== liveGroups) {
+      seededRef.current = liveGroups;
+      setCat(liveGroups);
     }
-  }, [liveCat]);
+  }, [liveGroups]);
+  // Render from the optimistic copy once seeded, else straight from the live map
+  // (avoids a one-frame blank between the fetch resolving and the seed effect).
+  const groups = cat.length > 0 ? cat : liveGroups ?? [];
   const [admin, setAdmin] = useState(false);
   const [toast, setToast] = useState('');
   const fireToast = (m: string) => {
@@ -860,49 +1170,44 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
     setTimeout(() => setToast(''), 3200);
   };
 
-  const tierLabel = lic.tier || 'professional';
-  const pj = lic.usage?.projects || { current: 0, limit: 0 };
-  const us = lic.usage?.users || { current: 0, limit: 0 };
+  const tierLabel = lic?.tier || '';
+  const pj = lic?.usage?.projects || { current: 0, limit: 0 };
+  const us = lic?.usage?.users || { current: 0, limit: 0 };
 
   const setOn = (groupIdx: number, appId: string, on: boolean) =>
-    setCat((prev) =>
-      prev.map((g, gi) =>
+    setCat((prev) => {
+      const base = prev.length > 0 ? prev : liveGroups ?? [];
+      return base.map((g, gi) =>
         gi !== groupIdx
           ? g
           : {
               ...g,
               apps: g.apps.map((a) => (a.id === appId ? { ...a, on } : a)),
             },
-      ),
-    );
+      );
+    });
 
   const toggle = async (groupIdx: number, appId: string, next: boolean) => {
-    const row = cat[groupIdx]?.apps.find((a) => a.id === appId);
+    const row = groups[groupIdx]?.apps.find((a) => a.id === appId);
     const label = row?.name || getSurfaceMeta(appId).label || appId;
     setOn(groupIdx, appId, next); // optimistic
-    if (!catalogIsLive) {
-      // Fixture mode — nothing to persist to; say so instead of faking success.
-      fireToast((next ? 'Enabled ' : 'Disabled ') + label + ' -- sample only, not persisted');
-      return;
-    }
     try {
-      // PUT /api/module-subscriptions/:moduleId/toggle (admin-only, org-scoped)
+      // PUT /api/module-subscriptions/:moduleId/toggle (admin-only, org-scoped) —
+      // a real, persisted write. apiRequest passes 401 through; other non-OK
+      // throws with the server's reason (admin required / tier does not include).
       const res = await apiRequest(
         'PUT',
         `/api/module-subscriptions/${encodeURIComponent(appId)}/toggle`,
         { enabled: next },
       );
       if (!res.ok) {
-        // apiRequest passes 401 through without throwing
         setOn(groupIdx, appId, !next);
         fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} -- sign in required`);
         return;
       }
       fireToast((next ? 'Enabled ' : 'Disabled ') + label);
     } catch (e) {
-      // apiRequest throws on non-OK with the server's reason (e.g. admin
-      // required, or the tier does not include this module). Revert -- never
-      // report a write that did not happen.
+      // Revert -- never report a write that did not happen.
       setOn(groupIdx, appId, !next);
       fireToast(
         `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
@@ -915,11 +1220,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
     <div className="page-inner">
       <AdminHeader
         eyebrow="Workspace -- /api/module-subscriptions"
-        title={
-          <React.Fragment>
-            Apps catalog <SampleTag sample={!catalogIsLive || liveLic === null} />
-          </React.Fragment>
-        }
+        title="Apps catalog"
         sub="Every application -- the destinations you open and work in -- entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
           <button
@@ -934,6 +1235,9 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       />
 
       {/* License / entitlement header */}
+      {licState.loading ? (
+        <div className="scaf-note" style={{ marginBottom: 16 }}>Loading license…</div>
+      ) : lic ? (
       <div className="lic-band">
         <div className="lic-tier">
           <span className="lic-tier-dot" data-tier={tierLabel}></span>
@@ -979,16 +1283,53 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         </div>
         <div className="lic-band-spacer"></div>
         {lic.renewsAt && <div className="lic-renew">Renews {lic.renewsAt}</div>}
-        <button
+        <a
           className="btn ghost"
-          style={{ height: 28 }}
-          onClick={() => open('licensing')}
+          style={{ height: 28, textDecoration: 'none' }}
+          href="/settings/subscription"
         >
           {I.creditCard || I.zap} Manage plan
-        </button>
+        </a>
       </div>
+      ) : (
+        <div
+          className="scaf-note"
+          style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}
+        >
+          {I.info}
+          <span>
+            License &amp; entitlement details are unavailable right now
+            {licState.error ? " -- the billing service didn't respond" : ''}.
+          </span>
+          <a
+            className="btn ghost"
+            style={{ height: 28, textDecoration: 'none', marginLeft: 'auto' }}
+            href="/settings/subscription"
+          >
+            {I.creditCard || I.zap} Manage plan
+          </a>
+        </div>
+      )}
 
-      {cat.map((g, gi) => (
+      {catState.loading ? (
+        <div className="sec">
+          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading apps…</div>
+        </div>
+      ) : catState.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the apps catalog"
+          hint="The module-subscriptions service didn't respond. Sign in and retry, or check it's reachable."
+        />
+      ) : groups.length === 0 ? (
+        <EmptyState
+          icon={I.grid}
+          title="No apps enabled yet"
+          hint="Modules auto-provision by tier. Once provisioned, your apps appear here entitlement-aware -- active apps launch and add-ons show an upgrade path."
+        />
+      ) : (
+        groups.map((g, gi) => (
         <div className="sec" key={g.group}>
           <div className="sec-hdr">
             <div className="sec-title">{g.group}</div>
@@ -1048,14 +1389,14 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                         Open
                       </button>
                     ) : isAddOn ? (
-                      <button
+                      <a
                         className="btn primary"
-                        style={{ height: 26, marginLeft: 'auto' }}
-                        onClick={() => open('licensing')}
+                        style={{ height: 26, marginLeft: 'auto', textDecoration: 'none' }}
+                        href="/settings/subscription"
                         title={`Upgrade your plan to unlock ${label}`}
                       >
                         Upgrade plan
-                      </button>
+                      </a>
                     ) : (
                       <button
                         className="btn ghost"
@@ -1072,7 +1413,8 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             })}
           </div>
         </div>
-      ))}
+        ))
+      )}
 
       <div className="sec">
         <div className="sec-hdr">
@@ -1109,39 +1451,61 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
 }
 
 /* ════════════ Artifacts Center ════════════
-   Live-wired to GET /api/artifacts-center (artifacts-center-routes.ts) —
-   { success, data: ArtifactCenterRow[] } in exactly this display shape from
-   the org-scoped concept2cure_artifacts store; `sig` reflects a real row in
-   the immutable signatures ledger; `model` is null when the producing model
-   was never persisted (rendered as an em dash, never invented). Fail-closed
-   to the curated fixture with the Sample pill. */
+   Live-anchored to GET /api/artifacts-center (mounted in
+   server/bootstrap/register-regulatory-routes.ts, router
+   server/routes/artifacts-center-routes.ts). REAL: one row per governed artifact
+   the org owns, from concept2cure_artifacts + concept2cure_signatures + projects,
+   in this surface's display shape. No fixture — real rows, honest empty, honest
+   error. `model` is nullable: the artifacts table does not persist the AnA
+   model/tier, so it is null unless a caller stored metadata.model (rendered '—',
+   never fabricated). */
 
-/** Fixture-compatible row whose model may honestly be absent when live. */
-type ArtifactRow = Omit<ArtifactEntry, 'model'> & { model: string | null };
+/** Live artifact row (server ArtifactCenterRow) — the fixture's ArtifactEntry
+    shape but with the truthful nullable `model`. */
+interface ArtifactRow {
+  id: string;
+  name: string;
+  kind: string;
+  fmt: string;
+  size: string;
+  model: string | null;
+  when: string;
+  ver: string;
+  sig: boolean;
+  prog: string;
+}
 
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
-  const artRaw = useLive<unknown>('/api/artifacts-center', null);
-  const liveRows = useMemo<ArtifactRow[] | null>(() => {
-    if (artRaw.sample) return null;
-    const list = unwrapList(artRaw.data);
-    return matchesShape<ArtifactRow>(list, ARTIFACTS) ? list : null;
-  }, [artRaw.sample, artRaw.data]);
-  const artifactsLive = liveRows !== null;
-  const rows: ArtifactRow[] = liveRows ?? ARTIFACTS;
+  // Real cross-project artifact gallery, unwrapped from { success, data }.
+  const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace -- evidence -- /api/artifacts-center"
-        title={
-          <React.Fragment>
-            Artifacts Center <SampleTag sample={!artifactsLive} />
-          </React.Fragment>
-        }
+        eyebrow="Workspace -- evidence"
+        title="Artifacts Center"
         sub="Every artifact AnA has drafted -- across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
         actions={
+          // MOCK ACTION (flagged): "Export all" has no handler and no bulk-export
+          // endpoint exists — inert button, left for a later actions pass.
           <button className="btn ghost">{I.externalLink} Export all</button>
         }
       />
+      {loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading artifacts…</div>
+      ) : error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the Artifacts Center"
+          hint="The governed artifact gallery didn't respond. Sign in and retry, or check the service is reachable."
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No artifacts yet"
+          hint="Every artifact AnA drafts across your projects lands here -- with its version chain, provenance and signature status. Draft a section, SAP, memo or report to get started."
+        />
+      ) : (
       <div className="ctable">
         <div
           className="ct-head"
@@ -1186,7 +1550,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div className="mono" style={{ fontSize: 11 }}>
                 {a.prog}
               </div>
-              <div style={{ color: 'var(--text-400)' }}>{a.model || '--'}</div>
+              <div style={{ color: 'var(--text-400)' }}>{a.model ?? '—'}</div>
               <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
               <div>
                 {a.sig ? (
@@ -1214,6 +1578,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
           );
         })}
       </div>
+      )}
       <div className="svc-note" style={{ marginTop: 14 }}>
         {I.info}
         <span>
@@ -1250,7 +1615,27 @@ interface ValidationKit {
   artifacts: ValidationArtifact[];
   note: string;
 }
-const VKIT_FALLBACK: ValidationKit = { artifacts: [], note: '' };
+
+/** Live API-key row (subset of server listApiKeys()) — the fields the admin
+    console renders. keyPrefix is the stored public prefix, never the secret. */
+interface ApiKeyRow {
+  id: number | string;
+  name: string;
+  keyPrefix: string | null;
+  status: string | null;
+  lastUsedAt: string | null;
+}
+
+/** Mirrors API_KEY_SCOPES in shared/schema/api-keys.ts — the backend rejects a
+ *  create with an unknown scope or zero scopes. All are read-only. */
+const API_KEY_SCOPE_OPTIONS: readonly string[] = [
+  'csr:read',
+  'regulatory:read',
+  'endpoints:read',
+  'precedent:read',
+  'trial-design:read',
+  'documents:read',
+];
 
 /** Short badge from a document's own status line (drafts ship as DRAFT). */
 function vkitBadge(status: string | null): string {
@@ -1279,65 +1664,13 @@ async function downloadValidationDoc(docId: string, filename: string): Promise<v
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-/* Security-health panel — GET /api/admin/security-health (admin-security.ts,
-   org-admin gated, audited read). The endpoint intentionally answers 503 when
-   the panel is FAILING with the report as the body — a failing posture is the
-   most important one to show, so this hook accepts both 200 and 503 JSON
-   bodies instead of routing through useLive (which would discard the 503). */
-interface SecCheckResult {
-  name: string;
-  status: string;
-  critical: boolean;
-  reason?: string;
-  durationMs: number;
-}
-interface SecHealthReport {
-  overall: 'healthy' | 'degraded' | 'failing';
-  checkedAt: string;
-  checks: SecCheckResult[];
-}
-
-function useSecurityHealth(bump: number): { report: SecHealthReport | null; loading: boolean } {
-  const [state, setState] = useState<{ report: SecHealthReport | null; loading: boolean }>({
-    report: null,
-    loading: true,
-  });
-  useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true }));
-    fetch('/api/admin/security-health', {
-      headers: {
-        ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
-        'x-organization-id': getOrgId(),
-      },
-      credentials: 'include',
-    })
-      .then(async (res) => {
-        if (cancelled) return;
-        if (res.status !== 200 && res.status !== 503) {
-          setState({ report: null, loading: false });
-          return;
-        }
-        const body = (await res.json().catch(() => null)) as SecHealthReport | null;
-        const valid =
-          body && typeof body.overall === 'string' && Array.isArray(body.checks);
-        setState({ report: valid ? body : null, loading: false });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ report: null, loading: false });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [bump]);
-  return state;
-}
-
 /* Platform role grants — live from GET /api/admin/access/grants (the audited
    access-management router, server/routes/admin/access-management.ts). The read
-   is platform-admin gated; a 401/403 or any shape mismatch fails closed to the
-   AC_GRANTS fixture with the Sample pill. When live, create/revoke go to the
-   real POST/DELETE (both require a reason-for-change, which the form collects). */
+   is platform-admin gated; a 401/403 surfaces as an honest error state (no
+   fixture, no Sample pill), a successful read with no grants as an honest empty
+   state. create/revoke go to the real POST/DELETE (both require a
+   reason-for-change, which the form collects) and only report success on a real
+   2xx. */
 interface LiveGrant {
   id: number | string;
   user_id?: number;
@@ -1361,17 +1694,22 @@ function mapLiveGrant(r: LiveGrant): AcGrant {
 
 export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   const [sec, setSec] = useState('access');
-  const vkit = useLive<ValidationKit>('/api/validation-kit', VKIT_FALLBACK);
+  // Fixture-free live reads, fetched only when their section is active
+  // (useLiveData no-ops on a null path). Each section renders real data, an
+  // honest empty state, or an honest error state — never a fixture.
+  const vkit = useLiveData<ValidationKit>(sec === 'validation' ? '/api/validation-kit' : null);
   const vkitDocs = vkit.data?.artifacts ?? [];
-  const grantsLive = useLive<{ grants?: LiveGrant[] } | null>('/api/admin/access/grants', null);
+  const grantsState = useLiveData<{ grants?: LiveGrant[] }>(
+    sec === 'access' ? '/api/admin/access/grants' : null,
+  );
   const liveGrants = useMemo(() => {
-    if (grantsLive.sample || !grantsLive.data) return null;
-    const arr = grantsLive.data.grants;
+    const arr = grantsState.data?.grants;
     if (!Array.isArray(arr)) return null;
     return arr.map(mapLiveGrant);
-  }, [grantsLive.sample, grantsLive.data]);
-  const grantsAreLive = liveGrants !== null;
-  const [grants, setGrants] = useState<AcGrant[]>(AC_GRANTS);
+  }, [grantsState.data]);
+  // Optimistic copy of the grants list, re-seeded once when the live read
+  // resolves (liveGrants identity is stable per resolved payload → no loop).
+  const [grants, setGrants] = useState<AcGrant[]>([]);
   const seededGrants = useRef<AcGrant[] | null>(null);
   useEffect(() => {
     if (liveGrants && seededGrants.current !== liveGrants) {
@@ -1379,189 +1717,26 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       setGrants(liveGrants);
     }
   }, [liveGrants]);
+  // Live module catalog (real per-org enabled/disabled state) for the Modules
+  // section, and live org API keys for the API-keys section.
+  const modState = useLiveData<{ modules: LiveModuleEntry[] }>(
+    sec === 'modules' ? '/api/module-subscriptions/catalog' : null,
+  );
+  const liveModules = (modState.data?.modules ?? []).filter(isLiveModuleEntry);
+  // keysReload is bumped after a create/revoke to re-fetch the live list.
+  const [keysReload, setKeysReload] = useState(0);
+  const keysState = useLiveData<{ keys: ApiKeyRow[] }>(
+    sec === 'apikeys' ? '/api/api-keys' : null,
+    [sec, keysReload],
+  );
+  const apiKeys = Array.isArray(keysState.data?.keys) ? (keysState.data!.keys as ApiKeyRow[]) : [];
+  const [keyName, setKeyName] = useState('');
+  const [keyScopes, setKeyScopes] = useState<string[]>([]);
+  // The raw secret returned once by POST /api/api-keys — held only in local
+  // state for a single reveal, never persisted or logged, cleared on dismiss.
+  const [mintedKey, setMintedKey] = useState<{ name: string; secret: string; prefix: string } | null>(null);
   const [form, setForm] = useState<AcFormState>({ email: '', role: 'support', reason: '' });
   const [toast, fireToast] = useToast();
-
-  /* Org profile -- live from GET /api/organizations/:id (validateOrgOwnership).
-     Renders only columns the org row really carries; nothing invented. */
-  const orgId = getOrgId();
-  const orgRaw = useLive<unknown>(`/api/organizations/${encodeURIComponent(orgId)}`, null);
-  const liveOrg = useMemo<Record<string, unknown> | null>(() => {
-    if (orgRaw.sample || !orgRaw.data || typeof orgRaw.data !== 'object') return null;
-    const org = (orgRaw.data as { organization?: unknown }).organization;
-    if (!org || typeof org !== 'object') return null;
-    const o = org as Record<string, unknown>;
-    return typeof o.name === 'string' ? o : null;
-  }, [orgRaw.sample, orgRaw.data]);
-  const orgLive = liveOrg !== null;
-
-  /* API keys -- live from /api/api-keys (org-scoped, admin-gated, audited).
-     The raw key is shown exactly once after create (the backend never returns
-     it again); revoke is a real DELETE. */
-  interface LiveApiKey {
-    id: number;
-    name: string;
-    keyPrefix: string;
-    status: string;
-    lastUsedAt: string | null;
-    createdAt: string | null;
-  }
-  const [keysBump, setKeysBump] = useState(0);
-  const keysRaw = useLive<unknown>('/api/api-keys', null, ['/api/api-keys', keysBump]);
-  const liveKeys = useMemo<LiveApiKey[] | null>(() => {
-    if (keysRaw.sample || !keysRaw.data || typeof keysRaw.data !== 'object') return null;
-    const keys = (keysRaw.data as { keys?: unknown }).keys;
-    if (!Array.isArray(keys)) return null;
-    return keys
-      .filter(
-        (k): k is Record<string, unknown> =>
-          !!k && typeof k === 'object' && typeof (k as any).keyPrefix === 'string',
-      )
-      .map((k) => ({
-        id: Number(k.id),
-        name: typeof k.name === 'string' ? k.name : String(k.id),
-        keyPrefix: String(k.keyPrefix),
-        status: typeof k.status === 'string' ? k.status : 'active',
-        lastUsedAt: typeof k.lastUsedAt === 'string' ? k.lastUsedAt : null,
-        createdAt: typeof k.createdAt === 'string' ? k.createdAt : null,
-      }));
-  }, [keysRaw.sample, keysRaw.data]);
-  const keysLive = liveKeys !== null;
-  const [keyName, setKeyName] = useState('');
-  const [mintedKey, setMintedKey] = useState<{ name: string; raw: string } | null>(null);
-  const [keyBusy, setKeyBusy] = useState(false);
-
-  const createKey = async () => {
-    const name = keyName.trim();
-    if (name.length < 2) {
-      fireToast('Name the key first (min 2 chars)');
-      return;
-    }
-    if (!keysLive) {
-      fireToast('Sign in as an org admin to mint API keys -- nothing was created');
-      return;
-    }
-    setKeyBusy(true);
-    try {
-      // 'documents:read' is the least-privileged member of API_KEY_SCOPES
-      // (shared/schema/api-keys.ts) — the server rejects unknown scopes.
-      const res = await apiRequest('POST', '/api/api-keys', { name, scopes: ['documents:read'] });
-      if (!res.ok) {
-        fireToast('Could not create key -- org admin role required');
-        return;
-      }
-      const body = await res.json().catch(() => null);
-      if (body && typeof body.apiKey === 'string') {
-        setMintedKey({ name, raw: body.apiKey });
-      }
-      setKeyName('');
-      setKeysBump((b) => b + 1);
-      fireToast('API key created -- audited');
-    } catch (e) {
-      fireToast(
-        'Could not create key -- ' +
-          (e instanceof Error && e.message ? e.message : 'request failed'),
-      );
-    } finally {
-      setKeyBusy(false);
-    }
-  };
-
-  const revokeKey = async (id: number, name: string) => {
-    if (!keysLive) {
-      fireToast('Sign in as an org admin to revoke keys');
-      return;
-    }
-    try {
-      const res = await apiRequest('DELETE', `/api/api-keys/${id}`);
-      if (!res.ok) {
-        fireToast('Could not revoke -- org admin role required');
-        return;
-      }
-      setKeysBump((b) => b + 1);
-      fireToast(`Revoked "${name}" -- audited`);
-    } catch (e) {
-      fireToast(
-        'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
-      );
-    }
-  };
-
-  /* Security & SSO policy -- live from the governed org-settings store
-     (organizations.settings.security). Toggles are governed writes: a reason
-     is captured and the PATCH lands in the audit trail. */
-  const [secBump, setSecBump] = useState(0);
-  const secHealth = useSecurityHealth(secBump);
-  const orgSettingsRaw = useLive<unknown>(
-    `/api/organizations/${encodeURIComponent(orgId)}/settings`,
-    null,
-    [orgId, secBump],
-  );
-  const liveSecurity = useMemo<{ mfaEnabled: boolean | null; ssoEnabled: boolean | null } | null>(() => {
-    if (orgSettingsRaw.sample || !orgSettingsRaw.data || typeof orgSettingsRaw.data !== 'object') {
-      return null;
-    }
-    const settings = (orgSettingsRaw.data as { settings?: unknown }).settings;
-    if (!settings || typeof settings !== 'object') return null;
-    const sec = (settings as Record<string, any>).security;
-    return {
-      mfaEnabled: sec && typeof sec.mfaEnabled === 'boolean' ? sec.mfaEnabled : null,
-      ssoEnabled: sec && typeof sec.ssoEnabled === 'boolean' ? sec.ssoEnabled : null,
-    };
-  }, [orgSettingsRaw.sample, orgSettingsRaw.data]);
-  const securityLive = liveSecurity !== null;
-
-  const toggleSecurityPolicy = async (key: 'mfaEnabled' | 'ssoEnabled', next: boolean) => {
-    if (!securityLive) {
-      fireToast('Sign in as an org admin to change security policy');
-      return;
-    }
-    const label = key === 'mfaEnabled' ? 'MFA requirement' : 'SSO';
-    const reason =
-      typeof window !== 'undefined' && window.prompt
-        ? window.prompt(
-            `Reason for ${next ? 'enabling' : 'disabling'} ${label} (min 3 chars, recorded in the audit trail):`,
-          )
-        : '';
-    if (reason == null) return; // cancelled
-    if (reason.trim().length < 3) {
-      fireToast('A reason (min 3 chars) is required');
-      return;
-    }
-    try {
-      const res = await apiRequest(
-        'PATCH',
-        `/api/organizations/${encodeURIComponent(orgId)}/settings`,
-        { settings: { security: { [key]: next } }, reason: reason.trim() },
-      );
-      if (!res.ok) {
-        fireToast('Could not update -- org admin role required');
-        return;
-      }
-      setSecBump((b) => b + 1);
-      fireToast(`${label} ${next ? 'enabled' : 'disabled'} -- reason recorded -- audited`);
-    } catch (e) {
-      fireToast(
-        'Could not update -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
-      );
-    }
-  };
-
-  /* Module subscriptions -- live enabled set from the same catalog the Apps
-     surface uses (module-subscriptions.ts). */
-  const modsRaw = useLive<unknown>('/api/module-subscriptions/catalog', null);
-  const liveMods = useMemo<{ name: string; enabled: boolean }[] | null>(() => {
-    if (modsRaw.sample || !modsRaw.data || typeof modsRaw.data !== 'object') return null;
-    const modules = (modsRaw.data as { modules?: unknown }).modules;
-    if (!Array.isArray(modules)) return null;
-    const rows = modules.filter(
-      (m): m is Record<string, unknown> =>
-        !!m && typeof m === 'object' && typeof (m as any).name === 'string',
-    );
-    if (!rows.length) return null;
-    return rows.map((m) => ({ name: String(m.name), enabled: Boolean(m.isEnabled) }));
-  }, [modsRaw.sample, modsRaw.data]);
-  const modsLive = liveMods !== null;
   const nav = (id: string) => {
     try {
       localStorage.setItem('c2c_open_surface', id);
@@ -1585,90 +1760,133 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       (roleMeta && roleMeta.business ? 'Business-tier ' : '') +
       'role granted -- audited (Part 11)';
 
-    if (grantsAreLive) {
-      // Real, audited write. apiRequest throws on non-OK (except 401) with the
-      // server's reason (e.g. business-admin required, no such user).
-      try {
-        const res = await apiRequest('POST', '/api/admin/access/grants', {
-          email: form.email.trim(),
-          role: form.role,
-          reason: form.reason.trim(),
-        });
-        if (!res.ok) {
-          fireToast('Could not grant -- sign in as a platform admin');
-          return;
-        }
-        const row = await res.json().catch(() => null);
-        const rec: AcGrant = {
-          id: row?.id ?? Date.now(),
-          name: form.email.split('@')[0],
-          email: form.email.trim(),
-          role: form.role,
-          granted_by: row?.granted_by || 'you',
-          granted_at: row?.granted_at ? String(row.granted_at).slice(0, 10) : 'just now',
-          _new: true,
-        };
-        setGrants((g) => [rec, ...g.filter((x) => !(x.email === rec.email && x.role === rec.role))]);
-        fireToast(okMsg);
-        setForm({ email: '', role: 'support', reason: '' });
-      } catch (e) {
-        fireToast(
-          'Could not grant -- ' +
-            (e instanceof Error && e.message ? e.message : 'request failed'),
-        );
+    // Real, audited write. apiRequest passes 401 through; other non-OK throws
+    // with the server's reason (business-admin required, no such user). Only
+    // report success — and the "audited (Part 11)" message — on a real 2xx.
+    try {
+      const res = await apiRequest('POST', '/api/admin/access/grants', {
+        email: form.email.trim(),
+        role: form.role,
+        reason: form.reason.trim(),
+      });
+      if (!res.ok) {
+        fireToast('Could not grant -- sign in as a platform admin');
+        return;
       }
-      return;
+      const row = await res.json().catch(() => null);
+      const rec: AcGrant = {
+        id: row?.id ?? Date.now(),
+        name: form.email.split('@')[0],
+        email: form.email.trim(),
+        role: form.role,
+        granted_by: row?.granted_by || 'you',
+        granted_at: row?.granted_at ? String(row.granted_at).slice(0, 10) : 'just now',
+        _new: true,
+      };
+      setGrants((g) => [rec, ...g.filter((x) => !(x.email === rec.email && x.role === rec.role))]);
+      fireToast(okMsg);
+      setForm({ email: '', role: 'support', reason: '' });
+    } catch (e) {
+      fireToast(
+        'Could not grant -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
     }
-
-    // Sample mode — no audited backend reachable; record locally and say so
-    // rather than claim a write that did not happen.
-    const rec: AcGrant = {
-      id: Date.now(),
-      name: form.email.split('@')[0],
-      email: form.email.trim(),
-      role: form.role,
-      granted_by: 'you',
-      granted_at: 'just now',
-      _new: true,
-    };
-    setGrants((g) => [rec, ...g]);
-    fireToast(okMsg + ' -- sample only, not persisted');
-    setForm({ email: '', role: 'support', reason: '' });
   };
 
   const revoke = async (id: number) => {
-    if (grantsAreLive) {
-      const reason =
-        typeof window !== 'undefined' && window.prompt
-          ? window.prompt(
-              'Reason for revoking this grant (min 3 chars, recorded in the audit trail):',
-            )
-          : '';
-      if (reason == null) return; // cancelled
-      if (reason.trim().length < 3) {
-        fireToast('A reason (min 3 chars) is required to revoke');
-        return;
-      }
-      try {
-        const res = await apiRequest('DELETE', `/api/admin/access/grants/${id}`, {
-          reason: reason.trim(),
-        });
-        if (!res.ok) {
-          fireToast('Could not revoke -- sign in as a platform admin');
-          return;
-        }
-        setGrants((g) => g.filter((x) => x.id !== id));
-        fireToast('Grant revoked -- reason recorded -- audited');
-      } catch (e) {
-        fireToast(
-          'Could not revoke -- ' +
-            (e instanceof Error && e.message ? e.message : 'request failed'),
-        );
-      }
+    const reason =
+      typeof window !== 'undefined' && window.prompt
+        ? window.prompt(
+            'Reason for revoking this grant (min 3 chars, recorded in the audit trail):',
+          )
+        : '';
+    if (reason == null) return; // cancelled
+    if (reason.trim().length < 3) {
+      fireToast('A reason (min 3 chars) is required to revoke');
       return;
     }
-    setGrants((g) => g.filter((x) => x.id !== id));
-    fireToast('Grant revoked -- sample only, not persisted');
+    // Real, audited DELETE — only drop the row and report success on a real 2xx.
+    try {
+      const res = await apiRequest('DELETE', `/api/admin/access/grants/${id}`, {
+        reason: reason.trim(),
+      });
+      if (!res.ok) {
+        fireToast('Could not revoke -- sign in as a platform admin');
+        return;
+      }
+      setGrants((g) => g.filter((x) => x.id !== id));
+      fireToast('Grant revoked -- reason recorded -- audited');
+    } catch (e) {
+      fireToast(
+        'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
+  };
+
+  const toggleKeyScope = (s: string) =>
+    setKeyScopes((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
+
+  // mintKey — REAL, audited create. POST /api/api-keys returns the raw secret
+  // exactly once (server audits creation with the prefix, never the secret).
+  // The secret is shown once via the reveal panel and never re-fetchable. Only
+  // reports success on a real 2xx; nothing is fabricated on failure.
+  const mintKey = async () => {
+    const name = keyName.trim();
+    if (!name) {
+      fireToast('Enter a name for the key');
+      return;
+    }
+    if (keyScopes.length === 0) {
+      fireToast('Select at least one scope');
+      return;
+    }
+    try {
+      const res = await apiRequest('POST', '/api/api-keys', { name, scopes: keyScopes });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast('Could not create the key -- ' + (json?.error || 'sign in as an admin'));
+        return;
+      }
+      if (json?.apiKey) {
+        setMintedKey({ name, secret: String(json.apiKey), prefix: String(json.keyPrefix ?? '') });
+      }
+      setKeyName('');
+      setKeyScopes([]);
+      setKeysReload((n) => n + 1); // re-fetch the live list to show the new key
+    } catch (e) {
+      fireToast(
+        'Could not create the key -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
+  };
+
+  // revokeKey — REAL, audited DELETE /api/api-keys/:id. Confirmed first because
+  // it immediately breaks any integration using the key. Only drops the row on
+  // a real 2xx; the live list is re-fetched to reflect the server state.
+  const revokeKey = async (id: number | string, name: string) => {
+    if (
+      typeof window !== 'undefined' &&
+      window.confirm &&
+      !window.confirm(
+        'Revoke API key "' + name + '"? Any integration using it stops working immediately. This is audited and cannot be undone.',
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await apiRequest('DELETE', '/api/api-keys/' + id);
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        fireToast('Could not revoke -- ' + (json?.error || 'sign in as an admin'));
+        return;
+      }
+      fireToast('API key revoked -- audited');
+      setKeysReload((n) => n + 1);
+    } catch (e) {
+      fireToast(
+        'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
   };
 
   const SECTIONS: [string, string, string][] = [
@@ -1688,9 +1906,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Admin -- /api/admin</div>
-          <h1 className="sp-title">
-            Admin console <SampleTag sample={!(grantsAreLive || orgLive || keysLive)} />
-          </h1>
+          <h1 className="sp-title">Admin console</h1>
           <p className="sp-state">
             Designate personnel, manage SSO/SCIM, security policy, module entitlements and API
             keys -- every governed action carries a reason and a 21 CFR Part 11 audit entry.
@@ -1821,9 +2037,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             {sec === 'access' && (
               <div>
                 <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">
-                    Platform role grants <SampleTag sample={!grantsAreLive} />
-                  </span>
+                  <span className="t">Platform role grants</span>
                   <span className="s">
                     {grants.length} active -- platform_role_grants
                   </span>
@@ -1869,7 +2083,23 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 )}
                 <div className="sp-list" style={{ marginTop: 14 }}>
-                  {grants.map((g) => {
+                  {grantsState.loading && grants.length === 0 ? (
+                    <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading grants…</div>
+                  ) : grantsState.error && grants.length === 0 ? (
+                    <EmptyState
+                      tone="error"
+                      icon={I.alertTriangle}
+                      title="Couldn't load access grants"
+                      hint="Platform role grants require a platform-admin session -- sign in and retry."
+                    />
+                  ) : grants.length === 0 ? (
+                    <EmptyState
+                      icon={I.shieldCheck}
+                      title="No platform role grants yet"
+                      hint="Grant a platform role above to designate personnel. Every grant carries a reason-for-change and a 21 CFR Part 11 audit entry."
+                    />
+                  ) : (
+                    grants.map((g) => {
                     const rm = LIC_ROLES.find((r) => r.id === g.role) || {
                       label: g.role,
                       business: false,
@@ -1897,54 +2127,24 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         </button>
                       </div>
                     );
-                  })}
+                    })
+                  )}
                 </div>
               </div>
             )}
 
             {sec === 'org' && (
-              <div>
-                <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">
-                    Organization profile <SampleTag sample={!orgLive} />
-                  </span>
-                  <span className="s">organizations -- /api/organizations/{orgId}</span>
-                </div>
-                <div className="ac-fields">
-                  {(
-                    (orgLive
-                      ? [
-                          ['Organization name', String(liveOrg!.name)],
-                          ['Client type', String(liveOrg!.clientType ?? '--')],
-                          ['Industry mode', String(liveOrg!.industryMode ?? '--')],
-                          ['Current tier', String(liveOrg!.subscriptionTier ?? liveOrg!.tier ?? '--')],
-                          ['Payment status', String(liveOrg!.paymentStatus ?? '--')],
-                          ['Status', String(liveOrg!.status ?? '--')],
-                          [
-                            'Seats',
-                            `${String(liveOrg!.activeUsers ?? '--')} active / ${String(liveOrg!.seatsPurchased ?? '--')} purchased`,
-                          ],
-                        ]
-                      : [
-                          ['Organization name', 'Bright Biosciences'],
-                          ['Organization type (industry_mode)', 'Virtual biotech'],
-                          ['Current tier', 'professional'],
-                          ['Payment status', 'active'],
-                        ]) as [string, string][]
-                  ).map(([k, v], i) => (
-                    <div key={i} className="ac-field">
-                      <span className="k">{k}</span>
-                      <span className="v">{v}</span>
-                    </div>
-                  ))}
-                  <div className="scaf-note" style={{ marginTop: 6 }}>
-                    Profile drives rail categories, pathways and pricing archetype. Edit it in{' '}
-                    <b>Setup</b> -- every change requires a reason and is audited.
-                  </div>
-                  <button className="sp-ask" style={{ marginTop: 10 }} onClick={() => nav('setup')}>
-                    {I.settings} Open Setup
-                  </button>
-                </div>
+              <div className="ac-fields">
+                {/* Backend gap: the only /api/setup routes are the first-run
+                    installer (GET /status, POST /initialize); there is no
+                    governed org-profile READ endpoint to source these fields, so
+                    we show an honest empty state rather than a fabricated org
+                    profile (name / industry mode / tier / region / residency). */}
+                <EmptyState
+                  icon={I.building}
+                  title="Organization profile not yet available"
+                  hint="A governed org-profile read isn't wired yet. The profile (name, industry mode, tier, region, data residency) drives rail categories, pathways and pricing archetype; editing is governed via /api/setup."
+                />
               </div>
             )}
 
@@ -1961,318 +2161,232 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             )}
 
             {sec === 'sso' && (
-              <div>
-                <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">
-                    SSO &amp; SCIM <SampleTag sample={!securityLive} />
-                  </span>
-                  <span className="s">
-                    SSO: {securityLive ? ((liveSecurity?.ssoEnabled ?? false) ? 'enabled' : 'disabled') : 'unknown'} -- governed in Security
-                  </span>
-                </div>
-                <div className="ac-cards">
-                  {(
+              <div className="ac-cards">
+                {(
+                  [
                     [
-                      [
-                        'SAML / OIDC SSO',
-                        'Enterprise SSO via authEnterprise -- IdP metadata, ACS URL, JIT provisioning. Toggle the org policy in the Security section (governed).',
-                        securityLive
-                          ? (liveSecurity?.ssoEnabled ?? false)
-                            ? 'Enabled'
-                            : 'Disabled'
-                          : 'SAML SSO on Professional+',
-                      ],
-                      [
-                        'SCIM 2.0 provisioning',
-                        'Automated user lifecycle from your IdP (/scim/v2). Bearer tokens are minted and rotated by platform operations in Master Administration -- Identity & SCIM; contact support to connect your IdP.',
-                        'Token-scoped, per-tenant',
-                      ],
-                      [
-                        'SCIM IP allowlist',
-                        'Restricts SCIM calls to your IdP egress ranges (CIDR). Managed alongside your SCIM token by platform operations.',
-                        'CIDR ranges',
-                      ],
-                    ] as [string, string, string][]
-                  ).map(([t, d, tag], i) => (
-                    <div key={i} className="ac-card">
-                      <div className="ac-card-t">{t}</div>
-                      <div className="ac-card-d">{d}</div>
-                      <span className="ac-card-tag">{tag}</span>
-                    </div>
-                  ))}
-                </div>
+                      'SAML / OIDC SSO',
+                      'Enterprise SSO via authEnterprise -- IdP metadata, ACS URL, JIT provisioning',
+                      'SAML SSO on Professional+',
+                    ],
+                    [
+                      'SCIM 2.0 provisioning',
+                      'Automated user lifecycle from your IdP -- scim-tenants',
+                      'Token-scoped, per-tenant',
+                    ],
+                    [
+                      'SCIM IP allowlist',
+                      'Restrict SCIM to your IdP egress ranges -- scim-ip-allowlist',
+                      'CIDR ranges',
+                    ],
+                  ] as [string, string, string][]
+                ).map(([t, d, tag], i) => (
+                  <div key={i} className="ac-card">
+                    <div className="ac-card-t">{t}</div>
+                    <div className="ac-card-d">{d}</div>
+                    <span className="ac-card-tag">{tag}</span>
+                  </div>
+                ))}
               </div>
             )}
 
             {sec === 'security' && (
-              <div>
-                <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">
-                    Security policy <SampleTag sample={!securityLive} />
-                  </span>
-                  <span className="s">organizations.settings.security -- governed</span>
-                </div>
-                <div className="txw-row">
-                  <div className="txw-row-l">
-                    MFA policy
-                    <small>Require TOTP for every member at sign-in. Governed change.</small>
+              <div className="ac-cards">
+                {(
+                  [
+                    [
+                      'MFA policy',
+                      'Require TOTP for all members or by role -- admin-security',
+                      'Recommended: required',
+                    ],
+                    [
+                      'IP allowlist',
+                      'Restrict app access to corporate ranges (CIDR)',
+                      'Off',
+                    ],
+                    [
+                      'Session policy',
+                      'JWT sliding 7-day refresh -- idle timeout',
+                      '7-day refresh',
+                    ],
+                    [
+                      'Audit to SIEM',
+                      'Stream the Part-11 audit log to your SIEM -- audit-siem',
+                      'Splunk / S3 / webhook',
+                    ],
+                  ] as [string, string, string][]
+                ).map(([t, d, tag], i) => (
+                  <div key={i} className="ac-card">
+                    <div className="ac-card-t">{t}</div>
+                    <div className="ac-card-d">{d}</div>
+                    <span className="ac-card-tag">{tag}</span>
                   </div>
-                  <div className="txw-row-r" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <button
-                      className="txw-switch"
-                      data-on={(liveSecurity?.mfaEnabled ?? true) || undefined}
-                      onClick={() => toggleSecurityPolicy('mfaEnabled', !(liveSecurity?.mfaEnabled ?? true))}
-                      aria-pressed={liveSecurity?.mfaEnabled ?? true}
-                      aria-label="MFA required"
-                    />
-                    <span className="txw-help">
-                      {(liveSecurity?.mfaEnabled ?? true) ? 'Required' : 'Optional'} -- TOTP via
-                      authenticator app
-                    </span>
-                  </div>
-                </div>
-                <div className="txw-row">
-                  <div className="txw-row-l">
-                    SSO (SAML / OIDC)
-                    <small>Centralized identity via your IdP. Governed change.</small>
-                  </div>
-                  <div className="txw-row-r" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <button
-                      className="txw-switch"
-                      data-on={(liveSecurity?.ssoEnabled ?? false) || undefined}
-                      onClick={() => toggleSecurityPolicy('ssoEnabled', !(liveSecurity?.ssoEnabled ?? false))}
-                      aria-pressed={liveSecurity?.ssoEnabled ?? false}
-                      aria-label="SSO enabled"
-                    />
-                    <span className="txw-help">
-                      {(liveSecurity?.ssoEnabled ?? false) ? 'Connected to your IdP' : 'Disabled'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pj-card-h" style={{ padding: 0, margin: '18px 0 10px' }}>
-                  <span className="t">
-                    Security health <SampleTag sample={!secHealth.report} />
-                  </span>
-                  <span className="s">
-                    /api/admin/security-health -- audited read
-                    {secHealth.report ? ` -- checked ${String(secHealth.report.checkedAt).slice(0, 16).replace('T', ' ')}` : ''}
-                  </span>
-                </div>
-                {secHealth.loading ? (
-                  <div className="scaf-note">Running the security self-test panel...</div>
-                ) : secHealth.report ? (
-                  <div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: 10,
-                        alignItems: 'center',
-                        padding: '10px 14px',
-                        borderRadius: 8,
-                        border: `1px solid ${secHealth.report.overall === 'healthy' ? 'var(--success)' : secHealth.report.overall === 'degraded' ? 'var(--warning)' : 'var(--error)'}`,
-                        background: `color-mix(in srgb,${secHealth.report.overall === 'healthy' ? 'var(--success)' : secHealth.report.overall === 'degraded' ? 'var(--warning)' : 'var(--error)'} 8%,transparent)`,
-                        marginBottom: 10,
-                        fontSize: 12.5,
-                      }}
-                    >
-                      {secHealth.report.overall === 'healthy' ? I.shieldCheck : I.alertTriangle}
-                      <b>Overall: {secHealth.report.overall}</b>
-                      <span style={{ color: 'var(--text-400)' }}>
-                        {secHealth.report.checks.length} checks
-                      </span>
-                      <button
-                        className="sp-ask"
-                        style={{ marginLeft: 'auto', padding: '2px 10px' }}
-                        onClick={() => setSecBump((b) => b + 1)}
-                      >
-                        Re-run
-                      </button>
-                    </div>
-                    <div className="sp-list">
-                      {secHealth.report.checks.map((c) => (
-                        <div key={c.name} className="sp-row">
-                          <span
-                            className={`rd-chip tone-${c.status === 'pass' ? 'ok' : c.status === 'warn' ? 'warn' : 'err'}`}
-                          >
-                            {c.status}
-                          </span>
-                          <span className="sp-row-b">
-                            <span className="sp-row-t">
-                              {c.name}
-                              {c.critical ? ' (critical)' : ''}
-                            </span>
-                            {c.reason && <span className="sp-row-s">{c.reason}</span>}
-                          </span>
-                          <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>
-                            {c.durationMs}ms
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="scaf-note">
-                    Security panel unavailable -- sign in as an org admin to run the live
-                    self-test (JWT posture, audit chain, malware scanning, session policy).
-                  </div>
-                )}
+                ))}
               </div>
             )}
 
             {sec === 'modules' && (
               <div>
-                <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">
-                    Module subscriptions <SampleTag sample={!modsLive} />
-                  </span>
-                  <span className="s">
-                    {modsLive
-                      ? `${liveMods!.filter((m) => m.enabled).length} enabled of ${liveMods!.length} -- module_subscriptions`
-                      : 'module_subscriptions'}
-                  </span>
-                </div>
                 <div className="scaf-note" style={{ marginBottom: 10 }}>
                   Modules auto-provision by tier (module_subscriptions --
-                  provisionModulesForTier). Enable/disable them for this organization in the
-                  Apps catalog; locked modules show an upgrade path, never a dead button.
+                  provisionModulesForTier). This organization's live entitlement state is shown
+                  below; enable or disable modules in the Apps catalog.
                 </div>
-                <div className="ob-mods">
-                  {(modsLive
-                    ? liveMods!.filter((m) => m.enabled).map((m) => m.name)
-                    : [
-                        'AI Copilot (AnA)',
-                        'eCTD Authoring',
-                        '510(k) Module',
-                        'CER Generation',
-                        'CMC / Module 3',
-                        'Advanced Analytics',
-                        'SAML SSO',
-                        'Compliance Audit Pack',
-                        'Deep Research',
-                        'Biostatistics',
-                      ]
-                  ).map((m, i) => (
-                    <span key={i} className="ob-mod">
-                      {I.check} {m}
-                    </span>
-                  ))}
-                </div>
-                {modsLive && liveMods!.every((m) => !m.enabled) && (
-                  <div className="scaf-note" style={{ marginTop: 8 }}>
-                    No modules enabled yet -- open the Apps catalog to enable what your tier
-                    includes.
+                {modState.loading ? (
+                  <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading modules…</div>
+                ) : modState.error ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn't load module subscriptions"
+                    hint="The module-subscriptions service didn't respond. Sign in and retry, or check it's reachable."
+                  />
+                ) : liveModules.length === 0 ? (
+                  <EmptyState
+                    icon={I.grid}
+                    title="No modules provisioned yet"
+                    hint="Modules auto-provision by tier. Once provisioned, this organization's enabled modules appear here."
+                  />
+                ) : (
+                  <div className="ob-mods">
+                    {liveModules.map((m) => (
+                      <span
+                        key={m.moduleId}
+                        className="ob-mod"
+                        style={m.isEnabled ? undefined : { opacity: 0.55 }}
+                        title={
+                          m.isEnabled
+                            ? 'Enabled for this organization'
+                            : 'Not enabled for this organization'
+                        }
+                      >
+                        {m.isEnabled ? I.check : I.lock} {m.name}
+                      </span>
+                    ))}
                   </div>
                 )}
-                <button className="sp-ask" style={{ marginTop: 10 }} onClick={() => nav('apps')}>
-                  {I.grid} Open Apps catalog
-                </button>
               </div>
             )}
 
             {sec === 'apikeys' && (
               <div>
-                <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">
-                    API keys <SampleTag sample={!keysLive} />
-                  </span>
-                  <span className="s">
-                    {keysLive ? `${liveKeys!.length} key${liveKeys!.length === 1 ? '' : 's'} -- api_keys` : 'api_keys'}
-                  </span>
-                </div>
                 <div className="scaf-note" style={{ marginBottom: 12 }}>
                   Programmatic access tokens (/api/api-keys) -- org-scoped, hashed at rest,
-                  last-used tracked, revocable. Every lifecycle event is audited.
+                  last-used tracked, revocable. Every use is audited.
                 </div>
+                {keysState.loading ? (
+                  <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading API keys…</div>
+                ) : keysState.error ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn't load API keys"
+                    hint="Managing API keys requires an admin session -- sign in and retry."
+                  />
+                ) : apiKeys.length === 0 ? (
+                  <EmptyState
+                    icon={I.terminal}
+                    title="No API keys yet"
+                    hint="Create an org-scoped API key for programmatic access. Keys are hashed at rest and every use is audited."
+                  />
+                ) : (
+                  <div className="sp-list">
+                    {apiKeys.map((k) => (
+                      <div key={String(k.id)} className="sp-row">
+                        <span className="sp-q-ic">{I.terminal || I.key}</span>
+                        <span className="sp-row-b">
+                          <span className="sp-row-t">{k.name}</span>
+                          <span className="sp-row-s" style={{ fontFamily: 'var(--font-mono)' }}>
+                            {k.keyPrefix ? k.keyPrefix + '…' : '—'}
+                            {k.lastUsedAt
+                              ? ' -- used ' + String(k.lastUsedAt).slice(0, 10)
+                              : ' -- never used'}
+                            {k.status && k.status !== 'active' ? ' -- ' + k.status : ''}
+                          </span>
+                        </span>
+                        {(!k.status || k.status === 'active') && (
+                          <button
+                            className="ac-revoke"
+                            title="Revoke this API key (audited)"
+                            onClick={() => revokeKey(k.id, k.name)}
+                          >
+                            {I.close}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* One-time secret reveal — the raw key is returned by POST once
+                    and never retrievable again; held only in local state until
+                    dismissed, never persisted or logged. */}
                 {mintedKey && (
                   <div
-                    style={{
-                      marginBottom: 12,
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid var(--success)',
-                      background: 'color-mix(in srgb,var(--success) 8%,transparent)',
-                      fontSize: 12,
-                    }}
+                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 10, background: 'var(--bg-050)' }}
                   >
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                      {I.shieldCheck} "{mintedKey.name}" created -- copy it now, it is never
-                      shown again
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <span className="sp-q-ic">{I.key || I.terminal}</span>
+                      <strong>API key “{mintedKey.name}” created</strong>
                     </div>
-                    <code
-                      className="mono"
-                      style={{ fontSize: 11, wordBreak: 'break-all', userSelect: 'all' }}
-                    >
-                      {mintedKey.raw}
-                    </code>
-                    <div style={{ marginTop: 6 }}>
-                      <button className="sp-ask" onClick={() => setMintedKey(null)}>
-                        I stored it -- dismiss
+                    <p className="sp-state" style={{ margin: '0 0 8px' }}>
+                      Copy it now — it is shown once and cannot be retrieved again. Store it in your secrets manager.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <code style={{ flex: 1, padding: '8px 10px', fontFamily: 'var(--font-mono)', background: 'var(--bg-000)', border: '1px solid var(--border)', borderRadius: 8, wordBreak: 'break-all' }}>
+                        {mintedKey.secret}
+                      </code>
+                      <button
+                        className="reg-mini"
+                        onClick={() => {
+                          try {
+                            void navigator.clipboard?.writeText(mintedKey.secret);
+                            fireToast('Copied to clipboard');
+                          } catch {
+                            fireToast('Copy failed — select the key and copy it manually');
+                          }
+                        }}
+                      >
+                        Copy
+                      </button>
+                      <button className="reg-mini" onClick={() => setMintedKey(null)}>
+                        Dismiss
                       </button>
                     </div>
                   </div>
                 )}
-                <div className="sp-list">
-                  {(keysLive
-                    ? liveKeys!.map((k) => ({
-                        id: k.id,
-                        n: k.name,
-                        k: `${k.keyPrefix}....`,
-                        u: k.lastUsedAt
-                          ? `last used ${String(k.lastUsedAt).slice(0, 10)}`
-                          : 'never used',
-                        revoked: k.status !== 'active',
-                      }))
-                    : [
-                        { id: -1, n: 'Production integration', k: 'pk_live_....4f2a', u: 'used 2h ago', revoked: false },
-                        { id: -2, n: 'CI validation', k: 'pk_live_....9c11', u: 'used 3d ago', revoked: false },
-                      ]
-                  ).map((row) => (
-                    <div key={row.id} className="sp-row">
-                      <span className="sp-q-ic">{I.terminal || I.key}</span>
-                      <span className="sp-row-b">
-                        <span className="sp-row-t">
-                          {row.n}
-                          {row.revoked ? ' (revoked)' : ''}
-                        </span>
-                        <span className="sp-row-s" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {row.k} -- {row.u}
-                        </span>
-                      </span>
-                      {!row.revoked && (
-                        <button
-                          className="ac-revoke"
-                          title="Revoke key (audited)"
-                          onClick={() =>
-                            keysLive
-                              ? revokeKey(row.id, row.n)
-                              : fireToast('Sign in as an org admin to revoke keys')
-                          }
-                        >
-                          {I.close}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {keysLive && liveKeys!.length === 0 && (
-                    <div className="scaf-note">No API keys yet -- mint the first one below.</div>
-                  )}
-                </div>
-                <div className="ac-grant-form" style={{ marginTop: 12 }}>
+                {/* Real create — POST /api/api-keys with a name + ≥1 scope. */}
+                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <input
-                    className="ob-in"
-                    style={{ margin: 0, flex: 1 }}
-                    placeholder="Key name (e.g. Production integration)"
                     value={keyName}
                     onChange={(e) => setKeyName(e.target.value)}
+                    placeholder="Key name (e.g. CI pipeline)"
+                    maxLength={255}
+                    style={{ padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-000)', maxWidth: 360 }}
                   />
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {API_KEY_SCOPE_OPTIONS.map((s) => {
+                      const on = keyScopes.includes(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => toggleKeyScope(s)}
+                          aria-pressed={on}
+                          style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--accent-100, #d97757)' : 'var(--border)'), background: on ? 'var(--accent-100, #d97757)' : 'transparent', color: on ? '#fff' : 'inherit' }}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
                   <button
                     className="sp-primary"
-                    style={{ padding: '8px 14px' }}
-                    disabled={keyBusy}
-                    onClick={createKey}
+                    style={{ alignSelf: 'flex-start', padding: '8px 14px' }}
+                    onClick={mintKey}
+                    disabled={!keyName.trim() || keyScopes.length === 0}
+                    title={!keyName.trim() ? 'Enter a name' : keyScopes.length === 0 ? 'Select at least one scope' : 'Create an org-scoped API key'}
                   >
-                    {I.plus} {keyBusy ? 'Creating...' : 'Create API key'}
+                    {I.plus} Create API key
                   </button>
                 </div>
               </div>

@@ -12,10 +12,12 @@
 import { useRef, useState } from 'react';
 
 import { I } from './icons';
+import { AgentActivityCard, composeInvestigationPrompt } from './AgentActivityCard';
 import { Composer, type ComposerReadyAttachment } from './Composer';
 import type { EffortLevel } from './ModelEffortPicker';
 import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import type { MessageAttachment } from './useAnaChat';
+import type { AgentActivitySummary } from './useAgentActivity';
 import styles from './styles.module.css';
 
 const AGENCIES = ['FDA', 'EMA', 'PMDA', 'Health Canada', 'MHRA', 'ICH'] as const;
@@ -72,6 +74,8 @@ export interface EmptyStateProps {
   onModelOverrideChange?: (modelId: string | null) => void;
   /** Project health snapshot, rendered as a compact card above the composer. */
   projectIntelligence?: AnaProjectIntelligence;
+  /** Live background-agent snapshot; renders a card only when work is in flight or fresh. */
+  agentActivity?: AgentActivitySummary;
   /** Guided Safety Narrative submit (E5). Forwarded to the composer's affordance. */
   onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
 }
@@ -106,6 +110,7 @@ export function EmptyState({
   modelOverride,
   onModelOverrideChange,
   projectIntelligence,
+  agentActivity,
   onSafetyNarrative,
 }: EmptyStateProps) {
   const [draft, setDraft] = useState('');
@@ -184,6 +189,10 @@ export function EmptyState({
             )}
           </div>
         )}
+        <AgentActivityCard
+          summary={agentActivity}
+          onOpenInvestigation={item => send(composeInvestigationPrompt(item))}
+        />
         <Composer
           value={draft}
           onChange={setDraft}

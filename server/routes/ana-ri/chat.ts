@@ -15,6 +15,12 @@ import type { QueryResult, QueryResultRow } from 'pg';
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
+  resolveThinkingConfig,
+  isSubstantiveTurn,
+  resolveModelTier,
+  resolveTierModel,
+} from '../../services/ai-gateway/reasoning.js';
+import {
   orchestrate,
   type OrchestratorInput,
 } from '../../services/ana-ri/orchestrator.js';
@@ -460,21 +466,26 @@ router.post('/chat', async (req: Request, res: Response) => {
     const fileIds = req.body.file_ids;
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
-        const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
-          [fileIds, orgId ? Number(orgId) : 0]
+        // Shared tenant-scoped lookup — checks both the organization column and
+        // the storage-path prefix. See uploaded-file-access.ts.
+        const { loadUploadedFileMetadata } = await import(
+          '../../services/ana/uploaded-file-access.js'
         );
-        if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows
-            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+        const attachedFiles = await loadUploadedFileMetadata(
+          fileIds,
+          orgId != null ? Number(orgId) : null
+        );
+        if (attachedFiles.length > 0) {
+          const fileContext = attachedFiles
+            .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)
             .join('\n');
           messages.push({
             role: 'user' as const,
             content: `[The user has attached the following files to this message:\n${fileContext}\nReference these files in your response when relevant.]`,
           });
         }
-      } catch {
-        /* non-blocking */
+      } catch (fileErr: any) {
+        console.warn('[AnA RI Chat] Attachment context failed:', fileErr?.message);
       }
     }
 
@@ -495,10 +506,42 @@ router.post('/chat', async (req: Request, res: Response) => {
         ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
         : undefined;
 
-    const chatThinkingConfig =
-      routingPlan.riskTier === 'high'
-        ? { enabled: true, budgetTokens: 10_000 }
-        : undefined;
+    // Extended thinking — same effort-scaled policy as the stream path (see
+    // reasoning.ts). This non-streaming evidence/Firecrawl fallback has no
+    // effort picker, so it resolves at the default Balanced effort: reason on
+    // substantive or high-risk turns, stay quick on casual ones. The gateway
+    // clamps any budget below max_tokens on the legacy thinking surface.
+    const chatSubstantive = isSubstantiveTurn({
+      messageLength: typeof message === 'string' ? message.length : 0,
+      intentLens: orchestration.detectedIntent?.lens,
+    });
+    const chatThinkingResolved = resolveThinkingConfig({
+      effort: 'balanced',
+      riskTier: routingPlan.riskTier,
+      substantive: chatSubstantive,
+    });
+    const chatThinkingConfig = chatThinkingResolved.enabled ? chatThinkingResolved : undefined;
+
+    // Cost-tiered model selection — same policy and precedence as the stream
+    // path: yields to an explicit provider preference and to a governance-
+    // pinned strategy; opt-out via ANA_MODEL_TIERING=off; tier remap via
+    // ANA_TIER_*_MODEL. Keeps this fallback path off the flagship for routine
+    // turns too.
+    const chatTieredModel = (() => {
+      if (validatedProvider) return null; // user pinned a provider
+      if (executionCtx.policyHint?.preferredStrategy) return null; // governance owns the strategy
+      if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+      const tier = resolveModelTier({
+        effort: 'balanced',
+        riskTier: routingPlan.riskTier,
+        intentLens: orchestration.detectedIntent?.lens,
+        taskType: routingPlan.taskType,
+        substantive: chatSubstantive,
+      });
+      const enabledModels =
+        typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+      return resolveTierModel(tier, enabledModels, process.env);
+    })();
     // Server-side tools only on this path — web_search / web_fetch /
     // code_execution resolve inside Anthropic's infrastructure and return
     // their results as content blocks, so no agentic loop is required.
@@ -515,6 +558,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(chatThinkingConfig ? { thinking: chatThinkingConfig } : {}),
       ...(validatedProvider ? { provider: validatedProvider } : {}),
+      // Mutually exclusive with validatedProvider (the tier yields to it above).
+      ...(chatTieredModel
+        ? { provider: chatTieredModel.provider, model: chatTieredModel.model }
+        : {}),
       ...(chatServerTools.length > 0 ? { tools: chatServerTools } : {}),
     });
 

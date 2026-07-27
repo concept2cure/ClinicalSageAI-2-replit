@@ -26,6 +26,17 @@
  *   GET    /api/mdx/qms/nonconforming                   list NC products
  *   POST   /api/mdx/qms/nonconforming                   create
  *   PATCH  /api/mdx/qms/nonconforming/:id/disposition   set disposition
+ *
+ *   GET    /api/mdx/qms/changes                         change-control register
+ *   POST   /api/mdx/qms/changes                          create change request
+ *   GET    /api/mdx/qms/changes/summary                  register KPIs
+ *   GET    /api/mdx/qms/changes/:id                      single change + links
+ *   PATCH  /api/mdx/qms/changes/:id                      partial update
+ *   POST   /api/mdx/qms/changes/:id/transition           controlled lifecycle move
+ *   DELETE /api/mdx/qms/changes/:id                      soft-delete
+ *   GET    /api/mdx/qms/changes/:id/links                list cross-references
+ *   POST   /api/mdx/qms/changes/:id/links                link deviation/CAPA/validation/doc
+ *   DELETE /api/mdx/qms/changes/:id/links/:linkId        remove a link
  */
 
 import { Router, Request, Response } from 'express';
@@ -37,6 +48,14 @@ import {
 import { pool } from '../db';
 import auditService from '../services/auditService';
 import { SOP_TEMPLATES, getSopTemplate, type SopSection } from '../services/qms/sopTemplates';
+import {
+  createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
+  listLinks, addLink, removeLink, changeControlSummary,
+  CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
+  LINK_TYPES, LINK_RELATIONSHIPS,
+  InvalidChangeTransitionError, SegregationOfDutiesError,
+  type ChangeState,
+} from '../services/qms/changeControl.service';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -775,6 +794,257 @@ router.patch('/qms/nonconforming/:id/disposition', async (req: Request, res: Res
     });
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'nc-disposition', err); }
+});
+
+/* ─── Change control (ICH Q10 §3.2.3 / EU GMP Annex 15 / 21 CFR 820.30·820.70) ──
+   The governed change-management register + its cross-references to deviations,
+   CAPAs, validation protocols and controlled documents. Lifecycle is a state
+   machine (changeControl.service CHANGE_TRANSITIONS); approval enforces
+   segregation of duties; every transition writes a 21 CFR Part 11 audit entry.
+   Reads fail CLOSED to an honest empty list when the store is not yet
+   provisioned (42P01) so the surface shows its typed fixtures, never a 500. */
+
+const changeCreate = z.object({
+  changeNumber:             z.string().min(1).max(60),
+  title:                    z.string().min(1).max(300),
+  description:              z.string().max(8000).optional().nullable(),
+  changeType:               z.enum(CHANGE_TYPES).optional(),
+  classification:           z.enum(CHANGE_CLASSIFICATIONS).optional(),
+  riskLevel:                z.enum(CHANGE_RISK_LEVELS).optional().nullable(),
+  reason:                   z.string().max(4000).optional().nullable(),
+  impactAssessment:         z.string().max(8000).optional().nullable(),
+  implementationPlan:       z.string().max(8000).optional().nullable(),
+  targetImplementationDate: z.string().date().optional().nullable(),
+  qmsDocumentId:            z.number().int().positive().optional().nullable(),
+  metadata:                 z.record(z.unknown()).optional().nullable(),
+});
+const changePatch = z.object({
+  title:                    z.string().min(1).max(300).optional(),
+  description:              z.string().max(8000).optional().nullable(),
+  changeType:               z.enum(CHANGE_TYPES).optional(),
+  classification:           z.enum(CHANGE_CLASSIFICATIONS).optional(),
+  riskLevel:                z.enum(CHANGE_RISK_LEVELS).optional().nullable(),
+  reason:                   z.string().max(4000).optional().nullable(),
+  impactAssessment:         z.string().max(8000).optional().nullable(),
+  implementationPlan:       z.string().max(8000).optional().nullable(),
+  targetImplementationDate: z.string().date().optional().nullable(),
+  qmsDocumentId:            z.number().int().positive().optional().nullable(),
+});
+const changeTransition = z.object({
+  to:                  z.enum(CHANGE_STATES),
+  effectivenessReview: z.string().max(8000).optional().nullable(),
+});
+const changeListQuery = z.object({
+  status:      z.enum(CHANGE_STATES).optional(),
+  change_type: z.enum(CHANGE_TYPES).optional(),
+});
+const linkCreate = z.object({
+  linkType:     z.enum(LINK_TYPES),
+  linkedRef:    z.string().min(1).max(120),
+  linkedLabel:  z.string().max(300).optional().nullable(),
+  linkedId:     z.number().int().positive().optional().nullable(),
+  relationship: z.enum(LINK_RELATIONSHIPS).optional(),
+  note:         z.string().max(2000).optional().nullable(),
+});
+
+/** True for a "relation does not exist" error — the store is not yet provisioned. */
+function isMissingStore(err: unknown): boolean {
+  return (err as { code?: string } | null)?.code === '42P01';
+}
+
+// List the change-control register (optionally filtered by status / type).
+router.get('/qms/changes', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = changeListQuery.safeParse(req.query);
+  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
+  try {
+    const rows = await listChanges(orgId, {
+      status: parsed.data.status,
+      changeType: parsed.data.change_type,
+    });
+    return ok(res, rows, { count: rows.length });
+  } catch (err) {
+    if (isMissingStore(err)) return ok(res, [], { count: 0, pendingStore: true });
+    return serverError(res, log, 'change-list', err);
+  }
+});
+
+// Register summary (KPIs for the Change Control surface).
+router.get('/qms/changes/summary', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  try {
+    return ok(res, await changeControlSummary(orgId));
+  } catch (err) {
+    if (isMissingStore(err)) {
+      return ok(res, {
+        total: 0, open: 0, awaitingApproval: 0, inImplementation: 0,
+        awaitingVerification: 0, closed: 0, overdueImplementation: 0, byStatus: {},
+      }, { pendingStore: true });
+    }
+    return serverError(res, log, 'change-summary', err);
+  }
+});
+
+// Create a change request.
+router.post('/qms/changes', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = changeCreate.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  try {
+    const row = await createChange(orgId, { ...parsed.data, proposedBy: getUserId(req) });
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.change.create',
+      resourceType: 'qms_change_control', resourceId: row.id,
+      details: { changeNumber: row.change_number, classification: row.classification },
+    });
+    return created(res, row);
+  } catch (err: unknown) {
+    if ((err as { code?: string }).code === '23505') {
+      return clientError(res, 409, 'A change with that number already exists in this org');
+    }
+    return serverError(res, log, 'change-create', err);
+  }
+});
+
+// Single change + its cross-references.
+router.get('/qms/changes/:id', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  try {
+    const change = await getChange(orgId, id);
+    if (!change) return notFoundInTenant(res, 'Change');
+    const links = await listLinks(orgId, id);
+    return ok(res, { ...change, links });
+  } catch (err) { return serverError(res, log, 'change-get', err); }
+});
+
+// Partial update (draft edits; not a lifecycle move — use /transition for that).
+router.patch('/qms/changes/:id', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const parsed = changePatch.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  try {
+    const row = await updateChange(orgId, id, { ...parsed.data, assessedBy: getUserId(req) });
+    if (!row) return notFoundInTenant(res, 'Change');
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.change.update',
+      resourceType: 'qms_change_control', resourceId: id,
+    });
+    return ok(res, row);
+  } catch (err) { return serverError(res, log, 'change-update', err); }
+});
+
+// Advance a change through the controlled lifecycle.
+router.post('/qms/changes/:id/transition', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const parsed = changeTransition.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  try {
+    const row = await transitionChange(orgId, id, parsed.data.to as ChangeState, {
+      userId, effectivenessReview: parsed.data.effectivenessReview,
+    });
+    if (!row) return notFoundInTenant(res, 'Change');
+    void auditService.logAction({
+      tenantId: orgId, userId: userId ?? undefined,
+      action: 'mdx.qms.change.transition',
+      resourceType: 'qms_change_control', resourceId: id,
+      details: { to: parsed.data.to },
+    });
+    return ok(res, row);
+  } catch (err) {
+    if (err instanceof InvalidChangeTransitionError) return clientError(res, 409, err.message);
+    if (err instanceof SegregationOfDutiesError) return clientError(res, 422, err.message);
+    return serverError(res, log, 'change-transition', err);
+  }
+});
+
+// Soft-delete (retire) a change request.
+router.delete('/qms/changes/:id', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  try {
+    const removed = await deleteChange(orgId, id);
+    if (!removed) return notFoundInTenant(res, 'Change');
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.change.delete',
+      resourceType: 'qms_change_control', resourceId: id,
+    });
+    return ok(res, { id, deleted: true });
+  } catch (err) { return serverError(res, log, 'change-delete', err); }
+});
+
+// Cross-references: list.
+router.get('/qms/changes/:id/links', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  try {
+    const rows = await listLinks(orgId, id);
+    return ok(res, rows, { count: rows.length });
+  } catch (err) {
+    if (isMissingStore(err)) return ok(res, [], { count: 0, pendingStore: true });
+    return serverError(res, log, 'change-links-list', err);
+  }
+});
+
+// Cross-references: link a change to a deviation / CAPA / validation / document.
+router.post('/qms/changes/:id/links', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const parsed = linkCreate.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  try {
+    const change = await getChange(orgId, id);
+    if (!change) return notFoundInTenant(res, 'Change');
+    const row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) });
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.change.link',
+      resourceType: 'qms_change_control', resourceId: id,
+      details: { linkType: parsed.data.linkType, linkedRef: parsed.data.linkedRef },
+    });
+    return created(res, row);
+  } catch (err) { return serverError(res, log, 'change-link-add', err); }
+});
+
+// Cross-references: remove a link.
+router.delete('/qms/changes/:id/links/:linkId', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  const linkId = Number(req.params.linkId);
+  if (!Number.isFinite(id) || !Number.isFinite(linkId)) return clientError(res, 422, 'id must be numeric');
+  try {
+    const removed = await removeLink(orgId, id, linkId);
+    if (!removed) return notFoundInTenant(res, 'Link');
+    void auditService.logAction({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.change.unlink',
+      resourceType: 'qms_change_control', resourceId: id,
+      details: { linkId },
+    });
+    return ok(res, { id: linkId, deleted: true });
+  } catch (err) { return serverError(res, log, 'change-link-remove', err); }
 });
 
 export default router;

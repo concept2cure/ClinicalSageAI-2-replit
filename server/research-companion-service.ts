@@ -3,7 +3,6 @@ import { db } from './db';
 import { eq, and, like, or, desc } from 'drizzle-orm';
 import { huggingFaceService, HFModel } from './huggingface-service';
 import { academicKnowledgeService } from './academic-knowledge-service';
-import { protocolKnowledgeService } from './protocol-knowledge-service';
 
 interface ResearchCompanionMemory {
   recentTopics: string[];

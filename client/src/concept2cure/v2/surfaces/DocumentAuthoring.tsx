@@ -1,228 +1,535 @@
 /**
- * Document Authoring -- kit app/Project2.jsx `DocAuthoring` ported.
+ * Document Authoring — the editable regulatory-document canvas.
  *
- * Registry id: `document-authoring` (full: true)
+ * Registry id: `document-authoring` (full: true, hideAna: true)
  *
- * Full-bleed 3-pane editor: document tree (left), editable canvas (center),
- * comments rail (right). Confidence gutters, provenance rows, streaming
- * generation, and per-block flags.
+ * Full-bleed 3-pane editor: document tree (left), editable content canvas
+ * (center), and a review rail (right) that flips between the section's
+ * revision history and its comment thread.
+ *
+ * REAL WIRING (regulated GA product): this surface is driven end-to-end by the
+ * governed authoring store at `/api/authoring` (server/routes/authoring.router.ts,
+ * tables authoring_documents / authoring_sections / doc_revisions /
+ * authoring_comments / authoring_citations):
+ *
+ *   • tree     — GET /api/authoring/docs?module=&status= → documents, and per
+ *                selected document GET /api/authoring/docs/:docId/sections.
+ *   • canvas   — the selected section's `content` is edited in place and saved
+ *                with PATCH /api/authoring/sections/:sectionId. The server
+ *                snapshots the prior content into doc_revisions on every
+ *                content change (revision_created:true), so every save is an
+ *                auditable revision — no client-side fabrication of version ids.
+ *   • history  — GET /api/authoring/sections/:sectionId/history lists the real
+ *                revisions (author + timestamp from the server); Revert POSTs
+ *                /revert {rev_id}, which itself snapshots current content first.
+ *   • comments — GET /api/authoring/documents/:docId/comments reads the thread;
+ *                Add comment POSTs /api/authoring/sections/:sectionId/comment.
+ *
+ * HONESTY: every pane renders live org-scoped data, an honest empty, or an
+ * honest failed-load — never a fixture. Writes are awaited; a success toast
+ * fires only after the server confirms, and on failure nothing local is
+ * mutated. Author attribution shown in history/comments is the server's
+ * (JWT-sourced created_by), never guessed. "Draft with AnA" hands off to the
+ * real assistant (onAsk) rather than injecting fabricated content.
  */
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { SampleTag, useLive } from '../dataConnect';
-import type { DocBlock, DocProgram, DocTreeVolume, DocComment } from '../fixtures/project2-data';
-import {
-  DOC_PROGRAM,
-  DOC_TREE,
-  DOC_BLOCKS_INIT,
-  DOC_COMMENTS,
-  DRAFT_TEXT,
-  STATUS_TONE,
-} from '../fixtures/project2-data';
+import { EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
+import { AuthoringFilingBar } from './AuthoringFilingBar';
+import { AuthoringCollab } from './AuthoringCollab';
+import { AuthoringCreateExport } from './AuthoringCreateExport';
 import '../styles/project-home-v2.css';
 
-/* ── Inline helpers ── */
+/* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
-function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
-  return <span className={`rd-chip tone-${tone}`}>{children}</span>;
+interface AuthDoc {
+  id: string;
+  title: string;
+  module: string | null;
+  product_code: string | null;
+  status: string;
+  updated_at: string | null;
+  section_count: number | string | null;
 }
+
+interface AuthSection {
+  id: string;
+  doc_id: string;
+  code: string;
+  title: string;
+  content: string | null;
+  order_index: number | null;
+  comment_count: number | string | null;
+  revision_count: number | string | null;
+  citation_count: number | string | null;
+  updated_at: string | null;
+}
+
+interface AuthRevision {
+  id: string;
+  section_id: string;
+  content: string | null;
+  created_at: string | null;
+  created_by_name: string | null;
+  created_by_email: string | null;
+}
+
+interface AuthComment {
+  id: string;
+  section_id: string | null;
+  body: string;
+  status: string | null;
+  author_name: string | null;
+  section_code: string | null;
+  section_title: string | null;
+  created_at: string | null;
+}
+
+/* ── Small toast (local per-surface pattern, matches sibling surfaces) ── */
+function useToast(): [string, (m: string) => void] {
+  const [msg, setMsg] = useState('');
+  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fire = useCallback((m: string) => {
+    setMsg(m);
+    if (t.current) clearTimeout(t.current);
+    t.current = setTimeout(() => setMsg(''), 4200);
+  }, []);
+  return [msg, fire];
+}
+function C2CToast({ msg }: { msg: string }) {
+  if (!msg) return null;
+  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
+}
+
+/* ── Helpers ── */
+
+/** GET via apiRequest without throwing — honest {ok,status,body}. */
+async function readJson<T = any>(path: string): Promise<{ ok: boolean; status: number; body: T | null }> {
+  try {
+    const res = await apiRequest('GET', path);
+    const body = (await res.json().catch(() => null)) as T | null;
+    return { ok: res.ok, status: res.status, body };
+  } catch (e) {
+    return { ok: false, status: 0, body: null };
+  }
+}
+
+function num(v: number | string | null | undefined): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Coarse relative time from an ISO timestamp; '' when absent. */
+function relTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const secs = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  const mins = Math.floor(secs / 60);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+  if (days > 0) return `${days} d ago`;
+  if (hrs > 0) return `${hrs} h ago`;
+  if (mins > 0) return `${mins} min ago`;
+  return 'just now';
+}
+
+const MODULES = ['M1', 'M2', 'M3', 'M4', 'M5'];
+const STATUSES = ['draft', 'in_review', 'approved'];
 
 /* ════ Document Authoring surface ════ */
 
 export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
-  const [active, setActive] = useState('m25');
-  const [showComments, setShowComments] = useState(false);
-  const band = (c: number) => (c >= 0.9 ? 'hi' : c >= 0.75 ? 'med' : 'lo');
+  const [module, setModule] = useState('M3');
+  const [status, setStatus] = useState('draft');
 
-  const [blocks, setBlocks] = useState<DocBlock[]>(DOC_BLOCKS_INIT);
-  const [stream, setStream] = useState('');
-  const [busy, setBusy] = useState(false);
+  // Documents for the current filter.
+  const [docs, setDocs] = useState<AuthDoc[]>([]);
+  const [docsState, setDocsState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [activeDocId, setActiveDocId] = useState<string | null>(null);
 
-  // Live authoring workspace — GET /api/document-authoring/workspace → { success,
-  // data: { program, tree, blocks, comments, activeDocumentId, meta } }. useLive
-  // puts the whole body on `.data`, so the workspace is at `.data.data`. program,
-  // tree, and comments fail closed to their project2-data fixtures. The center
-  // canvas blocks stay the DOC_BLOCKS_INIT fixture ALWAYS — the backend returns
-  // [] because no governed per-block confidence/provenance store exists for eCTD
-  // content (fabricating it is forbidden), so the canvas is always shown sample.
-  const ws = useLive<{
-    data?: { program?: DocProgram; tree?: DocTreeVolume[]; comments?: DocComment[] };
-  }>('/api/document-authoring/workspace', {
-    data: { program: DOC_PROGRAM, tree: DOC_TREE, comments: DOC_COMMENTS },
-  });
-  const wsData = ws.data?.data;
-  const treeLive =
-    !ws.sample &&
-    Array.isArray(wsData?.tree) &&
-    wsData!.tree!.length > 0 &&
-    typeof wsData!.tree![0]?.vol === 'string';
-  const tree: DocTreeVolume[] = treeLive ? wsData!.tree! : DOC_TREE;
-  const prog: DocProgram = !ws.sample && wsData?.program ? wsData.program : DOC_PROGRAM;
-  const commentsLive = !ws.sample && Array.isArray(wsData?.comments);
-  const comments: DocComment[] = commentsLive ? wsData!.comments! : DOC_COMMENTS;
-  const treeSample = !treeLive;
-  const commentsSample = !commentsLive;
+  // Sections of the active document.
+  const [sections, setSections] = useState<AuthSection[]>([]);
+  const [sectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
-  const generate = () => {
-    if (busy) return;
-    setBusy(true);
-    setStream('');
-    let i = 0;
-    const tick = () => {
-      i = Math.min(DRAFT_TEXT.length, i + 3);
-      setStream(DRAFT_TEXT.slice(0, i));
-      if (i < DRAFT_TEXT.length) {
-        setTimeout(tick, 16);
-      } else {
-        setTimeout(() => {
-          setBlocks((b) => [
-            ...b,
-            {
-              id: 'g' + Date.now(),
-              kind: 'p',
-              conf: 0.86,
-              spans: [{ t: DRAFT_TEXT }],
-              prov: {
-                source: 'Drafted by AnA from §2.5.1–§2.5.5 + linked evidence',
-                model: 'Maximum',
-                audit: 'AUD-' + (Math.floor(Math.random() * 9000) + 1000),
-              },
-            },
-          ]);
-          setStream('');
-          setBusy(false);
-        }, 250);
+  // The editable buffer for the active section, plus the last-saved baseline.
+  const [draft, setDraft] = useState('');
+  const [savedContent, setSavedContent] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Right rail: revision history or comments.
+  const [rail, setRail] = useState<'history' | 'comments' | null>(null);
+  const [revisions, setRevisions] = useState<AuthRevision[]>([]);
+  const [comments, setComments] = useState<AuthComment[]>([]);
+  const [newComment, setNewComment] = useState('');
+
+  const [toast, fireToast] = useToast();
+
+  const activeDoc = docs.find((d) => d.id === activeDocId) ?? null;
+  const activeSection = sections.find((s) => s.id === activeSectionId) ?? null;
+  const dirty = activeSection != null && draft !== savedContent;
+
+  /* ── Load documents for the current module/status ── */
+  const loadDocs = useCallback(async () => {
+    setDocsState('loading');
+    const { ok, body } = await readJson<{ documents?: AuthDoc[] }>(
+      `/api/authoring/docs?module=${encodeURIComponent(module)}&status=${encodeURIComponent(status)}`,
+    );
+    if (!ok || !body) { setDocsState('error'); setDocs([]); return; }
+    const list = Array.isArray(body.documents) ? body.documents : [];
+    setDocs(list);
+    setDocsState('ready');
+    // Keep the active doc if it survives the new filter; else pick the first.
+    setActiveDocId((cur) => (cur && list.some((d) => d.id === cur) ? cur : list[0]?.id ?? null));
+  }, [module, status]);
+
+  useEffect(() => { void loadDocs(); }, [loadDocs]);
+
+  /* ── Load sections when the active document changes ── */
+  const loadSections = useCallback(async (docId: string) => {
+    setSectionsState('loading');
+    const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
+      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`,
+    );
+    if (!ok || !body) { setSectionsState('error'); setSections([]); return; }
+    const list = Array.isArray(body.sections) ? body.sections : [];
+    setSections(list);
+    setSectionsState('ready');
+    setActiveSectionId((cur) => (cur && list.some((s) => s.id === cur) ? cur : list[0]?.id ?? null));
+  }, []);
+
+  useEffect(() => {
+    if (!activeDocId) { setSections([]); setSectionsState('idle'); setActiveSectionId(null); return; }
+    void loadSections(activeDocId);
+  }, [activeDocId, loadSections]);
+
+  /* ── Sync the editable buffer to the active section ── */
+  useEffect(() => {
+    const content = activeSection?.content ?? '';
+    setDraft(content);
+    setSavedContent(content);
+  }, [activeSectionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Load the right-rail data for the active section on demand ── */
+  const loadHistory = useCallback(async (sectionId: string) => {
+    const { body } = await readJson<{ revisions?: AuthRevision[] }>(
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`,
+    );
+    setRevisions(Array.isArray(body?.revisions) ? body!.revisions! : []);
+  }, []);
+
+  const loadComments = useCallback(async (docId: string) => {
+    const { body } = await readJson<{ comments?: AuthComment[] }>(
+      `/api/authoring/documents/${encodeURIComponent(docId)}/comments`,
+    );
+    setComments(Array.isArray(body?.comments) ? body!.comments! : []);
+  }, []);
+
+  useEffect(() => {
+    if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
+    if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
+  }, [rail, activeSectionId, activeDocId, loadHistory, loadComments]);
+
+  /* ── Save the section content (real, awaited, auto-revisioned) ── */
+  const save = useCallback(async () => {
+    if (!activeSection || !dirty || saving) return;
+    setSaving(true);
+    try {
+      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+        content: draft,
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) { fireToast('Not saved — your session isn’t authenticated. Sign in and retry.'); return; }
+      if (!res.ok) {
+        fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+        return;
       }
-    };
-    tick();
-  };
+      const adopted = (json as { section?: AuthSection })?.section;
+      const persisted = adopted?.content ?? draft;
+      setSavedContent(persisted);
+      setDraft(persisted);
+      // Adopt the server row (revision counter, updated_at) into the tree.
+      setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s)));
+      fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
+      // Keep the history rail fresh if it's open.
+      if (rail === 'history') void loadHistory(activeSection.id);
+    } catch (e) {
+      fireToast('Couldn’t save the section — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    } finally {
+      setSaving(false);
+    }
+  }, [activeSection, dirty, saving, draft, rail, loadHistory, fireToast]);
+
+  /* ── Revert to a prior revision (server snapshots current first) ── */
+  const revert = useCallback(async (revId: string) => {
+    if (!activeSection) return;
+    try {
+      const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/revert`, { rev_id: revId });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) { fireToast('Not reverted — your session isn’t authenticated.'); return; }
+      if (!res.ok) { fireToast('Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.'); return; }
+      const adopted = (json as { section?: AuthSection })?.section;
+      const content = adopted?.content ?? '';
+      setDraft(content);
+      setSavedContent(content);
+      setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s)));
+      fireToast('Section reverted to the selected revision.');
+      void loadHistory(activeSection.id);
+    } catch (e) {
+      fireToast('Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  }, [activeSection, loadHistory, fireToast]);
+
+  /* ── Add a comment on the active section ── */
+  const addComment = useCallback(async () => {
+    if (!activeSection || !activeDocId || !newComment.trim()) return;
+    try {
+      const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/comment`, {
+        body: newComment.trim(),
+        doc_id: activeDocId,
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) { fireToast('Comment not posted — your session isn’t authenticated.'); return; }
+      if (!res.ok) { fireToast('Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.'); return; }
+      setNewComment('');
+      fireToast('Comment added.');
+      void loadComments(activeDocId);
+    } catch (e) {
+      fireToast('Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
+
+  const draftPrompt = activeSection
+    ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
+    : 'Draft this section from the linked section evidence.';
 
   return (
-    <div className="ed" data-comments={showComments || undefined}>
+    <div className="ed" data-comments={rail != null || undefined}>
+      {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
-          <div className="ed-tree-t" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Document tree<SampleTag sample={treeSample} /></div>
-          <div className="ed-tree-m">{prog.readiness != null ? prog.readiness + '% ready' : 'Readiness pending'}{prog.due ? ' · ' + prog.due.replace('FDA filing · ', '') : ''}</div>
+          <div className="ed-tree-t">Document tree</div>
+          <div className="ed-tree-m">{docs.length} document{docs.length === 1 ? '' : 's'} · {module} · {status.replace('_', ' ')}</div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <select className="c2c-input" style={{ height: 28, flex: 1 }} value={module} onChange={(e) => setModule(e.target.value)}>
+              {MODULES.map((m) => <option key={m} value={m}>Module {m.slice(1)}</option>)}
+            </select>
+            <select className="c2c-input" style={{ height: 28, flex: 1 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+              {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+            </select>
+          </div>
         </div>
         <div className="ed-tree-scroll">
-          {tree.map((v) => (
-            <div key={v.vol} className="ed-vol">
-              <div className="ed-vol-l">{v.vol}</div>
-              {v.items.map((s) => (
-                <button
-                  key={s.id}
-                  className="ed-tree-row"
-                  data-active={active === s.id || undefined}
-                  data-blocker={s.blocker || undefined}
-                  onClick={() => setActive(s.id)}
-                >
-                  <span className="ed-num">{s.num}</span>
-                  <span className="ed-lbl">{s.label}</span>
-                  <span className="ed-dot" data-s={s.status} />
-                </button>
-              ))}
-            </div>
-          ))}
+          {docsState === 'loading' ? (
+            <div className="scaf-note" style={{ padding: 16 }}>Loading documents…</div>
+          ) : docsState === 'error' ? (
+            <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load documents"
+              hint="GET /api/authoring/docs didn’t respond. Sign in to your tenant and retry." />
+          ) : docs.length === 0 ? (
+            <EmptyState icon={I.fileText} title="No documents here"
+              hint={`No ${status.replace('_', ' ')} documents in Module ${module.slice(1)}. Switch the module or status filter above.`} />
+          ) : (
+            docs.map((d) => {
+              const open = d.id === activeDocId;
+              return (
+                <div key={d.id} className="ed-vol">
+                  <button
+                    className="ed-tree-row"
+                    data-active={open || undefined}
+                    onClick={() => setActiveDocId(d.id)}
+                    style={{ fontWeight: 600 }}
+                  >
+                    <span className="ed-num">{d.module ?? '—'}</span>
+                    <span className="ed-lbl">{d.title}</span>
+                    <span className="rd-chip tone-dim" style={{ marginLeft: 'auto' }}>{num(d.section_count)}</span>
+                  </button>
+                  {open && (
+                    sectionsState === 'loading' ? (
+                      <div className="scaf-note" style={{ padding: '6px 12px' }}>Loading sections…</div>
+                    ) : sectionsState === 'error' ? (
+                      <div className="scaf-note" style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}>Couldn’t load sections.</div>
+                    ) : sections.length === 0 ? (
+                      <div className="scaf-note" style={{ padding: '6px 12px' }}>No sections yet in this document.</div>
+                    ) : (
+                      sections.map((s) => (
+                        <button
+                          key={s.id}
+                          className="ed-tree-row"
+                          data-active={activeSectionId === s.id || undefined}
+                          onClick={() => setActiveSectionId(s.id)}
+                          style={{ paddingLeft: 22 }}
+                        >
+                          <span className="ed-num">{s.code}</span>
+                          <span className="ed-lbl">{s.title}</span>
+                          {num(s.comment_count) > 0 && <span className="ed-dot" data-s="review" title={`${num(s.comment_count)} comments`} />}
+                        </button>
+                      ))
+                    )
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </aside>
 
+      {/* ── Center: editable canvas ── */}
       <section className="ed-doc">
         <header className="ed-doc-h">
           <div className="ed-crumbs">
-            <span>{prog.code}</span>
+            <span>{activeDoc?.module ?? 'eCTD'}</span>
             <span className="sep">›</span>
-            <span className="here">{prog.section}</span>
+            <span>{activeDoc?.title ?? 'No document'}</span>
+            {activeSection && <><span className="sep">›</span><span className="here">{activeSection.code}</span></>}
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setShowComments(!showComments)}>
-              {I.checkCircle} Comments {comments.length}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <AuthoringCreateExport
+              docId={activeDoc?.id ?? null}
+              docTitle={activeDoc?.title ?? null}
+              module={module}
+              fireToast={fireToast}
+              onDocCreated={(d) => {
+                // Adopt the server's document: refetch the tree and open it.
+                void loadDocs().then(() => setActiveDocId(d.id));
+              }}
+              onSectionCreated={(s) => {
+                if (activeDocId) void loadSections(activeDocId).then(() => setActiveSectionId(s.id));
+              }}
+            />
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'comments' ? null : 'comments')} data-active={rail === 'comments' || undefined}>
+              {I.checkCircle} Comments{activeSection && num(activeSection.comment_count) > 0 ? ' ' + num(activeSection.comment_count) : ''}
             </button>
-            <button className="btn primary" style={{ height: 30 }} onClick={generate} disabled={busy}>
-              {I.sparkles} {busy ? 'Generating...' : 'Draft with AnA'}
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'history' ? null : 'history')} data-active={rail === 'history' || undefined}>
+              {I.clock} History{activeSection && num(activeSection.revision_count) > 0 ? ' ' + num(activeSection.revision_count) : ''}
             </button>
-            <button className="btn ghost" style={{ height: 30 }}>{I.lock} Lock</button>
+            <button className="btn primary" style={{ height: 30 }} onClick={save} disabled={!dirty || saving}>
+              {I.check} {saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}
+            </button>
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => onAsk(draftPrompt)}>
+              {I.sparkles} Draft with AnA
+            </button>
+            {activeDoc && (
+              <AuthoringCollab documentId={activeDoc.id} sectionId={activeSectionId} fireToast={fireToast} />
+            )}
+            {activeDoc && (
+              <AuthoringFilingBar
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                docStatus={activeDoc.status}
+                onChanged={() => { void loadDocs(); if (activeDocId) void loadSections(activeDocId); }}
+                fireToast={fireToast}
+              />
+            )}
           </div>
         </header>
 
         <div className="ed-doc-scroll">
           <div className="ed-doc-inner">
-            <div className="ed-mast">
-              <div className="ed-mast-num">§2.5</div>
-              <h1 className="ed-mast-t" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Clinical overview<SampleTag sample /></h1>
-              <div className="ed-mast-meta">{prog.title ?? 'Untitled'} · sample drafted content</div>
-            </div>
-
-            {blocks.map((b) =>
-              b.kind === 'h2' ? (
-                <h2 key={b.id} className="ed-h2">{b.text}</h2>
-              ) : (
-                <div key={b.id} className="ed-block" data-conf={band(b.conf!)}>
-                  <span className="ed-gutter" />
-                  <p className="ed-p">
-                    {b.spans!.map((s, i) =>
-                      s.cite ? (
-                        <a key={i} className="ed-cite" onClick={(e) => e.preventDefault()}>{s.cite}</a>
-                      ) : (
-                        <React.Fragment key={i}>{s.t}</React.Fragment>
-                      )
-                    )}
-                  </p>
-                  {b.flag && (
-                    <div className="ed-flag" data-sev={b.flag.sev}>
-                      <span className="ico">{I.alertTriangle}</span>
-                      <span>{b.flag.msg}</span>
-                    </div>
-                  )}
-                  <span className="ed-prov">
-                    <span className="ed-prov-r"><span className="k">Source</span><span className="v">{b.prov!.source}</span></span>
-                    <span className="ed-prov-r"><span className="k">Model</span><span className="v">{b.prov!.model}</span></span>
-                    <span className="ed-prov-r"><span className="k">Confidence</span><span className="v">{b.conf!.toFixed(2)}</span></span>
-                    <span className="ed-prov-r"><span className="k">Audit</span><span className="v">{b.prov!.audit}</span></span>
-                  </span>
-                </div>
-              )
-            )}
-
-            {stream && (
-              <div className="ed-block" data-conf="med">
-                <span className="ed-gutter" />
-                <p className="ed-p">{stream}<span className="ed-caret" /></p>
-                <span className="ed-genlbl">* AnA is drafting from the section evidence...</span>
+            {!activeSection ? (
+              <div style={{ paddingTop: 48 }}>
+                <EmptyState icon={I.fileText}
+                  title={activeDoc ? 'Select a section to edit' : 'Select a document'}
+                  hint={activeDoc
+                    ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
+                    : 'Choose a document from the tree to open its sections.'} />
               </div>
+            ) : (
+              <>
+                <div className="ed-mast">
+                  <div className="ed-mast-num">{activeSection.code}</div>
+                  <h1 className="ed-mast-t">{activeSection.title}</h1>
+                  <div className="ed-mast-meta">
+                    {activeDoc?.title ?? ''}
+                    {num(activeSection.revision_count) > 0 ? ` · ${num(activeSection.revision_count)} revisions` : ''}
+                    {num(activeSection.citation_count) > 0 ? ` · ${num(activeSection.citation_count)} citations` : ''}
+                    {dirty ? ' · unsaved changes' : activeSection.updated_at ? ` · saved ${relTime(activeSection.updated_at)}` : ''}
+                  </div>
+                </div>
+                <textarea
+                  className="ed-canvas"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); void save(); } }}
+                  placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
+                  spellCheck
+                  style={{
+                    width: '100%', minHeight: 460, resize: 'vertical', border: '1px solid var(--c2c-line,#e4e7ec)',
+                    borderRadius: 10, padding: '18px 20px', fontSize: 15, lineHeight: 1.7,
+                    fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--c2c-ink,#101828)',
+                    background: 'var(--c2c-surface,#fff)', outline: 'none',
+                  }}
+                />
+              </>
             )}
-
-            <div className="ed-foot">
-              <button className="btn primary" onClick={generate} disabled={busy}>
-                {I.sparkles} {busy ? 'Generating...' : 'Draft next section'}
-              </button>
-            </div>
           </div>
         </div>
       </section>
 
-      {showComments && (
+      {/* ── Right: history / comments rail ── */}
+      {rail === 'history' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Comments<SampleTag sample={commentsSample} /></div>
-          {comments.map((c) => (
-            <div key={c.id} className="cmt" data-ai={c.ai || undefined}>
-              <div className="cmt-meta">
-                <span className="cmt-av">{c.ai ? '*' : c.author.split(' ').map((x) => x[0]).join('')}</span>
-                <b>{c.author}</b>
-                <span className="cmt-role">{c.role}</span>
-                <span className="cmt-when">· {c.when}</span>
-              </div>
-              <div className="cmt-body">{c.body}</div>
-              {c.ai && (
-                <div className="cmt-actions">
-                  <button className="btn primary" style={{ height: 26 }}>Apply</button>
-                  <button className="btn ghost" style={{ height: 26 }}>Dismiss</button>
+          <div className="ed-comments-h">Revision history</div>
+          {!activeSection ? (
+            <EmptyState icon={I.clock} title="No section selected" hint="Select a section to see its revision history." />
+          ) : revisions.length === 0 ? (
+            <EmptyState icon={I.clock} title="No prior revisions"
+              hint="Each save snapshots the previous content here, so you can compare and revert." />
+          ) : (
+            revisions.map((r) => (
+              <div key={r.id} className="cmt">
+                <div className="cmt-meta">
+                  <span className="cmt-av">{(r.created_by_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
+                  <b>{r.created_by_name ?? r.created_by_email ?? 'Unknown author'}</b>
+                  <span className="cmt-when">· {relTime(r.created_at)}</span>
+                  <button className="nda-open" style={{ marginLeft: 'auto' }} onClick={() => revert(r.id)}>{I.rotateCcw} Revert</button>
                 </div>
-              )}
-            </div>
-          ))}
+                <div className="cmt-body" style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}>
+                  {(r.content ?? '').slice(0, 400) || <span style={{ opacity: 0.6 }}>(empty)</span>}
+                </div>
+              </div>
+            ))
+          )}
         </aside>
       )}
+
+      {rail === 'comments' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h">Comments</div>
+          {activeSection && (
+            <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+              <textarea
+                className="c2c-input" value={newComment} onChange={(e) => setNewComment(e.target.value)}
+                placeholder={`Comment on ${activeSection.code}…`}
+                style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                <button className="btn primary" style={{ height: 28 }} onClick={addComment} disabled={!newComment.trim()}>{I.plus} Add comment</button>
+              </div>
+            </div>
+          )}
+          {comments.length === 0 ? (
+            <EmptyState icon={I.checkCircle} title="No comments yet" hint="Review comments on this document appear here." />
+          ) : (
+            comments.map((c) => (
+              <div key={c.id} className="cmt">
+                <div className="cmt-meta">
+                  <span className="cmt-av">{(c.author_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
+                  <b>{c.author_name ?? 'Unknown'}</b>
+                  {c.section_code && <span className="cmt-role">{c.section_code}</span>}
+                  <span className="cmt-when">· {relTime(c.created_at)}</span>
+                  {c.status && c.status !== 'open' && <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>{c.status}</span>}
+                </div>
+                <div className="cmt-body">{c.body}</div>
+              </div>
+            ))
+          )}
+        </aside>
+      )}
+
+      <C2CToast msg={toast} />
     </div>
   );
 }

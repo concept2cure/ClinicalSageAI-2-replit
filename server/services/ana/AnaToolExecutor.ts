@@ -146,12 +146,18 @@ import type {
 import { ragRouter } from '../ragRouter';
 import {
   runAgenticToolLoop,
+  resolveMaxRounds,
+  resolveRoundExtension,
   capToolResultForModel,
+  budgetToolResultsForModel,
+  buildAdaptationNote,
   mapWithConcurrency,
   type ToolCall,
   type ModelTurn,
   type ToolResultEntry,
+  type FailedToolCall,
 } from './agentic-loop.js';
+import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -13133,6 +13139,75 @@ registerToolHandler('approve_qms_document', async (input, ctx) => {
   }
 });
 
+registerToolHandler('revise_qms_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
+  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required to open a controlled revision (21 CFR Part 11) — ask the user for it.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const cur = await getPool().query<{ version: string }>(
+      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, ctx.organizationId],
+    );
+    if (cur.rows.length === 0) return JSON.stringify({ error: `Document ${id} not found in this organization.` });
+    const m = /^(\d+)/.exec(String(cur.rows[0].version ?? '').trim());
+    const newVersion = `${(m ? parseInt(m[1], 10) : 1) + 1}.0`;
+    const { rows } = await getPool().query(
+      `UPDATE qms_documents
+          SET status = 'draft', version = $3, approver_id = NULL, approved_at = NULL,
+              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+                'lastRevision', jsonb_build_object('reason', $4::text, 'from', $5::text, 'at', NOW(), 'by', $6::int)),
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          AND status IN ('effective','superseded','retired','in_review')
+        RETURNING id, doc_number, version, status`,
+      [id, ctx.organizationId, newVersion, reason, cur.rows[0].version, ctx.userId ?? null],
+    );
+    if (rows.length === 0) return JSON.stringify({ error: 'Document cannot be revised from its current state.' });
+    const auditService = (await import('../auditService.js')).default;
+    void auditService.logAction({
+      tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
+      action: 'mdx.qms.document.revise', resourceType: 'qms_document', resourceId: id,
+      details: { reason, from: cur.rows[0].version, to: newVersion, via: 'ana' },
+    });
+    return JSON.stringify({ ok: true, ...rows[0], message: `Opened revision of ${rows[0].doc_number} → v${newVersion} (draft).` });
+  } catch (err) {
+    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('retire_qms_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'retire_qms_document requires tenant context.' });
+  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : null;
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `UPDATE qms_documents
+          SET status = 'retired',
+              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+                'retired', jsonb_build_object('reason', $3::text, 'at', NOW(), 'by', $4::int)),
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
+        RETURNING id, doc_number, status`,
+      [id, ctx.organizationId, reason, ctx.userId ?? null],
+    );
+    if (rows.length === 0) return JSON.stringify({ error: 'Document not found, or already retired.' });
+    const auditService = (await import('../auditService.js')).default;
+    void auditService.logAction({
+      tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
+      action: 'mdx.qms.document.retire', resourceType: 'qms_document', resourceId: id,
+      details: { reason, via: 'ana' },
+    });
+    return JSON.stringify({ ok: true, ...rows[0], message: `Retired document ${rows[0].doc_number}.` });
+  } catch (err) {
+    return JSON.stringify({ error: `retire_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('ack_training', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });
   if (!ctx.userId) return JSON.stringify({ error: 'ack_training requires user context.' });
@@ -13167,6 +13242,192 @@ registerToolHandler('ack_training', async (input, ctx) => {
     return JSON.stringify({
       error: `ack_training failed: ${err instanceof Error ? err.message : String(err)}`,
     });
+  }
+});
+
+// ── Change control (ICH Q10 / Annex 15) — call the shared service so the tool
+//    inherits the controlled lifecycle, segregation-of-duties and validation the
+//    REST routes use. Each governed action writes a 21 CFR Part 11 audit entry.
+registerToolHandler('qms_change_create', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_create requires tenant context.' });
+  const changeNumber = typeof input.change_number === 'string' ? input.change_number.trim() : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!changeNumber || !title) return JSON.stringify({ error: 'change_number and title are required.' });
+  try {
+    const { createChange } = await import('../qms/changeControl.service.js');
+    const row = await createChange(ctx.organizationId, {
+      changeNumber, title,
+      description: typeof input.description === 'string' ? input.description : null,
+      changeType: typeof input.change_type === 'string' ? input.change_type : undefined,
+      classification: typeof input.classification === 'string' ? input.classification : undefined,
+      riskLevel: typeof input.risk_level === 'string' ? input.risk_level : null,
+      reason: typeof input.reason === 'string' ? input.reason : null,
+      impactAssessment: typeof input.impact_assessment === 'string' ? input.impact_assessment : null,
+      implementationPlan: typeof input.implementation_plan === 'string' ? input.implementation_plan : null,
+      targetImplementationDate: typeof input.target_implementation_date === 'string' ? input.target_implementation_date : null,
+      qmsDocumentId: typeof input.qms_document_id === 'number' ? input.qms_document_id : null,
+      proposedBy: ctx.userId ?? null,
+    });
+    const auditService = (await import('../auditService.js')).default;
+    void auditService.logAction({
+      tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
+      action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id,
+      details: { changeNumber: row.change_number, classification: row.classification, via: 'ana' },
+    });
+    return JSON.stringify({ ok: true, ...row, message: `Raised change ${row.change_number} (${row.status}).` });
+  } catch (err: unknown) {
+    if ((err as { code?: string }).code === '23505') return JSON.stringify({ error: 'A change with that number already exists in this organization.' });
+    return JSON.stringify({ error: `qms_change_create failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('qms_change_transition', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_transition requires tenant context.' });
+  const id = typeof input.change_id === 'number' ? input.change_id : NaN;
+  const to = typeof input.to === 'string' ? input.to : '';
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+  if (!Number.isFinite(id)) return JSON.stringify({ error: 'change_id (number) is required.' });
+  if (!to) return JSON.stringify({ error: 'to (target lifecycle state) is required.' });
+  if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required for this governed (21 CFR Part 11) transition — ask the user for it.' });
+  try {
+    const svc = await import('../qms/changeControl.service.js');
+    const row = await svc.transitionChange(ctx.organizationId, id, to as Parameters<typeof svc.transitionChange>[2], {
+      userId: ctx.userId ?? null,
+      effectivenessReview: typeof input.effectiveness_review === 'string' ? input.effectiveness_review : null,
+    });
+    if (!row) return JSON.stringify({ error: `Change ${id} not found in this organization.` });
+    const auditService = (await import('../auditService.js')).default;
+    void auditService.logAction({
+      tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
+      action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id,
+      details: { to, reason, via: 'ana' },
+    });
+    return JSON.stringify({ ok: true, governed: true, ...row, message: `Change ${id} → ${row.status}.` });
+  } catch (err: unknown) {
+    // InvalidChangeTransitionError / SegregationOfDutiesError carry human-readable messages.
+    return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
+  }
+});
+
+registerToolHandler('qms_change_link', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_link requires tenant context.' });
+  const id = typeof input.change_id === 'number' ? input.change_id : NaN;
+  const linkType = typeof input.link_type === 'string' ? input.link_type : '';
+  const linkedRef = typeof input.linked_ref === 'string' ? input.linked_ref.trim() : '';
+  if (!Number.isFinite(id)) return JSON.stringify({ error: 'change_id (number) is required.' });
+  if (!linkType || !linkedRef) return JSON.stringify({ error: 'link_type and linked_ref are required.' });
+  try {
+    const { getChange, addLink } = await import('../qms/changeControl.service.js');
+    const change = await getChange(ctx.organizationId, id);
+    if (!change) return JSON.stringify({ error: `Change ${id} not found in this organization.` });
+    const row = await addLink(ctx.organizationId, id, {
+      linkType, linkedRef,
+      linkedLabel: typeof input.linked_label === 'string' ? input.linked_label : null,
+      relationship: typeof input.relationship === 'string' ? input.relationship : undefined,
+      note: typeof input.note === 'string' ? input.note : null,
+      createdBy: ctx.userId ?? null,
+    });
+    const auditService = (await import('../auditService.js')).default;
+    void auditService.logAction({
+      tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
+      action: 'mdx.qms.change.link', resourceType: 'qms_change_control', resourceId: id,
+      details: { linkType, linkedRef, via: 'ana' },
+    });
+    return JSON.stringify({ ok: true, ...row, message: `Linked ${linkType} ${linkedRef} to change ${id}.` });
+  } catch (err: unknown) {
+    return JSON.stringify({ error: `qms_change_link failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ── Clinical Regulatory Evidence — CSR ⇄ FDA CRL ⇄ study design (read-only
+//    evidence; never a prediction, never a dose value, never a binary verdict).
+registerToolHandler('search_clinical_regulatory_evidence', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'search_clinical_regulatory_evidence requires tenant context.' });
+  const org = ctx.organizationId;
+  const indication = typeof input.indication === 'string' ? input.indication : undefined;
+  const phase = typeof input.phase === 'string' ? input.phase : undefined;
+  const limit = typeof input.limit === 'number' ? Math.min(Math.max(input.limit, 1), 100) : 25;
+  const types = Array.isArray(input.entity_types) && input.entity_types.length
+    ? (input.entity_types as string[]) : ['studies', 'findings', 'outcomes', 'lessons'];
+  try {
+    const spine = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
+    const result: Record<string, unknown> = {};
+    if (types.includes('studies')) result.studies = await spine.listStudies(org, { indication, phase, limit });
+    if (types.includes('findings')) result.findings = await spine.listFindings(org, { limit });
+    if (types.includes('outcomes')) result.outcomes = await spine.listOutcomes(org, { limit });
+    if (types.includes('lessons')) result.designLessons = await spine.listDesignLessons(org, { limit });
+    return JSON.stringify({ ok: true, ...result, note: 'Precedent evidence from the shared spine (global-public + your org). This is evidence, not a prediction.' });
+  } catch (err) {
+    return JSON.stringify({ error: `search_clinical_regulatory_evidence failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('compare_proposed_design_to_precedent', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'compare_proposed_design_to_precedent requires tenant context.' });
+  const indication = typeof input.indication === 'string' ? input.indication : '';
+  if (!indication) return JSON.stringify({ error: 'indication is required.' });
+  const endpoint = typeof input.endpoint === 'string' ? input.endpoint : undefined;
+  try {
+    const sde = await import('../clinical-regulatory-evidence/study-design-evidence.service.js');
+    const benchmark = await sde.benchmarkDesign(ctx.organizationId, {
+      indication, phase: typeof input.phase === 'string' ? input.phase : undefined,
+      modality: typeof input.modality === 'string' ? input.modality : undefined,
+      population: typeof input.population === 'string' ? input.population : undefined,
+      endpointClass: endpoint, comparator: typeof input.comparator === 'string' ? input.comparator : undefined,
+      designType: typeof input.design_type === 'string' ? input.design_type : undefined,
+    });
+    const endpointRisk = endpoint
+      ? await sde.assessEndpointRegulatoryRisk(ctx.organizationId, endpoint, { indication, phase: typeof input.phase === 'string' ? input.phase : undefined })
+      : null;
+    return JSON.stringify({ ok: true, benchmark, endpointRisk, note: 'Evidence comparison with provenance — not a verdict on FDA acceptance.' });
+  } catch (err) {
+    return JSON.stringify({ error: `compare_proposed_design_to_precedent failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('explain_design_risk', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'explain_design_risk requires tenant context.' });
+  const feature = typeof input.feature === 'string' ? input.feature.trim() : '';
+  if (!feature) return JSON.stringify({ error: 'feature (e.g. the proposed endpoint) is required.' });
+  try {
+    const sde = await import('../clinical-regulatory-evidence/study-design-evidence.service.js');
+    const r = await sde.assessEndpointRegulatoryRisk(ctx.organizationId, feature, {
+      indication: typeof input.indication === 'string' ? input.indication : undefined,
+      phase: typeof input.phase === 'string' ? input.phase : undefined,
+    });
+    return JSON.stringify({ ok: true, ...r });
+  } catch (err) {
+    return JSON.stringify({ error: `explain_design_risk failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('stress_test_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'stress_test_protocol requires tenant context.' });
+  const indication = typeof input.indication === 'string' ? input.indication : '';
+  if (!indication) return JSON.stringify({ error: 'indication is required.' });
+  try {
+    const sde = await import('../clinical-regulatory-evidence/study-design-evidence.service.js');
+    const plan = await sde.simulateDesignWithRegulatoryStress(ctx.organizationId, {
+      indication, phase: typeof input.phase === 'string' ? input.phase : undefined,
+      endpoint: typeof input.endpoint === 'string' ? input.endpoint : undefined,
+    });
+    return JSON.stringify({ ok: true, ...plan });
+  } catch (err) {
+    return JSON.stringify({ error: `stress_test_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('trace_design_recommendation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'trace_design_recommendation requires tenant context.' });
+  const entityType = typeof input.entity_type === 'string' ? input.entity_type : '';
+  const entityId = typeof input.entity_id === 'number' ? input.entity_id : NaN;
+  if (!entityType || !Number.isFinite(entityId)) return JSON.stringify({ error: 'entity_type and numeric entity_id are required.' });
+  try {
+    const spine = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
+    const chain = await spine.listRelationshipsFor(ctx.organizationId, entityType as Parameters<typeof spine.listRelationshipsFor>[1], entityId);
+    return JSON.stringify({ ok: true, entity: { type: entityType, id: entityId }, chain, note: 'Every edge is inspectable with its source; inferred edges are flagged.' });
+  } catch (err) {
+    return JSON.stringify({ error: `trace_design_recommendation failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
 
@@ -14138,6 +14399,12 @@ registerToolHandler('draft_fda_ir_response', async (input) => {
   });
 });
 
+
+// The agentic-workflow tool handlers (drafting council, deep investigations,
+// client journey) are registered from their own module now — see
+// agentic-workflow-tools.ts. Injected register avoids an import cycle.
+registerAgenticWorkflowHandlers(registerToolHandler);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14145,6 +14412,11 @@ registerToolHandler('draft_fda_ir_response', async (input) => {
 export interface AgenticOptions {
   /** Maximum tool-use rounds before forcing stop */
   maxRounds?: number;
+  /**
+   * Progress-earned rounds allowed beyond maxRounds while every round tries
+   * novel work (see agentic-loop.ts). Defaults to the Balanced allowance.
+   */
+  progressExtension?: number;
   /** Streaming callback */
   onStream?: StreamCallback;
   /** Called when a tool is executed */
@@ -14177,8 +14449,13 @@ export async function executeAgenticLoop(
   options?: AgenticOptions
 ): Promise<AnaGatewayResponse> {
   const gateway = getGateway();
-  const maxRounds = options?.maxRounds || 5;
+  // Default to the effort-scaled Balanced ceiling (6) rather than a flat 5, so a
+  // caller that doesn't pin maxRounds still gets the modernized agentic depth.
+  const maxRounds = options?.maxRounds || resolveMaxRounds('balanced');
+  const progressExtension = options?.progressExtension ?? resolveRoundExtension('balanced');
   const signal = options?.signal;
+  // Failure-adaptation guidance from the latest round (cleared after use).
+  let pendingAdaptationNote = '';
 
   const toToolCall = (c: AnaToolUse): ToolCall => ({
     id: c.id,
@@ -14208,7 +14485,7 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return [];
     const ran = await mapWithConcurrency(
       calls,
-      async (call): Promise<{ call: ToolCall; result: string }> => {
+      async (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> => {
         const handler = toolHandlers.get(call.name);
         if (!handler) {
           return {
@@ -14217,6 +14494,7 @@ export async function executeAgenticLoop(
               error: `No handler registered for tool: ${call.name}`,
               availableTools: Array.from(toolHandlers.keys()),
             }),
+            errorMessage: 'no handler registered',
           };
         }
         try {
@@ -14229,6 +14507,7 @@ export async function executeAgenticLoop(
               error: `Tool execution failed: ${error?.message ?? 'unknown error'}`,
               tool: call.name,
             }),
+            errorMessage: error?.message ?? 'unknown error',
           };
         }
       },
@@ -14236,11 +14515,17 @@ export async function executeAgenticLoop(
     );
 
     const entries: ToolResultEntry[] = [];
-    for (const { call, result } of ran) {
+    const roundFailures: FailedToolCall[] = [];
+    for (const { call, result, errorMessage } of ran) {
       options?.onToolExecution?.(call.name, call.input, result);
       entries.push({ tool_use_id: call.id, name: call.name, content: result });
+      if (errorMessage) roundFailures.push({ name: call.name, error: errorMessage });
     }
-    return entries;
+    // Budget the whole round before it re-enters the model context (small
+    // rounds pass through byte-identical under the classic per-result caps),
+    // and stage the failure-adaptation note for the next model turn.
+    pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+    return budgetToolResultsForModel(entries);
   };
 
   // Feed the latest tool results back and get the model's next turn. On the
@@ -14257,11 +14542,17 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return { text: '', toolCalls: [] };
 
     loopMessages.push({ role: 'assistant', content: priorText || '' });
+    // Entries arrive pre-budgeted from executeTools (the cap here is a no-op
+    // safety net); the adaptation note rides the same user turn so a failed
+    // round becomes a course correction instead of an identical retry.
+    const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
+    pendingAdaptationNote = '';
     loopMessages.push({
       role: 'user',
-      content: results
-        .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
-        .join('\n\n'),
+      content:
+        results
+          .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
+          .join('\n\n') + adaptationSuffix,
     });
 
     const roundRequest: GatewayRequest = { ...request, messages: loopMessages };
@@ -14278,7 +14569,7 @@ export async function executeAgenticLoop(
   await runAgenticToolLoop(
     { text: finalResponse.content || '', toolCalls: finalResponse.toolUses.map(toToolCall) },
     { executeTools, callModel },
-    { maxRounds },
+    { maxRounds, progressExtension },
   );
 
   return finalResponse;

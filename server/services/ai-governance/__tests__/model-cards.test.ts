@@ -17,7 +17,7 @@ describe('model cards', () => {
 
   it('builds a card carrying pinned version, role, intended use, and limitations', () => {
     const card = buildModelCard(opus, approvedOpus);
-    expect(card.pinnedVersion).toBe('claude-opus-4-7');
+    expect(card.pinnedVersion).toBe('claude-opus-4-8');
     expect(card.role).toBe('primary');
     expect(card.qualityTier).toBe('flagship');
     expect(card.intendedUse).toContain('require human review');

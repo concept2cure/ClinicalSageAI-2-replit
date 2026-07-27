@@ -9,6 +9,7 @@
 
 
 import { assertRlsEnforcementForProduction } from '../db/rlsEnforcement';
+import { assertAuditSealPostureForProduction } from '../services/audit/auditSealPosture';
 
 type Environment = 'development' | 'staging' | 'production' | 'test';
 
@@ -281,6 +282,14 @@ assertMfaKeyPosture();
 // degrades to pool=null — a throw there logs but does NOT stop the boot.
 // No-op outside production. See server/db/rlsEnforcement.ts.
 assertRlsEnforcementForProduction();
+
+// Audit HMAC-seal boot posture: in production the tamper-evident audit seal key
+// (AUDIT_HMAC_KEY) must be provisioned, or the operator must explicitly accept
+// running with an unsealed ledger (AUDIT_SEAL_ACCEPT_UNSEALED=true). Unset/weak
+// otherwise refuses to boot — a silently-unsealed audit ledger is not an
+// acceptable GA posture. Fires on import (same contract as the asserts above).
+// No-op outside production. See server/services/audit/auditSealPosture.ts.
+assertAuditSealPostureForProduction();
 
 // Export configuration for the current environment
 export const config = {

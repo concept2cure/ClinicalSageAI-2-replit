@@ -3,8 +3,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { useLiveList, useLive, unwrapList } from '../dataConnect';
-import { RBM_SITES, RBM_OVERSIGHT_COUNTS } from '../fixtures/rbm-data';
+import { useLiveRows, unwrapList, EmptyState } from '../dataConnect';
 import '../styles/project-home-v2.css';
 
 /* ── Inline fixture types ── */
@@ -19,32 +18,35 @@ interface RbmSite {
 }
 
 interface CoStudy {
+  // Display columns returned by GET /api/clinical-operations/studies
+  // (clinical-operations-routes.ts): protocol AS id, phase, design, enrolled AS
+  // n, target_enrollment AS target, status, note. `design` and `note` are
+  // backfilled nullable columns (added via ALTER TABLE) and the POST write path
+  // does not set them, so persisted studies routinely carry null there —
+  // rendered honestly (omitted when absent), never fabricated.
   id: string;
   phase: string;
-  design: string;
+  design: string | null;
   n: number;
   target: number;
   status: string;
-  note: string;
+  note: string | null;
 }
 
 interface CoSite {
+  // Adopted from the live rbm_site_risk_scores rows (see mapRbmSites):
+  // site_number, site_name, composite_risk, monitoring_tier, drivers, plus
+  // country_code joined from site_intel.sites. `composite` is nullable
+  // (composite_risk can be null on the score row, and a newly-added site has no
+  // score yet). Open/high signal counts are NOT part of this endpoint, so they
+  // are not carried here (never fabricated).
   n: string;
   name: string;
   country: string;
   composite: number | null;
   tier: string;
   driver: string;
-  open: number;
-  high: number;
   _new?: boolean;
-}
-
-interface CoDsmb {
-  n: string;
-  date: string;
-  outcome: string;
-  tone: string;
 }
 
 interface CoDev {
@@ -56,31 +58,26 @@ interface CoDev {
   _new?: boolean;
 }
 
-/* ── Inline fixture data (kit window globals) ── */
+/* Stable empty seeds for the optimistic-row stores while the live source is
+   loading or has errored. `useLiveRows` synthesizes a FRESH [] every render in
+   those states, which would otherwise thrash the re-seed effect in `useRows`
+   (see dataConnect loop-safety note). */
+const EMPTY_SITES: CoSite[] = [];
+const EMPTY_DEVS: CoDev[] = [];
 
-const CO_STUDIES: CoStudy[] = [
-  { id: 'BX204-301', phase: '3', design: 'Randomized · pivotal', n: 412, target: 412, status: 'active', note: 'Primary ORR readout Q4 2026' },
-  { id: 'BX204-201', phase: '2', design: 'Single-arm · dose-expansion', n: 186, target: 186, status: 'complete', note: 'Supportive · CSR locked' },
-  { id: 'BX204-101', phase: '1', design: 'Dose-escalation (3+3)', n: 54, target: 54, status: 'complete', note: 'MTD established' },
-];
-
-const CO_DSMB: CoDsmb[] = [
-  { n: 'Review 3', date: 'Mar 2026', outcome: 'Continue as planned', tone: 'ok' },
-  { n: 'Review 2', date: 'Sep 2025', outcome: 'Continue -- no safety concerns', tone: 'ok' },
-  { n: 'Review 1', date: 'Mar 2025', outcome: 'Continue -- enrollment on track', tone: 'ok' },
-];
-
-const CO_DEV: CoDev[] = [
-  { sev: 'med', site: '1117', title: 'Informed-consent version lag at re-consent', capa: 'CAPA open', status: 'evaluating' },
-  { sev: 'low', site: '1104', title: 'Visit window exceeded (2 subjects)', capa: 'documented', status: 'planned' },
-];
-
-/** Build site list from cross-surface RBM data (live ?? shared rbm-data fixture). */
-function buildSites(sitesData: RbmSite[] = RBM_SITES): CoSite[] {
-  return sitesData.map((s: RbmSite) => {
-    const ov = RBM_OVERSIGHT_COUNTS[s.n] || { open: 0, high: 0 };
-    return { n: s.n, name: s.name, country: s.country, composite: s.composite, tier: s.tier, driver: (s.drivers || [])[0] || '', open: ov.open, high: ov.high };
-  });
+/** Map the adopted RbmSite rows onto the CoSite display shape. Open/high signal
+ *  counts are intentionally absent — GET /api/mdx/rbm-site-risk does not return
+ *  them (they live on /rbm-site-oversight/:programId, which this org-wide board
+ *  has no program handle to call), so they are not fabricated here. */
+function buildSites(sitesData: RbmSite[]): CoSite[] {
+  return sitesData.map((s: RbmSite) => ({
+    n: s.n,
+    name: s.name,
+    country: s.country,
+    composite: s.composite,
+    tier: s.tier,
+    driver: (s.drivers || [])[0] || '',
+  }));
 }
 
 /* ── Inline shared kit helpers (not yet ported as modules) ── */
@@ -298,23 +295,35 @@ export function mapRbmSites(payload: unknown): RbmSite[] | null {
 
 export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const liveStudies = useLiveList<CoStudy>('/api/clinical-operations/studies', CO_STUDIES);
-  // The endpoint returns raw rbm_site_risk_scores rows; useLiveList's guard
-  // would reject that shape, so adopt via mapRbmSites, which maps the rows and
-  // fails closed to the fixture on anything it can't map.
-  const sitesRaw = useLive<unknown>('/api/mdx/rbm-site-risk', null);
-  const liveSiteRows = useMemo(
-    () => (!sitesRaw.loading && !sitesRaw.sample ? mapRbmSites(sitesRaw.data) : null),
-    [sitesRaw.loading, sitesRaw.sample, sitesRaw.data],
+  // Studies & enrollment — GET /api/clinical-operations/studies is REAL
+  // (clinical_ops.studies via pg, projected to the CoStudy display contract,
+  // org-scoped). Real rows, an honest empty, or an honest failed-load — never a
+  // fixture.
+  const liveStudies = useLiveRows<CoStudy>('/api/clinical-operations/studies');
+
+  // Site-risk roster — GET /api/mdx/rbm-site-risk is REAL (rbm_site_risk_scores
+  // + country_code from site_intel.sites, org-scoped). The endpoint returns raw
+  // score rows, so adopt them via mapRbmSites → buildSites onto the CoSite
+  // display shape. mapRbmSites returns null for an empty/unmappable payload;
+  // `?? []` funnels that into the honest empty state below, never a fixture.
+  const liveSites = useLiveRows<unknown>('/api/mdx/rbm-site-risk');
+  const mappedSites = useMemo(
+    () => buildSites(mapRbmSites(liveSites.rows) ?? []),
+    [liveSites.rows],
   );
-  const liveSites = {
-    data: liveSiteRows ?? RBM_SITES,
-    sample: liveSiteRows == null,
-    loading: sitesRaw.loading,
-  };
-  const initialSites = useMemo(() => buildSites(liveSites.data), [liveSites.data]);
-  const [sites, addSite] = useRows<CoSite>(initialSites);
-  const [devs, addDev] = useRows<CoDev>(CO_DEV);
+  // Seed the optimistic-row store with a STABLE empty array while the roster is
+  // loading or errored (useLiveRows returns a fresh [] each render then); once
+  // it resolves, `mappedSites` is a stable reference and becomes the seed.
+  const seedSites =
+    liveSites.loading || liveSites.error ? EMPTY_SITES : mappedSites;
+  const [sites, addSite] = useRows<CoSite>(seedSites);
+
+  // Protocol deviations — no reachable list endpoint for this surface: the
+  // clinical-operations deviations API is study-scoped
+  // (GET /api/clinical-operations/studies/:studyId/deviations) and this org-wide
+  // board has no studyId handle. Start from an honest empty; rows a user logs
+  // are optimistic-only (the form copy below no longer claims persistence).
+  const [devs, addDev] = useRows<CoDev>(EMPTY_DEVS);
   const [siteForm, setSiteForm] = useState(false);
   const [devForm, setDevForm] = useState(false);
   const [toast, fireToast] = useToast();
@@ -322,8 +331,8 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const SITE_FORM: C2CFormConfig = {
     eyebrow: 'Clinical ops -- activate site',
     title: 'Activate a study site',
-    governed: 'Sites are governed records -- activation writes an audit entry and enrolls the site into risk-based monitoring.',
-    submitLabel: 'Activate site',
+    governed: 'Sites are governed records. This adds the site to the board for review — it does not yet write to the governed store or enroll it into risk-based monitoring.',
+    submitLabel: 'Add site',
     fields: [
       { key: 'n', label: 'Site number', type: 'text', placeholder: 'e.g. 1131', required: true, half: true },
       { key: 'country', label: 'Country', type: 'select', options: ['US', 'DE', 'FR', 'UK', 'JP', 'CA', 'SE', 'IT', 'AU'], required: true, half: true },
@@ -335,8 +344,8 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const DEV_FORM: C2CFormConfig = {
     eyebrow: 'Clinical ops -- log deviation',
     title: 'Log a protocol deviation',
-    governed: 'Deviations are governed -- logging opens the CAPA workflow and writes a §11 audit entry.',
-    submitLabel: 'Log deviation',
+    governed: 'Deviations are governed records. This adds the deviation to the board for review — it does not yet open a CAPA workflow or write a Part 11 audit entry.',
+    submitLabel: 'Add deviation',
     fields: [
       { key: 'site', label: 'Site', type: 'select', options: sites.map((s) => s.n), required: true, half: true },
       { key: 'sev', label: 'Severity', type: 'seg', options: ['low', 'med', 'high'], default: 'low', half: true },
@@ -355,8 +364,14 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
       eyebrow="Clinical development -- operations"
       title="Clinical operations"
       state={
-        enhanced.length
-          ? <><b>{enhanced.length}</b> of <b>{sites.length}</b> study sites are enhanced-tier and need on-site monitoring -- {worst.name} leads at composite <b>{worst.composite}</b>. Central monitoring holds the rest.</>
+        liveSites.loading && sites.length === 0
+          ? <>Loading the site-risk roster…</>
+          : liveSites.error && sites.length === 0
+          ? <>The site-risk roster didn't load — retry from the site-risk card below.</>
+          : sites.length === 0
+          ? <>No site-risk scores yet — run the risk-based-monitoring engine or add sites to populate the board.</>
+          : enhanced.length
+          ? <><b>{enhanced.length}</b> of <b>{sites.length}</b> study sites are enhanced-tier and need on-site monitoring{worst.name ? <> -- {worst.name} leads at composite <b>{worst.composite ?? '—'}</b></> : null}. Central monitoring holds the rest.</>
           : <>All <b>{sites.length}</b> sites are at standard or reduced monitoring -- no enhanced visits required.</>
       }
       starters={[
@@ -367,16 +382,19 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
       ]}
       primary={<button className="sp-primary" onClick={() => setSiteForm(true)}>{I.plus} Add study site</button>}
       queue={[
-        { ico: 'alertTriangle', title: worst.name + ' -- enhanced tier', sub: 'composite ' + worst.composite + ' -- ' + worst.driver, tone: 'warn', action: 'Review', cmd: 'Explain the drivers behind the highest-risk site and the monitoring it needs.' },
-        { ico: 'shieldCheck', title: 'DSMB data package due', sub: 'Interim review 4 -- Q3 2026', tone: 'info', action: 'Prep', cmd: 'Prepare the DSMB data package for interim review 4' },
-        { ico: 'clipboardList', title: 'Open protocol deviation -- CAPA', sub: 'Site 1117 -- informed-consent version lag', tone: 'warn', action: 'Open', cmd: 'Open the site 1117 informed-consent deviation and draft the CAPA' },
+        // Derived from the live roster; dropped when there's no site data so the
+        // queue never interpolates an "undefined" site.
+        ...(worst.name
+          ? [{ ico: 'alertTriangle', title: worst.name + ' -- ' + worst.tier + ' tier', sub: 'composite ' + (worst.composite ?? '—') + (worst.driver ? ' -- ' + worst.driver : ''), tone: 'warn', action: 'Review', cmd: 'Explain the drivers behind the highest-risk site and the monitoring it needs.' }]
+          : []),
+        { ico: 'shieldCheck', title: 'Prep the next DSMB data package', sub: 'Assemble the interim safety/efficacy package for the DSMB', tone: 'info', action: 'Prep', cmd: 'Prepare the next DSMB data package for the pivotal study' },
+        { ico: 'clipboardList', title: 'Review open protocol deviations', sub: 'Summarize open deviations and their CAPA status', tone: 'warn', action: 'Open', cmd: 'Summarize the open protocol deviations and their CAPA status' },
       ]}
       onAsk={ask}
     >
       <div className="sp-sec">
         <SpCard
           title="Site-risk assessment -- RBM"
-          sample={liveSites.sample}
           meta="site-risk-engine composite"
           foot={
             <SpAsk
@@ -386,39 +404,75 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
             />
           }
         >
-          <p className="co-assess-lead">
-            {enhanced.length} of {sites.length} sites are <b>enhanced-tier</b> and need on-site monitoring; central monitoring holds the remaining {sites.length - enhanced.length} at standard or reduced. Composite scores are the governed site-risk-engine output -- AnA ranks and explains them, it doesn't recompute them here.
-          </p>
-          <div className="sp-list">
-            {enhanced.map((s, i) => (
-              <div key={i} className="sp-row">
-                <span className="sp-tag">Site {s.n}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{s.name} -- composite {s.composite}</span>
-                  <span className="sp-row-s">{s.driver}{s.open ? ` -- ${s.open} open signal${s.open > 1 ? 's' : ''}` : ''}</span>
-                </span>
-                <span className="sp-sev" data-s="high">enhanced</span>
+          {liveSites.loading && sites.length === 0 ? (
+            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading site-risk roster…</div>
+          ) : liveSites.error && sites.length === 0 ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load the site-risk roster"
+              hint="The risk-based-monitoring site-risk engine didn't respond. These are the organization's governed site-risk composite scores — sign in and retry, or check the service is reachable."
+            />
+          ) : sites.length === 0 ? (
+            <EmptyState
+              icon={I.shieldCheck}
+              title="No site-risk scores yet"
+              hint="Once the risk-based-monitoring engine computes composite scores for this organization's study sites, the enhanced-tier sites and their drivers appear here."
+            />
+          ) : (
+            <>
+              <p className="co-assess-lead">
+                {enhanced.length} of {sites.length} sites are <b>enhanced-tier</b> and need on-site monitoring; central monitoring holds the remaining {sites.length - enhanced.length} at standard or reduced. Composite scores are the governed site-risk-engine output -- AnA ranks and explains them, it doesn't recompute them here.
+              </p>
+              <div className="sp-list">
+                {enhanced.map((s, i) => (
+                  <div key={i} className="sp-row">
+                    <span className="sp-tag">Site {s.n}</span>
+                    <span className="sp-row-b">
+                      <span className="sp-row-t">{s.name}{s.composite != null ? ` -- composite ${s.composite}` : ''}</span>
+                      <span className="sp-row-s">{s.driver}</span>
+                    </span>
+                    <span className="sp-sev" data-s="high">enhanced</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="co-reco">{I.shieldCheck} Recommendation -- schedule enhanced monitoring visits for these {enhanced.length} sites; maintain central monitoring elsewhere. Every visit writes a §11 audit entry.</div>
+              <div className="co-reco">{I.shieldCheck} Recommendation -- schedule enhanced monitoring visits for these {enhanced.length} sites; maintain central monitoring elsewhere. Scheduling a monitoring visit is a governed action that will carry a Part 11 audit entry once wired to the clinical-operations service.</div>
+            </>
+          )}
         </SpCard>
       </div>
 
       <div className="sp-sec">
-        <SpCard title="Studies & enrollment" sample={liveStudies.sample} meta="Phase 1 -> 3">
+        <SpCard title="Studies & enrollment" meta="Phase 1 -> 3">
           <div className="sp-list">
-            {liveStudies.data.map((s, i) => (
-              <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Summarize the status of study ${s.id}`)}>
-                <span className="sp-tag">{s.id}</span>
-                <span className="sp-tag2">Ph {s.phase}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{s.design} -- N={s.n}/{s.target}</span>
-                  <span className="sp-row-s">{s.note}</span>
-                </span>
-                {pill(s.status)}
-              </button>
-            ))}
+            {liveStudies.loading ? (
+              <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading studies…</div>
+            ) : liveStudies.error ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load the study portfolio"
+                hint="The clinical-operations service didn't respond. These are the organization's registered studies and their enrollment — sign in and retry, or check the service is reachable."
+              />
+            ) : liveStudies.empty ? (
+              <EmptyState
+                icon={I.fileText}
+                title="No studies yet"
+                hint="Register a study in the clinical-operations service and it appears here with its phase, design, and enrollment against target."
+              />
+            ) : (
+              liveStudies.rows.map((s, i) => (
+                <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Summarize the status of study ${s.id}`)}>
+                  <span className="sp-tag">{s.id}</span>
+                  <span className="sp-tag2">Ph {s.phase}</span>
+                  <span className="sp-row-b">
+                    <span className="sp-row-t">{s.design ? `${s.design} -- ` : ''}N={s.n}/{s.target}</span>
+                    <span className="sp-row-s">{s.note}</span>
+                  </span>
+                  {pill(s.status)}
+                </button>
+              ))
+            )}
           </div>
         </SpCard>
       </div>
@@ -431,54 +485,79 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
           foot={<SpAsk onAsk={ask} cmd="Open the central-monitoring view across all sites." label="Central monitoring" />}
         >
           <div className="sp-list">
-            {sites.map((s, i) => (
-              <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Explain the site-risk drivers for ${s.name} (site ${s.n}).`)}>
-                <span className="sp-tag">Site {s.n}</span>
-                <span className="sp-tag2">{s.country}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{s.name}{s.composite != null ? ` -- composite ${s.composite}` : ''}</span>
-                  <span className="sp-row-s">{s.driver}</span>
-                </span>
-                <span className="sp-sev" data-s={s.tier === 'enhanced' ? 'high' : s.tier === 'standard' ? 'med' : 'low'}>{s.tier}</span>
-              </button>
-            ))}
+            {liveSites.loading && sites.length === 0 ? (
+              <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading study sites…</div>
+            ) : liveSites.error && sites.length === 0 ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load the study sites"
+                hint="The risk-based-monitoring site-risk engine didn't respond. Sign in and retry, or check the service is reachable."
+              />
+            ) : sites.length === 0 ? (
+              <EmptyState
+                icon={I.shieldCheck}
+                title="No study sites yet"
+                hint="Add a study site or run the risk-based-monitoring engine, and each site's country, composite score, and monitoring tier appear here."
+              />
+            ) : (
+              sites.map((s, i) => (
+                <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Explain the site-risk drivers for ${s.name} (site ${s.n}).`)}>
+                  <span className="sp-tag">Site {s.n}</span>
+                  <span className="sp-tag2">{s.country}</span>
+                  <span className="sp-row-b">
+                    <span className="sp-row-t">{s.name}{s.composite != null ? ` -- composite ${s.composite}` : ''}</span>
+                    <span className="sp-row-s">{s.driver}</span>
+                  </span>
+                  <span className="sp-sev" data-s={s.tier === 'enhanced' ? 'high' : s.tier === 'standard' ? 'med' : 'low'}>{s.tier}</span>
+                </button>
+              ))
+            )}
           </div>
         </SpCard>
 
-        <SpCard title="DSMB & interim reviews" sample meta="independent monitoring">
-          <div className="sp-list">
-            {CO_DSMB.map((d, i) => (
-              <div key={i} className="sp-row">
-                <span className="sp-tag">{d.n}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{d.outcome}</span>
-                  <span className="sp-row-s">{d.date}</span>
-                </span>
-                <span className={'rd-chip tone-' + d.tone}>cleared</span>
-              </div>
-            ))}
-          </div>
+        <SpCard title="DSMB & interim reviews" meta="independent monitoring">
+          {/* Backend gap: there is no clinical-operations DSMB / interim-review
+              endpoint yet. An honest empty beats the prior hardcoded
+              review-history fixture presented as cleared reviews. */}
+          <EmptyState
+            icon={I.shieldCheck}
+            title="No DSMB reviews yet"
+            hint="Independent DSMB / DMC interim-review outcomes will appear here once the clinical-operations service records them. There is no DSMB review endpoint yet."
+          />
         </SpCard>
       </div>
 
       <div className="sp-sec">
         <SpCard
           title="Protocol deviations"
-          meta={devs.length + ' open'}
+          meta={devs.length === 1 ? '1 logged' : devs.length + ' logged'}
           action={<AddBtn onClick={() => setDevForm(true)} label="Log deviation" />}
         >
-          <div className="sp-list">
-            {devs.map((d, i) => (
-              <div key={i} className={rowcls(d)}>
-                <span className="sp-sev" data-s={d.sev}>{d.sev}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{d.title}</span>
-                  <span className="sp-row-s">{d.site} -- {d.capa}</span>
-                </span>
-                {pill(d.status)}
-              </div>
-            ))}
-          </div>
+          {/* Backend gap: no org-wide deviations list endpoint for this board
+              (the clinical-operations deviations API is study-scoped). Starts
+              from an honest empty; rows a user logs are optimistic-only, not a
+              fixture and not persisted. */}
+          {devs.length === 0 ? (
+            <EmptyState
+              icon={I.clipboardList}
+              title="No protocol deviations logged"
+              hint="Log a protocol deviation to track it on the board. The org-wide deviations list isn't wired yet — the clinical-operations deviations API is study-scoped, so logged rows stay local for now."
+            />
+          ) : (
+            <div className="sp-list">
+              {devs.map((d, i) => (
+                <div key={i} className={rowcls(d)}>
+                  <span className="sp-sev" data-s={d.sev}>{d.sev}</span>
+                  <span className="sp-row-b">
+                    <span className="sp-row-t">{d.title}</span>
+                    <span className="sp-row-s">{d.site} -- {d.capa}</span>
+                  </span>
+                  {pill(d.status)}
+                </div>
+              ))}
+            </div>
+          )}
         </SpCard>
       </div>
 
@@ -494,11 +573,9 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
               composite: null,
               tier: v.tier,
               driver: 'New site -- composite pending first RBM cycle',
-              open: 0,
-              high: 0,
             });
             setSiteForm(false);
-            fireToast('Site activated -- ' + v.n + ' (' + v.country + ')');
+            fireToast('Site added to the board -- ' + v.n + ' (' + v.country + ')');
           }}
         />
       )}
@@ -509,7 +586,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
           onSubmit={(v) => {
             addDev({ sev: v.sev, site: v.site, title: v.title, capa: v.capa, status: v.status });
             setDevForm(false);
-            fireToast('Deviation logged -- ' + v.site);
+            fireToast('Deviation added to the board -- ' + v.site);
           }}
         />
       )}

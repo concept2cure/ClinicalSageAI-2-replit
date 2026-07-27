@@ -26,6 +26,7 @@ import type { AuthoringContextPack } from '../../../../../shared/types/authoring
 import { Sidebar, type AnaView, type AccountInfo, type Recent } from './Sidebar';
 import { TopBar } from './TopBar';
 import { EmptyState, type EmptySuggestion } from './EmptyState';
+import { useAgentActivity } from './useAgentActivity';
 import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
@@ -266,8 +267,23 @@ export function Ana({
   const [view, setView] = useState<AnaView>('home');
   const [collapsed, setCollapsed] = useState(false);
   const [activeRecentId, setActiveRecentId] = useState<string | null>(null);
+  // Live agent surface: poll AnA's background deep investigations while the user
+  // is on the home screen, so the greeting card can show what she is working on.
+  const { summary: agentActivity } = useAgentActivity({ enabled: view === 'home' });
   // Tools the user pins for the next turn (additive focus). Empty = auto.
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  // Sources the user pinned in the project data room, handed over through
+  // window.C2C_SOURCE_PINS (the same cross-surface convention as
+  // window.C2C_PROJECT). Read once on mount so a pinned set survives the
+  // navigation from ProjectHome into AnA.
+  const [pinnedSourceIds] = useState<string[]>(() => {
+    try {
+      const pins = (window as unknown as { C2C_SOURCE_PINS?: string[] }).C2C_SOURCE_PINS;
+      return Array.isArray(pins) ? pins.filter((p) => typeof p === 'string' && p) : [];
+    } catch {
+      return [];
+    }
+  });
   // Model/effort picker state (flag-gated in the Composer). Effort defaults to
   // 'balanced'; modelOverride null = Auto (server routes by effort).
   const [effort, setEffort] = useState<EffortLevel>('balanced');
@@ -282,6 +298,7 @@ export function Ana({
     authoringContext: authoringContext ?? undefined,
     moduleContext: moduleContext ?? undefined,
     selectedTools,
+    selectedSourceIds: pinnedSourceIds,
     effortLevel: effort,
     modelOverride,
   });
@@ -1039,6 +1056,7 @@ export function Ana({
           modelOverride={modelOverride}
           onModelOverrideChange={setModelOverride}
           projectIntelligence={projectIntelligence}
+          agentActivity={agentActivity}
           onSafetyNarrative={handleSafetyNarrative}
         />
       )}

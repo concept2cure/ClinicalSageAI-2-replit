@@ -2,7 +2,8 @@
    Ported from design kit device-sub.jsx. */
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { DV, DV_CAPA, DV_INSPECTION, DV_PCCP, getDevicePathway } from '../fixtures/device-data';
+import { DV, getDevicePathway } from '../fixtures/device-data';
+import { useLiveData, useLiveRows, EmptyState, type DataState } from '../dataConnect';
 import {
   Ic, KV, StatusBadge, DeviceAcc, Tree, DocumentPage,
   IntelReadiness, IntelPredicate, IntelClassification, IntelRisk,
@@ -17,6 +18,12 @@ function Btn({ icon, variant, block, disabled, onClick, children }: {
 }) {
   return <button className={`btn ${variant || ''}${block ? ' block' : ''}`} disabled={disabled} onClick={onClick}>{icon && <Ic n={icon} />}{children}</button>;
 }
+// MOCK ACTION (flagged for the actions pass — do not half-wire here): both hub
+// mounts pass `onConfirm={() => {}}`, so confirming a governed action (including
+// "Assemble package" and "Submit to <gateway>" from IntelAssembly, shown with a
+// "21 CFR Part 11 e-signature" affordance) performs NO work — no API call, no
+// persistence, no audit entry. Needs a real governed-action endpoint before the
+// confirm can claim to do anything.
 function GovernedActionDialog({ open, onClose, onConfirm, title, intent, basis, esign }: {
   open: boolean; onClose: () => void; onConfirm: () => void;
   title?: string; intent?: string; basis?: string; esign?: boolean;
@@ -29,9 +36,16 @@ function GovernedActionDialog({ open, onClose, onConfirm, title, intent, basis, 
         {intent && <p style={{ fontSize: 12.5, color: 'var(--text-300)', margin: '8px 0' }}>{intent}</p>}
         {basis && <div className="ra-citation" title={basis}>{I.info} {basis}</div>}
         {esign && <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 8 }}>Requires e-signature (21 CFR Part 11)</div>}
+        {/* HONESTY GUARD: onConfirm is a no-op in every mount of this hub (no
+            backing endpoint), so the confirm is disabled and says so — a
+            governed action that performs no work must never look confirmable.
+            Real agency dispatch lives in the gateway-transmittals surface. */}
+        <div style={{ fontSize: 11, color: 'var(--warning,#b54708)', marginTop: 8 }}>
+          Not wired to a backend yet — confirming would perform no work, so it is disabled.
+        </div>
         <div className="tb-detail-f" style={{ marginTop: 14 }}>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" onClick={() => { onConfirm(); onClose(); }}>{I.check} Confirm</button>
+          <button className="btn primary" disabled title="No backing endpoint — this governed action is not wired yet">{I.check} Confirm</button>
         </div>
       </div>
     </div>
@@ -92,21 +106,46 @@ function IntelReviewSim({ pw }: { pw: any }) {
     </div>
   );
 }
-function IntelHumanFactors({ pw }: { pw: any }) {
-  const h = pw.humanfactors; if (!h) return null;
+/* ── Human factors (IEC 62366) — REAL org-scoped backend (GET /api/human-factors).
+   Returns the org's HFE/UE file object { device, framework, present, scenarios[] }
+   (or { data: null } when none), the `{ data }` success envelope the hook unwraps.
+   We render the real framework + use-related scenarios; nullable columns are
+   `| null` and rendered null-safe. `present` (element checklist) is intentionally
+   not rendered — its persisted shape isn't part of this display contract, and we
+   never fabricate a completeness number the backend doesn't return. ── */
+
+interface HfScenario { task: string; useError: string | null; potentialHarmSeverity: string | null; mitigated: boolean | null; }
+interface HfFile { device: string | null; framework: string | null; scenarios: HfScenario[] }
+
+function IntelHumanFactors() {
+  const hf = useLiveData<HfFile>('/api/human-factors');
+  if (hf.loading) return <div className="dv-mini"><div className="scaf-note" style={{ padding: '18px 10px' }}>Loading HFE/UE file…</div></div>;
+  if (hf.error) return (
+    <div className="dv-mini">
+      <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the HFE/UE file"
+        hint="The organization's IEC 62366 human-factors file (use specification, critical tasks, residual use-related risk) didn't respond. Sign in and retry, or check the service is reachable." />
+    </div>
+  );
+  if (hf.empty || !hf.data) return (
+    <div className="dv-mini">
+      <EmptyState icon={I.fileText} title="No HFE/UE file yet"
+        hint="Once a human-factors file is created, its use specification, use-related critical tasks and residual-risk conclusion are governed here (IEC 62366-1)." />
+    </div>
+  );
+  const h = hf.data;
+  const scenarios = h.scenarios ?? [];
   return (
     <div className="dv-mini">
-      <div className="dv-mini-sub">{h.framework} {'·'} HFE/UE file</div>
-      <div className="dv-gspr-bar"><span className="dv-gspr-seg" style={{ flex: h.completeness }} data-tone={h.completeness >= 75 ? 'ok' : 'warn'}>{h.completeness}%</span><span className="dv-gspr-seg" style={{ flex: 100 - h.completeness }} data-tone="idle" /></div>
-      {h.elements.map((el: any, i: number) => <div key={i} className="dv-mini-mfg"><span className="dv-mini-tk" data-ok={el.have}>{el.have ? '✓' : '•'}</span><span>{el.k}</span></div>)}
-      <div className="dv-mini-sub">Use-related critical tasks</div>
-      {h.critical.map((c: any, i: number) => (
+      <div className="dv-mini-sub">{h.framework || 'IEC 62366-1'}{h.device ? ` ${'·'} ${h.device}` : ''} {'·'} HFE/UE file</div>
+      <div className="dv-mini-sub">Use-related critical tasks{scenarios.length ? ` (${scenarios.length})` : ''}</div>
+      {scenarios.length === 0 ? (
+        <p className="dv-mini-note">No use-related scenarios recorded yet.</p>
+      ) : scenarios.map((c, i) => (
         <div key={i} className="dv-rsim-f" data-sev={c.mitigated ? 'minor' : 'major'}>
-          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={c.sev === 'critical' ? 'err' : 'warn'}>{c.sev}</span><span className="dv-rsim-area">{c.task}</span><span className="pg-badge" data-tone={c.mitigated ? 'ok' : 'err'}>{c.mitigated ? 'mitigated' : 'open'}</span></div>
-          <div className="dv-rsim-txt">Use error: {c.error}</div>
+          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={c.potentialHarmSeverity === 'critical' ? 'err' : 'warn'}>{c.potentialHarmSeverity || 'severity n/a'}</span><span className="dv-rsim-area">{c.task}</span><span className="pg-badge" data-tone={c.mitigated ? 'ok' : 'err'}>{c.mitigated ? 'mitigated' : 'open'}</span></div>
+          {c.useError && <div className="dv-rsim-txt">Use error: {c.useError}</div>}
         </div>
       ))}
-      <p className="dv-mini-note">{h.residualAcceptable ? 'Residual use-related risk acceptable — all critical tasks mitigated.' : 'Residual risk NOT acceptable — unmitigated critical task(s) must be closed before summative testing.'}</p>
     </div>
   );
 }
@@ -156,6 +195,12 @@ function IntelAssembly({ pw, onGov }: { pw: any; onGov: (cfg: any) => void }) {
     </div>
   );
 }
+// LEFT AS CANONICAL REFERENCE + FLAGGED (spec "unsure → leave and flag"): DV.markets
+// is fundamentally a canonical list of real regulatory markets/authorities/instruments
+// (FDA, EU MDR/IVDR, PMDA, Health Canada, NMPA, ANVISA, TGA, MHRA) — the kind of
+// reference config the standard excludes. It carries a fabricated per-device overlay
+// though (each market's `readiness` % and `reqs[].have` booleans), and there is no
+// backend for a "device market-readiness" contract to re-anchor that overlay to.
 function IntelGlobalMarkets({ pw }: { pw: any }) {
   const M = DV.markets || [];
   const [open, setOpen] = useState<string | null>(null);
@@ -184,122 +229,159 @@ function IntelGlobalMarkets({ pw }: { pw: any }) {
     </div>
   );
 }
-function IntelCapa() {
-  const D = DV_CAPA; if (!D) return null;
-  const ht: Record<string, string> = { none: 'idle', malfunction: 'warn', injury: 'warn', serious_injury: 'err', death: 'err' };
-  const st: Record<string, string> = { new: 'idle', triaged: 'ai', investigation: 'warn', escalated_mdr: 'err', escalated_capa: 'warn', resolved: 'ok', closed: 'ok' };
-  const ct: Record<string, string> = { open: 'idle', investigation: 'warn', action_planned: 'ai', action_implemented: 'ai', effectiveness_check: 'warn', closed_effective: 'ok', closed_not_effective: 'err', escalated: 'err' };
-  const at: Record<string, string> = { planned: 'idle', in_progress: 'ai', done: 'ok', blocked: 'err', cancelled: 'idle' };
-  const mt: Record<string, string> = { open: 'idle', preparing: 'warn', filed: 'ok', acknowledged: 'ok', followup_required: 'warn', closed: 'ok' };
-  const [_open, _setOpen] = useState<string | null>('mdr');
+/* ── CAPA / MDR vigilance — REAL org-scoped backend (/api/capa-mdr/*).
+   Three governed list endpoints (mdr-events, complaints, capa) each return
+   { rows, count }; we render the real persisted rows, an honest empty, or an
+   honest error — never a fixture. Display types are aligned to the drizzle
+   columns in shared/schema/capa-mdr.ts; nullable columns are `| null` and
+   rendered null-safe. Timestamps arrive as ISO strings over JSON. ── */
+
+interface MdrEventRow {
+  id: string; mdrCode: string; jurisdiction: string; state: string;
+  usFdaReportType: string | null; euMdrSeverity: string | null;
+  reportDueAt: string | null; reportFiledAt: string | null;
+  fdaReportNumber: string | null; daysToDue: number | null; eventNarrative: string;
+}
+interface ComplaintRow {
+  id: string; complaintCode: string; source: string; channel: string;
+  patientHarm: string; severityAssessment: string; triageState: string;
+  deviceModel: string | null; eventNarrative: string;
+}
+interface CapaRow {
+  id: string; capaCode: string; title: string; type: string; source: string;
+  riskLevel: string; state: string; assignedTo: string | null; targetCloseDate: string | null;
+}
+
+/* One governed post-market list, four honest states (loading → error → empty →
+   real). `state.data` is the `{ rows, count }` envelope the routes return (the
+   hook does not treat that as the canonical `{ data }` envelope, so we read
+   `.rows` and compute empty locally). */
+function CapaSection<T extends { id: string }>({ state, title, emptyTitle, render }: {
+  state: DataState<{ rows: T[] }>; title: string; emptyTitle: string; render: (r: T) => React.ReactNode;
+}) {
+  const rows = state.data?.rows ?? [];
   return (
-    <div className="dv-mini">
-      <div className="dv-mini-sub" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>MDR events ({D.mdrEvents.length}){D.mdrEvents.some((e: any) => e.state === 'preparing') && <span className="pg-badge" data-tone="err"><Ic n="alertTriangle" /> Clock running</span>}</div>
-      {D.mdrEvents.map((e: any, i: number) => {
-        const u = e.euDaysRemaining !== null && e.euDaysRemaining <= 2;
-        return (<div key={i} className="dv-rsim-f" data-sev={u ? 'critical' : 'minor'}>
-          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={mt[e.state] || 'idle'}>{e.code}</span><span className="dv-mini-note" style={{ flex: 1 }}>{e.jurisdiction === 'both' ? 'FDA + EU MDR' : e.jurisdiction === 'us_fda' ? 'FDA 803' : 'EU MDR 87'}</span><span className="pg-badge" data-tone={mt[e.state] || 'idle'}>{e.state.replace(/_/g, ' ')}</span></div>
-          {e.fdaDaysRemaining !== null && <div className="dv-rsim-fix"><b>FDA 30-day: </b>{e.fdaDaysRemaining} days remaining {'·'} due {e.fdaDueAt}</div>}
-          {e.euDaysRemaining !== null && <div className="dv-rsim-fix" style={u ? { color: 'var(--error)' } : undefined}><b>EU MDR 10-day: </b>{e.euDaysRemaining} day{e.euDaysRemaining === 1 ? '' : 's'} remaining {'·'} due {e.euDueAt}{u ? ' — ACTION REQUIRED' : ''}</div>}
-          {e.reportFiledAt && <div className="dv-rsim-fix"><b>Filed: </b>{e.reportFiledAt} {'·'} Report# {e.fdaReportNumber}</div>}
-          <div className="dv-mini-note" style={{ marginTop: 3 }}>{e.narrative}</div>
-        </div>);
-      })}
-      <div className="dv-mini-sub" style={{ marginTop: 10 }}>Complaints ({D.complaints.length}) — triage queue</div>
-      {D.complaints.map((c: any, i: number) => (
-        <div key={i} className="dv-rsim-f" data-sev={c.severity === 'serious' ? 'major' : c.severity === 'negligible' ? 'ok' : 'minor'}>
-          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={ht[c.harm] || 'idle'}>{c.harm.replace(/_/g, ' ')}</span><span className="dv-mini-note" style={{ flex: 1 }}>{c.code} {'·'} {c.source.replace(/_/g, ' ')}</span><span className="pg-badge" data-tone={st[c.state] || 'idle'}>{c.state.replace(/_/g, ' ')}</span></div>
-          <div className="dv-mini-note">{c.narrative}</div>
-          {c.linkedMdr && <div className="dv-rsim-fix"><b>{'→'} MDR: </b>{c.linkedMdr}</div>}
-          {c.linkedCapa && <div className="dv-rsim-fix"><b>{'→'} CAPA: </b>{c.linkedCapa}</div>}
-        </div>
-      ))}
-      <div className="dv-mini-sub" style={{ marginTop: 10 }}>CAPA records ({D.capas.length})</div>
-      {D.capas.map((c: any, i: number) => (
-        <div key={i} className="dv-rsim-f" data-sev={c.risk === 'high' ? 'critical' : c.risk === 'medium' ? 'major' : 'minor'}>
-          <div className="dv-rsim-fh"><span className="pg-badge" data-tone="idle">{c.code}</span><span className="dv-mini-note" style={{ flex: 1 }}>{c.type} {'·'} risk: {c.risk}</span><span className="pg-badge" data-tone={ct[c.state] || 'idle'}>{c.state.replace(/_/g, ' ')}</span></div>
-          <div className="dv-rsim-txt">{c.title}</div>
-          <div className="dv-mini-note">Owner: {c.assignedTo} {'·'} Due: {c.targetClose}</div>
-          <div className="dv-mini-note" style={{ marginTop: 3 }}>Root cause: {c.rootCause}</div>
-          <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>{c.actions.map((a: any, j: number) => (
-            <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-              <span className="pg-badge" data-tone={at[a.state] || 'idle'} style={{ minWidth: 22, textAlign: 'center' as const }}>{a.state === 'done' ? '✓' : a.state === 'in_progress' ? '…' : '–'}</span>
-              <span style={{ flex: 1 }}>{a.type.replace(/_/g, ' ')}: {a.desc}</span>
-              {a.completedAt ? <span style={{ color: 'var(--success)', fontSize: 10 }}>{a.completedAt}</span> : <span style={{ color: 'var(--text-400)', fontSize: 10 }}>due {a.due}</span>}
-            </div>
-          ))}</div>
-        </div>
-      ))}
+    <div>
+      <div className="dv-mini-sub" style={{ marginTop: 10 }}>{title}{rows.length ? ` (${rows.length})` : ''}</div>
+      {state.loading ? (
+        <div className="scaf-note" style={{ padding: '12px 10px' }}>Loading…</div>
+      ) : state.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title={`Couldn't load ${title.toLowerCase()}`}
+          hint="This is the organization's governed device post-market queue (21 CFR 803 / 820.100, EU MDR Art 87). Sign in and retry, or check the CAPA/MDR service is reachable."
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState icon={I.fileText} title={emptyTitle} />
+      ) : (
+        rows.map(render)
+      )}
     </div>
   );
 }
+
+function IntelCapa() {
+  const mdr = useLiveData<{ rows: MdrEventRow[] }>('/api/capa-mdr/mdr-events');
+  const complaints = useLiveData<{ rows: ComplaintRow[] }>('/api/capa-mdr/complaints');
+  const capa = useLiveData<{ rows: CapaRow[] }>('/api/capa-mdr/capa');
+  const ht: Record<string, string> = { none: 'idle', malfunction: 'warn', injury: 'warn', serious_injury: 'err', death: 'err' };
+  const st: Record<string, string> = { new: 'idle', triaged: 'ai', investigation: 'warn', escalated_mdr: 'err', escalated_capa: 'warn', resolved: 'ok', closed: 'ok' };
+  const ct: Record<string, string> = { open: 'idle', investigation: 'warn', action_planned: 'ai', action_implemented: 'ai', effectiveness_check: 'warn', closed_effective: 'ok', closed_not_effective: 'err', escalated: 'err' };
+  const mt: Record<string, string> = { open: 'idle', preparing: 'warn', filed: 'ok', acknowledged: 'ok', followup_required: 'warn', closed: 'ok' };
+  const jl = (j: string) => j === 'both' ? 'FDA + EU MDR' : j === 'us_fda' ? 'FDA 803' : j === 'eu_mdr' ? 'EU MDR 87' : j;
+  return (
+    <div className="dv-mini">
+      <CapaSection state={mdr} title="MDR events" emptyTitle="No MDR events yet" render={(e) => (
+        <div key={e.id} className="dv-rsim-f" data-sev={e.daysToDue !== null && e.daysToDue <= 2 ? 'critical' : 'minor'}>
+          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={mt[e.state] || 'idle'}>{e.mdrCode}</span><span className="dv-mini-note" style={{ flex: 1 }}>{jl(e.jurisdiction)}</span><span className="pg-badge" data-tone={mt[e.state] || 'idle'}>{e.state.replace(/_/g, ' ')}</span></div>
+          {e.reportDueAt && <div className="dv-rsim-fix"><b>Report due: </b>{e.reportDueAt.slice(0, 10)}{e.daysToDue !== null ? ` ${'·'} ${e.daysToDue} day${e.daysToDue === 1 ? '' : 's'} remaining` : ''}</div>}
+          {e.reportFiledAt && <div className="dv-rsim-fix"><b>Filed: </b>{e.reportFiledAt.slice(0, 10)}{e.fdaReportNumber ? ` ${'·'} Report# ${e.fdaReportNumber}` : ''}</div>}
+          <div className="dv-mini-note" style={{ marginTop: 3 }}>{e.eventNarrative}</div>
+        </div>
+      )} />
+      <CapaSection state={complaints} title="Complaints" emptyTitle="No complaints yet" render={(c) => (
+        <div key={c.id} className="dv-rsim-f" data-sev={c.severityAssessment === 'critical' ? 'critical' : c.severityAssessment === 'serious' ? 'major' : c.severityAssessment === 'negligible' ? 'ok' : 'minor'}>
+          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={ht[c.patientHarm] || 'idle'}>{c.patientHarm.replace(/_/g, ' ')}</span><span className="dv-mini-note" style={{ flex: 1 }}>{c.complaintCode} {'·'} {c.source.replace(/_/g, ' ')}</span><span className="pg-badge" data-tone={st[c.triageState] || 'idle'}>{c.triageState.replace(/_/g, ' ')}</span></div>
+          <div className="dv-mini-note">{c.eventNarrative}</div>
+        </div>
+      )} />
+      <CapaSection state={capa} title="CAPA records" emptyTitle="No CAPA records yet" render={(c) => (
+        <div key={c.id} className="dv-rsim-f" data-sev={c.riskLevel === 'critical' || c.riskLevel === 'high' ? 'critical' : c.riskLevel === 'medium' ? 'major' : 'minor'}>
+          <div className="dv-rsim-fh"><span className="pg-badge" data-tone="idle">{c.capaCode}</span><span className="dv-mini-note" style={{ flex: 1 }}>{c.type} {'·'} risk: {c.riskLevel}</span><span className="pg-badge" data-tone={ct[c.state] || 'idle'}>{c.state.replace(/_/g, ' ')}</span></div>
+          <div className="dv-rsim-txt">{c.title}</div>
+          <div className="dv-mini-note">{c.assignedTo ? `Owner: ${c.assignedTo}` : 'Unassigned'}{c.targetCloseDate ? ` ${'·'} Due: ${c.targetCloseDate.slice(0, 10)}` : ''}</div>
+        </div>
+      )} />
+    </div>
+  );
+}
+/* ── Inspection readiness — REAL org-scoped backend (GET /api/inspections,
+   BIMO/PAI). The list returns the org's inspections as a flat array of real
+   columns (snake_case). Per-inspection Form FDA 483 findings and per-area
+   readiness live at separate endpoints (/:id/findings, /readiness/score) and
+   are NOT fabricated here. Render real rows, an honest empty, or an honest
+   error — never a fixture. ── */
+
+interface InspectionRow {
+  id: number; inspection_type: string; agency: string; site_name: string;
+  scheduled_date: string | null; start_date: string | null; end_date: string | null;
+  status: string; outcome: string;
+}
+
 function IntelInspection() {
-  const D = DV_INSPECTION; if (!D) return null;
+  const insp = useLiveRows<InspectionRow>('/api/inspections');
   const oT: Record<string, string> = { pending: 'idle', nai: 'ok', vai: 'warn', oai: 'err' };
   const oL: Record<string, string> = { pending: 'Pending', nai: 'NAI', vai: 'VAI', oai: 'OAI' };
-  const fT: Record<string, string> = { critical: 'err', major: 'warn', minor: 'ai', observation: 'idle' };
-  const rT: Record<string, string> = { ready: 'ok', in_progress: 'ai', at_risk: 'err', not_started: 'idle' };
+  if (insp.loading) return <div className="dv-mini"><div className="scaf-note" style={{ padding: '18px 10px' }}>Loading inspections…</div></div>;
+  if (insp.error) return (
+    <div className="dv-mini">
+      <EmptyState
+        tone="error"
+        icon={I.alertTriangle}
+        title="Couldn't load inspection readiness"
+        hint="These are the organization's governed BIMO / PAI inspections and their outcomes. Sign in and retry, or check the inspection service is reachable."
+      />
+    </div>
+  );
+  if (insp.empty) return (
+    <div className="dv-mini">
+      <EmptyState
+        icon={I.shieldCheck}
+        title="No inspections yet"
+        hint="Scheduled and completed FDA / EMA / MHRA / PMDA inspections, their outcomes, Form 483 findings and per-area readiness are governed here once created."
+      />
+    </div>
+  );
   return (
-    <div className="dv-mini">{D.inspections.map((ins: any, i: number) => (
-      <div key={i} style={{ marginBottom: i < D.inspections.length - 1 ? 14 : 0 }}>
+    <div className="dv-mini">{insp.rows.map((ins) => (
+      <div key={ins.id} style={{ marginBottom: 10 }}>
         <div className="dv-mini-sub" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {ins.type.toUpperCase()} {'·'} {ins.agency.toUpperCase()}
-          <span className="pg-badge" data-tone={ins.status === 'scheduled' ? 'ai' : ins.status === 'completed' ? 'ok' : 'idle'}>{ins.status}</span>
-          {ins.outcome !== 'pending' && <span className="pg-badge" data-tone={oT[ins.outcome]}>{oL[ins.outcome]}</span>}
+          {ins.inspection_type.toUpperCase()} {'·'} {ins.agency.toUpperCase()}
+          <span className="pg-badge" data-tone={ins.status === 'scheduled' ? 'ai' : ins.status === 'completed' || ins.status === 'closed' ? 'ok' : 'idle'}>{ins.status}</span>
+          {ins.outcome && ins.outcome !== 'pending' && <span className="pg-badge" data-tone={oT[ins.outcome] || 'idle'}>{oL[ins.outcome] || ins.outcome}</span>}
         </div>
-        <div className="dv-mini-note">{ins.site}</div>
-        {ins.scheduledDate && <div className="dv-mini-mfg"><Ic n="calendar" /><span>Scheduled: {ins.scheduledDate}</span></div>}
-        {ins.startDate && <div className="dv-mini-note">Held: {ins.startDate} – {ins.endDate}</div>}
-        {ins.readiness.length > 0 && <div>
-          <div className="dv-mini-sub" style={{ marginTop: 8 }}>Readiness assessment ({ins.readiness.length} areas)</div>
-          {ins.readiness.map((r: any, j: number) => (
-            <div key={j} className="dv-rsim-f" data-sev={r.status === 'at_risk' ? 'critical' : r.status === 'in_progress' ? 'minor' : 'ok'}>
-              <div className="dv-rsim-fh"><span className="pg-badge" data-tone={rT[r.status] || 'idle'}>{r.status.replace(/_/g, ' ')}</span><span className="dv-rsim-area">{r.area}</span></div>
-              {r.gaps && <div className="dv-rsim-fix" style={{ color: 'var(--error)' }}>{r.gaps}</div>}
-            </div>
-          ))}
-        </div>}
-        {ins.findings.length > 0 && <div>
-          <div className="dv-mini-sub" style={{ marginTop: 8 }}>Form FDA 483 findings ({ins.findings.length}){ins.findings.some((f: any) => f.status === 'open') && <span className="pg-badge" data-tone="err" style={{ marginLeft: 6 }}>{ins.findings.filter((f: any) => f.status === 'open').length} open</span>}</div>
-          {ins.findings.map((f: any, j: number) => (
-            <div key={j} className="dv-rsim-f" data-sev={f.classification === 'critical' ? 'critical' : f.classification === 'major' ? 'major' : 'minor'}>
-              <div className="dv-rsim-fh"><span className="pg-badge" data-tone={fT[f.classification] || 'idle'}>{f.classification}</span><span className="dv-mini-note" style={{ flex: 1 }}>Obs. {f.num}</span><span className="pg-badge" data-tone={f.status === 'responded' ? 'ok' : 'err'}>{f.status}</span></div>
-              <div className="dv-rsim-txt">{f.desc}</div>
-              <div className="dv-rsim-fix"><b>Response due: </b>{f.responseDue}{f.responseFiled ? ' · filed ' + f.responseFiled : <span style={{ color: 'var(--error)' }}> — not yet filed</span>}</div>
-            </div>
-          ))}
-        </div>}
+        <div className="dv-mini-note">{ins.site_name}</div>
+        {ins.scheduled_date && <div className="dv-mini-mfg"><Ic n="calendar" /><span>Scheduled: {ins.scheduled_date.slice(0, 10)}</span></div>}
+        {ins.start_date && <div className="dv-mini-note">Held: {ins.start_date.slice(0, 10)}{ins.end_date ? ` – ${ins.end_date.slice(0, 10)}` : ''}</div>}
       </div>
     ))}</div>
   );
 }
+/* ── AI/ML PCCP (FDA 2025) — the backend is REAL (/api/pccp/programs/:programId
+   /plans, org-scoped drizzle over ai_ml_pccp_plans) but the list is keyed by a
+   regulatory-program UUID this fixture-driven device surface does not carry
+   (there is no program context here). Rather than fabricate a PCCP plan, show
+   an honest empty until the surface is wired to a real program.
+   FOLLOW-UP: thread the selected program id in and fetch its plans. ── */
 function IntelPccp() {
-  const P = DV_PCCP; if (!P) return null;
-  const pl = P.plan;
-  const MT: Record<string, string> = { algorithm_update: 'Algorithm update', retraining: 'Retraining', input_data_change: 'Input data', output_format_change: 'Output format', performance_threshold_change: 'Perf threshold', ui_change: 'UI change', hardware_dependency: 'Hardware', other: 'Other' };
-  const MO: Record<string, string> = { accepted: 'ok', draft: 'idle', proposed: 'warn', rejected: 'err', superseded: 'idle' };
-  const c2d = pl.component2_elements.filter((e: any) => e.have).length;
-  const c3d = pl.component3_elements.filter((e: any) => e.have).length;
   return (
     <div className="dv-mini">
-      <div className="dv-mini-sub">{pl.code} v{pl.version} {'·'} {pl.guidanceVersion}</div>
-      <div className="dv-mini-mfg"><span className="pg-badge" data-tone={pl.status === 'approved' ? 'ok' : pl.status === 'under_review' ? 'warn' : 'idle'}>{pl.status.replace(/_/g, ' ')}</span></div>
-      <div className="dv-mini-sub" style={{ marginTop: 10 }}>3 Required PCCP components (FDA 2025 final guidance)</div>
-      <div className="dv-mini-mfg"><span className="dv-mini-tk" data-ok={true}>{'✓'}</span><span>Component 1 — Description of modifications: complete</span></div>
-      <div className="dv-mini-mfg"><span className="dv-mini-tk" data-ok={c2d === pl.component2_elements.length}>{c2d}/{pl.component2_elements.length}</span><span>Component 2 — Modification protocol</span></div>
-      {pl.component2_elements.filter((e: any) => !e.have).map((e: any, i: number) => <div key={i} className="dv-mini-note" style={{ paddingLeft: 24, color: 'var(--warning)' }}>{'• ' + e.k + ' — missing'}</div>)}
-      <div className="dv-mini-mfg"><span className="dv-mini-tk" data-ok={c3d === pl.component3_elements.length}>{c3d}/{pl.component3_elements.length}</span><span>Component 3 — Impact assessment</span></div>
-      {pl.component3_elements.filter((e: any) => !e.have).map((e: any, i: number) => <div key={i} className="dv-mini-note" style={{ paddingLeft: 24, color: 'var(--warning)' }}>{'• ' + e.k + ' — missing'}</div>)}
-      <div className="dv-mini-sub" style={{ marginTop: 12 }}>Anticipated modifications ({P.modifications.length})</div>
-      {P.modifications.map((m: any, i: number) => (
-        <div key={i} className="dv-rsim-f" data-sev={m.status === 'accepted' ? 'ok' : 'minor'}>
-          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={MO[m.status] || 'idle'}>{m.code}</span><span className="dv-mini-note" style={{ flex: 1 }}>{MT[m.type] || m.type}</span><span className="pg-badge" data-tone={MO[m.status] || 'idle'}>{m.status}</span></div>
-          <div className="dv-rsim-txt">{m.title}</div><div className="dv-mini-note">{m.boundary}</div>
-          {m.metric !== 'N/A' && m.threshold && <div className="dv-rsim-fix"><b>Threshold: </b>{m.metric} {m.comparator} {m.threshold} on {m.testSet}</div>}
-          <div className="dv-rsim-fix"><b>Rollback: </b>{m.rollback}</div>
-          {m.labelingImpact && <div className="dv-rsim-fix"><b>Labeling: </b>{m.labelingImpact}</div>}
-        </div>
-      ))}
+      <EmptyState
+        icon={I.fileText}
+        title="No AI/ML PCCP plan yet"
+        hint="Predetermined Change Control Plans (FDA 2025 final guidance) are governed per regulatory program. Once this device submission is linked to its program, its PCCP plan, modification protocol and impact assessment appear here."
+      />
     </div>
   );
 }
@@ -328,11 +410,11 @@ const INTEL: Record<string, IntelEntry> = {
   traceability17511: { title: 'Metrological traceability', icon: 'telescope', C: IntelTraceability17511, has: pw => !!pw.traceability17511 },
   cyber: { title: 'Cybersecurity', icon: 'shieldCheck', C: IntelCyber, has: pw => !!pw.cyber },
   reviewsim: { title: 'Reviewer simulation', icon: 'scale', C: IntelReviewSim, has: pw => !!pw.reviewsim },
-  humanfactors: { title: 'Human factors (62366)', icon: 'user', C: IntelHumanFactors, has: pw => !!pw.humanfactors },
+  humanfactors: { title: 'Human factors (62366)', icon: 'user', C: IntelHumanFactors, has: () => true },
   registration: { title: 'Registration and listing', icon: 'fileCheck', C: IntelRegistration, has: pw => !!pw.registration },
-  pccp: { title: 'AI/ML PCCP (FDA 2025)', icon: 'settings', C: IntelPccp, has: () => !!DV_PCCP },
-  capa: { title: 'CAPA and MDR vigilance', icon: 'alertTriangle', C: IntelCapa, has: () => !!DV_CAPA },
-  inspection: { title: 'Inspection readiness', icon: 'shieldCheck', C: IntelInspection, has: () => !!DV_INSPECTION },
+  pccp: { title: 'AI/ML PCCP (FDA 2025)', icon: 'settings', C: IntelPccp, has: () => true },
+  capa: { title: 'CAPA and MDR vigilance', icon: 'alertTriangle', C: IntelCapa, has: () => true },
+  inspection: { title: 'Inspection readiness', icon: 'shieldCheck', C: IntelInspection, has: () => true },
   assembly: { title: 'Assembly and validate', icon: 'rocket', C: IntelAssembly, has: () => true },
 };
 function intelOrder(pw: any): string[] {
@@ -360,6 +442,19 @@ function CoAuthor({ pw, sec, onAsk }: { pw: any; sec: any; onAsk: (m: string) =>
 export function DeviceSubmission({ onAsk, surface }: { onAsk: (m: string) => void; surface?: any }) {
   const initial = (surface && ({ 'device-cer': 'cer', 'device-diagnostics': 'ivdr' } as Record<string, string>)[surface.id]) || '510k';
   const [pwId, setPwId] = useState(initial);
+  // FIXTURE SPINE (follow-up — not re-anchorable from this file alone): the whole
+  // `pw` object (device identity, sections, document content, predicate, risk,
+  // performance, reviewsim, DHF, cyber, registration, change-assessment, forms,
+  // assembly, ana, traceability) is seed data from ../fixtures/device-data. It has
+  // no matching backend contract and is consumed by components in ./DeviceIntel
+  // (Tree, DocumentPage, DeviceAcc, IntelPredicate, IntelRisk, …) that this task
+  // may not edit, so honestly re-anchoring it requires a coordinated multi-file
+  // change (a device-submission read model + DeviceIntel.tsx). The self-contained
+  // panels are handled here instead: CAPA/MDR, inspections and human factors are
+  // re-anchored to live org-scoped data; PCCP shows an honest empty pending a
+  // program id. (Candidate backends exist for some spine slices — /api/design-controls
+  // for DHF, but it serves a different item-list contract on its own surface;
+  // /api/cybersecurity-524b is POST-only — so they stay flagged, not half-wired.)
   const pw = getDevicePathway(pwId);
   const [activeSec, setActiveSec] = useState(pw.sections[0].id);
   const [dock, setDock] = useState('intel');

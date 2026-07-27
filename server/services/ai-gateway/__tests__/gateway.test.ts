@@ -218,11 +218,14 @@ describe('AIGateway', () => {
       (gateway as any).isReasoningOnlyModel(model);
 
     const buildParams = (model: string, request: Partial<GatewayRequest>): any => {
-      const params: any = {};
+      const req = buildTestRequest(request);
+      // Mirror executeAnthropic: max_tokens is set on params before the sampling
+      // params are applied, so the legacy thinking-budget clamp can see it.
+      const params: any = { max_tokens: req.maxTokens ?? 4096 };
       (gateway as any).applyAnthropicSamplingParams(
         params,
         { model, provider: 'anthropic' },
-        buildTestRequest(request)
+        req
       );
       return params;
     };
@@ -259,11 +262,26 @@ describe('AIGateway', () => {
       const plain = buildParams('claude-sonnet-4-6', { temperature: 0.3 });
       expect(plain.temperature).toBe(0.3);
 
+      // Budget passes through unchanged when it fits under max_tokens.
       const thinking = buildParams('claude-sonnet-4-6', {
+        maxTokens: 16000,
         thinking: { enabled: true, budgetTokens: 12000 },
       });
       expect(thinking.thinking).toEqual({ type: 'enabled', budget_tokens: 12000 });
       expect(thinking.temperature).toBe(1);
+    });
+
+    it('clamps the legacy budget_tokens below max_tokens (would 400 otherwise)', () => {
+      // Anthropic requires budget_tokens < max_tokens (thinking shares the
+      // output budget). A 12k budget on a 4k-max_tokens turn is clamped so
+      // >=1024 tokens remain for the answer.
+      const clamped = buildParams('claude-sonnet-4-6', {
+        maxTokens: 4096,
+        thinking: { enabled: true, budgetTokens: 12000 },
+      });
+      expect(clamped.thinking.type).toBe('enabled');
+      expect(clamped.thinking.budget_tokens).toBe(3072);
+      expect(clamped.thinking.budget_tokens).toBeLessThan(4096);
     });
   });
 

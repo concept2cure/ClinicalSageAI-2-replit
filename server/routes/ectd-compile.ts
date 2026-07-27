@@ -20,6 +20,25 @@ import { pool } from '../db';
 
 const router = Router();
 
+/**
+ * Organization id for the caller, taken only from authenticated request
+ * context — never from params, query or body.
+ *
+ * Every route here reads `project_sections`, which is tenant data. Routes that
+ * omitted this filter let one organization compile, validate or inspect the
+ * readiness of another organization's submission by guessing a numeric project
+ * id, so a null return must be treated as 401 rather than "no scope".
+ */
+function resolveOrgId(req: Request): number | null {
+  const raw =
+    (req as any).tenantId ||
+    (req as any).tenantContext?.organizationId ||
+    (req as any).organizationId ||
+    (req as any).user?.organizationId;
+  const numeric = raw != null ? Number(raw) : NaN;
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -108,20 +127,27 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
       : null;
 
     // Derive org from auth context
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId ||
-      (req as any).organizationId || (req as any).user?.organizationId;
+    const orgId = resolveOrgId(req);
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    // 1. Gather all project sections from DB (with org filter)
+    // 1. Gather all project sections from DB.
+    //
+    // TENANCY: filtered by organization_id as well as project_id. The org
+    // filter was described in this comment but absent from the SQL, so any
+    // authenticated organization could compile a submission from another
+    // organization's sections just by guessing a numeric project id.
+    // `project_sections.organization_id` is NOT NULL (see
+    // db/migrations/20260220_ind_section_tracking.sql), so this cannot
+    // legitimately exclude rows that belong to the caller.
     const sectionsResult = await pool.query(
       `SELECT section_code, title, status, content, word_count, assigned_to, module,
               required, updated_at
        FROM project_sections
-       WHERE project_id = $1
+       WHERE project_id = $1 AND organization_id = $2
        ORDER BY section_code`,
-      [projectId]
+      [projectId, Number(orgId)]
     );
     const sections = sectionsResult.rows;
 
@@ -181,23 +207,37 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
 
     // 5. Record compilation
     const compilationId = `comp_${Date.now()}_${projectId}`;
+    // This insert previously bound SIX values to FIVE placeholders with a
+    // duplicated orgId in second position, so every remaining value landed one
+    // column to the left: the org id was written as compilation_name, the name
+    // as compilation_type, the submission type as status, the status as
+    // xml_backbone — and the actual XML backbone was dropped. It could never
+    // execute anyway: module_id and compiled_by were NOT NULL and unsupplied.
+    // The catch below blamed a missing table, so the failure was invisible and
+    // GET /:projectId/history was permanently empty. See ledger C-16.
+    const compilationName = `IND Compilation — Project ${projectId}`;
     try {
       await pool.query(
-        `INSERT INTO ectd_compilations (organization_id, compilation_name, compilation_type,
-         status, xml_backbone, compiled_at, version)
-         VALUES ($1, $2, $3, $4, $5, NOW(), '1.0')`,
+        `INSERT INTO ectd_compilations
+           (organization_id, compilation_name, compilation_type, status,
+            xml_backbone, validation_results, compiled_at, version)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), '1.0')`,
         [
-          (req as any).organizationId || (req as any).user?.organizationId || orgId,
           orgId,
-          `IND Compilation — Project ${projectId}`,
+          compilationName,
           submissionType,
           hasBlockingErrors ? 'failed' : 'completed',
           xmlBackbone,
+          JSON.stringify(validationResults),
         ]
       );
-    } catch {
-      // Table may not exist yet — non-blocking
-      console.warn('[eCTD Compile] ectd_compilations table not available, skipping record');
+    } catch (err: any) {
+      // Still non-blocking — a compilation the caller can download is worth more
+      // than a failed request — but say what actually went wrong instead of
+      // assuming the table is missing.
+      console.warn(
+        `[eCTD Compile] could not record compilation for project ${projectId}: ${err?.message}`
+      );
     }
 
     const result: CompilationResult = {
@@ -239,16 +279,21 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
+  const orgId = resolveOrgId(req);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
+
   try {
-    // Get project sections
+    // Get project sections (tenant-scoped — readiness is tenant data)
     let sections: any[] = [];
     try {
       const result = await pool.query(
         `SELECT section_code, title, status, module, required,
                 word_count, updated_at
-         FROM project_sections WHERE project_id = $1
+         FROM project_sections WHERE project_id = $1 AND organization_id = $2
          ORDER BY section_code`,
-        [projectId]
+        [projectId, orgId]
       );
       sections = result.rows;
     } catch {
@@ -316,6 +361,14 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
+  // Compilation history is tenant data. The name-LIKE filter alone matched every
+  // organization's compilations for the same project number, so one tenant could
+  // read another's submission history. See ledger C-16.
+  const orgId = resolveOrgId(req);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
+
   try {
     let compilations: any[] = [];
     try {
@@ -323,14 +376,14 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
         `SELECT id, compilation_name, compilation_type, status, version,
                 compiled_at, created_at
          FROM ectd_compilations
-         WHERE compilation_name LIKE $1
+         WHERE organization_id = $1 AND compilation_name LIKE $2
          ORDER BY created_at DESC
          LIMIT 20`,
-        [`%Project ${projectId}%`]
+        [orgId, `%Project ${projectId}%`]
       );
       compilations = result.rows;
-    } catch {
-      // Table may not exist
+    } catch (err: any) {
+      console.warn(`[eCTD History] query failed for project ${projectId}: ${err?.message}`);
     }
 
     res.json({ projectId, compilations });
@@ -348,6 +401,11 @@ router.post('/:projectId/validate', async (req: Request, res: Response) => {
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
+  const orgId = resolveOrgId(req);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
+
   try {
     const { region = 'FDA' } = req.body;
 
@@ -355,8 +413,8 @@ router.post('/:projectId/validate', async (req: Request, res: Response) => {
     try {
       const result = await pool.query(
         `SELECT section_code, title, status, content, word_count, module, required
-         FROM project_sections WHERE project_id = $1`,
-        [projectId]
+         FROM project_sections WHERE project_id = $1 AND organization_id = $2`,
+        [projectId, orgId]
       );
       sections = result.rows;
     } catch {

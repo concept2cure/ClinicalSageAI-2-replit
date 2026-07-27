@@ -46,10 +46,12 @@ export const NAV_GROUP_OF: Record<string, string> = {
   orphan: 'biopharma',
   'lifecycle-mgmt': 'biopharma',
   pharmacovigilance: 'biopharma',
+  'pv-cockpit': 'biopharma',
   'clinical-ops': 'biopharma',
   nonclinical: 'biopharma',
   registrations: 'both',
   'change-assessment': 'both',
+  quality: 'both',
   'nda-cockpit': 'biopharma',
   'maa-cockpit': 'biopharma',
   'agency-meetings': 'both',
@@ -64,7 +66,12 @@ export const NAV_GROUP_OF: Record<string, string> = {
   biopharma: 'biopharma',
   cmc: 'biopharma',
   'csr-workflow': 'biopharma',
+  // Regulatory findings are read across device and biopharma alike — the graph
+  // carries 510(k)/PMA disciplines as well as NDA/BLA, so this is not a
+  // biopharma-only surface.
+  'crl-library': 'both',
   'ectd-coauthor': 'biopharma',
+  'ectd-compile': 'biopharma',
   pdev: 'biopharma',
   setup: 'admin',
   'audit-trail': 'admin',
@@ -90,7 +97,10 @@ export const RAIL_CORE = [
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
 ];
 /** Specialist science apps promoted to the rail (also in the Apps catalog) */
-export const RAIL_SPECIALIST = [{ id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' }];
+export const RAIL_SPECIALIST = [
+  { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
+  { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
+];
 /** Explore section */
 export const RAIL_EXPLORE = [
   { id: 'ana-command', label: 'AnA Command', icon: 'sparkles', badge: 'AnA' },
@@ -138,6 +148,7 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'human-factors',
   'regulatory-workspace',
   'labeling-pi',
+  'quality',
 ]);
 /** Client segmentation — canonical UI axis organizations.client_type; see kit registry notes */
 export const SEGMENTS = [
@@ -350,7 +361,17 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
     'export_document',
   ],
   'ectd-coauthor': ['run_validation', 'compile_dossier', 'route_document_to_module', 'export_document'],
-  'csr-workflow': ['run_validation', 'refine_with_validation', 'save_document_version', 'export_document'],
+  'ectd-compile': ['run_validation', 'compile_dossier', 'export_document'],
+  // `attach_sources_to_document` added on both authoring surfaces that now read
+  // the evidence graph, so a finding can be cited straight into the artifact.
+  'csr-workflow': [
+    'run_validation',
+    'refine_with_validation',
+    'attach_sources_to_document',
+    'save_document_version',
+    'export_document',
+  ],
+  'protocol-dev': ['run_validation', 'refine_with_validation', 'attach_sources_to_document'],
   'device-510k': [
     'run_validation',
     'refine_with_validation',
@@ -374,6 +395,7 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
     'export_document',
   ],
   'submission-center': ['compile_dossier', 'route_document_to_module', 'export_document', 'save_document_version'],
+  'submission-twin': ['run_validation', 'compile_dossier'],
   'decision-lineage': ['get_document', 'export_document', 'run_validation'],
   dossier: ['compile_dossier', 'route_document_to_module', 'export_document'],
   vault: ['promote_artifact', 'attach_sources_to_document', 'export_document'],
@@ -384,6 +406,12 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   'safety-narrative': ['attach_sources_to_document', 'save_document_version'],
   biostatistics: ['attach_sources_to_document', 'refine_with_validation'],
   'precedent-intelligence': ['attach_sources_to_document', 'promote_artifact'],
+  // The six §10 graph tools are read-only reasoning and are deliberately NOT
+  // governed actions (ADR-CRIG-003). Only writing a recommendation into a
+  // regulated artifact is governed, and that already exists as promote_artifact
+  // / save_document_version. Adding an e-signature gate to *reading* evidence
+  // would train users to click through signoffs that carry no meaning.
+  'crl-library': ['attach_sources_to_document', 'promote_artifact'],
   cmc: ['run_validation', 'refine_with_validation', 'save_document_version'],
   'ind-checklist': ['run_validation', 'compile_dossier', 'route_document_to_module'],
   risk: ['attach_sources_to_document', 'save_document_version'],
@@ -416,11 +444,11 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -442,11 +470,11 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -468,6 +496,7 @@ export const SEGMENT_MODULES = {
         'labeling-pi',
         'doc-journey',
         'ectd-coauthor',
+        'ectd-compile',
         'template-library',
       ],
     },
@@ -500,17 +529,21 @@ export const SEGMENT_MODULES = {
         'tasks',
         'agency-meetings',
         'audit-trail',
+        'quality',
       ],
     },
     {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
+        'biostat-workbench',
         'rbm',
         'clinical-ops',
         'safety-narrative',
         'pharmacovigilance',
+        'pv-cockpit',
         'precedent-intelligence',
+        'crl-library',
         'global-ri',
         'intelligence-catalog',
         'deep-research',
@@ -546,6 +579,7 @@ export const SEGMENT_MODULES = {
         'csr-workflow',
         'doc-journey',
         'ectd-coauthor',
+        'ectd-compile',
         'template-library',
       ],
     },
@@ -578,17 +612,21 @@ export const SEGMENT_MODULES = {
         'tasks',
         'agency-meetings',
         'audit-trail',
+        'quality',
       ],
     },
     {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
+        'biostat-workbench',
         'rbm',
         'clinical-ops',
         'safety-narrative',
         'pharmacovigilance',
+        'pv-cockpit',
         'precedent-intelligence',
+        'crl-library',
         'global-ri',
         'intelligence-catalog',
         'deep-research',
@@ -626,8 +664,10 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
+        'biostat-workbench',
         'rbm',
         'precedent-intelligence',
+        'crl-library',
         'global-ri',
         'intelligence-catalog',
         'deep-research',
@@ -1049,6 +1089,7 @@ const AUTHORING_SURFACES = [
   'labeling-pi',
   'doc-journey',
   'ectd-coauthor',
+  'ectd-compile',
   'review',
 ];
 
@@ -1061,6 +1102,11 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
   vault: ['Find the latest biocompat report', 'Surface unsigned documents', 'Search by SHA-256'],
   tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
+  'crl-library': [
+    'Findings on this endpoint class',
+    'What did FDA ask for after this deficiency?',
+    'Compare our design to this letter',
+  ],
 };
 
 /** What AnA is attached to on a surface (kit getAnaContext, verbatim logic). */

@@ -126,6 +126,36 @@ const PATTERNS: Pattern[] = [
     ],
   },
   {
+    // Ledger C-18. The tenant-header rule above was already here; identity and
+    // ROLE headers were not, and that is where the bypass lived: a valid token
+    // with no `roles` claim plus a forged `x-roles: ADMIN` header passed every
+    // requireAny() gate in the authoring router, returning 201 on an
+    // ADMIN-gated route. The same class in server/src/routes/stability.router.ts
+    // attributed GxP audit records to `x-user-name || x-user-email || 'user'`.
+    //
+    // Deriving these headers from verified claims is not enough on its own —
+    // overwrite without delete leaves the caller's value in place whenever the
+    // claim is absent. Route code must read the claim (req.user.*) directly.
+    name: 'identity-trust-header',
+    regex: /\breq\.headers\s*\[\s*['"]x-(roles?|user-email|user-name|user-id)['"]\s*\]/i,
+    message:
+      'Do not read identity or roles from request headers — they are ' +
+      'attacker-controlled. Read the verified claim: req.user.roles for ' +
+      'authorization, req.user.email / req.user.id for attribution. See ledger ' +
+      'C-18: a forged x-roles header passed every role gate in the authoring ' +
+      'router.',
+    exemptFiles: [
+      // This router's OWN JWT middleware derives and then sanitises these
+      // headers for legacy readers; it must be able to delete and set them.
+      /(?:^|\/)server\/routes\/authoring\.router\.ts$/,
+      // Telemetry only: extractActor() prefers req.user.id / req.user.userId and
+      // reaches the header solely to label an otherwise anonymous request in
+      // logs. The value is never an authorization or audit-record identity.
+      // Same rationale as this file's tenant-header exemption for observability.
+      /(?:^|\/)server\/src\/mw\/observability\.ts$/,
+    ],
+  },
+  {
     name: 'direct-jwt-verify',
     regex: /\bjwt\.verify\s*\(/,
     message:

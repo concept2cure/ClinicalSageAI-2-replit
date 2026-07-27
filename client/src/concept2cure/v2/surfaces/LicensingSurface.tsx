@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, liveGet } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
-import { useLiveB2bPricing, useLiveDtcPricing } from '../livePricing';
+import { EmptyState, useLiveData } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+// Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
+// LIC_ARCHETYPES / licBundle are the product's fixed pricing catalog — the same
+// tiers the backend charges against (server/services/billing.ts, mirrored here
+// in dollars; verified in sync) and served read-only by GET /api/billing/{pricing,
+// dtc-pricing}. Identical for every tenant, so it is kept as reference config,
+// not re-anchored. Only the per-org subscription STATUS below is live persisted
+// data. `BillingStatus` is a type. Nothing here is a sample, so no SampleTag.
 import {
   LIC_DTC,
   LIC_PRICING,
@@ -44,40 +49,33 @@ function lim(n: number): string | number {
   return n === -1 ? 'Unlimited' : n;
 }
 
-/* -- Billing API helper -- the project's one fetch convention (apiRequest
-   attaches Bearer + x-organization-id). The kit's window.C2C_API bridge is
-   gone in the ported app; going through it left checkout/portal permanently
-   in sample mode even when signed in. */
-
-async function billingPost<T>(path: string, body: Record<string, unknown>): Promise<T | null> {
-  const res = await apiRequest('POST', path, body);
-  if (!res.ok) return null; // 401 passes through un-thrown; anything else throws upstream
-  return (await res.json().catch(() => null)) as T | null;
-}
+/* -- Billing API helper (mirrors kit runtime setup) -- */
 
 interface BillingApi {
-  status(): Promise<BillingStatus | null>;
   checkout(body: Record<string, unknown>): Promise<{ checkoutUrl?: string } | null>;
   dtcCheckout(body: Record<string, unknown>): Promise<{ checkoutUrl?: string } | null>;
   portal(returnUrl: string): Promise<{ portalUrl?: string } | null>;
   connected(): boolean;
 }
 
+// Subscription STATUS is read fixture-free via useLiveData in the component.
+// This helper only carries the checkout / portal ACTIONS (real Stripe endpoints).
 const billing: BillingApi = {
-  status() {
-    return liveGet<BillingStatus | null>('/api/billing/status', null).then((r) => (r.sample ? null : r.data));
-  },
   checkout(body) {
-    return billingPost('/api/billing/checkout', body);
+    const api = (window as any).C2C_API;
+    return api ? api.post('/api/billing/checkout', body) : Promise.reject(new Error('offline'));
   },
   dtcCheckout(body) {
-    return billingPost('/api/billing/dtc-checkout', body);
+    const api = (window as any).C2C_API;
+    return api ? api.post('/api/billing/dtc-checkout', body) : Promise.reject(new Error('offline'));
   },
   portal(returnUrl) {
-    return billingPost('/api/billing/portal', { returnUrl });
+    const api = (window as any).C2C_API;
+    return api ? api.post('/api/billing/portal', { returnUrl }) : Promise.reject(new Error('offline'));
   },
   connected() {
-    return connected();
+    const api = (window as any).C2C_API;
+    return !!(api && api.connected());
   },
 };
 
@@ -88,29 +86,18 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const [cycle, setCycle] = useState<'monthly' | 'annual'>('annual');
   const [arch, setArch] = useState('virtual_biotech');
   const [seats, setSeats] = useState(5);
-  const [status, setStatus] = useState<BillingStatus | null>(null);
   const [toast, fireToast] = useToast();
   const live = billing.connected();
 
-  useEffect(() => {
-    billing
-      .status()
-      .then((r: any) => {
-        const s = r && (r.data !== undefined ? r.data : r);
-        if (s && s.tier) setStatus(s);
-      })
-      .catch(() => {});
-  }, []);
+  // Per-org subscription STATUS is real persisted data: GET /api/billing/status
+  // reads the organizations row (server getSubscriptionStatus) and reconciles
+  // live Stripe state. Real object -> honest error -> no fixture. useLiveData
+  // unwraps the success envelope; this route returns the status object directly.
+  const statusState = useLiveData<BillingStatus>('/api/billing/status');
+  const status = statusState.data;
 
   const family = (LIC_ARCHETYPES.find((a) => a.id === arch) || { family: 'pharma' }).family;
-  /* Price cards adopt the live /api/billing price book (fail-closed to the
-     curated fixtures); checkout amounts are always computed server-side by
-     Stripe from the same book, so what renders is what gets charged. */
-  const dtcPricing = useLiveDtcPricing(LIC_DTC);
-  const b2bPricing = useLiveB2bPricing(family, LIC_PRICING[family] || LIC_PRICING.pharma);
-  const dtcTiers: DtcTier[] = dtcPricing.tiers;
-  const b2bTiers: B2bTier[] = b2bPricing.tiers;
-  const pricingLive = dtcPricing.live || b2bPricing.live;
+  const b2bTiers: B2bTier[] = LIC_PRICING[family] || LIC_PRICING.pharma;
   const bundle = licBundle(seats);
 
   const curTier = status ? status.tier : 'free';
@@ -163,9 +150,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Admin · /api/billing {live ? '· live' : ''}</div>
-          <h1 className="sp-title">
-            Plans &amp; licensing <SampleTag sample={!live && !pricingLive} />
-          </h1>
+          <h1 className="sp-title">Plans &amp; licensing</h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by
             organization archetype -- with seat bundle discounts and annual
@@ -179,7 +164,20 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         )}
       </div>
 
-      {status && (
+      {statusState.loading ? (
+        <div className="scaf-note" style={{ marginBottom: 16 }}>
+          Loading your current plan…
+        </div>
+      ) : statusState.error ? (
+        <div style={{ marginBottom: 16 }}>
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load your current plan"
+            hint="Your subscription status didn't load. This reads your organization's billing record — sign in and retry, or check the billing service is reachable."
+          />
+        </div>
+      ) : status ? (
         <div className="pj-card" style={{ marginBottom: 16 }}>
           <div className="pj-card-b lic-status">
             <div>
@@ -210,7 +208,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       <div className="lic-controls">
         <div className="cv-tiers">
@@ -271,7 +269,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
 
       {model === 'dtc' ? (
         <div className="lic-grid">
-          {dtcTiers.map((t: DtcTier) => {
+          {LIC_DTC.map((t: DtcTier) => {
             const annual =
               t.baseMonthly != null && t.baseMonthly > 0
                 ? Math.round(t.baseMonthly * (1 - t.annualDiscountPct / 100))

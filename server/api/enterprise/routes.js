@@ -5,14 +5,11 @@ import { AIProviderRouter } from '../../services/aiProviderRouter.ts';
 const aiProviderRouter = new AIProviderRouter();
 const openaiService = aiProviderRouter; // Backward compatibility alias
 
-// Stub audit service (real service deprecated)
-const auditService = {
-  logAction: async data => console.log('[AUDIT]', data.action, data.resourceType),
-  constructor: {
-    ACTIONS: { REGULATORY_ANALYSIS: 'regulatory_analysis', GENERATE_DOCUMENT: 'generate_document' },
-    RESOURCE_TYPES: { ANALYSIS: 'analysis', DOCUMENT: 'document' },
-  },
-};
+// Real audit service — persists to the sha256-chained, HMAC-sealed audit_logs
+// table (21 CFR Part 11 §11.10(e)/§11.70). Previously a console.log no-op stub,
+// so enterprise regulatory/RBAC actions were never written to the audit trail
+// (and the `.constructor.SEVERITY.HIGH` reference below threw on the stub).
+import auditService from '../../services/auditService.ts';
 
 // Use the real RBAC service — deny-by-default (FDA 21 CFR Part 11 §11.10(d))
 import rbacServiceImport from '../../services/roleBasedAccess.js';
@@ -48,8 +45,8 @@ router.post('/regulatory/analyze', async (req, res) => {
     await auditService.logAction({
       tenantId: req.tenantId,
       userId: req.userId,
-      action: auditService.constructor.ACTIONS.REGULATORY_ANALYSIS,
-      resourceType: auditService.constructor.RESOURCE_TYPES.ANALYSIS,
+      action: 'regulatory_analysis',
+      resourceType: 'analysis',
       details: { documentType, textLength: text.length },
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
@@ -77,9 +74,9 @@ router.post('/regulatory/analyze', async (req, res) => {
       tenantId: req.tenantId,
       userId: req.userId,
       action: 'regulatory.analysis.error',
-      resourceType: auditService.constructor.RESOURCE_TYPES.SYSTEM,
+      resourceType: 'system',
       details: { error: error.message },
-      severity: auditService.constructor.SEVERITY.HIGH,
+      severity: 'high',
     });
 
     res.status(500).json({
@@ -110,7 +107,7 @@ router.post('/regulatory/generate', async (req, res) => {
       tenantId: req.tenantId,
       userId: req.userId,
       action: 'regulatory.content.generated',
-      resourceType: auditService.constructor.RESOURCE_TYPES.DOCUMENT,
+      resourceType: 'document',
       details: { documentType, prompt: prompt.substring(0, 100) },
     });
 
@@ -146,7 +143,7 @@ router.post('/regulatory/enhance', async (req, res) => {
       tenantId: req.tenantId,
       userId: req.userId,
       action: 'regulatory.text.enhanced',
-      resourceType: auditService.constructor.RESOURCE_TYPES.DOCUMENT,
+      resourceType: 'document',
       details: { improvements, originalLength: text.length },
     });
 
@@ -163,45 +160,23 @@ router.post('/regulatory/enhance', async (req, res) => {
 });
 
 // Get audit trail
-router.get('/audit/trail', rbacService.requirePermission('audit', 'read'), async (req, res) => {
-  try {
-    const filters = {
-      userId: req.query.userId,
-      action: req.query.action,
-      resourceType: req.query.resourceType,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-      limit: parseInt(req.query.limit) || 100,
-    };
-
-    const auditTrail = await auditService.getAuditTrail(req.tenantId, filters);
-
-    res.json({
-      auditTrail,
-      total: auditTrail.length,
-      filters,
-    });
-  } catch (error) {
-    console.error('Audit trail error:', error);
-    res.status(500).json({ error: 'Failed to retrieve audit trail' });
-  }
+// The canonical audit read-model lives at /api/audit-trail/ledger (hash-chained,
+// tenant-scoped). This enterprise router only WRITES audit rows (via the real
+// auditService above); it does not expose a query API. Respond honestly rather
+// than calling the non-existent getAuditTrail/getAuditStats, which returned 500.
+router.get('/audit/trail', rbacService.requirePermission('audit', 'read'), (_req, res) => {
+  res.status(501).json({
+    error: 'Not implemented here',
+    message: 'Query the audit trail at /api/audit-trail/ledger (hash-chained, tenant-scoped).',
+  });
 });
 
 // Get audit statistics
-router.get('/audit/stats', rbacService.requirePermission('audit', 'read'), async (req, res) => {
-  try {
-    const timeframe = req.query.timeframe || '24 hours';
-    const stats = await auditService.getAuditStats(req.tenantId, timeframe);
-
-    res.json({
-      stats,
-      timeframe,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Audit stats error:', error);
-    res.status(500).json({ error: 'Failed to retrieve audit statistics' });
-  }
+router.get('/audit/stats', rbacService.requirePermission('audit', 'read'), (_req, res) => {
+  res.status(501).json({
+    error: 'Not implemented here',
+    message: 'Audit statistics are derived from the /api/audit-trail/ledger read-model; this endpoint does not synthesize stats.',
+  });
 });
 
 // Role management endpoints
@@ -228,7 +203,7 @@ router.post(
         tenantId: req.tenantId,
         userId: req.userId,
         action: 'role.assigned',
-        resourceType: auditService.constructor.RESOURCE_TYPES.USER,
+        resourceType: 'user',
         resourceId: userId.toString(),
         details: { roleName, expiresAt },
       });
@@ -274,31 +249,39 @@ router.get(
 );
 
 // System health check with enterprise features status
-router.get('/health', async (req, res) => {
+router.get('/health', async (_req, res) => {
+  // Real database probe — previously hardcoded { available:true, status:'connected' }
+  // regardless of actual DB state.
+  let dbAvailable = false;
+  try {
+    const { pool } = await import('../../db');
+    if (pool) {
+      await pool.query('SELECT 1');
+      dbAvailable = true;
+    }
+  } catch {
+    dbAvailable = false;
+  }
+
   const health = {
-    status: 'healthy',
+    status: dbAvailable ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     services: {
       openai: {
         available: openaiService.isAvailable,
         status: openaiService.isAvailable ? 'connected' : 'unavailable',
       },
-      audit: {
-        available: true,
-        status: 'active',
-      },
-      rbac: {
-        available: true,
-        status: 'active',
-      },
+      // audit + rbac are wired to their real services (imported above).
+      audit: { available: true, status: 'active' },
+      rbac: { available: Boolean(rbacService), status: rbacService ? 'active' : 'unavailable' },
       database: {
-        available: true,
-        status: 'connected',
+        available: dbAvailable,
+        status: dbAvailable ? 'connected' : 'unavailable',
       },
     },
   };
 
-  res.json(health);
+  res.status(dbAvailable ? 200 : 503).json(health);
 });
 
 // Helper functions for fallback operations

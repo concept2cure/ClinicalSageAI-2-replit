@@ -7,7 +7,12 @@ PyPDF2==3.0.1                 # Strategy 2: native PDF fallback
 pdfminer.six==20260107        # Strategy 3: layout-aware extraction with LAParams
 pytesseract==0.3.13           # Strategy 4 & 5: OCR for scanned PDFs
 opencv-python-headless==4.13.0.92 # Strategy 5: image preprocessing for enhanced OCR
-Pillow==12.3.0                # Image handling for OCR (12.3.0 fixes CVE-2026-54058/54059/54060/55379/55380/59197/59199/59200/59204/59205)
+# 12.2.0 is flagged by the blocking Trivy filesystem scan for five HIGH/CRITICAL
+# advisories (CVE-2026-59197/59199/59200/59204/59205: out-of-bounds write, DoS via
+# crafted PDF stream and JPEG2000, heap corruption in ImageCms). 12.3.0 is the
+# only later release. The used API surface is just Image.open / Image.fromarray
+# (ingestion/pdf_extractor.py), so the upgrade risk is minimal.
+Pillow==12.3.0                # Image handling for OCR
 pdf2image==1.17.0             # Strategy 6: pdf->image via poppler (OCR fallback)
 
 # === Document Extraction - DOCX / XLSX / TXT ===

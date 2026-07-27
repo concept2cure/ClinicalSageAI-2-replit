@@ -1,5 +1,17 @@
 # Handoff to Design — Medical Device, Diagnostics & IVD Client (complete, code-grounded)
 
+> [!CAUTION]
+> **RETRACTED AS EVIDENCE — 24 July 2026.**
+> This brief is a historical record of what was believed on its authoring date. It is
+> **not** evidence of what the code does and must not be cited as a reason to build,
+> skip, or scope anything. At least one brief in this set was materially wrong about a
+> live subsystem (`HANDOFF_TO_DESIGN_document_authoring.md` §2 — see
+> `_sync/CLAUDE_DESIGN_MASTER_WORK_ORDER_2026-07-24.md` §0.1).
+>
+> Verify every claim below against the code at the head of `concept2cure-v2`, or treat
+> it as an open question. Authoritative scope lives in
+> `_sync/CLAUDE_DESIGN_MASTER_WORK_ORDER_2026-07-24.md`.
+
 **Date:** 2026-06-23
 **From:** Claude Code (platform/contract enablement)
 **To:** Claude Design / UI team

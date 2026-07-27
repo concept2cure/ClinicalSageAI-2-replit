@@ -129,6 +129,8 @@ export class ResolutionTestState {
   bundles: TestBundle[] = [];
   plans: TestPlan[] = [];
   bundleItems: TestBundleItem[] = [];
+  /** Execution receipts persisted during a run (ADR-0009). */
+  receipts: Array<{ id: string }> = [];
 
   reset(): void {
     this.supersessions = [];
@@ -138,5 +140,6 @@ export class ResolutionTestState {
     this.bundles = [];
     this.plans = [];
     this.bundleItems = [];
+    this.receipts = [];
   }
 }

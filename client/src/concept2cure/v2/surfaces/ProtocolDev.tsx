@@ -2,11 +2,18 @@
  *  ProtocolDev.tsx -- protocol development hub (C2C-17 + C2C-18..22)
  *  Ported from protocol-dev.jsx IIFE to typed React module.
  * ------------------------------------------------------------------ */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
-import { PDEV_DOC, type PdevDoc } from '../fixtures/protocol-data';
-import { SampleTag, liveGet } from '../dataConnect';
+import type { PdevDoc } from '../fixtures/protocol-data';
+import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
+import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
+import {
+  VERIFICATION_LABEL,
+  withDenominator,
+  type DesignEvidencePanelView,
+} from '../fixtures/clinical-regulatory-evidence';
 
 const Ic = PG.Ic;
 
@@ -376,28 +383,60 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
 
 /* ---- Main workspace ---- */
 export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
-  /* live ?? fixture — adopt the org's seeded protocol when the store returns the
-     full PdevDoc shape (header scalars + nested section tree, SoA grid, risk
-     register, amendments), else keep the codebase fixture so the hub is never
-     empty. Never fabricates. Endpoint returns { data: [doc], meta:{count} }. */
-  const [doc, setDoc] = useState<PdevDoc>(PDEV_DOC);
-  const [sample, setSample] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ data?: PdevDoc[] }>('/api/protocol-dev', { data: [] }).then((res) => {
-      if (cancelled) return;
-      const d = res.data?.data?.[0];
-      if (!res.sample && d && d.id && Array.isArray(d.sections) && d.sections.length > 0
-          && Array.isArray(d.risks) && d.soa && Array.isArray(d.soa.visits)) {
-        setDoc(d);
-        setSample(false);
-      }
-    });
-    return () => { cancelled = true; };
-  }, []);
+  // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
+  // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
+  // the real c2c_protocol_dev table via pool, org-scoped, JSONB rehydrated).
+  // Real rows, an honest empty state, or an honest failed-load — never a fixture.
+  // reloadKey bumps after a successful register write so the JSONB read-model
+  // refetches and the register renders the server's row (nothing local).
+  const [reloadKey, setReloadKey] = useState(0);
+  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev', ['/api/protocol-dev', reloadKey]);
+  if (loading) {
+    return <div className="pd-wrap"><div className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
+  }
+  if (error) {
+    return (
+      <div className="pd-wrap" style={{ padding: 16 }}>
+        <EmptyState tone="error" icon={I.alertTriangle}
+          title="Couldn't load the protocol"
+          hint="The protocol authoring store didn't respond. This is the organization's in-development clinical protocol — sign in and retry, or check that the service is reachable." />
+      </div>);
+  }
+  const doc = rows[0];
+  if (empty || !doc) {
+    return (
+      <div className="pd-wrap" style={{ padding: 16 }}>
+        <EmptyState icon={I.fileText}
+          title="No protocol in development yet"
+          hint="Start a clinical protocol to author it here — sections, objectives, schedule of assessments, risk register, budget, amendments, and review threads are all governed on this document." />
+      </div>);
+  }
+  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} onChanged={() => setReloadKey((k) => k + 1)} />;
+}
+
+/* ---- Workspace body — a real, loaded protocol document ---- */
+function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk?: (msg: string) => void; onChanged?: () => void }) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   const [gov, setGov] = useState<any>(null);
+  // Which register create-form is open (risk/milestone/amendment/deviation) —
+  // these POST to the real protocol-* routers, replacing the former reason-only
+  // governed dialog whose onConfirm was a no-op.
+  const [reg, setReg] = useState<RegisterKind | null>(null);
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fireToast = useCallback((m: string) => {
+    setToast(m);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(''), 4200);
+  }, []);
+  // The write routers key on the numeric c2c_protocol_dev id.
+  const numericDocId = Number(doc.id);
+  const canWrite = Number.isInteger(numericDocId) && numericDocId > 0;
+  const openReg = (kind: RegisterKind) => {
+    if (!canWrite) { fireToast('This protocol row has no numeric document id — register writes need the governed store.'); return; }
+    setReg(kind);
+  };
   const sec = doc.sections.find((s: any) => s.id === activeSec) || doc.sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
   const generate = (s: any) => onAsk && onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
@@ -407,28 +446,28 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
       case 'objectives':  return <ObjectivesTab doc={doc} onAdd={() => govAct({ title: 'Add objective', intent: 'Add a study objective and its endpoint.', basis: 'ICH M11 — Objectives & Endpoints' })} />;
       case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => govAct({ title: 'Add eligibility criterion', intent: 'Add an inclusion or exclusion criterion.', basis: 'ICH M11 — Study Population' })} />;
       case 'soa':         return <SoaTab doc={doc} />;
-      case 'risks':       return <RiskTab doc={doc} onAdd={() => govAct({ title: 'Add protocol risk', intent: 'Add a risk to the register with likelihood × impact.', basis: 'ICH E6(R2) §5.0 — risk-based quality management' })} />;
-      case 'milestones':  return <MilestonesTab doc={doc} onAdd={() => govAct({ title: 'Add milestone', intent: 'Add a timeline milestone with a target date.' })} />;
+      case 'risks':       return <RiskTab doc={doc} onAdd={() => openReg('risk')} />;
+      case 'milestones':  return <MilestonesTab doc={doc} onAdd={() => openReg('milestone')} />;
       case 'budget':      return <BudgetTab doc={doc} />;
-      case 'amendments':  return <AmendmentsTab doc={doc} onAdd={() => govAct({ title: 'Create amendment', intent: 'Open a new protocol amendment and define its change set.', basis: '45 CFR 46.116 / ICH E6(R2) — substantive change review', esign: false })} />;
-      case 'deviations':  return <DeviationsTab doc={doc} onAdd={() => govAct({ title: 'Report deviation', intent: 'Log a protocol deviation and open CAPA actions.', basis: 'ICH E6(R2) §4.5 — protocol compliance' })} />;
+      case 'amendments':  return <AmendmentsTab doc={doc} onAdd={() => openReg('amendment')} />;
+      case 'deviations':  return <DeviationsTab doc={doc} onAdd={() => openReg('deviation')} />;
       case 'reviews':     return <ReviewsTab doc={doc} />;
       case 'consent':     return <ConsentTab doc={doc} />;
-      default:            return <DocumentTab doc={doc} sec={sec} onGenerate={generate} />;
+      default:            return sec ? <DocumentTab doc={doc} sec={sec} onGenerate={generate} /> : <div className="pd-pane"><div className="pg-empty">This protocol has no sections yet.</div></div>;
     }
   })();
   return (
     <div className="pd-wrap">
       <div className="pd-head">
         <div className="pd-head-l">
-          <span className="pd-kind">{PG.labelize(doc.kind) + ' protocol'} <SampleTag sample={sample} /></span>
+          <span className="pd-kind">{(doc.kind ? PG.labelize(doc.kind) + ' ' : '') + 'protocol'}</span>
           <div className="pd-titrow"><h1 className="pd-title">{doc.title}</h1><span className="pd-short">{doc.shortTitle}</span></div>
           <div className="pd-subrow">
             <span>{doc.sponsor}</span><span className="pd-dot" /><span>PI {doc.pi}</span><span className="pd-dot" /><PG.StatusBadge status={doc.status} />
           </div>
         </div>
         <div className="pd-head-r">
-          <span className="pd-autosave"><span className="pd-autosave-dot" />{'Autosaved · v' + doc.version + ' · ' + doc.updated}</span>
+          <span className="pd-autosave"><span className="pd-autosave-dot" />{'Autosaved · v' + (doc.version || '—') + (doc.updated ? ' · ' + doc.updated : '')}</span>
           <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk && onAsk('Review ' + doc.shortTitle + ' for completeness and list what blocks finalization.')}>Ask AnA</PG.Btn>
           <PG.Btn icon="fileText" variant="outline" onClick={() => govAct({ title: 'Export protocol', intent: 'Render the assembled protocol to DOCX / PDF.', esign: false })}>Export</PG.Btn>
         </div>
@@ -443,6 +482,20 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
         <div className="pd-work">{body}</div>
       </div>
       <PG.GovernedActionDialog open={!!gov} onClose={() => setGov(null)} onConfirm={() => {}} {...(gov || {})} />
+      {reg && canWrite && (
+        <ProtocolRegisterForm
+          kind={reg}
+          protocolDocumentId={numericDocId}
+          onCancel={() => setReg(null)}
+          onDone={(kind) => {
+            setReg(null);
+            fireToast('Recorded — the ' + kind + ' was written to the governed register.');
+            onChanged?.();
+          }}
+          onError={(m) => fireToast(m)}
+        />
+      )}
+      {toast && <div className="de-toast"><span className="ico">{I.checkCircle}</span>{toast}</div>}
     </div>);
 }
 
@@ -459,7 +512,34 @@ export function PIAcc({ id, title, badge, open, onToggle, children }: PIAccProps
 }
 
 export function ProtocolIntelPanel({ onAsk }: WorkspaceProps) {
-  const doc: any = PDEV_DOC; if (!doc) return null;
+  // Same real protocol document as the workspace (GET /api/protocol-dev, the
+  // c2c_protocol_dev store via pool). Honest loading / empty / error — never a
+  // fixture.
+  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev');
+  if (loading) {
+    return <div className="pi-dock"><div className="scaf-note" style={{ margin: 12 }}>Loading…</div></div>;
+  }
+  if (error) {
+    return (
+      <div className="pi-dock">
+        <EmptyState tone="error" icon={I.alertTriangle}
+          title="Couldn't load the protocol"
+          hint="The protocol store didn't respond. Sign in and retry, or check that the service is reachable." />
+      </div>);
+  }
+  const doc = rows[0];
+  if (empty || !doc) {
+    return (
+      <div className="pi-dock">
+        <EmptyState icon={I.fileText}
+          title="No protocol in development yet"
+          hint="Start a protocol to see finalization readiness, objectives, eligibility, risks, and milestones here." />
+      </div>);
+  }
+  return <ProtocolIntelDock doc={doc} onAsk={onAsk} />;
+}
+
+function ProtocolIntelDock({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: string) => void }) {
   const [open, setOpen] = useState<string | null>('readiness');
   const tog = (k: string) => setOpen(open === k ? null : k);
   const ask = (m: string) => onAsk && onAsk(m);
@@ -505,10 +585,245 @@ export function ProtocolIntelPanel({ onAsk }: WorkspaceProps) {
           <span className="pi-ms-dot" data-urg={m.urgency} /><span className="pi-ms-l">{m.label}</span><span className="pi-ms-d">{m.date}</span>
         </div>))}
       </PIAcc>
+      <DesignEvidenceAccordions designNodeId={doc.id != null ? String(doc.id) : null} onAsk={onAsk} />
       <button className="pi-ask" onClick={() => ask('Review the protocol for finalization gaps and draft the missing required sections.')}>
         <Ic n="sparkles" s={13} />Ask AnA to close gaps
       </button>
     </div>);
+}
+
+/**
+ * The seven §13 evidence accordions, appended to the existing intel dock under
+ * an "Evidence" divider. The existing five accordions, the outline, the SoA grid
+ * and the register forms are untouched.
+ *
+ * ONE fetch (`design-evidence?designNodeId=`) answers all seven questions, so
+ * the dock can never show supporting evidence that has arrived beside
+ * contradictions that have not — a half-loaded evidence picture reads as a
+ * one-sided one.
+ *
+ * Flag off ⇒ renders nothing at all, and the dock is byte-identical to before.
+ */
+function DesignEvidenceAccordions({
+  designNodeId,
+  onAsk,
+}: {
+  designNodeId: string | null;
+  onAsk?: (msg: string) => void;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const graphOn = isClinicalRegulatoryGraphEnabled();
+  const path =
+    graphOn && designNodeId
+      ? `/api/clinical-regulatory-evidence/design-evidence?designNodeId=${encodeURIComponent(designNodeId)}`
+      : null;
+  const res = useLiveData<DesignEvidencePanelView>(path);
+
+  if (!graphOn) return null;
+
+  const tog = (k: string) => setOpen(open === k ? null : k);
+  const d = res.data;
+  const cov = d?.coverage ?? null;
+
+  /** Honest per-accordion empty text — never a blank body that reads as "none". */
+  const none = (what: string) => <div className="crl-ev-empty">No {what} in the evidence graph yet.</div>;
+
+  return (
+    <>
+      <div className="crl-ev-divider">
+        <span>Evidence</span>
+      </div>
+
+      {res.error && (
+        <div className="crl-ev-empty">
+          Couldn&apos;t reach the evidence graph. Nothing is shown from a cached sample.
+        </div>
+      )}
+
+      <PIAcc
+        id="ev-comparable"
+        title="Comparable studies"
+        badge={d?.comparableStudies.length ?? 0}
+        open={open === 'ev-comparable'}
+        onToggle={() => tog('ev-comparable')}
+      >
+        {!d || d.comparableStudies.length === 0
+          ? none('comparable studies')
+          : (() => {
+              const usable = d.comparableStudies.filter((s) => s.machineReadable).length;
+              return (
+                <>
+                  {d.comparableStudies.slice(0, 6).map((s, i) => (
+                    <div key={s.nctId ?? s.sponsorStudyId ?? i} className="pi-row">
+                      <p className="pi-row-t">
+                        {s.nctId ?? s.sponsorStudyId ?? 'unidentified study'}
+                        {s.phase ? ` · ${s.phase}` : ''}
+                        {s.indication ? ` · ${s.indication}` : ''}
+                      </p>
+                      <p className="pi-row-s">
+                        {s.designSummary}
+                        {s.machineReadable ? '' : ' · not machine-readable — excluded from every prior'}
+                      </p>
+                    </div>
+                  ))}
+                  <div className="crl-ev-empty">
+                    {withDenominator(usable, d.comparableStudies.length)} carry a machine-readable
+                    effect with uncertainty. The rest are listed but excluded from any prior.
+                  </div>
+                </>
+              );
+            })()}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-observed"
+        title="Observed results"
+        badge={d?.observations.length ?? 0}
+        open={open === 'ev-observed'}
+        onToggle={() => tog('ev-observed')}
+      >
+        {!d || d.observations.length === 0 ? (
+          none('structured observations')
+        ) : (
+          <>
+            {d.pooled && (
+              <div className="pi-row">
+                <p className="pi-row-t">
+                  {d.pooled.measure} {d.pooled.value} (95% CI {d.pooled.ci[0]}–{d.pooled.ci[1]})
+                </p>
+                <p className="pi-row-s">Pooled n {d.pooled.n}</p>
+              </div>
+            )}
+            <div className="crl-ev-empty">
+              Benefit direction normalised; the transformation is recorded on each observation.
+            </div>
+          </>
+        )}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-objections"
+        title="FDA objections"
+        badge={d?.findings.length ?? 0}
+        open={open === 'ev-objections'}
+        onToggle={() => tog('ev-objections')}
+      >
+        {!d || d.findings.length === 0
+          ? none('FDA findings mapped to this design node')
+          : d.findings.slice(0, 6).map((f) => (
+              <div key={f.findingId} className="pi-row">
+                <p className="pi-row-t">{f.finding}</p>
+                <p className="pi-row-s">
+                  {f.source.applicationType} {f.source.applicationNumber}
+                  {f.source.page != null ? ` · p. ${f.source.page}` : ''} ·{' '}
+                  {f.epistemicStatus === 'explicit' ? 'explicit' : 'inferred'} ·{' '}
+                  {VERIFICATION_LABEL[f.verification]}
+                </p>
+              </div>
+            ))}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-stress"
+        title="Stress tests"
+        badge={d ? `${d.stressScenarios.length} selected` : 0}
+        open={open === 'ev-stress'}
+        onToggle={() => tog('ev-stress')}
+      >
+        {!d || d.stressScenarios.length === 0 ? (
+          none('selected stress scenarios')
+        ) : (
+          <>
+            {d.stressScenarios.map((s) => (
+              <div key={s.scenarioId} className="pi-row">
+                <p className="pi-row-t">{s.label}</p>
+                <p className="pi-row-s">
+                  {s.parameterSource === 'none' ? 'No numeric parameter — scenario only' : s.parameterNote}
+                </p>
+              </div>
+            ))}
+            <div className="crl-ev-empty">
+              Scenarios are selected by CRL pattern. The letters justify why each matters; they do
+              not supply the numbers.
+            </div>
+          </>
+        )}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-assumptions"
+        title="Assumptions"
+        badge={d?.assumptions.length ?? 0}
+        open={open === 'ev-assumptions'}
+        onToggle={() => tog('ev-assumptions')}
+      >
+        {!d || d.assumptions.length === 0
+          ? none('recorded assumptions')
+          : d.assumptions.map((a, i) => (
+              <div key={i} className="pi-row">
+                <p className="pi-row-t">
+                  {a.label} · {a.value}
+                </p>
+                <p className="pi-row-s">Source: {a.source}</p>
+              </div>
+            ))}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-contradictions"
+        title="Contradictory evidence"
+        badge={d?.contradictions.length ?? 0}
+        open={open === 'ev-contradictions'}
+        onToggle={() => tog('ev-contradictions')}
+      >
+        {/* Retrieved separately and shown separately — never averaged into support. */}
+        {!d || d.contradictions.length === 0
+          ? none('contradictory evidence')
+          : d.contradictions.map((c, i) => (
+              <div key={i} className="pi-row">
+                <p className="pi-row-t">{c.text}</p>
+                {c.source && (
+                  <p className="pi-row-s">
+                    {c.source.applicationType} {c.source.applicationNumber}
+                    {c.source.page != null ? ` · p. ${c.source.page}` : ''}
+                  </p>
+                )}
+              </div>
+            ))}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-sources"
+        title="Sources"
+        badge={cov ? `${cov.cited} cited` : 0}
+        open={open === 'ev-sources'}
+        onToggle={() => tog('ev-sources')}
+      >
+        {!cov ? (
+          none('coverage')
+        ) : (
+          <div className="crl-ev-empty">
+            {cov.scanned} scanned · {withDenominator(cov.eligible, cov.scanned)} eligible ·{' '}
+            {withDenominator(cov.structured, cov.eligible)} structured ·{' '}
+            {withDenominator(cov.verified, cov.structured)} verified · {cov.cited} cited.
+            {cov.exclusionNote ? ` ${cov.exclusionNote}` : ''}
+          </div>
+        )}
+      </PIAcc>
+
+      <button
+        className="crl-trace-btn"
+        onClick={() =>
+          onAsk &&
+          onAsk(
+            'Trace this recommendation: show the sources, transformations, calculations, assumptions and contradictions behind it.',
+          )
+        }
+      >
+        <Ic n="sparkles" s={13} />Trace this recommendation
+      </button>
+    </>
+  );
 }
 
 /* ---- Bridge exports ---- */

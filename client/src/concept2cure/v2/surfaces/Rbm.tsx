@@ -1,23 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { SampleTag } from '../dataConnect';
+import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
+import type { RbmBoard, RbmProgram } from './rbmBoard';
+import { rbmBoardHasData } from './rbmBoard';
 import {
-  RBM_STUDIES, RBM_NAV, RBM_LINKS,
-} from '../fixtures/rbm-data';
-import {
-  SeedEmpty, RbmAnaDock, rbmAnaResolve,
+  SeedEmpty, RbmAnaDock, type RbmAnaMessage,
   RbmOverview, RbmReport, RbmRact, RbmKris, RbmQtls,
   RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan,
 } from './RbmSurfaces';
+import { useAnaChat } from '../../components/ana/useAnaChat';
 import '../styles/project-home-v2.css';
 import '../styles/rbm-v2.css';
 
-/* ── Surface component map ── */
+/* ── Surface component map — every sub-surface reads its slice from the live
+   board (GET /api/mdx-rbm/rbm-board/:programId) passed as `board`. ── */
 type SubSurface = React.ComponentType<{
-  onTab: (id: string) => void;
-  onAsk: (t: string) => void;
-  onNav: (id: string) => void;
+  board: RbmBoard;
+  onTab?: (id: string) => void;
+  onAsk?: (t: string) => void;
+  onNav?: (id: string) => void;
+  onReload?: () => void;
 }>;
 
 const SURFACES: Record<string, SubSurface> = {
@@ -26,13 +30,6 @@ const SURFACES: Record<string, SubSurface> = {
   patients: RbmPatients, sites: RbmSites, oversight: RbmOversight,
   plan: RbmPlan,
 };
-
-/* ── AnA message type ── */
-interface AnaMsg {
-  role: string;
-  text?: string;
-  r?: ReturnType<typeof rbmAnaResolve>;
-}
 
 /* ── Seed action map ── */
 const SEED_ACTIONS: Record<string, string[]> = {
@@ -54,30 +51,71 @@ const LINK_ICONS: Record<string, string> = {
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   Rbm — the RBM domain shell
+   Rbm — the RBM domain shell.
+
+   The study picker lists the real programs that have RBM data
+   (GET /api/mdx-rbm/rbm-programs); selecting one loads its live board and the
+   sub-surfaces render from it. When the org has no RBM data, or a study has none
+   yet, an honest empty / seed state is shown — never a fixture.
+
+   Every control that appears to change something writes to the server
+   (/api/mdx/rbm-*) and then bumps `reloadKey` so the board is re-fetched and the
+   surface re-derives from what was actually stored. There is no local
+   optimistic layer and no sample data anywhere in this shell, which is why the
+   "Sample data" tag is gone rather than merely hidden.
    ════════════════════════════════════════════════════════════════════ */
 
 export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
-  const [study, setStudy] = useState('bx204-301');
+  const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
-  const [anaMsgs, setAnaMsgs] = useState<AnaMsg[]>([]);
+  // Bumped after a persisted write so the board re-fetches and the surface
+  // re-derives from server truth (never optimistic local state).
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey(k => k + 1);
 
-  const st = RBM_STUDIES.find(s => s.id === study)!;
+  // Real studies (programs with RBM data) + the live board for the selected one.
+  const programs = useLiveRows<RbmProgram>('/api/mdx-rbm/rbm-programs');
+  useEffect(() => {
+    if (!study && programs.rows.length) setStudy(programs.rows[0].id);
+  }, [programs.rows, study]);
+  const boardPath = study ? '/api/mdx-rbm/rbm-board/' + study : null;
+  const board = useLiveData<RbmBoard>(boardPath, [boardPath, reloadKey]);
+  const bd = board.data;
+  // useLiveData keeps the previous study's board while the next request is in
+  // flight, so `bd` can still belong to the old program right after a study
+  // switch. Only treat the board as ready when it actually matches the selected
+  // study — otherwise the prior study's risk data would render (and be
+  // interactive) under the new selection until the fetch resolves.
+  const boardReady = !!bd && bd.programId === study;
+  const hasData = boardReady && rbmBoardHasData(bd);
+
+  const selProgram = programs.rows.find(p => p.id === study) || null;
+  const studyLabel = selProgram?.label ?? 'the study';
   const nav = RBM_NAV.find(n => n.id === tab)!;
 
+  /* AnA — the REAL streaming assistant (/api/ana-ri/stream), grounded to the
+     selected RBM program. The former rbmAnaResolve() heuristic that fabricated
+     canned cards from fixture constants is gone: the dock now shows the real
+     turn (streamed text, executed actions, and the real Part 11 sign-off for a
+     governed command). */
+  const anaChat = useAnaChat({ screenName: 'rbm', projectId: study ?? undefined });
+  const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
+    role: m.role,
+    text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
+    executedActions: m.executedActions,
+    pendingSignoffs: m.pendingSignoffs,
+  }));
   const askAna = (text: string) => {
     if (!text) return;
-    setAnaMsgs(m => [...m, { role: 'user', text }, { role: 'ana', r: rbmAnaResolve(text) }]);
     if (!anaOpen) setAnaOpen(true);
+    void anaChat.send(text);
   };
 
   const Body = SURFACES[tab];
 
   return (
     <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
-      <SampleTag sample={true} />
-
       <div className="reg-h">
         <div>
           <div className="ph-eyebrow">Clinical -- risk-based quality management</div>
@@ -92,16 +130,23 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
           <span className="rbm-study-l">Study</span>
           <select
             className="rbm-study-sel"
-            value={study}
+            value={study ?? ''}
             onChange={e => setStudy(e.target.value)}
             aria-label="Select a study"
+            disabled={programs.rows.length === 0}
           >
-            {RBM_STUDIES.map(s => (
-              <option key={s.id} value={s.id}>{s.label}</option>
-            ))}
+            {programs.rows.length === 0 ? (
+              <option value="">No RBM studies</option>
+            ) : (
+              programs.rows.map(s => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))
+            )}
           </select>
           <span className="rbm-study-m">
-            {st.program} -- {st.sites} sites -- {st.subjects} subjects
+            {bd && bd.programId === study
+              ? `${bd.summary.sites.total} sites -- ${bd.summary.patients.scored} subjects scored`
+              : 'Live RBM read-model'}
           </span>
         </div>
       </div>
@@ -145,25 +190,57 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="rbm-workarea" data-ana={anaOpen || undefined}>
         <div className="rbm-content">
-          {st.hasData ? (
-            <Body onTab={setTab} onAsk={askAna} onNav={onNav} />
+          {programs.loading ? (
+            <div style={{ padding: 24 }}>
+              <EmptyState title="Loading RBM studies…" icon={I.clock} />
+            </div>
+          ) : programs.error ? (
+            <div style={{ padding: 24 }}>
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load RBM studies"
+                hint="The risk-based monitoring service didn't respond. Nothing is shown from a cached sample."
+              />
+            </div>
+          ) : programs.rows.length === 0 ? (
+            <div style={{ padding: 24 }}>
+              <EmptyState
+                icon={I.clipboardList}
+                title="No RBM studies yet"
+                hint="No study in this organization has a risk-based monitoring assessment yet. Once an RBM assessment exists for a program it appears here with its live risk, KRIs, QTLs and monitoring plan — nothing is simulated."
+              />
+            </div>
+          ) : board.error ? (
+            <div style={{ padding: 24 }}>
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load the RBM board"
+                hint="The board didn't respond for this study. Nothing is shown from a cached sample."
+              />
+            </div>
+          ) : !bd || bd.programId !== study ? (
+            <div style={{ padding: 24 }}>
+              <EmptyState title="Loading the RBM board…" icon={I.clock} />
+            </div>
+          ) : hasData ? (
+            <Body key={bd.programId + '@' + bd.asOf} board={bd} onTab={setTab} onAsk={askAna} onNav={onNav} onReload={reload} />
           ) : (
             <SeedEmpty
-              title={`No RBM data for ${st.label} yet`}
+              title={`No RBM data for ${studyLabel} yet`}
               body="This study has no risk assessment, indicators or tolerance limits. Seeding creates the ICH E6(R3) TransCelerate defaults, scoped to this study, ready to tailor."
               actions={SEED_ACTIONS[tab] || SEED_ACTIONS.overview}
-              onRun={a => askAna(`${a} for ${st.label}`)}
+              onRun={a => askAna(`${a} for ${studyLabel}`)}
             />
           )}
         </div>
         {anaOpen ? (
           <RbmAnaDock
             nav={nav}
-            study={st.label.split(' --')[0]}
+            study={studyLabel.split(' --')[0]}
             msgs={anaMsgs}
             onAsk={askAna}
-            onTab={setTab}
-            onNav={onNav}
             onClose={() => setAnaOpen(false)}
           />
         ) : (

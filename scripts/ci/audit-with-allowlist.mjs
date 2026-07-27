@@ -4,54 +4,81 @@
 // the registry: when a maintainer ships a patch version >N+1, the advisory still
 // lists ranges up to <=N, but npm audit reports any installed version of the
 // package as vulnerable because it folds the advisory under the package name
-// instead of the specific range. As of 2026-05-21 the following packages ship
-// at versions ABOVE their CVE's vulnerable range yet npm audit still flags them:
-//
-//   - lodash@4.18.1                       (advisory range <=4.17.23)
-//   - @figma/code-connect@1.4.5           (advisory range 1.3.6-1.4.3, via lodash)
-//   - fast-uri@3.1.2                      (advisory range <=3.1.1)
-//   - protobufjs@7.6.0                    (advisory range <=7.5.7)
-//   - @babel/plugin-transform-modules-systemjs@7.29.4 (advisory range <=7.29.3)
+// instead of the specific range.
 //
 // We list the advisory IDs we accept as resolved-in-installed and require any
 // new high/critical advisory to either land here with explicit justification
 // (e.g. "fixed in installed version X > advisory range Y") or be cleared via
 // `npm audit fix`. New direct deps or genuine vulnerabilities will fail loudly.
+//
+// MAINTENANCE NOTE — every version claimed in this file was audited against the
+// lockfile on 2026-07-26, and several had gone stale in ways that mattered:
+//
+//   - A react-router exception claimed usage that did not exist (see the note
+//     where those entries were, below).
+//   - The `tmp` exception claimed no upgrade path existed. One had since been
+//     applied via an `overrides` entry, so it was a risk acceptance for a
+//     vulnerability that was already fixed.
+//   - A version inventory in this header listed fast-uri@3.1.2 and
+//     protobufjs@7.6.0 while the tree carried 3.1.4 and 7.6.4.
+//
+// An exception whose justification no longer holds is worse than no exception:
+// it reads as a considered decision when nobody has looked in months. So when
+// touching this file, re-check the claim against the installed tree
+// (`npm ls <pkg> --all`) rather than trusting the comment next to it — and
+// delete entries whose subject is gone instead of rewording them. The header
+// inventory that used to live here was removed for the same reason: it
+// duplicated the per-entry notes and drifted out of step with them.
 
 import { spawnSync } from 'node:child_process';
 
 const ACCEPTED_GHSA_IDS = new Set([
   // lodash — advisory range <=4.17.23, we ship 4.18.1
   'GHSA-r5fr-rjxr-66jc', // _.template code injection
-  // fast-uri — advisory ranges <=3.1.0 / <=3.1.1, we ship 3.1.2
+  // fast-uri — advisory ranges <=3.1.0 / <=3.1.1; installed 3.1.4, above range
   'GHSA-q3j6-qgpj-74h6', // percent-encoded dot traversal
   'GHSA-v39h-62p7-jpjc', // percent-encoded authority confusion
-  // protobufjs — advisory ranges <7.5.5 / <=7.5.5, we ship 7.6.0
+  // protobufjs — advisory ranges <7.5.5 / <=7.5.5; installed 7.6.4, above range
   'GHSA-xq3m-2v4x-88gg', // arbitrary code execution
   'GHSA-66ff-xgx4-vchm', // bytes field defaults code injection
   'GHSA-75px-5xx7-5xc7', // codegen gadget after prototype pollution
   'GHSA-jvwf-75h9-cwgg', // unsafe option paths DoS
   'GHSA-685m-2w69-288q', // unbounded protobuf recursion
-  // @babel/plugin-transform-modules-systemjs — advisory range <=7.29.3, we ship 7.29.4
+  // @babel/plugin-transform-modules-systemjs — advisory range <=7.29.3; installed
+  // 7.29.7, above range. (The note here said 7.29.4; the tree has moved since.)
   'GHSA-fv7c-fp4j-7gwp', // arbitrary code generation
-  // tmp — advisory range <0.2.6; exceljs@4.4.0 (latest) declares `tmp: ^0.2.0`
-  // resolving to 0.2.5. No upgrade path exists: exceljs has no newer release that
-  // bumps tmp. The vulnerability requires attacker-controlled prefix/postfix options
-  // to tmp.tmpName(); exceljs passes fixed internal strings — not user input — so
-  // the path-traversal gadget is not reachable in our usage. Accepted until exceljs
-  // ships a release that depends on tmp >= 0.2.6.
+  // tmp — advisory range <0.2.6; installed 0.2.7 via the `overrides` entry
+  // "tmp": "^0.2.6", above range. FIXED IN INSTALLED, not a risk acceptance.
+  //
+  // This entry previously read "No upgrade path exists: exceljs has no newer
+  // release that bumps tmp" and accepted the advisory on the grounds that the
+  // path-traversal gadget was unreachable in our usage. An override had since
+  // been added, so the acceptance was standing guard over something already
+  // patched. exceljs still declares `tmp: ^0.2.0`; the override is what lifts it.
   'GHSA-ph9p-34f9-6g65', // tmp path traversal via unsanitized prefix/postfix
   // esbuild — advisory GHSA-gv7w-rqvm-qjhr, vulnerable range >=0.17.0 <0.28.1
   // (build-time RCE via NPM_CONFIG_REGISTRY during esbuild's binary fetch).
-  // NOTE: unlike the entries above, this is NOT a registry-lag false positive —
-  // installed copies (0.25.12 direct; 0.27.4 via tsx; older via
-  // drizzle-kit/@esbuild-kit) are genuinely within range. Accepted as a low,
-  // BUILD-TIME-ONLY risk (dev/build tooling, not a runtime/production path)
-  // pending a coordinated bump to esbuild >= 0.28.1 across vite/tsx/drizzle-kit.
-  // Accepting the esbuild advisory also clears the tsx/vite "transitive
-  // vulnerability" flags, which are this same advisory surfaced through their
-  // bundled esbuild.
-  'GHSA-gv7w-rqvm-qjhr', // esbuild binary-integrity RCE (build-time; dep bump pending)
+  // NOT a registry-lag false positive: copies genuinely within range remain.
+  //
+  // Tree as audited 2026-07-26, after bumping the direct devDependency to
+  // ^0.28.1 (verified: `node scripts/build-server.mjs` succeeds on 0.28.1):
+  //   node_modules/esbuild                            0.28.1  ← FIXED; the copy
+  //                                                     our own build invokes
+  //   node_modules/vite/node_modules/esbuild          0.25.12 ← in range
+  //   node_modules/drizzle-kit/node_modules/esbuild   0.19.12 ← in range
+  //   node_modules/@esbuild-kit/core-utils/…/esbuild  0.18.20 ← in range
+  //
+  // The three remaining copies are nested inside build tooling that pins its own
+  // esbuild. Forcing them up with an override would put drizzle-kit — which the
+  // migration tooling depends on — on an esbuild four minors ahead of what it
+  // was released against, which is a materially worse risk than a build-time
+  // advisory. So: accepted as a BUILD-TIME-ONLY risk (no runtime/production
+  // path), narrowed to tooling-internal copies, pending upstream releases of
+  // vite/drizzle-kit that carry esbuild >= 0.28.1.
+  //
+  // Accepting this also clears the tsx/vite "transitive vulnerability" flags,
+  // which are this same advisory surfaced through their bundled esbuild.
+  'GHSA-gv7w-rqvm-qjhr', // esbuild binary-integrity RCE (build-time; tooling-internal copies)
   // ── Upgraded in place via package.json `overrides` to a version ABOVE the
   // advisory's vulnerable range. These are genuinely fixed in the installed
   // tree (confirmed: `npm ls <pkg> --all` shows only the patched version), but
@@ -107,6 +134,37 @@ const ACCEPTED_GHSA_IDS = new Set([
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
   // their dependency chain.
+  // ── brace-expansion / fast-uri / linkify-it / postcss: upgraded in place
+  // (package.json `overrides`, or a direct-dep bump for postcss) to a version
+  // ABOVE each advisory's vulnerable range.
+  // Confirmed fixed-in-installed via `npm ls <pkg> --all` (only the patched
+  // version present); npm audit still folds each advisory under the package name
+  // (registry lag), so accepted here as resolved-in-installed. ──
+  // brace-expansion — advisory ranges <1.1.16 / >=2.0.0 <2.1.2 / >=3.0.0 <5.0.7 /
+  // <=5.0.7; override 5.0.8 (installed 5.0.8, only version in the tree).
+  'GHSA-3jxr-9vmj-r5cp', // brace-expansion DoS: exponential expansion of non-expanding {} groups
+  'GHSA-mh99-v99m-4gvg', // brace-expansion DoS: unbounded expansion length OOM crash
+  // fast-uri — advisory ranges <=3.1.3 / >=3.0.0 <3.1.3; override ^3.1.4 (installed
+  // 3.1.4). ajv declares fast-uri ^3.0.1, so the ^3.1.4 override is non-breaking.
+  'GHSA-v2hh-gcrm-f6hx', // fast-uri host confusion via literal backslash authority delimiter
+  'GHSA-4c8g-83qw-93j6', // fast-uri host confusion via failed IDN canonicalization
+  // linkify-it — advisory range <=5.0.1; override ^5.0.2 (installed 5.0.2).
+  // markdown-it declares linkify-it ^5.0.2, so the override is non-breaking.
+  'GHSA-v245-v573-v5vm', // linkify-it quadratic-complexity DoS via the mailto: validator scan-loop
+  // postcss — advisory range <=8.5.17; direct dep bumped ^8.5.23 (installed 8.5.23).
+  'GHSA-r28c-9q8g-f849', // postcss path traversal in previous-source-map auto-loading
+  // ── react-router: entries REMOVED, dependency removed ─────────────────────
+  // GHSA-chx6-hx7r-mcp5 and GHSA-qwww-vcr4-c8h2 were accepted here on the
+  // stated basis that "this app uses react-router-dom in SPA / data-router
+  // mode". It does not use it at all — routing is `wouter`, and there was no
+  // import of react-router anywhere in client/, server/ or shared/. The
+  // package has been dropped from package.json, so both advisories are gone
+  // rather than suppressed, and neither entry has anything left to match.
+  //
+  // Keep this note: an allowlist entry whose justification describes usage
+  // that does not exist is worse than no entry, because it reads as a
+  // considered risk acceptance. If react-router is ever adopted, re-evaluate
+  // GHSA-qwww-vcr4-c8h2 against 8.3.0 rather than reinstating these lines.
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {

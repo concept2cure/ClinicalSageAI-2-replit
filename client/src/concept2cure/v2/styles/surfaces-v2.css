@@ -287,3 +287,56 @@
 .c2c-v2 .act-who{font-weight:600;}
 .c2c-v2 .act-what{color:var(--text-300);}
 .c2c-v2 .act-when{font-size:11px;color:var(--text-400);text-align:right;}
+
+/* ════ Clinical-Regulatory Intelligence Graph (phase 7) ════
+   FDA CRL library, the CSR workflow's regulatory dimensions, and the study
+   design evidence dock. Built on the existing tokens and the rd-chip / pj-card
+   vocabulary — no new colour values, no inline styles.
+
+   The one rule these styles enforce visually: an INFERRED mapping must never be
+   mistakable for something FDA stated explicitly. .crl-inferred is italic and
+   dimmed against the solid source-explicit chip; that contrast is a work-order
+   requirement (§7.2), not decoration. */
+
+/* ── Findings list ── */
+.c2c-v2 .crl-row{display:flex;flex-direction:column;align-items:stretch;gap:5px;width:100%;text-align:left;border-radius:var(--radius-lg);padding:9px 10px;border:1px solid transparent;background:transparent;}
+.c2c-v2 .crl-row:hover{background:var(--bg-050);}
+.c2c-v2 .crl-row[data-selected]{border-color:var(--accent-muted,var(--accent-000));background:var(--accent-000);}
+.c2c-v2 .crl-row-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.c2c-v2 .crl-row-text{font-size:12px;line-height:1.45;color:var(--text-200);}
+.c2c-v2 .crl-row-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.c2c-v2 .crl-app{font-size:11.5px;font-weight:500;color:var(--accent-200);}
+.c2c-v2 .crl-meta{font-size:10.5px;color:var(--text-400);}
+
+/* ── Verbatim excerpt. Quoted regulator language, never a paraphrase. ── */
+.c2c-v2 .crl-quote{margin:0 0 12px;padding:0 0 0 11px;border-left:2px solid var(--border-strong,var(--border));font-family:var(--font-serif,Georgia,serif);font-size:13px;line-height:1.7;color:var(--text-200);}
+
+/* ── Mapping chips. Inferred is visually non-interchangeable with explicit. ── */
+.c2c-v2 .crl-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px;padding-top:11px;border-top:1px solid var(--border);}
+.c2c-v2 .crl-inferred{font-style:italic;opacity:.78;text-transform:none;letter-spacing:0;}
+
+/* ── Coverage row — every count beside its denominator. ── */
+.c2c-v2 .crl-coverage-b{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text-200);}
+.c2c-v2 .crl-coverage-k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;}
+.c2c-v2 .crl-verified{color:var(--success);font-weight:600;}
+.c2c-v2 .crl-sep{color:var(--border-strong,var(--border));}
+.c2c-v2 .crl-note{font-size:11px;color:var(--text-400);line-height:1.5;}
+.c2c-v2 .crl-exclusion{padding-top:0;font-size:11.5px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .crl-conflict{border-left:3px solid var(--error);margin-top:10px;}
+
+/* ── CSR workflow: the two added regulatory dimensions. ── */
+.c2c-v2 .crl-dim-head{color:var(--accent-200);}
+.c2c-v2 .crl-outcome-crl{color:var(--error);font-weight:500;font-size:11px;}
+.c2c-v2 .crl-outcome-none{color:var(--text-400);font-size:11px;}
+.c2c-v2 .crl-findcounts{display:flex;flex-wrap:wrap;gap:4px;}
+.c2c-v2 .crl-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.c2c-v2 .crl-strip-cell{background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-lg);padding:9px 10px;}
+.c2c-v2 .crl-strip-n{font-size:17px;font-weight:700;font-family:var(--font-mono);}
+.c2c-v2 .crl-strip-n.is-verified{color:var(--success);}
+.c2c-v2 .crl-strip-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-400);margin-top:2px;}
+
+/* ── Study design evidence dock (7 accordions appended to the intel panel). ── */
+.c2c-v2 .crl-ev-divider{display:flex;align-items:center;gap:8px;padding:14px 2px 8px;margin-top:6px;border-top:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;}
+.c2c-v2 .crl-ev-empty{font-size:11px;color:var(--text-400);line-height:1.5;padding:8px 10px;}
+.c2c-v2 .crl-trace-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);font-size:12px;font-weight:500;color:var(--text-200);margin-top:10px;}
+.c2c-v2 .crl-trace-btn:hover{border-color:var(--border-strong);background:var(--bg-050);}

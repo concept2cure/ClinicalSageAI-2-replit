@@ -125,7 +125,8 @@ export function PdevAnaDock({
           <span className="pdev-ana-mark">✻</span>
           <div className="pdev-ana-id-text">
             <div className="pdev-ana-id-name">AnA 1.0 RI</div>
-            <div className="pdev-ana-id-model">Claude Opus 4.5</div>
+            {/* Standing rule: all UI says "AnA 1.0" — no raw model names. */}
+            <div className="pdev-ana-id-model">Regulatory intelligence</div>
           </div>
         </div>
         <button
@@ -317,7 +318,7 @@ export function PdevAnaDock({
         <div className="pdev-ana-foot-meta">
           {isStreaming
             ? 'Streaming · response will appear in Conversations'
-            : 'Routes via AnA gateway · Opus 4.5'}
+            : 'Routes via AnA gateway'}
         </div>
       </div>
     </aside>

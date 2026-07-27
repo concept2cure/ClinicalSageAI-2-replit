@@ -18,7 +18,8 @@
  */
 
 import type { Pool, PoolClient, QueryConfig, QueryResult } from 'pg';
-import { getTenantScope } from './tenantStore';
+import { getTenantScope, type TenantScope } from './tenantStore';
+import { readEnforcementMode } from './rlsEnforcement';
 import { tenantSessionVarMissing, tenantSessionVarPresent } from './tenantSessionMetrics';
 import { createScopedLogger } from '../utils/logger';
 
@@ -117,8 +118,110 @@ function inferCaller(): string {
   return 'unknown';
 }
 
+// ── Tenant-scope enforcement primitive (RLS rollout PR B) ────────────────────
+//
+// When RLS_ENFORCE=on, a query on the shared pool must run on a connection
+// whose `app.current_tenant_id` matches the active scope, or the 0021 policy
+// returns zero rows. The observability layer above already intercepts every
+// `pool.query`/`pool.connect`; this layer additionally *applies* the scope.
+//
+// Settings are written with `set_config(..., true)` — the `true` (is_local)
+// makes them TRANSACTION-scoped, so they vanish at COMMIT/ROLLBACK and the
+// connection returns to the pool carrying no tenant. Reset-on-release is thus a
+// Postgres guarantee, not application discipline: cross-tenant reuse is
+// structurally impossible, even if a query throws.
+
+// One round-trip that sets all three vars LOCAL to the current transaction.
+const TENANT_SET_CONFIG_SQL =
+  "SELECT set_config('app.current_tenant_id', $1, true), " +
+  "set_config('app.current_org_id', $2, true), " +
+  "set_config('app.current_user_role', $3, true)";
+
+function scopeParams(scope: TenantScope): [string, string, string] {
+  return [scope.tenantId, scope.orgUuid ?? '', scope.role ?? ''];
+}
+
 /**
- * Apply observability instrumentation to a `pg.Pool` instance. Idempotent —
+ * The scope to APPLY, or null when the primitive must stay inert. Inert unless
+ * RLS is actually enforcing AND a tenant scope is set AND the statement is not
+ * an infrastructure query. While RLS_ENFORCE≠'on' this short-circuits before
+ * any wrapping, so runtime behavior is byte-for-byte today's.
+ */
+function enforcingScope(queryText: string | undefined): TenantScope | null {
+  if (readEnforcementMode() !== 'on') return null;
+  if (isInfrastructureQuery(queryText)) return null;
+  return getTenantScope() ?? null;
+}
+
+/**
+ * Run a single pooled statement inside a micro-transaction that first applies
+ * the tenant vars LOCAL. Used for the `pool.query` path (drizzle's
+ * non-transactional statements).
+ */
+async function runQueryScoped(
+  originalConnect: Pool['connect'],
+  scope: TenantScope,
+  args: any[],
+): Promise<QueryResult> {
+  const client = (await (originalConnect as any)()) as PoolClient;
+  try {
+    await client.query('BEGIN');
+    await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+    const result = (await (client.query as any)(...args)) as QueryResult;
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      /* connection may already be broken; release discards it */
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Wrap a checked-out client so the drizzle-issued `BEGIN` is immediately
+ * followed by the LOCAL tenant vars, inside that same transaction. Used for the
+ * `pool.connect` path (drizzle's `db.transaction()`). Restored on release.
+ */
+function wrapClientForScope(client: PoolClient, scope: TenantScope): PoolClient {
+  const anyClient = client as any;
+  if (anyClient.__tenantScopeWrapped) return client;
+  anyClient.__tenantScopeWrapped = true;
+
+  const originalClientQuery = client.query.bind(client) as PoolClient['query'];
+  const originalRelease = client.release.bind(client) as PoolClient['release'];
+
+  anyClient.query = function scopedClientQuery(...qargs: any[]): any {
+    const text = extractQueryText(qargs[0]);
+    const isBegin = !!text && /^\s*BEGIN\b/i.test(text);
+    const hasCallback = typeof qargs[qargs.length - 1] === 'function';
+    if (!isBegin || hasCallback) {
+      return (originalClientQuery as any)(...qargs);
+    }
+    // Inject the LOCAL tenant vars right after BEGIN, within the transaction.
+    return (originalClientQuery as any)(...qargs).then(async (res: QueryResult) => {
+      await (originalClientQuery as any)(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+      return res;
+    });
+  };
+
+  anyClient.release = function scopedRelease(...rargs: any[]): any {
+    anyClient.query = originalClientQuery;
+    anyClient.release = originalRelease;
+    anyClient.__tenantScopeWrapped = false;
+    return (originalRelease as any)(...rargs);
+  };
+
+  return client;
+}
+
+/**
+ * Apply observability instrumentation to a `pg.Pool` instance, plus the
+ * tenant-scope enforcement layer (dormant unless RLS_ENFORCE=on). Idempotent —
  * a second call on the same pool is a no-op.
  */
 export function instrumentPool(pool: Pool): Pool {
@@ -131,15 +234,26 @@ export function instrumentPool(pool: Pool): Pool {
 
   // pg's Pool#query has many overloads (string, QueryConfig, with/without
   // params, with/without callback). We don't try to retype it — we keep the
-  // original signature and just observe before delegating.
+  // original signature, observe, then apply tenant scope when enforcing.
   (pool as any).query = function instrumentedQuery(...args: any[]): any {
-    recordCheck('pool.query', extractQueryText(args[0]));
-    return (originalQuery as any)(...args);
+    const queryText = extractQueryText(args[0]);
+    recordCheck('pool.query', queryText);
+    // Callback-form queries are not wrapped (drizzle uses the promise form);
+    // they fall through unchanged. This is a known coverage edge documented in
+    // docs/RLS_ENFORCEMENT_BURNDOWN.md.
+    const hasCallback = typeof args[args.length - 1] === 'function';
+    const scope = hasCallback ? null : enforcingScope(queryText);
+    if (!scope) return (originalQuery as any)(...args);
+    return runQueryScoped(originalConnect, scope, args);
   };
 
   (pool as any).connect = function instrumentedConnect(...args: any[]): any {
     recordCheck('pool.connect', undefined);
-    return (originalConnect as any)(...args);
+    const hasCallback = typeof args[args.length - 1] === 'function';
+    const scope = hasCallback ? null : enforcingScope(undefined);
+    const result = (originalConnect as any)(...args);
+    if (!scope || !result || typeof result.then !== 'function') return result;
+    return result.then((client: PoolClient) => wrapClientForScope(client, scope));
   };
 
   return pool;

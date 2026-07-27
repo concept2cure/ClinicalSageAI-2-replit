@@ -49,6 +49,10 @@ describe('mapRiskItems — live risk_items adoption', () => {
     expect(out).toHaveLength(1);
     const r = out![0];
     expect(r.id).toBe('HZ-07');
+    // The display id is the ref_code, but the real numeric id is carried as dbId
+    // so the write routes (PATCH /risk-items/:id, POST .../:id/controls, which
+    // require a numeric :id) address the row correctly.
+    expect(r.dbId).toBe(42);
     expect(r.hazard).toBe(DB_ROW.hazard);
     expect(r.situation).toBe(DB_ROW.hazardous_situation);
     expect(r.harm).toBe(DB_ROW.harm);

@@ -433,7 +433,6 @@ router.get(
   async (req, res) => {
     try {
       const cerProjectId = String(req.params.cerProjectId);
-      const organizationId = orgIdOf(req);
 
       // Convert to number
       const cerProjectIdNumber = parseInt(String(cerProjectId), 10);
@@ -441,38 +440,22 @@ router.get(
         return res.status(400).json({ error: 'Invalid CER Project ID' });
       }
 
-      // Try to get metrics from cache
-      const cacheKey = `cer-quality-metrics-${cerProjectIdNumber}`;
-      const cachedMetrics = getFromCache<any>(organizationId, 'cer-metrics', cacheKey);
-
-      if (cachedMetrics) {
-        logger.debug('Retrieved quality metrics from cache', { cerProjectId: cerProjectIdNumber });
-        return res.json(cachedMetrics);
-      }
-
-      // If we reach here, we need to calculate the metrics
-      // In a real implementation, this would examine validation results,
-      // section completeness, and other quality data stored in the database
-
-      // For now, we'll provide a placeholder response
-      const metrics = {
+      // Real CER quality metrics (overall score, section completeness, validated
+      // sections, critical-issue counts, active waivers) must be derived from the
+      // project's actual validation results and section state. That aggregation
+      // is not wired yet, so we fail closed with an honest 501 rather than
+      // fabricate numbers. Previously this returned a hardcoded placeholder
+      // (overallQualityScore: 85, sectionsWithCriticalIssues: 0, ...) AND cached
+      // it — a direct misrepresentation of submission readiness to a regulated
+      // user. No score is invented, and nothing fabricated is cached.
+      return res.status(501).json({
+        error: 'NOT_IMPLEMENTED',
+        message:
+          'Quality metrics for this CER project are not yet available: real ' +
+          'validation-result and section-completeness aggregation is not wired. ' +
+          'No fabricated score is returned.',
         cerProjectId: cerProjectIdNumber,
-        qmpId: 1, // This would normally be retrieved from the CER project
-        overallQualityScore: 85,
-        sectionsCompleted: 8,
-        totalSections: 10,
-        validatedSections: 6,
-        sectionsWithWarnings: 2,
-        sectionsWithCriticalIssues: 0,
-        activeWaivers: 1,
-        timestamp: new Date().toISOString(),
-        complianceStatus: 'in-progress',
-      };
-
-      // Store in cache
-      storeInCache(organizationId, 'cer-metrics', cacheKey, metrics);
-
-      return res.json(metrics);
+      });
     } catch (error) {
       logger.error(`Error getting quality metrics for CER project ${req.params.cerProjectId}`, {
         error,

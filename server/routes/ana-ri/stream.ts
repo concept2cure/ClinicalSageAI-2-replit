@@ -28,6 +28,13 @@ import {
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
+import {
+  resolveThinkingConfig,
+  isSubstantiveTurn,
+  resolveOutputBudget,
+  resolveModelTier,
+  resolveTierModel,
+} from '../../services/ai-gateway/reasoning.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { DetectedDocumentTemplatePayload } from '../../../shared/types/ana-document-detection.js';
@@ -45,7 +52,7 @@ import { buildMemoryContextForChat } from '../../services/memory-context-assembl
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
-import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import { runAgenticToolLoop, resolveMaxRounds, resolveRoundExtension, capToolResultForModel, budgetToolResultsForModel, buildAdaptationNote, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn, type FailedToolCall } from '../../services/ana/agentic-loop.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
@@ -454,17 +461,65 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
-    // Inject file context if file_ids provided
-    const streamFileIds = req.body.file_ids;
-    if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
+    // Inject file context from freshly-attached files AND from sources the user
+    // picked in the Data Room.
+    //
+    // `source_ids` are cre_evidence_sources identities; they resolve back to the
+    // uploads their bytes live in and then take exactly the same tenant-scoped
+    // path as an attachment. One grounding mechanism, two ways of choosing — a
+    // separate reader for selected sources would be a second thing to get
+    // tenancy wrong in.
+    const streamFileIds: string[] = [];
+    if (Array.isArray(req.body.file_ids)) {
+      for (const id of req.body.file_ids) {
+        if (typeof id === 'string' && id && !streamFileIds.includes(id)) streamFileIds.push(id);
+      }
+    }
+    if (Array.isArray(req.body.source_ids) && req.body.source_ids.length > 0) {
       try {
-        const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type, storage_path FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
-          [streamFileIds, orgId ? Number(orgId) : 0]
+        const { resolveSourceUploadIds } = await import(
+          '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
         );
-        if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows
-            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+        const fromSources = await resolveSourceUploadIds(
+          Number(orgId),
+          req.body.source_ids as Array<number | string>
+        );
+        if (fromSources.length < req.body.source_ids.length) {
+          // A selected source with no readable upload must not pass silently —
+          // the user chose it expecting it to be read.
+          console.warn(
+            `[AnA RI Stream] ${req.body.source_ids.length - fromSources.length} of ${req.body.source_ids.length} selected source(s) have no readable upload`
+          );
+        }
+        for (const id of fromSources) {
+          if (!streamFileIds.includes(id)) streamFileIds.push(id);
+        }
+      } catch (srcErr: any) {
+        console.warn('[AnA RI Stream] Source selection resolution failed:', srcErr?.message);
+      }
+    }
+    if (streamFileIds.length > 0) {
+      try {
+        // Tenant scoping is enforced by the shared helper, which checks BOTH
+        // the organization column and the storage-path prefix. This route used
+        // to hand-roll `WHERE ... AND organization_id = $2` against a table
+        // whose INSERT never wrote that column, so the lookup always returned
+        // zero rows and every attachment was silently dropped.
+        const { loadUploadedFileMetadata } = await import(
+          '../../services/ana/uploaded-file-access.js'
+        );
+        const attachedFiles = await loadUploadedFileMetadata(
+          streamFileIds,
+          orgId != null ? Number(orgId) : null
+        );
+        if (attachedFiles.length < streamFileIds.length) {
+          console.warn(
+            `[AnA RI Stream] ${streamFileIds.length - attachedFiles.length} of ${streamFileIds.length} attachment(s) not resolvable for this tenant`
+          );
+        }
+        if (attachedFiles.length > 0) {
+          const fileContext = attachedFiles
+            .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)
             .join('\n');
           messages.push({
             role: 'user' as const,
@@ -478,38 +533,37 @@ router.post('/stream', async (req: Request, res: Response) => {
           // metadata-only mention above.
           if (isPdfIntakeEnabled()) {
             const MAX_DOC_BYTES = 30 * 1024 * 1024; // ~30MB raw, under Anthropic's limit
-            for (const f of fileResult.rows as Array<{
-              original_name: string;
-              mime_type: string;
-              storage_path: string | null;
-            }>) {
-              const mime = (f.mime_type || '').toLowerCase();
+            for (const f of attachedFiles) {
+              const mime = (f.mimeType || '').toLowerCase();
               const docMime: 'application/pdf' | 'text/plain' | null =
                 mime === 'application/pdf'
                   ? 'application/pdf'
                   : mime === 'text/plain' || mime === 'text/markdown'
                     ? 'text/plain'
                     : null;
-              if (!docMime || !f.storage_path) continue;
-              const buf = await readLocalUploadBuffer(f.storage_path);
+              if (!docMime || !f.storagePath) continue;
+              const buf = await readLocalUploadBuffer(f.storagePath);
               if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
               messages.push({
                 role: 'user' as const,
-                content: `Read the attached document "${f.original_name}" and use it to answer.`,
+                content: `Read the attached document "${f.fileName}" and use it to answer.`,
                 contentBlocks: [
                   {
                     type: 'document',
                     source: { type: 'base64', media_type: docMime, data: buf.toString('base64') },
-                    title: f.original_name,
+                    title: f.fileName,
                   },
-                  { type: 'text', text: `Attached document: ${f.original_name}` },
+                  { type: 'text', text: `Attached document: ${f.fileName}` },
                 ],
               });
             }
           }
         }
-      } catch {
-        /* non-blocking */
+      } catch (fileErr: any) {
+        // Non-blocking: the turn still runs without the attachment. But it must
+        // not fail silently — a swallowed error here is indistinguishable to
+        // the user from "AnA read my file and ignored it".
+        console.warn('[AnA RI Stream] Attachment context failed:', fileErr?.message);
       }
     }
 
@@ -567,14 +621,20 @@ router.post('/stream', async (req: Request, res: Response) => {
       })}\n\n`
     );
 
-    // Routing plan
+    // Effort (Fast/Balanced/Thorough) resolved early so output headroom and
+    // reasoning depth can both scale with it. An unknown/absent value resolves
+    // to 'balanced' (never a 4xx).
+    const effortUsed = resolveEffortLevel(effort_level);
+
+    // Routing plan — output budget scales with effort (Thorough drafting gets
+    // more room; the planner still clamps to its own [512, 8192] range).
     const routingPlan = planKernelExecution({
       route: '/api/ana-ri/stream',
       messageLength: message.length,
       intentLens: orchestration.detectedIntent.lens,
       intentConfidence: orchestration.detectedIntent.confidence,
       submissionType: orchestration.detectedSubmissionType,
-      requestedMaxTokens: 4096,
+      requestedMaxTokens: resolveOutputBudget(effortUsed),
     });
 
     const policyHint = await getKernelPolicyHint({
@@ -584,9 +644,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     });
 
     // ── Model / effort picker (flag-gated client; server is permissive) ──────
-    // Effort is a calm Fast/Balanced/Thorough abstraction over routing strategy.
-    // An unknown / absent `effort_level` resolves to 'balanced' (never a 4xx).
-    const effortUsed = resolveEffortLevel(effort_level);
+    // Effort (resolved above) is a calm Fast/Balanced/Thorough abstraction over
+    // routing strategy.
     const effortStrategy = resolveEffortStrategy(effortUsed);
 
     // Governance-safe precedence: a kernel-pinned policyHint ALWAYS wins, so a
@@ -609,10 +668,43 @@ router.post('/stream', async (req: Request, res: Response) => {
       typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
     const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
 
+    // Substantive-turn signal — drives BOTH the reasoning depth and the cost
+    // tier below, computed once so they agree.
+    const substantiveTurn = isSubstantiveTurn({
+      messageLength: typeof message === 'string' ? message.length : 0,
+      intentLens: orchestration.detectedIntent?.lens,
+    });
+
+    // ── Cost-tiered model selection ──────────────────────────────────────────
+    // Keep the everyday path off the expensive flagship: Economy (Haiku) for
+    // routine turns, Standard (Sonnet) for real drafting/review, Flagship (Opus)
+    // only for a high kernel risk-tier or an explicit Thorough request. So the
+    // expensive model is the exception, not the default. This yields to an
+    // explicit user model pin and to a governance-pinned strategy, only uses
+    // enabled registry models (per-deployment tier remap via ANA_TIER_*_MODEL),
+    // and is opt-out via ANA_MODEL_TIERING=off.
+    const tieredModel = (() => {
+      if (resolvedOverride) return null; // user pinned a specific model
+      if (policyHint?.preferredStrategy) return null; // governance owns the strategy
+      if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+      const tier = resolveModelTier({
+        effort: effortUsed,
+        riskTier: routingPlan.riskTier,
+        intentLens: orchestration.detectedIntent?.lens,
+        taskType: routingPlan.taskType,
+        substantive: substantiveTurn,
+      });
+      return resolveTierModel(tier, overrideCandidates, process.env);
+    })();
+
     let fullContent = '';
     // Structured record of the tools run this turn (persisted on the assistant
     // message's metadata for cross-turn memory; see tool-trace.ts).
     const toolTrace: ToolTraceEntry[] = [];
+    // Failure-adaptation guidance from the most recent tool round; appended to
+    // the next model turn (then cleared) so a failed round becomes a course
+    // correction instead of an identical retry the thrash guard has to kill.
+    let pendingAdaptationNote = '';
     // Raw tool output this turn — the evidence corpus the final answer is
     // verified against in the self-verification round (see answer-grounding.ts).
     const toolEvidenceCorpus: string[] = [];
@@ -628,23 +720,21 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
-    // Extended thinking opt-in: kernel router flags genuinely high-stakes turns
-    // (audit/risk lens, critical contradictions). Use Claude's thinking budget
-    // to deepen reasoning on those without imposing latency on conversational
-    // turns. Gateway will force temperature=1 when thinking is enabled.
-    //
-    // Effort gating (additive on top of the risk-tier signal):
-    //   - 'thorough' may enable thinking even when riskTier !== 'high'
-    //     (deeper reasoning is exactly what the user asked for), capped at the
-    //     same 10k budget so it can't run away on latency/cost.
-    //   - 'fast' suppresses thinking outright (the user wants a quick turn).
-    //   - 'balanced' leaves the existing risk-tier behavior untouched.
-    const wantThinking =
-      effortUsed === 'fast'
-        ? false
-        : routingPlan.riskTier === 'high' || effortUsed === 'thorough';
-    const streamThinkingConfig = wantThinking
-      ? { enabled: true, budgetTokens: 10_000 }
+    // Extended thinking — effort-scaled reasoning policy (see reasoning.ts).
+    // AnA reasons on genuinely substantive turns by default (Balanced), not only
+    // when the kernel flags high risk, and reasons harder on Thorough. Casual
+    // one-line turns stay Fast so greetings never pay reasoning latency. On the
+    // flagship reasoning-only model thinking is adaptive (self-budgeting); the
+    // budget hint only bites the legacy fallback surface, where the gateway
+    // clamps it below max_tokens. Gateway forces temperature=1 when thinking is
+    // enabled on that legacy surface. (substantiveTurn computed above.)
+    const streamThinkingResolved = resolveThinkingConfig({
+      effort: effortUsed,
+      riskTier: routingPlan.riskTier,
+      substantive: substantiveTurn,
+    });
+    const streamThinkingConfig = streamThinkingResolved.enabled
+      ? streamThinkingResolved
       : undefined;
     // Full tool suite on the streaming path: custom JSON-schema tools
     // (PubMed search, FDA guidance lookup, predicate device analysis, etc.)
@@ -682,12 +772,15 @@ router.post('/stream', async (req: Request, res: Response) => {
       maxTokens: routingPlan.maxTokens,
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
-      // Explicit-override path: when the user pinned a valid enabled model, hand
-      // the gateway the resolved provider+model so its selectModel() short-
-      // circuits to that exact model (still subject to placement/health).
+      // Explicit-model path: a user pin wins; otherwise the cost tier picks the
+      // model (Economy/Standard/Flagship). Either hands the gateway an explicit
+      // provider+model so selectModel() short-circuits to it (still subject to
+      // placement/health). With neither, the effort-derived strategy selects.
       ...(resolvedOverride
         ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
-        : {}),
+        : tieredModel
+          ? { provider: tieredModel.provider, model: tieredModel.model }
+          : {}),
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
       ...(streamTools.length > 0 ? { tools: streamTools } : {}),
@@ -741,7 +834,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         // the client UI stays deterministic.
         for (const toolUse of calls) {
           res.write(
-            `data: ${JSON.stringify({ type: 'tool_use', name: toolUse.name, label: describeToolPlan([toolUse])[0].label, input: toolUse.input })}\n\n`
+            `data: ${JSON.stringify({ type: 'tool_use', round, name: toolUse.name, label: describeToolPlan([toolUse])[0].label, input: toolUse.input })}\n\n`
           );
         }
         const ran = await mapWithConcurrency(calls, async (toolUse) => {
@@ -783,26 +876,26 @@ router.post('/stream', async (req: Request, res: Response) => {
             errorMessage: toolErrorMessage,
             latencyMs: Date.now() - toolStart,
           });
-          return { toolUse, resultStr, toolStatus };
+          return { toolUse, resultStr, toolStatus, toolErrorMessage };
         }, 4);
 
         const entries: ToolResultEntry[] = [];
-        for (const { toolUse, resultStr, toolStatus } of ran) {
+        const roundFailures: FailedToolCall[] = [];
+        for (const { toolUse, resultStr, toolStatus, toolErrorMessage } of ran) {
           entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
           const stepLabel = describeToolPlan([toolUse])[0].label;
           // Record this call in the turn's tool-trace memory + evidence corpus.
           toolTrace.push(
             buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr),
           );
-          // Ground against what the MODEL saw, not the raw result. Oversized tool
-          // output is capped (head+tail) before it reaches the model (line below,
-          // callModel → capToolResultForModel). If the grounding round verified
-          // the answer against the full, uncapped result, a claim sitting in the
-          // truncated-away middle would be marked "grounded" though the model
-          // never read it — a false pass in the one direction that lets a
-          // fabrication through. Cap the corpus identically so the self-check
-          // sees exactly the evidence the model had.
-          toolEvidenceCorpus.push(capToolResultForModel(resultStr));
+          // Failures collected for the round's adaptation note (see below).
+          if (toolStatus !== 'success') {
+            roundFailures.push({
+              name: toolUse.name,
+              label: stepLabel,
+              error: toolErrorMessage || (toolStatus === 'not_found' ? 'no handler available' : undefined),
+            });
+          }
           // Calm, human-facing message for a non-success step so the client can
           // render an honest state ("AnA couldn't finish X") instead of a raw
           // error string — trust is the interface, including when something
@@ -815,7 +908,7 @@ router.post('/stream', async (req: Request, res: Response) => {
                 ? `This step (${humanStep}) isn't available here. AnA will work around it.`
                 : undefined;
           res.write(
-            `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, label: stepLabel, status: toolStatus, ...(humanMessage ? { message: humanMessage } : {}), result: resultStr })}\n\n`
+            `data: ${JSON.stringify({ type: 'tool_result', round, name: toolUse.name, label: stepLabel, status: toolStatus, ...(humanMessage ? { message: humanMessage } : {}), result: resultStr })}\n\n`
           );
           if (toolStatus === 'success') {
             try {
@@ -890,7 +983,22 @@ router.post('/stream', async (req: Request, res: Response) => {
             }
           }
         }
-        return entries;
+
+        // Budget the whole round's results before they reach the model, so a
+        // many-tool round can't bloat every later round's context (deep loops
+        // carry all prior results forward). Small rounds pass through under the
+        // classic per-result caps, byte-identical to before.
+        const budgeted = budgetToolResultsForModel(entries);
+        // Ground against what the MODEL saw, not the raw results. If the
+        // grounding round verified the answer against fuller text than the model
+        // was fed, a claim sitting in the truncated-away middle would be marked
+        // "grounded" though the model never read it — a false pass in the one
+        // direction that lets a fabrication through. The corpus therefore gets
+        // exactly the budgeted strings the model gets.
+        for (const b of budgeted) toolEvidenceCorpus.push(b.content);
+        // Failure guidance for the next model turn (cleared after use).
+        pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+        return budgeted;
       };
 
       // Call the model with the latest tool results, streaming its narration. On
@@ -903,11 +1011,18 @@ router.post('/stream', async (req: Request, res: Response) => {
         includeTools: boolean,
       ): Promise<ModelTurn> => {
         loopMessages.push({ role: 'assistant', content: priorText || '' });
+        // Entries arrive pre-budgeted from executeTools, so the per-result cap
+        // here is a no-op safety net. The adaptation note (when a tool failed
+        // last round) rides the same user turn so the model course-corrects
+        // instead of retrying the identical call.
+        const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
+        pendingAdaptationNote = '';
         loopMessages.push({
           role: 'user',
-          content: results
-            .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
-            .join('\n\n'),
+          content:
+            results
+              .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
+              .join('\n\n') + adaptationSuffix,
         });
 
         // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
@@ -931,11 +1046,13 @@ router.post('/stream', async (req: Request, res: Response) => {
           maxTokens: routingPlan.maxTokens,
           temperature: routingPlan.temperature,
           strategy: roundStrategy,
-          // Keep the same explicit-model pin across the agentic follow-up rounds
-          // so a user-chosen model stays consistent for the whole turn.
+          // Keep the same explicit model (user pin or cost tier) across the
+          // agentic follow-up rounds so the whole turn stays on one tier.
           ...(resolvedOverride
             ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
-            : {}),
+            : tieredModel
+              ? { provider: tieredModel.provider, model: tieredModel.model }
+              : {}),
           promptCache: { enabled: true, type: 'ephemeral' },
           ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
           stream: true,
@@ -965,7 +1082,14 @@ router.post('/stream', async (req: Request, res: Response) => {
       await runAgenticToolLoop(
         { text: fullContent, toolCalls: streamToolUses.map(toToolCall) },
         { executeTools, callModel },
-        { maxRounds: 5 },
+        // Effort-scaled agentic depth: Thorough can chase a multi-tool
+        // investigation all the way down; Balanced clears the old flat cap of 5.
+        // The ceiling is soft — a loop still discovering novel ground earns up
+        // to resolveRoundExtension() extra rounds; a circling loop never does.
+        {
+          maxRounds: resolveMaxRounds(effortUsed),
+          progressExtension: resolveRoundExtension(effortUsed),
+        },
       );
     }
 
@@ -1022,6 +1146,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         type: 'done',
         model: gwResponse.model,
         provider: gwResponse.provider,
+        // The cost tier the router selected (economy/standard/flagship), or null
+        // when tiering yielded (user pin / governance strategy / opt-out). Lets
+        // ops confirm the everyday path is staying off the flagship. Additive.
+        modelTier: tieredModel?.tier ?? null,
         // Echo the resolved effort back so the client can confirm what ran (the
         // effort the server actually used — which may differ from the request
         // when a governance policyHint pinned the strategy). Additive field.

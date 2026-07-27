@@ -206,6 +206,16 @@ async function startServer() {
 
   httpServer = createServer(app);
 
+  // Behind an ALB/ELB (or any L7 proxy), Node's default 5s keepAliveTimeout is
+  // BELOW the proxy's idle timeout (commonly 60s). That inverts who closes an
+  // idle keep-alive connection: Node closes it first, the proxy then reuses the
+  // socket it still believes is open, and the client gets a sporadic 502. Set
+  // keepAliveTimeout above the proxy idle window, and headersTimeout above that
+  // (it must exceed keepAliveTimeout or the keep-alive window is truncated).
+  // Both overridable for proxies configured with a longer idle setting.
+  httpServer.keepAliveTimeout = Number(process.env.HTTP_KEEP_ALIVE_TIMEOUT_MS || 65_000);
+  httpServer.headersTimeout = Number(process.env.HTTP_HEADERS_TIMEOUT_MS || 66_000);
+
   await setupFrontendServing(app, httpServer);
 
   await initializeParallelServices(httpServer, pool);

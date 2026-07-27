@@ -11,37 +11,22 @@
  *    becomes a location change; unknown segments render the honest scaffold.
  *  - The prototype TweaksPanel/edit-mode postMessage tooling is not product
  *    surface and is not ported.
- *  - AnA replies + action results are labelled sample until /api/ana-ri and
- *    /api/ai-actions wire in the surface phases (GAP RULE — no fabricated
- *    live output). Governed actions still demonstrate the §11.50 e-sign gate,
- *    marked sample; nothing is written.
+ *  - AnA conversation is LIVE: the shell rail, ⌘K and every surface's onAsk
+ *    stream real grounded replies from /api/ana-ri/stream (useAnaChat) — never
+ *    a fabricated/sample reply. Governed action *execution* still demonstrates
+ *    the §11.50 e-sign gate with a clearly-labelled sample result until
+ *    /api/ai-actions wires in.
  */
 import React from 'react';
 import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
-import {
-  AnaRail,
-  CmdK,
-  ESignGate,
-  Rail,
-  TopBar,
-  makeSampleActionResult,
-  type AnaMessage,
-} from './Shell';
+import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
+import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import { OnboardingWizard } from './surfaces/OnboardingWizard';
-import { connected } from './dataConnect';
-import { apiRequest } from '@/lib/queryClient';
-import {
-  AI_ACTIONS,
-  ANA_MODES,
-  getAction,
-  getSegment,
-  getSurfaceActions,
-} from './registryModel';
+import { getAction, getSegment } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
@@ -79,58 +64,41 @@ function loadPrefs(): Prefs {
   return DEFAULT_PREFS;
 }
 
-/**
- * First-run gate — show the onboarding wizard exactly once per user.
- * Truth lives in users.preferences.onboardingComplete (server, so it follows
- * the user across devices) with a localStorage mirror for responsiveness.
- * Fail-open: when unauthenticated or the prefs read fails, the shell renders —
- * the wizard must never be able to lock a user out of the product.
- */
-function useFirstRunGate(): { showWizard: boolean; complete: () => void } {
-  const [show, setShow] = React.useState(false);
-  React.useEffect(() => {
-    let cancelled = false;
-    try {
-      if (localStorage.getItem('c2c_onboarding_done') === '1') return undefined;
-    } catch {
-      /* storage unavailable — fall through to the server truth */
-    }
-    if (!connected()) return undefined;
-    apiRequest('GET', '/api/users/me/preferences')
-      .then(async (res) => {
-        if (cancelled || !res.ok) return;
-        const body = (await res.json().catch(() => null)) as
-          | { preferences?: Record<string, unknown> }
-          | null;
-        if (!body || typeof body.preferences !== 'object' || body.preferences === null) return;
-        if (body.preferences.onboardingComplete === true) {
-          try {
-            localStorage.setItem('c2c_onboarding_done', '1');
-          } catch {
-            /* mirror only */
-          }
-          return;
-        }
-        if (!cancelled) setShow(true);
-      })
-      .catch(() => {
-        /* prefs unreachable — fail open, never block the shell */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  const complete = React.useCallback(() => setShow(false), []);
-  return { showWizard: show, complete };
+/* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the shell
+   rail's AnaMessage shape. Replies are REAL, never stamped sample; while a
+   reply streams, the status phase stands in until the first token lands. The
+   turn's REAL executedActions (what ANA actually ran) and pendingSignoffs (a
+   governed command blocked on a Part 11 e-signature) are carried through so the
+   rail renders ANA's genuine action results and the real sign-off prompt —
+   never a fabricated result card. */
+function adaptChatMessage(m: AnaChatMessage): AnaMessage {
+  if (m.role === 'user') return { role: 'user', body: m.text };
+  return {
+    role: 'ana',
+    body: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
+    sample: false,
+    executedActions: m.executedActions,
+    pendingSignoffs: m.pendingSignoffs,
+  };
+}
+
+/* The shell's grounding for ANA: the project currently in context (set on the
+   window by the projects surface, the same source the CMC/board surfaces read).
+   Passing it to useAnaChat lets ANA see the open program on every surface's
+   chat instead of answering blind. */
+function readShellProjectId(): string | undefined {
+  try {
+    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+    return p && p.id != null ? String(p.id) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function V2App() {
   const [location, setLocation] = useLocation();
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
-  const [messages, setMessages] = React.useState<AnaMessage[]>([]);
-  const [esignFor, setEsignFor] = React.useState<string | null>(null);
-  const firstRun = useFirstRunGate();
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) =>
     setPrefs((p) => {
@@ -144,10 +112,12 @@ export function V2App() {
     });
 
   const activeId = surfaceIdFromLocation(location);
+  /* The real AnA assistant for the whole shell — one streaming conversation
+     (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
+  const anaChat = useAnaChat({ screenName: activeId, projectId: readShellProjectId() });
   const nav = React.useCallback(
     (id: string) => {
       setLocation(locationForSurface(id));
-      setMessages([]);
     },
     [setLocation]
   );
@@ -193,72 +163,27 @@ export function V2App() {
       notes: 'Home opens with the segment pathway chips and the composer. Ports in the surface phase.',
     } as UiSurface);
 
-  /* AnA ask — PROTOTYPE reply, always stamped sample until /api/ana-ri wires
-     in the surface phases. A fabricated reply must never read as live. */
+  /* AnA ask — routes to the REAL streaming assistant (/api/ana-ri/stream via
+     useAnaChat). The [Agent] prefix (rail agent toggle) is a task hint the
+     server's agentic tool loop handles, so we strip it and stream a grounded
+     reply. Governed action execution stays reachable via the action chips
+     (onAct → §11.50 e-sign). No fabricated/sample reply is ever shown. */
   const ask = (text: string) => {
-    if (!text) return;
-    const model = ANA_MODES.find((m) => m.id === prefs.anaMode)?.model ?? 'Balanced';
-    const plain = text.replace(/^\[Agent\]\s*/i, '').trim();
-    const agentMatch = text.match(/^\[Agent\]\s*(.*)$/i);
-    if (agentMatch) {
-      const body = agentMatch[1].trim() || 'Run the right action here.';
-      const blob = body.toLowerCase();
-      let hit: (typeof AI_ACTIONS)[number] | null = null;
-      let hitScore = 0;
-      for (const a of AI_ACTIONS) {
-        const triggers = (a.triggers ?? []).concat(
-          a.label
-            .toLowerCase()
-            .split(/\s+/)
-            .filter((w: string) => w.length > 3)
-        );
-        const score = triggers.reduce((s: number, w: string) => s + (blob.includes(w) ? 1 : 0), 0);
-        if (score > hitScore) {
-          hit = a;
-          hitScore = score;
-        }
-      }
-      setMessages((ms) => [...ms, { role: 'user', body }]);
-      if (!prefs.anaOpen) set('anaOpen', true);
-      if (hit) {
-        onAct(hit.id);
-        return;
-      }
-      setMessages((ms) => [
-        ...ms,
-        {
-          role: 'ana',
-          model,
-          sample: true,
-          body: 'I didn’t match that to a governed action on this surface. Here are the actions I can run here — pick one or rephrase:',
-          actions: getSurfaceActions(activeId).slice(0, 3),
-        },
-      ]);
-      return;
-    }
-    setMessages((ms) => [
-      ...ms,
-      { role: 'user', body: plain },
-      {
-        role: 'ana',
-        model,
-        sample: true,
-        body:
-          'Sample response — the live AnA gateway (/api/ana-ri) wires up with the surface-port phase. When it lands, this thread streams real grounded answers with pedigree badges; until then nothing here should be read as analysis.',
-        actions: getSurfaceActions(activeId).slice(0, 3),
-      },
-    ]);
+    const clean = text.replace(/^\[Agent\]\s*/i, '').trim();
+    if (!clean) return;
     if (!prefs.anaOpen) set('anaOpen', true);
+    void anaChat.send(clean);
   };
 
-  const runAction = (id: string, signed: boolean) => {
-    setMessages((ms) => [...ms, { role: 'action', result: makeSampleActionResult(id, signed) }]);
-    if (!prefs.anaOpen) set('anaOpen', true);
-  };
+  /* Governed + ungoverned actions both execute through ANA, the real agentic
+     executor. Tapping an action chip sends its intent to /api/ana-ri/stream;
+     ANA runs it (execute_platform_command / the AI-action dispatcher) with the
+     shell's grounded project context and streams the REAL result. A governed
+     action comes back as a Part 11 sign-off prompt (rendered inline by the rail
+     via the real GovernedActionSignoff), never a fabricated result card. */
   const onAct = (id: string) => {
     const a = getAction(id);
-    if (a?.governed) setEsignFor(id);
-    else runAction(id, false);
+    ask(a?.label ?? id.replace(/_/g, ' '));
   };
 
   const view = SURFACE_VIEWS[activeId];
@@ -274,11 +199,9 @@ export function V2App() {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
 
-  // First-run: the wizard owns the screen until the user finishes (it persists
-  // onboardingComplete to users.preferences, so it never re-appears).
-  if (firstRun.showWizard) {
-    return <OnboardingWizard onEnter={firstRun.complete} />;
-  }
+  /* The rail shows the real AnA conversation — including the actions ANA
+     actually executed and any governed action awaiting a Part 11 sign-off. */
+  const railMessages = anaChat.messages.map(adaptChatMessage);
 
   return (
     <div
@@ -318,7 +241,7 @@ export function V2App() {
           segment={prefs.segment}
           mode={prefs.anaMode}
           setMode={(m) => set('anaMode', m)}
-          messages={messages}
+          messages={railMessages}
           onSend={ask}
           onAct={onAct}
         />
@@ -334,16 +257,6 @@ export function V2App() {
         }}
       />
       <CollabLayer onNav={nav} />
-      {esignFor && (
-        <ESignGate
-          actionId={esignFor}
-          onCancel={() => setEsignFor(null)}
-          onConfirm={() => {
-            runAction(esignFor, true);
-            setEsignFor(null);
-          }}
-        />
-      )}
     </div>
   );
 }

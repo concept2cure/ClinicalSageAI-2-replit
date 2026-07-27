@@ -51,7 +51,9 @@ export function AnaRail({
 }: AnaRailProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = MDX_SUGGESTIONS[activeNav] || MDX_SUGGESTIONS.overview;
-  const modelName = ANA_MODES.find(m => m.id === mode)?.model ?? '';
+  // Standing rule: all UI says "AnA 1.0" — no raw model names. Surface the AnA
+  // *mode* (Standard / Deep research / …), never the underlying model.
+  const modeLabel = ANA_MODES.find(m => m.id === mode)?.label ?? '';
   const upload = useChatUpload({ projectId });
   const fileRef = React.useRef<HTMLInputElement>(null);
 
@@ -91,7 +93,7 @@ export function AnaRail({
           <span className="ana-id-mark">✻</span>
           <div className="ana-id-text">
             <div className="ana-id-name">AnA 1.0 RI</div>
-            <div className="ana-id-model">Claude {modelName}</div>
+            <div className="ana-id-model">{modeLabel}</div>
           </div>
         </div>
         <div className="ana-rail-actions">
@@ -132,10 +134,10 @@ export function AnaRail({
             key={m.id}
             className={`ana-mode-btn${mode === m.id ? ' on' : ''}`}
             onClick={() => setMode(m.id)}
-            title={`${m.desc} · Claude ${m.model}`}
+            title={m.desc}
           >
             <span className="lbl">{m.label}</span>
-            <span className="sub">{m.model}</span>
+            <span className="sub">{m.desc}</span>
           </button>
         ))}
       </div>
@@ -173,7 +175,7 @@ export function AnaRail({
           <div key={i} className={`ana-msg ${m.role}`}>
             <div className="who">
               {m.role === 'ana'
-                ? `AnA · ${ANA_MODES.find(x => x.id === m.mode)?.model || modelName}`
+                ? `AnA · ${ANA_MODES.find(x => x.id === m.mode)?.label || modeLabel}`
                 : 'You'}{' '}
               · {m.when}
             </div>
@@ -275,7 +277,7 @@ export function AnaRail({
           </button>
         </div>
         <div className="ana-foot-meta">
-          Routes via AI gateway · Claude {modelName}
+          Routes via AI gateway · {modeLabel}
         </div>
       </div>
     </aside>

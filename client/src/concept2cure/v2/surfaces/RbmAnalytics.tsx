@@ -12,9 +12,9 @@
  * Re-implementing it here under the rbm-ana.jsx file name would create a
  * second copy of the resolver that could silently drift from the one
  * actually wired into the rbm surface (Rbm.tsx). Instead this module
- * re-exports the same two symbols rbm-ana.jsx shipped on window
- * (`RbmAnaDock`, `rbmAnaResolve`) so the kit's file-for-file port map has
- * a named home, with RbmSurfaces.tsx remaining the single source of truth.
+ * re-exports the RBM AnA dock so the kit's file-for-file port map has a named
+ * home, with RbmSurfaces.tsx remaining the single source of truth. (The former
+ * rbmAnaResolve heuristic was removed when the dock was wired to the real
+ * streaming assistant — see RbmSurfaces.tsx.)
  */
-export { RbmAnaDock, rbmAnaResolve } from './RbmSurfaces';
-export type { AnaResult } from './RbmSurfaces';
+export { RbmAnaDock, type RbmAnaMessage } from './RbmSurfaces';

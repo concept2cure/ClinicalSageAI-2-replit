@@ -40,6 +40,42 @@ export function isSemanticWorkingMemoryEnabled(): boolean {
 }
 
 /**
+ * Pure: should a written working-memory row carry an embedding? Only when the
+ * feature is enabled AND the embedding column has actually been provisioned.
+ * Gating on both is what makes flipping the flag on SAFE ahead of the migration:
+ * without the column, appending `embedding` to the INSERT would throw and the
+ * (best-effort) working-memory write would be lost. Kept pure so the decision is
+ * unit-testable without a database.
+ */
+export function shouldEmbedWorkingMemory(flagOn: boolean, embeddingColumnPresent: boolean): boolean {
+  return flagOn && embeddingColumnPresent;
+}
+
+/**
+ * One-time probe: has the 20260602 migration added
+ * conversation_working_memory.embedding? Cached `true` permanently once seen
+ * (columns are never dropped), and re-probed while absent so enabling the
+ * feature on a running server picks up a freshly-applied migration without a
+ * restart. Runs only on the (infrequent) working-memory write path.
+ */
+let embeddingColumnConfirmed = false;
+async function embeddingColumnExists(): Promise<boolean> {
+  if (embeddingColumnConfirmed) return true;
+  try {
+    const { rows } = await pool.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'conversation_working_memory' AND column_name = 'embedding' LIMIT 1`
+    );
+    embeddingColumnConfirmed = rows.length > 0;
+    return embeddingColumnConfirmed;
+  } catch {
+    return false;
+  }
+}
+
+let warnedMissingEmbeddingColumn = false;
+
+/**
  * Embed a working-memory summary to a pgvector literal, best-effort. Returns
  * null on any failure so the row is still stored (without an embedding) rather
  * than lost — the semantic read path filters `embedding IS NOT NULL`.
@@ -143,9 +179,24 @@ async function insertWorkingMemoryRow(params: {
     params.messageCountAtGeneration,
   ];
 
+  // Semantic recall requires BOTH the flag and the embedding column (20260602
+  // migration). When the flag is on but the column is absent, insert WITHOUT
+  // the embedding rather than let the INSERT throw and lose the write — the
+  // semantic read filters `embedding IS NOT NULL`, so recall simply falls back
+  // to recency until the migration is applied. One-time warn so the misconfig
+  // is visible without flooding the log.
   if (isSemanticWorkingMemoryEnabled()) {
-    cols.push('embedding');
-    values.push(await embedSummaryToLiteral(params.summary));
+    if (shouldEmbedWorkingMemory(true, await embeddingColumnExists())) {
+      cols.push('embedding');
+      values.push(await embedSummaryToLiteral(params.summary));
+    } else if (!warnedMissingEmbeddingColumn) {
+      warnedMissingEmbeddingColumn = true;
+      logger.warn(
+        'ENABLE_SEMANTIC_WORKING_MEMORY is on but conversation_working_memory.embedding is missing — ' +
+          'apply the 20260602_working_memory_embeddings migration. Writing working memory without ' +
+          'embeddings for now; semantic recall falls back to recency until the column exists.'
+      );
+    }
   }
 
   cols.push('generated_at');

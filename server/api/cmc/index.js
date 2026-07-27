@@ -75,56 +75,62 @@ router.post('/test-event', requireAuth, async (req, res) => {
   }
 });
 
-// Get CMC module status and capabilities
+// Get CMC module capability manifest.
+//
+// HONESTY: This is a static capability manifest (source: 'manifest'), not a
+// live health probe. Each module is reported as 'available' because its router
+// is mounted above via router.use(); we do not claim per-module 'operational'
+// health that was never checked, and we do not report a fabricated build
+// version. The API itself is 'active' by virtue of serving this response.
 router.get('/status', (req, res) => {
   res.status(200).json({
     status: 'active',
+    source: 'manifest',
     modules: [
       {
         id: 'blueprint-generator',
         name: 'AI-CMC Blueprint Generator',
         description: 'Auto-generate ICH-compliant Module 3 documents from molecule + process data.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'change-impact-simulator',
         name: 'AI Change Impact Simulator (AICIS)',
         description:
           'Simulate change consequences across global filings before making a CMC change.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'manufacturing-tuner',
         name: 'Manufacturing Intelligence Tuner',
         description: 'Benchmark and improve your process using AI + global precedent mining.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'preclinical-translator',
         name: 'Preclinical-to-Process Translator',
         description: 'Instantly scale lab discoveries into commercial process frameworks.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'global-compliance',
         name: 'Global Compliance Auto-Match',
         description: 'Auto-localize content for multiple health authorities.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'audit-risk-monitor',
         name: 'Real-Time Audit Risk Monitor',
         description: 'AI-powered surveillance of compliance gaps.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'cmc-copilot',
         name: 'CMC CoPilot',
         description: 'AI assistant available in every CMC screen.',
-        status: 'operational',
+        status: 'available',
       },
     ],
-    version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
 });

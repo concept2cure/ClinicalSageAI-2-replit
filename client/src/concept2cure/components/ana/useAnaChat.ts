@@ -51,7 +51,20 @@ export interface AnaToolCall {
   name: string;
   label: string;
   status: 'running' | 'success' | 'error';
+  /**
+   * Agentic-loop round this call ran in (1-based). Lets the transcript group
+   * tool steps by investigation round instead of one flat list, so a deep
+   * multi-round investigation reads as the progression it actually was.
+   */
+  round?: number;
+  /** The input args AnA passed to the tool — for the audit/inspect disclosure. */
+  input?: unknown;
+  /** The tool's returned result, capped client-side — for the audit disclosure. */
+  result?: string;
 }
+
+/** Client-side cap on the tool result kept for the inspect disclosure (state size). */
+const TOOL_RESULT_VIEW_CAP = 4000;
 
 /**
  * Result of `verify_docx_against_source` — the audited "verify it against your
@@ -537,6 +550,17 @@ export interface UseAnaChatOptions {
    */
   selectedTools?: string[];
   /**
+   * Data Room sources the user has pinned as context for the turn, as
+   * `cre_evidence_sources` ids. Sent as `source_ids`; the server resolves each
+   * back to the upload its bytes live in and grounds the turn through the same
+   * tenant-scoped path an attachment uses.
+   *
+   * This is the explicit half of context selection: an attachment is a file the
+   * user just added, a pinned source is one they deliberately chose from the
+   * project's data room.
+   */
+  selectedSourceIds?: Array<number | string> | null;
+  /**
    * Response effort the user picked in the Composer (Fast/Balanced/Thorough).
    * Sent as `effort_level` when set; the server maps it to a routing strategy
    * (governance-pinned policy still wins). Omitted → server default 'balanced'.
@@ -755,9 +779,27 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           }
         : undefined;
 
+      // Server file ids for this turn's attachments. Without these the stream
+      // route has no way to know which upload the user attached: the chips
+      // rendered in the thread are client-only state, so a user could attach a
+      // file, watch it appear in chat, send, and have AnA never receive it.
+      // Only `ready` attachments carry a fileId; any still uploading are
+      // omitted rather than sent as undefined.
+      const attachedFileIds = (attachments ?? [])
+        .map(a => a.fileId)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
       const body = JSON.stringify({
         message: text,
         thread_id: threadIdRef.current || undefined,
+        file_ids: attachedFileIds.length > 0 ? attachedFileIds : undefined,
+        // Data Room sources pinned as context for this turn. Omitted when the
+        // user has pinned nothing, so the server keeps its own context
+        // assembly rather than being handed an empty selection to honour.
+        source_ids:
+          options.selectedSourceIds && options.selectedSourceIds.length > 0
+            ? options.selectedSourceIds
+            : undefined,
         project_id: options.projectId || ac?.projectId || undefined,
         submission_type: submissionTypeForContext,
         user_role: options.userRole || undefined,
@@ -1010,6 +1052,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (name) {
                 const label: string =
                   typeof event.label === 'string' && event.label ? event.label : toolLabel(name);
+                const round: number | undefined =
+                  typeof event.round === 'number' && event.round > 0 ? event.round : undefined;
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
@@ -1018,7 +1062,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           statusPhase: undefined,
                           toolCalls: [
                             ...(m.toolCalls || []),
-                            { name, label, status: 'running' as const },
+                            {
+                              name,
+                              label,
+                              status: 'running' as const,
+                              ...(round ? { round } : {}),
+                              ...(event.input !== undefined ? { input: event.input } : {}),
+                            },
                           ],
                         }
                       : m
@@ -1076,7 +1126,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     if (idx !== -1) {
                       const realIdx = m.toolCalls.length - 1 - idx;
                       const calls = m.toolCalls.slice();
-                      calls[realIdx] = { ...calls[realIdx], status: failed ? 'error' : 'success' };
+                      // Keep a capped copy of the result for the audit disclosure
+                      // so a reviewer can see exactly what this step returned,
+                      // without bloating message state with a huge payload.
+                      const rawResult = typeof event.result === 'string' ? event.result : undefined;
+                      const cappedResult = rawResult
+                        ? rawResult.length > TOOL_RESULT_VIEW_CAP
+                          ? `${rawResult.slice(0, TOOL_RESULT_VIEW_CAP)}\n… (truncated)`
+                          : rawResult
+                        : undefined;
+                      calls[realIdx] = {
+                        ...calls[realIdx],
+                        status: failed ? 'error' : 'success',
+                        ...(cappedResult !== undefined ? { result: cappedResult } : {}),
+                      };
                       next = { ...next, toolCalls: calls };
                     }
                   }

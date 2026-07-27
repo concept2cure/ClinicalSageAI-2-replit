@@ -20,8 +20,10 @@ describe('approved-models drift gate', () => {
   });
 
   it('flags a version bump as drift', () => {
+    // Use a version NOT in the lockfile (4.8 is the approved flagship). Any
+    // unreviewed swap of the pinned version must trip the gate.
     const bumped = liveRegistry.map(m =>
-      m.id === 'claude-opus-4' ? { ...m, model: 'claude-opus-4-8' } : m
+      m.id === 'claude-opus-4' ? { ...m, model: 'claude-opus-4-9' } : m
     );
     const drift = detectModelDrift(bumped);
     expect(drift).toHaveLength(1);

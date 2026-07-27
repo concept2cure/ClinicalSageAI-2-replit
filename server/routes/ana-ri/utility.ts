@@ -17,6 +17,7 @@ import {
 } from '../../services/ana-ri/enforcement.js';
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
 import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
+import { getAgentActivity } from '../../services/ana/agent-activity.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
   requiresPart11Signoff,
@@ -208,6 +209,25 @@ export function mountUtilityRoutes(router: Router): void {
         null,
         'SINCE_LAST_VISIT_FAILED'
       );
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/ana-ri/agent-activity — the live agent surface: the tenant's
+  // active / stalled / recently-finished background deep investigations, for a
+  // live dashboard panel to poll. Org-scoped; fail-soft (empty summary, not an
+  // error, when nothing is running or the table is absent).
+  // ─────────────────────────────────────────────────────────────────────────
+  router.get('/agent-activity', async (req: Request, res: Response) => {
+    const { numericOrgId } = extractRequestContext(req);
+    if (!numericOrgId) {
+      return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
+    }
+    try {
+      const summary = await getAgentActivity(numericOrgId);
+      return sendSuccess(res, summary);
+    } catch (error: any) {
+      return sendError(res, 500, error?.message || 'Failed to load agent activity', null, 'AGENT_ACTIVITY_FAILED');
     }
   });
 

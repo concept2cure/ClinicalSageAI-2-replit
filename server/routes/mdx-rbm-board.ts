@@ -10,11 +10,11 @@
  * so the surface can render one call instead of the 12 granular /api/mdx/rbm-*
  * reads it would otherwise fan out.
  *
- * Mounted at /api/mdx (alongside mdx-rbm.ts which owns the granular CRUD +
+ * Mounted at /api/mdx-rbm (alongside mdx-rbm.ts which owns the granular CRUD +
  * the compute/POST actions). READ-ONLY: every write path (seed, recompute,
  * central-monitoring run, patient scoring, approvals, CRUD) stays in mdx-rbm.ts.
  *
- *   GET /api/mdx/rbm-board/:programId
+ *   GET /api/mdx-rbm/rbm-board/:programId
  *     → { success: true, data: <RBM board display shape> }
  *
  * RLS: queries run through requestDb(req) (request-scoped, tenant-pinned) and
@@ -26,19 +26,20 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { and, eq, isNull, inArray } from 'drizzle-orm';
+import { and, eq, isNull, isNotNull, inArray, desc } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
 import {
   rbmRiskAssessments, rbmRiskItems, rbmKris, rbmKriValues, rbmQtls,
   rbmSignals, rbmSiteRiskScores, rbmPatientProfiles, rbmMonitoringPlans,
-  rbmMonitoringActions, users,
+  rbmMonitoringActions, rbmDataRuns, users,
 } from '../../shared/schema';
 import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
   type RiskReviewInput, type AttentionItem,
 } from '../services/rbm/risk-report';
+import { freshnessFromRun, type SourceFreshness } from '../services/rbm/metric-ingestion';
 
 const log = createScopedLogger('mdx-rbm-board');
 
@@ -54,19 +55,21 @@ const HIGH_SEV = new Set(['high', 'critical']);
 const OPEN_ITEM = new Set(['open', 'mitigating']);
 
 const SIGNAL_SEV_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-const KRI_STATUS_RANK: Record<string, number> = { red: 0, amber: 1, green: 2 };
-const QTL_STATUS_RANK: Record<string, number> = { breached: 0, approaching: 1, within: 2 };
+// `not_evaluated` sorts above green/within: an indicator nobody has read is an
+// oversight gap the monitor should see before the healthy ones.
+const KRI_STATUS_RANK: Record<string, number> = { red: 0, amber: 1, not_evaluated: 2, green: 3 };
+const QTL_STATUS_RANK: Record<string, number> = { breached: 0, approaching: 1, not_evaluated: 2, within: 3 };
 const PRIORITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
 // Attention-feed kind → the sub-surface tab it deep-links to, and a short
 // human category label. Pure display transforms of the real AttentionItem.kind.
 const NAV_BY_KIND: Record<AttentionItem['kind'], string> = {
   qtl: 'qtls', kri: 'kris', signal: 'signals', patient: 'patients',
-  action: 'plan', assessment: 'ract',
+  action: 'plan', assessment: 'ract', data: 'overview',
 };
 const KIND_LABEL: Record<AttentionItem['kind'], string> = {
   qtl: 'QTL', kri: 'KRI', signal: 'Signal', patient: 'Patient',
-  action: 'Action', assessment: 'Assessment',
+  action: 'Action', assessment: 'Assessment', data: 'Data',
 };
 
 function getOrgId(req: Request): number | null {
@@ -92,6 +95,15 @@ function iso(v: unknown): string | null {
   return String(v);
 }
 
+/** Read metadata.amendmentReason off a jsonb column without throwing. */
+function amendmentReason(metadata: unknown): string | null {
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    const r = (metadata as Record<string, unknown>).amendmentReason;
+    return typeof r === 'string' ? r : null;
+  }
+  return null;
+}
+
 /** Read metadata.approvalReason off a jsonb column without throwing. */
 function approvalReason(metadata: unknown): string | null {
   if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
@@ -105,7 +117,7 @@ export default function createRbmBoardRoutes(): Router {
   const router = Router();
 
   /**
-   * GET /api/mdx/rbm-board/:programId
+   * GET /api/mdx-rbm/rbm-board/:programId
    * Aggregated read-model for the RBM shell: summary, attention feed, risk
    * review report, RACT (assessment + CtQ register), KRIs (with trend sparks),
    * QTLs, central-monitoring signals, patient profiles, site risk, site
@@ -220,11 +232,59 @@ export default function createRbmBoardRoutes(): Router {
           eq(rbmMonitoringPlans.programId, programId),
         ));
 
+      // ── Per-source data freshness: the newest run per feed. ────────────────
+      // Queried defensively in its own try/catch rather than inside the board's
+      // outer one: an older database can carry the rbm_* store without the
+      // ingestion tables, and a missing rbm_data_runs must not blank the whole
+      // board. No runs simply means no feed is tracked, which the surface says
+      // outright rather than treating as healthy.
+      let freshness: SourceFreshness[] = [];
+      try {
+        const runRows = await db.select({
+          source: rbmDataRuns.source,
+          startedAt: rbmDataRuns.startedAt,
+          dataCutoff: rbmDataRuns.dataCutoff,
+          status: rbmDataRuns.status,
+          rowsAccepted: rbmDataRuns.rowsAccepted,
+          rowsRejected: rbmDataRuns.rowsRejected,
+        })
+          .from(rbmDataRuns)
+          .where(and(
+            eq(rbmDataRuns.organizationId, orgId),
+            eq(rbmDataRuns.programId, programId),
+          ))
+          .orderBy(desc(rbmDataRuns.startedAt))
+          .limit(500);
+
+        const newestBySource = new Map<string, typeof runRows[number]>();
+        for (const r of runRows) if (!newestBySource.has(r.source)) newestBySource.set(r.source, r);
+        const now = new Date(asOf);
+        freshness = [...newestBySource.values()]
+          .map(r => freshnessFromRun({
+            source: r.source,
+            startedAt: iso(r.startedAt),
+            dataCutoff: r.dataCutoff ? String(r.dataCutoff) : null,
+            status: r.status,
+            rowsAccepted: r.rowsAccepted,
+            rowsRejected: r.rowsRejected,
+          }, now))
+          // Stale first — the feed that stopped is the one worth seeing.
+          .sort((x, y) => Number(y.stale) - Number(x.stale) || x.source.localeCompare(y.source));
+      } catch (err) {
+        if ((err as { code?: string })?.code !== UNDEFINED_TABLE) throw err;
+      }
+
       // ── Choose the governing assessment/plan (active, else most-recent). ────
+      // Highest version wins, so an open draft amendment is what the RACT
+      // surface shows and edits. The APPROVED version remains the governing
+      // risk basis for the risk review and the attention feed — those read
+      // through loadRiskReviewInput, which orders active first — so an
+      // unapproved draft can never be reported as the study's risk position.
       const sortedAssessments = [...assessmentRows].sort(
-        (x, y) => (iso(y.a.updatedAt) ?? '').localeCompare(iso(x.a.updatedAt) ?? ''),
+        (x, y) => (y.a.version ?? 0) - (x.a.version ?? 0)
+          || (iso(y.a.updatedAt) ?? '').localeCompare(iso(x.a.updatedAt) ?? ''),
       );
-      const chosenAssessment = sortedAssessments.find(r => r.a.status === 'active') ?? sortedAssessments[0] ?? null;
+      const chosenAssessment = sortedAssessments[0] ?? null;
 
       const sortedPlans = [...planRows].sort(
         (x, y) => (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
@@ -243,9 +303,11 @@ export default function createRbmBoardRoutes(): Router {
 
       const redKris = kriRows.filter(k => k.status === 'red').map(k => k.name);
       const amberKris = kriRows.filter(k => k.status === 'amber').map(k => k.name);
+      const unevalKris = kriRows.filter(k => k.status === 'not_evaluated').map(k => k.name);
 
       const breachedQtls = qtlRows.filter(q => q.status === 'breached').map(q => q.parameter);
       const approachingQtls = qtlRows.filter(q => q.status === 'approaching').map(q => q.parameter);
+      const unevalQtls = qtlRows.filter(q => q.status === 'not_evaluated').map(q => q.parameter);
 
       const openSignals = signalRows.filter(s => OPEN_SIGNAL.has(s.status));
       const highSignals = openSignals.filter(s => HIGH_SEV.has(s.severity)).map(s => s.title);
@@ -278,12 +340,13 @@ export default function createRbmBoardRoutes(): Router {
           high: highItems.length,
           openCritical,
         },
-        kris: { total: kriRows.length, red: redKris, amber: amberKris },
-        qtls: { total: qtlRows.length, breached: breachedQtls, approaching: approachingQtls },
+        kris: { total: kriRows.length, red: redKris, amber: amberKris, notEvaluated: unevalKris },
+        qtls: { total: qtlRows.length, breached: breachedQtls, approaching: approachingQtls, notEvaluated: unevalQtls },
         signals: { open: openSignals.length, high: highSignals },
         sites: { total: siteRows.length, enhanced: enhancedSites },
         patients: { total: patientRows.length, flagged: flaggedPatients, review: reviewPatients },
         actions: { open: openActions, overdue: overdueActions },
+        dataSources: freshness.map(f => ({ source: f.source, stale: f.stale, ageDays: f.ageDays, status: f.status })),
       };
       const report = buildRiskReview(reviewInput);
       const attention = buildAttentionFeed(reviewInput).map(a => ({
@@ -308,7 +371,14 @@ export default function createRbmBoardRoutes(): Router {
       }
 
       // ── Shape each section to what the surface JSX consumes. ────────────────
-      const items = [...itemRows]
+      // Scoped to the assessment being shown. Fetching program-wide would
+      // concatenate the registers of every version once an amendment is open.
+      // When the program has no assessment at all, every item is shown — those
+      // rows have nowhere else to belong.
+      const scopedItems = chosenAssessment
+        ? itemRows.filter(r => r.it.assessmentId === chosenAssessment.a.id)
+        : itemRows;
+      const items = [...scopedItems]
         .sort((x, y) => (y.it.riskScore ?? 0) - (x.it.riskScore ?? 0))
         .map(({ it, owner }) => ({
           id: it.id,
@@ -406,6 +476,10 @@ export default function createRbmBoardRoutes(): Router {
           || (x.act.dueDate ?? '9999').localeCompare(y.act.dueDate ?? '9999'))
         .map(({ act, owner }) => ({
           id: act.id,
+          // A program can hold several plan versions and this list spans all of
+          // them. Surfaced so the plan surface can show — and mutate — only the
+          // actions belonging to the plan it is displaying.
+          planId: act.planId,
           type: act.actionType,
           title: act.description,
           priority: act.priority,
@@ -427,9 +501,19 @@ export default function createRbmBoardRoutes(): Router {
           when: iso(chosenAssessment.a.approvedAt),
           reason: approvalReason(chosenAssessment.a.metadata),
         } : null,
-        // Version history is not modelled as a reason-for-change chain; the
-        // rbm_risk_assessments row carries a single integer version only.
-        history: [] as { v: number; status: string; by: string; when: string; reason: string }[],
+        // The real version chain. An amendment creates a new draft version and
+        // approving it archives the one it supersedes, so every row here is a
+        // version that existed — the approved ones with the signature they were
+        // approved under. Newest first.
+        history: sortedAssessments.map(r => ({
+          id: r.a.id,
+          v: r.a.version,
+          status: r.a.status,
+          by: r.approver ?? null,
+          when: iso(r.a.approvedAt),
+          reason: approvalReason(r.a.metadata),
+          amendmentReason: amendmentReason(r.a.metadata),
+        })),
       } : null;
 
       const plan = chosenPlan ? {
@@ -459,8 +543,8 @@ export default function createRbmBoardRoutes(): Router {
           open: openItems.length,
           high: highItems.length,
         },
-        kris: { total: kriRows.length, red: redKris.length, amber: amberKris.length },
-        qtls: { total: qtlRows.length, breached: breachedQtls.length, approaching: approachingQtls.length },
+        kris: { total: kriRows.length, red: redKris.length, amber: amberKris.length, notEvaluated: unevalKris.length },
+        qtls: { total: qtlRows.length, breached: breachedQtls.length, approaching: approachingQtls.length, notEvaluated: unevalQtls.length },
         signals: { total: signalRows.length, open: openSignals.length, high: highSignals.length },
         sites: { total: siteRows.length, enhanced: enhancedSites },
         patients: { scored: patientRows.length, flagged: flaggedPatients, review: reviewPatients },
@@ -485,6 +569,7 @@ export default function createRbmBoardRoutes(): Router {
           oversight,
           plan,
           actions,
+          freshness,
         },
       });
     } catch (err) {
@@ -498,8 +583,8 @@ export default function createRbmBoardRoutes(): Router {
             summary: {
               overallRisk: null, asOf,
               riskItems: { total: 0, critical: 0, open: 0, high: 0 },
-              kris: { total: 0, red: 0, amber: 0 },
-              qtls: { total: 0, breached: 0, approaching: 0 },
+              kris: { total: 0, red: 0, amber: 0, notEvaluated: 0 },
+              qtls: { total: 0, breached: 0, approaching: 0, notEvaluated: 0 },
               signals: { total: 0, open: 0, high: 0 },
               sites: { total: 0, enhanced: 0 },
               patients: { scored: 0, flagged: 0, review: 0 },
@@ -507,12 +592,58 @@ export default function createRbmBoardRoutes(): Router {
             attention: [], report: null, reportMarkdown: null,
             assessment: null, items: [], kris: [], qtls: [], signals: [],
             patients: [], sites: [], oversight: {}, plan: null, actions: [],
+            freshness: [],
             pendingStore: true,
           },
         });
       }
       log.error('rbm-board failed', { err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({ success: false, error: 'Failed to assemble RBM board' });
+    }
+  });
+
+  /**
+   * GET /api/mdx-rbm/rbm-programs
+   * The programs (studies) that have a real RBM risk assessment for this org —
+   * the selectable studies for the RBM shell's study picker. Ids are the same
+   * program_id UUIDs the board keys on, so a selected study always resolves.
+   * The label is the most-recent assessment title (the only program-level label
+   * the RBM store carries — there is no separate program-name column, so nothing
+   * is fabricated). Fails closed to an empty list when the store is unprovisioned.
+   * Response: { success: true, data: { id: string; label: string }[], total }
+   */
+  router.get('/rbm-programs', async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
+    const db = requestDb(req);
+    try {
+      const rows = await db
+        .select({
+          programId: rbmRiskAssessments.programId,
+          title: rbmRiskAssessments.title,
+        })
+        .from(rbmRiskAssessments)
+        .where(and(
+          eq(rbmRiskAssessments.organizationId, orgId),
+          isNotNull(rbmRiskAssessments.programId),
+          isNull(rbmRiskAssessments.deletedAt),
+        ))
+        .orderBy(desc(rbmRiskAssessments.updatedAt));
+
+      const seen = new Map<string, string>();
+      for (const r of rows) {
+        if (r.programId && !seen.has(r.programId)) seen.set(r.programId, r.title);
+      }
+      const data = Array.from(seen.entries()).map(([id, label]) => ({ id, label }));
+      return res.json({ success: true, data, total: data.length });
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === UNDEFINED_TABLE) {
+        return res.json({ success: true, data: [], total: 0 });
+      }
+      log.error('rbm-programs failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'Failed to list RBM programs' });
     }
   });
 

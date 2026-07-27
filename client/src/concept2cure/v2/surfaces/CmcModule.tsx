@@ -1,43 +1,68 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { SampleTag, useLive } from '../dataConnect';
+import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
+import {
+  specRowsFromApi,
+  specCreateBody,
+  specUpdateBody,
+  asProjectUuid,
+  type CmcSpecRow,
+  type QualitySpecApiRow,
+} from './cmcSpec';
+import {
+  batchRowsFromApi,
+  batchCreateBody,
+  batchReleaseBody,
+  type CmcBatch,
+  type BatchApiRow,
+} from './cmcBatch';
+import { useAuth } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
-   CMC -- Module 3 operating system. Ports the full cmc/ module:
-   Overview with GOVERNED section approvals (21 CFR §11 e-sign),
-   Specifications with full create / edit / approve, a working
-   Change-impact SIMULATOR, Stability with a real shelf-life
-   PROJECTION, Batch records, Blueprint, Global, Program records
-   and the CMC copilot.
+   CMC -- Module 3 operating system.
+
+   Real-data standard: a surface renders REAL persisted data, an honest
+   EMPTY state, or an honest ERROR state — never an in-file fixture
+   presented as content.
+
+   Overview is anchored to the LIVE board (GET /api/cmc/module3-board):
+   portfolio ← reg_submissions + the real RPI engine, and the governed
+   §3.2 section list ← cmc_module3_sections (per project). The other
+   sub-tabs (Specifications / Stability / Batch / Blueprint / Global /
+   Program records) have NO faithful org-scoped source in this schema —
+   the board returns those slices as explicit null — so their former
+   fixtures are replaced with honest empty states rather than fabricated
+   content. Canonical config (ICH Q-series / CTD 3.2.S / 3.2.P catalogs,
+   market lists) and deterministic generators (the change simulator,
+   markdown renderer) are kept.
 
    Overrides the thin SURFACE_VIEWS['cmc'] with this full module.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Inline fixture types ── */
+/* ── Types ── */
 
 interface CmcNavItem { id: string; label: string; icon: string; }
 interface CmcPortfolio { sub: string; product: string; region: string; type: string; rpi: number | null; ir: number | null; }
-interface CmcSection { key: string; path: string; st: string; audit?: string; _new?: boolean; }
-interface CmcSpecRow { id: number; attr: string; material: string; method: string; release: string; shelf: string; ich: string; st: string; noMethod?: boolean; audit?: string; _new?: boolean; }
-interface CmcStabData { attr: string; cond: string; limit: number; unit: string; points: { m: number; v: number }[]; }
-interface CmcBatch { id: string; stage: string; yield: number; dev: number; st: string; _new?: boolean; }
-interface CmcBlueprint { s: string; l: string; ready: boolean; need?: string; }
-interface CmcGlobal { region: string; ready: number; gaps: string[]; }
-interface CmcCorrespondence { ag: string; kind: string; subj: string; due: string; tone: string; }
+interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
 interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
 
-/* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ── */
+/* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ──
+   useLiveData unwraps the { success, data } envelope, so the hook payload is
+   the display object directly (portfolio / sections / kpis / meta). rpi / ir /
+   rpiAverage / section counts are number | null — honestly null when the
+   backend cannot measure them; rendered as "—", never fabricated. */
 interface CmcBoardKpis { submissions: number; rpiAverage: number | null; irOverdue: number; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
 interface CmcBoardMeta { projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string; }
 interface CmcBoardData { portfolio?: CmcPortfolio[]; sections?: CmcSection[] | null; kpis?: CmcBoardKpis; meta?: CmcBoardMeta; }
 
-/* ── Inline fixture data (kit window globals) ── */
+/* ── Navigation + AnA prompt starters (UI config / affordances — not data) ── */
 
 const CMC_NAV: CmcNavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'beaker' },
@@ -59,83 +84,7 @@ const CMC_SUGGEST: Record<string, string[]> = {
   copilot: ['Explain ICH Q6B expectations for charge-variant specs', 'Draft a method-validation justification for sub-visible particles', 'What evidence supports a 24-month shelf-life claim?'],
 };
 
-const CMC_PORT: CmcPortfolio[] = [
-  { sub: 'BLA 761xxx', product: 'BX-204', region: 'US', type: 'BLA', rpi: 82, ir: 1 },
-  { sub: 'MAA EU', product: 'BX-204', region: 'EU', type: 'MAA', rpi: 74, ir: 1 },
-  { sub: 'NDA 212345', product: 'BX-204', region: 'US', type: 'NDA', rpi: 71, ir: 0 },
-  { sub: 'J-NDA', product: 'BX-204', region: 'JP', type: 'J-NDA', rpi: 66, ir: 0 },
-];
-
-const CMC_SECTIONS_SEED: CmcSection[] = [
-  { key: '3.2.S.1', path: 'General information', st: 'approved' },
-  { key: '3.2.S.2', path: 'Manufacture', st: 'approved' },
-  { key: '3.2.S.3', path: 'Characterisation', st: 'review' },
-  { key: '3.2.S.4', path: 'Control of drug substance', st: 'review' },
-  { key: '3.2.S.7', path: 'Stability', st: 'draft' },
-  { key: '3.2.P.3', path: 'Manufacture (DP)', st: 'review' },
-  { key: '3.2.P.5', path: 'Control of drug product', st: 'draft' },
-  { key: '3.2.P.8', path: 'Stability (DP)', st: 'draft' },
-];
-
-/* The { success, data } payload the Overview falls back to when the live board
-   is unreachable or unprovisioned -- the org portfolio + governed section seed,
-   shape-exact so `raw.data.data` is uniform whether live or sample. */
-const CMC_BOARD_FIXTURE: { data: CmcBoardData } = {
-  data: {
-    portfolio: CMC_PORT,
-    sections: CMC_SECTIONS_SEED,
-    kpis: {
-      submissions: CMC_PORT.length,
-      rpiAverage: Math.round(CMC_PORT.reduce((a, r) => a + (r.rpi ?? 0), 0) / CMC_PORT.length),
-      irOverdue: CMC_PORT.reduce((a, r) => a + (r.ir ?? 0), 0),
-      sectionsApproved: CMC_SECTIONS_SEED.filter((s) => s.st === 'approved').length,
-      sectionsTotal: CMC_SECTIONS_SEED.length,
-      readyPercent: Math.round(100 * CMC_SECTIONS_SEED.filter((s) => s.st === 'approved').length / CMC_SECTIONS_SEED.length),
-    },
-    meta: { projectId: null, portfolioProvisioned: false, sectionsProvisioned: null, generatedAt: '' },
-  },
-};
-
-const CMC_SPECROWS_SEED: CmcSpecRow[] = [
-  { id: 1, attr: 'Appearance', material: 'Drug substance', method: 'Visual', release: 'Clear to opalescent', shelf: 'Clear to opalescent', ich: 'ICH Q6B', st: 'approved' },
-  { id: 2, attr: 'Protein content', material: 'Drug substance', method: 'UV A280', release: '95-105% label', shelf: '90-110% label', ich: 'ICH Q6B', st: 'approved' },
-  { id: 3, attr: 'Aggregates (HMWS)', material: 'Drug substance', method: 'SE-HPLC', release: '<= 2.0%', shelf: '<= 3.0%', ich: 'ICH Q6B', st: 'review' },
-  { id: 4, attr: 'Charge variants', material: 'Drug substance', method: 'icIEF', release: 'Main >= 60%', shelf: 'Main >= 55%', ich: 'ICH Q6B', st: 'draft' },
-  { id: 5, attr: 'Bioburden', material: 'Drug product', method: 'USP <61>', release: '<= 10 CFU/10 mL', shelf: '--', ich: 'ICH Q6A', st: 'review' },
-  { id: 6, attr: 'Sub-visible particles', material: 'Drug product', method: 'USP <787>', release: 'Meets <787>', shelf: 'Meets <787>', ich: 'ICH Q6A', st: 'draft', noMethod: true },
-];
-
-const CMC_STAB_SEED: CmcStabData = {
-  attr: 'Aggregates (HMWS) -- SE-HPLC', cond: '25 C / 60% RH (long-term)', limit: 3.0, unit: '%',
-  points: [{ m: 0, v: 1.2 }, { m: 3, v: 1.4 }, { m: 6, v: 1.6 }, { m: 9, v: 1.7 }, { m: 12, v: 1.9 }, { m: 18, v: 2.2 }],
-};
-
-const CMC_BATCHES_SEED: CmcBatch[] = [
-  { id: 'BX204-DS-2401', stage: 'Drug substance', yield: 94, dev: 0, st: 'released' },
-  { id: 'BX204-DS-2402', stage: 'Drug substance', yield: 91, dev: 1, st: 'pending' },
-  { id: 'BX204-DP-2405', stage: 'Drug product', yield: 97, dev: 0, st: 'released' },
-  { id: 'BX204-DP-2406', stage: 'Drug product', yield: 88, dev: 2, st: 'pending' },
-];
-
-const CMC_BP: CmcBlueprint[] = [
-  { s: '3.2.S.2.2', l: 'Description of manufacturing process', ready: true },
-  { s: '3.2.S.4.1', l: 'Specification (drug substance)', ready: true },
-  { s: '3.2.S.7.1', l: 'Stability summary and conclusion', ready: true },
-  { s: '3.2.P.3.3', l: 'Description of manufacturing process (DP)', ready: false, need: 'batch records incomplete' },
-  { s: '3.2.P.5.1', l: 'Specification (drug product)', ready: true },
-];
-
-const CMC_GLOBAL: CmcGlobal[] = [
-  { region: 'FDA', ready: 82, gaps: ['3.2.S.4 method validation'] },
-  { region: 'EMA', ready: 74, gaps: ['Nitrosamine risk assessment', 'GMP certificate (EU site)'] },
-  { region: 'PMDA', ready: 66, gaps: ['Japan-specific release tests', 'MF registration'] },
-];
-
-const CMC_CORR: CmcCorrespondence[] = [
-  { ag: 'FDA', kind: 'Information Request', subj: '§3.2.S.4.4 comparability acceptance criteria', due: 'due 12d', tone: 'warn' },
-  { ag: 'EMA', kind: 'Day-120 LoQ', subj: 'Nitrosamine risk assessment', due: 'due 30d', tone: 'warn' },
-  { ag: 'PMDA', kind: 'Consultation', subj: 'Japan release-test bridging', due: 'scheduled', tone: 'info' },
-];
+/* ── Change-simulator canonical config (real regulatory reference — KEEP) ── */
 
 const CMC_CHANGE_TYPES: CmcChangeType[] = [
   { id: 'api_supplier_change', label: 'API supplier change', risk: 'high' },
@@ -182,11 +131,14 @@ function mdToHtml(md: string): string {
   return html;
 }
 
-/* ── Governed §11.50 e-sign form config ── */
+/* ── Governed §11.50 e-sign form config ──
+   MOCK ACTION (flag): submitting this form captures a signature UI but does NOT
+   persist a 21 CFR §11 electronic signature server-side — no approval endpoint is
+   wired from this surface yet. The governed copy is softened to say so honestly. */
 function signForm(target: string): C2CFormConfig {
   return {
     eyebrow: '21 CFR §11.50 -- e-signature', title: 'Sign to approve', sub: target, submitLabel: 'Sign & approve',
-    governed: 'Your signature is recorded with the approval\'s audit entry; the approved version is locked.',
+    governed: 'Draft approval only — this is not yet persisted as a 21 CFR §11 electronic signature or audit entry.',
     fields: [
       { key: 'meaning', label: 'Meaning of signature', type: 'select', options: ['Approval', 'Author', 'Reviewer', 'Responsibility'], default: 'Approval', required: true },
       { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Reason for this approval...', required: true },
@@ -195,7 +147,6 @@ function signForm(target: string): C2CFormConfig {
     ],
   };
 }
-function auditId(): string { return 'AUD-' + (Math.floor(Math.random() * 9000) + 1000); }
 
 /* ── Cross-surface navigation helpers ── */
 function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ } onNav && onNav(id); }
@@ -254,13 +205,14 @@ function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; ton
   return <div className="reg-kpi" data-tone={tone}><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div></div>;
 }
 
-/* ═══════════ Overview -- portfolio + governed section approvals ═══════════ */
+/* ═══════════ Overview -- LIVE portfolio + governed section approvals ═══════════ */
 
 function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  /* Live board -- GET /api/cmc/module3-board[?projectId]. `useLive` assigns the
-     WHOLE { success, data } body to `.data`, so the display payload is at
-     `raw.data.data`. Portfolio is org-scoped; the governed section list is
-     per-project, so it is only populated when a project is in context. */
+  /* Live board -- GET /api/cmc/module3-board[?projectId]. useLiveData unwraps the
+     { success, data } envelope, so `board.data` is the display payload directly:
+     real portfolio + KPIs, an honest empty, or an honest error — never a fixture.
+     Portfolio is org-scoped; the governed section list is per-project, so it is
+     null until a project is in context. */
   const ctxProjectId = ((): string | undefined => {
     try {
       const p = (window as any).C2C_PROJECT;
@@ -271,59 +223,88 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   const boardPath = ctxProjectId
     ? '/api/cmc/module3-board?projectId=' + encodeURIComponent(ctxProjectId)
     : '/api/cmc/module3-board';
-  const raw = useLive<{ data?: CmcBoardData }>(boardPath, CMC_BOARD_FIXTURE);
-  const board = raw.data?.data;
+  const board = useLiveData<CmcBoardData>(boardPath);
+  const data = board.data;
 
-  /* Fail-closed shape guards. Trust a 200 only when it structurally matches the
-     display contract AND the backend reports that slice as provisioned. An empty
-     provisioned slice keeps the fixture (shown honestly as "Sample data") so the
-     surface is never blank and never presents a fixture as live. */
-  const portfolioLive = Boolean(
-    !raw.sample &&
-    board &&
-    Array.isArray(board.portfolio) &&
-    board.portfolio.length > 0 &&
-    typeof board.portfolio[0]?.sub === 'string' &&
-    board.meta?.portfolioProvisioned === true,
-  );
-  const sectionsLive = Boolean(
-    !raw.sample &&
-    board &&
-    Array.isArray(board.sections) &&
-    board.sections.length > 0 &&
-    typeof board.sections[0]?.key === 'string' &&
-    board.meta?.sectionsProvisioned === true,
-  );
+  const port: CmcPortfolio[] = data && Array.isArray(data.portfolio) ? data.portfolio : [];
+  /* null = no project in context (sections are inherently per-project); [] = a
+     project is in context but has no governed sections yet. */
+  const liveSections: CmcSection[] | null = data && Array.isArray(data.sections) ? data.sections : null;
+  const kpis = data?.kpis;
 
-  const port: CmcPortfolio[] = portfolioLive ? (board!.portfolio ?? CMC_PORT) : CMC_PORT;
-  const liveSections: CmcSection[] | null = sectionsLive ? (board!.sections ?? null) : null;
-  const portfolioSample = !portfolioLive;
-  const sectionsSample = !sectionsLive;
-
-  /* Governed section-approval state seeds from the fixture, then re-seeds from
-     the live governed store once it arrives; in-place approvals mutate it. */
-  const [secs, setSecs] = useState<CmcSection[]>(CMC_SECTIONS_SEED.map((s) => ({ ...s })));
+  /* Governed section-approval working set — seeded from the live governed store.
+     useLiveData memoizes its result in state, so `liveSections` is a stable
+     reference between renders (it changes only when the fetch re-resolves), so
+     this re-seed effect does not loop. */
+  const [secs, setSecs] = useState<CmcSection[]>([]);
   useEffect(() => {
-    if (liveSections) setSecs(liveSections.map((s) => ({ ...s })));
+    setSecs((liveSections ?? []).map((s) => ({ ...s })));
   }, [liveSections]);
   const [sign, setSign] = useState<CmcSection | null>(null);
   const [toast, fireToast] = useToast();
 
   /* rpi / ir are number | null -- honestly null when the backend cannot measure a
-     submission. Guard every reduce/sort/compare so a null never NaNs a KPI, and
-     render "—" for a null cell. KPIs come from data.kpis when the portfolio is
-     live (identical to these guarded computations), else from the fixture. */
+     submission. Prefer the backend KPIs (identical guarded computation server-side)
+     and guard every reduce/sort so a null never NaNs a value; render "—" for null. */
   const rpiNums = port.map((r) => r.rpi).filter((v): v is number => typeof v === 'number');
   const computedAvgRpi = rpiNums.length ? Math.round(rpiNums.reduce((a, b) => a + b, 0) / rpiNums.length) : null;
-  const computedIrOverdue = port.reduce((a, r) => a + (r.ir ?? 0), 0);
-  const avgRpi: number | null = portfolioLive && board!.kpis ? board!.kpis.rpiAverage : computedAvgRpi;
-  const irOverdue: number = portfolioLive && board!.kpis ? board!.kpis.irOverdue : computedIrOverdue;
+  const avgRpi: number | null = kpis ? kpis.rpiAverage : computedAvgRpi;
+  const irOverdue: number = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
 
   const approved = secs.filter((s) => s.st === 'approved').length;
   const readyPct = secs.length ? Math.round(100 * approved / secs.length) : 0;
   const readyTone = readyPct >= 80 ? 'ok' : readyPct >= 50 ? 'warn' : 'err';
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'dim';
-  const doSign = () => { if (!sign) return; setSecs((ss) => ss.map((x) => x.key === sign.key ? { ...x, st: 'approved', audit: auditId(), _new: true } : x)); const a = auditId(); setSign(null); fireToast('Section ' + sign.key + ' approved -- §11.50 -- ' + a); };
+
+  // doSign — REAL, awaited section approval against the governed Module 3
+  // operating-system endpoint (POST /api/cmc/module3-os/sections/:projectId/
+  // :sectionKey/approve, server/api/cmc/module3OperatingSystemRoutes.ts). The
+  // backend blocks on unresolved critical contradictions (409), snapshots a new
+  // approved version, sets approval_state, and writes a cmc_provenance_events
+  // audit entry keyed to the authenticated user. The reason + reauth captured by
+  // the sign form are forwarded (the endpoint records the reason; server-side
+  // re-auth verification is the documented follow-up — see the wiring roadmap).
+  // Only reflects approval on a real 2xx; nothing is fabricated on failure.
+  const doSign = async (v: Record<string, string>) => {
+    if (!sign) return;
+    const target = sign;
+    if (!ctxProjectId) {
+      fireToast('Open a program first — section approval is recorded per project.');
+      return;
+    }
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/cmc/module3-os/sections/' +
+          encodeURIComponent(ctxProjectId) +
+          '/' +
+          encodeURIComponent(target.key) +
+          '/approve',
+        { reason: v.reason, reauth: { password: v.password, totp: v.totp || undefined } },
+      );
+      const json = await res.json().catch(() => null);
+      if (res.status === 409) {
+        fireToast('Cannot approve ' + target.key + ' — resolve the critical contradictions first.');
+        return;
+      }
+      if (!res.ok) {
+        fireToast('Couldn’t approve section ' + target.key + ' — ' + specErr(json, res.status) + '. Nothing was persisted.');
+        return;
+      }
+      setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
+      const ver = (json as { versionNumber?: number })?.versionNumber;
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast(
+        'Section ' + target.key + ' approved and signed' +
+          (ver ? ' · v' + ver : '') +
+          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.',
+      );
+      setSign(null);
+    } catch (e) {
+      fireToast('Couldn’t approve section ' + target.key + ' — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
+
   const rpiRankable = port.filter((p): p is CmcPortfolio & { rpi: number } => typeof p.rpi === 'number');
   const lowSub = rpiRankable.length ? [...rpiRankable].sort((a, b) => a.rpi - b.rpi)[0] : null;
   const inReview = secs.filter((s) => s.st === 'review');
@@ -339,7 +320,7 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
         : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <> -- preparedness is still computing across the portfolio</>}.</>}
       body={irOverdue
         ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}) -- agencies read a late IR response as a readiness signal. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
-        : <>{approved} of {secs.length} sections are approved. §{nextSec ? nextSec.key : ''} ({nextSec ? nextSec.path : ''}) is the next one to move -- clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}.</>}
+        : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move -- clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
       reassure={irOverdue ? "Answer the IRs first -- they're time-boxed. I'll draft the responses and route the sign-offs with you." : "You're building steadily. I'll help you move the next section to approved."}
       action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue CMC information requests for ' + irSubs.map((p) => p.sub).join(' and ')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
         alt: { label: 'Open change simulator', onClick: () => (window as any).__cmSetTab && (window as any).__cmSetTab('change') } }}
@@ -349,43 +330,74 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   return (
     <div className="cm-body">
       <CmHead title="Module 3 overview" meta={`${port.length} submissions -- RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
-      {cmLead}
-      <div className="cm-kpis">
-        <Kpi l="Submissions" v={port.length} />
-        <Kpi l="RPI average" v={avgRpi == null ? '—' : avgRpi} s="preparedness" />
-        <Kpi l="IR overdue" v={irOverdue} tone={irOverdue ? 'warn' : undefined} />
-        <Kpi l="Sections approved" v={approved + '/' + secs.length} tone={readyTone} />
-      </div>
-      <div className="pj-card" style={{ marginBottom: 16 }}>
-        <div className="pj-card-h"><span className="t">Portfolio</span><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="s">{port.length} submissions</span><SampleTag sample={portfolioSample} /></span></div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          <table className="reg-tbl"><thead><tr><th>Submission</th><th>Product</th><th>Region</th><th>Type</th><th>RPI</th><th>IR overdue</th></tr></thead>
-          <tbody>{port.map((r, i) => (<tr key={i}><td style={{ fontWeight: 600 }}>{r.sub}</td><td>{r.product}</td><td>{r.region}</td><td><span className="reg-pill neutral">{r.type}</span></td><td>{r.rpi == null ? '—' : r.rpi}</td><td>{r.ir == null ? '—' : r.ir}</td></tr>))}</tbody></table>
-        </div>
-      </div>
-      <div className="pj-card" style={{ marginBottom: 16 }}>
-        <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S -- §3.2.P</span></div>
-        <div className="pj-card-b">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
-            <b style={{ fontVariantNumeric: 'tabular-nums' }}>{readyPct}%</b>
-            <span className={'rd-chip tone-' + (readyPct >= 80 ? 'ok' : 'warn')}>{readyPct >= 80 ? 'Export ready' : 'Not export ready'}</span>
+      {board.loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the Module 3 board…</div>
+      ) : board.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the Module 3 board"
+          hint="The org-scoped CMC board didn't respond. It aggregates your regulatory submissions, preparedness index, and governed §3.2 sections — sign in and retry, or check the service is reachable."
+        />
+      ) : (
+        <>
+          {cmLead}
+          <div className="cm-kpis">
+            <Kpi l="Submissions" v={port.length} />
+            <Kpi l="RPI average" v={avgRpi == null ? '—' : avgRpi} s="preparedness" />
+            <Kpi l="IR overdue" v={irOverdue} tone={irOverdue ? 'warn' : undefined} />
+            <Kpi l="Sections approved" v={approved + '/' + secs.length} tone={readyTone} />
           </div>
-          <div className="cm-meta">{approved} of {secs.length} sections approved -- {secs.filter((s) => s.st === 'draft').length} draft -- 1 open contradiction (host-cell protein)</div>
-        </div>
-      </div>
-      <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Section approvals</span><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="s">governed -- 21 CFR §11</span><SampleTag sample={sectionsSample} /></span></div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
-          <tbody>{secs.map((s) => (
-            <tr key={s.key} className={s._new ? 'de-row-new' : undefined}><td className="mono" style={{ fontWeight: 600 }}>{s.key}</td><td>{s.path}</td>
-              <td><span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span></td>
-              <td style={{ textAlign: 'right' }}>{s.st === 'approved' ? <span className="cm-meta">{I.check} {s.audit || 'approved'}</span> : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}</td>
-            </tr>))}</tbody></table>
-        </div>
-        <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>
-      </div>
+          <div className="pj-card" style={{ marginBottom: 16 }}>
+            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{port.length} submissions</span></div>
+            <div className="pj-card-b" style={{ padding: 0 }}>
+              {port.length === 0 ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState icon={I.fileText} title="No submissions yet" hint="Your regulatory submissions (BLA / MAA / NDA / J-NDA) appear here with their preparedness index and overdue information requests." />
+                </div>
+              ) : (
+                <table className="reg-tbl"><thead><tr><th>Submission</th><th>Product</th><th>Region</th><th>Type</th><th>RPI</th><th>IR overdue</th></tr></thead>
+                <tbody>{port.map((r, i) => (<tr key={i}><td style={{ fontWeight: 600 }}>{r.sub}</td><td>{r.product}</td><td>{r.region}</td><td><span className="reg-pill neutral">{r.type}</span></td><td>{r.rpi == null ? '—' : r.rpi}</td><td>{r.ir == null ? '—' : r.ir}</td></tr>))}</tbody></table>
+              )}
+            </div>
+          </div>
+          {secs.length > 0 && (
+            <div className="pj-card" style={{ marginBottom: 16 }}>
+              <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S -- §3.2.P</span></div>
+              <div className="pj-card-b">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
+                  <b style={{ fontVariantNumeric: 'tabular-nums' }}>{readyPct}%</b>
+                  <span className={'rd-chip tone-' + (readyPct >= 80 ? 'ok' : 'warn')}>{readyPct >= 80 ? 'Export ready' : 'Not export ready'}</span>
+                </div>
+                <div className="cm-meta">{approved} of {secs.length} sections approved -- {drafts.length} draft</div>
+              </div>
+            </div>
+          )}
+          <div className="pj-card">
+            <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed -- 21 CFR §11</span></div>
+            <div className="pj-card-b" style={{ padding: 0 }}>
+              {liveSections === null ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per-project. Select a project to load its approval state." />
+                </div>
+              ) : secs.length === 0 ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState icon={I.fileText} title="No Module 3 sections yet" hint="This project has no governed §3.2 sections yet. They appear here with their approval state once created." />
+                </div>
+              ) : (
+                <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
+                <tbody>{secs.map((s) => (
+                  <tr key={s.key} className={s._new ? 'de-row-new' : undefined}><td className="mono" style={{ fontWeight: 600 }}>{s.key}</td><td>{s.path}</td>
+                    <td><span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span></td>
+                    <td style={{ textAlign: 'right' }}>{s.st === 'approved' ? <span className="cm-meta">{I.check} approved</span> : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}</td>
+                  </tr>))}</tbody></table>
+              )}
+            </div>
+            {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
+          </div>
+        </>
+      )}
       {sign && <C2CForm config={signForm('Section ' + sign.key + ' -- ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />
     </div>
@@ -394,8 +406,51 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
 
 /* ═══════════ Specifications -- create / edit / approve ═══════════ */
 
+/** Extract an honest error string from a failed CMC write response. */
+function specErr(json: unknown, status: number): string {
+  const j = json as { error?: string; message?: string; details?: Array<{ message?: string }> } | null;
+  return j?.error || j?.details?.[0]?.message || j?.message || ('HTTP ' + status);
+}
+
 function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const [rows, setRows] = useState<CmcSpecRow[]>(CMC_SPECROWS_SEED.map((r) => ({ ...r })));
+  /* REAL slice: the specifications workbench is bound to the governed
+     quality_specifications table (server/api/cmc/specificationRoutes.ts,
+     mounted at /api/cmc/specifications). Reads GET /:projectId, creates via
+     POST /, edits via the ungoverned PUT /:id, and approves ONLY through the
+     governed POST /:id/approve endpoint (§11 re-authentication + hash-chained
+     recordGovernedAction). The jsonb ↔ display-column shape gap is crossed by
+     the reversible, unit-tested mapping in ./cmcSpec. Specifications are
+     per-project, so the surface needs a project in context (window.C2C_PROJECT,
+     the same source the board uses); without one it renders an honest prompt,
+     never a fixture, and no write is fabricated on failure. */
+  const projectId = asProjectUuid(
+    (() => {
+      try {
+        const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+        return p && p.id != null ? String(p.id) : null;
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  const live = useLiveRows<QualitySpecApiRow>(
+    projectId ? '/api/cmc/specifications/' + encodeURIComponent(projectId) : null,
+  );
+  const mapped = React.useMemo<CmcSpecRow[]>(
+    () => (live.loading || live.error ? [] : specRowsFromApi(live.rows)),
+    [live.loading, live.error, live.rows],
+  );
+  const [rows, setRows] = useState<CmcSpecRow[]>([]);
+  // Seed the optimistic store once the live specifications file resolves;
+  // `mapped` is a stable reference while loading/errored, so this only fires on
+  // a real resolution and never thrashes user-added optimistic rows.
+  const seededRef = React.useRef<CmcSpecRow[] | null>(null);
+  useEffect(() => {
+    if (mapped !== seededRef.current) {
+      seededRef.current = mapped;
+      setRows(mapped);
+    }
+  }, [mapped]);
   const [edit, setEdit] = useState<CmcSpecRow | 'new' | null>(null);
   const [sign, setSign] = useState<CmcSpecRow | null>(null);
   const [toast, fireToast] = useToast();
@@ -413,35 +468,100 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       { key: 'justification', label: 'Justification', type: 'textarea', placeholder: 'Rationale for the limits and method' },
     ],
   });
-  const save = (v: Record<string, string>) => {
-    if (edit && edit !== 'new') { setRows((rs) => rs.map((x) => x.id === (edit as CmcSpecRow).id ? { ...x, attr: v.attr, material: v.material, method: v.method, release: v.release, shelf: v.shelf, ich: v.ich, st: v.st, noMethod: !v.method, _new: true } : x)); fireToast('Specification updated -- ' + v.attr); }
-    else { setRows((rs) => [{ id: Date.now(), attr: v.attr, material: v.material, method: v.method || '', release: v.release, shelf: v.shelf, ich: v.ich, st: v.st, noMethod: !v.method, _new: true }, ...rs]); fireToast('Specification created -- ' + v.attr); }
-    setEdit(null);
+  // save — REAL, awaited write. POST creates / PUT updates against the governed
+  // specifications file and adopts the SERVER's row (real id + persisted values).
+  // Nothing is added on failure; the success toast fires only after the write is
+  // confirmed. approval_status is never sent here — approval is governed-only.
+  const save = async (v: Record<string, string>) => {
+    if ((!edit || edit === 'new') && !projectId) {
+      fireToast('Open a program first — specifications are recorded per project.');
+      return;
+    }
+    try {
+      if (edit && edit !== 'new') {
+        const id = edit.id;
+        const res = await apiRequest('PUT', '/api/cmc/specifications/' + id, specUpdateBody(v));
+        const json = await res.json().catch(() => null);
+        if (!res.ok) { fireToast('Couldn’t save the specification — ' + specErr(json, res.status) + '. Nothing was persisted.'); return; }
+        const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
+        setRows((rs) => rs.map((x) => x.id === id ? { ...(adopted ?? x), _new: true } : x));
+        fireToast('Specification saved · ' + (adopted?.attr ?? v.attr));
+      } else {
+        const res = await apiRequest('POST', '/api/cmc/specifications', specCreateBody(v, projectId));
+        const json = await res.json().catch(() => null);
+        if (!res.ok) { fireToast('Couldn’t create the specification — ' + specErr(json, res.status) + '. Nothing was saved.'); return; }
+        const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
+        if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.'); return; }
+        setRows((rs) => [{ ...adopted, _new: true }, ...rs.filter((r) => r.id !== adopted.id)]);
+        fireToast('Specification created · ' + adopted.attr + ' · ' + adopted.st);
+      }
+      setEdit(null);
+    } catch (e) {
+      fireToast('Couldn’t save the specification — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
   };
-  const doSign = () => { if (!sign) return; setRows((rs) => rs.map((x) => x.id === sign.id ? { ...x, st: 'approved', audit: auditId(), _new: true } : x)); const a = auditId(); setSign(null); fireToast('Specification approved -- §11.50 -- ' + a); };
+  // doSign — REAL governed approval. POSTs to the ONLY approval path
+  // (/:id/approve), which re-authenticates (password + TOTP) and records a
+  // hash-chained governed action before flipping approval_status. Adopts the
+  // server's approved row; a failed re-auth (401) is surfaced honestly and the
+  // specification stays unapproved. No local "approved" flip is fabricated.
+  const doSign = async (v: Record<string, string>) => {
+    if (!sign) return;
+    const target = sign;
+    try {
+      const res = await apiRequest('POST', '/api/cmc/specifications/' + target.id + '/approve', {
+        reason: v.reason,
+        reauth: { password: v.password, totp: v.totp || undefined },
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.'); return; }
+      if (!res.ok) { fireToast('Couldn’t approve the specification — ' + specErr(json, res.status) + '. Nothing was persisted.'); return; }
+      const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
+      setRows((rs) => rs.map((x) => x.id === target.id ? { ...(adopted ?? { ...x, st: 'approved' }), _new: true } : x));
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      setSign(null);
+    } catch (e) {
+      fireToast('Couldn’t approve the specification — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
   const noMethodCount = rows.filter((r) => r.noMethod).length;
   return (
     <div className="cm-body">
       <CmHead title="Specifications" meta="Release and shelf-life limits -- drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
-        actions={<button className="nda-open" onClick={() => setEdit('new')}>{I.plus} New specification</button>} />
+        actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a program to record specifications' : ''}>{I.plus} New specification</button>} />
       {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Specification table</span><span className="s">{rows.length} attributes</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
-          <table className="reg-tbl"><thead><tr><th>Attribute</th><th>Material</th><th>Method</th><th>Release</th><th>Shelf life</th><th>ICH</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
-          <tbody>{rows.map((r) => (
-            <tr key={r.id} className={r._new ? 'de-row-new' : undefined}>
-              <td style={{ fontWeight: 600 }}>{r.attr}</td><td>{r.material}</td>
-              <td>{r.method || <span className="sp-tone-warn">no method</span>}</td>
-              <td>{r.release || '--'}</td><td>{r.shelf || '--'}</td><td className="mono">{r.ich}</td>
-              <td><span className={'rd-chip tone-' + stTone(r.st)}>{r.st}</span></td>
-              <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                <button className="nda-open" onClick={() => setEdit(r)}>{I.penLine} Edit</button>
-                {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Validate the method before approval' : ''}>{I.lock} Approve</button>}
-              </td>
-            </tr>))}</tbody></table>
+          {rows.length === 0 ? (
+            <div style={{ padding: 12 }}>
+              {!projectId ? (
+                <EmptyState icon={I.clipboardList} title="Open a program to manage its specifications" hint="Release and shelf-life limits are recorded per project in the governed specifications file (§3.2.S.4.1 / §3.2.P.5.1). Open a program, then create or review its specifications here." />
+              ) : live.loading ? (
+                <EmptyState icon={I.clipboardList} title="Loading specifications…" />
+              ) : live.error ? (
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file (GET /api/cmc/specifications) didn’t respond. Sign in to your tenant and retry." />
+              ) : (
+                <EmptyState icon={I.clipboardList} title="No specifications yet" hint="Release and shelf-life limits for your drug substance and drug product appear here. Use New specification to record the first one — it is persisted to the governed specifications file." />
+              )}
+            </div>
+          ) : (
+            <table className="reg-tbl"><thead><tr><th>Attribute</th><th>Material</th><th>Method</th><th>Release</th><th>Shelf life</th><th>ICH</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
+            <tbody>{rows.map((r) => (
+              <tr key={r.id} className={r._new ? 'de-row-new' : undefined}>
+                <td style={{ fontWeight: 600 }}>{r.attr}</td><td>{r.material}</td>
+                <td>{r.method || <span className="sp-tone-warn">no method</span>}</td>
+                <td>{r.release || '--'}</td><td>{r.shelf || '--'}</td><td className="mono">{r.ich}</td>
+                <td><span className={'rd-chip tone-' + stTone(r.st)}>{r.st}</span></td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <button className="nda-open" onClick={() => setEdit(r)}>{I.penLine} Edit</button>
+                  {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Validate the method before approval' : ''}>{I.lock} Approve</button>}
+                </td>
+              </tr>))}</tbody></table>
+          )}
         </div>
-        <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved specifications -> §3.2.S.4.1'} nav={nav} bar /></div>
+        {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved specifications -> §3.2.S.4.1'} nav={nav} bar /></div>}
       </div>
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
       {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
@@ -450,87 +570,27 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   );
 }
 
-/* ═══════════ Stability -- working shelf-life projection (linear fit) ═══════════ */
-
-function linFit(pts: { m: number; v: number }[]) {
-  const n = pts.length; const sx = pts.reduce((a, p) => a + p.m, 0), sy = pts.reduce((a, p) => a + p.v, 0);
-  const sxx = pts.reduce((a, p) => a + p.m * p.m, 0), sxy = pts.reduce((a, p) => a + p.m * p.v, 0);
-  const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx); const intc = (sy - slope * sx) / n;
-  return { slope, intc };
-}
-
-interface StabProj { slope: number; intc: number; monthsToLimit: number; shelf: number; lastM: number; rising: boolean; pts: { m: number; v: number }[]; }
-
-function StabChart({ proj, data, maxM }: { proj: StabProj; data: CmcStabData; maxM: number }) {
-  const W = 560, H = 180, pad = 34; const maxV = Math.max(data.limit * 1.15, ...proj.pts.map((p) => p.v));
-  const x = (m: number) => pad + (m / maxM) * (W - pad - 10); const y = (v: number) => H - pad - (v / maxV) * (H - pad - 14);
-  const fitX2 = maxM, fitY1 = proj.intc, fitY2 = proj.intc + proj.slope * maxM;
-  const limitY = y(data.limit);
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }} data-om-raster>
-      <line x1={pad} y1={H - pad} x2={W - 10} y2={H - pad} stroke="var(--border-strong)" />
-      <line x1={pad} y1={14} x2={pad} y2={H - pad} stroke="var(--border-strong)" />
-      <line x1={pad} y1={limitY} x2={W - 10} y2={limitY} stroke="var(--error)" strokeDasharray="4 3" />
-      <text x={W - 12} y={limitY - 4} textAnchor="end" fontSize="9" fill="var(--error)">limit {data.limit}{data.unit}</text>
-      <line x1={x(0)} y1={y(fitY1)} x2={x(fitX2)} y2={y(fitY2)} stroke="var(--accent-100)" strokeWidth="1.5" strokeDasharray="5 3" />
-      <polyline fill="none" stroke="var(--text-200)" strokeWidth="2" points={proj.pts.map((p) => x(p.m) + ',' + y(p.v)).join(' ')} />
-      {proj.pts.map((p, i) => (<circle key={i} cx={x(p.m)} cy={y(p.v)} r="3" fill="var(--text-100)" />))}
-      {isFinite(proj.monthsToLimit) && proj.monthsToLimit <= maxM && <circle cx={x(proj.monthsToLimit)} cy={limitY} r="4" fill="var(--error)" />}
-      <text x={pad} y={H - 6} fontSize="9" fill="var(--text-400)">0</text>
-      <text x={W - 10} y={H - 6} textAnchor="end" fontSize="9" fill="var(--text-400)">{maxM} mo</text>
-    </svg>
-  );
-}
+/* ═══════════ Stability -- shelf-life projection ═══════════ */
 
 function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const [data, setData] = useState<CmcStabData>(CMC_STAB_SEED);
-  const [form, setForm] = useState(false);
-  const [toast, fireToast] = useToast();
-  const proj = useMemo<StabProj>(() => {
-    const pts = [...data.points].sort((a, b) => a.m - b.m); const { slope, intc } = linFit(pts);
-    const monthsToLimit = slope > 0 ? (data.limit - intc) / slope : Infinity;
-    const shelf = isFinite(monthsToLimit) ? Math.floor(Math.min(monthsToLimit, 60)) : 60;
-    const lastM = pts[pts.length - 1].m;
-    const rising = slope > 0.02;
-    return { slope, intc, monthsToLimit, shelf, lastM, rising, pts };
-  }, [data]);
-  const addPt = (v: Record<string, string>) => { const m = +v.m, val = parseFloat(v.v); if (isNaN(m) || isNaN(val)) return; setData((d) => ({ ...d, points: [...d.points.filter((p) => p.m !== m), { m, v: val }] })); setForm(false); fireToast('Timepoint added -- ' + m + 'm = ' + val + data.unit + ' -- shelf life recomputed'); };
-  const maxM = Math.max(36, Math.ceil((isFinite(proj.monthsToLimit) ? proj.monthsToLimit : 36) / 6) * 6);
+  /* DATA: fixture removed (was CMC_STAB_SEED, a fabricated aggregate time-series).
+     No faithful org-scoped stability series is available: GET /api/cmc/module3-board
+     returns stability:null, and GET /api/cmc/stability-studies returns study
+     metadata (title / product / storage conditions / duration / status), NOT a
+     measurement time-series with limits — so the ICH Q1E projection cannot be
+     sourced without fabricating the points. The deterministic linear-fit projection
+     and chart were removed with the fixture; honest empty until a stability-series
+     backend is connected. */
   return (
     <div className="cm-body">
-      <CmHead title="Stability program" meta="ICH Q1A(R2) / Q1E -- shelf-life projection from long-term data" ask={ask} suggest={CMC_SUGGEST.stability}
-        actions={<button className="nda-open" onClick={() => setForm(true)}>{I.plus} Add timepoint</button>} />
-      <div className="cm-kpis">
-        <Kpi l="Projected shelf life" v={isFinite(proj.monthsToLimit) ? proj.shelf + ' mo' : '>=60 mo'} tone={proj.shelf >= 24 ? 'ok' : 'warn'} />
-        <Kpi l="Time to limit" v={isFinite(proj.monthsToLimit) ? Math.round(proj.monthsToLimit) + ' mo' : '--'} />
-        <Kpi l="Trend" v={proj.rising ? 'Rising' : 'Stable'} tone={proj.rising ? 'warn' : 'ok'} />
-        <Kpi l="Tested to" v={proj.lastM + ' mo'} />
-      </div>
-      <div className="pj-card" style={{ marginBottom: 16 }}>
-        <div className="pj-card-h"><span className="t">{data.attr}</span><span className="s">{data.cond} -- limit {data.limit}{data.unit}</span></div>
-        <div className="pj-card-b">
-          <StabChart proj={proj} data={data} maxM={maxM} />
-          <div className="cm-meta" style={{ marginTop: 10 }}>
-            {proj.rising
-              ? <>Linear fit rises {(proj.slope).toFixed(3)}{data.unit}/mo -- projected to reach the {data.limit}{data.unit} limit at <b>{Math.round(proj.monthsToLimit)} months</b>. Supports a <b>{proj.shelf}-month</b> shelf-life claim with margin.</>
-              : <>Trend is flat -- no approach to the {data.limit}{data.unit} limit within the tested range. Supports the maximum claim on this attribute.</>}
-          </div>
-          <div className="sp-foot"><button className="sp-ask" onClick={() => ask('Draft the §3.2.S.7 stability summary with the ICH Q1E shelf-life justification for ' + data.attr)}>{I.sparkles} Draft §3.2.S.7 summary</button></div>
-          <CmPush label={'§3.2.S.7 stability summary -- ' + data.attr} nav={nav} bar />
-        </div>
-      </div>
+      <CmHead title="Stability program" meta="ICH Q1A(R2) / Q1E -- shelf-life projection from long-term data" ask={ask} suggest={CMC_SUGGEST.stability} />
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Timepoints</span><span className="s">{proj.pts.length} results</span></div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          <table className="reg-tbl"><thead><tr><th>Month</th><th>Result ({data.unit})</th><th>Margin to limit</th></tr></thead>
-          <tbody>{proj.pts.map((p, i) => (<tr key={i}><td className="mono">{p.m}</td><td className="mono">{p.v.toFixed(2)}</td><td className={data.limit - p.v < 0.5 ? 'sp-tone-warn' : ''}>{(data.limit - p.v).toFixed(2)}{data.unit}</td></tr>))}</tbody></table>
+        <div className="pj-card-h"><span className="t">Stability & shelf-life projection</span><span className="s">ICH Q1E</span></div>
+        <div className="pj-card-b">
+          <EmptyState icon={I.barChart} title="No stability data yet" hint="Long-term stability results and the ICH Q1E shelf-life projection appear here once a stability-series data source is connected for your organization." />
         </div>
+        <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'§3.2.S.7 stability summary'} nav={nav} bar /></div>
       </div>
-      {form && <C2CForm config={{ eyebrow: 'Stability -- timepoint', title: 'Add a stability result', governed: 'Stability results are governed quality data (ICH Q1A) and update the shelf-life projection.', submitLabel: 'Add result', fields: [
-        { key: 'm', label: 'Timepoint (months)', type: 'number', min: 0, required: true, half: true },
-        { key: 'v', label: 'Result (' + data.unit + ')', type: 'number', required: true, half: true },
-      ] }} onCancel={() => setForm(false)} onSubmit={addPt} />}
-      <C2CToast msg={toast} />
     </div>
   );
 }
@@ -538,19 +598,93 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
 /* ═══════════ Batch records -- release eligibility ═══════════ */
 
 function CmBatch({ ask }: { ask: (text: string) => void }) {
-  const [rows, setRows] = useState<CmcBatch[]>(CMC_BATCHES_SEED.map((r) => ({ ...r })));
+  /* REAL slice: bound to the governed cmc_batch_records table
+     (server/api/cmc/batchRecordRoutes.ts, mounted at /api/cmc/batch-records).
+     Reads GET /:projectId, logs a batch via POST /, and releases ONLY through
+     the governed POST /:id/release endpoint (§11 re-authentication + hash-chained
+     recordGovernedAction, carrying a disposition decision). The jsonb yield/
+     deviation columns are crossed by the reversible, unit-tested mapping in
+     ./cmcBatch. Batches are per-project; without a project in context the
+     surface renders an honest prompt, never a fixture, and no write is
+     fabricated on failure. */
+  const projectId = asProjectUuid(
+    (() => {
+      try {
+        const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+        return p && p.id != null ? String(p.id) : null;
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  const live = useLiveRows<BatchApiRow>(
+    projectId ? '/api/cmc/batch-records/' + encodeURIComponent(projectId) : null,
+  );
+  const mapped = React.useMemo<CmcBatch[]>(
+    () => (live.loading || live.error ? [] : batchRowsFromApi(live.rows)),
+    [live.loading, live.error, live.rows],
+  );
+  const [rows, setRows] = useState<CmcBatch[]>([]);
+  const seededRef = React.useRef<CmcBatch[] | null>(null);
+  useEffect(() => {
+    if (mapped !== seededRef.current) {
+      seededRef.current = mapped;
+      setRows(mapped);
+    }
+  }, [mapped]);
   const [form, setForm] = useState(false);
+  const [releasing, setReleasing] = useState<CmcBatch | null>(null);
   const [toast, fireToast] = useToast();
+  const { user } = useAuth();
+  const releasedByName = user?.displayName || user?.email || 'current user';
   const eligible = (r: CmcBatch) => r.dev === 0 && r.yield >= 90;
   const pending = rows.filter((r) => r.st === 'pending').length;
   const devs = rows.reduce((a, r) => a + r.dev, 0);
-  const avgY = Math.round(rows.reduce((a, r) => a + r.yield, 0) / rows.length);
-  const add = (v: Record<string, string>) => { setRows((rs) => [{ id: v.id, stage: v.stage, yield: +v.yield || 0, dev: +v.dev || 0, st: 'pending', _new: true }, ...rs]); setForm(false); fireToast('Batch logged -- ' + v.id); };
-  const release = (id: string) => { setRows((rs) => rs.map((x) => x.id === id ? { ...x, st: 'released', _new: true } : x)); fireToast('Batch released -- ' + id); };
+  const avgY = rows.length ? Math.round(rows.reduce((a, r) => a + r.yield, 0) / rows.length) : 0;
+  // add — REAL, awaited create against the governed batch file; adopts the
+  // SERVER's row (real db id + persisted values). Nothing is added on failure.
+  const add = async (v: Record<string, string>) => {
+    if (!projectId) { fireToast('Open a program first — batch records are logged per project.'); return; }
+    try {
+      const res = await apiRequest('POST', '/api/cmc/batch-records', batchCreateBody(v, projectId));
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { fireToast('Couldn’t log the batch — ' + specErr(json, res.status) + '. Nothing was saved.'); return; }
+      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
+      if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.'); return; }
+      setRows((rs) => [{ ...adopted, _new: true }, ...rs.filter((r) => r.dbId !== adopted.dbId)]);
+      setForm(false);
+      fireToast('Batch ' + adopted.id + ' logged · ' + adopted.st);
+    } catch (e) {
+      fireToast('Couldn’t log the batch — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
+  // doRelease — REAL governed release. POSTs to the ONLY release path
+  // (/:id/release): re-authenticates (password + TOTP) and records a
+  // hash-chained governed action with the disposition decision before setting
+  // the batch status. Adopts the server's row; a failed re-auth (401) is
+  // surfaced honestly and the batch stays unreleased.
+  const doRelease = async (v: Record<string, string>) => {
+    if (!releasing) return;
+    const target = releasing;
+    if (target.dbId == null) { fireToast('This batch isn’t in the governed file yet — reload before releasing it.'); return; }
+    try {
+      const res = await apiRequest('POST', '/api/cmc/batch-records/' + target.dbId + '/release', batchReleaseBody(v, releasedByName));
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.'); return; }
+      if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.'); return; }
+      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
+      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...(adopted ?? { ...x, st: 'released' }), _new: true } : x));
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast('Batch ' + target.id + ' ' + (adopted?.st ?? 'released') + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      setReleasing(null);
+    } catch (e) {
+      fireToast('Couldn’t release the batch — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
   return (
     <div className="cm-body">
       <CmHead title="Batch records" meta="Manufacture, yield, deviations and disposition" ask={ask} suggest={CMC_SUGGEST.batch}
-        actions={<button className="nda-open" onClick={() => setForm(true)}>{I.plus} Log batch</button>} />
+        actions={<button className="nda-open" onClick={() => setForm(true)} disabled={!projectId} title={!projectId ? 'Open a program to log batch records' : ''}>{I.plus} Log batch</button>} />
       <div className="cm-kpis">
         <Kpi l="Batches" v={rows.length} />
         <Kpi l="Pending release" v={pending} tone={pending ? 'warn' : 'ok'} />
@@ -560,30 +694,52 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Batch disposition</span><span className="s">release when deviations = 0 and yield {'>='}  90%</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
-          <table className="reg-tbl"><thead><tr><th>Batch</th><th>Stage</th><th>Yield</th><th>Deviations</th><th>Eligible</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
-          <tbody>{rows.map((r) => (
-            <tr key={r.id} className={r._new ? 'de-row-new' : undefined}>
-              <td className="mono" style={{ fontWeight: 600 }}>{r.id}</td><td>{r.stage}</td>
-              <td className={r.yield < 90 ? 'sp-tone-warn' : ''}>{r.yield}%</td>
-              <td className={r.dev ? 'sp-tone-warn' : ''}>{r.dev}</td>
-              <td>{eligible(r) ? <span className="rd-chip tone-ok">yes</span> : <span className="rd-chip tone-warn">no</span>}</td>
-              <td><span className={'rd-chip tone-' + (r.st === 'released' ? 'ok' : 'warn')}>{r.st}</span></td>
-              <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => release(r.id)} disabled={!eligible(r)} title={!eligible(r) ? 'Resolve deviations / low yield first' : ''}>{I.check} Release</button>}</td>
-            </tr>))}</tbody></table>
+          {rows.length === 0 ? (
+            <div style={{ padding: 12 }}>
+              {!projectId ? (
+                <EmptyState icon={I.grid} title="Open a program to manage its batch records" hint="Manufactured batches with their yield, deviations, and disposition are recorded per project in the governed batch file. Open a program, then log or release its batches here." />
+              ) : live.loading ? (
+                <EmptyState icon={I.grid} title="Loading batch records…" />
+              ) : live.error ? (
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file (GET /api/cmc/batch-records) didn’t respond. Sign in to your tenant and retry." />
+              ) : (
+                <EmptyState icon={I.grid} title="No batch records yet" hint="Manufactured batches with their yield, deviations, and disposition appear here. Use Log batch to record the first one — it is persisted to the governed batch file." />
+              )}
+            </div>
+          ) : (
+            <table className="reg-tbl"><thead><tr><th>Batch</th><th>Stage</th><th>Yield</th><th>Deviations</th><th>Eligible</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
+            <tbody>{rows.map((r) => (
+              <tr key={r.dbId ?? r.id} className={r._new ? 'de-row-new' : undefined}>
+                <td className="mono" style={{ fontWeight: 600 }}>{r.id}</td><td>{r.stage}</td>
+                <td className={r.yield < 90 ? 'sp-tone-warn' : ''}>{r.yield}%</td>
+                <td className={r.dev ? 'sp-tone-warn' : ''}>{r.dev}</td>
+                <td>{eligible(r) ? <span className="rd-chip tone-ok">yes</span> : <span className="rd-chip tone-warn">no</span>}</td>
+                <td><span className={'rd-chip tone-' + (r.st === 'released' ? 'ok' : r.st === 'rejected' ? 'err' : 'warn')}>{r.st}</span></td>
+                <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Resolve deviations / low yield first' : ''}>{I.check} Release</button>}</td>
+              </tr>))}</tbody></table>
+          )}
         </div>
       </div>
-      {form && <C2CForm config={{ eyebrow: 'Batch -- new', title: 'Log a batch record', governed: 'Batch records are governed GMP data; disposition is computed from deviations and yield.', submitLabel: 'Log batch', fields: [
+      {form && <C2CForm config={{ eyebrow: 'Batch -- new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this program', submitLabel: 'Log batch', fields: [
         { key: 'id', label: 'Batch number', type: 'text', placeholder: 'e.g. BX204-DP-2407', required: true },
         { key: 'stage', label: 'Stage', type: 'select', options: ['Drug substance', 'Drug product'], required: true, half: true },
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: '0' },
       ] }} onCancel={() => setForm(false)} onSubmit={add} />}
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition -- §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed disposition recorded to the hash-chained audit trail. Released by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+        { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
+        { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
+        { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
+        { key: 'totp', label: 'Authenticator', type: 'text', placeholder: '6-digit code', half: true },
+      ] }} onCancel={() => setReleasing(null)} onSubmit={doRelease} />}
       <C2CToast msg={toast} />
     </div>
   );
 }
 
-/* ═══════════ Change simulator -- computes the filing path ═══════════ */
+/* ═══════════ Change simulator -- computes the filing path ═══════════
+   Deterministic, rule-backed computed output (SUPAC / ICH Q12) over canonical
+   config — no fixture data slice. KEEP. */
 
 function filingPath(changeType: string, risk: string, mkt: string): string[] {
   const high = risk === 'high', med = risk === 'med';
@@ -663,59 +819,60 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
 
 /* ═══════════ Blueprint -- Global -- Program records -- Copilot ═══════════ */
 
-function CmBlueprint({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const [gen, setGen] = useState<Record<string, number>>({});
-  const [toast, fire] = useToast();
-  const anyGen = Object.keys(gen).length > 0;
+function CmBlueprint({ ask }: { ask: (text: string) => void }) {
+  /* DATA: fixture removed (was CMC_BP, a fabricated §3.2 readiness list, plus a
+     fake "Generate" action). There is no org-scoped GET that returns which §3.2
+     sections are ready to generate — GET /api/cmc/module3-board returns
+     blueprint:null, and section generation is a POST action
+     (/api/cmc/generate-enhanced-blueprint), not a readiness readout. Honest empty
+     until a blueprint-readiness backend is connected. */
   return (
     <div className="cm-body">
       <CmHead title="Blueprint generator" meta="Compose CTD §3.2 sections from the quality data" ask={ask} suggest={CMC_SUGGEST.overview} />
-      <div className="pj-card"><div className="pj-card-h"><span className="t">§3.2 sections</span><span className="s">{CMC_BP.filter((b) => b.ready).length} ready to generate</span></div>
-        <div className="pj-card-b">{CMC_BP.map((b) => (
-          <div key={b.s} className="cm-gen">
-            <span className="mono" style={{ color: 'var(--accent-200)', fontWeight: 600, minWidth: 66 }}>{b.s}</span>
-            <div className="cm-gen-b"><div className="cm-gen-t">{b.l}</div><div className="cm-gen-s">{gen[b.s] ? 'Draft generated -- open in the editor to review' : b.ready ? 'Source data complete' : 'Blocked -- ' + b.need}</div></div>
-            {gen[b.s] ? <span className="rd-chip tone-ok">generated</span> : <button className="nda-open" disabled={!b.ready} onClick={() => { setGen((g) => ({ ...g, [b.s]: 1 })); fire('Generated ' + b.s + ' from the quality data'); }}>{I.sparkles} Generate</button>}
-          </div>))}
+      <div className="pj-card"><div className="pj-card-h"><span className="t">§3.2 sections</span><span className="s">CTD Module 3</span></div>
+        <div className="pj-card-b">
+          <EmptyState icon={I.template} title="No blueprint sections yet" hint="CTD §3.2.S / §3.2.P section drafts are generated on demand from your quality data. A per-project §3.2 readiness list appears here once connected." />
         </div>
-        {anyGen && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Generated §3.2 sections'} nav={nav} bar /></div>}
       </div>
-      <C2CToast msg={toast} />
     </div>
   );
 }
 
 function CmGlobal({ ask }: { ask: (text: string) => void }) {
+  /* DATA: fixture removed (was CMC_GLOBAL, fabricated per-region readiness % + gaps).
+     GET /api/cmc/module3-board returns global:null; /api/cmc/global-compliance is a
+     document-transform action plus a static market catalog, not a readiness
+     projection. Honest empty until a regional-readiness backend is connected. */
   return (
     <div className="cm-body">
       <CmHead title="Global compliance" meta="FDA -- EMA -- PMDA Module 3 readiness and regional gaps" ask={ask} />
-      <div className="cm-kpis" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>{CMC_GLOBAL.map((g) => (<div key={g.region} className="reg-kpi"><div className="reg-kpi-v" data-tone={g.ready >= 80 ? undefined : 'warn'}>{g.ready}%</div><div className="reg-kpi-l">{g.region} readiness</div></div>))}</div>
-      <div className="pj-card"><div className="pj-card-h"><span className="t">Regional gaps</span><span className="s">blocking each market</span></div>
-        <div className="pj-card-b"><div className="sp-list">{CMC_GLOBAL.flatMap((g) => g.gaps.map((gap, i) => (
-          <div key={g.region + i} className="sp-row"><span className="sp-tag2">{g.region}</span><div className="sp-row-b"><div className="sp-row-t">{gap}</div></div><button className="sp-addbtn" onClick={() => ask('Close the ' + g.region + ' gap: ' + gap)}>{I.sparkles} Resolve</button></div>
-        )))}</div></div>
+      <div className="pj-card"><div className="pj-card-h"><span className="t">Regional readiness</span><span className="s">FDA -- EMA -- PMDA</span></div>
+        <div className="pj-card-b">
+          <EmptyState icon={I.globe} title="No regional readiness yet" hint="Per-market Module 3 readiness and the gaps blocking each region appear here once computed from your submissions." />
+        </div>
       </div>
     </div>
   );
 }
 
 function CmPathway({ ask }: { ask: (text: string) => void }) {
+  /* DATA: fixtures removed (was CMC_CORR agency correspondence + inline hardcoded
+     "audit chain" rows). GET /api/cmc/module3-board returns correspondence:null and
+     exposes no correspondence or audit-trail readout; overdue information requests
+     are aggregated only into the Overview KPIs. Honest empty until correspondence /
+     audit-trail backends are connected. */
   return (
     <div className="cm-body">
       <CmHead title="Program records" meta="Agency correspondence, approval gates and the audit chain" ask={ask} />
       <div className="pj-card" style={{ marginBottom: 16 }}><div className="pj-card-h"><span className="t">Open agency correspondence</span><span className="s">triage by deadline</span></div>
-        <div className="pj-card-b"><div className="sp-queue">{CMC_CORR.map((c, i) => (
-          <button key={i} className="sp-q" data-tone={c.tone} onClick={() => ask('Draft a response to the ' + c.ag + ' ' + c.kind + ' on ' + c.subj)}>
-            <span className="sp-q-ic">{I.globe}</span><span className="sp-q-b"><span className="sp-q-t">{c.ag} -- {c.kind}</span><span className="sp-q-s">{c.subj} -- {c.due}</span></span><span className="sp-q-a">Respond {I.right}</span>
-          </button>))}</div>
+        <div className="pj-card-b">
+          <EmptyState icon={I.globe} title="No open agency correspondence" hint="Information requests, Day-120 LoQs, and consultations appear here. Overdue information requests currently feed only the Overview KPIs." />
         </div>
       </div>
-      <div className="pj-card"><div className="pj-card-h"><span className="t">Audit chain</span><span className="s">last 24 hours</span></div>
-        <div className="pj-card-b"><div className="sp-list">
-          <div className="sp-row"><span className="sp-tag2">SIGN</span><div className="sp-row-b"><div className="sp-row-t">§3.2.S.2 Manufacture approved</div><div className="sp-row-s">J. Chen -- §11.50 -- AUD-4471 -- 2h ago</div></div></div>
-          <div className="sp-row"><span className="sp-tag2">EDIT</span><div className="sp-row-b"><div className="sp-row-t">Aggregates spec release limit updated</div><div className="sp-row-s">M. Wei -- 5h ago</div></div></div>
-          <div className="sp-row"><span className="sp-tag2">DATA</span><div className="sp-row-b"><div className="sp-row-t">18-month stability result added</div><div className="sp-row-s">System -- SEND-linked -- 9h ago</div></div></div>
-        </div></div>
+      <div className="pj-card"><div className="pj-card-h"><span className="t">Audit chain</span><span className="s">governed actions</span></div>
+        <div className="pj-card-b">
+          <EmptyState icon={I.scroll} title="No audit activity yet" hint="Governed actions — signatures, edits, and data changes — appear here once an audit-trail source is connected for this surface." />
+        </div>
       </div>
     </div>
   );
