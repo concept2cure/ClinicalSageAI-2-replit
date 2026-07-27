@@ -3,14 +3,22 @@
  *
  * Wired to the real collaboration service (server/routes/realtime-collab.ts,
  * mounted /api/realtime-collab):
- *   • POST   /rooms                       — join the section's room; the server
- *                                           returns the live connectedUsers roster
- *   • DELETE /rooms/:roomKey/users/:uid   — leave on unmount/section change
- *   • GET    /locks/:documentId           — active locks for the document
- *   • POST   /locks                       — acquire a section lock (409 when
- *                                           another user holds it — surfaced
- *                                           with the server's reason)
- *   • DELETE /locks/:documentId           — release own lock
+ *   • POST   /rooms                        — join the section's room; the server
+ *                                            returns the live connectedUsers roster
+ *   • DELETE /rooms/:documentId/users/me   — leave on unmount/section change
+ *   • PUT    /rooms/:documentId/awareness  — presence heartbeat
+ *   • GET    /locks/:documentId            — active locks for the document
+ *   • POST   /locks                        — acquire a section lock (409 when
+ *                                            another user holds it — surfaced
+ *                                            with the server's reason)
+ *   • DELETE /locks/:documentId            — release own lock
+ *
+ * IDENTITY IS THE SERVER'S. This component used to send its own userId with
+ * every call and decide "is this my lock?" by comparing that string to the
+ * lock's userId. Both were wrong: the server took the body's userId as the
+ * actor (so naming someone else acted as them), and the client cannot know how
+ * the server identifies it. Locks now arrive with a server-computed `mine`, the
+ * holder is displayed by the server's own label, and no identity is sent.
  *
  * This is the service's REST layer — presence roster and Part 11 section
  * locking. The Yjs CRDT socket sync (y-websocket live co-editing) rides the
@@ -24,7 +32,16 @@ import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 
 interface RoomUser { userId: string; displayName?: string; email?: string; }
-interface SectionLock { documentId?: string; sectionId?: string | null; userId?: string; lockType?: string; reason?: string; expiresAt?: string; }
+interface SectionLock {
+  documentId?: string;
+  sectionId?: string | null;
+  /** Server-computed: does this lock belong to the caller? Never inferred here. */
+  mine?: boolean;
+  lockedByLabel?: string;
+  lockType?: string;
+  reason?: string;
+  expiresAt?: string;
+}
 
 export interface AuthoringCollabProps {
   documentId: string;
@@ -49,7 +66,10 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
   const [locks, setLocks] = useState<SectionLock[]>([]);
   const [joined, setJoined] = useState(false);
 
-  const roomKey = sectionId ? `${documentId}:${sectionId}` : documentId;
+  // Section scope travels as an explicit parameter now; the server composes the
+  // room key itself, prefixed with the tenant, so a client cannot address
+  // another organization's room by constructing its key.
+  const sectionParam = sectionId ? `?sectionId=${encodeURIComponent(sectionId)}` : '';
 
   const loadLocks = useCallback(async () => {
     try {
@@ -68,7 +88,6 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
       try {
         const res = await apiRequest('POST', '/api/realtime-collab/rooms', {
           documentId, projectId, sectionId: sectionId || undefined,
-          userId, displayName, email: user?.email || '',
         });
         const body = await res.json().catch(() => null);
         if (cancelled) return;
@@ -84,7 +103,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     return () => {
       cancelled = true;
       // Best-effort leave; the server also expires idle members.
-      void apiRequest('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(roomKey)}/users/${encodeURIComponent(userId)}`).catch(() => {});
+      void apiRequest('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`).catch(() => {});
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId, sectionId, projectId, userId]);
@@ -99,8 +118,8 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     let cancelled = false;
     const beat = async () => {
       try {
-        const res = await apiRequest('PUT', `/api/realtime-collab/rooms/${encodeURIComponent(roomKey)}/awareness`, {
-          userId, focusedField: sectionId || null, isTyping: false,
+        const res = await apiRequest('PUT', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/awareness`, {
+          sectionId: sectionId || undefined, focusedField: sectionId || null, isTyping: false,
         });
         const body = await res.json().catch(() => null);
         if (!cancelled && res.ok && Array.isArray(body?.connectedUsers)) {
@@ -111,16 +130,16 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     void beat();
     const t = setInterval(() => { void beat(); }, 20000);
     return () => { cancelled = true; clearInterval(t); };
-  }, [joined, userId, roomKey, sectionId]);
+  }, [joined, userId, documentId, sectionId]);
 
-  const myLock = locks.find((l) => l.userId === userId && (l.sectionId ?? null) === (sectionId ?? null));
-  const otherLock = locks.find((l) => l.userId !== userId && (l.sectionId ?? null) === (sectionId ?? null));
+  const myLock = locks.find((l) => l.mine === true && (l.sectionId ?? null) === (sectionId ?? null));
+  const otherLock = locks.find((l) => l.mine !== true && (l.sectionId ?? null) === (sectionId ?? null));
 
   const acquire = useCallback(async () => {
     if (!userId) return;
     try {
       const res = await apiRequest('POST', '/api/realtime-collab/locks', {
-        documentId, sectionId: sectionId || undefined, userId,
+        documentId, sectionId: sectionId || undefined,
         lockType: 'section-edit', reason: 'Editing in the authoring canvas',
       });
       const body = await res.json().catch(() => null);
@@ -137,7 +156,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     if (!userId) return;
     try {
       const res = await apiRequest('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`, {
-        userId, sectionId: sectionId || undefined,
+        sectionId: sectionId || undefined,
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) { fireToast(`Couldn’t release the lock (HTTP ${res.status}).`); return; }
@@ -165,7 +184,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
         </div>
       )}
       {otherLock ? (
-        <span className="rd-chip tone-warn" title={otherLock.reason || ''}>{I.lock} locked by {otherLock.userId}</span>
+        <span className="rd-chip tone-warn" title={otherLock.reason || ''}>{I.lock} locked by {otherLock.lockedByLabel || 'another author'}</span>
       ) : myLock ? (
         <button className="btn ghost" style={{ height: 30 }} onClick={release} title="Release your section lock">
           {I.lock} Unlock

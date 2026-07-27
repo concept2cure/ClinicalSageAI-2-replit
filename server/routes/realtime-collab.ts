@@ -1,23 +1,46 @@
 /**
  * =============================================================================
- * Real-Time Collaborative Editing — Yjs/CRDT WebSocket Service
+ * Real-Time Collaboration — presence roster and section locking (REST)
  * =============================================================================
- * Multi-user sync for regulatory document co-authoring with:
- * - Yjs CRDT for conflict-free merges
- * - WebSocket awareness protocol (cursors, selections, presence)
- * - Document-level locking with 21 CFR Part 11 audit trail
- * - Room isolation per document/section
- * - Persistence to PostgreSQL for offline recovery
+ * The REST half of collaborative authoring: who else is in this section right
+ * now, and who holds the edit lock on it. The CRDT sync itself lives on the
+ * /collab WebSocket (server/services/hocuspocus-server.ts).
  *
- * Architecture:
- *   Client (Y.Doc + y-websocket) ↔ WebSocket Server ↔ Yjs Room Manager
- *                                                      ↔ PostgreSQL persistence
- *                                                      ↔ Audit trail (Part 11)
+ * WHAT THIS HEADER USED TO SAY
+ * "Document-level locking with 21 CFR Part 11 audit trail" and "Persistence to
+ * PostgreSQL for offline recovery". Neither was true: every structure below is
+ * an in-memory Map that dies with the process, and no lock acquisition or
+ * release is written to any audit trail. The claims are removed rather than
+ * softened — see the `/ws-config` handler, which was reporting the same two
+ * fictions to clients.
+ *
+ * SECURITY — WHAT WAS WRONG
+ * The router was auth-gated at mount, and then every handler took the actor's
+ * identity from `req.body.userId` instead of `req.user`, and keyed its rooms
+ * and locks on `documentId` alone in process-global Maps. That combination
+ * meant any authenticated user could:
+ *
+ *   - release another user's section lock, by naming them:
+ *     `releaseLock` checks `existing.lockedBy === userId`, and `userId` came
+ *     from the request body. Part 11 lock theft in one call;
+ *   - acquire a lock, join a room, or update awareness AS somebody else;
+ *   - join any other tenant's room by document id and read back
+ *     `connectedUsers` — display names and email addresses of another
+ *     customer's authors;
+ *   - list every active room across every tenant via `GET /rooms`.
+ *
+ * Identity now comes from the authenticated principal only, and every room and
+ * lock key is prefixed with the caller's tenant, so two tenants cannot address
+ * the same room even when they hold the same document id. Document ownership is
+ * verified against `authoring_documents` before a caller may join a room or
+ * touch a lock, using the same authorizer the collaboration socket uses.
  * =============================================================================
  */
 
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { parseFiniteInt } from '../middleware/orgMembership';
+import { authorizeResource } from '../services/collab/collab-authorization';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -28,6 +51,8 @@ export interface CollabRoom {
   documentId: string;
   sectionId?: string;
   projectId: number;
+  /** Owning tenant. Rooms are addressed per tenant; this is the stored copy. */
+  tenantId: number;
   createdAt: Date;
   connectedUsers: CollabUser[];
   yjsStateVector: Buffer | null;
@@ -88,7 +113,10 @@ export interface DocumentLock {
   id: string;
   documentId: string;
   sectionId?: string;
+  /** Server-side identity of the holder. Never accepted from a request body. */
   lockedBy: string;
+  /** Human label for the holder, so a lock chip need not render a raw id. */
+  lockedByLabel: string;
   lockedAt: Date;
   expiresAt: Date;
   lockType: 'exclusive' | 'shared' | 'advisory';
@@ -122,6 +150,89 @@ const CURSOR_COLORS = [
 ];
 
 // ---------------------------------------------------------------------------
+// IDENTITY AND ACCESS
+// ---------------------------------------------------------------------------
+
+/**
+ * The authenticated actor. Everything downstream keys off this and never off a
+ * request body field — a body-supplied `userId` is exactly what let one user
+ * release another user's lock.
+ */
+interface Principal {
+  /** Stable server-side identity. Never accepted from the client. */
+  userId: string;
+  tenantId: number;
+  /** Human label for rosters and lock chips. */
+  label: string;
+  email: string;
+}
+
+function principal(req: Request): Principal | null {
+  const subject = req.user?.userId ?? req.user?.id;
+  const tenantId = parseFiniteInt(req.user?.organizationId);
+  if (subject === undefined || subject === null || subject === '' || tenantId === null) {
+    return null;
+  }
+  const email = typeof req.user?.email === 'string' ? req.user.email : '';
+  return { userId: String(subject), tenantId, label: email || String(subject), email };
+}
+
+/** Rooms and locks are addressed per tenant, so ids cannot collide across them. */
+function scopedKey(tenantId: number, documentId: string, sectionId?: string | null): string {
+  return sectionId ? `t${tenantId}:${documentId}:${sectionId}` : `t${tenantId}:${documentId}`;
+}
+
+/**
+ * Confirm the caller's tenant owns the document before letting them into its
+ * room or near its locks. Reuses the collaboration socket's authorizer so both
+ * halves of the collaboration layer answer "may this tenant touch this
+ * document?" the same way.
+ *
+ * Returns an HTTP status to send, or null when access is granted. Fails closed:
+ * an unverifiable answer is 503, not an allow.
+ */
+async function denyDocumentAccess(
+  documentId: string,
+  sectionId: string | null,
+  tenantId: number,
+  res: Response
+): Promise<boolean> {
+  const result = await authorizeResource(
+    { kind: 'authoring-document', documentId, sectionId },
+    tenantId
+  );
+  if (result === 'authorized') return false;
+  if (result === 'unavailable') {
+    res.status(503).json({
+      success: false,
+      error: { code: 'COLLAB_AUTHZ_UNAVAILABLE', message: 'Document ownership could not be verified' },
+    });
+    return true;
+  }
+  res.status(403).json({
+    success: false,
+    error: { code: 'COLLAB_FORBIDDEN', message: 'Document not available to this organization' },
+  });
+  return true;
+}
+
+/** 401 when the request carried no usable principal. */
+function requirePrincipal(req: Request, res: Response): Principal | null {
+  const actor = principal(req);
+  if (!actor) {
+    res.status(401).json({
+      success: false,
+      error: { code: 'AUTH_001', message: 'Authenticated identity with an organization is required' },
+    });
+    return null;
+  }
+  return actor;
+}
+
+/** A UUID check so a malformed document id never reaches Postgres. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// ---------------------------------------------------------------------------
 // ROOM MANAGER — In-memory Yjs room tracking
 // ---------------------------------------------------------------------------
 
@@ -130,8 +241,13 @@ class YjsRoomManager {
   private userColors: Map<string, string> = new Map();
   private colorIndex = 0;
 
-  getOrCreateRoom(documentId: string, projectId: number, sectionId?: string): CollabRoom {
-    const roomKey = sectionId ? `${documentId}:${sectionId}` : documentId;
+  getOrCreateRoom(
+    roomKey: string,
+    documentId: string,
+    projectId: number,
+    tenantId: number,
+    sectionId?: string
+  ): CollabRoom {
     let room = this.rooms.get(roomKey);
     if (!room) {
       room = {
@@ -139,6 +255,7 @@ class YjsRoomManager {
         documentId,
         sectionId,
         projectId,
+        tenantId,
         createdAt: new Date(),
         connectedUsers: [],
         yjsStateVector: null,
@@ -227,12 +344,17 @@ class YjsRoomManager {
     }
   }
 
-  getRoomStats(): {
+  /**
+   * Room statistics for ONE tenant. The unscoped version of this method backed
+   * `GET /rooms`, which listed every active room across every customer —
+   * document ids and head counts — to any authenticated caller.
+   */
+  getRoomStats(tenantId: number): {
     totalRooms: number;
     totalUsers: number;
     rooms: Array<{ roomId: string; documentId: string; userCount: number }>;
   } {
-    const rooms = this.getAllRooms();
+    const rooms = this.getAllRooms().filter(r => r.tenantId === tenantId);
     return {
       totalRooms: rooms.length,
       totalUsers: rooms.reduce((sum, r) => sum + r.connectedUsers.length, 0),
@@ -255,12 +377,17 @@ class DocumentLockManager {
   private locks: Map<string, DocumentLock> = new Map();
 
   acquireLock(
+    lockKey: string,
     documentId: string,
     userId: string,
     sectionId?: string,
-    opts?: { lockType?: DocumentLock['lockType']; durationMs?: number; reason?: string }
+    opts?: {
+      lockType?: DocumentLock['lockType'];
+      durationMs?: number;
+      reason?: string;
+      lockedByLabel?: string;
+    }
   ): DocumentLock | { error: string } {
-    const lockKey = sectionId ? `${documentId}:${sectionId}` : documentId;
     const existing = this.locks.get(lockKey);
 
     // Check if there's an active, unexpired lock by someone else
@@ -275,6 +402,7 @@ class DocumentLockManager {
       documentId,
       sectionId,
       lockedBy: userId,
+      lockedByLabel: opts?.lockedByLabel ?? userId,
       lockedAt: new Date(),
       expiresAt: new Date(Date.now() + (opts?.durationMs ?? 30 * 60 * 1000)), // 30 min default
       lockType: opts?.lockType ?? 'advisory',
@@ -284,8 +412,15 @@ class DocumentLockManager {
     return lock;
   }
 
-  releaseLock(documentId: string, userId: string, sectionId?: string): boolean {
-    const lockKey = sectionId ? `${documentId}:${sectionId}` : documentId;
+  /**
+   * Release a lock the caller actually holds.
+   *
+   * `userId` is the authenticated principal, which is the whole fix: the
+   * ownership test below was previously comparing the stored holder against a
+   * value the requester supplied, so naming the holder was sufficient to steal
+   * their lock.
+   */
+  releaseLock(lockKey: string, userId: string): boolean {
     const existing = this.locks.get(lockKey);
     if (existing && existing.lockedBy === userId) {
       this.locks.delete(lockKey);
@@ -294,8 +429,7 @@ class DocumentLockManager {
     return false;
   }
 
-  getLock(documentId: string, sectionId?: string): DocumentLock | null {
-    const lockKey = sectionId ? `${documentId}:${sectionId}` : documentId;
+  getLock(lockKey: string): DocumentLock | null {
     const lock = this.locks.get(lockKey);
     if (lock && lock.expiresAt <= new Date()) {
       this.locks.delete(lockKey);
@@ -304,10 +438,17 @@ class DocumentLockManager {
     return lock ?? null;
   }
 
-  getDocumentLocks(documentId: string): DocumentLock[] {
+  /**
+   * Active locks for one document within one tenant. Scanning by documentId
+   * alone — the previous behaviour — returned another tenant's locks, and with
+   * them the identity of the author holding each one.
+   */
+  getDocumentLocks(tenantId: number, documentId: string): DocumentLock[] {
     const result: DocumentLock[] = [];
-    for (const [, lock] of this.locks) {
-      if (lock.documentId === documentId && lock.expiresAt > new Date()) {
+    const prefix = `t${tenantId}:${documentId}`;
+    const now = new Date();
+    for (const [key, lock] of this.locks) {
+      if ((key === prefix || key.startsWith(`${prefix}:`)) && lock.expiresAt > now) {
         result.push(lock);
       }
     }
@@ -325,37 +466,52 @@ const router = Router();
 
 /**
  * GET /rooms
- * List all active collaboration rooms
+ * Active collaboration rooms for the caller's organization.
  */
-router.get('/rooms', (_req: Request, res: Response) => {
-  const stats = roomManager.getRoomStats();
-  res.json({
-    success: true,
-    data: stats,
-    provider: 'yjs-crdt',
-    protocol: 'y-websocket',
-    features: ['conflict-free-merge', 'awareness-cursors', 'offline-sync', 'section-locking'],
-  });
+router.get('/rooms', (req: Request, res: Response) => {
+  const actor = requirePrincipal(req, res);
+  if (!actor) return;
+  res.json({ success: true, data: roomManager.getRoomStats(actor.tenantId) });
 });
 
 /**
  * POST /rooms
- * Create or join a collaboration room
+ * Join the room for a document (or one of its sections).
+ *
+ * `userId`, `displayName` and `email` are no longer read from the body. They
+ * were the actor's whole identity, which meant joining a roster as somebody
+ * else was a matter of typing their name. Clients may still send them; they are
+ * ignored.
  */
-router.post('/rooms', (req: Request, res: Response) => {
-  const { documentId, projectId, sectionId, userId, displayName, email } = req.body;
-  if (!documentId || !projectId || !userId) {
-    return res
-      .status(400)
-      .json({ success: false, error: 'documentId, projectId, userId required' });
-  }
+router.post('/rooms', async (req: Request, res: Response) => {
+  const actor = requirePrincipal(req, res);
+  if (!actor) return;
 
-  const room = roomManager.getOrCreateRoom(documentId, projectId, sectionId);
-  const roomKey = sectionId ? `${documentId}:${sectionId}` : documentId;
+  const { documentId, projectId, sectionId } = req.body ?? {};
+  if (!documentId || !projectId) {
+    return res.status(400).json({ success: false, error: 'documentId and projectId required' });
+  }
+  if (!UUID_RE.test(String(documentId))) {
+    return res.status(400).json({ success: false, error: 'documentId must be a UUID' });
+  }
+  const section = sectionId ? String(sectionId) : null;
+  if (section && !UUID_RE.test(section)) {
+    return res.status(400).json({ success: false, error: 'sectionId must be a UUID' });
+  }
+  if (await denyDocumentAccess(String(documentId), section, actor.tenantId, res)) return;
+
+  const roomKey = scopedKey(actor.tenantId, String(documentId), section);
+  const room = roomManager.getOrCreateRoom(
+    roomKey,
+    String(documentId),
+    Number(projectId),
+    actor.tenantId,
+    section ?? undefined
+  );
   const user = roomManager.addUser(roomKey, {
-    userId,
-    displayName: displayName || 'Anonymous',
-    email: email || '',
+    userId: actor.userId,
+    displayName: actor.label,
+    email: actor.email,
   });
 
   res.json({
@@ -368,241 +524,151 @@ router.post('/rooms', (req: Request, res: Response) => {
         connectedUsers: room.connectedUsers,
       },
       user,
-      websocket: {
-        url: `/ws/collab/${roomKey}`,
-        protocol: 'y-websocket',
-        awarenessProtocol: 'y-protocols/awareness',
-        crdtType: 'Y.XmlFragment',
-        reconnectInterval: 3000,
-      },
     },
   });
 });
 
 /**
- * DELETE /rooms/:roomKey/users/:userId
- * Leave a collaboration room
+ * DELETE /rooms/:documentId/users/me
+ * Leave the room for a document (or one of its sections).
+ *
+ * The room and the departing member are both derived from the authenticated
+ * principal. The previous shape — `/rooms/:roomKey/users/:userId` — let a
+ * caller evict any other user from any room by naming both in the path.
  */
-router.delete('/rooms/:roomKey/users/:userId', (req: Request, res: Response) => {
-  const roomKey = String(req.params.roomKey);
-  const userId = String(req.params.userId);
-  const removed = roomManager.removeUser(decodeURIComponent(roomKey), userId);
+router.delete('/rooms/:documentId/users/me', (req: Request, res: Response) => {
+  const actor = requirePrincipal(req, res);
+  if (!actor) return;
+  const documentId = String(req.params.documentId);
+  const section = req.query.sectionId ? String(req.query.sectionId) : null;
+  const removed = roomManager.removeUser(
+    scopedKey(actor.tenantId, documentId, section),
+    actor.userId
+  );
   res.json({ success: true, removed });
 });
 
 /**
- * PUT /rooms/:roomKey/awareness
- * Update user awareness (cursor, selection, typing indicator)
+ * PUT /rooms/:documentId/awareness
+ * Publish the caller's own presence and read back the room roster.
  */
-router.put('/rooms/:roomKey/awareness', (req: Request, res: Response) => {
-  const roomKey = String(req.params.roomKey);
-  const { userId, cursor, selection, isTyping, focusedField } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
+router.put('/rooms/:documentId/awareness', (req: Request, res: Response) => {
+  const actor = requirePrincipal(req, res);
+  if (!actor) return;
+  const documentId = String(req.params.documentId);
+  const { cursor, selection, isTyping, focusedField, sectionId } = req.body ?? {};
+  const roomKey = scopedKey(actor.tenantId, documentId, sectionId ? String(sectionId) : null);
 
-  roomManager.updateAwareness(decodeURIComponent(roomKey), userId, {
-    userId,
+  // Awareness is published for the caller and nobody else — a body `userId`
+  // previously let one client move another client's cursor.
+  roomManager.updateAwareness(roomKey, actor.userId, {
+    userId: actor.userId,
     clientId: 0,
     cursor,
     selection,
     isTyping,
     focusedField,
   });
-  const room = roomManager.getRoom(decodeURIComponent(roomKey));
-  res.json({
-    success: true,
-    connectedUsers: room?.connectedUsers || [],
-  });
-});
-
-/**
- * POST /rooms/:roomKey/yjs-state
- * Persist Yjs CRDT state vector for recovery
- */
-router.post('/rooms/:roomKey/yjs-state', (req: Request, res: Response) => {
-  const roomKey = String(req.params.roomKey);
-  const { stateVector, document } = req.body;
-  if (!stateVector || !document) {
-    return res.status(400).json({ error: 'stateVector and document required' });
-  }
-
-  const sv = Buffer.from(stateVector, 'base64');
-  const doc = Buffer.from(document, 'base64');
-  roomManager.storeYjsState(decodeURIComponent(roomKey), sv, doc);
-
-  res.json({ success: true, message: 'CRDT state persisted' });
-});
-
-/**
- * GET /rooms/:roomKey/yjs-state
- * Retrieve persisted Yjs CRDT state for reconnection
- */
-router.get('/rooms/:roomKey/yjs-state', (req: Request, res: Response) => {
-  const roomKey = String(req.params.roomKey);
-  const room = roomManager.getRoom(decodeURIComponent(roomKey));
-  if (!room || !room.yjsDocument) {
-    return res.json({ success: true, data: null, message: 'No persisted state — new document' });
-  }
-
-  res.json({
-    success: true,
-    data: {
-      stateVector: room.yjsStateVector?.toString('base64') || null,
-      document: room.yjsDocument?.toString('base64') || null,
-      lastActivity: room.lastActivity,
-    },
-  });
+  const room = roomManager.getRoom(roomKey);
+  res.json({ success: true, connectedUsers: room?.connectedUsers || [] });
 });
 
 // ---------------------------------------------------------------------------
-// LOCK ENDPOINTS — 21 CFR Part 11 section-level document locking
+// LOCK ENDPOINTS — section-level edit locking
+//
+// These are advisory coordination locks, not a Part 11 control. They live in
+// process memory, they are lost on restart, and no acquisition or release is
+// written to an audit trail. The section header used to say "21 CFR Part 11
+// section-level document locking", and /ws-config reported
+// `part11Compliant: true` to clients. Signed, audited authoring actions are
+// authoring_signatures and authoring_audit_trail; this is a soft lock that
+// keeps two authors from typing over each other.
 // ---------------------------------------------------------------------------
 
 /**
  * POST /locks
- * Acquire a document/section lock
+ * Acquire the edit lock on a document or one of its sections.
  */
-router.post('/locks', (req: Request, res: Response) => {
-  const { documentId, sectionId, userId, lockType, durationMs, reason } = req.body;
-  if (!documentId || !userId) {
-    return res.status(400).json({ error: 'documentId and userId required' });
-  }
+router.post('/locks', async (req: Request, res: Response) => {
+  const actor = requirePrincipal(req, res);
+  if (!actor) return;
 
-  const result = lockManager.acquireLock(documentId, userId, sectionId, {
-    lockType,
-    durationMs,
-    reason,
-  });
+  const { documentId, sectionId, lockType, durationMs, reason } = req.body ?? {};
+  if (!documentId) return res.status(400).json({ success: false, error: 'documentId required' });
+  if (!UUID_RE.test(String(documentId))) {
+    return res.status(400).json({ success: false, error: 'documentId must be a UUID' });
+  }
+  const section = sectionId ? String(sectionId) : null;
+  if (section && !UUID_RE.test(section)) {
+    return res.status(400).json({ success: false, error: 'sectionId must be a UUID' });
+  }
+  if (await denyDocumentAccess(String(documentId), section, actor.tenantId, res)) return;
+
+  const result = lockManager.acquireLock(
+    scopedKey(actor.tenantId, String(documentId), section),
+    String(documentId),
+    actor.userId,
+    section ?? undefined,
+    { lockType, durationMs, reason, lockedByLabel: actor.label }
+  );
   if ('error' in result) {
     return res.status(409).json({ success: false, error: result.error });
   }
-
-  res.json({ success: true, data: result });
+  res.json({ success: true, data: { ...result, mine: true } });
 });
 
 /**
  * DELETE /locks/:documentId
- * Release a lock
+ * Release the caller's own lock. A caller can only ever release their own:
+ * both the key and the ownership test come from the authenticated principal.
  */
 router.delete('/locks/:documentId', (req: Request, res: Response) => {
+  const actor = requirePrincipal(req, res);
+  if (!actor) return;
   const documentId = String(req.params.documentId);
-  const { userId, sectionId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-
-  const released = lockManager.releaseLock(documentId, userId, sectionId);
+  const section = req.body?.sectionId ? String(req.body.sectionId) : null;
+  const released = lockManager.releaseLock(
+    scopedKey(actor.tenantId, documentId, section),
+    actor.userId
+  );
   res.json({ success: true, released });
 });
 
 /**
  * GET /locks/:documentId
- * Get all active locks for a document
+ * Active locks on a document, within the caller's organization only.
+ *
+ * `mine` is computed here rather than left to the client to infer by comparing
+ * id strings — the server is the only party that knows which principal the
+ * request came from.
  */
 router.get('/locks/:documentId', (req: Request, res: Response) => {
-  const documentId = String(req.params.documentId);
-  const locks = lockManager.getDocumentLocks(documentId);
+  const actor = requirePrincipal(req, res);
+  if (!actor) return;
+  const locks = lockManager
+    .getDocumentLocks(actor.tenantId, String(req.params.documentId))
+    .map(lock => ({ ...lock, mine: lock.lockedBy === actor.userId }));
   res.json({ success: true, data: locks });
-});
-
-// ---------------------------------------------------------------------------
-// MERGE CONFLICT RESOLUTION
-// ---------------------------------------------------------------------------
-
-/**
- * POST /conflicts/resolve
- * Resolve a Yjs CRDT merge conflict (for non-auto-mergeable structural changes)
- */
-router.post('/conflicts/resolve', (req: Request, res: Response) => {
-  const { conflictId, resolution, resolvedBy, roomKey } = req.body;
-  if (!conflictId || !resolution || !resolvedBy) {
-    return res.status(400).json({ error: 'conflictId, resolution, resolvedBy required' });
-  }
-
-  // In CRDT mode, most conflicts auto-resolve. This endpoint handles
-  // structural conflicts (e.g., section deletion while someone is editing)
-  const conflict: MergeConflict = {
-    id: conflictId,
-    roomId: roomKey || '',
-    conflictType: 'concurrent_edit',
-    baseVersion: 0,
-    localChanges: {},
-    remoteChanges: {},
-    resolvedBy,
-    resolution,
-    timestamp: new Date(),
-  };
-
-  res.json({
-    success: true,
-    data: conflict,
-    message: `Conflict resolved via ${resolution} by ${resolvedBy}`,
-  });
-});
-
-// ---------------------------------------------------------------------------
-// WEBSOCKET CONFIG ENDPOINT
-// ---------------------------------------------------------------------------
-
-/**
- * GET /ws-config
- * Client configuration for Yjs WebSocket provider setup
- */
-router.get('/ws-config', (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    config: {
-      provider: 'y-websocket',
-      crdtLibrary: 'yjs@13.6',
-      awareness: {
-        protocol: 'y-protocols/awareness',
-        cursorField: 'cursor',
-        selectionField: 'selection',
-        userField: 'user',
-        typingField: 'isTyping',
-      },
-      persistence: {
-        mode: 'server-postgres',
-        snapshotInterval: 30000, // 30s auto-snapshot
-        compactionThreshold: 100, // compact after 100 updates
-      },
-      sync: {
-        protocol: 'y-protocols/sync',
-        messageTypes: ['sync-step-1', 'sync-step-2', 'update', 'awareness'],
-        batchUpdates: true,
-        batchIntervalMs: 50,
-      },
-      locking: {
-        defaultDurationMs: 30 * 60 * 1000,
-        types: ['exclusive', 'shared', 'advisory'],
-        part11Compliant: true,
-      },
-      offline: {
-        enabled: true,
-        indexedDbName: 'trialsage-collab',
-        syncOnReconnect: true,
-      },
-    },
-  });
 });
 
 /**
  * GET /health
- * Health check for collaboration service
+ * Health check for the collaboration presence/locking service.
  */
-router.get('/health', (_req: Request, res: Response) => {
-  const stats = roomManager.getRoomStats();
+router.get('/health', (req: Request, res: Response) => {
+  const actor = principal(req);
+  const stats = actor ? roomManager.getRoomStats(actor.tenantId) : null;
   res.json({
     status: 'healthy',
     service: 'realtime-collab',
-    provider: 'yjs-crdt',
-    activeRooms: stats.totalRooms,
-    connectedUsers: stats.totalUsers,
-    features: {
-      crdtEngine: 'yjs',
-      awarenessProtocol: true,
-      sectionLocking: true,
-      offlineSync: true,
-      part11AuditTrail: true,
-      conflictResolution: 'automatic-crdt',
-    },
+    scope: 'presence-and-locking',
+    // Reported as what it is. This handler used to advertise
+    // `part11AuditTrail: true`, `offlineSync: true` and
+    // `conflictResolution: 'automatic-crdt'` from a router that does none of
+    // those things.
+    storage: 'in-memory (per process; not durable across restarts)',
+    activeRooms: stats?.totalRooms ?? null,
+    connectedUsers: stats?.totalUsers ?? null,
   });
 });
 
