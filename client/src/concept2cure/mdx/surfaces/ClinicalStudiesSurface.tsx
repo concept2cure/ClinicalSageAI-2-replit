@@ -28,6 +28,7 @@ import {
   type StudyRow,
 } from '../hooks/useClinicalStudies';
 import { useRbqm } from '../hooks/useRbqm';
+import { useStudyDesign } from '../hooks/useStudyDesign';
 import { readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 
@@ -105,6 +106,10 @@ export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSur
      portfolio still shows its project's monitoring. */
   const rbqmProgramId = projectId ?? selected?.programId ?? null;
   const rbqm = useRbqm(rbqmProgramId);
+
+  /* Protocol & study design is project-scoped on the same key, so a study
+     opened from the portfolio also shows its project's design records. */
+  const design = useStudyDesign(rbqmProgramId);
 
   return (
     <>
@@ -289,6 +294,59 @@ export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSur
           </div>
         </section>
       )}
+
+      <section className="section">
+        <div className="section-head">
+          <h2>Protocol and study design</h2>
+          <span className="section-sub">
+            ICH M11 protocol · SAP · schedule of activities · CRF · project-scoped
+            {program ? ` to ${program.code}` : selected ? ' to the selected study' : ''}
+          </span>
+        </div>
+        <DataGate
+          state={design.designs}
+          label="study designs"
+          onRetry={design.refresh}
+          emptyHint="No protocol or study design is linked to this project yet. Designs authored in the biostatistics workbench appear here once linked."
+        >
+          {(designs) => (
+            <div className="ctable">
+              <div className="ctable-head" style={{ gridTemplateColumns: '1.6fr 90px 1fr 110px 110px' }}>
+                <div>Design</div>
+                <div>Phase</div>
+                <div>Indication</div>
+                <div>Status</div>
+                <div>Updated</div>
+              </div>
+              {designs.map((d) => (
+                <button
+                  key={d.studyId}
+                  className="ctable-row"
+                  style={{ gridTemplateColumns: '1.6fr 90px 1fr 110px 110px', textAlign: 'left', cursor: 'pointer' }}
+                  onClick={() =>
+                    onAskAna(
+                      `Summarise the protocol and study design "${d.title}" (${d.studyId}) — objectives, population, endpoints, and any defensibility gaps.`,
+                    )
+                  }
+                  type="button"
+                >
+                  <div className="ctable-strong">{d.title || d.studyId}</div>
+                  <div>{d.phase || '—'}</div>
+                  <div style={{ color: 'var(--text-400)', fontSize: 12 }}>{d.indication || '—'}</div>
+                  <div>
+                    <span className="status-pill draft" style={{ textTransform: 'capitalize' }}>
+                      {d.status}
+                    </span>
+                  </div>
+                  <div className="mono small-mono">
+                    {d.updatedAt ? d.updatedAt.slice(0, 10) : '—'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </DataGate>
+      </section>
 
       <section className="section">
         <div className="section-head">
