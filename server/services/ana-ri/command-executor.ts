@@ -76,6 +76,7 @@ import {
   resolvePart11Enforce,
   type Part11Signoff,
 } from './part11-governance';
+import { authorizeCommand } from './command-authorization';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -4696,6 +4697,23 @@ export async function executeCommands(
   const commandMap: Record<string, any> = COMMAND_HANDLERS;
 
   for (const cmd of commands) {
+    // ── Central authorization envelope (G-05) ──
+    // One positive decision before dispatch: an unknown/unmapped command, a
+    // tenant tool-policy denial, or a missing capability fails closed HERE,
+    // rather than relying on each handler to gate itself. Recorded on the result
+    // so the decision is auditable.
+    const authz = authorizeCommand(cmd.command, ctx);
+    if (!authz.allowed) {
+      results.push({
+        success: false,
+        action: cmd.command,
+        message: `Not authorized to run ${cmd.command}: ${authz.reason}`,
+        data: { authorization: authz },
+      });
+      console.log(`[AnA Command] Denied ${cmd.command}: ${authz.reason} (policy ${authz.policyVersion})`);
+      continue;
+    }
+
     const handler = commandMap[cmd.command];
     if (handler) {
       // ── Part 11 gate: governed record-altering commands fail closed unless
