@@ -21,11 +21,29 @@ const pool = {
 // The service + the executor both read `pool` from server/db (../../../db from here).
 vi.mock('../../../db', () => ({
   pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) },
-  getPool: () => ({ query: (s: string, p?: unknown[]) => pool.query(s, p) }),
+  getPool: () => ({
+    query: (s: string, p?: unknown[]) => pool.query(s, p),
+    // C2C-AUDIT-001: the controlled-document handlers now run their mutation
+    // and their Part 11 audit row in ONE transaction on a pooled client.
+    // PGlite is a single connection, so BEGIN/COMMIT/ROLLBACK here are real.
+    connect: async () => ({
+      query: (s: string, p?: unknown[]) => pool.query(s, p),
+      release: () => undefined,
+    }),
+  }),
 }));
 // Keep the Part 11 audit write out of the DB in this focused test
-// (server/services/auditService = ../../auditService from here).
+// (server/services/auditService = ../../auditService from here). Still used by
+// the qms_change_* handlers.
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn() } }));
+// revise/retire_qms_document now write their audit via recordGovernedAction on
+// the mutation's own client instead of a fire-and-forget auditService call.
+// Atomicity is proved end-to-end against real audit DDL in
+// qms-vault-audit-atomicity.contract.test.ts; stubbing it here keeps this
+// suite focused on the change-control lifecycle without audit_logs DDL.
+vi.mock('../../../routes/c2c/actions', () => ({
+  recordGovernedAction: vi.fn(async () => ({ actionId: 'act_test', auditId: 'aud_test', sha256Chain: '' })),
+}));
 
 import { getToolHandler } from '../AnaToolExecutor';
 
