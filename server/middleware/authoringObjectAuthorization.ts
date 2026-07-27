@@ -13,10 +13,17 @@ import {
 
 const logger = createScopedLogger('authoring-object-authorization');
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const AUTHORING_PREFIX = '/authoring';
 
 interface ObjectTarget {
   action: AuthoringPermissionAction;
   resolve: () => Promise<AuthoringObjectScope | null>;
+}
+
+function relativeAuthoringPath(req: Request): string | null {
+  if (req.path === AUTHORING_PREFIX) return '/';
+  if (!req.path.startsWith(`${AUTHORING_PREFIX}/`)) return null;
+  return req.path.slice(AUTHORING_PREFIX.length) || '/';
 }
 
 function actionFromPath(path: string): AuthoringPermissionAction {
@@ -93,9 +100,8 @@ async function resolveCitationScope(
   };
 }
 
-function targetForRequest(req: Request, tenantId: number): ObjectTarget | null {
+function targetForRequest(req: Request, tenantId: number, path: string): ObjectTarget | null {
   const pool = getPool();
-  const path = req.path;
 
   // Creating a document has no object to authorize yet. The database trigger in
   // 20260727_authoring_object_permissions.sql atomically grants its creator
@@ -159,17 +165,20 @@ function targetForRequest(req: Request, tenantId: number): ObjectTarget | null {
 /**
  * Mandatory authoring object authorization.
  *
- * Mount this before the existing authoring router. It is deliberately not
- * feature-flagged: authenticated tenant membership is necessary but not
- * sufficient to mutate a governed document. Any policy-store or query failure
- * returns 503 and denies the write.
+ * Mounted once at `/api` immediately before the legacy `/api/authoring` router.
+ * It ignores every non-authoring route, which avoids adding another duplicate
+ * `/api/authoring` mount to the route registry while preserving exact ordering.
+ * It is deliberately not feature-flagged: authenticated tenant membership is
+ * necessary but not sufficient to mutate a governed document. Any policy-store
+ * or query failure returns 503 and denies the write.
  */
 export async function authoringObjectAuthorization(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void | Response> {
-  if (SAFE_METHODS.has(req.method)) {
+  const authoringPath = relativeAuthoringPath(req);
+  if (authoringPath == null || SAFE_METHODS.has(req.method)) {
     next();
     return;
   }
@@ -185,7 +194,7 @@ export async function authoringObjectAuthorization(
     });
   }
 
-  const target = targetForRequest(req, tenantId);
+  const target = targetForRequest(req, tenantId, authoringPath);
   if (!target) {
     next();
     return;
