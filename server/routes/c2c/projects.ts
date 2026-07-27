@@ -618,4 +618,58 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
   }
 });
 
+// ════════════════════════════════════════════════════════════════════════════
+// GET /api/c2c/projects/:id/regulatory-context — MDX-PM-01
+//
+// The contextual plan for this project: the resolved industry context, the
+// cockpit sections that context calls for, and the work packages with their
+// linked-task state.
+//
+// Mounted HERE, on the router the cockpit already talks to, rather than as a
+// second router on /api/c2c/projects. Two routers on one base path is what the
+// route-mount audit flags, and it is flagged for a good reason: which one
+// handles a request then depends on mount order.
+//
+// Returns an empty plan for a non-MDX project — no sections, no packages — so a
+// biopharma project's cockpit renders exactly what it renders today. That is
+// MDX-PM-01's acceptance criterion, and the server decides it rather than
+// leaving the client to.
+// ════════════════════════════════════════════════════════════════════════════
+
+router.get('/:id/regulatory-context', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+
+  const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+  if (!UUID_RE.test(id)) return send404(res);
+
+  try {
+    // Ownership FIRST, before anything program-scoped is read. An unowned id
+    // must 404, not return an empty plan — an empty plan for someone else's
+    // project reads as "this project has no regulatory work", which is a
+    // statement about their programme that this tenant is not entitled to.
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [id, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+
+    const { readProjectPlan } = await import('../../services/industry-context/project-plan.js');
+    const plan = await readProjectPlan(pool, {
+      organizationId: orgId,
+      programId: id,
+      userId: resolveUserId(req),
+    });
+
+    return res.json({ data: plan });
+  } catch (err: unknown) {
+    // 42P01 here means regulatory_programs itself is absent, since the plan
+    // reader tolerates its own missing tables internally.
+    if ((err as { code?: string })?.code === '42P01') return send404(res);
+    console.error('[c2c/projects] GET /:id/regulatory-context', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 export default router;
