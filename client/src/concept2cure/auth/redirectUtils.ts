@@ -24,7 +24,11 @@
 export const ALLOWED_REDIRECT_PREFIXES = ['/concept2cure', '/client-portal'] as const;
 
 const CANONICAL_FALLBACK = '/concept2cure';
-const CLIENT_FALLBACK = '/client-portal';
+// External clients land on the portal surface INSIDE the bundle. The bare
+// `/client-portal` path is a legacy alias that App.jsx fences to `/concept2cure`
+// (product home), so sending clients there would drop them on the wrong page —
+// route them straight to the registered surface instead.
+const CLIENT_FALLBACK = '/concept2cure/client-portal';
 
 // Conservative pathname allowlist. Permits the chars URLs legitimately
 // use in this app's beta routes (alphanumerics, `-_./~`, `:`, `@`, `+`,

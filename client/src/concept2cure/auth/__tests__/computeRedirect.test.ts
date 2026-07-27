@@ -54,6 +54,8 @@ describe('computeRedirect', () => {
   it('uses role-based client redirect for client_user/client_admin', () => {
     const user = { roles: ['client_user'] } as any;
     const redirect = computeRedirect('', user);
-    expect(redirect).toBe('/client-portal');
+    // The registered portal surface inside the bundle — not the bare
+    // `/client-portal` legacy alias, which App.jsx fences to the product home.
+    expect(redirect).toBe('/concept2cure/client-portal');
   });
 });

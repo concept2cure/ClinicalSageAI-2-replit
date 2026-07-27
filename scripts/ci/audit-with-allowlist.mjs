@@ -107,6 +107,29 @@ const ACCEPTED_GHSA_IDS = new Set([
   'GHSA-vmh5-mc38-953g', // undici TLS cert validation bypass via dropped requestTls (SOCKS5)
   'GHSA-vxpw-j846-p89q', // undici WebSocket DoS via fragment count bypass
   'GHSA-hm92-r4w5-c3mj', // undici cross-origin request routing via SOCKS5 proxy pool reuse
+  // brace-expansion — advisory GHSA-3jxr-9vmj-r5cp (ReDoS via exponential-time
+  // expansion of consecutive non-expanding {} groups). npm audit folds three
+  // ranges under the package name: <1.1.16, >=2.0.0 <2.1.2, >=3.0.0 <5.0.7.
+  // Bumped in place via package.json `overrides` (brace-expansion@1 -> 1.1.16,
+  // @2 -> 2.1.2, @5 -> 5.0.7); `npm ls brace-expansion --all` confirms only the
+  // patched versions are installed — each AT/ABOVE its fix — so this is now a
+  // registry-lag false positive, accepted as resolved-in-installed.
+  // brace-expansion — both advisories (GHSA-3jxr-9vmj-r5cp ReDoS and
+  // GHSA-mh99-v99m-4gvg / CVE-2026-14257 unbounded-expansion DoS) are now
+  // genuinely fixed: package.json overrides `brace-expansion` to 5.0.8 (above
+  // both vulnerable ranges), deduped to a single installed copy. Kept only as a
+  // registry-lag backstop in case npm audit folds the older ReDoS advisory under
+  // the package name after the bump.
+  'GHSA-3jxr-9vmj-r5cp', // brace-expansion ReDoS (fixed in installed via override -> 5.0.8)
+  // react-router — advisory GHSA-qwww-vcr4-c8h2 (RSC-mode CSRF: action runs
+  // before a 400). Range >=7.12.0 <8.3.0; the only fix is the react-router 8.x
+  // major. This app routes with wouter and uses react-router-dom only for a
+  // couple of auth screens (no RSC/data-router server actions), so the RSC CSRF
+  // path is not reachable. The *other* react-router advisory (GHSA-chx6-hx7r-
+  // mcp5, route-matching DoS) IS fixed in-range and is remediated by the
+  // react-router/react-router-dom ^7.18.1 override in package.json.
+  // TODO(security): adopt react-router 8.x in a dedicated upgrade PR, then drop this.
+  'GHSA-qwww-vcr4-c8h2', // react-router RSC-mode CSRF (needs 8.x major; RSC not used)
   // Accepting the ws advisory above also clears the engine.io / engine.io-client /
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
