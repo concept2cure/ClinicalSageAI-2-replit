@@ -15,16 +15,28 @@
  *     filesystem gates still report.
  *   • Only HARD gate failures drive the exit code (process.exit(1)). SOFT gates
  *     are advisory: they surface posture (WARN) but never block on their own.
+ *   • A gate declares a DEFAULT severity at registration but may return its own
+ *     `severity` to override it, so a gate whose blast radius depends on live
+ *     state (gate 2 below) can escalate itself from SOFT to HARD. The declared
+ *     default is what a thrown error falls back to — i.e. a probe that breaks
+ *     can never silently escalate into a NO-GO.
  *   • Secret VALUES are never printed — only which vars are set/missing and,
- *     for entropy-checked secrets, their length.
+ *     for entropy-checked secrets, their length. (SMTP_PORT is echoed: it is a
+ *     TCP port, not a credential, and it decides the TLS mode.)
  *
  * Gates:
  *   1. Schema provisioned            (HARD) — core tables exist + pg_policies > 0
- *   2. RLS enforcement posture       (SOFT) — relforcerowsecurity + RLS_ENFORCE
+ *   2. RLS enforcement posture       (HARD when the database holds MORE THAN ONE
+ *                                     organization and RLS_ENFORCE is not 'on' —
+ *                                     that combination is a live cross-tenant
+ *                                     read; SOFT while a single org exists)
  *   3. No known-password demo admin  (HARD) — seed demo-admin row absent + flag off
  *   4. Boot secrets present          (HARD) — fail-closed boot secrets set
- *   5. Monitoring (Sentry)           (SOFT) — SENTRY_DSN present
- *   6. PDF export capability         (SOFT) — chromium + veraPDF available
+ *   5. SMTP / login-OTP delivery     (HARD) — email OTP is mandatory 2FA, so an
+ *                                     unusable SMTP transport means NO tester
+ *                                     can log in at all
+ *   6. Monitoring (Sentry)           (SOFT) — SENTRY_DSN present
+ *   7. PDF export capability         (SOFT) — chromium + veraPDF available
  *
  * Usage:
  *   DATABASE_URL='postgres://…' node scripts/ops/pilot-go-no-go.mjs
@@ -216,13 +228,31 @@ async function gateSchema(db) {
   return { status: ok ? 'PASS' : 'FAIL', detail: parts.join('; ') };
 }
 
-// 2 · RLS enforcement posture (SOFT, best-effort)
+// 2 · RLS enforcement posture (SOFT by default, escalates to HARD)
+//
+// Severity is conditional on how much tenancy actually exists. Policies that are
+// provisioned but compiled to a no-op (RLS_ENFORCE != 'on') are harmless while a
+// single organization owns every row — there is no other tenant to leak to. The
+// moment a SECOND organization exists, that same posture is a live cross-tenant
+// read of another customer's regulatory data, which is a pilot-stopping defect,
+// not an advisory. So: > 1 org and not enforcing ⇒ HARD FAIL; 0–1 orgs and not
+// enforcing ⇒ SOFT WARN that flipping the switch is a precondition for tenant #2.
+//
+// The org count is read defensively: a missing organizations table or an
+// unreachable database yields a SOFT FAIL carrying the reason, never a crash and
+// never an escalation — we refuse to declare NO-GO on evidence we could not read.
 async function gateRls(db) {
   const raw = (process.env.RLS_ENFORCE ?? '').trim();
   const mode = resolveRlsMode(raw);
   const enforceStr = `RLS_ENFORCE=${raw || '(unset)'} → ${mode}${mode === 'on' ? ' (filtering rows)' : ' (NOT filtering)'}`;
 
-  if (!db.ok) return { status: 'FAIL', detail: `database unavailable — ${db.reason}; ${enforceStr}` };
+  if (!db.ok) {
+    return {
+      status: 'FAIL',
+      severity: 'SOFT',
+      detail: `database unavailable — ${db.reason}; ${enforceStr}; tenant count unknown, so this gate cannot judge cross-tenant exposure`,
+    };
+  }
 
   const forced = await db.pool.query(
     `SELECT count(*)::int AS n
@@ -246,14 +276,64 @@ async function gateRls(db) {
     ? `${probed.relname}: rowsecurity=${probed.relrowsecurity} force=${probed.relforcerowsecurity}`
     : 'no candidate RLS table present';
 
-  const detail = `${forcedCount} FORCE-RLS table(s); ${probeStr}; ${enforceStr}`;
-  if (forcedCount === 0 && !(probed && probed.relforcerowsecurity)) {
-    return { status: 'WARN', detail: `${detail} — no FORCE ROW LEVEL SECURITY tables found` };
+  // Tenancy: how many organizations actually share this database? Read in its
+  // own try/catch — an absent organizations table must degrade this gate, not
+  // abort it, and must never be mistaken for "0 tenants" (which would look SAFE).
+  let orgCount = null;
+  let orgReason = '';
+  try {
+    const orgs = await db.pool.query('SELECT count(*)::int AS n FROM organizations');
+    orgCount = orgs.rows[0].n;
+  } catch (err) {
+    orgReason = err?.message || String(err);
   }
-  if (mode === 'on') return { status: 'PASS', detail };
+
+  const noForce = forcedCount === 0 && !(probed && probed.relforcerowsecurity);
+  const tenancyStr =
+    orgCount === null ? `organizations: UNREADABLE (${orgReason})` : `organizations: ${orgCount}`;
+
+  const parts = [`${forcedCount} FORCE-RLS table(s)`, probeStr, enforceStr, tenancyStr];
+  if (noForce) parts.push('no FORCE ROW LEVEL SECURITY tables found');
+  const detail = parts.join('; ');
+
+  if (mode === 'on') {
+    // Enforcing. Still advisory-WARN if there is nothing to enforce on: the flag
+    // is set but no table carries FORCE ROW LEVEL SECURITY, so it filters nothing.
+    if (noForce) {
+      return {
+        status: 'WARN',
+        severity: 'SOFT',
+        detail: `${detail} — RLS_ENFORCE=on but no table FORCEs row security, so the switch currently filters nothing`,
+      };
+    }
+    return { status: 'PASS', severity: 'SOFT', detail };
+  }
+
+  // Not enforcing from here down. Severity depends on whether a second tenant exists.
+  if (orgCount === null) {
+    return {
+      status: 'FAIL',
+      severity: 'SOFT',
+      detail: `${detail} — cannot determine tenant count, so cross-tenant exposure is UNVERIFIED; re-run with a readable organizations table before treating this as safe`,
+    };
+  }
+
+  if (orgCount > 1) {
+    return {
+      status: 'FAIL',
+      severity: 'HARD',
+      detail:
+        `${detail} — ${orgCount} organizations share this database while RLS is NOT enforcing: ` +
+        'every tenant can read every other tenant\'s rows. Set RLS_ENFORCE=on (and restart) before any human tester touches this deployment.',
+    };
+  }
+
   return {
     status: 'WARN',
-    detail: `${detail} — policies provisioned but not enforcing; set RLS_ENFORCE=on before real tenants share data`,
+    severity: 'SOFT',
+    detail:
+      `${detail} — policies provisioned but not enforcing. Tolerable at ${orgCount} organization(s) (no second tenant to leak to), ` +
+      'but RLS_ENFORCE=on is REQUIRED before a second organization is created — this gate turns HARD the moment one is.',
   };
 }
 
@@ -361,7 +441,70 @@ function gateBootSecrets() {
   return { status: problems.length ? 'FAIL' : 'PASS', detail };
 }
 
-// 5 · Monitoring — SENTRY_DSN present (SOFT)
+// 5 · SMTP / login-OTP delivery (HARD)
+//
+// Readiness blocker #3: email OTP is the mandatory second factor, so a login
+// cannot complete unless mail actually reaches the tester. This gate mirrors
+// getTransporter() in server/services/emailService.ts exactly — no aliases, no
+// fallbacks, because the app has none:
+//
+//   SMTP_HOST  required   (no default; absent ⇒ transport is null)
+//   SMTP_USER  required   (no default; auth.user)
+//   SMTP_PASS  required   (no default; auth.pass)
+//   SMTP_PORT  optional   defaults to '465'; `secure` is `port === 465`, so the
+//                         port alone decides implicit TLS vs STARTTLS
+//   SMTP_FROM  optional   defaults to a literal noreply@ address
+//
+// getTransporter() returns null unless HOST *and* USER *and* PASS are all set,
+// and every sender then degrades to a log line: sendLoginOtpEmail() logs an
+// error in production and returns, so the tester waits forever for a code that
+// was never sent. That is a total login outage, hence HARD.
+//
+// Values are never printed — only set/MISSING. SMTP_PORT is echoed because it is
+// a TCP port rather than a credential and it silently changes the TLS mode.
+function gateSmtp() {
+  const isSet = (n) => (process.env[n] ?? '').trim() !== '';
+  const REQUIRED = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
+  const missing = REQUIRED.filter((n) => !isSet(n));
+
+  const rawPort = (process.env.SMTP_PORT ?? '').trim();
+  const port = rawPort === '' ? 465 : Number.parseInt(rawPort, 10);
+  const portValid = Number.isInteger(port) && port > 0 && port <= 65535;
+  const portStr = rawPort === ''
+    ? 'SMTP_PORT: unset → 465 (implicit TLS)'
+    : `SMTP_PORT: ${rawPort}${portValid ? (port === 465 ? ' (implicit TLS)' : ' (STARTTLS)') : ' — NOT A VALID TCP PORT'}`;
+
+  const state = [
+    ...REQUIRED.map((n) => `${n}: ${isSet(n) ? 'set' : 'MISSING'}`),
+    portStr,
+    `SMTP_FROM: ${isSet('SMTP_FROM') ? 'set' : 'unset → noreply@concept2cure.pro default'}`,
+  ];
+
+  const problems = [];
+  if (missing.length) {
+    problems.push(
+      `${missing.join(' + ')} MISSING — getTransporter() returns null, so login OTP emails are never sent and NO tester can complete a login`,
+    );
+  }
+  if (!portValid) {
+    problems.push(`SMTP_PORT='${rawPort}' does not parse to a usable TCP port — nodemailer cannot open a connection`);
+  }
+
+  // Configuration is necessary but NOT sufficient: credentials can be wrong, the
+  // relay can reject the sender domain, or mail can land in spam. Only a real
+  // send proves delivery.
+  const proof =
+    'NOTE: configuration present != mail delivered — wrong credentials, a rejected sender domain, or spam filtering all still block login. ' +
+    'Prove real end-to-end delivery with `npm run pilot:verify-otp <address>` before opening the pilot.';
+
+  // The per-variable state is reported unconditionally (not just on success) —
+  // an operator debugging a failure needs to see which vars ARE set, not only
+  // which are missing.
+  const detail = [state.join('; '), ...problems, proof].join('; ');
+  return { status: problems.length ? 'FAIL' : 'PASS', detail };
+}
+
+// 6 · Monitoring — SENTRY_DSN present (SOFT)
 function gateMonitoring() {
   const present = (process.env.SENTRY_DSN ?? '').trim() !== '';
   return present
@@ -369,7 +512,7 @@ function gateMonitoring() {
     : { status: 'WARN', detail: 'SENTRY_DSN not set — error monitoring / paging unavailable (recommended before pilot)' };
 }
 
-// 6 · PDF export capability (SOFT, best-effort)
+// 7 · PDF export capability (SOFT, best-effort)
 function gatePdf() {
   const chromium = detectChromium();
   const vera = detectVeraPdf();
@@ -380,10 +523,15 @@ function gatePdf() {
 }
 
 // ── runner / rendering ──────────────────────────────────────────────────────
+// `severity` is the gate's DEFAULT. A gate may return its own `severity` to
+// override it when its blast radius depends on live state (gate 2). A gate that
+// THROWS keeps the declared default — a broken probe must never be able to
+// escalate itself into a HARD failure and manufacture a NO-GO.
 async function runGate(num, name, severity, fn) {
   try {
-    const { status, detail } = await fn();
-    return { num, name, severity, status, detail };
+    const res = await fn();
+    const effective = res.severity === 'HARD' || res.severity === 'SOFT' ? res.severity : severity;
+    return { num, name, severity: effective, status: res.status, detail: res.detail };
   } catch (err) {
     return { num, name, severity, status: 'FAIL', detail: `check errored: ${err?.message || err}` };
   }
@@ -516,11 +664,14 @@ async function main() {
 
   const results = [];
   results.push(await runGate(1, 'Schema provisioned', 'HARD', () => gateSchema(db)));
+  // Gate 2 declares SOFT as its fallback only; it returns HARD itself when the
+  // database is genuinely multi-tenant and RLS is not enforcing.
   results.push(await runGate(2, 'RLS enforcement posture', 'SOFT', () => gateRls(db)));
   results.push(await runGate(3, 'No known-password demo admin', 'HARD', () => gateDemoAdmin(db)));
   results.push(await runGate(4, 'Boot secrets present', 'HARD', () => gateBootSecrets()));
-  results.push(await runGate(5, 'Monitoring (Sentry)', 'SOFT', () => gateMonitoring()));
-  results.push(await runGate(6, 'PDF export capability', 'SOFT', () => gatePdf()));
+  results.push(await runGate(5, 'SMTP / login-OTP delivery', 'HARD', () => gateSmtp()));
+  results.push(await runGate(6, 'Monitoring (Sentry)', 'SOFT', () => gateMonitoring()));
+  results.push(await runGate(7, 'PDF export capability', 'SOFT', () => gatePdf()));
 
   if (db.pool) await db.pool.end().catch(() => {});
 
