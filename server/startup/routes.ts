@@ -31,6 +31,7 @@ import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
 import { authoringObjectAuthorization } from '../middleware/authoringObjectAuthorization';
 import authoringPermissionsRouter from '../routes/authoring-permissions';
+import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
 
@@ -131,6 +132,10 @@ export async function registerPreStartRoutes(
   // own requests; every other document/section mutation must pass the mandatory,
   // fail-closed object authorization middleware. This makes the old
   // AUTH_ENFORCE_SECTION_PERMS opt-out irrelevant to the production route path.
+  // The startup invariant prevents an enabled authoring surface from mounting
+  // when the permission table, tenant constraints, RLS, or creator trigger are
+  // missing or partial.
+  await assertAuthoringAuthorizationReady(pool);
   app.use('/api/authoring', authoringPermissionsRouter);
   app.use('/api/authoring', authoringObjectAuthorization);
 
