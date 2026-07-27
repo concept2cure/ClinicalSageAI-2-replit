@@ -130,12 +130,21 @@ export async function registerPreStartRoutes(
   // Authoring object security is mounted ahead of the legacy authoring router.
   // Permission-management routes are owner/admin controlled and terminate their
   // own requests; every other document/section mutation must pass the mandatory,
-  // fail-closed object authorization middleware. This makes the old
-  // AUTH_ENFORCE_SECTION_PERMS opt-out irrelevant to the production route path.
-  // The startup invariant prevents an enabled authoring surface from mounting
-  // when the permission table, tenant constraints, RLS, or creator trigger are
-  // missing or partial.
+  // fail-closed object authorization middleware.
+  //
+  // The old authoring router contains a feature-flagged helper under
+  // AUTH_ENFORCE_SECTION_PERMS. That helper is now RETIRED on the production
+  // composition path: it represented a second permission system, depended on the
+  // old schema shape, and could deny a request after the canonical policy had
+  // already approved it. Keep the legacy function inert until it is deleted from
+  // the large router in a dedicated decomposition PR.
   await assertAuthoringAuthorizationReady(pool);
+  if (process.env.AUTH_ENFORCE_SECTION_PERMS === '1') {
+    console.warn(
+      '[authoring] AUTH_ENFORCE_SECTION_PERMS is retired; canonical mandatory object authorization is active.',
+    );
+  }
+  process.env.AUTH_ENFORCE_SECTION_PERMS = '0';
   app.use('/api/authoring', authoringPermissionsRouter);
   app.use('/api/authoring', authoringObjectAuthorization);
 
