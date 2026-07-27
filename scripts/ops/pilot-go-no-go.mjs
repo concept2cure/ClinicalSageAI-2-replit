@@ -286,17 +286,24 @@ function gateBootSecrets() {
   const isProd = nodeEnv === 'production';
   const isStaging = nodeEnv === 'staging';
 
+  // Resolve a secret the way server/config/environment.ts does: the
+  // environment-specific variable FIRST, then the generic one. Checking the
+  // generic first would pass this gate on a valid JWT_SECRET while the server
+  // picks a short JWT_SECRET_PROD and refuses to boot — a false GO.
+  const suffix = isProd ? 'PROD' : isStaging ? 'STAGING' : 'DEV';
+  const resolveOrdered = (names) => names.find((n) => (process.env[n] ?? '').trim() !== '');
+
   const groups = [
     { label: 'database URL', names: ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET'], required: true },
     {
       label: 'JWT signing secret',
-      names: ['JWT_SECRET', 'JWT_SECRET_DEV', 'JWT_SECRET_STAGING', 'JWT_SECRET_PROD'],
+      names: [`JWT_SECRET_${suffix}`, 'JWT_SECRET'],
       required: true,
       minLen: JWT_SECRET_MIN_LENGTH,
     },
     {
       label: 'refresh-token secret',
-      names: ['REFRESH_TOKEN_SECRET', 'REFRESH_TOKEN_SECRET_STAGING', 'REFRESH_TOKEN_SECRET_PROD'],
+      names: [`REFRESH_TOKEN_SECRET_${suffix}`, 'REFRESH_TOKEN_SECRET'],
       required: isProd || isStaging,
       minLen: JWT_SECRET_MIN_LENGTH,
     },
@@ -305,6 +312,9 @@ function gateBootSecrets() {
       label: 'audit HMAC seal key',
       names: ['AUDIT_HMAC_KEY'],
       required: isProd,
+      // assertAuditSealPostureForProduction() rejects a key under 32 chars even
+      // when the unsealed opt-out is set, so a non-blank value is not enough.
+      minLen: JWT_SECRET_MIN_LENGTH,
       // Explicit accepted-risk opt-out documented in server config.
       optOut: () => (process.env.AUDIT_SEAL_ACCEPT_UNSEALED ?? '').trim().toLowerCase() === 'true',
     },
@@ -313,7 +323,7 @@ function gateBootSecrets() {
   const problems = [];
   const okParts = [];
   for (const g of groups) {
-    const via = g.names.find((n) => (process.env[n] ?? '').trim() !== '');
+    const via = resolveOrdered(g.names);
     if (!g.required) {
       okParts.push(`${g.label}: ${via ? 'set' : 'not required for NODE_ENV=' + nodeEnv}`);
       continue;
@@ -331,6 +341,20 @@ function gateBootSecrets() {
       continue;
     }
     okParts.push(`${g.label}: set`);
+  }
+
+  // getRefreshTokenSecret() refuses to boot in staging/production when the
+  // refresh secret equals the JWT secret (a JWT disclosure would otherwise also
+  // forge refresh tokens). Compare the RESOLVED values, or this gate reports GO
+  // for an environment guaranteed to fail startup.
+  if (isProd || isStaging) {
+    const jwtVia = resolveOrdered([`JWT_SECRET_${suffix}`, 'JWT_SECRET']);
+    const refreshVia = resolveOrdered([`REFRESH_TOKEN_SECRET_${suffix}`, 'REFRESH_TOKEN_SECRET']);
+    if (jwtVia && refreshVia && process.env[jwtVia] === process.env[refreshVia]) {
+      problems.push(
+        `refresh-token secret (${refreshVia}) is IDENTICAL to the JWT signing secret (${jwtVia}) — the server refuses to boot; they must be distinct`,
+      );
+    }
   }
 
   const detail = `NODE_ENV=${nodeEnv}; ${problems.length ? problems.join('; ') : okParts.join('; ')}`;
