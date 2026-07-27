@@ -2,7 +2,7 @@
  * Industry-context profiles + effective-context resolver API (CONTEXT-01/02/03).
  *
  * Governed, tenant-scoped replacement for the free-text industry_mode column,
- * the localStorage admin blob, and the onboarding mock. Mounted at /api/mdx:
+ * the localStorage admin blob, and the un-persisted onboarding step. Mounted at /api/mdx:
  *
  *   GET   /api/mdx/industry-profile                          org profile
  *   PATCH /api/mdx/industry-profile                          upsert org profile (audited)
