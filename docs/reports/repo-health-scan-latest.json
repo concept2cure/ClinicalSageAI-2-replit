@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-27T18:38:56.638Z",
+  "generatedAt": "2026-07-27T22:29:30.472Z",
   "git": {
-    "sha": "7fdd0851fb0474a3c208541993e8847b8b3ff6b8",
+    "sha": "59349aaec1b4a2d57c648b332c9065c57cfaf523",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2470,7 +2470,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 933778
+        "bytes": 938975
       },
       {
         "file": "shared/schema.ts",
@@ -2486,15 +2486,15 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 197070
+        "bytes": 206961
+      },
+      {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 181850
       },
       {
         "file": "server/routes/ana-features.ts",
         "bytes": 179637
-      },
-      {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 178997
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2600,7 +2600,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18174
+        "lines": 18264
       },
       {
         "file": "server/statistics-service.ts",
@@ -2608,7 +2608,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5764
+        "lines": 5954
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2616,7 +2616,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4740
+        "lines": 4778
       },
       {
         "file": "server/storage.ts",
