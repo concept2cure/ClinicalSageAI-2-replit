@@ -54,11 +54,41 @@ function resolveProjectScope(
 export const uploadHandler = async (req: Request, res: Response) => {
   try {
     const fileBuffer: Buffer | undefined = (req as any).file?.buffer;
+
+    // FAIL CLOSED ON MISSING BYTES.
+    //
+    // Every field below used to fall back to a request-body value and then to
+    // a constant, so a request carrying no file still produced a
+    // `file_uploads` row named 'uploaded_file' with file_size 0, a
+    // storage_path nothing was written to, a `cre_evidence_sources` row
+    // stamped ingestion_status='ingested', and a 200 {status:'ready'}. For the
+    // whole time no multipart parser was mounted (see server/routes/chat.ts),
+    // that was EVERY upload.
+    //
+    // Evidence with no bytes is not evidence. There is nothing to checksum,
+    // nothing to extract, and nothing a later citation could be verified
+    // against — so this refuses rather than recording a document that does not
+    // exist. The body-only shape is gone with it: an upload endpoint that
+    // accepts a filename and a size without a file has no honest use.
+    if (!fileBuffer || fileBuffer.length === 0) {
+      logger.warn('Upload rejected — no file bytes received', {
+        hasFile: Boolean((req as any).file),
+        contentType: req.headers['content-type'] ?? null,
+      });
+      return res.status(400).json({
+        error: {
+          code: 'NO_FILE_RECEIVED',
+          message:
+            'No file bytes were received. Send the file as multipart/form-data under the field name "file".',
+        },
+      });
+    }
+
     const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const fileName = (req as any).file?.originalname || req.body?.fileName || 'uploaded_file';
-    const mimeType =
-      (req as any).file?.mimetype || req.body?.mimeType || 'application/octet-stream';
-    const fileSize = (req as any).file?.size || req.body?.fileSize || 0;
+    const fileName = (req as any).file?.originalname || 'uploaded_file';
+    const mimeType = (req as any).file?.mimetype || 'application/octet-stream';
+    // Trust the buffer's own length over any declared size.
+    const fileSize = fileBuffer.length;
     const projectId = req.body?.projectId || req.body?.project_id;
     const userId = (req as any).user?.id || null;
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
@@ -349,10 +379,23 @@ export const uploadHandler = async (req: Request, res: Response) => {
     if (Number.isFinite(numericOrgId) && numericOrgId > 0) {
       try {
         // Checksum the raw bytes, not the truncated extracted text: file
-        // identity is the document itself. Falls back to the content hash when
-        // no buffer is present (body-only uploads).
-        const checksum =
-          fileBuffer && fileBuffer.length > 0 ? sha256Bytes(fileBuffer) : sha256(extractedText);
+        // identity is the document itself.
+        //
+        // There is deliberately NO fallback. It used to be
+        // `sha256(extractedText)`, and extractedText on that branch was the
+        // placeholder built from fileName/mimeType/fileSize — a formatted
+        // metadata string, not content. With no multipart parser mounted those
+        // three were constants, so the "checksum" was a platform-wide
+        // constant: findSourceByChecksum matched the first upload every time,
+        // and every subsequent upload in an org adopted that row's id. Four
+        // different documents became one source called 'uploaded_file', and
+        // any section citing it recorded whichever file happened to be
+        // uploaded first.
+        //
+        // Content identity over anything but content is not identity. The
+        // handler now refuses byte-less uploads outright, so this is
+        // unconditional.
+        const checksum = sha256Bytes(fileBuffer);
         const { createSource, findSourceByChecksum } = await import(
           '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
         );
