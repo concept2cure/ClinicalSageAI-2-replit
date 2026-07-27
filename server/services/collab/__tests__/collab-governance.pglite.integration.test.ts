@@ -72,10 +72,14 @@ import { loadCollabState, storeCollabState } from '../collab-state.store';
 // that reads this file, and verifyJwtWithRotation resolves JWT_SECRET_<ENV>
 // ahead of the bare JWT_SECRET — so a locally-declared secret would have to
 // overwrite the harness's anyway to be the one the verifier tries.
-const JWT_SECRET = process.env.JWT_SECRET_DEV ?? process.env.JWT_SECRET;
-if (!JWT_SECRET) {
+const HARNESS_SIGNING_KEY = process.env.JWT_SECRET_DEV ?? process.env.JWT_SECRET;
+if (!HARNESS_SIGNING_KEY) {
   throw new Error('tests/setup.ts must provision JWT_SECRET_DEV before this suite runs');
 }
+// Re-bound with an explicit type: the narrowing above does not reach the
+// jwt.sign calls inside the test bodies, which TypeScript cannot prove run
+// after this check.
+const JWT_SECRET: string = HARNESS_SIGNING_KEY;
 
 const ORG_A = 4101;
 const ORG_B = 4202;
