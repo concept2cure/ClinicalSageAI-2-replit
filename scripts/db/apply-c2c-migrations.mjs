@@ -19,6 +19,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { applyAuthoringSubsystem } from './authoring-subsystem.mjs';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -74,36 +75,29 @@ const FILES = [
   'migrations/20260726_cre_source_program_scope.sql',
   // ── Authoring program scope (added 2026-07-27, from #1131) ────────────────
   // Program scope for authoring documents: a guarded ALTER that adds
-  // client_program_id to authoring_documents. This is deliberately the ONLY
-  // authoring entry here. The loop tables and their compliance companions
-  // (20260725_authoring_audit_trail, _signatures_and_workflow,
-  // _signature_freeze_binding) are a subsystem that must be provisioned
-  // TOGETHER — provisioning the loop tables alone would stand up freeze/e-sign
-  // without their audit/signature tables (unaudited freeze, failing e-sign).
-  // That subsystem is owned by the db/migrations lineage, not this
-  // supplementary applier, so this ALTER just adds one column WHERE the
-  // subsystem is provisioned: it self-guards on to_regclass and no-ops with a
-  // NOTICE where authoring_documents is not (yet) present, rather than failing
-  // the run or provisioning half a subsystem.
+  // client_program_id to authoring_documents. It self-guards on to_regclass.
+  // main() provisions the authoring subsystem (below) BEFORE this loop runs, so
+  // on a fresh DB the table is now present and this ALTER applies for real
+  // rather than no-opping.
   'migrations/20260727_authoring_document_program_scope.sql',
-  // Source-usage index + column semantics on authoring_citations.
-  //
-  // CEDED TO THE RULE ABOVE. This branch also listed
-  // db/migrations/20260725_authoring_document_loop_tables.sql here, arguing that
-  // the authoring router writes to tables no durable path creates. That gap is
-  // real, but the fix was wrong: the loop tables create frozen_documents and
-  // user_pins, while authoring_audit_trail and authoring_signatures live in
-  // separate files. Applying the loop tables ALONE makes freeze succeed with no
-  // audit row (router L387) and e-sign fail outright (L3083) — a working freeze
-  // with no audit trail is worse on a Part 11 surface than tables that are
-  // plainly absent. The entry was removed rather than reworded.
-  //
-  // What remains is one guarded index, matching the pattern above exactly: it
-  // self-guards on to_regclass and no-ops with a NOTICE where authoring_citations
-  // is absent, so it adds an index WHERE the subsystem is provisioned and does
-  // nothing where it is not.
+  // Source-usage index + column semantics on authoring_citations. Also guarded
+  // on to_regclass; likewise lands for real now that the subsystem is
+  // provisioned ahead of this loop.
   'migrations/20260726_authoring_citation_source_usage.sql',
 ];
+
+// The four db/migrations/20260725_authoring_* files that back the IND authoring
+// loop. They are provisioned as ONE atomic unit by applyAuthoringSubsystem()
+// BEFORE the FILES loop above, so the two guarded authoring ALTERs in that list
+// find their tables present.
+//
+// This supersedes an earlier cession that removed the loop-tables file from
+// FILES. That cession was right to refuse adding the loop tables ALONE (loop
+// tables without the audit/signature companions = a working freeze with no
+// audit row and a failing e-sign, worse on a Part 11 surface than plain
+// absence). The correct resolution is not to omit the subsystem but to
+// provision all four files TOGETHER, atomically — which is what the helper does.
+// See scripts/db/authoring-subsystem.mjs.
 
 /** Files that open their own transaction must not be wrapped in a second one. */
 const selfTransacting = (sql) => /^\s*BEGIN\s*;/im.test(sql);
@@ -125,6 +119,18 @@ async function main() {
   const repoRoot = path.resolve(__dirname, '..', '..');
 
   let failed = 0;
+
+  // Authoring subsystem FIRST — as an atomic unit, so the two guarded authoring
+  // ALTERs in FILES below find their tables present. A failure here is counted
+  // like any other and does not abort the rest of the run (the guarded ALTERs
+  // simply no-op if the subsystem did not come up).
+  try {
+    await applyAuthoringSubsystem(pool, repoRoot, { log: (m) => console.info(m) });
+  } catch (err) {
+    console.error(`✗ failed:  authoring subsystem — ${err.message}`);
+    failed++;
+  }
+
   for (const file of FILES) {
     const full = path.join(repoRoot, file);
     if (!fs.existsSync(full)) {

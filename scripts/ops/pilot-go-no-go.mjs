@@ -52,6 +52,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { AUTHORING_SUBSYSTEM_TABLES } from '../db/authoring-subsystem.mjs';
 
 dotenv.config({ quiet: true });
 
@@ -209,22 +210,41 @@ function detectVeraPdf() {
 // ════════════════════════════════════════════════════════════════════════════
 
 // 1 · Schema provisioned (HARD)
+//
+// Two things must hold: the core route tables exist with RLS policies, AND the
+// authoring subsystem is provisioned AS A UNIT. The unit check is not the same
+// as "authoring_documents exists": a PARTIAL subsystem (loop tables present, but
+// the audit/signature companions absent) stands up freeze/e-sign with no Part 11
+// evidence — the exact half-state /readyz fails closed on. So gate 1 mirrors that
+// contract: all AUTHORING_SUBSYSTEM_TABLES present, or NO-GO.
 async function gateSchema(db) {
   if (!db.ok) return { status: 'FAIL', detail: `database unavailable — ${db.reason}` };
-  const CORE = ['organizations', 'users', 'regulatory_programs', 'c2c_documents', 'authoring_documents'];
+  const CORE = ['organizations', 'users', 'regulatory_programs', 'c2c_documents'];
+  const CHECK = [...CORE, ...AUTHORING_SUBSYSTEM_TABLES];
   const tables = await db.pool.query(
     `SELECT t AS name, to_regclass('public.' || t) IS NOT NULL AS present FROM unnest($1::text[]) AS t`,
-    [CORE],
+    [CHECK],
   );
-  const missing = tables.rows.filter((r) => !r.present).map((r) => r.name);
+  const presentSet = new Set(tables.rows.filter((r) => r.present).map((r) => r.name));
+  const missingCore = CORE.filter((t) => !presentSet.has(t));
+  const authoringPresent = AUTHORING_SUBSYSTEM_TABLES.filter((t) => presentSet.has(t));
+  const authoringMissing = AUTHORING_SUBSYSTEM_TABLES.filter((t) => !presentSet.has(t));
+  const authoringState =
+    authoringMissing.length === 0 ? 'present' : authoringPresent.length === 0 ? 'absent' : 'partial';
+
   const policies = await db.pool.query('SELECT count(*)::int AS n FROM pg_policies');
   const policyCount = policies.rows[0].n;
 
-  const parts = [`core tables ${CORE.length - missing.length}/${CORE.length}`, `RLS policies ${policyCount}`];
-  if (missing.length) parts.push(`missing tables: ${missing.join(', ')}`);
+  const parts = [
+    `core tables ${CORE.length - missingCore.length}/${CORE.length}`,
+    `authoring subsystem ${authoringState} (${authoringPresent.length}/${AUTHORING_SUBSYSTEM_TABLES.length})`,
+    `RLS policies ${policyCount}`,
+  ];
+  if (missingCore.length) parts.push(`missing core: ${missingCore.join(', ')}`);
+  if (authoringMissing.length) parts.push(`missing authoring: ${authoringMissing.join(', ')}`);
   if (policyCount === 0) parts.push('no RLS policies (pg_policies = 0)');
 
-  const ok = missing.length === 0 && policyCount > 0;
+  const ok = missingCore.length === 0 && authoringState === 'present' && policyCount > 0;
   return { status: ok ? 'PASS' : 'FAIL', detail: parts.join('; ') };
 }
 
