@@ -127,7 +127,11 @@ export async function registerPreStartRoutes(
   registerConcept2CureRoutes(app);
   registerAdminRoutes(app);
 
-  // Authoring object security is mounted ahead of the legacy authoring router.
+  // Authoring object security is mounted once at the existing `/api` gateway,
+  // immediately ahead of the legacy `/api/authoring` router. The middleware
+  // ignores non-authoring paths, so no second `/api/authoring` mount is added and
+  // the route-mount no-regression contract stays intact.
+  //
   // Permission-management routes are owner/admin controlled and terminate their
   // own requests; every other document/section mutation must pass the mandatory,
   // fail-closed object authorization middleware.
@@ -145,8 +149,8 @@ export async function registerPreStartRoutes(
     );
   }
   process.env.AUTH_ENFORCE_SECTION_PERMS = '0';
-  app.use('/api/authoring', authoringPermissionsRouter);
-  app.use('/api/authoring', authoringObjectAuthorization);
+  app.use('/api', authoringPermissionsRouter);
+  app.use('/api', authoringObjectAuthorization);
 
   // Slot 5 — Authoring router + authoring actions + AnA platform control +
   // AI actions (+ Redis / queue init) + Phase 3 orchestration.
