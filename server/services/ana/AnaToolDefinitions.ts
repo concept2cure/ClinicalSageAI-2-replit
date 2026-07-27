@@ -507,6 +507,30 @@ import { POST_APPROVAL_TOOLS } from './postApprovalTools';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Onboarding (read-only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lets a client ask AnA, in conversation, what its workspace still needs and
+ * what a document could contribute — WITHOUT giving the model a way to write.
+ *
+ * Deliberately read-only. There is no `onboarding_commit` tool and there will
+ * not be one: a model-callable commit could self-invoke inside the agentic loop,
+ * which would defeat the human-approval gate the whole onboarding flow is built
+ * on. Applying proposals stays a human action through the governed endpoint.
+ */
+export const SUMMARIZE_ONBOARDING_READINESS: AnaTool = {
+  name: 'summarize_onboarding_readiness',
+  description:
+    "Report which onboarding fields this organization's profile already has and which are still blank, and explain what a client can upload to fill the gaps. Read-only: it inspects the org profile and never changes it. Use when a client asks what setup they still need, or what a document could help with. To actually apply values from a document, direct the client to the 'Set up from a document' flow — extraction proposes, the client reviews and approves, and only then is anything written.",
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FDA Postmarket Surveillance Tools (live openFDA)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2507,6 +2531,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_INTELLIGENCE_FLOWS,
   // War Game Simulation — FDA auditor pressure-testing of intelligence flow output
   START_WAR_GAME,
+  // Onboarding — read-only look at what a document could contribute to setup.
+  SUMMARIZE_ONBOARDING_READINESS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers
