@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-07-27T13:51:04.083Z",
+  "generatedAt": "2026-07-27T14:13:33.415Z",
   "git": {
-    "sha": "2a71a823cf41bf4b50ee1894c295c749203d4553",
-    "branch": "concept2cure-v2"
+    "sha": "3364a479321ff24cc356a5376b75cc2520776597",
+    "branch": "integrate-c2c-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 248,
+    "duplicateBasenames": 249,
     "largeFilesByBytes": 30,
     "largeFilesByLines": 84
   },
@@ -2211,6 +2211,14 @@
         ]
       },
       {
+        "basename": "resolver",
+        "count": 2,
+        "paths": [
+          "server/services/entitlements/resolver.ts",
+          "server/services/industry-context/resolver.ts"
+        ]
+      },
+      {
         "basename": "review",
         "count": 2,
         "paths": [
@@ -2462,11 +2470,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 931327
+        "bytes": 932442
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 826744
+        "bytes": 831177
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2584,7 +2592,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19710
+        "lines": 19793
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2592,7 +2600,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18133
+        "lines": 18158
       },
       {
         "file": "server/statistics-service.ts",
@@ -2667,12 +2675,12 @@
         "lines": 2504
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2419
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 2488
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2413
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "lines": 2419
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
@@ -2747,16 +2755,16 @@
         "lines": 2002
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 1994
+      },
+      {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 1981
       },
       {
         "file": "server/routes/report-os.ts",
         "lines": 1962
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 1937
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2879,6 +2887,10 @@
         "lines": 1623
       },
       {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1611
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2897,10 +2909,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
         "lines": 1582
-      },
-      {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1551
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
@@ -2924,7 +2932,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 396,
+      "duplicateGroups": 398,
       "largeByBytes": 27,
       "largeByLines": 73
     },
