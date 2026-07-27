@@ -131,6 +131,71 @@ describe('resolveEffectiveProjectContext — precedence', () => {
   });
 });
 
+describe('resolveEffectiveProjectContext — the two project identities', () => {
+  // The platform carries `projects` (serial), which unified_tasks and
+  // client_workspaces key on, and `regulatory_programs` (uuid), which the
+  // Projects DETAIL cockpit reads. There is no join between them, and the
+  // resolver does not invent one — a profile is read against whichever identity
+  // the caller holds.
+  const PROGRAM = '11111111-2222-3333-4444-555555555555';
+  const mdxProject = {
+    vertical: 'mdx', specialization: 'ivd_diagnostics',
+    product_type: null, lifecycle_stage: null,
+    target_markets: [], regulatory_pathways: [], filing_types: [],
+    inherited_from_org: false, client_workspace_id: null,
+  };
+
+  it('reads the profile by program_id when given a program uuid', async () => {
+    const { exec, calls } = mockExec({ projectProfile: mdxProject });
+    const c = await resolveEffectiveProjectContext(exec, {
+      organizationId: ORG, programId: PROGRAM,
+    });
+    expect(c.specialization).toBe('ivd_diagnostics');
+    expect(c.specializationSource).toBe('project');
+    const read = calls.find(x => x.sql.includes('project_industry_profiles'))!;
+    expect(read.sql).toContain('program_id = $1');
+    expect(read.args).toEqual([PROGRAM, ORG]);
+  });
+
+  it('reads by project_id when given a project id', async () => {
+    const { exec, calls } = mockExec({ projectProfile: mdxProject });
+    await resolveEffectiveProjectContext(exec, { organizationId: ORG, projectId: PROJECT });
+    const read = calls.find(x => x.sql.includes('project_industry_profiles'))!;
+    expect(read.sql).toContain('project_id = $1');
+    expect(read.args).toEqual([PROJECT, ORG]);
+  });
+
+  it('prefers the project id when both are given, and issues only one read', async () => {
+    const { exec, calls } = mockExec({ projectProfile: mdxProject });
+    await resolveEffectiveProjectContext(exec, {
+      organizationId: ORG, projectId: PROJECT, programId: PROGRAM,
+    });
+    const reads = calls.filter(x => x.sql.includes('project_industry_profiles'));
+    expect(reads).toHaveLength(1);
+    expect(reads[0].sql).toContain('project_id = $1');
+  });
+
+  it('degrades to no project profile on a database predating program_id', async () => {
+    // 42703, not 42P01: the table exists but the column does not. The org profile
+    // should still resolve rather than the whole read failing.
+    const { exec } = mockExec({
+      orgProfile: deviceOrg,
+      throwOn: { match: 'program_id = $1', code: '42703' },
+    });
+    const c = await resolveEffectiveProjectContext(exec, {
+      organizationId: ORG, programId: PROGRAM,
+    });
+    expect(c.specialization).toBe('medical_device');
+    expect(c.specializationSource).toBe('organization');
+  });
+
+  it('does not read any project profile when neither identity is given', async () => {
+    const { exec, calls } = mockExec({ orgProfile: deviceOrg });
+    await resolveEffectiveProjectContext(exec, { organizationId: ORG });
+    expect(calls.some(x => x.sql.includes('project_industry_profiles'))).toBe(false);
+  });
+});
+
 describe('resolveEffectiveProjectContext — never guesses', () => {
   it('asks for the vertical when the organization is a service provider', async () => {
     // A CRO's projects are whatever its sponsors' are. client-type-profiles maps

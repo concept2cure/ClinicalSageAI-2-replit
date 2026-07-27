@@ -109,6 +109,10 @@ const FILES = [
   'migrations/20260730_industry_context_profiles.sql',
   // ALTERs unified_tasks (additive) and creates task_regulatory_links.
   'migrations/20260731_mdx_task_regulatory_context.sql',
+  // ALTERs project_industry_profiles, so it must follow the context profiles
+  // above. Creates regulatory_work_packages and its decision records, both
+  // to_regclass-guarded on regulatory_programs.
+  'migrations/20260801_regulatory_work_packages.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

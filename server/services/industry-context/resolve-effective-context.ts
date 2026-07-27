@@ -111,11 +111,14 @@ async function readLegacyIndustryMode(exec: Exec, organizationId: number): Promi
   return rows[0]?.industry_mode ?? null;
 }
 
+const PROFILE_COLUMNS =
+  `vertical, specialization, product_type, lifecycle_stage, target_markets,
+   regulatory_pathways, filing_types, inherited_from_org, client_workspace_id`;
+
 async function readProjectProfile(exec: Exec, organizationId: number, projectId: number) {
   try {
     const { rows } = await exec.query(
-      `SELECT vertical, specialization, product_type, lifecycle_stage, target_markets,
-              regulatory_pathways, filing_types, inherited_from_org, client_workspace_id
+      `SELECT ${PROFILE_COLUMNS}
          FROM project_industry_profiles
         WHERE project_id = $1 AND organization_id = $2`,
       [projectId, organizationId],
@@ -123,6 +126,35 @@ async function readProjectProfile(exec: Exec, organizationId: number, projectId:
     return rows[0] ?? null;
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') return null;
+    throw err;
+  }
+}
+
+/**
+ * The same profile, addressed by regulatory_programs.id.
+ *
+ * The platform carries two project identities: `projects` (serial), which
+ * unified_tasks and client_workspaces key on, and `regulatory_programs` (uuid),
+ * which the Projects DETAIL cockpit reads and every MDX surface table references.
+ * There is no join between them, and this resolver does not invent one — a
+ * profile is attached to whichever identity the caller holds.
+ *
+ * Tolerates 42703 as well as 42P01: a database carrying the profile table from
+ * before 20260801 has no program_id column, and that should degrade to "no
+ * project profile" rather than failing the cockpit's read.
+ */
+async function readProgramProfile(exec: Exec, organizationId: number, programId: string) {
+  try {
+    const { rows } = await exec.query(
+      `SELECT ${PROFILE_COLUMNS}
+         FROM project_industry_profiles
+        WHERE program_id = $1 AND organization_id = $2`,
+      [programId, organizationId],
+    );
+    return rows[0] ?? null;
+  } catch (err) {
+    const code = (err as { code?: string })?.code;
+    if (code === '42P01' || code === '42703') return null;
     throw err;
   }
 }
@@ -189,15 +221,21 @@ function isVertical(v: unknown): v is Vertical {
 /**
  * Resolve the one effective context for a request.
  *
- * `projectId` and `clientWorkspaceId` are optional: called without them this
- * returns the organization-level context, which is what a landing page or a
- * cross-project report needs.
+ * `projectId`, `programId` and `clientWorkspaceId` are optional: called without
+ * them this returns the organization-level context, which is what a landing page
+ * or a cross-project report needs.
+ *
+ * `programId` addresses the same profile by regulatory_programs.id, for the
+ * Projects detail cockpit. Passing both is allowed and the project id wins, since
+ * it is the identity the task graph and the client workspace hang off; it is not
+ * a state any current caller produces.
  */
 export async function resolveEffectiveProjectContext(
   exec: Exec,
   input: {
     organizationId: number;
     projectId?: number | null;
+    programId?: string | null;
     clientWorkspaceId?: number | null;
     userId?: number | null;
   },
@@ -211,7 +249,9 @@ export async function resolveEffectiveProjectContext(
 
   const projectProfile = input.projectId
     ? await readProjectProfile(exec, organizationId, input.projectId)
-    : null;
+    : input.programId
+      ? await readProgramProfile(exec, organizationId, input.programId)
+      : null;
 
   // ── Primary industry: org profile, else the legacy column, else the default ──
   let primaryIndustry: PrimaryIndustry = LICENSE_DEFAULT_INDUSTRY;
