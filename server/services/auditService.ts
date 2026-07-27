@@ -33,13 +33,36 @@ interface AuditLogEntry {
   tenantId?: string | number;
   userId?: string | number;
   action: string;
-  resourceType: string;
+  /**
+   * What was audited. Optional because `tableName` is an accepted alias for it
+   * (see below) — logAction resolves whichever was supplied and falls back to
+   * 'unknown' only when neither is.
+   */
+  resourceType?: string;
   resourceId?: string | number;
   details?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
   /** Alias accepted by callers that use "organizationId" instead of tenantId */
   organizationId?: string | number;
+  /**
+   * Aliases for callers that name the audited object by its table and row.
+   *
+   * Sixteen call sites across the routes pass `tableName` / `recordId` rather
+   * than `resourceType` / `resourceId`. They were not accepted here and were
+   * not read by logAction, so on every one of those calls the audit row
+   * recorded resourceType 'unknown' and resourceId 'unknown' — the WHAT of a
+   * Part 11 record, silently dropped, while the call itself looked correct at
+   * the call site and compiled everywhere the object was widened to `any`.
+   * (`server/routes/onboarding-proposals.ts` is where it finally surfaced as a
+   * type error, which is how it was found.)
+   *
+   * Accepted and mapped rather than removed: the call sites read naturally and
+   * changing sixteen of them across several in-flight branches would conflict
+   * for no behavioural gain. `resourceType` still wins when both are given.
+   */
+  tableName?: string;
+  recordId?: string | number;
   /** Optional metadata blob — stored in newValues column */
   metadata?: Record<string, any>;
 }
@@ -182,10 +205,19 @@ class AuditService {
 
     // Resolve tenantId from either field name
     const resolvedTenantId = entry.tenantId ?? entry.organizationId;
+    // ...and the audited object from either naming. Without the tableName /
+    // recordId fallbacks these resolved to 'unknown' on every call that used
+    // them, which is most of the data_modify audit trail.
+    const resolvedResourceType = entry.resourceType || entry.tableName || 'unknown';
     const resolvedResourceId =
       entry.resourceId?.toString() ||
+      entry.recordId?.toString() ||
       entry.details?.resourceId?.toString() ||
       'unknown';
+    // Normalised in place so every persistence path below sees the resolved
+    // values rather than each having to repeat the fallback.
+    entry.resourceType = resolvedResourceType;
+    entry.resourceId = resolvedResourceId;
 
     // Always log to structured console for observability
     logger.info(`[AUDIT] ${entry.action} ${entry.resourceType}`, {
