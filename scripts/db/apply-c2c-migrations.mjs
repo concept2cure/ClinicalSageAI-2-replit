@@ -99,6 +99,11 @@ const FILES = [
   // IF NOT EXISTS + intra-cluster FKs only — no dependency on the authoring
   // subsystem, so it is order-independent here. NOT the Part 11 subsystem.
   'db/migrations/20260728_authoring_supplementary_tables.sql',
+  // MAUD validation persistence (G-02): canonical, durable definition of
+  // maud_algorithms / maud_validations / maud_validation_requests. The only prior
+  // CREATE TABLE lived in the ARCHIVED db/migrations/_consolidated/ (excluded from
+  // the schema scanners and off every apply path). Self-contained + idempotent.
+  'db/migrations/20260728_maud_validation_tables.sql',
   // Industry-context tailoring: organization_industry_profiles +
   // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
   // EXISTS, no data statements).
