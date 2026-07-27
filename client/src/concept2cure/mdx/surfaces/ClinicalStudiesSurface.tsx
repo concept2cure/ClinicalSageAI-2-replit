@@ -10,6 +10,17 @@
  * Cross-program surface — a clinical programme commonly runs studies
  * across several submissions, so the list is org-scoped.
  *
+ * ## Applicable study designs (MDX-STUDY-02)
+ *
+ * The surface also adapts the *design* side to the project context: it
+ * resolves the effective specialization (`/api/mdx/effective-context`)
+ * and lists only the study archetypes from the versioned registry
+ * (`/api/mdx/study-archetypes`) that apply to it — an IVD program sees
+ * precision / LoD / method-comparison studies, a device program sees
+ * feasibility / pivotal / HF-validation / PMCF. Selecting an archetype
+ * shows its required sections, endpoints, acceptance criteria, and
+ * filing mappings. Read-first: reference content only, no editor.
+ *
  * ## Data honesty
  *
  * Both the list and the per-study roll-up render through `DataGate`. A
@@ -30,14 +41,22 @@ import {
 import { useRbqm } from '../hooks/useRbqm';
 import { useStudyDesign } from '../hooks/useStudyDesign';
 import { useStudyDetail } from '../hooks/useStudyDetail';
+import {
+  useEffectiveSpecialization,
+  useStudyArchetypes,
+  archetypeQueryForContext,
+  groupArchetypesByDomain,
+  SPECIALIZATION_LABEL,
+} from '../hooks/useStudyArchetypes';
 import { readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 
 export interface ClinicalStudiesSurfaceProps {
-  onAskAna: (text: string, opts?: { tool?: string }) => void;
   /** The project (regulatory_programs UUID) in context, or null for the
-   *  portfolio-wide view. When set, the study list and RBQM narrow to it. */
-  program: Program | null;
+   *  portfolio-wide view. Anchors the design context, and when set narrows
+   *  the study list and RBQM to it; null falls back to org context. */
+  program?: Program | null;
+  onAskAna: (text: string, opts?: { tool?: string }) => void;
 }
 
 /* Map study status to an existing .status-pill modifier (app.css). The
@@ -88,7 +107,7 @@ function enrollmentText(s: StudyRow): string {
   return `${enrolled}/${s.samplePlanned} · ${pct}%`;
 }
 
-export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSurfaceProps) {
+export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStudiesSurfaceProps) {
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
 
   /* Everything on this surface hangs off the project — the
@@ -112,6 +131,33 @@ export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSur
   /* Protocol & study design is project-scoped on the same key, so a study
      opened from the portfolio also shows its project's design records. */
   const design = useStudyDesign(rbqmProgramId);
+
+  /* ── Context-adaptive study designs (MDX-STUDY-02) ──────────────────
+     Resolve the project's specialization, then fetch only the study
+     archetypes applicable to it. The archetype fetch is held (idle)
+     until the context resolves — see archetypeQueryForContext. */
+  const effective = useEffectiveSpecialization(program?.id ?? null);
+  const archetypeQuery = archetypeQueryForContext(effective.context);
+  const registry = useStudyArchetypes(archetypeQuery);
+  const [archetypeId, setArchetypeId] = React.useState<string | null>(null);
+  const archetypeRows = readyRows(registry.archetypes);
+  const selectedArchetype =
+    archetypeRows.find((a) => a.id === archetypeId) ?? null;
+
+  const contextCaption =
+    effective.context.status === 'ready'
+      ? effective.context.data.specialization
+        ? `Adapted to ${SPECIALIZATION_LABEL[effective.context.data.specialization]} (${
+            effective.context.data.source === 'project'
+              ? 'project profile'
+              : effective.context.data.source === 'organization'
+                ? 'organization profile'
+                : 'license default'
+          })`
+        : 'No specialization on file — showing the full registry'
+      : effective.context.status === 'error'
+        ? 'Context unavailable — showing the full registry'
+        : 'Resolving project context…';
 
   return (
     <>
@@ -593,6 +639,127 @@ export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSur
           </div>
         )}
       </section>
+
+      <section className="section">
+        <div className="section-head">
+          <h2>Applicable study designs</h2>
+          <span className="section-sub">
+            {contextCaption}
+            {registry.registryVersion ? ` · registry v${registry.registryVersion}` : ''}
+          </span>
+        </div>
+        <DataGate
+          state={registry.archetypes}
+          label="study archetypes"
+          onRetry={registry.refresh}
+          emptyHint="No study archetypes in the registry apply to this specialization."
+        >
+          {(archetypes) => {
+            const groups = groupArchetypesByDomain(archetypes);
+            return (
+              <div className="ctable">
+                <div className="ctable-head" style={{ gridTemplateColumns: ARCHETYPE_GRID }}>
+                  <div>Study type</div>
+                  <div>Domain</div>
+                  <div>Endpoints</div>
+                  <div>Primary filing mapping</div>
+                </div>
+                {[...groups.device, ...groups.ivd].map((a) => (
+                  <button
+                    key={a.id}
+                    className="ctable-row"
+                    style={{ gridTemplateColumns: ARCHETYPE_GRID, textAlign: 'left', cursor: 'pointer' }}
+                    data-selected={a.id === archetypeId || undefined}
+                    onClick={() => setArchetypeId((cur) => (cur === a.id ? null : a.id))}
+                    type="button"
+                  >
+                    <div>
+                      <div className="ctable-strong">{a.label}</div>
+                      <div style={{ color: 'var(--text-400)', fontSize: 12 }}>
+                        {a.designQuestions.length} design questions · {a.requiredSections.length} required sections
+                      </div>
+                    </div>
+                    <div>{a.domain === 'ivd' ? 'IVD' : 'Device'}</div>
+                    <div className="mono small-mono">{a.endpoints.length}</div>
+                    <div style={{ fontSize: 12 }}>{a.filingMappings[0] ?? '—'}</div>
+                  </button>
+                ))}
+              </div>
+            );
+          }}
+        </DataGate>
+      </section>
+
+      {selectedArchetype && (
+        <section className="section">
+          <div className="section-head">
+            <h2>{selectedArchetype.label} — design requirements</h2>
+            <span className="section-sub">
+              Applies to{' '}
+              {selectedArchetype.applicability
+                .map((s) => SPECIALIZATION_LABEL[s])
+                .join(' · ')}
+            </span>
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: 12,
+            }}
+          >
+            <ArchetypeFacet title="Required sections" items={selectedArchetype.requiredSections} />
+            <ArchetypeFacet title="Endpoints" items={selectedArchetype.endpoints} />
+            <ArchetypeFacet
+              title="Typical acceptance criteria"
+              items={selectedArchetype.typicalAcceptanceCriteria}
+            />
+            <ArchetypeFacet title="Filing mappings" items={selectedArchetype.filingMappings} />
+          </div>
+          <div className="page-actions" style={{ marginTop: 12 }}>
+            <button
+              className="btn ghost small"
+              onClick={() =>
+                onAskAna(
+                  `Draft a study synopsis outline for a ${selectedArchetype.label} study` +
+                    (program ? ` for ${program.title}` : '') +
+                    `, covering its required sections, endpoints, and acceptance criteria.`,
+                )
+              }
+              type="button"
+            >
+              {I.sparkles} Outline this study with AnA
+            </button>
+          </div>
+        </section>
+      )}
     </>
+  );
+}
+
+const ARCHETYPE_GRID = '1.8fr 90px 90px 1.4fr';
+
+/** One facet card of the selected archetype's design requirements. */
+function ArchetypeFacet({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="metric-card" style={{ alignItems: 'stretch' }}>
+      <div className="metric-label">{title}</div>
+      <ul
+        style={{
+          margin: '8px 0 0',
+          paddingLeft: 18,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          fontSize: 12,
+          color: 'var(--text-200)',
+          lineHeight: 1.5,
+        }}
+      >
+        {items.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
