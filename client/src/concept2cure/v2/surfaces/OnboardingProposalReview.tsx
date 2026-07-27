@@ -2,7 +2,15 @@
  * OnboardingProposalReview — the human review + approval gate for AnA's
  * onboarding proposals (P3). Presentational + local edit/approve state; it
  * consumes the shared `shared/types/onboarding-ingest` contract and never talks
- * to the network itself — the host wires `onCommit` to the governed commit call.
+ * to the network itself.
+ *
+ * STATUS: no commit path exists yet. `onCommit` currently has no production
+ * caller — the governed commit is deferred until P2's ingest PERSISTS its
+ * proposals server-side, so the commit can re-read its own record instead of
+ * trusting a client-supplied "approved" + provenance payload (see
+ * docs/architecture/ANA_ONBOARDING_P2P3_SPEC.md). Do not wire this to a write
+ * endpoint that trusts this component's output as proof a human approved
+ * anything: this gate is a UX affordance, not a server-side guarantee.
  *
  * Honesty / Part 11 surfaced in the UI:
  *  - Every proposed value shows its PROVENANCE (source file + page/section) and
@@ -12,7 +20,7 @@
  *  - A human edit is preserved separately from AnA's original extraction so the
  *    audit can show both.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type {
   OnboardingProposalField,
@@ -52,37 +60,61 @@ export function OnboardingProposalReview({
   onCommit,
   onCancel,
 }: OnboardingProposalReviewProps) {
-  // Local, human-controlled state keyed by field id. Seeded from the proposal's
-  // own value/status so re-review is idempotent.
-  const [state, setState] = useState<Record<string, FieldState>>(() => {
-    const seed: Record<string, FieldState> = {};
-    for (const g of groups) for (const f of g.fields) seed[f.id] = { value: f.value ?? '', status: f.status };
-    return seed;
-  });
-  const [reason, setReason] = useState('');
-
   const allFields = useMemo(() => groups.flatMap((g) => g.fields), [groups]);
+
+  /* Proposal-set identity. Field ids are only stable WITHIN one ingest run, so
+     when the host hands us a different set the local review state must reset —
+     otherwise a value reviewed against document A would be committed carrying
+     document B's provenance. */
+  const runKey = useMemo(
+    () => allFields.map((f) => `${f.id}:${f.provenance.file}:${f.provenance.page ?? f.provenance.section ?? ''}`).join('|'),
+    [allFields],
+  );
+
+  const seedState = () => {
+    const seed: Record<string, FieldState> = {};
+    for (const f of allFields) seed[f.id] = { value: f.value ?? '', status: f.status };
+    return seed;
+  };
+
+  // Local, human-controlled state keyed by field id, re-seeded per proposal set.
+  const [state, setState] = useState<Record<string, FieldState>>(seedState);
+  const [reason, setReason] = useState('');
+  const seededFor = useRef(runKey);
+  useEffect(() => {
+    if (seededFor.current !== runKey) {
+      seededFor.current = runKey;
+      setState(seedState());
+      setReason('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runKey]);
   const approvedCount = allFields.filter(
     (f) => state[f.id]?.status === 'approved' && (state[f.id]?.value ?? '').trim().length > 0,
   ).length;
 
+  /* Approval attaches to CONTENT, not to a field: changing a value always drops
+     an existing approval so the human must re-approve what they actually typed.
+     (A rejected field stays rejected — editing it does not resurrect it.) */
   const setValue = (id: string, value: string) =>
     setState((s) => {
       const prev = s[id];
-      // Editing a value marks it edited unless it was already approved/rejected.
-      const status: ProposalStatus =
-        prev?.status === 'approved' || prev?.status === 'rejected' ? prev.status : 'edited';
+      const status: ProposalStatus = prev?.status === 'rejected' ? 'rejected' : 'edited';
       return { ...s, [id]: { value, status } };
     });
   const setStatus = (id: string, status: ProposalStatus) =>
     setState((s) => ({ ...s, [id]: { value: s[id]?.value ?? '', status } }));
 
+  /* Bulk approve is limited to high-confidence, non-rejected fields: it must
+     never silently approve something the human explicitly skipped, nor a
+     low-confidence extraction the UI flagged for their attention. */
+  const bulkApprovable = allFields.filter(
+    (f) => f.confidence >= NEEDS_REVIEW_THRESHOLD && (state[f.id]?.value ?? '').trim().length > 0 && state[f.id]?.status !== 'rejected',
+  );
   const approveAll = () =>
     setState((s) => {
       const next = { ...s };
-      for (const f of allFields) {
-        if ((next[f.id]?.value ?? '').trim().length > 0) next[f.id] = { value: next[f.id].value, status: 'approved' };
-      }
+      for (const f of bulkApprovable) next[f.id] = { value: next[f.id].value, status: 'approved' };
       return next;
     });
 
@@ -99,7 +131,15 @@ export function OnboardingProposalReview({
       .filter((f) => state[f.id]?.status === 'approved' && (state[f.id]?.value ?? '').trim().length > 0)
       .map((f) => {
         const st = state[f.id];
-        return { ...f, value: st.value.trim(), status: 'approved' as const };
+        const value = st.value.trim();
+        // Flag a hand-entered value so downstream never attributes it to the
+        // source document's file/page/confidence (fabricated provenance).
+        return {
+          ...f,
+          value,
+          status: 'approved' as const,
+          humanEdited: value !== (f.extractedValue ?? ''),
+        };
       });
     if (approved.length === 0 || !reasonOk) return;
     onCommit(approved, reason.trim());
@@ -116,8 +156,14 @@ export function OnboardingProposalReview({
             approved fields are written, through the governed audit trail.
           </div>
         </div>
-        <button className="opr-approve-all" type="button" onClick={approveAll} disabled={committing}>
-          {I.check} Approve all filled
+        <button
+          className="opr-approve-all"
+          type="button"
+          onClick={approveAll}
+          disabled={committing || bulkApprovable.length === 0}
+          title="Low-confidence and skipped fields are excluded — review those individually"
+        >
+          {I.check} Approve {bulkApprovable.length} high-confidence
         </button>
       </div>
 

@@ -13,9 +13,14 @@
  *    UI must flag it for the human rather than let it pass quietly.
  *  - Nothing is committed by extraction. A proposal's status walks
  *    proposed -> (edited) -> approved|rejected under HUMAN control; only
- *    `approved` fields are eligible for the governed commit (P3), which writes
- *    through the existing audited org/program/profile routes attributed
- *    "AnA on behalf of <user>".
+ *    `approved` fields are ever eligible for a governed commit.
+ *  - NOTE: no commit path exists yet. A commit endpoint that trusts a
+ *    client-supplied `status:'approved'` + `provenance` can be used to
+ *    manufacture audit evidence for an extraction and approval that never
+ *    happened, so the governed commit is deferred until P2's ingest PERSISTS
+ *    its proposals server-side and the commit re-reads its own record. These
+ *    types describe the client-side review contract; a server must treat an
+ *    incoming payload as a REQUEST, never as proof of human approval.
  *  - Everything is tenant-scoped to the client's workspace; ingest never crosses
  *    client boundaries.
  *
@@ -67,6 +72,15 @@ export interface OnboardingProposalField {
   value: string | null;
   /** AnA's original extraction, preserved even after a human edit (audit trail). */
   extractedValue: string | null;
+  /**
+   * True when `value` is the human's own text, not AnA's extraction. When this
+   * is set, `provenance` describes the document the human REVIEWED — it is NOT
+   * the origin of the value, and an audit must record the value as
+   * human-entered rather than attributing it to the source document. Without
+   * this flag a hand-typed value would inherit the extraction's file, page and
+   * confidence, which is fabricated provenance in a Part 11 record.
+   */
+  humanEdited?: boolean;
   /** Source attribution — required for any non-null proposed value. */
   provenance: ProposalProvenance;
   /** Extraction confidence in [0,1]. */
