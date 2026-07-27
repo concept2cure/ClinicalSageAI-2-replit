@@ -10,7 +10,7 @@
  * human-approval gate the onboarding flow is built on — applying proposals
  * stays a human action through the governed endpoint.
  *
- * @module server/services/onboarding/readiness
+ * @module server/services/onboarding/onboarding-readiness
  */
 
 import { pool } from '../../db';

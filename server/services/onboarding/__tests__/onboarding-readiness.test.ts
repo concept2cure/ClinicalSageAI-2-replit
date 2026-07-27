@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const queryMock = vi.fn();
 vi.mock('../../../db', () => ({ pool: { query: (...a: unknown[]) => queryMock(...a) } }));
 
-const { summarizeOnboardingReadiness } = await import('../readiness');
+const { summarizeOnboardingReadiness } = await import('../onboarding-readiness');
 
 beforeEach(() => {
   // A safe default: anything else in the import chain that touches the pool

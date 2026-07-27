@@ -1406,7 +1406,7 @@ registerToolHandler('summarize_onboarding_readiness', async (_input, ctx) => {
   if (!Number.isFinite(orgId) || orgId <= 0) {
     return 'I need to know which workspace you are in before I can check what setup is outstanding.';
   }
-  const { summarizeOnboardingReadiness } = await import('../onboarding/readiness');
+  const { summarizeOnboardingReadiness } = await import('../onboarding/onboarding-readiness');
   const readiness = await summarizeOnboardingReadiness(orgId);
   return readiness.summary;
 });
