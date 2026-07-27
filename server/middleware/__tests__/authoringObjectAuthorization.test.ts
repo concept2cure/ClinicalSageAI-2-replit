@@ -90,8 +90,24 @@ describe('mandatory authoring object authorization middleware', () => {
     h.query.mockReset();
   });
 
+  it('ignores non-authoring API mutations at the shared /api mount', async () => {
+    const req = request({ method: 'POST', path: '/projects', body: { name: 'Project' } });
+    const res = response();
+    const next = vi.fn();
+
+    await authoringObjectAuthorization(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(h.query).not.toHaveBeenCalled();
+  });
+
   it('allows document creation so the database trigger can seed OWNER and AUTHOR', async () => {
-    const req = request({ method: 'POST', path: '/docs', user: author, body: { title: 'New' } });
+    const req = request({
+      method: 'POST',
+      path: '/authoring/docs',
+      user: author,
+      body: { title: 'New' },
+    });
     const res = response();
     const next = vi.fn();
 
@@ -103,7 +119,11 @@ describe('mandatory authoring object authorization middleware', () => {
 
   it('allows a document author to edit the section', async () => {
     installQueryBehavior({ roles: ['AUTHOR'] });
-    const req = request({ method: 'PATCH', path: `/sections/${SECTION_ID}`, user: author });
+    const req = request({
+      method: 'PATCH',
+      path: `/authoring/sections/${SECTION_ID}`,
+      user: author,
+    });
     const res = response();
     const next = vi.fn();
 
@@ -123,7 +143,7 @@ describe('mandatory authoring object authorization middleware', () => {
     installQueryBehavior({ roles: [] });
     const req = request({
       method: 'PATCH',
-      path: `/sections/${SECTION_ID}`,
+      path: `/authoring/sections/${SECTION_ID}`,
       user: { ...author, id: 'unrelated-user', userId: 'unrelated-user', email: 'unrelated@example.com' },
     });
     const res = response();
@@ -147,7 +167,7 @@ describe('mandatory authoring object authorization middleware', () => {
 
     const commentReq = request({
       method: 'POST',
-      path: `/sections/${SECTION_ID}/comment`,
+      path: `/authoring/sections/${SECTION_ID}/comment`,
       user: reviewer,
     });
     const commentRes = response();
@@ -155,7 +175,11 @@ describe('mandatory authoring object authorization middleware', () => {
     await authoringObjectAuthorization(commentReq, commentRes, commentNext);
     expect(commentNext).toHaveBeenCalledOnce();
 
-    const editReq = request({ method: 'PATCH', path: `/sections/${SECTION_ID}`, user: reviewer });
+    const editReq = request({
+      method: 'PATCH',
+      path: `/authoring/sections/${SECTION_ID}`,
+      user: reviewer,
+    });
     const editRes = response();
     const editNext = vi.fn();
     await authoringObjectAuthorization(editReq, editRes, editNext);
@@ -174,7 +198,7 @@ describe('mandatory authoring object authorization middleware', () => {
 
     const approveReq = request({
       method: 'POST',
-      path: `/sections/${SECTION_ID}/approve`,
+      path: `/authoring/sections/${SECTION_ID}/approve`,
       user: approver,
     });
     const approveRes = response();
@@ -182,7 +206,11 @@ describe('mandatory authoring object authorization middleware', () => {
     await authoringObjectAuthorization(approveReq, approveRes, approveNext);
     expect(approveNext).toHaveBeenCalledOnce();
 
-    const editReq = request({ method: 'DELETE', path: `/sections/${SECTION_ID}`, user: approver });
+    const editReq = request({
+      method: 'DELETE',
+      path: `/authoring/sections/${SECTION_ID}`,
+      user: approver,
+    });
     const editRes = response();
     const editNext = vi.fn();
     await authoringObjectAuthorization(editReq, editRes, editNext);
@@ -192,7 +220,11 @@ describe('mandatory authoring object authorization middleware', () => {
 
   it('blocks content mutation after the document becomes immutable', async () => {
     installQueryBehavior({ status: 'APPROVED', roles: ['OWNER', 'AUTHOR'] });
-    const req = request({ method: 'PATCH', path: `/sections/${SECTION_ID}`, user: author });
+    const req = request({
+      method: 'PATCH',
+      path: `/authoring/sections/${SECTION_ID}`,
+      user: author,
+    });
     const res = response();
     const next = vi.fn();
 
@@ -205,7 +237,11 @@ describe('mandatory authoring object authorization middleware', () => {
 
   it('fails closed with 503 when the permission store cannot be queried', async () => {
     installQueryBehavior({ throwOnPermission: true });
-    const req = request({ method: 'PATCH', path: `/sections/${SECTION_ID}`, user: author });
+    const req = request({
+      method: 'PATCH',
+      path: `/authoring/sections/${SECTION_ID}`,
+      user: author,
+    });
     const res = response();
     const next = vi.fn();
 
@@ -217,7 +253,7 @@ describe('mandatory authoring object authorization middleware', () => {
   });
 
   it('rejects a mutation when verified principal or tenant context is missing', async () => {
-    const req = request({ method: 'PATCH', path: `/sections/${SECTION_ID}` });
+    const req = request({ method: 'PATCH', path: `/authoring/sections/${SECTION_ID}` });
     const res = response();
     const next = vi.fn();
 
@@ -229,7 +265,7 @@ describe('mandatory authoring object authorization middleware', () => {
   });
 
   it('does not impose mutation permission checks on safe reads', async () => {
-    const req = request({ method: 'GET', path: `/sections/${SECTION_ID}` });
+    const req = request({ method: 'GET', path: `/authoring/sections/${SECTION_ID}` });
     const res = response();
     const next = vi.fn();
 
