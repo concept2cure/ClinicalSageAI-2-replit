@@ -233,6 +233,25 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       };
     });
 
+    // ── KNOWN-BAD: cross-tenant CHILD parentage rejected at the DB boundary ──
+    // A raw tenant-2 revision pointing at the tenant-1 section must be rejected
+    // by the composite FK doc_revisions_section_tenant_fkey (P0 #4) — RLS filters
+    // rows by their own tenant, but only this FK stops a child from structurally
+    // straddling two tenants. This is a physical guarantee independent of session
+    // vars, so we assert it directly against the pool.
+    await R.expectBlocked('cross-tenant-child-parentage-rejected-at-db', async () => {
+      try {
+        await jdb.pool.query(
+          `INSERT INTO doc_revisions (id, section_id, content, created_by, tenant_id)
+           VALUES (gen_random_uuid(), $1, 'cross-tenant', 'sys', 2)`,
+          [sectionId],
+        );
+        return { blocked: false };
+      } catch (e) {
+        return { blocked: /foreign key|violates/i.test(String(e)), thrown: String(e).split('\n')[0] };
+      }
+    });
+
     // ── KNOWN-BAD: cross-tenant read → 404, not data ─────────────────────────
     await R.expectBlocked('cross-tenant-document-read', async () => {
       const res = await asUser(OUTSIDER)(request(app).get(`/api/authoring/docs/${docId}`));

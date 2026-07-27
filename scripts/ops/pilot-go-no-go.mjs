@@ -52,7 +52,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import { AUTHORING_SUBSYSTEM_TABLES } from '../db/authoring-subsystem.mjs';
+import { AUTHORING_SUBSYSTEM_TABLES, AUTHORING_SUBSYSTEM_FK_CONSTRAINTS } from '../db/authoring-subsystem.mjs';
 
 dotenv.config({ quiet: true });
 
@@ -235,16 +235,33 @@ async function gateSchema(db) {
   const policies = await db.pool.query('SELECT count(*)::int AS n FROM pg_policies');
   const policyCount = policies.rows[0].n;
 
+  // Tenant-consistent parentage (P0 #4): when the tables are present, the four
+  // composite-FK integrity constraints must be too. A retrofit that left them off
+  // (or a DB provisioned before that migration) is a cross-tenant integrity hole
+  // even though every table "exists" — so it is a NO-GO.
+  let missingFks = [];
+  if (authoringState === 'present') {
+    const cons = await db.pool.query(
+      `SELECT conname FROM pg_constraint WHERE conname = ANY($1::text[])`,
+      [AUTHORING_SUBSYSTEM_FK_CONSTRAINTS],
+    );
+    const haveFks = new Set(cons.rows.map((r) => r.conname));
+    missingFks = AUTHORING_SUBSYSTEM_FK_CONSTRAINTS.filter((c) => !haveFks.has(c));
+  }
+
   const parts = [
     `core tables ${CORE.length - missingCore.length}/${CORE.length}`,
     `authoring subsystem ${authoringState} (${authoringPresent.length}/${AUTHORING_SUBSYSTEM_TABLES.length})`,
+    `tenant-parentage FKs ${AUTHORING_SUBSYSTEM_FK_CONSTRAINTS.length - missingFks.length}/${AUTHORING_SUBSYSTEM_FK_CONSTRAINTS.length}`,
     `RLS policies ${policyCount}`,
   ];
   if (missingCore.length) parts.push(`missing core: ${missingCore.join(', ')}`);
   if (authoringMissing.length) parts.push(`missing authoring: ${authoringMissing.join(', ')}`);
+  if (missingFks.length) parts.push(`missing parentage FKs: ${missingFks.join(', ')}`);
   if (policyCount === 0) parts.push('no RLS policies (pg_policies = 0)');
 
-  const ok = missingCore.length === 0 && authoringState === 'present' && policyCount > 0;
+  const ok =
+    missingCore.length === 0 && authoringState === 'present' && missingFks.length === 0 && policyCount > 0;
   return { status: ok ? 'PASS' : 'FAIL', detail: parts.join('; ') };
 }
 

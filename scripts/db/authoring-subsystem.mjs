@@ -76,6 +76,24 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
 ];
 
 /**
+ * Tenant-consistent parentage (P0 #4): the four composite (parent_id, tenant_id)
+ * → (id, tenant_id) foreign keys the loop-tables migration installs on the
+ * working-content child links. A subsystem whose tables exist WITHOUT these
+ * constraints is not correctly provisioned — RLS filters each row by its own
+ * tenant, but only these FKs stop a child from structurally pointing at another
+ * tenant's parent. server/db/ensureCoreTables.ts holds a synced copy and fails
+ * /readyz closed on their absence; the pilot go/no-go gate checks them too.
+ * Keep in sync with the DO-block in
+ * db/migrations/20260725_authoring_document_loop_tables.sql.
+ */
+export const AUTHORING_SUBSYSTEM_FK_CONSTRAINTS = [
+  'authoring_sections_doc_tenant_fkey',
+  'doc_revisions_section_tenant_fkey',
+  'authoring_comments_section_tenant_fkey',
+  'authoring_citations_section_tenant_fkey',
+];
+
+/**
  * The tenant-isolation policy 0021_enable_rls_everywhere.sql installs, specialized
  * to the authoring tables' `tenant_id` key. Shape is copied verbatim from that
  * migration so the two converge byte-for-byte: shadow-mode bypass when

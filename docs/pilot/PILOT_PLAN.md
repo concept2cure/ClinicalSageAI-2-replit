@@ -198,6 +198,17 @@ same unit can be (re)applied on its own with
 `APPLY_C2C_MIGRATIONS=true npm run db:apply-c2c`. A reprovision is not a
 restore — only the rehearsal above gets data back.
 
+**Retrofit onto a database that already holds authoring rows.** The unit also
+installs composite **tenant-parentage** foreign keys (a child's
+`(parent_id, tenant_id)` must match a real parent of the same tenant). On a
+fresh or empty database these apply cleanly. If a database already holds
+authoring content whose child rows point cross-tenant or dangle, the validated
+`ADD CONSTRAINT` raises and the whole provisioning transaction rolls back
+(fail-closed at provision time). For that case, apply the four FKs `NOT VALID`,
+remediate the offending rows, then `VALIDATE CONSTRAINT` — do **not** ship
+without the constraints present: `/readyz` and go/no-go gate 1 both fail closed
+when the authoring tables exist but their tenant-parentage FKs do not.
+
 ### Revoking access fast
 
 **Read this before you need it.** The obvious levers do not do what their names
