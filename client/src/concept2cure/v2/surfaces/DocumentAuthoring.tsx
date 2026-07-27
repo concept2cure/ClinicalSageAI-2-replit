@@ -227,6 +227,10 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
   // Right rail: revision history, comments, or the section's sources.
   const [rail, setRail] = useState<'history' | 'comments' | 'sources' | null>(null);
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
+  // 'error' is a distinct state on purpose: an empty list because the read
+  // failed and an empty list because there are no revisions are the same value
+  // and opposite facts.
+  const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
   const [comments, setComments] = useState<AuthComment[]>([]);
   const [newComment, setNewComment] = useState('');
 
@@ -293,9 +297,22 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
 
   /* ── Load the right-rail data for the active section on demand ── */
   const loadHistory = useCallback(async (sectionId: string) => {
-    const { body } = await readJson<{ revisions?: AuthRevision[] }>(
+    // `ok` is honoured because a read FAILURE must never be rendered as an
+    // assertion about the record. This destructured only `body`, so a 500 —
+    // which this endpoint returned on every single call while its join was
+    // `u.id = r.created_by::uuid` (integer = uuid, 42883 at parse time) —
+    // produced an empty array and the rail said "No prior revisions". An
+    // author who had saved five times was told her edits were never versioned,
+    // and a reviewer was told the section had never changed.
+    const { ok, body } = await readJson<{ revisions?: AuthRevision[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`,
     );
+    if (!ok) {
+      setRevisionsState('error');
+      setRevisions([]);
+      return;
+    }
+    setRevisionsState('ready');
     setRevisions(Array.isArray(body?.revisions) ? body!.revisions! : []);
   }, []);
 
@@ -641,9 +658,12 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
           <div className="ed-comments-h">Revision history</div>
           {!activeSection ? (
             <EmptyState icon={I.clock} title="No section selected" hint="Select a section to see its revision history." />
+          ) : revisionsState === 'error' ? (
+            <EmptyState icon={I.alertTriangle} title="Revision history unavailable"
+              hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions." />
           ) : revisions.length === 0 ? (
             <EmptyState icon={I.clock} title="No prior revisions"
-              hint="Each save snapshots the previous content here, so you can compare and revert." />
+              hint="Each save records the new content here under its author, so you can compare and revert." />
           ) : (
             revisions.map((r) => (
               <div key={r.id} className="cmt">
