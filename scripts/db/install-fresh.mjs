@@ -17,9 +17,19 @@
  *      ONLY in raw migrations and are NOT in shared/schema.ts — regulatory_programs,
  *      c2c_documents/sections/rule_packs, c2c_ana_*, submission-ops, … Without
  *      this the real routes read absent tables and the UI shows "Sample data".
- *   4. Apply the RLS-bearing raw migrations in their required order, tracking
+ *   4. Provision the authoring subsystem (the four db/migrations/20260725_authoring_*
+ *      files) as one atomic unit. These back the flagship IND authoring loop and
+ *      had NO durable provisioning path — see scripts/db/authoring-subsystem.mjs.
+ *   5. Apply the RLS-bearing raw migrations in their required order, tracking
  *      applied files in an _install_applied_migrations ledger.
- *   5. Verify: table count, pg_policies count, and that the core route tables exist.
+ *   6. Verify: table count, pg_policies count, and that the core route tables +
+ *      the authoring subsystem exist.
+ *
+ * The authoring subsystem in step 4 is the ONE db/migrations/ exception run
+ * here. It is included precisely because it is NOT part of the *_gcc_* tree
+ * below: its tables carry integer tenant_id (the app tenant model) and it adds
+ * no RLS of its own, so it composes cleanly with the RLS rollout — unlike the
+ * uuid-keyed governed-content tree.
  *
  * SEPARATE, NOT run here: the governed-content tree db/migrations/*_gcc_*.sql
  * (named `audit` schema, Part-11 tables, its own RLS). Those files are
@@ -43,6 +53,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import {
+  applyAuthoringSubsystem,
+  AUTHORING_SUBSYSTEM_TABLES,
+} from './authoring-subsystem.mjs';
 
 dotenv.config();
 
@@ -215,7 +229,19 @@ async function main() {
     console.log(`  ✓ overlay complete: ${applied} applied, ${present} already-present from push`);
   });
 
-  await step('4/5 Row-Level Security policies (raw migrations)', async () => {
+  await step('4/6 Authoring subsystem (Part-11 unit)', async () => {
+    // The four db/migrations/20260725_authoring_* files back the flagship IND
+    // authoring loop and, until now, had NO durable provisioning path — the
+    // root overlay above only touches migrations/, and the *_gcc_* psql loop
+    // never matched them. They apply here as ONE atomic unit (all four or none)
+    // so the loop tables never stand up freeze/e-sign without their audit and
+    // signature companions. See scripts/db/authoring-subsystem.mjs.
+    await applyAuthoringSubsystem(pool, path.resolve(__dirname, '..', '..'), {
+      log: (m) => console.log(m),
+    });
+  });
+
+  await step('5/6 Row-Level Security policies (raw migrations)', async () => {
     // The RLS rollout (0021) hard-fails if ANY tenant column is still text.
     // 0020 coerces a fixed list, but the raw overlay adds tables (e.g.
     // adverse_events) with a text organization_id that predate that list. On a
@@ -298,7 +324,7 @@ async function main() {
     }
   });
 
-  await step('5/5 Verify', async () => {
+  await step('6/6 Verify', async () => {
     const tables = await pool.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`,
     );
@@ -332,6 +358,26 @@ async function main() {
         `core product tables missing (routes would read absent tables → UI shows sample data): ${missingCore.join(', ')}`,
       );
     }
+
+    // Authoring subsystem — the exact contract /readyz enforces at boot
+    // (server/db/ensureCoreTables.ts). Absent OR partial here means the install
+    // did not stand the subsystem up as a unit; fail loudly rather than ship a
+    // database whose authoring routes throw while readiness would report red.
+    const authoring = await pool.query(
+      `SELECT t AS name, to_regclass('public.' || t) IS NOT NULL AS present
+         FROM unnest($1::text[]) AS t`,
+      [AUTHORING_SUBSYSTEM_TABLES],
+    );
+    const missingAuthoring = authoring.rows.filter((r) => !r.present).map((r) => r.name);
+    console.log(
+      `  authoring subsystem: ${AUTHORING_SUBSYSTEM_TABLES.length - missingAuthoring.length}/${AUTHORING_SUBSYSTEM_TABLES.length} tables present`,
+    );
+    if (missingAuthoring.length) {
+      throw new Error(
+        `authoring subsystem incomplete (authoring routes would throw; /readyz would fail closed): missing ${missingAuthoring.join(', ')}`,
+      );
+    }
+
     console.log('\n✅ Application schema install complete.');
     console.log('   Next:');
     console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');

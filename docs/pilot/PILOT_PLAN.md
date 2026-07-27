@@ -50,7 +50,7 @@ here is a date change, not a waiver.
 
 | # | Gate | Proof |
 | --- | --- | --- |
-| 1 | `npm run pilot:go-no-go` returns **GO** | Verdict line reads `VERDICT: GO`; exit code 0. Five HARD gates green: schema provisioned, no known-password demo admin, boot secrets present, SMTP/login-OTP configured, RLS posture. |
+| 1 | `npm run pilot:go-no-go` returns **GO** | Verdict line reads `VERDICT: GO`; exit code 0. Five HARD gates green: schema provisioned (core tables **and the authoring subsystem present as a unit** — a partial subsystem is a NO-GO), no known-password demo admin, boot secrets present, SMTP/login-OTP configured, RLS posture. |
 | 2 | **A real OTP reaches both external inboxes** | `npm run pilot:verify-otp -- <addr>` run **twice** — once to a Gmail address, once to an Outlook address — and the code is read out of each inbox by a human. Configuration present ≠ mail delivered; the script says so itself. |
 | 3 | **`RLS_ENFORCE=on`, cross-tenant read returns zero rows** | Restart with the flag on; execute one read from org A against org B's data; record the zero-row result with a timestamp. |
 | 4 | **No known-password demo admin** | `SEED_DEMO_USER=false`; the row confirmed absent by direct query, not by config inspection. |
@@ -184,12 +184,19 @@ Completed and written down **before the first tester signs in**:
 
 1. Neon **PITR / branching confirmed on** for the pilot database.
 2. One real **`pg_dump`** taken, stored off the pilot host, restore target identified.
-3. One **restore into a scratch Neon branch**, executed and verified against table and RLS-policy counts — the same counts the installer verifies (687 tables · 557 RLS policies · 5/5 core tables on a clean install).
+3. One **restore into a scratch Neon branch**, executed and verified against table and RLS-policy counts — the same counts the installer verifies (hundreds of tables · hundreds of RLS policies · core route tables · **10/10 authoring-subsystem tables** on a clean install).
 4. Both operations **timed**. The recovery-time number is a fact we know, not one we estimate during an incident.
 
 Reprovisioning from empty is a single command —
 `DATABASE_URL=… node scripts/db/install-fresh.mjs`, idempotent and safe to
-re-run — but a reprovision is not a restore. Only the rehearsal above gets data back.
+re-run. It provisions the app schema, the RLS policies, **and the authoring
+subsystem as an atomic unit** (the four `db/migrations/20260725_authoring_*`
+files — the flagship IND loop that no path provisioned before); the installer's
+final step fails loudly if any of those ten tables is absent, so a half-built
+authoring surface can never ship green. On an already-provisioned database the
+same unit can be (re)applied on its own with
+`APPLY_C2C_MIGRATIONS=true npm run db:apply-c2c`. A reprovision is not a
+restore — only the rehearsal above gets data back.
 
 ### Revoking access fast
 
