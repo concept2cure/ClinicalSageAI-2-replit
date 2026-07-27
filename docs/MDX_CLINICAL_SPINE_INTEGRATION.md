@@ -37,15 +37,34 @@ do not join to them for clinical work:
 | --- | --- | --- | --- |
 | Clinical study conduct | `clinical_studies` | **`program_id` uuid** | Child tables (`clinical_study_sites/deviations/aes/endpoints`) FK to `clinical_studies.id` (int). |
 | RBQM | `rbm_*` (`rbm_risk_assessments`, `_risk_items`, `_kris`, `_qtls`, `_signals`, `_site_risk_scores`, `_patient_profiles`, `_monitoring_plans`) | **`program_id` uuid** | Site risk reads a separate `site_intel` silo, not `clinical_study_sites`. |
-| Study design (CDISC PRM) | `cdisc_prm_studies` | **none** | Keyed by its own `study_id` text + `tenant_id`. `programId` is coerced into a `protocol_id` varchar. Consumed by the v2 `BiostatWorkbench`, not MDX. |
+| Study design (CDISC PRM) | `cdisc_prm_studies` | **`program_id` uuid** *(added)* | Was keyed only by `study_id` text + `tenant_id`; now carries the canonical project key, populated on persist and backfilled from `protocol_id` where that held a UUID. |
 | Protocol authoring | `protocol_documents` | **none directly** | Reaches a project *transitively* via `linked_protocol_id → clinical_studies.id → clinical_studies.program_id` (a soft polymorphic ref). |
 
-So RBQM and clinical studies already share the project key; the protocol
-and study-design tables do not.
+RBQM and clinical studies share the project key natively; the study-design
+table now carries it too (see below).
 
-## What is built now (this PR)
+## Connecting study design to the project (built)
 
-RBQM flows into the MDX **Clinical studies** workstream, project-scoped:
+`cdisc_prm_studies` now carries `program_id` (the canonical project key):
+
+- **Schema + migration** — `program_id uuid` column and index added
+  (`migrations/20260727_prm_program_link.sql`). Additive and nullable, so
+  existing rows and the v2 `BiostatWorkbench` persist path keep working.
+- **Populate on persist** — `studyDesignToRows` writes `program_id` from
+  the design's `programId`, but **only when it is a UUID**; a non-UUID
+  reference stays in `protocol_id` and `program_id` is left null rather
+  than writing a bad project link into a uuid column. Backfill promotes
+  existing `protocol_id` values that are already UUIDs.
+- **Project-filtered read** — `GET /api/study-design?program_id=<uuid>`;
+  an invalid filter matches nothing rather than widening to the tenant.
+- **Surfaced in MDX** — a read-first "Protocol and study design" zone on
+  the Clinical studies workstream (`useStudyDesign`), project-scoped on
+  the same key as the study list and the RBQM zone.
+
+## What is built now (this PR stack)
+
+The MDX **Clinical studies** workstream now carries a project's design,
+conduct and monitoring on one key:
 
 - The Clinical studies surface takes the shell's `program` and narrows
   its list to `program_id`; without a project it stays the portfolio.
@@ -61,25 +80,20 @@ RBQM flows into the MDX **Clinical studies** workstream, project-scoped:
 Everything renders through `DataGate`: no project selected → `idle`; a
 project with no RBM data → its honest zeros, never a fabricated posture.
 
-## What still needs a schema change (next PR — security review)
+- A **Protocol and study design** zone consumes
+  `GET /api/study-design?program_id=<uuid>` for the project, on the same
+  key, so design sits beside conduct and monitoring on one screen.
 
-To make **protocol and study design** connect to a project the same way:
+## Follow-ups still open
 
-1. **Add the project key to the design tables.** Add `program_id uuid`
-   (and `organization_id`) to `cdisc_prm_studies`, populated on persist
-   from `design.programId` (`study-design-repository.ts`). Backfill
-   existing rows where `protocol_id` already holds a UUID. This is the
-   single change that makes study design project-connected.
-2. **Expose a project-filtered read** — `GET /api/study-design?program_id=`
-   (its routes currently return bare objects, not the `{data}` envelope;
-   an MDX consumer should adapt for that).
-3. **Prefer the existing transitive link where it fits.**
-   `protocol_documents.linked_protocol_id → clinical_studies.id` already
-   reaches `program_id`; a protocol-authoring view can key off the
-   selected study without new columns.
-4. **Then surface it** — a "Protocol & study design" zone on the MDX
-   Clinical studies workstream, read-first via `DataGate`, same pattern
-   as the RBQM zone.
+- **`protocol_documents` (protocol authoring)** still has no direct
+  project key; it reaches one only transitively via
+  `linked_protocol_id → clinical_studies.id → program_id`. If that table
+  (rather than `cdisc_prm_studies`) is the intended authoring source for a
+  given surface, either add `program_id` there too or key a view off the
+  selected study. Not done here because the CDISC PRM table is the one the
+  `/api/study-design` routes read.
+- The **deeper RBQM ↔ conduct site gap** below is engine-side and remains.
 
 ## The deeper RBQM ↔ conduct gap (worth flagging)
 

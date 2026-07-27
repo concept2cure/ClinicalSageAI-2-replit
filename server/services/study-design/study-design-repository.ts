@@ -20,7 +20,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { cdiscPrmStudies, cdiscPrmStudyArms, cdiscPrmEndpoints } from 'shared/schema';
 import type {
@@ -50,6 +50,9 @@ export interface PersistContext {
 export interface StudyDesignRows {
   study: {
     studyId: string;
+    /** Canonical project key (regulatory_programs.id), or null when the
+     *  design's programId is absent or not a UUID. */
+    programId: string | null;
     protocolId: string;
     protocolTitle: string;
     protocolVersion: string;
@@ -136,6 +139,13 @@ function perArmSubjects(design: StudyDesign, index: number): number | null {
   return Math.round((total * ratio[index]) / denom);
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True when a value is a canonical project id (regulatory_programs UUID). */
+export function isUuid(value: unknown): boolean {
+  return typeof value === 'string' && UUID_RE.test(value);
+}
+
 /**
  * Map a structured design to its PRM rows. Pure: the full design lives in
  * `study.metadata.design`, and the columns are projections for query/export.
@@ -149,6 +159,10 @@ export function studyDesignToRows(design: StudyDesign, ctx: PersistContext): Stu
 
   const study: StudyDesignRows['study'] = {
     studyId,
+    // Promote programId to the canonical project column only when it is a
+    // UUID; a non-UUID value stays in protocol_id and program_id is left
+    // null rather than writing a bad project link into a uuid column.
+    programId: isUuid(design.programId) ? String(design.programId) : null,
     protocolId: design.programId?.toString() || studyId,
     protocolTitle: design.title,
     protocolVersion: String(design.version ?? 1),
@@ -220,12 +234,13 @@ export async function persistStudyDesignTx(
 
   await client.query(
     `INSERT INTO cdisc_prm_studies
-       (tenant_id, study_id, protocol_id, protocol_title, protocol_version, study_phase,
+       (tenant_id, study_id, program_id, protocol_id, protocol_title, protocol_version, study_phase,
         study_type, therapeutic_area, indication, primary_objective, secondary_objectives,
         study_design, blinding_schema, randomization, population_description,
         planned_subjects, protocol_status, metadata, created_by, last_modified_by, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$19, now())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$20, now())
      ON CONFLICT (study_id) DO UPDATE SET
+        program_id = EXCLUDED.program_id,
         protocol_title = EXCLUDED.protocol_title,
         protocol_version = EXCLUDED.protocol_version,
         study_phase = EXCLUDED.study_phase,
@@ -242,7 +257,7 @@ export async function persistStudyDesignTx(
         last_modified_by = EXCLUDED.last_modified_by,
         updated_at = now()`,
     [
-      ctx.tenantId, s.studyId, s.protocolId, s.protocolTitle, s.protocolVersion, s.studyPhase,
+      ctx.tenantId, s.studyId, s.programId, s.protocolId, s.protocolTitle, s.protocolVersion, s.studyPhase,
       s.studyType, s.therapeuticArea, s.indication, s.primaryObjective, j(s.secondaryObjectives),
       s.studyDesign, s.blindingSchema, j(s.randomization), s.populationDescription,
       s.plannedSubjects, s.protocolStatus, j(s.metadata), String(ctx.userId),
@@ -290,6 +305,8 @@ export async function persistStudyDesignTx(
 /** A list-row summary of a persisted design. */
 export interface StudyDesignSummary {
   studyId: string;
+  /** Canonical project key, or null when this design is not linked to one. */
+  programId: string | null;
   title: string;
   phase: string;
   indication: string;
@@ -316,17 +333,30 @@ export async function loadStudyDesign(
 /** List persisted designs for a tenant, most-recently-updated first. */
 export async function listStudyDesigns(
   tenantId: number,
-  opts: { limit?: number; offset?: number } = {},
+  opts: { limit?: number; offset?: number; programId?: string } = {},
 ): Promise<StudyDesignSummary[]> {
+  // Narrow to one project when a valid programId is given. An invalid one
+  // matches nothing rather than falling back to the whole tenant, so a
+  // malformed filter can never widen the result set.
+  const where =
+    opts.programId !== undefined
+      ? and(
+          eq(cdiscPrmStudies.tenantId, tenantId),
+          isUuid(opts.programId)
+            ? eq(cdiscPrmStudies.programId, opts.programId)
+            : sql`false`,
+        )
+      : eq(cdiscPrmStudies.tenantId, tenantId);
   const rows = await db
     .select()
     .from(cdiscPrmStudies)
-    .where(eq(cdiscPrmStudies.tenantId, tenantId))
+    .where(where)
     .orderBy(desc(cdiscPrmStudies.updatedAt))
     .limit(Math.min(opts.limit ?? 50, 200))
     .offset(opts.offset ?? 0);
   return rows.map(r => ({
     studyId: r.studyId,
+    programId: r.programId ?? null,
     title: r.protocolTitle,
     phase: r.studyPhase ?? '',
     indication: r.indication ?? '',

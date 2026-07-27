@@ -12550,6 +12550,11 @@ export const cdiscPrmStudies = pgTable(
       .notNull()
       .references(() => organizations.id),
     studyId: varchar('study_id', { length: 100 }).notNull().unique(),
+    // Canonical project key (regulatory_programs.id) — shared with
+    // clinical_studies and rbm_*. Nullable: populated on persist from a
+    // design's programId when it is a UUID. Bare uuid, no FK, matching the
+    // clinical-spine convention.
+    programId: uuid('program_id'),
     protocolId: varchar('protocol_id', { length: 100 }).notNull(),
     protocolTitle: text('protocol_title').notNull(),
     protocolVersion: varchar('protocol_version', { length: 20 }).notNull(),
@@ -12578,6 +12583,7 @@ export const cdiscPrmStudies = pgTable(
   table => ({
     tenantStudyIdx: uniqueIndex('prm_tenant_study_idx').on(table.tenantId, table.studyId),
     protocolIdx: index('prm_protocol_idx').on(table.protocolId),
+    programIdx: index('prm_program_idx').on(table.programId),
     phaseIdx: index('prm_phase_idx').on(table.studyPhase),
   })
 );

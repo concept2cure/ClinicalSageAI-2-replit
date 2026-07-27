@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   studyDesignToRows,
   rowsToStudyDesign,
+  isUuid,
   STUDY_DESIGN_META_KIND,
 } from '../study-design-repository';
 import { extractEffectObservation } from '../csr-evidence-source';
@@ -97,6 +98,36 @@ describe('studyDesignToRows / rowsToStudyDesign', () => {
   it('returns null for a row that is not a design spine', () => {
     expect(rowsToStudyDesign({ studyId: 'x', metadata: { kind: 'something-else' } })).toBeNull();
     expect(rowsToStudyDesign({ studyId: 'x', metadata: null })).toBeNull();
+  });
+
+  it('promotes a UUID programId to the canonical project column', () => {
+    const uuid = '11111111-2222-3333-4444-555555555555';
+    const rows = studyDesignToRows(design({ programId: uuid }), { tenantId: 1, userId: 7 });
+    expect(rows.study.programId).toBe(uuid);
+    // protocol_id keeps the original value for backward compatibility.
+    expect(rows.study.protocolId).toBe(uuid);
+  });
+
+  it('leaves program_id null when programId is not a UUID, without dropping protocol_id', () => {
+    const rows = studyDesignToRows(design({ programId: 'legacy-program-42' }), { tenantId: 1, userId: 7 });
+    expect(rows.study.programId).toBeNull();
+    // a non-UUID project reference must not be written into the uuid column…
+    expect(rows.study.protocolId).toBe('legacy-program-42'); // …but is preserved here
+  });
+
+  it('leaves program_id null when no programId is supplied', () => {
+    const rows = studyDesignToRows(design(), { tenantId: 1, userId: 7 });
+    expect(rows.study.programId).toBeNull();
+  });
+});
+
+describe('isUuid', () => {
+  it('accepts a canonical UUID and rejects everything else', () => {
+    expect(isUuid('11111111-2222-3333-4444-555555555555')).toBe(true);
+    expect(isUuid('legacy-program-42')).toBe(false);
+    expect(isUuid('')).toBe(false);
+    expect(isUuid(undefined)).toBe(false);
+    expect(isUuid(12345)).toBe(false);
   });
 });
 
