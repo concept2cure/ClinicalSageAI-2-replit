@@ -48,14 +48,31 @@ function getUserId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Roles permitted to change what regulatory instruments the workspace offers. */
+/**
+ * Roles permitted to change what regulatory instruments the workspace offers.
+ *
+ * Checked here rather than with the shared requireRole middleware, deliberately.
+ * `server/middleware/auth` has a .js shadow that the repo allowlists on purpose
+ * ("diverged legacy middleware; prod bundles it for ~26 .ts routes"), and the two
+ * implementations have INCOMPATIBLE SIGNATURES: the .ts twin takes varargs
+ * (...allowedRoles), the .js one takes a single requiredRole and silently ignores
+ * the rest. So `requireRole('owner', 'admin', 'org_admin', 'super_admin')`
+ * degrades to checking only 'owner' depending on which module the import
+ * specifier resolves to — and an extensionless import resolves differently under
+ * vitest than under the production bundle. A test proved this: org_admin got 403.
+ *
+ * An authorization decision must not depend on which twin a bundler picked, so
+ * this route makes the check explicit and local. Exact match, no case folding —
+ * folding would make this route MORE permissive than the rest of the platform,
+ * which is the wrong direction for an authorization decision.
+ */
 const PROFILE_ADMIN_ROLES = new Set(['owner', 'admin', 'org_admin', 'super_admin']);
 
-function userRoles(req: Request): string[] {
+function isProfileAdmin(req: Request): boolean {
   const u = (req as any).user ?? {};
-  const raw = u.roles ?? u.role ?? [];
-  const list = Array.isArray(raw) ? raw : [raw];
-  return list.filter((r: unknown): r is string => typeof r === 'string').map(r => r.toLowerCase());
+  const raw = u.roles ?? (u.role !== undefined ? [u.role] : []);
+  const list: unknown[] = Array.isArray(raw) ? raw : [raw];
+  return list.some(r => typeof r === 'string' && PROFILE_ADMIN_ROLES.has(r));
 }
 
 const APPROVAL_RIGOR = [
@@ -177,9 +194,9 @@ router.patch('/industry-profile', async (req, res) => {
   if (userId === null) return clientError(res, 401, 'An authenticated user is required');
 
   // Changing this changes which regulatory instruments every project in the
-  // organization is offered, so it is not an ordinary settings write.
-  const roles = userRoles(req);
-  if (!roles.some(r => PROFILE_ADMIN_ROLES.has(r))) {
+  // organization is offered, so it is not an ordinary settings write. Checked
+  // before the body is read, so a refused caller never reaches validation.
+  if (!isProfileAdmin(req)) {
     return clientError(res, 403,
       'Changing the organization industry profile requires an organization administrator role.');
   }

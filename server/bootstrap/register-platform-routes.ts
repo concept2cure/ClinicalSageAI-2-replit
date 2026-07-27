@@ -15,13 +15,18 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
   // global /api auth gate runs first (auth + admin role enforced
   // by the router itself). Returns the security self-test report
   // on demand for ops dashboards and SOC tooling.
-  app.use('/api/admin', adminSecurityRouter);
-
-  // Governed industry profile — the org-level setting that presets the one
-  // self-tailoring workspace, plus the resolved effective context every surface
-  // reads. Same /api/admin prefix so the global auth gate runs first; the router
-  // enforces the organization-administrator role itself. Adds no navigation.
-  app.use('/api/admin', adminIndustryProfileRouter);
+  //
+  // Both routers share ONE app.use for the prefix rather than mounting it twice.
+  // The route-mount audit counts duplicate prefix mounts as sprawl, and it is
+  // right to: two mount sites for one prefix is how ordering surprises get in.
+  // Express takes multiple handlers per use(), so adding a router here does not
+  // need a new mount.
+  //
+  // adminIndustryProfileRouter is the governed industry profile — the org-level
+  // setting that presets the one self-tailoring workspace, plus the resolved
+  // effective context every surface reads. It enforces the
+  // organization-administrator role itself. Adds no navigation.
+  app.use('/api/admin', adminSecurityRouter, adminIndustryProfileRouter);
 
   app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
   app.get('/readyz', async (_req, res) => {
