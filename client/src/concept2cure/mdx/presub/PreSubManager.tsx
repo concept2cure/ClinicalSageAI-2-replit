@@ -21,6 +21,7 @@ import {
   type DossierLink,
 } from '../data/presub';
 import { usePresubList, usePresubDetail } from '../hooks/usePresub';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 interface PreSubTypeChipProps {
   type: PresubTypeId;
@@ -346,8 +347,8 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
      during the initial fetch so the surface doesn't flash empty. When the
      live list returns zero rows, the empty state below renders accurately. */
   const live = usePresubList();
-  const sourceList: PresubListRow[] = live.list ?? PRESUB_LIST;
-  const sourceKpis = live.kpis ?? PRESUB_KPIS;
+  const sourceList: PresubListRow[] = useSampleRows(live.list, PRESUB_LIST);
+  const sourceKpis = useSampleRows(live.kpis, PRESUB_KPIS);
 
   const filtered = sourceList
     .filter(r => {

@@ -25,6 +25,7 @@ import { ANL_DOC_FRAMEWORKS, ANL_DOCUMENTS } from '../data/analytics-docs';
 import { useAnalytics, type AnalyticsPathway } from '../hooks/useAnalytics';
 import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface AnalyticsSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
@@ -40,12 +41,12 @@ const PATHWAYS: ReadonlyArray<{ id: AnalyticsPathway; label: string }> = [
 export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
   const [pathway, setPathway] = React.useState<AnalyticsPathway>('all');
   const live = useAnalytics(pathway);
-  const kpis = live.kpis ?? ANL_KPIS;
-  const phases = live.phases ?? ANL_CYCLE_PHASES;
-  const blockers = live.blockers ?? ANL_BLOCKERS;
-  const reviewers = live.reviewers ?? ANL_REVIEWERS;
-  const usage = live.anaUsage ?? ANL_ANA_USAGE;
-  const pace = live.pace24m ?? ANL_PACE_24M;
+  const kpis = useSampleRows(live.kpis, ANL_KPIS);
+  const phases = useSampleRows(live.phases, ANL_CYCLE_PHASES);
+  const blockers = useSampleRows(live.blockers, ANL_BLOCKERS);
+  const reviewers = useSampleRows(live.reviewers, ANL_REVIEWERS);
+  const usage = useSampleRows(live.anaUsage, ANL_ANA_USAGE);
+  const pace = useSampleRows(live.pace24m, ANL_PACE_24M);
   const documents = ANL_DOCUMENTS as unknown as KitDocument[];
   const frameworks = ANL_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 

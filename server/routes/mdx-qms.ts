@@ -134,6 +134,148 @@ function buildCreateMetadata(p: z.infer<typeof docCreate>): Record<string, unkno
   return Object.keys(meta).length > 0 ? meta : null;
 }
 
+/* ─── GET /api/mdx/qms/readiness ──────────────────────────────────────
+   One compact quality-system readiness block for the MDX device shell.
+
+   Every endpoint in this file was already consumed — but by
+   client/src/concept2cure/quality/*, a different application from the
+   MDX shell where device teams actually work a submission. A team could
+   not see whether its suppliers were qualified, whether required
+   training was current, or which audit findings threatened readiness
+   without leaving for another app (docs/MDX_SURFACE_COVERAGE_FINDING.md).
+
+   This endpoint derives counts only — it introduces no new writable
+   surface and reuses the same tables the /qms/* CRUD above owns. All
+   figures are organization-scoped and say so in meta.scope: the QMS is
+   an org-level system (21 CFR 820 / QMSR does not run per submission),
+   so labelling this per-programme would be the same header-vs-panel lie
+   the MDX surfaces just had removed.
+
+   Each block degrades independently on a missing table (42P01 —
+   pre-migration tenants) to zeroed counts with `available: false`,
+   never a 500 that blanks the panel. `available: false` matters: a
+   tenant with no QMS tables must render "not tracked here yet", not
+   "0 overdue" — a zero from an absent system reads as an all-clear. */
+
+router.get('/qms/readiness', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+
+  /** Run one block's query; absent table → null (block unavailable). */
+  const block = async <T extends Record<string, unknown>>(
+    name: string,
+    sql: string,
+  ): Promise<T | null> => {
+    try {
+      const { rows } = await pool.query(sql, [orgId]);
+      return (rows[0] as T) ?? null;
+    } catch (err) {
+      if ((err as { code?: string })?.code !== '42P01') {
+        log.warn(`qms readiness block ${name} failed`, {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+      return null;
+    }
+  };
+
+  try {
+    const [docs, suppliers, training, audits, nonconforming] = await Promise.all([
+      /* Controlled documents: effective set, and how many of those are
+         past their scheduled periodic review. Drafts are counted so the
+         panel can show work-in-flight, but only overdue reviews are a
+         readiness problem. */
+      block<{ effective: number; review_overdue: number; draft: number }>(
+        'documents',
+        `SELECT
+            COUNT(*) FILTER (WHERE status = 'effective')::int AS effective,
+            COUNT(*) FILTER (WHERE status = 'effective'
+                               AND next_review_date IS NOT NULL
+                               AND next_review_date < CURRENT_DATE)::int AS review_overdue,
+            COUNT(*) FILTER (WHERE status IN ('draft','in_review'))::int AS draft
+           FROM qms_documents
+          WHERE organization_id = $1 AND deleted_at IS NULL`,
+      ),
+      /* Suppliers: the two readiness killers are an unapproved critical
+         supplier and an overdue supplier audit. */
+      block<{ total: number; critical_unapproved: number; audit_overdue: number }>(
+        'suppliers',
+        `SELECT
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE criticality = 'critical'
+                               AND approval_status IS DISTINCT FROM 'approved')::int
+              AS critical_unapproved,
+            COUNT(*) FILTER (WHERE next_audit_date IS NOT NULL
+                               AND next_audit_date < CURRENT_DATE)::int AS audit_overdue
+           FROM qms_suppliers
+          WHERE organization_id = $1 AND deleted_at IS NULL`,
+      ),
+      /* Training: expired acknowledgments. No invented "compliance %"
+         — the tables cannot say who *should* have trained on what, only
+         which existing acknowledgments have lapsed. */
+      block<{ acknowledged: number; expired: number }>(
+        'training',
+        `SELECT
+            COUNT(*)::int AS acknowledged,
+            COUNT(*) FILTER (WHERE expires_at IS NOT NULL AND expires_at < NOW())::int
+              AS expired
+           FROM qms_training_records
+          WHERE organization_id = $1`,
+      ),
+      /* Internal audits: what is still open, and the major findings on
+         those open audits — the ones a QMSR inspection would ask about
+         first. */
+      block<{ open: number; open_major_findings: number }>(
+        'audits',
+        `SELECT
+            COUNT(*) FILTER (WHERE status IS DISTINCT FROM 'completed')::int AS open,
+            COALESCE(SUM(major_findings)
+              FILTER (WHERE status IS DISTINCT FROM 'completed'), 0)::int
+              AS open_major_findings
+           FROM qms_internal_audits
+          WHERE organization_id = $1`,
+      ),
+      /* Non-conforming product: undispositioned is the state in which
+         non-conforming stock can still ship. */
+      block<{ undispositioned: number }>(
+        'nonconforming',
+        `SELECT COUNT(*) FILTER (WHERE disposition IS NULL)::int AS undispositioned
+           FROM qms_nonconforming_products
+          WHERE organization_id = $1`,
+      ),
+    ]);
+
+    return ok(
+      res,
+      {
+        documents: docs
+          ? { available: true, effective: docs.effective, reviewOverdue: docs.review_overdue, draft: docs.draft }
+          : { available: false, effective: 0, reviewOverdue: 0, draft: 0 },
+        suppliers: suppliers
+          ? {
+              available: true,
+              total: suppliers.total,
+              criticalUnapproved: suppliers.critical_unapproved,
+              auditOverdue: suppliers.audit_overdue,
+            }
+          : { available: false, total: 0, criticalUnapproved: 0, auditOverdue: 0 },
+        training: training
+          ? { available: true, acknowledged: training.acknowledged, expired: training.expired }
+          : { available: false, acknowledged: 0, expired: 0 },
+        audits: audits
+          ? { available: true, open: audits.open, openMajorFindings: audits.open_major_findings }
+          : { available: false, open: 0, openMajorFindings: 0 },
+        nonconforming: nonconforming
+          ? { available: true, undispositioned: nonconforming.undispositioned }
+          : { available: false, undispositioned: 0 },
+      },
+      { scope: 'organization' },
+    );
+  } catch (err) {
+    return serverError(res, log, 'qms-readiness', err);
+  }
+});
+
 router.get('/qms/documents', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);

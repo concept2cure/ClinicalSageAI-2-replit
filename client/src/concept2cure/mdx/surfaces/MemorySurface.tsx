@@ -21,6 +21,7 @@ import {
 } from '../data/memory';
 import { useMemory } from '../hooks/useMemory';
 import { SampleDataBanner } from '../components/SampleDataBanner';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface MemorySurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
@@ -32,11 +33,11 @@ export function MemorySurface({ onAskAna }: MemorySurfaceProps) {
   const [unverifiedOnly, setUnverifiedOnly] = React.useState(false);
 
   const live = useMemory();
-  const atoms = live.atoms ?? MEM_ATOMS;
-  const categories = live.categories ?? MEM_CATEGORIES;
-  const effects = live.effects ?? MEM_EFFECTS;
-  const importance = live.importance ?? MEM_IMPORTANCE;
-  const ingest = live.ingest ?? MEM_INGEST;
+  const atoms = useSampleRows(live.atoms, MEM_ATOMS);
+  const categories = useSampleRows(live.categories, MEM_CATEGORIES);
+  const effects = useSampleRows(live.effects, MEM_EFFECTS);
+  const importance = useSampleRows(live.importance, MEM_IMPORTANCE);
+  const ingest = useSampleRows(live.ingest, MEM_INGEST);
 
   const filtered = atoms.filter(
     (a) =>

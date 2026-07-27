@@ -207,18 +207,55 @@ router.patch('/risk-items/:id', async (req: Request, res: Response) => {
     args.push(v);
     setFrags.push(`${col} = $${args.length}`);
   }
-  /* Recompute initial / residual risk products when components change. */
-  if (parsed.data.severity !== undefined || parsed.data.probability !== undefined) {
-    /* No clean way to do this in the single UPDATE without a sub-select,
-       so we leave initial_risk untouched on partial updates — service
-       layer can recompute when both fields land in a transaction. */
+  /* ── Recompute the risk products from POST-UPDATE component values ──
+     Both products used to go stale on a partial update:
+
+       initial_risk   was never recomputed at all — the code carried a
+                      comment saying there was "no clean way" to do it in
+                      one statement, so raising a hazard's severity from 2
+                      to 5 left initial_risk showing the old product.
+       residual_risk  was recomputed only when residualSeverity AND
+                      residualProbability arrived together. Sending one
+                      alone left a stored product contradicting its own
+                      components.
+
+     A stale risk score is not a cosmetic defect: these columns drive the
+     ISO 14971 matrix, the "high residual" counts on the risk dashboard,
+     and the acceptability banding. A hazard can silently sit in the
+     wrong band while its own severity and probability say otherwise.
+
+     There is in fact a clean single-statement form. In Postgres the
+     right-hand side of SET sees the OLD row, so COALESCE(<new>, <col>)
+     yields the new value when the caller supplied one and the existing
+     value when they did not — giving the correct post-update product
+     whichever subset of the four components was sent. */
+  const touchesInitial =
+    parsed.data.severity !== undefined || parsed.data.probability !== undefined;
+  if (touchesInitial) {
+    args.push(parsed.data.severity ?? null);
+    const sevArg = args.length;
+    args.push(parsed.data.probability ?? null);
+    const probArg = args.length;
+    setFrags.push(
+      `initial_risk = COALESCE($${sevArg}::int, severity) * COALESCE($${probArg}::int, probability)`,
+    );
   }
-  if (
-    parsed.data.residualSeverity != null &&
-    parsed.data.residualProbability != null
-  ) {
-    args.push(parsed.data.residualSeverity * parsed.data.residualProbability);
-    setFrags.push(`residual_risk = $${args.length}`);
+
+  const touchesResidual =
+    parsed.data.residualSeverity !== undefined ||
+    parsed.data.residualProbability !== undefined;
+  if (touchesResidual) {
+    args.push(parsed.data.residualSeverity ?? null);
+    const rSevArg = args.length;
+    args.push(parsed.data.residualProbability ?? null);
+    const rProbArg = args.length;
+    /* Residual components are nullable — a hazard with no mitigation yet
+       has no residual estimate. NULL * anything is NULL, so an
+       unestimated residual stays NULL rather than becoming a misleading
+       zero, and the surface renders it as "not yet assessed". */
+    setFrags.push(
+      `residual_risk = COALESCE($${rSevArg}::int, residual_severity) * COALESCE($${rProbArg}::int, residual_probability)`,
+    );
   }
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
   setFrags.push(`updated_at = NOW()`);

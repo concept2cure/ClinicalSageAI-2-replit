@@ -24,6 +24,13 @@ import type {
   AppLicense,
   AcGrant,
 } from '../fixtures/admin-data';
+import { useIndustryProfile } from '../../mdx/hooks/useIndustryProfile';
+import {
+  CLIENT_TYPE_OPTIONS,
+  buildOrgProfilePatch,
+  governedToPicker,
+  pickerMatchesProfile,
+} from '../../mdx/lib/industryProfileMapping';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
@@ -108,15 +115,21 @@ interface LangOption {
 }
 
 /* ════════════ Setup (org config) ════════════
-   Honestly fixture-backed (fail-closed). The only /api/setup routes on the
-   server (server/routes/setup.ts) are the first-run installer — GET /status
+   Partially governed. The client-type picker reads and writes the org's
+   industry profile through GET/PATCH /api/mdx/industry-profile (tenant-scoped,
+   audited — see server/routes/mdx-industry-context.ts and
+   mdx/hooks/useIndustryProfile). The picker vocabulary maps onto the governed
+   primary_industry/mdx_specialization enums via mdx/lib/industryProfileMapping.
+
+   The remaining fields (orgName, MFA/SSO, translation-workspace policy) are
+   still browser-local: the only /api/setup routes on the server
+   (server/routes/setup.ts) are the first-run installer — GET /status
    ({ initialized }) and the self-closing POST /initialize that creates the
    first org + admin on an empty database. Neither can truthfully read or
-   persist this panel's org-config fields (orgName, clientType, MFA/SSO,
-   translation-workspace policy), so these settings stay in localStorage and
-   the surface carries the Sample-data pill instead of pretending to be an
-   org-wide governed write. Do not wire this panel to /api/setup — calling the
-   installer from here would be destructive, not persistence. */
+   persist those fields, so they stay in localStorage and the surface carries
+   the Sample-data pill instead of pretending to be an org-wide governed
+   write. Do not wire this panel to /api/setup — calling the installer from
+   here would be destructive, not persistence. */
 
 export function Setup({ onAsk }: SurfaceViewProps) {
   const [s, setS] = useState<SetupSettings>(() => {
@@ -171,6 +184,51 @@ export function Setup({ onAsk }: SurfaceViewProps) {
       return n;
     });
 
+  /* ── Governed client type (org industry profile) ──
+     The picker below reads/writes GET|PATCH /api/mdx/industry-profile.
+     localStorage keeps only a cosmetic copy (and the pharma-vs-biotech
+     nuance the governed enum collapses); the profile row is the truth. */
+  const { profile, save: saveProfile, saveState } = useIndustryProfile();
+  const govPrimary = profile.status === 'ready' ? profile.data.primaryIndustry : null;
+  const govSpec = profile.status === 'ready' ? profile.data.mdxSpecialization : null;
+
+  useEffect(() => {
+    if (!govPrimary) return;
+    setS((prev) => {
+      if (pickerMatchesProfile(prev.clientType, govPrimary, govSpec)) return prev;
+      const next = { ...prev, clientType: governedToPicker(govPrimary, govSpec) };
+      try {
+        localStorage.setItem('c2c_admin_settings', JSON.stringify(next));
+      } catch (_e) {
+        /* noop */
+      }
+      return next;
+    });
+  }, [govPrimary, govSpec]);
+
+  const chooseClientType = (t: string) => {
+    set('clientType', t);
+    const patch = buildOrgProfilePatch(t, govSpec);
+    if (patch) void saveProfile(patch);
+  };
+
+  const clientTypeStatus: string =
+    profile.status === 'error'
+      ? 'Governed profile unreachable -- selection kept in this browser only.'
+      : saveState.status === 'saving'
+        ? 'Saving to governed org profile…'
+        : saveState.status === 'error'
+          ? saveState.message
+          : saveState.status === 'saved'
+            ? 'Saved to the governed org profile (audited).'
+            : profile.status === 'loading'
+              ? 'Loading governed org profile…'
+              : profile.status === 'empty'
+                ? 'No governed profile saved yet -- pick a type to create one.'
+                : profile.status === 'ready'
+                  ? 'Governed -- loaded from your org industry profile.'
+                  : '';
+
   const ALL_LANGS: LangOption[] = [
     { id: 'ja-JP', label: 'Japanese', flag: 'JP', agency: 'PMDA' },
     { id: 'zh-CN', label: 'Chinese (simplified)', flag: 'CN', agency: 'NMPA' },
@@ -203,7 +261,7 @@ export function Setup({ onAsk }: SurfaceViewProps) {
             Setup <SampleTag sample={true} />
           </React.Fragment>
         }
-        sub="Organization profile, security defaults, and module configuration. Saved in this browser only -- the governed org-settings backend is not wired yet."
+        sub="Organization profile, security defaults, and module configuration. Client type is governed (reads and writes the org industry profile); the remaining settings are saved in this browser only."
         actions={
           <button className="btn ghost" onClick={() => onAsk && onAsk('Summarize my org configuration')}>
             {I.sparkles} Ask AnA
@@ -248,21 +306,38 @@ export function Setup({ onAsk }: SurfaceViewProps) {
             </div>
             <div className="txw-row">
               <div className="txw-row-l">
-                Client type<small>Sets the default rail focus and AnA framing.</small>
+                Client type
+                <small>
+                  Sets the default rail focus and AnA framing. Governed -- saved to your
+                  organization's industry profile.
+                </small>
               </div>
               <div className="txw-row-r">
                 <div className="txw-row-r-grid">
-                  {['medtech', 'biotech', 'pharma', 'diagnostics', 'cro', 'health'].map((t) => (
+                  {CLIENT_TYPE_OPTIONS.map((t) => (
                     <button
                       key={t}
                       className="txw-pchip"
                       data-on={s.clientType === t || undefined}
-                      onClick={() => set('clientType', t)}
+                      disabled={profile.status === 'loading' || saveState.status === 'saving'}
+                      onClick={() => chooseClientType(t)}
                     >
                       {t}
                     </button>
                   ))}
                 </div>
+                {clientTypeStatus && (
+                  <span
+                    className="txw-help"
+                    data-tone={
+                      saveState.status === 'error' || profile.status === 'error'
+                        ? 'warn'
+                        : undefined
+                    }
+                  >
+                    {clientTypeStatus}
+                  </span>
+                )}
               </div>
             </div>
             <div className="txw-row">

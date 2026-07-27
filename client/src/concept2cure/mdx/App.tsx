@@ -18,6 +18,8 @@ import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
 import { IvdSurface } from './surfaces/IvdSurface';
+import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
+import { SoftwareSurface } from './surfaces/SoftwareSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
 import { UdiSurface } from './surfaces/UdiSurface';
@@ -45,6 +47,8 @@ const HERE_LABEL: Record<string, string> = {
   pma:            'PMA Submissions',
   cer:            'CER Generator',
   'device-diagnostics-workbench': 'IVD diagnostics workbench',
+  'clinical-studies': 'Clinical studies',
+  software:        'Software lifecycle',
   predicate:      'Precedent intelligence',
   engineering:    'Device engineering',
   udi:            'UDI and labeling',
@@ -169,6 +173,9 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
     // IVD workbench is org-scoped (IVDR lists), but anchor to a device program
     // for the GSPR matrix + dossier scope when one exists.
     if (activeNav === 'device-diagnostics-workbench') return programs.find(p => p.pathway === 'k510') ?? null;
+    // Software lifecycle is project-scoped; anchor to a device program when
+    // none is explicitly selected so the completeness summary can load.
+    if (activeNav === 'software') return programs.find(p => p.pathway === 'k510') ?? programs[0] ?? null;
     if (activeNav === 'project-home') return programs[0] ?? null;
     return null;
   }, [activeNav, selectedProgram, programs]);
@@ -231,7 +238,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         surface = <UdiSurface onAskAna={askAna} />;
         break;
       case 'postmarket':
-        surface = <PostmarketSurface onAskAna={askAna} />;
+        surface = <PostmarketSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'analytics':
         surface = <AnalyticsSurface onAskAna={askAna} />;
@@ -253,6 +260,12 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         break;
       case 'device-diagnostics-workbench':
         surface = <IvdSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('device-diagnostics-workbench')} />;
+        break;
+      case 'clinical-studies':
+        surface = <ClinicalStudiesSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'software':
+        surface = <SoftwareSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;

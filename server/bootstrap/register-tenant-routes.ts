@@ -14,6 +14,8 @@ export async function registerTenantRoutes({ app, pool }: TenantBootstrapContext
       { path: '/api/organizations', mod: '../routes/organizations-routes.js', name: 'Organizations' },
       { path: '/api/clients', mod: '../routes/clients-routes.js', name: 'Clients' },
       { path: '/api/client-portal', mod: '../routes/client-portal.js', name: 'Client Portal' },
+      // AnA onboarding proposal ingest — read-only, writes nothing (P2).
+      { path: '/api/onboarding', mod: '../routes/onboarding-proposals.js', name: 'Onboarding Proposals' },
       { path: '/api/tenant-users', mod: '../routes/tenant-users.js', name: 'Tenant Users' },
     ] as const;
     const tenantCoreResults = await Promise.allSettled(tenantCoreConfig.map(c => import(c.mod)));

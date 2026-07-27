@@ -68,6 +68,7 @@ import { MarketAccess } from './surfaces/MarketAccess';
 import { NdaCockpit } from './surfaces/NdaCockpit';
 import { Nonclinical } from './surfaces/Nonclinical';
 import { Onboarding } from './surfaces/Onboarding';
+import { OnboardingIngest } from './surfaces/OnboardingIngest';
 import { Orchestration } from './surfaces/Orchestration';
 import { PdevInd } from './surfaces/PdevInd';
 import { PrecedentEngine } from './surfaces/PrecedentEngine';
@@ -184,6 +185,9 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'nda-cockpit': { component: NdaCockpit },
   nonclinical: { component: Nonclinical },
   onboarding: { component: Onboarding },
+  // Upload a document -> AnA proposes values with verified provenance -> the
+  // human reviews and applies them through the governed, audited commit.
+  'onboarding-ingest': { component: OnboardingIngest, full: true },
   orchestration: { component: Orchestration },
   orphan: { component: Orphan },
   pdev: { component: PdevInd },

@@ -32,6 +32,7 @@ import {
 import { useVault, useVaultVersions } from '../hooks/useVault';
 import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { Program } from '../data/programs';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface VaultSurfaceProps {
   program: Program | null;
@@ -109,7 +110,7 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
     !usingSample && liveVersionsQuery.versions && liveVersionsQuery.versions.length
       ? liveVersionsQuery.versions
       : null;
-  const versions: VaultVersion[] = liveVersions ?? VAULT_VERSIONS;
+  const versions: VaultVersion[] = useSampleRows(liveVersions, VAULT_VERSIONS);
   const versionsAreSample = liveVersions === null;
 
   return (

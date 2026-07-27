@@ -173,6 +173,57 @@ export const organizations = pgTable('organizations', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Industry-context tailoring — governed profiles that preset one self-tailoring
+// workspace (see docs/MDX_INDUSTRY_CONTEXT_GAP_ANALYSIS.md). Replaces the
+// free-text industry_mode column, the localStorage admin blob, and the
+// onboarding mock as the authoritative source of a tenant's industry context.
+export const organizationIndustryProfiles = pgTable('organization_industry_profiles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .unique()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  // medical_device_diagnostics | biotech_pharma | cro | regulatory_consulting | academic_research
+  primaryIndustry: text('primary_industry').notNull(),
+  // medical_device | ivd_diagnostics | both | samd | companion_diagnostic | combination_product
+  mdxSpecialization: text('mdx_specialization'),
+  defaultMarkets: jsonb('default_markets').$type<string[]>().default([]).notNull(),
+  defaultPathways: jsonb('default_pathways').$type<string[]>().default([]).notNull(),
+  // single_reviewer | regulated_dual_review | qa_lock | signoff_required
+  defaultApprovalRigor: text('default_approval_rigor'),
+  effectiveAt: timestamp('effective_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+// organization_id is UNIQUE, so Postgres already indexes it — no extra index.
+
+// Per-project override, keyed on the canonical project id space
+// (regulatory_programs.id uuid) that clinical_studies / rbm_* / cdisc_prm share.
+// Inherits org defaults; a project may refine vertical/specialization/pathways
+// without changing navigation.
+export const projectIndustryProfiles = pgTable('project_industry_profiles', {
+  id: serial('id').primaryKey(),
+  programId: uuid('program_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  vertical: text('vertical'), // mdx | biopharma
+  specialization: text('specialization'),
+  productType: text('product_type'),
+  lifecycleStage: text('lifecycle_stage'),
+  targetMarkets: jsonb('target_markets').$type<string[]>().default([]).notNull(),
+  regulatoryPathways: jsonb('regulatory_pathways').$type<string[]>().default([]).notNull(),
+  filingTypes: jsonb('filing_types').$type<string[]>().default([]).notNull(),
+  inheritedFromOrg: boolean('inherited_from_org').default(true).notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  // program_id is UNIQUE (auto-indexed); org needs its own index for list scans.
+  pipOrgIdx: index('pip_org_idx').on(t.organizationId),
+}));
+
 // Organization Insert Schema
 export const insertOrganizationSchema = createInsertSchemaOmit(organizations, {
   id: true,
@@ -7040,6 +7091,14 @@ export const unifiedTasks = pgTable(
     comments: json('comments'),
     metadata: json('metadata'),
 
+    // MDx / regulatory task metadata (20260727_unified_tasks_mdx_metadata.sql)
+    lifecyclePhase: text('lifecycle_phase'), // see LIFECYCLE_PHASES below
+    market: text('market'), // target market/jurisdiction (e.g. US, EU, JP)
+    filingType: text('filing_type'), // e.g. 510(k), PMA, IVDR, IND, NDA
+    studyId: integer('study_id'), // linked study (no FK; tenant-provisioned store)
+    deliverableId: integer('deliverable_id'), // linked deliverable (no FK)
+    clientVisibility: text('client_visibility'), // internal | client_visible
+
     // Audit
     createdById: integer('created_by_id').references(() => users.id),
     lastModifiedBy: integer('last_modified_by').references(() => users.id),
@@ -7055,8 +7114,26 @@ export const unifiedTasks = pgTable(
     priorityIdx: index('unified_priority_idx').on(table.priority),
     projectIdx: index('unified_project_idx').on(table.projectId),
     idx_unified_tasks_org: index('idx_unified_tasks_org').on(table.organizationId),
+    lifecyclePhaseIdx: index('unified_lifecycle_phase_idx').on(table.lifecyclePhase),
   })
 );
+
+/**
+ * Canonical lifecycle phases for unified_tasks.lifecycle_phase (device/IVD
+ * development lifecycle through post-market). App-enforced domain — the column
+ * stays plain text so the migration remains purely additive.
+ */
+export const LIFECYCLE_PHASES = [
+  'strategy',
+  'design',
+  'verification',
+  'clinical_performance',
+  'submission_prep',
+  'authority_review',
+  'market_authorization',
+  'postmarket',
+] as const;
+export type LifecyclePhase = (typeof LIFECYCLE_PHASES)[number];
 
 // Unified Task Insert Schema
 export const insertUnifiedTaskSchema = createInsertSchemaOmit(unifiedTasks, {
@@ -12550,6 +12627,11 @@ export const cdiscPrmStudies = pgTable(
       .notNull()
       .references(() => organizations.id),
     studyId: varchar('study_id', { length: 100 }).notNull().unique(),
+    // Canonical project key (regulatory_programs.id) — shared with
+    // clinical_studies and rbm_*. Nullable: populated on persist from a
+    // design's programId when it is a UUID. Bare uuid, no FK, matching the
+    // clinical-spine convention.
+    programId: uuid('program_id'),
     protocolId: varchar('protocol_id', { length: 100 }).notNull(),
     protocolTitle: text('protocol_title').notNull(),
     protocolVersion: varchar('protocol_version', { length: 20 }).notNull(),
@@ -12578,6 +12660,7 @@ export const cdiscPrmStudies = pgTable(
   table => ({
     tenantStudyIdx: uniqueIndex('prm_tenant_study_idx').on(table.tenantId, table.studyId),
     protocolIdx: index('prm_protocol_idx').on(table.protocolId),
+    programIdx: index('prm_program_idx').on(table.programId),
     phaseIdx: index('prm_phase_idx').on(table.studyPhase),
   })
 );

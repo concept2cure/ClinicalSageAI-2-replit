@@ -384,7 +384,8 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const limit = req.query.limit ? Number(req.query.limit) : undefined;
     const offset = req.query.offset ? Number(req.query.offset) : undefined;
-    return res.json({ designs: await listStudyDesigns(orgId, { limit, offset }) });
+    const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
+    return res.json({ designs: await listStudyDesigns(orgId, { limit, offset, programId }) });
   } catch (err: any) {
     console.error('[study-design/list]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
