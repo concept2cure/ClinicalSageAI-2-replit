@@ -1,16 +1,18 @@
 /**
- * Authoring subsystem provisioning — the four db/migrations files that back the
+ * Authoring subsystem provisioning — the five db/migrations files that back the
  * flagship IND authoring loop (server/routes/authoring.router.ts), applied AS A
  * SINGLE ATOMIC UNIT.
  *
  * WHY A UNIT. The loop-tables file stands up document/section/freeze/PIN
  * storage; the audit-trail and signature/workflow files stand up the 21 CFR
- * Part 11 evidence those same operations MUST produce. Provisioning the loop
- * tables ALONE yields a working freeze with no audit row and an e-sign that
- * fails outright — a half-provisioned Part 11 surface that is WORSE than tables
- * plainly absent (ledger C-11 / C-14 / C-15, and the cession note this
- * supersedes in apply-c2c-migrations.mjs). So the four files apply in one
- * transaction: all present, or none.
+ * Part 11 evidence those same operations MUST produce; the Y.js-state file
+ * stands up the durable storage the collaborative editor writes through
+ * (C2C-COLLAB-001 — without it every CRDT edit is lost on unload/restart).
+ * Provisioning the loop tables ALONE yields a working freeze with no audit row
+ * and an e-sign that fails outright — a half-provisioned Part 11 surface that is
+ * WORSE than tables plainly absent (ledger C-11 / C-14 / C-15, and the cession
+ * note this supersedes in apply-c2c-migrations.mjs). So the five files apply in
+ * one transaction: all present, or none.
  *
  * WHY THEY NEED THEIR OWN PATH. They live in db/migrations/ but are NOT
  * *_gcc_*.sql, so the CI psql loop (`ls db/migrations/*_gcc_*.sql`) never
@@ -24,7 +26,7 @@
  * with the integer-keyed app RLS policy), every table here carries
  * `tenant_id INTEGER`, which is exactly the app tenant model.
  *
- * TENANT ISOLATION IS PART OF THE UNIT. The four .sql files create tables but no
+ * TENANT ISOLATION IS PART OF THE UNIT. The .sql files create tables but no
  * RLS. On the install-fresh path that is fine — its 0021_enable_rls_everywhere
  * step runs AFTER this and dynamically policies every tenant table. But on the
  * apply-c2c path (used to add the subsystem to an ALREADY-provisioned database),
@@ -44,20 +46,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * The four files, in dependency order. The loop-tables file creates
+ * The five files, in dependency order. The loop-tables file creates
  * authoring_documents / authoring_sections that later files reference; the
  * freeze-binding file ALTERs the authoring_signatures table the signatures file
- * creates, so it MUST be last. Repo-relative (joined against repoRoot).
+ * creates, so it MUST follow it. The Y.js-state file carries a composite
+ * (doc_id, tenant_id) FK onto authoring_documents(id, tenant_id), so it must
+ * follow the loop-tables file that creates that UNIQUE target.
+ * Repo-relative (joined against repoRoot).
  */
 export const AUTHORING_SUBSYSTEM_FILES = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
   'db/migrations/20260725_authoring_audit_trail.sql',
   'db/migrations/20260725_authoring_signatures_and_workflow.sql',
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+  'db/migrations/20260727_authoring_document_yjs_state.sql',
 ];
 
 /**
- * Tables the four files create (the freeze-binding file only ALTERs
+ * Tables the five files create (the freeze-binding file only ALTERs
  * authoring_signatures, adding no table). This is the readiness contract:
  * server/db/ensureCoreTables.ts holds the SAME list as AUTHORING_SUBSYSTEM_TABLES
  * and fails /readyz closed when any of them is absent. Keep the two in sync.
@@ -73,6 +79,10 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_audit_trail',
   'authoring_signatures',
   'authoring_workflow_steps',
+  // Durable Y.js/CRDT state for the collaborative editor (C2C-COLLAB-001).
+  // Absent, every collaborative edit is silently lost on unload/restart, so it
+  // belongs to the unit rather than being optional.
+  'authoring_document_yjs_state',
 ];
 
 /**
@@ -125,7 +135,7 @@ function tenantPolicySql(table) {
 
 /**
  * Apply the authoring subsystem as one atomic unit against `pool` (a connected
- * `pg` Pool): the four migration files, then tenant-isolation RLS on every table
+ * `pg` Pool): the five migration files, then tenant-isolation RLS on every table
  * they create. On any failure the whole transaction is rolled back, leaving the
  * subsystem ABSENT rather than half-provisioned — the state readiness reports
  * honestly, and the state recoverable by simply re-running this.
