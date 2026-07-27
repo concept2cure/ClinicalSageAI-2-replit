@@ -1137,6 +1137,73 @@ export type ClientWorkspace = InferSelectModel<typeof clientWorkspaces>;
 export type InsertClientWorkspace = z.infer<typeof insertClientWorkspaceSchema>;
 
 /**
+ * Governed industry context — the setting that tailors the one self-tailoring
+ * workspace. See shared/regulatory/mdx-specialization.ts for the vocabularies
+ * and migrations/20260730_industry_context_profiles.sql for why these are
+ * database records rather than a browser-local preference.
+ *
+ * Neither table affects navigation. The left rail is fixed; these change what
+ * the existing modules offer inside themselves.
+ */
+export const organizationIndustryProfiles = pgTable(
+  'organization_industry_profiles',
+  {
+    id:                   serial('id').primaryKey(),
+    organizationId:       integer('organization_id').notNull().unique()
+                            .references(() => organizations.id, { onDelete: 'cascade' }),
+    primaryIndustry:      text('primary_industry').notNull(),
+    /** 'unspecified' is a real state — see the module docs. Never inferred. */
+    mdxSpecialization:    text('mdx_specialization').default('unspecified').notNull(),
+    defaultMarkets:       jsonb('default_markets').default('[]').notNull(),
+    defaultPathways:      jsonb('default_pathways').default('[]').notNull(),
+    defaultApprovalRigor: text('default_approval_rigor').default('regulated_dual_review').notNull(),
+    /** Declared effective date, distinct from the row's last write. */
+    effectiveAt:          timestamp('effective_at', { withTimezone: true }).defaultNow().notNull(),
+    changeReason:         text('change_reason'),
+    updatedBy:            integer('updated_by').references(() => users.id),
+    createdAt:            timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:            timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('org_industry_profiles_org_idx').on(table.organizationId),
+  }),
+);
+export type OrganizationIndustryProfile = InferSelectModel<typeof organizationIndustryProfiles>;
+
+export const projectIndustryProfiles = pgTable(
+  'project_industry_profiles',
+  {
+    id:                 serial('id').primaryKey(),
+    organizationId:     integer('organization_id').notNull()
+                          .references(() => organizations.id, { onDelete: 'cascade' }),
+    projectId:          integer('project_id').notNull().unique()
+                          .references(() => projects.id, { onDelete: 'cascade' }),
+    clientWorkspaceId:  integer('client_workspace_id')
+                          .references(() => clientWorkspaces.id, { onDelete: 'set null' }),
+    /** True while the project is reading the org default rather than its own. */
+    inheritedFromOrg:   boolean('inherited_from_org').default(true).notNull(),
+    /** Null means inherit. A service organization's project should set this. */
+    vertical:           text('vertical'),
+    specialization:     text('specialization'),
+    productType:        text('product_type'),
+    lifecycleStage:     text('lifecycle_stage'),
+    targetMarkets:      jsonb('target_markets').default('[]').notNull(),
+    regulatoryPathways: jsonb('regulatory_pathways').default('[]').notNull(),
+    filingTypes:        jsonb('filing_types').default('[]').notNull(),
+    projectPurpose:     text('project_purpose'),
+    updatedBy:          integer('updated_by').references(() => users.id),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('project_industry_profiles_org_idx').on(table.organizationId),
+    projectIdx: index('project_industry_profiles_project_idx').on(table.projectId),
+    clientIdx:  index('project_industry_profiles_client_idx').on(table.clientWorkspaceId),
+  }),
+);
+export type ProjectIndustryProfile = InferSelectModel<typeof projectIndustryProfiles>;
+
+/**
  * Client Access (User-Client Workspace Junction Table)
  *
  * Maps users to client workspaces with role information.

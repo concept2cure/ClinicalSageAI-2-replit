@@ -103,6 +103,10 @@ const FILES = [
   'migrations/20260728_rbm_plan_versioning.sql',
   // ALTERs rbm_data_runs, so it must follow metric_ingestion above.
   'migrations/20260729_rbm_ingest_idempotency.sql',
+  // Governed industry context. Creates its own tables and backfills the org
+  // profile from organizations.industry_mode; references organizations, projects
+  // and client_workspaces, all of which exist in the journaled baseline.
+  'migrations/20260730_industry_context_profiles.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
