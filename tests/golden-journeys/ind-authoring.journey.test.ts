@@ -33,6 +33,11 @@ import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
 // signature check stays fully active. A forged-secret token is a known-bad step.
 const JWT_SECRET = 'journey-a-test-secret-0725';
 process.env.JWT_SECRET = JWT_SECRET;
+// The authoring router now verifies via the CANONICAL verifyJwtWithRotation,
+// which in test env (NODE_ENV=test → suffix DEV) reads JWT_SECRET_DEV ?? JWT_SECRET.
+// This file overrides JWT_SECRET for isolation, so it must override the
+// env-suffixed secret the verifier actually reads, or every token 401s.
+process.env.JWT_SECRET_DEV = JWT_SECRET;
 
 async function mint(user: { id: string; organizationId: number; email: string; name: string }, secret = JWT_SECRET) {
   return new SignJWT({

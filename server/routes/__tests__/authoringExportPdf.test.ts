@@ -27,6 +27,11 @@ vi.mock('../../db', () => ({
 vi.mock('../../export/renderers', () => ({ renderHtmlToPdf }));
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-export';
+// The authoring router verifies via the CANONICAL verifyJwtWithRotation, which in
+// test env reads JWT_SECRET_DEV ?? JWT_SECRET. Pin them together so the token this
+// file signs with JWT_SECRET is the one the verifier checks against, regardless of
+// what the global test setup did.
+process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
 

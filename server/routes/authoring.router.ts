@@ -7,7 +7,9 @@ import path from 'path';
 import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
 import { PDFDocument } from 'pdf-lib';
-import * as jose from 'jose';
+import { verifyJwtWithRotation } from '../utils/jwtVerify';
+import { nonAccessTokenReason } from '../middleware/tokenType';
+import { enforceOrgMembership } from '../middleware/orgMembership';
 import { getPool } from '../db';
 import auditService from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -17,127 +19,96 @@ const logger = createScopedLogger('authoring-router');
 
 const router = Router();
 
-// REQUIRED JWT verification middleware for 21 CFR Part 11 compliance
-router.use(async (req: Request, res: Response, next: any) => {
-  try {
-    const auth = req.headers.authorization || (req.headers as any).Authorization;
+// REQUIRED JWT verification middleware for 21 CFR Part 11 compliance.
+//
+// This composes the CANONICAL auth primitives so the authoring surface enforces
+// IDENTICAL semantics to server/middleware/auth.ts authenticateToken in EVERY
+// environment — not only where the /api boundary happens to run in enforce mode
+// (C2C-SEC-001). It replaces a bespoke jose verifier that omitted two canonical
+// controls: non-access token-class rejection (AUTH_008) and the live
+// organization_users membership re-check (AUTH_009).
+//
+// Twin-safety (see server/middleware/orgMembership.ts): every import here
+// resolves to the same file under vitest, tsx, and the production build —
+// verifyJwtWithRotation via ../utils/jwtVerify (whose .js is a shim that
+// re-exports the .ts), nonAccessTokenReason via ../middleware/tokenType (no .js
+// twin), enforceOrgMembership via ../middleware/orgMembership (no .js twin). An
+// extensionless import of '../middleware/auth' would instead bind to the stale
+// auth.js twin under vitest and silently drop AUTH_008/AUTH_009.
+router.use((req: Request, res: Response, next: any) => {
+  // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
+  // anything downstream reads them. requireAny() reads x-roles, createAuditTrail
+  // reads x-user-email; a client value must never survive to a route. This runs
+  // first so it applies on every path, including rejection.
+  delete (req.headers as any)['x-roles'];
+  delete (req.headers as any)['x-user-email'];
+  delete (req.headers as any)['x-tenant-id'];
 
-    // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
-    // any branching. Everything downstream treats these as trusted, derived
-    // values — requireAny() reads x-roles, createAuditTrail() reads x-user-email
-    // — so a client value must never survive to a route under ANY path through
-    // this middleware. Clearing inside the Bearer branch was not enough: a
-    // non-Bearer Authorization header satisfied the check below, skipped
-    // verification entirely, and reached the routes with a forged
-    // `x-roles: ADMIN` intact. Only getTenantId() throwing prevented a write,
-    // which is luck rather than access control.
-    delete (req.headers as any)['x-roles'];
-    delete (req.headers as any)['x-user-email'];
-    delete (req.headers as any)['x-tenant-id'];
-
-    // JWT is REQUIRED in all deployed environments
-    if (!auth) {
-      return res
-        .status(401)
-        .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
-    }
-
-    // A present-but-unverifiable credential is not authentication. This used to
-    // fall through to next() because the verification block was conditional.
-    if (!auth.startsWith('Bearer ') || !jose) {
-      return res
-        .status(401)
-        .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
-    }
-
-    if (auth && auth.startsWith('Bearer ') && jose) {
-      const token = auth.slice(7);
-      let claims: any = {};
-
-      // ALWAYS verify JWT in production - no bypasses
-      const jwtSecret = process.env.AUTH_JWT_SECRET || process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        console.error('CRITICAL: AUTH_JWT_SECRET or JWT_SECRET must be set.');
-        return res.status(500).json({ error: 'Server misconfiguration: missing JWT secret' });
-      }
-
-      try {
-        const secret = new TextEncoder().encode(jwtSecret);
-        const { payload } = await jose.jwtVerify(token, secret);
-        claims = payload || {};
-      } catch (jwtError) {
-        // SECURITY: Always reject invalid tokens in ALL environments.
-        // Never fall back to decodeJwt (unverified) — that bypasses signature validation.
-        return res.status(401).json({ error: 'Invalid authentication token' });
-      }
-
-      // Derive the identity headers from the VERIFIED claims — and DELETE them
-      // when the corresponding claim is absent.
-      //
-      // SECURITY (ledger C-18): these assignments used to sit behind
-      // `if (claims.<x>)`. A token that simply omitted a claim left the CLIENT's
-      // header in place, and everything downstream trusts these headers:
-      // requireAny() (8 role-gated routes) reads x-roles, createAuditTrail reads
-      // x-user-email. So a valid token with no `roles` claim plus a forged
-      // `x-roles: ADMIN` header passed every role gate — demonstrated at 201 in
-      // tests/schema-contract/authoring-role-gate.contract.test.ts before this
-      // change — and a token with no `email` claim let the caller attribute
-      // records to any address it named.
-      //
-      // Absence of a claim must mean absence of the privilege, never "whatever
-      // the caller asserted". Deleting is the fail-closed half; without it the
-      // overwrite is only a partial guard.
-      const setOrClear = (header: string, value: string | number | undefined) => {
-        if (value === undefined) delete (req.headers as any)[header];
-        else (req.headers as any)[header] = value;
-      };
-
-      setOrClear('x-user-email', claims.email ? String(claims.email).toLowerCase() : undefined);
-
-      const roleClaim = claims.roles;
-      const roleList = Array.isArray(roleClaim)
-        ? roleClaim
-        : roleClaim
-          ? String(roleClaim).split(',')
-          : undefined;
-      setOrClear(
-        'x-roles',
-        roleList ? roleList.map((r: string) => String(r).toUpperCase()).join(',') : undefined,
-      );
-
-      // Tenant scope comes from the token only — strict isolation.
-      const tenantClaim = claims.tenant_id ?? claims.organizationId ?? claims.orgId;
-      const tenantId =
-        tenantClaim === undefined || tenantClaim === null
-          ? undefined
-          : Number.parseInt(String(tenantClaim), 10);
-      setOrClear('x-tenant-id', Number.isFinite(tenantId) ? tenantId : undefined);
-
-      // SECURITY (21 CFR Part 11): expose the verified JWT principal on
-      // req.user so actor-identity helpers (getActorId / getActorEmail) derive
-      // attribution from the token only. This router is mounted without the
-      // shared authenticateToken middleware, so it must populate req.user here.
-      const subject = claims.userId ?? claims.id ?? claims.sub;
-      if (subject !== undefined && subject !== null && subject !== '') {
-        req.user = {
-          id: subject,
-          userId: subject,
-          email: claims.email ? String(claims.email).toLowerCase() : undefined,
-          role: claims.role,
-          roles: Array.isArray(claims.roles)
-            ? claims.roles
-            : claims.roles
-              ? String(claims.roles).split(',')
-              : undefined,
-          organizationId: claims.organizationId ?? claims.orgId ?? claims.tenant_id,
-        };
-      }
-    }
-  } catch (error) {
-    console.error('JWT middleware error:', error);
-    return res.status(500).json({ error: 'Authentication processing failed' });
+  const auth = req.headers.authorization || (req.headers as any).Authorization;
+  if (!auth || !/^Bearer\s+\S+$/i.test(auth)) {
+    return res
+      .status(401)
+      .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
   }
-  next();
+
+  let decoded: any;
+  try {
+    // Canonical rotation-aware HS256 verification (JWT_SECRET_{ENV} ?? JWT_SECRET),
+    // identical to authenticateToken — replaces the router-only AUTH_JWT_SECRET
+    // path (dead config nothing signs with).
+    decoded = verifyJwtWithRotation(auth.replace(/^Bearer\s+/i, ''));
+  } catch {
+    return res.status(401).json({ error: 'Invalid authentication token' });
+  }
+
+  // AUTH_008 (fail-closed): a non-access token (refresh / MFA challenge / MFA
+  // partial) is signed with the same secret and must never authenticate here.
+  if (nonAccessTokenReason(decoded)) {
+    return res.status(401).json({ error: 'Invalid authentication token' });
+  }
+
+  // AUTH_007: a signed token with no usable subject must not authenticate.
+  const subject = decoded.userId ?? decoded.id ?? decoded.sub;
+  if (subject === undefined || subject === null || subject === '' || subject === 0) {
+    return res
+      .status(401)
+      .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
+  }
+
+  // Expose the verified principal on req.user so actor-identity helpers
+  // (getActorId / getActorEmail / getTenantId → authedOrgId) derive attribution
+  // from the token only. Populated by this router's own first middleware — via
+  // the canonical primitives — so the token-class and membership invariants are
+  // enforced by the router itself in all environments.
+  req.user = {
+    id: subject,
+    userId: subject,
+    email: decoded.email ? String(decoded.email).toLowerCase() : undefined,
+    role: decoded.role,
+    roles: Array.isArray(decoded.roles)
+      ? decoded.roles
+      : decoded.roles
+        ? String(decoded.roles).split(',')
+        : undefined,
+    organizationId: decoded.organizationId ?? decoded.orgId ?? decoded.tenant_id,
+  };
+
+  // Re-derive the sanitized identity headers legacy readers consume, from the
+  // VERIFIED principal only (absence of a claim ⇒ absence of the header).
+  const setOrClear = (header: string, value: string | number | undefined) => {
+    if (value === undefined) delete (req.headers as any)[header];
+    else (req.headers as any)[header] = value;
+  };
+  setOrClear('x-user-email', req.user.email);
+  const roleList = Array.isArray(req.user.roles) && req.user.roles.length ? req.user.roles : undefined;
+  setOrClear('x-roles', roleList ? roleList.map((r) => String(r).toUpperCase()).join(',') : undefined);
+  const tenantId = authedOrgId(req);
+  setOrClear('x-tenant-id', tenantId == null ? undefined : tenantId);
+
+  // AUTH_009 (terminal): live organization_users re-check — fail-closed 403 on a
+  // revoked membership, fail-open only on infra-indeterminate. Same control and
+  // ~60s cache as authenticateToken.
+  return enforceOrgMembership(req, res, next);
 });
 const ALLOWED_UPLOAD_MIME_TYPES = new Set([
   'application/pdf',
