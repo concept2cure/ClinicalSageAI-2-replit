@@ -27,10 +27,15 @@ import {
   deriveStudyKpis,
   type StudyRow,
 } from '../hooks/useClinicalStudies';
+import { useRbqm } from '../hooks/useRbqm';
 import { readyRows } from '../lib/dataState';
+import type { Program } from '../data/programs';
 
 export interface ClinicalStudiesSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
+  /** The project (regulatory_programs UUID) in context, or null for the
+   *  portfolio-wide view. When set, the study list and RBQM narrow to it. */
+  program: Program | null;
 }
 
 /* Map study status to an existing .status-pill modifier (app.css). The
@@ -43,6 +48,22 @@ const STATUS_PILL: Record<string, string> = {
   analysis: 'review',
   completed: 'final',
   terminated: 'rejected',
+};
+
+/* RBM attention severity → an existing .status-pill modifier. Handles
+   both severity vocabularies the feed can emit (critical/high/… and
+   err/warn/…); an unknown token falls back to the neutral pill. */
+const ATTENTION_PILL: Record<string, string> = {
+  critical: 'serious',
+  err: 'serious',
+  error: 'serious',
+  high: 'review',
+  warn: 'review',
+  warning: 'review',
+  medium: 'review',
+  moderate: 'review',
+  low: 'draft',
+  info: 'draft',
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -65,15 +86,25 @@ function enrollmentText(s: StudyRow): string {
   return `${enrolled}/${s.samplePlanned} · ${pct}%`;
 }
 
-export function ClinicalStudiesSurface({ onAskAna }: ClinicalStudiesSurfaceProps) {
+export function ClinicalStudiesSurface({ onAskAna, program }: ClinicalStudiesSurfaceProps) {
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
 
-  const live = useClinicalStudies();
+  /* Everything on this surface hangs off the project — the
+     regulatory_programs UUID the shell carries as context. With a project
+     selected the list narrows to it; without one it is the portfolio. */
+  const projectId = program?.id ?? null;
+  const live = useClinicalStudies(projectId);
   const rows = readyRows(live.studies);
   const kpis = deriveStudyKpis(rows);
 
   const selected = rows.find((s) => s.id === selectedId) ?? null;
   const detail = useStudySummary(selected ? selected.id : null);
+
+  /* RBQM is project-scoped. Prefer the surface's project; fall back to
+     the selected study's own program_id so a study opened from the
+     portfolio still shows its project's monitoring. */
+  const rbqmProgramId = projectId ?? selected?.programId ?? null;
+  const rbqm = useRbqm(rbqmProgramId);
 
   return (
     <>
@@ -83,6 +114,7 @@ export function ClinicalStudiesSurface({ onAskAna }: ClinicalStudiesSurfaceProps
           <h1 className="page-title">Clinical studies</h1>
           <div className="page-sub">
             21 CFR 812 IDE · ISO 14155 · FDA BIMO · EU MDR Annex XIV / XV.
+            {program ? ` · ${program.code}` : ' · Portfolio'}
           </div>
         </div>
         <div className="page-actions">
@@ -257,6 +289,136 @@ export function ClinicalStudiesSurface({ onAskAna }: ClinicalStudiesSurfaceProps
           </div>
         </section>
       )}
+
+      <section className="section">
+        <div className="section-head">
+          <h2>Risk-based monitoring</h2>
+          <span className="section-sub">
+            ICH E6(R3) RBQM · ISO 14155 · project-scoped
+            {program ? ` to ${program.code}` : selected ? ' to the selected study' : ''} · read-only
+            from the monitoring engine
+          </span>
+        </div>
+        <DataGate
+          state={rbqm.summary}
+          label="monitoring roll-up"
+          onRetry={rbqm.refresh}
+          emptyHint="This project has no risk assessment, KRIs, or signals recorded yet."
+        >
+          {(sum) => (
+            <div className="metrics-row metrics-compact">
+              <div className="metric-card">
+                <div className="metric-label">Overall risk</div>
+                <div className="metric-val" style={{ fontSize: 18, textTransform: 'capitalize' }}>
+                  {sum.overallRisk ?? '—'}
+                </div>
+                <div className="metric-meta">{sum.riskItems.total} critical-to-quality risks</div>
+              </div>
+              <div className="metric-card" data-tone={sum.riskItems.critical > 0 ? 'err' : sum.riskItems.open > 0 ? 'warn' : undefined}>
+                <div className="metric-label">Open risk items</div>
+                <div className="metric-val">{sum.riskItems.open}</div>
+                <div className="metric-meta">
+                  {sum.riskItems.critical} critical · {sum.riskItems.high} high
+                </div>
+              </div>
+              <div className="metric-card" data-tone={sum.kris.red > 0 ? 'err' : sum.kris.amber > 0 ? 'warn' : undefined}>
+                <div className="metric-label">KRIs</div>
+                <div className="metric-val">
+                  {sum.kris.red}
+                  <span className="unit"> red</span>
+                </div>
+                <div className="metric-meta">
+                  {sum.kris.amber} amber · {sum.kris.total} tracked
+                </div>
+              </div>
+              <div className="metric-card" data-tone={sum.qtls.breached > 0 ? 'err' : sum.qtls.approaching > 0 ? 'warn' : undefined}>
+                <div className="metric-label">QTL breaches</div>
+                <div className="metric-val">{sum.qtls.breached}</div>
+                <div className="metric-meta">
+                  {sum.qtls.approaching} approaching · {sum.qtls.total} limits
+                </div>
+              </div>
+              <div className="metric-card" data-tone={sum.signals.open > 0 ? 'warn' : undefined}>
+                <div className="metric-label">Open signals</div>
+                <div className="metric-val">{sum.signals.open}</div>
+                <div className="metric-meta">
+                  {sum.signals.high} high · {sum.signals.total} total
+                </div>
+              </div>
+              <div className="metric-card" data-tone={sum.sites.enhanced > 0 ? 'warn' : undefined}>
+                <div className="metric-label">Sites on enhanced</div>
+                <div className="metric-val">{sum.sites.enhanced}</div>
+                <div className="metric-meta">of {sum.sites.total} monitored sites</div>
+              </div>
+            </div>
+          )}
+        </DataGate>
+
+        <div className="section-head" style={{ marginTop: 16 }}>
+          <h2 style={{ fontSize: 14 }}>Needs attention</h2>
+        </div>
+        <DataGate
+          state={rbqm.attention}
+          label="attention items"
+          onRetry={rbqm.refresh}
+          emptyHint="No open KRI, QTL, or central-monitoring signals need attention on this project."
+        >
+          {(items) => (
+            <div className="ctable">
+              <div className="ctable-head" style={{ gridTemplateColumns: '90px 110px 1fr' }}>
+                <div>Severity</div>
+                <div>Kind</div>
+                <div>Item</div>
+              </div>
+              {items.slice(0, 12).map((a, i) => {
+                const pill = ATTENTION_PILL[String(a.severity).toLowerCase()] ?? 'draft';
+                return (
+                  <button
+                    key={`${a.kind}-${i}`}
+                    className="ctable-row"
+                    style={{ gridTemplateColumns: '90px 110px 1fr', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() =>
+                      onAskAna(
+                        `${a.label}${a.detail ? ` — ${a.detail}` : ''}. Walk me through the monitoring response and what it means for this project.`,
+                      )
+                    }
+                    type="button"
+                  >
+                    <div>
+                      <span className={`status-pill ${pill}`} style={{ textTransform: 'capitalize' }}>
+                        {a.severity}
+                      </span>
+                    </div>
+                    <div className="mono tiny">{a.kind}</div>
+                    <div>
+                      <div className="ctable-strong">{a.label}</div>
+                      {a.detail && (
+                        <div style={{ color: 'var(--text-400)', fontSize: 12 }}>{a.detail}</div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </DataGate>
+
+        {rbqmProgramId && (
+          <div className="page-actions" style={{ marginTop: 12 }}>
+            <button
+              className="btn ghost small"
+              onClick={() =>
+                onAskAna(
+                  'Summarise the risk-based monitoring posture for this project — red KRIs, breached QTLs, and open signals — and the recommended monitoring actions.',
+                )
+              }
+              type="button"
+            >
+              {I.sparkles} Review monitoring posture
+            </button>
+          </div>
+        )}
+      </section>
     </>
   );
 }
