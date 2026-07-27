@@ -13,7 +13,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', () => ({ apiRequest }));
 
 import { RbmKris, RbmQtls, RbmRact, RbmOverview } from '../surfaces/RbmSurfacesA';
-import { RbmSignals, RbmSites, RbmPlan } from '../surfaces/RbmSurfacesB';
+import { RbmSignals, RbmSites, RbmPlan, RbmPatients } from '../surfaces/RbmSurfacesB';
 import type { RbmBoard } from '../surfaces/rbmBoard';
 
 const PROGRAM = '11111111-2222-3333-4444-555555555555';
@@ -500,5 +500,37 @@ describe('RBM plan — versioned amendment of an approved plan', () => {
   it('does not offer Amend on a draft plan', () => {
     render(<RbmPlan board={board()} onReload={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /Amend — new version/ })).toBeNull();
+  });
+});
+
+describe('RBM patient profiles — the score has to be explainable', () => {
+  const scored = (metrics: { k: string; z: number }[]) => board({
+    patients: [{
+      sid: 'S-014', site: '5', anomaly: 4.8, top: 'queries',
+      status: 'flagged', at: '2026-07-01', metrics,
+    }],
+    summary: { ...board().summary, patients: { scored: 1, flagged: 1, review: 0 } },
+  });
+
+  it('renders each dimension with its signed z, not just the top one', () => {
+    render(<RbmPatients board={scored([
+      { k: 'queries', z: 4.8 },
+      { k: 'aes', z: -3.9 },
+      { k: 'deviations', z: 0.4 },
+    ])} onReload={vi.fn()} />);
+    // The sign is the finding: an AE count below the cohort is under-reporting,
+    // and rendering it as 3.9 would hide which direction the patient deviates.
+    expect(screen.getByText('-3.9')).toBeTruthy();
+    expect(screen.getByText('+4.8')).toBeTruthy();
+    expect(screen.getByText('aes')).toBeTruthy();
+    expect(screen.getByText('deviations')).toBeTruthy();
+  });
+
+  it('says why there is no breakdown instead of implying the patient is typical', () => {
+    render(<RbmPatients board={scored([])} onReload={vi.fn()} />);
+    // "Not comparable" and "typical" are different claims; the surface must not
+    // let an empty breakdown read as the second.
+    expect(screen.getByText(/No dimension was comparable/)).toBeTruthy();
+    expect(screen.getByText(/not comparable/i)).toBeTruthy();
   });
 });

@@ -256,11 +256,20 @@ router.post('/rbm-patient-profiles/score', async (req, res) => {
       await client.query('BEGIN');
       for (const r of rows) {
         const s = byId.get(r.id)!;
+        // The per-dimension z breakdown is persisted alongside the score, under
+        // metadata.dimensionScores, because a score without it is not actionable:
+        // a monitor cannot tell one bad dimension from a patient who is atypical
+        // across the board. It is derived, not source data, so it is replaced
+        // wholesale on every scoring run rather than merged — a dimension that
+        // has dropped out of the cohort must disappear, not linger at its old z.
         await client.query(
           `UPDATE rbm_patient_profiles
-              SET anomaly_score = $1, top_dimension = $2, status = $3, scored_at = NOW(), updated_at = NOW()
-            WHERE id = $4 AND organization_id = $5`,
-          [s.anomalyScore, s.topDimension, s.status, r.id, orgId],
+              SET anomaly_score = $1, top_dimension = $2, status = $3,
+                  metadata = COALESCE(metadata, '{}'::jsonb)
+                             || jsonb_build_object('dimensionScores', $4::jsonb),
+                  scored_at = NOW(), updated_at = NOW()
+            WHERE id = $5 AND organization_id = $6`,
+          [s.anomalyScore, s.topDimension, s.status, JSON.stringify(s.dimensions), r.id, orgId],
         );
       }
       await client.query('COMMIT');

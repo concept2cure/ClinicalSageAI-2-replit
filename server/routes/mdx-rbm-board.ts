@@ -104,6 +104,31 @@ function amendmentReason(metadata: unknown): string | null {
   return null;
 }
 
+/**
+ * Read metadata.dimensionScores — the per-dimension z breakdown the cohort
+ * scorer wrote — off a jsonb column, tolerating anything unexpected.
+ *
+ * Defensive because the column is jsonb: an older row scored before the
+ * breakdown existed has no key at all, and a partially-written or hand-edited
+ * value must degrade to "no breakdown" rather than putting a NaN on screen next
+ * to a real z score. Every entry is validated individually, so one bad element
+ * does not discard the others.
+ */
+function dimensionScores(metadata: unknown): { k: string; z: number }[] {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return [];
+  const raw = (metadata as Record<string, unknown>).dimensionScores;
+  if (!Array.isArray(raw)) return [];
+  const out: { k: string; z: number }[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue;
+    const { dimension, z } = entry as { dimension?: unknown; z?: unknown };
+    const n = num(z);
+    if (typeof dimension !== 'string' || dimension === '' || n === null) continue;
+    out.push({ k: dimension, z: n });
+  }
+  return out;
+}
+
 /** Read metadata.approvalReason off a jsonb column without throwing. */
 function approvalReason(metadata: unknown): string | null {
   if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
@@ -461,7 +486,10 @@ export default function createRbmBoardRoutes(): Router {
           top: p.topDimension,
           status: p.status,
           at: iso(p.scoredAt),
-          metrics: [] as { k: string; z: number }[],
+          // The per-dimension breakdown the cohort scorer produced. Without it a
+          // flag reads "4.8, top dimension: query rate" and a monitor cannot tell
+          // one bad dimension from a patient atypical across the board.
+          metrics: dimensionScores(p.metadata),
         }));
 
       const sites = [...siteRows]

@@ -284,7 +284,7 @@ export function RbmPatients({ board, onReload }: SubProps) {
                 </div>
               );
             })}
-              {sel.metrics.length === 0 && <div className="rbm-note" style={{ margin: 0 }}>{I.info}Per-dimension breakdown isn&apos;t available from the profile store for this subject — the anomaly score and status are the scored result.</div>}
+              {sel.metrics.length === 0 && <div className="rbm-note" style={{ margin: 0 }}>{I.info}No dimension was comparable for this subject: either the cohort was below MIN_COHORT (5) on every metric it carries, or the subject was last scored before the breakdown was recorded. <b>Scan cohort</b> recomputes it. An absent dimension means <b>not comparable</b> — not typical.</div>}
               <div className="rbm-pt-foot"><RbmFreshness at={sel.at ?? '—'} />{sel.status !== 'normal' && <span className="rbm-pt-note">{I.alertTriangle}{sel.status === 'flagged' ? 'Flagged for medical review' : 'Queued for review'} -- dimensions 3+ MAD from cohort median drive the score.</span>}</div>
             </div>
           </div>
