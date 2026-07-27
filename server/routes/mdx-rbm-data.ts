@@ -313,6 +313,12 @@ const ingestBody = z.object({
   // happens in the service so the rules are identical for both.
   rows: z.array(z.record(z.unknown())).max(50_000).optional(),
   csv: z.string().max(20_000_000).optional(),
+  // Deliberately re-load content already ingested under this source. Refused
+  // without a reason: a reprocess replaces what an earlier run established, and
+  // an unexplained replacement leaves a supersession in the audit trail with no
+  // rationale attached to it.
+  reprocess: z.boolean().optional(),
+  reprocessReason: z.string().min(3).max(2000).optional().nullable(),
 }).refine(b => b.rows !== undefined || b.csv !== undefined, {
   message: 'Provide either `rows` or `csv`',
 });
@@ -336,12 +342,33 @@ router.post('/rbm-metric-ingest', async (req, res) => {
       ...parsed.data,
       ingestedBy: getUserId(req),
     });
+    if (!result.ok) {
+      // Nothing was written, so nothing needs rolling back beyond closing the
+      // transaction. Refusing loudly is the point: re-loading an extract appends
+      // KRI readings, so a silent skip would look like a successful no-op while a
+      // genuine second load would corrupt every trend computed over them.
+      await client.query('ROLLBACK');
+      if (result.reason === 'reprocess_reason_required') {
+        return clientError(res, 422, 'A reason is required to reprocess an extract that is already loaded.');
+      }
+      const p = result.priorRun;
+      return clientError(res, 409,
+        `This exact extract is already loaded for this source — run #${p?.runId} on `
+        + `${p?.startedAt?.slice(0, 10) ?? 'an earlier date'}`
+        + `${p?.dataCutoff ? ` (cutoff ${p.dataCutoff})` : ''}, ${p?.rowsAccepted ?? 0} row(s) accepted. `
+        + 'Loading it again would append duplicate readings. To replace that run deliberately, '
+        + 'resubmit with reprocess and a reason.',
+        { reason: result.reason, priorRun: p });
+    }
     await client.query('COMMIT');
     return created(res, result, {
       runId: result.runId,
       status: result.status,
       accepted: result.accepted,
       rejected: result.rejected,
+      contentHash: result.contentHash,
+      supersededRunId: result.supersededRunId,
+      retractedReadings: result.retractedReadings,
     });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});

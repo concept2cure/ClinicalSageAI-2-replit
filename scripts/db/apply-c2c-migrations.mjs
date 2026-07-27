@@ -101,6 +101,8 @@ const FILES = [
   'migrations/20260726_rbm_not_evaluated_backfill.sql',
   'migrations/20260727_rbm_qtl_direction.sql',
   'migrations/20260728_rbm_plan_versioning.sql',
+  // ALTERs rbm_data_runs, so it must follow metric_ingestion above.
+  'migrations/20260729_rbm_ingest_idempotency.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

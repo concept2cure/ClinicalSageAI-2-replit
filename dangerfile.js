@@ -370,13 +370,72 @@ const readPrTemplates = () => {
 // │                           RULE: PACKAGE.JSON CHANGES                         │
 // └─────────────────────────────────────────────────────────────────────────────┘
 
-const checkPackageChanges = () => {
+/** The package.json fields whose contents the lockfile actually reflects. */
+const DEPENDENCY_FIELDS = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies',
+  'bundledDependencies',
+  'bundleDependencies',
+  'overrides',
+  'resolutions',
+  'workspaces',
+  'packageManager',
+  'engines',
+];
+
+/**
+ * Did this PR change anything package-lock.json is derived from?
+ *
+ * The check used to be "package.json changed at all", which fails a PR that only
+ * adds an npm script, bumps the version string, or edits a description — none of
+ * which the lockfile reflects, so there is no lockfile update to make. The
+ * instruction it printed ("run npm install to regenerate the lockfile") produced
+ * either no diff or an unrelated dependency churn, so the only ways past it were
+ * to commit noise or to ignore a red check.
+ *
+ * Now it compares the dependency-bearing fields specifically. A real dependency
+ * change still fails without a lockfile; a scripts-only change passes.
+ *
+ * Returns null when the before/after cannot be read, which the caller treats as
+ * "assume it is a dependency change" — failing closed, since a missed dependency
+ * edit is the outcome that actually matters.
+ */
+const dependencyFieldsChanged = async () => {
+  try {
+    const diff = await danger.git.JSONDiffForFile('package.json');
+    if (!diff) return null;
+    return DEPENDENCY_FIELDS.some(field => {
+      const d = diff[field];
+      if (!d) return false;
+      return JSON.stringify(d.before) !== JSON.stringify(d.after);
+    });
+  } catch {
+    return null;
+  }
+};
+
+const checkPackageChanges = async () => {
   const changedFiles = getAllChangedFiles();
   const packageChanged = changedFiles.includes('package.json');
   const lockfileChanged = changedFiles.includes('package-lock.json');
   const fs = require('fs');
   const gitignore = fs.existsSync('.gitignore') ? fs.readFileSync('.gitignore', 'utf8') : '';
   const lockfileIgnored = /^\s*package-lock\.json\s*$/m.test(gitignore);
+
+  // A package.json edit that touches no dependency-bearing field has no lockfile
+  // consequence, so there is nothing to require. Unreadable diff → fail closed.
+  if (packageChanged && !lockfileChanged) {
+    const depsChanged = await dependencyFieldsChanged();
+    if (depsChanged === false) {
+      message(
+        '📦 **package.json Changed (no dependency impact)**: only non-dependency fields '
+        + `(e.g. \`scripts\`, \`version\`) changed, so \`package-lock.json\` needs no update.`
+      );
+      return;
+    }
+  }
 
   if (packageChanged && !lockfileChanged) {
     if (lockfileIgnored) {
@@ -486,7 +545,7 @@ const runDanger = async () => {
   await checkDeprecatedImports();
   checkTestCoverage();
   await checkConsoleLogs();
-  checkPackageChanges();
+  await checkPackageChanges();
   checkADRNeeded();
 };
 
