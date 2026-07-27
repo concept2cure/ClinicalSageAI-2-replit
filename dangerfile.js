@@ -311,28 +311,91 @@ const checkPRDescription = () => {
 // │                           RULE: PACKAGE.JSON CHANGES                         │
 // └─────────────────────────────────────────────────────────────────────────────┘
 
-const checkPackageChanges = () => {
+/**
+ * package.json fields whose contents npm's lockfile actually pins.
+ *
+ * `overrides` is npm's version-pinning field and IS reflected in
+ * package-lock.json. Yarn's `resolutions` is deliberately absent: this
+ * repository installs with `npm ci` and ships only package-lock.json, and npm
+ * ignores `resolutions` — so demanding a lockfile update for a resolutions-only
+ * edit would recreate exactly the impossible-to-satisfy failure this rule
+ * exists to remove. Add it back only alongside Yarn/resolution tooling.
+ *
+ * `workspaces` is included because adding one pulls in a package whose
+ * dependencies npm installs and links; that belongs in the security checklist.
+ */
+const DEPENDENCY_FIELDS = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies',
+  'bundledDependencies',
+  'bundleDependencies',
+  'overrides',
+  'workspaces',
+];
+
+/**
+ * True when the diff touches a field the lockfile pins. Adding an npm *script*
+ * (or editing a name/description/engines field) changes package.json but cannot
+ * change package-lock.json, so demanding a lockfile update for it is a false
+ * failure — it trained reviewers to ignore a red box that is supposed to mean
+ * "an unpinned dependency is about to ship".
+ *
+ * Falls back to `true` (the old behavior) when the before/after JSON cannot be
+ * read, so a parsing problem degrades to over-reporting rather than silently
+ * dropping a real dependency change.
+ */
+const packageDependenciesChanged = async () => {
+  let jsonDiff;
+  try {
+    jsonDiff = await danger.git.JSONDiffForFile('package.json');
+  } catch {
+    return { changed: true, certain: false };
+  }
+  if (!jsonDiff) return { changed: true, certain: false };
+
+  const touched = DEPENDENCY_FIELDS.filter((field) => {
+    const d = jsonDiff[field];
+    if (!d) return false;
+    // Danger reports added/removed for objects; fall back to a value compare.
+    if (Array.isArray(d.added) && d.added.length) return true;
+    if (Array.isArray(d.removed) && d.removed.length) return true;
+    return JSON.stringify(d.before) !== JSON.stringify(d.after);
+  });
+
+  return { changed: touched.length > 0, certain: true, fields: touched };
+};
+
+const checkPackageChanges = async () => {
   const changedFiles = getAllChangedFiles();
   const packageChanged = changedFiles.includes('package.json');
   const lockfileChanged = changedFiles.includes('package-lock.json');
+  if (!packageChanged) return;
+
   const fs = require('fs');
   const gitignore = fs.existsSync('.gitignore') ? fs.readFileSync('.gitignore', 'utf8') : '';
   const lockfileIgnored = /^\s*package-lock\.json\s*$/m.test(gitignore);
 
-  if (packageChanged && !lockfileChanged) {
+  const { changed: depsChanged, certain, fields } = await packageDependenciesChanged();
+
+  // Only a real dependency change can require a lockfile update.
+  if (depsChanged && !lockfileChanged) {
     if (lockfileIgnored) {
       warn(
         `📦 **package.json Changed Without Lockfile**: \`package-lock.json\` is gitignored in this repository, so lockfile updates are not expected in PR diffs.`
       );
     } else {
       fail(
-        `📦 **package.json Changed Without Lockfile**: You modified \`package.json\` but \`package-lock.json\` wasn't updated.\n\n` +
+        `📦 **Dependencies Changed Without Lockfile**: this PR modifies ` +
+          `${certain && fields.length ? `\`${fields.join('`, `')}\`` : 'package dependencies'} ` +
+          `but \`package-lock.json\` wasn't updated.\n\n` +
           `Run \`npm install\` to regenerate the lockfile.`
       );
     }
   }
 
-  if (packageChanged) {
+  if (depsChanged) {
     message(
       `📦 **Dependencies Changed**: This PR modifies package dependencies.\n\n` +
         `**Security Checklist:**\n` +
@@ -340,6 +403,11 @@ const checkPackageChanges = () => {
         `- [ ] Licenses compatible with project\n` +
         `- [ ] No unnecessary dependencies added\n` +
         `- [ ] \`npm audit\` passes`
+    );
+  } else {
+    message(
+      `📦 **package.json changed (no dependency change)**: only non-dependency fields ` +
+        `(scripts, metadata) were modified, so no \`package-lock.json\` update is required.`
     );
   }
 };
@@ -427,7 +495,7 @@ const runDanger = async () => {
   await checkDeprecatedImports();
   checkTestCoverage();
   await checkConsoleLogs();
-  checkPackageChanges();
+  await checkPackageChanges();
   checkADRNeeded();
 };
 
