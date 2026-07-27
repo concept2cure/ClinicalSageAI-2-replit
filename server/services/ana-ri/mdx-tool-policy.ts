@@ -70,34 +70,54 @@ export interface AnaToolPolicy {
 }
 
 /**
- * Load the per-tenant policy from `organizations.settings.anaToolPolicy`.
- * Returns an empty policy when:
+ * STRICT loader for `organizations.settings.anaToolPolicy` — DB errors
+ * PROPAGATE.
+ *
+ * Returns an empty policy only for DETERMINATE "no restriction configured"
+ * states:
  *   - the org row is missing (treat as no constraint),
  *   - settings is null,
  *   - the anaToolPolicy field is absent or malformed.
  *
- * The dispatcher calls this once per `executeCommands` invocation and
- * stamps the result on `ctx.anaToolPolicy`. Per-tool calls then read
- * the cached value via the gate.
+ * A read failure is NOT one of those states, so it throws and the caller can
+ * tell "tenant configured no restriction" apart from "could not read the
+ * tenant's restrictions". The governed-mutation dispatch uses this variant so
+ * it can fail CLOSED (see executeCommands -> ctx.governanceUnavailable).
+ */
+export async function loadAnaToolPolicyStrict(
+  pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> },
+  organizationId: number,
+): Promise<AnaToolPolicy> {
+  if (!Number.isFinite(organizationId) || organizationId <= 0) return {};
+  const { rows } = await pool.query(
+    `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
+    [organizationId],
+  );
+  const raw = rows[0]?.settings?.anaToolPolicy;
+  if (!raw || typeof raw !== 'object') return {};
+  const policy: AnaToolPolicy = {};
+  if (Array.isArray(raw.deny)) policy.deny = raw.deny.filter((s: unknown) => typeof s === 'string');
+  if (Array.isArray(raw.allow)) policy.allow = raw.allow.filter((s: unknown) => typeof s === 'string');
+  return policy;
+}
+
+/**
+ * FAIL-SOFT wrapper around {@link loadAnaToolPolicyStrict}, for READ/DISPLAY
+ * callers ONLY — the tool catalog, the chat stream's tool filter, the
+ * deep-investigation tool filter, and GET /api/ana-tool-policy. Degrading a
+ * tool picker to "show everything" on a settings read error is acceptable;
+ * degrading a governed WRITE to "allow everything" is not.
+ *
+ * The governed-mutation dispatch must use the strict variant instead.
  */
 export async function loadAnaToolPolicy(
   pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> },
   organizationId: number,
 ): Promise<AnaToolPolicy> {
-  if (!Number.isFinite(organizationId) || organizationId <= 0) return {};
   try {
-    const { rows } = await pool.query(
-      `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
-      [organizationId],
-    );
-    const raw = rows[0]?.settings?.anaToolPolicy;
-    if (!raw || typeof raw !== 'object') return {};
-    const policy: AnaToolPolicy = {};
-    if (Array.isArray(raw.deny)) policy.deny = raw.deny.filter((s: unknown) => typeof s === 'string');
-    if (Array.isArray(raw.allow)) policy.allow = raw.allow.filter((s: unknown) => typeof s === 'string');
-    return policy;
+    return await loadAnaToolPolicyStrict(pool, organizationId);
   } catch {
-    // Loader must never throw — treat any DB issue as default-allow.
+    // Read/display path only: treat an unreadable policy as default-allow.
     return {};
   }
 }
@@ -189,6 +209,31 @@ export function requireGovernedToolGate(
   const expected = (reqs.expected ?? 'yes').toLowerCase();
   const minLen = reqs.minReasonLength ?? DEFAULT_REASON_MIN;
   const threadId = typeof ctx.threadId === 'string' ? ctx.threadId : null;
+
+  // ── -1. Fail-CLOSED on indeterminate governance ───────────────────────
+  // executeCommands sets ctx.governanceUnavailable when the tenant tool
+  // policy or the Part 11 flag could not be READ (DB error / no pool). The
+  // deny/allow lists below are read from a cache that would be EMPTY in that
+  // state, so proceeding would silently un-enforce the tenant's policy on a
+  // governed mutation. Placed before the pending-action merge and the rate
+  // limiter so a governance outage neither burns rate-limit tokens nor
+  // mutates the pending-action store. (executeCommands already blocks every
+  // mutation-capable command centrally; this is the tool-policy mechanism's
+  // own fail-closed for any handler reached by another path.)
+  if (ctx.governanceUnavailable === true) {
+    return {
+      ok: false,
+      reason: '',
+      result: {
+        success: false,
+        action,
+        message:
+          "This change was blocked because your organization's governance configuration " +
+          'could not be verified. Please retry; if it persists, contact an administrator.',
+        error: 'GOVERNANCE_UNAVAILABLE',
+      },
+    };
+  }
 
   // ── 0. Multi-turn confirmation merge ─────────────────────────────────
   // If the caller looks like a confirming reply (confirm + reason
