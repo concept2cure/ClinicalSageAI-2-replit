@@ -452,3 +452,58 @@ describe('removing a citation', () => {
     expect(await usage.listSectionSources(ORG_A, sectionId)).toHaveLength(1);
   });
 });
+
+describe('the Source Tracer read (listCitedSections)', () => {
+  it('groups recorded citations per section with document context', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-tracer-1'));
+    const other = await spine.createSource(ORG_A, clientDoc('sha-tracer-2'));
+    const { docId, sectionId } = await makeSection(ORG_A, 'Tracer doc', 'TR.1');
+    await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await usage.citeSource(ORG_A, { sectionId, sourceId: other.id, createdBy: ACTOR });
+
+    const cited = await usage.listCitedSections(ORG_A, { documentId: docId });
+    expect(cited).toHaveLength(1);
+    expect(cited[0].sectionCode).toBe('TR.1');
+    expect(cited[0].documentTitle).toBe('Tracer doc');
+    expect(cited[0].sources).toHaveLength(2);
+    expect(cited[0].sources.every(s => s.state === 'current')).toBe(true);
+  });
+
+  it('surfaces a changed source as changed, per section', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-tracer-move-1'));
+    const { docId, sectionId } = await makeSection(ORG_A, 'Tracer changing doc', 'TR.2');
+    await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-tracer-move-2' WHERE id = $1`, [src.id]);
+
+    const cited = await usage.listCitedSections(ORG_A, { documentId: docId });
+    expect(cited[0].sources[0].state).toBe('changed');
+    // The recorded checksum is preserved as evidence, not advanced.
+    expect(cited[0].sources[0].citedChecksum).toBe('sha-tracer-move-1');
+  });
+
+  it('omits sections with no recorded citations — that is the surface contract', async () => {
+    const { docId } = await makeSection(ORG_A, 'Uncited doc', 'TR.3');
+    expect(await usage.listCitedSections(ORG_A, { documentId: docId })).toHaveLength(0);
+  });
+
+  it("does not serve another tenant's citations", async () => {
+    const src = await spine.createSource(ORG_B, clientDoc('sha-tracer-b', { clientProgramId: PROGRAM_B }));
+    const { docId, sectionId } = await makeSection(ORG_B, 'Their tracer doc', 'TR.4');
+    await usage.citeSource(ORG_B, { sectionId, sourceId: src.id, createdBy: ACTOR });
+
+    expect(await usage.listCitedSections(ORG_A, { documentId: docId })).toHaveLength(0);
+    expect(await usage.listCitedSections(ORG_B, { documentId: docId })).toHaveLength(1);
+  });
+
+  it('lists an unresolvable source rather than dropping the citation', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-tracer-gone'));
+    const { docId, sectionId } = await makeSection(ORG_A, 'Orphan tracer doc', 'TR.5');
+    await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE cre_evidence_sources SET deleted_at = NOW() WHERE id = $1`, [src.id]);
+
+    const cited = await usage.listCitedSections(ORG_A, { documentId: docId });
+    expect(cited).toHaveLength(1);
+    expect(cited[0].sources[0].state).toBe('unresolved');
+    expect(cited[0].sources[0].source).toBeNull();
+  });
+});

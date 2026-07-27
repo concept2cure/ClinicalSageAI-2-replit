@@ -15726,62 +15726,24 @@ export const concept2cureConversationsRelations = relations(
 );
 
 // ============================================================================
-// SOURCE CITATIONS — Sentence-level source linking for regulatory traceability
+// SOURCE CITATIONS — REMOVED (2026-07-27)
 // ============================================================================
-
-export const sourceTypeEnum = pgEnum('source_type', [
-  'trial_data',
-  'literature',
-  'regulatory_guidance',
-  'internal_data',
-]);
-
-export const sourceCitations = pgTable(
-  'source_citations',
-  {
-    id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => documents.id),
-    sectionId: integer('section_id'),
-    sentenceIndex: integer('sentence_index').notNull(),
-    sentenceText: text('sentence_text').notNull(),
-    sourceType: sourceTypeEnum('source_type').notNull(),
-    sourceId: text('source_id').notNull(),
-    sourceTitle: text('source_title').notNull(),
-    sourceUrl: text('source_url'),
-    confidence: real('confidence').notNull().default(1.0),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    createdBy: integer('created_by').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  table => ({
-    documentIdx: index('source_citations_document_idx').on(table.documentId),
-    orgIdx: index('source_citations_org_idx').on(table.organizationId),
-    sectionIdx: index('source_citations_section_idx').on(table.documentId, table.sectionId),
-  })
-);
-
-export const insertSourceCitationSchema = createInsertSchemaOmit(sourceCitations, {
-  id: true,
-  createdAt: true,
-});
-
-export type SourceCitation = InferSelectModel<typeof sourceCitations>;
-export type InsertSourceCitation = z.infer<typeof insertSourceCitationSchema>;
-
-export const sourceCitationsRelations = relations(sourceCitations, ({ one }) => ({
-  document: one(documents, {
-    fields: [sourceCitations.documentId],
-    references: [documents.id],
-  }),
-  organization: one(organizations, {
-    fields: [sourceCitations.organizationId],
-    references: [organizations.id],
-  }),
-}));
+// The `source_citations` drizzle table that lived here was never backed by DDL:
+// no migration in migrations/, db/migrations/ or sql/ ever created it, so every
+// runtime access 42P01'd (the writer swallowed the error; the reader returned
+// 503). It also could not be salvaged by writing the DDL — the AI-edit writer
+// inserted `concept2cure_artifacts` ids into `document_id` while the declared FK
+// and the Source Tracer's join pointed at `documents.id`, an unrelated serial
+// sequence. Provisioning the table would have turned a silent failure into
+// cross-labelled provenance on a Part 11 surface.
+//
+// Recorded section→source lineage lives in `authoring_citations` under the
+// convention documented in migrations/20260726_authoring_citation_source_usage.sql
+// (source = 'cre_evidence_source', reference_id = cre_evidence_sources.id,
+// payload_sha256 = the source's checksum at cite time), read and written through
+// server/services/clinical-regulatory-evidence/source-usage.service.ts.
+// Model-asserted sentence↔chunk support lives in the ai-trace-chain tables,
+// labelled as inference. Do not reintroduce a third store between them.
 
 // ============================================================
 // BIOSTATISTICS PLATFORM TABLES

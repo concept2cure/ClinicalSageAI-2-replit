@@ -447,6 +447,93 @@ export async function refreshSourceCitation(
   return { ok: true, changed: currentChecksum !== previousChecksum, previousChecksum, currentChecksum, sourceId };
 }
 
+/** A section with recorded source citations, grouped for the Source Tracer. */
+export interface CitedSection {
+  sectionId: string;
+  sectionCode: string | null;
+  sectionTitle: string | null;
+  documentId: string;
+  documentTitle: string | null;
+  module: string | null;
+  documentStatus: string | null;
+  sources: SectionSourceUsage[];
+}
+
+/**
+ * The Source Tracer read — every authored section in the org that carries at
+ * least one RECORDED canonical-source citation, grouped per section, each
+ * citation with its standing against the source's content today.
+ *
+ * This is the read that replaced `source_citations`, a sentence-level provenance
+ * table that never had DDL anywhere in the repo and whose writer and reader
+ * disagreed about what `document_id` meant (the writer inserted
+ * concept2cure_artifacts ids; the reader joined documents ids). A provenance
+ * surface fed by that join would, at best, show nothing — and at worst render
+ * one document's sentences under another document's title. Lineage shown to a
+ * regulated user must be a recorded fact, so the tracer now reads the same rows
+ * the authoring Sources rail writes: human-recorded citations carrying the
+ * source's checksum at cite time. Nothing here is inferred from text similarity,
+ * and there is no confidence score because nothing is being guessed.
+ *
+ * Sections with no recorded citations are simply absent — the tracer states that
+ * as its contract rather than padding the list.
+ */
+export async function listCitedSections(
+  orgId: number,
+  opts: { documentId?: string | null; limit?: number } = {},
+): Promise<CitedSection[]> {
+  const args: unknown[] = [orgId, CRE_SOURCE_CITATION];
+  let scope = '';
+  if (opts.documentId) {
+    args.push(opts.documentId);
+    scope = ` AND doc.id = $${args.length}`;
+  }
+  args.push(Math.min(Math.max(opts.limit ?? 500, 1), 2000));
+
+  const { rows } = await pool.query(
+    `SELECT c.id, c.section_id, c.created_at, c.created_by, c.citation_text, c.payload_sha256,
+            sec.code AS section_code, sec.title AS section_title,
+            doc.id AS document_id, doc.title AS document_title,
+            doc.module, doc.status AS document_status,
+            src.id AS source_id, src.title, src.checksum, src.source_type,
+            src.ingestion_status, src.extraction_status, src.updated_at AS source_updated_at,
+            src.metadata->>'mimeType'      AS mime_type,
+            src.provenance->>'fileUploadId' AS file_upload_id
+       FROM authoring_citations c
+       JOIN authoring_sections sec ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
+       JOIN authoring_documents doc ON doc.id = sec.doc_id AND doc.tenant_id = c.tenant_id
+       LEFT JOIN cre_evidence_sources src
+              ON src.id::text = c.reference_id
+             AND (src.organization_id IS NULL OR src.organization_id = $1)
+             AND src.deleted_at IS NULL
+      WHERE c.tenant_id = $1 AND c.source = $2${scope}
+      ORDER BY doc.title ASC NULLS LAST, sec.code ASC NULLS LAST, c.created_at ASC
+      LIMIT $${args.length}`,
+    args,
+  );
+
+  const bySection = new Map<string, CitedSection>();
+  for (const r of rows as Array<Record<string, unknown>>) {
+    const sectionId = String(r.section_id);
+    let entry = bySection.get(sectionId);
+    if (!entry) {
+      entry = {
+        sectionId,
+        sectionCode: (r.section_code as string) ?? null,
+        sectionTitle: (r.section_title as string) ?? null,
+        documentId: String(r.document_id),
+        documentTitle: (r.document_title as string) ?? null,
+        module: (r.module as string) ?? null,
+        documentStatus: (r.document_status as string) ?? null,
+        sources: [],
+      };
+      bySection.set(sectionId, entry);
+    }
+    entry.sources.push(adaptUsageRow(r));
+  }
+  return [...bySection.values()];
+}
+
 /** The joined source, or null when the reference did not resolve for this caller. */
 function adaptUsageSource(r: Record<string, unknown>): SectionSourceUsage['source'] {
   if (r.source_id == null) return null;
