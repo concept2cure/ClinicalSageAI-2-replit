@@ -2674,6 +2674,19 @@ button.ctable-row { border-radius: 0; }
 .ph-gov-sig.sig-pending  { background: var(--warning-muted); color: var(--warning); }
 .ph-gov-sig.sig-reserved { background: var(--bg-200);        color: var(--text-300); }
 
+/* Program context (resolved industry context strip) */
+.ph-ctx-row { grid-template-columns: 92px 1fr; }
+/* Keep the divider under the last key/value row — the tag rows follow it. */
+.ph-ctx .ph-gov-row:last-child { border-bottom: 1px solid var(--border); }
+.ph-ctx-tags {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ph-ctx-tags:last-child { border-bottom: 0; }
+.ph-ctx-tags > .ph-gov-role { flex: 0 0 92px; }
+.ph-ctx-none { font-size: 11px; color: var(--text-400); }
+
 /* Activity */
 .ph-activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .ph-act-row {
