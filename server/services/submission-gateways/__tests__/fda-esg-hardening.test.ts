@@ -236,6 +236,14 @@ const SMALL_AS2_REQUEST = () => ({
   environment:    'production' as const,
   submissionType: 'original',
   metadata:       { applicationId: 'IND123456', sequence: '0001', environment: 'production' },
+  // Transmission now requires a named human gate; this suite exercises the
+  // governed HTTP path. See TransmitAuthorization in ../types.ts.
+  authorization: {
+    kind: 'governed-http' as const,
+    actorUserId: 11,
+    reason: 'FDA ESG hardening suite exercises the governed transmit path',
+    reauthVerifiedAt: new Date(),
+  },
 });
 
 beforeEach(() => {
@@ -278,16 +286,25 @@ describe('FIX 2 — raw MDN persistence', () => {
     expect(ack.buffer.toString('utf8')).not.toMatch(/^FDA ESG Acknowledgement\n/);
   });
 
-  it('downloadAcknowledgment falls back to synthesised text for pre-fix rows (mdn_raw=NULL)', async () => {
+  it('falls back to a LABELLED platform record for pre-fix rows (mdn_raw=NULL)', async () => {
     // Simulate a pre-migration row: do NOT transmit, leave mdnRawStorage NULL.
+    // The fallback still exists — what changed is that it no longer presents
+    // itself as an FDA acknowledgement. This assertion used to require the
+    // header `FDA ESG Acknowledgement`, i.e. it pinned the defect: a document
+    // this platform composed from its own row, titled as the agency's.
     mdnRawStorage.value = null;
 
     const gw = new FdaEsgGateway();
     const ack = await gw.downloadAcknowledgment(4242);
+    const body = ack.buffer.toString('utf8');
 
     expect(ack.contentType).toBe('text/plain');
-    expect(ack.buffer.toString('utf8')).toMatch(/^FDA ESG Acknowledgement\n/);
-    expect(ack.buffer.toString('utf8')).toContain('Transmission: <mdn-msg-id@FDA-CESUB>');
+    expect(ack.provenance).toBe('platform-record');
+    expect(body).toMatch(/^CONCEPT2CURE TRANSMITTAL RECORD/);
+    expect(body).toMatch(/THIS IS NOT AN AGENCY ACKNOWLEDGEMENT/);
+    expect(body).not.toMatch(/^FDA ESG Acknowledgement/m);
+    // The identifiers it legitimately holds survive.
+    expect(body).toContain('Transmission: <mdn-msg-id@FDA-CESUB>');
   });
 });
 

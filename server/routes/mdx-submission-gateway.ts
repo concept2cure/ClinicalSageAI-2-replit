@@ -26,6 +26,7 @@ import { pool } from '../db';
 import {
   getGateway, listGateways, gatewayConfigurationStatus,
   CredentialError, GatewayError, TransportError, ValidationError,
+  acknowledgementFilename,
   type Region, type GatewayName,
 } from '../services/submission-gateways';
 import {
@@ -218,6 +219,11 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     res.setHeader('WWW-Authenticate', 'ReAuth required');
     return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
   }
+  // Captured here, at the moment the human actually re-authenticated, and
+  // handed to the gateway as this transmission's authorization. The gateway
+  // layer now refuses any transmit that cannot name a human gate — see
+  // TransmitAuthorization in server/services/submission-gateways/types.ts.
+  const reauthVerifiedAt = new Date();
 
   // Resolve the bundle. An explicit `bundle` in the body always wins (back-compat).
   // Otherwise, if a `packageId` is provided, load the stored bundle descriptor that
@@ -344,6 +350,12 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       environment:    p.environment,
       submissionType: p.submissionType,
       metadata:       { ...(p.metadata ?? {}), environment: p.environment },
+      authorization: {
+        kind: 'governed-http',
+        actorUserId: userId,
+        reason: p.reason,
+        reauthVerifiedAt,
+      },
     });
 
     // Record the governed sign AFTER the external transmit succeeds. The
@@ -446,7 +458,12 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
     const gw = getGateway(own.rows[0].region as Region, own.rows[0].gateway as GatewayName);
     const ack = await gw.downloadAcknowledgment(id);
     res.setHeader('Content-Type', ack.contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="ack-${ack.transmissionId}.txt"`);
+    // The filename carries the provenance, because a downloaded file outlives
+    // the page that served it — and the previous name, `ack-<id>.txt`, said
+    // "acknowledgement" for a document this platform wrote about itself.
+    res.setHeader('Content-Disposition', `attachment; filename="${acknowledgementFilename(ack)}"`);
+    // Machine-readable for the surface, which decides what to tell the user.
+    res.setHeader('X-Ack-Provenance', ack.provenance);
     return res.send(ack.buffer);
   } catch (err: unknown) {
     if (err instanceof GatewayError) return clientError(res, 502, err.message);

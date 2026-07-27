@@ -1261,8 +1261,12 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
 
 export const TRANSMIT_SUBMISSION: AnaTool = {
   name: 'transmit_submission',
+  // The description states the refusal, because a tool whose description
+  // promises transmission will be called for transmission and its refusal
+  // reported to the user as a failure. It does not transmit — see the handler
+  // in AnaToolExecutor.ts and the gateway guard in submission-gateways/index.ts.
   description:
-    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, or Health Canada CESG). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
+    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
   input_schema: {
     type: 'object',
     properties: {

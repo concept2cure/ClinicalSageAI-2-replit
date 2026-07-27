@@ -557,6 +557,14 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
       environment,
       submissionType: seq.type ?? undefined,
       metadata: { applicationId: params.applicationId ?? `SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
+      // Gate 1 above already verified this signature governs THIS sequence and
+      // was made by THIS actor; the gateway layer now requires that proof to be
+      // named rather than merely to have happened somewhere up the stack.
+      authorization: {
+        kind: 'governed-signature',
+        signatureActionId,
+        actorUserId: ctx.userId,
+      },
     });
   } finally {
     // The gateway has consumed the bundle bytes (or failed); either way the

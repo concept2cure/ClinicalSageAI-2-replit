@@ -20,7 +20,19 @@
  * empty/error states. Transmit/rollback are real awaited writes gated by the
  * server's re-auth; a 401 (re-auth failed), 412 (credentials not configured),
  * 422 (structural gate), and the 409 active-transmittal lock are each surfaced
- * with the server's own reason. The ACK download is the gateway's actual bytes.
+ * with the server's own reason.
+ *
+ * The ACK download states WHO WROTE THE BYTES. Only an FDA AS2 MDN is an agency
+ * artefact; for every other gateway the platform composes a record from its own
+ * transmittal row, and this surface used to hand that file over with the words
+ * "the agency's actual bytes" — enough for a sponsor to archive a document
+ * Concept2Cure wrote as proof an agency received a submission. The server sends
+ * provenance on X-Ack-Provenance and names the file accordingly; the toast below
+ * says which one arrived.
+ *
+ * Rollback is likewise scoped honestly: it records a rollback in THIS platform's
+ * audit trail and frees the transmit lock. It does not retract anything at the
+ * agency, and the copy no longer implies that it does.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
@@ -83,7 +95,9 @@ const TRANSMIT_FORM: C2CFormConfig = {
 const ROLLBACK_FORM = (id: number): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch',
   title: `Roll back transmittal #${id}`,
-  sub: 'Rolls the transmittal back at the gateway; the reason is recorded.',
+  sub: 'Records the rollback in this platform’s Part 11 audit trail and frees the transmit lock. '
+     + 'It does NOT retract the submission at the agency — the agency still holds the transmitted '
+     + 'bytes, and you must file the agency-side retraction directly (FDA: WebTrader).',
   governed: true, submitLabel: 'Roll back',
   fields: [
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters.' },
@@ -153,13 +167,19 @@ export function GatewayTransmittals(_props: SurfaceViewProps) {
         fireToast('No ACK available — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.');
         return;
       }
+      const provenance = res.headers.get('X-Ack-Provenance');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `ack-transmittal-${id}.txt`;
+      a.href = url;
+      a.download = provenance === 'agency'
+        ? `agency-acknowledgement-${id}.txt`
+        : `concept2cure-transmittal-record-${id}-NOT-AN-AGENCY-ACK.txt`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      fireToast('Gateway acknowledgment downloaded — the agency’s actual bytes.');
+      fireToast(provenance === 'agency'
+        ? 'Agency acknowledgment downloaded — the agency’s own bytes.'
+        : 'Downloaded this platform’s transmittal record. It is NOT an agency acknowledgment — obtain the agency receipt from the agency portal.');
     } catch (e) {
       fireToast('ACK download failed — ' + (e instanceof Error ? e.message : String(e)) + '.');
     }
@@ -174,7 +194,7 @@ export function GatewayTransmittals(_props: SurfaceViewProps) {
     if (status === 401) { fireToast('Not rolled back — re-authentication failed.'); return; }
     if (!ok) { fireToast(`Rollback failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing changed') + '.'); return; }
     setDialog(null);
-    fireToast(`Transmittal #${id} rolled back at the gateway.`);
+    fireToast(`Transmittal #${id} marked rolled back in the audit trail. The agency still holds the transmitted bytes — file the agency-side retraction separately.`);
     void load();
   }, [dialog, load, fireToast]);
 
@@ -215,7 +235,7 @@ export function GatewayTransmittals(_props: SurfaceViewProps) {
                   <td style={{ whiteSpace: 'nowrap' }}>{t.submitted_at ? new Date(t.submitted_at).toLocaleString() : '—'}</td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
-                    <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the agency acknowledgment' : 'No acknowledgment received yet'}>{I.download} ACK</button>
+                    <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rollback: t.id })}>{I.rotateCcw} Rollback</button>
                   </td>
                 </tr>))}</tbody></table>}

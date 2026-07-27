@@ -65,6 +65,12 @@ function caRequest() {
     environment: 'production' as const,
     submissionType: 'initial',
     metadata: { applicationId: 'CA-DOSSIER-1', sequence: '0000', environment: 'production' },
+      authorization: {
+        kind: 'governed-http' as const,
+        actorUserId: 1,
+        reason: 'gateway suite exercises the governed transmit path',
+        reauthVerifiedAt: new Date(),
+      },
   };
 }
 
