@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+import { getAuthHeaders as getCanonicalAuthHeaders } from '@/utils/authToken';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -122,13 +123,14 @@ export const licenseQueryKeys = {
 // API HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Delegates to the canonical builder so both the bearer and the
+// x-organization-id tenant header are sent — the previous version omitted the
+// tenant header entirely on /api/module-subscriptions.
 function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
+  return {
+    'Content-Type': 'application/json',
+    ...getCanonicalAuthHeaders(),
+  };
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
