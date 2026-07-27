@@ -158,6 +158,7 @@ import {
   type FailedToolCall,
 } from './agentic-loop.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { assertWithinDocumentWorkspace } from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -571,13 +572,21 @@ registerToolHandler('recall_rim_patterns', async (input, ctx) => {
 
 // RIM domain query — filter learned patterns by domain with optional confidence
 // and occurrence thresholds, sorted by occurrences descending. Tenant-scoped.
-registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>) =>
+registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>, ctx) =>
   runStatsTool('query_rim_patterns_by_domain', async () => {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    // Tenant comes from the VERIFIED context, never from the model's arguments.
+    // This previously read `input.orgId`, and the tool definition made orgId a
+    // required model-supplied field — so naming another organization's id read
+    // that tenant's learned regulatory patterns. The sibling recall_rim_patterns
+    // already gates on ctx.organizationId; this is the same rule.
+    const orgId = ctx?.organizationId;
     const domain = typeof input.domain === 'string' ? input.domain.trim() : '';
-    if (!orgId || !domain) {
-      throw new Error('orgId (number) and domain (string) are required.');
+    if (!orgId) {
+      throw new Error('query_rim_patterns_by_domain requires tenant context (organizationId).');
+    }
+    if (!domain) {
+      throw new Error('domain (string) is required.');
     }
     const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
     const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
@@ -599,12 +608,13 @@ registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string,
 );
 
 // RIM intelligence summary — aggregate domain counts, top patterns, date range.
-registerToolHandler('summarize_rim_intelligence', async (input: Record<string, unknown>) =>
+registerToolHandler('summarize_rim_intelligence', async (_input: Record<string, unknown>, ctx) =>
   runStatsTool('summarize_rim_intelligence', async () => {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    // See query_rim_patterns_by_domain: tenant from the verified context only.
+    const orgId = ctx?.organizationId;
     if (!orgId) {
-      throw new Error('orgId (number) is required.');
+      throw new Error('summarize_rim_intelligence requires tenant context (organizationId).');
     }
 
     const patterns = getPatterns({ orgId });
@@ -6698,15 +6708,37 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
 // the source of truth, the PDF is its native rendering.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('convert_docx_to_pdf', async (input) => {
+registerToolHandler('convert_docx_to_pdf', async (input, ctx) => {
   const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
   if (!inputDocxPath) {
     return JSON.stringify({
       error: 'convert_docx_to_pdf requires input_docx_path (string).',
     });
   }
+  // Tenant context, like every sibling document tool (insert_document_content,
+  // surgical_docx_xml_edit, validate_docx, …). This handler was registered
+  // without a ToolContext at all, so it had no identity to check even in
+  // principle — the only tool in the document-surgery family with that gap.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'convert_docx_to_pdf requires tenant context (organizationId).' });
+  }
   const outputPdfPath =
     typeof input.output_pdf_path === 'string' ? input.output_pdf_path : undefined;
+
+  // C2C-AI-003. Both paths come from model-chosen tool arguments and reach the
+  // worker, which READS input_docx_path and OVERWRITES output_pdf_path
+  // (server/scripts/docx_pdf_pipeline.py — `generated.replace(output_pdf)`).
+  // Unconfined, that is an arbitrary server-side file read whose bytes return
+  // through the tool result, and an arbitrary file overwrite. Confine both to
+  // the workspace the document tools actually write to.
+  try {
+    assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path');
+    if (outputPdfPath !== undefined) {
+      assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path');
+    }
+  } catch (err) {
+    return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
+  }
   const compress = input.compress === true;
   const allowedQ = new Set(['screen', 'ebook', 'printer', 'prepress', 'default']);
   const quality =

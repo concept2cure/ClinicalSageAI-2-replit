@@ -426,33 +426,58 @@ class MedicalDeviceService {
         ? submission.submission?.electronicSignatures
         : [];
 
-      // Update submission status
+      // This endpoint performs NO transmission. It validates completeness and
+      // applies the e-signature; there is no gateway client here and never was
+      // (the comment below said "placeholder"). It used to record the package as
+      // `submitted` with an actualSubmissionDate, log the attempt as a success —
+      // which stamps httpStatusCode 200 into fda_integration_logs for a call
+      // that was never made — and return "sent to FDA successfully".
+      //
+      // Every one of those was a claim about the agency that nothing had done.
+      // The signed, validated package is real and is recorded as such; the
+      // transmission is not, and is now reported as not having happened. Real
+      // transmission lives on the gateway path (server/services/submission-
+      // gateways, surfaced as Gateway Transmittals), which obtains and stores an
+      // actual agency receipt.
       await this.update510kSubmission(
         organizationId,
         submissionId,
         {
-          submissionStatus: 'submitted',
-          actualSubmissionDate: new Date(),
+          submissionStatus: 'ready_for_transmission',
           electronicSignatures: [...existingSignatures, signature],
         },
         userId
       );
 
-      // Log FDA integration attempt (placeholder)
       await this.logFDAIntegration(
         organizationId,
         'CDRH_Portal',
         '510k_submission',
         submissionId,
         { submissionId, deviceId: submission.device?.id ?? null },
-        { message: 'Submission queued for FDA gateway', status: 'pending' },
-        'success'
+        {
+          message:
+            'Package validated and signed locally. NOT transmitted to FDA — this endpoint has no gateway transport.',
+          transmitted: false,
+        },
+        'not_transmitted'
       );
 
-      // Update workflow
-      await this.updateWorkflowStatus(organizationId, '510k', submissionId, 'submitted', userId);
+      await this.updateWorkflowStatus(
+        organizationId,
+        '510k',
+        submissionId,
+        'ready_for_transmission',
+        userId
+      );
 
-      return { success: true, message: '510(k) submission sent to FDA successfully' };
+      return {
+        success: true,
+        transmitted: false,
+        message:
+          '510(k) package validated and signed. NOT transmitted to FDA — no submission has been made. ' +
+          'Use Gateway Transmittals to transmit and obtain an agency receipt.',
+      };
     } catch (error) {
       logger.error('Error submitting 510(k) to FDA:', { error: error });
 
@@ -886,7 +911,12 @@ class MedicalDeviceService {
         httpMethod: 'POST',
         requestPayload: request,
         responsePayload: response,
-        httpStatusCode: status === 'success' ? 200 : 500,
+        // Only a status that reflects an actual HTTP exchange gets an HTTP code.
+        // This used to write 200 for anything not a failure, so a local
+        // no-transmission path stamped a successful POST to an FDA endpoint into
+        // the log an inspector reads first. A call that was never made now
+        // records no status code at all.
+        httpStatusCode: status === 'success' ? 200 : status === 'failure' ? 500 : null,
         relatedEntityType: entityType,
         relatedEntityId: entityId,
         status,
