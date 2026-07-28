@@ -19,7 +19,7 @@ import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
-import { SampleTag, useLive, connected } from './dataConnect';
+import { SampleTag, connected } from './dataConnect';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { GovernedActionSignoff } from '../components/ana/GovernedActionSignoff';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
@@ -436,16 +436,22 @@ export function AnaRail({
   };
   const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
   const co = getCoauthor(segment);
-  const ac0: AnaContext = getAnaContext(surface.id, segment);
-  /* HARD RULE: bind AnA to the real co-author endpoint (live ?? fixture). When
-     the backend is reachable, live co-author state overrides the fixture. */
-  const liveCo = useLive<Partial<AnaContext> | null>(
-    `/api/coauthor?surface=${encodeURIComponent(surface.id)}&segment=${encodeURIComponent(segment ?? '')}`,
-    null,
-    [surface.id, segment]
-  );
-  const ac: AnaContext = liveCo.data ? { ...ac0, ...liveCo.data } : ac0;
-  const anaSample = !connected() || liveCo.sample;
+  /* AnA's per-surface context is local, and says so.
+   *
+   * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
+   * calling it a HARD RULE that bound AnA to "the real co-author endpoint".
+   * There is no such endpoint. server/routes/coauthor.ts mounts `/sessions`,
+   * `/documents`, `/documents/:id` and `/templates` — it has no root handler, so
+   * that request 404'd on every render of every surface, forever, and the result
+   * was discarded into the same fixture fallback used when it was never issued.
+   *
+   * The `sample` flag is what the user actually sees, and it was being derived
+   * from a call that could not succeed. Deriving it from `connected()` alone is
+   * the same answer honestly obtained. If per-surface AnA context becomes a real
+   * server concern, add the endpoint and restore the merge — do not reinstate a
+   * fetch against a route that does not exist. */
+  const ac: AnaContext = getAnaContext(surface.id, segment);
+  const anaSample = !connected();
   const suggestions = ac.suggestions?.length ? ac.suggestions : [];
   const send = () => {
     const t = draft.trim();
