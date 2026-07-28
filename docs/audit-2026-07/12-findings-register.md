@@ -2756,7 +2756,7 @@ The PR gate reads the same path: `--strict-no-regression --baseline docs/reports
 
 Current baseline: 249 duplicate basenames, 30 files over the byte threshold, 84 over the line threshold. (I confirmed the scan reads the baseline before overwriting it — scripts/audits/repo-health-scan.mjs:339 vs :369 — so within one run the comparison is honest.)
 
-Related: the orphan-endpoint gate is set at `--threshold 600` (package.json:90) against 556 actual orphans (docs/reports/orphan-endpoints-latest.json) — 44 of headroom, ~8%.
+Related: the orphan-endpoint gate is set at `--threshold 600` (package.json:91, the `:strict` variant — package.json:90 is the non-strict script and takes no threshold) against 556 actual orphans (docs/reports/orphan-endpoints-latest.json) — 44 of headroom, ~8%. That headroom is deliberate and documented at `.github/workflows/ci.yml:202-205`; see the correction to item 0.8 in Chapter 15.
 
 **Failure scenario.** Ten PRs each add three duplicate basenames. Each PR sees delta +3 against the baseline as of its branch point, fails, and the author bumps by re-basing after a merge that refreshed the baseline — or simply merges another PR first. Over a quarter the duplicate-basename count moves from 249 to 300 while every PR reported delta 0 and the gate reported green the whole time. There is no ceiling and no downward pressure; the only strict variant (`audit:repo-health:full-strict`) runs in the nightly job, which is permanently red (see NIGHTLY-01) and therefore ignored.
 

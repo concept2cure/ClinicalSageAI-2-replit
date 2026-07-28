@@ -18,7 +18,7 @@ ledger.
 | # | Baseline / allowlist | What it suppresses | Count | Gate | Blocking? |
 |---:|---|---|---:|---|---|
 | 1 | `.typecheck-baseline.json` | `tsc --noEmit` errors | **0** (from 2,598) | `ci:typecheck:no-regression` | ✅ — **but vacuous, see §11.3** |
-| 2 | `docs/reports/orphan-endpoints-latest.json` | API endpoints with no caller | **556** of 916 (60.7%) | `audit:orphaned-endpoints:strict` | ⚠️ threshold **600** — 44 slots of slack |
+| 2 | `docs/reports/orphan-endpoints-latest.json` | API endpoints with no caller | **556** of 914 (60.8%) | `audit:orphaned-endpoints:strict` | threshold **600** — 44 slots, deliberate (ci.yml:202-205) |
 | 3 | `docs/reports/env-var-docs-baseline.json` | Env vars read by code, absent from `.env.example` | **244** | `check-env-var-docs.mjs` | ❌ **no npm script, no workflow — the gate does not exist** |
 | 4 | `scripts/ci/unreferenced-modules-baseline.json` | Modules nothing references | **190** | `ci:unreferenced-modules` | ✅ |
 | 5 | `scripts/ci/unbacked-tables-baseline.json` | Tables queried by server code that **nothing in the repo creates** | **89** | `ci:unbacked-tables` | ✅ |

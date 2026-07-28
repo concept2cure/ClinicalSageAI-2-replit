@@ -73,7 +73,35 @@ something and one that does not.
 | **0.5** | **Fix `/readyz`.** `server/startup/services.ts` :92/:94/:99 return without calling `setSchemaReadiness`, leaving it `'unknown'` → rendered `"skipped"` → probe stays green. Make unknown **fail**, and fail on the "important" table set, not only the 2 critical ones. | Platform | 4 h | Boot against a DB missing `auth_users` → `/readyz` returns **503** naming it. |
 | **0.6** | **Wire the env-var-docs gate.** A 240-line checker maintains a 244-entry baseline for a gate no workflow invokes. Add the npm script and the CI step, or delete all three. | Platform | 1 h | Adding an undocumented env var fails CI. |
 | **0.7** | **Stop the repo-health baseline auto-ratcheting upward.** `repo-health-baseline-refresh.yml` commits a refreshed baseline on every merge, so that debt can only grow. Freeze it and ratchet down deliberately. | Platform | 2 h | Baseline cannot increase without a human commit. |
-| **0.8** | Lower `audit:orphaned-endpoints` `--threshold` from 600 to the actual count (556) so the 44 slots of slack close. | Platform | 15 min | Adding a dead endpoint fails CI. |
+| **0.8** | ~~Lower `audit:orphaned-endpoints` `--threshold` from 600 to the actual count (556) so the 44 slots of slack close.~~ **Corrected — see below.** Lower `audit:orphaned-endpoints:strict` from 600 to **570**. | Platform | 15 min | A PR adding 15 unwired endpoints fails CI; a PR deleting client code does not. |
+
+### Correction to item 0.8 — three errors in one row
+
+Found by re-verifying this chapter's own items against the live tree before implementing
+them, which is the discipline Chapter 03 exists to enforce. All three confirmed by execution.
+
+1. **Wrong script.** `audit:orphaned-endpoints` (`package.json:90`) takes no `--threshold`
+   and always exits 0. The 600 lives on `audit:orphaned-endpoints:strict`
+   (`package.json:91`), which is what `ci.yml` actually runs. Chapter 12 repeats the same
+   mis-citation.
+
+2. **Wrong target, and it reverses a reasoned decision without rebutting it.** The 44 slots
+   are not unnoticed slack. `.github/workflows/ci.yml:202-205` documents them, from whoever
+   performed the previous 900 → 600 ratchet:
+
+   > The 44 of remaining headroom is deliberate: a feature branch legitimately adds
+   > endpoints before the client that calls them exists, and one PR adding 45 unwired
+   > endpoints is worth a conversation rather than a silent pass.
+
+   Zero headroom is also the wrong goal on its own terms. Orphans are computed as
+   `declared − consumed`, so the gate is equally sensitive to **deleting client code** as to
+   adding endpoints. Pinned at 556, a PR that removes the last caller of a handful of
+   endpoints fails CI having added nothing. **570** closes 30 of the 44 slots while leaving
+   room for the legitimate case the existing comment describes.
+
+3. **Stale denominator.** Live count is `Declared: 914 / Consumed: 358 / Orphans: 556` —
+   556 of **914 (60.8%)**, not 916 (60.7%). The orphan numerator is unchanged, so the
+   headline finding stands; only the total drifted.
 
 > **Why this is Stage 0 and not Stage 3.** As of today the flagship quality gate passes
 > because the compiler runs out of memory, the readiness probe reports healthy over a
