@@ -1,0 +1,4725 @@
+{
+  "generatedAt": "2026-07-28T15:40:36.210Z",
+  "method": "raw-SQL table references in server/ (non-test) vs information_schema after scripts/db/install-fresh.mjs on an empty database",
+  "tablesPresentAfterFreshInstall": 710,
+  "schemasPresentAfterFreshInstall": [
+    "audit",
+    "lumen",
+    "precedent",
+    "public",
+    "vault"
+  ],
+  "distinctTablesReferencedInServerSql": 985,
+  "missingTableCount": 494,
+  "totalDanglingReferenceSites": 1583,
+  "missingSchemaCount": 23,
+  "missingSchemas": [
+    {
+      "schema": "innovation",
+      "referenceSites": 139,
+      "distinctTables": 27,
+      "exampleSite": "server/routes/innovation-routes.ts:145"
+    },
+    {
+      "schema": "intelligence",
+      "referenceSites": 51,
+      "distinctTables": 14,
+      "exampleSite": "server/services/intelligence/ana-failure-learning.ts:173"
+    },
+    {
+      "schema": "clinical_ops",
+      "referenceSites": 40,
+      "distinctTables": 7,
+      "exampleSite": "server/routes/clinical-operations-routes.ts:207"
+    },
+    {
+      "schema": "regulatory_intel",
+      "referenceSites": 32,
+      "distinctTables": 11,
+      "exampleSite": "server/services/regulatory-precedent-intelligence/advisory-committee-service.ts:113"
+    },
+    {
+      "schema": "cortex",
+      "referenceSites": 29,
+      "distinctTables": 23,
+      "exampleSite": "server/services/cortexPrimeService.ts:261"
+    },
+    {
+      "schema": "intelligent_docs",
+      "referenceSites": 24,
+      "distinctTables": 7,
+      "exampleSite": "server/routes/intelligentDocs.ts:90"
+    },
+    {
+      "schema": "manufacturing",
+      "referenceSites": 23,
+      "distinctTables": 4,
+      "exampleSite": "server/routes/manufacturing-routes.ts:178"
+    },
+    {
+      "schema": "regulatory_harmonization",
+      "referenceSites": 23,
+      "distinctTables": 9,
+      "exampleSite": "server/services/grdhe/grdheService.ts:124"
+    },
+    {
+      "schema": "labeling",
+      "referenceSites": 17,
+      "distinctTables": 5,
+      "exampleSite": "server/api/labeling/routes.ts:37"
+    },
+    {
+      "schema": "site_intel",
+      "referenceSites": 17,
+      "distinctTables": 5,
+      "exampleSite": "server/api/site-intel/routes.ts:61"
+    },
+    {
+      "schema": "signing",
+      "referenceSites": 16,
+      "distinctTables": 7,
+      "exampleSite": "server/api/signing/routes.ts:26"
+    },
+    {
+      "schema": "ectd",
+      "referenceSites": 14,
+      "distinctTables": 4,
+      "exampleSite": "server/api/ectd/routes.ts:14"
+    },
+    {
+      "schema": "compliance",
+      "referenceSites": 11,
+      "distinctTables": 7,
+      "exampleSite": "server/services/cortexComplianceService.ts:149"
+    },
+    {
+      "schema": "core",
+      "referenceSites": 9,
+      "distinctTables": 1,
+      "exampleSite": "server/routes/innovation-routes.ts:119"
+    },
+    {
+      "schema": "predicate",
+      "referenceSites": 7,
+      "distinctTables": 4,
+      "exampleSite": "server/services/precedent-engine.ts:274"
+    },
+    {
+      "schema": "ectd_v4",
+      "referenceSites": 2,
+      "distinctTables": 2,
+      "exampleSite": "server/services/cognitive-ecosystem/cognitive-audit.service.ts:852"
+    },
+    {
+      "schema": "ai",
+      "referenceSites": 1,
+      "distinctTables": 1,
+      "exampleSite": "server/services/ai-gateway/audit.ts:107"
+    },
+    {
+      "schema": "progress",
+      "referenceSites": 1,
+      "distinctTables": 1,
+      "exampleSite": "server/services/ana/discovery-cheminformatics-tool-defs.ts:185"
+    },
+    {
+      "schema": "schedule",
+      "referenceSites": 1,
+      "distinctTables": 1,
+      "exampleSite": "server/services/ana/intelligence-questions/flows/cer-report.ts:1612"
+    },
+    {
+      "schema": "frequency",
+      "referenceSites": 1,
+      "distinctTables": 1,
+      "exampleSite": "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:657"
+    },
+    {
+      "schema": "global_dossier",
+      "referenceSites": 1,
+      "distinctTables": 1,
+      "exampleSite": "server/services/cognitive-ecosystem/cognitive-audit.service.ts:876"
+    },
+    {
+      "schema": "agent_runtime",
+      "referenceSites": 1,
+      "distinctTables": 1,
+      "exampleSite": "server/services/cognitive-ecosystem/langgraph-orchestrator.service.ts:322"
+    },
+    {
+      "schema": "adversarial",
+      "referenceSites": 1,
+      "distinctTables": 1,
+      "exampleSite": "server/services/precedent-engine.ts:356"
+    }
+  ],
+  "rlsEnabledButZeroPolicies": 21,
+  "rlsEnabledButZeroPoliciesList": [
+    "csr_treatment_arms",
+    "csr_populations",
+    "csr_eligibility_criteria",
+    "csr_endpoints",
+    "csr_endpoint_results",
+    "csr_adverse_events",
+    "csr_safety_summaries",
+    "csr_pharmacokinetics",
+    "csr_dose_response",
+    "csr_biomarkers",
+    "csr_statistical_analyses",
+    "csr_sections",
+    "csr_tables_and_figures",
+    "csr_references",
+    "ctd_submissions",
+    "ctd_module_sections",
+    "ctd_documents",
+    "ctd_cross_references",
+    "ctd_quality_data",
+    "ctd_nonclinical_studies",
+    "csr_knowledge_edges"
+  ],
+  "rlsNotEnabled": 118,
+  "rlsNotEnabledList": [
+    "activity_reactions",
+    "agency_validation_results",
+    "ai_audit_log",
+    "audit_trail",
+    "billing_alerts",
+    "billing_budgets",
+    "available_modules",
+    "c2c_milestone_sections",
+    "cer_clinical_evidence",
+    "cer_compliance_checks",
+    "cer_essential_requirements",
+    "cer_exports",
+    "cer_faers_data",
+    "cer_sections",
+    "cer_literature",
+    "cer_version_history",
+    "cer_workflows",
+    "coauthor_document_versions",
+    "context_members",
+    "cross_module_task_links",
+    "device_data_categories",
+    "dlt_events",
+    "document_locks",
+    "document_comments",
+    "document_versions",
+    "doe_responses",
+    "doe_factors",
+    "dose_levels",
+    "doe_experiments",
+    "drafting_tasks",
+    "dose_cohorts",
+    "facts",
+    "fda_510k_stage_progress",
+    "feature_toggles",
+    "guidance_reference_index",
+    "ind_narrative_sections",
+    "ind_package_plan_documents",
+    "ind_package_plan_regions",
+    "ind_package_plan_requirements",
+    "ind_package_plan_timelines",
+    "ind_package_plan_modalities",
+    "leaf_citations",
+    "leaf_patches",
+    "notification_preferences",
+    "obligation_updates",
+    "organization_users",
+    "pkpd_compartments",
+    "platform_role_grants",
+    "platform_cost_rates",
+    "organizations",
+    "project_predictions",
+    "reg_obligation_templates",
+    "reg_obligations",
+    "risk_detections",
+    "risk_factors",
+    "section_patches",
+    "section_propagations",
+    "sharepoint_file_versions",
+    "sharepoint_locks",
+    "sharepoint_comments",
+    "sharepoint_shares",
+    "simple_document_versions",
+    "species_comparisons",
+    "stripe_events",
+    "task_dependencies",
+    "tier_pricing",
+    "translational_patterns",
+    "user_presence",
+    "validation_findings",
+    "validation_harmonization_opportunities",
+    "validation_issues",
+    "users",
+    "csr_details",
+    "doe_analysis_results",
+    "rag_chunks",
+    "reg_obligation_events",
+    "report_details",
+    "approval_checkpoints",
+    "support_ticket_messages",
+    "api_keys",
+    "resolution_bundle_items",
+    "ana_capability_registry",
+    "ana_platform_wisdom",
+    "ana_scoped_rules",
+    "report_program_group_projects",
+    "report_type_registry",
+    "revoked_tokens",
+    "submission_orchestrator_dependencies",
+    "q_submissions",
+    "q_sub_meetings",
+    "q_sub_questions",
+    "q_sub_commitments",
+    "q_sub_timeline_entries",
+    "complaints",
+    "mdr_events",
+    "capa_records",
+    "capa_actions",
+    "vigilance_events",
+    "program_milestones",
+    "c2c_rule_packs",
+    "c2c_document_sections",
+    "c2c_document_section_versions",
+    "c2c_document_section_evidence",
+    "c2c_tlf_builds",
+    "c2c_ana_conversation_turns",
+    "c2c_ana_agentic_prefs",
+    "c2c_project_pinned_evidence",
+    "c2c_forecast_snapshots",
+    "external_intelligence_findings",
+    "external_intelligence_runs",
+    "charter_sections",
+    "timeline_phases",
+    "ai_ml_modifications",
+    "gspr_requirements",
+    "device_test_standards",
+    "pdev_program_activities",
+    "pdev_readiness_snapshots",
+    "_install_applied_migrations"
+  ],
+  "missing": [
+    {
+      "table": "public.report",
+      "referenceCount": 39,
+      "sites": [
+        "server/routes/ind-templates.ts:255",
+        "server/services/ana/intelligence-questions/flows/bla-submission.ts:1854",
+        "server/services/ana/intelligence-questions/flows/cer-report.ts:1350",
+        "server/services/ana/intelligence-questions/flows/ind-submission.ts:991",
+        "server/services/ana/intelligence-questions/flows/ind-submission.ts:1023",
+        "server/services/ana/intelligence-questions/flows/nda-submission.ts:1330",
+        "server/services/ana/intelligence-questions/flows/protocol-development.ts:2300",
+        "server/services/ana/intelligence-questions/flows/protocol-development.ts:2346",
+        "server/services/ana/intelligence-questions/flows/protocol-development.ts:2389",
+        "server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts:684",
+        "server/services/ana/pharmacovigilance.ts:18",
+        "server/services/ana/pharmacovigilance.ts:33"
+      ]
+    },
+    {
+      "table": "public.project_sections",
+      "referenceCount": 31,
+      "sites": [
+        "server/routes/concept2cure.ts:2128",
+        "server/routes/concept2cure.ts:2170",
+        "server/routes/ectd-compile.ts:149",
+        "server/routes/ectd-compile.ts:300",
+        "server/routes/ectd-compile.ts:429",
+        "server/routes/integration-test.ts:231",
+        "server/routes/project-sections.ts:108",
+        "server/routes/project-sections.ts:125",
+        "server/routes/project-sections.ts:184",
+        "server/routes/project-sections.ts:245",
+        "server/routes/project-sections.ts:313",
+        "server/routes/project-sections.ts:347"
+      ]
+    },
+    {
+      "table": "public.stab_conditions",
+      "referenceCount": 25,
+      "sites": [
+        "server/src/routes/stability.router.ts:208",
+        "server/src/routes/stability.router.ts:229",
+        "server/src/routes/stability.router.ts:328",
+        "server/src/routes/stability.router.ts:534",
+        "server/src/routes/stability.router.ts:552",
+        "server/src/routes/stability.router.ts:606",
+        "server/src/routes/stability.router.ts:638",
+        "server/src/routes/stability.router.ts:658",
+        "server/src/routes/stability.router.ts:712",
+        "server/src/routes/stability.router.ts:813",
+        "server/src/routes/stability.router.ts:880",
+        "server/src/routes/stability.router.ts:950"
+      ]
+    },
+    {
+      "table": "public.stab_timepoints",
+      "referenceCount": 23,
+      "sites": [
+        "server/src/routes/stability.router.ts:208",
+        "server/src/routes/stability.router.ts:359",
+        "server/src/routes/stability.router.ts:540",
+        "server/src/routes/stability.router.ts:552",
+        "server/src/routes/stability.router.ts:665",
+        "server/src/routes/stability.router.ts:688",
+        "server/src/routes/stability.router.ts:712",
+        "server/src/routes/stability.router.ts:813",
+        "server/src/routes/stability.router.ts:880",
+        "server/src/routes/stability.router.ts:973",
+        "server/src/routes/stability.router.ts:1020",
+        "server/src/routes/stability.router.ts:1119"
+      ]
+    },
+    {
+      "table": "public.cmc_module3_sections",
+      "referenceCount": 22,
+      "sites": [
+        "server/api/cmc/module3BuildStateRoutes.ts:98",
+        "server/api/cmc/module3ConvergenceRoutes.ts:107",
+        "server/api/cmc/module3ConvergenceRoutes.ts:214",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:107",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:163",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:262",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:274",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:423",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:500",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:594",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:628",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:691"
+      ]
+    },
+    {
+      "table": "public.stab_tests",
+      "referenceCount": 21,
+      "sites": [
+        "server/src/routes/stability.router.ts:208",
+        "server/src/routes/stability.router.ts:377",
+        "server/src/routes/stability.router.ts:546",
+        "server/src/routes/stability.router.ts:552",
+        "server/src/routes/stability.router.ts:813",
+        "server/src/routes/stability.router.ts:880",
+        "server/src/routes/stability.router.ts:989",
+        "server/src/routes/stability.router.ts:1018",
+        "server/src/routes/stability.router.ts:1020",
+        "server/src/routes/stability.router.ts:1119",
+        "server/src/routes/stability.router.ts:1158",
+        "server/src/routes/stability.router.ts:1352"
+      ]
+    },
+    {
+      "table": "public.licenses",
+      "referenceCount": 20,
+      "sites": [
+        "server/routes/license-routes.js:63",
+        "server/routes/license-routes.js:135",
+        "server/routes/license-routes.js:161",
+        "server/routes/license-routes.js:231",
+        "server/routes/license-routes.js:271",
+        "server/routes/license-routes.js:366",
+        "server/routes/license-routes.js:414",
+        "server/routes/license-routes.js:442",
+        "server/routes/license-routes.js:469",
+        "server/routes/license-routes.js:495",
+        "server/routes/license-routes.js:532",
+        "server/routes/license-routes.js:588"
+      ]
+    },
+    {
+      "table": "public.ana_artifact_citation_runs",
+      "referenceCount": 19,
+      "sites": [
+        "server/services/ana/citation-engine.ts:499",
+        "server/services/ana/citation-engine.ts:634",
+        "server/services/ana/citation-engine.ts:701",
+        "server/services/ana/citation-engine.ts:838",
+        "server/services/ana/citation-engine.ts:934",
+        "server/services/ana/citation-engine.ts:1004",
+        "server/services/ana/citation-engine.ts:1128",
+        "server/services/ana/citation-engine.ts:1195",
+        "server/services/ana/citation-engine.ts:1636",
+        "server/services/ana/citation-engine.ts:1650",
+        "server/services/ana/citation-export.ts:181",
+        "server/services/ana/citation-health.ts:59"
+      ]
+    },
+    {
+      "table": "public.chat_threads",
+      "referenceCount": 18,
+      "sites": [
+        "server/routes/ana-ri/threads.ts:25",
+        "server/routes/chat/health.ts:10",
+        "server/routes/chat/threads.ts:39",
+        "server/routes/chat/threads.ts:103",
+        "server/routes/chat/threads.ts:192",
+        "server/routes/conversation-thread-routes.ts:109",
+        "server/routes/cortex-unified.ts:1230",
+        "server/routes/cortex-unified.ts:1320",
+        "server/routes/cortex-unified.ts:1355",
+        "server/routes/cortex-unified.ts:1380",
+        "server/routes/cortex-unified.ts:1388",
+        "server/routes/mdx-analytics.ts:224"
+      ]
+    },
+    {
+      "table": "public.stab_results",
+      "referenceCount": 18,
+      "sites": [
+        "server/src/routes/stability.router.ts:552",
+        "server/src/routes/stability.router.ts:813",
+        "server/src/routes/stability.router.ts:880",
+        "server/src/routes/stability.router.ts:914",
+        "server/src/routes/stability.router.ts:934",
+        "server/src/routes/stability.router.ts:1020",
+        "server/src/routes/stability.router.ts:1119",
+        "server/src/routes/stability.router.ts:1369",
+        "server/src/routes/stability.router.ts:1666",
+        "server/src/routes/stability.router.ts:1773",
+        "server/src/routes/stability.router.ts:1823",
+        "server/src/routes/stability.router.ts:1852"
+      ]
+    },
+    {
+      "table": "public.the",
+      "referenceCount": 17,
+      "sites": [
+        "server/api/validation/index.js:284",
+        "server/services/ana/bla-biologics-tool-defs.ts:337",
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:461",
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:793",
+        "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts:696",
+        "server/services/ana/intelligence-questions/war-game/auditors/risk-management-auditor.ts:490",
+        "server/services/ana/intelligence-questions/war-game/auditors/safety-narrative-auditor.ts:684",
+        "server/services/ana-ri/context-enrichment.ts:1341",
+        "server/services/ana-ri/context-enrichment.ts:1343",
+        "server/services/ana-ri/industry-wisdom-pack.ts:246",
+        "server/services/automation/rewrite-dispatcher.ts:296",
+        "server/services/combination-products/combination-products-knowledge.ts:954"
+      ]
+    },
+    {
+      "table": "public.cmc_source_objects",
+      "referenceCount": 15,
+      "sites": [
+        "server/api/cmc/module3BuildStateRoutes.ts:90",
+        "server/api/cmc/module3ConvergenceRoutes.ts:91",
+        "server/api/cmc/module3ConvergenceRoutes.ts:223",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:69",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:131",
+        "server/services/ana-ri/module3-command-handlers.ts:34",
+        "server/services/ana-ri/module3-command-handlers.ts:343",
+        "server/services/ana-ri/module3-command-handlers.ts:372",
+        "server/services/cmc/ich-compliance-checker.ts:142",
+        "server/services/cmc/qbd-analyzer.ts:118",
+        "server/services/cmc-write-through.ts:233",
+        "server/services/module3-convergence-service.ts:85"
+      ]
+    },
+    {
+      "table": "public.ai_threads",
+      "referenceCount": 13,
+      "sites": [
+        "server/routes/chat/send-message.ts:85",
+        "server/routes/chat/send-message.ts:106",
+        "server/routes/chat/send-message.ts:196",
+        "server/routes/chat/send-message.ts:213",
+        "server/routes/chat/threads.ts:21",
+        "server/routes/chat/threads.ts:72",
+        "server/routes/chat/threads.ts:142",
+        "server/routes/chat/threads.ts:167",
+        "server/routes/concept2cure.ts:2221",
+        "server/routes/conversation-thread-routes.ts:95",
+        "server/routes/evidence-ask.ts:280",
+        "server/services/ana/submission-chat-handler.ts:1393"
+      ]
+    },
+    {
+      "table": "public.cmc_contradictions",
+      "referenceCount": 12,
+      "sites": [
+        "server/api/cmc/module3BuildStateRoutes.ts:110",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:317",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:323",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:359",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:383",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:429",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:545",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:737",
+        "server/services/ana-ri/module3-command-handlers.ts:385",
+        "server/services/module3-convergence-service.ts:102",
+        "server/services/orchestration/cross-object-resolver.ts:443",
+        "server/services/orchestration/cross-object-resolver.ts:525"
+      ]
+    },
+    {
+      "table": "public.failed",
+      "referenceCount": 12,
+      "sites": [
+        "server/api/cmc/module3OperatingSystemRoutes.ts:283",
+        "server/cer2v/auto-vault.ts:147",
+        "server/routes/admin/business/rate-cards.ts:105",
+        "server/routes/admin/business/rate-cards.ts:183",
+        "server/routes/admin/master-admin.ts:228",
+        "server/routes/admin/master-admin.ts:311",
+        "server/routes/ana-features.ts:3746",
+        "server/routes/defense-packet.ts:515",
+        "server/routes/defense-packet.ts:542",
+        "server/routes/gspr-postmarket.ts:468",
+        "server/routes/pccp.ts:126",
+        "server/routes/pccp.ts:192"
+      ]
+    },
+    {
+      "table": "public.quality_specifications",
+      "referenceCount": 12,
+      "sites": [
+        "server/api/cmc/module3OperatingSystemRoutes.ts:294",
+        "server/api/cmc/specificationRoutes.ts:83",
+        "server/api/cmc/specificationRoutes.ts:126",
+        "server/api/cmc/specificationRoutes.ts:199",
+        "server/api/cmc/specificationRoutes.ts:241",
+        "server/api/cmc/specificationRoutes.ts:317",
+        "server/api/cmc/specificationRoutes.ts:326",
+        "server/api/cmc/specificationRoutes.ts:390",
+        "server/routes/c2c/actions.ts:155",
+        "server/services/ana-ri/module3-command-handlers.ts:301",
+        "server/services/cmc/ich-compliance-checker.ts:112",
+        "server/services/cmc/qbd-analyzer.ts:76"
+      ]
+    },
+    {
+      "table": "public.project",
+      "referenceCount": 12,
+      "sites": [
+        "server/routes/concept2cure.ts:2365",
+        "server/routes/concept2cure.ts:2366",
+        "server/routes/concept2cure.ts:2678",
+        "server/routes/concept2cure.ts:2682",
+        "server/routes/concept2cure.ts:2763",
+        "server/routes/concept2cure.ts:2767",
+        "server/routes/concept2cure.ts:3692",
+        "server/routes/concept2cure.ts:3693",
+        "server/routes/projects-management.ts:474",
+        "server/services/ana-ri/command-executor.ts:322",
+        "server/services/ana-ri/command-executor.ts:3830",
+        "server/services/ana-ri/command-executor.ts:3832"
+      ]
+    },
+    {
+      "table": "public.ana_submission_chat_proposals",
+      "referenceCount": 12,
+      "sites": [
+        "server/services/ana/citation-health.ts:103",
+        "server/services/ana/submission-chat-proposal-store.ts:106",
+        "server/services/ana/submission-chat-proposal-store.ts:116",
+        "server/services/ana/submission-chat-proposal-store.ts:169",
+        "server/services/ana/submission-chat-proposal-store.ts:185",
+        "server/services/ana/submission-chat-proposal-store.ts:214",
+        "server/services/ana/submission-chat-proposal-store.ts:236",
+        "server/services/ana/submission-chat-proposal-store.ts:294",
+        "server/services/ana/submission-chat-proposal-store.ts:302",
+        "server/services/ana/submission-chat-proposal-store.ts:459",
+        "server/services/ana/submission-chat-timeline.ts:103",
+        "server/services/export/docx-ledger-collector.ts:311"
+      ]
+    },
+    {
+      "table": "public.lumen_atom_versions",
+      "referenceCount": 12,
+      "sites": [
+        "server/services/atomVersionService.ts:92",
+        "server/services/atomVersionService.ts:109",
+        "server/services/atomVersionService.ts:234",
+        "server/services/atomVersionService.ts:248",
+        "server/services/atomVersionService.ts:262",
+        "server/services/atomVersionService.ts:427",
+        "server/services/atomVersionService.ts:455",
+        "server/services/atomVersionService.ts:486",
+        "server/services/atomVersionService.ts:524",
+        "server/services/atomVersionService.ts:525",
+        "server/services/atomVersionService.ts:526",
+        "server/services/atomVersionService.ts:527"
+      ]
+    },
+    {
+      "table": "public.artifact_compute_jobs",
+      "referenceCount": 12,
+      "sites": [
+        "server/services/compute/computeService.ts:29",
+        "server/services/compute/computeService.ts:108",
+        "server/services/compute/computeService.ts:163",
+        "server/services/compute/computeService.ts:181",
+        "server/services/compute/computeService.ts:226",
+        "server/services/workflow/temporalBridge.ts:28",
+        "server/services/workflow/temporalBridge.ts:58",
+        "server/services/workflow/temporalBridge.ts:95",
+        "server/services/workflow/temporalBridge.ts:146",
+        "server/services/workflow/temporalBridge.ts:169",
+        "server/services/workflow/temporalBridge.ts:191",
+        "server/services/workflow/temporalBridge.ts:204"
+      ]
+    },
+    {
+      "table": "public.governed_dependencies",
+      "referenceCount": 12,
+      "sites": [
+        "server/services/reactive-dependency-service.ts:79",
+        "server/services/reactive-dependency-service.ts:91",
+        "server/services/reactive-dependency-service.ts:108",
+        "server/services/reactive-dependency-service.ts:117",
+        "server/services/reactive-dependency-service.ts:127",
+        "server/services/reactive-dependency-service.ts:137",
+        "server/services/reactive-dependency-service.ts:185",
+        "server/services/reactive-dependency-service.ts:283",
+        "server/services/reactive-dependency-service.ts:305",
+        "server/services/reactive-dependency-service.ts:306",
+        "server/services/reactive-dependency-service.ts:307",
+        "server/services/reactive-dependency-service.ts:312"
+      ]
+    },
+    {
+      "table": "public.stab_studies",
+      "referenceCount": 12,
+      "sites": [
+        "server/src/routes/stability.router.ts:208",
+        "server/src/routes/stability.router.ts:300",
+        "server/src/routes/stability.router.ts:527",
+        "server/src/routes/stability.router.ts:708",
+        "server/src/routes/stability.router.ts:1016",
+        "server/src/routes/stability.router.ts:1115",
+        "server/src/routes/stability.router.ts:1429",
+        "server/src/routes/stability.router.ts:1570",
+        "server/src/routes/stability.router.ts:1666",
+        "server/src/routes/stability.router.ts:2114",
+        "server/src/routes/stability.router.ts:2319",
+        "server/src/routes/stability.router.ts:2434"
+      ]
+    },
+    {
+      "table": "public.cmc_provenance_events",
+      "referenceCount": 10,
+      "sites": [
+        "server/api/cmc/module3ConvergenceRoutes.ts:150",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:78",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:207",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:394",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:509",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:634",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:707",
+        "server/services/cmc-write-through.ts:248",
+        "server/services/module3-convergence-service.ts:286",
+        "server/services/module3-convergence-service.ts:411"
+      ]
+    },
+    {
+      "table": "public.ivdr_binder_claims",
+      "referenceCount": 10,
+      "sites": [
+        "server/routes/ai-claims-routes.ts:91",
+        "server/routes/ivdr-binder-routes.ts:108",
+        "server/routes/ivdr-binder-routes.ts:211",
+        "server/routes/ivdr-binder-routes.ts:303",
+        "server/routes/ivdr-binder-routes.ts:445",
+        "server/routes/ivdr-binder-routes.ts:502",
+        "server/routes/ivdr-binder-routes.ts:544",
+        "server/services/ivdrPackManifest.ts:130",
+        "server/workers/ivdr-pack-worker.ts:170",
+        "server/workers/ivdr-pack-worker.ts:194"
+      ]
+    },
+    {
+      "table": "public.ivdr_binder_evidence",
+      "referenceCount": 10,
+      "sites": [
+        "server/routes/ai-claims-routes.ts:118",
+        "server/routes/ai-claims-routes.ts:141",
+        "server/routes/ivdr-binder-routes.ts:121",
+        "server/routes/ivdr-binder-routes.ts:311",
+        "server/routes/ivdr-binder-routes.ts:380",
+        "server/routes/ivdr-binder-routes.ts:432",
+        "server/routes/ivdr-binder-routes.ts:570",
+        "server/services/ivdrPackManifest.ts:142",
+        "server/workers/ivdr-pack-worker.ts:170",
+        "server/workers/ivdr-pack-worker.ts:212"
+      ]
+    },
+    {
+      "table": "public.chat_messages",
+      "referenceCount": 10,
+      "sites": [
+        "server/routes/ana-ri/threads.ts:33",
+        "server/routes/chat/threads.ts:39",
+        "server/routes/conversation-thread-routes.ts:109",
+        "server/routes/conversation-thread-routes.ts:151",
+        "server/routes/cortex-unified.ts:1230",
+        "server/routes/cortex-unified.ts:1387",
+        "server/services/ana/submission-chat-timeline.ts:75",
+        "server/services/chat-thread-helpers.ts:81",
+        "server/services/chat-thread-helpers.ts:101",
+        "server/services/chat-thread-helpers.ts:143"
+      ]
+    },
+    {
+      "table": "public.gdpr_data_subject_requests",
+      "referenceCount": 10,
+      "sites": [
+        "server/routes/global-compliance.ts:308",
+        "server/routes/global-compliance.ts:333",
+        "server/routes/global-compliance.ts:421",
+        "server/routes/global-compliance.ts:447",
+        "server/routes/global-compliance.ts:536",
+        "server/routes/global-compliance.ts:819",
+        "server/services/ana-ri/command-executor.ts:1230",
+        "server/services/compliance/gdprComplianceService.ts:504",
+        "server/services/compliance/gdprComplianceService.ts:534",
+        "server/services/compliance/gdprComplianceService.ts:562"
+      ]
+    },
+    {
+      "table": "public.license_users",
+      "referenceCount": 10,
+      "sites": [
+        "server/routes/license-routes.js:63",
+        "server/routes/license-routes.js:161",
+        "server/routes/license-routes.js:231",
+        "server/routes/license-routes.js:271",
+        "server/routes/license-routes.js:532",
+        "server/services/atomicQuotaService.js:123",
+        "server/services/atomicQuotaService.js:252",
+        "server/services/atomicQuotaService.js:349",
+        "server/services/atomicQuotaService.js:376",
+        "server/services/quotaEnforcementService.js:71"
+      ]
+    },
+    {
+      "table": "public.lumen_atom_quality_scores",
+      "referenceCount": 10,
+      "sites": [
+        "server/services/atomQualityService.ts:332",
+        "server/services/atomQualityService.ts:365",
+        "server/services/atomQualityService.ts:436",
+        "server/services/atomQualityService.ts:474",
+        "server/services/atomQualityService.ts:484",
+        "server/services/atomQualityService.ts:512",
+        "server/services/conflictDetectionService.ts:131",
+        "server/services/conflictDetectionService.ts:168",
+        "server/services/conflictDetectionService.ts:214",
+        "server/services/conflictDetectionService.ts:269"
+      ]
+    },
+    {
+      "table": "public.unified_documents",
+      "referenceCount": 10,
+      "sites": [
+        "server/services/documentService.js:65",
+        "server/services/resolution/bundle-executor.ts:584",
+        "server/services/resolution/cluster-engine.ts:223",
+        "server/services/resolution/reapproval-engine.ts:203",
+        "server/services/resolution/rewrite-coordinator.ts:182",
+        "server/services/unifiedDocumentIngestion.js:1003",
+        "server/services/unifiedDocumentIngestion.js:1086",
+        "server/services/unifiedDocumentIngestion.js:1093",
+        "server/services/unifiedDocumentIngestion.js:1100",
+        "server/services/unifiedDocumentIngestion.js:1433"
+      ]
+    },
+    {
+      "table": "public.cmc_batch_records",
+      "referenceCount": 9,
+      "sites": [
+        "server/api/cmc/batchRecordRoutes.ts:92",
+        "server/api/cmc/batchRecordRoutes.ts:135",
+        "server/api/cmc/batchRecordRoutes.ts:205",
+        "server/api/cmc/batchRecordRoutes.ts:248",
+        "server/api/cmc/batchRecordRoutes.ts:320",
+        "server/api/cmc/batchRecordRoutes.ts:368",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:299",
+        "server/routes/c2c/actions.ts:161",
+        "server/services/ana-ri/module3-command-handlers.ts:304"
+      ]
+    },
+    {
+      "table": "public.cmc_documents",
+      "referenceCount": 9,
+      "sites": [
+        "server/api/cmc/documentRoutes.ts:42",
+        "server/api/cmc/documentRoutes.ts:102",
+        "server/api/cmc/documentRoutes.ts:156",
+        "server/api/cmc/documentRoutes.ts:180",
+        "server/api/cmc/documentRoutes.ts:242",
+        "server/api/cmc/documentRoutes.ts:319",
+        "server/api/cmc/documentRoutes.ts:372",
+        "server/api/cmc/documentRoutes.ts:448",
+        "server/api/cmc/documentRoutes.ts:508"
+      ]
+    },
+    {
+      "table": "public.section",
+      "referenceCount": 9,
+      "sites": [
+        "server/api/validation/index.js:293",
+        "server/routes/authoring.router.ts:1401",
+        "server/routes/cerv2-sections.ts:442",
+        "server/routes/cerv2-sections.ts:443",
+        "server/routes/coauthor.ts:438",
+        "server/routes/content-plan.js:221",
+        "server/routes/content-plan.js:224",
+        "server/routes/project-sections.ts:603",
+        "server/services/ana-ri/mdx-command-handlers.ts:650"
+      ]
+    },
+    {
+      "table": "public.ivdr_gspr_assessments",
+      "referenceCount": 9,
+      "sites": [
+        "server/routes/ivd-completeness-routes.ts:205",
+        "server/routes/ivdr-routes.ts:963",
+        "server/routes/ivdr-routes.ts:983",
+        "server/routes/ivdr-routes.ts:1005",
+        "server/routes/ivdr-routes.ts:1047",
+        "server/routes/ivdr-routes.ts:1078",
+        "server/routes/ivdr-routes.ts:1095",
+        "server/routes/ivdr-routes.ts:1201",
+        "server/routes/ivdr-routes.ts:1319"
+      ]
+    },
+    {
+      "table": "public.ivdr_analytical_validations",
+      "referenceCount": 9,
+      "sites": [
+        "server/routes/ivdr-routes.ts:339",
+        "server/routes/ivdr-routes.ts:363",
+        "server/routes/ivdr-routes.ts:447",
+        "server/routes/ivdr-routes.ts:507",
+        "server/routes/ivdr-routes.ts:873",
+        "server/routes/ivdr-routes.ts:1189",
+        "server/routes/workspace-summary.ts:143",
+        "server/services/ivdrPackContent.ts:93",
+        "server/workers/ivdr-pack-worker.ts:234"
+      ]
+    },
+    {
+      "table": "public.ivdr_clinical_evidence",
+      "referenceCount": 9,
+      "sites": [
+        "server/routes/ivdr-routes.ts:545",
+        "server/routes/ivdr-routes.ts:584",
+        "server/routes/ivdr-routes.ts:646",
+        "server/routes/ivdr-routes.ts:704",
+        "server/routes/ivdr-routes.ts:877",
+        "server/routes/ivdr-routes.ts:1193",
+        "server/routes/ivdr-routes.ts:1327",
+        "server/services/ivdrPackContent.ts:101",
+        "server/workers/ivdr-pack-worker.ts:240"
+      ]
+    },
+    {
+      "table": "public.ivdr_cdx_workflows",
+      "referenceCount": 9,
+      "sites": [
+        "server/routes/ivdr-routes.ts:743",
+        "server/routes/ivdr-routes.ts:778",
+        "server/routes/ivdr-routes.ts:831",
+        "server/routes/ivdr-routes.ts:847",
+        "server/routes/ivdr-routes.ts:881",
+        "server/routes/ivdr-routes.ts:1197",
+        "server/routes/ivdr-routes.ts:1323",
+        "server/services/ivdrPackContent.ts:109",
+        "server/workers/ivdr-pack-worker.ts:247"
+      ]
+    },
+    {
+      "table": "public.c2c_correspondence",
+      "referenceCount": 9,
+      "sites": [
+        "server/routes/regulatory-correspondence.ts:203",
+        "server/routes/regulatory-correspondence.ts:556",
+        "server/routes/regulatory-correspondence.ts:693",
+        "server/routes/regulatory-correspondence.ts:709",
+        "server/routes/regulatory-correspondence.ts:747",
+        "server/routes/regulatory-correspondence.ts:831",
+        "server/routes/regulatory-correspondence.ts:1034",
+        "server/routes/submission-ops.ts:1168",
+        "server/routes/submission-ops.ts:1256"
+      ]
+    },
+    {
+      "table": "public.lumen_atom_conflicts",
+      "referenceCount": 9,
+      "sites": [
+        "server/services/conflictDetectionService.ts:418",
+        "server/services/conflictDetectionService.ts:448",
+        "server/services/conflictDetectionService.ts:461",
+        "server/services/conflictDetectionService.ts:481",
+        "server/services/conflictDetectionService.ts:498",
+        "server/services/conflictDetectionService.ts:559",
+        "server/services/conflictDetectionService.ts:560",
+        "server/services/conflictDetectionService.ts:561",
+        "server/services/conflictDetectionService.ts:563"
+      ]
+    },
+    {
+      "table": "public.stab_samples",
+      "referenceCount": 9,
+      "sites": [
+        "server/src/routes/stability.router.ts:1890",
+        "server/src/routes/stability.router.ts:2450",
+        "server/src/routes/stability.router.ts:2457",
+        "server/src/routes/stability.router.ts:2470",
+        "server/src/routes/stability.router.ts:2483",
+        "server/src/routes/stability.router.ts:2492",
+        "server/src/routes/stability.router.ts:2536",
+        "server/src/routes/stability.router.ts:2582",
+        "server/src/routes/stability.router.ts:2610"
+      ]
+    },
+    {
+      "table": "public.a",
+      "referenceCount": 8,
+      "sites": [
+        "server/api/cmc/cmc-copilot.js:274",
+        "server/routes/ind-lifecycle/openapi.ts:105",
+        "server/services/ana/notifications-study-memory-tool-defs.ts:381",
+        "server/services/ana/notifications-study-memory-tool-defs.ts:790",
+        "server/services/ana/rweMethodologyTools.ts:182",
+        "server/services/ana-ri/command-executor.ts:3981",
+        "server/services/ana-ri/mdx-command-handlers-phase3.ts:332",
+        "server/services/ivd-knowledge/regulatory/eu-ivdr.ts:16"
+      ]
+    },
+    {
+      "table": "public.reg_submissions",
+      "referenceCount": 8,
+      "sites": [
+        "server/api/cmc/portfolio.ts:61",
+        "server/api/cmc/portfolio.ts:140",
+        "server/api/cmc/portfolio.ts:156",
+        "server/api/cmc/portfolio.ts:184",
+        "server/api/cmc/regulatory_aiDraft.ts:22",
+        "server/routes/cmc-module3-board.routes.ts:50",
+        "server/src/services/integrations/gmail.ts:86",
+        "server/src/services/reg/rpi.ts:17"
+      ]
+    },
+    {
+      "table": "public.reg_m3_sections",
+      "referenceCount": 8,
+      "sites": [
+        "server/api/cmc/portfolio.ts:90",
+        "server/api/cmc/portfolio.ts:231",
+        "server/api/cmc/regulatory_aiDraft.ts:22",
+        "server/api/cmc/regulatory_aiDraft.ts:42",
+        "server/src/services/reg/rpi.ts:22",
+        "server/src/services/reg/rpi.ts:33",
+        "server/src/services/reg/rpi.ts:40",
+        "server/src/services/reg/rpi.ts:47"
+      ]
+    },
+    {
+      "table": "public.ai_generation_runs",
+      "referenceCount": 8,
+      "sites": [
+        "server/routes/ai-claims-routes.ts:43",
+        "server/routes/chat/send-message.ts:847",
+        "server/routes/concept2cure.ts:4691",
+        "server/routes/evidence-ask.ts:291",
+        "server/services/ana/submission-chat-handler.ts:454",
+        "server/services/ivdrPackManifest.ts:178",
+        "server/services/ivdrPackManifest.ts:188",
+        "server/services/ivdrPackManifest.ts:201"
+      ]
+    },
+    {
+      "table": "public.c2c_correspondence_issues",
+      "referenceCount": 8,
+      "sites": [
+        "server/routes/c2c/actions.ts:167",
+        "server/routes/regulatory-correspondence.ts:588",
+        "server/routes/regulatory-correspondence.ts:714",
+        "server/routes/regulatory-correspondence.ts:747",
+        "server/routes/regulatory-correspondence.ts:842",
+        "server/routes/regulatory-correspondence.ts:1034",
+        "server/routes/submission-ops.ts:1168",
+        "server/routes/submission-ops.ts:1256"
+      ]
+    },
+    {
+      "table": "public.concept2cure_publishops_services",
+      "referenceCount": 8,
+      "sites": [
+        "server/routes/concept2cure-communication-center.ts:494",
+        "server/routes/concept2cure-communication-center.ts:569",
+        "server/routes/concept2cure-communication-center.ts:643",
+        "server/routes/concept2cure-communication-center.ts:676",
+        "server/routes/concept2cure.ts:12920",
+        "server/routes/concept2cure.ts:12995",
+        "server/routes/concept2cure.ts:13043",
+        "server/routes/concept2cure.ts:13076"
+      ]
+    },
+    {
+      "table": "public.task",
+      "referenceCount": 8,
+      "sites": [
+        "server/routes/concept2cure.ts:12498",
+        "server/routes/concept2cure.ts:12499",
+        "server/routes/concept2cure.ts:14827",
+        "server/routes/module-subscriptions.ts:370",
+        "server/routes/taskManagement.routes.ts:346",
+        "server/routes/unifiedTasks.routes.ts:359",
+        "server/services/ana-ri/command-executor.ts:848",
+        "server/services/ana-ri/command-executor.ts:3872"
+      ]
+    },
+    {
+      "table": "public.cre_evidence_sources",
+      "referenceCount": 8,
+      "sites": [
+        "server/services/clinical-regulatory-evidence/csr-adapter.service.ts:37",
+        "server/services/clinical-regulatory-evidence/index.ts:80",
+        "server/services/clinical-regulatory-evidence/source-usage.service.ts:104",
+        "server/services/clinical-regulatory-evidence/source-usage.service.ts:172",
+        "server/services/clinical-regulatory-evidence/source-usage.service.ts:200",
+        "server/services/clinical-regulatory-evidence/source-usage.service.ts:252",
+        "server/services/clinical-regulatory-evidence/source-usage.service.ts:322",
+        "server/services/clinical-regulatory-evidence/source-usage.service.ts:366"
+      ]
+    },
+    {
+      "table": "public.ectd_submissions",
+      "referenceCount": 8,
+      "sites": [
+        "server/services/ectd-submission-agent.ts:64",
+        "server/services/ectd-submission-agent.ts:128",
+        "server/services/ectd-submission-agent.ts:230",
+        "server/services/ectd-submission-agent.ts:283",
+        "server/services/ectd-submission-agent.ts:311",
+        "server/services/ectd-submission-agent.ts:341",
+        "server/services/ectd-submission-agent.ts:382",
+        "server/services/ectd-submission-agent.ts:403"
+      ]
+    },
+    {
+      "table": "public.user_work_sessions",
+      "referenceCount": 8,
+      "sites": [
+        "server/services/user-intelligence.ts:201",
+        "server/services/user-intelligence.ts:242",
+        "server/services/user-intelligence.ts:281",
+        "server/services/user-intelligence.ts:519",
+        "server/services/user-intelligence.ts:534",
+        "server/services/user-intelligence.ts:546",
+        "server/services/user-intelligence.ts:556",
+        "server/services/user-intelligence.ts:581"
+      ]
+    },
+    {
+      "table": "vault.processing_queue",
+      "referenceCount": 8,
+      "sites": [
+        "server/workers/vectorization-worker.ts:207",
+        "server/workers/vectorization-worker.ts:228",
+        "server/workers/vectorization-worker.ts:307",
+        "server/workers/vectorization-worker.ts:324",
+        "server/workers/vectorization-worker.ts:343",
+        "server/workers/vectorization-worker.ts:417",
+        "server/workers/vectorization-worker.ts:426",
+        "server/workers/vectorization-worker.ts:473"
+      ]
+    },
+    {
+      "table": "public.document",
+      "referenceCount": 7,
+      "sites": [
+        "server/api/cmc/documentRoutes.ts:422",
+        "server/routes/coauthor.ts:214",
+        "server/routes/coauthor.ts:215",
+        "server/routes/coauthor.ts:437",
+        "server/routes/document-data-center.ts:114",
+        "server/routes/document-routes.ts:249",
+        "server/storage.ts:2421"
+      ]
+    },
+    {
+      "table": "public.module",
+      "referenceCount": 7,
+      "sites": [
+        "server/routes/admin/master-admin.ts:570",
+        "server/routes/project-modules.ts:235",
+        "server/routes/project-modules.ts:268",
+        "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts:2134",
+        "server/src/services/ai/manufacturingReviewer.js:118",
+        "server/storage.ts:3412",
+        "server/storage.ts:3478"
+      ]
+    },
+    {
+      "table": "public.authoring_export_history",
+      "referenceCount": 7,
+      "sites": [
+        "server/routes/authoring.router.ts:3508",
+        "server/routes/authoring.router.ts:3561",
+        "server/routes/authoring.router.ts:3605",
+        "server/routes/authoring.router.ts:3632",
+        "server/routes/authoring.router.ts:3649",
+        "server/routes/authoring.router.ts:3678",
+        "server/services/ana-ri/command-executor.ts:2769"
+      ]
+    },
+    {
+      "table": "public.ai_messages",
+      "referenceCount": 7,
+      "sites": [
+        "server/routes/chat/send-message.ts:191",
+        "server/routes/chat/send-message.ts:867",
+        "server/routes/concept2cure.ts:2233",
+        "server/services/ana/submission-chat-handler.ts:1403",
+        "server/services/ana/submission-chat-handler.ts:1407",
+        "server/services/ana/submission-chat-stream-handler.ts:584",
+        "server/services/ana/submission-chat-stream-handler.ts:591"
+      ]
+    },
+    {
+      "table": "public.programs",
+      "referenceCount": 7,
+      "sites": [
+        "server/routes/innovation-routes.ts:118",
+        "server/services/innovation/auto-traceability-service.ts:697",
+        "server/services/innovation/compliance-guardrails-sdk-service.ts:1230",
+        "server/services/innovation/evidence-confidence-heatmap-service.ts:1158",
+        "server/services/innovation/outcome-based-template-learning-service.ts:782",
+        "server/services/innovation/regulatory-delta-radar-service.ts:1074",
+        "server/services/innovation/regulatory-delta-radar-service.ts:1089"
+      ]
+    },
+    {
+      "table": "public.submission_tasks",
+      "referenceCount": 7,
+      "sites": [
+        "server/routes/submissionCenter.routes.ts:44",
+        "server/routes/submissionCenter.routes.ts:122",
+        "server/routes/submissionCenter.routes.ts:153",
+        "server/routes/submissionCenter.routes.ts:178",
+        "server/routes/submissionCenter.routes.ts:179",
+        "server/routes/submissionCenter.routes.ts:198",
+        "server/routes/submissionCenter.routes.ts:228"
+      ]
+    },
+    {
+      "table": "vault.documents",
+      "referenceCount": 7,
+      "sites": [
+        "server/services/advancedRAGPipeline.ts:698",
+        "server/services/advancedRAGPipeline.ts:733",
+        "server/workers/vectorization-worker.ts:217",
+        "server/workers/vectorization-worker.ts:298",
+        "server/workers/vectorization-worker.ts:343",
+        "server/workers/vectorization-worker.ts:426",
+        "server/workers/vectorization-worker.ts:451"
+      ]
+    },
+    {
+      "table": "public.cer",
+      "referenceCount": 7,
+      "sites": [
+        "server/services/ana-ri/deficiency-taxonomy.ts:552",
+        "server/storage.ts:2695",
+        "server/storage.ts:2805",
+        "server/storage.ts:2905",
+        "server/storage.ts:3019",
+        "server/storage.ts:3109",
+        "server/storage.ts:3190"
+      ]
+    },
+    {
+      "table": "public.artifact_compute_attempts",
+      "referenceCount": 7,
+      "sites": [
+        "server/services/compute/computeService.ts:47",
+        "server/services/compute/computeService.ts:131",
+        "server/services/compute/computeService.ts:169",
+        "server/services/compute/computeService.ts:262",
+        "server/services/workflow/temporalBridge.ts:43",
+        "server/services/workflow/temporalBridge.ts:74",
+        "server/services/workflow/temporalBridge.ts:87"
+      ]
+    },
+    {
+      "table": "public.qms_change_controls",
+      "referenceCount": 7,
+      "sites": [
+        "server/services/qms/changeControl.service.ts:91",
+        "server/services/qms/changeControl.service.ts:115",
+        "server/services/qms/changeControl.service.ts:123",
+        "server/services/qms/changeControl.service.ts:153",
+        "server/services/qms/changeControl.service.ts:201",
+        "server/services/qms/changeControl.service.ts:212",
+        "server/services/qms/changeControl.service.ts:267"
+      ]
+    },
+    {
+      "table": "public.cmc_section_lineage",
+      "referenceCount": 6,
+      "sites": [
+        "server/api/cmc/module3ConvergenceRoutes.ts:138",
+        "server/api/cmc/module3ConvergenceRoutes.ts:143",
+        "server/api/cmc/module3ConvergenceRoutes.ts:223",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:196",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:201",
+        "server/services/ana-ri/module3-command-handlers.ts:343"
+      ]
+    },
+    {
+      "table": "audit.tamper_proof_log",
+      "referenceCount": 6,
+      "sites": [
+        "server/lib/tamper-proof-audit.ts:204",
+        "server/lib/tamper-proof-audit.ts:237",
+        "server/lib/tamper-proof-audit.ts:280",
+        "server/lib/tamper-proof-audit.ts:304",
+        "server/lib/tamper-proof-audit.ts:408",
+        "server/lib/tamper-proof-audit.ts:428"
+      ]
+    },
+    {
+      "table": "public.mechanism",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/ana-features.ts:1639",
+        "server/services/ana/intelligence-questions/flows/device-510k.ts:1190",
+        "server/services/ana/intelligence-questions/flows/device-pma.ts:1327",
+        "server/services/digital-health/digital-health-knowledge.ts:1608",
+        "server/services/digital-health/digital-health-knowledge.ts:1663",
+        "server/services/digital-health/digital-health-knowledge.ts:1694"
+      ]
+    },
+    {
+      "table": "public.doc_change_requests",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/authoring.router.ts:4236",
+        "server/routes/authoring.router.ts:4263",
+        "server/routes/authoring.router.ts:4287",
+        "server/routes/authoring.router.ts:4311",
+        "server/routes/authoring.router.ts:4335",
+        "server/routes/authoring.router.ts:4406"
+      ]
+    },
+    {
+      "table": "public.settings",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/client-branding.ts:84",
+        "server/routes/tenant-config.ts:139",
+        "server/routes/tenant-config.ts:145",
+        "server/routes/tenant-config.ts:307",
+        "server/routes/tenant-config.ts:313",
+        "server/src/routes/pm-settings.router.ts:249"
+      ]
+    },
+    {
+      "table": "public.artifact",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/concept2cure.ts:7125",
+        "server/routes/concept2cure.ts:7126",
+        "server/routes/concept2cure.ts:9041",
+        "server/routes/concept2cure.ts:9042",
+        "server/services/ana-ri/command-executor.ts:554",
+        "server/services/ana-ri/command-executor.ts:3844"
+      ]
+    },
+    {
+      "table": "public.lumen_knowledge_graph_edges",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/cortexQueryRoutes.ts:279",
+        "server/routes/cortexQueryRoutes.ts:454",
+        "server/services/atomQualityService.ts:102",
+        "server/services/knowledgeGraphService.ts:118",
+        "server/services/knowledgeGraphService.ts:170",
+        "server/services/knowledgeGraphService.ts:598"
+      ]
+    },
+    {
+      "table": "public.gdpr_processing_activities",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/global-compliance.ts:210",
+        "server/routes/global-compliance.ts:236",
+        "server/routes/global-compliance.ts:817",
+        "server/services/compliance/gdprComplianceService.ts:223",
+        "server/services/compliance/gdprComplianceService.ts:262",
+        "server/services/compliance/gdprComplianceService.ts:328"
+      ]
+    },
+    {
+      "table": "public.ivdr_pack_build_jobs",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/ivdr-binder-routes.ts:624",
+        "server/routes/ivdr-binder-routes.ts:662",
+        "server/workers/ivdr-pack-worker.ts:126",
+        "server/workers/ivdr-pack-worker.ts:143",
+        "server/workers/ivdr-pack-worker.ts:622",
+        "server/workers/ivdr-pack-worker.ts:634"
+      ]
+    },
+    {
+      "table": "public.ivdr_packs",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/ivdr-binder-routes.ts:703",
+        "server/routes/ivdr-binder-routes.ts:752",
+        "server/routes/ivdr-binder-routes.ts:851",
+        "server/workers/ivdr-pack-worker.ts:328",
+        "server/workers/ivdr-pack-worker.ts:493",
+        "server/workers/ivdr-pack-worker.ts:554"
+      ]
+    },
+    {
+      "table": "public.submission_projects",
+      "referenceCount": 6,
+      "sites": [
+        "server/routes/submissionCenter.routes.ts:44",
+        "server/routes/submissionCenter.routes.ts:78",
+        "server/routes/submissionCenter.routes.ts:102",
+        "server/routes/submissionCenter.routes.ts:153",
+        "server/routes/submissionCenter.routes.ts:257",
+        "server/routes/submissionCenter.routes.ts:309"
+      ]
+    },
+    {
+      "table": "vault.document_chunks",
+      "referenceCount": 6,
+      "sites": [
+        "server/services/advancedRAGPipeline.ts:575",
+        "server/services/advancedRAGPipeline.ts:698",
+        "server/services/advancedRAGPipeline.ts:733",
+        "server/workers/layout-aware-ingestion.ts:502",
+        "server/workers/vectorization-worker.ts:275",
+        "server/workers/vectorization-worker.ts:282"
+      ]
+    },
+    {
+      "table": "public.on",
+      "referenceCount": 6,
+      "sites": [
+        "server/services/escalate-engine.ts:378",
+        "server/services/global-ri/pharmacovigilance-obligations.ts:53",
+        "server/services/ind-lifecycle/ind-annual-report-service.ts:165",
+        "server/services/safety-reports/psur-dsur-service.ts:200",
+        "server/services/safety-reports/psur-dsur-structure.ts:66",
+        "server/services/safety-reports/psur-dsur-structure.ts:67"
+      ]
+    },
+    {
+      "table": "lumen.entity_extractions",
+      "referenceCount": 6,
+      "sites": [
+        "server/services/knowledge-graph.ts:83",
+        "server/services/knowledge-graph.ts:115",
+        "server/services/knowledge-graph.ts:137",
+        "server/workers/enhanced-ingestion-pipeline.ts:169",
+        "server/workers/enhanced-ingestion-pipeline.ts:218",
+        "server/workers/entity-extraction-worker.ts:356"
+      ]
+    },
+    {
+      "table": "public.license_agreements",
+      "referenceCount": 6,
+      "sites": [
+        "server/services/licensing/eula-service.ts:123",
+        "server/services/licensing/eula-service.ts:129",
+        "server/services/licensing/eula-service.ts:168",
+        "server/services/licensing/eula-service.ts:220",
+        "server/services/licensing/eula-service.ts:332",
+        "server/services/licensing/eula-service.ts:337"
+      ]
+    },
+    {
+      "table": "public.stab_assignments",
+      "referenceCount": 6,
+      "sites": [
+        "server/src/routes/stability.router.ts:2192",
+        "server/src/routes/stability.router.ts:2212",
+        "server/src/routes/stability.router.ts:2238",
+        "server/src/routes/stability.router.ts:2259",
+        "server/src/routes/stability.router.ts:2263",
+        "server/src/routes/stability.router.ts:2380"
+      ]
+    },
+    {
+      "table": "public.cmc_document_versions",
+      "referenceCount": 5,
+      "sites": [
+        "server/api/cmc/documentRoutes.ts:42",
+        "server/api/cmc/documentRoutes.ts:102",
+        "server/api/cmc/documentRoutes.ts:172",
+        "server/api/cmc/documentRoutes.ts:265",
+        "server/api/cmc/documentRoutes.ts:384"
+      ]
+    },
+    {
+      "table": "public.cmc_comparability_assessments",
+      "referenceCount": 5,
+      "sites": [
+        "server/api/cmc/module3OperatingSystemRoutes.ts:301",
+        "server/api/cmc/routes.ts:533",
+        "server/api/cmc/routes.ts:554",
+        "server/api/cmc/routes.ts:592",
+        "server/services/ana-ri/module3-command-handlers.ts:305"
+      ]
+    },
+    {
+      "table": "public.reg_question_events",
+      "referenceCount": 5,
+      "sites": [
+        "server/api/cmc/regulatoryIR.ts:63",
+        "server/api/cmc/regulatoryIR.ts:83",
+        "server/api/cmc/regulatoryIR.ts:119",
+        "server/api/cmc/regulatoryIR.ts:141",
+        "server/api/cmc/regulatoryIR.ts:154"
+      ]
+    },
+    {
+      "table": "public.user_roles",
+      "referenceCount": 5,
+      "sites": [
+        "server/api/enterprise/rbac-routes.js:53",
+        "server/api/enterprise/rbac-routes.js:356",
+        "server/api/enterprise/rbac-routes.js:374",
+        "server/services/rules-engine/actions/index.ts:35",
+        "server/services/rules-engine/actions/index.ts:216"
+      ]
+    },
+    {
+      "table": "public.firecrawl_usage_daily",
+      "referenceCount": 5,
+      "sites": [
+        "server/integrations/firecrawl/usage.ts:56",
+        "server/integrations/firecrawl/usage.ts:63",
+        "server/integrations/firecrawl/usage.ts:77",
+        "server/integrations/firecrawl/usage.ts:109",
+        "server/integrations/firecrawl/usage.ts:129"
+      ]
+    },
+    {
+      "table": "public.ai_claims",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/ai-claims-routes.ts:43",
+        "server/routes/chat/send-message.ts:937",
+        "server/routes/concept2cure.ts:4790",
+        "server/services/ivdrPackManifest.ts:188",
+        "server/services/ivdrPackManifest.ts:201"
+      ]
+    },
+    {
+      "table": "public.ai_retrieval_runs",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/ai-claims-routes.ts:43",
+        "server/routes/chat/send-message.ts:272",
+        "server/routes/concept2cure.ts:4511",
+        "server/routes/evidence-ask.ts:157",
+        "server/services/ivdrPackManifest.ts:178"
+      ]
+    },
+    {
+      "table": "public.ai_retrieval_chunks",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/ai-claims-routes.ts:77",
+        "server/routes/chat/send-message.ts:314",
+        "server/routes/concept2cure.ts:4534",
+        "server/routes/evidence-ask.ts:198",
+        "server/services/ana/submission-chat-handler.ts:454"
+      ]
+    },
+    {
+      "table": "public.doc_checklist",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/authoring.router.ts:4044",
+        "server/routes/authoring.router.ts:4054",
+        "server/routes/authoring.router.ts:4131",
+        "server/routes/authoring.router.ts:4160",
+        "server/routes/authoring.router.ts:4209"
+      ]
+    },
+    {
+      "table": "public.error",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/ectd-documents.ts:286",
+        "server/routes/ind-templates.ts:1300",
+        "server/routes/project-sections.ts:602",
+        "server/routes/project-sections.ts:1097",
+        "server/socketServer.ts:654"
+      ]
+    },
+    {
+      "table": "public.external_tool_audit_log",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/external-evidence.ts:105",
+        "server/routes/external-evidence.ts:145",
+        "server/routes/firecrawl-webhooks.ts:16",
+        "server/routes/firecrawl.ts:116",
+        "server/routes/firecrawl.ts:179"
+      ]
+    },
+    {
+      "table": "public.ind_kpi_events",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/ind-kpi.routes.ts:126",
+        "server/routes/ind-kpi.routes.ts:148",
+        "server/routes/ind-kpi.routes.ts:175",
+        "server/routes/ind-kpi.routes.ts:230",
+        "server/routes/ind-kpi.routes.ts:308"
+      ]
+    },
+    {
+      "table": "public.ind_milestones",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/preIndRoutes.ts:69",
+        "server/routes/preIndRoutes.ts:143",
+        "server/routes/preIndRoutes.ts:157",
+        "server/routes/preIndRoutes.ts:180",
+        "server/routes/preIndRoutes.ts:201"
+      ]
+    },
+    {
+      "table": "public.project_notifications",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/project-sections.ts:66",
+        "server/routes/project-sections.ts:914",
+        "server/routes/project-sections.ts:926",
+        "server/routes/project-sections.ts:946",
+        "server/routes/project-sections.ts:965"
+      ]
+    },
+    {
+      "table": "public.section_dependencies",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/project-sections.ts:268",
+        "server/routes/project-sections.ts:275",
+        "server/routes/project-sections.ts:850",
+        "server/routes/project-sections.ts:878",
+        "server/routes/regulatory-workspace-routes.ts:153"
+      ]
+    },
+    {
+      "table": "public.is",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/qc.routes.ts:104",
+        "server/services/ana/intelligence-questions/flows/briefing-book.ts:657",
+        "server/services/ana/intelligence-questions/flows/briefing-book.ts:700",
+        "server/services/ana/intelligence-questions/war-game/auditors/briefing-book-auditor.ts:104",
+        "server/services/digital-health/digital-health-knowledge.ts:545"
+      ]
+    },
+    {
+      "table": "public.assembly_docs",
+      "referenceCount": 5,
+      "sites": [
+        "server/routes/test-assembly.ts:125",
+        "server/services/AssemblyLine.ts:23",
+        "server/services/AssemblyLine.ts:36",
+        "server/services/AssemblyLine.ts:47",
+        "server/services/AssemblyLine.ts:73"
+      ]
+    },
+    {
+      "table": "lumen.data_atoms",
+      "referenceCount": 5,
+      "sites": [
+        "server/services/innovation/auto-traceability-service.ts:325",
+        "server/services/knowledge-graph.ts:335",
+        "server/services/multi-agent-council.ts:759",
+        "server/services/multi-agent-council.ts:952",
+        "server/workers/enhanced-ingestion-pipeline.ts:145"
+      ]
+    },
+    {
+      "table": "public.ai_goal_plan_runs",
+      "referenceCount": 5,
+      "sites": [
+        "server/services/kernel-observability.ts:72",
+        "server/services/kernel-plan-runtime.ts:50",
+        "server/services/kernel-plan-runtime.ts:80",
+        "server/services/kernel-plan-runtime.ts:123",
+        "server/services/kernel-plan-runtime.ts:185"
+      ]
+    },
+    {
+      "table": "lumen.atom_relationships",
+      "referenceCount": 5,
+      "sites": [
+        "server/services/knowledge-graph.ts:166",
+        "server/services/knowledge-graph.ts:198",
+        "server/services/knowledge-graph.ts:227",
+        "server/services/knowledge-graph.ts:245",
+        "server/workers/enhanced-ingestion-pipeline.ts:196"
+      ]
+    },
+    {
+      "table": "public.specification_audit_log",
+      "referenceCount": 4,
+      "sites": [
+        "server/api/cmc/specificationRoutes.ts:149",
+        "server/api/cmc/specificationRoutes.ts:252",
+        "server/api/cmc/specificationRoutes.ts:347",
+        "server/api/cmc/specificationRoutes.ts:390"
+      ]
+    },
+    {
+      "table": "public.cmc_ai_command_results",
+      "referenceCount": 4,
+      "sites": [
+        "server/api/cmc/workflowRoutes.ts:655",
+        "server/api/cmc/workflowRoutes.ts:721",
+        "server/api/cmc/workflowRoutes.ts:750",
+        "server/api/cmc/workflowRoutes.ts:785"
+      ]
+    },
+    {
+      "table": "vault.drafting_sessions",
+      "referenceCount": 4,
+      "sites": [
+        "server/api/drafting/routes.ts:243",
+        "server/api/drafting/routes.ts:408",
+        "server/api/drafting/routes.ts:441",
+        "server/api/drafting/routes.ts:524"
+      ]
+    },
+    {
+      "table": "public.all",
+      "referenceCount": 4,
+      "sites": [
+        "server/api/validation/index.js:273",
+        "server/api/validation/index.js:300",
+        "server/services/lumen-instruction-engine.ts:831",
+        "server/services/lumen-instruction-engine.ts:837"
+      ]
+    },
+    {
+      "table": "public.tenant",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/admin/master-admin.ts:228",
+        "server/routes/tenant-config.ts:180",
+        "server/routes/tenants-simple.ts:246",
+        "server/routes/tenants.ts:231"
+      ]
+    },
+    {
+      "table": "public.user",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/admin/master-admin.ts:311",
+        "server/routes/sso.ts:456",
+        "server/routes/tenant-users.ts:566",
+        "server/storage.ts:2135"
+      ]
+    },
+    {
+      "table": "public.scim",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/admin/scim-ip-allowlist.ts:103",
+        "server/routes/admin/scim-ip-allowlist.ts:104",
+        "server/routes/admin/scim-tenants.ts:125",
+        "server/routes/admin/scim-tenants.ts:126"
+      ]
+    },
+    {
+      "table": "public.clinical",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/ana-features.ts:1579",
+        "server/routes/ana-features.ts:1672",
+        "server/routes/ana-features.ts:1758",
+        "server/routes/ana-features.ts:1783"
+      ]
+    },
+    {
+      "table": "public.ai_kernel_decision_records",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/ana-ri/kernel.ts:59",
+        "server/routes/ana-ri/kernel.ts:68",
+        "server/services/kernel-decision-record.ts:48",
+        "server/services/kernel-observability.ts:53"
+      ]
+    },
+    {
+      "table": "public.doc_checklist_items",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/authoring.router.ts:4121",
+        "server/routes/authoring.router.ts:4142",
+        "server/routes/authoring.router.ts:4170",
+        "server/routes/authoring.router.ts:4186"
+      ]
+    },
+    {
+      "table": "public.concept2cure_authority_profiles",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/concept2cure-communication-center.ts:147",
+        "server/routes/concept2cure-communication-center.ts:242",
+        "server/routes/concept2cure.ts:12647",
+        "server/routes/concept2cure.ts:12719"
+      ]
+    },
+    {
+      "table": "public.concept2cure_agency_communications",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/concept2cure-communication-center.ts:287",
+        "server/routes/concept2cure-communication-center.ts:406",
+        "server/routes/concept2cure.ts:12764",
+        "server/routes/concept2cure.ts:12871"
+      ]
+    },
+    {
+      "table": "public.concept2cure_submission_center_items",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/concept2cure-communication-center.ts:733",
+        "server/routes/concept2cure-communication-center.ts:790",
+        "server/routes/concept2cure-communication-center.ts:883",
+        "server/routes/concept2cure-communication-center.ts:906"
+      ]
+    },
+    {
+      "table": "public.cro",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/cro.ts:212",
+        "server/routes/cro.ts:296",
+        "server/routes/cro.ts:365",
+        "server/routes/cro.ts:427"
+      ]
+    },
+    {
+      "table": "public.external_evidence_documents",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/external-evidence.ts:132",
+        "server/routes/firecrawl.ts:52",
+        "server/services/research-intelligence/persistEvidence.ts:34",
+        "server/services/research-intelligence/persistEvidence.ts:45"
+      ]
+    },
+    {
+      "table": "public.regional_compliance_config",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/global-compliance.ts:91",
+        "server/routes/global-compliance.ts:124",
+        "server/routes/global-compliance.ts:169",
+        "server/routes/global-compliance.ts:816"
+      ]
+    },
+    {
+      "table": "public.pv_adverse_events",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/global-compliance.ts:651",
+        "server/routes/global-compliance.ts:690",
+        "server/routes/global-compliance.ts:721",
+        "server/routes/global-compliance.ts:820"
+      ]
+    },
+    {
+      "table": "public.c2c_maa_module1_components",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/maa-module1.routes.ts:58",
+        "server/routes/maa-module1.routes.ts:93",
+        "server/routes/maa-module1.routes.ts:101",
+        "server/routes/maa-module1.routes.ts:107"
+      ]
+    },
+    {
+      "table": "public.user_work_queue",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/module-subscriptions.ts:360",
+        "server/services/user-intelligence.ts:315",
+        "server/services/user-intelligence.ts:614",
+        "server/services/user-intelligence.ts:686"
+      ]
+    },
+    {
+      "table": "public.section_comments",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/project-sections.ts:184",
+        "server/routes/project-sections.ts:735",
+        "server/routes/project-sections.ts:779",
+        "server/routes/regulatory-workspace-routes.ts:180"
+      ]
+    },
+    {
+      "table": "public.data",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/quality-management-api.ts:596",
+        "server/routes/sentinel-routes.ts:110",
+        "server/services/ana/intelligence-questions/flows/briefing-book.ts:667",
+        "server/services/module-intelligence.ts:375"
+      ]
+    },
+    {
+      "table": "public.c2c_submissions",
+      "referenceCount": 4,
+      "sites": [
+        "server/routes/regulatory-correspondence.ts:312",
+        "server/routes/regulatory-correspondence.ts:353",
+        "server/routes/regulatory-correspondence.ts:379",
+        "server/routes/regulatory-correspondence.ts:542"
+      ]
+    },
+    {
+      "table": "public.frequency",
+      "referenceCount": 4,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:643",
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:652",
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:803",
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:808"
+      ]
+    },
+    {
+      "table": "public.an",
+      "referenceCount": 4,
+      "sites": [
+        "server/services/ana/notifications-study-memory-tool-defs.ts:700",
+        "server/services/ana/notifications-study-memory-tool-defs.ts:744",
+        "server/services/ana/qms-labeling-analytics-tool-defs.ts:57",
+        "server/services/ana-ri/command-executor.ts:3842"
+      ]
+    },
+    {
+      "table": "public.ectd_submission_status_history",
+      "referenceCount": 4,
+      "sites": [
+        "server/services/ectd-submission-agent.ts:88",
+        "server/services/ectd-submission-agent.ts:289",
+        "server/services/ectd-submission-agent.ts:358",
+        "server/services/ectd-submission-agent.ts:421"
+      ]
+    },
+    {
+      "table": "precedent.regulatory_precedents",
+      "referenceCount": 4,
+      "sites": [
+        "server/services/intelligence/outcome-precedent-ingestor.ts:173",
+        "server/services/precedent-engine.ts:233",
+        "server/services/precedent-engine.ts:845",
+        "server/services/precedent-engine.ts:895"
+      ]
+    },
+    {
+      "table": "public.license_acceptances",
+      "referenceCount": 4,
+      "sites": [
+        "server/services/licensing/eula-service.ts:187",
+        "server/services/licensing/eula-service.ts:194",
+        "server/services/licensing/eula-service.ts:237",
+        "server/services/licensing/eula-service.ts:295"
+      ]
+    },
+    {
+      "table": "public.stab_capa",
+      "referenceCount": 4,
+      "sites": [
+        "server/src/routes/stability.router.ts:1926",
+        "server/src/routes/stability.router.ts:1941",
+        "server/src/routes/stability.router.ts:1966",
+        "server/src/routes/stability.router.ts:1970"
+      ]
+    },
+    {
+      "table": "public.cmc_methods",
+      "referenceCount": 4,
+      "sites": [
+        "server/src/routes/stability.router.ts:2143",
+        "server/src/routes/stability.router.ts:2161",
+        "server/src/routes/stability.router.ts:2280",
+        "server/src/routes/stability.router.ts:2323"
+      ]
+    },
+    {
+      "table": "public.batch",
+      "referenceCount": 3,
+      "sites": [
+        "server/api/cmc/batchRecordRoutes.ts:276",
+        "server/routes/manufacturing-routes.ts:533",
+        "server/routes/qc.routes.ts:286"
+      ]
+    },
+    {
+      "table": "public.cmc_document_links",
+      "referenceCount": 3,
+      "sites": [
+        "server/api/cmc/documentRoutes.ts:42",
+        "server/api/cmc/documentRoutes.ts:180",
+        "server/api/cmc/documentRoutes.ts:462"
+      ]
+    },
+    {
+      "table": "public.stability",
+      "referenceCount": 3,
+      "sites": [
+        "server/api/cmc/playbookRoutes.ts:410",
+        "server/api/cmc/stabilityRoutes.ts:241",
+        "server/api/cmc/workflowRoutes.ts:335"
+      ]
+    },
+    {
+      "table": "public.template",
+      "referenceCount": 3,
+      "sites": [
+        "server/api/templates/routes.ts:482",
+        "server/routes/client-branding.ts:309",
+        "server/services/templateService.ts:514"
+      ]
+    },
+    {
+      "table": "public.maud_validations",
+      "referenceCount": 3,
+      "sites": [
+        "server/db/maudDb.ts:80",
+        "server/db/maudDb.ts:101",
+        "server/db/maudDb.ts:150"
+      ]
+    },
+    {
+      "table": "public.external_tool_settings",
+      "referenceCount": 3,
+      "sites": [
+        "server/integrations/firecrawl/usage.ts:20",
+        "server/routes/external-evidence.ts:82",
+        "server/routes/firecrawl.ts:79"
+      ]
+    },
+    {
+      "table": "public.ai_claim_citations",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/ai-claims-routes.ts:77",
+        "server/routes/chat/send-message.ts:962",
+        "server/routes/concept2cure.ts:4815"
+      ]
+    },
+    {
+      "table": "public.to",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/ana-features.ts:1766",
+        "server/services/regulatory-programs.service.ts:491",
+        "server/socketServer.ts:509"
+      ]
+    },
+    {
+      "table": "public.authoring_ai_suggestions",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/authoring.router.ts:5084",
+        "server/routes/authoring.router.ts:5348",
+        "server/routes/authoring.router.ts:5368"
+      ]
+    },
+    {
+      "table": "public.authoring_tracked_change_decisions",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/authoring.router.ts:5500",
+        "server/routes/authoring.router.ts:5564",
+        "server/routes/authoring.router.ts:5606"
+      ]
+    },
+    {
+      "table": "public.thread",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/chat/threads.ts:174",
+        "server/routes/concept2cure.ts:13943",
+        "server/routes/cortex-unified.ts:1366"
+      ]
+    },
+    {
+      "table": "public.study",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/clinical-operations-routes.ts:402",
+        "server/src/routes/stability.router.ts:484",
+        "server/src/routes/stability.router.ts:508"
+      ]
+    },
+    {
+      "table": "public.submission",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/concept2cure-communication-center.ts:980",
+        "server/routes/ind-submissions.routes.ts:274",
+        "server/routes/regulatory-correspondence.ts:375"
+      ]
+    },
+    {
+      "table": "public.review",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/concept2cure.ts:13942",
+        "server/routes/concept2cure.ts:14826",
+        "server/routes/ind-templates.ts:1301"
+      ]
+    },
+    {
+      "table": "public.gdpr_data_breaches",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/global-compliance.ts:267",
+        "server/routes/global-compliance.ts:818",
+        "server/services/compliance/gdprComplianceService.ts:647"
+      ]
+    },
+    {
+      "table": "public.gdpr_transfer_assessments",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/global-compliance.ts:585",
+        "server/services/compliance/gdprComplianceService.ts:588",
+        "server/services/compliance/gdprComplianceService.ts:621"
+      ]
+    },
+    {
+      "table": "public.gdpr_dpias",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/global-compliance.ts:612",
+        "server/services/compliance/gdprComplianceService.ts:360",
+        "server/services/compliance/gdprComplianceService.ts:393"
+      ]
+    },
+    {
+      "table": "public.knowledge_graph_edges",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/graphrag.ts:310",
+        "server/routes/graphrag.ts:769",
+        "server/routes/graphrag.ts:879"
+      ]
+    },
+    {
+      "table": "public.knowledge_graph_nodes",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/graphrag.ts:310",
+        "server/routes/graphrag.ts:753",
+        "server/routes/graphrag.ts:872"
+      ]
+    },
+    {
+      "table": "public.ivdr_pack_snapshots",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/ivdr-binder-routes.ts:775",
+        "server/routes/ivdr-binder-routes.ts:888",
+        "server/workers/ivdr-pack-worker.ts:339"
+      ]
+    },
+    {
+      "table": "public.must",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/organizations-routes.ts:431",
+        "server/services/digital-health/digital-health-knowledge.ts:867",
+        "server/services/digital-health/digital-health-knowledge.ts:914"
+      ]
+    },
+    {
+      "table": "public.section_status_log",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/project-sections.ts:353",
+        "server/routes/project-sections.ts:811",
+        "server/services/artifact-tagger.ts:258"
+      ]
+    },
+    {
+      "table": "public.ctq",
+      "referenceCount": 3,
+      "sites": [
+        "server/routes/tenant-ctq-factors.ts:214",
+        "server/routes/tenant-ctq-factors.ts:220",
+        "server/routes/tenant-ctq-factors.ts:261"
+      ]
+    },
+    {
+      "table": "public.status",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/ana-ri/command-executor.ts:633",
+        "server/services/ana-ri/context-enrichment.ts:1336",
+        "server/services/learning/ich-currency.ts:78"
+      ]
+    },
+    {
+      "table": "public.risk",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/cmc-quality/cmc-quality-knowledge.ts:2661",
+        "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts:1309",
+        "server/services/ivd-knowledge/regulatory/eu-ivdr.ts:181"
+      ]
+    },
+    {
+      "table": "public.gdpr_consent_records",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/compliance/gdprComplianceService.ts:417",
+        "server/services/compliance/gdprComplianceService.ts:448",
+        "server/services/compliance/gdprComplianceService.ts:478"
+      ]
+    },
+    {
+      "table": "public.conversation_os_execution_steps",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:186",
+        "server/services/conversation-os/persistence.ts:189",
+        "server/services/conversation-os/persistence.ts:211"
+      ]
+    },
+    {
+      "table": "public.conversation_os_artifact_proposals",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:231",
+        "server/services/conversation-os/persistence.ts:251",
+        "server/services/conversation-os/persistence.ts:308"
+      ]
+    },
+    {
+      "table": "public.conversation_os_accepted_artifact_versions",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:251",
+        "server/services/conversation-os/persistence.ts:353",
+        "server/services/conversation-os/persistence.ts:387"
+      ]
+    },
+    {
+      "table": "public.folder",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/ectd/ECTDScaffoldingService.ts:291",
+        "server/services/ectd/ECTDScaffoldingService.ts:318",
+        "server/storage.ts:2548"
+      ]
+    },
+    {
+      "table": "public.ectd_submission_validations",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/ectd-submission-agent.ts:150",
+        "server/services/ectd-submission-agent.ts:213",
+        "server/services/ectd-submission-agent.ts:246"
+      ]
+    },
+    {
+      "table": "public.ai_kernel_policy_outcomes",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/kernel-adaptive-policy.ts:43",
+        "server/services/kernel-adaptive-policy.ts:85",
+        "server/services/kernel-observability.ts:63"
+      ]
+    },
+    {
+      "table": "public.ai_kernel_agent_protocol_events",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/kernel-agent-protocol.ts:53",
+        "server/services/kernel-agent-protocol.ts:76",
+        "server/services/kernel-observability.ts:81"
+      ]
+    },
+    {
+      "table": "lumen.traceability_matrix",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/knowledge-graph.ts:360",
+        "server/services/knowledge-graph.ts:381",
+        "server/services/knowledge-graph.ts:401"
+      ]
+    },
+    {
+      "table": "public.qms_change_links",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/qms/changeControl.service.ts:222",
+        "server/services/qms/changeControl.service.ts:233",
+        "server/services/qms/changeControl.service.ts:247"
+      ]
+    },
+    {
+      "table": "public.weekly_usage_limits",
+      "referenceCount": 3,
+      "sites": [
+        "server/services/weekly-usage-limits.ts:176",
+        "server/services/weekly-usage-limits.ts:185",
+        "server/services/weekly-usage-limits.ts:258"
+      ]
+    },
+    {
+      "table": "public.ana_kernel_decision_log",
+      "referenceCount": 3,
+      "sites": [
+        "server/src/control-plane/persistent-queries.ts:37",
+        "server/src/control-plane/persistent-queries.ts:89",
+        "server/src/control-plane/persistent-queries.ts:96"
+      ]
+    },
+    {
+      "table": "public.stab_exports",
+      "referenceCount": 3,
+      "sites": [
+        "server/src/routes/stability.router.ts:1090",
+        "server/src/routes/stability.router.ts:2332",
+        "server/src/services/reg/evidence.ts:20"
+      ]
+    },
+    {
+      "table": "public.stab_oot_rules",
+      "referenceCount": 3,
+      "sites": [
+        "server/src/routes/stability.router.ts:1314",
+        "server/src/routes/stability.router.ts:1330",
+        "server/src/routes/stability.router.ts:1360"
+      ]
+    },
+    {
+      "table": "public.stab_protocols",
+      "referenceCount": 3,
+      "sites": [
+        "server/src/routes/stability.router.ts:2031",
+        "server/src/routes/stability.router.ts:2046",
+        "server/src/routes/stability.router.ts:2061"
+      ]
+    },
+    {
+      "table": "public.v_stab_upcoming_tp",
+      "referenceCount": 3,
+      "sites": [
+        "server/src/routes/stability.router.ts:2360",
+        "server/src/routes/stability.router.ts:2373",
+        "server/src/routes/stability.router.ts:2395"
+      ]
+    },
+    {
+      "table": "public.stab_chain",
+      "referenceCount": 3,
+      "sites": [
+        "server/src/routes/stability.router.ts:2557",
+        "server/src/routes/stability.router.ts:2585",
+        "server/src/routes/stability.router.ts:2614"
+      ]
+    },
+    {
+      "table": "public.trials",
+      "referenceCount": 3,
+      "sites": [
+        "server/storage.ts:2156",
+        "server/storage.ts:2170",
+        "server/storage.ts:2229"
+      ]
+    },
+    {
+      "table": "public.ivdr_pack_counters",
+      "referenceCount": 3,
+      "sites": [
+        "server/workers/ivdr-pack-worker.ts:290",
+        "server/workers/ivdr-pack-worker.ts:297",
+        "server/workers/ivdr-pack-worker.ts:306"
+      ]
+    },
+    {
+      "table": "public.cmc_workflows",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/cmc/blueprintRoutes.ts:192",
+        "server/api/cmc/playbookRoutes.ts:38"
+      ]
+    },
+    {
+      "table": "public.cmc_document_collaborators",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/cmc/documentRoutes.ts:42",
+        "server/api/cmc/documentRoutes.ts:192"
+      ]
+    },
+    {
+      "table": "public.cmc_module3_section_versions",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/cmc/module3OperatingSystemRoutes.ts:606",
+        "server/api/cmc/module3OperatingSystemRoutes.ts:613"
+      ]
+    },
+    {
+      "table": "public.cmc_ai_tool_executions",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/cmc/playbookRoutes.ts:151",
+        "server/api/cmc/playbookRoutes.ts:172"
+      ]
+    },
+    {
+      "table": "public.reg_rpi_snapshots",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/cmc/portfolio.ts:140",
+        "server/api/cmc/portfolio.ts:166"
+      ]
+    },
+    {
+      "table": "vault.extracted_entities",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/drafting/routes.ts:497",
+        "server/api/drafting/routes.ts:540"
+      ]
+    },
+    {
+      "table": "public.module_tree",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/ectd/routes.ts:58",
+        "server/services/ectd/ECTDScaffoldingService.ts:131"
+      ]
+    },
+    {
+      "table": "public.roles",
+      "referenceCount": 2,
+      "sites": [
+        "server/api/enterprise/rbac-routes.js:53",
+        "server/api/enterprise/rbac-routes.js:356"
+      ]
+    },
+    {
+      "table": "public.at",
+      "referenceCount": 2,
+      "sites": [
+        "server/data-importer.ts:669",
+        "server/services/ana/medical-writing.ts:116"
+      ]
+    },
+    {
+      "table": "public.maud_validation_requests",
+      "referenceCount": 2,
+      "sites": [
+        "server/db/maudDb.ts:173",
+        "server/db/maudDb.ts:212"
+      ]
+    },
+    {
+      "table": "public.maud_algorithms",
+      "referenceCount": 2,
+      "sites": [
+        "server/db/maudDb.ts:233",
+        "server/db/maudDb.ts:269"
+      ]
+    },
+    {
+      "table": "public.ind_events",
+      "referenceCount": 2,
+      "sites": [
+        "server/events/eventBus.js:43",
+        "server/events/eventBus.js:117"
+      ]
+    },
+    {
+      "table": "public.document_subtypes",
+      "referenceCount": 2,
+      "sites": [
+        "server/hooks/refModel.js:10",
+        "server/hooks/refModel.js:132"
+      ]
+    },
+    {
+      "table": "public.skill",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/account-intelligence.ts:377",
+        "server/routes/account-intelligence.ts:378"
+      ]
+    },
+    {
+      "table": "public.c2c_agency_meetings",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/agency-meetings.routes.ts:28",
+        "server/routes/agency-meetings.routes.ts:96"
+      ]
+    },
+    {
+      "table": "public.license_requests",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/auth.ts:1818",
+        "server/routes/auth.ts:1834"
+      ]
+    },
+    {
+      "table": "public.authoring_tokens",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/authoring.router.ts:664",
+        "server/routes/authoring.router.ts:699"
+      ]
+    },
+    {
+      "table": "public.comment",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/authoring.router.ts:1663",
+        "server/routes/authoring.router.ts:2050"
+      ]
+    },
+    {
+      "table": "public.authoring_compliance_scores",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/authoring.router.ts:5105",
+        "server/routes/authoring.router.ts:5406"
+      ]
+    },
+    {
+      "table": "public.budget",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/billing-dashboard.ts:388",
+        "server/routes/billing-dashboard.ts:389"
+      ]
+    },
+    {
+      "table": "public.artifacts",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/chat-actions.ts:140",
+        "server/routes/workspace-summary.ts:135"
+      ]
+    },
+    {
+      "table": "public.site",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/clinical-operations-routes.ts:489",
+        "server/services/gcp-operations/gcp-operations-knowledge.ts:1615"
+      ]
+    },
+    {
+      "table": "public.federated_models",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/cognitive-ecosystem.ts:489",
+        "server/routes/cognitive-ecosystem.ts:521"
+      ]
+    },
+    {
+      "table": "public.publishops",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/concept2cure-communication-center.ts:721",
+        "server/routes/concept2cure.ts:13098"
+      ]
+    },
+    {
+      "table": "public.ownership",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/concept2cure.ts:2458",
+        "server/routes/concept2cure.ts:2459"
+      ]
+    },
+    {
+      "table": "public.conversation",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/concept2cure.ts:6395",
+        "server/routes/concept2cure.ts:6399"
+      ]
+    },
+    {
+      "table": "public.ctd",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/concept2cure.ts:9174",
+        "server/routes/concept2cure.ts:9175"
+      ]
+    },
+    {
+      "table": "public.tasks",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/concept2cure.ts:14774",
+        "server/routes/concept2cure.ts:17176"
+      ]
+    },
+    {
+      "table": "public.content_plan_sections",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/content-plan.js:86",
+        "server/routes/content-plan.js:201"
+      ]
+    },
+    {
+      "table": "public.section_evidence_links",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/content-plan.js:106",
+        "server/routes/content-plan.js:239"
+      ]
+    },
+    {
+      "table": "public.c2c_design_controls",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/design-controls.routes.ts:28",
+        "server/routes/design-controls.routes.ts:80"
+      ]
+    },
+    {
+      "table": "public.device",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/device-projects.ts:237",
+        "server/routes/device-projects.ts:238"
+      ]
+    },
+    {
+      "table": "public.evidence",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/evidence.ts:577",
+        "server/routes/ivdr-routes.ts:694"
+      ]
+    },
+    {
+      "table": "public.field",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/fieldSync.routes.ts:146",
+        "server/socketServer.ts:654"
+      ]
+    },
+    {
+      "table": "public.pv_safety_signals",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/global-compliance.ts:759",
+        "server/routes/global-compliance.ts:821"
+      ]
+    },
+    {
+      "table": "public.c2c_hf_files",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/human-factors.ts:31",
+        "server/routes/human-factors.ts:140"
+      ]
+    },
+    {
+      "table": "public.c2c_hf_scenarios",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/human-factors.ts:40",
+        "server/routes/human-factors.ts:151"
+      ]
+    },
+    {
+      "table": "public.ind",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/ind-submissions.routes.ts:353",
+        "server/routes/ind.ts:207"
+      ]
+    },
+    {
+      "table": "public.ivdr_validation_parameter_history",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/ivdr-routes.ts:440",
+        "server/routes/ivdr-routes.ts:507"
+      ]
+    },
+    {
+      "table": "public.ivdr_evidence_result_history",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/ivdr-routes.ts:639",
+        "server/routes/ivdr-routes.ts:704"
+      ]
+    },
+    {
+      "table": "public.ivdr_cdx_status_history",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/ivdr-routes.ts:824",
+        "server/routes/ivdr-routes.ts:847"
+      ]
+    },
+    {
+      "table": "public.c2c_smpc_sections",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/labeling-smpc.routes.ts:28",
+        "server/routes/labeling-smpc.routes.ts:68"
+      ]
+    },
+    {
+      "table": "public.avg",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/mdx-analytics.ts:85",
+        "server/routes/mdx-analytics.ts:124"
+      ]
+    },
+    {
+      "table": "public.c2c_nda_m1_docs",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/nda-cockpit.routes.ts:58",
+        "server/routes/nda-cockpit.routes.ts:103"
+      ]
+    },
+    {
+      "table": "public.c2c_nda_rtf",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/nda-cockpit.routes.ts:136",
+        "server/routes/nda-cockpit.routes.ts:183"
+      ]
+    },
+    {
+      "table": "public.organization",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/organizations-routes.ts:296",
+        "server/routes/organizations-routes.ts:483"
+      ]
+    },
+    {
+      "table": "public.ind_pre_ind_data",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/preIndRoutes.ts:52",
+        "server/routes/preIndRoutes.ts:104"
+      ]
+    },
+    {
+      "table": "public.milestone",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/project-sections.ts:1098",
+        "server/services/ana-ri/command-executor.ts:2221"
+      ]
+    },
+    {
+      "table": "public.quality",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/quality-management-api.ts:651",
+        "server/services/cmc/supac-classifier.ts:459"
+      ]
+    },
+    {
+      "table": "public.c2c_communication_timeline_events",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/regulatory-correspondence.ts:106",
+        "server/routes/regulatory-correspondence.ts:933"
+      ]
+    },
+    {
+      "table": "public.c2c_response_packages",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/regulatory-correspondence.ts:718",
+        "server/routes/regulatory-correspondence.ts:877"
+      ]
+    },
+    {
+      "table": "public.c2c_mailbox_connections",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/regulatory-correspondence.ts:954",
+        "server/routes/regulatory-correspondence.ts:994"
+      ]
+    },
+    {
+      "table": "public.traceability",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/tenant-traceability.ts:313",
+        "server/routes/tenant-traceability.ts:434"
+      ]
+    },
+    {
+      "table": "public.profile",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/users.ts:260",
+        "server/routes/users.ts:263"
+      ]
+    },
+    {
+      "table": "public.preferences",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/users.ts:442",
+        "server/routes/users.ts:445"
+      ]
+    },
+    {
+      "table": "public.persona",
+      "referenceCount": 2,
+      "sites": [
+        "server/routes/users.ts:527",
+        "server/routes/users.ts:528"
+      ]
+    },
+    {
+      "table": "public.procedures",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ai-ml-pccp/pccp-validator.service.ts:103",
+        "server/services/ana/digitalHealthTools.ts:175"
+      ]
+    },
+    {
+      "table": "public.plan",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/digitalHealthTools.ts:401",
+        "server/services/kernel-plan-runtime.ts:143"
+      ]
+    },
+    {
+      "table": "public.path",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/digitalHealthTools.ts:433",
+        "server/services/digital-health/digital-health-knowledge.ts:1609"
+      ]
+    },
+    {
+      "table": "public.available",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/intelligence-questions/flows/briefing-book.ts:661",
+        "server/storage.ts:3316"
+      ]
+    },
+    {
+      "table": "public.schedule",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/intelligence-questions/flows/cer-report.ts:1649",
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:641"
+      ]
+    },
+    {
+      "table": "public.required",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/intelligence-questions/flows/safety-narrative.ts:599",
+        "server/services/pediatric/pediatric-knowledge.ts:731"
+      ]
+    },
+    {
+      "table": "public.cycle",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:461",
+        "server/services/ana-ri/deficiency-taxonomy.ts:552"
+      ]
+    },
+    {
+      "table": "public.mechanisms",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor.ts:533",
+        "server/services/ana/intelligence-questions/war-game/auditors/pma-auditor.ts:775"
+      ]
+    },
+    {
+      "table": "public.this",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/labeling-auditor.ts:720",
+        "server/services/orchestration/recommendation-engine.ts:183"
+      ]
+    },
+    {
+      "table": "public.atom",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/atomQualityService.ts:141",
+        "server/services/enhancedEmbeddingService.ts:283"
+      ]
+    },
+    {
+      "table": "public.cre_regulatory_findings",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/clinical-regulatory-evidence/index.ts:64",
+        "server/services/clinical-regulatory-evidence/index.ts:80"
+      ]
+    },
+    {
+      "table": "public.manufacturing_processes",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/cmc/ich-compliance-checker.ts:135",
+        "server/services/cmc/qbd-analyzer.ts:102"
+      ]
+    },
+    {
+      "table": "public.descendants",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/cognitive-ecosystem/checkpoint-manager.service.ts:366",
+        "server/services/cognitive-ecosystem/checkpoint-manager.service.ts:378"
+      ]
+    },
+    {
+      "table": "public.collab_document_state",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/collab/collab-state.store.ts:42",
+        "server/services/collab/collab-state.store.ts:83"
+      ]
+    },
+    {
+      "table": "public.artifact_compute_outputs",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/compute/computeService.ts:67",
+        "server/services/compute/computeService.ts:270"
+      ]
+    },
+    {
+      "table": "public.conversation_os_tool_manifests",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:31",
+        "server/services/conversation-os/persistence.ts:48"
+      ]
+    },
+    {
+      "table": "public.conversation_os_tool_events",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:68",
+        "server/services/conversation-os/persistence.ts:83"
+      ]
+    },
+    {
+      "table": "public.conversation_os_retrieval_sources",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:106",
+        "server/services/conversation-os/persistence.ts:114"
+      ]
+    },
+    {
+      "table": "public.conversation_os_retrieval_chunks",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:114",
+        "server/services/conversation-os/persistence.ts:133"
+      ]
+    },
+    {
+      "table": "public.conversation_os_scout_findings",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:148",
+        "server/services/conversation-os/persistence.ts:164"
+      ]
+    },
+    {
+      "table": "public.conversation_os_execution_plans",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:180",
+        "server/services/conversation-os/persistence.ts:205"
+      ]
+    },
+    {
+      "table": "public.risk_management_files",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:177",
+        "server/services/design-risk/design-risk.service.ts:186"
+      ]
+    },
+    {
+      "table": "public.and",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/digital-health/digital-health-knowledge.ts:873",
+        "server/services/digital-health/digital-health-knowledge.ts:874"
+      ]
+    },
+    {
+      "table": "public.ectd_submission_documents",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ectd-submission-agent.ts:111",
+        "server/services/ectd-submission-agent.ts:144"
+      ]
+    },
+    {
+      "table": "public.search_atoms_hybrid",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/enhancedEmbeddingService.ts:415",
+        "server/services/enhancedEmbeddingService.ts:446"
+      ]
+    },
+    {
+      "table": "public.enterprise_integration_credentials",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/integrations/credentialVault.ts:106",
+        "server/services/integrations/credentialVault.ts:139"
+      ]
+    },
+    {
+      "table": "public.of",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ivd-knowledge/regulatory/eu-ivdr.ts:181",
+        "server/services/ivd-knowledge/regulatory/mdcg-guidance.ts:68"
+      ]
+    },
+    {
+      "table": "public.within",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/ivd-knowledge/regulatory/fda-ivd.ts:240",
+        "server/services/pediatric/pediatric-knowledge.ts:1401"
+      ]
+    },
+    {
+      "table": "public.ai_goal_plan_step_events",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/kernel-plan-runtime.ts:15",
+        "server/services/kernel-plan-runtime.ts:212"
+      ]
+    },
+    {
+      "table": "lumen.traverse_graph",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/knowledge-graph.ts:275",
+        "server/services/knowledge-graph.ts:335"
+      ]
+    },
+    {
+      "table": "public.impact_propagation_log",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/reactive-dependency-service.ts:317",
+        "server/services/reactive-dependency-service.ts:399"
+      ]
+    },
+    {
+      "table": "public.literature_entries",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/regulatory-programs.service.ts:664",
+        "server/services/regulatory-programs.service.ts:934"
+      ]
+    },
+    {
+      "table": "public.bundle_execution_receipts",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/resolution/receipt-store.ts:125",
+        "server/services/resolution/receipt-store.ts:174"
+      ]
+    },
+    {
+      "table": "public.weekly_overage_ledger",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/weekly-usage-limits.ts:402",
+        "server/services/weekly-usage-limits.ts:423"
+      ]
+    },
+    {
+      "table": "public.workflow_step_definitions",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/workflow/WorkflowExecutionEngine.ts:61",
+        "server/services/workflow/WorkflowExecutionEngine.ts:114"
+      ]
+    },
+    {
+      "table": "public.step_runs",
+      "referenceCount": 2,
+      "sites": [
+        "server/services/workflow/WorkflowExecutionEngine.ts:68",
+        "server/services/workflow/WorkflowExecutionEngine.ts:149"
+      ]
+    },
+    {
+      "table": "public.stab_audit",
+      "referenceCount": 2,
+      "sites": [
+        "server/src/routes/stability.router.ts:185",
+        "server/src/routes/stability.router.ts:1492"
+      ]
+    },
+    {
+      "table": "public.result",
+      "referenceCount": 2,
+      "sites": [
+        "server/src/routes/stability.router.ts:926",
+        "server/src/routes/stability.router.ts:1858"
+      ]
+    },
+    {
+      "table": "public.stab_inuse",
+      "referenceCount": 2,
+      "sites": [
+        "server/src/routes/stability.router.ts:1258",
+        "server/src/routes/stability.router.ts:1279"
+      ]
+    },
+    {
+      "table": "public.stab_signoffs",
+      "referenceCount": 2,
+      "sites": [
+        "server/src/routes/stability.router.ts:2300",
+        "server/src/routes/stability.router.ts:2328"
+      ]
+    },
+    {
+      "table": "public.reg_mail_ingest",
+      "referenceCount": 2,
+      "sites": [
+        "server/src/services/integrations/gmail.ts:104",
+        "server/src/services/integrations/gmail.ts:136"
+      ]
+    },
+    {
+      "table": "public.did",
+      "referenceCount": 2,
+      "sites": [
+        "server/test/quality-api-test.ts:84",
+        "server/test/quality-api-test.ts:142"
+      ]
+    },
+    {
+      "table": "public.access",
+      "referenceCount": 1,
+      "sites": [
+        "server/academic-knowledge-tracker.ts:222"
+      ]
+    },
+    {
+      "table": "public.component",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/ai/phase3-routes.js:232"
+      ]
+    },
+    {
+      "table": "public.date",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/audit-risk-monitor.js:556"
+      ]
+    },
+    {
+      "table": "public.cmc_projects",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/blueprintRoutes.ts:58"
+      ]
+    },
+    {
+      "table": "public.workflow_templates",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/blueprintRoutes.ts:142"
+      ]
+    },
+    {
+      "table": "public.cmc_workflow_instances",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/playbookRoutes.ts:103"
+      ]
+    },
+    {
+      "table": "public.cmc_checklist_instances",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/playbookRoutes.ts:241"
+      ]
+    },
+    {
+      "table": "public.cmc_workflow_tasks",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/playbookRoutes.ts:347"
+      ]
+    },
+    {
+      "table": "public.cmc",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/projectRoutes.ts:192"
+      ]
+    },
+    {
+      "table": "public.drug",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/projectRoutes.ts:685"
+      ]
+    },
+    {
+      "table": "public.dp_specs",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/regulatory_aiDraft.ts:33"
+      ]
+    },
+    {
+      "table": "public.qa_methods",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/regulatory_aiDraft.ts:51"
+      ]
+    },
+    {
+      "table": "public.analytical",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/routes.ts:138"
+      ]
+    },
+    {
+      "table": "public.project_workflows",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/routes.ts:389"
+      ]
+    },
+    {
+      "table": "public.comparability",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/routes.ts:629"
+      ]
+    },
+    {
+      "table": "public.specification",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/cmc/specificationRoutes.ts:275"
+      ]
+    },
+    {
+      "table": "vault.table_priority_search",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/drafting/routes.ts:143"
+      ]
+    },
+    {
+      "table": "vault.hybrid_search",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/drafting/routes.ts:158"
+      ]
+    },
+    {
+      "table": "public.cross",
+      "referenceCount": 1,
+      "sites": [
+        "server/api/validation/index.js:302"
+      ]
+    },
+    {
+      "table": "public.if",
+      "referenceCount": 1,
+      "sites": [
+        "server/data_integration.js:305"
+      ]
+    },
+    {
+      "table": "public.literature_sources",
+      "referenceCount": 1,
+      "sites": [
+        "server/db/setupLiterature.ts:44"
+      ]
+    },
+    {
+      "table": "public.medline",
+      "referenceCount": 1,
+      "sites": [
+        "server/db/setupLiterature.ts:44"
+      ]
+    },
+    {
+      "table": "public.document_types",
+      "referenceCount": 1,
+      "sites": [
+        "server/hooks/refModel.js:10"
+      ]
+    },
+    {
+      "table": "public.lifecycle",
+      "referenceCount": 1,
+      "sites": [
+        "server/hooks/refModel.js:10"
+      ]
+    },
+    {
+      "table": "public.folders",
+      "referenceCount": 1,
+      "sites": [
+        "server/hooks/refModel.js:49"
+      ]
+    },
+    {
+      "table": "public.retention_rules",
+      "referenceCount": 1,
+      "sites": [
+        "server/hooks/refModel.js:121"
+      ]
+    },
+    {
+      "table": "public.or",
+      "referenceCount": 1,
+      "sites": [
+        "server/lib/tamper-proof-audit.ts:120"
+      ]
+    },
+    {
+      "table": "public.requires",
+      "referenceCount": 1,
+      "sites": [
+        "server/prisma/client.js:177"
+      ]
+    },
+    {
+      "table": "public.cost",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/admin/business/rate-cards.ts:106"
+      ]
+    },
+    {
+      "table": "public.tier",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/admin/business/rate-cards.ts:184"
+      ]
+    },
+    {
+      "table": "public.feature",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/admin/master-admin.ts:617"
+      ]
+    },
+    {
+      "table": "public.labeling",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ana-features.ts:1639"
+      ]
+    },
+    {
+      "table": "public.investigator",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ana-features.ts:1731"
+      ]
+    },
+    {
+      "table": "public.calcitonin",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ana-features.ts:1801"
+      ]
+    },
+    {
+      "table": "public.for",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ana-features.ts:1829"
+      ]
+    },
+    {
+      "table": "public.policy",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ana-tool-policy.ts:104"
+      ]
+    },
+    {
+      "table": "public.assumption",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/assumption-decision-contradiction.ts:104"
+      ]
+    },
+    {
+      "table": "public.content",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/atoms.js:205"
+      ]
+    },
+    {
+      "table": "public.authoring_templates",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/authoring.router.ts:733"
+      ]
+    },
+    {
+      "table": "public.checklist",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/authoring.router.ts:4201"
+      ]
+    },
+    {
+      "table": "public.authoring_audit_events",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/authoring.router.ts:4905"
+      ]
+    },
+    {
+      "table": "public.authoring_suggestion_feedback",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/authoring.router.ts:5341"
+      ]
+    },
+    {
+      "table": "public.biopharma_prea_milestones",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/biopharma-specialty.routes.ts:60"
+      ]
+    },
+    {
+      "table": "public.biopharma_orphan_rpd",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/biopharma-specialty.routes.ts:66"
+      ]
+    },
+    {
+      "table": "public.biopharma_orphan_advocacy",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/biopharma-specialty.routes.ts:72"
+      ]
+    },
+    {
+      "table": "public.organizationid",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/biotech-rag.js:924"
+      ]
+    },
+    {
+      "table": "public.client",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/clients-routes.ts:591"
+      ]
+    },
+    {
+      "table": "public.security",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/clients-routes.ts:770"
+      ]
+    },
+    {
+      "table": "public.workspace",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/clients-routes.ts:1062"
+      ]
+    },
+    {
+      "table": "public.c2c_cmc_changes",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/cmc-changes.routes.ts:29"
+      ]
+    },
+    {
+      "table": "public.federated_participants",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/cognitive-ecosystem.ts:508"
+      ]
+    },
+    {
+      "table": "public.federated_safety_signals",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/cognitive-ecosystem.ts:538"
+      ]
+    },
+    {
+      "table": "public.federated_horizon_scans",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/cognitive-ecosystem.ts:558"
+      ]
+    },
+    {
+      "table": "public.placement",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/concept2cure.ts:7368"
+      ]
+    },
+    {
+      "table": "public.predicate_intelligence_results",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/concept2cure.ts:17080"
+      ]
+    },
+    {
+      "table": "public.patent_portfolio",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/concept2cure.ts:17111"
+      ]
+    },
+    {
+      "table": "public.ai_feedback",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/concept2cure.ts:17232"
+      ]
+    },
+    {
+      "table": "public.c2c_cro_portfolio",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/cro-portfolio.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.c2c_decision_lineage",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/decision-lineage.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.c2c_doc_journeys",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/doc-journey.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.c2c_dossier_map",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/dossier-map.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.ectd",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ectd-documents.ts:287"
+      ]
+    },
+    {
+      "table": "public.c2c_evidence_asks",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/evidence-asks.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.fda_510k_initial_data_forms",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/fda-forms.routes.ts:588"
+      ]
+    },
+    {
+      "table": "public.pv_risk_management_plans",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/global-compliance.ts:781"
+      ]
+    },
+    {
+      "table": "public.citation_chains",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/graphrag.ts:819"
+      ]
+    },
+    {
+      "table": "public.c2c_ind_checklist",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ind-checklist.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.alert",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ind_automation_routes.ts:511"
+      ]
+    },
+    {
+      "table": "public.extraction_jobs",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/integration-test.ts:144"
+      ]
+    },
+    {
+      "table": "public.c2c_biostat_saps",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/intelligence-cluster.ts:116"
+      ]
+    },
+    {
+      "table": "public.c2c_biostat_sample_sizes",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/intelligence-cluster.ts:140"
+      ]
+    },
+    {
+      "table": "public.c2c_biostat_interims",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/intelligence-cluster.ts:159"
+      ]
+    },
+    {
+      "table": "public.c2c_investigator_brochure",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/investigator-brochure.routes.ts:91"
+      ]
+    },
+    {
+      "table": "public.binder",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ivdr-binder-routes.ts:263"
+      ]
+    },
+    {
+      "table": "public.validation",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ivdr-routes.ts:497"
+      ]
+    },
+    {
+      "table": "public.cdx",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ivdr-routes.ts:837"
+      ]
+    },
+    {
+      "table": "public.gspr",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/ivdr-routes.ts:1084"
+      ]
+    },
+    {
+      "table": "public.c2c_labeling_pi",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/labeling-pi.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.smpc",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/labeling-smpc.routes.ts:80"
+      ]
+    },
+    {
+      "table": "public.license",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/license-routes.js:461"
+      ]
+    },
+    {
+      "table": "public.license_access_logs",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/license-routes.js:627"
+      ]
+    },
+    {
+      "table": "public.maa",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/maa-module1.routes.ts:117"
+      ]
+    },
+    {
+      "table": "public.c2c_market_access",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/market-access.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.roster",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/mdx-qms.ts:508"
+      ]
+    },
+    {
+      "table": "public.acks",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/mdx-qms.ts:508"
+      ]
+    },
+    {
+      "table": "public.work",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/module-subscriptions.ts:290"
+      ]
+    },
+    {
+      "table": "public.c2c_nda_modules",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/nda-cockpit.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.activity",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/pdev/pdev-routes.ts:432"
+      ]
+    },
+    {
+      "table": "public.context",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/predictive-sections.ts:227"
+      ]
+    },
+    {
+      "table": "public.c2c_program_journey",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/program-journey.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.program",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/programs.ts:383"
+      ]
+    },
+    {
+      "table": "public.deadline",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/project-sections.ts:539"
+      ]
+    },
+    {
+      "table": "public.fields",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/project-sections.ts:586"
+      ]
+    },
+    {
+      "table": "public.c2c_protocol_dev",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/protocol-dev.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.oos",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/qc.routes.ts:183"
+      ]
+    },
+    {
+      "table": "public.deviation",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/qc.routes.ts:397"
+      ]
+    },
+    {
+      "table": "public.microbiological",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/qc.routes.ts:495"
+      ]
+    },
+    {
+      "table": "public.reference",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/qc.routes.ts:596"
+      ]
+    },
+    {
+      "table": "public.c2c_reg_changes",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/reg-change.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.regulatory_twin_simulations",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/regulatory-digital-twin.ts:1676"
+      ]
+    },
+    {
+      "table": "public.c2c_research_admin",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/research-admin.routes.ts:28"
+      ]
+    },
+    {
+      "table": "public.c2c_sae_cases",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/safety-narrative.ts:32"
+      ]
+    },
+    {
+      "table": "public.finding",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/sentinel-routes.ts:112"
+      ]
+    },
+    {
+      "table": "public.config",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/sentinel-routes.ts:272"
+      ]
+    },
+    {
+      "table": "public.c2c_shadow_review",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/shadow-review.routes.ts:50"
+      ]
+    },
+    {
+      "table": "public.device_data_center_files",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/smart-blocks.js:127"
+      ]
+    },
+    {
+      "table": "public.predicate_devices",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/smart-blocks.js:172"
+      ]
+    },
+    {
+      "table": "public.custom_smart_blocks",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/smart-blocks.js:353"
+      ]
+    },
+    {
+      "table": "public.smart_block_usage",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/smart-blocks.js:460"
+      ]
+    },
+    {
+      "table": "public.those",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/tenant-ctq-factors.ts:313"
+      ]
+    },
+    {
+      "table": "public.notification",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/users.ts:632"
+      ]
+    },
+    {
+      "table": "public.lastlogin",
+      "referenceCount": 1,
+      "sites": [
+        "server/routes/users.ts:764"
+      ]
+    },
+    {
+      "table": "public.knowledge_documents",
+      "referenceCount": 1,
+      "sites": [
+        "server/sage-plus-service.ts:27"
+      ]
+    },
+    {
+      "table": "public.regulatory_status",
+      "referenceCount": 1,
+      "sites": [
+        "server/sage-plus-service.ts:60"
+      ]
+    },
+    {
+      "table": "public.assembly_audit_logs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/AssemblyLine.ts:81"
+      ]
+    },
+    {
+      "table": "public.skipped",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/account-canon.ts:444"
+      ]
+    },
+    {
+      "table": "vault.evidence_citations",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/advancedRAGPipeline.ts:1011"
+      ]
+    },
+    {
+      "table": "public.ai_provider_audit_log",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/aiProviderRouter.ts:430"
+      ]
+    },
+    {
+      "table": "public.everything",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/changePropagationTools.ts:46"
+      ]
+    },
+    {
+      "table": "public.travels",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/changePropagationTools.ts:46"
+      ]
+    },
+    {
+      "table": "public.active_runs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/citation-engine.ts:1195"
+      ]
+    },
+    {
+      "table": "public.ranked",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/citation-run-pruner.ts:45"
+      ]
+    },
+    {
+      "table": "public.active",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/citation-run-pruner.ts:45"
+      ]
+    },
+    {
+      "table": "public.since",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/flows/briefing-book.ts:655"
+      ]
+    },
+    {
+      "table": "public.summary",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/flows/briefing-book.ts:673"
+      ]
+    },
+    {
+      "table": "public.cutoff",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/flows/nda-submission.ts:1284"
+      ]
+    },
+    {
+      "table": "public.should",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/flows/nda-submission.ts:1330"
+      ]
+    },
+    {
+      "table": "public.per",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/briefing-book-auditor.ts:105"
+      ]
+    },
+    {
+      "table": "public.covering",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/briefing-book-auditor.ts:107"
+      ]
+    },
+    {
+      "table": "public.search",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:305"
+      ]
+    },
+    {
+      "table": "public.triggers",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/cer-auditor.ts:805"
+      ]
+    },
+    {
+      "table": "public.reporting",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/intelligence-questions/war-game/auditors/nda-auditor.ts:785"
+      ]
+    },
+    {
+      "table": "public.cyp",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana/pediatricTools.ts:227"
+      ]
+    },
+    {
+      "table": "public.doc_sections",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana-ri/command-executor.ts:2629"
+      ]
+    },
+    {
+      "table": "public.then",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana-ri/industry-wisdom-pack.ts:220"
+      ]
+    },
+    {
+      "table": "public.pmcf",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana-ri/mdx-command-handlers-phase2.ts:523"
+      ]
+    },
+    {
+      "table": "public.refused",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana-ri/mdx-command-handlers-phase3.ts:124"
+      ]
+    },
+    {
+      "table": "public.correspondences",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana-ri/mdx-proactive-signals.ts:185"
+      ]
+    },
+    {
+      "table": "public.was",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana-ri/persona.ts:407"
+      ]
+    },
+    {
+      "table": "public.predictions",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ana-scoped-rule-loader.ts:248"
+      ]
+    },
+    {
+      "table": "public.analytical_linearity_points",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/analytical/lims.ts:13"
+      ]
+    },
+    {
+      "table": "public.analytical_accuracy_points",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/analytical/lims.ts:25"
+      ]
+    },
+    {
+      "table": "public.analytical_precision_runs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/analytical/lims.ts:37"
+      ]
+    },
+    {
+      "table": "public.analytical_spec_thresholds",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/analytical/lims.ts:47"
+      ]
+    },
+    {
+      "table": "public.lumen_atom_citations",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/atomQualityService.ts:102"
+      ]
+    },
+    {
+      "table": "public.project_count",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/atomicQuotaService.js:521"
+      ]
+    },
+    {
+      "table": "public.max_projects",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/atomicQuotaService.js:521"
+      ]
+    },
+    {
+      "table": "public.uploads",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/autoExtractionPipeline.ts:314"
+      ]
+    },
+    {
+      "table": "public.multiple",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/cerGenerationService.ts:425"
+      ]
+    },
+    {
+      "table": "public.templates",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/cerGenerator.ts:24"
+      ]
+    },
+    {
+      "table": "public.cer_jobs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/cerGenerator.ts:101"
+      ]
+    },
+    {
+      "table": "public.narrative",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/cmc/supac-classifier.ts:451"
+      ]
+    },
+    {
+      "table": "audit.audit_logs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/cognitive-ecosystem/cognitive-audit.service.ts:885"
+      ]
+    },
+    {
+      "table": "public.as",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/combination-products/combination-products-knowledge.ts:1017"
+      ]
+    },
+    {
+      "table": "public.meddra_term_reference",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/compliance/pharmacovigilanceService.ts:940"
+      ]
+    },
+    {
+      "table": "public.artifact_compute_runtime_profiles",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/compute/runtimeProfiles.ts:15"
+      ]
+    },
+    {
+      "table": "public.conversation_os_proposal_versions",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:236"
+      ]
+    },
+    {
+      "table": "public.conversation_os_quality_evaluations",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/conversation-os/persistence.ts:324"
+      ]
+    },
+    {
+      "table": "public.decision_receipts",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/decision-lifecycle-service.ts:305"
+      ]
+    },
+    {
+      "table": "public.design_inputs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:36"
+      ]
+    },
+    {
+      "table": "public.design_outputs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:47"
+      ]
+    },
+    {
+      "table": "public.design_verifications",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:58"
+      ]
+    },
+    {
+      "table": "public.design_validations",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:69"
+      ]
+    },
+    {
+      "table": "public.design_reviews",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:80"
+      ]
+    },
+    {
+      "table": "public.design_changes",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:91"
+      ]
+    },
+    {
+      "table": "public.design_plans",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/design-risk/design-risk.service.ts:102"
+      ]
+    },
+    {
+      "table": "public.before",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/digital-health/digital-health-knowledge.ts:866"
+      ]
+    },
+    {
+      "table": "public.met",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/digital-health/digital-health-knowledge.ts:875"
+      ]
+    },
+    {
+      "table": "public.degrades",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/digital-health/digital-health-knowledge.ts:897"
+      ]
+    },
+    {
+      "table": "public.hybrid",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/enhancedEmbeddingService.ts:415"
+      ]
+    },
+    {
+      "table": "public.org_atoms",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/enhancedEmbeddingService.ts:415"
+      ]
+    },
+    {
+      "table": "public.embedding_audit_log",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/enhancedEmbeddingService.ts:561"
+      ]
+    },
+    {
+      "table": "public.faers_reports",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/enhancedFaersService.js:371"
+      ]
+    },
+    {
+      "table": "public.harmonize",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/escalate-engine.ts:337"
+      ]
+    },
+    {
+      "table": "public.sops",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/gcp-operations/gcp-operations-knowledge.ts:1617"
+      ]
+    },
+    {
+      "table": "public.listings",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/global-ri/establishment-registration.ts:49"
+      ]
+    },
+    {
+      "table": "public.latest",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/governed-decision-repository.ts:495"
+      ]
+    },
+    {
+      "table": "public.created_at",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/innovation/regulatory-negotiation-logbook-service.ts:204"
+      ]
+    },
+    {
+      "table": "public.embedding",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/innovation/regulatory-negotiation-logbook-service.ts:467"
+      ]
+    },
+    {
+      "table": "public.failures",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/intelligence/ana-failure-learning.ts:268"
+      ]
+    },
+    {
+      "table": "public.correction_counts",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/intelligence/ana-failure-learning.ts:268"
+      ]
+    },
+    {
+      "table": "public.fingerprint_correction_json",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/intelligence/ana-failure-learning.ts:268"
+      ]
+    },
+    {
+      "table": "public.now",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/intelligence/pattern-maintenance.ts:58"
+      ]
+    },
+    {
+      "table": "public.expectation",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ivd-knowledge/regulatory/mdcg-guidance.ts:64"
+      ]
+    },
+    {
+      "table": "public.breakpoints",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/ivd-knowledge/scientific/preanalytical-micro.ts:96"
+      ]
+    },
+    {
+      "table": "lumen.find_path",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/knowledge-graph.ts:299"
+      ]
+    },
+    {
+      "table": "lumen.find_supporting_evidence",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/knowledge-graph.ts:321"
+      ]
+    },
+    {
+      "table": "public.derived",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/knowledge-graph.ts:335"
+      ]
+    },
+    {
+      "table": "lumen.v_graph_statistics",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/knowledge-graph.ts:427"
+      ]
+    },
+    {
+      "table": "public.guidance",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/labeling/labeling-intelligence-knowledge.ts:1540"
+      ]
+    },
+    {
+      "table": "public.pregnancy",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/labeling/labeling-intelligence-knowledge.ts:1790"
+      ]
+    },
+    {
+      "table": "public.code",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/learning/ich-currency.ts:69"
+      ]
+    },
+    {
+      "table": "public.specifications",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts:2120"
+      ]
+    },
+    {
+      "table": "public.it",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/post-approval/post-approval-knowledge.ts:1362"
+      ]
+    },
+    {
+      "table": "public.ancestors",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/project-rollup-service.ts:337"
+      ]
+    },
+    {
+      "table": "public.correlations",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/regulatory-outcome-optimizer-service.ts:666"
+      ]
+    },
+    {
+      "table": "public.after",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/regulatory-outcome-optimizer-service.ts:733"
+      ]
+    },
+    {
+      "table": "public.rmp",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/regulatory-precedent-intelligence/ema-question-taxonomy-service.ts:326"
+      ]
+    },
+    {
+      "table": "public.publication_date",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/regulatory-programs.service.ts:664"
+      ]
+    },
+    {
+      "table": "public.concept2cure_projects",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/resolution/contradiction-resolution-orchestrator.ts:658"
+      ]
+    },
+    {
+      "table": "public.workflow_document_versions",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/resolution/rewrite-coordinator.ts:182"
+      ]
+    },
+    {
+      "table": "public.study_document",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/semanticSearch.js:28"
+      ]
+    },
+    {
+      "table": "public.affected",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/sop-generator.ts:107"
+      ]
+    },
+    {
+      "table": "public.chat_tool_runs",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/toolRegistry.ts:77"
+      ]
+    },
+    {
+      "table": "public.document_chunks",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/unifiedDocumentIngestion.js:1140"
+      ]
+    },
+    {
+      "table": "public.document_tables",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/unifiedDocumentIngestion.js:1183"
+      ]
+    },
+    {
+      "table": "public.document_approvals",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/unifiedTaskService.ts:574"
+      ]
+    },
+    {
+      "table": "public.workflow_definitions",
+      "referenceCount": 1,
+      "sites": [
+        "server/services/workflow/WorkflowExecutionEngine.ts:15"
+      ]
+    },
+    {
+      "table": "public.ordered",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/control-plane/persistent-queries.ts:96"
+      ]
+    },
+    {
+      "table": "public.expected_prev",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/control-plane/persistent-queries.ts:96"
+      ]
+    },
+    {
+      "table": "public.sampling",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:700"
+      ]
+    },
+    {
+      "table": "public.stab_reminders",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:746"
+      ]
+    },
+    {
+      "table": "public.test",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:1170"
+      ]
+    },
+    {
+      "table": "public.condition",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:1201"
+      ]
+    },
+    {
+      "table": "public.timepoint",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:1230"
+      ]
+    },
+    {
+      "table": "public.in",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:1305"
+      ]
+    },
+    {
+      "table": "public.oot",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:1342"
+      ]
+    },
+    {
+      "table": "public.capa",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:1977"
+      ]
+    },
+    {
+      "table": "public.stab_excursions",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:2004"
+      ]
+    },
+    {
+      "table": "public.assignment",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:2270"
+      ]
+    },
+    {
+      "table": "public.v_stab_due_tp",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/routes/stability.router.ts:2422"
+      ]
+    },
+    {
+      "table": "public.qc_specs",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/services/reg/evidence.ts:33"
+      ]
+    },
+    {
+      "table": "public.proc_control_strategy",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/services/reg/evidence.ts:46"
+      ]
+    },
+    {
+      "table": "public.reg_changes",
+      "referenceCount": 1,
+      "sites": [
+        "server/src/services/reg/rpi.ts:73"
+      ]
+    },
+    {
+      "table": "public.trial",
+      "referenceCount": 1,
+      "sites": [
+        "server/storage.ts:2229"
+      ]
+    },
+    {
+      "table": "public.skip",
+      "referenceCount": 1,
+      "sites": [
+        "server/workers/ivdr-pack-worker.ts:126"
+      ]
+    }
+  ]
+}
