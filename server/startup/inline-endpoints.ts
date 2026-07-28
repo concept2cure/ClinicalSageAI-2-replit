@@ -14,7 +14,11 @@
 import type { Express, NextFunction, Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../utils/logger';
-import { getSchemaReadiness, getSchemaReadinessDetail } from './readiness-state';
+import {
+  getSchemaReadiness,
+  getSchemaReadinessDetail,
+  isSchemaReadinessServing,
+} from './readiness-state';
 
 const logger = createScopedLogger('inline-endpoints');
 
@@ -73,10 +77,14 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
 
     // Schema — a reachable DB with missing critical tables/extensions is NOT
     // ready. The boot-time verification (startup/services.ts) records its
-    // verdict; 'unknown' (not yet verified / dev DB-less path) does not fail
-    // readiness, only a positive 'missing' verdict does.
+    // verdict here.
+    //
+    // This check FAILS CLOSED. 'unknown' — never verified — is a failure, not
+    // a pass, and so is 'error' — verification threw. Previously both were
+    // mapped to 'skipped' and served 200, so a database whose schema check had
+    // crashed reported ready. See readiness-state.ts for the full incident.
     const schema = getSchemaReadiness();
-    deps.schema = schema === 'missing' ? 'down' : schema === 'ready' ? 'ok' : 'skipped';
+    deps.schema = isSchemaReadinessServing(schema) ? 'ok' : 'down';
 
     // Redis + Bull action-queue worker tier. Only required when Redis is
     // configured; otherwise the platform runs on in-memory fallbacks, so we
@@ -109,12 +117,32 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
       .filter(([, status]) => status === 'down')
       .map(([name]) => name);
 
+    // The schema verdict is reported on BOTH paths. A 'degraded' schema still
+    // serves traffic, but the operator has to be able to see which tables are
+    // absent — a gap that is only visible on the failure path is a gap nobody
+    // reads until it is already an outage.
+    const schemaDetail = getSchemaReadinessDetail();
+
     if (failed.length > 0) {
-      const body: Record<string, unknown> = { ready: false, failed, dependencies: deps };
-      if (deps.schema === 'down') body.schemaDetail = getSchemaReadinessDetail();
+      const body: Record<string, unknown> = {
+        ready: false,
+        failed,
+        dependencies: deps,
+        schemaState: schema,
+      };
+      if (deps.schema === 'down') {
+        body.schemaDetail =
+          schemaDetail ||
+          (schema === 'unknown'
+            ? 'schema was never verified — no boot-time verdict was recorded'
+            : 'schema verification did not complete');
+      }
       return res.status(503).json(body);
     }
-    return res.json({ ready: true, dependencies: deps });
+
+    const body: Record<string, unknown> = { ready: true, dependencies: deps, schemaState: schema };
+    if (schema === 'degraded' && schemaDetail) body.schemaDetail = schemaDetail;
+    return res.json(body);
   });
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
