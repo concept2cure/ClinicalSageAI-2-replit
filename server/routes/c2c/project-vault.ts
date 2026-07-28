@@ -45,6 +45,7 @@ import {
   filingTypesForView,
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { sectionHasContentSql } from '../../services/c2c/section-content.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -363,7 +364,7 @@ export default function createProjectVaultRoutes(): Router {
           // inline (defense in depth + explicit org_id scoping so the section
           // read never widens past the caller's tenant).
           `SELECT ds.section_key, ds.status, ds.version, ds.updated_at,
-                  (ds.content -> 'paragraphs') IS NOT NULL AS has_content,
+                  ${sectionHasContentSql('ds.content')} AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
              LEFT JOIN users u ON u.id = ds.owner_id

@@ -42,6 +42,7 @@ import {
   filingTypesForView,
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { sectionHasContentSql } from '../../services/c2c/section-content.js';
 
 const router = Router();
 const logger = createScopedLogger('c2c-projects');
@@ -942,7 +943,7 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
       // Live section statuses for this document.
       const secRes = await pool.query(
         `SELECT section_key, status, version,
-                (content -> 'paragraphs') IS NOT NULL AS has_content
+                ${sectionHasContentSql('content')} AS has_content
          FROM c2c_document_sections
          WHERE document_id = $1`,
         [d.id],

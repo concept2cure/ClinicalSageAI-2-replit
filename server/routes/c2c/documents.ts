@@ -32,6 +32,7 @@ import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { writeMutation, recordGovernedAction } from './actions.js';
 import { detectSpans } from '../../services/sentenceTraceabilityService.js';
+import { sectionHasContentSql } from '../../services/c2c/section-content.js';
 import {
   replaceAuthorSpans,
   assertLineageCoversContent,
@@ -311,7 +312,7 @@ router.get('/:id/outline', async (req: Request, res: Response) => {
     const secRes = await pool.query(
       `SELECT section_key, status, owner_id, draft_source,
               drafted_at, accepted_at, version,
-              (content -> 'paragraphs') IS NOT NULL AS has_content
+              ${sectionHasContentSql('content')} AS has_content
        FROM c2c_document_sections
        WHERE document_id = $1`,
       [req.params.id],
