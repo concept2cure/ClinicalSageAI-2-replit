@@ -1,7 +1,7 @@
 {
   "$comment": "Tables referenced by server SQL that NOTHING in the repo creates — no migration, no drizzle pgTable, no runtime DDL. Pinned to the exact referencing file set, so an entry cannot silently acquire new call sites. Every entry is a feature that either returns 500 (unguarded query) or silently no-ops (query inside try/catch). Each is a defect awaiting a code-derived migration or a retirement, NOT an approved pattern. Shrink this file; never grow it. See ledger C-11/C-14 for the remediation pattern: derive the shape from the queries, add one canonical migration, prove it with a golden journey.",
-  "generatedAt": "2026-07-27T23:46:13.767Z",
-  "total": 77,
+  "generatedAt": "2026-07-28T00:00:00.000Z",
+  "total": 76,
   "entries": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -96,9 +96,6 @@
     ],
     "licenses": [
       "server/routes/project-hierarchy.ts"
-    ],
-    "literature_entries": [
-      "server/services/regulatory-programs.service.ts"
     ],
     "lumen.atom_relationships": [
       "server/services/knowledge-graph.ts",

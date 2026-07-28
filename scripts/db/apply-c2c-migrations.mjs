@@ -104,6 +104,12 @@ const FILES = [
   // CREATE TABLE lived in the ARCHIVED db/migrations/_consolidated/ (excluded from
   // the schema scanners and off every apply path). Self-contained + idempotent.
   'db/migrations/20260728_maud_validation_tables.sql',
+  // CER literature corpus (G-02): literature_entries, read by
+  // regulatory-programs.service.ts and written by seed-mdx-content.mjs, whose only
+  // CREATE TABLE lived in the ARCHIVED _consolidated/ dir (off every apply path).
+  // Canonical org-scoped shape derived from the live code; the pgvector embedding
+  // column is intentionally omitted (no live writer; legacy setupLiterature concern).
+  'db/migrations/20260728_literature_entries.sql',
   // Industry-context tailoring: organization_industry_profiles +
   // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
   // EXISTS, no data statements).
