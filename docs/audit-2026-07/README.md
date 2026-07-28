@@ -33,6 +33,9 @@ readiness assessments are treated as the seller's documents — tested, not inhe
 | [`08-quality-tests-ci.md`](08-quality-tests-ci.md) | Real test counts, the gates that cannot fail |
 | [`09-frontend-and-ux.md`](09-frontend-and-ux.md) | Navigation, data honesty, dead code, the attach button |
 | [`11-suppression-ledger.md`](11-suppression-ledger.md) | ~1,620 baselined defects — the best single predictor of readiness |
+| [`13-competitive-scorecard.md`](13-competitive-scorecard.md) | **12 categories × 5 competitors, 66 cited profiles** — scorecard and strategic read |
+| [`13-competitive/`](13-competitive/) | Per-category rack-and-stack detail |
+| [`16-enhancement-roadmap.md`](16-enhancement-roadmap.md) | Where to invest to win, and what *not* to build |
 | [`14-readiness-gate-ladder.md`](14-readiness-gate-ladder.md) | G1/G2/G3 verdict + claims-vs-code register |
 | [`15-remediation-plan.md`](15-remediation-plan.md) | Staged by importance, with acceptance tests |
 | [`evidence/`](evidence/) | Machine outputs + the live-proof execution log |
