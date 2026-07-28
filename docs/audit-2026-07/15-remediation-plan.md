@@ -17,6 +17,48 @@ concrete thing that must be true afterwards, so "done" is provable rather than a
 
 ---
 
+## Delivered so far
+
+Closed on branch `claude/codebase-audit-competitive-aet792` (PR #1189). Each row names the
+commit that closed it and the evidence that it is actually closed — the point of Stage 0
+being that a fix asserted is not a fix demonstrated.
+
+| Item | Commit | Proof |
+|---|---|---|
+| **0.1** Typecheck gate inspects the exit code | `d012635e0` | `TYPECHECK_HEAP_MB=128` → `FAIL — tsc did not complete. exit status: 134`, exit 1 (previously "OK", exit 0). Clean run → `errors found: 0 (tsc exit 0)`, exit 0. The "0 type errors" baseline is a **measured** 0 for the first time. |
+| **0.2** The two real `TS7016` errors | `2f9d2d2` | Renamed `migration-set.d.ts` → **`.d.mts`**. The original fix was inert: under `moduleResolution: "node"` a `.mjs` specifier resolves only to `.mts`/`.d.mts` and never consults `.d.ts`. |
+| **0.3** Per-PR lint gate can fail | `1e5808d59` | `\|\| echo` removed. Probed in `server/`: an error → exit 1; warning-only → exit 0, so the 6,268-warning backlog still passes. |
+| **0.4** Installer fails loudly | *this stage* | Empty DB → **exit 1**, naming 10 unapplied files, instead of `✅`. See below. |
+| **0.5** `/readyz` fails closed | `d8df70fc5` | Five terminal branches — including the `catch` that runs when schema verification itself throws — never recorded a verdict, leaving `'unknown'`, which was served as 200. Now `'unknown'` and `'error'` both fail. Auth/RBAC/licensing tables (`auth_users`, `roles`, `permissions`, `user_roles`, `licenses`) fail readiness by name. 15 tests; proven by reverting the `catch` alone and watching exactly that case go red. |
+| **1.4** Schedule-of-Events tenant arbiter | `0f6fbcbfe` | Arbiter is now `(organization_id, project_id)` and the narrow unique index is **dropped**, so `ON CONFLICT (project_id)` is no longer expressible. A composite FK to `projects(id, organization_id)` makes a cross-tenant schedule row impossible at the database level. Contract test reproduces the defect first against the old index. 10 tests. |
+| **1.5** Stored XSS in Batch Draft | `b3e1e26ca` | Closed at three independent layers: `derivePreview` no longer decodes `&lt;`/`&gt;` back into live markup, `bdSample` escapes everything it interpolates, and the sink runs the shared DOMPurify allowlist. 17 tests, asserting on the DOM rather than on substrings. |
+| **1.7** AnA attach button | `271d43aa3` | Uploads now go through `useChatUpload` → `POST /api/chat/upload`. A failed upload is never described as attached. 8 tests, including one asserting the real `File` reaches the `FormData` with non-zero size — which the old implementation could not have satisfied. |
+| **—** Unsupported compliance claims | `66529834a` | "SOC 2 Type II" removed from `SECURITY.md` and the signup screen (no report of any type exists; the platform's own `/api/part11/soc2/controls` said so while the landing copy claimed otherwise). Blanket encryption-at-rest and "MFA enforced everywhere" likewise corrected. A new CI gate blocks their return. |
+
+**Not yet closed from Stage 0/1:** 0.6, 0.7, 0.8, 1.1, 1.2, 1.3, 1.6, 1.8, 1.9, 1.10, 1.11.
+
+### On item 0.4 — what the installer was hiding
+
+The acceptance test above understates it. `install-fresh.mjs` did not merely mislabel
+unapplied migrations as "safe to skip"; it **printed the psql loop for the governed-content
+tree as advice and never ran it**, then declared success. A fresh install therefore produced
+a database with **no `audit` schema and no 21 CFR Part 11 tamper-proof audit trail** — and
+because the app boots without it (audit degrades non-fatally), nothing ever said so.
+
+Measured on an empty Postgres, before and after:
+
+| | Before | After |
+|---|---|---|
+| Governed-content files applied | **0 of 43** | **43 of 43** |
+| Tables in the `audit` schema | **0** | **17** |
+| Unapplied raw migrations | 10, called "safe to skip" | 10, **named**, with the failure reason for each |
+| Exit code | **0**, with `✅ Application schema install complete.` | **1**, with `❌ Install INCOMPLETE — not reporting success.` |
+
+`--allow-incomplete` is available for a deliberate partial install; it still names every gap
+and says the database is not production-ready.
+
+---
+
 ## Stage 0 — Make the instruments honest (2–3 days)
 
 Nothing here is a feature. All of it is the difference between a green check that means
