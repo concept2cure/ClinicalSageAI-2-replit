@@ -1,0 +1,681 @@
+{
+  "distinctTablesInSql": 1175,
+  "distinctTablesInDrizzle": 699,
+  "duplicateSqlDefinitions": 140,
+  "duplicateDrizzleDefinitions": 11,
+  "sqlOnlyTables": 549,
+  "drizzleOnlyTables": 73,
+  "duplicateSqlDetail": {
+    "core": [
+      "db/migrations/000_gcc_bootstrap_core.sql",
+      "db/migrations/044b_gcc_lumen_schema_prerequisite.sql",
+      "db/migrations/069_gcc_multitenant_rls_expansion.sql",
+      "db/migrations/_legacy/010_gcc_program_scoping_rls.sql",
+      "db/migrations/_legacy/031_gcc_enum_extensions_and_entity_utils.sql"
+    ],
+    "audit": [
+      "db/migrations/000_gcc_bootstrap_core.sql",
+      "db/migrations/001_gcc_core.sql",
+      "db/migrations/018_gcc_purge_workflow.sql",
+      "db/migrations/019_gcc_idempotency_ratelimit.sql",
+      "db/migrations/054_gcc_part11_audit.sql",
+      "db/migrations/_legacy/007_gcc_shadow_run_groups.sql",
+      "db/migrations/_legacy/009_gcc_esign_and_submission_gate.sql",
+      "db/migrations/_legacy/011_gcc_config_bundles.sql",
+      "db/migrations/_legacy/035_gcc_entity_chain_events.sql"
+    ],
+    "prose": [
+      "db/migrations/001_gcc_core.sql",
+      "db/migrations/003_gcc_prose_versioning.sql",
+      "db/migrations/_legacy/003_gcc_prose_versioning.sql",
+      "db/migrations/_legacy/008_gcc_snapshot_exports.sql",
+      "db/migrations/_legacy/008_gcc_submission_snapshots.sql",
+      "db/migrations/_legacy/009_gcc_esign_and_submission_gate.sql"
+    ],
+    "stab_results": [
+      "db/migrations/022_stability_v2.sql",
+      "db/migrations/030_stability_results.sql"
+    ],
+    "strategy_p34_exports": [
+      "db/migrations/029_strategy_step2.sql",
+      "db/migrations/030_stability_results.sql"
+    ],
+    "ectd": [
+      "db/migrations/038_gcc_ectd_seeder_service.sql",
+      "db/migrations/_legacy/015_gcc_submission_package.sql"
+    ],
+    "lumen": [
+      "db/migrations/044b_gcc_lumen_schema_prerequisite.sql",
+      "db/migrations/_legacy/045_gcc_neuro_symbolic_knowledge_graph.sql",
+      "db/migrations/_legacy/046_gcc_multi_agent_council.sql",
+      "migrations/20260724_lumen_council_provisioning.sql"
+    ],
+    "vault": [
+      "db/migrations/044c_gcc_vault_schema.sql",
+      "db/migrations/20260203_phase2_anchors_xrefs.sql",
+      "db/migrations/20260203_phase2_review_batch_persistence.sql",
+      "db/migrations/20260203_rps_event_store.sql",
+      "db/migrations/20260204_review_batch_worker.sql",
+      "db/migrations/_legacy/042_gcc_evidence_vault.sql",
+      "db/migrations/_legacy/044_gcc_cognitive_fabric_rag.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "migrations/20260608_vault_retention.sql"
+    ],
+    "ai": [
+      "db/migrations/059_gcc_vector_embeddings.sql",
+      "db/migrations/067_gcc_federated_learning_intelligence.sql"
+    ],
+    "agent_runtime": [
+      "db/migrations/064_gcc_cognitive_audit_schema.sql",
+      "db/migrations/_legacy/063_gcc_cognitive_agent_runtime.sql"
+    ],
+    "regulatory": [
+      "db/migrations/068_regulatory_schema_alignment.sql",
+      "db/migrations/_legacy/014_gcc_regulatory_timeline.sql"
+    ],
+    "cortex": [
+      "db/migrations/073_cortex_prime_unified_brain.sql",
+      "db/migrations/074_gcc_regulatory_intuition_engine.sql",
+      "db/migrations/075_gcc_epistemic_intelligence.sql",
+      "db/migrations/076_gcc_causal_inference_engine.sql",
+      "db/migrations/077_gcc_self_evolving_intelligence.sql",
+      "db/migrations/078_gcc_cross_domain_transfer.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "concept2cure_conversations": [
+      "db/migrations/20260128_concept2cure_foundation.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "concept2cure_messages": [
+      "db/migrations/20260128_concept2cure_foundation.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "concept2cure_artifacts": [
+      "db/migrations/20260128_concept2cure_foundation.sql",
+      "db/migrations/20260311_concept2cure_artifacts.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "concept2cure_artifact_versions": [
+      "db/migrations/20260128_concept2cure_foundation.sql",
+      "db/migrations/20260311_concept2cure_artifacts.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "concept2cure_signatures": [
+      "db/migrations/20260128_concept2cure_signatures.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "project_workflow_stages": [
+      "db/migrations/20260128_concept2cure_wbs_assignments.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "project_tasks": [
+      "db/migrations/20260128_concept2cure_wbs_assignments.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "cro_team_assignments": [
+      "db/migrations/20260128_concept2cure_wbs_assignments.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "audit_logs": [
+      "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/db-verify/00_bootstrap_base.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "proof_audit_logs": [
+      "db/migrations/20260129_proof_audit_logs.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "evidence": [
+      "db/migrations/20260206_phase5_contradiction_scanner.sql",
+      "db/migrations/20260206_phase5_evidence_fabric.sql"
+    ],
+    "documents": [
+      "db/migrations/20260206_phase6_docx_factory.sql",
+      "db/migrations/_consolidated/002_documents.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "predicate": [
+      "db/migrations/20260207_phase6_6_predicate_intelligence.sql",
+      "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql",
+      "db/migrations/20260208_phase6_6a_risk_rollups.sql",
+      "db/migrations/20260209_phase6_6a_fda_ingest_runs.sql",
+      "db/migrations/20260211_phase6_6d_defense_packets.sql",
+      "db/migrations/20260211_phase6_6e_proof_pack_exports.sql",
+      "db/migrations/20260211_phase7_0a_render_jobs.sql"
+    ],
+    "pm_settings": [
+      "db/migrations/20260209_create_pm_settings.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "project_modules": [
+      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "project_rules": [
+      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "rule_execution_log": [
+      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "sentinel_findings": [
+      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "project_milestones": [
+      "db/migrations/20260220_ind_section_tracking.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "precedent": [
+      "db/migrations/20260306_precedent_engine.sql",
+      "db/migrations/20260322_quality_checkpoints.sql"
+    ],
+    "concept2cure_provenance_events": [
+      "db/migrations/20260311_concept2cure_provenance_events.sql",
+      "db/migrations/20260313_phase11_governed_workflow.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "concept2cure_submission_snapshots": [
+      "db/migrations/20260313_concept2cure_submission_snapshots.sql",
+      "db/migrations/20260313_phase11_governed_workflow.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "concept2cure_review_comments": [
+      "db/migrations/20260313_concept2cure_submission_snapshots.sql",
+      "db/migrations/20260313_phase11_governed_workflow.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "api_usage_logs": [
+      "db/migrations/20260319_billing_usage_budgets_alerts.sql",
+      "migrations/20260702_usage_model_credit_ledger.sql"
+    ],
+    "assumption_records": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "decision_records": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "contradiction_findings": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/20260524_contradiction_engine_schema.sql"
+    ],
+    "contradiction_overlay_rules": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/20260524_contradiction_engine_schema.sql"
+    ],
+    "contradiction_consequence_log": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/20260524_contradiction_engine_schema.sql"
+    ],
+    "cmc_documents": [
+      "db/migrations/20260401_cmc_convergence_os.sql",
+      "db/migrations/_consolidated/010_cmc_documents.sql",
+      "db/migrations/_legacy/013_documents_sections.sql",
+      "server/db/_deprecated_migrations/010_cmc_documents.sql"
+    ],
+    "cmc_document_versions": [
+      "db/migrations/20260401_cmc_convergence_os.sql",
+      "db/migrations/_consolidated/010_cmc_documents.sql",
+      "server/db/_deprecated_migrations/010_cmc_documents.sql"
+    ],
+    "cmc_document_links": [
+      "db/migrations/20260401_cmc_convergence_os.sql",
+      "db/migrations/_consolidated/010_cmc_documents.sql",
+      "server/db/_deprecated_migrations/010_cmc_documents.sql"
+    ],
+    "cmc_document_collaborators": [
+      "db/migrations/20260401_cmc_convergence_os.sql",
+      "db/migrations/_consolidated/010_cmc_documents.sql",
+      "server/db/_deprecated_migrations/010_cmc_documents.sql"
+    ],
+    "compliance_tracking": [
+      "db/migrations/20260402_cmc_runtime_ddl_to_migration.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "supply_chain_suppliers": [
+      "db/migrations/20260402_supply_chain_tables.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "supply_chain_materials": [
+      "db/migrations/20260402_supply_chain_tables.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "supply_chain_batches": [
+      "db/migrations/20260402_supply_chain_tables.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "supply_chain_shipments": [
+      "db/migrations/20260402_supply_chain_tables.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "supply_chain_temperature_readings": [
+      "db/migrations/20260402_supply_chain_tables.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "q_submissions": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_sub_meetings": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_sub_questions": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_sub_commitments": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_sub_timeline_entries": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "intelligence": [
+      "db/migrations/20260520_ana_failure_learning.sql",
+      "db/migrations/20260520_document_templates.sql",
+      "db/migrations/20260520_growth_mindset_extensions.sql",
+      "db/migrations/20260520_regulatory_intelligence_layer.sql"
+    ],
+    "c2c_bla_assessments": [
+      "db/migrations/20260718_bla_assessments_store.sql",
+      "migrations/20260604_bla_workbench.sql"
+    ],
+    "doc_revisions": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "governance_boundary_rules": [
+      "db/migrations/20260725_governance_boundary_tables.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "governance_boundary_transitions": [
+      "db/migrations/20260725_governance_boundary_tables.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "resolution_plans": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "resolution_bundles": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "resolution_bundle_items": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "supersession_records": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "csr_details": [
+      "db/migrations/_consolidated/0000_curious_vampiro.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "csr_reports": [
+      "db/migrations/_consolidated/0000_curious_vampiro.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "server/database/schema.sql"
+    ],
+    "users": [
+      "db/migrations/_consolidated/0000_curious_vampiro.sql",
+      "db/migrations/_consolidated/001_create_core_tables.sql",
+      "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/db-verify/00_bootstrap_base.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "organizations": [
+      "db/migrations/_consolidated/001_analytical_methods_schema.sql",
+      "db/migrations/_consolidated/001_create_core_tables.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/db-verify/00_bootstrap_base.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "analytical_methods": [
+      "db/migrations/_consolidated/001_analytical_methods_schema.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "auth_audit_log": [
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "auth_sessions": [
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "auth_mfa_secrets": [
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "auth_password_history": [
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "auth_failed_attempts": [
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "org_sso_configs": [
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "auth_trusted_devices": [
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "user_organizations": [
+      "db/migrations/_consolidated/001_create_core_tables.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "programs": [
+      "db/migrations/_consolidated/001_create_core_tables.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "studies": [
+      "db/migrations/_consolidated/001_create_core_tables.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "document_templates": [
+      "db/migrations/_consolidated/001_templates_table.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "server/db/_deprecated_migrations/001_templates_table.sql"
+    ],
+    "document_versions": [
+      "db/migrations/_consolidated/003_versioning.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "sql/cro_database_schema.sql",
+      "sql/document_versions.sql"
+    ],
+    "cmc_method_overrides": [
+      "db/migrations/_consolidated/006_analytical_guard.sql",
+      "server/db/_deprecated_migrations/006_analytical_guard.sql"
+    ],
+    "regulatory_validation_issues": [
+      "db/migrations/_consolidated/007_regulatory_validation_issues.sql",
+      "server/db/_deprecated_migrations/007_regulatory_validation_issues.sql"
+    ],
+    "doc_documents": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "doc_sections": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "doc_comments": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "doc_citations": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "doc_guidance_cache": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "doc_templates": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "doc_collaborators": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "doc_activity_log": [
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql"
+    ],
+    "document_chunks": [
+      "db/migrations/_consolidated/20250108_add_versioning_audit_to_unified_documents.sql",
+      "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql"
+    ],
+    "document_tables": [
+      "db/migrations/_consolidated/20250108_add_versioning_audit_to_unified_documents.sql",
+      "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql"
+    ],
+    "document_audit_trail": [
+      "db/migrations/_consolidated/20250108_add_versioning_audit_to_unified_documents.sql",
+      "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "unified_documents": [
+      "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql",
+      "server/sql/unified_documents_table.sql"
+    ],
+    "cer_approvals": [
+      "db/migrations/_consolidated/20250429_add_status_and_approvals.sql",
+      "db/migrations/_consolidated/create_cer_approvals_table.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "cer_jobs": [
+      "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql",
+      "docs/archive/server-deprecated-migrations/20250501-create-cer-jobs-table.sql"
+    ],
+    "templates": [
+      "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql",
+      "docs/archive/server-deprecated-migrations/20250501-create-cer-jobs-table.sql"
+    ],
+    "maud_algorithms": [
+      "db/migrations/_consolidated/20250512-create-maud-validations-table.sql",
+      "docs/archive/server-deprecated-migrations/20250512-create-maud-validations-table.sql"
+    ],
+    "maud_validations": [
+      "db/migrations/_consolidated/20250512-create-maud-validations-table.sql",
+      "docs/archive/server-deprecated-migrations/20250512-create-maud-validations-table.sql"
+    ],
+    "maud_validation_requests": [
+      "db/migrations/_consolidated/20250512-create-maud-validations-table.sql",
+      "docs/archive/server-deprecated-migrations/20250512-create-maud-validations-table.sql"
+    ],
+    "lumen_filing_documents": [
+      "db/migrations/_consolidated/20250918_lumen_cortex.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "lumen_data_atoms": [
+      "db/migrations/_consolidated/20250918_lumen_cortex.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "lumen_observation_terms": [
+      "db/migrations/_consolidated/20250918_lumen_cortex.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "protocol_templates": [
+      "db/migrations/_consolidated/protocol_schema.sql",
+      "migrations/20260630_protocol_templates.sql"
+    ],
+    "qc_sst_templates": [
+      "db/migrations/_legacy/045_quality_step4.sql",
+      "db/migrations/_legacy/045_quality_templates.sql"
+    ],
+    "reg_submissions": [
+      "db/migrations/_legacy/060_regulatory_foundation.sql",
+      "server/schema/regulatory.sql"
+    ],
+    "reg_tasks": [
+      "db/migrations/_legacy/060_regulatory_foundation.sql",
+      "server/schema/regulatory.sql"
+    ],
+    "reg_messages": [
+      "db/migrations/_legacy/063_reg_questions_hub.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "reg_attachments": [
+      "db/migrations/_legacy/063_reg_questions_hub.sql",
+      "migrations/0000_sweet_joseph.sql"
+    ],
+    "ectd_templates": [
+      "migrations/0000_sweet_joseph.sql",
+      "server/db/ectd-schema.sql"
+    ],
+    "ind_submissions": [
+      "migrations/0000_sweet_joseph.sql",
+      "sql/ind_data_model.sql"
+    ],
+    "projects": [
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "reg_questions": [
+      "migrations/0000_sweet_joseph.sql",
+      "server/schema/regulatory.sql"
+    ],
+    "regulatory_submissions": [
+      "migrations/0000_sweet_joseph.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "unified_tasks": [
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "c2c_blockers": [
+      "migrations/0002_phase15_submission_ops.sql",
+      "migrations/20260524_c2c_blockers.sql"
+    ],
+    "charter_sections": [
+      "migrations/0012_project_charter_timeline.sql",
+      "migrations/20260629_charter_tables_rebuild.sql"
+    ],
+    "timeline_phases": [
+      "migrations/0012_project_charter_timeline.sql",
+      "migrations/20260629_charter_tables_rebuild.sql"
+    ],
+    "project_commitments": [
+      "migrations/0012_project_charter_timeline.sql",
+      "migrations/20260629_charter_tables_rebuild.sql"
+    ],
+    "ivdr_classifications": [
+      "migrations/001_create_ivdr_tables.sql",
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "udi_records": [
+      "migrations/20260507_mdx_beta_surfaces.sql",
+      "migrations/20260524_udi_records.sql"
+    ],
+    "risk_items": [
+      "migrations/20260507_mdx_beta_surfaces.sql",
+      "migrations/20260609_design_risk.sql"
+    ],
+    "risk_controls": [
+      "migrations/20260507_mdx_beta_surfaces.sql",
+      "migrations/20260609_design_risk.sql"
+    ],
+    "ivd_analytical_performance": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivd_performance.sql"
+    ],
+    "ivd_clinical_performance": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivd_performance.sql"
+    ],
+    "ivdr_per_documents": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "cdx_pairings": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "cdx_concordance_studies": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "clinical_studies": [
+      "migrations/20260510_notifications_and_clinical.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "c2c_ana_actions": [
+      "migrations/20260527_mutation_primitives.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "if": [
+      "migrations/20260528_phase9_document_schema.sql",
+      "migrations/20260629_charter_tables_rebuild.sql",
+      "migrations/20260724_lumen_council_provisioning.sql"
+    ],
+    "c2c_template_specs": [
+      "migrations/20260531_template_specs.sql",
+      "migrations/20260716_template_doc_types.sql"
+    ],
+    "submissions": [
+      "migrations/20260604_submission_core_canonical.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "regulatory_commitments": [
+      "migrations/20260610_ha_interactions_commitments.sql",
+      "sql/create_regulatory_commitments_table.sql"
+    ],
+    "effort_certifications": [
+      "migrations/20260611_effort_certification.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "effort_lines": [
+      "migrations/20260611_effort_certification.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "coi_disclosures": [
+      "migrations/20260611_research_security.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "ind_cross_references": [
+      "migrations/20260614_ind_cross_references.sql",
+      "sql/ind_data_model.sql"
+    ]
+  },
+  "duplicateDrizzleDetail": {
+    "workflow_runs": [
+      "database/schema/workflow-runs.ts",
+      "shared/schema/orchestration.ts"
+    ],
+    "workflow_steps": [
+      "database/schema/workflow-steps.ts",
+      "shared/schema/unified_workflow.ts"
+    ],
+    "name": [
+      "scripts/add_indexes.cjs",
+      "scripts/add_timestamps.cjs"
+    ],
+    "drug_substances": [
+      "shared/cmc-schema.ts",
+      "shared/schema.ts"
+    ],
+    "analytical_methods": [
+      "shared/cmc-schema.ts",
+      "shared/schema.ts"
+    ],
+    "stability_studies": [
+      "shared/cmc-schema.ts",
+      "shared/schema.ts"
+    ],
+    "regulatory_documents": [
+      "shared/cmc-schema.ts",
+      "shared/schema.ts"
+    ],
+    "compliance_tracking": [
+      "shared/cmc-schema.ts",
+      "shared/schema.ts"
+    ],
+    "workflow_templates": [
+      "shared/cmc-schema.ts",
+      "shared/schema/unified_workflow.ts"
+    ],
+    "drug_products": [
+      "shared/cmc-schema.ts",
+      "shared/schema.ts"
+    ],
+    "document_comments": [
+      "shared/schema/unified_workflow.ts",
+      "shared/schema.ts"
+    ]
+  }
+}

@@ -1,13 +1,24 @@
-/* Canonical Concept2Cure design-system tokens — must precede every other
-   import. Sources colors, type, spacing, radii, motion and shadow. The
-   design-system folder is the single source of truth; do not copy its
+/* Canonical Concept2Cure design-system tokens are loaded ONCE, by
+   client/src/main.tsx, before this file. They are deliberately NOT re-imported
+   here.
+
+   They used to be, and the two imports resolved to the same path — so Vite
+   inlined design-system/colors_and_type.css into the entry chunk twice
+   (~19 KB duplicated, both a full and a minified copy of the same :root and
+   .dark blocks). Removing the duplicate is safe because the only stylesheet
+   loaded between main.tsx's import and this one — styles/projects-prototype.css
+   — declares zero custom properties, so nothing was relying on the second copy
+   to win a cascade.
+
+   The design-system folder remains the single source of truth; do not copy its
    contents into v2's own CSS (that re-introduces the 2026-04-26 regression
-   class). See design-system/CLAUDE.md. */
-@import "../../design-system/colors_and_type.css";
+   class). See design-system/CLAUDE.md.
 
-/* Zen Design System — enterprise UI foundation (legacy) */
-@import './concept2cure/design/zen.css';
-
+   `zen.css` (799 lines, 49 --zen-* tokens, 92 .zen-* selectors) was imported
+   here and shipped on every page load with zero consumers: no var(--zen-*) and
+   no .zen-* class name appeared in any source file in the repository. It is
+   deleted rather than left loading. tests/ui/token-authority.test.ts pins both
+   facts so neither can come back silently. */
 @import "tailwindcss";
 
 /* ─── Global token-name shim ──────────────────────────────────────

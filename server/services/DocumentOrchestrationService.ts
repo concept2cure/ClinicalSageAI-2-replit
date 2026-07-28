@@ -532,14 +532,34 @@ class DocumentOrchestrationService {
     if (!userId) {
       throw new Error('User context required');
     }
+    // SECURITY (cross-tenant write): both statements below matched on
+    // documentId alone. `organizationId` was accepted as a parameter and used
+    // only to stamp the audit row, never to scope the read or the update — so a
+    // caller in org A could lock org B's 510(k) document by naming its id, and
+    // the audit trail would record the action under org A. Every READ path in
+    // documentOrchestrationRoutes.ts already filters on organizationId with an
+    // explicit security comment; the mutations did not.
+    if (!organizationId) {
+      throw new Error('Organization context required');
+    }
     const userIdStr = userId;
     const userIdNum = parseInt(userIdStr);
+    const orgIdNum = parseInt(organizationId);
+    if (!Number.isFinite(orgIdNum)) {
+      throw new Error('Organization context required');
+    }
 
-    // Get current document
+    // Get current document — scoped, so a foreign-tenant id is indistinguishable
+    // from a nonexistent one.
     const [currentDoc] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId))
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, orgIdNum)
+        )
+      )
       .limit(1);
 
     if (!currentDoc) {
@@ -565,7 +585,15 @@ class DocumentOrchestrationService {
         lockedAt: new Date(),
         updatedAt: new Date()
       })
-      .where(eq(fda510kDocuments.documentId, documentId))
+      // Org predicate repeated on the write, not just the read: the SELECT above
+      // and this UPDATE are separate statements, so scoping only the read is a
+      // check-then-act. Cheap to make the write independently correct.
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, orgIdNum)
+        )
+      )
       .returning();
 
     // Create audit log
@@ -604,11 +632,20 @@ class DocumentOrchestrationService {
     const userIdNum = parseInt(userIdStr);
     const orgIdNum = parseInt(orgIdStr);
 
-    // Get current document
+    // SECURITY (cross-tenant write): this read matched on documentId alone,
+    // despite the organizationId check three lines above. The INSERT below then
+    // copies `organizationId: currentDoc.organizationId` — so a caller in org A
+    // could name org B's documentId and create a brand-new row INSIDE org B,
+    // carrying org B's content forward under org A's user id.
     const [currentDoc] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId))
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, orgIdNum)
+        )
+      )
       .limit(1);
 
     if (!currentDoc) {

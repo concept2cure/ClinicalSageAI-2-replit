@@ -1,0 +1,1256 @@
+{
+  "scopes": {
+    "server/routes": {
+      "any": 4029,
+      "tsIgnore": 1,
+      "tsExpectError": 0,
+      "asUnknownAs": 30,
+      "eslintDisable": 0,
+      "todoMarker": 3,
+      "notImplemented": 25,
+      "inRealImplementation": 19,
+      "mathRandom": 54,
+      "consoleLog": 984,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 107,
+      "sqlRaw": 0,
+      "_files": 485,
+      "_testFilesExcluded": 103
+    },
+    "server/services": {
+      "any": 2719,
+      "tsIgnore": 6,
+      "tsExpectError": 2,
+      "asUnknownAs": 134,
+      "eslintDisable": 18,
+      "todoMarker": 11,
+      "notImplemented": 12,
+      "inRealImplementation": 21,
+      "mathRandom": 42,
+      "consoleLog": 511,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 284,
+      "sqlRaw": 3,
+      "_files": 1662,
+      "_testFilesExcluded": 728
+    },
+    "server/middleware": {
+      "any": 111,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 2,
+      "eslintDisable": 0,
+      "todoMarker": 0,
+      "notImplemented": 0,
+      "inRealImplementation": 0,
+      "mathRandom": 2,
+      "consoleLog": 24,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 0,
+      "sqlRaw": 0,
+      "_files": 37,
+      "_testFilesExcluded": 12
+    },
+    "server/api": {
+      "any": 275,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 0,
+      "eslintDisable": 0,
+      "todoMarker": 0,
+      "notImplemented": 7,
+      "inRealImplementation": 19,
+      "mathRandom": 5,
+      "consoleLog": 260,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 11,
+      "sqlRaw": 0,
+      "_files": 48,
+      "_testFilesExcluded": 5
+    },
+    "server/db": {
+      "any": 49,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 1,
+      "eslintDisable": 0,
+      "todoMarker": 0,
+      "notImplemented": 0,
+      "inRealImplementation": 0,
+      "mathRandom": 0,
+      "consoleLog": 61,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 1,
+      "sqlRaw": 0,
+      "_files": 27,
+      "_testFilesExcluded": 12
+    },
+    "server/startup": {
+      "any": 29,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 1,
+      "eslintDisable": 0,
+      "todoMarker": 0,
+      "notImplemented": 0,
+      "inRealImplementation": 0,
+      "mathRandom": 0,
+      "consoleLog": 96,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 0,
+      "sqlRaw": 0,
+      "_files": 12,
+      "_testFilesExcluded": 3
+    },
+    "server/bootstrap": {
+      "any": 46,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 0,
+      "eslintDisable": 0,
+      "todoMarker": 0,
+      "notImplemented": 0,
+      "inRealImplementation": 0,
+      "mathRandom": 1,
+      "consoleLog": 424,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 0,
+      "sqlRaw": 0,
+      "_files": 17,
+      "_testFilesExcluded": 1
+    },
+    "client/src": {
+      "any": 441,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 42,
+      "eslintDisable": 23,
+      "todoMarker": 3,
+      "notImplemented": 5,
+      "inRealImplementation": 1,
+      "mathRandom": 17,
+      "consoleLog": 156,
+      "dangerousHtml": 15,
+      "rawSqlTemplate": 0,
+      "sqlRaw": 0,
+      "_files": 791,
+      "_testFilesExcluded": 114
+    },
+    "shared": {
+      "any": 126,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 0,
+      "eslintDisable": 0,
+      "todoMarker": 0,
+      "notImplemented": 0,
+      "inRealImplementation": 0,
+      "mathRandom": 3,
+      "consoleLog": 1,
+      "dangerousHtml": 0,
+      "rawSqlTemplate": 0,
+      "sqlRaw": 0,
+      "_files": 193,
+      "_testFilesExcluded": 8
+    },
+    "scripts": {
+      "any": 46,
+      "tsIgnore": 0,
+      "tsExpectError": 0,
+      "asUnknownAs": 0,
+      "eslintDisable": 6,
+      "todoMarker": 7,
+      "notImplemented": 1,
+      "inRealImplementation": 1,
+      "mathRandom": 2,
+      "consoleLog": 1400,
+      "dangerousHtml": 2,
+      "rawSqlTemplate": 16,
+      "sqlRaw": 0,
+      "_files": 214,
+      "_testFilesExcluded": 0
+    }
+  },
+  "detail": {
+    "inRealImplementation": [
+      {
+        "file": "server/routes/510k-workflow-routes.ts",
+        "line": 74,
+        "text": "// For now, we'll use the project ID directly as the workflow ID"
+      },
+      {
+        "file": "server/routes/510k-workflow-routes.ts",
+        "line": 379,
+        "text": "// For now, return empty sections array"
+      },
+      {
+        "file": "server/routes/cer-routes.ts",
+        "line": 347,
+        "text": "// For now, we'll create a simplified in-memory storage solution"
+      },
+      {
+        "file": "server/routes/collaboration.ts",
+        "line": 24,
+        "text": "// For now, return recent user actions as activity entries."
+      },
+      {
+        "file": "server/routes/document_qc_routes.ts",
+        "line": 118,
+        "text": "// For now we just log it and return success"
+      },
+      {
+        "file": "server/routes/ind-templates.ts",
+        "line": 1116,
+        "text": "// For now, we'll return a success response"
+      },
+      {
+        "file": "server/routes/ivdr-binder-routes.ts",
+        "line": 949,
+        "text": "// For now, return the manifest JSON from the snapshot"
+      },
+      {
+        "file": "server/routes/medical-device-routes.js",
+        "line": 589,
+        "text": "// For now, we'll simulate the submission"
+      },
+      {
+        "file": "server/routes/notification_routes.ts",
+        "line": 27,
+        "text": "// In a real implementation, we would use a service like SendGrid or NodeMailer"
+      },
+      {
+        "file": "server/routes/notification_routes.ts",
+        "line": 28,
+        "text": "// For now, just log and return success"
+      },
+      {
+        "file": "server/routes/pdf-task-routes.ts",
+        "line": 204,
+        "text": "// In a real implementation, you would query a database to get task status"
+      },
+      {
+        "file": "server/routes/predictive-sections.ts",
+        "line": 225,
+        "text": "// For now, we'll use the provided updates directly"
+      },
+      {
+        "file": "server/routes/protocol_routes.ts",
+        "line": 727,
+        "text": "text = `Extracted text from ${req.file.originalname}. In a real implementation,"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1083,
+        "text": "// For now, return representative precedent strings"
+      },
+      {
+        "file": "server/routes/reports/generate-report.ts",
+        "line": 109,
+        "text": "// In a real implementation, we would fetch the protocol data from wherever it's stored"
+      },
+      {
+        "file": "server/routes/reports/generate-report.ts",
+        "line": 182,
+        "text": "// In a real implementation, you might want to send the files as downloads"
+      },
+      {
+        "file": "server/routes/reports/subscriptions-routes.ts",
+        "line": 107,
+        "text": "// For now, we'll just return a success message"
+      },
+      {
+        "file": "server/routes/reports/subscriptions-routes.ts",
+        "line": 140,
+        "text": "// For now, we'll just return a success message"
+      },
+      {
+        "file": "server/routes/tenant-quality-validation.ts",
+        "line": 266,
+        "text": "// For now, we'll just return a successful response"
+      },
+      {
+        "file": "server/services/FDAFormGenerator.ts",
+        "line": 113,
+        "text": "// For now, return empty string"
+      },
+      {
+        "file": "server/services/ModuleIntegrationService.ts",
+        "line": 404,
+        "text": "// In a real implementation, this would do a diff of the versions"
+      },
+      {
+        "file": "server/services/academic-document-processor.ts",
+        "line": 59,
+        "text": "// In a real implementation, we would load from a database or vector store"
+      },
+      {
+        "file": "server/services/academic-document-processor.ts",
+        "line": 60,
+        "text": "// This is a simplified implementation for demonstration purposes"
+      },
+      {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "line": 1836,
+        "text": "// For now, return the content as-is with metadata (PDF generation requires additional libs)"
+      },
+      {
+        "file": "server/services/cognitive-ecosystem/cognitive-audit.service.ts",
+        "line": 131,
+        "text": "// For now, we'll leave it null and populate asynchronously"
+      },
+      {
+        "file": "server/services/cognitive-ecosystem/cognitive-audit.service.ts",
+        "line": 902,
+        "text": "// For now, we'll query based on common patterns"
+      },
+      {
+        "file": "server/services/cognitive-ecosystem/global-dossier.service.ts",
+        "line": 598,
+        "text": "// For now, we'll create a placeholder"
+      },
+      {
+        "file": "server/services/documentReconstruction.js",
+        "line": 102,
+        "text": "// For now, just add a placeholder paragraph"
+      },
+      {
+        "file": "server/services/eSTARValidator.ts",
+        "line": 297,
+        "text": "// This is a simplified check; in a real implementation, you'd use a more structured approach"
+      },
+      {
+        "file": "server/services/export-service.ts",
+        "line": 133,
+        "text": "// Add each file to a tar-like structure (simplified implementation)"
+      },
+      {
+        "file": "server/services/indCopilot.js",
+        "line": 854,
+        "text": "// Basic context extraction - in a real implementation, this would use"
+      },
+      {
+        "file": "server/services/regulatory-intelligence-service.ts",
+        "line": 101,
+        "text": "// In a real implementation, we would load from a database"
+      },
+      {
+        "file": "server/services/regulatory-intelligence-service.ts",
+        "line": 102,
+        "text": "// This is a simplified implementation for demonstration purposes"
+      },
+      {
+        "file": "server/services/regulatory-intelligence-service.ts",
+        "line": 536,
+        "text": "// In a real implementation, this would use the Hugging Face service"
+      },
+      {
+        "file": "server/services/regulatory-intelligence-service.ts",
+        "line": 539,
+        "text": "// For now, return some sample considerations"
+      },
+      {
+        "file": "server/services/regulatory-intelligence-service.ts",
+        "line": 585,
+        "text": "// In a real implementation, this would use a more sophisticated approach"
+      },
+      {
+        "file": "server/services/regulatory-intelligence-service.ts",
+        "line": 596,
+        "text": "// Simple keyword-based check (in a real implementation, this would be more sophisticated)"
+      },
+      {
+        "file": "server/services/regulatory-intelligence-service.ts",
+        "line": 688,
+        "text": "// In a real implementation, this would use more sophisticated NLP techniques"
+      },
+      {
+        "file": "server/services/sap-generator-service.ts",
+        "line": 459,
+        "text": "// In a real implementation, would extract and analyze methods from similar trials"
+      },
+      {
+        "file": "server/services/sap-generator-service.ts",
+        "line": 461,
+        "text": "// For now, we'll just adjust based on the number of similar trials found"
+      },
+      {
+        "file": "server/api/cmc/audit-risk-monitor.js",
+        "line": 601,
+        "text": "// In a real implementation, we would use appropriate libraries for each file type"
+      },
+      {
+        "file": "server/api/cmc/blueprintRoutes.ts",
+        "line": 425,
+        "text": "// For now, return mock templates since we're using the playbook routes for workflow management"
+      },
+      {
+        "file": "server/api/cmc/change-impact-simulator.js",
+        "line": 261,
+        "text": "// In a real implementation, we would convert the data to PDF"
+      },
+      {
+        "file": "server/api/cmc/change-impact-simulator.js",
+        "line": 262,
+        "text": "// For now, we'll just return the JSON"
+      },
+      {
+        "file": "server/api/cmc/change-impact-simulator.js",
+        "line": 265,
+        "text": "// In a real implementation, we would convert the data to HTML"
+      },
+      {
+        "file": "server/api/cmc/change-impact-simulator.js",
+        "line": 266,
+        "text": "// For now, we'll just return the JSON"
+      },
+      {
+        "file": "server/api/cmc/global-compliance.js",
+        "line": 272,
+        "text": "// In a real implementation, we would use appropriate libraries for each file type"
+      },
+      {
+        "file": "server/api/cmc/global-compliance.js",
+        "line": 494,
+        "text": "// In a real implementation, we would convert the data to DOCX"
+      },
+      {
+        "file": "server/api/cmc/global-compliance.js",
+        "line": 495,
+        "text": "// For now, we'll just return the JSON for the specific region"
+      },
+      {
+        "file": "server/api/cmc/manufacturing-tuner.js",
+        "line": 412,
+        "text": "// In a real implementation, we would convert the data to PDF"
+      },
+      {
+        "file": "server/api/cmc/manufacturing-tuner.js",
+        "line": 413,
+        "text": "// For now, we'll just return the JSON"
+      },
+      {
+        "file": "server/api/cmc/manufacturing-tuner.js",
+        "line": 416,
+        "text": "// In a real implementation, we would convert the data to HTML"
+      },
+      {
+        "file": "server/api/cmc/manufacturing-tuner.js",
+        "line": 417,
+        "text": "// For now, we'll just return the JSON"
+      },
+      {
+        "file": "server/api/cmc/preclinical-translator.js",
+        "line": 317,
+        "text": "// In a real implementation, we would use appropriate libraries for each file type"
+      },
+      {
+        "file": "server/api/cmc/preclinical-translator.js",
+        "line": 510,
+        "text": "// In a real implementation, we would convert the data to PDF"
+      },
+      {
+        "file": "server/api/cmc/preclinical-translator.js",
+        "line": 511,
+        "text": "// For now, we'll just return the JSON"
+      },
+      {
+        "file": "server/api/cmc/preclinical-translator.js",
+        "line": 514,
+        "text": "// In a real implementation, we would convert the data to DOCX"
+      },
+      {
+        "file": "server/api/cmc/preclinical-translator.js",
+        "line": 515,
+        "text": "// For now, we'll just return the JSON"
+      },
+      {
+        "file": "server/api/validation/index.js",
+        "line": 112,
+        "text": "// In a real implementation, we'd start a background task to run the validation"
+      },
+      {
+        "file": "client/src/hooks/use-toast.ts",
+        "line": 138,
+        "text": "// For now just console log the toast"
+      },
+      {
+        "file": "scripts/security-test.js",
+        "line": 250,
+        "text": "// For now, we'll just skip this test"
+      }
+    ],
+    "mathRandom": [
+      {
+        "file": "server/routes/ai-actions.ts",
+        "line": 119,
+        "text": "`ai-actions-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`"
+      },
+      {
+        "file": "server/routes/ana-cortex.ts",
+        "line": 280,
+        "text": "`ana-cortex-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;"
+      },
+      {
+        "file": "server/routes/ana-platform-control.ts",
+        "line": 27,
+        "text": "`ana-platform-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;"
+      },
+      {
+        "file": "server/routes/ana-ri/chat.ts",
+        "line": 145,
+        "text": "`ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;"
+      },
+      {
+        "file": "server/routes/ana-ri/chat.ts",
+        "line": 853,
+        "text": "requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,"
+      },
+      {
+        "file": "server/routes/analytics-routes.ts",
+        "line": 42,
+        "text": "const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);"
+      },
+      {
+        "file": "server/routes/analytics-routes.ts",
+        "line": 457,
+        "text": "// semantic-similarity engine (previously a `Math.random()` rank)."
+      },
+      {
+        "file": "server/routes/analytics-routes.ts",
+        "line": 867,
+        "text": "// previously `Math.floor(Math.random()*15)+75` — a fabricated value."
+      },
+      {
+        "file": "server/routes/analytics-routes.ts",
+        "line": 901,
+        "text": "// fabricated with Math.random() yet dressed with academic citations,"
+      },
+      {
+        "file": "server/routes/auth.ts",
+        "line": 831,
+        "text": "slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;"
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "line": 1666,
+        "text": "id: f.id || `c-${Math.random().toString(36).slice(2)}`,"
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "line": 1912,
+        "text": "id: f.id || String(Math.random()), severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',"
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "line": 2363,
+        "text": "id: f.id || f.findingId || String(Math.random()),"
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "line": 2625,
+        "text": "id: f.id || `c-${Math.random().toString(36).slice(2)}`,"
+      },
+      {
+        "file": "server/routes/authoring.router.ts",
+        "line": 5419,
+        "text": "// scores below. Previously: `85 + Math.random() * 15` — a fabricated"
+      },
+      {
+        "file": "server/routes/authoring.router.ts",
+        "line": 5620,
+        "text": "// score — the prior implementation fabricated both with Math.random()"
+      },
+      {
+        "file": "server/routes/authoring.router.ts",
+        "line": 5621,
+        "text": "// (`compliant: Math.random() > 0.3`, `score: 75 + Math.random() * 25`),"
+      },
+      {
+        "file": "server/routes/biotech-rag.js",
+        "line": 1031,
+        "text": "const jobId = `train_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/biotech-rag.js",
+        "line": 1063,
+        "text": "const jobId = `train_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/chat/send-message.ts",
+        "line": 822,
+        "text": "requestId: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,"
+      },
+      {
+        "file": "server/routes/chat/upload.ts",
+        "line": 87,
+        "text": "const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;"
+      },
+      {
+        "file": "server/routes/chat/upload.ts",
+        "line": 234,
+        "text": "const artId = `artifact_chat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;"
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "line": 17799,
+        "text": "const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "line": 17874,
+        "text": "eventId: `prov_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,"
+      },
+      {
+        "file": "server/routes/ctd-onboarding.ts",
+        "line": 40,
+        "text": "const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;"
+      },
+      {
+        "file": "server/routes/document-intelligence-routes.ts",
+        "line": 75,
+        "text": "// `0.75 + Math.random() * 0.2` — a fabricated per-request value with"
+      },
+      {
+        "file": "server/routes/evidence-management.routes.ts",
+        "line": 208,
+        "text": "const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/evidence.ts",
+        "line": 482,
+        "text": "`${typePrefix}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;"
+      },
+      {
+        "file": "server/routes/fda510k-routes.ts",
+        "line": 489,
+        "text": "(req as any).requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/fda510k-routes.ts",
+        "line": 577,
+        "text": "const jitter = Math.random() * 0.3 * exponentialDelay; // Add 30% jitter"
+      },
+      {
+        "file": "server/routes/fda510k-routes.ts",
+        "line": 1201,
+        "text": "id: device.k_number || `K${Math.random().toString(36).substring(7)}`,"
+      },
+      {
+        "file": "server/routes/firecrawl.ts",
+        "line": 37,
+        "text": "String(req.header('x-correlation-id') || '') || `fc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/routes/haq-manager.ts",
+        "line": 382,
+        "text": "* canned regulatory paragraphs keyed by module, with a Math.random()"
+      },
+      {
+        "file": "server/routes/leaves.js",
+        "line": 206,
+        "text": "return `hash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/medical-device-routes.js",
+        "line": 26,
+        "text": "const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);"
+      },
+      {
+        "file": "server/routes/misc-inline-routes.ts",
+        "line": 401,
+        "text": "const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/orchestration.ts",
+        "line": 637,
+        "text": "const auditId = `gate-${response.projectId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/routes/protocol_routes.ts",
+        "line": 645,
+        "text": "* references). Previously `Math.floor(70 + Math.random() * 25)`, a random"
+      },
+      {
+        "file": "server/routes/protocol_routes.ts",
+        "line": 676,
+        "text": "* alignment heuristics. Previously added `Math.random() * 10 - 5` jitter."
+      },
+      {
+        "file": "server/routes/real-world-evidence.ts",
+        "line": 529,
+        "text": "* The prior implementation fabricated the entire result with Math.random();"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 612,
+        "text": "simulationId || `sim_${Date.now()}_${Math.random().toString(36).substring(7)}`;"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1144,
+        "text": "// Previously each panelist vote was drawn with a Math.random() \"personal"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1288,
+        "text": "if (Math.random() < 0.08) {"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1302,
+        "text": "if (Math.random() < irProbability) {"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1303,
+        "text": "simReviewDays += Math.round(30 + Math.random() * 60); // 30-90 day extension"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1308,
+        "text": "if (Math.random() < crlProbability) {"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1372,
+        "text": "const u1 = Math.random();"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1373,
+        "text": "const u2 = Math.random();"
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "line": 1549,
+        "text": "const simulationId = `sim_${Date.now()}_${Math.random().toString(36).substring(7)}`;"
+      },
+      {
+        "file": "server/routes/seed-demo.ts",
+        "line": 315,
+        "text": "size: Math.floor(Math.random() * 5000000) + 500000,"
+      },
+      {
+        "file": "server/routes/templates.ts",
+        "line": 291,
+        "text": "const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/routes/tenants-simple.ts",
+        "line": 411,
+        "text": "Math.random().toString(36).substring(2, 15) +"
+      },
+      {
+        "file": "server/routes/tenants-simple.ts",
+        "line": 412,
+        "text": "Math.random().toString(36).substring(2, 15);"
+      },
+      {
+        "file": "server/services/DocumentDataCenterService.ts",
+        "line": 196,
+        "text": "const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);"
+      },
+      {
+        "file": "server/services/academic-knowledge-service.ts",
+        "line": 143,
+        "text": "resource.id = `resource_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;"
+      },
+      {
+        "file": "server/services/account-canon.ts",
+        "line": 120,
+        "text": "return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/services/account-skill-bundles.ts",
+        "line": 20,
+        "text": "return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "line": 450,
+        "text": "const jitter = delay * 0.3 * Math.random(); // 0-30% jitter"
+      },
+      {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "line": 1831,
+        "text": "const jitter = backoffMs * 0.2 * Math.random(); // 0-20% jitter on health recovery"
+      },
+      {
+        "file": "server/services/aiProviderRouter.ts",
+        "line": 307,
+        "text": "// Deterministic round-robin cursor — replaces a Math.random() pick so routing"
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/war-game/engine.ts",
+        "line": 39,
+        "text": "return `wg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;"
+      },
+      {
+        "file": "server/services/ana/uploaded-file-access.ts",
+        "line": 221,
+        "text": "const fileId = `file_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/ana-biostats/orchestrator.ts",
+        "line": 44,
+        "text": "const workflowId = `biostats-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/ana-kernel-orchestrator.ts",
+        "line": 64,
+        "text": "requestId: `kernel-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,"
+      },
+      {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "line": 1397,
+        "text": "const threadId = `thread_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "line": 1450,
+        "text": "const commentId = `comment_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/ana-ri/mdx-pending-actions.ts",
+        "line": 73,
+        "text": "Math.random().toString(16).slice(2, 8) +"
+      },
+      {
+        "file": "server/services/ana-ri/mdx-pending-actions.ts",
+        "line": 74,
+        "text": "Math.random().toString(16).slice(2, 6)"
+      },
+      {
+        "file": "server/services/anaCortexClient.ts",
+        "line": 650,
+        "text": "return `req_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/services/audit/auditLogger.ts",
+        "line": 61,
+        "text": "return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "line": 48,
+        "text": "* input values and the constant tables below. No Date.now(), no Math.random(),"
+      },
+      {
+        "file": "server/services/chat-thread-helpers.ts",
+        "line": 65,
+        "text": "const newId = `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;"
+      },
+      {
+        "file": "server/services/cognitive-ecosystem/digital-twin-runtime.service.ts",
+        "line": 826,
+        "text": "const baseValue = 98 + Math.random() * 4; // 98-102%"
+      },
+      {
+        "file": "server/services/cognitive-ecosystem/digital-twin-runtime.service.ts",
+        "line": 827,
+        "text": "const uncertainty = 1 + Math.random() * 2;"
+      },
+      {
+        "file": "server/services/cognitive-ecosystem/digital-twin-runtime.service.ts",
+        "line": 836,
+        "text": "inSpecProbability: 0.90 + Math.random() * 0.09 // 90-99%"
+      },
+      {
+        "file": "server/services/cognitive-ecosystem/federated-learning.service.ts",
+        "line": 984,
+        "text": "return scale * (Math.random() - 0.5) * 2; // Simplified Laplace approximation"
+      },
+      {
+        "file": "server/services/compliance/pharmacovigilanceService.ts",
+        "line": 961,
+        "text": "const r = (Math.random() * 16) | 0;"
+      },
+      {
+        "file": "server/services/compliance/pharmacovigilanceService.ts",
+        "line": 975,
+        "text": "const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();"
+      },
+      {
+        "file": "server/services/contradiction-consequence-service.ts",
+        "line": 29,
+        "text": "return `csq_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/contradiction-consequence-service.ts",
+        "line": 311,
+        "text": "const artifactId = `contradiction_memo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/conversation-os/conversationKernel.ts",
+        "line": 12,
+        "text": "const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/conversation-os/persistence.ts",
+        "line": 5,
+        "text": "const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/generation-guard.ts",
+        "line": 74,
+        "text": "return `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/grdhe/exportGenerators/emaAEE2BR3.ts",
+        "line": 179,
+        "text": "const r = (Math.random() * 16) | 0;"
+      },
+      {
+        "file": "server/services/grdhe/exportGenerators/fdaAE3500A.ts",
+        "line": 125,
+        "text": "const r = (Math.random() * 16) | 0;"
+      },
+      {
+        "file": "server/services/innovation/compliance-guardrails-sdk-service.ts",
+        "line": 1176,
+        "text": "const key = `ts_${Math.random().toString(36).slice(2, 18)}`;"
+      },
+      {
+        "file": "server/services/innovation/submission-readiness-twin-service.ts",
+        "line": 802,
+        "text": "// Math.random() value and declared the criterion met/partially-met/not-met"
+      },
+      {
+        "file": "server/services/kernel-goal-planner.ts",
+        "line": 92,
+        "text": "planId: `plan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,"
+      },
+      {
+        "file": "server/services/multi-agent-council.ts",
+        "line": 359,
+        "text": "return `council-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;"
+      },
+      {
+        "file": "server/services/resolution/contradiction-resolution-orchestrator.ts",
+        "line": 411,
+        "text": "const threadId = `thread_cbp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/services/stats/rng.ts",
+        "line": 9,
+        "text": "* used unseeded `Math.random()`, which makes simulations non-reproducible."
+      },
+      {
+        "file": "server/services/submission-gateways/ema-cesp.ts",
+        "line": 187,
+        "text": "const boundary = `----c2c-${Date.now()}-${Math.random().toString(36).slice(2)}`;"
+      },
+      {
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "line": 25,
+        "text": "* Date.now(), no Math.random(), no I/O. Numeric routines are closed-form"
+      },
+      {
+        "file": "server/services/unifiedDocumentIngestion.js",
+        "line": 96,
+        "text": "const tempFile = `/tmp/pdf_extract_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`;"
+      },
+      {
+        "file": "server/services/workflow/DecisionLineageService.ts",
+        "line": 119,
+        "text": "const decisionId = `DEC-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "server/middleware/rateLimiter.ts",
+        "line": 155,
+        "text": "if (Math.random() < 0.01) {"
+      },
+      {
+        "file": "server/middleware/redisRateLimiter.ts",
+        "line": 227,
+        "text": "const member = `${now}:${Math.random().toString(36).slice(2)}`;"
+      },
+      {
+        "file": "server/api/ai/routes.ts",
+        "line": 427,
+        "text": "template.criticalFlags[Math.floor(Math.random() * template.criticalFlags.length)];"
+      },
+      {
+        "file": "server/api/cmc/audit-risk-monitor.js",
+        "line": 43,
+        "text": "const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);"
+      },
+      {
+        "file": "server/api/cmc/global-compliance.js",
+        "line": 42,
+        "text": "const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);"
+      },
+      {
+        "file": "server/api/cmc/manufacturing-tuner.js",
+        "line": 42,
+        "text": "const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);"
+      },
+      {
+        "file": "server/api/cmc/preclinical-translator.js",
+        "line": 42,
+        "text": "const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);"
+      },
+      {
+        "file": "server/bootstrap/register-clinical-intel-routes.ts",
+        "line": 126,
+        "text": "// client-side service that asserted existence with Math.random())."
+      },
+      {
+        "file": "client/src/components/ui/file-uploader.tsx",
+        "line": 127,
+        "text": "id: Math.random().toString(36).substring(2, 9),"
+      },
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "line": 632,
+        "text": "return `${Math.floor(Math.random() * 40) + 50}%`;"
+      },
+      {
+        "file": "client/src/concept2cure/components/ErrorBoundary.tsx",
+        "line": 85,
+        "text": "errorId: `err_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,"
+      },
+      {
+        "file": "client/src/concept2cure/hooks/useChatUpload.ts",
+        "line": 111,
+        "text": "const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "client/src/concept2cure/mdx/hooks/useElectronicSignature.ts",
+        "line": 13,
+        "text": "* generated by `Math.random()`, under footer text promising that \"time,"
+      },
+      {
+        "file": "client/src/concept2cure/mdx/hooks/useIvd.ts",
+        "line": 119,
+        "text": "id: String(v.id ?? Math.random().toString(36).slice(2)),"
+      },
+      {
+        "file": "client/src/concept2cure/mdx/hooks/useIvd.ts",
+        "line": 161,
+        "text": "id: String(e.id ?? Math.random().toString(36).slice(2)),"
+      },
+      {
+        "file": "client/src/concept2cure/mdx/hooks/useWorkbench.ts",
+        "line": 88,
+        "text": "const id = String(w.workItemId ?? w.id ?? Math.random().toString(36).slice(2, 10));"
+      },
+      {
+        "file": "client/src/concept2cure/mdx/store/dossierStore.ts",
+        "line": 304,
+        "text": "id:        `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,"
+      },
+      {
+        "file": "client/src/concept2cure/mdx/store/dossierStore.ts",
+        "line": 347,
+        "text": "id:        `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,"
+      },
+      {
+        "file": "client/src/concept2cure/v2/fixtures/conversation-thread-data.ts",
+        "line": 130,
+        "text": "const _ctAudit = () => 'AUD-' + Math.random().toString(36).slice(2, 8).toUpperCase();"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+        "line": 179,
+        "text": "const id = (task.taskId as string) || ('C2C-TASK-' + (2300 + Math.floor(Math.random() * 699)));"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "line": 16,
+        "text": "Math.random()-\"audited\" artifact; unpopulated fields are simply omitted. */"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "line": 266,
+        "text": "// Math.random()-\"audited\" fabricated artifacts are gone."
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "line": 680,
+        "text": "tpl.tasks.forEach(t => { idMap[t.id] = 'C2C-TASK-' + (2300 + Math.floor(Math.random() * 699)); });"
+      },
+      {
+        "file": "client/src/lib/api/client.ts",
+        "line": 284,
+        "text": "return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;"
+      },
+      {
+        "file": "client/src/lib/utils.ts",
+        "line": 42,
+        "text": "return Math.random()"
+      },
+      {
+        "file": "shared/types/decision-architecture.ts",
+        "line": 443,
+        "text": "return `dec_${Date.now()}_${_decisionCounter}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "shared/types/decision-architecture.ts",
+        "line": 447,
+        "text": "return `rcpt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "shared/types/governed-document-fabric.ts",
+        "line": 449,
+        "text": "return `gdf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;"
+      },
+      {
+        "file": "scripts/ops/verify-otp-delivery.mjs",
+        "line": 268,
+        "text": "return String(Math.floor(100000 + Math.random() * 900000));"
+      },
+      {
+        "file": "scripts/seed-mdx-content.mjs",
+        "line": 108,
+        "text": "const count = 4 + Math.floor(Math.random() * 8);"
+      }
+    ],
+    "rawSqlTemplate": [
+      {
+        "file": "server/services/committees/committee-service.ts",
+        "line": 170,
+        "text": "const p = await client.query(`SELECT id FROM ${table} WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [input.protocolId, orgId]);"
+      },
+      {
+        "file": "server/services/qms/qms.service.ts",
+        "line": 48,
+        "text": "const { rows } = await pool.query(`SELECT * FROM qms_documents WHERE ${where} ORDER BY doc_number ASC`, args);"
+      },
+      {
+        "file": "server/services/qms/qms.service.ts",
+        "line": 139,
+        "text": "const { rows } = await pool.query(`SELECT * FROM qms_suppliers WHERE ${where} ORDER BY supplier_name ASC`, args);"
+      },
+      {
+        "file": "server/db/ensureCoreTables.ts",
+        "line": 294,
+        "text": "await pool.query(`CREATE SCHEMA IF NOT EXISTS \"${missingSchema}\"`);"
+      },
+      {
+        "file": "scripts/seed/ga-demo.d/60-mdx-aggregates.mjs",
+        "line": 110,
+        "text": "await client.query(`SAVEPOINT ${name}`);"
+      },
+      {
+        "file": "scripts/seed/ga-demo.d/60-mdx-aggregates.mjs",
+        "line": 113,
+        "text": "await client.query(`RELEASE SAVEPOINT ${name}`);"
+      },
+      {
+        "file": "scripts/seed/ga-demo.d/60-mdx-aggregates.mjs",
+        "line": 116,
+        "text": "await client.query(`ROLLBACK TO SAVEPOINT ${name}`);"
+      },
+      {
+        "file": "scripts/setup-rls.js",
+        "line": 58,
+        "text": "await client.query(`ALTER TABLE IF EXISTS ${table} ENABLE ROW LEVEL SECURITY;`);"
+      }
+    ],
+    "sqlRaw": [
+      {
+        "file": "server/services/cerGenerationService.ts",
+        "line": 416,
+        "text": "metadata: sql`COALESCE(metadata, '{}'::jsonb) || ${sql.raw("
+      },
+      {
+        "file": "server/services/cerGenerationService.ts",
+        "line": 656,
+        "text": "metadata: sql`COALESCE(metadata, '{}'::jsonb) || ${sql.raw("
+      },
+      {
+        "file": "server/services/governance-boundary-service.ts",
+        "line": 233,
+        "text": "AND NOT ${sql.raw(ASSUMPTION_SETTLED_SQL_PREDICATE)}"
+      }
+    ],
+    "dangerousHtml": [
+      {
+        "file": "client/src/components/ui/chart.tsx",
+        "line": 76,
+        "text": "dangerouslySetInnerHTML={{"
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/DocumentStudioPane.tsx",
+        "line": 446,
+        "text": "dangerouslySetInnerHTML={{ __html: html }}"
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/Message.tsx",
+        "line": 525,
+        "text": "dangerouslySetInnerHTML={{ __html: renderedThinkingHtml }}"
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/Message.tsx",
+        "line": 616,
+        "text": "<div ref={proseRef} dangerouslySetInnerHTML={{ __html: renderedHtml }} />"
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/Message.tsx",
+        "line": 631,
+        "text": "dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(html) }}"
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/renderSafeMarkdown.ts",
+        "line": 6,
+        "text": "*   `dangerouslySetInnerHTML`, so it needs a single, audited sanitization"
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/renderSafeMarkdown.ts",
+        "line": 76,
+        "text": "* Render markdown to HTML safe to inject via dangerouslySetInnerHTML."
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx",
+        "line": 377,
+        "text": "? <div dangerouslySetInnerHTML={{ __html: html }} />"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/BatchDraft.tsx",
+        "line": 490,
+        "text": "<div className=\"bd-card-body\" dangerouslySetInnerHTML={{ __html: c.html || '<p class=\"bd-ph\">Waiting to start...</p>' }} />"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+        "line": 630,
+        "text": "<div className=\"bs-doc-render\" dangerouslySetInnerHTML={{ __html: html }} />"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "line": 811,
+        "text": "<div className=\"cm-doc-page\"><div className=\"cm-doc-render\" dangerouslySetInnerHTML={{ __html: mdToHtml(memoMd(result)) }} /></div>"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/EditorStudio.tsx",
+        "line": 170,
+        "text": "<div className=\"rce-body rst-read\" dangerouslySetInnerHTML={{ __html: html }} />"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/EditorTranslate.tsx",
+        "line": 413,
+        "text": "? <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-100)' }} dangerouslySetInnerHTML={{ __html: leftContent }} />"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/EditorTranslate.tsx",
+        "line": 442,
+        "text": "? <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-100)' }} dangerouslySetInnerHTML={{ __html: rightContent }} />"
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+        "line": 378,
+        "text": "<div className=\"bs-doc-page\"><div className=\"bs-doc-render\" dangerouslySetInnerHTML={{ __html: html }} /></div>"
+      },
+      {
+        "file": "scripts/phase8_e2e_qa.mjs",
+        "line": 744,
+        "text": "const hasInnerHTML = src.includes('innerHTML') || src.includes('dangerouslySetInnerHTML');"
+      },
+      {
+        "file": "scripts/phase8_e2e_qa.mjs",
+        "line": 749,
+        "text": "? ok(11, `${path.basename(f)}: no innerHTML/dangerouslySetInnerHTML`)"
+      }
+    ]
+  }
+}

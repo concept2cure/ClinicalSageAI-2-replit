@@ -45,11 +45,51 @@ describe('/readyz schema-readiness gate', () => {
     expect(res.body.dependencies.schema).toBe('ok');
   });
 
-  it('does not fail readiness on its own when schema state is unknown', async () => {
-    // unknown (never verified / dev DB-less path) must not turn /readyz red —
-    // only a positive 'missing' verdict does.
+  // ───────────────────────────────────────────────────────────────────────────
+  // This assertion is INVERTED from its original form, deliberately.
+  //
+  // It used to require that 'unknown' return 200 ("must not turn /readyz red —
+  // only a positive 'missing' verdict does"). That codified fail-OPEN, and
+  // startup/services.ts had five terminal branches — including the catch that
+  // runs when schema verification itself throws — which never recorded a
+  // verdict at all. The state stayed 'unknown' and the probe served 200. A
+  // readiness probe that answers "yes" when it never managed to check is worse
+  // than no probe, because it is trusted.
+  //
+  // 'unknown' is now unreachable in a correctly-booted process: index.ts awaits
+  // verifyDatabaseConnection before listening, and every branch there now sets
+  // a state. Observing it means a code path forgot to record one, which is a
+  // bug that should be loud.
+  // ───────────────────────────────────────────────────────────────────────────
+  it('FAILS readiness when schema state is unknown (never verified)', async () => {
+    const res = await request(appWithHealth()).get('/readyz');
+    expect(res.status).toBe(503);
+    expect(res.body.ready).toBe(false);
+    expect(res.body.failed).toContain('schema');
+    expect(res.body.dependencies.schema).toBe('down');
+    expect(res.body.schemaState).toBe('unknown');
+    expect(res.body.schemaDetail).toMatch(/never verified/i);
+  });
+
+  it('FAILS readiness when schema verification itself threw', async () => {
+    setSchemaReadiness('error', 'core table verification threw: connection reset');
+    const res = await request(appWithHealth()).get('/readyz');
+    expect(res.status).toBe(503);
+    expect(res.body.ready).toBe(false);
+    expect(res.body.dependencies.schema).toBe('down');
+    expect(res.body.schemaState).toBe('error');
+    expect(res.body.schemaDetail).toContain('connection reset');
+  });
+
+  it('serves traffic when degraded, but names the missing tables', async () => {
+    // Non-essential module tables absent: the platform works, those modules do
+    // not. Serving is correct; hiding it is not.
+    setSchemaReadiness('degraded', 'important tables missing: cerv2_510k_sections');
     const res = await request(appWithHealth()).get('/readyz');
     expect(res.status).toBe(200);
-    expect(res.body.dependencies.schema).toBe('skipped');
+    expect(res.body.ready).toBe(true);
+    expect(res.body.dependencies.schema).toBe('ok');
+    expect(res.body.schemaState).toBe('degraded');
+    expect(res.body.schemaDetail).toContain('cerv2_510k_sections');
   });
 });

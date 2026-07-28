@@ -125,9 +125,27 @@ export function AuthFlow({ onEnter }: AuthFlowProps) {
             <p className="auth-brand-sub">Author, govern, and assemble regulatory submissions on one intelligence layer — with AnA alongside every decision.</p>
           </div>
           <div className="auth-trust">
-            <div className="auth-trust-row"><span className="ico">{I.shieldCheck}</span><span><b>21 CFR Part 11</b> — audit trails, e-signatures, immutable records</span></div>
-            <div className="auth-trust-row"><span className="ico">{I.shieldCheck}</span><span><b>SOC 2 Type II</b> {'·'} HIPAA-ready {'·'} data encrypted in transit {'&'} at rest</span></div>
-            <div className="auth-trust-row"><span className="ico">{I.lock}</span><span><b>MFA {'&'} SSO</b> enforced on every production environment</span></div>
+            {/*
+              These rows are read by prospects at the point of signup, so every
+              claim here has to be one we can defend in a customer security
+              review. Three previous claims did not survive that test and were
+              corrected in the 2026-07 audit:
+                - a SOC 2 badge — we hold no SOC 2 report of any type. The
+                  platform ships a Trust Services Criteria control
+                  mapping as a reference for the customer's own GRC program;
+                  /api/part11/soc2/controls says exactly that in its own
+                  response body, so the product contradicted itself between its
+                  API and its landing copy.
+                - a blanket encryption-at-rest badge — encryption at rest is
+                  field-level over specific secrets, not blanket.
+                - a claim that multi-factor auth and SSO were mandatory in all
+                  production environments — TOTP MFA is per-user opt-in and SSO
+                  is configured per domain; neither is required by default.
+              Keep this row set factual. See SECURITY.md.
+            */}
+            <div className="auth-trust-row"><span className="ico">{I.shieldCheck}</span><span><b>21 CFR Part 11</b> — hash-chained audit trails, e-signatures, tamper-evident records</span></div>
+            <div className="auth-trust-row"><span className="ico">{I.shieldCheck}</span><span><b>HIPAA-ready</b> {'·'} encrypted in transit {'·'} stored credentials encrypted with AES-256-GCM</span></div>
+            <div className="auth-trust-row"><span className="ico">{I.lock}</span><span><b>MFA {'&'} SSO</b> supported {'·'} role-based access control {'·'} full audit logging</span></div>
           </div>
         </div>
         <div className="auth-main">

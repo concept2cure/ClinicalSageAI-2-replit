@@ -193,16 +193,26 @@ jobs:
 
       - name: Audit — orphaned endpoints (threshold 600)
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
-        # if the orphan count exceeds 600 (current: 556). Ratchet the threshold
+        # if the orphan count exceeds 570 (current: 556). Ratchet the threshold
         # down in package.json as the backlog is triaged.
         #
-        # Tightened from 900. The count had fallen to 556 without the gate
-        # following it, leaving 344 of slack — enough for the backlog to grow by
-        # more than half again while CI reported green. A ratchet that trails
-        # reality by that much is not a ratchet. The 44 of remaining headroom is
-        # deliberate: a feature branch legitimately adds endpoints before the
-        # client that calls them exists, and one PR adding 45 unwired endpoints
-        # is worth a conversation rather than a silent pass.
+        # Tightened from 900 -> 600 -> 570. The count had fallen to 556 without
+        # the gate following it, leaving 344 of slack — enough for the backlog
+        # to grow by more than half again while CI reported green. A ratchet
+        # that trails reality by that much is not a ratchet.
+        #
+        # The 14 of remaining headroom is deliberate, for the reason the 600
+        # step gave: a feature branch legitimately adds endpoints before the
+        # client that calls them exists, and a PR adding more than that is worth
+        # a conversation rather than a silent pass.
+        #
+        # Why 570 and not 556. Orphans are computed as `declared - consumed`, so
+        # this gate is equally sensitive to DELETING CLIENT CODE as to adding
+        # endpoints. Pinned at exactly 556, a PR that removes the last caller of
+        # a few endpoints fails CI having added none — the gate would punish
+        # deleting dead client code, which is the opposite of what it is for.
+        # The 2026-07 audit originally proposed 556; that was wrong, and this
+        # comment is the rebuttal. See Chapter 15, "Correction to item 0.8".
         run: npm run audit:orphaned-endpoints:strict
 
       - name: Upload governance audit artifacts

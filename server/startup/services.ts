@@ -32,6 +32,30 @@ export function startPythonBackend(): Promise<null> {
 }
 
 /**
+ * Tables classified "important" by ensureCoreTables that are nonetheless
+ * security-load-bearing: authentication, authorization and licensing.
+ *
+ * The distinction matters because the flat critical-table check passes without
+ * these, so a database missing every one of them reported ready. A process
+ * that cannot resolve a user, a role or a permission has no safe behaviour
+ * available to it — every request either errors or takes an unauthenticated
+ * path — so their absence fails readiness rather than degrading it.
+ *
+ * Kept as an explicit list, not a prefix match, so adding a table to
+ * IMPORTANT_TABLES is a deliberate decision about whether it belongs here.
+ */
+const SECURITY_CRITICAL_TABLES = [
+  'auth_users',
+  'auth_refresh_tokens',
+  'roles',
+  'permissions',
+  'user_roles',
+  'organization_users',
+  'licenses',
+  'audit_logs',
+];
+
+/**
  * Verify that the database is reachable and that core tables/extensions exist.
  * Fatal in production, non-fatal in dev (same as pre-refactor behavior).
  */
@@ -46,6 +70,11 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
       console.error('   Fatal in production — exiting');
       process.exit(1);
     }
+    // Non-production returns early without ever running schema verification.
+    // Record that explicitly: the /readyz database check would fail this probe
+    // anyway, but leaving the schema flag at its default here is precisely the
+    // "no verdict recorded" state the fail-closed default exists to catch.
+    setSchemaReadiness('error', `database unreachable: ${err?.message ?? String(err)}`);
     return;
   }
 
@@ -58,6 +87,9 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
     // NOT fold in subsystems (validateCoreTables/diagnostics keep their meaning),
     // so this is checked ahead of the success branch.
     const failingSubsystem = result.subsystems.find((s) => s.readinessFailing);
+    const missingSecurityTables = result.missingImportant.filter((t) =>
+      SECURITY_CRITICAL_TABLES.includes(t)
+    );
     if (result.missingCritical.length > 0) {
       setSchemaReadiness('missing', `missing tables: ${result.missingCritical.join(', ')}`);
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
@@ -84,23 +116,73 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
       console.error(
         '   authoring, set AUTHORING_SUBSYSTEM_OPTIONAL=true — never over a PARTIAL subsystem.',
       );
+    } else if (missingSecurityTables.length > 0) {
+      // Auth / RBAC / licensing tables. These are classified "important"
+      // rather than "critical" by ensureCoreTables, so the flat critical check
+      // above passes without them — but a database with no `auth_users`,
+      // `roles`, `permissions` or `user_roles` cannot authenticate or
+      // authorize anybody. Serving traffic in that state means every request
+      // either fails or, worse, takes an unauthenticated path. That is not
+      // degraded, it is down.
+      const detail = `security-critical tables missing: ${missingSecurityTables.join(', ')}`;
+      setSchemaReadiness('missing', detail);
+      console.error(`❌ CRITICAL: ${detail}`);
+      console.error('   Auth, RBAC and licensing cannot function. Run: npm run db:push');
     } else if (result.success) {
-      setSchemaReadiness('ready');
-      console.log(
-        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables, authoring subsystem present)`
+      // Remaining "important" tables are module surfaces (CERV2 sections,
+      // templates, assembly docs). Their absence breaks those modules but not
+      // the platform, so this serves traffic — and names the gap, rather than
+      // reporting an unqualified green that hides it.
+      const otherMissingImportant = result.missingImportant.filter(
+        (t) => !SECURITY_CRITICAL_TABLES.includes(t)
       );
+      if (otherMissingImportant.length > 0) {
+        setSchemaReadiness(
+          'degraded',
+          `important tables missing: ${otherMissingImportant.join(', ')}`
+        );
+        console.warn(
+          `⚠️ Database serving DEGRADED — important tables missing: ${otherMissingImportant.join(', ')}`
+        );
+      } else {
+        setSchemaReadiness('ready');
+        // console.info, not console.log — the repo's no-console rule permits
+        // warn/error/info only, and this line moved into the else branch above.
+        console.info(
+          `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables, authoring subsystem present)`
+        );
+      }
     } else if (result.errors.length > 0) {
-      console.error('⚠️ Table verification errors:', result.errors);
+      // Verification ran and reported errors. `result.success` is false, so we
+      // do NOT know the schema is sound — previously this branch logged and
+      // left the flag at 'unknown', which /readyz served as ready.
+      const detail = `table verification errors: ${result.errors.join('; ')}`;
+      setSchemaReadiness('error', detail);
+      console.error('❌ CRITICAL: Table verification errors:', result.errors);
     } else if (result.missingSchemas.length > 0) {
-      console.warn(
-        '⚠️ Database schemas required initialization:',
-        result.missingSchemas.join(', ')
-      );
+      const detail = `schemas missing: ${result.missingSchemas.join(', ')}`;
+      setSchemaReadiness('missing', detail);
+      console.error('❌ CRITICAL: Database schemas required initialization:', detail);
     } else if (result.warnings.length > 0) {
+      // Warnings with success=false. Not provably broken, not provably sound.
+      setSchemaReadiness('error', `verification inconclusive: ${result.warnings.join('; ')}`);
       console.warn('⚠️ Database readiness warnings:', result.warnings);
+    } else {
+      // Explicit terminal else. `success` is false and nothing above explains
+      // why — exactly the shape that used to fall through to 'unknown' and be
+      // served as ready. An unexplained failure is still a failure.
+      setSchemaReadiness(
+        'error',
+        'schema verification reported failure without a diagnosable cause'
+      );
+      console.error('❌ CRITICAL: Schema verification failed without a diagnosable cause.');
     }
   } catch (err: any) {
-    console.error('⚠️ Core table verification failed:', err.message);
+    // The check ITSELF threw. This is the branch that most needs to fail
+    // closed: we know less about the schema here than in any other path, and
+    // it previously left readiness at 'unknown' and served 200.
+    setSchemaReadiness('error', `core table verification threw: ${err?.message ?? String(err)}`);
+    console.error('❌ CRITICAL: Core table verification failed:', err?.message ?? String(err));
   }
 }
 

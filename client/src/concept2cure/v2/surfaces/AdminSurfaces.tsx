@@ -1092,8 +1092,8 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
         Entries are append-only, hash-chained (SHA-256), and timestamped. Each entry's hash
         incorporates the previous entry's hash, creating a verifiable chain. Any modification to a
-        historical entry breaks the chain. Export produces a Part 11-compliant signed PDF with the
-        full verification manifest.
+        historical entry breaks the chain. Export produces a signed PDF carrying the full
+        verification manifest, in the form Part 11 record retention expects.
       </div>
         </React.Fragment>
       )}

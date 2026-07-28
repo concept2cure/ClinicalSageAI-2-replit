@@ -387,7 +387,13 @@ export async function generateProjectSchedule(
         basis_summary, ana_summary, confidence, version, baseline_date, target_date,
         generated_by_ana, last_reviewed_by_ana_at, updated_at)
      VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, now(), now())
-     ON CONFLICT (project_id) DO UPDATE SET
+     -- Arbiter MUST name the tenant column. Uniqueness is what ON CONFLICT
+     -- resolves against, so an arbiter of (project_id) alone — against the old
+     -- org-blind unique index — decided whose row this upsert landed on, and
+     -- the DO UPDATE SET list below does not reset organization_id, so an
+     -- overwritten row silently kept the victim's tenant id.
+     -- See db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql
+     ON CONFLICT (organization_id, project_id) DO UPDATE SET
         status = 'active',
         project_type = EXCLUDED.project_type,
         regulatory_framework = EXCLUDED.regulatory_framework,

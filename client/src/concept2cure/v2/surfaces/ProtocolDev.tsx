@@ -440,7 +440,16 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk?:
   const sec = doc.sections.find((s: any) => s.id === activeSec) || doc.sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
   const generate = (s: any) => onAsk && onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
-  const govAct = (cfg: any) => setGov(cfg);
+  // Every action routed through here opened a 21 CFR Part 11 e-signature
+  // dialog whose onConfirm below is `() => {}`, and the dialog then toasted
+  // "<Action> recorded · AUD-9100" from a client-side counter. Nothing was
+  // written, and the audit id referred to nothing. The fabricated id is gone
+  // (see ProtocolGov.tsx); the dialog is kept because reason-for-change capture
+  // is the right shape, but the intent line now states plainly that the action
+  // is not persisted, so no one signs believing something was filed.
+  const NOT_PERSISTED = ' — NOTE: this action is not yet connected to the record; nothing is written or audited.';
+  const govAct = (cfg: any) =>
+    setGov({ ...cfg, intent: (cfg?.intent ?? '') + NOT_PERSISTED, esign: false });
   const body = (() => {
     switch (tab) {
       case 'objectives':  return <ObjectivesTab doc={doc} onAdd={() => govAct({ title: 'Add objective', intent: 'Add a study objective and its endpoint.', basis: 'ICH M11 — Objectives & Endpoints' })} />;
@@ -467,7 +476,14 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk?:
           </div>
         </div>
         <div className="pd-head-r">
-          <span className="pd-autosave"><span className="pd-autosave-dot" />{'Autosaved · v' + (doc.version || '—') + (doc.updated ? ' · ' + doc.updated : '')}</span>
+          {/* Was "Autosaved · v{version}". The register forms on this surface do
+              persist (POST /api/protocol-{risks,milestones,amendments,deviations}),
+              but the section content does not: DocumentTab reaches for
+              window.DocCanvas, a global that is assigned nowhere in the
+              repository, and falls through to a static render. So the document
+              body is read-only and nothing about it is autosaved. The version is
+              still worth showing — it is real, from GET /api/protocol-dev. */}
+          <span className="pd-autosave">{'v' + (doc.version || '—') + (doc.updated ? ' · updated ' + doc.updated : '')}</span>
           <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk && onAsk('Review ' + doc.shortTitle + ' for completeness and list what blocks finalization.')}>Ask AnA</PG.Btn>
           <PG.Btn icon="fileText" variant="outline" onClick={() => govAct({ title: 'Export protocol', intent: 'Render the assembled protocol to DOCX / PDF.', esign: false })}>Export</PG.Btn>
         </div>

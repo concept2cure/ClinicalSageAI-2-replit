@@ -1,0 +1,205 @@
+{
+  "totalMulterSites": 28,
+  "withFileFilter": 21,
+  "withSizeLimit": 27,
+  "withAllowlist": 2,
+  "withSafetyMiddleware": 7,
+  "sites": [
+    {
+      "file": "server/academic-resource-upload.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/api/cmc/audit-risk-monitor.js",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/api/cmc/global-compliance.js",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/api/cmc/manufacturing-tuner.js",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/api/cmc/preclinical-translator.js",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/api/templates/routes.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": true
+    },
+    {
+      "file": "server/api/validation/index.js",
+      "hasFileFilter": false,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/middleware/uploadAllowlist.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": true,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/analytics-routes.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": true
+    },
+    {
+      "file": "server/routes/authoring.router.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/biotech-rag.js",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/c2c/templates.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/chat.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": true,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/client-intelligence.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/concept2cure.ts",
+      "hasFileFilter": false,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/ctd-onboarding.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": true
+    },
+    {
+      "file": "server/routes/document-routes.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": true
+    },
+    {
+      "file": "server/routes/evidence-management.routes.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": true
+    },
+    {
+      "file": "server/routes/ind-pdf.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/ind-templates.ts",
+      "hasFileFilter": false,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/knowledge-base.ts",
+      "hasFileFilter": false,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/medical-device-routes.js",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": true
+    },
+    {
+      "file": "server/routes/onboarding-proposals.ts",
+      "hasFileFilter": false,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/preclinical.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/routes/protocol_routes.ts",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": true
+    },
+    {
+      "file": "server/services/DocumentDataCenterService.ts",
+      "hasFileFilter": false,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/services/unifiedDocumentIngestion.js",
+      "hasFileFilter": true,
+      "hasSizeLimit": true,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    },
+    {
+      "file": "server/src/routes/stability.router.ts",
+      "hasFileFilter": false,
+      "hasSizeLimit": false,
+      "usesUploadAllowlist": false,
+      "usesUploadSafety": false
+    }
+  ]
+}

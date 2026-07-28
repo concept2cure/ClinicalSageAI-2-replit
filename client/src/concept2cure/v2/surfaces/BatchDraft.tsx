@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals -- runtime channels with no typed provider yet (kit
@@ -98,11 +99,29 @@ function bdFlatten(nodes: SpineNode[], out: LeafSection[]): LeafSection[] {
    honestly labeled "Sample" on the card and never presented as a real AnA draft;
    kept until the drafting action is wired to the real streaming service in the
    actions pass. */
+/**
+ * Escape text before it is concatenated into an HTML string.
+ *
+ * bdSample builds HTML by string concatenation, so every interpolated value is
+ * markup unless escaped. `sec.preview` comes from the API, which derives it
+ * from stored TipTap document content — attacker-influenced text arriving in a
+ * field that reads like a harmless summary. `sec.title` and `sec.num` are
+ * likewise server data.
+ */
+function bdEscape(s: unknown): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function bdSample(sec: LeafSection, agency: string): string {
   const seed = sec.preview || (sec.title + ' -- integrated summary.');
-  return '<h3>§' + sec.num + ' -- ' + sec.title + '</h3>'
-    + '<p>' + seed + '</p>'
-    + '<p>This first draft is structured per ' + (agency || 'FDA') + ' expectations for the section, '
+  return '<h3>§' + bdEscape(sec.num) + ' -- ' + bdEscape(sec.title) + '</h3>'
+    + '<p>' + bdEscape(seed) + '</p>'
+    + '<p>This first draft is structured per ' + bdEscape(agency || 'FDA') + ' expectations for the section, '
     + 'with each substantive claim carrying a citation marker back to locked source data '
     + '<span class="stream-cite">[E1]</span>. Quantitative results are stated with their confidence '
     + 'intervals and cross-referenced to the supporting study report. Benefit-risk language is kept '
@@ -487,7 +506,20 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                 {c.state === 'error' ? (
                   <div className="bd-card-err">{c.error}</div>
                 ) : (
-                  <div className="bd-card-body" dangerouslySetInnerHTML={{ __html: c.html || '<p class="bd-ph">Waiting to start...</p>' }} />
+                  // c.html is server-stored / streamed document HTML, injected
+                  // raw here until the 2026-07 audit. It reaches this sink from
+                  // two directions: the drafting stream's `content`, and
+                  // bdSample(), which interpolates a section preview the API
+                  // derives from stored TipTap content. Sanitized through the
+                  // same DOMPurify allowlist the chat surface uses — the
+                  // allowlist keeps h3/p/span.stream-cite, so sample and live
+                  // drafts render unchanged.
+                  <div
+                    className="bd-card-body"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeChatHtml(c.html) || '<p class="bd-ph">Waiting to start...</p>',
+                    }}
+                  />
                 )}
 
                 {c.state === 'done' && (
