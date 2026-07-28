@@ -204,6 +204,14 @@ export const C2C_MIGRATION_FILES = [
   // uniformly wrong. CREATE OR REPLACE FUNCTION only; no table is altered and
   // no existing row is rewritten.
   'migrations/20260728_c2c_section_version_author_kind.sql',
+
+  // authoring_comments never had the eight columns its own API references —
+  // parent_comment_id, user_name/user_email, position_data, the resolution
+  // trio, updated_at. GET /docs/:id/comments and its reply sub-query were
+  // therefore unconditional 42703 failures. All additive and nullable, so no
+  // backfill; guarded on the table so it no-ops where the authoring bundle is
+  // absent.
+  'migrations/20260728_authoring_comments_threading.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

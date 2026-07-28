@@ -854,19 +854,45 @@ router.get('/templates', async (req: Request, res: Response) => {
     const { category, template_type, search } = req.query;
     const tenantId = getTenantId(req);
 
+    // Every column here is one that authoring_templates actually has.
+    //
+    // This SELECT asked for t.name, t.module, t.region, t.description,
+    // t.section_count and t.active — SIX columns the table does not define
+    // (ensureTemplateTablesExist above creates template_name, regions and
+    // is_active). PostgreSQL rejects an unknown column at plan time, so this
+    // was an unconditional 42703: the endpoint 500'd on every request it had
+    // ever received.
+    //
+    // It failed quietly because the only caller degrades well —
+    // v2/surfaces/AuthoringCreateExport.tsx:53 wraps the fetch in
+    // `catch { /* picker stays blank-only */ }` and only populates when the
+    // body parses. So the "Start from" dropdown in the New Document dialog has
+    // silently offered nothing but "None" for the life of the feature, with no
+    // error anywhere a user or an operator would see.
+    //
+    // The `// template_type filter removed - column doesn't exist` note below
+    // is a previous encounter with this same bug, patched one filter at a time;
+    // template_type does exist, and that comment is wrong too. Fixing the
+    // SELECT is what actually resolves it.
+    //
+    // Aliased to the shape the client reads (`t.name ?? t.title`) so the
+    // response contract is unchanged.
     let query = `
       SELECT
         t.id,
-        t.name,
+        t.template_name AS name,
         t.template_name,
-        t.module,
-        t.region,
-        t.description,
-        t.section_count,
+        t.template_type,
+        t.category,
+        t.regions,
+        t.metadata ->> 'description' AS description,
+        CASE WHEN jsonb_typeof(t.template_content -> 'sections') = 'array'
+             THEN jsonb_array_length(t.template_content -> 'sections')
+             ELSE 0 END AS section_count,
         t.created_at,
-        t.active
+        t.is_active AS active
       FROM authoring_templates t
-      WHERE t.tenant_id = $1 AND t.active = true
+      WHERE t.tenant_id = $1 AND t.is_active = true
     `;
 
     const params: any[] = [tenantId];
@@ -878,11 +904,19 @@ router.get('/templates', async (req: Request, res: Response) => {
       params.push(category);
     }
 
-    // template_type filter removed - column doesn't exist
+    // template_type DOES exist (see ensureTemplateTablesExist); the filter was
+    // removed under the mistaken belief that it did not. Restored.
+    if (template_type) {
+      paramCount++;
+      query += ` AND t.template_type = $${paramCount}`;
+      params.push(template_type);
+    }
 
     if (search) {
+      // Was `OR LOWER(t.name)` — t.name does not exist, so this branch was part
+      // of the same 42703.
       paramCount++;
-      query += ` AND (LOWER(t.template_name) LIKE LOWER($${paramCount}) OR LOWER(t.name) LIKE LOWER($${paramCount}))`;
+      query += ` AND LOWER(t.template_name) LIKE LOWER($${paramCount})`;
       params.push(`%${search}%`);
     }
 
@@ -893,7 +927,9 @@ router.get('/templates', async (req: Request, res: Response) => {
     res.json({
       success: true,
       templates: result.rows,
-      count: result.rowCount,
+      // rows.length, not rowCount: rowCount is a node-postgres field and is not
+      // populated by every driver this code is exercised against.
+      count: result.rows.length,
     });
   } catch (error) {
     console.error('Error listing templates:', error);
@@ -4082,10 +4118,25 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
       return res.status(404).json({ error: 'Template not found for current locale' });
     }
 
-    // Get existing sections
+    // COLUMN NAMES. authoring_sections is (id, doc_id, code, title, content,
+    // order_index, track_changes, tenant_id, created_at, updated_at) — see
+    // db/migrations/20260725_authoring_document_loop_tables.sql. There is no
+    // ALTER TABLE for it anywhere, so that is the complete schema.
+    //
+    // This block used `document_id`, `order_idx`, `created_by` and `updated_by`:
+    // four columns that do not exist. Every statement below was an
+    // unconditional 42703, so applying a template has never once succeeded.
+    // `order_idx` is the field name in the template JSON on disk, which is
+    // where the confusion came from — it is not the column name.
+    //
+    // TENANCY. The SELECT and UPDATE also matched on document/section id alone.
+    // Left unscoped, fixing only the column names would have converted a broken
+    // statement into a working cross-tenant write — a template applied to
+    // another tenant's document. tenantId is already resolved above; it is now
+    // in every predicate.
     const existingResult = await pool.query(
-      'SELECT id, code FROM authoring_sections WHERE document_id = $1',
-      [req.params.docId]
+      'SELECT id, code FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2',
+      [req.params.docId, tenantId]
     );
 
     const existingMap = new Map(existingResult.rows.map(x => [x.code, x.id]));
@@ -4105,22 +4156,22 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
         // Update existing section
         await pool.query(
           `UPDATE authoring_sections
-           SET title = $2, order_idx = $3, content = $4, updated_by = $5, updated_at = NOW()
-           WHERE id = $1`,
+              SET title = $2, order_index = $3, content = $4, updated_at = NOW()
+            WHERE id = $1 AND tenant_id = $5`,
           [
             existingId,
             section.title || '',
             section.order_idx || 0,
             JSON.stringify(section.content || {}),
-            'template',
+            tenantId,
           ]
         );
         upserts++;
       } else {
         // Insert new section
         await pool.query(
-          `INSERT INTO authoring_sections (id, document_id, code, title, order_idx, content, created_by, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          `INSERT INTO authoring_sections (id, doc_id, code, title, order_index, content, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
             crypto.randomUUID(),
             req.params.docId,
@@ -4128,7 +4179,6 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
             section.title || '',
             section.order_idx || 0,
             JSON.stringify(section.content || {}),
-            'template',
             tenantId,
           ]
         );
