@@ -142,6 +142,24 @@ export const C2C_MIGRATION_FILES = [
   // nothing, one index, and its own tenant_isolation_policy — 0021 has long
   // since run and never revisits a newly-added table.
   'db/migrations/20260728_artifacts_table.sql',
+  // ── CMC Module 3 tenant-scoped uniqueness (added 2026-07-28) ──────────────
+  // SECURITY. cmc_module3_sections and cmc_source_objects were unique on keys
+  // that omit organization_id (migrations/0016:22, migrations/0017:102,107).
+  // Uniqueness is what ON CONFLICT arbitrates against, so an org-blind key
+  // decides WHOSE ROW an upsert lands on — and the Module 3 compile route
+  // upserted on (project_id, section_key), matching any tenant's row for that
+  // project id while the DO UPDATE SET left organization_id alone.
+  //
+  // This one MUST be on the durable path, not just in migrations/. The root
+  // tree is applied only by install-fresh (new databases). Every already-
+  // provisioned database — which is every database that has the defect — gets
+  // schema only from this list. Landing the code fix without this entry would
+  // ship an ON CONFLICT clause naming an index that does not exist there:
+  // "there is no unique or exclusion constraint matching the ON CONFLICT
+  // specification" (42P10) on every compile. Merged-but-never-applied is the
+  // failure mode this module exists to prevent; here it would also be an
+  // outage.
+  'migrations/20260728_cmc_module3_org_scoped_uniqueness.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
