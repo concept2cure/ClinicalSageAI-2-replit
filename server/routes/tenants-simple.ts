@@ -8,6 +8,7 @@ import { authMiddleware } from '../auth';
 import { requireRole, invalidateOrgMembershipCache } from '../middleware/auth';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
+import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 
 const log = createScopedLogger('tenants-simple');
 
@@ -150,6 +151,11 @@ router.post('/', requireRole('super_admin', 'platform_admin'), async (req, res) 
     // SECURITY: Use crypto.randomBytes for API key generation (not Math.random)
     const crypto = await import('crypto');
     const apiKey = 'c2c_' + crypto.randomBytes(24).toString('base64url');
+
+    // Tenant isolation posture: refuse to make this deployment multi-tenant while
+    // Postgres RLS is not filtering rows. No-ops locally and for the founding
+    // organization. See server/db/tenantAdmission.ts.
+    await assertCanAdmitNewTenant();
 
     // Use postgres to create tenant
     const result = await sql`
