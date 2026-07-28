@@ -10,8 +10,9 @@ This is a substantial, genuinely-engineered platform whose hardest problems are 
 solved and whose connective tissue is missing. The tamper-evident audit chain is real
 cryptography. The default-deny authorization boundary holds under live probing. The
 proof-tier test suites apply real migrations to a real database and pass, 171 tests with
-zero skips. Against that: a from-scratch install silently omits fifteen Postgres schemas, the
-health probe reports green over a database with no authentication tables, the flagship
+zero skips. Against that: the supported install path silently omits fifteen Postgres schemas — five of
+which have no provisioning path at all — the health probe reports green over a database with
+no authentication tables, the flagship
 typecheck gate passes because the compiler runs out of memory, every row-level-security
 policy is compiled and inert, and the system has never been validated. **None of the gap to a
 credible external pilot is architectural** — it is roughly seven specific, locatable defects,
@@ -36,11 +37,11 @@ Each was proven by executing the system, not by reading it. Full detail in
 | # | Finding | Sev |
 |---:|---|---|
 | 1 | **The typecheck gate is vacuous.** It counts `error TS` strings and never checks tsc's exit code. `tsc` runs out of memory at the 6,144 MB cap *the gate itself sets*; a crash log contains no matches, so it reports zero and passes. Given 24 GB it completes with **2 real errors**, from a PR merged the day before this audit. Observed passing in CI on this audit's own PR. | P0 |
-| 2 | **A from-scratch install reports success while being materially incomplete.** It prints `✅ Application schema install complete`, delivers 702 tables / 572 policies (beating its own claim), and never creates **15 Postgres schemas** that server code queries. At least four **mounted** route families cannot serve a request. | P0 |
+| 2 | **A from-scratch install reports success while being materially incomplete.** It prints `✅ Application schema install complete`, delivers 702 tables / 572 policies, and creates **none of the 15 Postgres schemas** server code queries. A documented follow-on psql loop — which the installer names but does not run — supplies 9; one self-provisions. **Five have no provisioning path anywhere.** Either way, four **mounted** route families are permanently broken. *(Corrected — see Ch 03.)* | P0 |
 | 3 | **`/readyz` returns 200 `ready:true` over a database missing** `auth_users`, `auth_refresh_tokens`, `roles`, `permissions`, `user_roles`, `licenses`. Three branches of `startup/services.ts` never set schema readiness. The container `HEALTHCHECK` points here. | P0 |
 | 4 | **Every RLS policy is compiled and inert** — gated on a session variable nothing sets — and cannot be switched on until 81 route files move off the shared pool. Tenant isolation is single-layer. | P0 |
 | 5 | **A live cross-tenant write path** reproducing all four ingredients of the P0 fixed in #1186, in the Schedule-of-Events subsystem. | P1 |
-| 6 | **Reachable XSS fed by model output** — `BatchDraft.tsx` renders streamed AI content as raw HTML; drafts are shared across a project team. | P1 |
+| 6 | **Stored XSS on a reachable surface** — `BatchDraft.tsx:490` renders unsanitized HTML built from a persisted document title/preview, and `derivePreview` **HTML-entity-decodes** markup the editor had escaped, re-animating it. *(Corrected — my first reading blamed streamed model output, which is dead code. See Ch 03.)* | P1 |
 | 7 | **The attach button silently discards every file.** Files are kept as names only; the message posts the literal text `Attached N file(s)`. A user asks about an uploaded document and gets a fluent answer grounded in nothing. | P0 |
 | 8 | **`SECURITY.md` makes two unsupported claims** — "21 CFR Part 11 compliant" and "SOC 2 Type II controls". No SOC 2 report, auditor or control matrix exists anywhere in the repository. **One-hour fix; highest return in the audit.** | P1 |
 | 9 | **The system is not validated.** A full IQ/OQ/PQ/VSR protocol set exists and every execution record is blank. The VSR reads `DRAFT — REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE`. | P2 |
@@ -56,8 +57,10 @@ rather than a hit piece.
   matrix that refuses to start rather than run unsealed. Rebuilding this takes quarters.
 - **Proof-tier tests apply real migration files** to a real in-process Postgres — 171 tests,
   0 skipped, all passing. They exist because the team caught `vi.mock` hiding schema conflicts.
-- **The authorization boundary holds** — nine data endpoints probed unauthenticated all
-  returned 401, including in development, where static reading predicted otherwise.
+- **The authorization boundary holds, and is stronger than I first reported** — nine data
+  endpoints probed unauthenticated all returned 401. There are **two** global `/api` gates, one
+  of which enforces unconditionally in every environment, and route-level guard coverage is
+  **~50%, not the 14% my first sweep measured**. *(Corrected — see Ch 03.)*
 - **The AI gateway fails closed in production** rather than serving demo content, with the
   reasoning written inline.
 - **The platform refuses rather than fabricates** — anti-fabrication reject-lists in code,
@@ -75,7 +78,7 @@ vendors**, researched live. Detail: [Chapter 13](13-competitive-scorecard.md).
 "not competitive."**
 
 That severity comes from the lens, chosen deliberately: everything is scored on **what ships
-and is reachable**. Three properties get punished hard — only 5 of ~101 surfaces are
+and is reachable**. Three properties get punished hard — only 5 of 96 registered surfaces are
 navigable; every IQ/OQ/PQ record is blank, which several category analyses independently
 called *disqualifying rather than a deduction*; and the comparators are Veeva, LORENZ,
 Certara, Oracle, MasterControl and Cytel. **These scores measure procurement-readiness, not
@@ -90,6 +93,18 @@ twelve-category suite while being competitive in one.
 
 Where breadth was the thesis, breadth lost: RIM −3.2, pharmacovigilance −3.9, QMS −3.2. Those
 gaps are built on install base and validation packages, which engineering does not close soon.
+
+## A note on this audit's own reliability
+
+All ten headline findings were handed to independent verifiers instructed to **refute** them.
+**Four survived intact; six needed correction, three of them materially.** Chapter 03 lists
+every one, including the two where I was simply wrong: authorization coverage (off by ~3×) and
+the XSS taint path (I blamed dead code and missed a server-side entity-decode that re-animates
+escaped markup).
+
+**The findings that decide the verdict all survived** — the vacuous typecheck gate, inert RLS,
+the live cross-tenant write path, and the file-discarding attach button. The verdict below is
+unchanged; the precision behind it is materially better.
 
 ## The finding underneath all the others
 

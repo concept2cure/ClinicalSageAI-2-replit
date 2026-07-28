@@ -2,7 +2,7 @@
 
 Twelve offering categories, five closest competitors each — **66 competitor profiles**, researched live on the web with source URLs, and scored against a per-category rubric alongside this platform.
 
-**Method.** Categories are derived from `shared/regulatory/app-registry.ts`, the codebase's own canonical offering taxonomy, so the comparison is against what is actually sold rather than what a slide claims. Competitor facts carry URLs; our scores carry `file:line`. Everything is scored on **what ships and is reachable** — a capability a user cannot navigate to does not win deals, and this platform currently surfaces 5 of ~101 registered surfaces in its global navigation (Chapter 09).
+**Method.** Categories are derived from `shared/regulatory/app-registry.ts`, the codebase's own canonical offering taxonomy, so the comparison is against what is actually sold rather than what a slide claims. Competitor facts carry URLs; our scores carry `file:line`. Everything is scored on **what ships and is reachable** — a capability a user cannot navigate to does not win deals, and this platform currently surfaces 5 of 96 registered surfaces in its global navigation (Chapter 09).
 
 ## Scorecard
 
@@ -29,7 +29,7 @@ Twelve offering categories, five closest competitors each — **66 competitor pr
 
 A 1.8-versus-4.6 average and ten "not competitive" verdicts is a severe result, and it is severe **because of the lens, which was chosen deliberately**. Every dimension was scored on what *ships and is reachable today* — not on what is architected, coded, or nearly done. Three properties of this platform get punished hard by that lens, and all three are documented elsewhere in this audit:
 
-1. **Reachability.** 5 of ~101 registered surfaces are in the global navigation (Chapter 09). A capability a buyer cannot click to does not score, however good the code behind it is. Several categories here are scored near-zero on surfaces that demonstrably exist in the codebase.
+1. **Reachability.** 5 of 96 registered surfaces are in the global navigation (Chapter 09). A capability a buyer cannot click to does not score, however good the code behind it is. Several categories here are scored near-zero on surfaces that demonstrably exist in the codebase.
 2. **Validation.** Every IQ/OQ/PQ execution record is blank and the VSR reads `DRAFT` (Chapter 07). In this market that is not a deduction — it is disqualification. Multiple category analyses independently reached the same conclusion: **the product does not reach technical evaluation** without a qualification package, regardless of engine quality.
 3. **Incumbency.** The comparators are Veeva, LORENZ, Certara, Oracle, MasterControl and Cytel — decades of install base, agency familiarity, and accumulated edge-case handling. A 4.6 average for "best in category" is what a mature category looks like.
 

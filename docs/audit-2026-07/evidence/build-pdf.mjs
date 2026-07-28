@@ -17,6 +17,7 @@ const CORE_ONLY = process.argv.includes('--core')
 
 const CORE = [
   ['00-executive-summary.md', 'Executive summary'],
+  ['03-verification-and-corrections.md', 'Verification of this audit\'s own claims'],
   ['01-method-and-coverage.md', 'Method and coverage'],
   ['02-architecture-map.md', 'The as-built architecture'],
   ['04-security.md', 'Security'],
