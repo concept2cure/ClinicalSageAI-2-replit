@@ -143,27 +143,6 @@ export const C2C_MIGRATION_FILES = [
   // nothing, one index, and its own tenant_isolation_policy — 0021 has long
   // since run and never revisits a newly-added table.
   'db/migrations/20260728_artifacts_table.sql',
-  // ── Authoring supplementary stores (G-02, added 2026-07-28) ───────────────
-  // Ten independent tables the authoring router / command-executor read and write
-  // (AI suggestions, reviews, checklists, change-requests, compliance scores,
-  // comment activity, audit events, doc sections) that no migration created — every
-  // one of those endpoints 500s or silently no-ops on a fresh database. Shapes are
-  // derived from the live INSERT/SELECT/UPDATE statements. Self-contained
-  // CREATE TABLE IF NOT EXISTS + pg_constraint-guarded intra-cluster FKs only, so it
-  // is order-independent here. NOT the Part 11 authoring subsystem.
-  'db/migrations/20260728_authoring_supplementary_tables.sql',
-  // MAUD validation persistence (G-02): the canonical, durable definition of
-  // maud_algorithms / maud_validations / maud_validation_requests. The only prior
-  // CREATE TABLE lived in the ARCHIVED db/migrations/_consolidated/ directory, which
-  // the schema scanners exclude and no apply path runs. Self-contained + idempotent.
-  'db/migrations/20260728_maud_validation_tables.sql',
-  // CER literature corpus (G-02): literature_entries, read by
-  // regulatory-programs.service.ts (the literature-density chart and the portfolio
-  // corpus insight) and written by scripts/seed-mdx-content.mjs. Its only CREATE
-  // TABLE was likewise archived. Canonical org-scoped shape derived from the live
-  // code; the pgvector embedding column is deliberately omitted (no live writer, and
-  // it would require an extension absent from this baseline).
-  'db/migrations/20260728_literature_entries.sql',
   // ── Stability module tenant isolation (High-severity security fix) ────────
   // docs/security/STABILITY_TENANT_ISOLATION_FINDING.md. The stability router scoped
   // GMP data by surrogate id with no tenant predicate, and its
