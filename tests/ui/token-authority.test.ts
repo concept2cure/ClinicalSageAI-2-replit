@@ -39,6 +39,9 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// One implementation, shared with surface-honesty.contract.test.ts — see that
+// file's header for why this is a state machine and not a pair of regexes.
+import { stripComments } from './_strip-comments';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ENTRY = path.join(REPO_ROOT, 'client/src/main.tsx');
@@ -66,66 +69,6 @@ const DECL = /(--[A-Za-z0-9_-]+)\s*:\s*([^;}]+)/g;
 
 const rel = (abs: string) => path.relative(REPO_ROOT, abs).split(path.sep).join('/');
 
-/**
- * Comments must be removed before ANY scan below, for two independently
- * demonstrated reasons — both of which produced a wrong answer in this file
- * before it was written this way:
- *
- *   • main.tsx carries the comment `See design-system/CLAUDE.md "Token import"
- *     section.` The specifier regex matched the word `import` inside it, took
- *     the following `"` as an opening quote, and consumed forward to the next
- *     quote in the file — which was the opening quote of the real
- *     `import '../../design-system/colors_and_type.css'` on the next line.
- *     Canonical then vanished from the graph entirely.
- *   • index.css documents, in prose, that no `var(--zen-*)` remains. A scan for
- *     `var(--zen-` therefore matched the sentence saying there are none.
- *
- * This is a state machine, not a pair of regexes, because the regex version was
- * wrong in a way that silently emptied the graph rather than failing. App.jsx
- * line 15 is a `//` comment documenting the route `/concept2cure/*`. A
- * block-comment regex sees the `/*` inside that line comment, opens a comment
- * there, and closes it at the next comment terminator — 42 lines later, inside
- * a JSX comment.
- * Every `import` statement in the file lies between those two points, so App.jsx
- * scanned as a leaf with zero imports and the entire application below it
- * disappeared. Swapping the two regexes just moves the failure (a `//` inside a
- * block comment then leaves it unterminated).
- *
- * Comments are blanked in place rather than removed, so byte offsets and line
- * numbers stay valid for the brace-matching in `rootTokens`.
- */
-function stripComments(src: string, isCss: boolean): string {
-  const out = src.split('');
-  const blank = (from: number, to: number) => {
-    for (let k = from; k < to && k < out.length; k++) if (out[k] !== '\n') out[k] = ' ';
-  };
-  let i = 0;
-  while (i < src.length) {
-    const c = src[i];
-    const next = src[i + 1];
-    if (c === '/' && next === '*') {
-      const end = src.indexOf('*/', i + 2);
-      const stop = end === -1 ? src.length : end + 2;
-      blank(i, stop);
-      i = stop;
-    } else if (!isCss && c === '/' && next === '/') {
-      const nl = src.indexOf('\n', i);
-      const stop = nl === -1 ? src.length : nl;
-      blank(i, stop);
-      i = stop;
-    } else if (c === '"' || c === "'" || c === '`') {
-      // Skip string bodies so a `//` or `/*` inside one is never treated as a
-      // comment. Escape-aware; template-literal interpolation is not descended
-      // into, which is safe here because no import specifier lives inside one.
-      i++;
-      while (i < src.length && src[i] !== c) i += src[i] === '\\' ? 2 : 1;
-      i++;
-    } else {
-      i++;
-    }
-  }
-  return out.join('');
-}
 
 /** Resolve a specifier the way Vite does for this repo's aliases. */
 function resolve(spec: string, fromFile: string): string | null {
