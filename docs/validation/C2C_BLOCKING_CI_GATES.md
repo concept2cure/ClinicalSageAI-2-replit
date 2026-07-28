@@ -30,7 +30,25 @@ found controls that existed and were wired to nothing:
 
 Of 68 scripts matching `ci:|check:|audit:|verify:`, 38 run in CI. Most of the
 remainder are `:strict` and `:write-baseline` variants that are *deliberately*
-manual, plus advisory audits (`audit:dead-code` runs knip with `--no-exit-code`).
+manual.
+
+`audit:dead-code` was the sharpest instance of the shape this document is about,
+and it was worse than unwired — it was **wired to an analysis that never ran**.
+It invoked knip with `--no-exit-code`, so the job could not fail; and knip itself
+aborted on two config-load errors (`drizzle.config.ts` wants `DATABASE_URL`,
+`vitest.workspace.ts` calls a removed `defineWorkspace`), so it built no module
+graph at all. The output was therefore a clean bill of health assembled from
+nothing: zero unreferenced files, and 188 "unused dependencies" including
+`@anthropic-ai/sdk`, `drizzle-orm` and `zod`. One of its three entry points,
+`client/src/concept2cure/ZenApp.tsx`, had also been deleted from the repo.
+
+It is now `ci:unreferenced-modules` (`scripts/ci/check-unreferenced-modules.mjs`),
+blocking in CI on a baseline that may only shrink. The scanner is small enough to
+audit by reading, and `tests/ci/unreferenced-modules.contract.test.ts` pins the
+two repo-specific resolution quirks that make the obvious implementation call
+live routers dead — ESM `.js` specifiers naming `.ts` files, and routers mounted
+from a manifest of path strings rather than import literals. Both were
+mutation-verified: reverting either behaviour fails the suite.
 
 **The lesson generalises past CI:** a control that exists, looks right, and is
 attached to nothing is the same defect shape as a service that ships without
