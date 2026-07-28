@@ -174,14 +174,22 @@ Better than expected, and worth crediting:
   `server/services/ai-governance/approved-models.ts`.
 - **GDPR services exist** — `gdprComplianceService.ts`, `globalComplianceEngine.ts`.
 
-Two shipped defaults undercut it, and both are one-line changes:
+One shipped default undercuts it, and it is a one-line change:
 
-- **`AI_PII_ENFORCEMENT=audit`** is the `.env.example` default — the PII gate *observes*
-  rather than *blocks*. For a platform whose users paste clinical narratives, the default
-  should be `block`.
-- **`OPENAI_ZERO_RETENTION=false` and `ANTHROPIC_ZERO_RETENTION=false`** are the shipped
-  defaults. Unless the operator has a BAA/ZDR contract and flips these, customer regulatory
-  content is retained by the provider under standard terms.
+- **`AI_PII_ENFORCEMENT=audit`** (`.env.example:109`) — the PII gate *observes* rather than
+  *blocks*. For a platform whose users paste clinical narratives, the default should be
+  `block`.
+
+The adjacent zero-retention flags are, by contrast, **correctly set and worth crediting**:
+`OPENAI_ZERO_RETENTION` and `ANTHROPIC_ZERO_RETENTION` default `false` (`:65-66`) under the
+comment *"Flip to true only once a signed zero-retention agreement is actually in force"*,
+while `AI_BEDROCK_/AI_VERTEX_/AI_AZURE_ZERO_RETENTION` default `true` because those
+deployments carry ZDR contractually. Declaring a retention guarantee you do not hold would be
+the compliance defect; declining to is the right call.
+
+The exposure is the **interaction** between the two: with ZDR honestly `false` and the PII
+gate in `audit` mode, protected content can reach a non-ZDR provider and be recorded rather
+than refused. Flipping the PII default closes it without touching the ZDR flags.
 
 ---
 

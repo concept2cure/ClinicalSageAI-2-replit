@@ -171,13 +171,27 @@ with `npm ls`) — see Chapter 11 §11.9.
   (RAG/tool-output/assistant history) and any hit blocking on user messages. Bounded gaps
   prevent ReDoS. Its own header is honest: *"This is a heuristic layer, not a guarantee."*
   The test is thin — 20 parameterised cases, though the 10 benign ones are the valuable half.
-- **PII screening ships in the wrong mode.** `.env.example` defaults
+- **PII screening ships in the wrong mode.** `.env.example:109` defaults
   `AI_PII_ENFORCEMENT=audit` — observe, do not block. For a product whose users paste
-  clinical narratives, `block` is the correct default.
-- **Zero-retention defaults are off.** `OPENAI_ZERO_RETENTION=false` and
-  `ANTHROPIC_ZERO_RETENTION=false` ship as defaults, so without an explicit operator change
-  customer regulatory content is retained by providers under standard terms. Residency
-  enforcement itself is genuinely well built (`ai-governance/approved-models.ts`).
+  clinical narratives, `block` is the correct default. **This is the real defect in this
+  section.**
+- **The zero-retention defaults are correct, and are a credit.** `OPENAI_ZERO_RETENTION` and
+  `ANTHROPIC_ZERO_RETENTION` default to `false` (`.env.example:65-66`) under the comment
+  *"Zero-retention flags for the SHARED frontier APIs (default false). Flip to true only once
+  a signed zero-retention agreement is actually in force."* — while the enterprise-hosted
+  providers that do carry ZDR contractually (`AI_BEDROCK_`, `AI_VERTEX_`, `AI_AZURE_`)
+  default to `true` (`:39,47,55`). Defaulting a shared-API ZDR claim to `false` is the honest
+  choice; asserting a retention guarantee you do not hold would be the defect.
+  Residency enforcement is likewise well built (`ai-governance/approved-models.ts`).
+- **The combined risk is the interaction, not either flag.** With ZDR correctly declared
+  `false` and the PII gate in `audit` mode, protected content can reach a non-ZDR provider
+  and be *recorded* rather than *refused*. Fixing the PII default closes it; the ZDR flags
+  should be left alone.
+- **The gateway fails closed in production.** With no provider configured,
+  `gateway.ts:531-537` **throws** rather than serving demo content, with the reasoning written
+  in-line: *"serving demo-mode … regulatory text from a keyless prod deploy would silently
+  present fabricated content as a real AI response."* Outside production it falls back to a
+  deterministic response. This is exactly the right shape and is credited as a strength.
 
 ## 4.7 Priority actions
 
@@ -187,7 +201,7 @@ with `npm ls`) — see Chapter 11 §11.9.
 | 2 | Re-enable ESLint on `client/src/**`; at minimum `react/no-danger` + security rules | P1 | G1 | days |
 | 3 | Add `fileFilter` + `limits.fileSize` to `stability.router.ts`; wire `uploadAllowlist`/`uploadSafety` into all 28 multer sites | P1 | G1 | days |
 | 4 | Apply `ssrfGuard` to `citation-verification-service.ts` and the `AnaToolExecutor` fetch sites | P1 | G1 | days |
-| 5 | Flip `AI_PII_ENFORCEMENT` default to `block`; document the zero-retention posture as a deployment prerequisite | P1 | G2 | hours |
+| 5 | Flip the `AI_PII_ENFORCEMENT` default to `block`. Leave the ZDR flags as they are — their `false` default is correct — but make the PII gate the thing that stops protected content reaching a non-ZDR provider | P1 | G2 | hours |
 | 6 | Record the chromadb exposure determination, or drop the dependency | P1 | G2 | hours |
 | 7 | Resolve the `.trivyignore` ↔ `audit-with-allowlist.mjs` contradiction; delete the entry if the package is genuinely absent | P2 | G2 | 1 h |
 | 8 | SHA-pin all 137 GitHub Actions references; replace the deprecated Semgrep action | P2 | G2 | hours |
