@@ -32,8 +32,12 @@ The fix aligns the stability module with the app's **canonical** RLS instead of 
    by surrogate id (`capa_id`, `study_id`) affect **zero** rows; shadow mode bypasses (proving the
    policy is what isolates); missing context is fail-closed.
 
-**Follow-up (tracked):** create the seven unbacked `stab_*` tables + `cmc_methods` with `tenant_id`
-from birth and define the two `v_stab_*` views, then drop them from `unbacked-tables-baseline.json`.
+**Follow-up — DELIVERED (2026-07-28):** `db/migrations/20260728_stability_backing_tables.sql` creates
+the seven unbacked `stab_*` tables with `tenant_id` + the policy from birth, the two `v_stab_*` views
+(`security_invoker`, so they isolate via the base tables' RLS), and `cmc_methods` as a **global
+catalog** (no tenant column — it is joined by id, never tenant-filtered, and tenant-scoping it would
+hide every method). Shapes reconstructed from `_legacy/031‑035` + the router queries; proven by
+`tests/schema-contract/stability-backing-tables.contract.test.ts`. Unbacked baseline 76 → 66.
 
 ---
 

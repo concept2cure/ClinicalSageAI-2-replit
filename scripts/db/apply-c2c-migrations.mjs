@@ -117,6 +117,13 @@ const FILES = [
   // catalog-driven ALTER/policy DO-block: a no-op on a DB where the stab_* tables do
   // not yet exist (idempotent, re-run safe), so order-independent here.
   'db/migrations/20260728_stability_tenant_isolation.sql',
+  // Back the seven unbacked stab_* tables + the shared cmc_methods catalog + the two
+  // v_stab_* views (G-02 follow-up), tenant-isolated from birth (tenant_id NOT NULL +
+  // the same policy loop as the isolation migration). cmc_methods is a global catalog
+  // (no tenant column). Views are security_invoker + guarded on their base tables.
+  // Shapes reconstructed from _legacy/031-035 + the router queries. Must run AFTER the
+  // isolation migration; idempotent + self-contained (no FKs), so order-independent here.
+  'db/migrations/20260728_stability_backing_tables.sql',
   // Industry-context tailoring: organization_industry_profiles +
   // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
   // EXISTS, no data statements).

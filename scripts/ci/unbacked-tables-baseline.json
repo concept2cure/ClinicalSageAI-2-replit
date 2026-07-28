@@ -1,7 +1,7 @@
 {
   "$comment": "Tables referenced by server SQL that NOTHING in the repo creates — no migration, no drizzle pgTable, no runtime DDL. Pinned to the exact referencing file set, so an entry cannot silently acquire new call sites. Every entry is a feature that either returns 500 (unguarded query) or silently no-ops (query inside try/catch). Each is a defect awaiting a code-derived migration or a retirement, NOT an approved pattern. Shrink this file; never grow it. See ledger C-11/C-14 for the remediation pattern: derive the shape from the queries, add one canonical migration, prove it with a golden journey.",
   "generatedAt": "2026-07-28T00:00:00.000Z",
-  "total": 76,
+  "total": 66,
   "entries": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -42,9 +42,6 @@
     ],
     "clinical_ops.endpoint_results": [
       "server/services/regulatory-programs.service.ts"
-    ],
-    "cmc_methods": [
-      "server/src/routes/stability.router.ts"
     ],
     "concept2cure_projects": [
       "server/services/resolution/contradiction-resolution-orchestrator.ts"
@@ -165,27 +162,6 @@
     "specification_audit_log": [
       "server/api/cmc/specificationRoutes.ts"
     ],
-    "stab_assignments": [
-      "server/src/routes/stability.router.ts"
-    ],
-    "stab_capa": [
-      "server/src/routes/stability.router.ts"
-    ],
-    "stab_chain": [
-      "server/src/routes/stability.router.ts"
-    ],
-    "stab_excursions": [
-      "server/src/routes/stability.router.ts"
-    ],
-    "stab_protocols": [
-      "server/src/routes/stability.router.ts"
-    ],
-    "stab_samples": [
-      "server/src/routes/stability.router.ts"
-    ],
-    "stab_signoffs": [
-      "server/src/routes/stability.router.ts"
-    ],
     "step_runs": [
       "server/services/workflow/WorkflowExecutionEngine.ts"
     ],
@@ -209,12 +185,6 @@
     ],
     "user_roles": [
       "server/services/rules-engine/actions/index.ts"
-    ],
-    "v_stab_due_tp": [
-      "server/src/routes/stability.router.ts"
-    ],
-    "v_stab_upcoming_tp": [
-      "server/src/routes/stability.router.ts"
     ],
     "vault.document_chunks": [
       "server/services/advancedRAGPipeline.ts",
