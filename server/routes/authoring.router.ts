@@ -14,6 +14,10 @@ import { getPool } from '../db';
 import auditService from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+// c2c_documents is the system of record for a filing; this router is the
+// editing layer over it. This resolves which governed document an authored
+// document belongs to. See server/services/c2c/governed-document-binding.ts.
+import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -854,19 +858,45 @@ router.get('/templates', async (req: Request, res: Response) => {
     const { category, template_type, search } = req.query;
     const tenantId = getTenantId(req);
 
+    // Every column here is one that authoring_templates actually has.
+    //
+    // This SELECT asked for t.name, t.module, t.region, t.description,
+    // t.section_count and t.active — SIX columns the table does not define
+    // (ensureTemplateTablesExist above creates template_name, regions and
+    // is_active). PostgreSQL rejects an unknown column at plan time, so this
+    // was an unconditional 42703: the endpoint 500'd on every request it had
+    // ever received.
+    //
+    // It failed quietly because the only caller degrades well —
+    // v2/surfaces/AuthoringCreateExport.tsx:53 wraps the fetch in
+    // `catch { /* picker stays blank-only */ }` and only populates when the
+    // body parses. So the "Start from" dropdown in the New Document dialog has
+    // silently offered nothing but "None" for the life of the feature, with no
+    // error anywhere a user or an operator would see.
+    //
+    // The `// template_type filter removed - column doesn't exist` note below
+    // is a previous encounter with this same bug, patched one filter at a time;
+    // template_type does exist, and that comment is wrong too. Fixing the
+    // SELECT is what actually resolves it.
+    //
+    // Aliased to the shape the client reads (`t.name ?? t.title`) so the
+    // response contract is unchanged.
     let query = `
       SELECT
         t.id,
-        t.name,
+        t.template_name AS name,
         t.template_name,
-        t.module,
-        t.region,
-        t.description,
-        t.section_count,
+        t.template_type,
+        t.category,
+        t.regions,
+        t.metadata ->> 'description' AS description,
+        CASE WHEN jsonb_typeof(t.template_content -> 'sections') = 'array'
+             THEN jsonb_array_length(t.template_content -> 'sections')
+             ELSE 0 END AS section_count,
         t.created_at,
-        t.active
+        t.is_active AS active
       FROM authoring_templates t
-      WHERE t.tenant_id = $1 AND t.active = true
+      WHERE t.tenant_id = $1 AND t.is_active = true
     `;
 
     const params: any[] = [tenantId];
@@ -878,11 +908,19 @@ router.get('/templates', async (req: Request, res: Response) => {
       params.push(category);
     }
 
-    // template_type filter removed - column doesn't exist
+    // template_type DOES exist (see ensureTemplateTablesExist); the filter was
+    // removed under the mistaken belief that it did not. Restored.
+    if (template_type) {
+      paramCount++;
+      query += ` AND t.template_type = $${paramCount}`;
+      params.push(template_type);
+    }
 
     if (search) {
+      // Was `OR LOWER(t.name)` — t.name does not exist, so this branch was part
+      // of the same 42703.
       paramCount++;
-      query += ` AND (LOWER(t.template_name) LIKE LOWER($${paramCount}) OR LOWER(t.name) LIKE LOWER($${paramCount}))`;
+      query += ` AND LOWER(t.template_name) LIKE LOWER($${paramCount})`;
       params.push(`%${search}%`);
     }
 
@@ -893,7 +931,9 @@ router.get('/templates', async (req: Request, res: Response) => {
     res.json({
       success: true,
       templates: result.rows,
-      count: result.rowCount,
+      // rows.length, not rowCount: rowCount is a node-postgres field and is not
+      // populated by every driver this code is exercised against.
+      count: result.rows.length,
     });
   } catch (error) {
     console.error('Error listing templates:', error);
@@ -1242,12 +1282,65 @@ router.post('/docs', async (req: Request, res: Response) => {
     // supplied. A create without client_program_id (the org-wide path and the
     // golden-journey harness) emits the exact original statement, so databases
     // that lack the 20260727 migration keep working.
+    // GOVERNED BINDING. c2c_documents is the system of record for a regulatory
+    // filing; this stack is the editing layer over it. When the document is
+    // created against an open project, bind it to that project's governed
+    // document so the two stores share an identity instead of drifting into
+    // parallel truths — which is what produced "the same section edited in two
+    // places lands in two tables with two different audit chains".
+    //
+    // Read-only resolution: it never CREATES a governed document. That is
+    // scaffoldProjectDocuments()'s job, inside project creation, and a second
+    // creation path would be the duplication this is removing.
+    //
+    // Unbound stays legal and is never silent — an org-wide document, a program
+    // type with no document class (ivd/device/ide/biologic/anda), or a project
+    // predating scaffolding all end here with a stated reason returned to the
+    // caller rather than a bare null.
+    //
+    // FAIL SOFT. Binding is an enhancement, never a precondition for creating a
+    // document. The resolver reads regulatory_programs and c2c_documents; on a
+    // database where either is absent — which is the norm for the authoring
+    // subsystem's own test harness, and possible for a deployment that has the
+    // authoring bundle but not the c2c one — the query throws, and an
+    // unguarded call turned every create into a 500.
+    //
+    // That is exactly backwards: the document is the user's work, the binding is
+    // metadata about it. A governance lookup that cannot run must degrade to an
+    // unbound document with a stated reason, not deny the write. Logged at warn
+    // so the degradation is visible to an operator instead of silent.
+    let binding: { documentId: string | null; reason?: string };
+    try {
+      binding = await resolveGovernedDocument({
+        db: pool,
+        orgId: tenantId,
+        projectId: client_program_id ?? null,
+      });
+    } catch (bindErr) {
+      logger.warn('Governed-document binding unavailable; creating unbound document', {
+        error: bindErr instanceof Error ? bindErr.message : String(bindErr),
+        clientProgramId: client_program_id ?? null,
+      });
+      binding = {
+        documentId: null,
+        reason: 'The governance store could not be reached, so this document is not bound to a filing.',
+      };
+    }
+
     const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
     const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
     const args: any[] = [docId, title, module, product_code, locale, createdBy, tenantId, template_id];
     if (client_program_id) {
       args.push(client_program_id);
       cols.push('client_program_id');
+      vals.push(`$${args.length}`);
+    }
+    // Referenced ONLY when a binding resolved, for the same reason
+    // client_program_id is: a database without the 20260728 migration emits the
+    // original statement and keeps working.
+    if (binding.documentId) {
+      args.push(binding.documentId);
+      cols.push('c2c_document_id');
       vals.push(`$${args.length}`);
     }
     const result = await pool.query(
@@ -1309,6 +1402,13 @@ router.post('/docs', async (req: Request, res: Response) => {
       success: true,
       document: result.rows[0],
       message: 'Document created successfully',
+      // The binding outcome, always present. A document that is NOT attached to
+      // a governed filing must say so at the moment it is created — an unbound
+      // document is a legitimate state, but a silently unbound one is how the
+      // two stores drifted apart in the first place.
+      governance: binding.documentId
+        ? { bound: true, c2cDocumentId: binding.documentId }
+        : { bound: false, reason: binding.reason },
     });
   } catch (error) {
     console.error('Error creating document:', error);
@@ -4082,19 +4182,39 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
       return res.status(404).json({ error: 'Template not found for current locale' });
     }
 
-    // Get existing sections
+    // COLUMN NAMES. authoring_sections is (id, doc_id, code, title, content,
+    // order_index, track_changes, tenant_id, created_at, updated_at) — see
+    // db/migrations/20260725_authoring_document_loop_tables.sql. There is no
+    // ALTER TABLE for it anywhere, so that is the complete schema.
+    //
+    // This block used `document_id`, `order_idx`, `created_by` and `updated_by`:
+    // four columns that do not exist. Every statement below was an
+    // unconditional 42703, so applying a template has never once succeeded.
+    // `order_idx` is the field name in the template JSON on disk, which is
+    // where the confusion came from — it is not the column name.
+    //
+    // TENANCY. The SELECT and UPDATE also matched on document/section id alone.
+    // Left unscoped, fixing only the column names would have converted a broken
+    // statement into a working cross-tenant write — a template applied to
+    // another tenant's document. tenantId is already resolved above; it is now
+    // in every predicate.
+    // `content` is selected as well as id/code because overwrite mode has to
+    // snapshot what it is about to destroy — see the createRevision call below.
     const existingResult = await pool.query(
-      'SELECT id, code FROM authoring_sections WHERE document_id = $1',
-      [req.params.docId]
+      'SELECT id, code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2',
+      [req.params.docId, tenantId]
     );
 
-    const existingMap = new Map(existingResult.rows.map(x => [x.code, x.id]));
+    const existingMap = new Map<string, { id: string; content: string | null }>(
+      existingResult.rows.map(x => [x.code, { id: x.id, content: x.content ?? null }]),
+    );
 
     let upserts = 0;
 
     // Apply template sections
     for (const section of template.sections || []) {
-      const existingId = existingMap.get(section.code);
+      const existing = existingMap.get(section.code);
+      const existingId = existing?.id;
 
       if (existingId && mode !== 'overwrite') {
         // In merge mode, skip existing sections
@@ -4102,25 +4222,44 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
       }
 
       if (existingId) {
+        // PART 11. Overwrite mode replaces authored content with template
+        // boilerplate. Every other content-changing path in this router
+        // snapshots first via createRevision (the section PATCH at ~:1600, the
+        // revert at ~:1784); this one did not, so applying a template in
+        // overwrite mode destroyed an author's work with no recoverable
+        // history.
+        //
+        // It went unnoticed because the whole handler was dead: it referenced
+        // document_id/order_idx/created_by, none of which are columns, so every
+        // statement was an unconditional 42703. Repairing those column names
+        // made this path reachable for the first time — which makes closing
+        // this gap part of that same change, not a follow-up.
+        //
+        // Snapshot before the UPDATE, not after: the point is to preserve the
+        // superseded text.
+        if (existing?.content) {
+          await createRevision(existingId, existing.content, getActorId(req) ?? 'template', tenantId);
+        }
+
         // Update existing section
         await pool.query(
           `UPDATE authoring_sections
-           SET title = $2, order_idx = $3, content = $4, updated_by = $5, updated_at = NOW()
-           WHERE id = $1`,
+              SET title = $2, order_index = $3, content = $4, updated_at = NOW()
+            WHERE id = $1 AND tenant_id = $5`,
           [
             existingId,
             section.title || '',
             section.order_idx || 0,
             JSON.stringify(section.content || {}),
-            'template',
+            tenantId,
           ]
         );
         upserts++;
       } else {
         // Insert new section
         await pool.query(
-          `INSERT INTO authoring_sections (id, document_id, code, title, order_idx, content, created_by, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          `INSERT INTO authoring_sections (id, doc_id, code, title, order_index, content, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
             crypto.randomUUID(),
             req.params.docId,
@@ -4128,7 +4267,6 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
             section.title || '',
             section.order_idx || 0,
             JSON.stringify(section.content || {}),
-            'template',
             tenantId,
           ]
         );

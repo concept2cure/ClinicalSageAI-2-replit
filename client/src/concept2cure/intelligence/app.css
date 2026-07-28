@@ -2,7 +2,7 @@
    ─────────────────────────────────────────────────────────────
    Shared shell + 4 surfaces (Protocol / CMC / Biostat / Reports).
    Ported from ui_kits/intelligence/styles.css. Inherits the global
-   Claude.ai tokens already loaded by the host shell (design/claude-design.css);
+   Claude.ai tokens already loaded by the host shell (design-system/colors_and_type.css);
    the kit's `@import colors_and_type.css` and global html/body resets are
    intentionally dropped — this surface mounts inside ZenApp, so resets are
    scoped to `.in-shell` to avoid clobbering the host. Single accent.

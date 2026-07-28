@@ -1,6 +1,6 @@
 /* OnboardingProposalReview — AnA onboarding proposal review + approval gate.
    All rules scoped under .opr to avoid collision with global shell classes.
-   Uses the shared design tokens (client/src/concept2cure/design/claude-design.css). */
+   Uses the shared design tokens (design-system/colors_and_type.css). */
 
 .opr { max-width: 720px; margin: 0 auto; padding: 20px 4px 40px; font-family: var(--font-sans); }
 
