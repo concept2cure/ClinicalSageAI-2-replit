@@ -31,10 +31,7 @@ import {
   NAV_TIERS_V2,
   NAV_GROUP_OF,
   PRIMARY_SEGMENTS,
-  RAIL_CORE,
-  RAIL_EXPLORE,
-  RAIL_QUICK,
-  RAIL_SPECIALIST,
+  RAIL_PRIMARY,
   SEGMENTS,
   getAnaContext,
   getCoauthor,
@@ -178,16 +175,14 @@ export function Rail({
             </button>
           ))}
         </div>
-        <div className="rail-section">Workspace</div>
-        <div className="rail-nav">{RAIL_CORE.map(navItem)}</div>
-        <div className="rail-section">Science &amp; intelligence</div>
-        {/* `crl-library` is gated by ENABLE_CLINICAL_REGULATORY_GRAPH — flag off
-            and the rail entry is absent entirely, not disabled or empty. */}
-        <div className="rail-nav">{RAIL_SPECIALIST.filter(railVisible).map(navItem)}</div>
-        <div className="rail-section">Explore</div>
-        <div className="rail-nav">{RAIL_EXPLORE.map(navItem)}</div>
-        <div className="rail-section">Quick access</div>
-        <div className="rail-nav">{RAIL_QUICK.map(navItem)}</div>
+        {/* ana-ui-design-constitution §4: exactly five top-level destinations.
+            The four former rail groups (Workspace / Science & intelligence /
+            Explore / Quick access) carried ~15 siblings, six of them on the
+            constitution's forbidden list. They are demoted into NAV_HIDDEN, not
+            deleted — still reachable by ⌘K and deep-link. §7 keeps this rail to
+            Zone B alone; recency (Zone C) and the account footer (Zone D) are
+            rendered elsewhere in this component. */}
+        <div className="rail-nav">{RAIL_PRIMARY.filter(railVisible).map(navItem)}</div>
       </div>
       <div className="rail-foot">
         <button
