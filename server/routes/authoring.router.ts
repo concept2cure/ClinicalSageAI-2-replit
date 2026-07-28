@@ -14,6 +14,10 @@ import { getPool } from '../db';
 import auditService from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+// c2c_documents is the system of record for a filing; this router is the
+// editing layer over it. This resolves which governed document an authored
+// document belongs to. See server/services/c2c/governed-document-binding.ts.
+import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -1278,12 +1282,41 @@ router.post('/docs', async (req: Request, res: Response) => {
     // supplied. A create without client_program_id (the org-wide path and the
     // golden-journey harness) emits the exact original statement, so databases
     // that lack the 20260727 migration keep working.
+    // GOVERNED BINDING. c2c_documents is the system of record for a regulatory
+    // filing; this stack is the editing layer over it. When the document is
+    // created against an open project, bind it to that project's governed
+    // document so the two stores share an identity instead of drifting into
+    // parallel truths — which is what produced "the same section edited in two
+    // places lands in two tables with two different audit chains".
+    //
+    // Read-only resolution: it never CREATES a governed document. That is
+    // scaffoldProjectDocuments()'s job, inside project creation, and a second
+    // creation path would be the duplication this is removing.
+    //
+    // Unbound stays legal and is never silent — an org-wide document, a program
+    // type with no document class (ivd/device/ide/biologic/anda), or a project
+    // predating scaffolding all end here with a stated reason returned to the
+    // caller rather than a bare null.
+    const binding = await resolveGovernedDocument({
+      db: pool,
+      orgId: tenantId,
+      projectId: client_program_id ?? null,
+    });
+
     const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
     const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
     const args: any[] = [docId, title, module, product_code, locale, createdBy, tenantId, template_id];
     if (client_program_id) {
       args.push(client_program_id);
       cols.push('client_program_id');
+      vals.push(`$${args.length}`);
+    }
+    // Referenced ONLY when a binding resolved, for the same reason
+    // client_program_id is: a database without the 20260728 migration emits the
+    // original statement and keeps working.
+    if (binding.documentId) {
+      args.push(binding.documentId);
+      cols.push('c2c_document_id');
       vals.push(`$${args.length}`);
     }
     const result = await pool.query(
@@ -1345,6 +1378,13 @@ router.post('/docs', async (req: Request, res: Response) => {
       success: true,
       document: result.rows[0],
       message: 'Document created successfully',
+      // The binding outcome, always present. A document that is NOT attached to
+      // a governed filing must say so at the moment it is created — an unbound
+      // document is a legitimate state, but a silently unbound one is how the
+      // two stores drifted apart in the first place.
+      governance: binding.documentId
+        ? { bound: true, c2cDocumentId: binding.documentId }
+        : { bound: false, reason: binding.reason },
     });
   } catch (error) {
     console.error('Error creating document:', error);

@@ -212,6 +212,16 @@ export const C2C_MIGRATION_FILES = [
   // backfill; guarded on the table so it no-ops where the authoring bundle is
   // absent.
   'migrations/20260728_authoring_comments_threading.sql',
+
+  // Governed binding: authoring_documents.c2c_document_id. c2c_documents is the
+  // system of record for a regulatory filing; the authoring stack is the editing
+  // layer over it, and this column is the join. MUST follow the authoring bundle
+  // and the c2c document schema — it is guarded on both, so it no-ops rather
+  // than aborting the set where either is absent. Nothing is backfilled:
+  // historical authoring documents carry no derivable doc_type/agency, and
+  // inventing a regulatory class for a past record would be worse than leaving
+  // it unbound.
+  'migrations/20260728_authoring_document_governed_binding.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

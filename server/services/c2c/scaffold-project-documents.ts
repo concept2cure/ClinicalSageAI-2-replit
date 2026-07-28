@@ -56,6 +56,9 @@
 import type { PoolClient } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
+// The regulatory-class mapping lives in one module so this path and
+// POST /api/authoring/docs cannot disagree about what a project files.
+import { AGENCY_FALLBACKS, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
 
 export interface ScaffoldInput {
   /** Caller-owned transaction. This module never opens or commits one. */
@@ -81,34 +84,6 @@ export interface ScaffoldResult {
   detail?: string;
 }
 
-/**
- * program_type (lowercase, as projects.ts normalises it) → c2c_documents.doc_type.
- *
- * Deliberately partial. ivd / device / ide / biologic / anda are accepted by
- * VALID_PROGRAM_TYPES but have no doc_type CHECK value and no seeded pack. They
- * fail closed rather than being mapped to a near neighbour.
- */
-const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
-  ind: 'ind', cta: 'cta', nda: 'nda', bla: 'bla', maa: 'maa', jnda: 'jnda',
-  '510k': 'k510', de_novo: 'denovo', pma: 'pma', cer: 'cer',
-};
-
-/**
- * primary_agency → c2c_documents.agency CHECK value.
- *
- * NOT derived from shared/regulatory/document-taxonomy.ts: its Agency union
- * includes Swissmedic, ANVISA, CDSCO, HSA, ISO, IEC and IMDRF, none of which
- * passes c2c_documents_agency_check. Mapping through it would produce a
- * constraint violation at insert time.
- */
-const AGENCY_TO_CODE: Readonly<Record<string, string>> = {
-  FDA: 'fda', EMA: 'ema', PMDA: 'pmda', MHRA: 'mhra', ICH: 'ich',
-  TGA: 'tga', NMPA: 'nmpa', MFDS: 'mfds', HC: 'hc', HEALTH_CANADA: 'hc',
-};
-
-/** Agencies to try, in order, when the project's own agency has no pack. */
-const AGENCY_FALLBACKS = ['ich', 'fda'];
-
 interface RulePackRow {
   version: string;
   label: string;
@@ -118,25 +93,15 @@ interface RulePackRow {
 export async function scaffoldProjectDocuments(input: ScaffoldInput): Promise<ScaffoldResult> {
   const { client, orgId, userId, projectId, programType, primaryAgency, productName } = input;
 
-  const docType = PROGRAM_TO_DOC_TYPE[programType.toLowerCase()];
-  const agency = AGENCY_TO_CODE[
-    primaryAgency.trim().toUpperCase().replace(/[\s-]+/g, '_')
-  ];
-
-  if (!docType) {
+  const klass = resolveDocumentClass(programType, primaryAgency);
+  if (!klass) {
     return {
       documentId: null, sectionCount: 0, skipped: 'UNMAPPED_PROGRAM_TYPE',
-      detail: `No document class is defined for program type '${programType}'. ` +
+      detail: `${describeUnmappedClass(programType, primaryAgency)} ` +
               `The project was created; no document was scaffolded.`,
     };
   }
-  if (!agency) {
-    return {
-      documentId: null, sectionCount: 0, skipped: 'UNMAPPED_PROGRAM_TYPE',
-      detail: `No document agency is defined for '${primaryAgency}'. ` +
-              `The project was created; no document was scaffolded.`,
-    };
-  }
+  const { docType, agency } = klass;
 
   // Idempotency. A project that already has a document is never re-scaffolded —
   // a second outline would compete with whatever the first one has become.
