@@ -133,6 +133,15 @@ export const C2C_MIGRATION_FILES = [
   // here is what makes turning that flag on a configuration change rather than
   // a schema migration.
   'db/migrations/20260727_collab_document_state.sql',
+  // ── artifacts (added 2026-07-28) ──────────────────────────────────────────
+  // Chat-generated artifacts. Two shipped paths addressed this table and nothing
+  // created it: a fire-and-forget INSERT in server/routes/chat-actions.ts (whose
+  // .catch turned "relation does not exist" into a console.warn while the
+  // request still returned ok:true) and the workspace summary's "Recent
+  // artifacts" read. Self-contained: one CREATE TABLE IF NOT EXISTS referencing
+  // nothing, one index, and its own tenant_isolation_policy — 0021 has long
+  // since run and never revisits a newly-added table.
+  'db/migrations/20260728_artifacts_table.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
