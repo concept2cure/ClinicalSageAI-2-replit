@@ -93,8 +93,23 @@ jobs:
           fi
 
       - name: Run linter on changed files
+        # This step used to end in `--max-warnings 0 || echo "Lint warnings found"`.
+        # The `|| echo` swallowed eslint's exit code, so the per-PR lint gate could
+        # not fail — ever. It reported problems and passed regardless.
+        #
+        # The fix is deliberately not "delete `|| echo` and keep --max-warnings 0".
+        # A bare `eslint .` currently reports 6,268 warnings repo-wide (0 errors),
+        # so failing on any warning would red every PR on day one and this line
+        # would simply be reverted. Instead: eslint's own exit code now decides,
+        # which fails on ERRORS (the 13 rules configured as 'error') and lets the
+        # pre-existing warning backlog through.
+        #
+        # Follow-up, tracked in the 2026-07 audit remediation plan: ratchet
+        # warnings down and reintroduce --max-warnings with a real budget. Note
+        # also that eslint.config.js ignores client/src/** entirely (871 files),
+        # so this gate does not see the UI at all yet.
         run: |
           FILES=$(git diff "origin/$BASE_REF"...HEAD --name-only | grep -E '\.(ts|tsx|js|jsx)$' | tr '\n' ' ')
           if [ -n "$FILES" ]; then
-            npx eslint $FILES --max-warnings 0 || echo "Lint warnings found"
+            npx eslint $FILES
           fi
