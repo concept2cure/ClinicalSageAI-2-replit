@@ -21,6 +21,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 
+const ISOLATION_MIGRATION = 'db/migrations/20260728_stability_tenant_isolation.sql';
 const MIGRATION = 'db/migrations/20260728_stability_backing_tables.sql';
 let db: PGlite;
 
@@ -58,7 +59,13 @@ beforeAll(async () => {
     CREATE ROLE stab_app NOLOGIN;
   `);
 
-  // Apply the migration under study.
+  // Apply BOTH stability migrations, in the order the applier runs them. The
+  // isolation migration owns the PRE-EXISTING tables (it adds tenant_id, coerces a
+  // TEXT one, and attaches the policy) — including stab_timepoints / stab_conditions,
+  // which the two views read. The backing migration deliberately only touches the
+  // tables it creates, so applying it alone would leave those base tables unisolated
+  // and the view-isolation assertion below would be vacuous.
+  await db.exec(fs.readFileSync(path.resolve(ISOLATION_MIGRATION), 'utf8'));
   await db.exec(fs.readFileSync(path.resolve(MIGRATION), 'utf8'));
 
   // Grant AFTER the migration so every new table + view is covered.

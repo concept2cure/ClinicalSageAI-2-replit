@@ -242,7 +242,18 @@ BEGIN
     FROM information_schema.tables t
     WHERE t.table_type = 'BASE TABLE'
       AND t.table_schema NOT IN ('pg_catalog', 'information_schema')
-      AND t.table_name LIKE 'stab\_%' ESCAPE '\'
+      -- ONLY the tables this migration creates. Deliberately NOT a LIKE 'stab\_%'
+      -- sweep: the pre-existing stability tables may carry tenant_id as TEXT (see
+      -- 023_stability_step2.sql), and attaching an integer-comparing policy to a TEXT
+      -- column fails with "operator does not exist: text = integer". Coercing those
+      -- columns is the isolation migration's job (20260728_stability_tenant_isolation.sql),
+      -- which validates the data before it converts. Restricting the loop here keeps
+      -- the two files independent of apply ORDER — this one only ever touches columns
+      -- it just created as INTEGER.
+      AND t.table_name IN (
+        'stab_capa', 'stab_excursions', 'stab_samples', 'stab_chain',
+        'stab_assignments', 'stab_signoffs', 'stab_protocols'
+      )
     ORDER BY t.table_schema, t.table_name
   LOOP
     EXECUTE format('ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS tenant_id INTEGER',

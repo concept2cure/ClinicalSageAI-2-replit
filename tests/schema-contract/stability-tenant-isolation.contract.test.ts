@@ -57,16 +57,25 @@ async function asTenant<T>(
 
 beforeAll(async () => {
   db = new PGlite();
-  // Representative stability tables: stab_studies already carries tenant_id (the
-  // real POST /studies sets it); stab_results / stab_capa do NOT — the migration
-  // must add it and default it. Surrogate PKs are the ids the finding's attack uses.
+  // Representative stability tables, shaped like the REAL database:
+  //   * stab_studies already carries tenant_id — and carries it as TEXT, which is
+  //     what 023_stability_step2.sql actually created. This is the case that broke
+  //     the first version of this migration: ADD COLUMN IF NOT EXISTS silently
+  //     skipped the existing TEXT column and the integer-comparing policy then
+  //     failed with "operator does not exist: text = integer". The fixture models
+  //     it so a regression cannot pass this suite again.
+  //   * stab_results / stab_capa have NO tenant_id — the migration must add it.
+  // Surrogate PKs are the ids the finding's attack uses.
   await db.exec(`
-    CREATE TABLE stab_studies (study_id TEXT PRIMARY KEY, name TEXT, tenant_id INTEGER);
+    CREATE TABLE stab_studies (study_id TEXT PRIMARY KEY, name TEXT, tenant_id TEXT);
     CREATE TABLE stab_results (result_id TEXT PRIMARY KEY, study_id TEXT, value TEXT);
     CREATE TABLE stab_capa   (capa_id TEXT PRIMARY KEY, study_id TEXT, title TEXT, status TEXT);
     CREATE ROLE stab_app NOLOGIN;
     GRANT ALL ON stab_studies, stab_results, stab_capa TO stab_app;
   `);
+  // A pre-existing row whose tenant is stored as a numeric STRING — it must survive
+  // the coercion with its tenant intact.
+  await db.exec(`INSERT INTO stab_studies (study_id, name, tenant_id) VALUES ('LEGACY','Legacy study','1')`);
 
   // Apply the security migration — it scans the catalog and isolates every stab_* table.
   await db.exec(fs.readFileSync(path.resolve(MIGRATION), 'utf8'));
@@ -77,6 +86,35 @@ afterAll(async () => {
 });
 
 describe('stability tenant isolation (security fix) enforces under RLS', () => {
+  it('COERCES a pre-existing TEXT tenant_id to integer, preserving the tenant', async () => {
+    // Regression guard for "operator does not exist: text = integer". The platform
+    // requires an integer tenant key (0021 refuses to attach a policy to anything
+    // else), so the migration must convert rather than skip.
+    const col = await db.query<{ data_type: string }>(
+      `SELECT data_type FROM information_schema.columns
+        WHERE table_name = 'stab_studies' AND column_name = 'tenant_id'`,
+    );
+    expect(col.rows[0]?.data_type).toBe('integer');
+
+    // The legacy row kept its tenant, as the integer 1 rather than the string '1'.
+    const legacy = await db.query<{ tenant_id: number }>(
+      `SELECT tenant_id FROM stab_studies WHERE study_id = 'LEGACY'`,
+    );
+    expect(legacy.rows[0].tenant_id).toBe(1);
+
+    // And it is visible to its own tenant under enforcement, not orphaned by the
+    // conversion.
+    const seen = await asTenant(1, true, () =>
+      db.query(`SELECT study_id FROM stab_studies WHERE study_id = 'LEGACY'`),
+    );
+    expect(seen.rows.length).toBe(1);
+    // …and invisible to another tenant.
+    const unseen = await asTenant(2, true, () =>
+      db.query(`SELECT study_id FROM stab_studies WHERE study_id = 'LEGACY'`),
+    );
+    expect(unseen.rows.length).toBe(0);
+  });
+
   it('the migration added an integer tenant_id + default + policy to tables that lacked it', async () => {
     const col = await db.query<{ data_type: string; column_default: string | null }>(
       `SELECT data_type, column_default FROM information_schema.columns

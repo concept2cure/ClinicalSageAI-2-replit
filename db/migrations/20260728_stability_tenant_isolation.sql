@@ -78,6 +78,8 @@ DECLARE
   rec RECORD;
   policy_name CONSTANT text := 'tenant_isolation_policy';
   applied INT := 0;
+  current_type text;
+  bad_count BIGINT;
 BEGIN
   FOR rec IN
     SELECT t.table_schema, t.table_name
@@ -89,6 +91,53 @@ BEGIN
       AND t.table_name LIKE 'stab\_%' ESCAPE '\'
     ORDER BY t.table_schema, t.table_name
   LOOP
+    -- 0. COERCE a pre-existing non-integer tenant_id.
+    --
+    -- Several stab_* tables already carry tenant_id as TEXT (stab_studies gets it
+    -- from 023_stability_step2.sql). ADD COLUMN IF NOT EXISTS would silently skip
+    -- those, and the policy below — which compares tenant_id to
+    -- current_setting(...)::INT — would then fail with
+    -- "operator does not exist: text = integer". The platform's own convention is
+    -- an integer tenant key: 0021_enable_rls_everywhere.sql RAISEs rather than
+    -- attach a policy to a non-integer column, and 0020_coerce_text_tenant_columns.sql
+    -- is the coercion precedent this mirrors.
+    --
+    -- Safety, per 0020: validate BEFORE mutating. If any row holds a value that
+    -- cannot cast to integer, RAISE — the surrounding BEGIN/COMMIT rolls the whole
+    -- migration back rather than leaving a half-converted schema, and the message
+    -- names the table and the count so triage starts with concrete data.
+    SELECT data_type INTO current_type
+    FROM information_schema.columns
+    WHERE table_schema = rec.table_schema
+      AND table_name = rec.table_name
+      AND column_name = 'tenant_id';
+
+    IF current_type IS NOT NULL AND current_type NOT IN ('integer', 'bigint', 'smallint') THEN
+      EXECUTE format(
+        'SELECT count(*) FROM %I.%I WHERE tenant_id IS NOT NULL '
+        || 'AND btrim(tenant_id::text) <> '''' '
+        || 'AND btrim(tenant_id::text) !~ ''^-?[0-9]+$''',
+        rec.table_schema, rec.table_name
+      ) INTO bad_count;
+
+      IF bad_count > 0 THEN
+        RAISE EXCEPTION
+          '[stab-rls] %.%.tenant_id is % and holds % non-numeric value(s); cannot coerce to INTEGER. Resolve the data first.',
+          rec.table_schema, rec.table_name, current_type, bad_count;
+      END IF;
+
+      -- Drop the old default first: a TEXT default ('' or a quoted literal) is not
+      -- assignable to INTEGER and would block the type change.
+      EXECUTE format('ALTER TABLE %I.%I ALTER COLUMN tenant_id DROP DEFAULT',
+                     rec.table_schema, rec.table_name);
+      EXECUTE format(
+        'ALTER TABLE %I.%I ALTER COLUMN tenant_id TYPE INTEGER '
+        || 'USING NULLIF(btrim(tenant_id::text), '''')::INTEGER',
+        rec.table_schema, rec.table_name
+      );
+      RAISE NOTICE '[stab-rls] coerced %.%.tenant_id % -> integer', rec.table_schema, rec.table_name, current_type;
+    END IF;
+
     -- 1. integer tenant key + 2. request-derived default
     EXECUTE format('ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS tenant_id INTEGER',
                    rec.table_schema, rec.table_name);
