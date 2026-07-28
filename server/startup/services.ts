@@ -146,7 +146,9 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
         );
       } else {
         setSchemaReadiness('ready');
-        console.log(
+        // console.info, not console.log — the repo's no-console rule permits
+        // warn/error/info only, and this line moved into the else branch above.
+        console.info(
           `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables, authoring subsystem present)`
         );
       }

@@ -1,6 +1,6 @@
 # Removed documentation manifest — 2026-07-28
 
-390 superseded reports, proofs, audits and handoffs removed on branch
+388 superseded reports, proofs, audits and handoffs removed on branch
 `claude/codebase-audit-competitive-aet792`. **Nothing is lost** — every file remains in
 git history and can be restored with:
 
@@ -27,6 +27,26 @@ longer exists, with nothing marking it stale.
 | `docs/audit-2026-07/` (46) | This audit. |
 | `docs/proof/golden-journeys/*.md` (4) | Journey **definitions** — what each journey must prove. The executable journeys live in `tests/golden-journeys/`. |
 | 16 files cited by shipping code | Listed below. |
+
+### Two files restored after CI caught an incomplete reference scan
+
+The first pass of this cleanup scanned `server/ client/ shared/ scripts/ .github/
+package.json` for inbound references — and **missed `tests/`**. Tests are code, and two ops
+tests read documentation artifacts directly:
+
+| Restored | Read by |
+|---|---|
+| `docs/reports/REPORT_OS_SESSION_PROGRESS_2026-03-30.md` | `tests/ops/report-os-foundation.test.mjs:8` (`readFileSync`) |
+| `docs/proof/BETA_CORE_PULSE_PROOF.md` | `tests/ops/stage8-ga-readiness.test.mjs:24` (asserts it exists) |
+
+The `ops-audit` CI job caught this — 30 passed, 2 failed. Both files are restored and the
+suite is green again (44/44 locally). They are listed under "retained" rather than "removed"
+below.
+
+That these two ops tests assert the continued existence of a 2026-03 progress report and a
+beta proof document is itself worth noting: they are gates on documentation, not on
+behaviour. Retiring them is a reasonable follow-up, but deleting a test to make a cleanup
+succeed is the wrong order of operations.
 
 ### Files retained because shipping code cites them by path
 
@@ -224,7 +244,6 @@ confusion rather than removing it. Retire the citation first, then the file.
 - `docs/proof/AUTH_FIRST_SCREEN_PROOF.md`
 - `docs/proof/AUTH_SURFACE_INVENTORY.md`
 - `docs/proof/BASELINE_TRUTH_REPORT.md`
-- `docs/proof/BETA_CORE_PULSE_PROOF.md`
 - `docs/proof/BETA_EXPOSURE_POLICY.md`
 - `docs/proof/BETA_LAUNCH_LANE_PROOF.md`
 - `docs/proof/BIOTECH_HERO_PATH_COMPRESSION_PROOF.md`
@@ -347,7 +366,6 @@ confusion rather than removing it. Retire the citation first, then the file.
 - `docs/reports/PR_ACTIVITY_AUDIT_2026-04-04.md`
 - `docs/reports/QA_AUDIT_UI_OS_RESTRUCTURE_2026-03-27.md`
 - `docs/reports/QA_PROOF_AUDIT_2026-04-01.md`
-- `docs/reports/REPORT_OS_SESSION_PROGRESS_2026-03-30.md`
 - `docs/reports/SECURITY_AUDIT_PR338-356_2026-04-02.md`
 - `docs/reports/SHELL_MIGRATION_ANALYSIS_2026-05-01.md`
 - `docs/reports/SHIPPING_GATE_REPORT_2026-04-05.md`
