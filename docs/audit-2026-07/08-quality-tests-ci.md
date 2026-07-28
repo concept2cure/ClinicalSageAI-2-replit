@@ -105,7 +105,46 @@ Detailed in Chapter 11; summarised here because they belong to the quality story
 
 | Gate | Why it cannot fail |
 |---|---|
-| **Typecheck** (`ci.yml:231`) | Counts `/error TS/` and never checks tsc's exit code. tsc OOMs at the 6,144 MB cap the gate itself sets → 0 matches → pass. **Proven by execution.** With adequate heap it reports 2 errors from PR #1180, merged the day before this audit. |
+| **Typecheck** (`ci.yml:231`) | Counts `/error TS/` and never checks tsc's exit code. tsc OOMs at the 6,144 MB cap the gate itself sets → 0 matches → pass. **Proven by execution.** With adequate heap it reports 2 errors from PR #1180, merged the day before this audit. **Corroborated in CI — see §8.6.1.** |
+
+### 8.6.1 The gate observed passing in CI on a commit that contains type errors
+
+The audit's own pull request (#1189) provided an unplanned control experiment.
+
+`ci.yml:231` runs `npm run ci:typecheck:no-regression` — the exact script analysed above.
+That job **completed with conclusion `success`** (run `30378548693`, 16:40:54 → 16:46:36,
+5m42s) on a commit whose tree contains the two `TS7016` errors in
+`server/services/ana/__tests__/{council-tool,deep-investigation}.test.ts`.
+
+Those errors are deterministic: they arise from importing `scripts/db/migration-set.mjs`,
+a local `.mjs` file with no declaration, under `noImplicitAny` with `allowJs` unset. Nothing
+about a CI runner changes that outcome. So one of two things happened:
+
+1. **tsc did not complete** — the same OOM reproduced locally at the same 6,144 MB cap — and
+   the gate read 0 errors from a crash log and passed; or
+2. tsc completed, saw those 2 errors, and the gate passed anyway with `2 > 0`.
+
+The second is impossible given the script's logic (`errorCount > baselineCount → exit 1`).
+
+**What is proven, and what is inferred.** Proven: the gate contains no exit-code check; at
+the configured cap tsc OOMs and the gate then reads zero errors; with adequate heap tsc
+reports 2 errors in files this audit did not touch; CI ran that script on that tree and went
+green. Inferred, strongly: CI's tsc crashed rather than completed. The audit reports the
+inference as an inference — but under either branch, **the gate went green over a tree that
+does not typecheck**, which is the finding.
+
+### 8.6.2 The lint gate observed passing on 6,268 warnings
+
+The same CI job's log ends with:
+
+```
+✖ 6268 problems (0 errors, 6268 warnings)
+```
+
+and the job succeeded. This is direct confirmation of the mechanism described above:
+`npm run lint` is a bare `eslint .` with no `--max-warnings`, and only 13 rules are set to
+`error`. **6,268 warnings is not a gate result; it is a number nobody is reading** — and it
+excludes `client/src/**` entirely, so the real figure is unknown.
 | **Per-PR ESLint** (`pr-checks.yml:99`) | `npx eslint $FILES --max-warnings 0 \|\| echo "Lint warnings found"` — `\|\| echo` swallows the exit code. |
 | **Repo-wide lint** (`ci.yml:221`) | `npm run lint` is a bare `eslint .` with no `--max-warnings`; only 13 rules are `error`, the rest `warn`. |
 | **Semgrep** (`semgrep.yml:30`) | `continue-on-error: true` at job level. |
