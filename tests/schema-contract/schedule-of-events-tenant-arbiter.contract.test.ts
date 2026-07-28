@@ -154,9 +154,7 @@ const victimRow = async () => {
   return r.rows[0];
 };
 
-const applyMigration = async () => {
-  await pg.exec(fs.readFileSync(MIGRATION, 'utf8'));
-};
+const applyMigration = async () => pg.exec(fs.readFileSync(MIGRATION, 'utf8'));
 
 describe('the org-blind arbiter really was a cross-tenant write (mechanism proof)', () => {
   // Asserts the DEFECT, against the OLD index, so the fix below is known to
@@ -261,6 +259,50 @@ describe('after the migration, the arbiter is tenant-scoped', () => {
         `INSERT INTO project_schedule_of_events (organization_id, project_id) VALUES ($1, $2)`,
         [ATTACKER_ORG, PROJECT]
       )
+    ).rejects.toThrow(/fk_schedule_project_same_org|foreign key/i);
+  });
+});
+
+describe('the migration is safe on databases that do not have the table', () => {
+  // The PR preview database is seeded from a schema snapshot that predates
+  // 20260617, so project_schedule_of_events does not exist there. The first
+  // version of this migration hard-failed with `relation ... does not exist`,
+  // reddening CI on a database where there was simply nothing to fix. A
+  // migration that errors on "nothing to do" blocks every unrelated PR.
+  it('no-ops instead of erroring when the tables are absent', async () => {
+    const bare = new PGlite();
+    try {
+      await expect(bare.exec(fs.readFileSync(MIGRATION, 'utf8'))).resolves.toBeDefined();
+    } finally {
+      await bare.close();
+    }
+  });
+
+  it('no-ops when project_schedule_of_events exists but projects does not', async () => {
+    const partial = new PGlite();
+    try {
+      await partial.exec(`
+        CREATE TABLE project_schedule_of_events (
+          id serial PRIMARY KEY,
+          organization_id integer NOT NULL,
+          project_id integer NOT NULL
+        );
+      `);
+      await expect(partial.exec(fs.readFileSync(MIGRATION, 'utf8'))).resolves.toBeDefined();
+    } finally {
+      await partial.close();
+    }
+  });
+
+  it('is idempotent — applying twice is a no-op the second time', async () => {
+    await pg.exec(OLD_INDEX);
+    await applyMigration();
+    await expect(applyMigration()).resolves.toBeDefined();
+
+    // And the arbiter is still the tenant-scoped one afterwards.
+    await seedVictim();
+    await expect(
+      pg.query(UPSERT('(organization_id, project_id)'), attackerArgs)
     ).rejects.toThrow(/fk_schedule_project_same_org|foreign key/i);
   });
 });

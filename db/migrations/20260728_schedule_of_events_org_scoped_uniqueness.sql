@@ -33,23 +33,62 @@
 -- org A's — better, but still tenant pollution. The FK refuses the row outright.
 --
 -- Idempotent: safe to re-run.
+--
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- ROLLBACK: reverses cleanly ONLY while no org has taken advantage of the wider
+-- uniqueness. Restoring the narrow unique index fails if two organizations now
+-- hold a schedule for the same project_id — which the composite FK below should
+-- prevent, but check before assuming:
+--
+--   SELECT project_id, count(*) FROM project_schedule_of_events
+--    GROUP BY project_id HAVING count(*) > 1;
+--
+--   ALTER TABLE project_schedule_of_events DROP CONSTRAINT IF EXISTS fk_schedule_project_same_org;
+--   CREATE UNIQUE INDEX IF NOT EXISTS unique_project_schedule
+--     ON project_schedule_of_events (project_id);
+--   DROP INDEX IF EXISTS unique_project_schedule_org;
+--   DROP INDEX IF EXISTS uniq_projects_id_org;
+--
+-- Rolling back REOPENS the cross-tenant write described above. Do it only to
+-- unblock a deploy, and re-apply as soon as the blocker is resolved.
+-- ═══════════════════════════════════════════════════════════════════════════════
 
 BEGIN;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 0. Refuse to proceed over existing cross-tenant rows.
+-- Guard: skip entirely when the tables are not present.
 --
--- If any schedule row's organization_id disagrees with its project's owner, the
--- FK below would fail with a generic constraint error. Those rows are the
--- corruption this migration exists to prevent, so fail EARLY and name them: a
--- human has to decide whether each is an artifact of the bug or of a legitimate
--- org move, and no migration should guess.
+-- The whole migration lives inside one DO block so it can no-op cleanly on a
+-- database that has not yet created project_schedule_of_events (its own
+-- migration, 20260617, runs earlier in filename order on a full install — but
+-- the PR preview database is seeded from a schema snapshot that predates it,
+-- where this migration previously hard-failed with
+-- `relation "project_schedule_of_events" does not exist`).
+--
+-- There is nothing to fix on a database without the table, and a migration that
+-- errors on "nothing to do" blocks every unrelated PR. DDL inside a DO block
+-- must go through EXECUTE, which is why the statements are quoted below.
 -- ─────────────────────────────────────────────────────────────────────────────
-DO $$
+DO $migration$
 DECLARE
   offenders text;
   offender_count integer;
 BEGIN
+  IF to_regclass('public.project_schedule_of_events') IS NULL
+     OR to_regclass('public.projects') IS NULL THEN
+    RAISE NOTICE '[20260728] project_schedule_of_events or projects absent; nothing to migrate.';
+    RETURN;
+  END IF;
+
+  -- ───────────────────────────────────────────────────────────────────────────
+  -- 0. Refuse to proceed over existing cross-tenant rows.
+  --
+  -- If any schedule row's organization_id disagrees with its project's owner,
+  -- the FK below would fail with a generic constraint error. Those rows are the
+  -- corruption this migration exists to prevent, so fail EARLY and name them: a
+  -- human has to decide whether each is an artifact of the bug or of a
+  -- legitimate org move, and no migration should guess.
+  -- ───────────────────────────────────────────────────────────────────────────
   SELECT count(*), string_agg(format('schedule id=%s (org %s) -> project %s (org %s)',
                                      s.id, s.organization_id, p.id, p.organization_id), '; ')
     INTO offender_count, offenders
@@ -62,49 +101,46 @@ BEGIN
       'project_schedule_of_events has % row(s) whose organization_id does not match the owning project. These are cross-tenant rows and must be resolved by hand before this migration can apply. Offenders: %',
       offender_count, offenders;
   END IF;
-END $$;
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 1. FK target. projects.id is the primary key, so (id, organization_id) needs
---    its own unique index to be referenceable by a composite FK. It is
---    redundant for uniqueness (id alone is already unique) and exists purely to
---    make the tenant-consistency FK expressible.
--- ─────────────────────────────────────────────────────────────────────────────
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_projects_id_org
-  ON projects (id, organization_id);
+  -- ───────────────────────────────────────────────────────────────────────────
+  -- 1. FK target. projects.id is the primary key, so (id, organization_id)
+  --    needs its own unique index to be referenceable by a composite FK. It is
+  --    redundant for uniqueness (id alone is already unique) and exists purely
+  --    to make the tenant-consistency FK expressible.
+  -- ───────────────────────────────────────────────────────────────────────────
+  EXECUTE 'CREATE UNIQUE INDEX IF NOT EXISTS uniq_projects_id_org
+             ON projects (id, organization_id)';
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 2. The tenant-aware arbiter, created BEFORE the old one is dropped so the
---    table is never momentarily without a uniqueness guarantee on the plan
---    header. Still one header row per project per org.
--- ─────────────────────────────────────────────────────────────────────────────
-CREATE UNIQUE INDEX IF NOT EXISTS unique_project_schedule_org
-  ON project_schedule_of_events (organization_id, project_id);
+  -- ───────────────────────────────────────────────────────────────────────────
+  -- 2. The tenant-aware arbiter, created BEFORE the old one is dropped so the
+  --    table is never momentarily without a uniqueness guarantee on the plan
+  --    header. Still one header row per project per org.
+  -- ───────────────────────────────────────────────────────────────────────────
+  EXECUTE 'CREATE UNIQUE INDEX IF NOT EXISTS unique_project_schedule_org
+             ON project_schedule_of_events (organization_id, project_id)';
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 3. Drop the org-blind arbiter. This is the line that closes the defect: while
---    a unique index on (project_id) exists, `ON CONFLICT (project_id)` remains
---    expressible and a future caller could reintroduce it.
--- ─────────────────────────────────────────────────────────────────────────────
-DROP INDEX IF EXISTS unique_project_schedule;
+  -- ───────────────────────────────────────────────────────────────────────────
+  -- 3. Drop the org-blind arbiter. This is the line that closes the defect:
+  --    while a unique index on (project_id) exists, ON CONFLICT (project_id)
+  --    remains expressible and a future caller could reintroduce it.
+  -- ───────────────────────────────────────────────────────────────────────────
+  EXECUTE 'DROP INDEX IF EXISTS unique_project_schedule';
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 4. Structural tenant consistency. A schedule row can now only reference a
---    project in the SAME organization — checked by Postgres on every insert and
---    update, including any that bypasses the service layer.
--- ─────────────────────────────────────────────────────────────────────────────
-DO $$
-BEGIN
+  -- ───────────────────────────────────────────────────────────────────────────
+  -- 4. Structural tenant consistency. A schedule row can now only reference a
+  --    project in the SAME organization — checked by Postgres on every insert
+  --    and update, including any that bypasses the service layer.
+  -- ───────────────────────────────────────────────────────────────────────────
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'fk_schedule_project_same_org'
-      AND conrelid = 'project_schedule_of_events'::regclass
+      AND conrelid = 'public.project_schedule_of_events'::regclass
   ) THEN
-    ALTER TABLE project_schedule_of_events
-      ADD CONSTRAINT fk_schedule_project_same_org
-      FOREIGN KEY (project_id, organization_id)
-      REFERENCES projects (id, organization_id);
+    EXECUTE 'ALTER TABLE project_schedule_of_events
+               ADD CONSTRAINT fk_schedule_project_same_org
+               FOREIGN KEY (project_id, organization_id)
+               REFERENCES projects (id, organization_id)';
   END IF;
-END $$;
+END $migration$;
 
 COMMIT;
