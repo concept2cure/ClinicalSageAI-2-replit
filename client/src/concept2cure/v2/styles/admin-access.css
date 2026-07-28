@@ -4,7 +4,7 @@
  * (mdx/app.css admin section) but EVERY rule is scoped under `.adm-access`
  * so it cannot collide with other ui-v2 CSS (which also defines .btn,
  * .ctable, .section, etc.). Uses the shared design tokens from
- * concept2cure/design/claude-design.css, so it themes with the rest of ui-v2.
+ * design-system/colors_and_type.css, so it themes with the rest of ui-v2.
  */
 
 .adm-access { display: flex; flex-direction: column; min-width: 0; }

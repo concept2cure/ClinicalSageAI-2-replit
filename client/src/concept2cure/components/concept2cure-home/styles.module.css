@@ -76,7 +76,7 @@
 /* Shell grid */
 .shell {
   /* Bundle-local token overrides (bundle ui_kits/home/styles.css :root).
-     These three colors differ from claude-design.css and the bundle is the
+     These three colors differ from design-system/colors_and_type.css and the bundle is the
      authority for the home surface — so scope the overrides to .shell. */
   --border: #e3e1d7;
   --warning: #c87d2e;

@@ -1,3 +1,28 @@
+/* ── ana-ui-design-constitution §12: serif is isolated to reading ──────────────
+   "Shell = clean sans. Forbidden: Lora, mixed serif... Serif isolated to
+   document editing only."
+
+   design-system/colors_and_type.css:278-310 already decided this correctly on
+   2026-07-06: --font-sans is system-ui, --font-display maps to it, and
+   --font-serif (Lora) is scoped to "long-form prose, answers, artifact
+   reading". Poppins was removed from chrome in the same decision. The token
+   layer is compliant; three call sites in THIS file were not.
+
+   Moved to --font-sans (chrome, not prose):
+     .pj-title         a 30px page title
+     .ana-ctx-section  a context-panel section label
+     .ana-greet-t      a greeting header
+
+   Deliberately LEFT serif, because §12 permits it and these are reading
+   surfaces, not chrome:
+     .ana-msg.ana .bd  AnA's answer body
+     .haq-resp-text    health-authority question response prose
+     .gri-result-sum   result summary prose
+     .dsr-pg-*         document preview pages
+
+   No token was added, removed or redefined — the design-tokens skill's C2C
+   override forbids that, and nothing here needed it.
+   ───────────────────────────────────────────────────────────────────────────── */
 /* ════════════════════════════════════════════════════════════════════
    Concept2Cure.RI ui-v2 shell — kit app/app.css ported as a real stylesheet
    (design_handoff_c2c_v2_ui_replacement, 2026-07-06).
@@ -588,7 +613,7 @@
 .c2c-v2 .pj-back:hover{color:var(--text-100);}
 .c2c-v2 .pj-back .ico{font-size:15px;}
 .c2c-v2 .pj-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;}
-.c2c-v2 .pj-title{font-family:var(--font-serif,Georgia,serif);font-size:30px;font-weight:600;letter-spacing:-.02em;color:var(--text-100);margin:0 0 6px;}
+.c2c-v2 .pj-title{font-family:var(--font-sans);font-size:30px;font-weight:600;letter-spacing:-.02em;color:var(--text-100);margin:0 0 6px;}
 .c2c-v2 .pj-desc{font-size:13px;line-height:1.55;color:var(--text-300);max-width:680px;}
 .c2c-v2 .pj-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;}
 .c2c-v2 .pj-top-actions{display:flex;gap:6px;flex-shrink:0;}
@@ -1063,7 +1088,7 @@
 .c2c-v2 .ana-ctx-prog .ico{font-size:13px;}
 .c2c-v2 .ana-ctx-cell{display:flex;flex-direction:column;gap:4px;}
 .c2c-v2 .ana-ctx-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);font-weight:600;}
-.c2c-v2 .ana-ctx-section{font-size:14px;font-weight:600;color:var(--text-100);font-family:var(--font-serif);}
+.c2c-v2 .ana-ctx-section{font-size:14px;font-weight:600;color:var(--text-100);font-family:var(--font-sans);}
 .c2c-v2 .ana-ctx-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .c2c-v2 .ana-ctx-stage{display:inline-flex;align-self:flex-start;padding:2px 9px;border-radius:999px;background:var(--warning-muted);color:var(--warning);font-size:11px;font-weight:600;}
 .c2c-v2 .ana-ctx-ready{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-100);}
@@ -1452,7 +1477,7 @@
 
 .c2c-v2 .ana-greet{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:40px 18px;}
 .c2c-v2 .ana-greet-mark{width:40px;height:40px;border-radius:11px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:20px;}
-.c2c-v2 .ana-greet-t{font-size:16px;font-weight:600;font-family:var(--font-serif);}
+.c2c-v2 .ana-greet-t{font-size:16px;font-weight:600;font-family:var(--font-sans);}
 .c2c-v2 .ana-greet-s{font-size:12px;color:var(--text-400);line-height:1.5;max-width:240px;}
 
 /* ════════ HAQ Manager (haq-manager.jsx) ════════ */
