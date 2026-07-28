@@ -47,26 +47,51 @@ export function documentWorkspaceRoots(): string[] {
 const TRAVERSAL_SEGMENT = /(^|[\\/])\.\.([\\/]|$)/;
 
 /**
- * True when `candidate` resolves inside one of the workspace roots.
+ * The absolute path `candidate` denotes, if and only if it lands inside a
+ * workspace root — otherwise null.
  *
- * The `..` and NUL rejections happen BEFORE resolution so a traversal is
- * refused on its own terms rather than only when it happens to escape; the
- * containment test is what makes an absolute path safe, since `path.resolve`
- * lets an absolute candidate override the root and it then fails this check.
+ * ── Resolve against the SAME BASE the consumer uses ───────────────────────────
+ * This resolves against `process.cwd()`, not against a root, and that detail is
+ * the whole correctness of the control. An earlier version resolved against each
+ * root (`path.resolve(root, candidate)`) while the consumer — the Python worker,
+ * via `Path(arg).resolve()` — resolves against the process working directory.
+ * Two different bases means the guard validated a different file from the one
+ * that was opened, and every relative path sailed through:
+ *
+ *   output_pdf_path = "dist/index.js"
+ *     guard    → path.resolve("/app/tmp", "dist/index.js") = /app/tmp/dist/index.js
+ *                → inside the root → PASS
+ *     consumer → Path("dist/index.js").resolve()            = /app/dist/index.js
+ *                → overwrites the production server bundle
+ *
+ * Absolute paths and `..` were blocked; ordinary relative paths were not, because
+ * they were never checked against the location they would actually reach. Same
+ * base, one resolution, one answer.
+ *
+ * `..` and NUL are still rejected up front so a traversal is refused on its own
+ * terms rather than only when it happens to escape.
  */
-export function isWithinDocumentWorkspace(candidate: unknown): boolean {
-  if (typeof candidate !== 'string' || candidate.length === 0) return false;
-  if (candidate.includes('\0')) return false;
-  if (TRAVERSAL_SEGMENT.test(candidate)) return false;
+export function resolveWithinDocumentWorkspace(candidate: unknown): string | null {
+  if (typeof candidate !== 'string' || candidate.length === 0) return null;
+  if (candidate.includes('\0')) return null;
+  if (TRAVERSAL_SEGMENT.test(candidate)) return null;
 
-  return documentWorkspaceRoots().some(root => {
-    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
-    // -- the resolve IS the sanitiser here, not a sink: this function returns a
-    // boolean and opens nothing. `..` and NUL are already rejected above, and
-    // the containment comparison below is what makes the result safe.
-    const resolved = path.resolve(root, candidate);
-    return resolved === root || resolved.startsWith(root + path.sep);
-  });
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+  // -- the resolve IS the sanitiser here, not a sink: this function opens
+  // nothing. `..` and NUL are rejected above, and the containment test below is
+  // what makes the returned path safe. An absolute candidate overrides cwd and
+  // then fails containment unless it genuinely lives under a root.
+  const resolved = path.resolve(process.cwd(), candidate);
+
+  const inside = documentWorkspaceRoots().some(
+    root => resolved === root || resolved.startsWith(root + path.sep),
+  );
+  return inside ? resolved : null;
+}
+
+/** True when `candidate` denotes a path inside the workspace. */
+export function isWithinDocumentWorkspace(candidate: unknown): boolean {
+  return resolveWithinDocumentWorkspace(candidate) !== null;
 }
 
 /**
@@ -79,12 +104,17 @@ export function isWithinDocumentWorkspace(candidate: unknown): boolean {
  * conversation.
  */
 export function assertWithinDocumentWorkspace(candidate: unknown, label: string): string {
-  if (!isWithinDocumentWorkspace(candidate)) {
+  const resolved = resolveWithinDocumentWorkspace(candidate);
+  if (resolved === null) {
     throw new Error(
       `${label} must be a path inside the AnA document workspace (tmp/ or uploads/). ` +
-        `Absolute paths outside it, and any '..' segment, are refused. Use a path returned ` +
+        `Paths outside it, and any '..' segment, are refused. Use a path returned ` +
         `by an earlier document tool, or a file_id with the uploaded-document tools.`,
     );
   }
-  return candidate as string;
+  // Return the RESOLVED path, not the caller's string. Callers must use this
+  // value: handing the raw candidate onward is what let the guard validate one
+  // file while the consumer opened another. An absolute path also removes any
+  // dependence on the consumer's working directory matching ours.
+  return resolved;
 }

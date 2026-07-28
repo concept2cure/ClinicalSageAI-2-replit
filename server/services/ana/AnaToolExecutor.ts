@@ -6729,13 +6729,22 @@ registerToolHandler('convert_docx_to_pdf', async (input, ctx) => {
   // worker, which READS input_docx_path and OVERWRITES output_pdf_path
   // (server/scripts/docx_pdf_pipeline.py — `generated.replace(output_pdf)`).
   // Unconfined, that is an arbitrary server-side file read whose bytes return
-  // through the tool result, and an arbitrary file overwrite. Confine both to
-  // the workspace the document tools actually write to.
+  // through the tool result, and an arbitrary file overwrite.
+  //
+  // The RESOLVED paths are what get used below — never the caller's strings.
+  // Passing the raw candidate onward was itself the bug: the guard resolved it
+  // against the workspace root while the worker resolved it against the process
+  // working directory, so the check and the open addressed different files and
+  // any ordinary relative path (e.g. "dist/index.js") passed while landing
+  // outside. Validate and use the same value.
+  let safeInputDocxPath: string;
+  let safeOutputPdfPath: string | undefined;
   try {
-    assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path');
-    if (outputPdfPath !== undefined) {
-      assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path');
-    }
+    safeInputDocxPath = assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path');
+    safeOutputPdfPath =
+      outputPdfPath === undefined
+        ? undefined
+        : assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path');
   } catch (err) {
     return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
   }
@@ -6750,8 +6759,8 @@ registerToolHandler('convert_docx_to_pdf', async (input, ctx) => {
     const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
     const { promises: fs } = await import('fs');
     const result = await runDocxPdfPipeline({
-      inputDocxPath,
-      outputPdfPath,
+      inputDocxPath: safeInputDocxPath,
+      outputPdfPath: safeOutputPdfPath,
       compress,
       quality,
     });
