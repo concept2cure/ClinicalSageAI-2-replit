@@ -182,13 +182,29 @@ function endpointMatrix() {
     byFile[row.file].total++
     if (row.guarded) byFile[row.file].guarded++
   }
+  const unguarded = rows.filter((r) => !r.guarded)
+  // Rank files by how much unguarded surface they carry, so the committed
+  // artifact stays reviewable. The full 3,000+ row dump is regenerable by
+  // re-running this script with SWEEP_FULL=1 — it is not committed, because a
+  // 30,000-line JSON blob in a pull request is noise, not evidence.
+  const unguardedByFile = Object.entries(
+    unguarded.reduce((acc, r) => { acc[r.file] = (acc[r.file] || 0) + 1; return acc }, {})
+  ).sort((a, b) => b[1] - a[1])
+
   return {
+    _note:
+      'Route-level guards only. A global default-deny boundary (server/middleware/authBoundary.ts) ' +
+      'covers /api before any route registers, and live probing confirmed it holds — so "unguarded" ' +
+      'measures DEFENCE IN DEPTH, not exposure. See evidence/00-live-proof-log.md §LP-08.',
     totalEndpoints: rows.length,
     guardedEndpoints: rows.filter((r) => r.guarded).length,
-    unguardedEndpoints: rows.filter((r) => !r.guarded).length,
+    unguardedEndpoints: unguarded.length,
     filesWithEndpoints: Object.keys(byFile).length,
+    guardsObserved: [...new Set(rows.flatMap((r) => r.guards))].sort(),
+    topFilesByUnguardedCount: unguardedByFile.slice(0, 60).map(([file, count]) => ({ file, count })),
+    unguardedSample: unguarded.slice(0, 40),
     byFile,
-    unguarded: rows.filter((r) => !r.guarded),
+    ...(process.env.SWEEP_FULL ? { unguardedFull: unguarded } : {}),
   }
 }
 
@@ -343,6 +359,9 @@ function secretScan() {
   for (const f of walk(ROOT)) {
     const ext = path.extname(f)
     if (!['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.yml', '.yaml', '.sh', '.env', '.example', '.md', '.tf'].includes(ext)) continue
+    // Skip this audit's own outputs: a previous run's JSON contains the matched
+    // snippets, so scanning it reports the scanner's own findings as new hits.
+    if (rel(f).startsWith('docs/audit-2026-07/')) continue
     const src = read(f)
     if (!src) continue
     const lines = src.split('\n')

@@ -362,6 +362,31 @@ is heavy for a first paint but is a performance finding, not a correctness one. 
 client trees documented elsewhere in this audit are largely tree-shaken out of the bundle,
 but they remain a maintenance and review-surface liability.
 
+## LP-09b · Booting the server mutates the database schema
+
+Re-running the gap analysis after the boot returned **717** tables where the installer had
+produced **702**. The delta is not measurement noise — it is `server/db/ensureCoreTables.ts`,
+which runs at boot from `server/startup/services.ts:53` and contains **7
+`CREATE TABLE IF NOT EXISTS` statements** (`:358` `documents`, `:374` `document_versions`,
+`:388` `cerv2_510k_sections`, `:408` `cerv2_section_versions`, `:420`
+`cerv2_document_sessions`, `:431` `rag_documents`, `:446` `rag_chunks`), auto-creating on
+miss at `:470-475`.
+
+All 7 are present in `audit_fresh` after the boot. Its own docstring says it *"validates"*
+rather than creates.
+
+Two consequences a buyer should weigh:
+
+1. **Schema creation happens outside the migration system**, so those seven tables' shapes
+   are governed by a TypeScript file rather than by a reviewed, versioned migration — and
+   they will never appear in a migration-based diff of two environments.
+2. **Starting the application is a schema-mutating operation.** That is incompatible with a
+   GxP change-control posture, where schema changes are controlled artifacts, and it means a
+   production rollback to an older image cannot be assumed to leave the database unchanged.
+
+It also means the numbers in LP-02b were taken from a pristine install, and the numbers in
+this section were taken after a boot. Both are stated rather than averaged.
+
 ## LP-10 · The application's own security self-check reports failing
 
 At boot, unprompted:

@@ -148,7 +148,15 @@ const report = {
   rlsEnabledButZeroPoliciesList: rlsEnabledNoPolicy,
   rlsNotEnabled: rlsDisabled.length,
   rlsNotEnabledList: rlsDisabled,
-  missing,
+  // Committed artifact keeps the top of the distribution with one example site
+  // each, so the file stays reviewable in a diff. Re-run with GAP_FULL=1 for the
+  // complete list with every reference site.
+  missingTop: missing.slice(0, 120).map((m) => ({
+    table: m.table,
+    referenceCount: m.referenceCount,
+    exampleSite: m.sites[0],
+  })),
+  ...(process.env.GAP_FULL ? { missing } : {}),
 }
 
 fs.writeFileSync(path.join(OUT, '10-fresh-install-gap.json'), JSON.stringify(report, null, 2))

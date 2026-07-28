@@ -1,6 +1,6 @@
 {
-  "totalFiles": 7858,
-  "totalCodeLines": 1489132,
+  "totalFiles": 7881,
+  "totalCodeLines": 1489325,
   "byLayer": {
     ".github": {
       "files": 62,
@@ -507,10 +507,10 @@
       "testFiles": 0
     },
     "docs": {
-      "files": 944,
-      "lines": 575,
-      "codeFiles": 2,
-      "codeLines": 575,
+      "files": 961,
+      "lines": 768,
+      "codeFiles": 3,
+      "codeLines": 768,
       "testFiles": 0
     },
     "drizzle.config.ts": {
@@ -780,7 +780,7 @@
       "testFiles": 0
     },
     "tests": {
-      "files": 379,
+      "files": 385,
       "lines": 84426,
       "codeFiles": 367,
       "codeLines": 84426,
@@ -844,7 +844,7 @@
     }
   },
   "byExt": {
-    ".md": 1108,
+    ".md": 1117,
     "": 8,
     ".yml": 30,
     ".py": 45,
@@ -855,7 +855,7 @@
     ".svg": 34,
     ".xml": 12,
     ".tpl": 2,
-    ".json": 229,
+    ".json": 242,
     ".html": 45,
     ".js": 226,
     ".css": 101,
@@ -870,7 +870,7 @@
     ".docx": 17,
     ".sh": 53,
     ".prisma": 3,
-    ".mjs": 153,
+    ".mjs": 154,
     ".MD": 1,
     ".png": 3,
     ".md5": 2,
