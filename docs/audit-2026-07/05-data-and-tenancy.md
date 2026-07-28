@@ -214,7 +214,7 @@ is `db/migrations/20260224_ai_trace_chain.sql`, which is in the orphaned tree. Y
 `README.md:25` calls the AnA chat surface *"the product."* On a correct from-scratch install,
 it queries tables that do not exist.
 
-### 5.3.2 Fifteen schemas are queried and never created
+### 5.3.2 Fifteen schemas are missing after the supported install; five have no path at all
 
 The installer creates `audit`, `lumen`, `precedent`, `public`, `vault`. Server code issues
 SQL against fifteen more that do not exist:
@@ -239,10 +239,27 @@ SQL against fifteen more that do not exist:
 Note `predicate` versus the created `precedent` — a **schema-name mismatch**, not just an
 absence.
 
-**At least four mounted route families cannot serve a single request against a correctly
-installed fresh database.** They will 500 at the first query. Nothing in CI detects this,
-because `check-unbacked-tables.mjs` verifies that a `CREATE` exists *somewhere in the repo*,
-not that the file is on an apply path.
+**Corrected after verification (Chapter 03, C2).** `install-fresh.mjs` creates **none** of
+the 15 — confirmed live. But the script's own closing output, and CI (`ci.yml:296, 354, 494`),
+prescribe a follow-on `db/migrations/*_gcc_*.sql` psql loop that applies cleanly (43/43) and
+creates **9** of them (`innovation`, `cortex`, `signing`, `manufacturing`, `compliance`,
+`labeling`, `site_intel`, `ectd`, `core`). `clinical_ops` self-provisions at runtime
+(`clinical-operations-routes.ts:113-214`).
+
+**Schemas with no provisioning path anywhere in the repository: 5** — `intelligence`,
+`intelligent_docs`, `regulatory_intel`, `regulatory_harmonization`, `predicate`.
+
+Two things sharpen rather than soften:
+
+- **The route-family impact stands and was understated.** Even after the *full* documented
+  install, at least four mounted route families still cannot serve a request:
+  `/api/intelligent-docs`, `/api/regulatory-precedent-intelligence`, `/api/harmonize`, and
+  `/api/precedent-engine` + `/api/predicate-intelligence`.
+- **The operator hazard is real.** `install-fresh.mjs` does not run the gcc loop itself, so a
+  buyer following the script's advertised "one supported path" gets **all 15** missing.
+
+Nothing in CI detects this, because `check-unbacked-tables.mjs` verifies that a `CREATE` exists
+*somewhere in the repo*, not that the file is on an apply path.
 
 ## 5.4 Why the proof-tier tests did not catch this
 

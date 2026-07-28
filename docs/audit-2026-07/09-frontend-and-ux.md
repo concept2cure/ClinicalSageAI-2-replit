@@ -50,9 +50,9 @@ As of HEAD (`576ec5d`, the day of this audit), `client/src/concept2cure/v2/regis
 | | |
 |---|---:|
 | `RAIL_PRIMARY` destinations (`:116-122`) | **5** — Chats, Projects, Communication Center, Apps, Settings |
-| `NAV_HIDDEN` entries (`:125-171`) | **41** |
-| Registered UI surfaces | **~101** |
-| Reachable from the global rail | **5 (≈5%)** |
+| `NAV_HIDDEN` entries (`:125-171`) | **40** (42 literal, `tasks` and `vault` duplicated) |
+| Registered UI surfaces | **96** (44 base + 52 ui-v2) |
+| Reachable from the global rail | **5 (5.2%)** |
 | Reachable from in-app `onNav()` calls | 15 distinct ids |
 | Reachable only by typed URL or ⌘K | **~85** |
 

