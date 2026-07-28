@@ -60,6 +60,7 @@ vi.mock('../../storage', () => ({
     }),
     updateDocument: vi.fn(async (id: string, patch: Record<string, unknown>) => ({ id, ...patch })),
     deleteDocument: vi.fn(async () => true),
+    createDocument: vi.fn(async (doc: Record<string, unknown>) => ({ id: 'new-doc', ...doc })),
   },
 }));
 
@@ -124,5 +125,71 @@ describe('Tenant isolation — Documents auth missing', () => {
       const res = await request(app).get(path);
       expect(res.status).toBe(403);
     }
+  });
+});
+
+/**
+ * The gap that let a cross-tenant write ship.
+ *
+ * Every test above covers an id-scoped operation. POST has no id, so it was
+ * never exercised — and POST / was the one handler in document-routes.ts that
+ * did not call requireAuthedOrgId. It validated req.body with
+ * insertDocumentSchema (which omits only id/createdAt/updatedAt, leaving
+ * organizationId caller-supplied) and passed the result straight to
+ * storage.createDocument, which spreads its input verbatim into the insert.
+ *
+ * So any authenticated user could create a document inside any organization,
+ * unaudited, by naming its id in the body. A suite that checks read, update and
+ * delete but not create is exactly how that survives review.
+ */
+describe('Tenant isolation — Documents create', () => {
+  it('a body-supplied organizationId cannot place a document in another org', async () => {
+    const { storage } = await import('../../storage');
+    const res = await request(app)
+      .post('/api/documents')
+      // Every notNull column on `documents`, so the payload clears Zod and the
+      // assertion is about tenancy rather than validation.
+      .send({
+        title: 'planted',
+        organizationId: ORG_B,
+        clientWorkspaceId: 1,
+        documentCode: 'DOC-001',
+        documentType: 'Protocol',
+        status: 'draft',
+        ownerId: 1,
+        createdById: 1,
+      });
+
+    expect(res.status).toBe(201);
+    const arg = (storage.createDocument as any).mock.calls[0][0];
+    // The authed org wins over the body, unconditionally.
+    expect(arg.organizationId).toBe(ORG_A);
+    expect(arg.organizationId).not.toBe(ORG_B);
+  });
+
+  it('create without a tenant context is refused outright', async () => {
+    authState.user = null;
+    const { storage } = await import('../../storage');
+    const res = await request(app)
+      .post('/api/documents')
+      .send({
+        title: 'planted',
+        organizationId: ORG_B,
+        clientWorkspaceId: 1,
+        documentCode: 'DOC-002',
+        documentType: 'Protocol',
+        status: 'draft',
+        ownerId: 1,
+        createdById: 1,
+      });
+
+    expect(res.status).toBe(403);
+    expect((storage.createDocument as any)).not.toHaveBeenCalled();
+  });
+
+  it('upload refuses without a tenant context before touching the filesystem', async () => {
+    authState.user = null;
+    const res = await request(app).post('/api/documents/upload');
+    expect(res.status).toBe(403);
   });
 });

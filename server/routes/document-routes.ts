@@ -160,10 +160,33 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new document
+//
+// SECURITY (cross-tenant write): this handler validated req.body with
+// insertDocumentSchema and passed the result straight to storage.createDocument.
+// That schema omits only id/createdAt/updatedAt, so `organizationId` — a notNull
+// FK on `documents` — was caller-supplied, and storage.createDocument spreads
+// the input verbatim into the insert. Any authenticated user could therefore
+// create a document inside ANY organization, unaudited, by naming its id in the
+// body. The five read/update/delete handlers in this same file already guard
+// with requireAuthedOrgId (lines 112, 142, 255, 277, 299); the two write paths
+// were the exception, and the tenant-isolation contract test covers
+// GET/PATCH/DELETE but not POST.
+//
+// server/utils/authedOrgId.ts names this precise pattern in its docstring:
+// "`req.body.organizationId` ... were each cross-tenant IDORs".
+//
+// The authed org id is applied AFTER the spread so a body value cannot win.
 router.post('/', async (req, res) => {
   try {
-    // Validate request body using Zod schema
-    const documentData = insertDocumentSchema.parse(req.body);
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    // Validate request body using Zod schema, with the tenant forced from the
+    // verified JWT rather than taken from user-controlled input.
+    const documentData = insertDocumentSchema.parse({
+      ...(req.body ?? {}),
+      organizationId: guard.orgId,
+    });
 
     // Create document in storage
     const document = await storage.createDocument(documentData);
@@ -182,6 +205,9 @@ router.post('/', async (req, res) => {
 // Upload a document file
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const file = req.file;
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -220,13 +246,19 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'Invalid document data format' });
     }
 
-    // Add file information to document data
+    // Add file information to document data.
+    //
+    // SECURITY: same cross-tenant write as POST / above — `documentData` is
+    // JSON.parse'd from a multipart field, so organizationId was entirely
+    // caller-controlled. Forced from the verified JWT, applied last so nothing
+    // in the uploaded payload can override it.
     const enhancedDocumentData = {
       ...documentData,
       fileName: file.originalname,
       fileType: file.mimetype,
       fileSize: file.size,
       filePath: file.path,
+      organizationId: guard.orgId,
     };
 
     // Validate document data
@@ -359,6 +391,22 @@ router.get('/:id/download', async (req, res) => {
 });
 
 // Get all folders
+// TENANCY GAP — NOT fixable with a guard, recorded rather than papered over.
+//
+// `document_folders` has no organizationId column (shared/schema.ts), and
+// storage.getFolders/createFolder accept no org scope. So every tenant sees and
+// writes the same folder tree, and neither handler below can be tenant-scoped
+// without a schema change plus a backfill.
+//
+// Adding requireAuthedOrgId here would return 403 without a tenant context and
+// then ignore the org entirely — the appearance of isolation with none of the
+// substance, which is worse than the honest absence. The documents themselves
+// ARE scoped (documents.organizationId is notNull and every document handler in
+// this file guards on it); only the folder taxonomy is global.
+//
+// This route currently has no client caller, so the exposure is limited to
+// direct API access. It is a deletion candidate; if it is kept instead, the
+// folder table needs a tenant column first.
 router.get('/folders', async (req, res) => {
   try {
     const { parentId } = req.query;
