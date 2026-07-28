@@ -54,6 +54,17 @@ jobs:
         # honored for deliberate, audited exceptions.
         run: npm run check:security-patterns
 
+      - name: Compliance claim check
+        # Hard gate. Customer-facing copy must not assert compliance the
+        # platform cannot evidence. The signup screen previously advertised
+        # "SOC 2 Type II" — for which no report of any type exists — alongside
+        # blanket encryption-at-rest and mandatory MFA, none of which were true.
+        # These are exactly the claims a regulated-industry buyer's procurement
+        # team audits, so the failure mode is a security questionnaire answered
+        # wrongly in writing. Deliberate exceptions annotate the line with
+        # `compliance-claim-allow: <reason>`.
+        run: npm run check:compliance-claims
+
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh
 

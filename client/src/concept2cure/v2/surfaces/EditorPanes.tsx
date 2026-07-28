@@ -398,7 +398,7 @@ export function GovernancePane({
           </div>
         ) : (
           <div>
-            <p>Apply a Part 11 compliant electronic signature to freeze and certify this section.</p>
+            <p>Apply a Part 11 electronic signature to freeze and certify this section.</p>
             <button className="btn primary" style={{ height: 30, fontSize: 12 }} onClick={() => onSign && onSign()}>{I.lock} Sign section</button>
           </div>
         )}

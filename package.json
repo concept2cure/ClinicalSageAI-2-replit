@@ -37,6 +37,7 @@
     "eval:grounding": "tsx scripts/eval-grounding.ts",
     "eval:risk-backtest": "tsx scripts/backtest-risk-model.ts",
     "check:security-patterns": "tsx scripts/check-security-patterns.ts",
+    "check:compliance-claims": "node scripts/ci/check-compliance-claims.mjs",
     "ocr:vendor": "node scripts/vendor-tesseract-langdata.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
