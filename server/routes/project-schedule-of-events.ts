@@ -70,28 +70,78 @@ function parseGoals(value: unknown): GeneratorGoal[] {
     .filter((g) => g.title);
 }
 
-async function resolveProjectType(orgId: number, projectId: number): Promise<string | null> {
-  try {
-    const { rows } = await pool.query(
-      `SELECT type, metadata FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [projectId, orgId],
-    );
-    const r = rows[0];
-    if (!r) return null;
-    const md = r.metadata && typeof r.metadata === 'object' ? r.metadata : {};
-    return (md.submissionType as string) || r.type || null;
-  } catch {
+/**
+ * Look up a project WITHIN the caller's organization.
+ *
+ * This used to be `resolveProjectType`, returning `string | null` — which
+ * conflated two entirely different answers:
+ *
+ *   - "that project is not yours" (or does not exist), and
+ *   - "it is yours, and it has no submission type set".
+ *
+ * Only one caller used it, and it treated both as "no type known" and carried
+ * on. So POST /projects/:id/schedule-of-events/generate would proceed for a
+ * project in ANOTHER organization, reaching an upsert whose ON CONFLICT arbiter
+ * was org-blind. Distinguishing the two cases is what makes an ownership gate
+ * expressible at all, so the return type now carries the distinction.
+ *
+ * Errors are rethrown rather than swallowed into `null`. The previous
+ * `catch { return null }` turned a transient database failure into "no type",
+ * and under the gate below would turn it into a 404 — reporting "your project
+ * does not exist" because a query timed out.
+ */
+type ProjectLookup = { found: false } | { found: true; projectType: string | null };
+
+async function findProjectInOrg(orgId: number, projectId: number): Promise<ProjectLookup> {
+  const { rows } = await pool.query(
+    `SELECT type, metadata FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+    [projectId, orgId],
+  );
+  const r = rows[0];
+  if (!r) return { found: false };
+  const md = r.metadata && typeof r.metadata === 'object' ? r.metadata : {};
+  return { found: true, projectType: (md.submissionType as string) || r.type || null };
+}
+
+/**
+ * Ownership gate for every handler in this router.
+ *
+ * Resolves the project id and confirms it belongs to the caller's organization,
+ * writing the response and returning null when it does not. A cross-tenant
+ * request and a genuinely absent project both get the same 404 — the response
+ * must not reveal that project 42 exists but belongs to somebody else.
+ *
+ * The service layer scopes its own reads by organization_id, so a cross-tenant
+ * GET already returned an empty schedule rather than the victim's. This gate
+ * exists for the mutating handlers, and to keep the composite FK added in
+ * 20260728_schedule_of_events_org_scoped_uniqueness.sql from surfacing as a 500
+ * with constraint text in the body.
+ */
+async function requireOwnedProject(
+  req: Request,
+  res: Response,
+): Promise<{ orgId: number; projectId: number; projectType: string | null } | null> {
+  const orgId = getOrganizationId(req);
+  const projectId = getProjectId(req);
+  if (projectId == null) {
+    res.status(400).json({ error: 'Invalid project id' });
     return null;
   }
+  const project = await findProjectInOrg(orgId, projectId);
+  if (!project.found) {
+    res.status(404).json({ error: 'Project not found' });
+    return null;
+  }
+  return { orgId, projectId, projectType: project.projectType };
 }
 
 // ── routes ────────────────────────────────────────────────────────────────────
 
 router.get('/projects/:id/schedule-of-events', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrganizationId(req);
-    const projectId = getProjectId(req);
-    if (projectId == null) return res.status(400).json({ error: 'Invalid project id' });
+    const owned = await requireOwnedProject(req, res);
+    if (!owned) return;
+    const { orgId, projectId } = owned;
     const view = await getScheduleOfEvents(orgId, projectId);
     return res.json(view);
   } catch (err: any) {
@@ -101,13 +151,14 @@ router.get('/projects/:id/schedule-of-events', async (req: Request, res: Respons
 
 router.post('/projects/:id/schedule-of-events/generate', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrganizationId(req);
-    const projectId = getProjectId(req);
-    if (projectId == null) return res.status(400).json({ error: 'Invalid project id' });
+    const owned = await requireOwnedProject(req, res);
+    if (!owned) return;
+    const { orgId, projectId } = owned;
     const body = req.body ?? {};
+    // The gate already resolved the project inside the caller's org, so the
+    // stored type comes from there rather than a second lookup.
     const projectType =
-      (typeof body.project_type === 'string' && body.project_type.trim()) ||
-      (await resolveProjectType(orgId, projectId));
+      (typeof body.project_type === 'string' && body.project_type.trim()) || owned.projectType;
     const view = await generateProjectSchedule({
       orgId,
       projectId,
@@ -126,9 +177,9 @@ router.post('/projects/:id/schedule-of-events/generate', async (req: Request, re
 
 router.post('/projects/:id/schedule-of-events/amend', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrganizationId(req);
-    const projectId = getProjectId(req);
-    if (projectId == null) return res.status(400).json({ error: 'Invalid project id' });
+    const owned = await requireOwnedProject(req, res);
+    if (!owned) return;
+    const { orgId, projectId } = owned;
     const body = req.body ?? {};
     const milestoneKey = typeof body.milestone_key === 'string' ? body.milestone_key.trim() : '';
     if (!milestoneKey) return res.status(400).json({ error: 'milestone_key is required' });
@@ -152,9 +203,9 @@ router.post('/projects/:id/schedule-of-events/amend', async (req: Request, res: 
 
 router.post('/projects/:id/schedule-of-events/review', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrganizationId(req);
-    const projectId = getProjectId(req);
-    if (projectId == null) return res.status(400).json({ error: 'Invalid project id' });
+    const owned = await requireOwnedProject(req, res);
+    if (!owned) return;
+    const { orgId, projectId } = owned;
     const apply = req.body?.apply === undefined ? true : !!req.body.apply;
     const result = await reviewScheduleHealth({ orgId, projectId, apply, triggeredBy: 'user' });
     const view = await getScheduleOfEvents(orgId, projectId);
@@ -166,9 +217,9 @@ router.post('/projects/:id/schedule-of-events/review', async (req: Request, res:
 
 router.post('/projects/:id/schedule-of-events/goals/reset', async (req: Request, res: Response) => {
   try {
-    const orgId = getOrganizationId(req);
-    const projectId = getProjectId(req);
-    if (projectId == null) return res.status(400).json({ error: 'Invalid project id' });
+    const owned = await requireOwnedProject(req, res);
+    if (!owned) return;
+    const { orgId, projectId } = owned;
     const body = req.body ?? {};
     const goals = parseGoals(body.goals);
     const rationale = typeof body.rationale === 'string' ? body.rationale.trim() : '';
