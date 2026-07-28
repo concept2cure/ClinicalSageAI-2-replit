@@ -12,10 +12,11 @@
  *                           does not have (it has template_name, regions,
  *                           is_active). The endpoint 500'd on every request it
  *                           had ever received, and the only caller
- *                           (AuthoringCreateExport.tsx) wraps the fetch in
- *                           `catch { /* picker stays blank-only *​/ }`, so the
+ *                           (AuthoringCreateExport.tsx:53) swallows the rejection
+ *                           in a catch that leaves the picker blank-only. So the
  *                           "Start from" template dropdown silently offered
- *                           nothing but "None" for the life of the feature.
+ *                           nothing but "None" for the life of the feature,
+ *                           with no error anywhere a user or operator would see.
  *
  *   POST /docs/:id/apply-template
  *                           used document_id, order_idx, created_by and
