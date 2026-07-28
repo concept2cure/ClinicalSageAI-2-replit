@@ -13,6 +13,13 @@
  * Declared, not inferred: `allowJs` is off, so tsc never reads the .mjs. Keep
  * this file in step with the real exports — a drift here is invisible at
  * runtime and only shows up as a type that lies.
+ *
+ * THE EXTENSION IS LOAD-BEARING — this file must be `migration-set.d.mts`.
+ * Under `moduleResolution: "node"` (Node10) TypeScript resolves a specifier
+ * ending in `.mjs` by substituting ONLY `.mts` and `.d.mts`; it never consults
+ * `.d.ts` for a `.mjs` import. Renaming this to `migration-set.d.ts` silently
+ * un-types the module again and TS7016 comes back — verified against tsc 5.6.3
+ * with `--traceResolution`. Do not "normalise" the extension.
  */
 
 /**
