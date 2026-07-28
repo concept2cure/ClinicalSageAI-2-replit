@@ -11,7 +11,7 @@
  */
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, liveGetOrNull } from '../dataConnect';
+import { SampleTag, connected, liveGetOrNull, liveMutateOrNull } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -200,10 +200,13 @@ const ECTD_THREAD: EctdThreadMessage[] = [];
    instead. */
 
 function runValidateAction(docId: number): Promise<ValidationResult | null> {
-  if (!(window as any).C2C_API) return Promise.resolve(null);
-  return (window as any).C2C_API.post('/api/coauthor/documents/' + docId + '/validate', {})
-    .then((r: any) => (r && r.validation) || null)
-    .catch(() => null);
+  // Was `window.C2C_API`, assigned nowhere — so this returned null before ever
+  // issuing a request, and the panel showed "unavailable" for a reason that had
+  // nothing to do with the server. Its sibling runComplianceAction below was
+  // already ported to liveGetOrNull; this is the same file carrying both forms.
+  return liveMutateOrNull<{ validation?: ValidationResult }>(
+    'POST', '/api/coauthor/documents/' + docId + '/validate', {},
+  ).then((r) => r.data?.validation || null);
 }
 
 function runComplianceAction(docId: number): Promise<ComplianceResult | null> {

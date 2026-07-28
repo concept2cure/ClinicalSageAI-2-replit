@@ -293,7 +293,29 @@ const checkPRDescription = () => {
     );
   }
 
-  // Check for required sections from PR template
+  // Check for required sections from PR template.
+  //
+  // These strings MUST appear verbatim as headings in
+  // .github/pull_request_template.md, or this warning fires on every PR whose
+  // author followed the template — which is what happened until 2026-07. Two
+  // competing templates shipped, and neither offered `## Summary`:
+  //
+  //   .github/PULL_REQUEST_TEMPLATE.md  `## Description`, `### Testing`
+  //   .github/pull_request_template.md  `## Change Summary`, `## Test Evidence`
+  //
+  // (`### Testing` does satisfy the check, because the match below is a
+  // substring test and `'### Testing'.includes('## Testing')` is true — the
+  // match starts at index 1. `## Change Summary` does not contain `## Summary`,
+  // and `## Description` contains neither.)
+  //
+  // So an author following either template verbatim was still told a section was
+  // missing. A warning that fires on correct behaviour is not a control; it
+  // trains people to ignore Danger. Which template an author even saw was
+  // undetermined — GitHub resolves the filename case-insensitively. They are now
+  // one file.
+  //
+  // tests/ci/pr-template-danger-parity.contract.test.ts asserts the containment,
+  // so the two can no longer drift apart silently.
   const requiredSections = ['## Summary', '## Type of Change', '## Testing'];
   const missingSections = requiredSections.filter(section => !pr.body?.includes(section));
 

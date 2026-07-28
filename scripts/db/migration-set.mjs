@@ -142,6 +142,59 @@ export const C2C_MIGRATION_FILES = [
   // nothing, one index, and its own tenant_isolation_policy — 0021 has long
   // since run and never revisits a newly-added table.
   'db/migrations/20260728_artifacts_table.sql',
+  // ── c2c section timestamps (added 2026-07-28) ─────────────────────────────
+  // c2c_document_sections was created with no updated_at/created_at, yet FOUR
+  // shipped queries reference ds.updated_at: /workstreams (projects.ts:334),
+  // /drafts (:371,:377), the project vault (project-vault.ts:365) and the UPDATE
+  // branch of the canonical Part 11 section save (documents.ts:441). Postgres
+  // rejects an unknown column at plan time, so those are unconditional 42703
+  // failures — /workstreams and /drafts have 500'd on every project page load,
+  // and the section save would 500 on the first re-save of any section.
+  //
+  // Must be on this list, not just in migrations/: the root tree reaches new
+  // databases only, and every database with this defect is an existing one.
+  // CREATE TABLE IF NOT EXISTS cannot add a column to a table that already
+  // exists, so the guarded ALTER is the only way the column lands.
+  'migrations/20260728_c2c_document_sections_timestamps.sql',
+  // ── CMC Module 3 operating system (added 2026-07-28) ──────────────────────
+  // The ONLY file that creates cmc_module3_sections, cmc_source_objects,
+  // cmc_section_lineage, cmc_provenance_events and seven siblings — and it was
+  // on NO durable apply path. It carries no `_gcc_` infix so the CI psql loop
+  // skips it; it lives in db/migrations so install-fresh's root-tree overlay
+  // never sees it; and it was not in this list. It IS in
+  // db/migrations/migrations_manifest.json, which nothing consumes.
+  //
+  // Consequences, both observed: the blank-DB provisioning job failed with
+  // `relation "cmc_module3_sections" does not exist`, and migrations/0016 and
+  // 0017 — which ALTER these tables from the root tree — have been ALTERing
+  // tables that install-fresh never created. Every CMC Module 3 write in the
+  // product has only ever addressed tables that exist on databases provisioned
+  // by some other means.
+  //
+  // Fully idempotent: 11 CREATE TABLE IF NOT EXISTS, no unguarded DDL, no data
+  // statements, and `organizations` is its only external FK target — which
+  // deploy-migrate already asserts as a base sentinel before this loop runs.
+  //
+  // MUST precede the re-key below, which indexes the tables this creates.
+  'db/migrations/20260401_cmc_convergence_os.sql',
+  // ── CMC Module 3 tenant-scoped uniqueness (added 2026-07-28) ──────────────
+  // SECURITY. cmc_module3_sections and cmc_source_objects were unique on keys
+  // that omit organization_id (migrations/0016:22, migrations/0017:102,107).
+  // Uniqueness is what ON CONFLICT arbitrates against, so an org-blind key
+  // decides WHOSE ROW an upsert lands on — and the Module 3 compile route
+  // upserted on (project_id, section_key), matching any tenant's row for that
+  // project id while the DO UPDATE SET left organization_id alone.
+  //
+  // This one MUST be on the durable path, not just in migrations/. The root
+  // tree is applied only by install-fresh (new databases). Every already-
+  // provisioned database — which is every database that has the defect — gets
+  // schema only from this list. Landing the code fix without this entry would
+  // ship an ON CONFLICT clause naming an index that does not exist there:
+  // "there is no unique or exclusion constraint matching the ON CONFLICT
+  // specification" (42P10) on every compile. Merged-but-never-applied is the
+  // failure mode this module exists to prevent; here it would also be an
+  // outage.
+  'migrations/20260728_cmc_module3_org_scoped_uniqueness.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

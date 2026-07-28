@@ -61,6 +61,17 @@ jobs:
         # a silent no-op (query inside try/catch). See ledger C-14.
         run: npm run ci:unbacked-tables
 
+      - name: Guardrails — source files nothing can reach
+        # The inverse of the unbacked-table class: not a table with no code, but
+        # code with no caller. Nothing imports the module, so its routes are
+        # unmounted and nothing it contains can run — yet it greps like product.
+        #
+        # `audit:dead-code` (knip) was meant to cover this and could not: two
+        # config-load failures abort its analysis, so it reported zero
+        # unreferenced files while calling @anthropic-ai/sdk unused, and it ran
+        # with --no-exit-code so the job passed regardless.
+        run: npm run ci:unreferenced-modules
+
       - name: Guardrails — no direct Pool construction in runtime code
         # Was enforced nowhere. Its scan list also named ten of server/'s ~35
         # directories, so server/src, server/bootstrap, server/lib and others

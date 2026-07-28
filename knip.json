@@ -2,8 +2,7 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "server/index.ts",
-    "client/src/main.tsx",
-    "client/src/concept2cure/ZenApp.tsx"
+    "client/src/main.tsx"
   ],
   "project": [
     "server/**/*.ts",
@@ -60,5 +59,9 @@
     "supertest",
     "ajv*"
   ],
-  "ignoreBinaries": ["bash", "node", "npx"]
+  "ignoreBinaries": [
+    "bash",
+    "node",
+    "npx"
+  ]
 }

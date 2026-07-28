@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData } from '../dataConnect';
+import { EmptyState, useLiveData, liveMutateOrNull, connected } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 // Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
 // LIC_ARCHETYPES / licBundle are the product's fixed pricing catalog — the same
@@ -60,22 +60,28 @@ interface BillingApi {
 
 // Subscription STATUS is read fixture-free via useLiveData in the component.
 // This helper only carries the checkout / portal ACTIONS (real Stripe endpoints).
+// Ported off the design kit's `window.C2C_API` bridge, which is assigned
+// nowhere in this repository — so every one of these four went down the
+// `: Promise.reject(new Error('offline'))` branch, on every click, forever.
+// Checkout and portal are real Stripe endpoints; they have never been reachable
+// from this surface. dataConnect's header states the rule these now follow: the
+// kit global collapses onto apiRequest on port, and no second fetch convention
+// is introduced.
 const billing: BillingApi = {
   checkout(body) {
-    const api = (window as any).C2C_API;
-    return api ? api.post('/api/billing/checkout', body) : Promise.reject(new Error('offline'));
+    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/checkout', body)
+      .then((r) => r.data);
   },
   dtcCheckout(body) {
-    const api = (window as any).C2C_API;
-    return api ? api.post('/api/billing/dtc-checkout', body) : Promise.reject(new Error('offline'));
+    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/dtc-checkout', body)
+      .then((r) => r.data);
   },
   portal(returnUrl) {
-    const api = (window as any).C2C_API;
-    return api ? api.post('/api/billing/portal', { returnUrl }) : Promise.reject(new Error('offline'));
+    return liveMutateOrNull<{ portalUrl?: string }>('POST', '/api/billing/portal', { returnUrl })
+      .then((r) => r.data);
   },
   connected() {
-    const api = (window as any).C2C_API;
-    return !!(api && api.connected());
+    return connected();
   },
 };
 

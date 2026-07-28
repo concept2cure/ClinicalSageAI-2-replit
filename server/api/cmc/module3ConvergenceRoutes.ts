@@ -120,7 +120,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
     const upsert = await client.query(
       `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
        VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,'draft')
-       ON CONFLICT (project_id, section_key)
+       ON CONFLICT (organization_id, project_id, section_key)
        DO UPDATE SET deterministic_json = excluded.deterministic_json,
                      compiled_hash = excluded.compiled_hash,
                      stale = excluded.stale,
@@ -144,7 +144,14 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
 
     if (sectionId) {
       // 4. Refresh lineage
-      await client.query(`DELETE FROM cmc_section_lineage WHERE section_id = $1`, [sectionId]);
+      // Scoped by org as well as section id. `sectionId` comes from the upsert's
+      // RETURNING, so before the arbiter carried organization_id this deleted the
+      // VICTIM's provenance rows — the traceability tying each Module 3 section
+      // back to the source objects it was compiled from.
+      await client.query(
+        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
+        [sectionId, orgId]
+      );
       for (const lin of section.lineage) {
         await client.query(
           `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)

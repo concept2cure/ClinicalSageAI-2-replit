@@ -56,7 +56,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
       await client.query(
         `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
          VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,null,'draft')
-         ON CONFLICT (project_id, section_key)
+         ON CONFLICT (organization_id, project_id, section_key)
          DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()
          RETURNING id`,
         [orgId, projectId, section.sectionKey, section.sectionPath,
@@ -146,7 +146,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   await pool.query(
     `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, approval_state)
      VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,'draft')
-     ON CONFLICT (project_id, section_key)
+     ON CONFLICT (organization_id, project_id, section_key)
      DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()`,
     [orgId, projectId, section.sectionKey, section.sectionPath,
      JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
