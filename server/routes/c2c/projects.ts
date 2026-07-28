@@ -21,6 +21,11 @@
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
+import type { PoolClient } from 'pg';
+import {
+  scaffoldProjectDocuments,
+  type ScaffoldResult,
+} from '../../services/c2c/scaffold-project-documents.js';
 import {
   foldersForView,
   docKindsForView,
@@ -201,8 +206,12 @@ router.post('/', async (req: Request, res: Response) => {
   // Insert. `code` is unique per (organization_id, code); derive a readable base
   // and disambiguate with a short suffix only if the base is already taken.
   const base = baseCodeFrom(productName, name);
-  const insert = async (code: string) =>
-    pool.query(
+  // The program insert and the document scaffold share ONE transaction. If they
+  // did not, a failure between them would leave a project with no document —
+  // which is precisely the bug being fixed. `insert` therefore runs on the
+  // caller-supplied client, not on the pool.
+  const insert = async (client: PoolClient, code: string) =>
+    client.query(
       `INSERT INTO regulatory_programs
          (organization_id, name, code, program_type, product_type, primary_agency,
           target_agencies, product_name, indication, status, phase, priority,
@@ -218,19 +227,46 @@ router.post('/', async (req: Request, res: Response) => {
       ],
     );
 
+  const client = await pool.connect();
+  let newId: string;
+  let scaffold: ScaffoldResult = { documentId: null, sectionCount: 0 };
   try {
-    let created;
     try {
-      created = await insert(base);
-    } catch (e) {
-      // 23505 = unique_violation on (organization_id, code) → retry once with a suffix.
-      if ((e as { code?: string })?.code === '23505') {
-        created = await insert(`${base}-${Date.now().toString(36).slice(-4).toUpperCase()}`);
-      } else {
-        throw e;
+      await client.query('BEGIN');
+      let created;
+      try {
+        created = await insert(client, base);
+      } catch (e) {
+        // 23505 = unique_violation on (organization_id, code). The retry needs a
+        // SAVEPOINT: inside a transaction the failed statement has already
+        // aborted it, so a bare retry would raise 25P02 instead of inserting.
+        if ((e as { code?: string })?.code === '23505') {
+          await client.query('ROLLBACK');
+          await client.query('BEGIN');
+          created = await insert(client, `${base}-${Date.now().toString(36).slice(-4).toUpperCase()}`);
+        } else {
+          throw e;
+        }
       }
+      newId = (created.rows[0] as { id: string }).id;
+
+      // Scaffold the project's first document from its rule pack. Insert-only,
+      // so the Part 11 BEFORE UPDATE version trigger never fires. A skip
+      // (unmapped program type, no pack) is returned rather than thrown — the
+      // project is still legitimately created — and surfaced in the 201 body so
+      // it is never silent.
+      scaffold = await scaffoldProjectDocuments({
+        client, orgId, userId, projectId: newId,
+        programType, primaryAgency, productName,
+      });
+
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
     }
-    const newId = (created.rows[0] as { id: string }).id;
 
     // Re-read through the EXACT projection the list uses, so the client receives
     // the new card in its display contract (id, title, ws, code, stage, …).
@@ -251,7 +287,15 @@ router.post('/', async (req: Request, res: Response) => {
         WHERE p.id = $1 AND p.organization_id = $2`,
       [newId, orgId],
     );
-    return res.status(201).json({ data: rows[0], meta: { created: true } });
+    return res.status(201).json({
+      data: rows[0],
+      meta: {
+        created: true,
+        documentId: scaffold.documentId,
+        scaffoldedSections: scaffold.sectionCount,
+        ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
+      },
+    });
   } catch (err: unknown) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.status(503).json({ error: 'PENDING_STORE' });

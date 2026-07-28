@@ -259,9 +259,21 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
         <button className="dj-tb-b" title="Insert table">{I.grid}</button>
         <span className="dj-tb-sep" />
         <button className="dj-tb-tc" title="Toggle track changes"><span className="dj-tb-dot" />Track changes</button>
-        <span className="dj-tb-save">{I.check} Autosaved · {s.seal ? 'v1.0' : s.wm ? s.wm.replace('DRAFT ', '') : 'v0.x'}</span>
+        {/* Was: a green-check "Autosaved · v1.0" pill. This surface has no save
+            path of any kind — its only request is GET /api/doc-journey. The
+            page below carried `contentEditable` with no onInput, no state and
+            no write, so anything typed was lost on reload AND on any re-render
+            (selecting another stage re-renders s.body straight over the DOM).
+            The pill asserted the opposite of what happened. */}
+        <span className="dj-tb-save" title="This preview does not save. Author in Document Authoring.">
+          Read-only preview · {s.seal ? 'v1.0' : s.wm ? s.wm.replace('DRAFT ', '') : 'v0.x'}
+        </span>
       </div>
-      <div className={'dj-page' + (s.wm ? ' has-wm' : '')} contentEditable suppressContentEditableWarning={true} spellCheck={false}>
+      {/* contentEditable removed with the same justification: an editable
+          surface that cannot save is a trap, not a feature. The formatting
+          toolbar above is left in place because it is the visual language of
+          this preview, and execCommand on a non-editable region is inert. */}
+      <div className={'dj-page' + (s.wm ? ' has-wm' : '')} spellCheck={false}>
         {s.wm && <div className="dj-wm" contentEditable={false}>{s.wm}</div>}
         <div className="dj-doc-mast">
           <div className="dj-doc-spon">Concept2Cure Biosciences, Inc.</div>

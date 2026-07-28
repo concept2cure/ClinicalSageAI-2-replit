@@ -195,15 +195,32 @@ export function toast(msg: string, audit?: string): void {
   }, 3200);
 }
 
-let auditSeq = 9100;
-export function nextAudit(): string {
-  return 'AUD-' + auditSeq++;
-}
-
+/**
+ * `nextAudit()` used to live here:
+ *
+ *     let auditSeq = 9100;
+ *     export function nextAudit(): string { return 'AUD-' + auditSeq++; }
+ *
+ * A client-side counter that minted Part 11 audit identifiers out of thin air.
+ * GovernedActionDialog called it on every confirm and toasted
+ * "<Action> recorded · AUD-9100" — behind a dialog whose stated basis is
+ * "21 CFR Part 11 e-signature", while its caller's onConfirm was a literal
+ * no-op. Nothing was recorded and the identifier referred to nothing.
+ *
+ * A fabricated audit id is worse than no audit id: it is the artefact an
+ * inspector would ask to trace, and it would trace to nothing. Real audit
+ * identifiers are minted server-side by recordGovernedAction, which writes a
+ * hash-chained audit_logs row and returns its id.
+ *
+ * `audit` is therefore optional on the result: a caller that genuinely persists
+ * supplies the real id it got back from the server; a caller that does not
+ * supplies nothing, and the dialog claims nothing.
+ */
 export interface GovernedActionResult {
   reason: string;
   signed: boolean;
-  audit: string;
+  /** Server-issued audit id. Absent when the action was not persisted. */
+  audit?: string;
 }
 
 export interface GovernedActionDialogProps {
@@ -218,7 +235,14 @@ export interface GovernedActionDialogProps {
 
 /** Governed action dialog — delegates to the canonical GovernedActionModal
     (reason-for-change + e-signature meaning capture) instead of a bespoke
-    Part 11 dialog; records an audit id and toasts on confirm. */
+    Part 11 dialog.
+
+    It no longer toasts "<Action> recorded" on confirm. It has no way to know
+    whether anything was recorded: that depends entirely on what the caller's
+    onConfirm does, and at least one caller's is an empty function. Announcing a
+    governed action completed is the caller's business, because only the caller
+    knows whether it did — and only the caller has the server-issued audit id to
+    name in the announcement. */
 export function GovernedActionDialog({ open, title, onClose, onConfirm }: GovernedActionDialogProps) {
   if (!open) return null;
   return (
@@ -226,9 +250,7 @@ export function GovernedActionDialog({ open, title, onClose, onConfirm }: Govern
       action={title || 'Confirm action'}
       onCancel={onClose}
       onConfirm={({ reason, meaning }) => {
-        const audit = nextAudit();
-        toast((title || 'Action') + ' recorded', audit);
-        onConfirm?.({ reason, signed: !!meaning, audit });
+        onConfirm?.({ reason, signed: !!meaning });
         onClose();
       }}
     />
@@ -255,6 +277,6 @@ export function Btn({
 if (typeof window !== 'undefined') {
   (window as any).PG = {
     Ic, StatusBadge, Citation, FindingsList, CompletenessGate, AuditTrail,
-    GovernedActionDialog, Btn, toast, nextAudit, labelize, SEV_TONE, STATUS_TONE,
+    GovernedActionDialog, Btn, toast, labelize, SEV_TONE, STATUS_TONE,
   };
 }

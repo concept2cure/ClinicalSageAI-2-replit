@@ -391,8 +391,28 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
       await client.query('BEGIN');
 
       // Set GUCs for Part-11 trigger attribution.
-      await client.query(`SET LOCAL app.actor_id = $1`, [String(userId)]);
-      await client.query(`SET LOCAL app.reason = $1`, [reason.trim()]);
+      //
+      // `set_config(..., true)`, NOT `SET LOCAL ... = $1`. `SET` is a utility
+      // statement and its grammar has no parameter production, so a bind
+      // placeholder is a syntax error — and node-postgres uses the extended
+      // protocol whenever a values array is passed, so it fails at Parse with
+      // 42601 every single time. It threw here, before the existence check
+      // below, which meant NEITHER the INSERT branch nor the UPDATE branch ever
+      // ran: no section was ever created or updated through this route, and the
+      // catch-all turned it into a 500. The dossier editor rendered
+      // "Not saved — HTTP 500" for every save.
+      //
+      // The rest of the repository already knew this — server/middleware/
+      // tenantContext.ts, server/services/tenant/governed-tenant-context.ts and
+      // eleven call sites in server/src/routes/stability.router.ts all use
+      // set_config(). This route was the only place that deviated.
+      //
+      // `true` is the is_local flag: it scopes the setting to the surrounding
+      // transaction exactly as SET LOCAL would, so the BEFORE UPDATE trigger
+      // c2c_snapshot_section_version() sees the actor and the value does not
+      // leak to the next borrower of this pooled connection.
+      await client.query(`SELECT set_config('app.actor_id', $1, true)`, [String(userId)]);
+      await client.query(`SELECT set_config('app.reason', $1, true)`, [reason.trim()]);
 
       // Check if section already exists.
       const existing = await client.query(

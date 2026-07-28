@@ -3,7 +3,7 @@
    One surface, two modes (Conversation / Workbench), one set of
    primitives. Ported verbatim from ui_kits/authoring/styles.css.
    Inherits the global Claude-faithful tokens already loaded by the host
-   shell (design/claude-design.css); the kit's `@import colors_and_type.css`
+   shell (design-system/colors_and_type.css); the kit's `@import colors_and_type.css`
    and global html/body/button resets are dropped and scoped to `.au-shell`
    so this surface, mounted inside ZenApp, never clobbers the host.
    No new color introduced. Motion 200ms ease-out throughout. */
