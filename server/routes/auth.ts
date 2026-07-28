@@ -85,6 +85,7 @@ import {
   isPasswordExpired,
   checkPasswordHistory,
 } from '../services/auth-security-service';
+import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
@@ -844,6 +845,11 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       });
       stripeCustomerId = customer.id;
     }
+
+    // Tenant isolation posture: refuse to make this deployment multi-tenant while
+    // Postgres RLS is not filtering rows. No-ops locally and for the founding
+    // organization. See server/db/tenantAdmission.ts.
+    await assertCanAdmitNewTenant();
 
     const result = await db.transaction(async tx => {
       const [org] = await tx

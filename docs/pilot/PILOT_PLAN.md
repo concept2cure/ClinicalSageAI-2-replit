@@ -52,7 +52,7 @@ here is a date change, not a waiver.
 | --- | --- | --- |
 | 1 | `npm run pilot:go-no-go` returns **GO** | Verdict line reads `VERDICT: GO`; exit code 0. Five HARD gates green: schema provisioned (core tables **and the authoring subsystem present as a unit** — a partial subsystem is a NO-GO), no known-password demo admin, boot secrets present, SMTP/login-OTP configured, RLS posture. |
 | 2 | **A real OTP reaches both external inboxes** | `npm run pilot:verify-otp -- <addr>` run **twice** — once to a Gmail address, once to an Outlook address — and the code is read out of each inbox by a human. Configuration present ≠ mail delivered; the script says so itself. |
-| 3 | **`RLS_ENFORCE=on`, cross-tenant read returns zero rows** | Restart with the flag on; execute one read from org A against org B's data; record the zero-row result with a timestamp. |
+| 3 | **`RLS_ENFORCE=on`, cross-tenant read returns zero rows** | Restart with the flag on; execute one read from org A against org B's data; record the zero-row result with a timestamp. **The system now enforces this itself**: creating a *second* organization fails closed unless `RLS_ENFORCE=on` (`server/db/tenantAdmission.ts`). The founding tenant is unaffected, so a fresh install still onboards with no configuration — but the pilot's second tenant cannot exist without row filtering. That turns "remember to flip it" into a thing you cannot forget. |
 | 4 | **No known-password demo admin** | `SEED_DEMO_USER=false`; the row confirmed absent by direct query, not by config inspection. |
 | 5 | **Every tester has signed the data agreement** | Countersigned `C2C-PILOT-DATA-AGREEMENT-001` on file per tester, before their account exists. |
 
