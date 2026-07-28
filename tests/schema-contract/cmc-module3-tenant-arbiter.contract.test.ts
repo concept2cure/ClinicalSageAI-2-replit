@@ -260,6 +260,67 @@ describe('the migration removes BOTH org-blind objects', () => {
   }, 60_000);
 });
 
+describe('databases that do not have these tables at all', () => {
+  /**
+   * This is the state the Neon preview branch is in, and it failed CI: an
+   * unguarded `ALTER TABLE cmc_module3_sections` aborts the entire run with
+   * "relation does not exist". `DROP INDEX IF EXISTS` tolerates a missing index;
+   * nothing tolerates a missing table.
+   *
+   * The divergence is real rather than a CI artifact — the CMC Module 3 DDL
+   * lives in the root migrations/ tree, which only install-fresh applies, so a
+   * long-lived database provisioned another way simply does not have it. On such
+   * a database this migration has nothing to fix, and must say so rather than
+   * failing a deploy over a table that deployment does not use.
+   */
+  const freshDb = async () => {
+    await pg.close();
+    pg = new PGlite(); // no BASE_SCHEMA
+  };
+
+  it('no-ops instead of aborting when neither table exists', async () => {
+    await freshDb();
+    await expect(pg.exec(fs.readFileSync(MIGRATION, 'utf8'))).resolves.toBeDefined();
+  }, 60_000);
+
+  it('creates no indexes it has no table for', async () => {
+    await freshDb();
+    await pg.exec(fs.readFileSync(MIGRATION, 'utf8'));
+    const idx = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM pg_indexes
+        WHERE indexname IN ('cmc_module3_sections_org_project_key_idx',
+                            'cmc_source_objects_org_project_key_idx')`,
+    );
+    expect(Number(idx.rows[0].n)).toBe(0);
+  }, 60_000);
+
+  it('still fixes the table that IS present when only one of the two exists', async () => {
+    // Partial provisioning is the realistic middle case, and the guard is
+    // per-table precisely so one absent table does not skip the other's fix.
+    await freshDb();
+    await pg.exec(`
+      CREATE TABLE cmc_source_objects (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id integer NOT NULL, project_id text NOT NULL,
+        source_type text NOT NULL, source_key text NOT NULL,
+        source_payload jsonb, source_hash text,
+        version integer NOT NULL DEFAULT 1,
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE UNIQUE INDEX cmc_source_objects_project_key_idx
+        ON cmc_source_objects(project_id, source_type, source_key, version);
+    `);
+    await pg.exec(fs.readFileSync(MIGRATION, 'utf8'));
+
+    const idx = await pg.query<{ indexname: string }>(
+      `SELECT indexname FROM pg_indexes WHERE tablename = 'cmc_source_objects'`,
+    );
+    const names = idx.rows.map(r => r.indexname);
+    expect(names).toContain('cmc_source_objects_org_project_key_idx');
+    expect(names).not.toContain('cmc_source_objects_project_key_idx');
+  }, 60_000);
+});
+
 describe('source objects get the same protection', () => {
   const SOURCE_UPSERT = (arbiter: string) => `
     INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, source_hash, version)
