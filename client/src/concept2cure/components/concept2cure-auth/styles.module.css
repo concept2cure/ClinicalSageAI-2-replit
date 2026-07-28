@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════
    Claude Auth — visual layer for ZenLogin's behaviors.
-   Tokens come from client/src/concept2cure/design/claude-design.css.
+   Tokens come from design-system/colors_and_type.css.
    Bundle-local --border override lifted from ui_kits/home/styles.css.
    This is implementer-built (no auth kit shipped yet by Claude Design);
    tokens, fonts, and motion match the home surface verbatim.

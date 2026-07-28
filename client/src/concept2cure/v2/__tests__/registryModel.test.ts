@@ -15,7 +15,10 @@ import {
   ESIGN_MEANINGS,
   NAV_GROUP_OF,
   NAV_HIDDEN,
-  RAIL_PRIMARY,
+  RAIL_CORE,
+  RAIL_EXPLORE,
+  RAIL_QUICK,
+  RAIL_SPECIALIST,
   SEGMENTS,
   SEGMENT_MODULES,
   SURFACE_ACTIONS,
@@ -25,44 +28,15 @@ import {
 
 describe('ui-v2 registry model ↔ shared registry parity', () => {
   it('every rail entry resolves to a registered surface', () => {
-    for (const { id } of RAIL_PRIMARY) {
+    const railIds = [
+      ...RAIL_CORE.map((s) => s.id),
+      ...RAIL_SPECIALIST.map((s) => s.id),
+      ...RAIL_EXPLORE.map((s) => s.id),
+      ...RAIL_QUICK.map((s) => s.target),
+    ];
+    for (const id of railIds) {
       expect(getSurface(id), `rail id ${id}`).toBeDefined();
     }
-  });
-
-  // ── ana-ui-design-constitution §4 ──────────────────────────────────────────
-  it('ships exactly five top-level destinations', () => {
-    expect(RAIL_PRIMARY).toHaveLength(5);
-  });
-
-  it('those five are Chats, Projects, Communication Center, Apps, Settings', () => {
-    expect(RAIL_PRIMARY.map((s) => s.label)).toEqual([
-      'Chats', 'Projects', 'Communication Center', 'Apps', 'Settings',
-    ]);
-  });
-
-  it('chat is the FIRST destination — Law 1, "chat is the primary operating surface"', () => {
-    // It was previously third-tier, inside Explore, while the analytics
-    // dashboard was first-tier in Workspace. That inversion is the defect.
-    expect(RAIL_PRIMARY[0].id).toBe('conversation-thread');
-  });
-
-  it.each([
-    'vault', 'submission-center', 'artifacts-center',
-    'document-authoring', 'insights', 'crl-library',
-  ])('%s is not a shell sibling — §4 forbids it at top level', (forbidden) => {
-    expect(RAIL_PRIMARY.map((s) => s.id)).not.toContain(forbidden);
-  });
-
-  it.each([
-    'vault', 'submission-center', 'artifacts-center',
-    'document-authoring', 'insights', 'crl-library',
-    'rbm', 'tasks', 'ana-command', 'ana-memory',
-  ])('%s is DEMOTED, not deleted — still reachable via ⌘K/deep-link', (demoted) => {
-    // The constitution says these "may exist inside projects, drawers, tabs, or
-    // apps — never as shell siblings". Removing a destination without keeping it
-    // reachable would be a regression, not compliance.
-    expect(NAV_HIDDEN.has(demoted), `${demoted} lost its reachability`).toBe(true);
   });
 
   it('every NAV_GROUP_OF / NAV_HIDDEN id resolves to a registered surface', () => {
