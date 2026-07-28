@@ -277,22 +277,56 @@ export class EctdSubmissionAgent {
 
     const prevStatus = sub.status;
 
-    // Update status to submitted
+    // ── THIS METHOD DOES NOT TRANSMIT ANYTHING ───────────────────────────────
+    // There is no gateway client here: no AS2 handshake, no ESG connection, no
+    // bytes leaving the process, no transmittal record, no acknowledgement. The
+    // work above is validation-gating and nothing more.
+    //
+    // It previously wrote `status = 'submitted'` with a history row reading
+    // "Submitted to agency gateway", and returned `{ status: 'submitted' }`. A
+    // regulatory affairs lead reading that record — in the UI, in an export, or
+    // during an inspection — would conclude the sequence had been filed. It had
+    // not. That is a fabricated regulatory record, and the same defect already
+    // found and closed in ESGSubmissionService and medicalDeviceService; this is
+    // the third site.
+    //
+    // The record therefore stays at 'validated' — which is exactly what is true.
+    //
+    // 'validated' rather than a new 'ready_for_transmission': the status column
+    // carries a CHECK constraint (db/migrations/082_ectd_submission_agent.sql:71)
+    // listing draft/assembling/validated/submitted/acknowledged/under_review/
+    // approved/rejected/withdrawn/amendment_required. Introducing a new value
+    // needs a migration on the durable apply path, and inventing one to carry a
+    // message would be schema churn for prose. It is also the more honest
+    // outcome: pressing "submit" on a build that cannot submit SHOULD leave the
+    // record where it was, so the queue of sequences genuinely awaiting filing
+    // stays visible instead of silently emptying itself.
+    //
+    // The history row is where the operator's intent and our refusal are
+    // recorded, so the attempt is auditable rather than invisible.
     await pool.query(
-      `UPDATE ectd_submissions SET status = 'submitted', submitted_at = NOW(), updated_at = NOW()
+      `UPDATE ectd_submissions SET status = 'validated', updated_at = NOW()
        WHERE id = $1 AND org_id = $2`,
       [submissionId, orgId],
     );
 
-    // Record status change
     await pool.query(
       `INSERT INTO ectd_submission_status_history
         (submission_id, org_id, from_status, to_status, change_reason)
-       VALUES ($1,$2,$3,'submitted','Submitted to agency gateway')`,
+       VALUES ($1,$2,$3,'validated',
+               'Transmission requested and validation passed. NOT transmitted: this build performs no agency gateway transmission, so the sequence remains awaiting filing.')`,
       [submissionId, orgId, prevStatus],
     );
 
-    return { id: submissionId, status: 'submitted', submittedAt: new Date().toISOString() };
+    return {
+      id: submissionId,
+      status: 'validated',
+      transmitted: false,
+      submittedAt: null,
+      message:
+        'Validation passed. This sequence has NOT been transmitted to any agency gateway — ' +
+        'this build performs no gateway transmission. It remains awaiting filing.',
+    };
   }
 
   /** Get a single submission with org isolation */

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-27T17:04:24.822Z",
+  "generatedAt": "2026-07-28T04:18:21.453Z",
   "git": {
-    "sha": "b4d49245bf9cc56a4a5543ef8beabf8a3b1f4bcd",
+    "sha": "b479ce3783872c0f76a56cf449d59b823bd6885a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2470,11 +2470,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 932950
+        "bytes": 941356
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 831177
+        "bytes": 833399
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2486,15 +2486,15 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 197070
+        "bytes": 209151
+      },
+      {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 181850
       },
       {
         "file": "server/routes/ana-features.ts",
         "bytes": 179637
-      },
-      {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 178997
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2533,12 +2533,12 @@
         "bytes": 127662
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 117471
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 118165
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 116366
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "bytes": 117471
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2592,7 +2592,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19793
+        "lines": 19827
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2600,7 +2600,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18159
+        "lines": 18305
       },
       {
         "file": "server/statistics-service.ts",
@@ -2608,7 +2608,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5764
+        "lines": 5991
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2616,7 +2616,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4740
+        "lines": 4778
       },
       {
         "file": "server/storage.ts",
@@ -2655,12 +2655,12 @@
         "lines": 2673
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "lines": 2609
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2633
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2607
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "lines": 2609
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
@@ -2756,7 +2756,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 1994
+        "lines": 2000
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",

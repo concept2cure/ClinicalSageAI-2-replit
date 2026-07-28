@@ -3,14 +3,18 @@
  * flagship IND authoring loop (server/routes/authoring.router.ts), applied AS A
  * SINGLE ATOMIC UNIT.
  *
+ * (Durable CRDT state is NOT part of this unit. It lives in its own table,
+ * created by db/migrations/20260727_collab_document_state.sql and applied on the
+ * apply-c2c path — see server/services/hocuspocus-server.ts.)
+ *
  * WHY A UNIT. The loop-tables file stands up document/section/freeze/PIN
  * storage; the audit-trail and signature/workflow files stand up the 21 CFR
- * Part 11 evidence those same operations MUST produce. Provisioning the loop
- * tables ALONE yields a working freeze with no audit row and an e-sign that
- * fails outright — a half-provisioned Part 11 surface that is WORSE than tables
- * plainly absent (ledger C-11 / C-14 / C-15, and the cession note this
- * supersedes in apply-c2c-migrations.mjs). So the four files apply in one
- * transaction: all present, or none.
+ * Part 11 evidence those same operations MUST produce.
+ * Provisioning the loop tables ALONE yields a working freeze with no audit row
+ * and an e-sign that fails outright — a half-provisioned Part 11 surface that is
+ * WORSE than tables plainly absent (ledger C-11 / C-14 / C-15, and the cession
+ * note this supersedes in apply-c2c-migrations.mjs). So the four files apply in
+ * one transaction: all present, or none.
  *
  * WHY THEY NEED THEIR OWN PATH. They live in db/migrations/ but are NOT
  * *_gcc_*.sql, so the CI psql loop (`ls db/migrations/*_gcc_*.sql`) never
@@ -24,7 +28,7 @@
  * with the integer-keyed app RLS policy), every table here carries
  * `tenant_id INTEGER`, which is exactly the app tenant model.
  *
- * TENANT ISOLATION IS PART OF THE UNIT. The four .sql files create tables but no
+ * TENANT ISOLATION IS PART OF THE UNIT. The .sql files create tables but no
  * RLS. On the install-fresh path that is fine — its 0021_enable_rls_everywhere
  * step runs AFTER this and dynamically policies every tenant table. But on the
  * apply-c2c path (used to add the subsystem to an ALREADY-provisioned database),
@@ -47,7 +51,7 @@ import path from 'node:path';
  * The four files, in dependency order. The loop-tables file creates
  * authoring_documents / authoring_sections that later files reference; the
  * freeze-binding file ALTERs the authoring_signatures table the signatures file
- * creates, so it MUST be last. Repo-relative (joined against repoRoot).
+ * creates, so it MUST follow it. Repo-relative (joined against repoRoot).
  */
 export const AUTHORING_SUBSYSTEM_FILES = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
@@ -61,6 +65,16 @@ export const AUTHORING_SUBSYSTEM_FILES = [
  * authoring_signatures, adding no table). This is the readiness contract:
  * server/db/ensureCoreTables.ts holds the SAME list as AUTHORING_SUBSYSTEM_TABLES
  * and fails /readyz closed when any of them is absent. Keep the two in sync.
+ *
+ * doc_permissions (C2C-AUTHOR-002) backs the section-level write gate in
+ * server/routes/authoring.router.ts. It MUST be in this list: the loop is what
+ * installs tenant_isolation_policy, and on the apply-c2c path (adding the
+ * subsystem to an already-provisioned database) 0021_enable_rls_everywhere has
+ * already run and will never revisit a new table — an RLS-less table under
+ * RLS_ENFORCE is readable across tenants, i.e. every tenant's section grants.
+ *
+ * The twin literal in server/db/ensureCoreTables.ts carries the SAME eleven
+ * entries, so /readyz gates on doc_permissions too.
  */
 export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_documents',
@@ -73,6 +87,12 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_audit_trail',
   'authoring_signatures',
   'authoring_workflow_steps',
+  // Section-level permission grants (C2C-AUTHOR-002). Created by the loop-tables
+  // migration with tenant_id + composite (doc_id, tenant_id) / (section_id,
+  // tenant_id) FKs. Listed here so the helper applies tenant_isolation_policy to
+  // it — 0021 has already run on the apply-c2c path and would never revisit a
+  // newly-added table, which would leave the grant store cross-tenant readable.
+  'doc_permissions',
 ];
 
 /**

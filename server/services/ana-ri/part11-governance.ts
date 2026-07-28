@@ -14,8 +14,10 @@
  * without breaking existing behavior; once the modal lands, a tenant flips the
  * flag and every governed AnA action is gated.
  *
- * Pure / deterministic except for {@link loadPart11Enforce}, which is a
- * fail-soft org-settings read (any DB issue → not enforced).
+ * Pure / deterministic except for the org-settings readers. Two variants:
+ * {@link loadPart11EnforceStrict} propagates DB errors (used by the governed
+ * dispatch so an unreadable flag fails CLOSED) and {@link loadPart11Enforce}
+ * is its fail-soft wrapper for non-enforcement reads.
  */
 
 /** AnA command names whose effect alters the regulatory record and therefore
@@ -175,79 +177,38 @@ export function buildSignatureRequiredResult(
 }
 
 /**
- * Fail-soft org-settings read: is Part 11 enforcement enabled for this tenant?
- * Any DB issue → false (not enforced), mirroring loadAnaToolPolicy. Reads
- * organizations.settings.anaPart11Enforce (boolean).
+ * STRICT org-settings read: is Part 11 enforcement enabled for this tenant?
+ * DB errors PROPAGATE, so the caller can distinguish a DETERMINATE "tenant has
+ * not opted in" (false) from an INDETERMINATE "could not read the flag"
+ * (throws). The governed-mutation dispatch uses this variant and fails CLOSED
+ * on the indeterminate case — see executeCommands -> ctx.governanceUnavailable.
+ * Reads organizations.settings.anaPart11Enforce (boolean).
+ */
+export async function loadPart11EnforceStrict(
+  pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> },
+  organizationId: number
+): Promise<boolean> {
+  if (!Number.isFinite(organizationId) || organizationId <= 0) return false;
+  const { rows } = await pool.query(
+    `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
+    [organizationId]
+  );
+  return rows[0]?.settings?.anaPart11Enforce === true;
+}
+
+/**
+ * FAIL-SOFT wrapper around {@link loadPart11EnforceStrict}, for non-enforcement
+ * READ callers (surfacing the tenant's current setting in a UI). Any DB issue →
+ * false. It must NOT be used to decide whether a governed mutation may run:
+ * that path uses the strict variant so an unreadable flag blocks the write.
  */
 export async function loadPart11Enforce(
   pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> },
   organizationId: number
 ): Promise<boolean> {
-  if (!Number.isFinite(organizationId) || organizationId <= 0) return false;
   try {
-    const { rows } = await pool.query(
-      `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
-      [organizationId]
-    );
-    return rows[0]?.settings?.anaPart11Enforce === true;
+    return await loadPart11EnforceStrict(pool, organizationId);
   } catch {
     return false;
-  }
-}
-
-/**
- * True when this deployment runs under the immutable REGULATED PROFILE
- * (C2C_REGULATED_PROFILE=1). Under it, Part 11 governance must not be silently
- * removable by configuration or a database fault (G-04): enforcement DEFAULTS
- * ON and a settings-read failure FAILS CLOSED for governed commands. Outside the
- * profile the legacy opt-in behaviour (loadPart11Enforce) is preserved, so
- * enabling this is a deliberate per-deployment decision rather than a silent
- * behaviour change.
- */
-export function isRegulatedProfile(): boolean {
-  return process.env.C2C_REGULATED_PROFILE === '1';
-}
-
-export interface Part11EnforcementVerdict {
-  /** Whether the governed-command gate is active for this dispatch. */
-  enforced: boolean;
-  /** True when the org-settings read threw — the caller must fail closed. */
-  readFailed: boolean;
-}
-
-/**
- * Resolve Part 11 enforcement with an explicit read-failure signal (G-04).
- *
- * - Regulated profile: DEFAULT enforced (only an explicit `anaPart11Enforce:
- *   false` opts a tenant out), and a settings-read failure yields
- *   `enforced: true, readFailed: true` — the gate cannot be dropped by a DB
- *   outage, the fail-soft hole the finding named.
- * - Outside the profile: mirrors {@link loadPart11Enforce} (default OFF,
- *   read failure → not enforced), so existing behaviour is unchanged.
- */
-export async function resolvePart11Enforce(
-  pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> } | null | undefined,
-  organizationId: number,
-  opts: { regulated: boolean }
-): Promise<Part11EnforcementVerdict> {
-  const { regulated } = opts;
-  if (!pool) {
-    // No database handle: under the regulated profile we cannot prove a tenant
-    // opted out, so we enforce (and mark the read as failed for the receipt).
-    return { enforced: regulated, readFailed: regulated };
-  }
-  if (!Number.isFinite(organizationId) || organizationId <= 0) {
-    return { enforced: regulated, readFailed: false };
-  }
-  try {
-    const { rows } = await pool.query(
-      `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
-      [organizationId]
-    );
-    const flag = rows[0]?.settings?.anaPart11Enforce;
-    const enforced = regulated ? flag !== false : flag === true;
-    return { enforced, readFailed: false };
-  } catch {
-    return { enforced: regulated, readFailed: regulated };
   }
 }

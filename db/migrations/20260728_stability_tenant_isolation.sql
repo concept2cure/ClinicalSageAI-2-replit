@@ -1,3 +1,29 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Bring every existing stab_* table under the platform uniform tenant
+--          isolation policy, closing a High-severity cross-tenant read/write on
+--          GMP stability data.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 3 — Quality (3.2.P.8 Stability)
+--   - Integrity Risk Addressed: TENANT ISOLATION. Stability queries scoped by
+--     surrogate id (study_id / capa_id / assign_id) with no tenant predicate, and
+--     the set_config(app.tenant_id, ...) calls were inert because the platform RLS
+--     keys on app.current_tenant_id. One sponsors stability study, CAPA and OOS
+--     records were readable and writable by another.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Installs ENABLE + FORCE ROW LEVEL SECURITY and the uniform
+--     tenant_isolation_policy (the 0021 shape) on every stab_* base table. FORCE is
+--     required because the application login role owns these tables.
+--   - Migration is idempotent (ADD COLUMN IF NOT EXISTS; policy DROP-then-CREATE).
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: Stability module tenant isolation (High-severity security fix)
 -- Date: 2026-07-28

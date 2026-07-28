@@ -1,3 +1,26 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provide the canonical, durable definition of the MAUD validation
+--          persistence tables (maud_algorithms / maud_validations /
+--          maud_validation_requests), whose only prior DDL was archived.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 2 / Module 3 (validation evidence for authored content)
+--   - Integrity Risk Addressed: validation runs and their algorithm provenance
+--     were not persisted on a fresh database, so a documents validation history
+--     — the record that it WAS validated, by which algorithm and version — was
+--     unrecoverable.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Tenant isolation: organization_id is filtered explicitly by every read.
+--   - Migration is idempotent (IF NOT EXISTS; triggers DROP-then-CREATE).
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: MAUD validation persistence tables (G-02 canonicalization)
 -- Date: 2026-07-28

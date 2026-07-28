@@ -395,7 +395,8 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the architecture
   // finding. The route family is a thin layer over existing primitives
   // (regulatoryPrograms, q_submissions, fda_communications,
-  // contradiction engine, ind_package_plans, etc.).
+  // contradiction engine, etc.). It does NOT read ind_package_plans —
+  // that cluster is defined in shared/schema.ts and touched by no code.
   try {
     const pdevModule = await import('../routes/pdev/pdev-routes');
     app.use('/api/pdev', authenticateToken, pdevModule.default);

@@ -32,9 +32,9 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
-const APPLY_SCRIPT = 'scripts/db/apply-c2c-migrations.mjs';
 const CANONICAL = 'db/migrations/044b_gcc_lumen_schema_prerequisite.sql';
 const COUNCIL = 'migrations/20260724_lumen_council_provisioning.sql';
 const INGESTION_SOURCE = 'server/workers/enhanced-ingestion-pipeline.ts';
@@ -42,15 +42,13 @@ const INGESTION_SOURCE = 'server/workers/enhanced-ingestion-pipeline.ts';
 const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
 
 /**
- * The FILES list is parsed out of the script rather than duplicated here, so a
- * change to the real apply order is a change to what these tests assert.
+ * The real ordered list, imported rather than duplicated, so a change to the
+ * apply order is a change to what these tests assert. It now lives in
+ * scripts/db/migration-set.mjs — shared by the manual applier
+ * (apply-c2c-migrations.mjs) and the deploy-time one (deploy-migrate.mjs), so
+ * this ordering contract covers the production deploy path too.
  */
-function applyOrder(): string[] {
-  const src = read(APPLY_SCRIPT);
-  const block = src.match(/const FILES = \[([\s\S]*?)\];/);
-  if (!block) throw new Error(`could not locate the FILES list in ${APPLY_SCRIPT}`);
-  return [...block[1].matchAll(/'([^']+\.sql)'/g)].map((m) => m[1]);
-}
+const applyOrder = (): string[] => C2C_MIGRATION_FILES;
 
 /**
  * PGlite has no uuid-ossp extension. Two narrowly-scoped adaptations let the

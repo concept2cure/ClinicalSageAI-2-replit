@@ -230,18 +230,10 @@ describe('authoring supplementary stores (G-02) match the code', () => {
     ).rejects.toThrow();
   });
 
-  it('template_sections: the POST /docs copy filter selects its columns', async () => {
-    await q(
-      `INSERT INTO template_sections (template_id, tenant_id, code, title, content, order_index)
-       VALUES ($1,$2,$3,$4,$5,$6)`,
-      [TPL, T, '2.5', 'Overview', 'body', 1],
-    );
-    const sel = await q(
-      `SELECT code, title, content, order_index FROM template_sections WHERE template_id = $1 AND tenant_id = $2`,
-      [TPL, T],
-    );
-    expect(sel.rows.length).toBe(1);
-  });
+  // template_sections is deliberately NOT created by this migration — see the
+  // removal note in the .sql. The authoring router reads the global
+  // intelligence.template_sections catalog instead, so a public.template_sections
+  // would be dead DDL and would shadow the real relation on the search path.
 
   it('doc_sections: command-executor read', async () => {
     await q(`INSERT INTO doc_sections (id, code, title) VALUES ($1,$2,$3)`, [SEC, '2.5.1', 'Sec']);

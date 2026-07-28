@@ -88,35 +88,54 @@ export const CLIENT_CATEGORIES = [
   { id: 'cro', label: 'CRO / Research', icon: 'network' },
   { id: 'health', label: 'Health Systems', icon: 'building' },
 ];
-/** Core workspace — the same central solution for every client type */
-export const RAIL_CORE = [
-  { id: 'projects', label: 'Project management', icon: 'folder' },
-  { id: 'vault', label: 'Vault', icon: 'vault' },
-  { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
-  { id: 'tasks', label: 'Tasking', icon: 'checkSquare' },
-  { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
+/**
+ * THE FIVE TOP-LEVEL DESTINATIONS — ana-ui-design-constitution §4.
+ *
+ * The constitution allows exactly five shell siblings: Chats, Projects,
+ * Communication Center, Apps, Settings. It explicitly FORBIDS Documents,
+ * Intelligence, Workspace Home, Editor, Review, Verify, References, Vault,
+ * Submit, Export, Builder, Dossier and "Analytics dashboard" as global
+ * top-level entries — "these may exist inside projects, drawers, tabs, or
+ * apps — never as shell siblings."
+ *
+ * What was here before: four rail arrays (RAIL_CORE, RAIL_SPECIALIST,
+ * RAIL_EXPLORE, RAIL_QUICK) carrying ~15 unique destinations under three
+ * client-type tiers. Six of them were on the forbidden list and shipping as
+ * top-level: vault, submission-center, artifacts-center, document-authoring,
+ * insights (the analytics dashboard) and crl-library. Meanwhile Law 1 —
+ * "chat is the primary operating surface" — was inverted: `conversation-thread`
+ * sat third-tier inside Explore while the analytics dashboard sat first-tier
+ * in Workspace, and Communication Center had a registered surface and a
+ * NAV_GROUP_OF entry but appeared in no rail at all.
+ *
+ * DEMOTED, NOT DELETED. Every id removed from the rail moves into NAV_HIDDEN
+ * below, which is the established "reachable via ⌘K and deep-link, just not a
+ * rail entry" mechanism. Nothing becomes unreachable; the surfaces stop being
+ * shell siblings. That is precisely what §4 asks for.
+ */
+export const RAIL_PRIMARY = [
+  { id: 'conversation-thread', label: 'Chats', icon: 'messageSquare', badge: 'AnA' },
+  { id: 'projects', label: 'Projects', icon: 'folder' },
+  { id: 'communication-center', label: 'Communication Center', icon: 'inbox' },
+  { id: 'apps', label: 'Apps', icon: 'grid' },
+  { id: 'setup', label: 'Settings', icon: 'settings' },
 ];
-/** Specialist science apps promoted to the rail (also in the Apps catalog) */
-export const RAIL_SPECIALIST = [
-  { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
-  { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
-];
-/** Explore section */
-export const RAIL_EXPLORE = [
-  { id: 'ana-command', label: 'AnA Command', icon: 'sparkles', badge: 'AnA' },
-  { id: 'ana-memory', label: 'AnA Memory', icon: 'database', badge: 'AnA' },
-  { id: 'apps', label: 'Apps catalog', icon: 'grid' },
-  { id: 'artifacts-center', label: 'Artifacts Center', icon: 'sparkles' },
-  { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare', badge: 'AnA' },
-];
-/** Quick access (targets resolve to surface ids) */
-export const RAIL_QUICK = [
-  { id: 'recent', label: 'Recent Documents', icon: 'clock', target: 'document-authoring' },
-  { id: 'tasks', label: 'My Tasks', icon: 'checkSquare', target: 'tasks', count: 12 },
-  { id: 'starred', label: 'Starred Items', icon: 'star', target: 'projects' },
-];
+
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */
 export const NAV_HIDDEN: ReadonlySet<string> = new Set([
+  // ── Demoted from the rail by the §4 five-destination collapse (2026-07-28).
+  // Each was a top-level rail entry; six are on the constitution's explicit
+  // forbidden list. They remain fully reachable here via ⌘K and deep-link.
+  'vault',
+  'submission-center',
+  'artifacts-center',
+  'document-authoring',
+  'insights',
+  'crl-library',
+  'rbm',
+  'tasks',
+  'ana-command',
+  'ana-memory',
   'device-510k',
   'device-cer',
   'device-diagnostics',

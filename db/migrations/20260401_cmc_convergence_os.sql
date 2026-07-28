@@ -101,11 +101,35 @@ CREATE TABLE IF NOT EXISTS cmc_provenance_events (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- Adapter/hardening additions for existing CMC atoms
-ALTER TABLE cmc_batch_records ADD COLUMN IF NOT EXISTS tenant_id TEXT;
-ALTER TABLE stability_studies ADD COLUMN IF NOT EXISTS tenant_id TEXT;
-ALTER TABLE quality_specifications ADD COLUMN IF NOT EXISTS tenant_id TEXT;
-ALTER TABLE cmc_comparability_assessments ADD COLUMN IF NOT EXISTS tenant_id TEXT;
+-- Adapter/hardening additions for existing CMC atoms.
+--
+-- Guarded on to_regclass because `ADD COLUMN IF NOT EXISTS` guards the COLUMN,
+-- not the TABLE: on a database that does not have these four, the bare ALTERs
+-- raised "relation does not exist" and aborted this file at line 105 — after it
+-- had created cmc_module3_sections and cmc_source_objects but BEFORE
+-- cmc_documents and its three companions. A file that half-applies is worse than
+-- one that fails cleanly, and this one did so silently for anything downstream.
+--
+-- That abort is what kept this file off every durable apply path, which is why
+-- the whole CMC Module 3 subsystem addressed tables nothing provisioned. These
+-- four columns are an adapter for pre-existing CMC atoms; where those atoms are
+-- absent there is nothing to adapt, so skipping is the correct behaviour rather
+-- than a degradation.
+DO $$
+BEGIN
+    IF to_regclass('public.cmc_batch_records') IS NOT NULL THEN
+        ALTER TABLE cmc_batch_records ADD COLUMN IF NOT EXISTS tenant_id TEXT;
+    END IF;
+    IF to_regclass('public.stability_studies') IS NOT NULL THEN
+        ALTER TABLE stability_studies ADD COLUMN IF NOT EXISTS tenant_id TEXT;
+    END IF;
+    IF to_regclass('public.quality_specifications') IS NOT NULL THEN
+        ALTER TABLE quality_specifications ADD COLUMN IF NOT EXISTS tenant_id TEXT;
+    END IF;
+    IF to_regclass('public.cmc_comparability_assessments') IS NOT NULL THEN
+        ALTER TABLE cmc_comparability_assessments ADD COLUMN IF NOT EXISTS tenant_id TEXT;
+    END IF;
+END $$;
 
 -- Canonical document persistence moved out of route-local runtime DDL
 CREATE TABLE IF NOT EXISTS cmc_documents (

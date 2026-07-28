@@ -1,3 +1,25 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Back the CER literature corpus table (literature_entries) that the
+--          regulatory-programs service reads and the MDx seed writes.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 2.5 / Module 4-5 (clinical evaluation literature evidence)
+--   - Integrity Risk Addressed: the literature-density chart and the portfolio
+--     corpus insight read a table nothing created, so they silently reported ZERO
+--     literature — a false negative on EU MDR Article 61 sufficient-evidence
+--     signalling rather than a visible error.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Tenant isolation: organization_id NOT NULL, filtered by every live query.
+--   - Migration is idempotent (IF NOT EXISTS; trigger DROP-then-CREATE).
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: literature_entries — CER literature corpus (G-02 canonicalization)
 -- Date: 2026-07-28

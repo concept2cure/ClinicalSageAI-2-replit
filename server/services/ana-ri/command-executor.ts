@@ -66,17 +66,16 @@ import {
   PDEV_COMMAND_HANDLERS,
   PDEV_COMMAND_METADATA,
 } from './pdev-command-handlers';
-import { loadAnaToolPolicy } from './mdx-tool-policy';
+import { loadAnaToolPolicyStrict } from './mdx-tool-policy';
 import {
   requiresPart11Signoff,
   requiresEsignature,
   validateSignoff,
   buildSignatureRequiredResult,
-  isRegulatedProfile,
-  resolvePart11Enforce,
+  loadPart11EnforceStrict,
   type Part11Signoff,
 } from './part11-governance';
-import { authorizeCommand } from './command-authorization';
+import { authorizeCommand, isPrivacyAdmin } from './command-rbac';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -133,6 +132,18 @@ export interface CommandContext {
    * verifies the user's re-authentication via the e-signature service.
    */
   signoff?: Part11Signoff;
+  /**
+   * Set true by `executeCommands` when the tenant's governance configuration
+   * could not be RESOLVED for this dispatch — the tool-policy read or the
+   * Part 11 flag read failed (DB error / no pool). It is NOT set when a read
+   * succeeds and simply finds no restriction configured.
+   *
+   * Every mutation-capable command fails CLOSED while it is set
+   * (command-rbac.ts `authorizeCommand`, and again in
+   * `requireGovernedToolGate`). Read-only commands deliberately continue to
+   * work: AnA degrades to read-only rather than to un-governed.
+   */
+  governanceUnavailable?: boolean;
 }
 
 export interface CommandResult {
@@ -220,18 +231,11 @@ async function persistGovernedCommandArtifact(
   return execution.artifactMutation;
 }
 
-function hasPrivacyAdminRole(role?: string): boolean {
-  const normalized = String(role || '').toLowerCase();
-  return [
-    'admin',
-    'manager',
-    'owner',
-    'super_admin',
-    'platform_admin',
-    'dpo',
-    'privacy_officer',
-  ].includes(normalized);
-}
+// Privacy-admin authorization for the GDPR data-subject commands lives in
+// command-rbac.ts (`isPrivacyAdmin`). It reads organization_users.role through
+// the canonical RBAC service instead of the self-asserted `ctx.userRole`, which
+// the chat bridge never populates — so the previous check evaluated `undefined`
+// for every AnA-initiated cross-subject export/erase.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. PROJECT OPERATIONS
@@ -1132,7 +1136,9 @@ export async function exportPersonalData(
 ): Promise<CommandResult> {
   try {
     const dataSubjectId = params?.dataSubjectId || ctx.userId;
-    if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+    // Self-service is always permitted (GDPR Art. 15/20). Acting on ANOTHER
+    // subject requires a DB-sourced privacy-admin grant — fail-closed.
+    if (dataSubjectId !== ctx.userId && !(await isPrivacyAdmin(ctx))) {
       return {
         success: false,
         action: 'export_personal_data',
@@ -1215,7 +1221,9 @@ export async function erasePersonalData(
   params: { dataSubjectId?: number; reason?: string }
 ): Promise<CommandResult> {
   const dataSubjectId = params?.dataSubjectId || ctx.userId;
-  if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+  // Self-service is always permitted (GDPR Art. 17). Acting on ANOTHER subject
+  // requires a DB-sourced privacy-admin grant — fail-closed.
+  if (dataSubjectId !== ctx.userId && !(await isPrivacyAdmin(ctx))) {
     return {
       success: false,
       action: 'erase_personal_data',
@@ -4655,94 +4663,81 @@ export async function executeCommands(
   // Stamps ctx.anaToolPolicy from organizations.settings.anaToolPolicy.
   // The policy gate in mdx-tool-policy.ts reads from this cached value;
   // populating it here means handlers don't need to know about the load.
-  // Loader is fail-soft: any DB error → default-allow.
+  //
+  // FAIL-CLOSED: this used to swallow read errors into {} (allow-all), so a
+  // transient DB fault silently removed the tenant's deny/allow lists from
+  // every governed mutation. The strict loader propagates the error and we
+  // record the indeterminate state instead of inventing a permissive default.
   if (
     ctx.anaToolPolicy === undefined &&
     ctx.organizationId !== undefined &&
     Number.isFinite(ctx.organizationId)
   ) {
     try {
-      if (pool) {
-        ctx.anaToolPolicy = await loadAnaToolPolicy(pool, ctx.organizationId);
-      }
+      if (!pool) throw new Error('no db pool available for AnA governance load');
+      ctx.anaToolPolicy = await loadAnaToolPolicyStrict(pool, ctx.organizationId);
     } catch {
-      ctx.anaToolPolicy = {};
+      ctx.governanceUnavailable = true;
     }
   }
 
-  // ── Resolve Part 11 enforcement once per dispatch ──
-  // Outside the regulated profile this mirrors the legacy fail-soft flag
-  // (default OFF). Under C2C_REGULATED_PROFILE=1 it defaults ON and a
-  // settings-read failure fails CLOSED for governed commands (G-04), so a DB
-  // fault or an unset tenant flag can no longer silently remove the gate.
-  const regulated = isRegulatedProfile();
-  let part11ReadFailed = false;
+  // ── Load per-tenant Part 11 enforcement flag once per dispatch ──
+  // Stamps ctx.part11Enforce from organizations.settings.anaPart11Enforce.
+  //
+  // FAIL-CLOSED: this used to swallow read errors into `false` (not enforced),
+  // which meant a settings-DB outage removed the 21 CFR Part 11 sign-off gate
+  // from record-altering commands at exactly the moment the system was least
+  // trustworthy. A determinate "tenant has not opted in" still yields false.
   if (
     ctx.part11Enforce === undefined &&
     ctx.organizationId !== undefined &&
     Number.isFinite(ctx.organizationId)
   ) {
     try {
-      const verdict = await resolvePart11Enforce(pool, ctx.organizationId, { regulated });
-      ctx.part11Enforce = verdict.enforced;
-      part11ReadFailed = verdict.readFailed;
+      if (!pool) throw new Error('no db pool available for Part 11 governance load');
+      ctx.part11Enforce = await loadPart11EnforceStrict(pool, ctx.organizationId);
     } catch {
-      // resolvePart11Enforce does not throw, but stay defensive: under the
-      // regulated profile an unexpected fault must not disable the gate.
-      ctx.part11Enforce = regulated;
-      part11ReadFailed = regulated;
+      ctx.governanceUnavailable = true;
     }
   }
 
   const commandMap: Record<string, any> = COMMAND_HANDLERS;
 
   for (const cmd of commands) {
-    // ── Central authorization envelope (G-05) ──
-    // One positive decision before dispatch: an unknown/unmapped command, a
-    // tenant tool-policy denial, or a missing capability fails closed HERE,
-    // rather than relying on each handler to gate itself. Recorded on the result
-    // so the decision is auditable.
-    const authz = authorizeCommand(cmd.command, ctx);
-    if (!authz.allowed) {
-      results.push({
-        success: false,
-        action: cmd.command,
-        message: `Not authorized to run ${cmd.command}: ${authz.reason}`,
-        data: { authorization: authz },
-      });
-      console.warn(`[AnA Command] Denied ${cmd.command}: ${authz.reason} (policy ${authz.policyVersion})`);
-      continue;
-    }
-
     const handler = commandMap[cmd.command];
     if (handler) {
       // ── Part 11 gate: governed record-altering commands fail closed unless
       // this dispatch carries a valid sign-off. Tiered — reason-for-change
       // always; high-impact actions additionally require an e-signature. ──
-      if (requiresPart11Signoff(cmd.command)) {
-        // G-04: under the regulated profile a settings-read failure blocks the
-        // governed command outright — the gate cannot be dropped by a DB fault.
-        // (Outside the profile part11ReadFailed is never true.)
-        if (regulated && part11ReadFailed) {
-          results.push({
-            success: false,
-            action: cmd.command,
-            message:
-              'Part 11 governance policy could not be loaded; refusing this governed command under the regulated profile (fail closed).',
-          });
-          console.warn(`[AnA Command] Blocked ${cmd.command}: PART11_POLICY_UNAVAILABLE`);
+      if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
+        const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
+        if (!v.ok) {
+          const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
+          results.push(blocked);
+          console.log(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
           continue;
         }
-        if (ctx.part11Enforce) {
-          const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
-          if (!v.ok) {
-            const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
-            results.push(blocked);
-            console.warn(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
-            continue;
-          }
-        }
       }
+
+      // ── Central authorization gate ────────────────────────────────────
+      // The single place every AnA-dispatched command is authorized, for all
+      // four entry points (chat bridge tool, POST /execute, POST
+      // /governed-action, chat action blocks). Fail-closed by construction:
+      // a command with no entry in COMMAND_AUTHORIZATION is denied, so a new
+      // handler cannot ship ungated. Mutations additionally require the
+      // caller's canonical organization_users role (via rbacService) and a
+      // RESOLVED governance configuration. See command-rbac.ts.
+      //
+      // Deliberately AFTER the Part 11 gate: both are fail-closed pre-handler
+      // gates, and this ordering keeps the Part 11 signature demand as the
+      // first thing a signer is told when enforcement is on.
+      const authz = await authorizeCommand(cmd.command, ctx);
+      if (!authz.ok) {
+        results.push(authz.result);
+        console.warn(`[AnA Command] Blocked ${cmd.command}: ${authz.result.error}`);
+        continue;
+      }
+
       try {
         const result = await handler(ctx, cmd.params);
         results.push(result);

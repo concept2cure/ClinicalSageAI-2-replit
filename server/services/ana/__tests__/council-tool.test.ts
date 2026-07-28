@@ -9,6 +9,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
 import { describe, it, expect } from 'vitest';
+import { C2C_MIGRATION_FILES } from '../../../../scripts/db/migration-set.mjs';
 
 import { getAllEnabledTools } from '../AnaToolDefinitions.js';
 import { getToolHandler } from '../AnaToolExecutor.js';
@@ -95,11 +96,7 @@ describe('council provisioning migration — idempotency guard', () => {
   it('defers lumen.data_atoms to the canonical prerequisite, which the apply script installs first', () => {
     expect(sql).not.toMatch(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?lumen\.data_atoms/i);
 
-    const script = readFileSync(
-      resolve(__dirname, '../../../../scripts/db/apply-c2c-migrations.mjs'),
-      'utf8',
-    );
-    const order = [...script.matchAll(/'([^']+\.sql)'/g)].map((m) => m[1]);
+    const order = C2C_MIGRATION_FILES;
     const canonical = order.indexOf('db/migrations/044b_gcc_lumen_schema_prerequisite.sql');
     const council = order.indexOf('migrations/20260724_lumen_council_provisioning.sql');
     expect(canonical).toBeGreaterThanOrEqual(0);
@@ -128,11 +125,9 @@ describe('council provisioning migration — idempotency guard', () => {
     }
   });
 
-  it('is wired into the standard apply script', () => {
-    const script = readFileSync(
-      resolve(__dirname, '../../../../scripts/db/apply-c2c-migrations.mjs'),
-      'utf8',
-    );
-    expect(script).toContain('20260724_lumen_council_provisioning.sql');
+  it('is wired into the standard apply set', () => {
+    // See the note in deep-investigation.test.ts: membership in this set is what
+    // puts a migration on the deploy path, not just on a manual one.
+    expect(C2C_MIGRATION_FILES).toContain('migrations/20260724_lumen_council_provisioning.sql');
   });
 });

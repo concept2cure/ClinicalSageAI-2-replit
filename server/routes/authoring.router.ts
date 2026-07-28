@@ -141,30 +141,36 @@ const upload = multer({
 // Use centralized database pool
 const pool = getPool();
 
-// Section-level permission enforcement helper
-//
-// COLUMN FIX: both queries joined `authoring_sections s ON s.document_id = …`.
-// That column does not exist — the section's parent is `doc_id`
-// (db/migrations/20260725_authoring_document_loop_tables.sql). Because the whole
-// function short-circuits unless AUTH_ENFORCE_SECTION_PERMS=1, the broken SQL had
-// never run: switching the gate ON would have made every section POST/PATCH/DELETE
-// raise 42703 inside an async middleware, i.e. turning the control on took the
-// surface down. A security control that cannot be enabled is not a control.
-//
-// FAILS CLOSED. Any error now denies the edit instead of rejecting into the
-// middleware. Previously the throw escaped `router.use`, so the request neither
-// passed nor was refused — it simply never got an answer.
 /**
- * Whether object-level section-permission enforcement is active.
+ * Document states in which the record is LOCKED and its sections are immutable.
  *
- * G-01: this was OPT-IN (off unless AUTH_ENFORCE_SECTION_PERMS=1), so the
- * least-privilege control shipped disabled and — because doc_permissions did not
- * exist and the predicate was broken — could not even be switched on. It is now
- * DEFAULT-ON in the environments that carry regulated work:
- *   - production: ALWAYS enforced (the opt-out is not honoured here);
- *   - staging:    enforced by default; AUTH_ENFORCE_SECTION_PERMS=0 disables;
- *   - dev / test: OFF by default so suites that predate object permissions are
- *                 unaffected, ON when a run sets AUTH_ENFORCE_SECTION_PERMS=1.
+ * Matches the freeze handler's own check (`doc.status === 'FROZEN' ||
+ * doc.status === 'APPROVED'`). Compared case-insensitively because the router
+ * writes both cases — `POST /docs` inserts `'draft'` and the analytics query
+ * counts `'approved'` in lower case, while freeze/approve write `'FROZEN'` /
+ * `'APPROVED'` in upper case. A case-sensitive comparison would silently miss a
+ * locked record.
+ */
+const LOCKED_DOCUMENT_STATUSES = new Set(['FROZEN', 'APPROVED']);
+
+/**
+ * Is the fine-grained per-user section-permission matrix enforced?
+ *
+ * 21 CFR Part 11 §11.10(d) — "limiting system access to authorized individuals".
+ * The matrix used to be strictly opt-in behind `AUTH_ENFORCE_SECTION_PERMS === '1'`,
+ * and that flag is set NOWHERE in this repository outside tests. The effective
+ * production rule was therefore "any authenticated member of the owning tenant may
+ * edit any unlocked section of that tenant" — no per-user grant, and PATCH
+ * /sections/:sectionId carries no coarse role gate either. A viewer-tier member, or
+ * any member with no grant on the document, could edit a regulated IND/CTD section
+ * they were never authorized to author.
+ *
+ * Enforced by DEFAULT in production and staging; the flag remains as a non-production
+ * kill-switch (`'0'` disables, `'1'` forces on) so local development and fixtures that
+ * predate the grant store keep working. Production cannot be opted out.
+ *
+ * Paired with the creator auto-grant on POST /docs — without that grant this control
+ * is a lockout rather than a permission model.
  */
 function sectionPermsEnforced(): boolean {
   if (process.env.NODE_ENV === 'production') return true;
@@ -174,64 +180,137 @@ function sectionPermsEnforced(): boolean {
   return process.env.NODE_ENV === 'staging';
 }
 
+/** The only grants the fine-grained section matrix recognises. */
+const GRANTABLE_SECTION_ROLES = new Set(['AUTHOR', 'REVIEWER']);
+
+/**
+ * Section-level write authorization (C2C-AUTHOR-001 / C2C-AUTHOR-002).
+ *
+ * WHAT WAS WRONG
+ * --------------
+ * 1. DEFAULT ALLOW-ALL. The whole function opened with
+ *      `if (process.env.AUTH_ENFORCE_SECTION_PERMS !== '1') return true;`
+ *    and that flag is set NOWHERE in this repository. So the deployed default
+ *    returned true before establishing anything at all — not the caller's
+ *    tenant, not that the section existed, not the document's state.
+ * 2. IMMUTABILITY WAS FLAG-GATED. The APPROVED check lived INSIDE that
+ *    short-circuit, so with the flag off (i.e. always) a signed, frozen IND
+ *    document's sections stayed editable. Record immutability is not a feature
+ *    flag — it is 21 CFR Part 11 §11.10(c)/(e). It is now unconditional.
+ *    FROZEN was never checked at all, at any flag setting.
+ * 3. NO TENANT SCOPE. Neither query carried a tenant predicate, so with the
+ *    flag ON a grant in tenant B could authorise a write in tenant A. Both
+ *    queries are now anchored to the VERIFIED tenant.
+ * 4. HEADER-DERIVED IDENTITY. Identity came from `x-user-email` and roles from
+ *    `x-roles`. This router's own first middleware strips caller-supplied
+ *    copies and re-derives them from verified claims, so these were not
+ *    directly forgeable HERE — but authorization must not depend on a mutable
+ *    header at all (one mis-ordered middleware and the class is back). Both now
+ *    read the verified principal, matching requireAny() and ledger C-18.
+ * 5. AND/OR PRECEDENCE. `WHERE s.id = $1 AND … OR (p.section_id IS NULL AND …)`
+ *    binds AND tighter than OR, so the right-hand branch was NOT anchored to
+ *    the requested section: ANY doc-level grant the caller held on ANY document
+ *    satisfied a write to ANY other section. Every predicate is now anchored to
+ *    the requested section AND the caller's tenant.
+ * 6. PHANTOM TABLE. `doc_permissions` had no CREATE statement anywhere in the
+ *    repo, so the flag-on path could only ever deny (relation does not exist →
+ *    catch → false). A control that cannot be switched on is not a control,
+ *    which is precisely why the insecure default was never turned off. The
+ *    table is now provisioned by the canonical loop-tables migration and
+ *    carried by the authoring provisioning unit.
+ *
+ * WHAT THE FLAG NOW GATES
+ * -----------------------
+ * ONLY the optional per-user AUTHOR/REVIEWER matrix. The non-negotiable
+ * guarantees — verified principal, tenant isolation, object existence within
+ * that tenant, and the Part 11 immutability lock — run on every call regardless
+ * of configuration. Flag-off is therefore no longer allow-all: it is
+ * "a verified member of the owning tenant may edit an unlocked section of that
+ * tenant", which is what keeps collaborative authoring working. It deliberately
+ * does NOT prove a per-user grant; that is what the flag buys.
+ *
+ * FAILS CLOSED. Any throw, any missing tenant claim, any unknown section
+ * denies. Never returns true on an error path.
+ */
 async function canEditSection(
   req: Request,
   sectionId: string | string[] | undefined
 ): Promise<boolean> {
-  if (!sectionPermsEnforced()) return true;
-
-  // Actor + tenant from the VERIFIED principal, never client headers. The
-  // middleware sanitises x-user-email/x-roles from the same claims, but a gate
-  // must not depend on a mutable header at all (see requireAny / ledger C-18).
-  const email = (req.user?.email || '').toString().toLowerCase();
-  let tenantId: number;
   try {
-    tenantId = getTenantId(req);
-  } catch {
-    return false; // no verified tenant ⇒ no edit
-  }
-  if (!email) return false;
+    // A repeated ?sectionId or a missing param is not an identifiable object.
+    if (typeof sectionId !== 'string' || sectionId.length === 0) return false;
 
-  try {
-    // Document status APPROVED blocks edits regardless. Tenant-scoped, and an
-    // unknown/foreign section (no row) denies.
-    const d = (
+    // Identity and tenant come from the VERIFIED principal only — never a
+    // header, body or query value.
+    const email = getActorEmail(req);
+    if (!email) return false;
+    const tenantId = authedOrgId(req);
+    if (tenantId == null) return false;
+
+    // ── UNCONDITIONAL: object existence + tenant + record immutability ───────
+    // Resolving the section THROUGH its tenant proves three things at once: the
+    // section exists, it belongs to the caller's tenant, and its parent
+    // document is tenant-consistent (the join matches on tenant as well as id).
+    const parent = (
       await pool.query(
-        `SELECT d.status FROM authoring_documents d
-         JOIN authoring_sections s ON s.doc_id = d.id AND s.tenant_id = d.tenant_id
-         WHERE s.id = $1 AND s.tenant_id = $2`,
+        `SELECT d.status
+           FROM authoring_sections s
+           JOIN authoring_documents d
+             ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
+          WHERE s.id = $1 AND s.tenant_id = $2
+          LIMIT 1`,
         [sectionId, tenantId]
       )
-    ).rows[0];
-    if (!d) return false;
-    if (d.status === 'APPROVED') return false;
+    ).rows[0] as { status?: string | null } | undefined;
 
-    // QA/RA_CMC override, from the verified roles claim.
-    const roles = (Array.isArray(req.user?.roles) ? req.user!.roles : [])
-      .map((r) => String(r).toUpperCase());
+    // Unknown section, or a section belonging to another tenant.
+    if (!parent) return false;
+
+    // 21 CFR Part 11 record integrity: a frozen or approved record is closed to
+    // edits for EVERY caller, including QA/RA_CMC, at every flag setting.
+    if (LOCKED_DOCUMENT_STATUSES.has(String(parent.status ?? '').toUpperCase())) {
+      return false;
+    }
+
+    // ── Fine-grained per-user matrix: ON by default in prod/staging ──────────
+    if (!sectionPermsEnforced()) return true;
+
+    // Roles from the verified token, read with the same typed access
+    // requireAny() uses.
+    const claimed = ((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[];
+    const roles = (Array.isArray(claimed) ? claimed : [claimed]).map(r =>
+      String(r).toUpperCase()
+    );
     if (roles.includes('QA') || roles.includes('RA_CMC')) return true;
 
-    // Otherwise require a doc- or section-level grant. FIXED PREDICATE (G-01):
-    // the branches are parenthesised, both anchored on the TARGET section ($1)
-    // and the caller's TENANT ($3), and a doc-level grant is section_id IS NULL.
-    // The prior unparenthesised OR let any doc-level grant on ANY document
-    // authorise a section of a DIFFERENT document, across tenants.
-    const row = (
+    // Every predicate is anchored to the REQUESTED section and the caller's
+    // tenant; the doc-level branch is parenthesised so it can no longer escape
+    // that anchor. `p.section_id IS NULL` = a grant over the whole document.
+    const grant = (
       await pool.query(
-        `SELECT 1 FROM doc_permissions p
-         JOIN authoring_sections s ON s.doc_id = p.doc_id AND s.tenant_id = p.tenant_id
-         WHERE s.id = $1
-           AND p.tenant_id = $3
-           AND p.email = $2
-           AND p.role IN ('AUTHOR','REVIEWER')
-           AND (p.section_id = s.id OR p.section_id IS NULL)
-         LIMIT 1`,
-        [sectionId, email, tenantId]
+        `SELECT 1
+           FROM authoring_sections s
+           JOIN doc_permissions p
+             ON p.doc_id = s.doc_id AND p.tenant_id = s.tenant_id
+          WHERE s.id = $1
+            AND s.tenant_id = $2
+            AND p.tenant_id = $2
+            AND LOWER(p.email) = LOWER($3)
+            AND UPPER(p.role) IN ('AUTHOR', 'REVIEWER')
+            AND (p.section_id IS NULL OR p.section_id = s.id)
+          LIMIT 1`,
+        [sectionId, tenantId, email]
       )
     ).rows[0];
-    return !!row;
+    return !!grant;
   } catch (error) {
-    console.error('[authoring] canEditSection failed; denying the edit', error);
+    // Fail CLOSED: a permission store that cannot be consulted authorises
+    // nothing. Logged so an operator sees a broken store rather than a silent
+    // deny storm.
+    logger.error('canEditSection failed; denying the section edit', {
+      sectionId: typeof sectionId === 'string' ? sectionId : null,
+      err: error instanceof Error ? error.message : String(error),
+    });
     return false;
   }
 }
@@ -261,23 +340,28 @@ const requireAny = (roles: string[]) => {
   };
 };
 
-// Guard for section CONTENT mutations only. `req.path` here is the remainder
-// after the matched '/sections/:sectionId' mount ('/' for the section itself,
-// '/revert' etc. for subresources). Editing the section (PATCH) and reverting
-// it to a prior revision (POST /revert) change the regulated content and
-// require edit permission. Collaboration subresources — comment, cite, tokens —
-// are deliberately NOT gated by EDIT permission: a reviewer must be able to
-// annotate without authoring rights, and they were never gated while
-// enforcement was off, so this stays monotonic as enforcement turns on.
+// Guard for section changes & token refresh.
+//
+// Belt-and-braces: canEditSection already fails closed internally, but this
+// middleware must never be able to fall through to next() — or to reject into
+// Express's error handler — on a throw. Either outcome is a fail-OPEN or a
+// request that gets no answer at all. next() is deliberately OUTSIDE the try so
+// an error raised by a downstream handler cannot be mistaken for a gate failure
+// and trigger a second response.
 router.use('/sections/:sectionId', async (req: Request, res: Response, next: any) => {
-  const isContentMutation =
-    (req.method === 'PATCH' && req.path === '/') ||
-    (req.method === 'POST' && req.path === '/revert');
-  if (isContentMutation) {
-    const ok = await canEditSection(req, req.params.sectionId);
-    if (!ok) return res.status(403).json({ error: 'No edit permission for this section' });
+  try {
+    if (['PATCH', 'POST', 'DELETE'].includes(req.method)) {
+      const ok = await canEditSection(req, req.params.sectionId);
+      if (!ok) return res.status(403).json({ error: 'No edit permission for this section' });
+    }
+  } catch (error) {
+    logger.error('section edit guard failed; denying the request', {
+      method: req.method,
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(403).json({ error: 'No edit permission for this section' });
   }
-  next();
+  return next();
 });
 
 // Source tenant id from the verified JWT. The previous header / query /
@@ -1200,36 +1284,82 @@ router.post('/docs', async (req: Request, res: Response) => {
       args,
     );
 
-    // If template_id provided, copy sections from template
-    if (template_id) {
-      await pool.query(
-        `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-         SELECT gen_random_uuid(), $1, code, title, content, order_index, NOW(), NOW(), $2
-         FROM template_sections
-         WHERE template_id = $3 AND tenant_id = $2`,
-        [docId, tenantId, template_id]
-      );
-    }
-
-    // G-01: grant the creator a document-level AUTHOR permission so that once
-    // section-permission enforcement is active they can edit the document they
-    // just created without a separate grant step. Best-effort: document creation
-    // must not fail if the permission store is absent (an un-provisioned dev /
-    // test harness) — the grant is only consulted when enforcement is on, and
-    // canEditSection fails closed regardless.
+    // Creator auto-grant — the mandatory companion to sectionPermsEnforced().
+    //
+    // With the per-user matrix enforced by default, a document whose creator holds
+    // no grant is a document nobody can edit. This writes the doc-level AUTHOR grant
+    // (section_id NULL = the whole document) so creating a document still means you
+    // can author it.
+    //
+    // The email MUST come from getActorEmail() — the same accessor canEditSection
+    // compares with `LOWER(p.email) = LOWER($3)`. `createdBy` above is getActorId(),
+    // a different value whenever the JWT carries an email claim; granting on that
+    // would silently lock the creator out of their own document.
+    //
+    // Best-effort: a failed grant must not fail document creation (the document is
+    // already committed and is valid without it), but it is logged loudly because a
+    // grant-store outage means the creator will hit a 403 on their next edit.
     const creatorEmail = getActorEmail(req);
     if (creatorEmail) {
       try {
         await pool.query(
           `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
            VALUES ($1, NULL, $2, 'AUTHOR', $3)`,
-          [docId, creatorEmail.toLowerCase(), tenantId]
+          [docId, creatorEmail.toLowerCase(), tenantId],
         );
       } catch (grantErr) {
-        console.warn(
-          '[authoring] creator auto-grant skipped',
-          grantErr instanceof Error ? grantErr.message : grantErr
-        );
+        logger.warn('creator auto-grant skipped; creator may be denied on next edit', {
+          docId,
+          error: grantErr instanceof Error ? grantErr.message : String(grantErr),
+        });
+      }
+    }
+
+    // If template_id provided, scaffold the document's section skeleton.
+    //
+    // This query could never run. It selected `code, title, content, order_index`
+    // from an unqualified `template_sections` filtered by `tenant_id` — but the
+    // only such table is `intelligence.template_sections`
+    // (db/migrations/20260520_document_templates.sql:78), whose columns are
+    // `section_code`, `section_title` and `ordering`, with NO `content` and NO
+    // `tenant_id`. Every column named was wrong and the relation was unresolvable,
+    // so a create-from-template always fell into the catch below and 500'd.
+    //
+    // Templates are GLOBAL regulatory reference data — `intelligence.document_templates`
+    // carries no tenancy column, deliberately, because they describe agency
+    // expectations rather than customer content. So there is no tenant filter to
+    // apply on the read; tenancy comes from the document being created, and every
+    // seeded row carries that tenant.
+    //
+    // Templates store section STRUCTURE and authoring guidance, not prose, so a
+    // seeded section starts empty. That is the honest scaffold: the section exists
+    // with its regulatory code, title and ordering, and the author writes it.
+    if (template_id) {
+      const seeded = await pool.query(
+        `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
+         SELECT gen_random_uuid(), $1, ts.section_code, ts.section_title, '', ts.ordering, NOW(), NOW(), $2
+         FROM intelligence.template_sections ts
+         WHERE ts.template_id = $3
+         ORDER BY ts.ordering
+         RETURNING id, code, content`,
+        [docId, tenantId, template_id]
+      );
+
+      // Every write to a regulated section produces its Part 11 evidence — the
+      // sibling POST /sections handler does exactly this, and a section that
+      // appears in a document with no record of how it got there is precisely
+      // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
+      // like any other.
+      // `createdBy` is the verified actor already resolved (and null-guarded)
+      // at the top of this handler — not re-derived, so a seeded section is
+      // attributed to exactly the principal the document is.
+      for (const row of seeded.rows) {
+        await createRevision(row.id, row.content ?? '', createdBy, tenantId);
+        await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
+          template_id,
+          section_code: row.code,
+          seeded: true,
+        });
       }
     }
 
@@ -1343,6 +1473,29 @@ router.post('/sections', async (req: Request, res: Response) => {
         success: false,
         error: 'doc_id, code, and title are required',
       });
+    }
+
+    // The same Part 11 immutability lock the /sections/:sectionId guard applies
+    // (C2C-AUTHOR-001). This route creates a section rather than editing one, so
+    // it sits OUTSIDE that guard's path — but adding a section to a FROZEN or
+    // APPROVED document alters the record set a signature attests to just as
+    // surely as editing one. Resolving the parent in-tenant first also turns a
+    // foreign/unknown doc_id into a clean 404 instead of the composite-FK
+    // violation 500 it used to raise.
+    const parentDoc = await pool.query(
+      `SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2`,
+      [doc_id, tenantId]
+    );
+    if ((parentDoc.rowCount ?? 0) === 0) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+    const parentStatus = String(
+      (parentDoc.rows[0] as { status?: string | null }).status ?? ''
+    ).toUpperCase();
+    if (LOCKED_DOCUMENT_STATUSES.has(parentStatus)) {
+      return res
+        .status(403)
+        .json({ success: false, error: 'Document is FROZEN/APPROVED; cannot add sections' });
     }
 
     const result = await pool.query(
@@ -4540,17 +4693,34 @@ router.post(
       ).rows[0];
       if (!cr) return res.status(404).json({ error: 'CR not found' });
 
+      // Companion correctness fix: this joined `s.document_id = d.id`, a column
+      // that does not exist (the section's parent is `doc_id`) — the identical
+      // latent 42703 canEditSection carried. It also honoured only APPROVED, so
+      // a FROZEN record was not treated as locked. Same immutability set as the
+      // section gate now.
+      //
+      // SCOPE NOTE: this route still cannot succeed — `doc_change_requests`
+      // (queried above) has no CREATE statement anywhere in the repo, so the
+      // handler 500s before reaching here. This removes the latent column bug
+      // and aligns the lock; it does not make the route work. The identical
+      // wrong-column bug ALSO remains at the template-apply handler
+      // (`SELECT id, code FROM authoring_sections WHERE document_id = $1` and
+      // the INSERT that follows it, which additionally reference the
+      // non-existent `order_idx`/`created_by` shape) — that is a separate
+      // broken-CRUD defect, deliberately out of scope for section authz.
       const d = (
         await pool.query(
           `
       SELECT d.status FROM authoring_documents d
-      JOIN authoring_sections s ON s.document_id = d.id
+      JOIN authoring_sections s ON s.doc_id = d.id
       WHERE s.id = $1`,
           [cr.section_id]
         )
       ).rows[0];
-      if (d?.status === 'APPROVED')
-        return res.status(409).json({ error: 'Document APPROVED; cannot apply changes' });
+      if (LOCKED_DOCUMENT_STATUSES.has(String(d?.status ?? '').toUpperCase()))
+        return res
+          .status(409)
+          .json({ error: 'Document is FROZEN/APPROVED; cannot apply changes' });
 
       if (cr.apply_kind === 'CONTENT') {
         // Replace section content with patch_json
@@ -4600,35 +4770,63 @@ router.post(
   }
 );
 
-// Assign permission (doc- or section-level)
+// Assign permission (doc- or section-level).
+//
+// TENANT-SCOPED (C2C-AUTHOR-002). The grant is written with the granter's
+// VERIFIED tenant, and both the document and — for a section-scoped grant — the
+// section must already live in that tenant. Without this the writer produced
+// rows canEditSection (which is tenant-scoped) could never match, and a grant
+// could be minted against another tenant's document id.
 router.post(
   '/docs/:docId/permissions',
   requireAny(['QA', 'RA_CMC']),
   async (req: Request, res: Response) => {
     try {
+      const tenantId = authedOrgId(req);
+      if (tenantId == null) return res.status(403).json({ error: 'Tenant context required' });
+
       const { email, role, section_id } = req.body || {};
       if (!email || !role) return res.status(400).json({ error: 'email and role required' });
-      let tenantId: number;
-      try {
-        tenantId = getTenantId(req);
-      } catch {
-        return res.status(403).json({ error: 'Tenant context required' });
+
+      const normalizedRole = String(role).toUpperCase();
+      if (!GRANTABLE_SECTION_ROLES.has(normalizedRole)) {
+        return res.status(400).json({
+          error: `role must be one of: ${[...GRANTABLE_SECTION_ROLES].join(', ')}`,
+        });
       }
-      // The document being granted on must belong to the caller's tenant, or the
-      // grant would create a cross-tenant permission row (defence above the
-      // composite FK, and a clean 404 instead of a constraint 500).
-      const owns = (
-        await pool.query(
-          `SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
-          [req.params.docId, tenantId]
-        )
-      ).rows[0];
-      if (!owns) return res.status(404).json({ error: 'Document not found' });
+
+      // The document must exist INSIDE the caller's tenant — a 404 rather than a
+      // dangling grant (or an FK-violation 500) for a foreign/unknown id.
+      const doc = await pool.query(
+        `SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2`,
+        [req.params.docId, tenantId]
+      );
+      if ((doc.rowCount ?? 0) === 0) return res.status(404).json({ error: 'Document not found' });
+
+      // A section-scoped grant must name a section OF THIS document in the same
+      // tenant, so a grant can never straddle documents or tenants.
+      if (section_id) {
+        const sec = await pool.query(
+          `SELECT 1 FROM authoring_sections WHERE id = $1 AND doc_id = $2 AND tenant_id = $3`,
+          [section_id, req.params.docId, tenantId]
+        );
+        if ((sec.rowCount ?? 0) === 0) {
+          return res.status(404).json({ error: 'Section not found for this document' });
+        }
+      }
+
       const ins = (
         await pool.query(
-          `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
-           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-          [req.params.docId, section_id || null, String(email).toLowerCase(), role, tenantId]
+          `
+      INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [
+            req.params.docId,
+            section_id || null,
+            String(email).toLowerCase(),
+            normalizedRole,
+            tenantId,
+          ]
         )
       ).rows[0];
       res.json(ins);
@@ -4641,16 +4839,11 @@ router.post(
 
 router.get('/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
-    let tenantId: number;
-    try {
-      tenantId = getTenantId(req);
-    } catch {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
+    const tenantId = authedOrgId(req);
+    if (tenantId == null) return res.status(403).json({ error: 'Tenant context required' });
     const rows = (
       await pool.query(
-        `SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions
-         WHERE doc_id = $1 AND tenant_id = $2 ORDER BY created_at DESC`,
+        `SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions WHERE doc_id=$1 AND tenant_id=$2 ORDER BY created_at DESC`,
         [req.params.docId, tenantId]
       )
     ).rows;

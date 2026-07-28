@@ -18,6 +18,7 @@ import { invalidateOrgMembershipCache } from '../middleware/auth';
 import { createScopedLogger } from '../utils/logger';
 import { db } from '../db';
 import crypto from 'crypto';
+import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 
 const logger = createScopedLogger('tenant-api');
 const router = Router();
@@ -169,6 +170,11 @@ router.post(
 
       // Generate API key if not provided
       const apiKey = crypto.randomBytes(16).toString('hex');
+
+      // Tenant isolation posture: refuse to make this deployment multi-tenant
+      // while Postgres RLS is not filtering rows. No-ops locally and for the
+      // founding organization. See server/db/tenantAdmission.ts.
+      await assertCanAdmitNewTenant();
 
       // Create new tenant
       const newTenant = await db

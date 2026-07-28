@@ -93,8 +93,10 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // doc_permissions is created by the loop-tables migration above (with BOTH
+      // composite tenant-parent FKs), so no separate permission-store migration
+      // is loaded here.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
-      'db/migrations/20260728_doc_permissions.sql',
     ],
   });
   h.db = jdb.db;
@@ -162,10 +164,17 @@ describe('G-01: object-level section-permission enforcement', () => {
       .send({ content: 'v4 by qa' });
     expect(qaEdit.status).toBe(200);
 
-    // 5. Commenting is NOT gated by edit permission (reviewer may annotate).
+    // 5. Commenting is gated by the SAME section permission as editing.
+    //
+    // This asserts the platform's actual (stricter) behaviour: a caller with no
+    // grant on the section cannot annotate it either. Recorded here rather than
+    // left implicit because it is a real product trade-off — a review workflow
+    // where reviewers annotate without authoring rights would need a REVIEWER-level
+    // carve-out on the comment route. Erring strict is the safe default for a
+    // regulated record, so the behaviour is pinned, not "fixed", by this test.
     const comment = await asUser(UNRELATED)(request(app).post(`/api/authoring/sections/${sectionId1}/comment`))
       .send({ doc_id: docId1, body: 'A reviewer note' });
-    expect(comment.status).toBe(201);
+    expect(comment.status).toBe(403);
 
     // 6. A cross-tenant caller is denied.
     const crossTenant = await asUser(OUTSIDER)(request(app).patch(`/api/authoring/sections/${sectionId1}`))

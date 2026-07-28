@@ -1,3 +1,27 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision the ten authoring-router supplementary stores (AI suggestions,
+--          reviews, checklists, change requests, compliance scores, comment
+--          activity, audit events, doc sections) that no migration created.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 2 / Module 3 (authored CTD narrative and quality sections)
+--   - Integrity Risk Addressed: review, checklist and audit-event evidence for
+--     authored sections was unrecordable — every one of those endpoints 500d or
+--     silently no-opped on a fresh database, leaving no trace that a review or a
+--     compliance check ever occurred.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Tenant isolation: the six authoring_* tables carry tenant_id and are filtered
+--     by it in every query. The doc_* tables scope by doc_id / checklist_id.
+--   - Migration is idempotent (CREATE TABLE/INDEX IF NOT EXISTS; guarded FKs).
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: authoring-router supplementary stores (code-derived, G-02)
 -- Date: 2026-07-28
@@ -17,7 +41,7 @@
 -- applyAuthoringSubsystem). Creating them here is safe: there is no half-a-subsystem
 -- freeze/e-sign hazard.
 --
--- TENANCY: the six authoring_* tables and template_sections carry tenant_id and are
+-- TENANCY: the six authoring_* tables carry tenant_id and are
 -- filtered by it in every query — reproduced. The four doc_* tables scope by
 -- doc_id / checklist_id only (tenant_id appears in NONE of their queries) —
 -- reconstructed faithfully. Composite tenant-parent FKs to authoring_documents (the
@@ -183,18 +207,16 @@ CREATE TABLE IF NOT EXISTS doc_checklist_items (
 CREATE INDEX IF NOT EXISTS doc_checklist_items_checklist_idx
   ON doc_checklist_items (checklist_id, created_at);
 
--- ── 10. template_sections (read-only; copied FROM in POST /docs; seeded external) ─
-CREATE TABLE IF NOT EXISTS template_sections (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  template_id UUID NOT NULL,
-  tenant_id   INTEGER NOT NULL,
-  code        TEXT,
-  title       TEXT,
-  content     TEXT,
-  order_index INTEGER
-);
-CREATE INDEX IF NOT EXISTS template_sections_template_idx
-  ON template_sections (template_id, tenant_id);
+-- ── 10. (removed) template_sections ──────────────────────────────────────────
+-- A public.template_sections table was going to be created here for the
+-- unqualified `SELECT code, title, content, order_index FROM template_sections`
+-- in POST /docs. That query was itself the defect: the only such relation is
+-- intelligence.template_sections (db/migrations/20260520_document_templates.sql),
+-- whose columns are section_code / section_title / ordering with no content and no
+-- tenant_id — so every column named was wrong and create-from-template always 500'd.
+-- The authoring router now reads intelligence.template_sections directly, so a bare
+-- public.template_sections would be dead DDL AND a search-path shadowing hazard for
+-- the real, global template catalog. Deliberately not created.
 
 -- ── 11. doc_sections (read-only; command-executor reads id/code/title) ────────
 CREATE TABLE IF NOT EXISTS doc_sections (

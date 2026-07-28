@@ -19,7 +19,7 @@ import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
-import { SampleTag, useLive, connected } from './dataConnect';
+import { SampleTag, connected } from './dataConnect';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { GovernedActionSignoff } from '../components/ana/GovernedActionSignoff';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
@@ -31,10 +31,7 @@ import {
   NAV_TIERS_V2,
   NAV_GROUP_OF,
   PRIMARY_SEGMENTS,
-  RAIL_CORE,
-  RAIL_EXPLORE,
-  RAIL_QUICK,
-  RAIL_SPECIALIST,
+  RAIL_PRIMARY,
   SEGMENTS,
   getAnaContext,
   getCoauthor,
@@ -178,16 +175,14 @@ export function Rail({
             </button>
           ))}
         </div>
-        <div className="rail-section">Workspace</div>
-        <div className="rail-nav">{RAIL_CORE.map(navItem)}</div>
-        <div className="rail-section">Science &amp; intelligence</div>
-        {/* `crl-library` is gated by ENABLE_CLINICAL_REGULATORY_GRAPH — flag off
-            and the rail entry is absent entirely, not disabled or empty. */}
-        <div className="rail-nav">{RAIL_SPECIALIST.filter(railVisible).map(navItem)}</div>
-        <div className="rail-section">Explore</div>
-        <div className="rail-nav">{RAIL_EXPLORE.map(navItem)}</div>
-        <div className="rail-section">Quick access</div>
-        <div className="rail-nav">{RAIL_QUICK.map(navItem)}</div>
+        {/* ana-ui-design-constitution §4: exactly five top-level destinations.
+            The four former rail groups (Workspace / Science & intelligence /
+            Explore / Quick access) carried ~15 siblings, six of them on the
+            constitution's forbidden list. They are demoted into NAV_HIDDEN, not
+            deleted — still reachable by ⌘K and deep-link. §7 keeps this rail to
+            Zone B alone; recency (Zone C) and the account footer (Zone D) are
+            rendered elsewhere in this component. */}
+        <div className="rail-nav">{RAIL_PRIMARY.filter(railVisible).map(navItem)}</div>
       </div>
       <div className="rail-foot">
         <button
@@ -436,16 +431,22 @@ export function AnaRail({
   };
   const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
   const co = getCoauthor(segment);
-  const ac0: AnaContext = getAnaContext(surface.id, segment);
-  /* HARD RULE: bind AnA to the real co-author endpoint (live ?? fixture). When
-     the backend is reachable, live co-author state overrides the fixture. */
-  const liveCo = useLive<Partial<AnaContext> | null>(
-    `/api/coauthor?surface=${encodeURIComponent(surface.id)}&segment=${encodeURIComponent(segment ?? '')}`,
-    null,
-    [surface.id, segment]
-  );
-  const ac: AnaContext = liveCo.data ? { ...ac0, ...liveCo.data } : ac0;
-  const anaSample = !connected() || liveCo.sample;
+  /* AnA's per-surface context is local, and says so.
+   *
+   * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
+   * calling it a HARD RULE that bound AnA to "the real co-author endpoint".
+   * There is no such endpoint. server/routes/coauthor.ts mounts `/sessions`,
+   * `/documents`, `/documents/:id` and `/templates` — it has no root handler, so
+   * that request 404'd on every render of every surface, forever, and the result
+   * was discarded into the same fixture fallback used when it was never issued.
+   *
+   * The `sample` flag is what the user actually sees, and it was being derived
+   * from a call that could not succeed. Deriving it from `connected()` alone is
+   * the same answer honestly obtained. If per-surface AnA context becomes a real
+   * server concern, add the endpoint and restore the merge — do not reinstate a
+   * fetch against a route that does not exist. */
+  const ac: AnaContext = getAnaContext(surface.id, segment);
+  const anaSample = !connected();
   const suggestions = ac.suggestions?.length ? ac.suggestions : [];
   const send = () => {
     const t = draft.trim();

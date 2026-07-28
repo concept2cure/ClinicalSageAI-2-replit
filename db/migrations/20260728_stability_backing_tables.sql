@@ -1,3 +1,34 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Create the seven previously-unbacked stab_* tables, the shared
+--          cmc_methods catalog and the two v_stab_* views, tenant-isolated from
+--          birth.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 3 — Quality (3.2.P.8 Stability); analytical methods 3.2.P.5
+--   - Integrity Risk Addressed: TENANT ISOLATION plus missing GxP records. CAPA,
+--     chain-of-custody, sample, assignment, sign-off, protocol and excursion data
+--     had no table at all, so those routes 500d (fail-safe). Creating them WITHOUT
+--     isolation would have converted that fail-safe error into a real cross-tenant
+--     leak, which is why this migration follows the isolation migration and applies
+--     the same policy to everything it creates.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Every stab_* table gets tenant_id INTEGER NOT NULL defaulting from
+--     app.current_tenant_id, then ENABLE + FORCE RLS and tenant_isolation_policy.
+--   - cmc_methods is deliberately created WITHOUT a tenant column: it is a global
+--     analytical-method catalog joined by id and never tenant-filtered; scoping it
+--     would hide every method and block every stability sign-off.
+--   - The two views are security_invoker so they inherit base-table RLS as the
+--     CALLING tenant regardless of view ownership.
+--   - Migration is idempotent (IF NOT EXISTS; views DROP-then-CREATE).
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: back the unbacked stability tables + views (G-02, tenant-isolated)
 -- Date: 2026-07-28

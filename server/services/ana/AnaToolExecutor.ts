@@ -158,6 +158,7 @@ import {
   type FailedToolCall,
 } from './agentic-loop.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { assertWithinDocumentWorkspace } from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -571,13 +572,21 @@ registerToolHandler('recall_rim_patterns', async (input, ctx) => {
 
 // RIM domain query — filter learned patterns by domain with optional confidence
 // and occurrence thresholds, sorted by occurrences descending. Tenant-scoped.
-registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>) =>
+registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>, ctx) =>
   runStatsTool('query_rim_patterns_by_domain', async () => {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    // Tenant comes from the VERIFIED context, never from the model's arguments.
+    // This previously read `input.orgId`, and the tool definition made orgId a
+    // required model-supplied field — so naming another organization's id read
+    // that tenant's learned regulatory patterns. The sibling recall_rim_patterns
+    // already gates on ctx.organizationId; this is the same rule.
+    const orgId = ctx?.organizationId;
     const domain = typeof input.domain === 'string' ? input.domain.trim() : '';
-    if (!orgId || !domain) {
-      throw new Error('orgId (number) and domain (string) are required.');
+    if (!orgId) {
+      throw new Error('query_rim_patterns_by_domain requires tenant context (organizationId).');
+    }
+    if (!domain) {
+      throw new Error('domain (string) is required.');
     }
     const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
     const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
@@ -599,12 +608,13 @@ registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string,
 );
 
 // RIM intelligence summary — aggregate domain counts, top patterns, date range.
-registerToolHandler('summarize_rim_intelligence', async (input: Record<string, unknown>) =>
+registerToolHandler('summarize_rim_intelligence', async (_input: Record<string, unknown>, ctx) =>
   runStatsTool('summarize_rim_intelligence', async () => {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    // See query_rim_patterns_by_domain: tenant from the verified context only.
+    const orgId = ctx?.organizationId;
     if (!orgId) {
-      throw new Error('orgId (number) is required.');
+      throw new Error('summarize_rim_intelligence requires tenant context (organizationId).');
     }
 
     const patterns = getPatterns({ orgId });
@@ -1394,6 +1404,21 @@ registerToolHandler('search_clinical_evidence', async (input) => {
       suggestion: `Search ClinicalTrials.gov for: "${query || [asStr(input.condition), asStr(input.intervention)].filter(Boolean).join(' ')}"`,
     });
   }
+});
+
+// Onboarding readiness — READ-ONLY. Reports which onboarding fields the org
+// profile already has and what a document could fill. There is deliberately no
+// commit counterpart: a model-callable commit could self-invoke in the agentic
+// loop and defeat the human-approval gate, so applying proposals stays a human
+// action through the governed endpoint.
+registerToolHandler('summarize_onboarding_readiness', async (_input, ctx) => {
+  const orgId = Number(ctx?.organizationId);
+  if (!Number.isFinite(orgId) || orgId <= 0) {
+    return 'I need to know which workspace you are in before I can check what setup is outstanding.';
+  }
+  const { summarizeOnboardingReadiness } = await import('../onboarding/onboarding-readiness');
+  const readiness = await summarizeOnboardingReadiness(orgId);
+  return readiness.summary;
 });
 
 // Search Device Adverse Events — live FDA MAUDE via openFDA passthrough.
@@ -6683,15 +6708,46 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
 // the source of truth, the PDF is its native rendering.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('convert_docx_to_pdf', async (input) => {
+registerToolHandler('convert_docx_to_pdf', async (input, ctx) => {
   const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
   if (!inputDocxPath) {
     return JSON.stringify({
       error: 'convert_docx_to_pdf requires input_docx_path (string).',
     });
   }
+  // Tenant context, like every sibling document tool (insert_document_content,
+  // surgical_docx_xml_edit, validate_docx, …). This handler was registered
+  // without a ToolContext at all, so it had no identity to check even in
+  // principle — the only tool in the document-surgery family with that gap.
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'convert_docx_to_pdf requires tenant context (organizationId).' });
+  }
   const outputPdfPath =
     typeof input.output_pdf_path === 'string' ? input.output_pdf_path : undefined;
+
+  // C2C-AI-003. Both paths come from model-chosen tool arguments and reach the
+  // worker, which READS input_docx_path and OVERWRITES output_pdf_path
+  // (server/scripts/docx_pdf_pipeline.py — `generated.replace(output_pdf)`).
+  // Unconfined, that is an arbitrary server-side file read whose bytes return
+  // through the tool result, and an arbitrary file overwrite.
+  //
+  // The RESOLVED paths are what get used below — never the caller's strings.
+  // Passing the raw candidate onward was itself the bug: the guard resolved it
+  // against the workspace root while the worker resolved it against the process
+  // working directory, so the check and the open addressed different files and
+  // any ordinary relative path (e.g. "dist/index.js") passed while landing
+  // outside. Validate and use the same value.
+  let safeInputDocxPath: string;
+  let safeOutputPdfPath: string | undefined;
+  try {
+    safeInputDocxPath = assertWithinDocumentWorkspace(inputDocxPath, 'input_docx_path');
+    safeOutputPdfPath =
+      outputPdfPath === undefined
+        ? undefined
+        : assertWithinDocumentWorkspace(outputPdfPath, 'output_pdf_path');
+  } catch (err) {
+    return JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
+  }
   const compress = input.compress === true;
   const allowedQ = new Set(['screen', 'ebook', 'printer', 'prepress', 'default']);
   const quality =
@@ -6703,8 +6759,8 @@ registerToolHandler('convert_docx_to_pdf', async (input) => {
     const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
     const { promises: fs } = await import('fs');
     const result = await runDocxPdfPipeline({
-      inputDocxPath,
-      outputPdfPath,
+      inputDocxPath: safeInputDocxPath,
+      outputPdfPath: safeOutputPdfPath,
       compress,
       quality,
     });
@@ -13067,10 +13123,35 @@ registerToolHandler('verify_memory_atom', async (input, ctx) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QMS + Labeling + Search handlers (migration 20260511).
+//
+// C2C-AUDIT-001 — the four controlled-document handlers below (create /
+// approve / revise / retire) are REGULATED mutations of the GxP document
+// register. Each one therefore commits its 21 CFR Part 11 §11.10(e) audit row
+// in the SAME transaction as the mutation, via recordGovernedAction on the
+// caller's client — the canonical in-file pattern already used by the FCOI
+// handlers. Previously create/approve wrote NO audit at all, and revise/retire
+// autocommitted the UPDATE and then fired `void auditService.logAction(...)`
+// on a separate connection whose failures were swallowed, so a crash or audit
+// error left a durable regulated change with no audit trail.
+//
+// `command` MUST come from the c2c_ana_actions_command_check vocabulary
+// (migrations/20260527_mutation_primitives.sql): claim | transition | resolve |
+// sign | accept-ai-suggestion | lock | unclaim | transition-back | reopen |
+// revoke-signature | reject-ai-suggestion | unlock. All four handlers move
+// qms_documents.status, so they are 'transition'; the specific verb travels in
+// the hash-committed payload under `kind`.
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Reason-for-change for a governed QMS action: caller-supplied, else a fallback. */
+const QMS_REASON_MIN = 8;
+function qmsReason(input: Record<string, unknown>, fallback: string): string {
+  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
+  return r.length >= QMS_REASON_MIN ? r : fallback;
+}
 
 registerToolHandler('create_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'create_qms_document requires user context — a controlled document cannot be created without an identified actor (21 CFR Part 11).' });
   const docNumber = typeof input.doc_number === 'string' ? input.doc_number.trim() : '';
   const title     = typeof input.title === 'string' ? input.title.trim() : '';
   const docType   = typeof input.doc_type === 'string' ? input.doc_type : '';
@@ -13078,9 +13159,13 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'].includes(docType)) {
     return JSON.stringify({ error: 'doc_type invalid.' });
   }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const client = await getPool().connect();
   try {
-    const { getPool } = await import('../../db.js');
-    const { rows } = await getPool().query(
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { rows } = await client.query(
       `INSERT INTO qms_documents (
          organization_id, doc_number, title, doc_type, category, version, status,
          author_id
@@ -13090,29 +13175,45 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
         ctx.organizationId, docNumber, title, docType,
         typeof input.category === 'string' ? input.category : null,
         typeof input.version === 'string' ? input.version : null,
-        ctx.userId ?? null,
+        ctx.userId,
       ],
     );
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+      target: `qms-document:${rows[0].id}`,
+      reason: qmsReason(input, `Controlled document ${docNumber} created via AnA`),
+      payload: { kind: 'create', docNumber, title, docType, to: 'draft' },
+      domain: 'mdx', surface: 'ana',
+    });
+    await client.query('COMMIT');
     return JSON.stringify({
       ok: true, ...rows[0],
       message: `Created QMS document ${docNumber} (${docType}, draft).`,
     });
   } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => undefined);
     const code = (err as { code?: string }).code;
     if (code === '23505') return JSON.stringify({ error: 'A document with that number already exists.' });
     return JSON.stringify({
       error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
     });
+  } finally {
+    client.release();
   }
 });
 
 registerToolHandler('approve_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_qms_document requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'approve_qms_document requires user context — an approval cannot be recorded without an identified approver (21 CFR Part 11).' });
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const client = await getPool().connect();
   try {
-    const { getPool } = await import('../../db.js');
-    const { rows } = await getPool().query(
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { rows } = await client.query(
       `UPDATE qms_documents
           SET status = 'effective',
               approver_id = $3,
@@ -13123,20 +13224,32 @@ registerToolHandler('approve_qms_document', async (input, ctx) => {
           AND status IN ('draft','in_review')
           AND deleted_at IS NULL
         RETURNING id, status, effective_date`,
-      [id, ctx.organizationId, ctx.userId ?? null,
+      [id, ctx.organizationId, ctx.userId,
        typeof input.effective_date === 'string' ? input.effective_date : null],
     );
     if (rows.length === 0) {
+      await client.query('ROLLBACK').catch(() => undefined);
       return JSON.stringify({ error: 'Document not found, or not in draft/in_review state.' });
     }
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+      target: `qms-document:${id}`,
+      reason: qmsReason(input, `Controlled document approved to effective via AnA`),
+      payload: { kind: 'approve', to: 'effective', effectiveDate: rows[0].effective_date ?? null },
+      domain: 'mdx', surface: 'ana',
+    });
+    await client.query('COMMIT');
     return JSON.stringify({
       ok: true, ...rows[0],
       message: `Approved document ${id} — effective ${rows[0].effective_date}.`,
     });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({
       error: `approve_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
     });
+  } finally {
+    client.release();
   }
 });
 
@@ -13146,16 +13259,24 @@ registerToolHandler('revise_qms_document', async (input, ctx) => {
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
   if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required to open a controlled revision (21 CFR Part 11) — ask the user for it.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const client = await getPool().connect();
   try {
-    const { getPool } = await import('../../db.js');
-    const cur = await getPool().query<{ version: string }>(
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const cur = await client.query<{ version: string }>(
       `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [id, ctx.organizationId],
     );
-    if (cur.rows.length === 0) return JSON.stringify({ error: `Document ${id} not found in this organization.` });
+    if (cur.rows.length === 0) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      return JSON.stringify({ error: `Document ${id} not found in this organization.` });
+    }
     const m = /^(\d+)/.exec(String(cur.rows[0].version ?? '').trim());
     const newVersion = `${(m ? parseInt(m[1], 10) : 1) + 1}.0`;
-    const { rows } = await getPool().query(
+    const { rows } = await client.query(
       `UPDATE qms_documents
           SET status = 'draft', version = $3, approver_id = NULL, approved_at = NULL,
               metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
@@ -13164,18 +13285,25 @@ registerToolHandler('revise_qms_document', async (input, ctx) => {
         WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
           AND status IN ('effective','superseded','retired','in_review')
         RETURNING id, doc_number, version, status`,
-      [id, ctx.organizationId, newVersion, reason, cur.rows[0].version, ctx.userId ?? null],
+      [id, ctx.organizationId, newVersion, reason, cur.rows[0].version, ctx.userId],
     );
-    if (rows.length === 0) return JSON.stringify({ error: 'Document cannot be revised from its current state.' });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
-      tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
-      action: 'mdx.qms.document.revise', resourceType: 'qms_document', resourceId: id,
-      details: { reason, from: cur.rows[0].version, to: newVersion, via: 'ana' },
+    if (rows.length === 0) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      return JSON.stringify({ error: 'Document cannot be revised from its current state.' });
+    }
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+      target: `qms-document:${id}`, reason,
+      payload: { kind: 'revise', from: cur.rows[0].version, to: newVersion, status: 'draft' },
+      domain: 'mdx', surface: 'ana',
     });
+    await client.query('COMMIT');
     return JSON.stringify({ ok: true, ...rows[0], message: `Opened revision of ${rows[0].doc_number} → v${newVersion} (draft).` });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
   }
 });
 
@@ -13184,9 +13312,14 @@ registerToolHandler('retire_qms_document', async (input, ctx) => {
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
   const reason = typeof input.reason === 'string' ? input.reason.trim() : null;
+  if (!ctx.userId) return JSON.stringify({ error: 'retire_qms_document requires user context — a retirement cannot be recorded without an identified actor (21 CFR Part 11).' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const client = await getPool().connect();
   try {
-    const { getPool } = await import('../../db.js');
-    const { rows } = await getPool().query(
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { rows } = await client.query(
       `UPDATE qms_documents
           SET status = 'retired',
               metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
@@ -13194,18 +13327,26 @@ registerToolHandler('retire_qms_document', async (input, ctx) => {
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
         RETURNING id, doc_number, status`,
-      [id, ctx.organizationId, reason, ctx.userId ?? null],
+      [id, ctx.organizationId, reason, ctx.userId],
     );
-    if (rows.length === 0) return JSON.stringify({ error: 'Document not found, or already retired.' });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
-      tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
-      action: 'mdx.qms.document.retire', resourceType: 'qms_document', resourceId: id,
-      details: { reason, via: 'ana' },
+    if (rows.length === 0) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      return JSON.stringify({ error: 'Document not found, or already retired.' });
+    }
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+      target: `qms-document:${id}`,
+      reason: qmsReason(input, 'Controlled document retired via AnA'),
+      payload: { kind: 'retire', to: 'retired' },
+      domain: 'mdx', surface: 'ana',
     });
+    await client.query('COMMIT');
     return JSON.stringify({ ok: true, ...rows[0], message: `Retired document ${rows[0].doc_number}.` });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `retire_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
   }
 });
 
@@ -17600,9 +17741,11 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
     const category = typeof input.category === 'string' && input.category.trim() ? input.category.trim() : 'document';
     const ctd = typeof input.ctd_section === 'string' && input.ctd_section.trim() ? input.ctd_section.trim() : null;
 
+    const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
+      await setTenantContextTx(client, ctx.organizationId);
       const ins = await client.query<{ id: number }>(
         `INSERT INTO concept2cure_artifacts (
            artifact_id, organization_id, type, category, title, content, content_hash,
@@ -17618,16 +17761,19 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
          VALUES ($1, $2, 1, $3, $4, $5, $6)`,
         [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
       );
+      // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
+      // the same transaction as the artifact + immutable version. It used to be
+      // a post-COMMIT `try { auditLog(...) } catch { /* never block on audit */ }`
+      // on a separate connection, so a failed audit left a committed regulated
+      // document with no §11.10(e) trail. Now the audit failing rolls the
+      // document back with it.
+      await recordGovernedAction(client, {
+        orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+        target: `vault-document:${externalId}`, reason,
+        payload: { kind: 'create', title, category, ctdSection: ctd, contentHash: hash, to: 'draft', version: 1 },
+        domain: 'mdx', surface: 'ana',
+      });
       await client.query('COMMIT');
-
-      try {
-        const { auditLog } = await import('../auditService.js');
-        auditLog({
-          tenantId: ctx.organizationId, userId: ctx.userId,
-          action: 'VAULT_DOCUMENT_CREATED', resource: 'concept2cure_artifact',
-          resourceId: externalId, details: { title, category, ctdSection: ctd, reason },
-        });
-      } catch { /* never block on audit */ }
 
       return JSON.stringify({
         ok: true, id: ins.rows[0].id, artifact_id: externalId, version: 1, content_hash: hash,
@@ -17655,9 +17801,11 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
   try {
     const { getPool } = await import('../../db.js');
     const { createHash } = await import('crypto');
+    const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
+      await setTenantContextTx(client, ctx.organizationId);
       const existing = await client.query<{ id: number; status: string; version: number; title: string }>(
         `SELECT id, status, version, title FROM concept2cure_artifacts
           WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2)
@@ -17687,16 +17835,14 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [doc.id, ctx.organizationId, nextVersion, content, hash, reason, ctx.userId],
       );
+      // C2C-AUDIT-001: atomic Part 11 audit — see save_document_to_vault.
+      await recordGovernedAction(client, {
+        orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
+        target: `vault-document:${doc.id}`, reason,
+        payload: { kind: 'version', title: doc.title, from: Number(doc.version ?? 1), to: nextVersion, contentHash: hash },
+        domain: 'mdx', surface: 'ana',
+      });
       await client.query('COMMIT');
-
-      try {
-        const { auditLog } = await import('../auditService.js');
-        auditLog({
-          tenantId: ctx.organizationId, userId: ctx.userId,
-          action: 'VAULT_DOCUMENT_VERSIONED', resource: 'concept2cure_artifact',
-          resourceId: String(doc.id), details: { title: doc.title, version: nextVersion, reason },
-        });
-      } catch { /* never block on audit */ }
 
       return JSON.stringify({
         ok: true, id: doc.id, version: nextVersion, content_hash: hash,

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, liveGet } from '../dataConnect';
+import { SampleTag, connected, liveGet, liveMutateOrNull } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
@@ -268,11 +268,23 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const runLocal = () => { const a = parseProtocol(text); setAnalysis({ protocol_data: a, similar_protocols: [], source: 'local' }); };
   const analyze = () => {
     if (text.trim().length < 50) { fireToast('Add more protocol detail (min ~50 chars)'); return; }
-    const api = (window as any).C2C_API; // POST has no dataConnect mapping -- keep the kit bridge guard so this falls back to the local analyzer
-    if (!api || !api.connected()) { runLocal(); return; }
+    // The old guard read `window.C2C_API`, which nothing assigns, so this always
+    // fell through to the local analyzer and the server was never consulted.
+    // dataConnect now carries the POST mapping its comment said was missing.
+    if (!connected()) { runLocal(); return; }
     setBusy(true);
-    api.post('/api/analytics/analyze-protocol-text', { text })
-      .then((r: any) => { const d = (r && r.data) || {}; setAnalysis({ protocol_data: d.protocol_data || parseProtocol(text), similar_protocols: d.similar_protocols || [], recommendations: d.recommendations, statistical_insights: d.statistical_insights, source: 'live' }); })
+    liveMutateOrNull<any>('POST', '/api/analytics/analyze-protocol-text', { text })
+      .then((r) => {
+        if (!r.data) { runLocal(); return; }
+        const d = r.data;
+        setAnalysis({
+          protocol_data: d.protocol_data || parseProtocol(text),
+          similar_protocols: d.similar_protocols || [],
+          recommendations: d.recommendations,
+          statistical_insights: d.statistical_insights,
+          source: 'live',
+        });
+      })
       .catch(() => runLocal())
       .finally(() => setBusy(false));
   };

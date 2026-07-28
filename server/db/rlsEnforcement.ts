@@ -129,6 +129,65 @@ export function assertRlsEnforcementForProduction(
 }
 
 /**
+ * Refuse to create an ADDITIONAL organization while RLS is not filtering.
+ *
+ * ── Why a boot check is not enough ────────────────────────────────────────────
+ * assertRlsEnforcementForProduction runs once, at boot, and deliberately permits
+ * an explicit `off`/`shadow` for staged rollouts. That is a defensible posture
+ * while the deployment holds ONE tenant: there is no second organization for a
+ * missing row filter to leak to, so RLS-off costs nothing real.
+ *
+ * The moment a second organization exists, that reasoning stops holding — and
+ * nothing noticed, because the condition arises long after boot. The pilot
+ * go/no-go gate says exactly this ("tolerable at 0 organization(s) … RLS_ENFORCE=on
+ * is REQUIRED before a second organization is created — this gate turns HARD the
+ * moment one is"), but that gate is a script a human runs, not a control in the
+ * running system. This is the control.
+ *
+ * ── What it does ──────────────────────────────────────────────────────────────
+ * Called before inserting an organization. If this insert would create the
+ * SECOND (or later) organization, and RLS is not `on`, it throws. Creating the
+ * FIRST organization is always allowed — a fresh deployment must be able to
+ * onboard its founding tenant without operators having flipped RLS first, and
+ * with one tenant there is nothing to isolate from.
+ *
+ * Scoped to deployed environments (anything not explicitly `development` or
+ * `test`), matching the repo's established prod-fail-closed idiom — an unset,
+ * blank, `staging` or `preview` NODE_ENV all enforce. Local development keeps
+ * working with zero configuration.
+ *
+ * The remedy is one environment variable, and it is named in the error.
+ *
+ * @param existingOrgCount organizations already present.
+ * @throws when adding a tenant would put a deployed system into multi-tenant
+ *         operation without row filtering.
+ */
+export function assertTenantIsolationBeforeNewOrg(
+  existingOrgCount: number,
+  env: NodeJS.ProcessEnv = process.env
+): void {
+  const nodeEnv = (env.NODE_ENV ?? '').trim().toLowerCase();
+  const isLocal = nodeEnv === 'development' || nodeEnv === 'test';
+  if (isLocal) return;
+
+  // The founding tenant is always permitted — nothing to leak between.
+  if (existingOrgCount < 1) return;
+
+  const mode = readEnforcementMode(env);
+  if (mode === 'on') return;
+
+  throw new Error(
+    `[rls-enforcement] FAIL-CLOSED: refusing to create organization #${existingOrgCount + 1} ` +
+      `while RLS_ENFORCE is "${mode}". Postgres Row-Level Security is not filtering rows, so ` +
+      'this deployment would hold more than one tenant with tenant isolation resting solely on ' +
+      'the app-layer auth gate — a single missed org predicate in any query becomes a ' +
+      'cross-tenant read. Accepting that risk is defensible with ONE tenant and is not with two. ' +
+      'Set RLS_ENFORCE=on (the policies are already provisioned; this only flips them from ' +
+      'compiled-but-inert to filtering) and retry.'
+  );
+}
+
+/**
  * Install a Pool 'connect' handler that sets `app.rls_enforce` on every
  * new connection based on the env var. Idempotent — calling twice on the
  * same pool installs only one handler.

@@ -23,16 +23,19 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 
-const APPLIER = 'scripts/db/apply-c2c-migrations.mjs';
+const APPLIER = 'scripts/db/migration-set.mjs';
 
-/** The FILES array from the applier, read as source so the test cannot drift. */
-function migrationList() {
-  const source = readFileSync(APPLIER, 'utf8');
-  const block = source.match(/const FILES = \[([\s\S]*?)\];/);
-  assert.ok(block, 'could not locate the FILES array in ' + APPLIER);
-  return [...block[1].matchAll(/'([^']+\.sql)'/g)].map((m) => m[1]);
-}
+/**
+ * The real ordered list, imported rather than scraped out of a source file.
+ *
+ * It moved here from apply-c2c-migrations.mjs when the deploy-time applier
+ * (scripts/db/deploy-migrate.mjs) started consuming the same set, so these
+ * assertions now cover the PRODUCTION deploy path and not merely the applier a
+ * human might run by hand.
+ */
+const migrationList = () => C2C_MIGRATION_FILES;
 
 test('every migration in the applier allowlist exists on disk', () => {
   const missing = migrationList().filter((f) => !existsSync(f));

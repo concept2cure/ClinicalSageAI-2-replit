@@ -179,42 +179,44 @@ describe('SmartFieldLinking tenant scoping (G-08)', () => {
   });
 
   it('writes ZERO rows when a caller claims another tenant\'s project (cross-tenant hazard closed)', async () => {
-    await smartFieldLinking.updateField({
-      source: 'workflow',
-      field: 'device.deviceName',
-      value: 'HIJACK',
-      timestamp: new Date(),
-      // ORG_B presenting ORG_A's project id.
-      metadata: { organizationId: ORG_B, projectId: PROJECT_A },
-    });
+    // ORG_B presenting ORG_A's project id. The ownership proof rejects the call
+    // outright, so nothing is queued — a strictly stronger outcome than the write
+    // matching zero rows. Both are asserted below.
+    await expect(
+      smartFieldLinking.updateField({
+        source: 'workflow',
+        field: 'device.deviceName',
+        value: 'HIJACK',
+        timestamp: new Date(),
+        metadata: { organizationId: ORG_B, projectId: PROJECT_A },
+      })
+    ).rejects.toThrow(/project_not_in_organization/);
     await settle();
 
-    // Neither document changed: WHERE org=B AND project=A matches nothing, and
-    // WHERE org=B AND project=B is not this document_type/project combination.
+    // And no row moved either way: neither the victim tenant's document nor the
+    // caller's own is touched.
     expect(await docContent('doc-a')).toEqual({});
     expect(await docContent('doc-b')).toEqual({});
   });
 
   it('refuses an update carrying no organization/project scope (fail closed)', async () => {
-    const errors: unknown[] = [];
-    const onError = (e: unknown) => errors.push(e);
-    smartFieldLinking.on('updateError', onError);
-    try {
-      await smartFieldLinking.updateField({
+    // The scope is resolved and rejected UP FRONT, before the item is queued, so
+    // updateField itself rejects rather than surfacing a later 'updateError'.
+    // Rejecting at the entry point is the stronger contract: an unscoped write
+    // never reaches the queue at all.
+    await expect(
+      smartFieldLinking.updateField({
         source: 'workflow',
         field: 'device.deviceName',
         value: 'NOSCOPE',
         timestamp: new Date(),
         metadata: {},
-      });
-      await settle();
-    } finally {
-      smartFieldLinking.off('updateError', onError);
-    }
+      })
+    ).rejects.toThrow(/field_update_missing_tenant_context/);
+    await settle();
 
     expect(await docContent('doc-a')).toEqual({});
     expect(await docContent('doc-b')).toEqual({});
-    expect(errors.length).toBeGreaterThan(0);
   });
 
   it('refuses a document→workflow write for a project outside the caller org, and allows the owner', async () => {
@@ -224,24 +226,19 @@ describe('SmartFieldLinking tenant scoping (G-08)', () => {
       [PROJECT_B, 'setup', 'device_info', '{}']
     );
 
-    // ORG_A claims ORG_B's project — refused; stage data unchanged.
-    const errors: unknown[] = [];
-    const onError = (e: unknown) => errors.push(e);
-    smartFieldLinking.on('updateError', onError);
-    try {
-      await smartFieldLinking.updateField({
+    // ORG_A claims ORG_B's project — the project→organization ownership proof
+    // fails and the call rejects; stage data unchanged.
+    await expect(
+      smartFieldLinking.updateField({
         source: 'document',
         field: 'main_510k.coverPage.deviceName',
         value: 'X',
         timestamp: new Date(),
         metadata: { organizationId: ORG_A, projectId: PROJECT_B },
-      });
-      await settle();
-    } finally {
-      smartFieldLinking.off('updateError', onError);
-    }
+      })
+    ).rejects.toThrow(/project_not_in_organization/);
+    await settle();
     expect(await stageData(PROJECT_B)).toEqual({});
-    expect(errors.length).toBeGreaterThan(0);
 
     // The owning tenant writes successfully.
     await smartFieldLinking.updateField({
