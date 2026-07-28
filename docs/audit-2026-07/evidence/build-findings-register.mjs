@@ -10,15 +10,24 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const JOURNAL = process.argv[2]
+// Accepts one or more journals. The review streams ran as separate workflows —
+// the 12-unit code review, and a later design + deep-security pass — and both
+// belong in one register rather than in chapters that would need cross-reading.
+const JOURNALS = process.argv.slice(2)
 const OUT = path.join(process.cwd(), 'docs/audit-2026-07/12-findings-register.md')
 
-const rows = fs.readFileSync(JOURNAL, 'utf8').trim().split('\n')
-  .map((l) => { try { return JSON.parse(l) } catch { return null } })
-  .filter(Boolean)
-  .filter((o) => o.type === 'result' && o.result)
+const rows = JOURNALS.flatMap((j) =>
+  fs.readFileSync(j, 'utf8').trim().split('\n')
+    .map((l) => { try { return JSON.parse(l) } catch { return null } })
+    .filter(Boolean)
+    .filter((o) => o.type === 'result' && o.result)
+)
 
-const units = rows.filter((r) => Array.isArray(r.result.findings)).map((r) => r.result)
+// The two streams name their scope differently: `unit` (code review) vs `area`
+// (design / security). Normalise so downstream code does not care which ran.
+const units = rows
+  .filter((r) => Array.isArray(r.result.findings))
+  .map((r) => ({ ...r.result, unit: r.result.unit || r.result.area }))
 const verdicts = rows.filter((r) => typeof r.result.refuted === 'boolean').map((r) => r.result)
 
 const esc = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\r?\n+/g, ' ').trim()

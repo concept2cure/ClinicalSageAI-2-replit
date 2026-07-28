@@ -416,3 +416,40 @@ untenanted queries.
 - Authenticated cross-tenant probes (requires seeding two orgs).
 
 None of these are reported as passing until they have actually run.
+
+---
+
+## LP-11 · The typecheck gate, after the fix — both halves proven
+
+Closing the loop on §LP-06. The gate now inspects `tsc.status`, and the heap default was
+raised 6,144 → 24,576 MB (`TYPECHECK_HEAP_MB` overrides).
+
+**Crashed compiler must fail:**
+
+```
+$ TYPECHECK_HEAP_MB=128 node scripts/ci/typecheck-no-regression.mjs
+[ci:typecheck-no-regression] FAIL — tsc did not complete.
+  exit status : 134
+  heap cap    : 128 MB (override with TYPECHECK_HEAP_MB)
+  The error count below is NOT trustworthy — the compiler died before finishing.
+  ...FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+EXIT=1
+```
+
+Previously this exact condition printed *"OK — error count 0 matches baseline"* and exited 0.
+
+**Clean run must complete and report a true count:**
+
+```
+$ node scripts/ci/typecheck-no-regression.mjs
+[ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+EXIT=0
+```
+
+**Two consequences worth stating.** First, the two `TS7016` errors from PR #1180 are genuinely
+closed — the declaration had to be `.d.mts`, because `moduleResolution: "node"` never consults
+`.d.ts` for a `.mjs` import. Second, and more important: **the repository's "0 type errors"
+baseline is, as of this run, a measured 0 for the first time.** It was previously a number
+produced by a compiler that never finished.
