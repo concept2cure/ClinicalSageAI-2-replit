@@ -1297,11 +1297,35 @@ router.post('/docs', async (req: Request, res: Response) => {
     // type with no document class (ivd/device/ide/biologic/anda), or a project
     // predating scaffolding all end here with a stated reason returned to the
     // caller rather than a bare null.
-    const binding = await resolveGovernedDocument({
-      db: pool,
-      orgId: tenantId,
-      projectId: client_program_id ?? null,
-    });
+    //
+    // FAIL SOFT. Binding is an enhancement, never a precondition for creating a
+    // document. The resolver reads regulatory_programs and c2c_documents; on a
+    // database where either is absent — which is the norm for the authoring
+    // subsystem's own test harness, and possible for a deployment that has the
+    // authoring bundle but not the c2c one — the query throws, and an
+    // unguarded call turned every create into a 500.
+    //
+    // That is exactly backwards: the document is the user's work, the binding is
+    // metadata about it. A governance lookup that cannot run must degrade to an
+    // unbound document with a stated reason, not deny the write. Logged at warn
+    // so the degradation is visible to an operator instead of silent.
+    let binding: { documentId: string | null; reason?: string };
+    try {
+      binding = await resolveGovernedDocument({
+        db: pool,
+        orgId: tenantId,
+        projectId: client_program_id ?? null,
+      });
+    } catch (bindErr) {
+      logger.warn('Governed-document binding unavailable; creating unbound document', {
+        error: bindErr instanceof Error ? bindErr.message : String(bindErr),
+        clientProgramId: client_program_id ?? null,
+      });
+      binding = {
+        documentId: null,
+        reason: 'The governance store could not be reached, so this document is not bound to a filing.',
+      };
+    }
 
     const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
     const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
@@ -4174,18 +4198,23 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
     // statement into a working cross-tenant write — a template applied to
     // another tenant's document. tenantId is already resolved above; it is now
     // in every predicate.
+    // `content` is selected as well as id/code because overwrite mode has to
+    // snapshot what it is about to destroy — see the createRevision call below.
     const existingResult = await pool.query(
-      'SELECT id, code FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2',
+      'SELECT id, code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2',
       [req.params.docId, tenantId]
     );
 
-    const existingMap = new Map(existingResult.rows.map(x => [x.code, x.id]));
+    const existingMap = new Map<string, { id: string; content: string | null }>(
+      existingResult.rows.map(x => [x.code, { id: x.id, content: x.content ?? null }]),
+    );
 
     let upserts = 0;
 
     // Apply template sections
     for (const section of template.sections || []) {
-      const existingId = existingMap.get(section.code);
+      const existing = existingMap.get(section.code);
+      const existingId = existing?.id;
 
       if (existingId && mode !== 'overwrite') {
         // In merge mode, skip existing sections
@@ -4193,6 +4222,25 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
       }
 
       if (existingId) {
+        // PART 11. Overwrite mode replaces authored content with template
+        // boilerplate. Every other content-changing path in this router
+        // snapshots first via createRevision (the section PATCH at ~:1600, the
+        // revert at ~:1784); this one did not, so applying a template in
+        // overwrite mode destroyed an author's work with no recoverable
+        // history.
+        //
+        // It went unnoticed because the whole handler was dead: it referenced
+        // document_id/order_idx/created_by, none of which are columns, so every
+        // statement was an unconditional 42703. Repairing those column names
+        // made this path reachable for the first time — which makes closing
+        // this gap part of that same change, not a follow-up.
+        //
+        // Snapshot before the UPDATE, not after: the point is to preserve the
+        // superseded text.
+        if (existing?.content) {
+          await createRevision(existingId, existing.content, getActorId(req) ?? 'template', tenantId);
+        }
+
         // Update existing section
         await pool.query(
           `UPDATE authoring_sections

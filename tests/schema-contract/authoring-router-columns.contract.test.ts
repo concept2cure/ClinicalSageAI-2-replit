@@ -208,7 +208,11 @@ describe('authoring.router.ts SQL matches the schema', () => {
     // the two endpoints this gate was written for.
     const prepared = results.filter((r) => !r.code).map((r) => r.sql.replace(/\s+/g, ' '));
     expect(prepared.some((s) => /FROM authoring_templates t/i.test(s))).toBe(true);
-    expect(prepared.some((s) => /SELECT id, code FROM authoring_sections WHERE doc_id/i.test(s))).toBe(true);
+    // Matched on the clause rather than the column list: overwrite mode also
+    // selects `content` so it can snapshot what it is about to replace, and
+    // pinning the projection would make this assertion break on a correct
+    // change — which it did, the first time that snapshot was added.
+    expect(prepared.some((s) => /FROM authoring_sections WHERE doc_id = \$1 AND tenant_id/i.test(s))).toBe(true);
     expect(prepared.some((s) => /UPDATE authoring_sections\s+SET title/i.test(s))).toBe(true);
     expect(prepared.some((s) => /INSERT INTO authoring_sections \(id, doc_id, code, title, order_index/i.test(s))).toBe(true);
   });
