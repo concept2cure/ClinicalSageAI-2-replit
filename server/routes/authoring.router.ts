@@ -1257,15 +1257,52 @@ router.post('/docs', async (req: Request, res: Response) => {
       args,
     );
 
-    // If template_id provided, copy sections from template
+    // If template_id provided, scaffold the document's section skeleton.
+    //
+    // This query could never run. It selected `code, title, content, order_index`
+    // from an unqualified `template_sections` filtered by `tenant_id` — but the
+    // only such table is `intelligence.template_sections`
+    // (db/migrations/20260520_document_templates.sql:78), whose columns are
+    // `section_code`, `section_title` and `ordering`, with NO `content` and NO
+    // `tenant_id`. Every column named was wrong and the relation was unresolvable,
+    // so a create-from-template always fell into the catch below and 500'd.
+    //
+    // Templates are GLOBAL regulatory reference data — `intelligence.document_templates`
+    // carries no tenancy column, deliberately, because they describe agency
+    // expectations rather than customer content. So there is no tenant filter to
+    // apply on the read; tenancy comes from the document being created, and every
+    // seeded row carries that tenant.
+    //
+    // Templates store section STRUCTURE and authoring guidance, not prose, so a
+    // seeded section starts empty. That is the honest scaffold: the section exists
+    // with its regulatory code, title and ordering, and the author writes it.
     if (template_id) {
-      await pool.query(
+      const seeded = await pool.query(
         `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-         SELECT gen_random_uuid(), $1, code, title, content, order_index, NOW(), NOW(), $2
-         FROM template_sections
-         WHERE template_id = $3 AND tenant_id = $2`,
+         SELECT gen_random_uuid(), $1, ts.section_code, ts.section_title, '', ts.ordering, NOW(), NOW(), $2
+         FROM intelligence.template_sections ts
+         WHERE ts.template_id = $3
+         ORDER BY ts.ordering
+         RETURNING id, code, content`,
         [docId, tenantId, template_id]
       );
+
+      // Every write to a regulated section produces its Part 11 evidence — the
+      // sibling POST /sections handler does exactly this, and a section that
+      // appears in a document with no record of how it got there is precisely
+      // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
+      // like any other.
+      // `createdBy` is the verified actor already resolved (and null-guarded)
+      // at the top of this handler — not re-derived, so a seeded section is
+      // attributed to exactly the principal the document is.
+      for (const row of seeded.rows) {
+        await createRevision(row.id, row.content ?? '', createdBy, tenantId);
+        await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
+          template_id,
+          section_code: row.code,
+          seeded: true,
+        });
+      }
     }
 
     res.status(201).json({
