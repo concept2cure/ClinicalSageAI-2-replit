@@ -321,6 +321,94 @@ describe('databases that do not have these tables at all', () => {
   }, 60_000);
 });
 
+describe('the provisioning file that creates these tables is self-sufficient', () => {
+  /**
+   * db/migrations/20260401_cmc_convergence_os.sql is the ONLY file that creates
+   * cmc_module3_sections, cmc_source_objects and nine siblings — and it used to
+   * HALF-APPLY. Four bare `ALTER TABLE … ADD COLUMN IF NOT EXISTS` at lines
+   * 105-108 guard the COLUMN, not the TABLE, so on any database lacking
+   * cmc_batch_records the file aborted there: after creating seven tables,
+   * before creating cmc_documents and its three companions.
+   *
+   * That abort is why the file sat on no durable apply path, which is why the
+   * whole CMC Module 3 subsystem addressed tables nothing provisioned — and why
+   * the blank-DB job failed with `relation "cmc_module3_sections" does not
+   * exist`. A file that half-applies is worse than one that fails cleanly,
+   * because nothing downstream can tell.
+   */
+  const PROVISION = path.join(REPO_ROOT, 'db/migrations/20260401_cmc_convergence_os.sql');
+  const ALL_TABLES = [
+    'cmc_source_objects', 'cmc_module3_sections', 'cmc_section_lineage',
+    'cmc_contradictions', 'cmc_ai_command_results', 'cmc_module3_section_versions',
+    'cmc_provenance_events', 'cmc_documents', 'cmc_document_versions',
+    'cmc_document_links', 'cmc_document_collaborators',
+  ];
+
+  const bareDb = async () => {
+    await pg.close();
+    pg = new PGlite();
+    await pg.exec(`CREATE TABLE organizations (id serial PRIMARY KEY, name text);`);
+  };
+
+  it('applies end to end on a bare database', async () => {
+    await bareDb();
+    await expect(pg.exec(fs.readFileSync(PROVISION, 'utf8'))).resolves.toBeDefined();
+  }, 60_000);
+
+  it('creates every table, not just the ones before the old abort point', async () => {
+    await bareDb();
+    await pg.exec(fs.readFileSync(PROVISION, 'utf8'));
+    const r = await pg.query<{ tablename: string }>(
+      `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE 'cmc_%'`,
+    );
+    const present = r.rows.map(x => x.tablename);
+    for (const t of ALL_TABLES) expect(present, `${t} was not created`).toContain(t);
+  }, 60_000);
+
+  it('still adds the adapter columns when the CMC atoms DO exist', async () => {
+    // The guard must skip, not silently drop the work where it applies.
+    await bareDb();
+    await pg.exec(`
+      CREATE TABLE cmc_batch_records (id serial PRIMARY KEY);
+      CREATE TABLE stability_studies (id serial PRIMARY KEY);
+      CREATE TABLE quality_specifications (id serial PRIMARY KEY);
+      CREATE TABLE cmc_comparability_assessments (id serial PRIMARY KEY);
+    `);
+    await pg.exec(fs.readFileSync(PROVISION, 'utf8'));
+    const r = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM information_schema.columns
+        WHERE table_name IN ('cmc_batch_records','stability_studies',
+                             'quality_specifications','cmc_comparability_assessments')
+          AND column_name = 'tenant_id'`,
+    );
+    expect(Number(r.rows[0].n)).toBe(4);
+  }, 60_000);
+
+  it('hands off to the re-key: provision then re-key leaves only org-scoped uniqueness', async () => {
+    // This is the exact ordered pair C2C_MIGRATION_FILES now applies.
+    await bareDb();
+    await pg.exec(fs.readFileSync(PROVISION, 'utf8'));
+    await pg.exec(fs.readFileSync(MIGRATION, 'utf8'));
+    const r = await pg.query<{ indexname: string }>(
+      `SELECT indexname FROM pg_indexes
+        WHERE tablename IN ('cmc_module3_sections','cmc_source_objects')
+          AND indexdef LIKE '%UNIQUE%'`,
+    );
+    const names = r.rows.map(x => x.indexname);
+    expect(names).toContain('cmc_module3_sections_org_project_key_idx');
+    expect(names).toContain('cmc_source_objects_org_project_key_idx');
+    expect(names).not.toContain('cmc_module3_sections_project_key_idx');
+    expect(names).not.toContain('cmc_source_objects_project_key_idx');
+  }, 60_000);
+
+  it('is re-runnable', async () => {
+    await bareDb();
+    const sql = fs.readFileSync(PROVISION, 'utf8');
+    await pg.exec(sql);
+    await expect(pg.exec(sql)).resolves.toBeDefined();
+  }, 60_000);
+});
+
 describe('source objects get the same protection', () => {
   const SOURCE_UPSERT = (arbiter: string) => `
     INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, source_hash, version)
