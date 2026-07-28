@@ -142,6 +142,20 @@ export const C2C_MIGRATION_FILES = [
   // nothing, one index, and its own tenant_isolation_policy — 0021 has long
   // since run and never revisits a newly-added table.
   'db/migrations/20260728_artifacts_table.sql',
+  // ── c2c section timestamps (added 2026-07-28) ─────────────────────────────
+  // c2c_document_sections was created with no updated_at/created_at, yet FOUR
+  // shipped queries reference ds.updated_at: /workstreams (projects.ts:334),
+  // /drafts (:371,:377), the project vault (project-vault.ts:365) and the UPDATE
+  // branch of the canonical Part 11 section save (documents.ts:441). Postgres
+  // rejects an unknown column at plan time, so those are unconditional 42703
+  // failures — /workstreams and /drafts have 500'd on every project page load,
+  // and the section save would 500 on the first re-save of any section.
+  //
+  // Must be on this list, not just in migrations/: the root tree reaches new
+  // databases only, and every database with this defect is an existing one.
+  // CREATE TABLE IF NOT EXISTS cannot add a column to a table that already
+  // exists, so the guarded ALTER is the only way the column lands.
+  'migrations/20260728_c2c_document_sections_timestamps.sql',
   // ── CMC Module 3 operating system (added 2026-07-28) ──────────────────────
   // The ONLY file that creates cmc_module3_sections, cmc_source_objects,
   // cmc_section_lineage, cmc_provenance_events and seven siblings — and it was

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, liveGet } from '../dataConnect';
+import { SampleTag, connected, liveGet, liveMutateOrNull } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -172,14 +172,15 @@ function pdevFetchView(id: string): Promise<{ data: PdevProgramView; sample: boo
 }
 
 function pdevDraft(body: { programId: string; activityKey: string; userPrompt?: string }): Promise<PdevAiDraftResult> {
-  const api = (window as any).C2C_API;
-  if (api && typeof api.post === 'function') {
-    return api
-      .post('/api/pdev/programs/' + encodeURIComponent(body.programId) + '/activities/' + encodeURIComponent(body.activityKey) + '/ai-draft', body)
-      .then((r: any) => (r && r.data) || PDEV_DRAFT)
-      .catch(() => PDEV_DRAFT);
-  }
-  return Promise.resolve(PDEV_DRAFT);
+  // Was gated on the design kit's `window.C2C_API`, which nothing assigns — so
+  // `typeof api.post === 'function'` was never true and this returned the
+  // PDEV_DRAFT fixture unconditionally, without ever asking the server.
+  return liveMutateOrNull<any>(
+    'POST',
+    '/api/pdev/programs/' + encodeURIComponent(body.programId) +
+      '/activities/' + encodeURIComponent(body.activityKey) + '/ai-draft',
+    body,
+  ).then((r) => r.data || PDEV_DRAFT);
 }
 
 /* ── AI drafting workbench (the governed deliverable) ── */

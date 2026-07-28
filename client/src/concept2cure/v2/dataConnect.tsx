@@ -226,6 +226,50 @@ export async function liveGetOrNull<T>(path: string): Promise<DataResult<T>> {
   }
 }
 
+/**
+ * Fixture-free mutation. Same contract as liveGetOrNull, for POST/PATCH/PUT/DELETE.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────────
+ * Six ui-v2 surfaces reached for `window.C2C_API.post(...)` — the design kit's
+ * global bridge. That global is assigned NOWHERE in this repository: 12 reads,
+ * zero writes, not in index.html, not via a vite define. So every action guarded
+ * by `const api = (window as any).C2C_API; if (!api) return;` silently did
+ * nothing, and the surfaces fell back to local computation or fixtures without
+ * telling anyone. Roughly ten user-facing actions across AnaMemory, AnaVerbs,
+ * EctdCoauthor, LicensingSurface, PdevInd and ReportEngine.
+ *
+ * Providing the global would have been the smaller diff and the wrong fix. This
+ * module's own header states the rule: the kit's window.C2C_API "collapses onto"
+ * apiRequest + getAuthToken on port — "do not introduce a second fetch
+ * convention" (INSTALL_TARGET_AUDIT §4). The surfaces still reading it are
+ * un-ported leftovers, not consumers of a missing feature. EctdCoauthor shows
+ * both forms in one file: its compliance read was ported to liveGetOrNull while
+ * its validate action still called the ghost.
+ *
+ * So: one helper on the sanctioned convention, and the call sites move to it.
+ * Returning null rather than a fixture is deliberate — a mutation that failed
+ * must not look like one that succeeded.
+ */
+export async function liveMutateOrNull<T>(
+  method: 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+  path: string,
+  body?: unknown,
+): Promise<DataResult<T>> {
+  try {
+    const res = await apiRequest(method, path, body);
+    if (!res.ok) {
+      return { data: null, error: `HTTP ${res.status} ${path}`, status: res.status };
+    }
+    if (res.status === 204) {
+      return { data: null, status: 204 };
+    }
+    const parsed = (await res.json()) as unknown;
+    return { data: unwrapEnvelope(parsed) as T, status: res.status };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+  }
+}
+
 export interface DataState<T> {
   data: T | null;
   loading: boolean;

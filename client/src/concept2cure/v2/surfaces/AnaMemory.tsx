@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, liveGet } from '../dataConnect';
+import { SampleTag, connected, liveGet, liveMutateOrNull } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
@@ -136,9 +136,15 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
 
   const verify = (id: number) => {
     setMem(m => ({ ...m, atoms: m.atoms.map(a => (a.id === id ? { ...a, is_verified_by_user: true, verified_at: new Date().toISOString() } : a)) }));
-    const api = (window as any).C2C_API;
-    if (api && api.connected()) api.post('/api/mdx/ana/memory/' + id + '/verify', {}).catch(() => {/* noop */});
-    fire('Verified -- AnA will weight this memory more.');
+    // Two problems, one line: the POST was gated on `window.C2C_API` (assigned
+    // nowhere, so it never fired), and the toast claimed success regardless of
+    // whether anything happened. Now it reports what actually occurred.
+    liveMutateOrNull('POST', '/api/mdx/ana/memory/' + id + '/verify', {})
+      .then((r) => {
+        fire(r.error
+          ? 'Could not verify -- the change was not saved.'
+          : 'Verified -- AnA will weight this memory more.');
+      });
   };
 
   const active = mem.atoms.filter(a => a.status === 'active');

@@ -101,6 +101,15 @@ CREATE TABLE IF NOT EXISTS c2c_document_sections (
   accepted_by        integer,
   accepted_at        timestamptz,
   version            integer NOT NULL DEFAULT 1,
+  -- Added 2026-07-28. FOUR shipped queries referenced ds.updated_at against a
+  -- table that never had it — projects.ts:334 (/workstreams), :371,:377
+  -- (/drafts), project-vault.ts:365, and documents.ts:441 (the UPDATE branch of
+  -- the canonical Part 11 section save). Postgres rejects an unknown column at
+  -- plan time, so those were unconditional 42703 failures, not empty results.
+  -- Present here so fresh installs match; the guarded ALTER for existing
+  -- databases is migrations/20260728_c2c_document_sections_timestamps.sql.
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  updated_at         timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT c2c_doc_sections_status_check
     CHECK (status IN ('todo','drafted','review','approved','locked')),
