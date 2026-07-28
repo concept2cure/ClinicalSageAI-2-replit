@@ -1,10 +1,39 @@
 # Security Finding: Stability module tenant isolation is non-functional
 
 **Severity:** High (cross-tenant read/write on GMP-regulated stability data)
-**Status:** Open — remediation specified below, not yet implemented
+**Status:** **Remediated for existing tables** (see "Remediation delivered" below) — the seven
+unbacked `stab_*` tables + `cmc_methods` + the two views are backed-with-isolation as a tracked
+follow-up (they 500 today, so they are fail-safe until then).
 **Discovered:** 2026-07-28, during the AnA-1 assessment G-02 (unbacked-table) burndown
 **Surface:** `server/src/routes/stability.router.ts` (mounted at `/api/stability`) and the `stab_*` schema
 **Related:** assessment finding G-02 (this is why the stability tables must **not** be naively backed)
+
+---
+
+## Remediation delivered (2026-07-28)
+
+The fix aligns the stability module with the app's **canonical** RLS instead of its bespoke (inert)
+`app.tenant_id` scheme:
+
+1. **`db/migrations/20260728_stability_tenant_isolation.sql`** — for every existing `stab_*` base
+   table: adds an integer `tenant_id` (0021 requires integer keys), defaults it to
+   `current_setting('app.current_tenant_id')` so the router's tenant-less `INSERT`s auto-tag, and
+   installs `ENABLE`/`FORCE ROW LEVEL SECURITY` + the **identical `tenant_isolation_policy`** shape as
+   `migrations/0021_enable_rls_everywhere.sql` (shadow-mode gated on `app.rls_enforce`, keyed on
+   `app.current_tenant_id`/`app.current_org_id`, `app_super_admin` escape hatch). On the durable
+   applier path; idempotent; a no-op where the tables do not yet exist.
+2. **`server/src/routes/stability.router.ts`** — the module `pool` is replaced by a fail-closed,
+   tenant-scoped facade that derives the tenant from the request ALS (`getTenantScope()`) and sets the
+   **canonical** session vars on the connection (`.query()` is_local in a transaction; `.connect()`
+   session-level with clear-on-release). No stability query can run without a tenant boundary. The
+   inert `set_config('app.tenant_id', …)` blocks are superseded.
+3. **`tests/schema-contract/stability-tenant-isolation.contract.test.ts`** — golden PGlite proof under
+   a non-superuser role with `rls_enforce=on`: INSERTs auto-tag, and a second tenant's `SELECT`/`UPDATE`
+   by surrogate id (`capa_id`, `study_id`) affect **zero** rows; shadow mode bypasses (proving the
+   policy is what isolates); missing context is fail-closed.
+
+**Follow-up (tracked):** create the seven unbacked `stab_*` tables + `cmc_methods` with `tenant_id`
+from birth and define the two `v_stab_*` views, then drop them from `unbacked-tables-baseline.json`.
 
 ---
 

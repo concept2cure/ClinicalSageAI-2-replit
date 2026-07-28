@@ -110,6 +110,13 @@ const FILES = [
   // Canonical org-scoped shape derived from the live code; the pgvector embedding
   // column is intentionally omitted (no live writer; legacy setupLiterature concern).
   'db/migrations/20260728_literature_entries.sql',
+  // Stability module tenant isolation (High-severity security fix; finding in
+  // docs/security/). Brings every EXISTING stab_* base table under the app's uniform
+  // tenant_isolation_policy (0021 shape) keyed on app.current_tenant_id + FORCE RLS,
+  // and defaults tenant_id from the request so the router's INSERTs auto-tag. Pure
+  // catalog-driven ALTER/policy DO-block: a no-op on a DB where the stab_* tables do
+  // not yet exist (idempotent, re-run safe), so order-independent here.
+  'db/migrations/20260728_stability_tenant_isolation.sql',
   // Industry-context tailoring: organization_industry_profiles +
   // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
   // EXISTS, no data statements).
