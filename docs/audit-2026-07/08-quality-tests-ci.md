@@ -150,6 +150,13 @@ excludes `client/src/**` entirely, so the real figure is unknown.
 | **Semgrep** (`semgrep.yml:30`) | `continue-on-error: true` at job level. |
 | **Trivy config scan** (`ci.yml:796`) | `continue-on-error: true`. (The Trivy *filesystem* scan **is** blocking.) |
 
+**One gate that does work, for contrast.** `danger.yml` retries `npx danger ci` three times
+and then `exit 1`, and the `Danger` commit status was observed as `failure` on this audit's
+own PR head — a real red signal, correctly wired. It is worth naming because it sharpens the
+point: the repository is not incapable of building blocking gates. It has one, on **pull-request
+line count**. The gates that cannot fail are the ones covering type safety, lint, SAST and IaC
+misconfiguration. The loudest check on this PR is the least consequential one.
+
 And the linting hole that produced real security findings: `eslint.config.js:34` ignores
 **`client/src/**` entirely** — 871 files, 191,327 lines — plus `scripts/**` at `:46`. That
 is why `react/no-danger` never flagged the unsanitized `dangerouslySetInnerHTML` sinks fed
