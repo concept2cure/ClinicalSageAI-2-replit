@@ -1,6 +1,44 @@
+-- ⛔ THIS DRAFT IS UNSAFE TO RUN AS WRITTEN. It drops tables that shipped code
+--    reads. It now aborts on its first statement; see the guard below.
+--
 -- DRAFT — DO NOT place in migrations/ until verified against a live database.
 -- Source: docs/DEAD_TABLES_INVENTORY.md (163 tables with zero const + zero SQL-name
 -- references across server/, client/src/, scripts/, shared/{types,regulatory,utils}).
+--
+-- ── WHY IT WAS DISARMED ──────────────────────────────────────────────────────
+-- The inventory this list came from is static-reference analysis, and it has
+-- false negatives in both directions. Re-measured against the live 710-table
+-- schema, EIGHT tables named below exist AND are referenced by shipped code:
+--
+--   client_access           server/routes/client-portal.ts:106 — `FROM client_access ca`.
+--                           This is the predicate that scopes an EXTERNAL CLIENT
+--                           to their workspace. Dropping it does not merely lose
+--                           data; it breaks the client portal's authorization.
+--   regulatory_obligations  server/services/ana/deadline-radar.ts:15 imports
+--                           `regulatoryObligations` and selects from it at :136.
+--   charter_sections        server/routes/charters.ts:22 — a migration was written
+--   timeline_phases         specifically to RESTORE these three. Dropping them
+--   project_commitments     re-opens the outage that migration closed.
+--   charter_audit_events    server/routes/charters.ts:23 — the per-entity audit
+--                           table the charter domain writes in-transaction.
+--   readiness_rules         client/src/concept2cure/v2/surfaces/Orchestration.tsx:644
+--   doe_studies             server/services/ana/intelligence-questions/war-game/
+--                           auditors/cmc-auditor.ts
+--
+-- The list is also unordered with respect to foreign keys while deliberately
+-- avoiding CASCADE, so it cannot execute end-to-end regardless: e.g.
+-- supply_chain_organizations (line ~180) is still referenced by `materials` and
+-- `batches`, and spine_edges (absent from this list) references spine_nodes.
+-- And it omits `ind_package_plans` while dropping all five of its children,
+-- which would leave an orphaned parent.
+--
+-- ── HOW TO USE IT ANYWAY ─────────────────────────────────────────────────────
+-- Treat this as a LEAD LIST, not a script. Per table: confirm it is unreferenced
+-- (`npm run ci:unreferenced-modules --json` covers modules; for tables check both
+-- snake_case AND camelCase, and discount English-word collisions — "materials",
+-- "plans", "sections" all appear in prose), confirm no inbound FK, then move it
+-- into a real, ordered migration under db/migrations/ with a header explaining
+-- what it removes and why.
 --
 -- OPERATOR GATE before running ANY line below:
 --   1. \dt and information_schema cross-check on the target DB (row counts).
@@ -10,7 +48,19 @@
 -- Each statement is CASCADE-free on purpose: if a DROP fails on a dependency,
 -- that dependency is evidence the table is NOT actually dead — investigate, do
 -- not add CASCADE blindly.
---
+
+-- ── ABORT GUARD ──────────────────────────────────────────────────────────────
+-- Fires unconditionally, so a copy-paste of this whole file into psql destroys
+-- nothing. Delete this block only alongside removing the eight live tables above.
+DO $$
+BEGIN
+    RAISE EXCEPTION USING MESSAGE =
+        'docs/drop-dead-tables.draft.sql is a lead list, not a migration. It names '
+        'at least 8 tables that shipped code reads — including client_access, which '
+        'server/routes/client-portal.ts uses to scope external clients. Verify each '
+        'table individually and write an ordered migration under db/migrations/.';
+END $$;
+
 -- BEGIN;   -- uncomment to run as one reviewable transaction
 DROP TABLE IF EXISTS public.activity_reactions;
 DROP TABLE IF EXISTS public.agency_communications;
