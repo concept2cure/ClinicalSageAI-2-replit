@@ -112,6 +112,41 @@ a legal and contractual exposure, not a bug.
 | "Every one of the repo's other `ON CONFLICT` sites already scoped by org" | commit #1186 | ❌ **Not accurate** — 115 sites; Schedule-of-Events is a live counterexample |
 | "0 type errors" | `.typecheck-baseline.json` | ❌ **Unverified** — the gate passes because tsc crashes; a completing run reports 2 |
 | "ZenApp.tsx is the app entry (113 KB)" | `FEATURE_INVENTORY.md`, `AGENTS.md` | ❌ **False** — the file does not exist |
+| "AIOS-05 Tenant isolation — **Pass**" | `docs/reports/evidence-pack-2026-07-28.md` | ❌ **Contradicted** — see §14.4.1 |
+| "AIOS-02 Policy enforcement — **Pass** — 55 CI gates registered" | same | ⚠️ **Overstated** — see §14.4.1 |
+| "AIOS-01 Lineage completeness — **Pass**" | same | ⚠️ **Overstated** — the cited evidence is 556 orphans out of 916 endpoints |
+
+### 14.4.1 The platform's own evidence pack marks failing controls as Pass
+
+While this audit was running, a repo script (`scripts/audits/generate-evidence-pack.mjs`)
+auto-generated `docs/reports/evidence-pack-2026-07-28.md` against this very branch. It is
+committed here unmodified because it is the clearest single illustration of the pattern this
+audit keeps hitting: **controls are graded on whether a mechanism exists, not on whether it
+works.**
+
+Three of its seven control statuses do not survive checking:
+
+- **`AIOS-05 Tenant isolation` — "Pass — tenant-isolation gate live with baseline ratchet …
+  25 candidate findings tracked, no regression allowed."** The gate is indeed live and the
+  ratchet is real. But tenant isolation itself is **not** enforced: every RLS policy is inert
+  (Chapter 05 §5.1), the gate covers 32 tables, cannot see Drizzle query-builder calls at all,
+  and blanket-exempts `server/workers/` and `server/jobs/`. A green ratchet on a narrow
+  scanner is being reported as an isolation guarantee.
+- **`AIOS-02 Policy enforcement` — "Pass — 55 CI gates registered."** The 55 are enumerated
+  from `package.json` script names, and the list includes manual ratchet variants —
+  `:write-baseline`, `:strict` — which are **not gates** and are invoked by no workflow
+  (Chapter 11 §11.7). Counting `ci:typecheck:write-baseline` as an enforced control while the
+  gate it writes to passes on an OOM crash is the inversion in miniature.
+- **`AIOS-01 Lineage completeness` — "Pass — orphan-endpoint detector landed … 916 endpoints,
+  360 consumed, 556 orphans."** The detector landing is the pass criterion; the finding it
+  produced — that 61% of the API has no caller — does not affect the grade.
+
+To be fair to it, the pack is transparent about its own method (*"Items marked **Pass** are
+verified by static-text checks against the source tree"*) and marks genuinely-pending items
+as **Pending**. The defect is not dishonesty; it is that a static-text check for the presence
+of a control is being presented, in a document titled *Evidence Pack*, as evidence the control
+is effective. An auditor or acquirer reading it would be misled — which is why it belongs in
+this register rather than in a footnote.
 
 ---
 
