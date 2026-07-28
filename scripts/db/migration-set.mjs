@@ -195,6 +195,15 @@ export const C2C_MIGRATION_FILES = [
   // failure mode this module exists to prevent; here it would also be an
   // outage.
   'migrations/20260728_cmc_module3_org_scoped_uniqueness.sql',
+
+  // Part 11 attribution. c2c_snapshot_section_version() hardcoded author_kind
+  // to 'human' for every superseded version, so AnA-generated text entered the
+  // immutable ledger claiming a person wrote it. The section row's own
+  // draft_source is mutable and overwritten by the next edit, which makes the
+  // version ledger the only durable record of AI involvement — and it was
+  // uniformly wrong. CREATE OR REPLACE FUNCTION only; no table is altered and
+  // no existing row is rewritten.
+  'migrations/20260728_c2c_section_version_author_kind.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

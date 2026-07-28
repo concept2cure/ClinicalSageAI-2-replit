@@ -182,7 +182,7 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
         </div>
       </div>
 
-      <DrafterFooter draft={draft} setDraft={setDraft} allApproved={allApproved} onClose={onClose} />
+      <DrafterFooter draft={draft} allApproved={allApproved} onClose={onClose} />
     </div>
   );
 }
@@ -587,35 +587,63 @@ function DrafterReviewers({ draft, setDraft }: { draft: ResponseDraft; setDraft:
 }
 
 /* ── Footer ── */
-function DrafterFooter({ draft, setDraft, allApproved, onClose }: {
+/**
+ * This footer used to claim two things that never happened.
+ *
+ *   "Save draft"  was bound to onClose. It closed the panel and discarded every
+ *                 edit in every textarea above it.
+ *   "Send to FDA" called send(), which set local React state to status:'sent'
+ *                 and nothing else. The button then read "Sent to FDA", with the
+ *                 tooltip "Send to FDA via eSTAR portal". This file contains no
+ *                 network call of any kind — zero '/api/' strings.
+ *
+ * A button that reports a submission to a regulator has occurred, when no bytes
+ * left the browser, is the most dangerous thing this codebase can ship. Both
+ * claims are removed rather than restyled.
+ *
+ * Not wired up instead of removed, deliberately: a real endpoint does exist —
+ * POST /api/regulatory-correspondence/response-packages
+ * (server/routes/regulatory-correspondence.ts:804) — but connecting it is a
+ * build with its own governance, validation and audit requirements, not a
+ * copy-editing pass. Claiming less than the product does is recoverable;
+ * claiming more is not. The affordance stays visible and disabled so the
+ * capability gap is legible rather than hidden.
+ */
+function DrafterFooter({ draft, allApproved, onClose }: {
   draft: ResponseDraft;
-  setDraft: (d: ResponseDraft) => void;
   allApproved: boolean;
   onClose: () => void;
 }) {
   const status = draft.status || 'unstarted';
   if (status === 'unstarted') return null;
 
-  const send = () => {
-    if (!allApproved) return;
-    setDraft({ ...draft, status: 'sent', sent_at: new Date().toISOString() });
-  };
-
   return (
     <div className="drafter-foot">
       <div className="drafter-foot-l">
         {draft.acknowledged_by && <span className="drafter-foot-ack">Acknowledged by {draft.acknowledged_by}</span>}
+        <span className="drafter-foot-ack">
+          Draft is held in this session only — it is not saved to the record.
+        </span>
       </div>
       <div className="drafter-foot-r">
-        <button className="drafter-foot-act ghost" onClick={onClose}>Save draft</button>
-        <button className="drafter-foot-act ghost danger">Discard</button>
         <button
-          className={`drafter-foot-act primary ${allApproved ? '' : 'is-disabled'}`}
-          disabled={!allApproved}
-          onClick={send}
-          title={allApproved ? 'Send to FDA via eSTAR portal' : 'All reviewers must approve before sending'}
+          className="drafter-foot-act ghost"
+          onClick={onClose}
+          title="Close this panel. The draft is not persisted."
         >
-          {I.send} <span>{status === 'sent' ? 'Sent to FDA' : `Send to ${draft.send_to || 'FDA'}`}</span>
+          Close
+        </button>
+        <button className="drafter-foot-act ghost danger" onClick={onClose}>Discard</button>
+        <button
+          className="drafter-foot-act primary is-disabled"
+          disabled
+          title={
+            allApproved
+              ? 'Transmission to the agency is not connected in this build. Use the submission gateway to file a response.'
+              : 'All reviewers must approve before sending. Transmission is not connected in this build.'
+          }
+        >
+          {I.send} <span>Send — not connected</span>
         </button>
       </div>
     </div>

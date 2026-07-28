@@ -2,7 +2,7 @@
    Claude Design — eCTD Co-Author Phase 3 surface
    Ported from docs/design/concept2cure-design-system/
    project/ui_kits/ectd_coauthor/styles.css
-   Tokens come from client/src/concept2cure/design/claude-design.css.
+   Tokens come from design-system/colors_and_type.css.
    Scoped via CSS Modules — no global resets, no :root redefinitions.
    ════════════════════════════════════════════════════════════ */
 

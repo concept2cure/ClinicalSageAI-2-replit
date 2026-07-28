@@ -1,5 +1,36 @@
 # AnA UI Forensic Audit — 2026-07-28
 
+> ## ⛔ SUPERSEDED IN PART — read this before acting on §2.1 or §3
+>
+> **2026-07-28, product owner decision: the rail is NOT to be collapsed. The
+> navigation shipping today is the intended navigation.**
+>
+> This audit's central recommendation — reduce the rail to the constitution's
+> five permitted destinations and demote the other ten — was implemented in
+> PR #1187 and then **reverted in full at the product owner's direction**.
+> `RAIL_CORE`, `RAIL_SPECIALIST`, `RAIL_EXPLORE` and `RAIL_QUICK` are correct as
+> they stand. Do not re-collapse them.
+>
+> The same decision applies to §2.2's typography finding. Three chrome elements
+> (`.pj-title`, `.ana-ctx-section`, `.ana-greet-t`) were moved from
+> `--font-serif` to `--font-sans` and then reverted. They stay serif.
+>
+> **Where that leaves the constitution.** `ana-ui-design-constitution` §4
+> ("Allowed — Only Five") and §12 (shell typography) are, on this product, design
+> *guidance* and not binding law. Where this repository and that document
+> disagree about what the user sees, the repository wins. A future reader should
+> not treat §4 as an outstanding defect to be closed.
+>
+> **What in this audit still stands.** Everything factual: the absent files table
+> (§0), the real entry chain (§1), the missing `config/ui-surface-registry.json`
+> (§4), and the explicit list of what was never measured (§2.3). Those are
+> measurements, not recommendations, and none of them was reverted.
+>
+> Separately, the token-layer cleanup that grew out of §2.2 — deleting three
+> stylesheets with zero consumers and removing a duplicated token import — was
+> kept, because it is provably invisible: it changes no rendered pixel.
+> `tests/ui/token-authority.test.ts` holds that line.
+
 **Phase 1 of the AnA UI Master Work Order.**
 Authority: `ana-ui-design-constitution` (design law) · `ana-ui-master-work-order` (phasing).
 
