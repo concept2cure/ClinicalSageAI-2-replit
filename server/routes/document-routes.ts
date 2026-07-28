@@ -66,27 +66,61 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+/**
+ * Extension for a stored upload, derived from the VALIDATED mime type.
+ *
+ * The stored filename used to end in `path.extname(file.originalname)` — an
+ * attacker-supplied string reaching a filesystem path. In practice it was
+ * contained (path.extname operates on the basename, so a traversal sequence
+ * cannot survive it, and the stem is Date.now() + a uuid), but "contained by a
+ * subtlety of path.extname" is not a property worth depending on, and it is
+ * exactly the shape a taint analyser flags.
+ *
+ * The mime type is a better source and costs nothing: multer runs fileFilter
+ * BEFORE the storage engine's filename callback, and that filter rejects
+ * anything outside ALLOWED_MIME_TYPES. So by the time this map is consulted the
+ * value is one of ten known constants, and no request-controlled byte reaches
+ * the path at all. Unknown types cannot occur, but fall back to '' rather than
+ * guessing.
+ *
+ * The original filename is NOT lost — it is stored as `fileName` on the
+ * document row, which is where it belongs: data, not a path.
+ */
+const EXT_BY_MIME: Readonly<Record<string, string>> = {
+  'application/pdf': '.pdf',
+  'application/xml': '.xml',
+  'text/xml': '.xml',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+  'text/plain': '.txt',
+  'text/csv': '.csv',
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/tiff': '.tiff',
+};
+
 const multerStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueFilename = `${Date.now()}-${uuidv4()}${path.extname(file.originalname)}`;
+    // Unique, and built entirely from values this server controls.
+    const uniqueFilename = `${Date.now()}-${uuidv4()}${EXT_BY_MIME[file.mimetype] ?? ''}`;
     cb(null, uniqueFilename);
   },
 });
 
-// SECURITY: Restrict file types and enforce size limits for regulatory submissions
-const ALLOWED_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/xml', 'text/xml',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-  'text/plain', 'text/csv',
-  'image/png', 'image/jpeg', 'image/tiff',
-]);
+// SECURITY: Restrict file types and enforce size limits for regulatory
+// submissions.
+//
+// Derived from EXT_BY_MIME rather than written out a second time. The two lists
+// have to agree — the filter decides what may be stored, the map decides what it
+// is stored as — and two hand-maintained copies of the same list are a drift
+// waiting to happen: add a type to one and the other silently stores it with no
+// extension, or (worse) allow a type the map does not know. One source, no
+// possible disagreement.
+const ALLOWED_MIME_TYPES = new Set(Object.keys(EXT_BY_MIME));
 
 const upload = multer({
   storage: multerStorage,
