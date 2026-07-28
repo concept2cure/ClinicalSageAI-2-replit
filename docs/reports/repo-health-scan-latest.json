@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-28T00:02:12.653Z",
+  "generatedAt": "2026-07-28T02:48:42.277Z",
   "git": {
-    "sha": "171c54dd6d934e7982ad610bcf9bcc83beb35297",
+    "sha": "78735b753144ae3ed914b8814b077855b1c1d5d7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2756,7 +2756,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 1994
+        "lines": 2000
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
