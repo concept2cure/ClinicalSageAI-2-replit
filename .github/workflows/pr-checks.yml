@@ -119,8 +119,20 @@ jobs:
         # warnings down and reintroduce --max-warnings with a real budget. Note
         # also that eslint.config.js ignores client/src/** entirely (871 files),
         # so this gate does not see the UI at all yet.
+        #
+        # `--diff-filter=d` excludes DELETED files. Without it, `git diff
+        # --name-only` lists paths this PR removed, eslint is handed a file that
+        # no longer exists, and it exits 2 with "No files matching the pattern".
+        # That made the gate fail on any PR that deletes a .ts/.tsx/.js/.jsx
+        # file — which is what happened the first time a PR did (a doc cleanup
+        # that removed an archived runMigrations.ts).
+        #
+        # This bug was always here. It could not surface while the step ended in
+        # `|| echo`, because that swallowed every non-zero exit including this
+        # one. Making the gate able to fail is what revealed it was also being
+        # invoked wrongly.
         run: |
-          FILES=$(git diff "origin/$BASE_REF"...HEAD --name-only | grep -E '\.(ts|tsx|js|jsx)$' | tr '\n' ' ')
+          FILES=$(git diff "origin/$BASE_REF"...HEAD --name-only --diff-filter=d | grep -E '\.(ts|tsx|js|jsx)$' | tr '\n' ' ')
           if [ -n "$FILES" ]; then
             npx eslint $FILES
           fi
