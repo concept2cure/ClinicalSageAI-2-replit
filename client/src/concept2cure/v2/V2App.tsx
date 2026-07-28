@@ -278,6 +278,9 @@ export function V2App() {
           welcome={welcome}
           onDismissWelcome={() => set('welcomeDismissed', true)}
           onNav={nav}
+          // Scopes composer uploads to the active project, so extracted text
+          // lands in that project's memory — the same id useAnaChat uses.
+          projectId={readShellProjectId()}
         />
       )}
       <CmdK
