@@ -180,10 +180,18 @@ jobs:
       - name: Audit — repo health scan (no regressions)
         run: npm run audit:repo-health:no-regression
 
-      - name: Audit — orphaned endpoints (threshold 900)
+      - name: Audit — orphaned endpoints (threshold 600)
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
-        # if the orphan count exceeds 900 (current: ~713). Ratchet the
-        # threshold down in package.json as the backlog is triaged.
+        # if the orphan count exceeds 600 (current: 556). Ratchet the threshold
+        # down in package.json as the backlog is triaged.
+        #
+        # Tightened from 900. The count had fallen to 556 without the gate
+        # following it, leaving 344 of slack — enough for the backlog to grow by
+        # more than half again while CI reported green. A ratchet that trails
+        # reality by that much is not a ratchet. The 44 of remaining headroom is
+        # deliberate: a feature branch legitimately adds endpoints before the
+        # client that calls them exists, and one PR adding 45 unwired endpoints
+        # is worth a conversation rather than a silent pass.
         run: npm run audit:orphaned-endpoints:strict
 
       - name: Upload governance audit artifacts
