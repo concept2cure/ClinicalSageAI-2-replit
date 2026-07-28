@@ -86,10 +86,22 @@ interface BatchDraftSpine {
 
 // ─── Derivation helpers (honest: yield a value ONLY when one is really present) ─
 
+/**
+ * Entities decoded for readability in the preview text.
+ *
+ * `&lt;` and `&gt;` are deliberately NOT here. They used to be, and decoding
+ * them was an XSS step: TipTap escapes angle brackets a user types, so a
+ * document body containing the literal text `<img src=x onerror=...>` is stored
+ * as `&lt;img src=x onerror=...&gt;` — inert. Decoding it back reconstituted
+ * live markup in a field the client then concatenated into an HTML string and
+ * injected via dangerouslySetInnerHTML (BatchDraft.tsx). The preview is plain
+ * text; it has no reason to contain an angle bracket, and now cannot.
+ *
+ * Decoding `&amp;` first is safe: input `&amp;lt;` yields the literal text
+ * `&lt;`, not `<`.
+ */
 const HTML_ENTITIES: Record<string, string> = {
   '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
   '&quot;': '"',
   '&#39;': "'",
   '&nbsp;': ' ',
@@ -100,11 +112,16 @@ const HTML_ENTITIES: Record<string, string> = {
  * Strips tags, decodes a handful of common entities, collapses whitespace, and
  * truncates. Returns null when the document carries no usable text — never a
  * placeholder or fabricated summary.
+ *
+ * The result is TEXT. Callers must escape it before placing it in markup.
  */
 function derivePreview(content: string | null): string | null {
   if (!content) return null;
   let text = content.replace(/<[^>]+>/g, ' ');
-  text = text.replace(/&amp;|&lt;|&gt;|&quot;|&#39;|&nbsp;/g, m => HTML_ENTITIES[m] ?? ' ');
+  text = text.replace(/&amp;|&quot;|&#39;|&nbsp;/g, m => HTML_ENTITIES[m] ?? ' ');
+  // Any angle bracket still present came from raw markup rather than an
+  // entity — strip it so the preview cannot carry a tag under any encoding.
+  text = text.replace(/[<>]/g, ' ');
   text = text.replace(/\s+/g, ' ').trim();
   if (!text) return null;
   return text.length > 240 ? `${text.slice(0, 240).trimEnd()}…` : text;

@@ -6898,7 +6898,15 @@ export const projectScheduleOfEvents = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   table => ({
-    uniqueProjectSchedule: unique('unique_project_schedule').on(table.projectId),
+    // Tenant-aware arbiter. This was `unique('unique_project_schedule')` on
+    // projectId ALONE, and uniqueness is what ON CONFLICT resolves against —
+    // so the org-blind key let an upsert in one organization land on another
+    // organization's row. Never narrow this back to projectId.
+    // See db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql
+    uniqueProjectScheduleOrg: unique('unique_project_schedule_org').on(
+      table.organizationId,
+      table.projectId
+    ),
     idx_project_schedule_org: index('idx_project_schedule_org').on(table.organizationId),
     idx_project_schedule_project: index('idx_project_schedule_project').on(table.projectId),
   })

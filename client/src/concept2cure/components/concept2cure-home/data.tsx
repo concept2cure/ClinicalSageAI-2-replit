@@ -112,7 +112,7 @@ export const MODULES: ModuleCard[] = [
   { navId: 'memory',     icon: 'brain',       title: 'AnA Memory',                     desc: 'Browse what AnA remembers — pinned facts, source traces and how the RIM reasons about your programs.',                   foot: '42 recalls · 14 pinned' },
   { navId: 'artifacts',  icon: 'sparkles',    title: 'User Artifacts',                 desc: 'Every artifact AnA has drafted for you — sections, SAPs, responses, slides.',                                             foot: '34 artifacts · 12 this week' },
   { navId: 'audit',      icon: 'scroll',      title: 'Audit and Compliance',           desc: '21 CFR Part 11 audit trail, e-signatures, access logs and full change history.',                                          foot: 'Part 11 ready · 248k events' },
-  { navId: 'admin',      icon: 'settings',    title: 'Admin Settings',                 desc: 'Users and roles, SSO, agency credentials, integrations and billing.',                                                    foot: 'Enterprise tier · SOC 2 Type II' },
+  { navId: 'admin',      icon: 'settings',    title: 'Admin Settings',                 desc: 'Users and roles, SSO, agency credentials, integrations and billing.',                                                    foot: 'Enterprise tier · SSO and RBAC' },
 ];
 
 // PDEV (Phase 7) is a Domain rail item gated by ENABLE_PDEV_SURFACE. When the

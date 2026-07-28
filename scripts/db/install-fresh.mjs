@@ -22,7 +22,9 @@
  *      had NO durable provisioning path — see scripts/db/authoring-subsystem.mjs.
  *   5. Apply the RLS-bearing raw migrations in their required order, tracking
  *      applied files in an _install_applied_migrations ledger.
- *   6. Verify: table count, pg_policies count, and that the core route tables +
+ *   6. Apply the governed-content tree (*_gcc_*.sql) via psql — the `audit`
+ *      schema and Part-11 tamper-proof audit tables.
+ *   7. Verify: table count, pg_policies count, and that the core route tables +
  *      the authoring subsystem exist.
  *
  * The authoring subsystem in step 4 is the ONE db/migrations/ exception run
@@ -31,17 +33,26 @@
  * no RLS of its own, so it composes cleanly with the RLS rollout — unlike the
  * uuid-keyed governed-content tree.
  *
- * SEPARATE, NOT run here: the governed-content tree db/migrations/*_gcc_*.sql
- * (named `audit` schema, Part-11 tables, its own RLS). Those files are
- * psql-authored and CI applies them on their own database, never combined with
- * the RLS rollout below (their uuid tenant columns are incompatible with the
- * app RLS policy). The app BOOTS without them (tamper-proof audit degrades
- * non-fatally); apply them for full Part-11 audit, via psql, as CI does:
- *   for f in $(ls db/migrations/*_gcc_*.sql | sort); do \
- *     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done
+ * Step 6 applies the governed-content tree db/migrations/*_gcc_*.sql (named
+ * `audit` schema, Part-11 tables, its own RLS). These files are psql-authored
+ * — meta-commands and dollar-quoting that node-postgres cannot execute — so the
+ * step shells out to psql, exactly as CI does. They are applied AFTER the RLS
+ * rollout and never merged into it: their uuid tenant columns are incompatible
+ * with the app RLS policy.
+ *
+ * This step used to not exist. The script printed the psql loop as advice and
+ * then declared success, so an operator who followed the green checkmark ended
+ * up with no `audit` schema and no tamper-proof Part 11 audit trail. The app
+ * BOOTS without it (audit degrades non-fatally), which is why that went
+ * unnoticed. If psql is unavailable the step now says so, records the shortfall,
+ * and the install does not report success.
  *
  * Usage:
  *   DATABASE_URL='postgres://…' node scripts/db/install-fresh.mjs
+ *   DATABASE_URL='postgres://…' node scripts/db/install-fresh.mjs --allow-incomplete
+ *
+ * Exit code is 0 only when every step completed. A partial install exits 1 and
+ * names what is missing, unless --allow-incomplete is passed.
  *
  * After this completes, set RLS_ENFORCE=on and restart to turn the tenant
  * isolation policies from shadow-mode into enforcing.
@@ -81,13 +92,36 @@ const RLS_MIGRATIONS = [
 const url = resolveDatabaseUrl(INSTALL_URL_VARS);
 const pool = new Pool({ connectionString: url, ssl: sslFor(url) });
 
+/**
+ * `--allow-incomplete` — finish and exit 0 even when part of the install did
+ * not land.
+ *
+ * The default is now the opposite. This script used to print
+ * "✅ Application schema install complete." unconditionally: with raw
+ * migrations left unapplied (described, without evidence, as "safe to skip"),
+ * and with the entire governed-content tree un-run, because the script only
+ * PRINTED the psql loop for an operator to run by hand. An operator who
+ * followed the green checkmark got a database with no `audit` schema and no
+ * Part 11 tamper-proof audit trail, and nothing told them.
+ *
+ * An installer that reports success it did not achieve is worse than one that
+ * fails, because the failure surfaces later, in production, as a missing table.
+ */
+const ALLOW_INCOMPLETE = process.argv.includes('--allow-incomplete');
+
+/** Non-fatal shortfalls, collected across steps and adjudicated at the end. */
+const incomplete = [];
+function recordIncomplete(area, detail) {
+  incomplete.push({ area, detail });
+}
+
 async function step(label, fn) {
   process.stdout.write(`\n▶ ${label}\n`);
   await fn();
 }
 
 async function main() {
-  await step('1/5 Prerequisites — schemas + extensions', async () => {
+  await step('1/7 Prerequisites — schemas + extensions', async () => {
     await pool.query(`
       CREATE SCHEMA IF NOT EXISTS vault;
       CREATE SCHEMA IF NOT EXISTS precedent;
@@ -100,7 +134,7 @@ async function main() {
     console.log('  ✓ schemas (vault, precedent, audit) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
   });
 
-  await step('2/5 Tables — drizzle-kit push', async () => {
+  await step('2/7 Tables — drizzle-kit push', async () => {
     // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
     // destructive changes so it proceeds. Inherit env so drizzle.config.ts
     // resolves the same DATABASE_URL.
@@ -118,7 +152,7 @@ async function main() {
     console.log('  ✓ schema pushed from shared/schema.ts');
   });
 
-  await step('3/5 Complete schema — raw migration overlay', async () => {
+  await step('3/7 Complete schema — raw migration overlay', async () => {
     // drizzle-kit push lays down ONLY shared/schema.ts. The core product tables
     // — regulatory_programs, c2c_documents / c2c_document_sections /
     // c2c_rule_packs, c2c_ana_*, the submission-ops set, and ~200 more — live
@@ -199,16 +233,27 @@ async function main() {
 
     const remaining = files.filter((f) => !done.has(f));
     if (remaining.length) {
+      // This used to read "safe to skip for the app schema". Nothing here
+      // establishes that. The loop knows only that each file kept failing —
+      // usually because it references a table absent from this schema, which is
+      // often benign and sometimes means a table that should exist does not.
+      // Asserting safety on the operator's behalf is the part that was wrong;
+      // report the facts and let the exit code reflect the uncertainty.
       console.log(
-        `  • ${remaining.length} file(s) left unapplied — each references a table absent from this schema ` +
-          `(non-core index/ALTER files against renamed/removed tables); safe to skip for the app schema:`,
+        `  ⚠ ${remaining.length} file(s) left unapplied. Each failed repeatedly across ` +
+          `multiple passes, typically because it references a table absent from this ` +
+          `schema. Review each before treating this install as complete:`,
       );
       for (const f of remaining) console.log(`      ${f} — ${lastErr.get(f) || ''}`);
+      recordIncomplete(
+        'raw migration overlay',
+        `${remaining.length} file(s) unapplied: ${remaining.join(', ')}`,
+      );
     }
-    console.log(`  ✓ overlay complete: ${applied} applied, ${present} already-present from push`);
+    console.log(`  ✓ overlay: ${applied} applied, ${present} already-present from push`);
   });
 
-  await step('4/6 Authoring subsystem (Part-11 unit)', async () => {
+  await step('4/7 Authoring subsystem (Part-11 unit)', async () => {
     // The four db/migrations/20260725_authoring_* files back the flagship IND
     // authoring loop and, until now, had NO durable provisioning path — the
     // root overlay above only touches migrations/, and the *_gcc_* psql loop
@@ -220,7 +265,7 @@ async function main() {
     });
   });
 
-  await step('5/6 Row-Level Security policies (raw migrations)', async () => {
+  await step('5/7 Row-Level Security policies (raw migrations)', async () => {
     // The RLS rollout (0021) hard-fails if ANY tenant column is still text.
     // 0020 coerces a fixed list, but the raw overlay adds tables (e.g.
     // adverse_events) with a text organization_id that predate that list. On a
@@ -303,7 +348,70 @@ async function main() {
     }
   });
 
-  await step('6/6 Verify', async () => {
+  await step('6/7 Governed content — Part 11 audit tree (*_gcc_*.sql)', async () => {
+    // This step used to not exist. The script PRINTED a psql loop and told the
+    // operator to run it themselves, then declared the install complete —
+    // so following the instructions on screen produced a database with no
+    // `audit` schema and no tamper-proof Part 11 audit trail, while the last
+    // line said success. The app boots without it (audit degrades non-fatally),
+    // which is exactly why nobody noticed.
+    //
+    // These files are psql-authored (\set, dollar-quoting, meta-commands) and
+    // cannot be run through node-postgres, so psql is genuinely required — that
+    // constraint was real. It just is not a reason to make it the operator's
+    // problem.
+    const gccDir = path.resolve(__dirname, '..', '..', 'db', 'migrations');
+    const gccFiles = fs.existsSync(gccDir)
+      ? fs.readdirSync(gccDir).filter((f) => f.includes('_gcc_') && f.endsWith('.sql')).sort()
+      : [];
+
+    if (!gccFiles.length) {
+      console.log('  • no *_gcc_* files found; nothing to apply');
+      return;
+    }
+
+    const psqlProbe = spawnSync('psql', ['--version'], { encoding: 'utf8' });
+    if (psqlProbe.error || psqlProbe.status !== 0) {
+      console.log(
+        `  ⚠ psql not available — cannot apply ${gccFiles.length} governed-content file(s).`,
+      );
+      console.log('    The app will boot, but 21 CFR Part 11 tamper-proof audit will be absent.');
+      console.log('    Install the postgresql client and re-run, or apply by hand:');
+      console.log('      for f in $(ls db/migrations/*_gcc_*.sql | sort); do \\');
+      console.log('        psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done');
+      recordIncomplete(
+        'governed content (Part 11 audit)',
+        `psql unavailable; ${gccFiles.length} *_gcc_* file(s) not applied`,
+      );
+      return;
+    }
+
+    let ok = 0;
+    const failed = [];
+    for (const f of gccFiles) {
+      const full = path.join(gccDir, f);
+      const res = spawnSync('psql', [url, '-v', 'ON_ERROR_STOP=1', '-f', full], {
+        encoding: 'utf8',
+        env: { ...process.env, PAGER: 'cat' },
+      });
+      if (res.status === 0) {
+        ok++;
+      } else {
+        const why = ((res.stderr || '').trim().split('\n').pop() || '').slice(0, 160);
+        failed.push(`${f} — ${why}`);
+        console.log(`  ⚠ ${f}: ${why}`);
+      }
+    }
+    console.log(`  ${failed.length ? '⚠' : '✓'} governed content: ${ok}/${gccFiles.length} applied`);
+    if (failed.length) {
+      recordIncomplete(
+        'governed content (Part 11 audit)',
+        `${failed.length} of ${gccFiles.length} file(s) failed: ${failed.join(' | ')}`,
+      );
+    }
+  });
+
+  await step('7/7 Verify', async () => {
     const tables = await pool.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`,
     );
@@ -357,19 +465,52 @@ async function main() {
       );
     }
 
-    console.log('\n✅ Application schema install complete.');
-    console.log('   Next:');
-    console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');
-    console.log('   • leave SEED_DEMO_USER unset in production (no known-password admin);');
-    console.log('   • for full 21 CFR Part 11 tamper-proof audit, also apply the governed-');
-    console.log('     content tree (creates the `audit` schema) via psql:');
-    console.log('       for f in $(ls db/migrations/*_gcc_*.sql | sort); do \\');
-    console.log('         psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done');
+    // The success banner is printed by main(), and ONLY when nothing was
+    // recorded incomplete. It used to print here, unconditionally.
   });
 }
 
+/**
+ * Final verdict.
+ *
+ * Green is earned, not assumed. If any step recorded a shortfall the script
+ * says what is missing, what it means, and exits non-zero — unless the operator
+ * explicitly asked for a partial install with --allow-incomplete, in which case
+ * it still says what is missing and exits 0.
+ */
+function report() {
+  if (!incomplete.length) {
+    console.log('\n✅ Application schema install complete.');
+    console.log('   Next:');
+    console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');
+    console.log('   • leave SEED_DEMO_USER unset in production (no known-password admin).');
+    return 0;
+  }
+
+  console.error(`\n⚠️  Install finished with ${incomplete.length} incomplete area(s):`);
+  for (const { area, detail } of incomplete) {
+    console.error(`   • ${area}: ${detail}`);
+  }
+
+  if (ALLOW_INCOMPLETE) {
+    console.error('\n   Continuing anyway: --allow-incomplete was passed.');
+    console.error('   This database is NOT fully provisioned. Do not treat it as production-ready');
+    console.error('   without resolving the areas above.');
+    return 0;
+  }
+
+  console.error('\n❌ Install INCOMPLETE — not reporting success.');
+  console.error('   Resolve the areas above and re-run (the script is idempotent), or pass');
+  console.error('   --allow-incomplete to accept a partial install deliberately.');
+  return 1;
+}
+
 main()
-  .then(() => pool.end())
+  .then(async () => {
+    const code = report();
+    await pool.end().catch(() => {});
+    process.exit(code);
+  })
   .catch(async (err) => {
     console.error(`\n❌ Install failed: ${err.message}`);
     await pool.end().catch(() => {});

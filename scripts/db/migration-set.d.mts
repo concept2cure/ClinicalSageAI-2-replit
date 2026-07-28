@@ -9,6 +9,13 @@
  * Hand-written rather than emitted: the .mjs is the source of truth and must
  * stay plain ESM (deploy-migrate and install-fresh run it directly with node, no
  * build step). Keep these signatures in step with it.
+ *
+ * THE EXTENSION IS LOAD-BEARING — this file must stay `.d.mts`. Under
+ * `moduleResolution: "node"` TypeScript resolves a specifier ending in `.mjs`
+ * by substituting ONLY `.mts` and `.d.mts`; it never consults `.d.ts` for a
+ * `.mjs` import. Renaming this to `migration-set.d.ts` silently un-types the
+ * module and TS7016 comes back — verified against tsc 5.6.3 with
+ * `--traceResolution`. Do not "normalise" the extension.
  */
 
 /**

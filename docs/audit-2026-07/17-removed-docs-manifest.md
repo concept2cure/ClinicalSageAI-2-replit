@@ -1,0 +1,464 @@
+# Removed documentation manifest — 2026-07-28
+
+388 superseded reports, proofs, audits and handoffs removed on branch
+`claude/codebase-audit-competitive-aet792`. **Nothing is lost** — every file remains in
+git history and can be restored with:
+
+```
+git checkout e06b7f62f -- <path>
+```
+
+## Why
+
+These are point-in-time artifacts — dated proof runs, build-order checkpoints, phase
+reports, superseded audits — that accumulated faster than they were retired. They
+describe states the codebase has long since left, and the 2026-07 audit
+(`docs/audit-2026-07/`) supersedes their findings. Left in place they are worse than
+clutter: a reader searching the repo finds a 2026-03 proof asserting a control that no
+longer exists, with nothing marking it stale.
+
+## What was NOT removed
+
+| Kept | Why |
+|---|---|
+| `docs/validation/` (10) | The IQ/OQ/PQ protocols that get **executed** for G3. |
+| `docs/runbooks/` (5), `docs/operations/` (12) | Operational procedures, still current. |
+| `docs/adr/` (12) | Architecture decision records — the record of *why*, which does not expire. |
+| `docs/audit-2026-07/` (46) | This audit. |
+| `docs/proof/golden-journeys/*.md` (4) | Journey **definitions** — what each journey must prove. The executable journeys live in `tests/golden-journeys/`. |
+| 16 files cited by shipping code | Listed below. |
+
+### Two files restored after CI caught an incomplete reference scan
+
+The first pass of this cleanup scanned `server/ client/ shared/ scripts/ .github/
+package.json` for inbound references — and **missed `tests/`**. Tests are code, and two ops
+tests read documentation artifacts directly:
+
+| Restored | Read by |
+|---|---|
+| `docs/reports/REPORT_OS_SESSION_PROGRESS_2026-03-30.md` | `tests/ops/report-os-foundation.test.mjs:8` (`readFileSync`) |
+| `docs/proof/BETA_CORE_PULSE_PROOF.md` | `tests/ops/stage8-ga-readiness.test.mjs:24` (asserts it exists) |
+
+The `ops-audit` CI job caught this — 30 passed, 2 failed. Both files are restored and the
+suite is green again (44/44 locally). They are listed under "retained" rather than "removed"
+below.
+
+That these two ops tests assert the continued existence of a 2026-03 progress report and a
+beta proof document is itself worth noting: they are gates on documentation, not on
+behaviour. Retiring them is a reasonable follow-up, but deleting a test to make a cleanup
+succeed is the wrong order of operations.
+
+### Files retained because shipping code cites them by path
+
+Deleting these would leave dangling references in source comments — for example
+`scripts/ci/check-js-ts-shadows.mjs` cites `KNOWN_ISSUES_LEDGER.md` item M-5 as the
+rationale for its behaviour. A comment pointing at a file that no longer exists adds
+confusion rather than removing it. Retire the citation first, then the file.
+
+- `DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md`
+- `FORENSIC_CODE_AUDIT_2026-05-29.md`
+- `GA_GAP_AUDIT_2026-06-10.md`
+- `HANDOFF_TO_DESIGN_document_authoring.md`
+- `HANDOFF_TO_DESIGN_global_ri.md`
+- `HANDOFF_TO_DESIGN_master_admin_business_center.md`
+- `PDEV_IND_WORKFLOW_AUDIT.md`
+- `PHASE_10_2_INSTALL.md`
+- `PHASE_11_INSTALL.md`
+- `PRODUCT_READINESS_ASSESSMENT.md`
+- `RECONCILE.md`
+- `docs/audits/WEAVE_PARITY_MATRIX_2026-03-27.md`
+- `docs/beta/security/PEN_TEST_SCOPE_2026-05-01.md`
+- `docs/plans/FINAL_DOCUMENT_SYSTEM_PROJECT_AND_BUILD_PLAN_2026-03-27.md`
+- `docs/proof/KNOWN_ISSUES_LEDGER.md`
+- `docs/reports/MDX_BETA_BACKEND_PROGRESS_2026-05-01.md`
+
+## Removed
+
+- `ANA_CAPABILITY_ENHANCEMENT_RECOMMENDATIONS_2026-06-21.md`
+- `ANA_SCREENSHOT_CAPABILITY_PARITY_2026-06-21.md`
+- `GLOBAL_UI_READINESS_ADVISORY_2026-06-17.md`
+- `HANDOFF_TO_DESIGN_ana_document_studio.md`
+- `HANDOFF_TO_DESIGN_clinical_regulatory_evidence.md`
+- `HANDOFF_TO_DESIGN_device_ivd_diagnostics.md`
+- `HANDOFF_TO_DESIGN_quality_assurance.md`
+- `HANDOFF_TO_DESIGN_segmentation_and_taxonomy.md`
+- `HANDOFF_TO_DESIGN_translation_workspace.md`
+- `INSIGHTS_BUILD_LOG.md`
+- `READ_ME_FIRST.md`
+- `docs/IND_MODULE1_BACKEND_GAP_ANALYSIS_2026-04-09.md`
+- `docs/INVESTOR_TECHNICAL_BRIEF_2026-05-07.md`
+- `docs/SECURITY_POSTURE_FULL_REVIEW_2026-03-29.md`
+- `docs/archive/ACTIVE_FILE_STRUCTURE.md`
+- `docs/archive/ARCHITECTURE_old.md`
+- `docs/archive/BUILD_PLAN_ENTERPRISE_GA.md`
+- `docs/archive/COAUTHOR_DECOMPOSITION_MAP.md`
+- `docs/archive/COMMENTARY.md`
+- `docs/archive/CONCEPT2CURE_DEEP_ACTIVATION_AUDIT.md`
+- `docs/archive/CONCEPT2CURE_PLANNING_INDEX.md`
+- `docs/archive/CONCEPT2CURE_PROJECTS_IMPLEMENTATION.md`
+- `docs/archive/CONCEPT2CURE_ROADMAP_PART1.md`
+- `docs/archive/CONCEPT2CURE_ROADMAP_PART2.md`
+- `docs/archive/CONCEPT2CURE_ROADMAP_PART3.md`
+- `docs/archive/CONCEPT2CURE_ROADMAP_PART4.md`
+- `docs/archive/CONCEPT2CURE_ROADMAP_PART5.md`
+- `docs/archive/CONCEPT2CURE_UNIFIED_PROJECT_ROADMAP.md`
+- `docs/archive/CONCEPT2CURE_UX_FOUNDATION.md`
+- `docs/archive/CONCEPT2CURE_V2_TO_V3_TRANSFORMATION.md`
+- `docs/archive/CONCEPT2CURE_V3_COMPLETE_SYSTEM.md`
+- `docs/archive/CONSOLIDATION_ACTION_PLAN_2026-01-26.md`
+- `docs/archive/CONSOLIDATION_REPORT.md`
+- `docs/archive/CONSOLIDATION_SUMMARY.md`
+- `docs/archive/DEVELOPER_AGENDA_ANSWERS.md`
+- `docs/archive/DRIFT_REPORT.md`
+- `docs/archive/GO_NOGO.md`
+- `docs/archive/IMPLEMENTATION_TRACKER.md`
+- `docs/archive/MEETING_SAFE_CLICK_PATH.md`
+- `docs/archive/NOVEL_VALUE_RBL.md`
+- `docs/archive/PROBLEMATIC_CODE_FOR_3RD_PARTY.md`
+- `docs/archive/REMEDIATION_ROADMAP.md`
+- `docs/archive/REPLIT_AGENT_ENHANCEMENT_DIRECTIVE.md`
+- `docs/archive/ROADMAP_INVENTORY.md`
+- `docs/archive/SERVICE_CONSOLIDATION_PLAN.md`
+- `docs/archive/STEP1_ROLLBACK_PLAN.md`
+- `docs/archive/STEP2_AUDIT_LOG.md`
+- `docs/archive/STEP6_AUDIT_REPORT.md`
+- `docs/archive/STEP_AUDIT_LOG.md`
+- `docs/archive/TECH_DEBT_ANALYSIS_2026-01-24.md`
+- `docs/archive/TEXT_PROCESSING_PROOF.md`
+- `docs/archive/UI_ALIGNMENT_SUMMARY_2026-01-29.md`
+- `docs/archive/UNIFIED_DOCUMENT_INTEGRATION_COMPLETE.md`
+- `docs/archive/UNIFIED_DOCUMENT_INTEGRATION_MANIFEST.md`
+- `docs/archive/UX_MASTER_ARCHITECT_REVIEW.md`
+- `docs/archive/VAULT_DMS_DROPDOWN_FIX_COMPLETE.md`
+- `docs/archive/agent_templates.md`
+- `docs/archive/database_indexing_optimization_report.md`
+- `docs/archive/enhanced_operational_health_report.md`
+- `docs/archive/health_monitoring_success_report.md`
+- `docs/archive/integration-test-report.md`
+- `docs/archive/operational_health_report.md`
+- `docs/archive/phase-reports/AUDIT_EXECUTIVE_SUMMARY.md`
+- `docs/archive/phase-reports/PHASE6_AUDIT_REPORT.md`
+- `docs/archive/phase-reports/PHASE6_QUICK_SUMMARY.md`
+- `docs/archive/phase-reports/PHASE_0_1_READINESS_AUDIT.md`
+- `docs/archive/phase-reports/PHASE_5_6_AUDIT_REPORT.md`
+- `docs/archive/prisma-legacy/README.md`
+- `docs/archive/prisma-legacy/schema.prisma`
+- `docs/archive/prisma-legacy/schema_cognitive_ecosystem.prisma`
+- `docs/archive/prisma-legacy/schema_ectd_v4.prisma`
+- `docs/archive/replit.md`
+- `docs/archive/server-deprecated-migrations/012_document_authoring_schema.sql`
+- `docs/archive/server-deprecated-migrations/20250501-create-cer-jobs-table.sql`
+- `docs/archive/server-deprecated-migrations/20250512-create-maud-validations-table.sql`
+- `docs/archive/server-deprecated-migrations/README.md`
+- `docs/archive/server-deprecated-migrations/runMigrations.ts`
+- `docs/archive/sprint2_verification_report.md`
+- `docs/audit/package-manager-baseline-2026-03-26.md`
+- `docs/audit/security-scrub-2026-03-29.md`
+- `docs/audits/510k-guided-beta-readiness-update-2026-04-01.md`
+- `docs/audits/ANA-SINGLE-BRAIN-AUDIT-2026-03-30.md`
+- `docs/audits/ANA_RI_BRAINSTEM_AUDIT_2026-03-24.md`
+- `docs/audits/ANA_UI_FORENSIC_AUDIT_2026-04-05.md`
+- `docs/audits/BIOTECH_SME_FULL_CLICK_THROUGH_AUDIT_2026-03-19.md`
+- `docs/audits/CMC_AnA_Integration_Audit_2026-03-25.md`
+- `docs/audits/CMC_TOP_LEVEL_UI_HUMAN_EXPERIENCE_AUDIT_2026-03-25.md`
+- `docs/audits/CONCEPT2CURE_ANA_INTEGRATION_AUDIT_2026-03-24.md`
+- `docs/audits/CONCEPT2CURE_ANA_INTEGRATION_EXECUTION_PLAN_2026-03-24.md`
+- `docs/audits/CURRENT_DOCUMENT_SYSTEM_REALITY_2026-03-27.md`
+- `docs/audits/DMS_VAULT_BETA_BUILD_PLAN_2026-03-25.md`
+- `docs/audits/DMS_VAULT_COMPETITIVE_BETA_PLAN_2026-03-25.md`
+- `docs/audits/DOCUMENT_EDITOR_WEAVE_STUDY_UX_GAP_ANALYSIS_2026-04-09.md`
+- `docs/audits/ENTERPRISE_ETHICS_MLOPS_DOMAIN_AUDIT_2026-03-24.md`
+- `docs/audits/ENTERPRISE_ETHICS_MLOPS_EXECUTION_PLAN_2026-03-24.md`
+- `docs/audits/EXPORT_GOVERNANCE_ROUTE_INVENTORY_2026-03-24.md`
+- `docs/audits/FULL_CODEBASE_CONTROL_AUDIT_2026-04-04.md`
+- `docs/audits/HARNESS_ENTRYPOINT_TRUTH_TABLE_2026-04-01.md`
+- `docs/audits/HUMAN_EXPERIENCE_EVALUATION_2026-03-27.md`
+- `docs/audits/LAST_20_PRS_BUILD_PLAN_EXECUTION_2026-03-28.md`
+- `docs/audits/LAST_20_PRS_WIRING_AUDIT_2026-03-28.md`
+- `docs/audits/OSS_STACK_QA_HX_AUDIT_2026-03-27.md`
+- `docs/audits/QA_ANA_INTEGRATION_AUDIT_2026-03-27.md`
+- `docs/audits/QA_CHAT_FIRST_RECONCILIATION_2026-03-27.md`
+- `docs/audits/QA_FIGMA_COMPONENT_AUDIT_2026-03-27.md`
+- `docs/audits/QA_UI_STANDARDS_AUDIT_2026-03-27.md`
+- `docs/audits/REASONING_TIER_REPO_TRUTH_2026-03-27.md`
+- `docs/audits/ROUTE_PREFIX_AUTHORITY_MATRIX_2026-04-01.md`
+- `docs/audits/VAULT_UI_HUMAN_EXPERIENCE_AUDIT_2026-03-25.md`
+- `docs/audits/build-order-10-founder-critical-path-truth-map.md`
+- `docs/audits/build-order-11-production-stability-map.md`
+- `docs/audits/build-order-12-production-readiness-map.md`
+- `docs/audits/build-order-13-ops-hardening-map.md`
+- `docs/audits/build-order-14-governed-export-and-ops-map.md`
+- `docs/audits/build-order-15-consumer-surface-map.md`
+- `docs/audits/build-order-16-workspace-truth-map.md`
+- `docs/audits/build-order-17-governance-action-wiring-map.md`
+- `docs/audits/build-order-18-workspace-governance-propagation-map.md`
+- `docs/audits/build-order-19-governance-detail-unification-map.md`
+- `docs/audits/build-order-20-workflow-gating-map.md`
+- `docs/audits/build-order-21-transition-enforcement-map.md`
+- `docs/audits/build-order-22-declarative-navigation-map.md`
+- `docs/audits/build-order-23-nav-source-governance-map.md`
+- `docs/audits/build-order-24-topbar-governance-map.md`
+- `docs/audits/build-order-9-lean-core-map.md`
+- `docs/audits/checkpoints/2026-03-27_control-tower_swarm-process-baseline_2026-03-27T19-51-13-219Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_beta-scorecard-sample-pass_2026-03-27T20-11-48-503Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_dedupe-uat-aggregation-logic_2026-03-27T20-33-16-243Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_ga-readiness-check-runbook-scaffold_2026-03-27T20-09-47-829Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_ga-readiness-service-and-tests_2026-03-27T20-15-51-478Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_golden-tasks-and-human-uat-scaffold_2026-03-27T20-06-17-659Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_medical-writing-checklist-tuning_2026-03-27T20-51-36-892Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_regulatory-uat-catalog-coverage_2026-03-27T20-40-48-520Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_scorecard-sync-and-uat-service_2026-03-27T20-25-18-385Z.md`
+- `docs/audits/checkpoints/2026-03-27_eval-release-plane_uat-metrics-aggregation-scaffold_2026-03-27T20-16-20-640Z.md`
+- `docs/audits/checkpoints/2026-03-27_ingestion-plane_phase1-ingestion-arbitration-scaffold_2026-03-27T19-57-31-319Z.md`
+- `docs/audits/cmc-convergence-map-2026-04-01.md`
+- `docs/audits/concept2cure-baseline-proof-matrix-2026-03-31.md`
+- `docs/audits/forensic-authority-map-2026-03-30.md`
+- `docs/audits/repo-risk-pass-2026-03-26.md`
+- `docs/audits/session-a-infra-recon-2026-03-30.md`
+- `docs/audits/session-b-infra-recon-2026-03-30.md`
+- `docs/execution/BIOTECH_UI_EXECUTION_CHECKLIST_2026-03-25.md`
+- `docs/execution/BIOTECH_UI_EXECUTION_PACKAGE_2026-03-25.md`
+- `docs/execution/BIOTECH_UI_RACK_AND_STACK_2026-03-25.csv`
+- `docs/execution/BIOTECH_UI_SPRINT_1_EXECUTION_BOARD_2026-03-25.csv`
+- `docs/hosting-cost-responsiveness-beta-audit-2026-03-29.md`
+- `docs/mock-route-audit-2026-04-01.md`
+- `docs/plans/ANA_BENCHMARK_AND_PROOF_HARNESS_2026-03-28.md`
+- `docs/plans/ANA_FIRST_CONVERGENCE_PLAN_2026-03-27.md`
+- `docs/plans/ANA_UI_CONVERGENCE_WORK_ORDER_2026-04-05.md`
+- `docs/plans/ANTHROPIC_DRAFTING_SEQUENCE_SPEC_2026-03-27.md`
+- `docs/plans/CLAUDE_CODE_UI_OS_PLAN_PROMPT_2026-03-26.md`
+- `docs/plans/CMC_UI_CONVERGENCE_PLAN_2026-04-06.md`
+- `docs/plans/DOCUMENT_SYSTEM_CONVERGENCE_DECISIONS_2026-03-27.md`
+- `docs/plans/FINAL_DOCUMENT_WORKFLOW_ARCHITECTURE_DIRECTIVE_2026-03-27.md`
+- `docs/plans/NEXT_WEEK_ANA_EXPERIENCE_ABILITY_LOCK_2026-03-28.md`
+- `docs/plans/NEXT_WEEK_ANA_EXPERIENCE_ABILITY_LOCK_PLUS_2026-03-28.md`
+- `docs/plans/NEXT_WEEK_ARTOS_COMPARATOR_LOCK_2026-03-28.md`
+- `docs/plans/NEXT_WEEK_WEAVE_PARITY_LOCK_2026-03-28.md`
+- `docs/plans/REPORT_OS_ARCHITECTURE_AND_IMPLEMENTATION_SLICE_2026-03-30.md`
+- `docs/plans/UI_OS_MASTER_IMPLEMENTATION_PLAN_2026-03-26.md`
+- `docs/proof/ACTIVE_PROJECT_ENFORCEMENT.md`
+- `docs/proof/ANA-SINGLE-BRAIN-PROOF-2026-03-30.md`
+- `docs/proof/ANA_BENCHMARK_RESULTS_2026-03-29.md`
+- `docs/proof/ANA_TRANSCRIPT_PROOF_2026-03-29.md`
+- `docs/proof/AUTH_DEBLOAT_REPORT.md`
+- `docs/proof/AUTH_FIRST_SCREEN_PROOF.md`
+- `docs/proof/AUTH_SURFACE_INVENTORY.md`
+- `docs/proof/BASELINE_TRUTH_REPORT.md`
+- `docs/proof/BETA_EXPOSURE_POLICY.md`
+- `docs/proof/BETA_LAUNCH_LANE_PROOF.md`
+- `docs/proof/BIOTECH_HERO_PATH_COMPRESSION_PROOF.md`
+- `docs/proof/BOULDER_TO_STATUE_PROOF.md`
+- `docs/proof/CANVAS_BASELINE_VALIDATION.md`
+- `docs/proof/CMC_DIRECT_OPEN_RUNTIME_PROOF.md`
+- `docs/proof/CMC_TO_GOVERNED_ARTIFACT_AUDIT.md`
+- `docs/proof/COMPUTE_PRESET_CONSEQUENCE_MATRIX.md`
+- `docs/proof/DATA_AND_SYSTEM_CONTROL_PROOF.md`
+- `docs/proof/DOCUMENT_FOCUS_VIEW_REFACTOR.md`
+- `docs/proof/DOCUMENT_HANDOFF_TRUTH_TABLE.md`
+- `docs/proof/DOCUMENT_LOOP_PROOF.md`
+- `docs/proof/EXISTING_CANVAS_VALIDATION.md`
+- `docs/proof/GUIDED_DEMO_CHECKLIST.md`
+- `docs/proof/HARNESS_BASELINE_RECON_2026-04-01.md`
+- `docs/proof/HARNESS_DOCUMENT_LOOP_PROOF_2026-04-01.md`
+- `docs/proof/HUMAN_BETA_TEST_SCRIPT.md`
+- `docs/proof/IND_DRAFT_TO_ARTIFACT_PROOF.md`
+- `docs/proof/LUMEN_CORTEX_POSITIONING_DECISION.md`
+- `docs/proof/OPTIMIZATION_BASELINE_AND_RESULTS.md`
+- `docs/proof/PHASE2_DOSSIER_DISCOVERY.md`
+- `docs/proof/PHASE2_DOSSIER_WORKSPACE_ACCEPTANCE.md`
+- `docs/proof/PHASE3_DOCUMENT_TREE_AND_PLACEMENT.md`
+- `docs/proof/PHASE4_PROGRAM_TWIN_AND_SUBMISSION_APPS.md`
+- `docs/proof/PHASE4_RUNTIME_ACCEPTANCE.md`
+- `docs/proof/PHASE4_TRANSFORM_CANVAS_AND_VERIFICATION.md`
+- `docs/proof/RC_BETA_CANDIDATE_PROOF.md`
+- `docs/proof/RC_BETA_PROOF_PACK.md`
+- `docs/proof/RC_SEED_CATALOG.md`
+- `docs/proof/RECOVERY_BRANCH_TRUTH_PROOF.md`
+- `docs/proof/SHELL_COMPUTE_CONVERGENCE_PROOF.md`
+- `docs/proof/SIGNUP_DEBLOAT_REPORT.md`
+- `docs/proof/SIGNUP_SURFACE_INVENTORY.md`
+- `docs/proof/STAGE8_CONVERGENCE_DECISION_PACK.md`
+- `docs/proof/STAGE8_GA_READINESS_SCORECARD.md`
+- `docs/proof/UI_CSS_STABILIZATION_SPRINT.md`
+- `docs/proof/UI_TRUTH_TABLE.md`
+- `docs/proof/WORKSPACE_COMPOSITION_TRUTH_TABLE.md`
+- `docs/proof/approved-route-policy-proof.md`
+- `docs/proof/build-order-10-founder-critical-path-proof.md`
+- `docs/proof/build-order-11-production-stability-proof.md`
+- `docs/proof/build-order-12-production-readiness-proof.md`
+- `docs/proof/build-order-13-ops-hardening-proof.md`
+- `docs/proof/build-order-14-governed-export-and-ops-proof.md`
+- `docs/proof/build-order-15-workspace-operating-surface-proof.md`
+- `docs/proof/build-order-16-workspace-truth-proof.md`
+- `docs/proof/build-order-17-governance-action-wiring-proof.md`
+- `docs/proof/build-order-18-workspace-governance-propagation-proof.md`
+- `docs/proof/build-order-19-governance-detail-unification-proof.md`
+- `docs/proof/build-order-20-workflow-gating-proof.md`
+- `docs/proof/build-order-21-workflow-transition-enforcement-proof.md`
+- `docs/proof/build-order-22-declarative-navigation-proof.md`
+- `docs/proof/build-order-23-nav-source-governance-activation-proof.md`
+- `docs/proof/build-order-24-topbar-governance-proof.md`
+- `docs/proof/build-order-9-lean-core-production-hardening-proof.md`
+- `docs/proof/desktop-1366x768.png`
+- `docs/proof/desktop-1440x900.png`
+- `docs/proof/external-testing-mode-proof.md`
+- `docs/proof/founder-proof-path.md`
+- `docs/proof/governed-consequence-hardening.md`
+- `docs/proof/governed-document-decision-fabric-proof-v1.md`
+- `docs/proof/mobile-375x812.png`
+- `docs/proof/phase2-build-order-2-completion-proof.md`
+- `docs/proof/phase2-build-order-2-fabric-loop-proof.md`
+- `docs/proof/phase2-build-order-3-finalization-proof.md`
+- `docs/proof/workflow-state-normalization.md`
+- `docs/proofs/session-a-proof-2026-03-30.md`
+- `docs/proofs/session-b-proof-2026-03-30.md`
+- `docs/qa/PRESSURE_TEST_510K_DEVICE_2026-03-27.md`
+- `docs/qa/PRESSURE_TEST_BIOSTATISTICIAN_2026-03-27.md`
+- `docs/qa/PRESSURE_TEST_CER_EU_MDR_2026-03-27.md`
+- `docs/qa/PRESSURE_TEST_IND_RA_LEAD_2026-03-27.md`
+- `docs/qa/PRESSURE_TEST_UI_UX_QUALITY_2026-03-27.md`
+- `docs/release/evidence/reasoning-tier-uat/cycle-sample/2026-03-27_uat-09_run-01.md`
+- `docs/remediation-trust-hardening-report-2026-04-01.md`
+- `docs/reports/ANA_CONTEXT_AWARENESS_FIXES_2026-04-27.md`
+- `docs/reports/ANA_CORE_STRENGTHENING_AUDIT_2026-03-29.md`
+- `docs/reports/ANA_DIAGNOSIS_REPORT_2026-04-27.md`
+- `docs/reports/ANA_INTELLIGENCE_APP_CONTROL_AUDIT_2026-03-28.md`
+- `docs/reports/ANA_LATENCY_FIXES_2026-04-27.md`
+- `docs/reports/ANA_MDX_EXPLAINER_LAYER_2026-05-01.md`
+- `docs/reports/ANA_MDX_TOOL_LAYER_2026-05-01.md`
+- `docs/reports/ANA_PROJECTS_MODULE_REMEDIATION_CHECKLIST_2026-04-01.md`
+- `docs/reports/ANA_UI_VALIDATION_REPORT_2026-04-05.md`
+- `docs/reports/ARTOS_PARITY_ASSESSMENT_2026-03-29.md`
+- `docs/reports/BETA_AGENT_SWARM_TELEMETRY_2026-04-01.md`
+- `docs/reports/BETA_CANDIDATE_VALIDATION_2026-03-27.md`
+- `docs/reports/BETA_OPERATOR_CHECKLIST_2026-03-27.md`
+- `docs/reports/BETA_PROOF_PACKAGE_2026-03-27.md`
+- `docs/reports/BETA_SCREENSHOT_CHECKLIST_2026-03-27.md`
+- `docs/reports/CLAUDE_DESIGN_KIT_BRIEFS_2026-05-01.md`
+- `docs/reports/CLAUDE_PARITY_AUDIT_2026-03-27.md`
+- `docs/reports/CLICK_THROUGH_TEST_REPORT_2026-03-30.md`
+- `docs/reports/CODEBASE_ARCHITECTURE_REVIEW_2026-05-06.md`
+- `docs/reports/CODEBASE_RESTRUCTURING_MASTER_PLAN_2026-04-04.md`
+- `docs/reports/CODEBASE_SURGICAL_AUDIT_2026-04-05.md`
+- `docs/reports/COMPETITIVE_CLICK_THROUGH_EVALUATION_2026-03-27.md`
+- `docs/reports/COMPLETE_BUILD_SUMMARY_2026-03-28.md`
+- `docs/reports/CONTROLLED_BETA_FREEZE_2026-03-27.md`
+- `docs/reports/CONTROLLED_BETA_LAUNCH_READINESS_2026-03-27.md`
+- `docs/reports/CROSS_PR_INTEGRATION_MATRIX_2026-04-01.md`
+- `docs/reports/DESIGN_BRIDGE_PROPOSAL_2026-05-01.md`
+- `docs/reports/DOCUMENT_ASSEMBLY_BUILD_PLANS_2026-04-27.md`
+- `docs/reports/DOCUMENT_ASSEMBLY_ECTD_BIOTECH_AUDIT_2026-04-27.md`
+- `docs/reports/DOCUMENT_ASSEMBLY_VERIFICATION_2026-04-27.md`
+- `docs/reports/DOCUMENT_EDITING_GAP_ANALYSIS_VS_WEAVE_ARTOS_2026-03-29.md`
+- `docs/reports/DOCUMENT_SYSTEM_FINAL_VALIDATION_2026-03-27.md`
+- `docs/reports/FIX_ALL_SWEEP_2026-04-27.md`
+- `docs/reports/GA_READINESS_AUDIT_2026-03-27.md`
+- `docs/reports/GA_READINESS_VERIFICATION_2026-03-27.md`
+- `docs/reports/GA_VALIDATION_REPORT_2026-03-29.md`
+- `docs/reports/MDX_AUDIT_AND_FIX_PASS_2026-05-01.md`
+- `docs/reports/MDX_BETA_AUDIT_2026-05-01.md`
+- `docs/reports/MDX_BRIEF2_AI_LETTER_BACKEND_SPEC_2026-05-01.md`
+- `docs/reports/MDX_BRIEF8_PREFLIGHT_BACKEND_SPEC_2026-05-01.md`
+- `docs/reports/MDX_UAT_REPORT_2026-05-01.md`
+- `docs/reports/POST_PHASE7_UI_COHERENCE_AUDIT_2026-03-27.md`
+- `docs/reports/PRODUCT_CAPABILITY_MAP_2026-04-05.md`
+- `docs/reports/PROJECTS_CONTEXT_ISOLATION_AUDIT_2026-04-22.md`
+- `docs/reports/PR_ACTIVITY_AUDIT_2026-04-04.md`
+- `docs/reports/QA_AUDIT_UI_OS_RESTRUCTURE_2026-03-27.md`
+- `docs/reports/QA_PROOF_AUDIT_2026-04-01.md`
+- `docs/reports/SECURITY_AUDIT_PR338-356_2026-04-02.md`
+- `docs/reports/SHELL_MIGRATION_ANALYSIS_2026-05-01.md`
+- `docs/reports/SHIPPING_GATE_REPORT_2026-04-05.md`
+- `docs/reports/SONARQUBE_GATE_TRIAGE_2026-03-26.md`
+- `docs/reports/SWARM_AUDIT_AND_NEXT_STEPS_2026-04-01.md`
+- `docs/reports/UI_DESIGN_PRINCIPLES_AUDIT_2026-03-29.md`
+- `docs/reports/UI_MIGRATION_MAP_2026-05-01.md`
+- `docs/reports/VERIFICATION_PROOF_REPORT_2026-03-30.md`
+- `docs/reports/WEAVE_PARITY_COMPLETE_GAP_REPORT_2026-03-29.md`
+- `docs/reports/WEAVE_PARITY_GAP_ANALYSIS_2026-03-28.md`
+- `docs/reports/ana-document-generation-tool-gaps-2026-04-27.md`
+- `docs/reports/ana-intelligence-import-audit-2026-03-29.md`
+- `docs/reports/ana-responsiveness-audit-2026-04-22.md`
+- `docs/reports/ana-tool-gaps-2026-04-27.md`
+- `docs/reports/apps-convergence-proof-2026-04-06.md`
+- `docs/reports/apps-expansion-2026-04-14.md`
+- `docs/reports/architecture-optimization-2026-04-26.md`
+- `docs/reports/audit-ui-chatfirst-2026-03-25.md`
+- `docs/reports/backend-ui-gap-analysis-2026-04-02.md`
+- `docs/reports/beta-readiness-audit-2026-03-25.md`
+- `docs/reports/beta-readiness-audit-2026-03-30.md`
+- `docs/reports/beta-readiness-full-2026-03-25.md`
+- `docs/reports/biostats-sap-capability-gap-2026-03-25.md`
+- `docs/reports/branch-cleanup-proof-2026-04-27.md`
+- `docs/reports/branch-divergence-audit-2026-04-27.md`
+- `docs/reports/branch-divergence-resolution-2026-04-26.md`
+- `docs/reports/broadened-codebase-audit-2026-04-02.md`
+- `docs/reports/broken-imports-audit-2026-04-05.md`
+- `docs/reports/browse-all-capabilities-2026-04-14.md`
+- `docs/reports/build-config-audit-2026-03-30.md`
+- `docs/reports/capability-surface-audit-2026-04-14.md`
+- `docs/reports/claude-projects-redesign-plan-2026-03-25.md`
+- `docs/reports/claude-ui-design-audit-2026-03-29.md`
+- `docs/reports/claude-ui-northstar-execution-checklist-2026-03-31.md`
+- `docs/reports/claude-ui-northstar-gap-assessment-2026-03-31.md`
+- `docs/reports/client-intelligence-route-audit-2026-03-29.md`
+- `docs/reports/cmc-app-audit-2026-04-06.md`
+- `docs/reports/cmc-write-through-convergence-proof-2026-04-06.md`
+- `docs/reports/code-quality-audit-2026-05-07.md`
+- `docs/reports/codex-4e0fea2f-deferred-review-2026-04-27.md`
+- `docs/reports/codex-value-extraction-2026-04-27.md`
+- `docs/reports/db-query-layer-performance-audit-2026-03-31.md`
+- `docs/reports/dead-code-audit-client-2026-04-01.md`
+- `docs/reports/dead-route-files-audit-2026-04-01.md`
+- `docs/reports/deleted-files-import-audit-2026-04-05.md`
+- `docs/reports/device-diagnostics-beta-2026-04-17.md`
+- `docs/reports/device-diagnostics-beta-final-2026-04-17.md`
+- `docs/reports/editor-experience-audit-2026-03-29.md`
+- `docs/reports/editor-features-verification-2026-03-29.md`
+- `docs/reports/editor-parity-rack-and-stack-2026-03-30.md`
+- `docs/reports/evidence-pack-2026-05-07.md`
+- `docs/reports/frontend-component-audit-2026-03-30.md`
+- `docs/reports/full-pipeline-audit-2026-03-27.md`
+- `docs/reports/ga-readiness-audit-2026-03-29.md`
+- `docs/reports/ga-readiness-audit-document-system-sprint-2026-03-27.md`
+- `docs/reports/harness-feature-audit-and-next-steps-2026-04-01.md`
+- `docs/reports/home-reference-parity-2026-04-14.md`
+- `docs/reports/intelligence-components-review-2026-03-29.md`
+- `docs/reports/launch-truth-track-2026-03-26.md`
+- `docs/reports/medical-device-workflow-audit-2026-04-06.md`
+- `docs/reports/middleware-stack-performance-audit-2026-03-31.md`
+- `docs/reports/module3-workflow-convergence-proof-2026-04-06.md`
+- `docs/reports/platform-full-audit-2026-04-01.md`
+- `docs/reports/pr-audit-344-356-multi-agent-2026-04-02.md`
+- `docs/reports/project-charter-architecture-study-2026-03-27.md`
+- `docs/reports/project-status-assessment-2026-03-28.md`
+- `docs/reports/projects-redesign-report-2026-03-25.md`
+- `docs/reports/qa-combined-2026-03-25.md`
+- `docs/reports/react-client-performance-audit-2026-03-31.md`
+- `docs/reports/reporting-compliance-module-inventory-audit-2026-04-09.md`
+- `docs/reports/screen-flow-map-and-improvements-2026-03-28.md`
+- `docs/reports/server-routes-audit-2026-03-30.md`
+- `docs/reports/server-routes-bootstrap-audit-2026-04-02.md`
+- `docs/reports/sme-audit-project-charter-2026-03-27.md`
+- `docs/reports/top-level-ui-audit-biostats-2026-03-25.md`
+- `docs/reports/ui-authority-audit-2026-04-05.md`
+- `docs/reports/ui-convergence-proof-2026-04-05.md`
+- `docs/reports/ui-convergence-proof-2026-04-14.md`
+- `docs/reports/ui-convergence-proof-2026-04-22.md`
+- `docs/reports/ui-state-governance-audit-2026-03-24.md`
+- `docs/reports/ui-visual-quality-audit-2026-04-06.md`
+- `docs/reports/weave-bio-capabilities-2026-03-29.md`
+- `docs/reports/weave-bio-competitive-analysis.md`
+- `docs/reports/weave-bio-competitive-research-2026-03-29.md`
+- `docs/reports/weave-bio-comprehensive-research-2026-03-29.md`
+- `docs/reports/weave-bio-document-editor-research-2026-03-28.md`
+- `docs/reports/weave-bio-feature-inventory-2026-03-29.md`
+- `docs/reports/weave-parity-honest-assessment-2026-03-29.md`
+- `docs/reports/weave-parity-updated-2026-03-29.md`
+- `docs/reports/wo1-sidebar-parity-proof-2026-04-06.md`
+- `docs/reports/wo2-home-canvas-proof-2026-04-06.md`
+- `docs/reports/wo2-projects-parity-proof-2026-04-06.md`
+- `docs/reports/wo3-apps-directory-proof-2026-04-06.md`
+- `docs/reports/wo3-visual-polish-proof-2026-04-06.md`
+- `docs/reports/wo4-customize-proof-2026-04-06.md`
+- `docs/reports/wo5-final-audit-proof-2026-04-06.md`
