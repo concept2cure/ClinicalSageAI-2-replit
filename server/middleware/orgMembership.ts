@@ -20,8 +20,8 @@
  *   - positive AND negative results are cached (~60s) so the DB sees at most one
  *     membership lookup per user:org per minute per process;
  *   - membership row gone → 403 (fail-closed);
- *   - DB unavailable / query error → structured warning + fail-open on the JWT
- *     claims (an infra blip must not take the whole API down).
+ *   - DB unavailable / query error → 503 (fail-closed; membership cannot be
+ *     proven, so tenant access is not granted).
  * Mutation sites (invite / remove / role change) call invalidateOrgMembershipCache
  * so revocation takes effect immediately on the mutating instance; other
  * instances converge within the cache TTL.
@@ -31,6 +31,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
+import { runWithTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('auth-middleware');
 
@@ -108,31 +109,37 @@ async function queryOrgMembership(
     const organizationUsers = (schemaModule as { organizationUsers?: any }).organizationUsers;
     if (!db || typeof db.select !== 'function' || !organizationUsers) {
       logger.warn(
-        'Org membership re-check unavailable (db not initialized) — allowing on JWT claims (fail-open)',
+        'Org membership re-check unavailable (db not initialized) — tenant access will be refused',
         { userId, organizationId }
       );
       return 'indeterminate';
     }
-    const rows = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(
-        drizzle.and(
-          drizzle.eq(organizationUsers.userId, userId),
-          drizzle.eq(organizationUsers.organizationId, organizationId)
-        )
-      )
-      .limit(1);
+    const rows = await runWithTenantScope(
+      {
+        tenantId: String(organizationId),
+        role: null,
+        source: 'request',
+        caller: 'org-membership-bootstrap',
+      },
+      () =>
+        db
+          .select({ role: organizationUsers.role })
+          .from(organizationUsers)
+          .where(
+            drizzle.and(
+              drizzle.eq(organizationUsers.userId, userId),
+              drizzle.eq(organizationUsers.organizationId, organizationId)
+            )
+          )
+          .limit(1)
+    );
     return rows.length > 0 ? 'member' : 'revoked';
   } catch (error) {
-    logger.warn(
-      'Org membership re-check failed — allowing on JWT claims (fail-open)',
-      {
-        userId,
-        organizationId,
-        error: error instanceof Error ? error.message : String(error),
-      }
-    );
+    logger.warn('Org membership re-check failed — tenant access will be refused', {
+      userId,
+      organizationId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return 'indeterminate';
   }
 }
@@ -149,6 +156,12 @@ function cacheMembership(key: string, isMember: boolean): void {
 function sendMembershipRevoked(res: Response): Response {
   return res.status(403).json({
     error: { code: 'AUTH_009', message: 'Organization membership revoked or not found' },
+  });
+}
+
+function sendMembershipIndeterminate(res: Response): Response {
+  return res.status(503).json({
+    error: { code: 'AUTH_010', message: 'Organization membership could not be verified' },
   });
 }
 
@@ -181,9 +194,10 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
   void queryOrgMembership(userId, organizationId)
     .then(result => {
       if (result === 'indeterminate') {
-        // Warning already logged in queryOrgMembership. Not cached — retry
-        // on the next request so a recovered DB restores enforcement fast.
-        next();
+        // Warning already logged in queryOrgMembership. Not cached, so the next
+        // request retries immediately after recovery. Never authorize a tenant
+        // request whose current membership cannot be proven.
+        sendMembershipIndeterminate(res);
         return;
       }
       cacheMembership(key, result === 'member');
@@ -198,13 +212,12 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
       sendMembershipRevoked(res);
     })
     .catch(error => {
-      // Belt-and-braces: queryOrgMembership already fails open internally.
-      logger.warn('Org membership re-check crashed — allowing on JWT claims (fail-open)', {
+      logger.warn('Org membership re-check crashed — refusing tenant access', {
         userId,
         organizationId,
         error: error instanceof Error ? error.message : String(error),
       });
-      next();
+      sendMembershipIndeterminate(res);
     });
 }
 
@@ -237,11 +250,8 @@ export function peekOrgMembership(userId: number, organizationId: number): boole
  * cached — the caller decides what an unverifiable membership means, and the
  * next check should get a real answer as soon as the database recovers.
  *
- * Callers differ on purpose. HTTP treats 'indeterminate' as allow (an infra
- * blip must not take the whole API down, and the handler behind it still
- * applies its own tenant filters). The collaboration socket treats it as
- * refuse, because a socket that opens has unmediated read and write access to
- * a document's full CRDT state with no downstream guard behind it.
+ * All tenant-bearing callers must refuse `indeterminate`. A signed JWT proves
+ * token issuance, not current organization membership.
  */
 export async function checkOrgMembership(
   userId: number,

@@ -209,11 +209,7 @@ export const securityHeaders = config.isDevelopment
           // Runtime <style> injection from Tiptap/Radix is auto-nonced by
           // the boot-time createElement patch in client/src/cspNonce.ts.
           // Google Fonts stylesheet is loaded via <link> from index.html.
-          styleSrcElem: [
-            "'self'",
-            scriptSrcDirective,
-            'https://fonts.googleapis.com',
-          ],
+          styleSrcElem: ["'self'", scriptSrcDirective, 'https://fonts.googleapis.com'],
           styleSrcAttr: ["'unsafe-inline'"],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           // imgSrc deliberately allows any https: origin. The app renders
@@ -283,10 +279,7 @@ export function permissionsPolicy(_req: Request, res: Response, next: NextFuncti
   // `report-to <group>` directive resolves to this URL. Browsers that
   // understand this header use it; older ones fall back to `report-uri`.
   // Single quoted-string form per spec.
-  res.setHeader(
-    'Reporting-Endpoints',
-    `${CSP_REPORT_TO_GROUP}="${CSP_REPORT_URI}"`,
-  );
+  res.setHeader('Reporting-Endpoints', `${CSP_REPORT_TO_GROUP}="${CSP_REPORT_URI}"`);
 
   res.setHeader(
     'Permissions-Policy',
@@ -316,7 +309,7 @@ export function permissionsPolicy(_req: Request, res: Response, next: NextFuncti
       'usb=()',
       'web-share=()',
       'xr-spatial-tracking=()',
-    ].join(', '),
+    ].join(', ')
   );
   next();
 }
@@ -640,8 +633,8 @@ export function auditLog(req: Request, res: Response, next: NextFunction) {
     typeof existingId === 'string' && existingId.length > 0
       ? existingId
       : isValidClientRequestId(supplied)
-        ? supplied
-        : randomBytes(16).toString('hex');
+      ? supplied
+      : randomBytes(16).toString('hex');
 
   // Add request ID to response headers
   res.setHeader('X-Request-Id', requestId);
@@ -700,8 +693,19 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 
   // Validate against API key service (database lookup)
   try {
-    const { validateApiKey: validateKey } = await import('../services/api-key-service.js');
-    const result = await validateKey(apiKey);
+    const [{ validateApiKey: validateKey }, { runWithTenantScope }] = await Promise.all([
+      import('../services/api-key-service.js'),
+      import('../db/tenantStore'),
+    ]);
+    const result = await runWithTenantScope(
+      {
+        tenantId: '0',
+        role: 'app_super_admin',
+        source: 'request',
+        caller: 'api-key-resolution',
+      },
+      () => validateKey(apiKey)
+    );
 
     if (!result.valid) {
       return res.status(401).json({
@@ -716,6 +720,16 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
     (req as any).tenantId = result.organizationId;
     (req as any).apiScopes = result.scopes;
     (req as any).apiRateLimit = result.rateLimit;
+
+    return runWithTenantScope(
+      {
+        tenantId: String(result.organizationId),
+        role: 'api_key',
+        source: 'request',
+        caller: req.path,
+      },
+      next
+    );
   } catch (error) {
     // Fail closed: the client presented an API key but the key store could
     // not validate it (service error / table missing). Falling through here
@@ -726,8 +740,6 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
       code: 'API_KEY_SERVICE_UNAVAILABLE',
     });
   }
-
-  next();
 }
 
 // ============================================================================
@@ -838,11 +850,7 @@ export function requireJwtSecret(): void {
  * import of auditService keeps boot fast and avoids a cycle between
  * security middleware and the service that depends on the DB pool.
  */
-function auditSecurityEvent(
-  req: Request,
-  action: string,
-  details: Record<string, unknown>,
-): void {
+function auditSecurityEvent(req: Request, action: string, details: Record<string, unknown>): void {
   (async () => {
     try {
       const { default: auditService } = await import('../services/auditService');
@@ -897,7 +905,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
       reason: 'no_origin_no_referer_no_bearer',
       method: req.method,
     });
-     
+
     console.warn(
       `[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`
     );
@@ -913,7 +921,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
       method: req.method,
       origin: source,
     });
-     
+
     console.warn(
       `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
     );

@@ -21,6 +21,7 @@
 import cron from 'node-cron';
 import { runExternalIntelligenceSweep } from '../services/external-intelligence/index.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('external-intel-sweep');
 
@@ -41,9 +42,9 @@ export function startExternalIntelligenceSchedule(): void {
   const expr = process.env.EXTERNAL_INTELLIGENCE_CRON || '0 1 * * *';
   try {
     cron.schedule(expr, () => {
-      void runExternalIntelligenceSweep().catch(err =>
-        logger.error(`External intelligence sweep crashed: ${err?.message}`)
-      );
+      void runWithSystemTenantScope('external-intelligence-sweep', () =>
+        runExternalIntelligenceSweep()
+      ).catch(err => logger.error(`External intelligence sweep crashed: ${err?.message}`));
     });
     logger.info(`External intelligence sweep scheduled (${expr})`, {
       enabled: true,

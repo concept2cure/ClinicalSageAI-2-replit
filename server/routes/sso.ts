@@ -8,14 +8,25 @@ import { eq } from 'drizzle-orm';
 import { users, organizationUsers, organizations } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
-import {
-  getSamlProvider,
-  SAMLValidationError,
-  type SAMLConfig,
-} from '../services/saml-provider';
+import { getSamlProvider, SAMLValidationError, type SAMLConfig } from '../services/saml-provider';
+import { runWithTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('sso');
 const router = Router();
+// SSO resolves the tenant from a signed SAML response before a JWT tenant scope
+// exists. Use the explicit system identity only for this pre-tenant router;
+// individual callbacks still validate the IdP signature and organization.
+router.use((req, _res, next) =>
+  runWithTenantScope(
+    {
+      tenantId: '0',
+      role: 'app_super_admin',
+      source: 'request',
+      caller: `sso-pretenant:${req.path}`,
+    },
+    next
+  )
+);
 const isDev = process.env.NODE_ENV === 'development';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -425,7 +436,11 @@ router.get('/saml/logout', async (req: Request, res: Response) => {
     const sessionIndex = claims.sessionIndex;
     const email = claims.email;
     // Only federated (SAML) sessions have an IdP session to terminate.
-    if (claims.provider !== 'saml' || typeof sessionIndex !== 'string' || typeof email !== 'string') {
+    if (
+      claims.provider !== 'saml' ||
+      typeof sessionIndex !== 'string' ||
+      typeof email !== 'string'
+    ) {
       return res.redirect(302, loginUrl);
     }
 
@@ -662,7 +677,6 @@ async function findOrCreateSamlUser(
   // login (configOrgId), resolved from the callback's orgSlug — never a
   // hardcoded org 1.
   try {
-
     await (db.insert(organizationUsers) as any).values({
       userId: newUser.id,
       organizationId: configOrgId,

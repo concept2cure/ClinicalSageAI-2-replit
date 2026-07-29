@@ -36,6 +36,10 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { authenticateToken } from './auth';
 import { createScopedLogger } from '../utils/logger';
+import { readEnforcementMode } from '../db/rlsEnforcement';
+import { runWithTenantScope } from '../db/tenantStore';
+import { getPool } from '../db/runtime';
+import { LazyRequestDbClient } from './lazyRequestDbClient';
 
 const defaultLogger = createScopedLogger('auth-boundary');
 
@@ -132,6 +136,77 @@ interface AuthBoundaryOptions {
   authenticate?: RequestHandler;
   /** Override the logger (tests). */
   logger?: Pick<ReturnType<typeof createScopedLogger>, 'warn'>;
+  /** Override tenant-envelope installation (tests). */
+  establishTenantContext?: (req: Request, res: Response, next: NextFunction) => void;
+}
+
+function positiveIntegerClaim(value: unknown): string | null {
+  const normalized = typeof value === 'number' ? String(value) : value;
+  if (typeof normalized !== 'string' || !/^[1-9]\d*$/.test(normalized)) return null;
+  return Number.isSafeInteger(Number(normalized)) ? normalized : null;
+}
+
+/**
+ * Install the tenant execution envelope once canonical JWT authentication and
+ * live membership verification have succeeded. This is the global adoption
+ * point for protected `/api` routes; individual route files do not need to
+ * recreate pool/session setup.
+ */
+function continueWithTenantExecutionContext(req: Request, res: Response, next: NextFunction): void {
+  if (readEnforcementMode() !== 'on') {
+    next();
+    return;
+  }
+
+  const tenantId = positiveIntegerClaim(req.user?.organizationId);
+  const userId = positiveIntegerClaim(req.user?.userId ?? req.user?.id);
+  if (!tenantId || !userId) {
+    res.status(401).json({
+      error: { code: 'AUTH_011', message: 'Authenticated request is missing tenant context' },
+    });
+    return;
+  }
+
+  const role = req.user?.role ?? null;
+  req.userId = userId;
+  req.tenantId = tenantId;
+  req.userRole = role ?? undefined;
+  req.tenantContext = {
+    ...(req.tenantContext ?? {}),
+    organizationId: tenantId,
+    userId,
+    role,
+  };
+
+  const lazy = new LazyRequestDbClient(getPool(), async client => {
+    await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [tenantId]);
+    await client.query("SELECT set_config('app.current_user_role', $1, false)", [role ?? '']);
+    await client.query("SELECT set_config('app.current_org_id', $1, false)", [
+      req.tenantContext?.organizationUuid ?? '',
+    ]);
+  });
+  req.dbClient = lazy;
+
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    req.dbClient = null;
+    void lazy.release();
+  };
+  res.once('finish', release);
+  res.once('close', release);
+
+  runWithTenantScope(
+    {
+      tenantId,
+      orgUuid: req.tenantContext.organizationUuid ?? null,
+      role,
+      source: 'request',
+      caller: req.path,
+    },
+    next
+  );
 }
 
 /** Cap on the warn-once dedup set so unbounded path cardinality (ids in
@@ -145,6 +220,8 @@ const WARN_DEDUP_MAX_ENTRIES = 5_000;
 export function createAuthBoundary(options: AuthBoundaryOptions = {}): RequestHandler {
   const authenticate = options.authenticate ?? authenticateToken;
   const logger = options.logger ?? defaultLogger;
+  const establishTenantContext =
+    options.establishTenantContext ?? continueWithTenantExecutionContext;
   const warnedRoutes = new Set<string>();
 
   return function authBoundary(req: Request, res: Response, next: NextFunction) {
@@ -158,14 +235,14 @@ export function createAuthBoundary(options: AuthBoundaryOptions = {}): RequestHa
     // an auth adapter that populated req.user). authenticateToken always
     // re-verifies the Authorization header, so skipping here both avoids the
     // duplicate verification cost and keeps the boundary idempotent.
-    if (req.user) return next();
+    if (req.user) return establishTenantContext(req, res, next);
 
     const mode = resolveAuthBoundaryMode();
 
     if (mode === 'enforce') {
       // Delegate the failure response to the canonical middleware so the
       // 401 body is the repo-standard { error: { code, message } } shape.
-      return authenticate(req, res, next);
+      return authenticate(req, res, () => establishTenantContext(req, res, next));
     }
 
     // Warn mode: run the same authenticator, but swallow its rejection —

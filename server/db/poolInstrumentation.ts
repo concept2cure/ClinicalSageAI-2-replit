@@ -39,17 +39,11 @@ const INFRASTRUCTURE_QUERIES = new Set<string>([
   "SELECT set_config('app.current_tenant_id', '', false)",
   "SELECT set_config('app.current_user_role', '', false)",
   "SELECT set_config('app.current_org_id', '', false)",
-  'BEGIN',
-  'COMMIT',
-  'ROLLBACK',
 ]);
 
 function isInfrastructureQuery(text: string | undefined): boolean {
   if (!text) return false;
   if (INFRASTRUCTURE_QUERIES.has(text)) return true;
-  // Tenant-context bootstrap calls — these run BEFORE the scope is in place
-  // by definition.
-  if (text.startsWith("SELECT set_config('app.current_")) return true;
   return false;
 }
 
@@ -82,10 +76,15 @@ function recordCheck(op: 'pool.query' | 'pool.connect', queryText: string | unde
   const lastWarn = lastWarnedByCaller.get(caller) ?? 0;
   if (now - lastWarn >= WARN_RATE_LIMIT_MS) {
     lastWarnedByCaller.set(caller, now);
-    logger.warn('Query issued without tenant scope (will return zero rows once RLS is enabled)', {
+    const enforcement = readEnforcementMode();
+    logger.warn(
+      enforcement === 'on'
+        ? 'Database operation blocked because tenant scope is missing'
+        : 'Query issued without tenant scope (will be blocked once RLS is enabled)', {
       op,
       caller,
       queryPreview: queryText ? shortenQueryForLog(queryText) : undefined,
+      enforcement,
     });
   }
 }
@@ -153,6 +152,12 @@ function enforcingScope(queryText: string | undefined): TenantScope | null {
   return getTenantScope() ?? null;
 }
 
+function missingTenantScopeError(op: 'pool.query' | 'pool.connect'): Error {
+  return new Error(
+    `[tenant-rls] FAIL-CLOSED: ${op} requires an active tenant scope while RLS_ENFORCE=on`
+  );
+}
+
 /**
  * Run a single pooled statement inside a micro-transaction that first applies
  * the tenant vars LOCAL. Used for the `pool.query` path (drizzle's
@@ -164,6 +169,7 @@ async function runQueryScoped(
   args: any[],
 ): Promise<QueryResult> {
   const client = (await (originalConnect as any)()) as PoolClient;
+  let releaseError: Error | undefined;
   try {
     await client.query('BEGIN');
     await client.query(TENANT_SET_CONFIG_SQL, scopeParams(scope));
@@ -173,12 +179,17 @@ async function runQueryScoped(
   } catch (err) {
     try {
       await client.query('ROLLBACK');
-    } catch {
-      /* connection may already be broken; release discards it */
+    } catch (rollbackError) {
+      // pg only destroys a checked-out connection when release receives an
+      // error. A bare release would recycle a connection whose transaction and
+      // tenant-local state are now unknown.
+      releaseError = rollbackError instanceof Error
+        ? rollbackError
+        : new Error('tenant-scoped rollback failed');
     }
     throw err;
   } finally {
-    client.release();
+    client.release(releaseError);
   }
 }
 
@@ -194,26 +205,94 @@ function wrapClientForScope(client: PoolClient, scope: TenantScope): PoolClient 
 
   const originalClientQuery = client.query.bind(client) as PoolClient['query'];
   const originalRelease = client.release.bind(client) as PoolClient['release'];
+  let transactionOpen = false;
+  let poisonError: Error | undefined;
 
   anyClient.query = function scopedClientQuery(...qargs: any[]): any {
     const text = extractQueryText(qargs[0]);
-    const isBegin = !!text && /^\s*BEGIN\b/i.test(text);
+    const isBegin = !!text && /^\s*(?:BEGIN|START\s+TRANSACTION)\b/i.test(text);
+    const isEnd = !!text && /^\s*(?:COMMIT|END|ROLLBACK|ABORT)\b/i.test(text);
     const hasCallback = typeof qargs[qargs.length - 1] === 'function';
-    if (!isBegin || hasCallback) {
+    if (hasCallback) {
+      const callback = qargs[qargs.length - 1] as (error: Error | null, result?: QueryResult) => void;
+      const queryArgs = qargs.slice(0, -1);
+      if (isBegin) {
+        return (originalClientQuery as any)(...queryArgs, (beginError: Error | null, result: QueryResult) => {
+          if (beginError) {
+            poisonError = beginError;
+            callback(beginError);
+            return;
+          }
+          transactionOpen = true;
+          (originalClientQuery as any)(TENANT_SET_CONFIG_SQL, scopeParams(scope)).then(
+            () => callback(null, result),
+            (error: unknown) => {
+              poisonError = error instanceof Error
+                ? error
+                : new Error('tenant context initialization failed');
+              callback(poisonError);
+            },
+          );
+        });
+      }
+      if (isEnd) {
+        return (originalClientQuery as any)(...queryArgs, (error: Error | null, result: QueryResult) => {
+          if (error) poisonError = error;
+          else transactionOpen = false;
+          callback(error, result);
+        });
+      }
       return (originalClientQuery as any)(...qargs);
     }
+
+    if (!isBegin) {
+      const result = (originalClientQuery as any)(...qargs);
+      if (!isEnd || !result || typeof result.then !== 'function') return result;
+      return result.then(
+        (value: QueryResult) => {
+          transactionOpen = false;
+          return value;
+        },
+        (error: unknown) => {
+          poisonError = error instanceof Error
+            ? error
+            : new Error('tenant-scoped transaction cleanup failed');
+          throw error;
+        },
+      );
+    }
     // Inject the LOCAL tenant vars right after BEGIN, within the transaction.
-    return (originalClientQuery as any)(...qargs).then(async (res: QueryResult) => {
-      await (originalClientQuery as any)(TENANT_SET_CONFIG_SQL, scopeParams(scope));
-      return res;
-    });
+    return (originalClientQuery as any)(...qargs).then(
+      async (res: QueryResult) => {
+        transactionOpen = true;
+        try {
+          await (originalClientQuery as any)(TENANT_SET_CONFIG_SQL, scopeParams(scope));
+          return res;
+        } catch (error) {
+          poisonError = error instanceof Error
+            ? error
+            : new Error('tenant context initialization failed');
+          throw error;
+        }
+      },
+      (error: unknown) => {
+        poisonError = error instanceof Error
+          ? error
+          : new Error('tenant-scoped transaction initialization failed');
+        throw error;
+      },
+    );
   };
 
   anyClient.release = function scopedRelease(...rargs: any[]): any {
     anyClient.query = originalClientQuery;
     anyClient.release = originalRelease;
     anyClient.__tenantScopeWrapped = false;
-    return (originalRelease as any)(...rargs);
+    const callerSignal = rargs[0] as Error | boolean | undefined;
+    const unsafeRelease = transactionOpen
+      ? new Error('tenant-scoped client released with an open transaction')
+      : undefined;
+    return (originalRelease as any)(callerSignal ?? poisonError ?? unsafeRelease);
   };
 
   return client;
@@ -238,19 +317,54 @@ export function instrumentPool(pool: Pool): Pool {
   (pool as any).query = function instrumentedQuery(...args: any[]): any {
     const queryText = extractQueryText(args[0]);
     recordCheck('pool.query', queryText);
-    // Callback-form queries are not wrapped (drizzle uses the promise form);
-    // they fall through unchanged. This is a known coverage edge documented in
-    // docs/RLS_ENFORCEMENT_BURNDOWN.md.
     const hasCallback = typeof args[args.length - 1] === 'function';
-    const scope = hasCallback ? null : enforcingScope(queryText);
+    const scope = enforcingScope(queryText);
+    if (readEnforcementMode() === 'on' && !isInfrastructureQuery(queryText) && !scope) {
+      const error = missingTenantScopeError('pool.query');
+      if (hasCallback) {
+        const callback = args[args.length - 1] as (error: Error) => void;
+        queueMicrotask(() => callback(error));
+        return undefined;
+      }
+      return Promise.reject(error);
+    }
     if (!scope) return (originalQuery as any)(...args);
+    if (hasCallback) {
+      const callback = args[args.length - 1] as (error: Error | null, result?: QueryResult) => void;
+      runQueryScoped(originalConnect, scope, args.slice(0, -1)).then(
+        result => callback(null, result),
+        error => callback(error),
+      );
+      return undefined;
+    }
     return runQueryScoped(originalConnect, scope, args);
   };
 
   (pool as any).connect = function instrumentedConnect(...args: any[]): any {
     recordCheck('pool.connect', undefined);
     const hasCallback = typeof args[args.length - 1] === 'function';
-    const scope = hasCallback ? null : enforcingScope(undefined);
+    const scope = enforcingScope(undefined);
+    if (readEnforcementMode() === 'on' && !scope) {
+      const error = missingTenantScopeError('pool.connect');
+      if (hasCallback) {
+        const callback = args[args.length - 1] as Function;
+        queueMicrotask(() => callback(error, undefined, undefined));
+        return undefined;
+      }
+      return Promise.reject(error);
+    }
+    if (scope && hasCallback) {
+      const callback = args[args.length - 1] as Function;
+      const connectArgs = args.slice(0, -1);
+      return (originalConnect as any)(...connectArgs, (error: Error | null, client: PoolClient) => {
+        if (error || !client) {
+          callback(error, client, undefined);
+          return;
+        }
+        const wrapped = wrapClientForScope(client, scope);
+        callback(null, wrapped, (releaseError?: Error | boolean) => wrapped.release(releaseError));
+      });
+    }
     const result = (originalConnect as any)(...args);
     if (!scope || !result || typeof result.then !== 'function') return result;
     return result.then((client: PoolClient) => wrapClientForScope(client, scope));

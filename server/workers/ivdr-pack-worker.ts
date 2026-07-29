@@ -26,6 +26,7 @@ import { renderIvdrPackHtml } from '../services/ivdrPackHtml';
 import { renderHtmlToPdfTracked } from '../export/renderers';
 import { putBytes, isVaultAvailable } from '../services/vaultService';
 import archiver from 'archiver';
+import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
 
 // ── Stable stringify (in-line to avoid import issues in worker context) ──────
 
@@ -528,7 +529,13 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     ]);
 
     console.log(
-      `[IVDR-PackWorker] Stored 4 artifacts in vault: manifest=${manifestVault.sha256.substring(0, 12)}… docx=${docxVault.sha256.substring(0, 12)}… pdf=${pdfVault.sha256.substring(0, 12)}… zip=${zipVault.sha256.substring(0, 12)}…`
+      `[IVDR-PackWorker] Stored 4 artifacts in vault: manifest=${manifestVault.sha256.substring(
+        0,
+        12
+      )}… docx=${docxVault.sha256.substring(0, 12)}… pdf=${pdfVault.sha256.substring(
+        0,
+        12
+      )}… zip=${zipVault.sha256.substring(0, 12)}…`
     );
 
     // ── Step 8: Update pack with vault refs, artifact hashes, warnings → promote ──
@@ -652,60 +659,72 @@ export function startPackBuildWorker(pool: Pool, intervalMs = 2000): void {
   let idleLogCounter = 0;
 
   workerTimer = setInterval(async () => {
-    try {
-      const job = await claimNextJob(pool);
-      if (!job) {
-        // Log idle state every ~60s (30 ticks at 2s interval) to avoid spam
-        idleLogCounter++;
-        if (idleLogCounter % 30 === 1) {
-          console.log('[IVDR-PackWorker] Worker running, idle — no queued jobs');
-        }
-        return;
-      }
-      idleLogCounter = 0; // reset on activity
-
-      console.log(`[IVDR-PackWorker] Processing job ${job.id} for project ${job.project_id}`);
-
+    await runWithSystemTenantScope('ivdr-pack-worker:claim', async () => {
       try {
-        const packId = await runPackBuild(pool, job);
+        const job = await claimNextJob(pool);
+        if (!job) {
+          // Log idle state every ~60s (30 ticks at 2s interval) to avoid spam
+          idleLogCounter++;
+          if (idleLogCounter % 30 === 1) {
+            console.log('[IVDR-PackWorker] Worker running, idle — no queued jobs');
+          }
+          return;
+        }
+        idleLogCounter = 0; // reset on activity
 
-        await pool.query(
-          `UPDATE ivdr_pack_build_jobs
+        console.log(`[IVDR-PackWorker] Processing job ${job.id} for project ${job.project_id}`);
+
+        await runWithTenantScope(
+          {
+            tenantId: String(job.organization_id),
+            role: null,
+            source: 'job',
+            caller: `ivdr-pack-worker:${job.id}`,
+          },
+          async () => {
+            try {
+              const packId = await runPackBuild(pool, job);
+
+              await pool.query(
+                `UPDATE ivdr_pack_build_jobs
            SET status = 'SUCCEEDED', completed_at = NOW(), output_pack_id = $2
            WHERE id = $1`,
-          [job.id, packId]
-        );
+                [job.id, packId]
+              );
 
-        console.log(`[IVDR-PackWorker] Job ${job.id} succeeded → pack ${packId}`);
-      } catch (buildError: any) {
-        const { code, label } = safePackError(buildError);
-        console.error(`[IVDR-PackWorker] Job ${job.id} failed: ${code} — ${label}`);
+              console.log(`[IVDR-PackWorker] Job ${job.id} succeeded → pack ${packId}`);
+            } catch (buildError: any) {
+              const { code, label } = safePackError(buildError);
+              console.error(`[IVDR-PackWorker] Job ${job.id} failed: ${code} — ${label}`);
 
-        await pool.query(
-          `UPDATE ivdr_pack_build_jobs
+              await pool.query(
+                `UPDATE ivdr_pack_build_jobs
            SET status = 'FAILED', completed_at = NOW(), error_code = $2, error_label = $3
            WHERE id = $1`,
-          [job.id, code, label]
-        );
+                [job.id, code, label]
+              );
 
-        await emitAudit(
-          pool,
-          job.organization_id,
-          job.project_id,
-          job.requested_by_user_id || 'system',
-          job.requested_by_user_id || 'system',
-          'PACK_BUILD_FAILED',
-          {
-            jobId: job.id,
-            errorCode: code,
-            errorLabel: label,
+              await emitAudit(
+                pool,
+                job.organization_id,
+                job.project_id,
+                job.requested_by_user_id || 'system',
+                job.requested_by_user_id || 'system',
+                'PACK_BUILD_FAILED',
+                {
+                  jobId: job.id,
+                  errorCode: code,
+                  errorLabel: label,
+                }
+              );
+            }
           }
         );
+      } catch (loopError) {
+        // Claim or outer error — log but don't crash the loop
+        console.error('[IVDR-PackWorker] Worker loop error:', loopError);
       }
-    } catch (loopError) {
-      // Claim or outer error — log but don't crash the loop
-      console.error('[IVDR-PackWorker] Worker loop error:', loopError);
-    }
+    });
   }, intervalMs);
 }
 

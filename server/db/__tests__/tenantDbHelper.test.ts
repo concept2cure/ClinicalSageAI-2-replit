@@ -6,7 +6,8 @@
  * object, so tenant filtering never engaged) or fell back to a
  * pool-bound Drizzle from `server/db`.
  *
- * After: `getDb` returns whatever `requestDb` returns. Routes that
+ * After: `getDb` returns whatever `requestDb` returns and fails closed when
+ * request tenant context is missing. Routes that
  * chain `.select().from(...).where(...)` keep working; queries now
  * route through the request-scoped client so the RLS policy and the
  * pool instrumentation see them.

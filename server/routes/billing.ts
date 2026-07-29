@@ -31,6 +31,7 @@ import {
 } from '../services/billing.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { createScopedLogger } from '../utils/logger';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('billing');
 const router = Router();
@@ -295,7 +296,9 @@ router.post('/webhooks/stripe', raw({ type: 'application/json' }), async (req: R
   }
 
   try {
-    await processWebhookEvent(event);
+    // Stripe callbacks arrive without a user JWT. Give the billing service an
+    // explicit, auditable system scope rather than relying on ambient state.
+    await runWithSystemTenantScope('stripe-webhook', () => processWebhookEvent(event));
     res.json({ received: true });
   } catch (error) {
     logger.error('Webhook processing error', {

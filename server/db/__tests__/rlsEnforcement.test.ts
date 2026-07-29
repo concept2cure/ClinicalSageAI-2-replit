@@ -63,6 +63,15 @@ describe('assertRlsEnforcementForProduction', () => {
     );
   });
 
+  it.each(['enforce', 'true', '1'])(
+    'rejects the non-canonical on alias %s in production',
+    alias => {
+      expect(() =>
+        assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: alias })
+      ).toThrow(/Set RLS_ENFORCE=on/);
+    }
+  );
+
   it('refuses to boot in production when RLS_ENFORCE is unset (no silent default)', () => {
     expect(() => assertRlsEnforcementForProduction({ NODE_ENV: 'production' })).toThrow(
       /REFUSING TO BOOT.*RLS_ENFORCE is not set/s

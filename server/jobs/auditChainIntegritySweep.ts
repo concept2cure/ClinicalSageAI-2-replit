@@ -19,6 +19,7 @@ import cron from 'node-cron';
 import { pool } from '../db.js';
 import { verifyAuditChain } from '../services/audit/chain.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('audit-chain-integrity');
 
@@ -31,30 +32,32 @@ export interface AuditChainCheckResult {
 
 /** Run a single audit-chain verification. Never throws. */
 export async function runAuditChainIntegrityCheck(): Promise<AuditChainCheckResult> {
-  try {
-    const client = await pool.connect();
+  return runWithSystemTenantScope('audit-chain-integrity-sweep', async () => {
     try {
-      const result = await verifyAuditChain(client);
-      if (result.ok) {
-        logger.info(`Audit chain intact (${result.rowsChecked} rows verified)`);
-      } else {
-        // A break is a data-integrity incident: surface loudly for alerting.
-        logger.error(
-          `AUDIT CHAIN BROKEN at row ${result.brokenAt?.id} after ${result.rowsChecked} rows — investigate immediately`
-        );
-        process.emitWarning(
-          `Audit chain integrity check failed at row ${result.brokenAt?.id}`,
-          'AuditChainIntegrity'
-        );
+      const client = await pool.connect();
+      try {
+        const result = await verifyAuditChain(client);
+        if (result.ok) {
+          logger.info(`Audit chain intact (${result.rowsChecked} rows verified)`);
+        } else {
+          // A break is a data-integrity incident: surface loudly for alerting.
+          logger.error(
+            `AUDIT CHAIN BROKEN at row ${result.brokenAt?.id} after ${result.rowsChecked} rows — investigate immediately`
+          );
+          process.emitWarning(
+            `Audit chain integrity check failed at row ${result.brokenAt?.id}`,
+            'AuditChainIntegrity'
+          );
+        }
+        return result;
+      } finally {
+        client.release();
       }
-      return result;
-    } finally {
-      client.release();
+    } catch (err: any) {
+      logger.error(`Audit chain integrity check could not run: ${err?.message}`);
+      return { ok: false, rowsChecked: 0, error: err?.message };
     }
-  } catch (err: any) {
-    logger.error(`Audit chain integrity check could not run: ${err?.message}`);
-    return { ok: false, rowsChecked: 0, error: err?.message };
-  }
+  });
 }
 
 /**

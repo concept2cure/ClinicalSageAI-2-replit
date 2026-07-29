@@ -1,6 +1,6 @@
 # C2C Tenant Isolation Proof
 
-**Work order:** WO-02 · **Base SHA:** `2a5b46d1`
+**Work order:** WO-02 · **Evidence refreshed:** 2026-07-29
 **Evidence standard:** verified by reading or running code.
 
 ---
@@ -10,8 +10,7 @@
 `server/config/environment.ts:276-284`:
 
 ```ts
-// RLS boot posture: in production RLS_ENFORCE must be an EXPLICIT operator
-// decision. No-op outside production. See server/db/rlsEnforcement.ts.
+// RLS boot posture: production unconditionally requires RLS_ENFORCE=on.
 assertRlsEnforcementForProduction();
 ```
 
@@ -24,6 +23,7 @@ for a fail-closed control: it cannot be reached around by a request path.
 | Test | Result |
 |---|---|
 | `environment.test.ts:321` — "refuses to load in production when `RLS_ENFORCE` is unset" | **passing** |
+| `rlsEnforcement.test.ts` — rejects invalid, alias, `off`, and `shadow` production modes | **passing** |
 | `environment.test.ts` — production audit-seal posture (4 cases: short key, sufficient key, explicit unsealed acceptance, non-production) | **passing** |
 
 Verified in this pass: `server/config/__tests__/environment.test.ts` green.
@@ -47,6 +47,15 @@ All in `.github/workflows/ci.yml`, all exit-code gating:
 
 Supporting runtime code: `server/db/tenantRls.ts`, `server/db/rlsEnforcement.ts`,
 `server/db/rlsAllowlist.ts`, `server/db/tenantStore.ts`.
+
+The controls deliberately reuse the established evidence artifacts rather than
+creating another baseline format:
+
+- `docs/reports/tenant-isolation-baseline.json` is the raw-SQL no-regression set;
+- `docs/reports/tenant-isolation-justifications.md` owns reviewed exceptions;
+- `docs/reports/requestdb-coverage-baseline.json` is the request-scoped adoption set;
+- `docs/RLS_ENFORCEMENT_BURNDOWN.md` owns rollout status and sequencing; and
+- `scripts/audits/generate-evidence-pack.mjs` packages repository evidence.
 
 ---
 
@@ -77,3 +86,27 @@ isolation cannot be tested at all.
 Until then, this document claims **boot-time and CI-time enforcement only**. It
 does not claim proven per-table runtime isolation for the operating-system
 stores, and no such claim should be made externally.
+
+## 4. Current residual findings
+
+The existing checks are ratchets, not declarations of zero risk:
+
+- `npm run ci:tenant-isolation:no-regression` reports **25** baseline candidate
+  raw-SQL statements. Every candidate has a narrow disposition in
+  `docs/reports/tenant-isolation-justifications.md`, and the justification parity
+  gate rejects missing or stale rows.
+- `node scripts/ci/audit-requestdb-coverage.mjs` currently reports **96** route
+  files touching the database, **16** using `requestDb(req)`, and **77** still on
+  the shared pool. The baseline classifies all 77: **75** inherit the verified JWT
+  tenant boundary, **2** establish an explicit pre-tenant scope, and **0** remain
+  unclassified. The shared-pool list remains a migration ratchet, not an isolation
+  bypass list.
+- The global auth boundary now installs the tenant ALS scope and lazy request DB
+  client after successful authentication. API-key, SAML, Firecrawl, and Stripe
+  entry points establish explicit scopes rather than depending on ambient state.
+- Mock tests prove that cleanup paths call `release(error)`; live PostgreSQL tests
+  are still required to prove driver destruction/replacement, connection reuse,
+  policy `USING`/`WITH CHECK`, cancellation, and concurrent tenant switching.
+
+These are go-live blockers. They must not be converted into an allowlist merely
+to obtain a green check.
