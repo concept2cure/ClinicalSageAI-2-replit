@@ -77,6 +77,7 @@ export async function withTenantConnection<T>(
 
   const pool = getPool();
   const client = await pool.connect();
+  let releaseError: Error | undefined;
 
   try {
     // Set session vars on the dedicated connection. `false` makes them
@@ -89,18 +90,25 @@ export async function withTenantConnection<T>(
     await client.query("SELECT set_config('app.current_user_role', $1, false)", [opts.role ?? '']);
 
     return await runWithTenantScope(scope, () => fn(client));
+  } catch (error) {
+    // The callback may fail without contaminating session state, but session
+    // setup can fail partway through. Conservatively evict unless setup and
+    // cleanup both complete successfully.
+    releaseError = error instanceof Error ? error : new Error(String(error));
+    throw error;
   } finally {
     try {
       await client.query("SELECT set_config('app.current_tenant_id', '', false)");
       await client.query("SELECT set_config('app.current_org_id', '', false)");
       await client.query("SELECT set_config('app.current_user_role', '', false)");
     } catch (cleanupErr) {
-      // Best-effort. If the connection is already broken the release will
-      // discard it anyway.
+      releaseError = cleanupErr instanceof Error
+        ? cleanupErr
+        : new Error('Failed to clear tenant session variables');
       logger.warn('Failed to clear tenant session vars on release', {
-        error: (cleanupErr as Error).message,
+        error: releaseError.message,
       });
     }
-    client.release();
+    client.release(releaseError);
   }
 }

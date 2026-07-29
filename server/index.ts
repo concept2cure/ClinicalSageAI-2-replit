@@ -145,6 +145,11 @@ async function startServer() {
   await verifyDatabaseConnection(pool);
   await initializeEarlyServices();
 
+  if (process.env.NODE_ENV === 'production') {
+    const { assertRlsCatalogPosture } = await import('./db/rlsEnforcement');
+    await assertRlsCatalogPosture(pool);
+  }
+
   // Security self-test — run AFTER the DB connection is verified
   // (so the audit-chain check can query) but BEFORE any other
   // startup work or HTTP listen. In production a critical failure

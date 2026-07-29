@@ -21,6 +21,13 @@ import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('lazy-request-db-client');
 
+function asError(value: unknown, message: string): Error {
+  if (value instanceof Error) return value;
+  const error = new Error(message);
+  (error as Error & { cause?: unknown }).cause = value;
+  return error;
+}
+
 /**
  * Minimal contract the request-scoped DB client exposes to route handlers.
  * Pinned to `Pool['query']` so its overload set is identical to `pg.Pool` —
@@ -64,7 +71,10 @@ export class LazyRequestDbClient implements RequestDbClient {
         try {
           await this.applySessionVars(client);
         } catch (err) {
-          client.release();
+          // Session setup may have failed after setting only some variables.
+          // Evict the connection instead of returning indeterminate tenant
+          // state to the reusable pool.
+          client.release(asError(err, 'Failed to apply tenant session variables'));
           throw err;
         }
         return client;
@@ -86,16 +96,20 @@ export class LazyRequestDbClient implements RequestDbClient {
       return;
     }
 
+    let cleanupError: Error | null = null;
     try {
       await client.query("SELECT set_config('app.current_tenant_id', '', false)");
       await client.query("SELECT set_config('app.current_user_role', '', false)");
       await client.query("SELECT set_config('app.current_org_id', '', false)");
     } catch (err) {
+      cleanupError = asError(err, 'Failed to clear tenant session variables');
       logger.warn('Failed to clear tenant session vars on release', {
-        error: (err as Error).message,
+        error: cleanupError.message,
       });
     } finally {
-      client.release();
+      // node-postgres destroys a pooled client when release receives an
+      // error. A clean release is only safe after every reset succeeds.
+      client.release(cleanupError ?? undefined);
     }
   }
 }
