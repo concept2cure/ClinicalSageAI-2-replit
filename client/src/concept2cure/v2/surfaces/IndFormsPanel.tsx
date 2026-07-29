@@ -22,11 +22,13 @@ import { apiRequest } from '@/lib/queryClient';
 interface BuildResult { formId?: string; missingRequired?: string[]; fields?: Record<string, unknown> | Array<unknown>; }
 
 const FORM_LABELS: Record<string, string> = {
-  '1571': 'FDA 1571 — IND application',
-  '1572': 'FDA 1572 — Statement of investigator',
-  '3674': 'FDA 3674 — ClinicalTrials.gov certification',
-  '3454': 'FDA 3454 — Financial disclosure (none)',
-  '3455': 'FDA 3455 — Financial disclosure (disclosed)',
+  'FDA_1571': 'FDA 1571 — IND application',
+  'FDA_1572': 'FDA 1572 — Statement of investigator',
+  'FDA_3674': 'FDA 3674 — ClinicalTrials.gov certification',
+  'FDA_3454': 'FDA 3454 — Financial disclosure (none)',
+  'FDA_3455': 'FDA 3455 — Financial disclosure (disclosed)',
+  'FDA_356H': 'FDA 356h — NDA / ANDA / BLA application',
+  'FDA_1574': 'FDA 1574 — Assurance of IRB review',
 };
 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3'];

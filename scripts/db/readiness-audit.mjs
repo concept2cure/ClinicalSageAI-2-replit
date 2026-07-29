@@ -46,6 +46,54 @@ function loadManifest() {
 async function runDatabaseChecks(client) {
   const checks = [];
 
+  // Document identity convergence gate. The active workflow model expects an
+  // integer-keyed unified_documents table, while the legacy ingestion writer
+  // sends UUID ids and a different column family. Report the physical truth;
+  // never let another registry hide this collision.
+  const unifiedColumns = (
+    await client.query(`
+      SELECT column_name, data_type, udt_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'unified_documents'
+      ORDER BY ordinal_position
+    `)
+  ).rows;
+  if (unifiedColumns.length === 0) {
+    checks.push(
+      fail(
+        'unified_documents_contract',
+        'public.unified_documents is absent.',
+        'Provision and reconcile the existing unified workflow model before implementing platform document identity.'
+      )
+    );
+  } else {
+    const byName = new Map(unifiedColumns.map(row => [row.column_name, row]));
+    const idType = byName.get('id')?.udt_name;
+    const workflowRequired = ['title', 'document_type', 'status', 'organization_id', 'latest_version'];
+    const ingestionMarkers = ['processing_id', 'document_version_id', 'tenant_id', 'text_content'];
+    const missingWorkflow = workflowRequired.filter(name => !byName.has(name));
+    const presentIngestion = ingestionMarkers.filter(name => byName.has(name));
+    if (!['int4', 'int8'].includes(idType) || missingWorkflow.length > 0) {
+      checks.push(
+        fail(
+          'unified_documents_contract',
+          `Physical unified_documents is incompatible with the active workflow contract: id=${idType ?? 'missing'}, missing=${missingWorkflow.join(', ') || 'none'}.`,
+          'Select one authoritative unified_documents schema and migrate workflow and ingestion callers to it before adding a platform document UID.'
+        )
+      );
+    } else if (presentIngestion.length > 0) {
+      checks.push(
+        warn(
+          'unified_documents_contract',
+          `Workflow columns are present, but legacy ingestion columns coexist (${presentIngestion.join(', ')}).`,
+          'Verify the deployed writer contract and quarantine the incompatible UUID ingestion writer before document-identity rollout.'
+        )
+      );
+    } else {
+      checks.push(pass('unified_documents_contract', 'Physical table matches the integer-keyed workflow contract.'));
+    }
+  }
+
   const extensionRows = (
     await client.query(`
       SELECT extname
@@ -267,6 +315,25 @@ function runStaticChecks() {
   const checks = [];
   const migrations = getMigrationInventory();
   const manifest = loadManifest();
+
+  const workflowSchemaPath = path.join(repoRoot, 'shared', 'schema', 'unified_workflow.ts');
+  const ingestionPath = path.join(repoRoot, 'server', 'services', 'unifiedDocumentIngestion.js');
+  const workflowSchema = fs.existsSync(workflowSchemaPath) ? fs.readFileSync(workflowSchemaPath, 'utf8') : '';
+  const ingestionSource = fs.existsSync(ingestionPath) ? fs.readFileSync(ingestionPath, 'utf8') : '';
+  const workflowUsesSerialId = /unifiedDocuments[\s\S]{0,500}id:\s*serial\('id'\)/.test(workflowSchema);
+  const ingestionGeneratesUuidId = /const\s+documentId\s*=\s*uuidv4\(\)/.test(ingestionSource)
+    && /INSERT INTO unified_documents/.test(ingestionSource);
+  if (workflowUsesSerialId && ingestionGeneratesUuidId) {
+    checks.push(
+      fail(
+        'unified_documents_static_contract',
+        'Workflow schema declares unified_documents.id as serial, but unifiedDocumentIngestion writes a uuidv4() into id.',
+        'Reconcile ingestion with the existing ModuleIntegrationService/unified workflow boundary; do not create a parallel identity table.'
+      )
+    );
+  } else {
+    checks.push(pass('unified_documents_static_contract', 'No integer-vs-UUID writer collision detected.'));
+  }
 
   if (migrations.length === 0) {
     checks.push(

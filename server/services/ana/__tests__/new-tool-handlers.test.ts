@@ -19,6 +19,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { getToolHandler, type ToolContext } from '../AnaToolExecutor.js';
+import FDAFormGenerator from '../../FDAFormGenerator';
 
 const NEW_TOOLS = [
   'lookup_regulatory_precedents',
@@ -31,6 +32,9 @@ const NEW_TOOLS = [
   'draft_510k_substantial_equivalence',
   'draft_clinical_overview_m2_5',
   'draft_fda_ir_response',
+  'list_fda_forms',
+  'prepare_fda_form',
+  'amend_fda_form',
 ] as const;
 
 describe('AnA new tool handlers — registration', () => {
@@ -372,4 +376,37 @@ describe('generate_statistical_document — full template coverage', () => {
       expect(result.content.length).toBeGreaterThan(100);
     });
   }
+});
+
+
+describe('existing FDAFormGenerator — AnA adapter', () => {
+  it('lists the canonical registry with fail-closed release readiness', async () => {
+    const result = JSON.parse(await getToolHandler('list_fda_forms')!({}, {}));
+    expect(result.canonicalRegistry).toBe(true);
+    expect(result.releaseReadiness).toEqual(expect.objectContaining({ releaseReady: false, catalogComplete: false }));
+  });
+
+  it('prepares a registered form for the existing Document Studio contract', async () => {
+    const result = JSON.parse(await getToolHandler('prepare_fda_form')!({
+      formId: 'FDA_3514', values: { applicant_name: 'Acme', device_name: 'Device' },
+    }, {}));
+    expect(result).toEqual(expect.objectContaining({ status: 'generated', documentType: 'fda-form/FDA_3514', approvalStatus: 'draft' }));
+    expect(result.content).toContain('FDA_FORM_DATA_BASE64');
+  });
+
+  it('requires an amendment reason and executes conditional validation', async () => {
+    const noReason = JSON.parse(await getToolHandler('amend_fda_form')!({ formId: 'FDA_1571', currentValues: {}, changes: {} }, {}));
+    expect(noReason.error).toBe('REASON_REQUIRED');
+    const supplement = JSON.parse(await getToolHandler('prepare_fda_form')!({ formId: 'FDA_356H', values: { application_type: 'Supplement' } }, {}));
+    expect(supplement.missingRequired).toContain('application_number');
+  });
+
+  it('escapes project values in the existing universal HTML generator', async () => {
+    const generated = await new FDAFormGenerator().generateSmartForm('FDA_3514', {
+      organization: { applicantName: '<script>alert(1)</script>' },
+      fda510kProject: { deviceName: 'Device <unsafe>' },
+    });
+    expect(generated.htmlContent).not.toContain('<script>alert(1)</script>');
+    expect(generated.htmlContent).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
 });

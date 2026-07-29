@@ -13,6 +13,23 @@ and testing something real?
 
 ---
 
+## 2026-07-29 document-identity reconciliation hold
+
+A detailed reuse investigation found that the proposed standalone identity,
+alias, and placement tables duplicated existing `unified_documents`,
+`module_documents`, and submission-core responsibilities. That proposal has been
+reverted in full. Document-identity production readiness is **0/100 pending an
+approved interface contract and reconciliation of incompatible existing
+`unified_documents` schemas**.
+
+The approved next direction is to extend the existing unified workflow and
+submission core, not create a parallel registry. See `RECONCILE.md` §6 for the
+asset inventory, duplication analysis, target model, and approval gates. The
+broad pilot assessment below must not be interpreted as approval of a
+platform-wide document-ID claim.
+
+---
+
 ## Verdict — Code-ready, gated on operational sign-off
 
 > **7 of 8 launch-blocking code gaps are closed.** One human gate remains.
