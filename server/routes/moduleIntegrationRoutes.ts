@@ -81,7 +81,10 @@ router.get('/documents/:moduleType', asyncHandler(async (req, res) => {
 router.get('/document/:id', asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
-    const document = await moduleIntegrationService.getDocument(parseInt(String(id), 10));
+    const document = await moduleIntegrationService.getDocument(
+      parseInt(String(id), 10),
+      Number(getSecureOrgId(req))
+    );
 
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
@@ -103,7 +106,11 @@ router.get('/document/:id', asyncHandler(async (req, res) => {
 router.patch('/documents/:id', asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
-    const document = await moduleIntegrationService.updateDocument(parseInt(String(id), 10), req.body);
+    const document = await moduleIntegrationService.updateDocument(
+      parseInt(String(id), 10),
+      req.body,
+      Number(getSecureOrgId(req))
+    );
     res.json(document);
   } catch (error) {
     if (error instanceof DocumentNotFoundException) {

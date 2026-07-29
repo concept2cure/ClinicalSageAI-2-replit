@@ -24,6 +24,8 @@ import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
 import { pool as dbPool } from '../utils/database.js';
+import { db } from '../db.ts';
+import { ModuleIntegrationService } from './ModuleIntegrationService.ts';
 // import PDFParser from 'pdf-parse';
 // import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
@@ -358,6 +360,7 @@ export class UnifiedDocumentIngestion {
   constructor() {
     this.processingQueue = new Map();
     this.knowledgeBase = new Map();
+    this.moduleIntegration = new ModuleIntegrationService(db);
   }
 
   /**
@@ -1118,137 +1121,104 @@ export class UnifiedDocumentIngestion {
    */
   async storeUnifiedDocument(data) {
     try {
-      const query = `
-        INSERT INTO unified_documents (
-          id, processing_id, original_name, file_path, file_size, mime_type,
-          module, context, text_content, processed_text, ai_analysis,
-          module_specific_data, document_type, structure, content_hash, processing_time, created_at,
-          document_version_id, is_latest_version, previous_version_doc_id, version_number, version_label,
-          ingested_by, source_system, source_file_checksum, regulatory_pathway, compliance_score,
-          therapeutic_area, study_id, product_name, regulatory_agency, effective_date, version_notes,
-          ectd_module, ectd_section, ectd_leaf_id, ectd_operation_type, ectd_sequence_number,
-          submission_id, submission_type, tenant_id
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-          $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33,
-          $34, $35, $36, $37, $38, $39, $40, $41
-        ) RETURNING *
-      `;
-
-      // Generate SHA256 checksum of source file
       const fileChecksum = crypto
         .createHash('sha256')
         .update(data.file.buffer || '')
         .digest('hex');
-
-      // Extract enhanced metadata
       const enhancedMetadata = this.extractEnhancedMetadata(data);
-
-      const documentId = uuidv4();
-      const documentVersionId = uuidv4();
-
-      // CRITICAL FIX: Extract tenant_id from options (passed from middleware)
-      const tenantId = data.options.tenantId || 'default';
-      if (!tenantId || tenantId === 'default') {
-        console.warn('[UNIFIED INGESTION] No tenant_id provided, using default tenant');
+      const tenantId = Number(data.options.tenantId);
+      const projectId = data.options.projectId;
+      const actorId = data.options.userId;
+      if (!Number.isInteger(tenantId) || tenantId <= 0) {
+        throw new Error('tenantId is required to persist an ingested document');
+      }
+      if (projectId === undefined || projectId === null || String(projectId).trim() === '') {
+        throw new Error('projectId is required to persist an ingested document');
+      }
+      if (actorId === undefined || actorId === null || String(actorId).trim() === '') {
+        throw new Error('userId is required to attribute an ingested document');
       }
 
-      const values = [
-        documentId,
-        data.processingId,
-        data.file.originalname,
-        data.file.path || null, // Allow NULL for memory storage uploads as per database schema fix
-        data.file.size,
-        data.file.mimetype,
-        data.options.module || 'general',
-        data.options.context || 'unknown',
-        data.extractedContent.text,
-        JSON.stringify(data.processedText),
-        JSON.stringify(data.aiAnalysis),
-        JSON.stringify(data.moduleSpecificData),
-        JSON.stringify(data.documentType),
-        JSON.stringify(data.structure),
-        data.extractedContent.hash,
-        data.processingTime,
-        new Date(),
-        // New versioning fields
-        documentVersionId,
-        true, // is_latest_version
-        data.options.previousVersionId || null,
-        1, // version_number (will be updated by trigger if not first version)
-        data.options.versionLabel || 'Initial',
-        // New audit fields
-        data.options.userId || 'system',
-        data.options.sourceSystem || data.options.module || 'unified-ingestion',
-        fileChecksum,
-        enhancedMetadata.regulatoryPathway,
-        enhancedMetadata.complianceScore,
-        enhancedMetadata.therapeuticArea,
-        enhancedMetadata.studyId,
-        enhancedMetadata.productName,
-        enhancedMetadata.regulatoryAgency,
-        enhancedMetadata.effectiveDate,
-        data.options.versionNotes || null,
-        // eCTD fields
-        enhancedMetadata.ectdModule,
-        enhancedMetadata.ectdSection,
-        enhancedMetadata.ectdLeafId,
-        enhancedMetadata.ectdOperationType || 'new',
-        enhancedMetadata.ectdSequenceNumber,
-        data.options.submissionId || null,
-        data.options.submissionType || null,
-        // CRITICAL FIX: Add tenant_id
-        tenantId,
-      ];
+      const moduleAliases = {
+        cmc: 'cmc', cer: 'cer', 'cer-v2': 'cer', study: 'study', ind: 'study',
+        ectd: 'ectd', coauthor: 'ectd', '510k': '510k', vault: 'vault',
+      };
+      const requestedModule = String(data.options.module || '').toLowerCase();
+      const moduleType = moduleAliases[requestedModule];
+      if (!moduleType) {
+        throw new Error(`module must resolve to an existing unified workflow module: ${requestedModule || 'missing'}`);
+      }
 
-      // CRITICAL FIX: Version tracking - if this is a new version, update previous versions
+      const content = {
+        text: data.extractedContent.text,
+        processedText: data.processedText,
+        aiAnalysis: data.aiAnalysis,
+        moduleSpecificData: data.moduleSpecificData,
+        structure: data.structure,
+      };
+      const metadata = {
+        projectId: String(projectId),
+        processingId: data.processingId,
+        originalName: data.file.originalname,
+        filePath: data.file.path || null,
+        fileSize: data.file.size,
+        mimeType: data.file.mimetype,
+        context: data.options.context || 'unknown',
+        contentHash: data.extractedContent.hash,
+        sourceFileChecksum: fileChecksum,
+        sourceSystem: data.options.sourceSystem || requestedModule,
+        processingTime: data.processingTime,
+        regulatory: enhancedMetadata,
+      };
+
+      let registered;
       if (data.options.previousVersionId) {
-        // Get the logical document ID from the previous version
-        const logicalDocQuery = await dbPool.query(
-          'SELECT original_name FROM unified_documents WHERE id = $1',
-          [data.options.previousVersionId]
-        );
-
-        if (logicalDocQuery.rows.length > 0) {
-          // Update all previous versions with the same original_name to not be latest
-          await dbPool.query(
-            'UPDATE unified_documents SET is_latest_version = FALSE WHERE original_name = $1 AND id != $2',
-            [logicalDocQuery.rows[0].original_name, documentId]
-          );
+        const documentId = Number(data.options.previousVersionId);
+        if (!Number.isInteger(documentId) || documentId <= 0) {
+          throw new Error('previousVersionId must be an existing unified document integer ID');
         }
+        registered = await this.moduleIntegration.updateDocument(documentId, {
+          content,
+          metadata,
+          updatedBy: String(actorId),
+        }, tenantId);
       } else {
-        // For new documents, ensure no other version with same name is marked as latest
-        await dbPool.query(
-          'UPDATE unified_documents SET is_latest_version = FALSE WHERE original_name = $1 AND id != $2',
-          [data.file.originalname, documentId]
-        );
+        registered = await this.moduleIntegration.registerDocument({
+          title: data.file.originalname,
+          documentType: data.documentType?.type || requestedModule,
+          createdBy: String(actorId),
+          organizationId: tenantId,
+          moduleType,
+          originalId: String(data.options.sourceDocumentId || data.processingId),
+          content,
+          metadata,
+        });
       }
 
-      const result = await dbPool.query(query, values);
-      const documentRecord = result.rows[0];
+      const versionId = registered.version?.id;
+      const documentRecord = {
+        ...registered,
+        processing_id: data.processingId,
+        original_name: data.file.originalname,
+        module: requestedModule,
+        processing_time: data.processingTime,
+        content_hash: data.extractedContent.hash,
+        processed_text: data.processedText,
+        ai_analysis: data.aiAnalysis,
+        module_specific_data: data.moduleSpecificData,
+        document_type: data.documentType,
+        structure: data.structure,
+      };
 
       // Store document chunks if available
-      if (data.processedText.chunks && data.processedText.chunks.length > 0) {
-        await this.storeDocumentChunks(documentVersionId, data.processedText.chunks, tenantId);
+      if (versionId && data.processedText.chunks && data.processedText.chunks.length > 0) {
+        await this.storeDocumentChunks(versionId, data.processedText.chunks, tenantId);
       }
 
       // Store extracted tables if available
-      if (data.extractedContent.tables && data.extractedContent.tables.length > 0) {
-        await this.storeDocumentTables(documentVersionId, data.extractedContent.tables, tenantId);
+      if (versionId && data.extractedContent.tables && data.extractedContent.tables.length > 0) {
+        await this.storeDocumentTables(versionId, data.extractedContent.tables, tenantId);
       }
-
-      // Create audit trail entry
-      await this.createAuditEntry(
-        documentVersionId,
-        'document_ingested',
-        data.options.userId || 'system',
-        {
-          source: data.options.sourceSystem || data.options.module,
-          fileSize: data.file.size,
-          processingTime: data.processingTime,
-        },
-        tenantId
-      );
 
       return documentRecord;
     } catch (error) {
