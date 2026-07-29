@@ -953,7 +953,7 @@ export interface PathwayPanesProps {
   onAskAna: (text: string) => void;
   onOpenEditor?: OpenEditor;
   /** Canonical project id — anchors live audit + scopes correspondence. When
-   *  absent, the panes fall back to the kit fixtures. */
+   *  absent, live panes render an explicit empty state. */
   programId?: string | null;
 }
 
@@ -999,11 +999,18 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
         )}
         {tab === 'approvals' && <ApprovalsPane approvals={data.approvals} onOpenSection={openSection} />}
         {tab === 'files' && (
-          <FilesTreePane
-            key={`ftp-${pathway}-${dossier.version}`}
-            pathway={pathway}
-            onOpenSection={openSection}
-          />
+          <>
+            {dossier.status === 'loading' && <div role="status">Loading dossier files…</div>}
+            {dossier.status === 'unavailable' && <div role="alert">Dossier files are unavailable. Sample evidence has not been substituted.</div>}
+            {dossier.status === 'empty' && <div role="status">No dossier sections have been created for this program.</div>}
+            {(dossier.status === 'live-data' || dossier.status === 'sample') && (
+              <FilesTreePane
+                key={`ftp-${pathway}-${dossier.version}`}
+                pathway={pathway}
+                onOpenSection={openSection}
+              />
+            )}
+          </>
         )}
       </div>
       <DossierDrawer

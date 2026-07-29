@@ -14,9 +14,9 @@
  * same path scheme the tree + drawer read). The returned `version` bumps on
  * hydration; PathwayPanes keys FilesTreePane on it so the memoized tree remounts.
  *
- * Resilience: when there's no programId, no matching document, or any request
- * fails, the store keeps its fixture seed (DossierStore.hydratePathway no-ops on
- * an empty section list). `live` reports whether real data was seeded.
+ * Data honesty: no program, an empty document, loading, or request failure
+ * clears the pathway rather than retaining fictional evidence. Fixtures are
+ * installed only when the user explicitly enables sample mode.
  *
  * Scope note: the program→document association (projectId filter), document
  * selection, and the exact content/paragraph shape are verified against the
@@ -29,6 +29,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../../../lib/queryClient';
 import { DossierStore, type HydrateSection } from '../store/dossierStore';
 import type { PathwayKey } from '../types';
+import { useSampleMode } from '../components/DataGate';
 
 interface C2cDocument {
   id: string;
@@ -159,9 +160,11 @@ export interface DossierHydration {
   /** True once real backend sections were seeded (vs the fixture fallback). */
   live: boolean;
   documentId: string | null;
+  status: 'loading' | 'live-data' | 'empty' | 'unavailable' | 'sample';
 }
 
 export function useDossierHydration(pathway: PathwayKey, programId?: string | null): DossierHydration {
+  const sampleOn = useSampleMode();
   const q = useQuery<DossierFetch | null>({
     queryKey: ['dossier', pathway, programId],
     queryFn: () => fetchDossier(pathway, programId as string),
@@ -176,8 +179,23 @@ export function useDossierHydration(pathway: PathwayKey, programId?: string | nu
     if (q.data && q.data.sections.length > 0) {
       DossierStore.hydratePathway(pathway, q.data.docId, q.data.sections);
       setVersion((v) => v + 1);
+    } else if (sampleOn) {
+      DossierStore.enableSampleFixtures();
+      setVersion((v) => v + 1);
+    } else if (!q.isLoading) {
+      DossierStore.clearPathway(pathway);
+      setVersion((v) => v + 1);
     }
-  }, [q.data, pathway]);
+  }, [q.data, q.isLoading, pathway, programId, sampleOn]);
 
-  return { version, live: hasSections, documentId: q.data?.docId ?? null };
+  const status: DossierHydration['status'] = hasSections
+    ? 'live-data'
+    : sampleOn
+      ? 'sample'
+      : q.isLoading
+        ? 'loading'
+        : q.error
+          ? 'unavailable'
+          : 'empty';
+  return { version, live: hasSections, documentId: q.data?.docId ?? null, status };
 }

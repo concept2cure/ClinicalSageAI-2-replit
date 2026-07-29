@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { computeDiagnosticAccuracy, computeRoc, computeWeightedKappa } from '../clinical-performance';
+import { calculateClinical2x2 } from '../../../../shared/ivdr/manifest';
 
 describe('computeDiagnosticAccuracy', () => {
   // tp=90, fn=10, tn=80, fp=20 → 100 positives, 100 negatives, N=200.
@@ -63,6 +64,20 @@ describe('computeDiagnosticAccuracy', () => {
     expect(() => computeDiagnosticAccuracy({ tp: 0, fp: 0, fn: 0, tn: 10 })).toThrow();
     expect(() => computeDiagnosticAccuracy({ tp: 1.5, fp: 0, fn: 1, tn: 1 })).toThrow();
     expect(() => computeDiagnosticAccuracy({ tp: 5, fp: 5, fn: 5, tn: 5 }, { prevalence: 2 })).toThrow();
+  });
+});
+
+describe('shared IVDR 2×2 point estimates', () => {
+  it('represents undefined denominators explicitly for persistence/UI consumers', () => {
+    expect(calculateClinical2x2({ tp: 0, fp: 0, fn: 0, tn: 0 })).toMatchObject({
+      sensitivity: null, specificity: null, ppv: null, npv: null,
+      accuracy: null, prevalence: null, total: 0,
+      calculationVersion: 'ivdr-2x2-v1',
+    });
+  });
+
+  it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])('rejects unsafe cell %s', (tp) => {
+    expect(() => calculateClinical2x2({ tp, fp: 0, fn: 0, tn: 0 })).toThrow(RangeError);
   });
 });
 
