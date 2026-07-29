@@ -44,6 +44,12 @@ import type {
   FindingQuery,
   VerificationState,
 } from '../services/clinical-regulatory-evidence/types.js';
+import {
+  ingestCrl,
+  extractFindingsFromText,
+  type CrlIngestInput,
+} from '../services/clinical-regulatory-evidence/crl-ingestion.service.js';
+import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('clinical-regulatory-evidence-routes');
@@ -313,6 +319,56 @@ async function handleStressTest(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Ingest an FDA Complete Response Letter into the SHARED evidence corpus.
+ *
+ * This is the write that fills cre_regulatory_findings / cre_regulatory_outcomes —
+ * the tables every CRE surface reads. It is PLATFORM-ADMIN only (route-level
+ * `requirePlatformAdmin`): a CRL is a public FDA record written GLOBAL_PUBLIC (org
+ * NULL) and visible to every tenant, so a single tenant user must not be able to
+ * mint cross-tenant regulatory evidence. Accepts already-structured `findings`, or a
+ * raw `text` letter which is extracted through the AI gateway (never fabricated — an
+ * empty extraction yields a 422, never a synthetic finding). The tenant scope
+ * supplies the acting org; the rows still land global-public by design.
+ */
+async function handleIngestCrl(req: Request, res: Response): Promise<void> {
+  const scope = guard(req, res);
+  if (!scope) return;
+  const body = (req.body ?? {}) as Partial<CrlIngestInput> & { text?: string };
+  const applicationNumber = str(body.applicationNumber);
+  if (!applicationNumber) {
+    res.status(400).json({ success: false, error: 'applicationNumber is required' });
+    return;
+  }
+  try {
+    let findings = Array.isArray(body.findings) ? body.findings : [];
+    if (findings.length === 0 && typeof body.text === 'string' && body.text.trim().length >= 40) {
+      findings = await extractFindingsFromText(body.text, { applicationNumber });
+    }
+    if (findings.length === 0) {
+      res.status(422).json({
+        success: false,
+        error: 'No findings supplied, and none could be extracted from the letter text.',
+      });
+      return;
+    }
+    const result = await ingestCrl(scope.organizationId, { ...body, applicationNumber, findings });
+    res.json({
+      success: true,
+      data: {
+        sourceId: result.source.id,
+        applicationNumber,
+        findingCount: result.findings.length,
+        outcomeCount: result.outcomes.length,
+        linkedStudyIds: result.linkedStudyIds,
+        relationshipCount: result.relationshipCount,
+      },
+    });
+  } catch (e) {
+    fail(res, 'ingest-crl', e);
+  }
+}
+
 export default function createClinicalRegulatoryEvidenceRoutes(): Router {
   const router = Router();
 
@@ -323,6 +379,9 @@ export default function createClinicalRegulatoryEvidenceRoutes(): Router {
   router.get('/design-evidence', handleDesignEvidence);
   router.get('/trace/:traceId', handleTrace);
   router.post('/stress-test', handleStressTest);
+
+  // Write path — platform-admin only (fills the shared global-public FDA corpus).
+  router.post('/crl', requirePlatformAdmin, handleIngestCrl);
 
   return router;
 }
