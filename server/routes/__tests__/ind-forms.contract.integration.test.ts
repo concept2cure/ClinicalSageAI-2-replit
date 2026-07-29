@@ -68,8 +68,15 @@ describe('form discovery + build', () => {
     const res = await request(app).get('/api/ind-forms/');
     expect(res.status).toBe(200);
     expect(res.body.forms).toEqual(
-      expect.arrayContaining(['FDA_1571', 'FDA_1572', 'FDA_3674', 'FDA_3454', 'FDA_3455']),
+      expect.arrayContaining(['FDA_1571', 'FDA_1572', 'FDA_1574', 'FDA_3674', 'FDA_3454', 'FDA_3455', 'FDA_356H']),
     );
+    expect(res.body.formDefinitions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        formId: 'FDA_356H', implementationStatus: 'full', version: 'unverified',
+        governance: expect.objectContaining({ failClosed: true }),
+        fields: expect.arrayContaining([expect.objectContaining({ id: 'application_type', required: true })]),
+      }),
+    ]));
   });
 
   it('POST /FDA_1571/build → 200 returns a field map + missingRequired', async () => {

@@ -1,4 +1,4 @@
-import { FDAFormsRegistry, FormField, FDAFormDefinition, getRequiredForms, getFormsForStage } from '../config/FDAFormsRegistry';
+import { FDAFormsRegistry, FormField, FDAFormDefinition, governedFormDefinition, getRequiredForms, getFormsForStage } from '../config/FDAFormsRegistry';
 
 export default class FDAFormGenerator {
   /**
@@ -37,8 +37,8 @@ export default class FDAFormGenerator {
         value = new Date().toISOString().split('T')[0];
       }
       
-      formData[field.id] = value || '';
-      if (value && field.required) filledCount++;
+      formData[field.id] = value ?? '';
+      if (field.required && value !== null && value !== undefined && value !== '' && value !== false) filledCount++;
     }
 
     // Calculate completeness
@@ -118,11 +118,14 @@ export default class FDAFormGenerator {
    * Generate universal HTML for any form
    */
   private generateUniversalFormHTML(formDefinition: FDAFormDefinition, formData: any): string {
+    const escapeHtml = (value: unknown) => String(value ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     let html = `
 <!DOCTYPE html>
 <html>
 <head>
-    <title>${formDefinition.title}</title>
+    <title>${escapeHtml(formDefinition.title)}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .form-header { background: #003366; color: white; padding: 20px; margin-bottom: 20px; }
@@ -136,15 +139,15 @@ export default class FDAFormGenerator {
 </head>
 <body>
     <div class="form-header">
-        <h1>FDA Form ${formDefinition.formNumber}</h1>
-        <h2>${formDefinition.title}</h2>
-        <p>Version: ${formDefinition.version} | Last Updated: ${formDefinition.lastUpdated}</p>
+        <h1>FDA Form ${escapeHtml(formDefinition.formNumber)}</h1>
+        <h2>${escapeHtml(formDefinition.title)}</h2>
+        <p>Version: ${escapeHtml(formDefinition.version)} | Last Updated: ${escapeHtml(formDefinition.lastUpdated)}</p>
     </div>
     
     <div class="form-section">
         <h3>Form Information</h3>
-        <p>${formDefinition.description}</p>
-        <p><strong>Category:</strong> ${formDefinition.category}</p>
+        <p>${escapeHtml(formDefinition.description)}</p>
+        <p><strong>Category:</strong> ${escapeHtml(formDefinition.category)}</p>
         <p><strong>Submission Date:</strong> ${new Date().toLocaleDateString()}</p>
     </div>
     
@@ -153,35 +156,35 @@ export default class FDAFormGenerator {
     
     // Add form fields
     for (const field of formDefinition.fields) {
-      const value = formData[field.id] || '';
+      const value = formData[field.id] ?? '';
       html += `
         <div class="field-group">
-            <label class="field-label">${field.label}${field.required ? ' *' : ''}</label>`;
+            <label class="field-label">${escapeHtml(field.label)}${field.required ? ' *' : ''}</label>`;
       
       switch (field.type) {
         case 'checkbox':
           html += `
             <input type="checkbox" class="checkbox" ${value ? 'checked' : ''} disabled />
-            <span>${field.label}</span>`;
+            <span>${escapeHtml(field.label)}</span>`;
           break;
         case 'select':
           html += `
             <div class="field-value">
                 <select disabled>
-                    <option>${value || 'Not Selected'}</option>
+                    <option>${escapeHtml(value || 'Not Selected')}</option>
                 </select>
             </div>`;
           break;
         case 'textarea':
           html += `
             <div class="field-value" style="min-height: 100px;">
-                ${value || 'Not Provided'}
+                ${escapeHtml(value || 'Not Provided')}
             </div>`;
           break;
         default:
           html += `
             <div class="field-value">
-                ${value || 'Not Provided'}
+                ${escapeHtml(value || 'Not Provided')}
             </div>`;
       }
       
@@ -837,4 +840,116 @@ export default class FDAFormGenerator {
 </body>
 </html>`;
   }
+
+  /** Client-release gate shared by FDA discovery and editable draft generation. */
+  static readonly RELEASE_READINESS = {
+    releaseReady: false,
+    catalogComplete: false,
+    officialAssetsVerified: false,
+    blockers: ['FDA_CATALOG_NOT_RECONCILED', 'OFFICIAL_PDF_ASSETS_NOT_VERIFIED'],
+  } as const;
+
+  /** List governed definitions from the existing canonical FDA registry. */
+  listGovernedForms(input: Record<string, unknown> = {}) {
+    const category = typeof input.category === 'string' ? input.category : undefined;
+    const status = typeof input.implementationStatus === 'string' ? input.implementationStatus : undefined;
+    const forms = Object.values(FDAFormsRegistry)
+      .map(governedFormDefinition)
+      .filter((form) => !category || form.category === category)
+      .filter((form) => !status || form.implementationStatus === status)
+      .map(({ formId, formNumber, title, category: formCategory, version, implementationStatus, fields, governance }) => ({
+        formId, formNumber, title, category: formCategory, version, implementationStatus,
+        fieldCount: fields.length, workflow: governance,
+      }));
+    return { forms, total: forms.length, canonicalRegistry: true, releaseReadiness: FDAFormGenerator.RELEASE_READINESS };
+  }
+
+  /** Prepare any registered form as an editor-compatible, structured governed draft. */
+  prepareEditableDraft(input: Record<string, unknown>) {
+    const formId = String(input.formId ?? '');
+    const rawDefinition = FDAFormsRegistry[formId];
+    const definition = rawDefinition ? governedFormDefinition(rawDefinition) : undefined;
+    if (!definition) return { error: 'UNKNOWN_FORM', message: `Unknown canonical FDA form: ${formId}` };
+    const reason = typeof input.reasonForChange === 'string' && input.reasonForChange.trim()
+      ? input.reasonForChange.trim() : 'Initial editable FDA form draft';
+    return this.buildEditableDraft(definition, this.formValues(input.values), reason);
+  }
+
+  /** Amend into a new draft; never mutate the supplied map or an approved version. */
+  amendEditableDraft(input: Record<string, unknown>) {
+    const formId = String(input.formId ?? '');
+    const rawDefinition = FDAFormsRegistry[formId];
+    const definition = rawDefinition ? governedFormDefinition(rawDefinition) : undefined;
+    if (!definition) return { error: 'UNKNOWN_FORM', message: `Unknown canonical FDA form: ${formId}` };
+    const reason = typeof input.reasonForChange === 'string' ? input.reasonForChange.trim() : '';
+    if (!reason) return { error: 'REASON_REQUIRED', message: 'A reason for change is required to amend a governed FDA form.' };
+    return this.buildEditableDraft(definition, { ...this.formValues(input.currentValues), ...this.formValues(input.changes) }, reason);
+  }
+
+  private formValues(value: unknown): Record<string, string | number | boolean | null> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, string | number | boolean | null> : {};
+  }
+
+  private blank(value: unknown): boolean {
+    return value === undefined || value === null || value === '' || value === false;
+  }
+
+  private validateEditableValues(definition: FDAFormDefinition, values: Record<string, string | number | boolean | null>) {
+    const known = new Set(definition.fields.map((field) => field.id));
+    const unknownFields = Object.keys(values).filter((id) => !known.has(id));
+    const requiredIds = new Set(definition.fields.filter((field) => field.required && this.blank(values[field.id])).map((field) => field.id));
+    for (const rule of definition.conditionalLogic ?? []) {
+      const actual = values[rule.when.fieldId];
+      const matches = rule.when.operator === 'equals' ? actual === rule.when.value
+        : rule.when.operator === 'not_equals' ? actual !== rule.when.value
+          : rule.when.operator === 'truthy' ? !this.blank(actual) : this.blank(actual);
+      if (matches && rule.effect === 'required') for (const fieldId of rule.fieldIds) if (this.blank(values[fieldId])) requiredIds.add(fieldId);
+    }
+    const missingRequired = definition.fields.map((field) => field.id).filter((id) => requiredIds.has(id));
+    const validationErrors: Array<{ fieldId: string; code: string; message: string }> = [];
+    for (const field of definition.fields) {
+      const value = values[field.id];
+      if (!this.blank(value)) {
+        const validType = field.type === 'checkbox' ? typeof value === 'boolean'
+          : field.type === 'number' ? typeof value === 'number' && Number.isFinite(value)
+            : typeof value === 'string';
+        if (!validType) {
+          validationErrors.push({ fieldId: field.id, code: 'INVALID_TYPE', message: `${field.label} must be a ${field.type} value` });
+          continue;
+        }
+        if (field.type === 'date' && typeof value === 'string' && !/^\d{4}-\d{2}-\d{2}$/.test(value))
+          validationErrors.push({ fieldId: field.id, code: 'INVALID_DATE', message: `${field.label} must use YYYY-MM-DD` });
+      }
+      if (field.options && typeof value === 'string' && value && !field.options.includes(value))
+        validationErrors.push({ fieldId: field.id, code: 'INVALID_OPTION', message: `${field.label} must be one of: ${field.options.join(', ')}` });
+      if (field.maxLength && typeof value === 'string' && value.length > field.maxLength)
+        validationErrors.push({ fieldId: field.id, code: 'MAX_LENGTH', message: `${field.label} exceeds ${field.maxLength} characters` });
+    }
+    return { unknownFields, missingRequired, validationErrors };
+  }
+
+  private buildEditableDraft(definition: FDAFormDefinition, values: Record<string, string | number | boolean | null>, reasonForChange: string) {
+    const verdict = this.validateEditableValues(definition, values);
+    if (verdict.unknownFields.length) return { error: 'UNKNOWN_FIELDS', message: `Unknown fields for ${definition.formId}: ${verdict.unknownFields.join(', ')}`, ...verdict };
+    const render = (field: FormField) => field.type === 'checkbox' ? (values[field.id] === true ? '☒ Yes' : '☐ No')
+      : this.blank(values[field.id]) ? '_Not provided_' : String(values[field.id]);
+    const content = [
+      `# FDA Form ${definition.formNumber} — ${definition.title}`, '',
+      `> Editable governed draft · canonical ID: ${definition.formId} · registry version: ${definition.version}`,
+      `> Reason for change: ${reasonForChange}`,
+      `<!-- FDA_FORM_DATA_BASE64 ${Buffer.from(JSON.stringify({ formId: definition.formId, formVersion: definition.version, values }), 'utf8').toString('base64')} -->`, '',
+      ...definition.fields.flatMap((field) => [`## ${field.label}${field.required ? ' *' : ''}`, render(field), '']),
+    ].join('\n');
+    return {
+      status: 'generated', title: `FDA Form ${definition.formNumber} — ${definition.title}`,
+      documentType: `fda-form/${definition.formId}`, content, formId: definition.formId,
+      formVersion: definition.version, values, ...verdict, workflow: definition.governance,
+      editorTarget: 'document-studio', canvasTarget: 'ana-canvas',
+      pdfAvailable: definition.implementationStatus === 'full' && definition.version !== 'unverified',
+      draftPdfAvailable: definition.implementationStatus === 'full',
+      releaseReadiness: FDAFormGenerator.RELEASE_READINESS, approvalStatus: 'draft', reasonForChange,
+    };
+  }
+
 }

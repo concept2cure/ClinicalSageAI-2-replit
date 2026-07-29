@@ -27,12 +27,16 @@ import {
   buildForm3674,
   buildForm3454,
   buildForm3455,
+  buildForm356h,
+  buildForm1574,
   buildAllForm1572,
   FORM_1571,
   FORM_1572,
   FORM_3674,
   FORM_3454,
   FORM_3455,
+  FORM_356H,
+  FORM_1574,
   type IndProjectMetadata,
 } from '../services/ind-forms/ind-form-data-builders';
 import { assembleFormMetadata } from '../services/ind-forms/form-context-assembler';
@@ -43,11 +47,13 @@ import {
   getInvestigator,
 } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
+import { FDAFormsRegistryClass } from '../config/FDAFormsRegistry';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
 const limiter = createRateLimiter();
 const AUTHOR = 'regulatory-author';
+const formsRegistry = new FDAFormsRegistryClass();
 
 interface Ctx {
   userId: number;
@@ -93,7 +99,10 @@ function fail(res: Response, err: unknown): void {
 
 /** List the supported form ids. */
 router.get('/', limiter, requireRole(AUTHOR), (_req, res) => {
-  res.json({ forms: SUPPORTED_FORM_IDS });
+  // Return the canonical registry objects rather than maintaining a second,
+  // route-local metadata model that can drift from validation and rendering.
+  const formDefinitions = SUPPORTED_FORM_IDS.map((formId) => formsRegistry.getForm(formId));
+  res.json({ forms: SUPPORTED_FORM_IDS, formDefinitions });
 });
 
 /**
@@ -113,6 +122,10 @@ router.post('/:formId/build', limiter, requireRole(AUTHOR), (req, res) => {
         return res.json(buildForm3454(meta));
       case FORM_3455:
         return res.json(buildForm3455(meta));
+      case FORM_356H:
+        return res.json(buildForm356h(meta));
+      case FORM_1574:
+        return res.json(buildForm1574(meta));
       case FORM_1572: {
         // 1572 is per-investigator; build one per investigator.
         return res.json(buildAllForm1572(meta));

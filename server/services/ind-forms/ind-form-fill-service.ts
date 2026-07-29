@@ -54,6 +54,8 @@ import {
   buildForm3674,
   buildForm3454,
   buildForm3455,
+  buildForm356h,
+  buildForm1574,
   labelsForForm,
   type BuiltForm,
   type FieldValue,
@@ -64,6 +66,8 @@ import {
   FORM_3674,
   FORM_3454,
   FORM_3455,
+  FORM_356H,
+  FORM_1574,
 } from './ind-form-data-builders';
 
 // ---------------------------------------------------------------------------
@@ -86,6 +90,8 @@ export const SUPPORTED_FORM_IDS = [
   FORM_3674,
   FORM_3454,
   FORM_3455,
+  FORM_356H,
+  FORM_1574,
 ] as const;
 
 export type SupportedFormId = (typeof SUPPORTED_FORM_IDS)[number];
@@ -130,6 +136,10 @@ function buildFormById(formId: string, meta: IndProjectMetadata): BuiltForm {
       return buildForm3454(meta);
     case FORM_3455:
       return buildForm3455(meta);
+    case FORM_356H:
+      return buildForm356h(meta);
+    case FORM_1574:
+      return buildForm1574(meta);
     case FORM_1572: {
       // 1572 is per-investigator; for the single-form entry point use the first
       // investigator (or an empty one so missingRequired is populated).
@@ -378,5 +388,7 @@ export async function generateAllIndForms(
   results.push(await generateIndForm(FORM_3674, meta));
   results.push(await generateIndForm(FORM_3454, meta));
   results.push(await generateIndForm(FORM_3455, meta));
+  results.push(await generateIndForm(FORM_356H, meta));
+  results.push(await generateIndForm(FORM_1574, meta));
   return results;
 }
