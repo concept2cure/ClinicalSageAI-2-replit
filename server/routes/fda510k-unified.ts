@@ -6,12 +6,12 @@
  *
  * Consolidated from:
  * - 510kRoutes.ts (device profiles, predicate finder)
- * - [removed] 510k-api-routes.ts (was deprecated mock data)
+ * - [removed] 510k-api-routes.ts (deprecated non-production data path)
  * - [removed] 510k-compliance-routes.ts (was deprecated, returned 503)
  * - 510k-literature-routes.ts (literature search)
  * - 510k-project.routes.ts (project wizard)
  * - fda510k-routes.ts (production FDA API)
- * - [removed] 510kEstarRoutes.ts (was deprecated simulation; use 510k-estar-routes.ts)
+ * - [removed] 510kEstarRoutes.ts (deprecated alternate path; use 510k-estar-routes.ts)
  *
  * @version 2.0.0
  * @module server/routes/fda510k-unified
@@ -282,7 +282,7 @@ async function mountSubRouters() {
     logger.error('Failed to mount device routes:', error);
   }
 
-  // Requirements by Device Class — removed (510k-api-routes was deprecated mock data)
+  // Requirements by Device Class — removed with the deprecated non-production data path.
 
   // Compliance Checks — removed (510k-compliance-routes returned 503 on all endpoints)
 
@@ -313,7 +313,7 @@ async function mountSubRouters() {
     logger.error('Failed to mount FDA API routes:', error);
   }
 
-  // eSTAR Integration — removed deprecated 510kEstarRoutes (simulated);
+  // eSTAR Integration — removed deprecated alternate 510kEstarRoutes path;
   // active eSTAR endpoint is at /api/510k/estar via 510k-estar-routes.ts
 }
 

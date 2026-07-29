@@ -1,9 +1,14 @@
 import express from 'express';
 import request from 'supertest';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+
+vi.mock('../../server/auth.js', () => ({ authMiddleware: vi.fn() }));
+vi.mock('../../server/routes/510k-project.routes', () => ({ default: 'project-router' }));
+
 import telemetryRouter from '../../server/routes/beta-telemetry.routes';
+import { mountBetaSafeRoutes } from '../../server/betaRouteManifest';
 
 const telemetryDir = path.resolve(process.cwd(), 'test-results', 'beta-telemetry');
 const telemetryFile = path.join(telemetryDir, 'events.ndjson');
@@ -11,6 +16,10 @@ const telemetryFile = path.join(telemetryDir, 'events.ndjson');
 describe('beta telemetry routes', () => {
   const app = express();
   app.use(express.json());
+  app.use((req, _res, next) => {
+    req.tenantContext = { organizationId: 1 };
+    next();
+  });
   app.use('/api/telemetry/beta-workspace', telemetryRouter);
 
   beforeEach(async () => {
@@ -68,5 +77,54 @@ describe('beta telemetry routes', () => {
     expect(response.body.events).toHaveLength(1);
     expect(response.body.events[0].type).toBe('export_attempt');
     expect(String(response.body.events[0].projectId)).toBe('p2');
+  });
+
+  it('requires organization context', async () => {
+    const unscopedApp = express();
+    unscopedApp.use(express.json());
+    unscopedApp.use('/api/telemetry/beta-workspace', telemetryRouter);
+
+    const response = await request(unscopedApp)
+      .post('/api/telemetry/beta-workspace/event')
+      .send({ type: 'route_entry', route: '/concept2cure' });
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toBe('organization_context_required');
+  });
+
+  it('does not return events from another organization', async () => {
+    const otherOrgApp = express();
+    otherOrgApp.use(express.json());
+    otherOrgApp.use((req, _res, next) => {
+      req.tenantContext = { organizationId: 2 };
+      next();
+    });
+    otherOrgApp.use('/api/telemetry/beta-workspace', telemetryRouter);
+
+    await request(otherOrgApp).post('/api/telemetry/beta-workspace/event').send({
+      type: 'route_entry',
+      route: '/concept2cure/project/other-org/510k',
+      projectId: 'other-org',
+    });
+
+    const response = await request(app)
+      .get('/api/telemetry/beta-workspace/events')
+      .query({ projectId: 'other-org' });
+    expect(response.status).toBe(200);
+    expect(response.body.events).toEqual([]);
+  });
+
+  it('mounts authentication before the tester telemetry router', () => {
+    const use = vi.fn();
+    const authenticate = vi.fn();
+
+    mountBetaSafeRoutes({ use } as any, authenticate);
+
+    expect(use).toHaveBeenNthCalledWith(
+      2,
+      '/api/telemetry/beta-workspace',
+      authenticate,
+      telemetryRouter
+    );
   });
 });

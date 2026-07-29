@@ -87,33 +87,34 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
 }
 
 /**
- * Optional request logging for DEBUG mode. Body is redacted for
- * /api/concept2cure routes because they can carry large base64 payloads.
+ * Optional request logging for DEBUG mode. Request/query values are never
+ * logged; only allowlisted transport metadata and query keys are retained.
  */
 export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): void {
   app.use((req: Request, _res: Response, next) => {
-    const isConcept2cureRoute = req.url.startsWith('/api/concept2cure');
+    const isConcept2cureRoute = isConcept2cureApiRoute(req);
     debugLog(`${req.method} ${req.url}`, {
-      headers: req.headers,
-      query: req.query,
-      body: req.method !== 'GET' && !isConcept2cureRoute ? req.body : undefined,
-      bodyRedacted: isConcept2cureRoute ? true : undefined,
+      headers: getDebugHeaderMetadata(req),
+      query: getDebugQueryMetadata(req),
+      body: undefined,
+      bodyRedacted: true,
+      bodyMetadata: getDebugBodyMetadata(req),
+      concept2curePayload: isConcept2cureRoute,
     });
     next();
   });
 }
 
 const IMMUTABLE_ROUTE_PATTERNS = [
-  /^\/api\/audit\/events/, // Audit trail events — append-only
-  /^\/api\/audit\/bulk-delete/, // Explicit bulk-delete block
+  /^\/api\/audit\/events(?:\/|$)/, // Audit trail events — append-only
+  /^\/api\/audit\/bulk-delete(?:\/|$)/, // Explicit bulk-delete block
 ];
 
-function applyImmutabilityPolicy(app: Express): void {
+export function applyImmutabilityPolicy(app: Express): void {
   app.use((req: Request, res: Response, next: NextFunction) => {
-    const isDestructive =
-      req.method === 'DELETE' || (req.method === 'POST' && req.path.includes('bulk-delete'));
+    const isDestructive = isDestructiveAuditMutation(req);
     if (isDestructive) {
-      const isImmutable = IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(req.path));
+      const isImmutable = isImmutableAuditRoute(req.path);
       if (isImmutable) {
         console.warn(
           `[IMMUTABILITY] Blocked ${req.method} ${req.path} — audit records are append-only`
@@ -129,4 +130,58 @@ function applyImmutabilityPolicy(app: Express): void {
     }
     next();
   });
+}
+
+export function isConcept2cureApiRoute(req: Pick<Request, 'originalUrl' | 'path' | 'url'>): boolean {
+  const requestPath = req.originalUrl || req.path || req.url || '';
+  return /^\/api\/concept2cure(?:\/|\?|$)/.test(requestPath);
+}
+
+export function getDebugBodyMetadata(
+  req: Pick<Request, 'method' | 'headers'>
+): Record<string, unknown> | undefined {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase())) return undefined;
+  return {
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length'],
+    transferEncoding: req.headers['transfer-encoding'],
+  };
+}
+
+const DEBUG_HEADER_ALLOWLIST = [
+  'accept',
+  'content-length',
+  'content-type',
+  'traceparent',
+  'user-agent',
+  'x-request-id',
+] as const;
+
+export function getDebugHeaderMetadata(
+  req: Pick<Request, 'headers'>
+): Record<string, string | string[] | undefined> {
+  return Object.fromEntries(
+    DEBUG_HEADER_ALLOWLIST.map(header => [header, req.headers[header]]).filter(
+      ([, value]) => value !== undefined
+    )
+  );
+}
+
+export function getDebugQueryMetadata(
+  req: Pick<Request, 'query'>
+): { parameterCount: number; keys: string[] } {
+  const keys = Object.keys(req.query).sort();
+  return { parameterCount: keys.length, keys };
+}
+
+export function isDestructiveAuditMutation(req: Pick<Request, 'method' | 'path'>): boolean {
+  const method = req.method.toUpperCase();
+  return (
+    ['DELETE', 'PUT', 'PATCH'].includes(method) ||
+    (method === 'POST' && /(?:^|\/)bulk-delete(?:\/|$)/i.test(req.path))
+  );
+}
+
+export function isImmutableAuditRoute(path: string): boolean {
+  return IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(path));
 }

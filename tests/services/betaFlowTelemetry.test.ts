@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   classifyBetaFlow,
   getBetaFlowTelemetrySnapshot,
+  normalizeBetaTelemetryPath,
   recordBetaFlowEvent,
   resetBetaFlowTelemetry,
 } from '../../server/services/telemetry/betaFlowTelemetry';
@@ -15,7 +16,25 @@ describe('betaFlowTelemetry', () => {
     expect(classifyBetaFlow('GET', '/api/concept2cure/onboarding/status')).toBe('onboarding');
     expect(classifyBetaFlow('POST', '/api/projects')).toBe('project_creation');
     expect(classifyBetaFlow('POST', '/api/documents/123/status')).toBe('authoring');
+    expect(classifyBetaFlow('POST', '/api/documents/123/export')).toBe('exports');
     expect(classifyBetaFlow('POST', '/api/programs/1/export')).toBe('exports');
+    expect(classifyBetaFlow('GET', '/api/health?next=/api/export')).toBe('other');
+    expect(classifyBetaFlow('POST', '/api/concept2cure/projects')).toBe('project_creation');
+    expect(
+      classifyBetaFlow('PUT', '/api/concept2cure/projects/42/artifacts/99/status')
+    ).toBe('authoring');
+    expect(
+      classifyBetaFlow('POST', '/api/concept2cure/projects/42/artifacts/99/export')
+    ).toBe('exports');
+    expect(classifyBetaFlow('GET', '/api/concept2cure/projects')).toBe('other');
+    expect(classifyBetaFlow('POST', '/api/projects-legacy')).toBe('other');
+    expect(classifyBetaFlow('POST', '/api/documents-archive')).toBe('other');
+  });
+
+  it('removes query strings and fragments from telemetry paths', () => {
+    expect(normalizeBetaTelemetryPath('/api/documents/1?token=secret#section')).toBe(
+      '/api/documents/1'
+    );
   });
 
   it('aggregates requests, errors, and error rate', () => {
@@ -47,6 +66,32 @@ describe('betaFlowTelemetry', () => {
       path: '/api/documents/1/export',
       statusCode: 503,
       flow: 'authoring',
+    });
+  });
+
+  it('does not retain query-string secrets in error events', () => {
+    recordBetaFlowEvent('authoring', 500, 25, {
+      method: 'POST',
+      path: '/api/documents/1?access_token=beta-secret',
+    });
+
+    const detailed = getBetaFlowTelemetrySnapshot({ includeErrorEvents: true });
+    expect(detailed.recentErrorEvents?.[0]?.path).toBe('/api/documents/1');
+  });
+
+  it('does not double-count an event already assigned to route_errors', () => {
+    recordBetaFlowEvent('route_errors', 503, 40, {
+      method: 'GET',
+      path: '/api/broken',
+    });
+
+    const routeErrors = getBetaFlowTelemetrySnapshot().telemetry.find(
+      item => item.flow === 'route_errors'
+    );
+    expect(routeErrors).toMatchObject({
+      requests: 1,
+      errors: 1,
+      avgDurationMs: 40,
     });
   });
 
