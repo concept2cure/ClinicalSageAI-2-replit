@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-28T20:51:51.562Z",
+  "generatedAt": "2026-07-29T23:04:10.347Z",
   "git": {
-    "sha": "69ba8366cac7f586076b3ab23cba9510ca55f4fa",
+    "sha": "d39752cb8457619174f4c9be32048f3692845374",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2470,7 +2470,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 941356
+        "bytes": 942008
       },
       {
         "file": "shared/schema.ts",
@@ -2490,7 +2490,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 181850
+        "bytes": 182939
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2534,7 +2534,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 118165
+        "bytes": 119523
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2600,7 +2600,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18305
+        "lines": 18318
       },
       {
         "file": "server/statistics-service.ts",
@@ -2616,7 +2616,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4778
+        "lines": 4806
       },
       {
         "file": "server/storage.ts",
@@ -2656,7 +2656,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2633
+        "lines": 2660
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2875,20 +2875,20 @@
         "lines": 1678
       },
       {
-        "file": "server/services/unifiedDocumentIngestion.js",
-        "lines": 1658
-      },
-      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
       {
-        "file": "services/regulatory/globalPyramids.ts",
-        "lines": 1623
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1628
       },
       {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1611
+        "file": "server/services/unifiedDocumentIngestion.js",
+        "lines": 1628
+      },
+      {
+        "file": "services/regulatory/globalPyramids.ts",
+        "lines": 1623
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
