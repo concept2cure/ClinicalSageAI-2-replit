@@ -77,6 +77,9 @@ describe('form discovery + build', () => {
         fields: expect.arrayContaining([expect.objectContaining({ id: 'application_type', required: true })]),
       }),
     ]));
+    expect(res.body.releaseReadiness).toEqual(expect.objectContaining({
+      releaseReady: false, catalogComplete: false, officialAssetsVerified: false,
+    }));
   });
 
   it('POST /FDA_1571/build → 200 returns a field map + missingRequired', async () => {

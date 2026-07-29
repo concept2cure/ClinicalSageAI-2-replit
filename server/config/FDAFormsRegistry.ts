@@ -501,9 +501,72 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
 };
 
 const FDA_FORMS_CATALOG_URL = 'https://www.fda.gov/about-fda/forms/new-and-updated-fda-forms';
+export const FDA_FORMS_RELEASE_READINESS = {
+  releaseReady: false,
+  catalogComplete: false,
+  officialAssetsVerified: false,
+  blockers: ['FDA_CATALOG_NOT_RECONCILED', 'OFFICIAL_PDF_ASSETS_NOT_VERIFIED'],
+} as const;
 const FULLY_IMPLEMENTED_FORMS = new Set([
   'FDA_1571', 'FDA_1572', 'FDA_1574', 'FDA_3454', 'FDA_3455', 'FDA_356H', 'FDA_3674',
 ]);
+
+export interface FDAOfficialCatalogEntry {
+  formNumber: string;
+  title: string;
+  sourceUrl: string;
+  revisionDate?: string;
+}
+
+export interface FDACatalogReconciliation {
+  catalogEntries: number;
+  registryEntries: number;
+  missingFromRegistry: FDAOfficialCatalogEntry[];
+  duplicateCatalogNumbers: string[];
+  registryEntriesNotInSnapshot: string[];
+  invalidSourceUrls: string[];
+  reconciled: boolean;
+}
+
+function normalizedFormNumber(value: string): string {
+  return value.toLowerCase().replace(/^fda\s*/i, '').replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Pure reconciliation gate for a reviewed FDA catalog snapshot. This does not
+ * scrape or mutate the registry: ingestion supplies the reviewed snapshot and
+ * promotion remains blocked until every official entry maps exactly once.
+ */
+export function reconcileFdaCatalogSnapshot(entries: FDAOfficialCatalogEntry[]): FDACatalogReconciliation {
+  const counts = new Map<string, number>();
+  const invalidSourceUrls: string[] = [];
+  for (const entry of entries) {
+    const number = normalizedFormNumber(entry.formNumber);
+    counts.set(number, (counts.get(number) ?? 0) + 1);
+    try {
+      const url = new URL(entry.sourceUrl);
+      if (url.protocol !== 'https:' || !(url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'))) invalidSourceUrls.push(entry.sourceUrl);
+    } catch {
+      invalidSourceUrls.push(entry.sourceUrl);
+    }
+  }
+  const registryByNumber = new Map(Object.values(FDAFormsRegistry).map((form) => [normalizedFormNumber(form.formNumber), form]));
+  const missingFromRegistry = entries.filter((entry) => !registryByNumber.has(normalizedFormNumber(entry.formNumber)));
+  const duplicateCatalogNumbers = [...counts.entries()].filter(([, count]) => count > 1).map(([number]) => number).sort();
+  const registryEntriesNotInSnapshot = [...registryByNumber.entries()]
+    .filter(([number]) => !counts.has(number)).map(([, form]) => form.formId).sort();
+  return {
+    catalogEntries: entries.length,
+    registryEntries: registryByNumber.size,
+    missingFromRegistry,
+    duplicateCatalogNumbers,
+    registryEntriesNotInSnapshot,
+    invalidSourceUrls,
+    reconciled: entries.length > 0 && missingFromRegistry.length === 0
+      && registryEntriesNotInSnapshot.length === 0
+      && duplicateCatalogNumbers.length === 0 && invalidSourceUrls.length === 0,
+  };
+}
 
 /** Add the governed lifecycle contract to legacy definitions without cloning registries. */
 export function governedFormDefinition(form: FDAFormDefinition): FDAFormDefinition {

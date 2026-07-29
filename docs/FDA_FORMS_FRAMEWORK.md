@@ -34,6 +34,12 @@ record the FDA URL, retrieval time, checksum, edition/expiration text, and licen
 review; a changed checksum creates a new version rather than overwriting an
 approved version.
 
+Every `<FORM_ID>.pdf` requires a sibling `<FORM_ID>.pdf.manifest.json` containing
+`formId`, `version`, an HTTPS `sourceUrl` on `fda.gov`, SHA-256, `reviewedBy`,
+`reviewedAt`, and a complete `fieldMap` from canonical field IDs to AcroForm field
+names. Missing manifests, checksum mismatch, non-FDA sources, or partial mappings
+force the renderer back to the watermarked draft path.
+
 Network access to FDA was unavailable during this implementation, so no PDF is
 represented as an official downloaded asset in this repository. The renderer
 therefore continues to use the fail-safe watermarked draft until reviewed official

@@ -1,4 +1,4 @@
-import { FDAFormsRegistry, FormField, FDAFormDefinition, governedFormDefinition, getRequiredForms, getFormsForStage } from '../config/FDAFormsRegistry';
+import { FDAFormsRegistry, FDA_FORMS_RELEASE_READINESS, FormField, FDAFormDefinition, governedFormDefinition, getRequiredForms, getFormsForStage } from '../config/FDAFormsRegistry';
 
 export default class FDAFormGenerator {
   /**
@@ -842,12 +842,7 @@ export default class FDAFormGenerator {
   }
 
   /** Client-release gate shared by FDA discovery and editable draft generation. */
-  static readonly RELEASE_READINESS = {
-    releaseReady: false,
-    catalogComplete: false,
-    officialAssetsVerified: false,
-    blockers: ['FDA_CATALOG_NOT_RECONCILED', 'OFFICIAL_PDF_ASSETS_NOT_VERIFIED'],
-  } as const;
+  static readonly RELEASE_READINESS = FDA_FORMS_RELEASE_READINESS;
 
   /** List governed definitions from the existing canonical FDA registry. */
   listGovernedForms(input: Record<string, unknown> = {}) {

@@ -64,6 +64,12 @@ not be established.
 **Release gate:** blocked until a reviewed catalog snapshot/import, source URL,
 edition/expiration metadata, checksum, and reconciliation report exist.
 
+**Remediation applied:** the canonical registry now owns a pure snapshot
+reconciliation gate that reports missing forms, duplicate form numbers,
+registry-only entries, and invalid/non-FDA source URLs. An empty or discrepant
+snapshot cannot report `reconciled: true`. The actual FDA snapshot remains
+blocked on network-enabled reviewed ingestion.
+
 ### F-02 — Critical — official form fidelity is not established
 
 No reviewed AcroForm assets or complete AcroForm field-name mappings are
@@ -73,6 +79,11 @@ submission gates.
 
 **Release gate:** blocked until official assets and mappings are independently
 verified against golden filled-form fixtures.
+
+**Remediation applied:** the existing IND PDF engine now refuses every asset
+without a reviewed FDA-source sidecar manifest, matching SHA-256, and complete
+canonical-to-AcroForm field map. This secures future ingestion but does not make
+the currently absent official assets complete.
 
 ### F-03 — High — “full” is an implementation tier, not regulatory verification
 

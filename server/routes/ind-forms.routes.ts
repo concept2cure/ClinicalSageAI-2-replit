@@ -47,7 +47,7 @@ import {
   getInvestigator,
 } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
-import { FDAFormsRegistryClass } from '../config/FDAFormsRegistry';
+import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
@@ -102,7 +102,7 @@ router.get('/', limiter, requireRole(AUTHOR), (_req, res) => {
   // Return the canonical registry objects rather than maintaining a second,
   // route-local metadata model that can drift from validation and rendering.
   const formDefinitions = SUPPORTED_FORM_IDS.map((formId) => formsRegistry.getForm(formId));
-  res.json({ forms: SUPPORTED_FORM_IDS, formDefinitions });
+  res.json({ forms: SUPPORTED_FORM_IDS, formDefinitions, releaseReadiness: FDA_FORMS_RELEASE_READINESS });
 });
 
 /**
