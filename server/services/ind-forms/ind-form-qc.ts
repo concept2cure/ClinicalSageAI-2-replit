@@ -77,6 +77,9 @@ export function runM1FormsQc(input: M1QcInput): M1QcResult {
     for (const fieldId of f.missingRequired ?? []) {
       findings.push({ formId: f.formId, severity: 'error', code: 'COMPLETENESS', message: `${f.formId}: required field "${fieldId}" is missing.` });
     }
+    for (const finding of f.validationErrors ?? []) {
+      findings.push({ formId: f.formId, severity: 'error', code: 'VALIDATION', message: `${f.formId}: ${finding.message}` });
+    }
   }
 
   // STRUCTURE — duplicate non-1572 forms (1572 is legitimately per-investigator).

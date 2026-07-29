@@ -11,12 +11,16 @@ import {
   buildForm3674,
   buildForm3454,
   buildForm3455,
+  buildForm356h,
+  buildForm1574,
   labelsForForm,
   FORM_1571,
   FORM_1572,
   FORM_3674,
   FORM_3454,
   FORM_3455,
+  FORM_356H,
+  FORM_1574,
   type IndProjectMetadata,
 } from '../ind-form-data-builders';
 
@@ -33,6 +37,13 @@ function fullMeta(): IndProjectMetadata {
     studyTitle: 'A Phase 1 Study of ACME-001',
     protocolNumbers: 'ACME-001-101',
     nctNumber: 'NCT00000000',
+    applicationType: 'NDA',
+    applicationNumber: 'NDA 123456',
+    dosageForm: 'Tablet',
+    routeOfAdministration: 'Oral',
+    irbNameAddress: 'Acme IRB, Boston, MA',
+    irbChairName: 'Dr. Robin Chair',
+    irbAssuranceNumber: 'FWA00000001',
     sponsor: {
       name: 'Acme Therapeutics, Inc.',
       address: '1 Acme Way, Cambridge, MA',
@@ -232,7 +243,7 @@ describe('buildForm3455 (financial disclosure)', () => {
 
 describe('labelsForForm', () => {
   it('returns non-empty label maps for every supported form', () => {
-    for (const id of [FORM_1571, FORM_1572, FORM_3674, FORM_3454, FORM_3455]) {
+    for (const id of [FORM_1571, FORM_1572, FORM_3674, FORM_3454, FORM_3455, FORM_356H, FORM_1574]) {
       const labels = labelsForForm(id);
       expect(Object.keys(labels).length).toBeGreaterThan(0);
     }
@@ -240,5 +251,37 @@ describe('labelsForForm', () => {
 
   it('returns an empty map for an unknown form id', () => {
     expect(labelsForForm('FDA_9999')).toEqual({});
+  });
+});
+
+describe('NDA/BLA and IRB forms', () => {
+  it('builds Form 356h from marketing-application metadata', () => {
+    const built = buildForm356h(fullMeta());
+    expect(built.formId).toBe(FORM_356H);
+    expect(built.fields.application_type).toBe('NDA');
+    expect(built.fields.route_of_administration).toBe('Oral');
+    expect(built.missingRequired).toEqual([]);
+    expect(built.validationErrors).toEqual([]);
+  });
+
+  it('requires an application number for supplements and rejects unknown application types', () => {
+    const supplement = fullMeta();
+    supplement.applicationType = 'Supplement';
+    delete supplement.applicationNumber;
+    expect(buildForm356h(supplement).missingRequired).toContain('application_number');
+
+    const invalid = fullMeta();
+    (invalid as any).applicationType = 'PMA';
+    expect(buildForm356h(invalid).validationErrors).toEqual([
+      expect.objectContaining({ fieldId: 'application_type', code: 'INVALID_OPTION' }),
+    ]);
+  });
+
+  it('builds Form 1574 and fails closed on missing IRB chair', () => {
+    const meta = fullMeta();
+    delete meta.irbChairName;
+    const built = buildForm1574(meta);
+    expect(built.formId).toBe(FORM_1574);
+    expect(built.missingRequired).toContain('irb_chair_name');
   });
 });

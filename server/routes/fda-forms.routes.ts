@@ -10,7 +10,7 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService';
 import FDAFormGenerator from '../services/FDAFormGenerator';
-import { FDAFormsRegistryClass } from '../config/FDAFormsRegistry';
+import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
 
 const router = Router();
 
@@ -50,6 +50,7 @@ router.get('/registry', async (req: Request, res: Response) => {
       registry,
       categories,
       totalForms,
+      releaseReadiness: FDA_FORMS_RELEASE_READINESS,
       version: '2.0.0',
       lastUpdated: new Date().toISOString()
     });
