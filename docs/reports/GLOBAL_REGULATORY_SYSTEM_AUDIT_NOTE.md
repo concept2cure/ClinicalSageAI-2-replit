@@ -29,7 +29,7 @@
 | Project bootstrap | bootstrapProject(entry) → sections + milestones + requiredArtifacts | shared/regulatory/project-bootstrap.ts |
 | Section blueprints | CTD, Device, CER blueprints selected by registry entry | shared/regulatory/project-bootstrap.ts |
 | Task blueprints | Milestones selected by registry entry | shared/regulatory/project-bootstrap.ts |
-| Readiness matrix | assessReadiness(blueprint, artifacts) — registry-driven | shared/regulatory/readiness-matrix.ts |
+| Submission readiness | evaluateReadiness(input) — registry-aware sections and artifacts | server/services/regulatory/readinessEvaluator.ts |
 | Backward compat | LEGACY_TO_REGISTRY_ID maps old types to new | shared/regulatory/document-taxonomy.ts |
 | Project metadata | enrichProjectMetadata() adds .regulatory without migration | shared/regulatory/project-model-integration.ts |
 | API | 5 endpoints: registry, regions, search, resolve, by-id | server/routes/regulatory-registry.ts |
@@ -334,3 +334,175 @@ Some pieces are production-leaning (notably `concept2cure.ts` communication cent
 
 **High** for route wiring, incomplete implementation, and tenant-scoping observations (direct code evidence).  
 **Medium** for runtime behavior assumptions where environment-specific flags/data may alter active paths.
+
+---
+
+## 2026-07-29 Addendum — Biotech completion planning duplication audit
+
+### Decision
+
+**The proposed standalone biotech completion-matrix subsystem is withdrawn.**
+The investigation found that it recreated registry filtering, readiness scoring,
+gap reporting, evidence governance concepts, and workflow classification that
+already exist in the product. Its new module, generator, manifest, generated
+artifacts, tests, package scripts, roadmap file, and separate audit file have been
+removed rather than adding another source of truth.
+
+This addendum records the investigation in the existing Global Regulatory System
+audit instead of creating another audit/document-control hierarchy.
+
+### Existing capabilities that must be reused
+
+| Required concern | Existing canonical implementation | Reuse decision |
+|---|---|---|
+| Regulatory application/document inventory | `shared/regulatory/global-document-registry.ts` and `shared/regulatory/document-taxonomy.ts` | Keep as the only canonical inventory and taxonomy |
+| Server registry facade and filtering | `server/services/regulatory/registry/globalDocumentRegistryService.ts` | Extend filters/coverage reporting here; do not create a parallel matrix registry |
+| Project/application configuration | `shared/regulatory/workspace-config.ts`, `shared/regulatory/project-bootstrap.ts`, and `server/services/regulatory/projectBootstrapFromRegistry.ts` | Reconcile fallbacks and coverage in place |
+| Required artifact definitions | `server/services/regulatory/requiredArtifactMatrix.ts` | Extend the existing matrix; do not create a second evidence-requirements manifest |
+| Submission readiness and gap evaluation | `server/services/regulatory/readinessEvaluator.ts` and `server/services/regulatory/submission-readiness.ts` | Add qualification dimensions to the existing evaluator contract |
+| Project-level readiness | `server/services/ana/project-readiness-aggregator.ts` | Preserve as the aggregate source for section, citation, consistency, and guidance readiness |
+| Governed lifecycle/export/publish gates | `shared/types/governed-document-fabric.ts` and its evaluators | Reuse existing lifecycle readiness, blockers, placement, and gate decisions |
+| Workflow/application packs | `server/services/ana-ri/workflow-orchestration.ts`, `server/services/regulatory/taskBlueprintCatalog.ts`, and registry blueprints | Converge these existing catalogs before adding pack abstractions |
+| Validation profiles | `shared/regulatory/validation-profile.ts` | Extend the grounded profile model rather than storing decorative per-row status |
+| Release readiness | Existing GA/beta readiness registers and control-plane gates | Add evidence to the established release process, not a new CSV/JSON release gate |
+
+### Duplication findings
+
+#### D-01 — Parallel readiness model (High)
+
+The withdrawn module introduced a new `CompletionState`, row score, blocker count,
+and summary while the repository already has:
+
+- registry-aware section/artifact readiness in `readinessEvaluator.ts`;
+- project readiness aggregation across coverage, citations, contradictions, and
+  guidance in `project-readiness-aggregator.ts`;
+- document lifecycle readiness and blocking categories in
+  `governed-document-fabric.ts`;
+- multiple established release-readiness gates and registers.
+
+A second readiness vocabulary would require adapters, invite conflicting scores,
+and allow the planning CSV to disagree with live governed state.
+
+#### D-02 — Parallel evidence manifest (High)
+
+The withdrawn JSON manifest modeled reviewed evidence claims, but the product
+already has governed artifacts, artifact versions, audit records, formal decision
+references, lifecycle evaluations, export gates, and evidence-pack tooling. A
+Git-reviewed JSON file cannot replace tenant-scoped, version-bound governed
+records and would create a non-runtime approval channel.
+
+#### D-03 — Parallel workflow-family classification (High)
+
+The withdrawn eight-family classifier inferred ownership from registry metadata
+and used marketing applications as a catch-all. Existing workflow orchestration,
+application families, work packages, filing taxonomy, task catalogs, and dedicated
+registry blueprints already classify and execute work. The correct task is to
+reconcile those catalogs and remove silent fallbacks, not add another classifier.
+
+#### D-04 — Static generated outputs duplicate live readiness (Medium)
+
+The withdrawn CSV and JSON summary were repository snapshots, whereas readiness
+is already calculated from project sections, governed artifacts, citations,
+contradictions, and guidance alerts. Static files would become stale and could not
+represent tenant/project state.
+
+#### D-05 — The existing system itself is fragmented (High)
+
+Withdrawal does not mean the product is complete. Investigation confirmed several
+parallel existing readiness services and overlapping catalogs. The convergence
+work must select canonical layers and route existing consumers through them.
+Adding a new top-level matrix would have worsened this problem.
+
+### Corrected readiness assessment
+
+There is **no defensible repository-wide percentage for full biotech document-type
+completion today**. The withdrawn 6.67%/13.33% figures measured cells in a newly
+invented planning schema, not operational product readiness, and must not be used.
+
+Current evidence supports these narrower statements:
+
+- The canonical registry contains 158 active, uniquely identified entries with no
+  missing segment classification in the audit query.
+- 101 entries match the proposed biotech scope rule, but scope membership does not
+  establish document-pack implementation.
+- The existing required-artifact matrix has dedicated definitions for a small
+  subset of pathways (including IND, NDA/BLA, EU CTA/MAA and device pathways).
+- The shared bootstrap and server task catalog use generic fallbacks for many
+  registry entries.
+- Existing workflow orchestration has substantive IND content and several other
+  application workflows, but it is not derived consistently from the canonical
+  registry and does not cover every scoped entry.
+- Existing readiness engines are real and tested, but none currently produces an
+  audited all-biotech, all-document qualification result across the requested
+  fifteen completion dimensions.
+
+**Beta decision remains NO-GO for the “complete biotech operating system” claim,**
+but the reason is missing convergence and qualification evidence—not a score from
+a parallel completion matrix.
+
+### Gap analysis against the requested fifteen completion dimensions
+
+| Requested dimension | Existing system to inspect/extend | Current gap |
+|---|---|---|
+| Canonical registry entry | Global registry/service | Present; regulatory-content validation and scope granularity still required |
+| Applicability rule | Registry metadata, workspace derivation, program model | No single executable, versioned conditional-applicability contract |
+| Structured outline | Shared bootstrap and dedicated registry blueprints | Coverage is partial; generic fallback masks unsupported types |
+| Source-data definitions | Required artifact matrix, workflow required artifacts, evidence fabric | Definitions are duplicated and incomplete across pathways |
+| Drafting instructions | Default instruction builder, AnA commands, templates | No audited per-document coverage map |
+| AnA tools/context | Workflow orchestration and AnA services | Substantive pathway logic exists but is not registry-complete |
+| Completeness/quality validation | Validation profiles and readiness evaluator | Existing engines need a unified profile/pack contract |
+| Cross-document consistency | Project readiness aggregator and consistency scanner | Existing live capability; document-family qualification coverage is unproven |
+| Governed lifecycle | Governed document fabric and lifecycle services | Existing canonical vocabulary; end-to-end pathway coverage is unproven |
+| Version/reason for change | Governed artifacts, versions, audit trail | Must be verified per workflow rather than represented in static JSON |
+| Dossier placement | Governed fabric and dossier/submission services | Existing decisions/services need per-pathway coverage evidence |
+| Word/PDF export | Existing export services and governed export gates | Qualification evidence must be linked to real artifacts and versions |
+| Package inclusion | Required artifact matrix and package builder | Dedicated pathway coverage is limited |
+| Automated tests | Existing service and journey tests | No consolidated coverage ledger tied to registry IDs |
+| Golden document | Existing eval/evidence-pack systems | No approved golden case for every scoped document type |
+
+### Required next work — investigation before implementation
+
+1. **Approve canonical ownership.** Publish a short architecture decision naming
+   the registry service, readiness evaluator, project readiness aggregator,
+   governed document fabric, required artifact matrix, and workflow catalog as the
+   layers to converge. No new subsystem should be created.
+2. **Build a coverage audit from existing services.** For every scoped registry ID,
+   query whether it has a dedicated section blueprint, task/workflow pack,
+   required-artifact definition, grounded validation profile, package rules,
+   export journey tests, and golden evidence. The audit should call existing
+   APIs/functions and report `dedicated`, `family-derived`, `generic-fallback`, or
+   `missing`; it must not create a new readiness score.
+3. **Reconcile duplicated catalogs.** Compare registry `requiredArtifacts`,
+   `requiredArtifactMatrix`, workflow `requiredArtifacts`, shared task blueprints,
+   and dedicated server blueprints. Select authoritative ownership and add drift
+   tests.
+4. **Eliminate silent fallbacks.** Generic fallback may remain for UI exploration,
+   but beta qualification and export/submission gates must fail closed when a
+   dedicated or explicitly approved family pack is absent.
+5. **Complete one existing vertical slice.** Use the current IND workflow,
+   readiness evaluator, governed fabric, package builder, export gates, and project
+   readiness aggregator. Close gaps in those systems rather than wrapping them.
+6. **Attach qualification evidence to governed artifacts/decisions.** Do not use a
+   repository JSON approval manifest as a substitute for runtime governance.
+7. **Only then publish a control-tower view.** The view should aggregate canonical
+   service results and deep-link to evidence; it should not own readiness state.
+
+### Investigation commands used
+
+```text
+rg --files --glob '!node_modules/**' | rg -i '(completion.?matrix|readiness|document.?registry|capability.?manifest|coverage|evidence.?manifest|release.?gate|document.?type)'
+rg -n -i "completion matrix|document readiness|readiness matrix|definition of done|golden.document|requiredArtifacts|defaultSectionBlueprint|validationProfile" shared server client scripts tests docs
+rg -n "ci:biotech-matrix|biotech:matrix" .github scripts/ci package.json
+npx tsx -e <registry integrity and biotech-scope inventory queries>
+npm run typecheck
+npx vitest run --config vitest.config.ts tests/regulatory/document-taxonomy.test.ts tests/regulatory/validation-profile.test.ts tests/regulatory/readinessEvaluator.test.ts tests/regulatory/globalDocumentRegistry.test.ts
+```
+
+### Audit confidence and limitation
+
+**High confidence** that the withdrawn files duplicated existing concepts and
+would have created a parallel source of truth; this is supported by direct symbol,
+consumer, and service inspection. **Medium confidence** on end-to-end readiness of
+each existing pathway because a registry-ID coverage audit across all existing
+catalogs has not yet been implemented. That coverage audit is the next approved
+investigation artifact; implementation should not proceed before it is reviewed.

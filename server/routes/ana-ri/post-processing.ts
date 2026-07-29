@@ -32,6 +32,7 @@ import { computeRimClaimMetrics } from '../../services/ana/rim-claim-metrics.js'
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import type { CommandContext } from '../../services/ana-ri/command-executor.js';
+import { isPositiveIntegerId } from './shared.js';
 import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersionStore.js';
 
 export interface StreamPostProcessingContext {
@@ -55,7 +56,7 @@ export interface StreamPostProcessingContext {
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
   collectedProvenance: ProvenanceRecord[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
-  collectedDrafts: { title: string; content: string; documentType?: string }[];
+  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
   /** Gateway message history built for the turn (for working-memory write-back). */
   messages: GatewayMessage[];
   model: string | undefined;
@@ -78,7 +79,7 @@ async function persistCollectedDrafts(args: {
   streamProjectId: string | number | null | undefined;
   userId: number | undefined;
   threadId: string | undefined;
-  collectedDrafts: { title: string; content: string; documentType?: string }[];
+  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
 }): Promise<void> {
   const { res, orgId, streamProjectId, userId, threadId, collectedDrafts } = args;
   const projectId =
@@ -101,6 +102,7 @@ async function persistCollectedDrafts(args: {
         title: draft.title,
         content: draft.content,
         documentType: draft.documentType,
+        reasonForChange: draft.reasonForChange,
       });
       if (saved.created) {
         res.write(
@@ -153,7 +155,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     let executedCommands: any[] = [];
 
     // Guidance executor — auto-create artifacts if response contains action signals
-    if (fullContent && streamProjectId && orgId) {
+    if (fullContent && streamProjectId && orgId && isPositiveIntegerId(userId)) {
       try {
         const guidance = await processResponseActions(fullContent, {
           projectId:
@@ -161,7 +163,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
               ? Number.parseInt(streamProjectId, 10)
               : streamProjectId,
           organizationId: Number(orgId),
-          userId: typeof userId === 'number' ? userId : 0,
+          userId,
           userName: 'AnA',
           threadId: threadId || undefined,
         });
@@ -173,10 +175,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)
-    if (contentForCommandProcessing && orgId) {
+    if (contentForCommandProcessing && orgId && isPositiveIntegerId(userId)) {
       try {
         const cmdCtx: CommandContext = {
-          userId: typeof userId === 'number' ? userId : 0,
+          userId,
           organizationId: Number(orgId),
           activeProjectId: streamProjectId
             ? typeof streamProjectId === 'string'

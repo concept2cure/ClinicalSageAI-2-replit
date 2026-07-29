@@ -82,6 +82,7 @@ import {
   sendSuccess,
   sendError,
   extractRequestContext,
+  isPositiveIntegerId,
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
@@ -669,7 +670,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     let executedActions: any[] = [];
     const chatProjectIdForActions = chatProjectId;
     let postGuidanceResponseContent = response.content;
-    if (response.content && chatProjectIdForActions && orgId) {
+    if (response.content && chatProjectIdForActions && orgId && isPositiveIntegerId(userId)) {
       try {
         const guidance = await processResponseActions(response.content, {
           projectId:
@@ -677,7 +678,7 @@ router.post('/chat', async (req: Request, res: Response) => {
               ? Number.parseInt(chatProjectIdForActions, 10)
               : chatProjectIdForActions,
           organizationId: Number(orgId),
-          userId: typeof userId === 'number' ? userId : 0,
+          userId,
           userName: 'AnA',
           threadId: resolvedThreadId || undefined,
         });
@@ -692,10 +693,10 @@ router.post('/chat', async (req: Request, res: Response) => {
     // (Parity with /stream — previously only ran on stream path)
     let executedCommands: any[] = [];
     let cleanedResponseContent = postGuidanceResponseContent;
-    if (postGuidanceResponseContent && orgId) {
+    if (postGuidanceResponseContent && orgId && isPositiveIntegerId(userId)) {
       try {
         const cmdCtx: CommandContext = {
-          userId: typeof userId === 'number' ? userId : 0,
+          userId,
           organizationId: Number(orgId),
           activeProjectId: chatProjectIdForActions
             ? typeof chatProjectIdForActions === 'string'

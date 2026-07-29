@@ -27,7 +27,7 @@ console.log(`║  Readiness Check — ${strict ? 'STRICT (blocking)' : 'WARN-ONL
 console.log('╚══════════════════════════════════════════════════════════════╝\n');
 
 try {
-  const { runStartupInvariants } = await import('../server/lib/startup-invariants.js');
+  const { runStartupInvariants } = await import('../server/lib/startup-invariants.ts');
   const report = await runStartupInvariants();
 
   console.log(`Checked at: ${report.checkedAt}`);
@@ -63,6 +63,6 @@ try {
   process.exit(0);
 } catch (err) {
   console.error('Readiness check failed to execute:', err.message || err);
-  if (strict) process.exit(1);
-  process.exit(0);
+  // Execution failure is never a readiness pass, including warn-only mode.
+  process.exit(1);
 }

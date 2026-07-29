@@ -1,12 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock the runtime module before importing requestDb so the pool-bound
-// fallback doesn't try to construct a real pg pool.
-vi.mock('../runtime', () => ({
-  db: { __sentinel: 'pool-bound' },
-}));
-
-import { requestDb } from '../requestDb';
+import { MissingRequestDbContextError, requestDb } from '../requestDb';
 
 function fakeReq(dbClient?: unknown): any {
   return { dbClient };
@@ -20,16 +14,24 @@ describe('requestDb', () => {
     const req = fakeReq(fakeClient);
     const built = requestDb(req);
 
-    // Built object should be a Drizzle instance, not the pool-bound sentinel.
-    expect((built as any).__sentinel).not.toBe('pool-bound');
     // Drizzle objects expose a `select` method.
     expect(typeof (built as any).select).toBe('function');
   });
 
-  it('falls back to the pool-bound db when no dbClient is on the request', () => {
-    const req = fakeReq(undefined);
-    const built = requestDb(req);
-    expect((built as any).__sentinel).toBe('pool-bound');
+  it('fails closed with a typed error when dbClient is missing', () => {
+    expect(() => requestDb(fakeReq(undefined))).toThrow(MissingRequestDbContextError);
+    try {
+      requestDb(fakeReq(undefined));
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: 'REQUEST_DB_CONTEXT_REQUIRED',
+        statusCode: 500,
+      });
+    }
+  });
+
+  it('fails closed when dbClient does not implement query', () => {
+    expect(() => requestDb(fakeReq({}))).toThrow(MissingRequestDbContextError);
   });
 
   it('caches the wrapper on the request to avoid rebuilding per call', () => {

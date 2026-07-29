@@ -4650,6 +4650,21 @@ export const COMMAND_HANDLERS: Record<string, any> = {
 /** Names of every dispatchable platform command (the parity guard's source of truth). */
 export const COMMAND_HANDLER_NAMES: string[] = Object.keys(COMMAND_HANDLERS);
 
+function isPositiveIntegerId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
+export function validateCommandContext(ctx: CommandContext): string | null {
+  if (!isPositiveIntegerId(ctx.userId)) return 'userId must be a positive integer';
+  if (!isPositiveIntegerId(ctx.organizationId)) {
+    return 'organizationId must be a positive integer';
+  }
+  if (ctx.activeProjectId !== undefined && !isPositiveIntegerId(ctx.activeProjectId)) {
+    return 'activeProjectId must be a positive integer when provided';
+  }
+  return null;
+}
+
 /**
  * Execute parsed commands and return results.
  */
@@ -4658,6 +4673,19 @@ export async function executeCommands(
   ctx: CommandContext
 ): Promise<CommandResult[]> {
   const results: CommandResult[] = [];
+
+  // Identity is a dispatcher precondition, not merely an RBAC concern. Reject
+  // every command before tenant policy reads, Part 11 reads, authorization, or
+  // handler invocation when the verified principal context is invalid.
+  const contextError = validateCommandContext(ctx);
+  if (contextError) {
+    return commands.map(cmd => ({
+      success: false,
+      action: cmd.command,
+      message: `Command blocked: ${contextError}.`,
+      error: 'COMMAND_CONTEXT_INVALID',
+    }));
+  }
 
   // ── Load per-tenant AnA tool policy once per dispatch ──
   // Stamps ctx.anaToolPolicy from organizations.settings.anaToolPolicy.

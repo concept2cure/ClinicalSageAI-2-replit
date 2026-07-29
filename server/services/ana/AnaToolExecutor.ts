@@ -252,6 +252,19 @@ export function getRegisteredToolNames(): string[] {
 // Built-in Tool Handlers
 // ─────────────────────────────────────────────────────────────────────────────
 
+registerToolHandler('list_fda_forms', async (input) => {
+  const { default: FDAFormGenerator } = await import('../FDAFormGenerator.js');
+  return JSON.stringify(new FDAFormGenerator().listGovernedForms(input));
+});
+registerToolHandler('prepare_fda_form', async (input) => {
+  const { default: FDAFormGenerator } = await import('../FDAFormGenerator.js');
+  return JSON.stringify(new FDAFormGenerator().prepareEditableDraft(input));
+});
+registerToolHandler('amend_fda_form', async (input) => {
+  const { default: FDAFormGenerator } = await import('../FDAFormGenerator.js');
+  return JSON.stringify(new FDAFormGenerator().amendEditableDraft(input));
+});
+
 // Study digital twin simulation. Builds a StudyDesign from the model's sketch and
 // predicts outcomes across any therapeutic area / phase, grounded on the org's
 // uploaded history when available. The disclaimer + (when no history) the upload
