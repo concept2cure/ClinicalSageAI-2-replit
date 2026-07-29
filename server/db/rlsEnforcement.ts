@@ -21,10 +21,9 @@
  *
  * Outside production an unset RLS_ENFORCE defaults to off so dev/test keep
  * working with zero configuration. IN PRODUCTION there is no default: the
- * operator must set RLS_ENFORCE explicitly (on|shadow|off) or the boot fails —
- * a silently-off RLS layer is not an acceptable GA posture. An explicit
- * off/shadow still boots (staged rollouts) but logs a prominent warning naming
- * the accepted risk. See assertRlsEnforcementForProduction.
+ * operator must enable RLS or boot fails. `off` and `shadow` remain available
+ * for local development and tests only; they are not valid production modes.
+ * See assertRlsEnforcementForProduction.
  *
  * The setting is applied per connection via a Pool 'connect' handler so
  * every connection inherits it without each call site doing anything.
@@ -73,12 +72,10 @@ export function isExplicitEnforcementDecision(env: NodeJS.ProcessEnv = process.e
  *
  * Production boot matrix (non-production is always a no-op):
  *   - RLS_ENFORCE=on                          → boots, RLS filters rows.
- *   - RLS_ENFORCE=shadow / off (explicit)     → boots, but logs a prominent
- *     structured warning naming the accepted risk. Allowed for staged rollouts.
- *   - RLS_ENFORCE unset or unrecognized       → REFUSES TO BOOT. Silent-off is
- *     not an acceptable production posture; the operator must decide.
- *   - RLS_REQUIRE_ENFORCE=true                → fail-closed: anything other
- *     than 'on' refuses to boot, explicit or not.
+ *   - Any other value, including off/shadow   → REFUSES TO BOOT.
+ *
+ * `RLS_REQUIRE_ENFORCE` is no longer needed to opt into the safe posture;
+ * production enforcement is unconditional.
  *
  * @returns the resolved enforcement mode.
  */
@@ -87,55 +84,32 @@ export function assertRlsEnforcementForProduction(
 ): RlsEnforcementMode {
   const mode = readEnforcementMode(env);
   const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
-  if (!isProduction || mode === 'on') return mode;
+  const raw = (env.RLS_ENFORCE ?? '').trim();
+  if (!isProduction) return mode;
+  if (raw.toLowerCase() === 'on') return mode;
 
-  const message =
-    `RLS_ENFORCE is "${mode}" in production — Postgres Row-Level Security is NOT ` +
-    'filtering rows (defense-in-depth disabled). Tenant isolation is relying solely ' +
-    'on the app-layer auth gate + JWT org scoping. Set RLS_ENFORCE=on once the policy ' +
-    'rollout is verified.';
-
-  if ((env.RLS_REQUIRE_ENFORCE ?? '').trim().toLowerCase() === 'true') {
-    // Operator opted into fail-closed: refuse to boot with RLS off in prod.
-    throw new Error(`[rls-enforcement] FAIL-CLOSED: ${message}`);
-  }
-
-  if (!isExplicitEnforcementDecision(env)) {
-    // No decision was made — production must not default RLS off silently.
-    const raw = (env.RLS_ENFORCE ?? '').trim();
-    throw new Error(
-      `[rls-enforcement] REFUSING TO BOOT: RLS_ENFORCE is ${
-        raw === '' ? 'not set' : `set to unrecognized value "${raw}"`
-      } in production. Postgres Row-Level Security posture requires an explicit ` +
-        'operator decision. Set RLS_ENFORCE=on (policy filters rows — the target ' +
-        'state), RLS_ENFORCE=shadow (staged rollout: policy compiled but not ' +
-        'filtering), or RLS_ENFORCE=off (explicitly accept that tenant isolation ' +
-        'relies solely on the app-layer auth gate + JWT org scoping). ' +
-        'RLS_REQUIRE_ENFORCE=true additionally refuses anything other than on.'
-    );
-  }
-
-  // Explicit off/shadow: permitted for staged rollouts, but the accepted risk
-  // must be visible — one prominent structured warning at boot.
-  logger.warn(`⚠️  ${message}`, {
-    mode,
-    controlledBy: 'RLS_ENFORCE',
-    acceptedRisk:
-      'Postgres RLS defense-in-depth is not filtering rows; tenant isolation relies ' +
-      'solely on the app-layer auth gate + JWT org scoping',
-    remediation: 'set RLS_ENFORCE=on once the policy rollout is verified',
-  });
-  return mode;
+  const configured = raw === ''
+    ? 'not set'
+    : isExplicitEnforcementDecision(env)
+      ? `set to "${raw}" (resolved mode "${mode}")`
+      : `set to unrecognized value "${raw}" (resolved mode "${mode}")`;
+  throw new Error(
+    `[rls-enforcement] FAIL-CLOSED: REFUSING TO BOOT: RLS_ENFORCE is ${configured} in ` +
+      'production. Postgres Row-Level Security must filter rows in every production ' +
+      'deployment. Set RLS_ENFORCE=on. The off and shadow modes are restricted to ' +
+      'development and test environments.'
+  );
 }
 
 /**
  * Refuse to create an ADDITIONAL organization while RLS is not filtering.
  *
  * ── Why a boot check is not enough ────────────────────────────────────────────
- * assertRlsEnforcementForProduction runs once, at boot, and deliberately permits
- * an explicit `off`/`shadow` for staged rollouts. That is a defensible posture
- * while the deployment holds ONE tenant: there is no second organization for a
- * missing row filter to leak to, so RLS-off costs nothing real.
+ * assertRlsEnforcementForProduction makes production fail closed, but preview,
+ * staging, and other deployed non-production environments can still run with
+ * RLS disabled for rollout verification. That is tolerable only while the
+ * deployment holds ONE tenant: there is no second organization for a missing
+ * row filter to leak to.
  *
  * The moment a second organization exists, that reasoning stops holding — and
  * nothing noticed, because the condition arises long after boot. The pilot
@@ -147,9 +121,10 @@ export function assertRlsEnforcementForProduction(
  * ── What it does ──────────────────────────────────────────────────────────────
  * Called before inserting an organization. If this insert would create the
  * SECOND (or later) organization, and RLS is not `on`, it throws. Creating the
- * FIRST organization is always allowed — a fresh deployment must be able to
- * onboard its founding tenant without operators having flipped RLS first, and
- * with one tenant there is nothing to isolate from.
+ * FIRST organization remains allowed in non-production deployments so a fresh
+ * preview or staging environment can be provisioned before RLS validation. A
+ * production process cannot reach this exception because its boot gate already
+ * requires RLS to be on.
  *
  * Scoped to deployed environments (anything not explicitly `development` or
  * `test`), matching the repo's established prod-fail-closed idiom — an unset,
@@ -201,8 +176,8 @@ export function installRlsEnforcement(pool: Pool): Pool {
   if (tagged.__rlsEnforcementInstalled) return pool;
   tagged.__rlsEnforcementInstalled = true;
 
-  // Enforces the production boot matrix: explicit on/shadow/off proceeds
-  // (off/shadow with a loud warning); unset/unrecognized refuses to boot.
+  // Enforces the production boot matrix: only on proceeds; every disabled,
+  // missing, or unrecognized posture refuses to boot.
   const mode = assertRlsEnforcementForProduction();
   const settingValue = mode === 'on' ? 'on' : '';
 

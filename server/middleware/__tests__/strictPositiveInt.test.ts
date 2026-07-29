@@ -4,7 +4,7 @@ vi.mock('../../db', () => ({ db: { select: vi.fn() }, getPool: vi.fn() }));
 vi.mock('../../db/tenantStore', () => ({ runWithTenantScope: vi.fn() }));
 vi.mock('../../../shared/schema', () => ({ organizations: {}, organizationUsers: {} }));
 
-import { strictPositiveInt } from '../tenantContext';
+import { getRequestDbClient, strictPositiveInt } from '../tenantContext';
 
 describe('strictPositiveInt', () => {
   it('accepts clean positive integer strings', () => {
@@ -48,5 +48,16 @@ describe('strictPositiveInt', () => {
 
   it('rejects values beyond safe integer range', () => {
     expect(strictPositiveInt('99999999999999999999')).toBeNull();
+  });
+});
+
+describe('getRequestDbClient', () => {
+  it('returns the request-scoped client', () => {
+    const dbClient = { query: vi.fn() };
+    expect(getRequestDbClient({ dbClient } as any)).toBe(dbClient);
+  });
+
+  it.each([undefined, null, {}])('fails closed for an invalid request client: %j', dbClient => {
+    expect(() => getRequestDbClient({ dbClient } as any)).toThrow(/requires tenant context/);
   });
 });

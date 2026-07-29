@@ -6,17 +6,14 @@
  * object, so tenant filtering never engaged) or fell back to a
  * pool-bound Drizzle from `server/db`.
  *
- * After: `getDb` returns whatever `requestDb` returns. Routes that
+ * After: `getDb` returns whatever `requestDb` returns and fails closed when
+ * request tenant context is missing. Routes that
  * chain `.select().from(...).where(...)` keep working; queries now
  * route through the request-scoped client so the RLS policy and the
  * pool instrumentation see them.
  */
 
 import { describe, it, expect, vi } from 'vitest';
-
-vi.mock('../runtime', () => ({
-  db: { __sentinel: 'pool-bound' },
-}));
 
 import { getDb, ensureTenantId } from '../tenantDbHelper';
 import { requestDb } from '../requestDb';
@@ -36,9 +33,9 @@ describe('getDb', () => {
     expect(a).toBe(b);
   });
 
-  it('falls back to the pool-bound db when no dbClient is on the request', () => {
+  it('fails closed when no dbClient is on the request', () => {
     const req = fakeReq({});
-    expect((getDb(req) as any).__sentinel).toBe('pool-bound');
+    expect(() => getDb(req)).toThrow(/requires a tenant-scoped dbClient/);
   });
 });
 

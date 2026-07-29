@@ -35,16 +35,15 @@
  * object (`req.__requestDb`) so multiple calls in the same handler do
  * not pay the construction cost twice.
  *
- * Safe outside the request scope: if `req.dbClient` is missing (e.g. a
- * route that ran before requireTenantContext, or a test that fakes the
- * request), this falls back to the pool-bound default `db`. PR A's
- * pool instrumentation will count that case as missing-tenant.
+ * This helper fails closed outside the request scope. A missing or invalid
+ * `req.dbClient` means the route did not establish tenant context; falling back
+ * to the shared database would turn middleware omission into an isolation
+ * bypass.
  */
 
 import type { Request } from 'express';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../shared/schema';
-import { db as poolBoundDb } from './runtime';
 
 type Schema = typeof schema;
 export type RequestDb = NodePgDatabase<Schema>;
@@ -54,17 +53,21 @@ interface RequestWithCachedDb extends Request {
 }
 
 export function requestDb(req: Request): RequestDb {
+  const client = (req as Request & { dbClient?: unknown }).dbClient;
+  if (!client || typeof (client as { query?: unknown }).query !== 'function') {
+    throw new Error(
+      'requestDb requires a tenant-scoped dbClient; ensure requireTenantContext runs before this handler'
+    );
+  }
+
   const cached = (req as RequestWithCachedDb).__requestDb;
   if (cached) return cached;
 
-  const client = (req as Request & { dbClient?: unknown }).dbClient;
   // Drizzle's node-postgres driver only needs `.query()` on the client.
   // The lazy wrapper installed by requireTenantContext satisfies that;
   // we cast to `any` here so we don't have to pull pg types into the
   // Drizzle type parameter just to widen the constructor signature.
-  const built: RequestDb = client
-    ? (drizzle(client as any, { schema }) as RequestDb)
-    : (poolBoundDb as unknown as RequestDb);
+  const built = drizzle(client as any, { schema }) as RequestDb;
 
   (req as RequestWithCachedDb).__requestDb = built;
   return built;

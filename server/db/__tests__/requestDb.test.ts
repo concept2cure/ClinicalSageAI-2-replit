@@ -1,11 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock the runtime module before importing requestDb so the pool-bound
-// fallback doesn't try to construct a real pg pool.
-vi.mock('../runtime', () => ({
-  db: { __sentinel: 'pool-bound' },
-}));
-
 import { requestDb } from '../requestDb';
 
 function fakeReq(dbClient?: unknown): any {
@@ -20,16 +14,22 @@ describe('requestDb', () => {
     const req = fakeReq(fakeClient);
     const built = requestDb(req);
 
-    // Built object should be a Drizzle instance, not the pool-bound sentinel.
-    expect((built as any).__sentinel).not.toBe('pool-bound');
     // Drizzle objects expose a `select` method.
     expect(typeof (built as any).select).toBe('function');
   });
 
-  it('falls back to the pool-bound db when no dbClient is on the request', () => {
-    const req = fakeReq(undefined);
-    const built = requestDb(req);
-    expect((built as any).__sentinel).toBe('pool-bound');
+  it.each([undefined, null, {}, { query: 'not-a-function' }])(
+    'fails closed when dbClient is missing or invalid: %j',
+    dbClient => {
+      expect(() => requestDb(fakeReq(dbClient))).toThrow(/requires a tenant-scoped dbClient/);
+    },
+  );
+
+  it('does not return a cached wrapper after tenant context is removed', () => {
+    const req = fakeReq({ query: vi.fn() });
+    requestDb(req);
+    req.dbClient = null;
+    expect(() => requestDb(req)).toThrow(/requires a tenant-scoped dbClient/);
   });
 
   it('caches the wrapper on the request to avoid rebuilding per call', () => {

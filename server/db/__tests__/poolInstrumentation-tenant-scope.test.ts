@@ -32,9 +32,20 @@ function textOf(arg: unknown): string {
 function makeMockPool() {
   const clientCalls: Array<{ text: string; params?: unknown }> = [];
   const client: any = {
-    query: vi.fn(async (text: unknown, params?: unknown) => {
+    query: vi.fn((text: unknown, paramsOrCallback?: unknown, maybeCallback?: unknown) => {
+      const callback = typeof maybeCallback === 'function'
+        ? maybeCallback as Function
+        : typeof paramsOrCallback === 'function'
+          ? paramsOrCallback as Function
+          : undefined;
+      const params = typeof paramsOrCallback === 'function' ? undefined : paramsOrCallback;
       clientCalls.push({ text: textOf(text), params });
-      return { rows: [], rowCount: 0 };
+      const result = { rows: [], rowCount: 0 };
+      if (callback) {
+        queueMicrotask(() => callback(null, result));
+        return undefined;
+      }
+      return Promise.resolve(result);
     }),
     release: vi.fn(),
   };
@@ -44,11 +55,26 @@ function makeMockPool() {
       poolCalls.push({ text: textOf(text), params });
       return { rows: [], rowCount: 0 };
     }),
-    connect: vi.fn(async () => client),
+    connect: vi.fn((callback?: Function) => {
+      if (callback) {
+        queueMicrotask(() => callback(null, client, client.release));
+        return undefined;
+      }
+      return Promise.resolve(client);
+    }),
     on: vi.fn(),
   };
   instrumentPool(pool);
   return { pool, client, clientCalls, poolCalls };
+}
+
+function callbackQuery(target: any, text: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    target.query(text, (error: Error | null, result: unknown) => {
+      if (error) reject(error);
+      else resolve(result);
+    });
+  });
 }
 
 const SCOPE: TenantScope = {
@@ -76,12 +102,30 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
     expect(clientCalls).toHaveLength(0);
   });
 
-  it('is inert when enforcing but NO tenant scope is set', async () => {
+  it('fails closed when enforcing but NO tenant scope is set', async () => {
     process.env.RLS_ENFORCE = 'on';
     const { pool, poolCalls, clientCalls } = makeMockPool();
-    await pool.query('SELECT * FROM projects'); // no runWithTenantScope
-    expect(poolCalls.map(c => c.text)).toEqual(['SELECT * FROM projects']);
+    await expect(pool.query('SELECT * FROM projects')).rejects.toThrow(/requires an active tenant scope/);
+    expect(poolCalls).toHaveLength(0);
     expect(clientCalls).toHaveLength(0);
+  });
+
+  it('fails closed through callback-form pool.query when tenant scope is missing', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, poolCalls } = makeMockPool();
+    await expect(callbackQuery(pool, 'SELECT * FROM projects')).rejects.toThrow(
+      /requires an active tenant scope/,
+    );
+    expect(poolCalls).toHaveLength(0);
+  });
+
+  it('fails closed through promise and callback pool.connect when tenant scope is missing', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool } = makeMockPool();
+    await expect(pool.connect()).rejects.toThrow(/requires an active tenant scope/);
+    await expect(new Promise((resolve, reject) => {
+      pool.connect((error: Error | null) => error ? reject(error) : resolve(undefined));
+    })).rejects.toThrow(/requires an active tenant scope/);
   });
 
   it('wraps a pooled query in a scoped micro-transaction when enforcing + scoped', async () => {
@@ -100,6 +144,19 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
     expect(texts[3]).toBe('COMMIT');
     // tenant vars carried the active scope
     expect(clientCalls[1].params).toEqual(['42', 'org-uuid-42', '']);
+  });
+
+  it('wraps callback-form pool.query without bypassing tenant scope', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, poolCalls, clientCalls } = makeMockPool();
+    await runWithTenantScope(SCOPE, () => callbackQuery(pool, 'SELECT * FROM projects'));
+    expect(poolCalls).toHaveLength(0);
+    expect(clientCalls.map(c => c.text)).toEqual([
+      'BEGIN',
+      expect.stringMatching(SET_CONFIG_RE),
+      'SELECT * FROM projects',
+      'COMMIT',
+    ]);
   });
 
   it('does NOT wrap infrastructure queries even when enforcing + scoped', async () => {
@@ -122,6 +179,22 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
       runWithTenantScope(SCOPE, () => pool.query('SELECT * FROM projects')),
     ).rejects.toThrow('boom');
     expect(client.release).toHaveBeenCalledTimes(1);
+    expect(client.release).toHaveBeenCalledWith(undefined);
+  });
+
+  it('destroys a scoped-query connection when rollback cleanup fails', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, client } = makeMockPool();
+    client.query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // set_config
+      .mockRejectedValueOnce(new Error('query failed'))
+      .mockRejectedValueOnce(new Error('rollback failed'));
+
+    await expect(
+      runWithTenantScope(SCOPE, () => pool.query('SELECT * FROM projects')),
+    ).rejects.toThrow('query failed');
+    expect(client.release).toHaveBeenCalledWith(expect.objectContaining({ message: 'rollback failed' }));
   });
 
   it('injects LOCAL tenant vars right after BEGIN on the transaction (connect) path', async () => {
@@ -141,6 +214,52 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
     expect(texts[3]).toBe('COMMIT');
   });
 
+  it('wraps callback-form pool.connect and callback-form transaction boundaries', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, clientCalls } = makeMockPool();
+
+    await runWithTenantScope(SCOPE, () => new Promise<void>((resolve, reject) => {
+      pool.connect((connectError: Error | null, client: any, done: Function) => {
+        if (connectError) return reject(connectError);
+        callbackQuery(client, 'BEGIN')
+          .then(() => callbackQuery(client, 'COMMIT'))
+          .then(() => {
+            done();
+            resolve();
+          }, reject);
+      });
+    }));
+
+    expect(clientCalls.map(c => c.text)).toEqual([
+      'BEGIN',
+      expect.stringMatching(SET_CONFIG_RE),
+      'COMMIT',
+    ]);
+  });
+
+  it.each([
+    ['START TRANSACTION', 'END'],
+    ['START TRANSACTION', 'ABORT'],
+  ])('scopes alternate transaction syntax %s / %s', async (beginSql, endSql) => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, client, clientCalls } = makeMockPool();
+    const releaseSpy = client.release;
+
+    await runWithTenantScope(SCOPE, async () => {
+      const c: any = await pool.connect();
+      await c.query(beginSql);
+      await c.query(endSql);
+      c.release();
+    });
+
+    expect(clientCalls.map(c => c.text)).toEqual([
+      beginSql,
+      expect.stringMatching(SET_CONFIG_RE),
+      endSql,
+    ]);
+    expect(releaseSpy).toHaveBeenCalledWith(undefined);
+  });
+
   it('connect path is inert while RLS_ENFORCE is off (no injected set_config)', async () => {
     const { pool, clientCalls } = makeMockPool();
     await runWithTenantScope(SCOPE, async () => {
@@ -150,5 +269,78 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
       c.release();
     });
     expect(clientCalls.map(c => c.text)).toEqual(['BEGIN', 'COMMIT']);
+  });
+
+  it('destroys a checked-out connection when tenant context initialization fails', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, client } = makeMockPool();
+    const releaseSpy = client.release;
+    client.query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
+      .mockRejectedValueOnce(new Error('set_config failed'));
+
+    await runWithTenantScope(SCOPE, async () => {
+      const c: any = await pool.connect();
+      await expect(c.query('BEGIN')).rejects.toThrow('set_config failed');
+      c.release();
+    });
+
+    expect(releaseSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'set_config failed' }),
+    );
+  });
+
+  it('destroys a checked-out connection when BEGIN fails', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, client } = makeMockPool();
+    const releaseSpy = client.release;
+    client.query.mockRejectedValueOnce(new Error('begin failed'));
+
+    await runWithTenantScope(SCOPE, async () => {
+      const c: any = await pool.connect();
+      await expect(c.query('BEGIN')).rejects.toThrow('begin failed');
+      c.release();
+    });
+
+    expect(releaseSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'begin failed' }),
+    );
+  });
+
+  it('destroys a checked-out connection released with an open transaction', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, client } = makeMockPool();
+    const releaseSpy = client.release;
+
+    await runWithTenantScope(SCOPE, async () => {
+      const c: any = await pool.connect();
+      await c.query('BEGIN');
+      c.release();
+    });
+
+    expect(releaseSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'tenant-scoped client released with an open transaction' }),
+    );
+  });
+
+  it('destroys a checked-out connection when COMMIT fails', async () => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, client } = makeMockPool();
+    const releaseSpy = client.release;
+    client.query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // set_config
+      .mockRejectedValueOnce(new Error('commit failed'));
+
+    await runWithTenantScope(SCOPE, async () => {
+      const c: any = await pool.connect();
+      await c.query('BEGIN');
+      await expect(c.query('COMMIT')).rejects.toThrow('commit failed');
+      c.release();
+    });
+
+    expect(releaseSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'commit failed' }),
+    );
   });
 });

@@ -336,18 +336,16 @@ describe('production RLS enforcement posture (fires on config import)', () => {
     expect(config.isProduction).toBe(true);
   });
 
-  it('loads (with a warning) in production when the operator explicitly sets off', async () => {
+  it('refuses to load in production when the operator explicitly sets off', async () => {
     process.env.NODE_ENV = 'production';
     process.env.RLS_ENFORCE = 'off';
-    const { config } = await import('../environment');
-    expect(config.isProduction).toBe(true);
+    await expect(import('../environment')).rejects.toThrow(/FAIL-CLOSED/);
   });
 
-  it('loads (with a warning) in production when the operator explicitly sets shadow', async () => {
+  it('refuses to load in production when the operator explicitly sets shadow', async () => {
     process.env.NODE_ENV = 'production';
     process.env.RLS_ENFORCE = 'shadow';
-    const { config } = await import('../environment');
-    expect(config.isProduction).toBe(true);
+    await expect(import('../environment')).rejects.toThrow(/FAIL-CLOSED/);
   });
 
   it('fail-closes in production under RLS_REQUIRE_ENFORCE=true unless on', async () => {

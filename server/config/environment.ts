@@ -273,10 +273,8 @@ const assertMfaKeyPosture = (): void => {
 // deployment fails fast — same fire-on-import contract as getJwtSecret.
 assertMfaKeyPosture();
 
-// RLS boot posture: in production RLS_ENFORCE must be an EXPLICIT operator
-// decision (on|shadow|off) — unset/unrecognized refuses to boot, explicit
-// off/shadow boots with a prominent accepted-risk warning, and
-// RLS_REQUIRE_ENFORCE=true fail-closes anything other than on. Fires on
+// RLS boot posture: production unconditionally requires RLS_ENFORCE=on.
+// Missing, unrecognized, off, and shadow postures all refuse to boot. Fires on
 // import (same contract as the asserts above) because the other call site,
 // server/db/runtime.ts, wraps pool initialization in a try/catch that
 // degrades to pool=null — a throw there logs but does NOT stop the boot.

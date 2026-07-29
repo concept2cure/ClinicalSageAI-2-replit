@@ -9,10 +9,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { Pool } from 'pg';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
-import { getPool } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
 import { runWithTenantScope } from '../db/tenantStore';
@@ -359,14 +357,17 @@ export function getTenantContext(req: Request): TenantContext {
 }
 
 /**
- * Get the DB client to use for the current request. Returns the lazy
- * request-scoped wrapper installed by `requireTenantContext` when present,
- * or the shared pool as a fallback (which will NOT have RLS session vars
- * set — caller must accept that or route through `requireTenantContext`
- * upstream).
+ * Get the tenant-scoped DB client for the current request. Missing context is
+ * rejected rather than falling back to the shared pool: a route that omitted
+ * `requireTenantContext` must never gain unscoped database access.
  */
-export function getRequestDbClient(req: Request): RequestDbClient | Pool {
-  return req.dbClient ?? getPool();
+export function getRequestDbClient(req: Request): RequestDbClient {
+  if (!req.dbClient || typeof req.dbClient.query !== 'function') {
+    throw new Error(
+      'getRequestDbClient requires tenant context; install requireTenantContext before this handler'
+    );
+  }
+  return req.dbClient;
 }
 
 /**

@@ -68,6 +68,15 @@ describe('assertRlsEnforcementForProduction', () => {
     );
   });
 
+  it.each(['enforce', 'true', '1'])(
+    'rejects the non-canonical on alias %s in production',
+    alias => {
+      expect(() =>
+        assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: alias })
+      ).toThrow(/Set RLS_ENFORCE=on/);
+    }
+  );
+
   it('refuses to boot in production when RLS_ENFORCE is unset (no silent default)', () => {
     expect(() => assertRlsEnforcementForProduction({ NODE_ENV: 'production' })).toThrow(
       /REFUSING TO BOOT.*RLS_ENFORCE is not set/s
@@ -83,35 +92,31 @@ describe('assertRlsEnforcementForProduction', () => {
     ).toThrow(/unrecognized value "onn"/);
   });
 
-  it('boot-failure message names all accepted operator decisions', () => {
+  it('boot-failure message names the only accepted production posture', () => {
     try {
       assertRlsEnforcementForProduction({ NODE_ENV: 'production' });
       throw new Error('expected throw');
     } catch (e: unknown) {
       const msg = (e as Error).message;
       expect(msg).toContain('RLS_ENFORCE=on');
-      expect(msg).toContain('RLS_ENFORCE=shadow');
-      expect(msg).toContain('RLS_ENFORCE=off');
+      expect(msg).toContain('off and shadow modes are restricted');
     }
   });
 
-  it('warns but does not throw when RLS is EXPLICITLY off in production', () => {
+  it('refuses to boot when RLS is explicitly off in production', () => {
     expect(() =>
       assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'off' })
-    ).not.toThrow();
-    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'off' })).toBe(
-      'off'
-    );
+    ).toThrow(/FAIL-CLOSED/);
   });
 
-  it('warns but does not throw when RLS is EXPLICITLY shadow in production', () => {
-    expect(
+  it('refuses to boot when RLS is explicitly shadow in production', () => {
+    expect(() =>
       assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'shadow' })
-    ).toBe('shadow');
+    ).toThrow(/FAIL-CLOSED/);
   });
 
   it('hard-fails in production when RLS_REQUIRE_ENFORCE=true and RLS is not on', () => {
-    // Unset keeps the FAIL-CLOSED message under the opt-in flag.
+    // The legacy flag does not weaken or alter unconditional enforcement.
     expect(() =>
       assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_REQUIRE_ENFORCE: 'true' })
     ).toThrow(/FAIL-CLOSED/);

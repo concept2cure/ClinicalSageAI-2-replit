@@ -1,0 +1,3346 @@
+{
+  "format": "concept2cure.architecture-remediation-baseline/v1",
+  "revision": "cf3bb67e702e8d0d5dc730268b6991086834f343",
+  "hashAlgorithm": "sha256",
+  "categories": {
+    "apiContracts": [
+      "global-ri.openapi.json",
+      "ivd-platform.openapi.json",
+      "scripts/global-ri/generate-openapi.ts",
+      "submission-center.openapi.json"
+    ],
+    "commandRegistry": [
+      "server/services/ana-ri/__tests__/command-registry-consistency.test.ts",
+      "server/services/ana-ri/command-executor.ts"
+    ],
+    "aiToolRegistry": [
+      "server/services/ana/__tests__/tool-registry-consistency.test.ts",
+      "server/services/toolRegistry.ts"
+    ],
+    "schemaAndMigrations": [
+      "db/migrations/000_gcc_bootstrap_core.sql",
+      "db/migrations/001_gcc_core.sql",
+      "db/migrations/002_gcc_audit_immutability.sql",
+      "db/migrations/003_gcc_prose_versioning.sql",
+      "db/migrations/004_gcc_enhanced_citations.sql",
+      "db/migrations/005_gcc_database_roles.sql",
+      "db/migrations/006_gcc_dashboard_views.sql",
+      "db/migrations/016_perf_indexes.sql",
+      "db/migrations/017_gcc_shadow_agent_rbac.sql",
+      "db/migrations/018_gcc_purge_workflow.sql",
+      "db/migrations/019_gcc_idempotency_ratelimit.sql",
+      "db/migrations/020_new_process_wizard.sql",
+      "db/migrations/022_stability_v2.sql",
+      "db/migrations/023_stability_step2.sql",
+      "db/migrations/024_stability_step3.sql",
+      "db/migrations/026_stability_step4.sql",
+      "db/migrations/028_strategy_core.sql",
+      "db/migrations/029_strategy_step2.sql",
+      "db/migrations/030_stability_results.sql",
+      "db/migrations/036_gcc_discovery_bridge.sql",
+      "db/migrations/037_gcc_registry_trial_ledger.sql",
+      "db/migrations/038_gcc_ectd_seeder_service.sql",
+      "db/migrations/039_gcc_label_impact_simulator.sql",
+      "db/migrations/040_gcc_site_intelligence.sql",
+      "db/migrations/041_gcc_signing_gates.sql",
+      "db/migrations/044b_gcc_lumen_schema_prerequisite.sql",
+      "db/migrations/044c_gcc_vault_schema.sql",
+      "db/migrations/047_quality_step6.sql",
+      "db/migrations/048_quality_step7.sql",
+      "db/migrations/049_quality_step8.sql",
+      "db/migrations/050_gcc_ectd_v4_domain_registry.sql",
+      "db/migrations/051_gcc_multi_tenant_identity.sql",
+      "db/migrations/052_gcc_ectd_v4_cou_graph.sql",
+      "db/migrations/053_gcc_rls_policies.sql",
+      "db/migrations/054_gcc_part11_audit.sql",
+      "db/migrations/055_gcc_test_scenarios.sql",
+      "db/migrations/056_gcc_test_runner.sql",
+      "db/migrations/057_gcc_product_master.sql",
+      "db/migrations/058_gcc_fhir_resources.sql",
+      "db/migrations/059_gcc_vector_embeddings.sql",
+      "db/migrations/063_gcc_cognitive_agent_runtime.sql",
+      "db/migrations/064_gcc_cognitive_audit_schema.sql",
+      "db/migrations/065_gcc_global_dossier_schema.sql",
+      "db/migrations/066_gcc_manufacturing_digital_twins.sql",
+      "db/migrations/067_gcc_federated_learning_intelligence.sql",
+      "db/migrations/068_regulatory_schema_alignment.sql",
+      "db/migrations/069_gcc_multitenant_rls_expansion.sql",
+      "db/migrations/070_gcc_rls_extended_ga.sql",
+      "db/migrations/072_gcc_innovation_platform_core.sql",
+      "db/migrations/073_cortex_prime_unified_brain.sql",
+      "db/migrations/074_gcc_regulatory_intuition_engine.sql",
+      "db/migrations/075_gcc_epistemic_intelligence.sql",
+      "db/migrations/076_gcc_causal_inference_engine.sql",
+      "db/migrations/077_gcc_self_evolving_intelligence.sql",
+      "db/migrations/078_gcc_cross_domain_transfer.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql",
+      "db/migrations/080_gcc_21cfr_part11_compliance.sql",
+      "db/migrations/081_grdhe_regulatory_mapping_layer.sql",
+      "db/migrations/082_ectd_submission_agent.sql",
+      "db/migrations/100_regulatory_templates.sql",
+      "db/migrations/101_complete_template_catalog.sql",
+      "db/migrations/102_load_all_templates.sql",
+      "db/migrations/103_load_complete_templates.sql",
+      "db/migrations/20260125_add_atom_embeddings.sql",
+      "db/migrations/20260125_ai_provider_audit_log.sql",
+      "db/migrations/20260125_enhanced_cortex_schema.sql",
+      "db/migrations/20260128_concept2cure_foundation.sql",
+      "db/migrations/20260128_concept2cure_signatures.sql",
+      "db/migrations/20260128_concept2cure_wbs_assignments.sql",
+      "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql",
+      "db/migrations/20260129_add_org_uuid_alignment.sql",
+      "db/migrations/20260129_phase5_intelligent_document_system.sql",
+      "db/migrations/20260129_proof_audit_logs.sql",
+      "db/migrations/20260129_workflow_indexes_and_dlq.sql",
+      "db/migrations/20260130_add_assembly_audit_logs.sql",
+      "db/migrations/20260130_add_assembly_docs_table.sql",
+      "db/migrations/20260130_add_workflow_rls_and_step_runs_immutability.sql",
+      "db/migrations/20260203_phase2_anchors_xrefs.sql",
+      "db/migrations/20260203_phase2_graph_rls_indexes_patch.sql",
+      "db/migrations/20260203_phase2_review_batch_persistence.sql",
+      "db/migrations/20260203_phase2_review_batch_runner_hardening.sql",
+      "db/migrations/20260203_rps_event_store.sql",
+      "db/migrations/20260204_review_batch_worker.sql",
+      "db/migrations/20260205_review_batch_admin.sql",
+      "db/migrations/20260206_phase4_orchestration_kernel.sql",
+      "db/migrations/20260206_phase5_contradiction_scanner.sql",
+      "db/migrations/20260206_phase5_evidence_fabric.sql",
+      "db/migrations/20260206_phase5_idempotent_provenance.sql",
+      "db/migrations/20260206_phase6_docx_factory.sql",
+      "db/migrations/20260206_review_batch_ops_control.sql",
+      "db/migrations/20260207_phase4_seed_templates.sql",
+      "db/migrations/20260207_phase6_6_predicate_intelligence.sql",
+      "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql",
+      "db/migrations/20260208_phase6_6a_risk_rollups.sql",
+      "db/migrations/20260209_create_pm_settings.sql",
+      "db/migrations/20260209_phase6_6a_fda_ingest_runs.sql",
+      "db/migrations/20260211_phase6_6d_defense_packets.sql",
+      "db/migrations/20260211_phase6_6e_proof_pack_exports.sql",
+      "db/migrations/20260211_phase6_6g_proof_pack_trust_chain.sql",
+      "db/migrations/20260211_phase7_0a_render_jobs.sql",
+      "db/migrations/20260212_phase7_0c_render_tenant_safety.sql",
+      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
+      "db/migrations/20260220_ind_section_tracking.sql",
+      "db/migrations/20260220_user_intelligence_platform.sql",
+      "db/migrations/20260222_audit_events_hash_chain.sql",
+      "db/migrations/20260222_audit_events_immutability.sql",
+      "db/migrations/20260222_ivdr_schema_hardening.sql",
+      "db/migrations/20260223_ivdr_binder_packs.sql",
+      "db/migrations/20260223_ivdr_packs_building_status.sql",
+      "db/migrations/20260224_ai_claims_verifier_flags.sql",
+      "db/migrations/20260224_ai_trace_chain.sql",
+      "db/migrations/20260224_binder_evidence_source_types.sql",
+      "db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql",
+      "db/migrations/20260305_projects_add_path_column.sql",
+      "db/migrations/20260306_chat_tool_runs.sql",
+      "db/migrations/20260306_precedent_engine.sql",
+      "db/migrations/20260311_concept2cure_artifacts.sql",
+      "db/migrations/20260311_concept2cure_provenance_events.sql",
+      "db/migrations/20260313_concept2cure_submission_snapshots.sql",
+      "db/migrations/20260313_phase11_governed_workflow.sql",
+      "db/migrations/20260314_phase12_multi_user_review.sql",
+      "db/migrations/20260317_global_regulatory_compliance.sql",
+      "db/migrations/20260317_submission_twin.sql",
+      "db/migrations/20260318_ga_immutability_hardening.sql",
+      "db/migrations/20260319_billing_usage_budgets_alerts.sql",
+      "db/migrations/20260319_evidence_fabric.sql",
+      "db/migrations/20260319_ga_indexes_and_fixes.sql",
+      "db/migrations/20260322_quality_checkpoints.sql",
+      "db/migrations/20260322_regulatory_precedent_intelligence.sql",
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "db/migrations/20260323_reactive_dependency_layer.sql",
+      "db/migrations/20260324_ai_goal_plan_runs.sql",
+      "db/migrations/20260324_ai_kernel_agent_protocol_events.sql",
+      "db/migrations/20260324_ai_kernel_decision_records.sql",
+      "db/migrations/20260324_ai_kernel_policy_outcomes.sql",
+      "db/migrations/20260324_ana_kernel_decision_log.sql",
+      "db/migrations/20260325_ai_goal_plan_hardening.sql",
+      "db/migrations/20260325_ai_goal_plan_step_events.sql",
+      "db/migrations/20260325_ana_kernel_log_immutability_hashchain.sql",
+      "db/migrations/20260325_decision_receipts.sql",
+      "db/migrations/20260326_artifact_compute_plane.sql",
+      "db/migrations/20260326_conversation_os_durability.sql",
+      "db/migrations/20260326_conversation_os_durability_phase2.sql",
+      "db/migrations/20260331_communication_center_scaffold.sql",
+      "db/migrations/20260331_regulatory_correspondence_os.sql",
+      "db/migrations/20260401_cmc_convergence_os.sql",
+      "db/migrations/20260401_project_sharing_visibility.sql",
+      "db/migrations/20260401_submission_center_items.sql",
+      "db/migrations/20260402_cmc_runtime_ddl_to_migration.sql",
+      "db/migrations/20260402_supply_chain_tables.sql",
+      "db/migrations/20260501_q_sub.sql",
+      "db/migrations/20260508_ana_submission_chat_proposals.sql",
+      "db/migrations/20260508_artifact_citations.sql",
+      "db/migrations/20260508_authoring_plans.sql",
+      "db/migrations/20260508_consistency_alerts.sql",
+      "db/migrations/20260508_guidance_alerts.sql",
+      "db/migrations/20260508_project_therapeutic_area.sql",
+      "db/migrations/20260520_ana_failure_learning.sql",
+      "db/migrations/20260520_document_templates.sql",
+      "db/migrations/20260520_growth_mindset_extensions.sql",
+      "db/migrations/20260520_regulatory_intelligence_layer.sql",
+      "db/migrations/20260526_drop_invalid_cdisc_fks.sql",
+      "db/migrations/20260526_updated_at_triggers.sql",
+      "db/migrations/20260609_scim_tenants.sql",
+      "db/migrations/20260611_organization_invitations.sql",
+      "db/migrations/20260611_scim_ip_allowlist.sql",
+      "db/migrations/20260612_org_client_type_user_preferences.sql",
+      "db/migrations/20260617_audit_events_hmac_seal.sql",
+      "db/migrations/20260617_audit_logs_immutability.sql",
+      "db/migrations/20260617_precedent_org_isolation.sql",
+      "db/migrations/20260617_project_schedule_of_events.sql",
+      "db/migrations/20260621_intelligent_licensing_eula.sql",
+      "db/migrations/20260621_weekly_usage_limits.sql",
+      "db/migrations/20260629_ana_artifact_thread_lookup.sql",
+      "db/migrations/20260716_biopharma_specialty.sql",
+      "db/migrations/20260716_change_assessments.sql",
+      "db/migrations/20260716_clinical_ops_studies_display.sql",
+      "db/migrations/20260716_enablement.sql",
+      "db/migrations/20260716_nonclinical_display.sql",
+      "db/migrations/20260717_agency_meetings_store.sql",
+      "db/migrations/20260717_biostat_docs.sql",
+      "db/migrations/20260717_cro_portfolio_store.sql",
+      "db/migrations/20260717_decision_lineage_store.sql",
+      "db/migrations/20260717_design_controls_store.sql",
+      "db/migrations/20260717_doc_journey_store.sql",
+      "db/migrations/20260717_dossier_map_store.sql",
+      "db/migrations/20260717_evidence_asks_store.sql",
+      "db/migrations/20260717_evidence_objects_store.sql",
+      "db/migrations/20260717_human_factors_store.sql",
+      "db/migrations/20260717_ind_checklist_store.sql",
+      "db/migrations/20260717_labeling_pi_store.sql",
+      "db/migrations/20260717_maa_module1_store.sql",
+      "db/migrations/20260717_market_access_store.sql",
+      "db/migrations/20260717_nda_m1_docs_store.sql",
+      "db/migrations/20260717_nda_modules_store.sql",
+      "db/migrations/20260717_nda_rtf_store.sql",
+      "db/migrations/20260717_program_journey_store.sql",
+      "db/migrations/20260717_protocol_dev_store.sql",
+      "db/migrations/20260717_reg_change_store.sql",
+      "db/migrations/20260717_research_admin_store.sql",
+      "db/migrations/20260717_sae_cases_store.sql",
+      "db/migrations/20260717_sae_reporting_clock.sql",
+      "db/migrations/20260717_shadow_review_store.sql",
+      "db/migrations/20260718_bla_assessments_store.sql",
+      "db/migrations/20260718_cmc_changes_store.sql",
+      "db/migrations/20260718_pediatric_orphan_cards.sql",
+      "db/migrations/20260718_smpc_sections_store.sql",
+      "db/migrations/20260724_clinical_regulatory_evidence_spine.sql",
+      "db/migrations/20260724_qms_change_control_store.sql",
+      "db/migrations/20260725_authoring_audit_trail.sql",
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "db/migrations/20260725_bundle_execution_receipts.sql",
+      "db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql",
+      "db/migrations/20260725_ectd_compilations_project_level.sql",
+      "db/migrations/20260725_esig_gate_columns_port.sql",
+      "db/migrations/20260725_governance_boundary_tables.sql",
+      "db/migrations/20260725_project_sections_content_columns.sql",
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "db/migrations/20260727_collab_document_state.sql",
+      "db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql",
+      "db/migrations/20260727_drop_source_citations_phantom.sql",
+      "db/migrations/20260727_industry_context_profiles.sql",
+      "db/migrations/20260727_prm_program_link.sql",
+      "db/migrations/20260727_unified_tasks_mdx_metadata.sql",
+      "db/migrations/20260728_artifacts_table.sql",
+      "db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql",
+      "db/migrations/_consolidated/0000_curious_vampiro.sql",
+      "db/migrations/_consolidated/0001_breezy_clea.sql",
+      "db/migrations/_consolidated/0003_enhance_document_chunks_metadata.sql",
+      "db/migrations/_consolidated/001_analytical_methods_schema.sql",
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "db/migrations/_consolidated/001_create_core_tables.sql",
+      "db/migrations/_consolidated/001_templates_table.sql",
+      "db/migrations/_consolidated/002_documents.sql",
+      "db/migrations/_consolidated/003_analytical_details.sql",
+      "db/migrations/_consolidated/003_versioning.sql",
+      "db/migrations/_consolidated/004_fts.sql",
+      "db/migrations/_consolidated/005_lock.sql",
+      "db/migrations/_consolidated/006_analytical_guard.sql",
+      "db/migrations/_consolidated/006_roles.sql",
+      "db/migrations/_consolidated/007_dashboards.sql",
+      "db/migrations/_consolidated/007_guard_gaps_index.sql",
+      "db/migrations/_consolidated/007_regulatory_validation_issues.sql",
+      "db/migrations/_consolidated/008_guard_tasks_index.sql",
+      "db/migrations/_consolidated/010_cmc_documents.sql",
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "db/migrations/_consolidated/20250108_add_versioning_audit_to_unified_documents.sql",
+      "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql",
+      "db/migrations/_consolidated/20250429_add_status_and_approvals.sql",
+      "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql",
+      "db/migrations/_consolidated/20250512-create-maud-validations-table.sql",
+      "db/migrations/_consolidated/20250512_literature_entries.sql",
+      "db/migrations/_consolidated/20250918_lumen_cortex.sql",
+      "db/migrations/_consolidated/auth_schema.sql",
+      "db/migrations/_consolidated/create_cer_approvals_table.sql",
+      "db/migrations/_consolidated/ind_wizard_schema.sql",
+      "db/migrations/_consolidated/protocol_schema.sql",
+      "db/migrations/_consolidated/regulatory_intelligence_schema.sql",
+      "db/migrations/_legacy/003_gcc_prose_versioning.sql",
+      "db/migrations/_legacy/003_gcc_prose_versioning_verify.sql",
+      "db/migrations/_legacy/007_008_gcc_verify.sql",
+      "db/migrations/_legacy/007_gcc_heatmap_views.sql",
+      "db/migrations/_legacy/007_gcc_shadow_run_groups.sql",
+      "db/migrations/_legacy/008_gcc_snapshot_exports.sql",
+      "db/migrations/_legacy/008_gcc_submission_snapshots.sql",
+      "db/migrations/_legacy/009_gcc_esign_and_submission_gate.sql",
+      "db/migrations/_legacy/009_process_core.sql",
+      "db/migrations/_legacy/010_gcc_program_scoping_rls.sql",
+      "db/migrations/_legacy/010_process_design_ppq_cpv.sql",
+      "db/migrations/_legacy/011_gcc_config_bundles.sql",
+      "db/migrations/_legacy/011_process_fmea_impact_doe.sql",
+      "db/migrations/_legacy/012_gcc_retention_legal_hold.sql",
+      "db/migrations/_legacy/012_process_playbooks_layout.sql",
+      "db/migrations/_legacy/013_documents_sections.sql",
+      "db/migrations/_legacy/013_gcc_drift_monitoring.sql",
+      "db/migrations/_legacy/014_gcc_regulatory_timeline.sql",
+      "db/migrations/_legacy/014_seed_cmc_documents.sql",
+      "db/migrations/_legacy/015_esign_cpvrules.sql",
+      "db/migrations/_legacy/015_gcc_submission_package.sql",
+      "db/migrations/_legacy/031_gcc_enum_extensions_and_entity_utils.sql",
+      "db/migrations/_legacy/031_stability_workflow.sql",
+      "db/migrations/_legacy/032_gcc_safety_signal_intelligence.sql",
+      "db/migrations/_legacy/032_stability_assignments.sql",
+      "db/migrations/_legacy/033_gcc_cro_execution_intelligence.sql",
+      "db/migrations/_legacy/033_stability_tp_assignments.sql",
+      "db/migrations/_legacy/034_gcc_intel_packs.sql",
+      "db/migrations/_legacy/034_stability_samples.sql",
+      "db/migrations/_legacy/035_gcc_entity_chain_events.sql",
+      "db/migrations/_legacy/035_stability_sample_link_coc.sql",
+      "db/migrations/_legacy/042_gcc_evidence_vault.sql",
+      "db/migrations/_legacy/042_quality_base_tables.sql",
+      "db/migrations/_legacy/043_gcc_ectd_expanded_modules.sql",
+      "db/migrations/_legacy/043_quality_step2_pro.sql",
+      "db/migrations/_legacy/044_gcc_cognitive_fabric_rag.sql",
+      "db/migrations/_legacy/044_quality_step3.sql",
+      "db/migrations/_legacy/045_gcc_neuro_symbolic_knowledge_graph.sql",
+      "db/migrations/_legacy/045_quality_step4.sql",
+      "db/migrations/_legacy/045_quality_templates.sql",
+      "db/migrations/_legacy/046_gcc_multi_agent_council.sql",
+      "db/migrations/_legacy/046_quality_step5.sql",
+      "db/migrations/_legacy/060_gcc_glsos_enhancements.sql",
+      "db/migrations/_legacy/060_regulatory_foundation.sql",
+      "db/migrations/_legacy/061_gcc_jsonb_indexes_and_constraints.sql",
+      "db/migrations/_legacy/061_regulatory_m3_builder.sql",
+      "db/migrations/_legacy/062_gcc_schema_fixes.sql",
+      "db/migrations/_legacy/062_reg_q12_autopilot.sql",
+      "db/migrations/_legacy/063_gcc_cognitive_agent_runtime.sql",
+      "db/migrations/_legacy/063_reg_questions_hub.sql",
+      "db/migrations/_legacy/071_gcc_rls_lumen_and_org_enforcement.sql",
+      "db/migrations/_legacy/071_portfolio.sql",
+      "db/migrations/emergency_security_migration.sql",
+      "db/migrations/migrations_manifest.json",
+      "drizzle.config.ts",
+      "migrations/.prefix-collisions-baseline.json",
+      "migrations/0000_sweet_joseph.sql",
+      "migrations/0001_phase13_full.sql",
+      "migrations/0002_phase15_submission_ops.sql",
+      "migrations/0003_billing_stripe.sql",
+      "migrations/0004_workflow_performance_indexes.sql",
+      "migrations/0005_csr_knowledge_database.sql",
+      "migrations/0006_regulatory_atoms.sql",
+      "migrations/0007_ctd_onboarding_pipeline.sql",
+      "migrations/0007_gap_analysis_results.sql",
+      "migrations/0007_orchestration_phase3.sql",
+      "migrations/0007_support_admin.sql",
+      "migrations/0007_tenant_isolation_fixes.sql",
+      "migrations/0008_api_keys.sql",
+      "migrations/0008_critical_fk_delete_policies.sql",
+      "migrations/0008_ga_hardening.sql",
+      "migrations/0009_email_otp_fields.sql",
+      "migrations/0010_biostats_signal_engine.sql",
+      "migrations/0010_operating_system_foundation.sql",
+      "migrations/0010_resolution_orchestration.sql",
+      "migrations/0011_ai_threads_title.sql",
+      "migrations/0011_governed_decision_transitions.sql",
+      "migrations/0012_project_charter_timeline.sql",
+      "migrations/0013_ana_intelligence_system.sql",
+      "migrations/0014_report_os_foundation.sql",
+      "migrations/0015_document_artifact_bridge.sql",
+      "migrations/0016_module3_workflow_convergence.sql",
+      "migrations/0017_module3_project_id_fix.sql",
+      "migrations/0018_submission_orchestrator.sql",
+      "migrations/0019_tenant_column_audit.sql",
+      "migrations/001_create_ivdr_tables.sql",
+      "migrations/0020_coerce_text_tenant_columns.sql",
+      "migrations/0021_enable_rls_everywhere.sql",
+      "migrations/20260327_data_lineage_tracking.sql",
+      "migrations/20260331_performance_indexes.sql",
+      "migrations/20260429_ai_ml_pccp.sql",
+      "migrations/20260429_evidence_sufficiency.sql",
+      "migrations/20260429_gspr_postmarket.sql",
+      "migrations/20260429_regulatory_graph.sql",
+      "migrations/20260429_reviewer_simulation.sql",
+      "migrations/20260501_q_sub.sql",
+      "migrations/20260504_capa_mdr.sql",
+      "migrations/20260505_saved_precedent_queries.sql",
+      "migrations/20260506_kit_section_draft_provenance.sql",
+      "migrations/20260507_mdx_beta_surfaces.sql",
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260508_preclinical_provenance.sql",
+      "migrations/20260509_submission_gateways.sql",
+      "migrations/20260510_notifications_and_clinical.sql",
+      "migrations/20260511_qms_and_labeling.sql",
+      "migrations/20260512_legacy_imports.sql",
+      "migrations/20260520_pdev_workflow_activities.sql",
+      "migrations/20260521_org_lifecycle_state.sql",
+      "migrations/20260524_c2c_blockers.sql",
+      "migrations/20260524_contradiction_engine_schema.sql",
+      "migrations/20260524_ivd_performance.sql",
+      "migrations/20260524_ivdr_cdx.sql",
+      "migrations/20260524_program_workbench_schema.sql",
+      "migrations/20260524_udi_records.sql",
+      "migrations/20260525_audit_logs_updated_at.sql",
+      "migrations/20260527_concept2cure_project_links.sql",
+      "migrations/20260527_mutation_primitives.sql",
+      "migrations/20260528_phase9_document_schema.sql",
+      "migrations/20260529_phase10_schema.sql",
+      "migrations/20260529_phase11_intelligence.sql",
+      "migrations/20260529_phase9_backfill.sql",
+      "migrations/20260530_csr_reports_nct_id.sql",
+      "migrations/20260531_template_specs.sql",
+      "migrations/20260601_chat_message_metadata.sql",
+      "migrations/20260602_working_memory_embeddings.sql",
+      "migrations/20260603_ai_capability_governance.sql",
+      "migrations/20260603_commitments.sql",
+      "migrations/20260603_governance_permission_grants.sql",
+      "migrations/20260603_living_record_program_link.sql",
+      "migrations/20260603_living_record_spine.sql",
+      "migrations/20260603_project_retrieval_mode.sql",
+      "migrations/20260603_pv_operational.sql",
+      "migrations/20260604_bla_workbench.sql",
+      "migrations/20260604_evidence_graph_and_embeddings.sql",
+      "migrations/20260604_shadow_review.sql",
+      "migrations/20260604_study_twins.sql",
+      "migrations/20260604_submission_core_canonical.sql",
+      "migrations/20260605_consistency_findings.sql",
+      "migrations/20260608_ai_placement_policies.sql",
+      "migrations/20260608_submission_leaf_document_type.sql",
+      "migrations/20260608_vault_retention.sql",
+      "migrations/20260609_audit_hmac_seal.sql",
+      "migrations/20260609_design_risk.sql",
+      "migrations/20260609_ind_master_data.sql",
+      "migrations/20260610_controlled_substances.sql",
+      "migrations/20260610_egrants.sql",
+      "migrations/20260610_etmf.sql",
+      "migrations/20260610_financial_disclosure_21cfr54.sql",
+      "migrations/20260610_ha_interactions_commitments.sql",
+      "migrations/20260610_iacuc_animal_governance.sql",
+      "migrations/20260610_ibc_biosafety.sql",
+      "migrations/20260610_ind_dispatch_snapshots.sql",
+      "migrations/20260610_inspection_readiness.sql",
+      "migrations/20260610_irb_submissions.sql",
+      "migrations/20260610_ivd_assessments.sql",
+      "migrations/20260610_lifecycle_obligations.sql",
+      "migrations/20260610_nonclinical_send.sql",
+      "migrations/20260610_rim_lite.sql",
+      "migrations/20260610_veeva_vault_links.sql",
+      "migrations/20260611_drop_charter_staging_tables.sql",
+      "migrations/20260611_effort_certification.sql",
+      "migrations/20260611_research_compliance.sql",
+      "migrations/20260611_research_security.sql",
+      "migrations/20260612_ana_relational_external_intel.sql",
+      "migrations/20260612_grant_budget.sql",
+      "migrations/20260612_grant_closeout.sql",
+      "migrations/20260612_grant_costshare_nce.sql",
+      "migrations/20260612_grant_subawards.sql",
+      "migrations/20260612_rls_research_admin.sql",
+      "migrations/20260614_ind_cross_references.sql",
+      "migrations/20260614_ind_safety_reports.sql",
+      "migrations/20260615_ind_amendments.sql",
+      "migrations/20260615_ind_annual_reports.sql",
+      "migrations/20260615_ind_icsr_transmissions.sql",
+      "migrations/20260615_regulatory_assessments.sql",
+      "migrations/20260615_report_subscriptions.sql",
+      "migrations/20260615_tmf_artifact_filings.sql",
+      "migrations/20260616_drop_unused_cdisc_reference_tables.sql",
+      "migrations/20260617_ai_provider_preference.sql",
+      "migrations/20260618_coverage_analysis.sql",
+      "migrations/20260619_research_committees.sql",
+      "migrations/20260620_grant_funding_profiles.sql",
+      "migrations/20260621_protocol_development.sql",
+      "migrations/20260622_protocol_risks.sql",
+      "migrations/20260628_csr_job_state.sql",
+      "migrations/20260629_charter_tables_rebuild.sql",
+      "migrations/20260629_orchestrator_awaiting_async_status.sql",
+      "migrations/20260629_orchestrator_awaiting_signature_status.sql",
+      "migrations/20260629_orchestrator_region_check_alignment.sql",
+      "migrations/20260629_orchestrator_submission_id_fk.sql",
+      "migrations/20260629_orchestrator_tenant_scope.sql",
+      "migrations/20260629_protocol_amendments.sql",
+      "migrations/20260629_protocol_consent.sql",
+      "migrations/20260629_protocol_deviations.sql",
+      "migrations/20260629_protocol_reviews.sql",
+      "migrations/20260629_rbm_surfaces.sql",
+      "migrations/20260629_submission_transmittals_active_lock.sql",
+      "migrations/20260629_submission_transmittals_mdn_raw.sql",
+      "migrations/20260629_translation_platform.sql",
+      "migrations/20260630_protocol_milestones.sql",
+      "migrations/20260630_protocol_templates.sql",
+      "migrations/20260630_rbm_kri_values.sql",
+      "migrations/20260701_protocol_soa.sql",
+      "migrations/20260701_rbm_patient_profiles.sql",
+      "migrations/20260702_protocol_budget.sql",
+      "migrations/20260702_usage_model_credit_ledger.sql",
+      "migrations/20260703_dmsp.sql",
+      "migrations/20260704_biosketch.sql",
+      "migrations/20260704_other_support.sql",
+      "migrations/20260705_export_control.sql",
+      "migrations/20260705_invention_disclosure.sql",
+      "migrations/20260705_research_agreements.sql",
+      "migrations/20260706_org_user_persona.sql",
+      "migrations/20260706_report_definitions.sql",
+      "migrations/20260716_template_doc_types.sql",
+      "migrations/20260724_ana_deep_investigations.sql",
+      "migrations/20260724_lumen_council_provisioning.sql",
+      "migrations/20260726_authoring_citation_source_usage.sql",
+      "migrations/20260726_cre_source_program_scope.sql",
+      "migrations/20260726_file_uploads_tenancy.sql",
+      "migrations/20260726_rbm_metric_ingestion.sql",
+      "migrations/20260726_rbm_not_evaluated_backfill.sql",
+      "migrations/20260727_authoring_document_program_scope.sql",
+      "migrations/20260727_onboarding_proposal_runs.sql",
+      "migrations/20260728_authoring_comments_threading.sql",
+      "migrations/20260728_authoring_document_governed_binding.sql",
+      "migrations/20260728_c2c_document_sections_timestamps.sql",
+      "migrations/20260728_c2c_section_version_author_kind.sql",
+      "migrations/20260728_chat_thread_store.sql",
+      "migrations/20260728_cmc_module3_org_scoped_uniqueness.sql",
+      "migrations/_generated/phase9_rule_packs.json",
+      "migrations/meta/0000_snapshot.json",
+      "migrations/meta/_journal.json",
+      "migrations/phase13_review_threads_tasks.sql",
+      "shared/schema/ai-ml-pccp.ts",
+      "shared/schema/ana-intelligence.ts",
+      "shared/schema/ana-relational.ts",
+      "shared/schema/api-keys.ts",
+      "shared/schema/biopharma-specialty.ts",
+      "shared/schema/biosketch.ts",
+      "shared/schema/capa-mdr.ts",
+      "shared/schema/cdisc-reference.ts",
+      "shared/schema/change-assessments.ts",
+      "shared/schema/cmc-os.ts",
+      "shared/schema/controlled-substances.ts",
+      "shared/schema/coverage-analysis.ts",
+      "shared/schema/csr-knowledge-db.ts",
+      "shared/schema/ctd-projects.ts",
+      "shared/schema/defense-packets.ts",
+      "shared/schema/dmsp.ts",
+      "shared/schema/effort-certification.ts",
+      "shared/schema/enablement-content.ts",
+      "shared/schema/etmf.ts",
+      "shared/schema/evidence-sufficiency.ts",
+      "shared/schema/evidence.ts",
+      "shared/schema/export-control.ts",
+      "shared/schema/external-intelligence.ts",
+      "shared/schema/financial-disclosures.ts",
+      "shared/schema/grant-funding-profiles.ts",
+      "shared/schema/grants.ts",
+      "shared/schema/gspr-postmarket.ts",
+      "shared/schema/gspr.seed.ts",
+      "shared/schema/ha-interactions.ts",
+      "shared/schema/iacuc.ts",
+      "shared/schema/ibc.ts",
+      "shared/schema/ind-amendments.ts",
+      "shared/schema/ind-annual-reports.ts",
+      "shared/schema/ind-cross-references.ts",
+      "shared/schema/ind-dispatch-snapshots.ts",
+      "shared/schema/ind-icsr-transmissions.ts",
+      "shared/schema/ind-master-data.ts",
+      "shared/schema/ind-safety-reports.ts",
+      "shared/schema/index.ts",
+      "shared/schema/inspection.ts",
+      "shared/schema/invention-disclosure.ts",
+      "shared/schema/irb.ts",
+      "shared/schema/lifecycle.ts",
+      "shared/schema/living-record-spine.ts",
+      "shared/schema/nonclinical.ts",
+      "shared/schema/operating-system.ts",
+      "shared/schema/orchestration.ts",
+      "shared/schema/org-lifecycle.ts",
+      "shared/schema/other-support.ts",
+      "shared/schema/pdev-workflow.ts",
+      "shared/schema/programs.ts",
+      "shared/schema/project-charter.ts",
+      "shared/schema/protocol-amendments.ts",
+      "shared/schema/protocol-budget.ts",
+      "shared/schema/protocol-consent.ts",
+      "shared/schema/protocol-development.ts",
+      "shared/schema/protocol-deviations.ts",
+      "shared/schema/protocol-milestones.ts",
+      "shared/schema/protocol-reviews.ts",
+      "shared/schema/protocol-risks.ts",
+      "shared/schema/protocol-soa.ts",
+      "shared/schema/protocol-templates.ts",
+      "shared/schema/q-sub.ts",
+      "shared/schema/qc-schemas.ts",
+      "shared/schema/regulatory-assessments.ts",
+      "shared/schema/regulatory-atoms.ts",
+      "shared/schema/regulatory-graph.ts",
+      "shared/schema/regulatory-standards.seed.ts",
+      "shared/schema/report-os.ts",
+      "shared/schema/research-agreements.ts",
+      "shared/schema/research-committees.ts",
+      "shared/schema/research-compliance.ts",
+      "shared/schema/research-security.ts",
+      "shared/schema/resolution.ts",
+      "shared/schema/reviewer-simulation.ts",
+      "shared/schema/rim.ts",
+      "shared/schema/shadow-review.ts",
+      "shared/schema/submissions.ts",
+      "shared/schema/support-admin.ts",
+      "shared/schema/tmf-artifacts.ts",
+      "shared/schema/unified_workflow.ts",
+      "shared/schema/vault.ts"
+    ],
+    "architectureControls": [
+      "AGENTS.md",
+      "docs/ARCHITECTURE.md",
+      "docs/adr/0001-use-drizzle-orm-over-prisma.md",
+      "docs/adr/0002-multi-tenant-architecture.md",
+      "docs/adr/0003-21-cfr-part-11-compliance-strategy.md",
+      "docs/adr/0004-lumen-cortex-ai-architecture.md",
+      "docs/adr/0005-client-portal-v2-design.md",
+      "docs/adr/0006-canonical-migration-lineage.md",
+      "docs/adr/0007-canonical-operating-system-schema.md",
+      "docs/adr/0008-canonical-contradiction-and-overlay-stores.md",
+      "docs/adr/0009-resolution-receipt-persistence.md",
+      "docs/adr/0010-schema-contract-test-tier.md",
+      "docs/adr/README.md",
+      "docs/adr/TEMPLATE.md",
+      "docs/architecture/AGENT_ARCHITECTURE.md",
+      "docs/architecture/AGENT_BUILD_CONSTRAINTS.md",
+      "docs/architecture/AGENT_CONSTRAINTS.md",
+      "docs/architecture/AGENT_WORKFLOW_CONSTRAINTS.md",
+      "docs/architecture/ANA_1_0_RI_CROSS_CUTTING_AUDIT_AND_ENHANCEMENT_PLAN.md",
+      "docs/architecture/ANA_1_0_RI_EXECUTION_PLAN.md",
+      "docs/architecture/ANA_AGENTIC_ONBOARDING.md",
+      "docs/architecture/ANA_DOCUMENT_STACK_ARCHITECTURE.md",
+      "docs/architecture/ANA_DOCUMENT_STACK_DATA_CONTRACTS.md",
+      "docs/architecture/ANA_DOCUMENT_STACK_LIFESCIENCES_TUNING.md",
+      "docs/architecture/ANA_DOCUMENT_STACK_SERVICE_BOUNDARIES.md",
+      "docs/architecture/ANA_ONBOARDING_P2P3_SPEC.md",
+      "docs/architecture/ARCHITECTURE_REMEDIATION_EPIC_2026-07-29.md",
+      "docs/architecture/C2C_2026_EXECUTION_REALITY_SYNC.md",
+      "docs/architecture/C2C_CANONICAL_SERVICE_AND_STORE_MAP.md",
+      "docs/architecture/C2C_ROUTE_SURFACE_CALLER_MATRIX.md",
+      "docs/architecture/C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md",
+      "docs/architecture/C2C_WORK_ORDER_DEPENDENCY_LEDGER.md",
+      "docs/architecture/CANONICAL_AUTHORITIES_AND_BOUNDARIES.md",
+      "docs/architecture/CANONICAL_AUTHORITIES_AND_RUNTIME_CUSTODY.md",
+      "docs/architecture/CANONICAL_DATA_PATHS_AND_SYSTEM_PLANES.md",
+      "docs/architecture/CLEANUP_PLAN.md",
+      "docs/architecture/CLINICAL_REGULATORY_EVIDENCE_DISCOVERY.md",
+      "docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md",
+      "docs/architecture/CLINICAL_REGULATORY_INTELLIGENCE_GRAPH_DISCOVERY.md",
+      "docs/architecture/CONCEPT2CURE_CANONICAL_UI_IA_AND_SHELL_SPEC.md",
+      "docs/architecture/CONCEPT2CURE_V3_ARCHITECTURE.md",
+      "docs/architecture/CORTEX_PRIME_ARCHITECTURE.md",
+      "docs/architecture/ECTD_COAUTHOR_VERSION_CONTROL.md",
+      "docs/architecture/HRM_SERVICE_BOUNDARY.md",
+      "docs/architecture/LIVING_RECORD_SPINE.md",
+      "docs/architecture/OSS_STACK_DATA_CONTRACTS.md",
+      "docs/architecture/OSS_STACK_SERVICE_BOUNDARIES.md",
+      "docs/architecture/OSS_STACK_TARGET_ARCHITECTURE.md",
+      "docs/architecture/PRODUCTION_BUILD_PLAN.md",
+      "docs/architecture/PROGRESS.md",
+      "docs/architecture/REASONING_TIER_ARCHITECTURE.md",
+      "docs/architecture/REASONING_TIER_DATA_CONTRACTS.md",
+      "docs/architecture/REASONING_TIER_FAILURE_MODES.md",
+      "docs/architecture/RECOVERY_BRANCH_CONVERGENCE_PLAN.md",
+      "docs/architecture/RECOVERY_GUARDRAILS.md",
+      "docs/architecture/REFERENCE_MODEL_INTEGRATION.md",
+      "docs/architecture/TARGET_SYSTEM_SHAPE.md",
+      "docs/architecture/VERSION.md",
+      "docs/architecture/VERSION_CONTROL.md",
+      "docs/architecture/build-order-10-founder-critical-path-hardening.md",
+      "docs/architecture/build-order-11-production-stability.md",
+      "docs/architecture/build-order-12-production-readiness-and-drift-elimination.md",
+      "docs/architecture/build-order-13-ops-hardening.md",
+      "docs/architecture/build-order-14-governed-export-and-ops-activation.md",
+      "docs/architecture/build-order-15-workspace-operating-surface-convergence.md",
+      "docs/architecture/build-order-16-workspace-truth-convergence.md",
+      "docs/architecture/build-order-17-governance-action-wiring.md",
+      "docs/architecture/build-order-18-workspace-governance-propagation.md",
+      "docs/architecture/build-order-19-governance-detail-unification.md",
+      "docs/architecture/build-order-20-workflow-gating.md",
+      "docs/architecture/build-order-21-workflow-transition-enforcement.md",
+      "docs/architecture/build-order-22-declarative-navigation-governance.md",
+      "docs/architecture/build-order-23-nav-source-governance-activation.md",
+      "docs/architecture/build-order-24-topbar-governance-convergence.md",
+      "docs/architecture/build-order-9-lean-core-production-hardening.md",
+      "docs/architecture/degraded-mode-policy.md",
+      "docs/architecture/docx-pipeline-canonical-designation.md",
+      "docs/architecture/governed-document-decision-fabric-v1.md",
+      "docs/architecture/phase2-build-order-2-fabric-assimilation.md",
+      "docs/architecture/regulatory-correspondence-os.md"
+    ]
+  },
+  "counts": {
+    "apiContracts": 4,
+    "commandRegistry": 2,
+    "aiToolRegistry": 2,
+    "schemaAndMigrations": 576,
+    "architectureControls": 80
+  },
+  "artifacts": {
+    "AGENTS.md": {
+      "bytes": 4557,
+      "sha256": "83361f534404dd8b6979003fca5bce578f9d0c5db0c72543732383a7e87d5811"
+    },
+    "db/migrations/000_gcc_bootstrap_core.sql": {
+      "bytes": 4308,
+      "sha256": "179aa856cae944e73da928ae930b82594ba37684135cb9fe78bd86816bb91563"
+    },
+    "db/migrations/001_gcc_core.sql": {
+      "bytes": 14817,
+      "sha256": "81aea8541ec8f3cb62bcefd7e8d775acee9ed0d74e324942459c00ab294d2a56"
+    },
+    "db/migrations/002_gcc_audit_immutability.sql": {
+      "bytes": 4594,
+      "sha256": "268556c68c786bd959c1980d2469ed732ccceb79cb9e90362cf1d4288e378574"
+    },
+    "db/migrations/003_gcc_prose_versioning.sql": {
+      "bytes": 17393,
+      "sha256": "c553154532aad538cb468a39df25770856dd52afd464c58b5740ae4278ad009d"
+    },
+    "db/migrations/004_gcc_enhanced_citations.sql": {
+      "bytes": 9622,
+      "sha256": "bd9c661292fd6bfddc8c4fe1755e0f833edcaf51909b65ce31aa00cf35262453"
+    },
+    "db/migrations/005_gcc_database_roles.sql": {
+      "bytes": 14795,
+      "sha256": "278c92423f7b7bdd2aee907602300eb797c9d8b7b6a932028cf1aadfa6a944c6"
+    },
+    "db/migrations/006_gcc_dashboard_views.sql": {
+      "bytes": 16218,
+      "sha256": "920d19e03ac75235563afe0bedc334b09efcbf455e744bbfeecea4ec4c956498"
+    },
+    "db/migrations/016_perf_indexes.sql": {
+      "bytes": 1322,
+      "sha256": "38ac3142b96422923517d37c0698e7a71b14f1aad6ae225d6d82750200185ebc"
+    },
+    "db/migrations/017_gcc_shadow_agent_rbac.sql": {
+      "bytes": 10298,
+      "sha256": "e28dd21ce3c50a5269b6456cad65182bc320a3443b623be1de813c28dd2018b3"
+    },
+    "db/migrations/018_gcc_purge_workflow.sql": {
+      "bytes": 17765,
+      "sha256": "762806e79395a247f93a779f579beb096f963c43f321d92386f4b8fded491e4e"
+    },
+    "db/migrations/019_gcc_idempotency_ratelimit.sql": {
+      "bytes": 9126,
+      "sha256": "c7ad7af404daae783f5d2b0618822d24947c4b8a252f38165fa66ae5e53fb995"
+    },
+    "db/migrations/020_new_process_wizard.sql": {
+      "bytes": 3213,
+      "sha256": "3fabb61f629e6933444995a13dd61ef7f25c5297d6fc54465a3ded37c8bfcd68"
+    },
+    "db/migrations/022_stability_v2.sql": {
+      "bytes": 3520,
+      "sha256": "9f4cec64c87d2754078f290dd2fbc3515d058916ec6be3d5582e8e6b438ea963"
+    },
+    "db/migrations/023_stability_step2.sql": {
+      "bytes": 2626,
+      "sha256": "a63a55479fbf6ded264d9d373f779b0fb054d389e4aac63a089e142f16da6b44"
+    },
+    "db/migrations/024_stability_step3.sql": {
+      "bytes": 1246,
+      "sha256": "37e8d66937023f937c76163cd07e3305cf6e8fdf285d24904ee7fc32be453064"
+    },
+    "db/migrations/026_stability_step4.sql": {
+      "bytes": 1736,
+      "sha256": "01e44cccaf042692849c8dea358e9472ed3f0c0270ea86d6641a412b0ed36670"
+    },
+    "db/migrations/028_strategy_core.sql": {
+      "bytes": 2391,
+      "sha256": "ca7459f228223d3e3d4e35b20c6a4f876ca7286c46deedc475ba08297fa4c16f"
+    },
+    "db/migrations/029_strategy_step2.sql": {
+      "bytes": 2384,
+      "sha256": "92d0a3baca094535b4b699cc9ca56286a9c0b6558523a24b4d8372a61bdbd5c7"
+    },
+    "db/migrations/030_stability_results.sql": {
+      "bytes": 4942,
+      "sha256": "690d9644600eb7a77e16cb4398a0b1bfe7c3455b4f9148e784c3108b765536f0"
+    },
+    "db/migrations/036_gcc_discovery_bridge.sql": {
+      "bytes": 5503,
+      "sha256": "5dfedf70d7c86de1c3c84c0bf19eb53b02f1a1b06d7a8adc224c8de74df5672b"
+    },
+    "db/migrations/037_gcc_registry_trial_ledger.sql": {
+      "bytes": 7795,
+      "sha256": "cd1d70d2bad09e0a2c8512fa082d7eb901ab620ca03d0a6f11f5ec640c324bd9"
+    },
+    "db/migrations/038_gcc_ectd_seeder_service.sql": {
+      "bytes": 33570,
+      "sha256": "39e3be5a84ad614f56387105abd07c0fed17ba90738b3188cf7fba7fc6df1620"
+    },
+    "db/migrations/039_gcc_label_impact_simulator.sql": {
+      "bytes": 17540,
+      "sha256": "f63bb58624b6a593c0147a926adb2e575e30678accde726b68e8adf03e2d88da"
+    },
+    "db/migrations/040_gcc_site_intelligence.sql": {
+      "bytes": 15604,
+      "sha256": "bd255c2b26b68b98cc9256feb5c700004d4f79d3ee88abf835a17fea9317f2c9"
+    },
+    "db/migrations/041_gcc_signing_gates.sql": {
+      "bytes": 22288,
+      "sha256": "4f4fcbe72236d06554538c50772ff6fffb52ae778e3dc0e3c59c1a7a2b04a6df"
+    },
+    "db/migrations/044b_gcc_lumen_schema_prerequisite.sql": {
+      "bytes": 1580,
+      "sha256": "9d71321e1ef9eec4f441bd6c5d20a0db1be79567cb832eba9e28f9538f7c402b"
+    },
+    "db/migrations/044c_gcc_vault_schema.sql": {
+      "bytes": 6165,
+      "sha256": "dac530246366d5648bdb2c752065fc74c3f9018041a31b00f722c4d76b49b0d5"
+    },
+    "db/migrations/047_quality_step6.sql": {
+      "bytes": 960,
+      "sha256": "62e9fc5a53cd20f1a07b88b556170d4ad7bd8f6a0bf1f163a12cd4fe023f2008"
+    },
+    "db/migrations/048_quality_step7.sql": {
+      "bytes": 1977,
+      "sha256": "75b297274d9fe9bab7fb43a8387178b8dd894c03a0dcc4eee5b6331d4908b217"
+    },
+    "db/migrations/049_quality_step8.sql": {
+      "bytes": 864,
+      "sha256": "5b884e810ac26a84f55e40c0d751c13f2b5056a4df4e9177c866077c9f80df4a"
+    },
+    "db/migrations/050_gcc_ectd_v4_domain_registry.sql": {
+      "bytes": 34824,
+      "sha256": "f30b26c680f389528dc520a68e1c2da8672c11fa9f91c2ac7c3bcc9ea0da0d4c"
+    },
+    "db/migrations/051_gcc_multi_tenant_identity.sql": {
+      "bytes": 22950,
+      "sha256": "e8ad08a0de13ab508fc163ccce9ed9b4189c0e51e65f7e5780b202448f15ffc4"
+    },
+    "db/migrations/052_gcc_ectd_v4_cou_graph.sql": {
+      "bytes": 26640,
+      "sha256": "571d3655c5f9f3c84c7c9aade84f392930f786901182ce12536380924269500e"
+    },
+    "db/migrations/053_gcc_rls_policies.sql": {
+      "bytes": 11841,
+      "sha256": "4a361e90bd2cfd534b08a75223605247388191fd4bff09a0892f2165c3e5ac1d"
+    },
+    "db/migrations/054_gcc_part11_audit.sql": {
+      "bytes": 21761,
+      "sha256": "0dd9854197e75b8ec125af000aed4427f724dccc0074efa32b8739a1074a6f02"
+    },
+    "db/migrations/055_gcc_test_scenarios.sql": {
+      "bytes": 28240,
+      "sha256": "98135694caf945612fe493df0eebb0677a3e4a0a02907319097d28fcb9834336"
+    },
+    "db/migrations/056_gcc_test_runner.sql": {
+      "bytes": 25297,
+      "sha256": "0ff94137484d65b7a52d32beaf34391a738f11ce751cd9912a7112d8dcf9fe18"
+    },
+    "db/migrations/057_gcc_product_master.sql": {
+      "bytes": 27017,
+      "sha256": "e6fb8cbc2373c4fa01db9c6b61dab975f9b35ff301ff0a3a75d6ddd62a9d7ccf"
+    },
+    "db/migrations/058_gcc_fhir_resources.sql": {
+      "bytes": 28710,
+      "sha256": "bf654fb9a2bc2d1dd66191da0a185154c81eac190a81df933eb66f42be328572"
+    },
+    "db/migrations/059_gcc_vector_embeddings.sql": {
+      "bytes": 24801,
+      "sha256": "25c2b16a689a93bf717a8d08f5a5aae81bcdd801eba679fdc814793361716a59"
+    },
+    "db/migrations/063_gcc_cognitive_agent_runtime.sql": {
+      "bytes": 8800,
+      "sha256": "2006ab273f4cff9ee64c77013f35708cecb33ae832f08261f377bf880fae44a9"
+    },
+    "db/migrations/064_gcc_cognitive_audit_schema.sql": {
+      "bytes": 25669,
+      "sha256": "4dae651e9d99d99a118dbabcef688c9a7e45be7822e67a615e1982e854585b6d"
+    },
+    "db/migrations/065_gcc_global_dossier_schema.sql": {
+      "bytes": 25221,
+      "sha256": "933564fd7781463dc6ef0659b17d7040b8e971637c270fe701d16dfc3e533905"
+    },
+    "db/migrations/066_gcc_manufacturing_digital_twins.sql": {
+      "bytes": 31884,
+      "sha256": "b56812604dd4c105129e3d297d2c5e44c914ee317a39ba05632688c87fe8687d"
+    },
+    "db/migrations/067_gcc_federated_learning_intelligence.sql": {
+      "bytes": 31337,
+      "sha256": "71f37bac2c9914b97b490273a54af697d95b38d26e3dcb09dacbf0138eb78b14"
+    },
+    "db/migrations/068_regulatory_schema_alignment.sql": {
+      "bytes": 6157,
+      "sha256": "5e54886942d9e560880f909c70193e0a52c4e4e415cf260cd7cd2670ff90f02a"
+    },
+    "db/migrations/069_gcc_multitenant_rls_expansion.sql": {
+      "bytes": 18402,
+      "sha256": "824ed649d7028b474d0029a3484dd2647760f502ed3f07a881761c555c310e58"
+    },
+    "db/migrations/070_gcc_rls_extended_ga.sql": {
+      "bytes": 30333,
+      "sha256": "38bd0f1a9564f9dd152007d80de383c46bdaef42e589a2089b1878adc870d600"
+    },
+    "db/migrations/072_gcc_innovation_platform_core.sql": {
+      "bytes": 66715,
+      "sha256": "381bff97572a0b48f5d69be3058f0a61b0b8089eb51aaaa204795736845d2417"
+    },
+    "db/migrations/073_cortex_prime_unified_brain.sql": {
+      "bytes": 5798,
+      "sha256": "2adf0850bb402e5e582ee0a35bf87ae991dfa1518b05acb0176831539cc3850c"
+    },
+    "db/migrations/074_gcc_regulatory_intuition_engine.sql": {
+      "bytes": 34554,
+      "sha256": "a67f5b1141afca8d0566f69405f985cc14e441910c00d9146ecaa3851fa4eae7"
+    },
+    "db/migrations/075_gcc_epistemic_intelligence.sql": {
+      "bytes": 32848,
+      "sha256": "3de5218946f1bebefd6551d4a59a0531a2e71d0d80fe756129ea17fa823b53bf"
+    },
+    "db/migrations/076_gcc_causal_inference_engine.sql": {
+      "bytes": 31149,
+      "sha256": "2ea6884ff8d7ee645a10f8df223653ab3ce48d58ab867969866d5fcb99ee7cab"
+    },
+    "db/migrations/077_gcc_self_evolving_intelligence.sql": {
+      "bytes": 37375,
+      "sha256": "b5239e8343c1777b1ee2f0200f5068c13a26fa12edf24c5ff88c06385fb896c3"
+    },
+    "db/migrations/078_gcc_cross_domain_transfer.sql": {
+      "bytes": 33379,
+      "sha256": "872570feb48473a7f9fdac26de94cc1e2973794ee75d9edf1b22d1dfecd26825"
+    },
+    "db/migrations/079_gcc_unified_functions_views.sql": {
+      "bytes": 29583,
+      "sha256": "364dcd952feb0d38f912b18ff8bb486c9bc169d4412a437f9f1d34dbbf7475b8"
+    },
+    "db/migrations/080_gcc_21cfr_part11_compliance.sql": {
+      "bytes": 35218,
+      "sha256": "df0d6d9e6346233ed710faea1df9e1057dc0315c70329b66647c00da59ad8eb2"
+    },
+    "db/migrations/081_grdhe_regulatory_mapping_layer.sql": {
+      "bytes": 70425,
+      "sha256": "60401070642869e8a298d8851080a1ff05622db972ec8992b5c9ebe4b8e8d31d"
+    },
+    "db/migrations/082_ectd_submission_agent.sql": {
+      "bytes": 11213,
+      "sha256": "f847e577009a6aca1fae89adbc4431f68234c2312e095f4ddf52502384e92a0a"
+    },
+    "db/migrations/100_regulatory_templates.sql": {
+      "bytes": 112350,
+      "sha256": "d64320bacc0b01e5a427f118c3bdb16a3fe24d2dfec928cd9eaa26229dc7184d"
+    },
+    "db/migrations/101_complete_template_catalog.sql": {
+      "bytes": 80621,
+      "sha256": "dbf74f1696433edaaccbebf0dece6e733883460ae68b3e9065f4655b9ff978b1"
+    },
+    "db/migrations/102_load_all_templates.sql": {
+      "bytes": 32572,
+      "sha256": "feb87a72fce97cc6fcb59fb010b33a6afbabf6406c98f971e49eb5cd49acc82e"
+    },
+    "db/migrations/103_load_complete_templates.sql": {
+      "bytes": 79593,
+      "sha256": "252eb23f1a2d514f9ba5c8b9871f940357da20b48d2ce1e9ace6e941008b4b26"
+    },
+    "db/migrations/20260125_add_atom_embeddings.sql": {
+      "bytes": 10023,
+      "sha256": "f32c822297eb31b01134c5805c035e4d3a9c0874bc98726084eed397d3c3eebb"
+    },
+    "db/migrations/20260125_ai_provider_audit_log.sql": {
+      "bytes": 5686,
+      "sha256": "e4911cfb69da0580d2bc2563bbe6f7881fc1f75888d7a1e8dba34039a8897600"
+    },
+    "db/migrations/20260125_enhanced_cortex_schema.sql": {
+      "bytes": 22787,
+      "sha256": "61761e9ec54776db86056138de92b2d2bf00a2ce2029d5ebf27d852880d2c4f0"
+    },
+    "db/migrations/20260128_concept2cure_foundation.sql": {
+      "bytes": 9516,
+      "sha256": "23203640d6a45e04c3413e6bc5b86241aea5e170e0589592af4b63c1331c432a"
+    },
+    "db/migrations/20260128_concept2cure_signatures.sql": {
+      "bytes": 4696,
+      "sha256": "2f2a77a288c60f2ed4844202e2ec4fb572d333ac0f2e64e98b07b4b3b4f74a66"
+    },
+    "db/migrations/20260128_concept2cure_wbs_assignments.sql": {
+      "bytes": 5101,
+      "sha256": "b207468a5122f8a243e6d308d45f0bdeb9f184e0887fcdc7005aad942689708c"
+    },
+    "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql": {
+      "bytes": 2364,
+      "sha256": "4fe5404fc70b5f2fb04f3cf05cab198895c7b8c51ef8065bd30bfe06bd9aaddb"
+    },
+    "db/migrations/20260129_add_org_uuid_alignment.sql": {
+      "bytes": 649,
+      "sha256": "6debc504aba5902fc47f7db0a5a9d54718a1411bc0fddb67bd745180f27d1788"
+    },
+    "db/migrations/20260129_phase5_intelligent_document_system.sql": {
+      "bytes": 24280,
+      "sha256": "9a8a9789be74832ff563edf259c6f265c6a9b010216d0f590753d11198dc25ce"
+    },
+    "db/migrations/20260129_proof_audit_logs.sql": {
+      "bytes": 7185,
+      "sha256": "a2187cf5bffc5566bd33b7d09fdf53f8447e1eb65037bdddecf98a734d748044"
+    },
+    "db/migrations/20260129_workflow_indexes_and_dlq.sql": {
+      "bytes": 2638,
+      "sha256": "04d0227834738c1ba4f4ecd9349c85c1f17bc5ee841bb9b6e17d0ca85cc2d9df"
+    },
+    "db/migrations/20260130_add_assembly_audit_logs.sql": {
+      "bytes": 275,
+      "sha256": "7e20f0ff77c09fa92eb3f3656a976c13960d6279f65b200fb422310caa508dd1"
+    },
+    "db/migrations/20260130_add_assembly_docs_table.sql": {
+      "bytes": 137,
+      "sha256": "a9311e1d5c376825bb64a2149f5cd7b11065c19678e774c6b1fcf64c3d567ecc"
+    },
+    "db/migrations/20260130_add_workflow_rls_and_step_runs_immutability.sql": {
+      "bytes": 3451,
+      "sha256": "f6af40f9698e5b38ed0b4089b8a79df07deda073f3231370628493ba2edfbc0e"
+    },
+    "db/migrations/20260203_phase2_anchors_xrefs.sql": {
+      "bytes": 7113,
+      "sha256": "ad5efa813e749c2e3b4d8ca6803b45a67a82fb54e17b32780dd5f2187b831d44"
+    },
+    "db/migrations/20260203_phase2_graph_rls_indexes_patch.sql": {
+      "bytes": 8527,
+      "sha256": "e6fa30475f2f2136b7f52e715ee7bf20f14be7ce4ba62d20faf80bf1ef22e886"
+    },
+    "db/migrations/20260203_phase2_review_batch_persistence.sql": {
+      "bytes": 7598,
+      "sha256": "cf4c735d709c91c020ef1bc1ed626efad5ee18779fb7570e13dfe1fd38e0ae42"
+    },
+    "db/migrations/20260203_phase2_review_batch_runner_hardening.sql": {
+      "bytes": 4325,
+      "sha256": "3e428b4e4b7c76273fa7eadeaf920c86c40ee8e85565a61e48af189f528ba369"
+    },
+    "db/migrations/20260203_rps_event_store.sql": {
+      "bytes": 11261,
+      "sha256": "2b7419c5288b821dcca0df4f24307e4a2de1bc934cfed18c7868f9811cac063e"
+    },
+    "db/migrations/20260204_review_batch_worker.sql": {
+      "bytes": 3688,
+      "sha256": "d6954228ddf3aec2a8117d115cec3a68063c60ec63c5a6d6446a07a37e17e6c5"
+    },
+    "db/migrations/20260205_review_batch_admin.sql": {
+      "bytes": 1174,
+      "sha256": "ab210da10b7a8bdef24a2d211ca267eeb0268f6fde35daef980042f3b218dd4c"
+    },
+    "db/migrations/20260206_phase4_orchestration_kernel.sql": {
+      "bytes": 22914,
+      "sha256": "116215f11bd8676b29fc668deba7c3cb0a45ce11722086a04b87b839d73c91e9"
+    },
+    "db/migrations/20260206_phase5_contradiction_scanner.sql": {
+      "bytes": 3552,
+      "sha256": "031ddc529590580a2137b476e9fb34afab472e52818093521c1db8e054d4b632"
+    },
+    "db/migrations/20260206_phase5_evidence_fabric.sql": {
+      "bytes": 18269,
+      "sha256": "a6217e901907cf58b52d5783c5cf6761b74a528d8b3d5cdb35db6d0c19bb8034"
+    },
+    "db/migrations/20260206_phase5_idempotent_provenance.sql": {
+      "bytes": 3438,
+      "sha256": "ac4fc1bcd643a8098f118a88f13248c92c3eb311655865c66002c41094d6ee00"
+    },
+    "db/migrations/20260206_phase6_docx_factory.sql": {
+      "bytes": 6318,
+      "sha256": "01b16a87e1755eb05ca776f24dfa29f34a381367496a1e8a10b050355afc0422"
+    },
+    "db/migrations/20260206_review_batch_ops_control.sql": {
+      "bytes": 2941,
+      "sha256": "4a3ff8321fdcf33c1904e725ffe43c48db9ee86957497764bad90ae823f530e3"
+    },
+    "db/migrations/20260207_phase4_seed_templates.sql": {
+      "bytes": 7391,
+      "sha256": "5eb1641ee512fc80f13e9669075e5b0d8e4e4f9e0b186ae89d1f8bae4c07d261"
+    },
+    "db/migrations/20260207_phase6_6_predicate_intelligence.sql": {
+      "bytes": 10851,
+      "sha256": "4ac1148f20c1d17bd891d17f31692816bf665086df522c58926adc0c10d84d02"
+    },
+    "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql": {
+      "bytes": 9511,
+      "sha256": "4186586c084f669a3375f49c58785698b67011132f836701611cee093505aeb8"
+    },
+    "db/migrations/20260208_phase6_6a_risk_rollups.sql": {
+      "bytes": 6388,
+      "sha256": "80b2efc74a58eae1efd2d24baad6ab16d6c2bd1034825ad1b39aeef9b28919b8"
+    },
+    "db/migrations/20260209_create_pm_settings.sql": {
+      "bytes": 6610,
+      "sha256": "330c6caf0abda6594df395758ca1fc11c719f6bafe1498921d274fabdfe66842"
+    },
+    "db/migrations/20260209_phase6_6a_fda_ingest_runs.sql": {
+      "bytes": 3218,
+      "sha256": "33e8ffd76c14e45c39b83a108272a01e1a2adbd7b5d784eaac8f030fb1c06847"
+    },
+    "db/migrations/20260211_phase6_6d_defense_packets.sql": {
+      "bytes": 5905,
+      "sha256": "67b589cccd4a6b2349994594cd5815d08595d8f14f9e51b2d9d941c4063bd602"
+    },
+    "db/migrations/20260211_phase6_6e_proof_pack_exports.sql": {
+      "bytes": 6925,
+      "sha256": "af3ccafe828f28059e8d4343fffebdd6d77d7a4282c512533321af6111043a2f"
+    },
+    "db/migrations/20260211_phase6_6g_proof_pack_trust_chain.sql": {
+      "bytes": 6343,
+      "sha256": "185e576172c50382217bf958d17bd5174cee510099407d9b4efe0aa582ceba4e"
+    },
+    "db/migrations/20260211_phase7_0a_render_jobs.sql": {
+      "bytes": 2934,
+      "sha256": "e13672a4e8f649bc1ee11b14c562af76a3e3d31a8f3b6e0d9e7f29f1b3fa5411"
+    },
+    "db/migrations/20260212_phase7_0c_render_tenant_safety.sql": {
+      "bytes": 5301,
+      "sha256": "1855d6954235cefb1c4195a8672eec3c904c8f618025a7a604c3c3884afcdf05"
+    },
+    "db/migrations/20260216_enterprise_4pillar_expansion.sql": {
+      "bytes": 13180,
+      "sha256": "c74d27bccc8cc16331a168d9b7a2d8addf0774e50fa3732bee978d93b1730d72"
+    },
+    "db/migrations/20260220_ind_section_tracking.sql": {
+      "bytes": 13742,
+      "sha256": "55ddbb1082563a414b44cb3f98fe391ab6e6108595652aa6333160b7fb8b5c42"
+    },
+    "db/migrations/20260220_user_intelligence_platform.sql": {
+      "bytes": 17292,
+      "sha256": "f08fb171503afc7c094135bd01b3d9f4b055d4bf5bd57fc830a87c94f5ddc273"
+    },
+    "db/migrations/20260222_audit_events_hash_chain.sql": {
+      "bytes": 5873,
+      "sha256": "550fef2347b813700391cfd17ba1e1b33ea0d75a8386c9cb00c56995f4a98b26"
+    },
+    "db/migrations/20260222_audit_events_immutability.sql": {
+      "bytes": 6202,
+      "sha256": "acbd2e642832cfa7535bba54e8aca1119164515d1974f6c686e1633ce20b6834"
+    },
+    "db/migrations/20260222_ivdr_schema_hardening.sql": {
+      "bytes": 6769,
+      "sha256": "f795b3b02887ba65898709fd09b91b90d38c8b58f9e10550761d063b3dce6be7"
+    },
+    "db/migrations/20260223_ivdr_binder_packs.sql": {
+      "bytes": 11290,
+      "sha256": "cc34eba777f72b79ea2256c88956d0a849ff0cc2bf813427176dfe602e90591c"
+    },
+    "db/migrations/20260223_ivdr_packs_building_status.sql": {
+      "bytes": 1192,
+      "sha256": "2b705b4409f51d402b6c427ec59d74b04d9cfa07e03af0f101319ed252bbc6a0"
+    },
+    "db/migrations/20260224_ai_claims_verifier_flags.sql": {
+      "bytes": 2037,
+      "sha256": "ed7e3e472105e6926bc7d912079d408639a5f069e2b0fccc58fd341660888f23"
+    },
+    "db/migrations/20260224_ai_trace_chain.sql": {
+      "bytes": 10689,
+      "sha256": "5ad8f88a55f643ca64907e559cdd11ab16c6d06f862ad02bb2f81de208486243"
+    },
+    "db/migrations/20260224_binder_evidence_source_types.sql": {
+      "bytes": 4411,
+      "sha256": "a24d7cab5f131acae2edbd81ba8af75b11dfac9ddb741b2f8bf7b30632016cf6"
+    },
+    "db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql": {
+      "bytes": 2481,
+      "sha256": "b127396c261babfa500fb7a804f6a5b48d5c99f17298f9d14caf1d4667fae1f5"
+    },
+    "db/migrations/20260305_projects_add_path_column.sql": {
+      "bytes": 352,
+      "sha256": "8498a9b3af3ea54c7f84391ae1509ef3e9e8cbb4ffb506290d27e0bc80b4b466"
+    },
+    "db/migrations/20260306_chat_tool_runs.sql": {
+      "bytes": 731,
+      "sha256": "39c9dffa8c311848c9de7c4020827bfe49db32ba132ae43bfeade4b25244aaf3"
+    },
+    "db/migrations/20260306_precedent_engine.sql": {
+      "bytes": 7069,
+      "sha256": "c9706d32caf68ff190785b32e8728713747c88ebae596bcbe00f29c0eaf56536"
+    },
+    "db/migrations/20260311_concept2cure_artifacts.sql": {
+      "bytes": 1857,
+      "sha256": "3491b904d17fbfebedbeddecc6cd99b16c967f9cb9e9473fa8de83c685032e71"
+    },
+    "db/migrations/20260311_concept2cure_provenance_events.sql": {
+      "bytes": 1765,
+      "sha256": "62ac4e7d68ab57a31ce9e35071a855f939b1705662dcb0d36ea524a9dfbf8e02"
+    },
+    "db/migrations/20260313_concept2cure_submission_snapshots.sql": {
+      "bytes": 3880,
+      "sha256": "b62d8a8927e5c79ae38dc7cba6101eccbbb0b261870d7f3b8319d19238b529b0"
+    },
+    "db/migrations/20260313_phase11_governed_workflow.sql": {
+      "bytes": 7359,
+      "sha256": "ecc2497c623e022d8e3d2a46efc960dd319fcc8fe68143fbc2d6126a0d595c24"
+    },
+    "db/migrations/20260314_phase12_multi_user_review.sql": {
+      "bytes": 3130,
+      "sha256": "0bc9fb272c760e6621d636b98e05faee3459de49d611ffe16840529648190899"
+    },
+    "db/migrations/20260317_global_regulatory_compliance.sql": {
+      "bytes": 14330,
+      "sha256": "67eadf860a2e2ea6a4d91c67d8d415b4c508dc3c57e5a1975dc4945f28714cb2"
+    },
+    "db/migrations/20260317_submission_twin.sql": {
+      "bytes": 8551,
+      "sha256": "e230042d0b5ac99ec01afecd51da326c367553d314e55220eabf287d09c054a1"
+    },
+    "db/migrations/20260318_ga_immutability_hardening.sql": {
+      "bytes": 11138,
+      "sha256": "f6f3a552fdb4075d4bc6e0990eba19c042ac7503adcefeaafdeeecf882d51631"
+    },
+    "db/migrations/20260319_billing_usage_budgets_alerts.sql": {
+      "bytes": 2942,
+      "sha256": "905b313870f38dec695348c3a4142900549f13c7d3328890229d784755f7ac98"
+    },
+    "db/migrations/20260319_evidence_fabric.sql": {
+      "bytes": 9335,
+      "sha256": "bc348568ca6c5ebd3f8be05df068685fcdbeb4615b588a4dbcd39308953b7b87"
+    },
+    "db/migrations/20260319_ga_indexes_and_fixes.sql": {
+      "bytes": 1039,
+      "sha256": "bf39114342cbe26fa54b5f9a0dc2749bf0ed37f5ac2a5df032122f3246af38a1"
+    },
+    "db/migrations/20260322_quality_checkpoints.sql": {
+      "bytes": 1396,
+      "sha256": "45ebb756298f4f4ae422d3181ea4c18ac043301d0538342126848dd8748259ee"
+    },
+    "db/migrations/20260322_regulatory_precedent_intelligence.sql": {
+      "bytes": 19990,
+      "sha256": "c5d121e84728b59bd5aecd9eba663a9040270fdfa92b06ff6d17ea7d1685a714"
+    },
+    "db/migrations/20260323_assumption_decision_contradiction.sql": {
+      "bytes": 14070,
+      "sha256": "4b19c21777eb94f45fe91642e75ab7dc6b86838868f5318460e51b9425d306e9"
+    },
+    "db/migrations/20260323_reactive_dependency_layer.sql": {
+      "bytes": 5506,
+      "sha256": "b3d77fadd5c069cb1855335daf6f82d05a22098691d28adf6d4d1a5dc54ef7be"
+    },
+    "db/migrations/20260324_ai_goal_plan_runs.sql": {
+      "bytes": 681,
+      "sha256": "5b56d862e39ba69bf5305490e6ffcf76d3b7f75f62c78b20a3457509cc3962f4"
+    },
+    "db/migrations/20260324_ai_kernel_agent_protocol_events.sql": {
+      "bytes": 655,
+      "sha256": "957afd54a4abcca31535ede7271d516dbe3bfdfb837fe2ef985001bfb74cfce7"
+    },
+    "db/migrations/20260324_ai_kernel_decision_records.sql": {
+      "bytes": 1575,
+      "sha256": "2d8e9cd8d77044572c24545a6df9774af8224b136cc94fbafd066e60aba1eb9a"
+    },
+    "db/migrations/20260324_ai_kernel_policy_outcomes.sql": {
+      "bytes": 891,
+      "sha256": "7b0b90c87764ff303ca22a38ea1dd2ade906e2037edb53da49ea1e4bff472e2a"
+    },
+    "db/migrations/20260324_ana_kernel_decision_log.sql": {
+      "bytes": 1499,
+      "sha256": "b1215c40f89573f218ae78b4a98d47eb18d7f3a6678714f4afc51ecf84128190"
+    },
+    "db/migrations/20260325_ai_goal_plan_hardening.sql": {
+      "bytes": 1319,
+      "sha256": "25b71a09ad0e17239dc92755b8f5fb6bbfa7d41bf320fabe80226db41caf640c"
+    },
+    "db/migrations/20260325_ai_goal_plan_step_events.sql": {
+      "bytes": 516,
+      "sha256": "3702e4ef576774c7370c0f8b5cdf1ad33c853f23d6cabffddd297c09ebb34c24"
+    },
+    "db/migrations/20260325_ana_kernel_log_immutability_hashchain.sql": {
+      "bytes": 1873,
+      "sha256": "47cbcab73d4db9424ef6d36a58725fa2dec001abc68bd3c75461227dd3fa1cfc"
+    },
+    "db/migrations/20260325_decision_receipts.sql": {
+      "bytes": 1335,
+      "sha256": "825285eecfd99c1e50b35de90446e1bda73d65f657b896d32a11d3ff8d8a9fe5"
+    },
+    "db/migrations/20260326_artifact_compute_plane.sql": {
+      "bytes": 3709,
+      "sha256": "a91622908d6a3fc445cfc9755c4d3b6fc8e3d845ac3ac78bc8a1df94c2b2db53"
+    },
+    "db/migrations/20260326_conversation_os_durability.sql": {
+      "bytes": 4683,
+      "sha256": "7b54e6ec0f8751c18276caf15af9af838b0a1974ffceb600d22cbc20e0600bbd"
+    },
+    "db/migrations/20260326_conversation_os_durability_phase2.sql": {
+      "bytes": 804,
+      "sha256": "28f5b0b1461bb9d6456b7a8bda02ec949985e2451d88f85c11338dcf9caaf230"
+    },
+    "db/migrations/20260331_communication_center_scaffold.sql": {
+      "bytes": 2982,
+      "sha256": "8dd0ea3538242f002b834a4af83dd7cf9ee113050e2fe94c259556f27eade947"
+    },
+    "db/migrations/20260331_regulatory_correspondence_os.sql": {
+      "bytes": 5254,
+      "sha256": "fb2aaa3d3b3578fcf296a4a19fc81cee0360d8c2fa3b171c065a1277b82419b0"
+    },
+    "db/migrations/20260401_cmc_convergence_os.sql": {
+      "bytes": 6597,
+      "sha256": "fa8968a1cf24681da899c84e7ea7855d7f9892f196ae2afedb54d1fb487bd58f"
+    },
+    "db/migrations/20260401_project_sharing_visibility.sql": {
+      "bytes": 2653,
+      "sha256": "e3e7ebbf7a24b3001e0719275bd831127dbfd816a1639fd8be87ed6a7c282e2c"
+    },
+    "db/migrations/20260401_submission_center_items.sql": {
+      "bytes": 1057,
+      "sha256": "f0929b276af731dd1d8e0ab5e85fc07c1f02e6bf99d339d0172777e307c8d246"
+    },
+    "db/migrations/20260402_cmc_runtime_ddl_to_migration.sql": {
+      "bytes": 1106,
+      "sha256": "1f1d5043dba6c4e3aef13ca2b9913eca9bf351a5de7c63eae3b13df136324a09"
+    },
+    "db/migrations/20260402_supply_chain_tables.sql": {
+      "bytes": 4757,
+      "sha256": "b608a425e3903167bec770d0250fbc008158235da1fe1d06bdcb319c459ea250"
+    },
+    "db/migrations/20260501_q_sub.sql": {
+      "bytes": 5666,
+      "sha256": "67aed356b13a7e0bebac449a55f57ec0454a77ad247e07ea7c23b3dd06829424"
+    },
+    "db/migrations/20260508_ana_submission_chat_proposals.sql": {
+      "bytes": 2950,
+      "sha256": "026a41ce2153c034e1631f2ac2d527a032227be7d9d3548a881c54f34e57168c"
+    },
+    "db/migrations/20260508_artifact_citations.sql": {
+      "bytes": 3439,
+      "sha256": "500bfc4c2595e3e6e26e5c88d2614bca51a7a1687bd63bb218cc0f846a8d19c6"
+    },
+    "db/migrations/20260508_authoring_plans.sql": {
+      "bytes": 3725,
+      "sha256": "bfa075c84d0e3ea3f3a3fdbb03d4b997454202f0fa215902cfe7aa9dbd293c69"
+    },
+    "db/migrations/20260508_consistency_alerts.sql": {
+      "bytes": 2731,
+      "sha256": "14e16a8ef2cd2ceb14021f821495414619ec8d5c3401b6f077da1bf68017ecd2"
+    },
+    "db/migrations/20260508_guidance_alerts.sql": {
+      "bytes": 3639,
+      "sha256": "8485fc54c51c98bbeed6268a70bbe64583146bf585234181c6d39769a6257e8b"
+    },
+    "db/migrations/20260508_project_therapeutic_area.sql": {
+      "bytes": 722,
+      "sha256": "f3e8cc5cf044ef39577b135fb8ab88d111d98dae40c08a75b0ddcc11d0cd7d87"
+    },
+    "db/migrations/20260520_ana_failure_learning.sql": {
+      "bytes": 9632,
+      "sha256": "9cba91cbd709bdf62a5133ef968d944545708b66ebb5c30f6106aec4d4e7a6b5"
+    },
+    "db/migrations/20260520_document_templates.sql": {
+      "bytes": 8682,
+      "sha256": "bf430adb200f0e649502f6f89816df00ee4e311f556ad43449d8809a534b53b6"
+    },
+    "db/migrations/20260520_growth_mindset_extensions.sql": {
+      "bytes": 8712,
+      "sha256": "15cbb2b0bea09fb33c3e29b7a79dfe8b1124e9ee04d676d7dc83f0ca275d67c8"
+    },
+    "db/migrations/20260520_regulatory_intelligence_layer.sql": {
+      "bytes": 10866,
+      "sha256": "785ded74bdc1ecd09b3da68ffdfb997f674d9228effb6bac00d442b875bf48cd"
+    },
+    "db/migrations/20260526_drop_invalid_cdisc_fks.sql": {
+      "bytes": 1767,
+      "sha256": "2dbed8700741ba8561cda7177947266cbbbdb7ad2937e392a4086413fe4870d5"
+    },
+    "db/migrations/20260526_updated_at_triggers.sql": {
+      "bytes": 3135,
+      "sha256": "6fe9bb80cc7e975ad92e346d588df3a8a85a55f630a492c9ed1a9e7cfbec4a2d"
+    },
+    "db/migrations/20260609_scim_tenants.sql": {
+      "bytes": 1344,
+      "sha256": "1aaa5ae0e8577604426bcba72b398d9aeb4da2ac27c4f08975ce31b3f8e54ccf"
+    },
+    "db/migrations/20260611_organization_invitations.sql": {
+      "bytes": 2556,
+      "sha256": "a05975a4341cdd2e96a04775ee847998e4b5076583056c7d94dcef05797450d4"
+    },
+    "db/migrations/20260611_scim_ip_allowlist.sql": {
+      "bytes": 1511,
+      "sha256": "6dfb20fc8fd8204c001a90851e590478b3a3154e8a3fdbb45b50353e05cf4ba6"
+    },
+    "db/migrations/20260612_org_client_type_user_preferences.sql": {
+      "bytes": 2803,
+      "sha256": "a264955300cdbbdc32a942fc2dd919323886b5dc39f3e6eabcbced1ee53de9f0"
+    },
+    "db/migrations/20260617_audit_events_hmac_seal.sql": {
+      "bytes": 5638,
+      "sha256": "d6f2ac50baaee98317f5c79cbd9ebdc5133f0d620dd1c19c35d43737eef659db"
+    },
+    "db/migrations/20260617_audit_logs_immutability.sql": {
+      "bytes": 11870,
+      "sha256": "2f9c6dc0786fc7405b6f910b060f98ebb1e5b8bb6ea6cb1d3eb31b4a547190c3"
+    },
+    "db/migrations/20260617_precedent_org_isolation.sql": {
+      "bytes": 2331,
+      "sha256": "936c88348857ed8792083137a2f77f6fd4f06777515c9dd059f9aa793d74c03f"
+    },
+    "db/migrations/20260617_project_schedule_of_events.sql": {
+      "bytes": 4265,
+      "sha256": "b2f353d5c9f3c5cbf157dc009ff83c9dee89cef9c8bcaed85684e072cc45d75f"
+    },
+    "db/migrations/20260621_intelligent_licensing_eula.sql": {
+      "bytes": 4153,
+      "sha256": "18792fe831955bd11775906c0a0345eb8b5a8f3f3dc09d61ca7e3d5654ccb7f0"
+    },
+    "db/migrations/20260621_weekly_usage_limits.sql": {
+      "bytes": 5421,
+      "sha256": "010e287b063264ac16da8226767fda4054544f66dc3368bd37ef3e9e729c7a1d"
+    },
+    "db/migrations/20260629_ana_artifact_thread_lookup.sql": {
+      "bytes": 1910,
+      "sha256": "8938f0df3832663da18fc41ed36989e29bed1f1e58efc68a9d53d68a41c33b77"
+    },
+    "db/migrations/20260716_biopharma_specialty.sql": {
+      "bytes": 1413,
+      "sha256": "e62c7f6cfa5f20bd65ce3436603e5d09d7b623703de28e395a4158e81c0933e3"
+    },
+    "db/migrations/20260716_change_assessments.sql": {
+      "bytes": 1362,
+      "sha256": "8bcc9bdc4d6c177a0f73c647cca85e444f6d8b1af666928c14e67cfffe75938f"
+    },
+    "db/migrations/20260716_clinical_ops_studies_display.sql": {
+      "bytes": 1295,
+      "sha256": "0eadd06ae5d6d57dc3facb2a0681513e265448288a8d72d7665f2b85024525c5"
+    },
+    "db/migrations/20260716_enablement.sql": {
+      "bytes": 878,
+      "sha256": "e67eef21e5f1274ed1095091e3d9da14a19f44b062309b33cbd2d4ef38a84d0b"
+    },
+    "db/migrations/20260716_nonclinical_display.sql": {
+      "bytes": 859,
+      "sha256": "a9499abe384d197c62a5f440ec8af595144f90006e61c04374a4fd4bc8352f55"
+    },
+    "db/migrations/20260717_agency_meetings_store.sql": {
+      "bytes": 1055,
+      "sha256": "30cf48bc19a0875eac1135b0582bbfd2da8c49ac1217b8ff7a934f08e1945c10"
+    },
+    "db/migrations/20260717_biostat_docs.sql": {
+      "bytes": 2555,
+      "sha256": "091c8eb46cd4da2b4238fb3937b61558ea9c9cf751d420a2f65d19c1fe9d5305"
+    },
+    "db/migrations/20260717_cro_portfolio_store.sql": {
+      "bytes": 996,
+      "sha256": "65f20a6dd2f5e9dfe5c7d9b5640db9d849882c9c1ff02b14b1e0fdba163461c7"
+    },
+    "db/migrations/20260717_decision_lineage_store.sql": {
+      "bytes": 1175,
+      "sha256": "59732bcd9b6b350c4894b9c7e75ed322196f4d5b011afb76d1045bfafdf583c8"
+    },
+    "db/migrations/20260717_design_controls_store.sql": {
+      "bytes": 953,
+      "sha256": "cc346d991dfc184c9043a0d1805745e873cd9b2b811c035eef733ee8162d7105"
+    },
+    "db/migrations/20260717_doc_journey_store.sql": {
+      "bytes": 1166,
+      "sha256": "92dc24735fd65dc7da57cd095394286f97cbb84427868d52e4181f9096b774eb"
+    },
+    "db/migrations/20260717_dossier_map_store.sql": {
+      "bytes": 847,
+      "sha256": "085143f1439602768d0531508d94769e120f97df84b2af96472139e3447f81ae"
+    },
+    "db/migrations/20260717_evidence_asks_store.sql": {
+      "bytes": 1035,
+      "sha256": "9c4c3d602b6950e2272d169b637d8c4c5478535bf121052def0a779353568315"
+    },
+    "db/migrations/20260717_evidence_objects_store.sql": {
+      "bytes": 1781,
+      "sha256": "5d0ca3f374b765c0f15a8435a8ffe1e203ec923e3735e5922778bdb934b19542"
+    },
+    "db/migrations/20260717_human_factors_store.sql": {
+      "bytes": 956,
+      "sha256": "5f4b2d231713f6acd4dae5019f64f5206f9ea5652fda746a01a077ee0155605d"
+    },
+    "db/migrations/20260717_ind_checklist_store.sql": {
+      "bytes": 1320,
+      "sha256": "6933d699a8620ec200dc340985535398bde7eb206220a87fc53a798977bc9d5a"
+    },
+    "db/migrations/20260717_labeling_pi_store.sql": {
+      "bytes": 1240,
+      "sha256": "5d9a93ef09c976f468917fe78d8233fd7e93bfcff4b14892f95be990e9d92ac4"
+    },
+    "db/migrations/20260717_maa_module1_store.sql": {
+      "bytes": 1080,
+      "sha256": "c0e30deacddbae04cfb494022e3701c310b7e22923d70dbcbb57593d6731b1dc"
+    },
+    "db/migrations/20260717_market_access_store.sql": {
+      "bytes": 1117,
+      "sha256": "0f39b568cff5ea79925b3d3d432e026ba2eb1a4c13a48d53ae917deecaaf00bf"
+    },
+    "db/migrations/20260717_nda_m1_docs_store.sql": {
+      "bytes": 991,
+      "sha256": "050d6c63a3fc17f4d2195722db5dc43a411d2593271765dce1762306b121a2e4"
+    },
+    "db/migrations/20260717_nda_modules_store.sql": {
+      "bytes": 785,
+      "sha256": "560e784fbfecd2d52baa86e4307622d8e96e6db6b1f360b660ed8b366bd5f30c"
+    },
+    "db/migrations/20260717_nda_rtf_store.sql": {
+      "bytes": 1074,
+      "sha256": "d164de112aa3297ba973ca31bb4b3a95b31c7224036c7dd0ab59a29b2b46943a"
+    },
+    "db/migrations/20260717_program_journey_store.sql": {
+      "bytes": 1896,
+      "sha256": "d025bd6c73bd5755ace2ff612daf648922bf0156b1610c3cf12f21c52b6dcfc4"
+    },
+    "db/migrations/20260717_protocol_dev_store.sql": {
+      "bytes": 2222,
+      "sha256": "bb2c92646e3760c1ac7e9bc3dc77b7379132210ef8a427b4c76fae764b3c5868"
+    },
+    "db/migrations/20260717_reg_change_store.sql": {
+      "bytes": 1279,
+      "sha256": "faef710c181852e1a37e76c67598d8e2eb44e8900af0d0bcb863f84983cc4935"
+    },
+    "db/migrations/20260717_research_admin_store.sql": {
+      "bytes": 1106,
+      "sha256": "3b5f4903305129c225f084ed94acf0f47f4414ce7236704a7fc87eaca23daead"
+    },
+    "db/migrations/20260717_sae_cases_store.sql": {
+      "bytes": 1074,
+      "sha256": "2a7dd23613b736da9d0f8e0592feda5c415bf2441f46fa1a68f0bc53964d5b62"
+    },
+    "db/migrations/20260717_sae_reporting_clock.sql": {
+      "bytes": 1491,
+      "sha256": "0356d190ce649b176eda1dde52a6aa67ca80f17d604cf877845026c78ce85dab"
+    },
+    "db/migrations/20260717_shadow_review_store.sql": {
+      "bytes": 1155,
+      "sha256": "bf7055313379f9e6cc34b5182e2be21d6649d55c00cf087d40176e74300f8ba9"
+    },
+    "db/migrations/20260718_bla_assessments_store.sql": {
+      "bytes": 2506,
+      "sha256": "d4dd2f477409dc0df4452daca9665309a35a33c6d72136904ba7e061707feeed"
+    },
+    "db/migrations/20260718_cmc_changes_store.sql": {
+      "bytes": 2454,
+      "sha256": "ee4932f946df119599d6116e43c90b3acf99fc91334b2464ecc337f05187e78e"
+    },
+    "db/migrations/20260718_pediatric_orphan_cards.sql": {
+      "bytes": 1682,
+      "sha256": "9ffd8589500b21ca06545a5aae97b368038eb918a654a7a21b06b0f69dcadc1c"
+    },
+    "db/migrations/20260718_smpc_sections_store.sql": {
+      "bytes": 950,
+      "sha256": "32692bfb0dd97d6781383859aced4297f8d11da46fddd6b136f6fb6202324770"
+    },
+    "db/migrations/20260724_clinical_regulatory_evidence_spine.sql": {
+      "bytes": 14751,
+      "sha256": "d049816e00b0b583d0e35e6febe3ef9147600ff8f9ecbc5cd794b9b72c9b3e3f"
+    },
+    "db/migrations/20260724_qms_change_control_store.sql": {
+      "bytes": 6357,
+      "sha256": "f319676b20a2d1c19a9ba4f4f3e4cb0e3d468d7a76a51c9f1a7922c7c3e32686"
+    },
+    "db/migrations/20260725_authoring_audit_trail.sql": {
+      "bytes": 2110,
+      "sha256": "c4477135827b2180b1e43b7feba93dabed8eaf75123b5b8ec67d8d2284fc1c6a"
+    },
+    "db/migrations/20260725_authoring_document_loop_tables.sql": {
+      "bytes": 13888,
+      "sha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    "db/migrations/20260725_authoring_signature_freeze_binding.sql": {
+      "bytes": 2505,
+      "sha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    "db/migrations/20260725_authoring_signatures_and_workflow.sql": {
+      "bytes": 4923,
+      "sha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    "db/migrations/20260725_bundle_execution_receipts.sql": {
+      "bytes": 2912,
+      "sha256": "42c89034461bde1c7440fb794a83e3624a5cf676dfd0532023aa865e88ee84d3"
+    },
+    "db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql": {
+      "bytes": 2333,
+      "sha256": "41b86003a00357dd881643618411613165f3375b7918c3121d8198ea785d4b94"
+    },
+    "db/migrations/20260725_ectd_compilations_project_level.sql": {
+      "bytes": 1443,
+      "sha256": "978bb039324e4f62a922139eaa832465a5d3041318f5a99eb1b28191945f7fe5"
+    },
+    "db/migrations/20260725_esig_gate_columns_port.sql": {
+      "bytes": 7904,
+      "sha256": "905fb6c1351200a3384d27f9f74d9537d34bf7eeb24e7b7c8ab9db3bf8571c5c"
+    },
+    "db/migrations/20260725_governance_boundary_tables.sql": {
+      "bytes": 4867,
+      "sha256": "7e918f54ea284c7e91b4a14cc561dc214dcc60ecb243038f809f09146e17313e"
+    },
+    "db/migrations/20260725_project_sections_content_columns.sql": {
+      "bytes": 2309,
+      "sha256": "97d4fcd8f2464f5b740ff738c4b68c08a6b717b25e103f59c14c5b185a6ad664"
+    },
+    "db/migrations/20260725_resolution_orchestration_tables.sql": {
+      "bytes": 7616,
+      "sha256": "ceca98acb950b76fa5c279491c4230961742ac6524d7932b823050dde6893585"
+    },
+    "db/migrations/20260727_collab_document_state.sql": {
+      "bytes": 4919,
+      "sha256": "6075eb91f40c37322b36432f8810a6884d802af826c4143986c0fdbc74b6f648"
+    },
+    "db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql": {
+      "bytes": 2673,
+      "sha256": "52f6e6745922c4dfe1d47b9858c2f775e4b03e7c3fc592cecc38a1c795b10703"
+    },
+    "db/migrations/20260727_drop_source_citations_phantom.sql": {
+      "bytes": 2475,
+      "sha256": "730b60217d1adcaa3d96d2fe4e5d5512eba7eac2c50580e360db4c72da864154"
+    },
+    "db/migrations/20260727_industry_context_profiles.sql": {
+      "bytes": 3662,
+      "sha256": "39e2c31d9a180b917cf325a94a72a9a2b641c9ca04f957a6f97675096080eea2"
+    },
+    "db/migrations/20260727_prm_program_link.sql": {
+      "bytes": 2230,
+      "sha256": "0b2acb2073f111deb5337dfc1b137bab3d806cf422cb45a2b7f6a1acae8ef081"
+    },
+    "db/migrations/20260727_unified_tasks_mdx_metadata.sql": {
+      "bytes": 2919,
+      "sha256": "eb6c73718f8962150505136a761464df52ef8a9d26ad01d7ee479e144615fff8"
+    },
+    "db/migrations/20260728_artifacts_table.sql": {
+      "bytes": 7243,
+      "sha256": "663e9473557322b8a71c4064894ed1f66cc71f74ecf7f6bfddc13edec91f5b71"
+    },
+    "db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql": {
+      "bytes": 10373,
+      "sha256": "32456e10254292dd863b12235960373b20878aeeb9d0e14e1a58b953e99186d3"
+    },
+    "db/migrations/_consolidated/0000_curious_vampiro.sql": {
+      "bytes": 2708,
+      "sha256": "9c977a3801d507dd5d6378c8e6b02f7972bfc185a475bbdfaa570b68954de0ae"
+    },
+    "db/migrations/_consolidated/0001_breezy_clea.sql": {
+      "bytes": 1699,
+      "sha256": "aec5d4d149a3dd081784782ae1d1c69d967479f51ae0166c458ec4e1b54a8016"
+    },
+    "db/migrations/_consolidated/0003_enhance_document_chunks_metadata.sql": {
+      "bytes": 1008,
+      "sha256": "1f92a797c32d6aa9fc503da8aad8ab10e1c99e9f3f4d5901f5115eb75b224ac6"
+    },
+    "db/migrations/_consolidated/001_analytical_methods_schema.sql": {
+      "bytes": 16676,
+      "sha256": "d4d55548c3b86a3ffdb4c2eb4f0b4d93488a69d4a56cd9231409455534eb88fc"
+    },
+    "db/migrations/_consolidated/001_auth_security_tables.sql": {
+      "bytes": 11768,
+      "sha256": "27d13243cc8fc0a940f9a601c997d5670638a47c718ee8dc6d973dbbd51aa82b"
+    },
+    "db/migrations/_consolidated/001_create_core_tables.sql": {
+      "bytes": 888,
+      "sha256": "5542efab668906da21551bcd5b9e36bb5d60e4b04522e36b217aae3fe13dc41d"
+    },
+    "db/migrations/_consolidated/001_templates_table.sql": {
+      "bytes": 1790,
+      "sha256": "42a9aa73cc5cd1e575d2a932289dfa4821467168080d083d1425e28cb66887dd"
+    },
+    "db/migrations/_consolidated/002_documents.sql": {
+      "bytes": 473,
+      "sha256": "f29cb1b3cd50fe36616052845e87e4693b2f5a6f49115dc1a9e6e9ffa05a0097"
+    },
+    "db/migrations/_consolidated/003_analytical_details.sql": {
+      "bytes": 6749,
+      "sha256": "c553e5516c17eee51b6c908b7bc7fbe7e2668ca7d3174a8754d19259186f3351"
+    },
+    "db/migrations/_consolidated/003_versioning.sql": {
+      "bytes": 521,
+      "sha256": "fcafb0e4443d2a295da216828320af4e07ae77d4b1b7fe12e218b99c6b39a85c"
+    },
+    "db/migrations/_consolidated/004_fts.sql": {
+      "bytes": 202,
+      "sha256": "a904f16493a51b7929b12af95e076036bf1fc36fecc24a04d0741428eb2ae7e3"
+    },
+    "db/migrations/_consolidated/005_lock.sql": {
+      "bytes": 146,
+      "sha256": "0b40fe9ae3a91b2ac4dbe89434f39531cf110362170435835c3b862ac1d11dca"
+    },
+    "db/migrations/_consolidated/006_analytical_guard.sql": {
+      "bytes": 210,
+      "sha256": "628a19533f47db869f01f7b844bc0d8e3727c651a265175a2572f59c34191bbd"
+    },
+    "db/migrations/_consolidated/006_roles.sql": {
+      "bytes": 269,
+      "sha256": "04635e7d358dd6c5883527bcc39231f1e33171a35533c245abeb2e28e1309d64"
+    },
+    "db/migrations/_consolidated/007_dashboards.sql": {
+      "bytes": 3160,
+      "sha256": "48a78819dabb5515cd76c03e6c975f2fb717358a68edbec643a18bf3328cef10"
+    },
+    "db/migrations/_consolidated/007_guard_gaps_index.sql": {
+      "bytes": 186,
+      "sha256": "ead82e31f285399535ec4ed4d92b4022540f0930b72028b633b4f1e3789834ec"
+    },
+    "db/migrations/_consolidated/007_regulatory_validation_issues.sql": {
+      "bytes": 4150,
+      "sha256": "885c50fddf9fdafd39b00a6a7c1311d45e169dfdd9b34423422bf4ba1632f5ac"
+    },
+    "db/migrations/_consolidated/008_guard_tasks_index.sql": {
+      "bytes": 167,
+      "sha256": "e47662f0c3454ecbcec8d0986aa46898faff27a3218bec3c85e11f5d333019b4"
+    },
+    "db/migrations/_consolidated/010_cmc_documents.sql": {
+      "bytes": 2667,
+      "sha256": "92b8d0638114cf06303c6e3b1cfea8ecba562c4c4816b00fafa6b2275c1e9399"
+    },
+    "db/migrations/_consolidated/012_document_authoring_schema.sql": {
+      "bytes": 15860,
+      "sha256": "c896b677957bb87e7512c4c0910f3e4ac438025ff321f96306511215d2a6ece3"
+    },
+    "db/migrations/_consolidated/20250108_add_versioning_audit_to_unified_documents.sql": {
+      "bytes": 8276,
+      "sha256": "dbc5f53010a8accea5f37d9b6f7a7a0f0ea0de9d34b055cfc1827ed828227b0e"
+    },
+    "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql": {
+      "bytes": 9510,
+      "sha256": "c923be233a121bbf8652ff1c683cdce98472e8c0f14ca5bff7afdd339bd9e95f"
+    },
+    "db/migrations/_consolidated/20250429_add_status_and_approvals.sql": {
+      "bytes": 844,
+      "sha256": "2ec6f095b4205ff7ad447117ce61cdfeb94ebf52c04fb8d4d2be63a3435eac62"
+    },
+    "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql": {
+      "bytes": 1557,
+      "sha256": "51daae6b1f8c9da3a6208a9c32cb231dfc5d8e1dc1e1749a40bbda6bc6c253ad"
+    },
+    "db/migrations/_consolidated/20250512-create-maud-validations-table.sql": {
+      "bytes": 3705,
+      "sha256": "089b198d2f83e81d6cc08e7aa4b461341b32d9624a47902b6aebe0eef44f0044"
+    },
+    "db/migrations/_consolidated/20250512_literature_entries.sql": {
+      "bytes": 4472,
+      "sha256": "9d00145609d00899514f0ecc0bb941720681acf82597839c6dac3945b0d5f154"
+    },
+    "db/migrations/_consolidated/20250918_lumen_cortex.sql": {
+      "bytes": 2314,
+      "sha256": "ed7ef4476f17749630ea7f5bf66a474a7644d558b001432a206fe66c27d89aaa"
+    },
+    "db/migrations/_consolidated/auth_schema.sql": {
+      "bytes": 4589,
+      "sha256": "9a94c8d732e14e2d03f26e24872ed842e51b9aa14b1463978a6f8ffe92fbc0d1"
+    },
+    "db/migrations/_consolidated/create_cer_approvals_table.sql": {
+      "bytes": 1539,
+      "sha256": "157723207f8979fa97ca6b93d2186b86fb077990a5c268d30c5ddd3a8589a0e6"
+    },
+    "db/migrations/_consolidated/ind_wizard_schema.sql": {
+      "bytes": 5031,
+      "sha256": "82a187759d8d290b181249a7c6e7734b6b67e3ab57c6362399a75931e6c7eeb9"
+    },
+    "db/migrations/_consolidated/protocol_schema.sql": {
+      "bytes": 2438,
+      "sha256": "ee0d5b32bac7819549238e97a70b590ca8239cd65a946426ea39b1208a78c873"
+    },
+    "db/migrations/_consolidated/regulatory_intelligence_schema.sql": {
+      "bytes": 7546,
+      "sha256": "09968d2e22aeb294467c2641071e922cc253e06e53280ab1ac9816b5d54401c1"
+    },
+    "db/migrations/_legacy/003_gcc_prose_versioning.sql": {
+      "bytes": 17133,
+      "sha256": "6658cc26190039d4ac8dd9c283c36f4c49c4580e1b54fe79f1b6fb87504aacc5"
+    },
+    "db/migrations/_legacy/003_gcc_prose_versioning_verify.sql": {
+      "bytes": 4265,
+      "sha256": "b4c302ef693aece3096d3ac029db128195a39293da06bfc00b05b50db6fad50f"
+    },
+    "db/migrations/_legacy/007_008_gcc_verify.sql": {
+      "bytes": 6557,
+      "sha256": "aab3d4aa6246455d65b2dfcdb2c5e23348dadacb9b6efa5591eb9589627b0781"
+    },
+    "db/migrations/_legacy/007_gcc_heatmap_views.sql": {
+      "bytes": 7143,
+      "sha256": "873134a4dcf5e0474206605dcdf132475cea1721a64e731d7c6c05b96d977b1a"
+    },
+    "db/migrations/_legacy/007_gcc_shadow_run_groups.sql": {
+      "bytes": 8614,
+      "sha256": "ee809f5e6600b0d5056269e964ad3f247b2b2c76bacb6cf31ae48be2f48e8624"
+    },
+    "db/migrations/_legacy/008_gcc_snapshot_exports.sql": {
+      "bytes": 9244,
+      "sha256": "f7cec276cbcc47aec864aae325abf77165a0f0e145da5a280f95163ddf0a21ae"
+    },
+    "db/migrations/_legacy/008_gcc_submission_snapshots.sql": {
+      "bytes": 15292,
+      "sha256": "05fc5d228470c2016255474764cb36362a70564a0f9fd90351e924a2f4316e99"
+    },
+    "db/migrations/_legacy/009_gcc_esign_and_submission_gate.sql": {
+      "bytes": 20279,
+      "sha256": "519ef533cda938bcde34f1f46cabf0cf406e129b2d940b022feb0ae112f4b082"
+    },
+    "db/migrations/_legacy/009_process_core.sql": {
+      "bytes": 2803,
+      "sha256": "f2b654f0dc43b91d04d3603ca2a425c5772df26ae8c439e6544f570dd8936f63"
+    },
+    "db/migrations/_legacy/010_gcc_program_scoping_rls.sql": {
+      "bytes": 29717,
+      "sha256": "807a61e6ee2f8d382aeab62efa6d87ff2e45c87933f9a5f7412d61b4130b60a5"
+    },
+    "db/migrations/_legacy/010_process_design_ppq_cpv.sql": {
+      "bytes": 2165,
+      "sha256": "c3805ed73d2db8b410aaff4bc6a07bf0fc420ffb94a72bdc06787a90b6d9795a"
+    },
+    "db/migrations/_legacy/011_gcc_config_bundles.sql": {
+      "bytes": 8852,
+      "sha256": "1b2d77b3d8d5b29879d6769cd6f66a9ea375a935f12d3596a12ab42e0c267694"
+    },
+    "db/migrations/_legacy/011_process_fmea_impact_doe.sql": {
+      "bytes": 2511,
+      "sha256": "f147c60aeaab3bc8e2905b046556c8025b6dcc679f9752d70ae28463e564c2a3"
+    },
+    "db/migrations/_legacy/012_gcc_retention_legal_hold.sql": {
+      "bytes": 17822,
+      "sha256": "2b14e6b0edaaf74882bdfaed7592e7b40c9eb2a6e8d24338373c8c7a12a01b28"
+    },
+    "db/migrations/_legacy/012_process_playbooks_layout.sql": {
+      "bytes": 2503,
+      "sha256": "607c89c201c1fbccaa988d489e07421c7d01aa3eec2ee9fbdff411a74a098ba3"
+    },
+    "db/migrations/_legacy/013_documents_sections.sql": {
+      "bytes": 849,
+      "sha256": "fa8da500edb9850a1de17801c20db7d722f719a87a06987151e5f992ead50072"
+    },
+    "db/migrations/_legacy/013_gcc_drift_monitoring.sql": {
+      "bytes": 14170,
+      "sha256": "55668f78e252c15ac97b31c2de023058ee3f5e4dee5b44d35b5bbc5bbdbab888"
+    },
+    "db/migrations/_legacy/014_gcc_regulatory_timeline.sql": {
+      "bytes": 18178,
+      "sha256": "13cab857bcfa5e446dc6c013eb5496b16e895069ae0fe8f364d4d9d0c9fce1eb"
+    },
+    "db/migrations/_legacy/014_seed_cmc_documents.sql": {
+      "bytes": 3973,
+      "sha256": "ac875fe6fe449e6d518b8c3424a31ff5cd46c6754c631eadb11a61c88c42d11b"
+    },
+    "db/migrations/_legacy/015_esign_cpvrules.sql": {
+      "bytes": 868,
+      "sha256": "5d9d38ce9cdf90a79eca0b77603b40bc359be366fc876afcbc0c26da7daa2c29"
+    },
+    "db/migrations/_legacy/015_gcc_submission_package.sql": {
+      "bytes": 16446,
+      "sha256": "b29a8e31fd809146c888eae0568a48ac03c3c810b05847cb2f3d9a9b116dfb3c"
+    },
+    "db/migrations/_legacy/031_gcc_enum_extensions_and_entity_utils.sql": {
+      "bytes": 76358,
+      "sha256": "4af4d6c2f58717d543a36f14086aca6b3e9b20d029664425fdc8e681d7f5e0e6"
+    },
+    "db/migrations/_legacy/031_stability_workflow.sql": {
+      "bytes": 2428,
+      "sha256": "6c568aa5892c746535995b302ddcb7eaaefbd4ad67b110d1fe2517671a6bd36a"
+    },
+    "db/migrations/_legacy/032_gcc_safety_signal_intelligence.sql": {
+      "bytes": 10349,
+      "sha256": "bb05b924a558139d5da16c966b5c768e1c3d6b46783e197e72aadd447e016c54"
+    },
+    "db/migrations/_legacy/032_stability_assignments.sql": {
+      "bytes": 508,
+      "sha256": "9568650dd69170383b4dee1a621d4561e5b79196b6c3e01c45aa067c0bfe9896"
+    },
+    "db/migrations/_legacy/033_gcc_cro_execution_intelligence.sql": {
+      "bytes": 10781,
+      "sha256": "6f28ae36f5bc57fbcc4fbd22a6dd3cfb0ac87cb5ed1641cc1ba6a0952e06567b"
+    },
+    "db/migrations/_legacy/033_stability_tp_assignments.sql": {
+      "bytes": 543,
+      "sha256": "cdd04de38e0a4d8ac1eb5132696f8a86e5c6e098856ddd682569bb9bba6080d8"
+    },
+    "db/migrations/_legacy/034_gcc_intel_packs.sql": {
+      "bytes": 11020,
+      "sha256": "a0ee14bde9986c8c1f06172831ac47926258f14a48579175595db38b62ef590b"
+    },
+    "db/migrations/_legacy/034_stability_samples.sql": {
+      "bytes": 1077,
+      "sha256": "c7e6f2372a3a2c28adc362a32dbd31d22d16d5e9076347d71312e33bd32a5dfa"
+    },
+    "db/migrations/_legacy/035_gcc_entity_chain_events.sql": {
+      "bytes": 6377,
+      "sha256": "cd91acc0e78213384d76948eda3179b170bd469030bfe69c27a7b7c99626ad35"
+    },
+    "db/migrations/_legacy/035_stability_sample_link_coc.sql": {
+      "bytes": 755,
+      "sha256": "7bf4d10fc28af08a070b24f7ebc675e071a949082446b0c4f65707275bbd5192"
+    },
+    "db/migrations/_legacy/042_gcc_evidence_vault.sql": {
+      "bytes": 20628,
+      "sha256": "172275a24ca860c58791c4be14eb9e9e513c8a37a337eabfb1736421dce2a625"
+    },
+    "db/migrations/_legacy/042_quality_base_tables.sql": {
+      "bytes": 2069,
+      "sha256": "5c30c6b7766cf133c58e731a8c89c522a0e5751c68431ecd4dfa0eafc5a759d4"
+    },
+    "db/migrations/_legacy/043_gcc_ectd_expanded_modules.sql": {
+      "bytes": 22140,
+      "sha256": "996f725b0fb7b739ab022141c86f0d32cdd4687347ced3d73451cbbd807ac576"
+    },
+    "db/migrations/_legacy/043_quality_step2_pro.sql": {
+      "bytes": 961,
+      "sha256": "b9f5b5f148c5dbc00ab097bad457df1472340dcc8d14a8ae88cd49c64d3903d1"
+    },
+    "db/migrations/_legacy/044_gcc_cognitive_fabric_rag.sql": {
+      "bytes": 12008,
+      "sha256": "a712eb77080bde53ade758f2447ef7be8f9b6e8f51862cb5bf1c815c24bd2fd1"
+    },
+    "db/migrations/_legacy/044_quality_step3.sql": {
+      "bytes": 769,
+      "sha256": "ebeef820699bdc1a4886ecbb343a73a905be0a429ade577cd906d3beff4ca8e0"
+    },
+    "db/migrations/_legacy/045_gcc_neuro_symbolic_knowledge_graph.sql": {
+      "bytes": 17959,
+      "sha256": "62c2432588d223a0eb85f79176322a783183d4e7d2b76983ea141f76be4d36a9"
+    },
+    "db/migrations/_legacy/045_quality_step4.sql": {
+      "bytes": 1059,
+      "sha256": "29a995d6264f1681a4302fa37d93e7c899e166079942cc9e91e5897c02662b49"
+    },
+    "db/migrations/_legacy/045_quality_templates.sql": {
+      "bytes": 2201,
+      "sha256": "79a1c0b0054c42a82ffd4f3fb81dba8b73d5db651ab9fb707b831fb9e21d194a"
+    },
+    "db/migrations/_legacy/046_gcc_multi_agent_council.sql": {
+      "bytes": 14442,
+      "sha256": "4dee7bdb7ad24819880ec0e4fc41a8677cbf9d6b838d6697815b5b23a49582c6"
+    },
+    "db/migrations/_legacy/046_quality_step5.sql": {
+      "bytes": 2098,
+      "sha256": "8e406e31d78fbe92a9dea78a5cdd8dbbaabe9b6d753c452a1034f3f14f438cc8"
+    },
+    "db/migrations/_legacy/060_gcc_glsos_enhancements.sql": {
+      "bytes": 31254,
+      "sha256": "6125443add8f16d880876a9d2c9cff65590cd2ff3575dff0c259594a4d23a1a4"
+    },
+    "db/migrations/_legacy/060_regulatory_foundation.sql": {
+      "bytes": 3300,
+      "sha256": "fb1dfe038703200678ca906a43ab9b03bdc5fdf8f08e9258a6ee1656e39b54e3"
+    },
+    "db/migrations/_legacy/061_gcc_jsonb_indexes_and_constraints.sql": {
+      "bytes": 17336,
+      "sha256": "b03145b24561601a7c6d4bed54db7fd39d3271e4ec6d22aadbf5cb974fa13a9e"
+    },
+    "db/migrations/_legacy/061_regulatory_m3_builder.sql": {
+      "bytes": 1235,
+      "sha256": "6a22664ce812f87b05c2c6d495ebe1c1d8ec5f3cee8d7727dcf3d4d0e0eb1f7a"
+    },
+    "db/migrations/_legacy/062_gcc_schema_fixes.sql": {
+      "bytes": 11119,
+      "sha256": "c96faca7fecfec5d7411c6220fae3c504860c0ef3435c380087e64ba98edefa6"
+    },
+    "db/migrations/_legacy/062_reg_q12_autopilot.sql": {
+      "bytes": 1925,
+      "sha256": "287c239a4d2ac902a3ed96b7280e1c92769cbf52108bde49249cc8768ffdeb8d"
+    },
+    "db/migrations/_legacy/063_gcc_cognitive_agent_runtime.sql": {
+      "bytes": 27838,
+      "sha256": "7c88af706827e1639ac81eadd066aa7297757538d23b2124bc85f7913e73a0f1"
+    },
+    "db/migrations/_legacy/063_reg_questions_hub.sql": {
+      "bytes": 2577,
+      "sha256": "83d4c5ccbb55abd6fc92cabee8247de9277baa0ce1a8afd56853febeba7e965a"
+    },
+    "db/migrations/_legacy/071_gcc_rls_lumen_and_org_enforcement.sql": {
+      "bytes": 8085,
+      "sha256": "eceb620b09316811c42b6fac3b076bc331d60f88f3a294e3db4cdd7a40245b05"
+    },
+    "db/migrations/_legacy/071_portfolio.sql": {
+      "bytes": 431,
+      "sha256": "a2cb598cffa8dc2ba3ddb10bc1f9a4f02e7a91b1c30f305f27fc3d659a86accb"
+    },
+    "db/migrations/emergency_security_migration.sql": {
+      "bytes": 3393,
+      "sha256": "35dfcc68624dccb6b1baf9e7a4a707adfa9e17f6de2ff3691b405e99fa4d9c0a"
+    },
+    "db/migrations/migrations_manifest.json": {
+      "bytes": 22569,
+      "sha256": "63960100fd6f6985a36e7049cf2ddb46c1535faefac89d8b5e4453d007e23b1b"
+    },
+    "docs/ARCHITECTURE.md": {
+      "bytes": 8791,
+      "sha256": "d860d7ae949525a693d9b0f1b6b4a5c7799968303c8a4cce1264006362dd6b21"
+    },
+    "docs/adr/0001-use-drizzle-orm-over-prisma.md": {
+      "bytes": 4446,
+      "sha256": "0353d9e3f15e8e31304fad27caa2ad5d2de35034efcd2681c07b24aea75da022"
+    },
+    "docs/adr/0002-multi-tenant-architecture.md": {
+      "bytes": 5381,
+      "sha256": "07baab39d279c5e7ac6d6c23f461a6ba93c4d244d6dbbda75a5fd13351598e37"
+    },
+    "docs/adr/0003-21-cfr-part-11-compliance-strategy.md": {
+      "bytes": 6613,
+      "sha256": "9044c8691ec529b7e7ae6444a0f13308e1ee4b88c10e94cc68d20e7fc2595b62"
+    },
+    "docs/adr/0004-lumen-cortex-ai-architecture.md": {
+      "bytes": 9662,
+      "sha256": "96bd3920e5f0aaf6fc732d975404c33eb835b4295fbe7a8029630a85dfd0d90e"
+    },
+    "docs/adr/0005-client-portal-v2-design.md": {
+      "bytes": 6283,
+      "sha256": "a9b1fd18e53aa9705ec516fccd89c2859226b7ff419b8fdcbd0a04a063b389a2"
+    },
+    "docs/adr/0006-canonical-migration-lineage.md": {
+      "bytes": 7413,
+      "sha256": "ee8e84f61a0d53eff2a844d8fcc077444c14af764debc980b146f77cf8dfb49e"
+    },
+    "docs/adr/0007-canonical-operating-system-schema.md": {
+      "bytes": 14255,
+      "sha256": "2d1f610659b9f0645a6809cf5c8c7ff5ee20fcde38b7fc2efba689b65baef001"
+    },
+    "docs/adr/0008-canonical-contradiction-and-overlay-stores.md": {
+      "bytes": 6817,
+      "sha256": "125603ea25784e3e8300e68643a0c01b97b07373520d2380b955eb526a597bd1"
+    },
+    "docs/adr/0009-resolution-receipt-persistence.md": {
+      "bytes": 11984,
+      "sha256": "b608418d3b093955d6c9e409f96f81b1f37b19242cc392fcb2941f7f3f3788d5"
+    },
+    "docs/adr/0010-schema-contract-test-tier.md": {
+      "bytes": 8102,
+      "sha256": "fd42fec0dd5b5aedade352d5eb042577a52a42c1c2b18dc799cbc0b0faa96547"
+    },
+    "docs/adr/README.md": {
+      "bytes": 3102,
+      "sha256": "534d9500b9588d5afca3c21bdc92dfd6e3ee6b606225438563acac0498cbe0a7"
+    },
+    "docs/adr/TEMPLATE.md": {
+      "bytes": 1948,
+      "sha256": "76519fd5e40f3feb69168a2f1d06ffd76d01bc5419d766f7bb4e01ccf0d95dd7"
+    },
+    "docs/architecture/AGENT_ARCHITECTURE.md": {
+      "bytes": 17610,
+      "sha256": "ca55eccbda4318c5d15a7559eb7d5d120d80fa146b9b4eae2abccb37a126ea3b"
+    },
+    "docs/architecture/AGENT_BUILD_CONSTRAINTS.md": {
+      "bytes": 2265,
+      "sha256": "fc51fe0caeaa1c54da881aa8dae963d6ae54fa40fcb63d573144dd5cb121c1fa"
+    },
+    "docs/architecture/AGENT_CONSTRAINTS.md": {
+      "bytes": 2527,
+      "sha256": "d29443c8ced3023c3037f6ef29336ed8075097cfda697075e85808fb5b5ebfce"
+    },
+    "docs/architecture/AGENT_WORKFLOW_CONSTRAINTS.md": {
+      "bytes": 2693,
+      "sha256": "64ec8f06f90793b04f7f5ba56f2b1d90423f7b239f4b830b102bb84825925219"
+    },
+    "docs/architecture/ANA_1_0_RI_CROSS_CUTTING_AUDIT_AND_ENHANCEMENT_PLAN.md": {
+      "bytes": 6383,
+      "sha256": "20373a763e3d19aad30cd833c77b2de17d8bb34f9558353332b323803b6f017f"
+    },
+    "docs/architecture/ANA_1_0_RI_EXECUTION_PLAN.md": {
+      "bytes": 4691,
+      "sha256": "93aa811434e8ad6b20f67053a554ee4094bcca4c25690ee0d067c588424e07d4"
+    },
+    "docs/architecture/ANA_AGENTIC_ONBOARDING.md": {
+      "bytes": 5631,
+      "sha256": "03f44ad003fffb4418d48640ff5c402bfae8d98d7ee74eaaa43892ed1ac4cd1d"
+    },
+    "docs/architecture/ANA_DOCUMENT_STACK_ARCHITECTURE.md": {
+      "bytes": 2277,
+      "sha256": "330da8fe6dff754ebeb69512c7a0281dc043b8558efe3acf17fae5ed162389d1"
+    },
+    "docs/architecture/ANA_DOCUMENT_STACK_DATA_CONTRACTS.md": {
+      "bytes": 915,
+      "sha256": "e46093dd2ca527da7c6f3baf3fe4ba937a66d2895c96746823f59970998b59b6"
+    },
+    "docs/architecture/ANA_DOCUMENT_STACK_LIFESCIENCES_TUNING.md": {
+      "bytes": 1453,
+      "sha256": "3afd634fe336682514846de3b5e5a6d362f85a5314ef3de842ace625d22e855b"
+    },
+    "docs/architecture/ANA_DOCUMENT_STACK_SERVICE_BOUNDARIES.md": {
+      "bytes": 1393,
+      "sha256": "30678c269d334010a079ee2ceac405abd683d91e3d7dbf4a679e13410ef193d4"
+    },
+    "docs/architecture/ANA_ONBOARDING_P2P3_SPEC.md": {
+      "bytes": 30082,
+      "sha256": "25ff9a6557148e3cfb3373c279312b17019b53908d27626509562a84eb52af49"
+    },
+    "docs/architecture/ARCHITECTURE_REMEDIATION_EPIC_2026-07-29.md": {
+      "bytes": 24036,
+      "sha256": "4426af9e1b854df4d2c304300e0ed677f56ca2a432fc63ac018fd634cc90d2a1"
+    },
+    "docs/architecture/C2C_2026_EXECUTION_REALITY_SYNC.md": {
+      "bytes": 15995,
+      "sha256": "dd32d9f42512e0c8596a893807dcdad2e70f573cb593b7bc58ff4a8716f12a5d"
+    },
+    "docs/architecture/C2C_CANONICAL_SERVICE_AND_STORE_MAP.md": {
+      "bytes": 13323,
+      "sha256": "7b192d6f94558d782b74fa3fedf7425ad442a6e5bb3f96d857f10838371388f3"
+    },
+    "docs/architecture/C2C_ROUTE_SURFACE_CALLER_MATRIX.md": {
+      "bytes": 11414,
+      "sha256": "73637c977e0d8b3fb9a0d54ead6afc87abc524ec72d222610710986e2f853e01"
+    },
+    "docs/architecture/C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md": {
+      "bytes": 68267,
+      "sha256": "dca953aa690f806303202b4c8a46d5ae8de52312804ab3f4975d6a76e95c7844"
+    },
+    "docs/architecture/C2C_WORK_ORDER_DEPENDENCY_LEDGER.md": {
+      "bytes": 11587,
+      "sha256": "6793195ac99f7d69edd374040d22a90fd14b3322732db6fa9a81c1accbe6adea"
+    },
+    "docs/architecture/CANONICAL_AUTHORITIES_AND_BOUNDARIES.md": {
+      "bytes": 4999,
+      "sha256": "929048d6134489991fcabe1245b52eff5839c576be166152c3f7820daacc0c6d"
+    },
+    "docs/architecture/CANONICAL_AUTHORITIES_AND_RUNTIME_CUSTODY.md": {
+      "bytes": 7958,
+      "sha256": "2674ce823489f39170a3e4546bb5f61bd7a98061b391472743f1abc55f3edc77"
+    },
+    "docs/architecture/CANONICAL_DATA_PATHS_AND_SYSTEM_PLANES.md": {
+      "bytes": 4657,
+      "sha256": "9ff195eb34e13d3cb6608300d4d8a6b560e618f065060db19d20a8e2443f96bf"
+    },
+    "docs/architecture/CLEANUP_PLAN.md": {
+      "bytes": 598,
+      "sha256": "99b5dca078d16790857948f1200f6846cf7cd6cf75d8d2522ed8c3a0546e7ceb"
+    },
+    "docs/architecture/CLINICAL_REGULATORY_EVIDENCE_DISCOVERY.md": {
+      "bytes": 20324,
+      "sha256": "bd0b658fa52c4e2c4a923be938b3fa27223aadffd514bdda45b94c8d8e1f7e5b"
+    },
+    "docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md": {
+      "bytes": 12303,
+      "sha256": "cbc15b6b469c4605bd3ef59aa3f3488b246a8ede1b7e7ca117c429b0eaa15338"
+    },
+    "docs/architecture/CLINICAL_REGULATORY_INTELLIGENCE_GRAPH_DISCOVERY.md": {
+      "bytes": 23790,
+      "sha256": "e1d516212d45efed9b28db1e22d52910efeb1b3077db0379f7da60fea108542c"
+    },
+    "docs/architecture/CONCEPT2CURE_CANONICAL_UI_IA_AND_SHELL_SPEC.md": {
+      "bytes": 20846,
+      "sha256": "91f6206418bb3a783b5521a8fbef20cb481735f31d1ca48c775a15d3015a535f"
+    },
+    "docs/architecture/CONCEPT2CURE_V3_ARCHITECTURE.md": {
+      "bytes": 9392,
+      "sha256": "b7dda0170f4fd0f2452bc3156f0cba66362c06d718e1960bed3a25a986662d24"
+    },
+    "docs/architecture/CORTEX_PRIME_ARCHITECTURE.md": {
+      "bytes": 18049,
+      "sha256": "d16da115c647b36d2b08f8730dd17860ae31c2732a7d92e3e60b41695170560b"
+    },
+    "docs/architecture/ECTD_COAUTHOR_VERSION_CONTROL.md": {
+      "bytes": 2420,
+      "sha256": "656b4c3220bb7d6abc7af2516bdbc79c0a8ed9065fe5afa87bec0cb48eb3d3cd"
+    },
+    "docs/architecture/HRM_SERVICE_BOUNDARY.md": {
+      "bytes": 1917,
+      "sha256": "d544f946d5fe7e1b40ef36a012cb28d18ed788973a49d2d8da231e3e40a57e27"
+    },
+    "docs/architecture/LIVING_RECORD_SPINE.md": {
+      "bytes": 26443,
+      "sha256": "b2b63d722fcfdc773ad28644d01daa45d8a27701081dbbeaa06f418fc231a8cb"
+    },
+    "docs/architecture/OSS_STACK_DATA_CONTRACTS.md": {
+      "bytes": 3261,
+      "sha256": "1255b6b67beb129485c829fc4ec7a52e158d8a6f66b53f7b1a8e623a70d66618"
+    },
+    "docs/architecture/OSS_STACK_SERVICE_BOUNDARIES.md": {
+      "bytes": 1983,
+      "sha256": "1a126bf41c1c3457a874f0efa61ad7d36370d368588e9d18e440dfe43bb3ffc7"
+    },
+    "docs/architecture/OSS_STACK_TARGET_ARCHITECTURE.md": {
+      "bytes": 1799,
+      "sha256": "f49c257f31d0838c619ae0172e66d10fd823212e8e44ddc393dc3d4c4ad7d580"
+    },
+    "docs/architecture/PRODUCTION_BUILD_PLAN.md": {
+      "bytes": 2498,
+      "sha256": "da217326b9981748542f5814931539c31d5bb362435b22c977e0b04b2e64ac34"
+    },
+    "docs/architecture/PROGRESS.md": {
+      "bytes": 2416,
+      "sha256": "37870e24427cbf083d2a15a1687e037d79ccd4e6266c9fe5d502f95b2ec5ac5a"
+    },
+    "docs/architecture/REASONING_TIER_ARCHITECTURE.md": {
+      "bytes": 3461,
+      "sha256": "531a72f164df3c718be1b883c7a1d09fbbf88d34f7bbfc27556d64b749f1d688"
+    },
+    "docs/architecture/REASONING_TIER_DATA_CONTRACTS.md": {
+      "bytes": 2631,
+      "sha256": "6628ae6a7a82adb37adc22f6de6887c78626d45098a336f63f663e236c68813a"
+    },
+    "docs/architecture/REASONING_TIER_FAILURE_MODES.md": {
+      "bytes": 2323,
+      "sha256": "39008381fedcb2a99ab944b25f98e2032591f80ee30e50e1908aca6f9b96740f"
+    },
+    "docs/architecture/RECOVERY_BRANCH_CONVERGENCE_PLAN.md": {
+      "bytes": 2947,
+      "sha256": "1401b17c7d4a7e8d226f1eb5094bd19d77155239a2cb6ced3dcfff0b6b0e788b"
+    },
+    "docs/architecture/RECOVERY_GUARDRAILS.md": {
+      "bytes": 2767,
+      "sha256": "cd810f1362426a2ced35324192f53fc6edbab68cc0e4286a87ddd6a417d1048b"
+    },
+    "docs/architecture/REFERENCE_MODEL_INTEGRATION.md": {
+      "bytes": 7638,
+      "sha256": "65d8ad21fb36d79107ec4174ebb26f53ab6dcea20b1cc6377588dac316da22e2"
+    },
+    "docs/architecture/TARGET_SYSTEM_SHAPE.md": {
+      "bytes": 3836,
+      "sha256": "26fd461efabc982720ff4785d45047bf69eb1674bd67e0fd23138cff8bb651fd"
+    },
+    "docs/architecture/VERSION.md": {
+      "bytes": 2636,
+      "sha256": "a6b5ecdbbf9276414326768ee92715cb9818e0d360ea4596ba84bb62d5c9ce64"
+    },
+    "docs/architecture/VERSION_CONTROL.md": {
+      "bytes": 2740,
+      "sha256": "6c17d0f4f649ff07a1cdd00ed597adc344a369452268af7f790328780e5f9b6e"
+    },
+    "docs/architecture/build-order-10-founder-critical-path-hardening.md": {
+      "bytes": 5052,
+      "sha256": "47b6d5f553dc81915bba8fee27736aa305dd9201282706867f86a42680f22576"
+    },
+    "docs/architecture/build-order-11-production-stability.md": {
+      "bytes": 2717,
+      "sha256": "ba901afd8a00972aa986514c19a73787378e7cd3d2158f833ce48526f40212e8"
+    },
+    "docs/architecture/build-order-12-production-readiness-and-drift-elimination.md": {
+      "bytes": 2376,
+      "sha256": "d688af15eb2946f23a6515b3519cc4ead2dacda17ba8731d56e11d2b736d8fed"
+    },
+    "docs/architecture/build-order-13-ops-hardening.md": {
+      "bytes": 1833,
+      "sha256": "c1d5128edb2db365d08097080ac80823d74f539975d531ad8f1f8336f90453d9"
+    },
+    "docs/architecture/build-order-14-governed-export-and-ops-activation.md": {
+      "bytes": 1830,
+      "sha256": "6d530f0a69e78a7958f538049cd05286cbc9073bcb2f22861d8809341651f2a1"
+    },
+    "docs/architecture/build-order-15-workspace-operating-surface-convergence.md": {
+      "bytes": 1783,
+      "sha256": "e37f1a329cfe0f93803ac7fe2eff77594406e3ed26c50d2e0b437674e31e67b1"
+    },
+    "docs/architecture/build-order-16-workspace-truth-convergence.md": {
+      "bytes": 1211,
+      "sha256": "bc84a1bdd76aede8f345ced5e95dd380f4a9115ae8c3d60bf820d6ca675cc611"
+    },
+    "docs/architecture/build-order-17-governance-action-wiring.md": {
+      "bytes": 1284,
+      "sha256": "06ab562c5c52cb3b00de6c38afc5b3f886eab6331f93a9f9570cc6021b8cf6cd"
+    },
+    "docs/architecture/build-order-18-workspace-governance-propagation.md": {
+      "bytes": 1779,
+      "sha256": "a77a38f5b875369bbef1069d956de4d719b13b91757c23199de619ab58599a87"
+    },
+    "docs/architecture/build-order-19-governance-detail-unification.md": {
+      "bytes": 1275,
+      "sha256": "273e91807e86c6c0aa09c2793fc61f1926de86bf1d58b1fa2bd090d44478ad97"
+    },
+    "docs/architecture/build-order-20-workflow-gating.md": {
+      "bytes": 1347,
+      "sha256": "1827109965839301eb9b3a3b263935738a318a4dfccede7295d6371150d27b6e"
+    },
+    "docs/architecture/build-order-21-workflow-transition-enforcement.md": {
+      "bytes": 1261,
+      "sha256": "4a19f2156c964d78796d7ceced387f84e950962718ad5bc09ab302bc0b38180c"
+    },
+    "docs/architecture/build-order-22-declarative-navigation-governance.md": {
+      "bytes": 1321,
+      "sha256": "d20004c9ee636ddfc4ad2bcae7b74446ff5beac0b828dd3c94ce4483c80f08af"
+    },
+    "docs/architecture/build-order-23-nav-source-governance-activation.md": {
+      "bytes": 1061,
+      "sha256": "15c2e321eaaf8594a25d50a9ab5a24d5e748f85422244dfc9f6a510c5a6addee"
+    },
+    "docs/architecture/build-order-24-topbar-governance-convergence.md": {
+      "bytes": 1167,
+      "sha256": "9173674ebc6c35755dc52596910e0db69cf893de8476ed2c0d3a179487f74446"
+    },
+    "docs/architecture/build-order-9-lean-core-production-hardening.md": {
+      "bytes": 5895,
+      "sha256": "dd9dc7e833c5b8103ecfa1645ca30f4d0b74fe6436058555e38e9a1ac7a8baf7"
+    },
+    "docs/architecture/degraded-mode-policy.md": {
+      "bytes": 2399,
+      "sha256": "b2a1bcaa3b1ac44bbad46a78f4f7e6dd8308d125e9123cb1c7a3cfc341206bfe"
+    },
+    "docs/architecture/docx-pipeline-canonical-designation.md": {
+      "bytes": 2147,
+      "sha256": "2b343be7a7eb9ec2df3099765a8f1e96ed7b9c22acd8cb913ee4f6d468a51508"
+    },
+    "docs/architecture/governed-document-decision-fabric-v1.md": {
+      "bytes": 24460,
+      "sha256": "0a904ffbfb877022da3ba370e9173aae330dc88f961494bf415a480a5a1c2a7b"
+    },
+    "docs/architecture/phase2-build-order-2-fabric-assimilation.md": {
+      "bytes": 6364,
+      "sha256": "26a89daa0836b548750509e9ff3ec9a1661e0e771b73e4a35706636e0d79475e"
+    },
+    "docs/architecture/regulatory-correspondence-os.md": {
+      "bytes": 2913,
+      "sha256": "1ac1031df4002a062e7e6484d4e9ee63a7a7d549e3513eead0befc516dfdc3f7"
+    },
+    "drizzle.config.ts": {
+      "bytes": 726,
+      "sha256": "e61e63a67bb86dd8ecd2f9dc190d5216e8f34778e041c5e69e9561f85db1e372"
+    },
+    "global-ri.openapi.json": {
+      "bytes": 127796,
+      "sha256": "500bf1c504a854da049d97eed2f40cfb4d6d5f582a5e7153c1ec29ffddc289e6"
+    },
+    "ivd-platform.openapi.json": {
+      "bytes": 33810,
+      "sha256": "8a7457d0beb6157bc9a00caed8eb6564001a5e6e10ef886a2a5231edfd4cf9f9"
+    },
+    "migrations/.prefix-collisions-baseline.json": {
+      "bytes": 551,
+      "sha256": "15acdb52b1f3ed0d74e5e2f87f022cb960de90f69d249dfaf5ad481f344b15a5"
+    },
+    "migrations/0000_sweet_joseph.sql": {
+      "bytes": 420565,
+      "sha256": "4ad13ecd8dcb8b996674c816e8a54d34604610b8a4293619a1a1861b88c8ad56"
+    },
+    "migrations/0001_phase13_full.sql": {
+      "bytes": 7395,
+      "sha256": "5d0961c88e63fee70233ea3535b1a70e99c101376eeb4e274694dc8dc7059aa2"
+    },
+    "migrations/0002_phase15_submission_ops.sql": {
+      "bytes": 12273,
+      "sha256": "298c1170f0a2649dab5013f6e14b42b30a60b22fe9e29419836dff9b6808066d"
+    },
+    "migrations/0003_billing_stripe.sql": {
+      "bytes": 1670,
+      "sha256": "aa0cf39ffb4f5556535d67292be6836f7ef17c22d8314c567a15139e9ef1aaee"
+    },
+    "migrations/0004_workflow_performance_indexes.sql": {
+      "bytes": 1694,
+      "sha256": "26db6288c5e91b170dff86ce70144a43fa7f4378b7bbe426ea8237d2b3dbd2e8"
+    },
+    "migrations/0005_csr_knowledge_database.sql": {
+      "bytes": 37851,
+      "sha256": "57a39c58e6d3ce70518e61d3f6d90f17f917c73fc4c9dd0cfdc7bc382e86a525"
+    },
+    "migrations/0006_regulatory_atoms.sql": {
+      "bytes": 14341,
+      "sha256": "290c791d9cc48787050c90c834b520ab6023a53a9966e7a59446ae19d1ae192a"
+    },
+    "migrations/0007_ctd_onboarding_pipeline.sql": {
+      "bytes": 4065,
+      "sha256": "67e239a90edf8d18de05c9c390a4d4da9e6a0419a49c0636af4cc816e62e7d9b"
+    },
+    "migrations/0007_gap_analysis_results.sql": {
+      "bytes": 932,
+      "sha256": "d600beca86b2efcdb53b74f786ad4c511d6be86d2517ecbbc56eab6c5648b2ca"
+    },
+    "migrations/0007_orchestration_phase3.sql": {
+      "bytes": 11612,
+      "sha256": "98329ec9eed9b95a8ac90b9d1d0674e74d66c3fd3f4761eb6a7a11d7bd47a05e"
+    },
+    "migrations/0007_support_admin.sql": {
+      "bytes": 4519,
+      "sha256": "1104539c5780d68152c4efcafebef3490a87e843ff6911fbf5185796967b4360"
+    },
+    "migrations/0007_tenant_isolation_fixes.sql": {
+      "bytes": 2139,
+      "sha256": "2c20a4ca45d6d24664a5cced73bd2804295d1e5acfd8e06b341e1a8b63d4f181"
+    },
+    "migrations/0008_api_keys.sql": {
+      "bytes": 1099,
+      "sha256": "43ae97162fe9ec3ce6b82ef08c67085987049691c9f0e7aca268910ae59cd723"
+    },
+    "migrations/0008_critical_fk_delete_policies.sql": {
+      "bytes": 5706,
+      "sha256": "7bf9b6874beb3423f07235c8bd31178c0ab44cc72456c83563b8c24d469b4118"
+    },
+    "migrations/0008_ga_hardening.sql": {
+      "bytes": 1991,
+      "sha256": "72b70334f4b2bc4d3d65381b714017606e131fa7570019d8c1f5d03c991962b5"
+    },
+    "migrations/0009_email_otp_fields.sql": {
+      "bytes": 552,
+      "sha256": "e4403034b18b555880b6d7d8dcf988bb2ed1696f68beee0663e46571335fed69"
+    },
+    "migrations/0010_biostats_signal_engine.sql": {
+      "bytes": 7551,
+      "sha256": "aa8affc40a32c841710d4b80566669a0df2a89d7b371a94d89ea9e47f208955a"
+    },
+    "migrations/0010_operating_system_foundation.sql": {
+      "bytes": 16346,
+      "sha256": "922a426d4138b0ad9124454f98faff8447d17392fa299f1948689daa74d2dc0d"
+    },
+    "migrations/0010_resolution_orchestration.sql": {
+      "bytes": 6276,
+      "sha256": "00d304f41cdefa6f980beea5e3a265d7d66170be84365c55c5fe3917719f58e3"
+    },
+    "migrations/0011_ai_threads_title.sql": {
+      "bytes": 423,
+      "sha256": "f146158620e67134d57716499544457b08ae14c0e6ba78713486133479fcba53"
+    },
+    "migrations/0011_governed_decision_transitions.sql": {
+      "bytes": 1244,
+      "sha256": "ec126fed32c62a13afcfa63d80daaf7153f5da8bfe32d86775abf00f3fe63050"
+    },
+    "migrations/0012_project_charter_timeline.sql": {
+      "bytes": 6776,
+      "sha256": "dfe5505de1687f565298f0b19a61a2877a2abcb28bd882d0e362f7269f164dcb"
+    },
+    "migrations/0013_ana_intelligence_system.sql": {
+      "bytes": 10237,
+      "sha256": "5a5b2f11c79ac6ace93ad8628562a5e6e0c7e55883d8e291273353e9abb09a61"
+    },
+    "migrations/0014_report_os_foundation.sql": {
+      "bytes": 6360,
+      "sha256": "09c4d410d18d7da2ba64b64c52ff056eceb2e1d89eba06447318661506d34e8e"
+    },
+    "migrations/0015_document_artifact_bridge.sql": {
+      "bytes": 1325,
+      "sha256": "e07c9692c4f5a9c4ef492efedff5b6cdb6fceabea83070608925f6ec826ee3c8"
+    },
+    "migrations/0016_module3_workflow_convergence.sql": {
+      "bytes": 2288,
+      "sha256": "9c655aa3a4f803416ebed7bfa5df64743fec594d1de2bc3c7b50d4b7a56ade8e"
+    },
+    "migrations/0017_module3_project_id_fix.sql": {
+      "bytes": 5026,
+      "sha256": "e7a47e894745566f92596bb9e8472238450fb3eb6dd4521317e13682b8882731"
+    },
+    "migrations/0018_submission_orchestrator.sql": {
+      "bytes": 3864,
+      "sha256": "e211d2f8a900702a443a1e5ca18fb8ac3e16ccbed713df1883ccc692ed1c299e"
+    },
+    "migrations/0019_tenant_column_audit.sql": {
+      "bytes": 2753,
+      "sha256": "7213563f9feab3904da918203a27b2a6f2598bfc705e37462ae23a1e2538707b"
+    },
+    "migrations/001_create_ivdr_tables.sql": {
+      "bytes": 8103,
+      "sha256": "6ad2e224572af0c9e16c086c070858bec8adbcc1319fd308cecd8c1afed93010"
+    },
+    "migrations/0020_coerce_text_tenant_columns.sql": {
+      "bytes": 5537,
+      "sha256": "472f42d5ed53bd0b90bfd79b167dda3fbb08b6b6cae5528a77030a1945688ae3"
+    },
+    "migrations/0021_enable_rls_everywhere.sql": {
+      "bytes": 7425,
+      "sha256": "57bc8bdc83e38806e4f79bfa123ae4a8a9ea88b8b8e931fd37beda288e8b9a50"
+    },
+    "migrations/20260327_data_lineage_tracking.sql": {
+      "bytes": 6546,
+      "sha256": "fcf3c4fdf845dbe92277cb94c481cab7279d6094a1db2390be95f2180a78cf5f"
+    },
+    "migrations/20260331_performance_indexes.sql": {
+      "bytes": 8138,
+      "sha256": "da2631dc69cd2a7b6af6d0addd709eee2645cb0305ed39d5d1a264ba3cf2885c"
+    },
+    "migrations/20260429_ai_ml_pccp.sql": {
+      "bytes": 4068,
+      "sha256": "3a3fecef46445e7d1167587f22df39fd1e29d2a5d25f9fdecccf127b3bd85f32"
+    },
+    "migrations/20260429_evidence_sufficiency.sql": {
+      "bytes": 1667,
+      "sha256": "347429d958fe49f449bbb02007bb8b1a450238140b3a903e06b089e5b50d6d63"
+    },
+    "migrations/20260429_gspr_postmarket.sql": {
+      "bytes": 4599,
+      "sha256": "40098488871db1a9d97ac809f9afc0a570fd3fc4d07921509c2e11f060e7bb28"
+    },
+    "migrations/20260429_regulatory_graph.sql": {
+      "bytes": 5976,
+      "sha256": "12df4eb5e4fd3d22442b344d838a9e432c03742f8c78bb4123189115daca9374"
+    },
+    "migrations/20260429_reviewer_simulation.sql": {
+      "bytes": 1548,
+      "sha256": "45e39f4f88f46b88e1e93645051188103b8edfea9096cf208ea86602a7963692"
+    },
+    "migrations/20260501_q_sub.sql": {
+      "bytes": 5666,
+      "sha256": "67aed356b13a7e0bebac449a55f57ec0454a77ad247e07ea7c23b3dd06829424"
+    },
+    "migrations/20260504_capa_mdr.sql": {
+      "bytes": 11693,
+      "sha256": "a841b02edc5f2e5d47d2cab59c0b97fc437f2934e5162bb93c01bdfe972489d5"
+    },
+    "migrations/20260505_saved_precedent_queries.sql": {
+      "bytes": 969,
+      "sha256": "820e48db80dac642da3c0350dabc3fff0b09bdb9b4e12beba6efccd7e70a45dc"
+    },
+    "migrations/20260506_kit_section_draft_provenance.sql": {
+      "bytes": 1551,
+      "sha256": "90302b0f2c36dd0ffc01a7d60a2eaec7dab52d730893aededda6a8c12078b8ea"
+    },
+    "migrations/20260507_mdx_beta_surfaces.sql": {
+      "bytes": 9812,
+      "sha256": "0a98549f37cff4dddd91421b2f5f56c81ddecbb351609c3890f389264759576a"
+    },
+    "migrations/20260508_ivd_diagnostic_surfaces.sql": {
+      "bytes": 14126,
+      "sha256": "445da5746e38844e04898eb4243497b5bf62299ed2fb11f3219ddca39c2dcb89"
+    },
+    "migrations/20260508_preclinical_provenance.sql": {
+      "bytes": 694,
+      "sha256": "fdb9e2fa9fc00d770e1c8a14919f9aa1e9656cacce66628ca1b1ad6c0bc2fa05"
+    },
+    "migrations/20260509_submission_gateways.sql": {
+      "bytes": 7501,
+      "sha256": "4ccbac6455f8446f0ca8f918165a2b7b14838a7e968cae7940dd9412399dc5e6"
+    },
+    "migrations/20260510_notifications_and_clinical.sql": {
+      "bytes": 11243,
+      "sha256": "6fa3b52786d331458275f5f275017702fc7ff5d7dcf54f066e3f53e677cfb4b3"
+    },
+    "migrations/20260511_qms_and_labeling.sql": {
+      "bytes": 13438,
+      "sha256": "2d79e2abdb84628b5ea11f029c4b6766b8a26324de96a5bd27c5445d9086eca5"
+    },
+    "migrations/20260512_legacy_imports.sql": {
+      "bytes": 5328,
+      "sha256": "84c0d2c0d63245304d1ec801676851fce8e5d2aaef5b796b7c382855e5ce7914"
+    },
+    "migrations/20260520_pdev_workflow_activities.sql": {
+      "bytes": 4907,
+      "sha256": "f6033a0d341fec8719b69e4b6579791be6bc1b8cc5284f6ab4d87bb1f7a5bc15"
+    },
+    "migrations/20260521_org_lifecycle_state.sql": {
+      "bytes": 4587,
+      "sha256": "8bee2a5194b9d49a10e475194d85b1ef14551648b5c2c6254512d03273b254f4"
+    },
+    "migrations/20260524_c2c_blockers.sql": {
+      "bytes": 2500,
+      "sha256": "281784f4e5b84d0f0cf0c1792452301e03cec60ff4f2246a07613f791101b5c2"
+    },
+    "migrations/20260524_contradiction_engine_schema.sql": {
+      "bytes": 7177,
+      "sha256": "4889a2f061952139e8d4f8f30dad4bdb8f97652732a6c1220ca2a3382271475d"
+    },
+    "migrations/20260524_ivd_performance.sql": {
+      "bytes": 3348,
+      "sha256": "0b054077efe2620a33f1584431e1794f8d193f75c6c20d97541fabe643526ef1"
+    },
+    "migrations/20260524_ivdr_cdx.sql": {
+      "bytes": 6287,
+      "sha256": "cd15b36b0fa27e7134ce949e83f72aab32cc201613142d040980578b8158b9cf"
+    },
+    "migrations/20260524_program_workbench_schema.sql": {
+      "bytes": 10522,
+      "sha256": "823ff0a86b256e9053dd761b7af1567ed7534edfcd5869486564a19cabbca522"
+    },
+    "migrations/20260524_udi_records.sql": {
+      "bytes": 2190,
+      "sha256": "e194a902dcb62f173b045f3a25f2222f7d627c20c293e935eca6a519117777b4"
+    },
+    "migrations/20260525_audit_logs_updated_at.sql": {
+      "bytes": 902,
+      "sha256": "88fc1659750e0b24525999dfd2371a598f01dc19db258cc44a8fdcf67303e172"
+    },
+    "migrations/20260527_concept2cure_project_links.sql": {
+      "bytes": 1571,
+      "sha256": "af7e3ff10c7b6f6a6f13590402352913ff464edfffb9e9201e19fd97adc02fb4"
+    },
+    "migrations/20260527_mutation_primitives.sql": {
+      "bytes": 5776,
+      "sha256": "cb439a03ab53338895f54ecd89605f67342b5cb7e191bef8e77d6cf33c3d10d7"
+    },
+    "migrations/20260528_phase9_document_schema.sql": {
+      "bytes": 26483,
+      "sha256": "cb413315c15782856f61830c85cdca244f1b196b412a2a89cd35d16aba1fb572"
+    },
+    "migrations/20260529_phase10_schema.sql": {
+      "bytes": 6327,
+      "sha256": "d186475f794cc0b145b68f9228832077cfecbb2c3c8690ea4a7ca6ea546abc61"
+    },
+    "migrations/20260529_phase11_intelligence.sql": {
+      "bytes": 2809,
+      "sha256": "0dbd75b5ee7c98f4cd1364a76bd447d268db44db5ea3fd75c073fccda43ed490"
+    },
+    "migrations/20260529_phase9_backfill.sql": {
+      "bytes": 20052,
+      "sha256": "78f293b0d71882cfdbe7390ca21659ee4670a0eb7b00c240ee07af2bdd04cd01"
+    },
+    "migrations/20260530_csr_reports_nct_id.sql": {
+      "bytes": 1420,
+      "sha256": "96a5d8c52596c9ab4f0bdb89fb6ebae227f80b326597ea1aa1a40bd98c0d730e"
+    },
+    "migrations/20260531_template_specs.sql": {
+      "bytes": 2783,
+      "sha256": "de987e98e3358ab8261972f35558cbb1a9d6bce16f707a98e7f89896a1fdec3a"
+    },
+    "migrations/20260601_chat_message_metadata.sql": {
+      "bytes": 565,
+      "sha256": "c196ff28fd5291e9956db46728ce4c6dfccc44d597bb8d748271f43aa45112f8"
+    },
+    "migrations/20260602_working_memory_embeddings.sql": {
+      "bytes": 996,
+      "sha256": "49b75fc8592a065a68c996321704780c630e660bad4811d4f04125333a501bbd"
+    },
+    "migrations/20260603_ai_capability_governance.sql": {
+      "bytes": 2757,
+      "sha256": "6e6d78aaaeec82c133261b959cd455f91019658bac6005a466c7339bc5fa45a6"
+    },
+    "migrations/20260603_commitments.sql": {
+      "bytes": 3240,
+      "sha256": "23f8c3c044a3213df88f125ce0caeaf4e416651d82cd5d8825fa9a3976f107cf"
+    },
+    "migrations/20260603_governance_permission_grants.sql": {
+      "bytes": 1358,
+      "sha256": "80cd0aaf03cc65f59c346eb9ff6a2aaaf4a8f3a3f572484742b6da939cddebc7"
+    },
+    "migrations/20260603_living_record_program_link.sql": {
+      "bytes": 1719,
+      "sha256": "d2469926bb542c17c9040cb923dec2c276e1f9d15de6671475d0479846051e17"
+    },
+    "migrations/20260603_living_record_spine.sql": {
+      "bytes": 18708,
+      "sha256": "d46ceda191326b1386e312de12d0e2310531e0529d9a012042485829d5fe7e68"
+    },
+    "migrations/20260603_project_retrieval_mode.sql": {
+      "bytes": 773,
+      "sha256": "9aa13d9b61d1a9c19639bdf2553f2e6a2781c8104552f8ff4689ca7b065999a7"
+    },
+    "migrations/20260603_pv_operational.sql": {
+      "bytes": 8644,
+      "sha256": "eac12fde35c0abf893e4d677f1afb02052f7759b18f0eb23139c862dcd83b11e"
+    },
+    "migrations/20260604_bla_workbench.sql": {
+      "bytes": 2681,
+      "sha256": "e6679758493114a10b8635718c99c3f3feb62afbcd218b0bab6f325d29f8d4eb"
+    },
+    "migrations/20260604_evidence_graph_and_embeddings.sql": {
+      "bytes": 3875,
+      "sha256": "71c4595ca1442e32e48e407bbde6b6a6199ac16c75db8852b0e09369b4c013de"
+    },
+    "migrations/20260604_shadow_review.sql": {
+      "bytes": 3301,
+      "sha256": "b64e45f42945f5010186e115e9bc2a7de4d293d21efbea2d5b4cb24e331112f0"
+    },
+    "migrations/20260604_study_twins.sql": {
+      "bytes": 1676,
+      "sha256": "2e500dc49d3aced4eb2d631c7ead9fae35aaafa58b4bf81f38f075ee15ea5ef2"
+    },
+    "migrations/20260604_submission_core_canonical.sql": {
+      "bytes": 7523,
+      "sha256": "43cca9766d82f1d11da40a83536c64dbed71fee6103af8a0ac93576177ac4387"
+    },
+    "migrations/20260605_consistency_findings.sql": {
+      "bytes": 1847,
+      "sha256": "40bd1d5343c4de47f555b3ee54f20f76a73ce0eeda409e394271c5d09bc42d58"
+    },
+    "migrations/20260608_ai_placement_policies.sql": {
+      "bytes": 2486,
+      "sha256": "fd7f128854f84962e3f7e30238198fd1371863761a94e0aca5e4bbb7d2e7bac5"
+    },
+    "migrations/20260608_submission_leaf_document_type.sql": {
+      "bytes": 474,
+      "sha256": "9f957896009500090422a88a2d30722caa8d8e7540ec900d0412907a380135f9"
+    },
+    "migrations/20260608_vault_retention.sql": {
+      "bytes": 2049,
+      "sha256": "12ead3ca954991d60e7498c61932e46bac241d109a1995bf423418453ab88b84"
+    },
+    "migrations/20260609_audit_hmac_seal.sql": {
+      "bytes": 1167,
+      "sha256": "bfbdb0308edfd439106148fd2bd06f9ddfa6b49db9e889ec1598b622ed8757b4"
+    },
+    "migrations/20260609_design_risk.sql": {
+      "bytes": 10636,
+      "sha256": "ce991e01b1ba827a284e9e7232de3a9577c63d4ce32eb5c3af8d3883c99582bc"
+    },
+    "migrations/20260609_ind_master_data.sql": {
+      "bytes": 2933,
+      "sha256": "0909ac46db6d24b3c244f3b540f4f0c187072b922ecf4e81b5cdc03c676ffc18"
+    },
+    "migrations/20260610_controlled_substances.sql": {
+      "bytes": 3603,
+      "sha256": "058125684fa8b74d49f00b685a0d5f730862d036e338237aa8e6fcf8dbcf2c64"
+    },
+    "migrations/20260610_egrants.sql": {
+      "bytes": 6818,
+      "sha256": "8cf28cee61ec71f037eb934c7a8d7e4ce57d1e413c6fe70252af65a9592c99f7"
+    },
+    "migrations/20260610_etmf.sql": {
+      "bytes": 2544,
+      "sha256": "31d9726ac9650c8178f8cff0ce844b8116ef849df264e4b56d20dd74af2d2c22"
+    },
+    "migrations/20260610_financial_disclosure_21cfr54.sql": {
+      "bytes": 6457,
+      "sha256": "1c09cd0040ddf65df9ca324d9ecbffdae79f9c7104ba5bf5dfa42ff1357483f3"
+    },
+    "migrations/20260610_ha_interactions_commitments.sql": {
+      "bytes": 6060,
+      "sha256": "9ac47933ed3d17b48456b92a70236a4bdd251ac67e9b0cf7b8471a58ac4d0439"
+    },
+    "migrations/20260610_iacuc_animal_governance.sql": {
+      "bytes": 6696,
+      "sha256": "4277e04b5c8965b4e234c0686c26803e01ebf57982b3a722e8a9caf1815fbefd"
+    },
+    "migrations/20260610_ibc_biosafety.sql": {
+      "bytes": 4907,
+      "sha256": "b8ec275ae8a990df7ce5a026a7c90c79b693a252f975aa95aa314ecb9a2f14b3"
+    },
+    "migrations/20260610_ind_dispatch_snapshots.sql": {
+      "bytes": 1194,
+      "sha256": "add62f59a6759740cb2d5f551edd8c383f41dfc31a245e54c154135e79c72433"
+    },
+    "migrations/20260610_inspection_readiness.sql": {
+      "bytes": 4438,
+      "sha256": "dc87805dd923b72304ab2341a05cd7b8a928f3ea036dabe78dfec63c9556c3b0"
+    },
+    "migrations/20260610_irb_submissions.sql": {
+      "bytes": 8126,
+      "sha256": "6a00ca88438dd63279b2b4282163834299edf347f1f939ab03ecea303c8946fb"
+    },
+    "migrations/20260610_ivd_assessments.sql": {
+      "bytes": 3824,
+      "sha256": "50f9e99ff6e4bb55c9881ab52a4ab9fe613346cf187e07466cbcb3d5f7d490c7"
+    },
+    "migrations/20260610_lifecycle_obligations.sql": {
+      "bytes": 2981,
+      "sha256": "60804db0b1d5d6666beb87e3391979b7ab281cb5aaf6e56688549bc4dd168ec0"
+    },
+    "migrations/20260610_nonclinical_send.sql": {
+      "bytes": 4079,
+      "sha256": "caddd419fc08dd9786a8cf862254507cb0fd70765887a759a836149a04bd9568"
+    },
+    "migrations/20260610_rim_lite.sql": {
+      "bytes": 4003,
+      "sha256": "9765e64c487c63500397be79566dfb019ce3a321e12e08d09883054646096822"
+    },
+    "migrations/20260610_veeva_vault_links.sql": {
+      "bytes": 1644,
+      "sha256": "ade083d9e0128096fa305e8b074bd041bfe8ba77078ab8501e0d02b8f82765d5"
+    },
+    "migrations/20260611_drop_charter_staging_tables.sql": {
+      "bytes": 2420,
+      "sha256": "43b8436dfaa25f334ab3779f7223c0f9ea6f48a73153fcb1a69853f36d8428d2"
+    },
+    "migrations/20260611_effort_certification.sql": {
+      "bytes": 1683,
+      "sha256": "0357816ed3337133b22971e7e5f595e36dd777a3521fc6712f90002d1914f6a9"
+    },
+    "migrations/20260611_research_compliance.sql": {
+      "bytes": 2372,
+      "sha256": "a43982a1a9f54f53d0f55e000c22e56e9ff9f4b7f79c245a08498ff5d16e2e17"
+    },
+    "migrations/20260611_research_security.sql": {
+      "bytes": 1208,
+      "sha256": "a0015bea7a099364536c3ab233952a5085b889ddc4f9d57c25f09870c9fc9ccc"
+    },
+    "migrations/20260612_ana_relational_external_intel.sql": {
+      "bytes": 4126,
+      "sha256": "071ccce41710ff21f0efabf0bdeb402364305a226b7a5c19280b3ff4e2e9189f"
+    },
+    "migrations/20260612_grant_budget.sql": {
+      "bytes": 2724,
+      "sha256": "c600685435f16204e8e1c6eed18e14651720282e77219dd05c2684d6b70c5cfa"
+    },
+    "migrations/20260612_grant_closeout.sql": {
+      "bytes": 2403,
+      "sha256": "df34f3bdbe2790c295b6bef897dc21de350f2f288f5c43edd1fce5c3e372b947"
+    },
+    "migrations/20260612_grant_costshare_nce.sql": {
+      "bytes": 3047,
+      "sha256": "cb50cf819a8fc6901f70738aa7e851d5b0f29c3405b201ee355c517ed1d0bfab"
+    },
+    "migrations/20260612_grant_subawards.sql": {
+      "bytes": 2279,
+      "sha256": "dd2807ff8fb34abf447d343a0d11fe5d3bb6ab14519c2301b2022fea3a516f2d"
+    },
+    "migrations/20260612_rls_research_admin.sql": {
+      "bytes": 4470,
+      "sha256": "1febab49539c8eb00891b1b6c52fd9c7361f9619d0159015f07d7e338fc1f277"
+    },
+    "migrations/20260614_ind_cross_references.sql": {
+      "bytes": 1451,
+      "sha256": "01d71899d8fdbac5812d7d4d681a7c4ae79fee2be831bd85f4ae889e7ee56628"
+    },
+    "migrations/20260614_ind_safety_reports.sql": {
+      "bytes": 1453,
+      "sha256": "065a306daf2001c1a68ec196a17c1f14b4361cfcd2c3e48361a44a76305c7a07"
+    },
+    "migrations/20260615_ind_amendments.sql": {
+      "bytes": 1435,
+      "sha256": "cc6ef311630b3849babf992715cd36d22848795f46f5101d14f6368be81d7b41"
+    },
+    "migrations/20260615_ind_annual_reports.sql": {
+      "bytes": 1533,
+      "sha256": "a5771d1ea767f44dba2fb1a48319748f01f4a3f873af46c5120a155f6d304e57"
+    },
+    "migrations/20260615_ind_icsr_transmissions.sql": {
+      "bytes": 1805,
+      "sha256": "70931da4ba2eaa2b653547008d9ad3196a3053180b78fbfa4576c05838fbd59c"
+    },
+    "migrations/20260615_regulatory_assessments.sql": {
+      "bytes": 1308,
+      "sha256": "95dc06f219a7c46be4d44464efb87f2fba0e5a5e8a72c0530caf953cd237a2dc"
+    },
+    "migrations/20260615_report_subscriptions.sql": {
+      "bytes": 1755,
+      "sha256": "2bdc42d66ea95b5e16ed31b8ebddb38b483b92ab3b866af1ade174bb122ae5e7"
+    },
+    "migrations/20260615_tmf_artifact_filings.sql": {
+      "bytes": 972,
+      "sha256": "261c9f8fc7ab183d6c2e89309edf5c2bed84fad756213446f9faba3f6f702fe0"
+    },
+    "migrations/20260616_drop_unused_cdisc_reference_tables.sql": {
+      "bytes": 2502,
+      "sha256": "e4a8e1cf9fe8622262009694cec7f360bd46ce4edf1de20394510a86db33e90d"
+    },
+    "migrations/20260617_ai_provider_preference.sql": {
+      "bytes": 1110,
+      "sha256": "7d63c33c3e7af37a2eb537e4c4fc055d3710ab1cc9a415ce5e789ad0d8d2ad08"
+    },
+    "migrations/20260618_coverage_analysis.sql": {
+      "bytes": 5186,
+      "sha256": "ef59fc798ceefb30793be3101bad06740b649343a0d9ca8d28176f90fb5a6f25"
+    },
+    "migrations/20260619_research_committees.sql": {
+      "bytes": 7400,
+      "sha256": "97957b2ee8407af343ecd5abee580fa0dd636febf2f1635fa6ed3a1dd46b0a07"
+    },
+    "migrations/20260620_grant_funding_profiles.sql": {
+      "bytes": 1510,
+      "sha256": "4c9fe679e69055f87d3b899e72a0e84e84a8ab37bbe3c2a6abcbe10a5dfa1982"
+    },
+    "migrations/20260621_protocol_development.sql": {
+      "bytes": 7594,
+      "sha256": "b83f013219cb8780db21c72183e99d3eeab5297f6cd303f3d085920730971907"
+    },
+    "migrations/20260622_protocol_risks.sql": {
+      "bytes": 2238,
+      "sha256": "da94cbb3a4a93f28df1ab2db3341de6347f86551283eec88e673288317e6dce1"
+    },
+    "migrations/20260628_csr_job_state.sql": {
+      "bytes": 6364,
+      "sha256": "abf73898e67b66556028626e246a1bde89a41f646a35343a3e894e77c11d63da"
+    },
+    "migrations/20260629_charter_tables_rebuild.sql": {
+      "bytes": 16360,
+      "sha256": "5c004a746b0747adb41ecb8b75a1c346e21c68e9f8b5c42965c2ebaf08e9fbcf"
+    },
+    "migrations/20260629_orchestrator_awaiting_async_status.sql": {
+      "bytes": 2151,
+      "sha256": "2089d62ca7da1603d7e713c0a9cce72d0426f5a26f61b80c433efb3982485708"
+    },
+    "migrations/20260629_orchestrator_awaiting_signature_status.sql": {
+      "bytes": 5764,
+      "sha256": "114f1c766913d3afd21c01a4354c57d5828a0b4d5b5ba8568ee2eac8663fbc17"
+    },
+    "migrations/20260629_orchestrator_region_check_alignment.sql": {
+      "bytes": 1570,
+      "sha256": "8026598f42918811df00c0038c388b36c42ce451049b6526eeae2e4d610a5bf5"
+    },
+    "migrations/20260629_orchestrator_submission_id_fk.sql": {
+      "bytes": 4845,
+      "sha256": "d30f6c93572855bde94d3e0d9155b0393415f987ae98e45ffceb8f1cb4529c8d"
+    },
+    "migrations/20260629_orchestrator_tenant_scope.sql": {
+      "bytes": 3453,
+      "sha256": "3cc1a48183c9169e18443f34385492a895744ac49ad7b04581d4466ec7333227"
+    },
+    "migrations/20260629_protocol_amendments.sql": {
+      "bytes": 2811,
+      "sha256": "8c2a439e5161e457e8d8d100b27b3a0ece99268a12af3357127d47409ca74d0c"
+    },
+    "migrations/20260629_protocol_consent.sql": {
+      "bytes": 2628,
+      "sha256": "fbd710927c31dd961af14f0e29ae650adf3c266629fa7e380cdb2e5d68cf10f6"
+    },
+    "migrations/20260629_protocol_deviations.sql": {
+      "bytes": 3121,
+      "sha256": "978acd278488bc5b41cca3663b6b5009a690b7f41fdbe58550095f84df6a052c"
+    },
+    "migrations/20260629_protocol_reviews.sql": {
+      "bytes": 2975,
+      "sha256": "6bfbcd2568af7a094f63c7571847ead38f1c4e50ce53d42f1178da2af749c760"
+    },
+    "migrations/20260629_rbm_surfaces.sql": {
+      "bytes": 11090,
+      "sha256": "2125d652a5ceb596ded19224a55e0d9cb0e47e1b39bb5ebd0d53ddffe187ec24"
+    },
+    "migrations/20260629_submission_transmittals_active_lock.sql": {
+      "bytes": 1665,
+      "sha256": "e7323d7abf051f141fcd472fa2ff330476469a5fe9bc59c7369fbd53a3aaad0e"
+    },
+    "migrations/20260629_submission_transmittals_mdn_raw.sql": {
+      "bytes": 1056,
+      "sha256": "393ab34e51aa2862caf1a56803d6a21208f554543ddb0d6e944998818183b7ed"
+    },
+    "migrations/20260629_translation_platform.sql": {
+      "bytes": 7732,
+      "sha256": "3932b313ba4b50b2bcdf363054bffd5cacf7c8ded6f217c9b26e3a10bfad7ca3"
+    },
+    "migrations/20260630_protocol_milestones.sql": {
+      "bytes": 1776,
+      "sha256": "b06976901f1b1c392163e28463fd8a75b3158776cc479083f9cfb5b336cd2542"
+    },
+    "migrations/20260630_protocol_templates.sql": {
+      "bytes": 2318,
+      "sha256": "63b76db0a0e9ec05e51687d4c020eb3b46bd21f9061bf849724079096a40106c"
+    },
+    "migrations/20260630_rbm_kri_values.sql": {
+      "bytes": 1137,
+      "sha256": "081d6336585a6f62a149b50d0241d317a8c0ad299f341d7319af92d61e805b3e"
+    },
+    "migrations/20260701_protocol_soa.sql": {
+      "bytes": 2518,
+      "sha256": "918f7b59ac1c03ec62a2f2d7737be782764119739ff0c59aca8dc1bd8e5f56a0"
+    },
+    "migrations/20260701_rbm_patient_profiles.sql": {
+      "bytes": 1581,
+      "sha256": "7f646119b418ee121c03901e7a330c99b126cb14210bf304ae3174deefa9d211"
+    },
+    "migrations/20260702_protocol_budget.sql": {
+      "bytes": 2575,
+      "sha256": "6009b7cb1ac073498d78724af63a44f96934ff390515249d23844250d3ab0529"
+    },
+    "migrations/20260702_usage_model_credit_ledger.sql": {
+      "bytes": 3696,
+      "sha256": "ff82cc37889d1e089b9c592a4f1b64c4619437b582fe01088371482849ad8397"
+    },
+    "migrations/20260703_dmsp.sql": {
+      "bytes": 2653,
+      "sha256": "c857b263965b258cb65ea3423cf60b432c3f87dc4b2bfcea75dc9147a92a8b16"
+    },
+    "migrations/20260704_biosketch.sql": {
+      "bytes": 2800,
+      "sha256": "0fa6048cc79f32dced52c39fcb3952bb0980ef25e778de54fbb2eb589b328703"
+    },
+    "migrations/20260704_other_support.sql": {
+      "bytes": 3560,
+      "sha256": "585c63aacedae871d4d5ae410f6443b154773aed7a428986f94443d8de606682"
+    },
+    "migrations/20260705_export_control.sql": {
+      "bytes": 2851,
+      "sha256": "b50aa921a7de74584ef38bf3c09a49e30a554840046804a29f258e705fadef2f"
+    },
+    "migrations/20260705_invention_disclosure.sql": {
+      "bytes": 2170,
+      "sha256": "913a0aa0b15763a68711156e157abd175572b1597b4b36cb337cf4de435ce4e6"
+    },
+    "migrations/20260705_research_agreements.sql": {
+      "bytes": 2878,
+      "sha256": "e5a4b16d6ff1ee1ab5e9232c4dbedac4936b9a997373455471616f8b9fd099cb"
+    },
+    "migrations/20260706_org_user_persona.sql": {
+      "bytes": 956,
+      "sha256": "4b211d326a257b7be2c7cfd3a905a2b019dc8f44a06c2862b621d9d8558f6a37"
+    },
+    "migrations/20260706_report_definitions.sql": {
+      "bytes": 1762,
+      "sha256": "7126b4aaae4090762da259e86528a41c58b0169f939a8c7d683d3a00bf924ec1"
+    },
+    "migrations/20260716_template_doc_types.sql": {
+      "bytes": 2286,
+      "sha256": "4fe6daa79f3ec8cdda089a1b3ced037427918c37227395ff7f29cf3ba33fd5da"
+    },
+    "migrations/20260724_ana_deep_investigations.sql": {
+      "bytes": 1405,
+      "sha256": "35ac81447af3f72eb72411790c440ca665093600f5ca7e9eaaf9aa1a5f19ee9b"
+    },
+    "migrations/20260724_lumen_council_provisioning.sql": {
+      "bytes": 8556,
+      "sha256": "cd077a42bb1df0f37a46f84d81de49980cc6baf447dee7cfb52de87497488f55"
+    },
+    "migrations/20260726_authoring_citation_source_usage.sql": {
+      "bytes": 5213,
+      "sha256": "82507db8881b4c7b304d5933ed398eeed0fa708ea3c3bc6c7997cbb1f14597a7"
+    },
+    "migrations/20260726_cre_source_program_scope.sql": {
+      "bytes": 4483,
+      "sha256": "3a35473610de9d5e19f3101946aa2be24094f3532c558711a1390525eabdc394"
+    },
+    "migrations/20260726_file_uploads_tenancy.sql": {
+      "bytes": 4133,
+      "sha256": "b72369590bafaa24574fce9b9863c299a12ef70b7577929f65818f2592da429a"
+    },
+    "migrations/20260726_rbm_metric_ingestion.sql": {
+      "bytes": 5316,
+      "sha256": "18e61b41ee945376dde9aad435123192889782cb8eee7e4af3e76299098bdb94"
+    },
+    "migrations/20260726_rbm_not_evaluated_backfill.sql": {
+      "bytes": 2447,
+      "sha256": "f3e1c320fe1d99f8e19d92419d72f83eecb88e66219cb5673e1b42c85c976639"
+    },
+    "migrations/20260727_authoring_document_program_scope.sql": {
+      "bytes": 3938,
+      "sha256": "7e42c0a3825e0ba2cdccc0eae7bfd7c3aceddd1ac9690deeb52a583e5acdf131"
+    },
+    "migrations/20260727_onboarding_proposal_runs.sql": {
+      "bytes": 4993,
+      "sha256": "e5a546789f1bd497675558dbf6dde9c187b5340bdd9d0aa07040722b92ad205c"
+    },
+    "migrations/20260728_authoring_comments_threading.sql": {
+      "bytes": 4103,
+      "sha256": "cc332122214cec8576d22d894af0ec993d4a8d54815739903e7aea7edcb4493c"
+    },
+    "migrations/20260728_authoring_document_governed_binding.sql": {
+      "bytes": 3992,
+      "sha256": "d2798b45cba8d5a2861bed5921df472906749d720028d02b4a9ec9e392fc18c6"
+    },
+    "migrations/20260728_c2c_document_sections_timestamps.sql": {
+      "bytes": 4380,
+      "sha256": "7df4f3196269dfbbee82d25b63361553a18480a7e590617452e99ff0a07cc597"
+    },
+    "migrations/20260728_c2c_section_version_author_kind.sql": {
+      "bytes": 4062,
+      "sha256": "8bfdd734deac427b0a5a8922a46ce35007ccb1b57ce4c83e5fa2cad11d7b249e"
+    },
+    "migrations/20260728_chat_thread_store.sql": {
+      "bytes": 8146,
+      "sha256": "b11d8fd4c72f648105290e2b194b6f4121f6e2fc15bf2f41474f81d13708960f"
+    },
+    "migrations/20260728_cmc_module3_org_scoped_uniqueness.sql": {
+      "bytes": 7090,
+      "sha256": "d9e3f6b9278211e19c22ce0811aa3546caff8b276f3af7edaa43134bec4b6b2c"
+    },
+    "migrations/_generated/phase9_rule_packs.json": {
+      "bytes": 20439,
+      "sha256": "ba184d429d67e1ef5408f1ff3dd77bd63d922cd170753de9ebd5f592086d8c83"
+    },
+    "migrations/meta/0000_snapshot.json": {
+      "bytes": 1540386,
+      "sha256": "e994491dbb955eed7b8e4587b69d3f1e8d110df7ce1aaf1a732bff12c5b22016"
+    },
+    "migrations/meta/_journal.json": {
+      "bytes": 206,
+      "sha256": "b48ba88255ddc8f892e0c962c4acfad5a4d4b62a58028ceb79fd42288fa51628"
+    },
+    "migrations/phase13_review_threads_tasks.sql": {
+      "bytes": 4662,
+      "sha256": "ef5b4854bec735699f324d219dc6e60a5821014ef780f5b38af333cb33e0a0f8"
+    },
+    "scripts/global-ri/generate-openapi.ts": {
+      "bytes": 568,
+      "sha256": "8e20e16ec1ac8da7b796c2aa83984eaef5ddde1279253b6518506eb8a824385e"
+    },
+    "server/services/ana-ri/__tests__/command-registry-consistency.test.ts": {
+      "bytes": 2393,
+      "sha256": "a75d7ab7fcdf23fa860d36fa485eb3ecdd4526fa502ff1d4f135c7f64f6b1595"
+    },
+    "server/services/ana-ri/command-executor.ts": {
+      "bytes": 181850,
+      "sha256": "4a071a1de37035ed1b44b5d60a5e3dc2232f4a2590003659c1406fb5a436e039"
+    },
+    "server/services/ana/__tests__/tool-registry-consistency.test.ts": {
+      "bytes": 1998,
+      "sha256": "ce679f8f2c1b7e78cb51cf5f1a1696fd48bd1347f35bbbb3c545c2aa2dcfe808"
+    },
+    "server/services/toolRegistry.ts": {
+      "bytes": 7004,
+      "sha256": "a87cbba204af3a0b3eeeea3a70b581418e975ee35765a683a44f30a78e7bc92b"
+    },
+    "shared/schema/ai-ml-pccp.ts": {
+      "bytes": 9361,
+      "sha256": "e322c35ed78186d54a06270a1ca436cd13fe0890c7bba070397e91ab4c577ebf"
+    },
+    "shared/schema/ana-intelligence.ts": {
+      "bytes": 21077,
+      "sha256": "16c8f386deae7a22efc58c2cbd7e85931bb9c3ebc45f29faca11828c79b11354"
+    },
+    "shared/schema/ana-relational.ts": {
+      "bytes": 3766,
+      "sha256": "6f14c778368ec46fb881e442fef043601575ad25f6b3dd5c19418d512ae65687"
+    },
+    "shared/schema/api-keys.ts": {
+      "bytes": 2338,
+      "sha256": "457995d211b1ee42de1c407fd05a3b125372425579bb81b397073ebadfdac068"
+    },
+    "shared/schema/biopharma-specialty.ts": {
+      "bytes": 2208,
+      "sha256": "41a9a9847388f85bb477d9eb8482dc84a4db70b0b603f4f8fabd3796a0efb220"
+    },
+    "shared/schema/biosketch.ts": {
+      "bytes": 4102,
+      "sha256": "4cae23dded92f888226ea33b5c9d31d54d9aff12c98a60b75d39a5a21d21716f"
+    },
+    "shared/schema/capa-mdr.ts": {
+      "bytes": 25440,
+      "sha256": "4877284db43d2705b9f2fce658b34a23b23343c428498b7df7cb8d476a561166"
+    },
+    "shared/schema/cdisc-reference.ts": {
+      "bytes": 1366,
+      "sha256": "99a2c9ef0de6da95b105b508ccd796ad9e33fbf88f3d3756e6462ec534c2193b"
+    },
+    "shared/schema/change-assessments.ts": {
+      "bytes": 1794,
+      "sha256": "c78c7bcf589d281743569dd91d443e4ff85e8256544cefceb0e7328096db4403"
+    },
+    "shared/schema/cmc-os.ts": {
+      "bytes": 5153,
+      "sha256": "13c6e095edaa85d2bd70b89d9d6dced6a0236b3b3a8d1d9f1dbfb1bb24d5261a"
+    },
+    "shared/schema/controlled-substances.ts": {
+      "bytes": 5413,
+      "sha256": "b84498dd8bf3c74bc17a9d7210173eedf9b999ef0e6aec21aadfbc1957ed5b7a"
+    },
+    "shared/schema/coverage-analysis.ts": {
+      "bytes": 7167,
+      "sha256": "bfbe8f3323338670cfc6d8efc0fc613c7345ee83933d9fa38a9316331c9c650a"
+    },
+    "shared/schema/csr-knowledge-db.ts": {
+      "bytes": 58252,
+      "sha256": "4fd7a42f0cff0b788c9ee6a77480c20419abab86985ff063d248e92e31b1f1ae"
+    },
+    "shared/schema/ctd-projects.ts": {
+      "bytes": 5983,
+      "sha256": "3bf115fa97197b0e6e674d1fc719c111f25fd84a358d3c21499450066d9d1231"
+    },
+    "shared/schema/defense-packets.ts": {
+      "bytes": 4760,
+      "sha256": "5e9f58ca64a320f1c59ee6ba9c6f97db072aec987b75b0b5b3c7fd1de4693ce9"
+    },
+    "shared/schema/dmsp.ts": {
+      "bytes": 3783,
+      "sha256": "3f73a3268b62007f43f8a89a6fa4815df952c74392d818083c06d042a8c2e53e"
+    },
+    "shared/schema/effort-certification.ts": {
+      "bytes": 3893,
+      "sha256": "1c621d8b7bb71f7b1734f0691a2b1ff02c794057de01ee8a6760b5ad609d3440"
+    },
+    "shared/schema/enablement-content.ts": {
+      "bytes": 1422,
+      "sha256": "973a57a71102aedda4a0faca162f0711cf9411f50495232322d0a2a1fa6b0c52"
+    },
+    "shared/schema/etmf.ts": {
+      "bytes": 3744,
+      "sha256": "489c39101229ba234b83ca840692891e84330dfd0aab8cf36f9f4c535a9d4946"
+    },
+    "shared/schema/evidence-sufficiency.ts": {
+      "bytes": 3896,
+      "sha256": "ccf3f7e7373536d824259cfce0457c2d26de092adcbba9efc648e0f57289fa8f"
+    },
+    "shared/schema/evidence.ts": {
+      "bytes": 5080,
+      "sha256": "fac8587b6414673d634c778b91e4820d3905c021237d77875d4a822c8ff252ee"
+    },
+    "shared/schema/export-control.ts": {
+      "bytes": 3460,
+      "sha256": "240abcf25269fcfe7d6ecea2a55be0e7efa9c4756d00453c416723a00825485d"
+    },
+    "shared/schema/external-intelligence.ts": {
+      "bytes": 3766,
+      "sha256": "cf526f195ba4fcfc92b757d212bdc52366134900f27cbc306176d34dc68538c3"
+    },
+    "shared/schema/financial-disclosures.ts": {
+      "bytes": 8318,
+      "sha256": "a56b5bdf999e00d525f335d16e123acd8556012cb9531f942078084cc410af47"
+    },
+    "shared/schema/grant-funding-profiles.ts": {
+      "bytes": 2062,
+      "sha256": "a1432eb060def57f20c9054eb218649e25192aba789141a2f11518bff95aeff6"
+    },
+    "shared/schema/grants.ts": {
+      "bytes": 19746,
+      "sha256": "7748492a3e34347eb549606be7da856dbbdb4a744ec97154599aa78188a7ae07"
+    },
+    "shared/schema/gspr-postmarket.ts": {
+      "bytes": 11457,
+      "sha256": "13eb4684b4c1ed397fb9b3c9c73cd87f6db3e8ac97f3f180120d2c8e086a40d8"
+    },
+    "shared/schema/gspr.seed.ts": {
+      "bytes": 8137,
+      "sha256": "09e6b2da730eba5f3e99077e0f3a468598e5b942fd2afb80e5c86a604cf655d7"
+    },
+    "shared/schema/ha-interactions.ts": {
+      "bytes": 7686,
+      "sha256": "7e1b016cfd08ab0fc322b43739c45c695847ecf40a439368bca7e567f349e8a0"
+    },
+    "shared/schema/iacuc.ts": {
+      "bytes": 9173,
+      "sha256": "b69908de73a6af39d641ca6cde084251e2cad636a5ccf16c30cbab8bf664edb2"
+    },
+    "shared/schema/ibc.ts": {
+      "bytes": 6349,
+      "sha256": "f6362756e3af8cc0396a95ad4da21bc6d3de62a5d619e0b4e84d20da08399697"
+    },
+    "shared/schema/ind-amendments.ts": {
+      "bytes": 2666,
+      "sha256": "1bb3febc9b3381609afcb0eb2ddc09df22b012667feb1f4bad1c98d82d6a4d35"
+    },
+    "shared/schema/ind-annual-reports.ts": {
+      "bytes": 2973,
+      "sha256": "550c7038cd951120af556aa4506376dba37871676c4a4931ab42e63bd2399c31"
+    },
+    "shared/schema/ind-cross-references.ts": {
+      "bytes": 2958,
+      "sha256": "2eaafa229e18c00aa830d6d4065a75dc046ca334ddfb6170cc7b2c80e6c6e359"
+    },
+    "shared/schema/ind-dispatch-snapshots.ts": {
+      "bytes": 2452,
+      "sha256": "f3bdb9be9e62977bf2b7695869f92ed9480f80ca237d1579747dd859c2cf6856"
+    },
+    "shared/schema/ind-icsr-transmissions.ts": {
+      "bytes": 3450,
+      "sha256": "a8ad4c709e2182823551cbc5e86f2eca3890d05cdf07b4ca5370ff5ab84f9771"
+    },
+    "shared/schema/ind-master-data.ts": {
+      "bytes": 10685,
+      "sha256": "0dc608c7a06eb9937bf1d94e61a4db141cafc5140dc923ff8625259f0bc8b593"
+    },
+    "shared/schema/ind-safety-reports.ts": {
+      "bytes": 3164,
+      "sha256": "635a40cc46aa73137c49cf76798b2c09b8be1e3777d3e2f132e98c42cb591b6a"
+    },
+    "shared/schema/index.ts": {
+      "bytes": 18950,
+      "sha256": "fa95dfdbc0e0f04ecc0812a9cf453d82dc57f761dc37cf395716e74e9a626419"
+    },
+    "shared/schema/inspection.ts": {
+      "bytes": 6684,
+      "sha256": "b4e3e95f5f0a36dea901654ff3b47ad812c37cbe869862fd31e8b1b46298c19f"
+    },
+    "shared/schema/invention-disclosure.ts": {
+      "bytes": 2935,
+      "sha256": "7b8cfd8034d08714ba1260c6da1b0464d1672646988516d14bf16f59c9e14f2b"
+    },
+    "shared/schema/irb.ts": {
+      "bytes": 10386,
+      "sha256": "12f05720755d8ee08e0de3c96df372a18422d7938f06573e02c6e39e4be38a5c"
+    },
+    "shared/schema/lifecycle.ts": {
+      "bytes": 4456,
+      "sha256": "0c4abc3294ce9698cb4f6c813dcd53805e08a67e124b8edb1d0ea3f63bec924b"
+    },
+    "shared/schema/living-record-spine.ts": {
+      "bytes": 20661,
+      "sha256": "08fc048fa4e268c70b21958064e045b7b3cbfb6bb6f77f0686294fa5380fcb87"
+    },
+    "shared/schema/nonclinical.ts": {
+      "bytes": 5702,
+      "sha256": "8e882edae74bfc3fbb0caa713c13438604e52b6914a4d1f754eff229a53ffc75"
+    },
+    "shared/schema/operating-system.ts": {
+      "bytes": 26022,
+      "sha256": "b2e783f097ceeea609441cb4c8032b1fc0b2ff5cdaffb2191d7eb50ebe3bd7ec"
+    },
+    "shared/schema/orchestration.ts": {
+      "bytes": 26241,
+      "sha256": "532fd89513b0207888245b68d8d282c0338fc1929976433ba133a331bc1a72e9"
+    },
+    "shared/schema/org-lifecycle.ts": {
+      "bytes": 10916,
+      "sha256": "b60421c4bafe6fc09d5b05fefa5518347531fccd20b6ba37325b92bef9d2514c"
+    },
+    "shared/schema/other-support.ts": {
+      "bytes": 5083,
+      "sha256": "973fdec07b384a3d4a17b8da39921a121bbf200a42a8701381d03f8e6b067bee"
+    },
+    "shared/schema/pdev-workflow.ts": {
+      "bytes": 9995,
+      "sha256": "04c92714925606733d90a6a360a347adb4cc174a3bc5db5da7afcdd6f34e73a1"
+    },
+    "shared/schema/programs.ts": {
+      "bytes": 20312,
+      "sha256": "331b0b11552149270843d8d5e07ddfd0973750b69b3d23b22640ad598a5c5482"
+    },
+    "shared/schema/project-charter.ts": {
+      "bytes": 38134,
+      "sha256": "ea1ab66fe03410e2ab5ff4fbd4d3a2487acf09f62011d4a4c4044f80b4eaa930"
+    },
+    "shared/schema/protocol-amendments.ts": {
+      "bytes": 3941,
+      "sha256": "9c51bec71cfacd26bd90d3d54162c398d29c8ba2ce09725c03993227d2589f68"
+    },
+    "shared/schema/protocol-budget.ts": {
+      "bytes": 3286,
+      "sha256": "1d200e1e8bc9543da06db89e2e5cd69a9248ccf3c3adcdc433a4a9ed212c4468"
+    },
+    "shared/schema/protocol-consent.ts": {
+      "bytes": 3671,
+      "sha256": "7c6f9149c5b0b70012be0f9a840a3a7a483910bde3839afdb803dd3323b0f839"
+    },
+    "shared/schema/protocol-development.ts": {
+      "bytes": 11718,
+      "sha256": "5c5b26f1d1d4764b3ee42e341409073c37c5c3d5f14197be416d87b74382f52e"
+    },
+    "shared/schema/protocol-deviations.ts": {
+      "bytes": 4409,
+      "sha256": "435e95397bb82e61cdc34780f5550287fa78b5e8ead54ebca1481c3c89023071"
+    },
+    "shared/schema/protocol-milestones.ts": {
+      "bytes": 2139,
+      "sha256": "cc8c951cce11429c0bd0f42eacc4f657c66023c85141137b6e1471e2a542b1c8"
+    },
+    "shared/schema/protocol-reviews.ts": {
+      "bytes": 4448,
+      "sha256": "3cfcd172cb2815ef0b03e9ea7a76b92bc44350d82dcaf8657527608e56731f12"
+    },
+    "shared/schema/protocol-risks.ts": {
+      "bytes": 2515,
+      "sha256": "1333d7801fc82a5779ea72327e83cb401c50f25ce6e0e525a7ff424cf8d48616"
+    },
+    "shared/schema/protocol-soa.ts": {
+      "bytes": 3097,
+      "sha256": "7cf942c2eba60738eab868a7838f30784f9fcb6dbe39fec379d2465794370088"
+    },
+    "shared/schema/protocol-templates.ts": {
+      "bytes": 3035,
+      "sha256": "01965f47bc29d14af373893922cf638f0dcfbc76896b68607a37d03e84686de2"
+    },
+    "shared/schema/q-sub.ts": {
+      "bytes": 13907,
+      "sha256": "b82be0fd84e41ecda85e0d02b513d9638faa548fa66713a293b74d5bfb5da0e5"
+    },
+    "shared/schema/qc-schemas.ts": {
+      "bytes": 29885,
+      "sha256": "4b8f6c6021954da43788046012518a2d0da4f0d944e060893a76227f6846f41e"
+    },
+    "shared/schema/regulatory-assessments.ts": {
+      "bytes": 2717,
+      "sha256": "5da2691bf07ed9d7449a7e712170c1aac89482181392816d4cce03d77ba2eb0d"
+    },
+    "shared/schema/regulatory-atoms.ts": {
+      "bytes": 23010,
+      "sha256": "431ada2312451f2a8554659d417899242d984b260594bbe6813301f31b2056db"
+    },
+    "shared/schema/regulatory-graph.ts": {
+      "bytes": 5285,
+      "sha256": "760471b819c7675a02ab3dce6dcb637dba2758aeb1d1458f40f367fd812ba85e"
+    },
+    "shared/schema/regulatory-standards.seed.ts": {
+      "bytes": 22344,
+      "sha256": "87362df19e3eb63caaf68f624bfe2a81e5f52fbc5154992acb5bc24a07eef1e6"
+    },
+    "shared/schema/report-os.ts": {
+      "bytes": 14379,
+      "sha256": "5b84403c5831fe1cb254757cc6dbc9c94e0cb80e932b92774daa78aef3ce946c"
+    },
+    "shared/schema/research-agreements.ts": {
+      "bytes": 3379,
+      "sha256": "b90539037c27337decb655e95bca02d9e82e16e9b60f5d1a9a05eabd90d866e8"
+    },
+    "shared/schema/research-committees.ts": {
+      "bytes": 9941,
+      "sha256": "f211790513da89fae832187820e0e919ccd3c3eb2709dc9eaf9cd5443939e37d"
+    },
+    "shared/schema/research-compliance.ts": {
+      "bytes": 3850,
+      "sha256": "2c2a6f9165d7cdae6b6fb61a437d530a884a1b17c74a9f5f4445830fcf45e456"
+    },
+    "shared/schema/research-security.ts": {
+      "bytes": 2794,
+      "sha256": "508aee0a47a9cebcc8bf488328421659a061bf5328569d55039e01bbebf50373"
+    },
+    "shared/schema/resolution.ts": {
+      "bytes": 16381,
+      "sha256": "f1a809dd5d9898fb15d2040d3fe90ef92c345522177de29f477b7d167bb31b8f"
+    },
+    "shared/schema/reviewer-simulation.ts": {
+      "bytes": 3075,
+      "sha256": "eb5b512661081677353922e727967a1b281f31d3c4706053b9cb41836e6f9b89"
+    },
+    "shared/schema/rim.ts": {
+      "bytes": 5156,
+      "sha256": "b13fbd4034940044cbddabf3db2c2046f52e3e9e83c11a11ff4ded1d29cc3fc6"
+    },
+    "shared/schema/shadow-review.ts": {
+      "bytes": 3370,
+      "sha256": "0c9a73aece7beb7ddca7db367acbc44d9fc65dc1002ba3771c1632192dfc1a0f"
+    },
+    "shared/schema/submissions.ts": {
+      "bytes": 11241,
+      "sha256": "535901a70bacbf35e6f8d51c1bfd783f822fd0b2c53b82b484f333c2a98cafde"
+    },
+    "shared/schema/support-admin.ts": {
+      "bytes": 9037,
+      "sha256": "22fcc3b856cc201e46ccd4934591b611f95c7f5e5f31060111b8d8ac74085548"
+    },
+    "shared/schema/tmf-artifacts.ts": {
+      "bytes": 2608,
+      "sha256": "a479a1b04928abb46ff55c6600dbe00e8444999376ce0e33ba3a8ecb53f9d036"
+    },
+    "shared/schema/unified_workflow.ts": {
+      "bytes": 13836,
+      "sha256": "0a651619adeb9ddf6da9eb9295e7061e621e45f8429abdac49502e4a569608eb"
+    },
+    "shared/schema/vault.ts": {
+      "bytes": 8454,
+      "sha256": "80649c1c34f02ad8921f00ba6faff463583da2a01a0c92e91266136e3d42ce33"
+    },
+    "submission-center.openapi.json": {
+      "bytes": 64075,
+      "sha256": "f594a6b5c4a090b3223ab7f1374dc81336d246eae58f8ee7021bd7cbdedc8be6"
+    }
+  }
+}

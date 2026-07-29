@@ -130,17 +130,30 @@ describeIfDb('pool-instrumentation tenant-scope primitive — integration', () =
     expect(rows.rowCount).toBe(2);
   });
 
-  it('NO-LEAK: after a scoped query, a subsequent unscoped query on the reused connection sees zero rows', async () => {
+  it('NO-LEAK: rejects an unscoped query after scoped connection reuse', async () => {
     // Tenant 2 scope populates current_tenant_id LOCAL to its micro-transaction.
     await runWithTenantScope(
       { tenantId: '2', source: 'job', caller: 'test' },
       () => pool.query(`SELECT id FROM ${TABLE}`),
     );
-    // No scope → primitive is inert → query runs directly on the SAME (max:1)
-    // connection. If the LOCAL var had leaked, this would see tenant-2's row.
-    // Under rls_enforce=on with no current_tenant_id, the policy yields zero.
-    const leaked = await pool.query(`SELECT id FROM ${TABLE}`);
-    expect(leaked.rowCount).toBe(0);
+    // Missing tenant context is rejected before SQL reaches the reused
+    // connection; callers cannot mistake an empty RLS result for authorized
+    // access or execute a policy-misconfigured table unscoped.
+    await expect(pool.query(`SELECT id FROM ${TABLE}`)).rejects.toThrow(
+      /requires an active tenant scope/,
+    );
+  });
+
+  it('NO-LEAK: reused connection switches from tenant 2 to tenant 1', async () => {
+    await runWithTenantScope(
+      { tenantId: '2', source: 'job', caller: 'test' },
+      () => pool.query(`SELECT id FROM ${TABLE}`),
+    );
+    const tenantOne = await runWithTenantScope(
+      { tenantId: '1', source: 'job', caller: 'test' },
+      () => pool.query(`SELECT organization_id FROM ${TABLE}`),
+    );
+    expect(tenantOne.rows).toEqual([{ organization_id: 1 }]);
   });
 
   it('WITH CHECK rejects an insert under a mismatched tenant scope', async () => {
