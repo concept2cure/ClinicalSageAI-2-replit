@@ -29,12 +29,17 @@ import createIVDRRoutes from '../ivdr-routes';
 
 const PROGRAM = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 
-function app(org: number | null = 5) {
+function app(org: number | null = 5, actor = true) {
   const a = express();
+  a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) {
       (req as any).tenantId = org;
       (req as any).user = { organizationId: org, role: 'admin' };
+      if (actor) {
+        (req as any).user.id = 42;
+        (req as any).userId = 42;
+      }
       (req as any).tenantContext = { organizationId: org };
     }
     next();
@@ -138,5 +143,51 @@ describe('IVDR programme scoping', () => {
       expect(res.status).toBe(422);
       expect(query).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('IVDR diagnostic result calculations', () => {
+  it.each([
+    { truePositive: -1, falsePositive: 0, trueNegative: 1, falseNegative: 0 },
+    { truePositive: 1.25, falsePositive: 0, trueNegative: 1, falseNegative: 0 },
+    { truePositive: '5', falsePositive: 0, trueNegative: 1, falseNegative: 0 },
+  ])('rejects invalid counts before persistence: %j', async (body) => {
+    const res = await request(app()).put('/api/ivdr/clinical-evidence/7/results').send(body);
+    expect(res.status).toBe(422);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('persists explicit null metrics for an all-zero table', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 7 }] });
+    const res = await request(app()).put('/api/ivdr/clinical-evidence/7/results').send({
+      truePositive: 0, falsePositive: 0, trueNegative: 0, falseNegative: 0,
+      reason: 'zero-denominator qualification',
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.metrics).toMatchObject({
+      sensitivity: null, specificity: null, ppv: null, npv: null,
+      accuracy: null, prevalence: null, total: 0, calculationVersion: 'ivdr-2x2-v1',
+    });
+    const update = query.mock.calls.find((call) => String(call[0]).includes('UPDATE ivdr_clinical_evidence'));
+    expect(update?.[1]?.slice(1, 10)).toEqual([0, 0, 0, 0, null, null, null, null, null]);
+    expect(String(update?.[0])).toContain('INSERT INTO ivdr_evidence_result_history');
+    expect(update?.[1]?.[19]).toBe('42');
+  });
+
+  it('fails closed before persistence when actor attribution is absent', async () => {
+    const res = await request(app(5, false)).put('/api/ivdr/clinical-evidence/7/results').send({
+      truePositive: 1, falsePositive: 0, trueNegative: 1, falseNegative: 0,
+    });
+    expect(res.status).toBe(403);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('does not report success or write history for a missing tenant-scoped row', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app()).put('/api/ivdr/clinical-evidence/999/results').send({
+      truePositive: 1, falsePositive: 0, trueNegative: 1, falseNegative: 0,
+    });
+    expect(res.status).toBe(404);
+    expect(query).toHaveBeenCalledTimes(1);
   });
 });

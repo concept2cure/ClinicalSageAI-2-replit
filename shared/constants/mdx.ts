@@ -18,7 +18,7 @@
 
 /* ─── Pathway / program type ───────────────────────────────────────── */
 
-export const REGULATORY_PATHWAYS = ['k510', 'pma', 'cer'] as const;
+export const REGULATORY_PATHWAYS = ['k510', 'pma', 'cer', 'ivdr'] as const;
 export type RegulatoryPathway = typeof REGULATORY_PATHWAYS[number];
 
 /** Backend `regulatoryPath` column → kit pathway code. */
@@ -27,6 +27,8 @@ export const REGULATORY_PATH_TO_PATHWAY: Record<string, RegulatoryPathway> = {
   'de_novo': 'k510',
   'pma':     'pma',
   'cer':     'cer',
+  'ivd':     'ivdr',
+  'ivdr':    'ivdr',
 };
 
 /** Backend `programType` column → kit pathway code (null = non-MDX type). */
@@ -37,6 +39,9 @@ export const PROGRAM_TYPE_TO_PATHWAY: Record<string, RegulatoryPathway | null> =
   'DE_NOVO': 'k510',
   'PMA':     'pma',
   'CER':     'cer',
+  'IVD':     'ivdr',
+  'IVDR':    'ivdr',
+  'IVDR_TD': 'ivdr',
   /* Non-MDX program types — surfaces filter these out. */
   'IND': null,
   'NDA': null,
@@ -48,7 +53,15 @@ export const PATHWAY_LABEL: Record<RegulatoryPathway, string> = {
   k510: '510(k)',
   pma:  'PMA',
   cer:  'CER',
+  ivdr: 'IVDR',
 };
+
+export const MDX_DIAGNOSTICS_SURFACE_ID = 'device-diagnostics-workbench' as const;
+
+/** The only compatibility boundary for historical MDx surface identifiers. */
+export function resolveMdxSurfaceId(value: string): string {
+  return value === 'ivd' || value === 'ivdr' ? MDX_DIAGNOSTICS_SURFACE_ID : value;
+}
 
 /* ─── Program phase / stage ────────────────────────────────────────── */
 
@@ -172,7 +185,7 @@ export const STATUS_TO_KIT: Record<string, SignalKitStatus> = {
 
 /* ─── Submission packages ──────────────────────────────────────────── */
 
-export const SUBMISSION_PATHWAYS = ['510(k)', 'PMA', 'CER', 'EU MDR', 'IND'] as const;
+export const SUBMISSION_PATHWAYS = ['510(k)', 'PMA', 'CER', 'IVDR', 'EU MDR', 'IND'] as const;
 export type SubmissionPathway = typeof SUBMISSION_PATHWAYS[number];
 
 export const FAMILY_TO_SUBMISSION_PATHWAY: Record<string, SubmissionPathway> = {
@@ -180,7 +193,7 @@ export const FAMILY_TO_SUBMISSION_PATHWAY: Record<string, SubmissionPathway> = {
   '510(k)':  '510(k)',
   'pma':     'PMA',
   'cer':     'CER',
-  'ivdr_td': 'EU MDR',
+  'ivdr_td': 'IVDR',
   'eu_mdr':  'EU MDR',
   'ind':     'IND',
 };

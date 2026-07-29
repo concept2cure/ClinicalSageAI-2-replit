@@ -156,6 +156,45 @@ export interface Clinical2x2 {
   tn: number;
 }
 
+/** Canonical runtime-agnostic point estimates used by the existing stats
+ * engine, IVDR persistence routes, pack manifests, and the MDx client. */
+export const CLINICAL_2X2_CALCULATION_VERSION = 'ivdr-2x2-v1' as const;
+
+export interface Clinical2x2PointEstimates {
+  sensitivity: number | null;
+  specificity: number | null;
+  ppv: number | null;
+  npv: number | null;
+  accuracy: number | null;
+  prevalence: number | null;
+  total: number;
+  calculationVersion: typeof CLINICAL_2X2_CALCULATION_VERSION;
+}
+
+function safeRatio(numerator: number, denominator: number): number | null {
+  return denominator === 0 ? null : numerator / denominator;
+}
+
+export function calculateClinical2x2(cm: Clinical2x2): Clinical2x2PointEstimates {
+  for (const [name, value] of Object.entries(cm)) {
+    if (!Number.isSafeInteger(value) || value < 0) {
+      throw new RangeError(`${name} must be a non-negative safe integer`);
+    }
+  }
+  const total = cm.tp + cm.fp + cm.fn + cm.tn;
+  if (!Number.isSafeInteger(total)) throw new RangeError('diagnostic count total exceeds the safe integer range');
+  return {
+    sensitivity: safeRatio(cm.tp, cm.tp + cm.fn),
+    specificity: safeRatio(cm.tn, cm.tn + cm.fp),
+    ppv: safeRatio(cm.tp, cm.tp + cm.fp),
+    npv: safeRatio(cm.tn, cm.tn + cm.fn),
+    accuracy: safeRatio(cm.tp + cm.tn, total),
+    prevalence: safeRatio(cm.tp + cm.fn, total),
+    total,
+    calculationVersion: CLINICAL_2X2_CALCULATION_VERSION,
+  };
+}
+
 export interface WilsonCI {
   low: number;
   high: number;

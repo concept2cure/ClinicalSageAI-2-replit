@@ -17,9 +17,8 @@
  *   push `attach` events. The drawer's Activity tab subscribes to the same
  *   store, so the cross-surface round-trip is automatic.
  *
- * Per the canonical direction (kit is the only UI; no divergence), the seed
- * fixtures are the kit's verbatim — the store is the data model for the
- * pathway Files tab and dossier drawer.
+ * Kit fixtures are retained only for explicit sample mode. Importing this
+ * module never places fictional evidence in a live dossier.
  */
 
 import * as React from 'react';
@@ -443,8 +442,11 @@ function clearPathway(pathway: PathwayId): void {
 }
 
 function hydratePathway(pathway: PathwayId, docId: string | null, sections: HydrateSection[]): void {
-  if (!sections.length) return; // nothing from the backend → keep the fixtures
   clearPathway(pathway);
+  if (!sections.length) {
+    backendDocId.delete(pathway);
+    return;
+  }
   if (docId) backendDocId.set(pathway, docId); else backendDocId.delete(pathway);
   const touched: string[] = [];
   sections.forEach((s) => {
@@ -536,6 +538,17 @@ function seed(): void {
   });
 }
 
+function clearAllPathways(): void {
+  Object.keys(ROOTS).forEach(clearPathway);
+  backendDocId.clear();
+}
+
+/** Explicit demo boundary. Never call as a loading/error fallback. */
+function enableSampleFixtures(): void {
+  clearAllPathways();
+  seed();
+}
+
 /* ─────────────── Public API ─────────────── */
 
 export const DossierStore = {
@@ -557,6 +570,8 @@ export const DossierStore = {
   clearPathway,
   hydratePathway,
   getBackendDocId,
+  enableSampleFixtures,
+  clearAllPathways,
 };
 
 /** Subscribe a component to a single node path; re-renders on write. */
@@ -591,6 +606,6 @@ export function useSection(pathway: PathwayId, sectionId: string | number, label
   };
 }
 
-// Seed once at module load — fixtures (K510_ESTAR, PATHWAY_TABS_DATA) are
-// statically imported, so they are available synchronously.
-seed();
+// Deliberately no module-load seed: live, empty, loading, denied, and failed
+// customer workspaces all begin empty. useDossierHydration is the sole switch
+// that may install fixtures after explicit sample-mode opt-in.

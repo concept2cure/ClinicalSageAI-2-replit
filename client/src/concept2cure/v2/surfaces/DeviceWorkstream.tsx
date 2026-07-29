@@ -24,11 +24,16 @@ export const MDX_SURFACE_HASH: Record<string, string> = {
   'device-workstream': 'overview',
   'device-510k': 'k510',
   'device-cer': 'cer',
-  'device-diagnostics': 'ivd',
+  'device-diagnostics': 'device-diagnostics-workbench',
   'device-submission': 'submissions',
 };
 
+export function resolveDeviceWorkstreamSurface(surfaceId?: string): string {
+  if (!surfaceId) return 'overview';
+  return MDX_SURFACE_HASH[surfaceId] ?? surfaceId;
+}
+
 export function DeviceWorkstream({ surface }: SurfaceViewProps) {
-  const hash = MDX_SURFACE_HASH[surface?.id || 'device-workstream'] || 'overview';
+  const hash = resolveDeviceWorkstreamSurface(surface?.id);
   return <MdxRoute initialNav={hash} />;
 }

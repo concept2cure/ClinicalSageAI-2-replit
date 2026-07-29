@@ -59,7 +59,7 @@ interface ListPayload {
   data: ServerProgramRow[];
 }
 
-function deriveKitPathway(programType: string, regulatoryPath: string | null): ProgramPathway | null {
+export function deriveKitPathway(programType: string, regulatoryPath: string | null): ProgramPathway | null {
   if (regulatoryPath && REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()]) {
     return REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()] as ProgramPathway;
   }
