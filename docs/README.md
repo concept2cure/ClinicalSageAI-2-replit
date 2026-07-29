@@ -39,6 +39,7 @@ docs/
 ### Architecture
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Module boundaries and coding standards
 - [Architecture Remediation Epic](architecture/ARCHITECTURE_REMEDIATION_EPIC_2026-07-29.md) - Control plan and phase gates for enterprise/GxP readiness remediation
+- [Architecture Remediation Implementation Audit](architecture/ARCHITECTURE_REMEDIATION_IMPLEMENTATION_AUDIT_2026-07-29.md) - Findings, residual risks, and release blockers for the remediation work
 - [AGENT_ARCHITECTURE.md](AGENT_ARCHITECTURE.md) - AI agent system design
 - [CORTEX_PRIME_ARCHITECTURE.md](CORTEX_PRIME_ARCHITECTURE.md) - AI brain architecture
 

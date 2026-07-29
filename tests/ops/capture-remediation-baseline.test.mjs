@@ -61,6 +61,9 @@ test('compareManifests detects artifact drift and optionally enforces revision',
   const expected = {
     format: BASELINE_FORMAT,
     revision: 'one',
+    hashAlgorithm: 'sha256',
+    categories: {},
+    counts: {},
     artifacts: {
       'global-ri.openapi.json': { bytes: 1, sha256: 'a' },
       'removed.openapi.json': { bytes: 1, sha256: 'b' },
@@ -69,23 +72,46 @@ test('compareManifests detects artifact drift and optionally enforces revision',
   const actual = {
     format: BASELINE_FORMAT,
     revision: 'two',
+    hashAlgorithm: 'sha256',
+    categories: {},
+    counts: {},
     artifacts: {
       'global-ri.openapi.json': { bytes: 2, sha256: 'c' },
       'added.openapi.json': { bytes: 1, sha256: 'd' },
     },
   };
 
-  assert.deepEqual(compareManifests(expected, actual), [
+  const differences = compareManifests(expected, actual);
+  assert.deepEqual(differences.slice(0, 3), [
     'added: added.openapi.json',
     'changed: global-ri.openapi.json',
     'removed: removed.openapi.json',
   ]);
-  assert.deepEqual(compareManifests(expected, actual, { strictRevision: true }), [
+  assert.ok(differences.some(value => value.startsWith('category count mismatch:')));
+  assert.deepEqual(compareManifests(expected, actual, { strictRevision: true }).slice(0, 4), [
     'revision: expected one, found two',
     'added: added.openapi.json',
     'changed: global-ri.openapi.json',
     'removed: removed.openapi.json',
   ]);
+});
+
+test('compareManifests detects category-only and count drift', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'remediation-category-drift-'));
+  mkdirSync(path.join(root, 'server/services'), { recursive: true });
+  writeFileSync(path.join(root, 'server/services/toolRegistry.ts'), 'export const tools = [];\n');
+  const actual = buildManifest({
+    root,
+    files: ['server/services/toolRegistry.ts'],
+    revision: 'abc123',
+  });
+  const expected = structuredClone(actual);
+  expected.categories.aiToolRegistry = [];
+  expected.counts.aiToolRegistry = 99;
+
+  const differences = compareManifests(expected, actual);
+  assert.ok(differences.includes('category changed: aiToolRegistry'));
+  assert.ok(differences.includes('category count mismatch: aiToolRegistry'));
 });
 
 test('parseArgs requires exactly one operation', () => {

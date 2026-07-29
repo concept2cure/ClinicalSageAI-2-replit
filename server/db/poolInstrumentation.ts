@@ -39,17 +39,11 @@ const INFRASTRUCTURE_QUERIES = new Set<string>([
   "SELECT set_config('app.current_tenant_id', '', false)",
   "SELECT set_config('app.current_user_role', '', false)",
   "SELECT set_config('app.current_org_id', '', false)",
-  'BEGIN',
-  'COMMIT',
-  'ROLLBACK',
 ]);
 
 function isInfrastructureQuery(text: string | undefined): boolean {
   if (!text) return false;
   if (INFRASTRUCTURE_QUERIES.has(text)) return true;
-  // Tenant-context bootstrap calls — these run BEFORE the scope is in place
-  // by definition.
-  if (text.startsWith("SELECT set_config('app.current_")) return true;
   return false;
 }
 

@@ -167,6 +167,32 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
     expect(clientCalls).toHaveLength(0);
   });
 
+  it.each([
+    "SELECT set_config('app.current_tenant_id', $1, false)",
+    "SELECT set_config('app.current_user_role', $1, false)",
+    'BEGIN',
+    'COMMIT',
+    'ROLLBACK',
+  ])('does not exempt unsafe unscoped session/transaction SQL: %s', async sql => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, poolCalls } = makeMockPool();
+    await expect(pool.query(sql, ['attacker-controlled'])).rejects.toThrow(
+      /requires an active tenant scope/,
+    );
+    expect(poolCalls).toHaveLength(0);
+  });
+
+  it.each([
+    "SELECT set_config('app.current_tenant_id', '', false)",
+    "SELECT set_config('app.current_user_role', '', false)",
+    "SELECT set_config('app.current_org_id', '', false)",
+  ])('retains only the exact empty-value session reset exemption: %s', async sql => {
+    process.env.RLS_ENFORCE = 'on';
+    const { pool, poolCalls } = makeMockPool();
+    await pool.query(sql);
+    expect(poolCalls.map(call => call.text)).toEqual([sql]);
+  });
+
   it('releases the client after a scoped query (even on error) so no connection leaks', async () => {
     process.env.RLS_ENFORCE = 'on';
     const { pool, client } = makeMockPool();

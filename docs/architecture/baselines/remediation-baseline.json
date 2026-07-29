@@ -1,6 +1,6 @@
 {
   "format": "concept2cure.architecture-remediation-baseline/v1",
-  "revision": "cf3bb67e702e8d0d5dc730268b6991086834f343",
+  "revision": "30502868c43a0696b30603a27b6a80692c59a42b",
   "hashAlgorithm": "sha256",
   "categories": {
     "apiContracts": [
@@ -623,6 +623,7 @@
       "docs/architecture/ANA_DOCUMENT_STACK_SERVICE_BOUNDARIES.md",
       "docs/architecture/ANA_ONBOARDING_P2P3_SPEC.md",
       "docs/architecture/ARCHITECTURE_REMEDIATION_EPIC_2026-07-29.md",
+      "docs/architecture/ARCHITECTURE_REMEDIATION_IMPLEMENTATION_AUDIT_2026-07-29.md",
       "docs/architecture/C2C_2026_EXECUTION_REALITY_SYNC.md",
       "docs/architecture/C2C_CANONICAL_SERVICE_AND_STORE_MAP.md",
       "docs/architecture/C2C_ROUTE_SURFACE_CALLER_MATRIX.md",
@@ -683,7 +684,7 @@
     "commandRegistry": 2,
     "aiToolRegistry": 2,
     "schemaAndMigrations": 576,
-    "architectureControls": 80
+    "architectureControls": 81
   },
   "artifacts": {
     "AGENTS.md": {
@@ -2049,6 +2050,10 @@
     "docs/architecture/ARCHITECTURE_REMEDIATION_EPIC_2026-07-29.md": {
       "bytes": 24036,
       "sha256": "4426af9e1b854df4d2c304300e0ed677f56ca2a432fc63ac018fd634cc90d2a1"
+    },
+    "docs/architecture/ARCHITECTURE_REMEDIATION_IMPLEMENTATION_AUDIT_2026-07-29.md": {
+      "bytes": 9723,
+      "sha256": "e7ee9ead49494bb618e5ba1cf0a6fc5eaa8a7e84a8b66e95dd3b8bf8dc74fa35"
     },
     "docs/architecture/C2C_2026_EXECUTION_REALITY_SYNC.md": {
       "bytes": 15995,

@@ -87,6 +87,9 @@ export function compareManifests(expected, actual, { strictRevision = false } = 
     differences.push(`unsupported baseline format: ${expected.format ?? '<missing>'}`);
     return differences;
   }
+  if (expected.hashAlgorithm !== 'sha256' || actual.hashAlgorithm !== 'sha256') {
+    differences.push('hashAlgorithm must be sha256');
+  }
   if (strictRevision && expected.revision !== actual.revision) {
     differences.push(`revision: expected ${expected.revision}, found ${actual.revision}`);
   }
@@ -102,6 +105,17 @@ export function compareManifests(expected, actual, { strictRevision = false } = 
     else if (!after) differences.push(`removed: ${file}`);
     else if (before.sha256 !== after.sha256 || before.bytes !== after.bytes) {
       differences.push(`changed: ${file}`);
+    }
+  }
+
+  for (const category of Object.keys(CATEGORY_RULES).sort()) {
+    const before = expected.categories?.[category] ?? [];
+    const after = actual.categories?.[category] ?? [];
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+      differences.push(`category changed: ${category}`);
+    }
+    if (expected.counts?.[category] !== after.length || actual.counts?.[category] !== after.length) {
+      differences.push(`category count mismatch: ${category}`);
     }
   }
   return differences;
