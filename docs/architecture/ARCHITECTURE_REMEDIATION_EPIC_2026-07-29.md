@@ -116,6 +116,12 @@ not require the capture commit to equal `HEAD`, because committing the manifest
 necessarily advances the branch. Recapture is an explicit baseline approval,
 not an automatic CI repair.
 
+For an approval candidate, start from a clean reviewed revision and run
+`npm run architecture:baseline:release`. This variant refuses capture when any
+tracked or untracked non-ignored file is present, preventing draft contracts
+from entering release evidence. Committing the newly generated manifest is the
+subsequent reviewed baseline-change step.
+
 ### Phase 1 — Security and multi-tenant integrity (P0)
 
 #### Tenant context and RLS contract
@@ -366,8 +372,8 @@ applicable earlier gates and the final acceptance criteria below.
 | Control | Revision status | Executable evidence | Scope note |
 |---|---|---|---|
 | REM-103 production startup posture | Implemented; evidence review pending | `npx vitest run --config vitest.config.ts server/db/__tests__/rlsEnforcement.test.ts server/config/__tests__/environment.test.ts` | Production now unconditionally rejects missing, invalid, `off`, and `shadow` modes; this does not by itself prove every table policy is correct |
-| REM-102 contaminated connection disposal | Implemented; evidence review pending | `npx vitest run --config vitest.config.ts server/db/__tests__/poolInstrumentation-tenant-scope.test.ts` | Promise/callback pool paths and supported transaction aliases apply tenant scope; rollback failures, tenant-context initialization failures, failed transaction cleanup, and release with an open transaction destroy rather than recycle the connection; live pool leak testing remains outstanding |
-| REM-101 request database fallback removal | Implemented for canonical request helpers and instrumented pool; wider entry-point inventory pending | `npx vitest run --config vitest.config.ts server/db/__tests__/requestDb.test.ts server/db/__tests__/poolInstrumentation-tenant-scope.test.ts` | `requestDb`/`getRequestDbClient` reject missing request clients, and non-infrastructure promise/callback pool operations reject missing tenant scope while RLS is on; route-mount and non-HTTP entry-point review remains outstanding |
+| REM-102 contaminated connection disposal | Implemented; evidence review pending | `npx vitest run --config vitest.config.ts server/db/__tests__/poolInstrumentation-tenant-scope.test.ts server/middleware/__tests__/lazy-request-db-client.test.ts` | Promise/callback pool paths and the lazy request client destroy connections after uncertain setup/cleanup; supported transaction aliases apply tenant scope; live driver leak/failure testing remains outstanding |
+| REM-101 request database fallback removal | Implemented for canonical request helpers and instrumented pool; wider entry-point inventory pending | `npx vitest run --config vitest.config.ts server/db/__tests__/requestDb.test.ts server/db/__tests__/poolInstrumentation-tenant-scope.test.ts server/middleware/__tests__/tenantContext-bootstrap.contract.test.ts` | Request helpers reject missing clients, pool operations reject missing scope, and authentication establishes a JWT-claimed bootstrap scope before membership authorization; route-mount and non-HTTP entry-point review remains outstanding |
 
 Estimates are intentionally absent until Phase 0 establishes scope and owners
 decompose these controls into implementation issues. Assigning dates before the

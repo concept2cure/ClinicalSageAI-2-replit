@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import {
   BASELINE_FORMAT,
+  assertCleanWorktree,
   buildManifest,
   categorizeFiles,
   compareManifests,
@@ -114,12 +116,27 @@ test('compareManifests detects category-only and count drift', () => {
   assert.ok(differences.includes('category count mismatch: aiToolRegistry'));
 });
 
+test('assertCleanWorktree rejects tracked and untracked release inputs', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'remediation-clean-tree-'));
+  execFileSync('git', ['init', '-q'], { cwd: root });
+  execFileSync('git', ['config', 'user.email', 'audit@example.invalid'], { cwd: root });
+  execFileSync('git', ['config', 'user.name', 'Audit Test'], { cwd: root });
+  writeFileSync(path.join(root, 'tracked.txt'), 'approved\n');
+  execFileSync('git', ['add', 'tracked.txt'], { cwd: root });
+  execFileSync('git', ['commit', '-qm', 'baseline'], { cwd: root });
+
+  assert.doesNotThrow(() => assertCleanWorktree(root));
+  writeFileSync(path.join(root, 'draft.txt'), 'unreviewed\n');
+  assert.throws(() => assertCleanWorktree(root), /requires a clean Git worktree/);
+});
+
 test('parseArgs requires exactly one operation', () => {
   assert.deepEqual(parseArgs(['--output', 'baseline.json']), {
     output: 'baseline.json',
     verify: null,
     root: process.cwd(),
     strictRevision: false,
+    requireClean: false,
   });
   assert.throws(() => parseArgs([]), /one of --output/);
   assert.throws(
@@ -131,4 +148,19 @@ test('parseArgs requires exactly one operation', () => {
     () => parseArgs(['--output', 'one.json', '--strict-revision']),
     /requires --verify/,
   );
+  assert.throws(
+    () => parseArgs(['--verify', 'baseline.json', '--require-clean']),
+    /only valid with --output/,
+  );
+  expectParseReleaseMode();
 });
+
+function expectParseReleaseMode() {
+  assert.deepEqual(parseArgs(['--output', 'baseline.json', '--require-clean']), {
+    output: 'baseline.json',
+    verify: null,
+    root: process.cwd(),
+    strictRevision: false,
+    requireClean: true,
+  });
+}

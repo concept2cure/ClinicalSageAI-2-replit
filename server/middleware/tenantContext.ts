@@ -215,15 +215,39 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const tenant = await db
-      .select({
-        id: organizations.id,
-        industryMode: organizations.industryMode,
-        status: organizations.status,
-      })
-      .from(organizations)
-      .where(eq(organizations.id, orgIdInt))
-      .limit(1);
+    // Bootstrap the database scope from the signed JWT organization claim
+    // before querying tenant/membership records. The claim is not sufficient
+    // authorization by itself—the membership query below still decides that—
+    // but scoping to the claimed tenant prevents the instrumented pool's
+    // fail-closed guard from turning every production request into a 401 when
+    // RLS_ENFORCE=on.
+    const bootstrap = {
+      tenantId: organizationId,
+      orgUuid: decoded.organizationUuid || null,
+      role: null,
+      source: 'request' as const,
+      caller: `${req.path}:tenant-bootstrap`,
+    };
+
+    const { tenant, membership } = await runWithTenantScope(bootstrap, async () => {
+      const tenantRows = await db
+        .select({
+          id: organizations.id,
+          industryMode: organizations.industryMode,
+          status: organizations.status,
+        })
+        .from(organizations)
+        .where(eq(organizations.id, orgIdInt))
+        .limit(1);
+
+      const membershipRows = await db
+        .select({ role: organizationUsers.role })
+        .from(organizationUsers)
+        .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, orgIdInt)))
+        .limit(1);
+
+      return { tenant: tenantRows, membership: membershipRows };
+    });
 
     if (!tenant.length || tenant[0].status === 'suspended') {
       return res.status(401).json({
@@ -231,12 +255,6 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
         message: 'Tenant not active',
       });
     }
-
-    const membership = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, orgIdInt)))
-      .limit(1);
 
     if (!membership.length) {
       return res.status(403).json({

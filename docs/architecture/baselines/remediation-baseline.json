@@ -1,6 +1,6 @@
 {
   "format": "concept2cure.architecture-remediation-baseline/v1",
-  "revision": "30502868c43a0696b30603a27b6a80692c59a42b",
+  "revision": "f3c62486c4812c1c621e86510f262bfc3696e16c",
   "hashAlgorithm": "sha256",
   "categories": {
     "apiContracts": [
@@ -2048,12 +2048,12 @@
       "sha256": "25ff9a6557148e3cfb3373c279312b17019b53908d27626509562a84eb52af49"
     },
     "docs/architecture/ARCHITECTURE_REMEDIATION_EPIC_2026-07-29.md": {
-      "bytes": 24036,
-      "sha256": "4426af9e1b854df4d2c304300e0ed677f56ca2a432fc63ac018fd634cc90d2a1"
+      "bytes": 24437,
+      "sha256": "4f3df83fdf2e529b7c9d7aa950541c083cc7709cb77d21701d47ae57f7155a24"
     },
     "docs/architecture/ARCHITECTURE_REMEDIATION_IMPLEMENTATION_AUDIT_2026-07-29.md": {
-      "bytes": 9723,
-      "sha256": "e7ee9ead49494bb618e5ba1cf0a6fc5eaa8a7e84a8b66e95dd3b8bf8dc74fa35"
+      "bytes": 10856,
+      "sha256": "32f27b9280b6ec090d44a92c0f20ba45ba760920a813a4c8f7db276e3dda5394"
     },
     "docs/architecture/C2C_2026_EXECUTION_REALITY_SYNC.md": {
       "bytes": 15995,

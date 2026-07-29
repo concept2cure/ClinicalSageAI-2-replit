@@ -81,6 +81,14 @@ export function captureRepository(root) {
   return buildManifest({ root, files, revision });
 }
 
+export function assertCleanWorktree(root) {
+  const status = git(root, ['status', '--porcelain', '--untracked-files=all']);
+  if (status) {
+    const paths = status.split('\n').slice(0, 10).join(', ');
+    throw new Error(`approval-grade baseline requires a clean Git worktree; found: ${paths}`);
+  }
+}
+
 export function compareManifests(expected, actual, { strictRevision = false } = {}) {
   const differences = [];
   if (expected.format !== BASELINE_FORMAT) {
@@ -122,7 +130,13 @@ export function compareManifests(expected, actual, { strictRevision = false } = 
 }
 
 export function parseArgs(argv) {
-  const options = { output: null, verify: null, root: process.cwd(), strictRevision: false };
+  const options = {
+    output: null,
+    verify: null,
+    root: process.cwd(),
+    strictRevision: false,
+    requireClean: false,
+  };
   const readValue = (arg, index) => {
     const value = argv[index + 1];
     if (!value || value.startsWith('--')) throw new Error(`${arg} requires a value`);
@@ -134,6 +148,7 @@ export function parseArgs(argv) {
     else if (arg === '--verify') options.verify = readValue(arg, index++);
     else if (arg === '--root') options.root = readValue(arg, index++);
     else if (arg === '--strict-revision') options.strictRevision = true;
+    else if (arg === '--require-clean') options.requireClean = true;
     else throw new Error(`unknown argument: ${arg}`);
   }
   if (options.output && options.verify) throw new Error('use either --output or --verify, not both');
@@ -143,12 +158,16 @@ export function parseArgs(argv) {
   if (options.strictRevision && !options.verify) {
     throw new Error('--strict-revision requires --verify');
   }
+  if (options.requireClean && !options.output) {
+    throw new Error('--require-clean is only valid with --output');
+  }
   return options;
 }
 
 function main(argv) {
   const options = parseArgs(argv);
   const root = path.resolve(options.root);
+  if (options.requireClean) assertCleanWorktree(root);
   const current = captureRepository(root);
 
   if (options.output) {

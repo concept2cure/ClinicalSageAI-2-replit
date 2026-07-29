@@ -96,6 +96,31 @@ describe('LazyRequestDbClient', () => {
     );
     expect(clearCalls).toHaveLength(3);
     expect(pool.__client.release).toHaveBeenCalledTimes(1);
+    expect(pool.__client.release).toHaveBeenCalledWith(undefined);
+  });
+
+  it('destroys the connection when tenant session setup fails', async () => {
+    const pool = makeFakePool();
+    const setupError = new Error('second session variable failed');
+    const lazy = new LazyRequestDbClient(pool as any, async client => {
+      await client.query("SELECT set_config('app.current_tenant_id', '42', false)");
+      throw setupError;
+    });
+
+    await expect(lazy.query('SELECT 1')).rejects.toThrow(setupError.message);
+    expect(pool.__client.release).toHaveBeenCalledWith(setupError);
+  });
+
+  it('destroys the connection when tenant session cleanup fails', async () => {
+    const pool = makeFakePool();
+    const cleanupError = new Error('reset failed');
+    const lazy = new LazyRequestDbClient(pool as any, async () => {});
+
+    await lazy.query('SELECT 1');
+    pool.__client.query.mockRejectedValueOnce(cleanupError);
+    await lazy.release();
+
+    expect(pool.__client.release).toHaveBeenCalledWith(cleanupError);
   });
 
   it('throws when query() is called after release()', async () => {

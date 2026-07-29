@@ -64,7 +64,10 @@ export class LazyRequestDbClient implements RequestDbClient {
         try {
           await this.applySessionVars(client);
         } catch (err) {
-          client.release();
+          // Session setup can fail after one or more tenant variables were
+          // written. Passing the error to pg destroys the connection instead
+          // of returning partially scoped session state to the pool.
+          client.release(err instanceof Error ? err : new Error('tenant session setup failed'));
           throw err;
         }
         return client;
@@ -86,16 +89,19 @@ export class LazyRequestDbClient implements RequestDbClient {
       return;
     }
 
+    let releaseError: Error | undefined;
     try {
       await client.query("SELECT set_config('app.current_tenant_id', '', false)");
       await client.query("SELECT set_config('app.current_user_role', '', false)");
       await client.query("SELECT set_config('app.current_org_id', '', false)");
     } catch (err) {
+      releaseError = err instanceof Error ? err : new Error('tenant session cleanup failed');
       logger.warn('Failed to clear tenant session vars on release', {
-        error: (err as Error).message,
+        error: releaseError.message,
       });
     } finally {
-      client.release();
+      // A connection with unverifiable cleanup must never be recycled.
+      client.release(releaseError);
     }
   }
 }
