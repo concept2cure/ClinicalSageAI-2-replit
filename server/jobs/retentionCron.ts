@@ -33,6 +33,7 @@ import {
 // job-level events. Typed via the adjacent audit-logger.d.ts.
 import { logSystemEvent, logAction } from '../utils/audit-logger.js';
 import { reportSecurityAlert } from '../services/security-alerts';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 type VaultDocument = typeof vaultDocuments.$inferSelect;
 type RetentionPolicy = typeof vaultRetentionPolicies.$inferSelect;
@@ -92,61 +93,68 @@ async function archiveDocument(doc: VaultDocument): Promise<void> {
  * errors (those are counted and the sweep continues).
  */
 export async function runRetentionSweep(): Promise<RetentionSummary> {
-  const summary: RetentionSummary = {
-    scanned: 0,
-    archived: 0,
-    softDeleted: 0,
-    hardDeleted: 0,
-    errors: 0,
-  };
+  return runWithSystemTenantScope('retention-sweep', async () => {
+    const summary: RetentionSummary = {
+      scanned: 0,
+      archived: 0,
+      softDeleted: 0,
+      hardDeleted: 0,
+      errors: 0,
+    };
 
-  const [expired, policies] = await Promise.all([findExpiredDocuments(), loadPolicies()]);
-  summary.scanned = expired.length;
+    const [expired, policies] = await Promise.all([findExpiredDocuments(), loadPolicies()]);
+    summary.scanned = expired.length;
 
-  for (const doc of expired) {
-    try {
-      const policy = doc.retentionPolicy ? policies.get(doc.retentionPolicy) : undefined;
-      const archiveBeforeDelete = policy ? policy.archiveBeforeDelete : DEFAULT_BEHAVIOR.archiveBeforeDelete;
-      const hardDelete = policy ? policy.hardDelete : DEFAULT_BEHAVIOR.hardDelete;
+    for (const doc of expired) {
+      try {
+        const policy = doc.retentionPolicy ? policies.get(doc.retentionPolicy) : undefined;
+        const archiveBeforeDelete = policy
+          ? policy.archiveBeforeDelete
+          : DEFAULT_BEHAVIOR.archiveBeforeDelete;
+        const hardDelete = policy ? policy.hardDelete : DEFAULT_BEHAVIOR.hardDelete;
 
-      if (archiveBeforeDelete) {
-        await archiveDocument(doc);
-        summary.archived += 1;
+        if (archiveBeforeDelete) {
+          await archiveDocument(doc);
+          summary.archived += 1;
+        }
+
+        if (hardDelete) {
+          await db.delete(vaultDocuments).where(eq(vaultDocuments.id, doc.id));
+          summary.hardDeleted += 1;
+        } else {
+          await db
+            .update(vaultDocuments)
+            .set({ deletedAt: new Date() })
+            .where(and(eq(vaultDocuments.id, doc.id), isNull(vaultDocuments.deletedAt)));
+          summary.softDeleted += 1;
+        }
+
+        logAction({
+          action: hardDelete ? 'document.retention_hard_delete' : 'document.retention_soft_delete',
+          userId: 'system',
+          username: 'retention-job',
+          entityType: 'vault_document',
+          entityId: doc.id,
+          details: {
+            programId: doc.programId,
+            documentCode: doc.documentCode,
+            retentionPolicy: doc.retentionPolicy ?? null,
+            policyMatched: Boolean(policy),
+            retentionUntil: doc.retentionUntil,
+            archived: archiveBeforeDelete,
+          },
+        });
+      } catch (error) {
+        summary.errors += 1; // per-document best-effort; keep sweeping
+        console.error(
+          `[RETENTION] Failed to process document ${doc.id}:`,
+          error instanceof Error ? error.message : error
+        );
       }
-
-      if (hardDelete) {
-        await db.delete(vaultDocuments).where(eq(vaultDocuments.id, doc.id));
-        summary.hardDeleted += 1;
-      } else {
-        await db
-          .update(vaultDocuments)
-          .set({ deletedAt: new Date() })
-          .where(and(eq(vaultDocuments.id, doc.id), isNull(vaultDocuments.deletedAt)));
-        summary.softDeleted += 1;
-      }
-
-      logAction({
-        action: hardDelete ? 'document.retention_hard_delete' : 'document.retention_soft_delete',
-        userId: 'system',
-        username: 'retention-job',
-        entityType: 'vault_document',
-        entityId: doc.id,
-        details: {
-          programId: doc.programId,
-          documentCode: doc.documentCode,
-          retentionPolicy: doc.retentionPolicy ?? null,
-          policyMatched: Boolean(policy),
-          retentionUntil: doc.retentionUntil,
-          archived: archiveBeforeDelete,
-        },
-      });
-    } catch (error) {
-      summary.errors += 1; // per-document best-effort; keep sweeping
-      console.error(`[RETENTION] Failed to process document ${doc.id}:`, error instanceof Error ? error.message : error);
     }
-  }
 
-  return summary;
+    return summary;
+  });
 }
 
 /** Best-effort admin notification. Recipients come from RETENTION_ADMIN_EMAILS

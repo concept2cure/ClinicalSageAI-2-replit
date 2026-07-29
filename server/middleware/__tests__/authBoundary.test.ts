@@ -11,11 +11,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import {
-  createAuthBoundary,
-  isPublicApiPath,
-  resolveAuthBoundaryMode,
-} from '../authBoundary';
+import { createAuthBoundary, isPublicApiPath, resolveAuthBoundaryMode } from '../authBoundary';
 
 function mockReq(overrides: Partial<Request> = {}): Request {
   return { method: 'GET', baseUrl: '', path: '/', ...overrides } as Request;
@@ -67,7 +63,9 @@ describe('isPublicApiPath', () => {
 
 describe('resolveAuthBoundaryMode', () => {
   it('enforces in production by default', () => {
-    expect(resolveAuthBoundaryMode({ NODE_ENV: 'production' } as NodeJS.ProcessEnv)).toBe('enforce');
+    expect(resolveAuthBoundaryMode({ NODE_ENV: 'production' } as NodeJS.ProcessEnv)).toBe(
+      'enforce'
+    );
   });
 
   it('warns in staging and dev/test by default (soak, never silent-open in prod)', () => {
@@ -78,10 +76,16 @@ describe('resolveAuthBoundaryMode', () => {
 
   it('honours an explicit AUTH_BOUNDARY_MODE override both ways', () => {
     expect(
-      resolveAuthBoundaryMode({ NODE_ENV: 'production', AUTH_BOUNDARY_MODE: 'warn' } as NodeJS.ProcessEnv)
+      resolveAuthBoundaryMode({
+        NODE_ENV: 'production',
+        AUTH_BOUNDARY_MODE: 'warn',
+      } as NodeJS.ProcessEnv)
     ).toBe('warn');
     expect(
-      resolveAuthBoundaryMode({ NODE_ENV: 'development', AUTH_BOUNDARY_MODE: 'enforce' } as NodeJS.ProcessEnv)
+      resolveAuthBoundaryMode({
+        NODE_ENV: 'development',
+        AUTH_BOUNDARY_MODE: 'enforce',
+      } as NodeJS.ProcessEnv)
     ).toBe('enforce');
   });
 });
@@ -134,10 +138,38 @@ describe('createAuthBoundary', () => {
     const authenticate = vi.fn(rejectingAuth);
     const next = vi.fn() as unknown as NextFunction;
     const res = mockRes();
-    createAuthBoundary({ authenticate })(mockReq({ baseUrl: '/api', path: '/control-plane' }), res, next);
+    createAuthBoundary({ authenticate })(
+      mockReq({ baseUrl: '/api', path: '/control-plane' }),
+      res,
+      next
+    );
     expect(authenticate).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('installs tenant execution context only after authentication succeeds', () => {
+    process.env.AUTH_BOUNDARY_MODE = 'enforce';
+    const order: string[] = [];
+    const authenticate: RequestHandler = (req, _res, next) => {
+      order.push('authenticate');
+      req.user = { id: 7, userId: 7, organizationId: 42, role: 'member' };
+      next();
+    };
+    const establishTenantContext = vi.fn((_req, _res, next) => {
+      order.push('tenant-context');
+      next();
+    });
+    const next = vi.fn(() => order.push('route')) as unknown as NextFunction;
+
+    createAuthBoundary({ authenticate, establishTenantContext })(
+      mockReq({ baseUrl: '/api', path: '/documents' }),
+      mockRes(),
+      next
+    );
+
+    expect(order).toEqual(['authenticate', 'tenant-context', 'route']);
+    expect(establishTenantContext).toHaveBeenCalledTimes(1);
   });
 
   it('warn mode lets an unauthenticated protected request through and logs once per route', () => {

@@ -17,6 +17,7 @@ import { db } from '../db';
 import { factBindings } from '../../shared/schema/living-record-spine';
 import { runDriftSentinel } from '../services/living-record/reconciliation-engine';
 import { createScopedLogger } from '../utils/logger';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('drift-sentinel');
 
@@ -29,21 +30,26 @@ export interface DriftSweepSummary {
 
 /** One sweep across every program that has at least one fact binding. */
 export async function runDriftSentinelSweep(): Promise<DriftSweepSummary> {
-  const rows = await db
-    .selectDistinct({ programId: factBindings.programId })
-    .from(factBindings);
+  return runWithSystemTenantScope('drift-sentinel-sweep', async () => {
+    const rows = await db.selectDistinct({ programId: factBindings.programId }).from(factBindings);
 
-  const summary: DriftSweepSummary = { programs: rows.length, driftDetected: 0, healed: 0, errors: 0 };
-  for (const r of rows) {
-    try {
-      const report = await runDriftSentinel(r.programId);
-      summary.driftDetected += report.driftDetected;
-      summary.healed += report.healed;
-    } catch {
-      summary.errors += 1; // per-program best-effort; keep sweeping
+    const summary: DriftSweepSummary = {
+      programs: rows.length,
+      driftDetected: 0,
+      healed: 0,
+      errors: 0,
+    };
+    for (const r of rows) {
+      try {
+        const report = await runDriftSentinel(r.programId);
+        summary.driftDetected += report.driftDetected;
+        summary.healed += report.healed;
+      } catch {
+        summary.errors += 1; // per-program best-effort; keep sweeping
+      }
     }
-  }
-  return summary;
+    return summary;
+  });
 }
 
 const DEFAULT_INTERVAL_MS = 1000 * 60 * 60; // hourly
@@ -67,7 +73,7 @@ export function startDriftSentinelSchedule(intervalMs: number = DEFAULT_INTERVAL
   }
   if (timer) return;
   timer = setInterval(() => {
-    void runDriftSentinelSweep().catch((err) => {
+    void runDriftSentinelSweep().catch(err => {
       // Best-effort sweep, but a silent failure means drift detection has
       // gone dark — log it so ops can see the schedule is failing.
       logger.error(`scheduled sweep failed: ${err?.message ?? err}`);

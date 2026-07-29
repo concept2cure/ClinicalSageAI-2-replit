@@ -71,7 +71,10 @@ describe('requireTenantContext bootstrap scope contract', () => {
     const tenantLookup = source.indexOf('.from(organizations)', bootstrapIndex);
     const membershipLookup = source.indexOf('.from(organizationUsers)', tenantLookup);
     const membershipDecision = source.indexOf('if (!membership.length)', membershipLookup);
-    const resolvedRole = source.indexOf('const resolvedRole = membership[0].role', membershipDecision);
+    const resolvedRole = source.indexOf(
+      'const resolvedRole = membership[0].role',
+      membershipDecision
+    );
     const downstreamScope = source.indexOf('role: resolvedRole || null', resolvedRole);
 
     expect(bootstrapIndex).toBeGreaterThan(-1);
@@ -80,5 +83,15 @@ describe('requireTenantContext bootstrap scope contract', () => {
     expect(membershipDecision).toBeGreaterThan(membershipLookup);
     expect(resolvedRole).toBeGreaterThan(membershipDecision);
     expect(downstreamScope).toBeGreaterThan(resolvedRole);
+  });
+});
+
+describe('organization membership availability posture', () => {
+  const source = readFileSync('server/middleware/orgMembership.ts', 'utf8');
+
+  it('fails closed when live membership cannot be verified', () => {
+    expect(source).toContain("code: 'AUTH_010'");
+    expect(source).toContain('sendMembershipIndeterminate(res)');
+    expect(source).not.toContain('allowing on JWT claims (fail-open)');
   });
 });

@@ -18,7 +18,7 @@ vi.mock('../runtime', () => ({
 }));
 
 import { withTenantConnection } from '../withTenantConnection';
-import { getTenantScope } from '../tenantStore';
+import { getTenantScope, runWithSystemTenantScope } from '../tenantStore';
 
 beforeEach(() => {
   fakeClient.query.mockReset();
@@ -28,16 +28,23 @@ beforeEach(() => {
 });
 
 describe('withTenantConnection', () => {
+  it('provides a named, least-privilege system scope for cross-tenant jobs', async () => {
+    await runWithSystemTenantScope('test-sweep', async () => {
+      expect(getTenantScope()).toEqual({
+        tenantId: '0',
+        role: 'app_super_admin',
+        source: 'job',
+        caller: 'test-sweep',
+      });
+    });
+  });
   it('sets app.current_tenant_id, app.current_org_id, and app.current_user_role before the callback runs', async () => {
     let queriesAtCallbackTime: any[] = [];
-    await withTenantConnection(
-      { tenantId: 42, orgUuid: 'uuid-x', role: 'member' },
-      async () => {
-        // Snapshot the query log at callback time so we know the SET
-        // happened BEFORE us, not after.
-        queriesAtCallbackTime = [...fakeClient.query.mock.calls];
-      }
-    );
+    await withTenantConnection({ tenantId: 42, orgUuid: 'uuid-x', role: 'member' }, async () => {
+      // Snapshot the query log at callback time so we know the SET
+      // happened BEFORE us, not after.
+      queriesAtCallbackTime = [...fakeClient.query.mock.calls];
+    });
 
     const sets = queriesAtCallbackTime.map(c => c[0]);
     expect(sets).toContain("SELECT set_config('app.current_tenant_id', $1, false)");
@@ -53,12 +60,9 @@ describe('withTenantConnection', () => {
 
   it('makes the tenant scope visible to getTenantScope inside the callback', async () => {
     let scopeInside: ReturnType<typeof getTenantScope>;
-    await withTenantConnection(
-      { tenantId: '7', source: 'cli', caller: 'test' },
-      async () => {
-        scopeInside = getTenantScope();
-      }
-    );
+    await withTenantConnection({ tenantId: '7', source: 'cli', caller: 'test' }, async () => {
+      scopeInside = getTenantScope();
+    });
     expect(scopeInside?.tenantId).toBe('7');
     expect(scopeInside?.source).toBe('cli');
     expect(scopeInside?.caller).toBe('test');
@@ -77,16 +81,28 @@ describe('withTenantConnection', () => {
     );
     expect(cleared.length).toBe(1);
     expect(fakeClient.release).toHaveBeenCalledTimes(1);
+    expect(fakeClient.release).toHaveBeenCalledWith(undefined);
+  });
+
+  it('destroys the connection when session cleanup fails', async () => {
+    const cleanupError = new Error('cleanup failed');
+    fakeClient.query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockRejectedValueOnce(cleanupError);
+
+    await withTenantConnection({ tenantId: '1' }, async () => undefined);
+    expect(fakeClient.release).toHaveBeenCalledWith(cleanupError);
   });
 
   it('passes role="app_super_admin" through to the session var (cross-tenant scan path)', async () => {
-    await withTenantConnection(
-      { tenantId: '0', role: 'app_super_admin' },
-      async () => undefined
-    );
+    await withTenantConnection({ tenantId: '0', role: 'app_super_admin' }, async () => undefined);
 
     const setRole = fakeClient.query.mock.calls.find(
-      c => c[0] === "SELECT set_config('app.current_user_role', $1, false)" && c[1]?.[0] === 'app_super_admin'
+      c =>
+        c[0] === "SELECT set_config('app.current_user_role', $1, false)" &&
+        c[1]?.[0] === 'app_super_admin'
     );
     expect(setRole, 'super-admin role must be propagated to the connection').toBeDefined();
   });

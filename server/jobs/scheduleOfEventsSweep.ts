@@ -18,8 +18,12 @@
  * @module server/jobs/scheduleOfEventsSweep
  */
 
-import { listActiveSchedulePlans, reviewScheduleHealth } from '../services/projects/schedule-of-events';
+import {
+  listActiveSchedulePlans,
+  reviewScheduleHealth,
+} from '../services/projects/schedule-of-events';
 import { createScopedLogger } from '../utils/logger.js';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('schedule-of-events-sweep');
 
@@ -33,33 +37,41 @@ export interface ScheduleSweepSummary {
 
 /** One sweep across every active schedule of events. */
 export async function runScheduleOfEventsSweep(): Promise<ScheduleSweepSummary> {
-  const summary: ScheduleSweepSummary = { schedules: 0, reviewed: 0, tasksCreated: 0, alertsCreated: 0, errors: 0 };
-  let plans: Array<{ scheduleId: number; orgId: number; projectId: number }>;
-  try {
-    plans = await listActiveSchedulePlans();
-  } catch {
-    // Tables not migrated yet, or transient DB error — treat as no work.
-    return summary;
-  }
-  summary.schedules = plans.length;
-  for (const p of plans) {
+  return runWithSystemTenantScope('schedule-of-events-sweep', async () => {
+    const summary: ScheduleSweepSummary = {
+      schedules: 0,
+      reviewed: 0,
+      tasksCreated: 0,
+      alertsCreated: 0,
+      errors: 0,
+    };
+    let plans: Array<{ scheduleId: number; orgId: number; projectId: number }>;
     try {
-      const result = await reviewScheduleHealth({
-        orgId: p.orgId,
-        projectId: p.projectId,
-        apply: true,
-        triggeredBy: 'scheduler',
-      });
-      if (result.ok) {
-        summary.reviewed += 1;
-        summary.tasksCreated += result.tasksCreated;
-        summary.alertsCreated += result.alertsCreated;
-      }
+      plans = await listActiveSchedulePlans();
     } catch {
-      summary.errors += 1; // per-project best-effort
+      // Tables not migrated yet, or transient DB error — treat as no work.
+      return summary;
     }
-  }
-  return summary;
+    summary.schedules = plans.length;
+    for (const p of plans) {
+      try {
+        const result = await reviewScheduleHealth({
+          orgId: p.orgId,
+          projectId: p.projectId,
+          apply: true,
+          triggeredBy: 'scheduler',
+        });
+        if (result.ok) {
+          summary.reviewed += 1;
+          summary.tasksCreated += result.tasksCreated;
+          summary.alertsCreated += result.alertsCreated;
+        }
+      } catch {
+        summary.errors += 1; // per-project best-effort
+      }
+    }
+    return summary;
+  });
 }
 
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000; // every 6 hours

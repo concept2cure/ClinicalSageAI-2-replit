@@ -16,27 +16,96 @@
  *
  * Apply the migration first: psql ... -f migrations/20260612_rls_research_admin.sql
  */
-import { pool } from '../../server/db';
+import { Pool } from 'pg';
+import { RLS_ALLOWLIST } from '../../server/db/rlsAllowlist';
 
-let pass = 0, fail = 0;
-function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
+const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('TEST_DATABASE_URL or DATABASE_URL is required');
+// Deliberately uninstrumented verifier connection: this harness must switch
+// tenant/session variables itself to test the database policy, not the app shim.
+const pool = new Pool({ connectionString: databaseUrl });
 
-const NEW_TABLES = ['grant_awards', 'effort_certifications', 'coi_disclosures', 'research_personnel', 'grant_closeout_records', 'grant_subawards', 'iacuc_protocols', 'irb_submissions'];
+let pass = 0,
+  fail = 0;
+function ok(cond: boolean, msg: string) {
+  if (cond) {
+    pass++;
+    console.log('  ✓', msg);
+  } else {
+    fail++;
+    console.log('  ✗ FAIL:', msg);
+  }
+}
+
+const NEW_TABLES = [
+  'grant_awards',
+  'effort_certifications',
+  'coi_disclosures',
+  'research_personnel',
+  'grant_closeout_records',
+  'grant_subawards',
+  'iacuc_protocols',
+  'irb_submissions',
+];
 const set = (k: string, v: string) => `SELECT set_config('${k}', '${v}', true)`;
 const INS = (org: number, num: string) =>
   `INSERT INTO grant_awards (organization_id, award_number, funding_agency, status, created_by) VALUES (${org}, '${num}', 'nih', 'active', 1)`;
 
 async function main() {
-  await pool.query(`INSERT INTO organizations(id,name) VALUES (1,'Org A'),(2,'Org B') ON CONFLICT DO NOTHING`);
+  await pool.query(
+    `INSERT INTO organizations(id,name) VALUES (1,'Org A'),(2,'Org B') ON CONFLICT DO NOTHING`
+  );
   await pool.query(`INSERT INTO users(id,email) VALUES (1,'u@x') ON CONFLICT DO NOTHING`);
 
   console.log('\n[RLS] coverage — research-admin tables now carry tenant_isolation_policy');
+  const policyMatrix = await pool.query(
+    `WITH tenant_tables AS (
+       SELECT c.table_schema, c.table_name
+       FROM information_schema.columns c
+       WHERE c.column_name IN ('organization_id', 'org_id', 'tenant_id')
+         AND c.table_schema NOT IN ('pg_catalog', 'information_schema')
+         AND c.table_name <> ALL($1::text[])
+       GROUP BY c.table_schema, c.table_name
+     )
+     SELECT t.table_schema, t.table_name,
+            pc.relrowsecurity AS enabled,
+            pc.relforcerowsecurity AS forced,
+            p.cmd, p.qual, p.with_check
+     FROM tenant_tables t
+     JOIN pg_namespace pn ON pn.nspname = t.table_schema
+     JOIN pg_class pc ON pc.relnamespace = pn.oid AND pc.relname = t.table_name
+     LEFT JOIN pg_policies p ON p.schemaname = t.table_schema
+       AND p.tablename = t.table_name AND p.policyname = 'tenant_isolation_policy'
+     ORDER BY t.table_schema, t.table_name`,
+    [RLS_ALLOWLIST]
+  );
+  const incomplete = policyMatrix.rows.filter(
+    row => row.enabled !== true || row.forced !== true || !row.cmd || !row.qual || !row.with_check
+  );
+  ok(policyMatrix.rows.length > 0, `discovered ${policyMatrix.rows.length} tenant-bearing tables`);
+  ok(
+    incomplete.length === 0,
+    `every non-allowlisted tenant table has ENABLE+FORCE RLS and USING/WITH CHECK ` +
+      `(incomplete: ${
+        incomplete.map(row => `${row.table_schema}.${row.table_name}`).join(', ') || 'none'
+      })`
+  );
   const covered = await pool.query(
-    `SELECT count(DISTINCT tablename)::int n FROM pg_policies WHERE policyname='tenant_isolation_policy' AND tablename = ANY($1)`, [NEW_TABLES]);
-  ok(covered.rows[0].n === NEW_TABLES.length, `all ${NEW_TABLES.length} sampled research-admin tables have the policy (have ${covered.rows[0].n}) — run the migration if this fails`);
+    `SELECT count(DISTINCT tablename)::int n FROM pg_policies WHERE policyname='tenant_isolation_policy' AND tablename = ANY($1)`,
+    [NEW_TABLES]
+  );
+  ok(
+    covered.rows[0].n === NEW_TABLES.length,
+    `all ${NEW_TABLES.length} sampled research-admin tables have the policy (have ${covered.rows[0].n}) — run the migration if this fails`
+  );
   const forced = await pool.query(
-    `SELECT bool_and(relrowsecurity) e, bool_and(relforcerowsecurity) f FROM pg_class WHERE relname = ANY($1)`, [NEW_TABLES]);
-  ok(forced.rows[0].e === true && forced.rows[0].f === true, 'RLS is ENABLED + FORCED on them (owner is not exempt)');
+    `SELECT bool_and(relrowsecurity) e, bool_and(relforcerowsecurity) f FROM pg_class WHERE relname = ANY($1)`,
+    [NEW_TABLES]
+  );
+  ok(
+    forced.rows[0].e === true && forced.rows[0].f === true,
+    'RLS is ENABLED + FORCED on them (owner is not exempt)'
+  );
 
   console.log('\n[RLS] shadow mode (enforcement off) — existing behavior is unbroken');
   const shadow = await pool.query(`SELECT count(*)::int n FROM grant_awards`);
@@ -53,28 +122,58 @@ async function main() {
     await c.query(INS(1, 'RLS-A1'));
     let checkBlocked = false;
     await c.query('SAVEPOINT sp');
-    try { await c.query(INS(2, 'RLS-B-bad')); }
-    catch (e: any) { checkBlocked = /row-level security|policy/i.test(e.message); await c.query('ROLLBACK TO SAVEPOINT sp'); }
+    try {
+      await c.query(INS(2, 'RLS-B-bad'));
+    } catch (e: any) {
+      checkBlocked = /row-level security|policy/i.test(e.message);
+      await c.query('ROLLBACK TO SAVEPOINT sp');
+    }
     ok(checkBlocked, 'WITH CHECK blocks writing an org-2 row under org-1 context');
-    ok((await c.query(`SELECT count(*)::int n FROM grant_awards WHERE organization_id <> 1`)).rows[0].n === 0, 'org-1 context sees ZERO non-org-1 rows');
+    ok(
+      (await c.query(`SELECT count(*)::int n FROM grant_awards WHERE organization_id <> 1`)).rows[0]
+        .n === 0,
+      'org-1 context sees ZERO non-org-1 rows'
+    );
 
     // Org 2 context.
     await c.query(set('app.current_tenant_id', '2'));
     await c.query(INS(2, 'RLS-B2'));
-    ok((await c.query(`SELECT count(*)::int n FROM grant_awards WHERE award_number='RLS-A1'`)).rows[0].n === 0, 'org-2 context cannot see the org-1 row (isolation)');
-    ok((await c.query(`SELECT count(*)::int n FROM grant_awards WHERE organization_id <> 2`)).rows[0].n === 0, 'org-2 context sees ZERO non-org-2 rows');
+    ok(
+      (await c.query(`SELECT count(*)::int n FROM grant_awards WHERE award_number='RLS-A1'`))
+        .rows[0].n === 0,
+      'org-2 context cannot see the org-1 row (isolation)'
+    );
+    ok(
+      (await c.query(`SELECT count(*)::int n FROM grant_awards WHERE organization_id <> 2`)).rows[0]
+        .n === 0,
+      'org-2 context sees ZERO non-org-2 rows'
+    );
 
     // Back to org 1: the org-2 row is invisible (isolation both directions).
     await c.query(set('app.current_tenant_id', '1'));
-    ok((await c.query(`SELECT count(*)::int n FROM grant_awards WHERE award_number='RLS-B2'`)).rows[0].n === 0, 'org-1 context cannot see the org-2 row (both directions)');
+    ok(
+      (await c.query(`SELECT count(*)::int n FROM grant_awards WHERE award_number='RLS-B2'`))
+        .rows[0].n === 0,
+      'org-1 context cannot see the org-2 row (both directions)'
+    );
 
     // No tenant context → fail-closed.
     await c.query(set('app.current_tenant_id', ''));
-    ok((await c.query(`SELECT count(*)::int n FROM grant_awards`)).rows[0].n === 0, 'enforcement on + NO tenant context → zero rows (fail-closed)');
+    ok(
+      (await c.query(`SELECT count(*)::int n FROM grant_awards`)).rows[0].n === 0,
+      'enforcement on + NO tenant context → zero rows (fail-closed)'
+    );
 
     // Super-admin role bypasses isolation (sees both tenants' seeded rows).
     await c.query(set('app.current_user_role', 'app_super_admin'));
-    ok((await c.query(`SELECT count(*)::int n FROM grant_awards WHERE award_number IN ('RLS-A1','RLS-B2')`)).rows[0].n === 2, 'app_super_admin role bypasses isolation (sees both tenants)');
+    ok(
+      (
+        await c.query(
+          `SELECT count(*)::int n FROM grant_awards WHERE award_number IN ('RLS-A1','RLS-B2')`
+        )
+      ).rows[0].n === 2,
+      'app_super_admin role bypasses isolation (sees both tenants)'
+    );
 
     await c.query('ROLLBACK'); // undo enforcement vars + seed rows; DB returns to shadow mode
   } catch (e) {
@@ -89,23 +188,33 @@ async function main() {
   // The production helper the governed routes call right after BEGIN. With it set,
   // a domain write under enforcement succeeds for the right tenant and is blocked
   // for another — i.e. enforcement can be turned on without breaking the new domains.
-  const { setTenantContextTx } = await import('../../server/services/tenant/governed-tenant-context');
+  const { setTenantContextTx } = await import(
+    '../../server/services/tenant/governed-tenant-context'
+  );
   const gc = await pool.connect();
   try {
     await gc.query('BEGIN');
     await gc.query(set('app.rls_enforce', 'on'));
     await setTenantContextTx(gc, 1); // exactly what server/routes/*.ts governed() now does
     const ins = await gc.query(INS(1, 'RLS-GOV') + ' RETURNING id');
-    ok(ins.rows.length === 1, 'governed-style write under setTenantContextTx + enforcement succeeds for the tenant');
+    ok(
+      ins.rows.length === 1,
+      'governed-style write under setTenantContextTx + enforcement succeeds for the tenant'
+    );
     let blocked = false;
     await gc.query('SAVEPOINT s');
-    try { await gc.query(INS(2, 'RLS-GOV-bad')); }
-    catch (e: any) { blocked = /row-level security|policy/i.test(e.message); await gc.query('ROLLBACK TO SAVEPOINT s'); }
+    try {
+      await gc.query(INS(2, 'RLS-GOV-bad'));
+    } catch (e: any) {
+      blocked = /row-level security|policy/i.test(e.message);
+      await gc.query('ROLLBACK TO SAVEPOINT s');
+    }
     ok(blocked, 'the same governed context cannot write another tenant row (WITH CHECK)');
     await gc.query('ROLLBACK');
   } catch (e) {
     await gc.query('ROLLBACK').catch(() => undefined);
-    console.error('HARNESS ERROR (governed path)', e); fail++;
+    console.error('HARNESS ERROR (governed path)', e);
+    fail++;
   } finally {
     gc.release();
   }
@@ -114,4 +223,7 @@ async function main() {
   await pool.end();
   process.exit(fail === 0 ? 0 : 1);
 }
-main().catch((e) => { console.error('HARNESS ERROR', e); process.exit(2); });
+main().catch(e => {
+  console.error('HARNESS ERROR', e);
+  process.exit(2);
+});

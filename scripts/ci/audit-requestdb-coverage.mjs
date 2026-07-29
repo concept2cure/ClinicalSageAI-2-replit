@@ -2,16 +2,15 @@
 /**
  * CI Guard: request-scoped DB adoption (RLS readiness).
  *
- * Multi-tenant isolation relies on Postgres Row-Level Security. RLS only
- * filters on a connection that has the tenant session vars set, and those
- * are only set on the request-scoped client exposed by `requestDb(req)`
- * (see server/db/requestDb.ts + server/middleware/lazyRequestDbClient.ts).
+ * Multi-tenant isolation relies on Postgres Row-Level Security. Protected JWT
+ * routes receive AsyncLocalStorage scope at the global auth boundary, and the
+ * instrumented pool applies that scope automatically. `requestDb(req)` remains
+ * the explicit request-pinned path and is preferred for multi-statement work.
  *
- * A route handler that queries through the shared pool-bound `db` / `getDb()`
- * runs on a random idle connection with NO tenant context, so once
- * RLS_ENFORCE=on those queries either return zero rows (tenant tables) or —
- * worse, pre-enforcement — read across tenants. Every tenant-facing route
- * must move from `db` to `requestDb(req)` before the enforcement flip.
+ * Shared-pool use is therefore classified rather than automatically unsafe:
+ * JWT-bound routes are auto-scoped; pre-tenant/alternative-auth routes must
+ * establish an explicit scope; anything else is unclassified and release-
+ * blocking.
  *
  * This gate measures that migration and ratchets it: it fails when a NEW
  * route file reaches for the shared pool, so new code is forced onto the
@@ -73,6 +72,15 @@ const ALLOWLIST_FILES = new Set([
   'server/routes/setup.ts',
 ]);
 
+const EXPLICIT_PRE_TENANT_SCOPE_FILES = new Set([
+  // Mounted before the auth boundary; signature verification + explicit
+  // system audit scope live in the route.
+  'server/routes/firecrawl-webhooks.ts',
+  // SAML resolves the organization before a JWT exists; the router installs a
+  // named pre-tenant system scope and validates the signed IdP response.
+  'server/routes/sso.ts',
+]);
+
 const ROUTES_DIR = path.join(repoRoot, 'server', 'routes');
 
 // ─── Detection ───────────────────────────────────────────────────────────────
@@ -123,21 +131,37 @@ for (const file of walk(ROUTES_DIR)) {
 onSharedPool.sort();
 usingRequestDb.sort();
 
+const classifications = {
+  jwtBoundaryAutoScoped: onSharedPool.filter(file => !EXPLICIT_PRE_TENANT_SCOPE_FILES.has(file)),
+  explicitPreTenantScope: onSharedPool.filter(file => EXPLICIT_PRE_TENANT_SCOPE_FILES.has(file)),
+  unclassified: [],
+};
+
 const summary = {
   generatedAt: new Date().toISOString(),
   routeFilesTouchingDb,
   usingRequestDb: usingRequestDb.length,
   onSharedPool: onSharedPool.length,
+  classifications: {
+    jwtBoundaryAutoScoped: classifications.jwtBoundaryAutoScoped.length,
+    explicitPreTenantScope: classifications.explicitPreTenantScope.length,
+    unclassified: classifications.unclassified.length,
+  },
 };
 
 // ─── Output ────────────────────────────────────────────────────────────────
 if (stdoutJson) {
-  process.stdout.write(JSON.stringify({ summary, onSharedPool, usingRequestDb }, null, 2) + '\n');
+  process.stdout.write(
+    JSON.stringify({ summary, onSharedPool, usingRequestDb, classifications }, null, 2) + '\n'
+  );
 } else {
   console.log('[ci:requestdb-coverage] RLS request-scoped DB adoption');
   console.log(`  route files touching the DB : ${routeFilesTouchingDb}`);
   console.log(`  using requestDb(req)        : ${usingRequestDb.length}`);
   console.log(`  still on the shared pool    : ${onSharedPool.length} (migration backlog)`);
+  console.log(`    JWT boundary auto-scoped  : ${classifications.jwtBoundaryAutoScoped.length}`);
+  console.log(`    explicit pre-tenant scope : ${classifications.explicitPreTenantScope.length}`);
+  console.log(`    unclassified              : ${classifications.unclassified.length}`);
 }
 
 // ─── Baseline + no-regression ────────────────────────────────────────────────
@@ -146,6 +170,7 @@ if (writeBaseline) {
   const baseline = {
     generatedAt: summary.generatedAt,
     onSharedPool: onSharedPool.slice().sort(),
+    classifications,
   };
   fs.writeFileSync(baselinePath, JSON.stringify(baseline, null, 2) + '\n');
   console.log(
@@ -158,8 +183,10 @@ if (writeBaseline) {
 if (strictNoRegression) {
   if (!fs.existsSync(baselinePath)) {
     console.error(
-      `[ci:requestdb-coverage] FAIL — baseline not found at ${path.relative(repoRoot, baselinePath)}. ` +
-        'Run with --write-baseline first.'
+      `[ci:requestdb-coverage] FAIL — baseline not found at ${path.relative(
+        repoRoot,
+        baselinePath
+      )}. ` + 'Run with --write-baseline first.'
     );
     process.exit(1);
   }

@@ -76,31 +76,37 @@ export async function withTenantConnection<T>(
   };
 
   const pool = getPool();
-  const client = await pool.connect();
-
-  try {
-    // Set session vars on the dedicated connection. `false` makes them
-    // session-level (persists for the connection's life), matching the
-    // pattern in tenantContext middleware. They are cleared in the
-    // `finally` below to be safe in case the connection comes back into
-    // the pool (it does — release() returns it).
-    await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [tenantId]);
-    await client.query("SELECT set_config('app.current_org_id', $1, false)", [opts.orgUuid ?? '']);
-    await client.query("SELECT set_config('app.current_user_role', $1, false)", [opts.role ?? '']);
-
-    return await runWithTenantScope(scope, () => fn(client));
-  } finally {
+  return runWithTenantScope(scope, async () => {
+    const client = await pool.connect();
+    let releaseError: Error | undefined;
     try {
-      await client.query("SELECT set_config('app.current_tenant_id', '', false)");
-      await client.query("SELECT set_config('app.current_org_id', '', false)");
-      await client.query("SELECT set_config('app.current_user_role', '', false)");
-    } catch (cleanupErr) {
-      // Best-effort. If the connection is already broken the release will
-      // discard it anyway.
-      logger.warn('Failed to clear tenant session vars on release', {
-        error: (cleanupErr as Error).message,
-      });
+      // Set session vars on the dedicated connection. `false` makes them
+      // session-level (persists for the connection's life), matching the
+      // pattern in tenantContext middleware. They are cleared in the
+      // `finally` below to be safe in case the connection comes back into
+      // the pool (it does — release() returns it).
+      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [tenantId]);
+      await client.query("SELECT set_config('app.current_org_id', $1, false)", [
+        opts.orgUuid ?? '',
+      ]);
+      await client.query("SELECT set_config('app.current_user_role', $1, false)", [
+        opts.role ?? '',
+      ]);
+
+      return await fn(client);
+    } finally {
+      try {
+        await client.query("SELECT set_config('app.current_tenant_id', '', false)");
+        await client.query("SELECT set_config('app.current_org_id', '', false)");
+        await client.query("SELECT set_config('app.current_user_role', '', false)");
+      } catch (cleanupErr) {
+        releaseError =
+          cleanupErr instanceof Error ? cleanupErr : new Error('tenant connection cleanup failed');
+        logger.warn('Failed to clear tenant session vars on release; destroying connection', {
+          error: releaseError.message,
+        });
+      }
+      client.release(releaseError);
     }
-    client.release();
-  }
+  });
 }

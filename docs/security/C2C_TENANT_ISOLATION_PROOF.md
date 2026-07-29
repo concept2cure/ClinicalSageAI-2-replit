@@ -91,15 +91,19 @@ stores, and no such claim should be made externally.
 
 The existing checks are ratchets, not declarations of zero risk:
 
-- `npm run ci:tenant-isolation:no-regression` currently reports **25** baseline
-  candidate raw-SQL statements. Passing means no new fingerprint was added; each
-  candidate still requires remediation or a narrow documented justification.
+- `npm run ci:tenant-isolation:no-regression` reports **25** baseline candidate
+  raw-SQL statements. Every candidate has a narrow disposition in
+  `docs/reports/tenant-isolation-justifications.md`, and the justification parity
+  gate rejects missing or stale rows.
 - `node scripts/ci/audit-requestdb-coverage.mjs` currently reports **96** route
   files touching the database, **16** using `requestDb(req)`, and **77** still on
-  the shared pool.
-- `requireTenantContext` is not globally mounted. The fail-closed pool prevents
-  unscoped execution when enforcement is on, but unconverted routes may fail for
-  clients until middleware/adoption work is complete.
+  the shared pool. The baseline classifies all 77: **75** inherit the verified JWT
+  tenant boundary, **2** establish an explicit pre-tenant scope, and **0** remain
+  unclassified. The shared-pool list remains a migration ratchet, not an isolation
+  bypass list.
+- The global auth boundary now installs the tenant ALS scope and lazy request DB
+  client after successful authentication. API-key, SAML, Firecrawl, and Stripe
+  entry points establish explicit scopes rather than depending on ambient state.
 - Mock tests prove that cleanup paths call `release(error)`; live PostgreSQL tests
   are still required to prove driver destruction/replacement, connection reuse,
   policy `USING`/`WITH CHECK`, cancellation, and concurrent tenant switching.
