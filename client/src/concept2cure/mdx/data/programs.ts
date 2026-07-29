@@ -8,7 +8,7 @@
  */
 
 export type ProgramStatus = 'idle' | 'active' | 'blocked' | 'complete';
-export type ProgramPathway = 'k510' | 'pma' | 'cer';
+export type ProgramPathway = 'k510' | 'pma' | 'cer' | 'ivdr';
 export type DueTone = 'ok' | 'warn' | 'err';
 
 export interface Program {
