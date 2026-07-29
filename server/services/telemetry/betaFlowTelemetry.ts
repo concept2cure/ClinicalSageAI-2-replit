@@ -27,6 +27,7 @@ const errorEvents: ErrorEvent[] = [];
 const resetEvents: ResetEvent[] = [];
 const MAX_ERROR_EVENTS = 200;
 const MAX_RESET_EVENTS = 50;
+const MAX_TELEMETRY_PATH_LENGTH = 512;
 
 const FLOW_ORDER: FlowKey[] = [
   'onboarding',
@@ -41,8 +42,18 @@ for (const flow of FLOW_ORDER) {
   counters.set(flow, { requests: 0, errors: 0, totalDurationMs: 0 });
 }
 
+/** Keep beta telemetry free of query-string credentials and unbounded URLs. */
+export function normalizeBetaTelemetryPath(url: string): string {
+  const rawPath = String(url || '').split(/[?#]/, 1)[0] || '/';
+  return rawPath.slice(0, MAX_TELEMETRY_PATH_LENGTH);
+}
+
+function matchesPathFamily(path: string, prefix: string): boolean {
+  return path === prefix || path.startsWith(`${prefix}/`);
+}
+
 export function classifyBetaFlow(method: string, url: string): FlowKey {
-  const path = (url || '').toLowerCase();
+  const path = normalizeBetaTelemetryPath(url).toLowerCase();
   const verb = method.toUpperCase();
 
   if (
@@ -54,28 +65,32 @@ export function classifyBetaFlow(method: string, url: string): FlowKey {
   }
 
   if (
-    path.startsWith('/api/projects') ||
-    path.startsWith('/api/device-projects') ||
+    matchesPathFamily(path, '/api/projects') ||
+    matchesPathFamily(path, '/api/device-projects') ||
+    (verb === 'POST' && /^\/api\/concept2cure\/projects\/?$/.test(path)) ||
     path.includes('/project-bootstrap') ||
     path.includes('/bootstrap')
   ) {
     return 'project_creation';
   }
 
+  // Export is checked before authoring because many export endpoints are
+  // nested below document/artifact route families.
+  if (path.includes('/export') || matchesPathFamily(path, '/api/submit')) {
+    return 'exports';
+  }
+
   if (
-    path.startsWith('/api/documents') ||
-    path.startsWith('/api/authoring') ||
-    path.startsWith('/api/coauthor') ||
-    path.startsWith('/api/authoring-actions')
+    matchesPathFamily(path, '/api/documents') ||
+    matchesPathFamily(path, '/api/authoring') ||
+    matchesPathFamily(path, '/api/coauthor') ||
+    matchesPathFamily(path, '/api/authoring-actions') ||
+    /^\/api\/concept2cure\/projects\/[^/]+\/artifacts(?:\/|$)/.test(path)
   ) {
     return 'authoring';
   }
 
-  if (path.includes('/export') || path.startsWith('/api/submit')) {
-    return 'exports';
-  }
-
-  if (verb === 'GET' && path.startsWith('/api/ops/beta-telemetry')) {
+  if (verb === 'GET' && matchesPathFamily(path, '/api/ops/beta-telemetry')) {
     return 'other';
   }
 
@@ -93,15 +108,17 @@ export function recordBetaFlowEvent(
   target.totalDurationMs += Math.max(0, durationMs);
   if (statusCode >= 500) {
     target.errors += 1;
-    const errorBucket = counters.get('route_errors')!;
-    errorBucket.requests += 1;
-    errorBucket.errors += 1;
-    errorBucket.totalDurationMs += Math.max(0, durationMs);
+    if (flow !== 'route_errors') {
+      const errorBucket = counters.get('route_errors')!;
+      errorBucket.requests += 1;
+      errorBucket.errors += 1;
+      errorBucket.totalDurationMs += Math.max(0, durationMs);
+    }
 
     errorEvents.push({
       at: new Date().toISOString(),
       method: String(context?.method || 'UNKNOWN').toUpperCase(),
-      path: String(context?.path || ''),
+      path: normalizeBetaTelemetryPath(String(context?.path || '')),
       statusCode,
       flow,
       durationMs: Math.max(0, durationMs),
