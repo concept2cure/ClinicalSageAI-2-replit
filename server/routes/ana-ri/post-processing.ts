@@ -55,7 +55,7 @@ export interface StreamPostProcessingContext {
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
   collectedProvenance: ProvenanceRecord[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
-  collectedDrafts: { title: string; content: string; documentType?: string }[];
+  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
   /** Gateway message history built for the turn (for working-memory write-back). */
   messages: GatewayMessage[];
   model: string | undefined;
@@ -78,7 +78,7 @@ async function persistCollectedDrafts(args: {
   streamProjectId: string | number | null | undefined;
   userId: number | undefined;
   threadId: string | undefined;
-  collectedDrafts: { title: string; content: string; documentType?: string }[];
+  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
 }): Promise<void> {
   const { res, orgId, streamProjectId, userId, threadId, collectedDrafts } = args;
   const projectId =
@@ -101,6 +101,7 @@ async function persistCollectedDrafts(args: {
         title: draft.title,
         content: draft.content,
         documentType: draft.documentType,
+        reasonForChange: draft.reasonForChange,
       });
       if (saved.created) {
         res.write(
