@@ -96,6 +96,60 @@ describe('LazyRequestDbClient', () => {
     );
     expect(clearCalls).toHaveLength(3);
     expect(pool.__client.release).toHaveBeenCalledTimes(1);
+    expect(pool.__client.release).toHaveBeenCalledWith(undefined);
+  });
+
+  it('evicts the client when applying tenant session vars fails', async () => {
+    const pool = makeFakePool();
+    const setupError = new Error('session setup failed');
+    const lazy = new LazyRequestDbClient(pool as any, async () => {
+      throw setupError;
+    });
+
+    await expect(lazy.query('SELECT 1')).rejects.toBe(setupError);
+
+    expect(pool.__client.release).toHaveBeenCalledTimes(1);
+    expect(pool.__client.release).toHaveBeenCalledWith(setupError);
+    expect(pool.__client.query).not.toHaveBeenCalledWith('SELECT 1');
+  });
+
+  it('evicts the client when clearing any tenant session var fails', async () => {
+    const pool = makeFakePool();
+    const cleanupError = new Error('reset failed');
+    const lazy = new LazyRequestDbClient(pool as any, async () => {});
+
+    await lazy.query('SELECT 1');
+    pool.__client.query.mockRejectedValueOnce(cleanupError);
+    await lazy.release();
+
+    expect(pool.__client.release).toHaveBeenCalledTimes(1);
+    expect(pool.__client.release).toHaveBeenCalledWith(cleanupError);
+  });
+
+  it('does not offer a cleanup-failed client to the next tenant borrower', async () => {
+    const first = makeFakeClient();
+    const second = makeFakeClient();
+    let reusable: FakePoolClient | undefined = first;
+    const pool = {
+      connect: vi.fn(async () => {
+        const selected = reusable ?? second;
+        selected.release.mockImplementation((error?: Error) => {
+          reusable = error ? undefined : selected;
+        });
+        return selected;
+      }),
+    };
+
+    const tenantA = new LazyRequestDbClient(pool as any, async () => {});
+    await tenantA.query('SELECT tenant_a');
+    first.query.mockRejectedValueOnce(new Error('reset failed'));
+    await tenantA.release();
+
+    const tenantB = new LazyRequestDbClient(pool as any, async () => {});
+    await tenantB.query('SELECT tenant_b');
+
+    expect(first.release).toHaveBeenCalledWith(expect.any(Error));
+    expect(second.query).toHaveBeenCalledWith('SELECT tenant_b');
   });
 
   it('throws when query() is called after release()', async () => {

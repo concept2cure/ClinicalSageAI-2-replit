@@ -65,9 +65,10 @@ describe('withTenantConnection', () => {
   });
 
   it('clears the session vars and releases the client even when the callback throws', async () => {
+    const callbackError = new Error('boom');
     await expect(
       withTenantConnection({ tenantId: '1' }, async () => {
-        throw new Error('boom');
+        throw callbackError;
       })
     ).rejects.toThrow('boom');
 
@@ -77,6 +78,32 @@ describe('withTenantConnection', () => {
     );
     expect(cleared.length).toBe(1);
     expect(fakeClient.release).toHaveBeenCalledTimes(1);
+    expect(fakeClient.release).toHaveBeenCalledWith(callbackError);
+  });
+
+  it('evicts when tenant session setup fails partway through', async () => {
+    const setupError = new Error('setup failed');
+    fakeClient.query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockRejectedValueOnce(setupError);
+
+    await expect(
+      withTenantConnection({ tenantId: '1' }, async () => 'unreachable'),
+    ).rejects.toBe(setupError);
+
+    expect(fakeClient.release).toHaveBeenCalledWith(setupError);
+  });
+
+  it('evicts when tenant session cleanup fails', async () => {
+    const cleanupError = new Error('cleanup failed');
+    fakeClient.query.mockImplementation(async (sql: string) => {
+      if (sql === "SELECT set_config('app.current_tenant_id', '', false)") throw cleanupError;
+      return { rows: [], rowCount: 0 };
+    });
+
+    await withTenantConnection({ tenantId: '1' }, async () => 'ok');
+
+    expect(fakeClient.release).toHaveBeenCalledWith(cleanupError);
   });
 
   it('passes role="app_super_admin" through to the session var (cross-tenant scan path)', async () => {
@@ -101,5 +128,6 @@ describe('withTenantConnection', () => {
   it('returns the callback result', async () => {
     const out = await withTenantConnection({ tenantId: '1' }, async () => ({ ok: true }));
     expect(out).toEqual({ ok: true });
+    expect(fakeClient.release).toHaveBeenCalledWith(undefined);
   });
 });
