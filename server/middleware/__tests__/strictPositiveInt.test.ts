@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 vi.mock('../../db', () => ({ db: { select: vi.fn() }, getPool: vi.fn() }));
 vi.mock('../../db/tenantStore', () => ({ runWithTenantScope: vi.fn() }));
@@ -59,5 +60,25 @@ describe('getRequestDbClient', () => {
 
   it.each([undefined, null, {}])('fails closed for an invalid request client: %j', dbClient => {
     expect(() => getRequestDbClient({ dbClient } as any)).toThrow(/requires tenant context/);
+  });
+});
+
+describe('requireTenantContext bootstrap scope contract', () => {
+  const source = readFileSync('server/middleware/tenantContext.ts', 'utf8');
+
+  it('scopes tenant and membership lookups but authorizes from membership', () => {
+    const bootstrapIndex = source.indexOf('runWithTenantScope(bootstrap');
+    const tenantLookup = source.indexOf('.from(organizations)', bootstrapIndex);
+    const membershipLookup = source.indexOf('.from(organizationUsers)', tenantLookup);
+    const membershipDecision = source.indexOf('if (!membership.length)', membershipLookup);
+    const resolvedRole = source.indexOf('const resolvedRole = membership[0].role', membershipDecision);
+    const downstreamScope = source.indexOf('role: resolvedRole || null', resolvedRole);
+
+    expect(bootstrapIndex).toBeGreaterThan(-1);
+    expect(tenantLookup).toBeGreaterThan(bootstrapIndex);
+    expect(membershipLookup).toBeGreaterThan(tenantLookup);
+    expect(membershipDecision).toBeGreaterThan(membershipLookup);
+    expect(resolvedRole).toBeGreaterThan(membershipDecision);
+    expect(downstreamScope).toBeGreaterThan(resolvedRole);
   });
 });

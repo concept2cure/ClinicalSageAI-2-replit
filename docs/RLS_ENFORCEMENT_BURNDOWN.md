@@ -1,6 +1,7 @@
 # RLS Enforcement Burndown — runway to `RLS_ENFORCE=on`
 
-Status: **analysis / planning** (no enforcement flip in this doc).
+Status: **implementation / evidence review** (production boot now requires enforcement;
+route, worker, and live-policy coverage remain incomplete).
 Owner: unassigned. Relates to `GA_READINESS_PLAN.md` item **0.1** (highest severity).
 
 This is the map for turning on Postgres Row-Level Security as tenant-isolation
@@ -14,27 +15,32 @@ RLS boot-posture hardening, PR #1042).
 | Piece | State | Where |
 |---|---|---|
 | RLS policy installed (compiles to no-op unless `app.rls_enforce='on'`) | ✅ done | migrations; `server/db/tenantRls.ts` |
-| Three-knob rollout `RLS_ENFORCE=off\|shadow\|on` + per-connection `app.rls_enforce` | ✅ done | `server/db/rlsEnforcement.ts` |
-| Prod fail-closed boot posture (explicit decision required; `RLS_REQUIRE_ENFORCE`) | ✅ done (#1042) | `server/db/rlsEnforcement.ts` |
+| Three-knob local/test rollout `RLS_ENFORCE=off\|shadow\|on` + per-connection `app.rls_enforce` | ✅ done; production accepts canonical `on` only | `server/db/rlsEnforcement.ts` |
+| Prod fail-closed boot posture | ✅ done; missing, invalid, `off`, and `shadow` refuse startup | `server/db/rlsEnforcement.ts`; `server/config/environment.ts` |
 | Observability shim: counts queries with no tenant scope (`tenant_session_var_missing_total`, labeled by caller) | ✅ done | `server/db/poolInstrumentation.ts` |
 | AsyncLocalStorage tenant scope (`runWithTenantScope` / `getTenantScope`) | ✅ done | `server/db/tenantStore.ts` |
-| Request middleware establishes scope + per-request scoped client | ✅ done, but **mounted on one route only** | `server/middleware/tenantContext.ts` |
+| Request middleware establishes bootstrap scope, verifies membership, then installs a per-request scoped client | ✅ primitive; **mounted on one route only** | `server/middleware/tenantContext.ts` |
 | `withTenantConnection` (dedicated scoped client for jobs/scripts) | ✅ exists, **~1 caller** | `server/db/withTenantConnection.ts`; only `server/services/memory-consolidation-job.ts` |
-| Request-scoped drizzle over the tenant client (`requestDb(req)` / `getDb(req)`) | ✅ **exists**, low adoption | `server/db/requestDb.ts`, `server/db/tenantDbHelper.ts` |
+| Request-scoped drizzle over the tenant client (`requestDb(req)` / `getDb(req)`) | ✅ exists and fails closed if middleware omitted; low adoption | `server/db/requestDb.ts`, `server/db/tenantDbHelper.ts` |
+| Shared-pool automatic scoping | ✅ promise/callback paths implemented; missing scope blocked when enforcement is on | `server/db/poolInstrumentation.ts` |
+| Connection poisoning after uncertain tenant setup/cleanup | ✅ mock-tested for pool and lazy request clients | `server/db/poolInstrumentation.ts`; `server/middleware/lazyRequestDbClient.ts` |
 | Scope **adopted** across all request routes + jobs/workers | ❌ not done | the burndown |
 
 ## The real gap: adoption, not a missing primitive
 
-`db` (drizzle) is built over the **pool** (`server/db/runtime.ts:120`), whose
-connections carry `app.rls_enforce` but **not** `app.current_tenant_id`. So a
-pooled `db.*` query returns **zero rows** under `RLS_ENFORCE=on`.
+`db` (drizzle) is built over the **pool** (`server/db/runtime.ts`). The pool
+instrumentation now reads AsyncLocalStorage scope and applies tenant values in a
+transaction-local micro-transaction. When enforcement is on, a non-infrastructure
+pool operation with no scope is rejected rather than returning an ambiguous empty
+result. Scope adoption is therefore still the linchpin: unscoped routes now become
+availability failures instead of silently under-filtered access.
 
 But the per-connection primitives already exist:
 
-- **Requests:** `requestDb(req)` returns a drizzle bound to `req.dbClient` — the
-  lazy per-request client that runs `SET LOCAL app.current_tenant_id`. Queries
-  through it are RLS-correct. `req.dbClient` + the AsyncLocalStorage scope are set
-  up by the `requireTenantContext` middleware.
+- **Requests:** `requestDb(req)` returns a drizzle bound to `req.dbClient` and
+  throws if that client is absent. `requireTenantContext` bootstraps a scope from
+  the signed JWT organization claim for tenant/membership lookup, authorizes from
+  the membership record, and installs the resolved role for downstream work.
 - **Jobs/scripts:** `withTenantConnection({tenantId, role})` gives a dedicated
   scoped client; run drizzle on it via `drizzle(client, { schema })`.
 
@@ -43,8 +49,11 @@ So the linchpin is **adoption**, and it has two blockers:
 1. **`requireTenantContext` is mounted on one route only** (`server/routes/ana-features.ts`).
    Until it's promoted to the global `/api` chain (after the merged auth/default-deny
    gate, with a public/health/webhook allowlist), `req.dbClient` isn't set up for
-   other routes and `requestDb(req)` falls back to the pool-bound `db`.
+   other routes and `requestDb(req)` now rejects access. That is safe but becomes
+   a client-visible availability failure until adoption is complete.
 2. **Handlers still call the pool-bound `db`** instead of `requestDb(req)`.
+   The existing coverage artifact currently lists 77 shared-pool route files:
+   `docs/reports/requestdb-coverage-baseline.json`.
 
 Two ways to close it:
 
@@ -116,7 +125,7 @@ tenant.
 
 ## Recommended sequence
 
-1. ✅ **DONE — the (B) auto primitive is built, dormant.** `instrumentPool`
+1. ✅ **DONE — the (B) auto primitive is built and active when enforcement is on.** `instrumentPool`
    (`server/db/poolInstrumentation.ts`) now applies the active scope's tenant vars
    via a `set_config(..., true)` **LOCAL** micro-transaction, gated on
    `RLS_ENFORCE==='on' && getTenantScope()`. LOCAL settings vanish at
@@ -127,7 +136,7 @@ tenant.
    (has the `rls_enforce` escape clause); `server/db/tenantRls.ts` is dead legacy;
    the RAISE-on-missing-tenant insert trigger is installed on only ~5
    `concept2cure_*` tables. **Still needs a live-Postgres integration test** (no-leak
-   reuse + zero-row cross-tenant) before the flip — RLS row-filtering isn't
+   reuse + cross-tenant filtering) before production acceptance — RLS row-filtering isn't
    exercised by the mock-pool unit tests. Keep (A) `requestDb` adoption as the
    escape hatch for hot read paths if per-statement transaction overhead bites.
 2. **Promote `requireTenantContext` to the global `/api` chain** (after the merged
@@ -145,8 +154,31 @@ tenant.
 5. **Verify in staging** with `RLS_ENFORCE=on`: run the cron/worker set + a
    cross-tenant request smoke test asserting **zero-row leakage**, and watch
    `tenant_session_var_missing_total` drop to ~0 (labels pinpoint stragglers).
-6. **Flip:** `RLS_ENFORCE=on`, then `RLS_REQUIRE_ENFORCE=true` so any regression
-   fails boot (`server/db/rlsEnforcement.ts`).
+6. **Production posture:** `RLS_ENFORCE=on` is now mandatory; no secondary
+   `RLS_REQUIRE_ENFORCE` opt-in is required (`server/db/rlsEnforcement.ts`).
 
-**Acceptance (GA plan 0.1):** cross-tenant read returns zero rows in a staging test;
-prod boot fails closed if enforcement is missing.
+**Acceptance (GA plan 0.1):** cross-tenant reads/writes are rejected or filtered in
+a live two-tenant staging test, unscoped application access is rejected, connection
+failure cannot leak tenant state, and production boot fails closed if enforcement
+is missing.
+
+## Canonical control reuse review (2026-07-29)
+
+No separate remediation epic, audit manifest, or architecture-baseline generator
+is needed for this work. The repository already has canonical control artifacts:
+
+| Need | Existing source of truth |
+|---|---|
+| Program sequencing and release stages | `docs/audit-2026-07/15-remediation-plan.md`, `docs/GA_READINESS_PLAN.md` |
+| RLS rollout status and residual work | this document |
+| Tenant-isolation proof boundaries | `docs/security/C2C_TENANT_ISOLATION_PROOF.md` |
+| Raw-SQL isolation ratchet | `scripts/ci/check-tenant-isolation.mjs`, `docs/reports/tenant-isolation-baseline.json`, `docs/reports/tenant-isolation-justifications.md` |
+| Request-scoped DB adoption | `scripts/ci/audit-requestdb-coverage.mjs`, `docs/reports/requestdb-coverage-baseline.json` |
+| RLS policy/allowlist parity | `scripts/ci/check-rls-allowlist-sync.mjs`, `server/db/rlsAllowlist.ts` |
+| Database readiness | `scripts/db/readiness-audit.mjs`, `docs/operations/DB_READINESS.md` |
+| Evidence packaging | `scripts/audits/generate-evidence-pack.mjs`, `docs/reports/evidence-pack-2026-07-28.md` |
+
+New controls must extend these artifacts rather than introduce parallel manifests.
+The current no-regression tenant audit still carries 25 candidates, and the
+request-DB coverage artifact still carries 77 shared-pool route files. Neither a
+green ratchet nor fail-closed pool behavior makes those backlogs accepted.
