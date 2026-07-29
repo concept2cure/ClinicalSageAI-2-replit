@@ -716,7 +716,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Document drafts emitted this turn — persisted to the governed artifact
     // version history (concept2cure_artifacts / _artifact_versions) by
     // post-processing so Document Studio version history survives the session.
-    const collectedDrafts: { title: string; content: string; documentType?: string }[] = [];
+    const collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[] = [];
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
@@ -967,6 +967,7 @@ router.post('/stream', async (req: Request, res: Response) => {
                   title: draftTitle,
                   content: parsed.content,
                   documentType: typeof parsed.documentType === 'string' ? parsed.documentType : undefined,
+                  reasonForChange: typeof parsed.reasonForChange === 'string' ? parsed.reasonForChange : undefined,
                 });
                 res.write(
                   `data: ${JSON.stringify({

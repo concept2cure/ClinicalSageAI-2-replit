@@ -3,6 +3,19 @@ import { getAuthToken, getOrgId } from '@/utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
+/** Preserves HTTP semantics for consumers that must distinguish forbidden,
+ * unavailable, validation, and empty states without parsing error strings. */
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly payload?: unknown,
+  ) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
+}
+
 interface GetQueryFnOptions {
   on401?: 'throw' | 'returnNull';
 }
@@ -54,10 +67,10 @@ export const apiRequest = async (
     if (contentType.includes('application/json')) {
       const errorPayload = await response.json().catch(() => ({}));
       const message = errorPayload?.error?.message || errorPayload?.error || errorPayload?.message;
-      throw new Error(message || `API request failed with status ${response.status}`);
+      throw new ApiRequestError(message || `API request failed with status ${response.status}`, response.status, errorPayload);
     }
     const errorText = await response.text();
-    throw new Error(errorText || `API request failed with status ${response.status}`);
+    throw new ApiRequestError(errorText || `API request failed with status ${response.status}`, response.status, errorText);
   }
 
   return response;

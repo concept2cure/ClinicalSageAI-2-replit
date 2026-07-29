@@ -18,7 +18,7 @@
  *   `requestDb(req)` returns a Drizzle wrapped around the request-scoped
  *   lazy wrapper. Drizzle's node-postgres driver only calls `.query()` on
  *   the client, which our lazy wrapper exposes — first call acquires a
- *   pool connection and runs `SET LOCAL app.current_tenant_id` on it,
+ *   pool connection and applies session-level tenant variables on it,
  *   then delegates. So all queries through this Drizzle instance run on
  *   the same connection with the RLS session vars set, and connection
  *   acquisition is deferred until the first DB hit.
@@ -35,10 +35,10 @@
  * object (`req.__requestDb`) so multiple calls in the same handler do
  * not pay the construction cost twice.
  *
- * This helper fails closed outside the request scope. A missing or invalid
- * `req.dbClient` means the route did not establish tenant context; falling back
- * to the shared database would turn middleware omission into an isolation
- * bypass.
+ * This helper is intentionally unsafe outside a tenant request scope. If
+ * `req.dbClient` is absent or malformed, it throws a typed error rather than
+ * falling back to the shared pool. System operations must use an explicitly
+ * audited system database path; they must never manufacture a request.
  */
 
 import type { Request } from 'express';
@@ -52,6 +52,16 @@ interface RequestWithCachedDb extends Request {
   __requestDb?: RequestDb;
 }
 
+export class MissingRequestDbContextError extends Error {
+  readonly code = 'REQUEST_DB_CONTEXT_REQUIRED';
+  readonly statusCode = 500;
+
+  constructor() {
+    super('Request-scoped database context is required');
+    this.name = 'MissingRequestDbContextError';
+  }
+}
+
 export function requestDb(req: Request): RequestDb {
   const client = (req as Request & { dbClient?: unknown }).dbClient;
   if (!client || typeof (client as { query?: unknown }).query !== 'function') {
@@ -63,6 +73,10 @@ export function requestDb(req: Request): RequestDb {
   const cached = (req as RequestWithCachedDb).__requestDb;
   if (cached) return cached;
 
+  const client = (req as Request & { dbClient?: { query?: unknown } }).dbClient;
+  if (!client || typeof client.query !== 'function') {
+    throw new MissingRequestDbContextError();
+  }
   // Drizzle's node-postgres driver only needs `.query()` on the client.
   // The lazy wrapper installed by requireTenantContext satisfies that;
   // we cast to `any` here so we don't have to pull pg types into the

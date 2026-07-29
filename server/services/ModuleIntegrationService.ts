@@ -239,11 +239,11 @@ export class ModuleIntegrationService {
    * @param documentId The document ID
    * @returns The document
    */
-  async getDocument(documentId: any) {
+  async getDocument(documentId: number, organizationId: number) {
     const document = await this.db
       .select()
       .from(unifiedDocuments)
-      .where(eq(unifiedDocuments.id, documentId))
+      .where(and(eq(unifiedDocuments.id, documentId), eq(unifiedDocuments.organizationId, organizationId)))
       .limit(1);
 
     if (!document.length) {
@@ -253,7 +253,10 @@ export class ModuleIntegrationService {
     const moduleDoc = await this.db
       .select()
       .from(moduleDocuments)
-      .where(eq(moduleDocuments.unifiedDocumentId, documentId))
+      .where(and(
+        eq(moduleDocuments.unifiedDocumentId, documentId),
+        eq(moduleDocuments.organizationId, organizationId)
+      ))
       .limit(1);
 
     const latestVersion = await this.db
@@ -282,13 +285,16 @@ export class ModuleIntegrationService {
    * @param updateData The data to update
    * @returns The updated document
    */
-  async updateDocument(documentId: any, updateData: any) {
+  async updateDocument(documentId: number, updateData: any, organizationId: number) {
     return this.db.transaction(async (tx: any) => {
       // Check if document exists
       const existingDoc = await tx
         .select()
         .from(unifiedDocuments)
-        .where(eq(unifiedDocuments.id, documentId))
+        .where(and(
+          eq(unifiedDocuments.id, documentId),
+          eq(unifiedDocuments.organizationId, organizationId)
+        ))
         .limit(1);
 
       if (!existingDoc.length) {
@@ -348,7 +354,10 @@ export class ModuleIntegrationService {
             ...docUpdateData,
             updatedAt: new Date(),
           })
-          .where(eq(unifiedDocuments.id, documentId))
+          .where(and(
+            eq(unifiedDocuments.id, documentId),
+            eq(unifiedDocuments.organizationId, organizationId)
+          ))
           .returning();
 
         // Create audit log for document update

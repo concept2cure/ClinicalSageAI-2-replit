@@ -326,7 +326,7 @@ describe('production RLS enforcement posture (fires on config import)', () => {
   it('refuses to load in production on an unrecognized RLS_ENFORCE value', async () => {
     process.env.NODE_ENV = 'production';
     process.env.RLS_ENFORCE = 'onn'; // typo must not silently disable RLS
-    await expect(import('../environment')).rejects.toThrow(/unrecognized value/);
+    await expect(import('../environment')).rejects.toThrow(/set to "onn"/);
   });
 
   it('loads in production with RLS_ENFORCE=on', async () => {
@@ -336,13 +336,13 @@ describe('production RLS enforcement posture (fires on config import)', () => {
     expect(config.isProduction).toBe(true);
   });
 
-  it('refuses to load in production when the operator explicitly sets off', async () => {
+  it('refuses production when the operator explicitly sets off', async () => {
     process.env.NODE_ENV = 'production';
     process.env.RLS_ENFORCE = 'off';
     await expect(import('../environment')).rejects.toThrow(/FAIL-CLOSED/);
   });
 
-  it('refuses to load in production when the operator explicitly sets shadow', async () => {
+  it('refuses production when the operator explicitly sets shadow', async () => {
     process.env.NODE_ENV = 'production';
     process.env.RLS_ENFORCE = 'shadow';
     await expect(import('../environment')).rejects.toThrow(/FAIL-CLOSED/);

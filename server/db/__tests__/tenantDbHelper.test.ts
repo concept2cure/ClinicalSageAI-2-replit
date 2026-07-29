@@ -16,7 +16,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { getDb, ensureTenantId } from '../tenantDbHelper';
-import { requestDb } from '../requestDb';
+import { MissingRequestDbContextError, requestDb } from '../requestDb';
 
 function fakeReq(opts: { dbClient?: unknown; tenantContext?: any; tenantId?: number | string }) {
   return opts as any;
@@ -33,9 +33,8 @@ describe('getDb', () => {
     expect(a).toBe(b);
   });
 
-  it('fails closed when no dbClient is on the request', () => {
-    const req = fakeReq({});
-    expect(() => getDb(req)).toThrow(/requires a tenant-scoped dbClient/);
+  it('fails closed when no request-scoped database client is present', () => {
+    expect(() => getDb(fakeReq({}))).toThrow(MissingRequestDbContextError);
   });
 });
 

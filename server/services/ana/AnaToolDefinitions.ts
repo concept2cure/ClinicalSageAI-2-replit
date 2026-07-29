@@ -1682,7 +1682,34 @@ export const LIST_REPORT_DEFINITIONS: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
+const LIST_FDA_FORMS: AnaTool = {
+  name: 'list_fda_forms',
+  description: 'List forms from the existing canonical FDA registry for project selection, including implementation and release-readiness status.',
+  input_schema: { type: 'object', properties: {
+    category: { type: 'string' }, implementationStatus: { type: 'string', enum: ['metadata', 'full'] },
+  } },
+};
+
+const PREPARE_FDA_FORM: AnaTool = {
+  name: 'prepare_fda_form',
+  description: 'Use the existing universal FDAFormGenerator to prepare any registered FDA form as a structured editable draft for Document Studio. Does not approve, sign, or submit.',
+  input_schema: { type: 'object', properties: {
+    formId: { type: 'string' }, values: { type: 'object' }, reasonForChange: { type: 'string' },
+  }, required: ['formId'] },
+};
+
+const AMEND_FDA_FORM: AnaTool = {
+  name: 'amend_fda_form',
+  description: 'Use the existing universal FDAFormGenerator to amend a structured FDA form into a new Document Studio draft. Requires a reason and never mutates an approved version.',
+  input_schema: { type: 'object', properties: {
+    formId: { type: 'string' }, currentValues: { type: 'object' }, changes: { type: 'object' }, reasonForChange: { type: 'string' },
+  }, required: ['formId', 'currentValues', 'changes', 'reasonForChange'] },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
+  LIST_FDA_FORMS,
+  PREPARE_FDA_FORM,
+  AMEND_FDA_FORM,
   LIST_VAULT_DOCUMENTS,
   READ_VAULT_DOCUMENT,
   GET_DOCUMENT_VERSIONS,

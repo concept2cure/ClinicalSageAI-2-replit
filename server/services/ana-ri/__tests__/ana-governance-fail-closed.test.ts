@@ -141,8 +141,25 @@ describe('executeCommands — central RBAC gate', () => {
       { organizationId: 9 } as CommandContext,
     );
 
-    expect(res[0].error).toBe('RBAC_CONTEXT_MISSING');
+    expect(res[0].error).toBe('COMMAND_CONTEXT_INVALID');
+    expect(dbState.query).not.toHaveBeenCalled();
     expect(handlerWrites()).toEqual([]);
+  });
+
+  it.each([
+    ['zero user', { userId: 0 }],
+    ['fractional user', { userId: 1.5 }],
+    ['negative organization', { organizationId: -1 }],
+    ['invalid project', { activeProjectId: Number.NaN }],
+  ])('rejects %s before governance policy loading', async (_label, over) => {
+    const res = await executeCommands(
+      [{ command: 'list_projects', params: {} }] as any,
+      ctx(over as Partial<CommandContext>),
+    );
+
+    expect(res[0].error).toBe('COMMAND_CONTEXT_INVALID');
+    expect(dbState.query).not.toHaveBeenCalled();
+    expect(rbac.hasRole).not.toHaveBeenCalled();
   });
 });
 

@@ -23,6 +23,7 @@ import type {
   IvdValidation,
 } from '../data/ivd';
 import { useFetchJson } from './useFetchJson';
+import { calculateClinical2x2 } from '../../../../../shared/ivdr/manifest';
 
 /* ─── helpers ───────────────────────────────────────────────────────── */
 
@@ -30,10 +31,6 @@ function num(v: unknown): number | null {
   if (v === null || v === undefined || v === '') return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
-}
-
-function ratio(a: number, b: number): number | null {
-  return b > 0 ? a / b : null;
 }
 
 /* ─── classifications ───────────────────────────────────────────────── */
@@ -151,22 +148,23 @@ interface ServerEvidence {
   status?: string;
 }
 
-function adaptEvidence(e: ServerEvidence): IvdClinicalEvidence {
-  const tp = num(e.true_positive ?? e.truePositive) ?? 0;
-  const fp = num(e.false_positive ?? e.falsePositive) ?? 0;
-  const tn = num(e.true_negative ?? e.trueNegative) ?? 0;
-  const fn = num(e.false_negative ?? e.falseNegative) ?? 0;
-  const total = tp + fp + tn + fn;
+export function adaptEvidence(e: ServerEvidence): IvdClinicalEvidence | null {
+  const tp = num(e.true_positive ?? e.truePositive);
+  const fp = num(e.false_positive ?? e.falsePositive);
+  const tn = num(e.true_negative ?? e.trueNegative);
+  const fn = num(e.false_negative ?? e.falseNegative);
+  if ([tp, fp, tn, fn].some((v) => v === null || !Number.isSafeInteger(v) || v < 0)) return null;
+  const metrics = calculateClinical2x2({ tp: tp!, fp: fp!, tn: tn!, fn: fn! });
   return {
     id: String(e.id ?? Math.random().toString(36).slice(2)),
     study: e.study_name ?? e.studyName ?? e.study ?? 'Clinical study',
     tp, fp, tn, fn,
     // Prefer server-computed metrics; derive from the 2×2 when absent.
-    sensitivity: num(e.sensitivity) ?? ratio(tp, tp + fn),
-    specificity: num(e.specificity) ?? ratio(tn, tn + fp),
-    ppv: num(e.ppv) ?? ratio(tp, tp + fp),
-    npv: num(e.npv) ?? ratio(tn, tn + fn),
-    accuracy: num(e.accuracy) ?? ratio(tp + tn, total),
+    sensitivity: metrics.sensitivity,
+    specificity: metrics.specificity,
+    ppv: metrics.ppv,
+    npv: metrics.npv,
+    accuracy: metrics.accuracy,
     status: e.status ?? 'draft',
   };
 }
@@ -178,7 +176,7 @@ export function useIvdClinicalEvidence(programId?: string | null): UseIvdRows<Iv
       : '/api/ivdr/clinical-evidence',
   );
   if (!data) return { rows: null, loading, error, refresh };
-  const rows = (data.evidence ?? []).map(adaptEvidence);
+  const rows = (data.evidence ?? []).map(adaptEvidence).filter((row): row is IvdClinicalEvidence => row !== null);
   return { rows, loading, error, refresh };
 }
 

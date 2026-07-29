@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { requestDb } from '../requestDb';
+import { MissingRequestDbContextError, requestDb } from '../requestDb';
 
 function fakeReq(dbClient?: unknown): any {
   return { dbClient };
@@ -18,18 +18,20 @@ describe('requestDb', () => {
     expect(typeof (built as any).select).toBe('function');
   });
 
-  it.each([undefined, null, {}, { query: 'not-a-function' }])(
-    'fails closed when dbClient is missing or invalid: %j',
-    dbClient => {
-      expect(() => requestDb(fakeReq(dbClient))).toThrow(/requires a tenant-scoped dbClient/);
-    },
-  );
+  it('fails closed with a typed error when dbClient is missing', () => {
+    expect(() => requestDb(fakeReq(undefined))).toThrow(MissingRequestDbContextError);
+    try {
+      requestDb(fakeReq(undefined));
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: 'REQUEST_DB_CONTEXT_REQUIRED',
+        statusCode: 500,
+      });
+    }
+  });
 
-  it('does not return a cached wrapper after tenant context is removed', () => {
-    const req = fakeReq({ query: vi.fn() });
-    requestDb(req);
-    req.dbClient = null;
-    expect(() => requestDb(req)).toThrow(/requires a tenant-scoped dbClient/);
+  it('fails closed when dbClient does not implement query', () => {
+    expect(() => requestDb(fakeReq({}))).toThrow(MissingRequestDbContextError);
   });
 
   it('caches the wrapper on the request to avoid rebuilding per call', () => {

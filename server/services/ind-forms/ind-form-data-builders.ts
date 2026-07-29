@@ -11,6 +11,9 @@
  *                    Investigators (sponsor certifies NONE)
  *   - FDA Form 3455  Disclosure: Financial Interests/Arrangements of Clinical
  *                    Investigators (sponsor discloses interests)
+ *   - FDA Form 356h  Application to Market a New or Abbreviated New Drug or
+ *                    Biologic for Human Use
+ *   - FDA Form 1574  Assurance of IRB Review
  *
  * Where a field already exists in `server/config/FDAFormsRegistry.ts` we reuse its
  * id and label so the rendered output and any future AcroForm mapping stay aligned
@@ -39,6 +42,8 @@ export interface BuiltForm {
   fields: Record<string, FieldValue>;
   /** Ids of required fields that were left blank/false, in declaration order. */
   missingRequired: string[];
+  /** Deterministic semantic validation findings beyond simple presence checks. */
+  validationErrors: Array<{ fieldId: string; code: string; message: string }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -117,6 +122,17 @@ export interface IndProjectMetadata {
    * certification asserts a registered trial.
    */
   nctNumber?: string;
+  /** NDA, ANDA, or BLA application number when assigned. */
+  applicationNumber?: string;
+  /** Regulatory application type used by Form 356h. */
+  applicationType?: 'NDA' | 'ANDA' | 'BLA' | 'Supplement';
+  /** Dosage form and route of administration used by Form 356h. */
+  dosageForm?: string;
+  routeOfAdministration?: string;
+  /** IRB assurance data used by Form 1574. */
+  irbNameAddress?: string;
+  irbChairName?: string;
+  irbAssuranceNumber?: string;
 
   sponsor?: SponsorInfo;
   agent?: AgentInfo;
@@ -169,18 +185,27 @@ interface FieldSpec {
   id: string;
   value: FieldValue;
   required: boolean;
+  allowedValues?: readonly string[];
 }
 
 function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
   const fields: Record<string, FieldValue> = {};
   const missingRequired: string[] = [];
+  const validationErrors: BuiltForm['validationErrors'] = [];
   for (const spec of specs) {
     fields[spec.id] = spec.value;
     if (spec.required && !isPresent(spec.value)) {
       missingRequired.push(spec.id);
     }
+    if (typeof spec.value === 'string' && spec.value && spec.allowedValues && !spec.allowedValues.includes(spec.value)) {
+      validationErrors.push({
+        fieldId: spec.id,
+        code: 'INVALID_OPTION',
+        message: `${spec.id} must be one of: ${spec.allowedValues.join(', ')}`,
+      });
+    }
   }
-  return { formId, fields, missingRequired };
+  return { formId, fields, missingRequired, validationErrors };
 }
 
 // ---------------------------------------------------------------------------
@@ -451,6 +476,66 @@ export function labels3455(): Record<string, string> {
 }
 
 // ---------------------------------------------------------------------------
+// FDA Form 356h — NDA / ANDA / BLA application
+// ---------------------------------------------------------------------------
+
+export const FORM_356H = 'FDA_356H';
+
+export function buildForm356h(meta: IndProjectMetadata): BuiltForm {
+  const sponsorName = s(meta.sponsorName) || s(meta.sponsor?.name);
+  const applicationType = s(meta.applicationType);
+  return assemble(FORM_356H, [
+    { id: 'applicant_name', value: sponsorName, required: true },
+    { id: 'applicant_address', value: s(meta.sponsor?.address), required: true },
+    { id: 'application_type', value: applicationType, required: true, allowedValues: ['NDA', 'ANDA', 'BLA', 'Supplement'] },
+    { id: 'application_number', value: s(meta.applicationNumber), required: applicationType === 'Supplement' },
+    { id: 'proprietary_established_name', value: s(meta.drugName), required: true },
+    { id: 'dosage_form', value: s(meta.dosageForm), required: true },
+    { id: 'route_of_administration', value: s(meta.routeOfAdministration), required: true },
+    { id: 'indication', value: s(meta.indication), required: true },
+    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },
+    { id: 'authorized_rep_title', value: s(meta.sponsor?.authorizedRepTitle), required: false },
+  ]);
+}
+
+export function labels356h(): Record<string, string> {
+  return {
+    applicant_name: 'Applicant Name', applicant_address: 'Applicant Address',
+    application_type: 'Application Type', application_number: 'Application Number',
+    proprietary_established_name: 'Proprietary / Established Name', dosage_form: 'Dosage Form',
+    route_of_administration: 'Route of Administration', indication: 'Indication(s)',
+    authorized_rep_name: 'Authorized Representative', authorized_rep_title: 'Representative Title',
+  };
+}
+
+// ---------------------------------------------------------------------------
+// FDA Form 1574 — Assurance of IRB review
+// ---------------------------------------------------------------------------
+
+export const FORM_1574 = 'FDA_1574';
+
+export function buildForm1574(meta: IndProjectMetadata): BuiltForm {
+  return assemble(FORM_1574, [
+    { id: 'sponsor_name', value: s(meta.sponsorName) || s(meta.sponsor?.name), required: true },
+    { id: 'drug_name', value: s(meta.drugName), required: true },
+    { id: 'protocol_number', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: true },
+    { id: 'irb_name_address', value: s(meta.irbNameAddress), required: true },
+    { id: 'irb_chair_name', value: s(meta.irbChairName), required: true },
+    { id: 'irb_assurance_number', value: s(meta.irbAssuranceNumber), required: false },
+    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },
+  ]);
+}
+
+export function labels1574(): Record<string, string> {
+  return {
+    sponsor_name: 'Sponsor Name', drug_name: 'Investigational Drug',
+    protocol_number: 'Protocol Number', irb_name_address: 'IRB Name and Address',
+    irb_chair_name: 'IRB Chair', irb_assurance_number: 'IRB Assurance Number',
+    authorized_rep_name: 'Sponsor Authorized Representative',
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Label lookup by form id (for the fill service / fallback renderer)
 // ---------------------------------------------------------------------------
 
@@ -466,6 +551,10 @@ export function labelsForForm(formId: string): Record<string, string> {
       return labels3454();
     case FORM_3455:
       return labels3455();
+    case FORM_356H:
+      return labels356h();
+    case FORM_1574:
+      return labels1574();
     default:
       return {};
   }
