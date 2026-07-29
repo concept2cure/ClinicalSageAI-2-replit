@@ -11,8 +11,8 @@
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import { logger } from '../../../lib/logger';
-import { AuditLogger } from '../../audit/AuditLogger';
+import { logger } from '../../utils/logger';
+import { AuditLogger } from '../audit/auditLogger';
 
 export interface HashAlgorithm {
   name: 'SHA-256' | 'SHA-512' | 'MD5';
@@ -57,7 +57,7 @@ export interface ReleasePackage {
  * Generates cryptographic hashes for regulatory submission packages
  */
 export class ReleaseHashGenerator {
-  private auditLogger: AuditLogger;
+  private auditLogger: any;
   private defaultAlgorithm: HashAlgorithm;
 
   constructor(algorithm: string = 'SHA-256') {

@@ -91,7 +91,7 @@ async function fetchRTMData(programId: number, organizationId: number) {
 router.get('/programs/:programId/rtm', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }
@@ -134,7 +134,7 @@ router.get('/programs/:programId/rtm', async (req: Request, res: Response) => {
 router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }
@@ -196,12 +196,19 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    // Register governed export (fail-closed for regulated outputs)
+    // Register governed export (fail-closed for regulated outputs).
+    // SECURITY: JWT-bound — the audit attribution must be the actual
+    // principal, never a `|| 1` fallback that would silently rewrite
+    // every export to org 1.
     const user = (req as any).user;
+    const govOrgId = user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (govOrgId == null || user?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
     const governanceResult = await registerExportGovernanceQuick({
-      organizationId: user?.organizationId || 1,
+      organizationId: Number(govOrgId),
       projectId: Number(programId) || 0,
-      userId: user?.id || 0,
+      userId: Number(user.id),
       userName: user?.name || user?.email || 'unknown',
       title: `RTM Export: Program ${programId}`,
       exportFormat: 'csv',
@@ -234,7 +241,7 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
 router.post('/programs/:programId/rtm/snapshot', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }
@@ -285,7 +292,7 @@ router.post('/programs/:programId/rtm/snapshot', async (req: Request, res: Respo
 router.get('/programs/:programId/rtm/snapshots', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const programId = parseInt(req.params.programId, 10);
+    const programId = parseInt(String(req.params.programId), 10);
     if (isNaN(programId)) {
       return res.status(400).json({ error: 'Invalid program ID' });
     }

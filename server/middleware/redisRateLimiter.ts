@@ -17,6 +17,12 @@
 import { Request, Response, NextFunction } from 'express';
 import Redis from 'ioredis';
 import { createScopedLogger } from '../utils/logger';
+import {
+  RATE_LIMITS,
+  RATE_LIMIT_FAIL_CLOSED_CATEGORIES,
+  RATE_LIMIT_STORE,
+  REDIS,
+} from '../config/platform-limits';
 
 const logger = createScopedLogger('redis-rate-limiter');
 
@@ -72,10 +78,10 @@ export async function initializeRedisRateLimiter(): Promise<boolean> {
 
   try {
     redisClient = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
-      retryStrategy: times => Math.min(times * 100, 2000),
+      maxRetriesPerRequest: REDIS.maxRetriesPerRequest,
+      retryStrategy: times => Math.min(times * REDIS.retryBackoffStepMs, REDIS.retryBackoffCapMs),
       enableReadyCheck: true,
-      connectTimeout: 5000,
+      connectTimeout: REDIS.connectTimeoutMs,
       lazyConnect: true,
     });
 
@@ -131,7 +137,7 @@ export async function closeRedisRateLimiter(): Promise<void> {
 // IN-MEMORY FALLBACK
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MEMORY_STORE_MAX_SIZE = 10_000;
+const MEMORY_STORE_MAX_SIZE = RATE_LIMIT_STORE.memoryStoreMaxSize;
 const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
 /**
@@ -155,7 +161,7 @@ const memoryStoreCleanup = setInterval(() => {
       if (key) memoryStore.delete(key);
     }
   }
-}, 60000);
+}, RATE_LIMIT_STORE.memoryStoreCleanupIntervalMs);
 memoryStoreCleanup.unref();
 
 /**
@@ -213,8 +219,13 @@ async function checkRedisRateLimit(
     // Count entries in current window
     pipeline.zcard(fullKey);
 
-    // Add current request with timestamp as score
-    pipeline.zadd(fullKey, now, `${now}:${Math.random().toString(36).slice(2)}`);
+    // Add current request with timestamp as score. Keep the member id so a
+    // rejected request can be removed again below — otherwise denied retries
+    // would keep refilling the window and a client at its limit could stay
+    // locked out indefinitely (and behavior would diverge from the in-memory
+    // fallback, which only counts allowed requests).
+    const member = `${now}:${Math.random().toString(36).slice(2)}`;
+    pipeline.zadd(fullKey, now, member);
 
     // Set expiry on the key
     pipeline.pexpire(fullKey, windowMs);
@@ -229,6 +240,10 @@ async function checkRedisRateLimit(
     const count = (results[1]?.[1] as number) || 0;
 
     if (count >= maxRequests) {
+      // Rejected — un-count this request so denied retries don't extend the
+      // window. Best-effort: on failure the entry ages out with the window.
+      await redisClient.zrem(fullKey, member).catch(() => {});
+
       // Get the oldest entry to calculate retry time
       const oldest = await redisClient.zrange(fullKey, 0, 0, 'WITHSCORES');
       const oldestTime = oldest.length >= 2 ? parseInt(oldest[1], 10) : now;
@@ -261,90 +276,67 @@ async function checkRedisRateLimit(
 // DEFAULT RULES
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Values are centralized in server/config/platform-limits.ts (RATE_LIMITS).
+// Spread into fresh mutable objects so this record satisfies the local
+// RateLimitRule type and remains independently overridable per-call.
 const DEFAULT_RULES: Record<string, RateLimitRule> = {
-  // Authentication endpoints
-  auth: {
-    windowMs: process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 1000,
-    maxRequests: process.env.NODE_ENV === 'production' ? 20 : 300,
-    message:
-      process.env.NODE_ENV === 'production'
-        ? 'Too many authentication attempts. Please try again later.'
-        : 'Too many authentication attempts. Please wait briefly and try again.',
-  },
-
-  // General API
-  api: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 100,
-    message: 'Too many requests. Please slow down.',
-  },
-
-  // AI/ML endpoints (resource intensive)
-  ai: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 30,
-    message: 'Too many AI requests. Please wait before making more.',
-    skipRoles: ['admin', 'super_admin'],
-  },
-
-  // Document generation
-  documents: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 20,
-    message: 'Too many document requests. Please wait.',
-  },
-
-  // Concept2Cure specific
-  concept2cure: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 100,
-    message: 'Rate limit exceeded for Concept2Cure API.',
-  },
-
-  // Heavy validation endpoints
-  validation: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10,
-    message: 'Too many validation requests.',
-  },
-
-  // File uploads
-  upload: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10,
-    message: 'Too many file uploads. Please wait.',
-  },
+  auth: { ...RATE_LIMITS.auth },
+  api: { ...RATE_LIMITS.api },
+  ai: { ...RATE_LIMITS.ai, skipRoles: [...RATE_LIMITS.ai.skipRoles] },
+  documents: { ...RATE_LIMITS.documents },
+  concept2cure: { ...RATE_LIMITS.concept2cure },
+  validation: { ...RATE_LIMITS.validation },
+  upload: { ...RATE_LIMITS.upload },
 };
+
+/**
+ * Categories that must FAIL CLOSED when the limiter itself errors (e.g. Redis
+ * unreachable AND the in-memory fallback throws). For these sensitive buckets,
+ * allowing requests through unthrottled is a worse outcome than a brief denial:
+ *
+ *  - `auth`: login/register/auth — brute-force and credential-stuffing surface.
+ *  - `documents`: governed document/export/pdf generation — data-exfiltration
+ *    surface for a multi-tenant regulated SaaS.
+ *
+ * Non-sensitive categories (api, ai, upload, etc.) keep failing OPEN to favour
+ * availability. This only affects the error path; normal Redis-up and
+ * in-memory-fallback limiting behaviour is unchanged.
+ */
+const FAIL_CLOSED_CATEGORIES = new Set<string>(RATE_LIMIT_FAIL_CLOSED_CATEGORIES);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MIDDLEWARE FACTORY
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Determine the rate limit category for a request path.
+ * Match against a full path segment (anchored on '/') rather than a raw
+ * substring. The previous `path.includes('/auth')` pattern routed
+ * `/api/audit/events`, `/api/oauth-clients`, and
+ * `/api/data/authoritative-record` into the strict auth bucket
+ * (5 requests / 15 min in production), locking legitimate users out.
  */
-function getCategory(path: string): string {
-  if (path.includes('/login') || path.includes('/register') || path.includes('/auth')) {
+function hasSegment(path: string, ...segments: string[]): boolean {
+  const padded = path.endsWith('/') ? path : `${path}/`;
+  return segments.some(seg => padded.includes(`/${seg}/`));
+}
+
+export function getCategory(path: string): string {
+  if (hasSegment(path, 'login', 'register', 'auth')) {
     return 'auth';
   }
-  if (
-    path.includes('/ai') ||
-    path.includes('/generate') ||
-    path.includes('/openai') ||
-    path.includes('/anthropic')
-  ) {
+  if (hasSegment(path, 'ai', 'generate', 'openai', 'anthropic')) {
     return 'ai';
   }
-  if (path.includes('/concept2cure')) {
+  if (hasSegment(path, 'concept2cure')) {
     return 'concept2cure';
   }
-  if (path.includes('/document') || path.includes('/export') || path.includes('/pdf')) {
+  if (hasSegment(path, 'document', 'documents', 'export', 'pdf')) {
     return 'documents';
   }
-  if (path.includes('/validate')) {
+  if (hasSegment(path, 'validate')) {
     return 'validation';
   }
-  if (path.includes('/upload')) {
+  if (hasSegment(path, 'upload')) {
     return 'upload';
   }
   return 'api';
@@ -448,10 +440,32 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
 
       next();
     } catch (error) {
-      // On error, allow the request but log the issue
-      logger.error('Rate limiter error', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      const message = error instanceof Error ? error.message : 'Unknown error';
+
+      // Sensitive categories fail CLOSED: when the limiter cannot evaluate the
+      // request we deny rather than admit it unthrottled (brute-force /
+      // exfiltration surfaces). Non-sensitive categories fail OPEN for
+      // availability.
+      if (FAIL_CLOSED_CATEGORIES.has(category)) {
+        logger.error('Rate limiter error on sensitive category - failing CLOSED', {
+          error: message,
+          path: req.path,
+          category,
+        });
+        res.setHeader('Retry-After', 60);
+        res.status(503).json({
+          error: 'Service temporarily unavailable',
+          message: 'Rate limiting is temporarily degraded. Please retry shortly.',
+          retryAfter: 60,
+        });
+        return;
+      }
+
+      // Non-sensitive: allow the request but log the degradation.
+      logger.error('Rate limiter error - failing open (non-sensitive category)', {
+        error: message,
         path: req.path,
+        category,
       });
       next();
     }

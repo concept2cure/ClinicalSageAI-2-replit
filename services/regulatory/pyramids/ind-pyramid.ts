@@ -1,144 +1,606 @@
-type BaseTask = {
-  id: string;
-  name: string;
-  estimatedHours: number;
-  role?: string;
-  critical?: boolean;
-  description?: string;
-};
-
-type PyramidTask = BaseTask & {
-  phaseId: string;
-  dependencies: string[];
-};
-
-type PyramidPhase = {
-  id: string;
-  name: string;
-  order: number;
-  tasks: PyramidTask[];
-};
-
-type SubmissionPyramid = {
-  type: 'IND';
-  phases: PyramidPhase[];
-  tasks: PyramidTask[];
-};
-
-function buildPhase(
-  phaseId: string,
-  name: string,
-  order: number,
-  baseTasks: BaseTask[],
-  dependsOn?: string
-): { phase: PyramidPhase; completeId: string } {
-  const dependencies = dependsOn ? [dependsOn] : [];
-  const tasks = baseTasks.map(task => ({
-    ...task,
-    id: `${phaseId}.${task.id}`,
-    phaseId,
-    dependencies,
-  }));
-  const completeId = `${phaseId}.complete`;
-  const completionTask: PyramidTask = {
-    id: completeId,
-    name: `${name} Complete`,
-    estimatedHours: 1,
-    role: 'regulatory_ops',
-    critical: true,
-    phaseId,
-    dependencies: tasks.map(task => task.id),
-  };
-
-  return {
-    phase: { id: phaseId, name, order, tasks: [...tasks, completionTask] },
-    completeId,
-  };
-}
+import type { BaseTask, SubmissionPyramid } from './types.js';
+import { buildPhase } from './types.js';
 
 export function buildIndPyramid(): SubmissionPyramid {
-  const phases: PyramidPhase[] = [];
+  const phases: SubmissionPyramid['phases'] = [];
 
   const phase1 = buildPhase('phase1', 'Program Planning', 1, [
-    { id: 'product_profile', name: 'Define product profile', estimatedHours: 6, role: 'ra_lead', critical: true },
-    { id: 'ind_strategy', name: 'Draft IND strategy', estimatedHours: 8, role: 'ra_lead', critical: true },
-    { id: 'pre_ind_plan', name: 'Plan Pre-IND meeting', estimatedHours: 6, role: 'project_manager' },
-    { id: 'nonclinical_gap', name: 'Assess nonclinical gaps', estimatedHours: 8, role: 'toxicologist' },
-    { id: 'clinical_outline', name: 'Outline clinical plan', estimatedHours: 6, role: 'clinical_lead' },
-    { id: 'timeline', name: 'Create master timeline', estimatedHours: 4, role: 'project_manager' },
+    {
+      id: 'product_profile',
+      name: 'Define product profile',
+      estimatedHours: 6,
+      role: 'ra_lead',
+      critical: true,
+      risk: { severity: 'high', probability: 0.3, impact: 'Misaligned IND strategy if product profile is incomplete', mitigations: ['Engage cross-functional team early', 'Benchmark against approved INDs in same therapeutic area'] },
+      guidance: { ichGuideline: 'ICH M4', cfrReference: '21 CFR 312.23', keyConsiderations: ['Target Product Profile should align with intended clinical indication', 'Consider both drug and biologic classification implications'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1 },
+      deliverables: ['Target Product Profile', 'Regulatory pathway assessment'],
+      subTasks: [
+        { id: 'indication', name: 'Define target indication and patient population', estimatedHours: 2 },
+        { id: 'dosage_form', name: 'Characterize dosage form and route of administration', estimatedHours: 1 },
+        { id: 'competitive_landscape', name: 'Assess competitive landscape and unmet need', estimatedHours: 2 },
+        { id: 'pathway_decision', name: 'Determine regulatory pathway (standard vs. expedited)', estimatedHours: 1 },
+      ],
+    },
+    {
+      id: 'ind_strategy',
+      name: 'Draft IND strategy',
+      estimatedHours: 8,
+      role: 'ra_lead',
+      critical: true,
+      risk: { severity: 'high', probability: 0.2, impact: 'FDA clinical hold if strategy gaps exist', mitigations: ['Review recent FDA Complete Response Letters in class', 'Pre-IND meeting alignment'] },
+      guidance: { fdaGuidanceRef: 'Guidance for Industry: Content and Format of INDs', cfrReference: '21 CFR 312.23', keyConsiderations: ['Determine if IND is commercial or research', 'Identify any special protocol assessment opportunities'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 2 },
+      deliverables: ['IND strategy document', 'Module content matrix'],
+      crossSubmissionDeps: [{ targetSubmissionType: 'NDA', targetTaskId: 'phase1.reg_strategy', relationship: 'feeds_into', description: 'IND strategy informs downstream NDA filing strategy' }],
+    },
+    {
+      id: 'pre_ind_plan',
+      name: 'Plan Pre-IND meeting',
+      estimatedHours: 6,
+      role: 'project_manager',
+      risk: { severity: 'medium', probability: 0.15, impact: 'Delayed FDA alignment without Pre-IND', mitigations: ['Submit Type B meeting request ≥90 days before target', 'Prepare concise briefing document'] },
+      guidance: { fdaGuidanceRef: 'Formal Meetings Between the FDA and Sponsors (2017)', cfrReference: '21 CFR 312.82', keyConsiderations: ['Type B meeting for Pre-IND has 60-day FDA response target', 'Meeting request must include a preliminary IND design summary'] },
+      timeline: { typicalStartWeek: 2, typicalDurationWeeks: 2, fdaMilestone: 'Pre-IND Meeting Request' },
+      deliverables: ['Meeting request letter', 'FDA questions list draft'],
+    },
+    {
+      id: 'nonclinical_gap',
+      name: 'Assess nonclinical gaps',
+      estimatedHours: 8,
+      role: 'toxicologist',
+      risk: { severity: 'high', probability: 0.35, impact: 'Clinical hold if critical nonclinical studies missing', mitigations: ['Map against ICH M3(R2) decision tree', 'Identify GLP vs non-GLP study requirements'] },
+      guidance: { ichGuideline: 'ICH M3(R2)', fdaGuidanceRef: 'Nonclinical Safety Evaluation of Drug or Biologic Combinations', keyConsiderations: ['Duration of tox studies must support proposed clinical duration', 'Genotoxicity battery required before Phase 1'] },
+      timeline: { typicalStartWeek: 2, typicalDurationWeeks: 2 },
+      deliverables: ['Nonclinical gap analysis report', 'Study requirement matrix'],
+      subTasks: [
+        { id: 'pharm_gaps', name: 'Assess pharmacology study gaps', estimatedHours: 2 },
+        { id: 'pk_gaps', name: 'Assess PK/ADME study gaps', estimatedHours: 2 },
+        { id: 'tox_gaps', name: 'Assess toxicology study gaps per ICH M3(R2)', estimatedHours: 3 },
+        { id: 'glp_status', name: 'Verify GLP compliance status of completed studies', estimatedHours: 1 },
+      ],
+    },
+    {
+      id: 'clinical_outline',
+      name: 'Outline clinical plan',
+      estimatedHours: 6,
+      role: 'clinical_lead',
+      risk: { severity: 'medium', probability: 0.2, impact: 'Protocol redesign if endpoints are misaligned', mitigations: ['Engage biostatistician early for endpoint strategy', 'Review FDA guidance for indication-specific endpoints'] },
+      guidance: { ichGuideline: 'ICH E6(R2), ICH E8(R1)', keyConsiderations: ['First-in-human study design must justify starting dose', 'Safety monitoring plan is critical for IND acceptance'] },
+      timeline: { typicalStartWeek: 3, typicalDurationWeeks: 2 },
+      deliverables: ['Clinical development plan outline', 'Phase 1 study synopsis'],
+      crossSubmissionDeps: [{ targetSubmissionType: 'NDA', targetTaskId: 'phase6.csr_compilation', relationship: 'feeds_into', description: 'Phase 1 data from IND clinical plan feeds NDA Module 5' }],
+    },
+    {
+      id: 'timeline',
+      name: 'Create master timeline',
+      estimatedHours: 4,
+      role: 'project_manager',
+      timeline: { typicalStartWeek: 3, typicalDurationWeeks: 1 },
+      deliverables: ['Master project timeline', 'Resource allocation plan'],
+    },
   ]);
   phases.push(phase1.phase);
 
   const phase2 = buildPhase('phase2', 'Pre-IND Engagement', 2, [
-    { id: 'meeting_request', name: 'Submit Pre-IND meeting request', estimatedHours: 4, role: 'ra_lead' },
-    { id: 'briefing_package', name: 'Prepare briefing package', estimatedHours: 10, role: 'medical_writer', critical: true },
-    { id: 'questions', name: 'Finalize FDA questions', estimatedHours: 4, role: 'ra_lead' },
-    { id: 'meeting_execution', name: 'Conduct Pre-IND meeting', estimatedHours: 4, role: 'ra_lead' },
-    { id: 'meeting_minutes', name: 'Document meeting minutes', estimatedHours: 4, role: 'ra_lead' },
-    { id: 'strategy_updates', name: 'Incorporate FDA feedback', estimatedHours: 6, role: 'ra_lead', critical: true },
+    {
+      id: 'meeting_request',
+      name: 'Submit Pre-IND meeting request',
+      estimatedHours: 4,
+      role: 'ra_lead',
+      guidance: { fdaGuidanceRef: 'Formal Meetings Between the FDA and Sponsors', cfrReference: '21 CFR 312.82' },
+      timeline: { typicalStartWeek: 5, typicalDurationWeeks: 1, fdaMilestone: 'Pre-IND Meeting Request Submitted', regulatoryDeadlineDays: 60 },
+      deliverables: ['Meeting request package'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'Cover Letter / Meeting Request', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'briefing_package',
+      name: 'Prepare briefing package',
+      estimatedHours: 10,
+      role: 'medical_writer',
+      critical: true,
+      risk: { severity: 'high', probability: 0.25, impact: 'Inadequate briefing package leads to non-productive meeting', mitigations: ['Follow CDER/CBER briefing document template', 'Internal mock meeting before FDA interaction'] },
+      timeline: { typicalStartWeek: 6, typicalDurationWeeks: 3 },
+      deliverables: ['Pre-IND briefing document', 'Supporting data appendices'],
+      subTasks: [
+        { id: 'product_overview', name: 'Draft product development overview', estimatedHours: 2 },
+        { id: 'nonclinical_summary', name: 'Summarize nonclinical program for briefing', estimatedHours: 3 },
+        { id: 'clinical_plan_summary', name: 'Summarize proposed clinical plan', estimatedHours: 3 },
+        { id: 'questions_draft', name: 'Draft questions for FDA', estimatedHours: 2 },
+      ],
+    },
+    {
+      id: 'questions',
+      name: 'Finalize FDA questions',
+      estimatedHours: 4,
+      role: 'ra_lead',
+      timeline: { typicalStartWeek: 9, typicalDurationWeeks: 1 },
+      deliverables: ['Final FDA question list'],
+    },
+    {
+      id: 'meeting_execution',
+      name: 'Conduct Pre-IND meeting',
+      estimatedHours: 4,
+      role: 'ra_lead',
+      timeline: { typicalStartWeek: 10, typicalDurationWeeks: 1, fdaMilestone: 'Pre-IND Meeting' },
+      deliverables: ['Meeting attendance log'],
+    },
+    {
+      id: 'meeting_minutes',
+      name: 'Document meeting minutes',
+      estimatedHours: 4,
+      role: 'ra_lead',
+      timeline: { typicalStartWeek: 10, typicalDurationWeeks: 1 },
+      deliverables: ['Official meeting minutes'],
+    },
+    {
+      id: 'strategy_updates',
+      name: 'Incorporate FDA feedback',
+      estimatedHours: 6,
+      role: 'ra_lead',
+      critical: true,
+      risk: { severity: 'medium', probability: 0.4, impact: 'Strategy misalignment if FDA feedback not fully addressed', mitigations: ['Track each FDA comment with disposition', 'Update IND strategy document with FDA alignment notes'] },
+      timeline: { typicalStartWeek: 11, typicalDurationWeeks: 2 },
+      deliverables: ['Updated IND strategy with FDA alignment', 'FDA feedback disposition table'],
+    },
   ], phase1.completeId);
   phases.push(phase2.phase);
 
-  const phase3 = buildPhase('phase3', 'Module 1 Administrative', 3, [
-    { id: 'cover_letter', name: 'Draft cover letter', estimatedHours: 4, role: 'ra_lead' },
-    { id: 'form_1571', name: 'Complete FDA Form 1571', estimatedHours: 4, role: 'ra_associate', critical: true },
-    { id: 'intro_statement', name: 'Draft introductory statement', estimatedHours: 6, role: 'medical_writer' },
-    { id: 'general_plan', name: 'Draft general investigational plan', estimatedHours: 6, role: 'medical_writer' },
-    { id: 'toc', name: 'Compile table of contents', estimatedHours: 3, role: 'regulatory_ops' },
-    { id: 'env_assessment', name: 'Environmental assessment check', estimatedHours: 2, role: 'ra_associate' },
+  // NOTE (CTD correctness): phases 3-7 follow the ICH CTD module numbering and
+  // mirror the canonical source of truth in
+  // server/services/regulatory/registry/blueprints/usIndBlueprint.ts:
+  //   Module 3 = Quality/CMC, Module 4 = Nonclinical, Module 5 = Clinical,
+  //   Module 2 = CTD Summaries (built FROM modules 3/4/5), Module 1 = Administrative.
+  // Build order = dependency order (content modules -> summaries -> administrative -> QA/submission).
+
+  const phase3 = buildPhase('phase3', 'Module 3 — Quality/CMC', 3, [
+    {
+      id: 'drug_substance',
+      name: 'Draft drug substance section (3.2.S)',
+      estimatedHours: 10,
+      role: 'cmc_lead',
+      critical: true,
+      risk: { severity: 'high', probability: 0.3, impact: 'Clinical hold for inadequate drug substance characterization', mitigations: ['Ensure complete structural elucidation', 'Include impurity profile with qualified limits'] },
+      guidance: { ichGuideline: 'ICH Q6A/Q6B', cfrReference: '21 CFR 312.23(a)(7)', keyConsiderations: ['Full characterization required even for Phase 1', 'Impurity qualification per ICH Q3A/Q3B'] },
+      timeline: { typicalStartWeek: 13, typicalDurationWeeks: 3 },
+      deliverables: ['3.2.S Drug Substance section'],
+      documentBindings: [{ ctdSection: '3.2.S', sectionTitle: 'Drug Substance', ectdLifecycleOp: 'new', artifactTypes: ['cmc_report', 'analytical_data'] }],
+      subTasks: [
+        { id: 'general_info', name: 'Nomenclature and general properties (3.2.S.1)', estimatedHours: 1, documentBinding: { ctdSection: '3.2.S.1', sectionTitle: 'General Information' } },
+        { id: 'manufacture', name: 'Manufacturing process description (3.2.S.2)', estimatedHours: 2, documentBinding: { ctdSection: '3.2.S.2', sectionTitle: 'Manufacture' } },
+        { id: 'characterisation', name: 'Structural characterization and impurity profile (3.2.S.3)', estimatedHours: 3, documentBinding: { ctdSection: '3.2.S.3', sectionTitle: 'Characterisation' } },
+        { id: 'controls', name: 'Specifications and analytical procedures (3.2.S.4)', estimatedHours: 2, documentBinding: { ctdSection: '3.2.S.4', sectionTitle: 'Control of Drug Substance' } },
+        { id: 'ref_standards', name: 'Reference standards (3.2.S.5)', estimatedHours: 1, documentBinding: { ctdSection: '3.2.S.5', sectionTitle: 'Reference Standards' } },
+        { id: 'stability', name: 'Stability data summary (3.2.S.7)', estimatedHours: 1, documentBinding: { ctdSection: '3.2.S.7', sectionTitle: 'Stability' } },
+      ],
+    },
+    {
+      id: 'drug_product',
+      name: 'Draft drug product section (3.2.P)',
+      estimatedHours: 10,
+      role: 'cmc_lead',
+      risk: { severity: 'high', probability: 0.25, impact: 'Refuse-to-file if formulation not adequately described', mitigations: ['Include composition table with function of each excipient', 'Describe container closure system'] },
+      guidance: { ichGuideline: 'ICH Q8(R2)', cfrReference: '21 CFR 312.23(a)(7)' },
+      timeline: { typicalStartWeek: 14, typicalDurationWeeks: 3 },
+      deliverables: ['3.2.P Drug Product section'],
+      documentBindings: [{ ctdSection: '3.2.P', sectionTitle: 'Drug Product', ectdLifecycleOp: 'new', artifactTypes: ['cmc_report', 'formulation_data'] }],
+      subTasks: [
+        { id: 'composition', name: 'Description and composition (3.2.P.1)', estimatedHours: 2, documentBinding: { ctdSection: '3.2.P.1', sectionTitle: 'Description and Composition' } },
+        { id: 'pd_development', name: 'Pharmaceutical development (3.2.P.2)', estimatedHours: 3, documentBinding: { ctdSection: '3.2.P.2', sectionTitle: 'Pharmaceutical Development' } },
+        { id: 'pd_manufacture', name: 'Manufacturing process (3.2.P.3)', estimatedHours: 2, documentBinding: { ctdSection: '3.2.P.3', sectionTitle: 'Manufacture' } },
+        { id: 'pd_controls', name: 'Product specifications (3.2.P.5)', estimatedHours: 2, documentBinding: { ctdSection: '3.2.P.5', sectionTitle: 'Control of Drug Product' } },
+        { id: 'container_closure', name: 'Container closure system (3.2.P.7)', estimatedHours: 1, documentBinding: { ctdSection: '3.2.P.7', sectionTitle: 'Container Closure System' } },
+      ],
+    },
+    {
+      id: 'manufacturing',
+      name: 'Describe manufacturing process',
+      estimatedHours: 8,
+      role: 'cmc_lead',
+      guidance: { ichGuideline: 'ICH Q7', keyConsiderations: ['GMP compliance for clinical supplies', 'Batch records for clinical material'] },
+      timeline: { typicalStartWeek: 15, typicalDurationWeeks: 2 },
+      deliverables: ['Manufacturing process description', 'Batch analysis certificates'],
+      documentBindings: [{ ctdSection: '3.2.S.2', sectionTitle: 'Manufacture', ectdLifecycleOp: 'new' }, { ctdSection: '3.2.P.3', sectionTitle: 'Manufacture', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'control_strategy',
+      name: 'Define control strategy & specifications',
+      estimatedHours: 6,
+      role: 'quality',
+      guidance: { ichGuideline: 'ICH Q6A, ICH Q10', keyConsiderations: ['Phase-appropriate specifications', 'Justify acceptance criteria with available data'] },
+      timeline: { typicalStartWeek: 16, typicalDurationWeeks: 2 },
+      deliverables: ['Control strategy document', 'Specifications table'],
+    },
+    {
+      id: 'stability',
+      name: 'Compile stability data',
+      estimatedHours: 8,
+      role: 'cmc_lead',
+      risk: { severity: 'medium', probability: 0.3, impact: 'Expiry dating limitations if stability insufficient', mitigations: ['Initiate long-term and accelerated studies early', 'Include stress testing data'] },
+      guidance: { ichGuideline: 'ICH Q1A(R2), ICH Q1B', keyConsiderations: ['Minimum 1 month accelerated data for Phase 1', 'Long-term data should cover proposed clinical duration'] },
+      timeline: { typicalStartWeek: 16, typicalDurationWeeks: 2 },
+      deliverables: ['Stability summary', 'Stability protocols and data tables'],
+      documentBindings: [{ ctdSection: '3.2.S.7', sectionTitle: 'Stability', ectdLifecycleOp: 'new' }, { ctdSection: '3.2.P.8', sectionTitle: 'Stability', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'cmc_review',
+      name: 'CMC review and finalize',
+      estimatedHours: 6,
+      role: 'qa_manager',
+      critical: true,
+      risk: { severity: 'medium', probability: 0.2, impact: 'Internal quality deficiencies delay submission', mitigations: ['Use QC checklist against FDA CMC guidance', 'Cross-reference with ICH CTD format'] },
+      timeline: { typicalStartWeek: 18, typicalDurationWeeks: 1 },
+      deliverables: ['CMC QC review report', 'Finalized Module 3'],
+    },
   ], phase2.completeId);
   phases.push(phase3.phase);
 
-  const phase4 = buildPhase('phase4', 'Module 2 Investigator’s Brochure', 4, [
-    { id: 'ib_outline', name: 'Finalize IB outline', estimatedHours: 4, role: 'medical_writer' },
-    { id: 'nonclinical_summary', name: 'Draft nonclinical summary', estimatedHours: 10, role: 'toxicologist', critical: true },
-    { id: 'clinical_summary', name: 'Draft clinical summary', estimatedHours: 8, role: 'clinical_lead' },
-    { id: 'pk_pd', name: 'Compile PK/PD data', estimatedHours: 8, role: 'clinical_pharmacology' },
-    { id: 'ib_review', name: 'IB review and QC', estimatedHours: 6, role: 'qa_manager' },
-    { id: 'ib_finalize', name: 'Finalize IB', estimatedHours: 4, role: 'medical_writer', critical: true },
+  const phase4 = buildPhase('phase4', 'Module 4 — Nonclinical', 4, [
+    {
+      id: 'pharmacology',
+      name: 'Draft pharmacology study reports (4.2.1)',
+      estimatedHours: 8,
+      role: 'nonclinical_lead',
+      guidance: { ichGuideline: 'ICH S7A, ICH S7B', cfrReference: '21 CFR 312.23(a)(8)', keyConsiderations: ['Primary and secondary pharmacodynamics', 'Safety pharmacology core battery (CV, CNS, respiratory)'] },
+      timeline: { typicalStartWeek: 19, typicalDurationWeeks: 2 },
+      deliverables: ['Primary pharmacodynamics reports', 'Safety pharmacology reports'],
+      documentBindings: [{ ctdSection: '4.2.1', sectionTitle: 'Pharmacology', ectdLifecycleOp: 'new', artifactTypes: ['study_report', 'nonclinical_data'] }],
+      subTasks: [
+        { id: 'primary_pd', name: 'Primary pharmacodynamics studies', estimatedHours: 3, documentBinding: { ctdSection: '4.2.1.1', sectionTitle: 'Primary Pharmacodynamics' } },
+        { id: 'secondary_pd', name: 'Secondary pharmacodynamics studies', estimatedHours: 2, documentBinding: { ctdSection: '4.2.1.2', sectionTitle: 'Secondary Pharmacodynamics' } },
+        { id: 'safety_pharm', name: 'Safety pharmacology studies', estimatedHours: 3, documentBinding: { ctdSection: '4.2.1.3', sectionTitle: 'Safety Pharmacology' } },
+      ],
+    },
+    {
+      id: 'pk_studies',
+      name: 'Draft pharmacokinetic study reports (4.2.2)',
+      estimatedHours: 8,
+      role: 'nonclinical_lead',
+      guidance: { ichGuideline: 'ICH S3A, ICH S3B', keyConsiderations: ['ADME characterization', 'Tissue distribution if relevant'] },
+      timeline: { typicalStartWeek: 19, typicalDurationWeeks: 2 },
+      deliverables: ['PK/ADME study reports'],
+      documentBindings: [{ ctdSection: '4.2.2', sectionTitle: 'Pharmacokinetics', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'toxicology',
+      name: 'Draft toxicology study reports (4.2.3)',
+      estimatedHours: 10,
+      role: 'toxicologist',
+      critical: true,
+      risk: { severity: 'critical', probability: 0.25, impact: 'Clinical hold — most common cause of IND clinical holds is inadequate toxicology', mitigations: ['Ensure GLP compliance for pivotal studies', 'Duration of tox studies must support intended clinical duration per ICH M3(R2)', 'Include dose-response and NOAEL determination'] },
+      guidance: { ichGuideline: 'ICH M3(R2), ICH S2(R1), ICH S9', cfrReference: '21 CFR 312.23(a)(8)', keyConsiderations: ['Single-dose and repeat-dose toxicity in 2 species', 'Genotoxicity battery (Ames, chromosomal aberration, in vivo micronucleus)', 'Local tolerance studies for injectable products'] },
+      timeline: { typicalStartWeek: 19, typicalDurationWeeks: 3 },
+      deliverables: ['Repeat-dose toxicity reports', 'Genotoxicity battery reports', 'Local tolerance reports'],
+      documentBindings: [{ ctdSection: '4.2.3', sectionTitle: 'Toxicology', ectdLifecycleOp: 'new', artifactTypes: ['study_report', 'glp_statement'] }],
+      subTasks: [
+        { id: 'single_dose', name: 'Single-dose toxicity studies', estimatedHours: 2, documentBinding: { ctdSection: '4.2.3.1', sectionTitle: 'Single-Dose Toxicity' } },
+        { id: 'repeat_dose', name: 'Repeat-dose toxicity studies', estimatedHours: 4, documentBinding: { ctdSection: '4.2.3.2', sectionTitle: 'Repeat-Dose Toxicity' } },
+        { id: 'genotox', name: 'Genotoxicity studies', estimatedHours: 2, documentBinding: { ctdSection: '4.2.3.3', sectionTitle: 'Genotoxicity' } },
+        { id: 'local_tol', name: 'Local tolerance studies', estimatedHours: 2, documentBinding: { ctdSection: '4.2.3.6', sectionTitle: 'Local Tolerance' } },
+      ],
+    },
+    {
+      id: 'study_reports',
+      name: 'Compile/place nonclinical study reports',
+      estimatedHours: 8,
+      role: 'nonclinical_lead',
+      timeline: { typicalStartWeek: 21, typicalDurationWeeks: 2 },
+      deliverables: ['Compiled nonclinical study report package'],
+    },
+    {
+      id: 'glp_compliance',
+      name: 'Verify GLP compliance & statements',
+      estimatedHours: 4,
+      role: 'qa_manager',
+      risk: { severity: 'high', probability: 0.15, impact: 'FDA will not accept pivotal tox studies without GLP compliance', mitigations: ['Obtain signed GLP compliance statements from each CRO', 'Audit GLP study records'] },
+      guidance: { cfrReference: '21 CFR Part 58', keyConsiderations: ['GLP compliance statement required for each pivotal nonclinical study', 'Non-GLP studies must be identified and justified'] },
+      timeline: { typicalStartWeek: 22, typicalDurationWeeks: 1 },
+      deliverables: ['GLP compliance statements', 'GLP audit findings (if any)'],
+    },
+    {
+      id: 'nonclinical_finalize',
+      name: 'Finalize Module 4',
+      estimatedHours: 4,
+      role: 'nonclinical_lead',
+      critical: true,
+      timeline: { typicalStartWeek: 23, typicalDurationWeeks: 1 },
+      deliverables: ['Finalized Module 4 package'],
+    },
   ], phase3.completeId);
   phases.push(phase4.phase);
 
-  const phase5 = buildPhase('phase5', 'Module 3 Clinical Protocol', 5, [
-    { id: 'protocol_outline', name: 'Draft protocol outline', estimatedHours: 6, role: 'clinical_lead' },
-    { id: 'design', name: 'Define study design', estimatedHours: 8, role: 'clinical_lead', critical: true },
-    { id: 'endpoints', name: 'Define endpoints', estimatedHours: 6, role: 'biostatistician' },
-    { id: 'inclusion_exclusion', name: 'Define eligibility criteria', estimatedHours: 6, role: 'clinical_lead' },
-    { id: 'safety_plan', name: 'Draft safety monitoring plan', estimatedHours: 6, role: 'medical_monitor' },
-    { id: 'protocol_finalize', name: 'Finalize protocol', estimatedHours: 6, role: 'clinical_lead', critical: true },
+  const phase5 = buildPhase('phase5', 'Module 5 — Clinical', 5, [
+    {
+      id: 'protocol_outline',
+      name: 'Draft clinical protocol outline',
+      estimatedHours: 6,
+      role: 'clinical_lead',
+      guidance: { ichGuideline: 'ICH E6(R2)', keyConsiderations: ['Protocol must include adequate safety monitoring', 'Stopping rules for dose escalation studies'] },
+      timeline: { typicalStartWeek: 24, typicalDurationWeeks: 2 },
+      deliverables: ['Protocol outline / synopsis'],
+      documentBindings: [{ ctdSection: '5.3.5', sectionTitle: 'Clinical Study Reports', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'design',
+      name: 'Define study design & estimands',
+      estimatedHours: 8,
+      role: 'clinical_lead',
+      critical: true,
+      risk: { severity: 'high', probability: 0.2, impact: 'Protocol amendments if design is suboptimal', mitigations: ['Align with ICH E9(R1) estimand framework', 'Engage biostatistician for sample size and power'] },
+      guidance: { ichGuideline: 'ICH E9(R1), ICH E8(R1)', keyConsiderations: ['First-in-human dose selection must be justified from nonclinical data', 'Dose escalation scheme (e.g., modified Fibonacci, BOIN, 3+3)'] },
+      timeline: { typicalStartWeek: 25, typicalDurationWeeks: 2 },
+      deliverables: ['Study design document', 'Statistical analysis plan draft'],
+    },
+    {
+      id: 'endpoints',
+      name: 'Define endpoints',
+      estimatedHours: 6,
+      role: 'biostatistician',
+      guidance: { ichGuideline: 'ICH E9', keyConsiderations: ['Safety as primary endpoint for Phase 1', 'PK endpoints for dose-finding'] },
+      timeline: { typicalStartWeek: 26, typicalDurationWeeks: 1 },
+      deliverables: ['Endpoint definitions', 'Assessment schedule'],
+    },
+    {
+      id: 'inclusion_exclusion',
+      name: 'Define eligibility criteria',
+      estimatedHours: 6,
+      role: 'clinical_lead',
+      risk: { severity: 'medium', probability: 0.3, impact: 'Enrollment delays if criteria too restrictive', mitigations: ['Benchmark against similar Phase 1 trials on ClinicalTrials.gov', 'Include feasibility assessment'] },
+      timeline: { typicalStartWeek: 26, typicalDurationWeeks: 1 },
+      deliverables: ['Eligibility criteria document'],
+    },
+    {
+      id: 'safety_plan',
+      name: 'Draft safety monitoring plan',
+      estimatedHours: 6,
+      role: 'medical_monitor',
+      critical: true,
+      risk: { severity: 'critical', probability: 0.15, impact: 'Clinical hold if safety monitoring inadequate', mitigations: ['Include DSMB charter for higher-risk indications', 'Define dose-limiting toxicity criteria', 'Include stopping rules'] },
+      guidance: { cfrReference: '21 CFR 312.32', keyConsiderations: ['IND safety reporting requirements (7-day and 15-day reports)', 'Sponsor safety monitoring responsibilities'] },
+      timeline: { typicalStartWeek: 27, typicalDurationWeeks: 2 },
+      deliverables: ['Safety monitoring plan', 'DSMB charter (if applicable)', 'AE/SAE reporting procedures'],
+    },
+    {
+      id: 'investigator_brochure',
+      name: "Author Investigator's Brochure",
+      estimatedHours: 16,
+      role: 'medical_writer',
+      critical: true,
+      risk: { severity: 'high', probability: 0.2, impact: 'Clinical hold if IB is incomplete or inconsistent with protocol', mitigations: ['Follow ICH E6(R2) Section 7 structure', 'Cross-reference all nonclinical and available clinical data'] },
+      guidance: { ichGuideline: 'ICH E6(R2) Section 7', cfrReference: '21 CFR 312.23(a)(5)', keyConsiderations: ['IB must include all relevant nonclinical and clinical data', 'Risk/benefit assessment required', 'Must be updated annually'] },
+      timeline: { typicalStartWeek: 24, typicalDurationWeeks: 4 },
+      deliverables: ["Investigator's Brochure"],
+      documentBindings: [{ ctdSection: '5.3.5.4', sectionTitle: "Investigator's Brochure", ectdLifecycleOp: 'new', artifactTypes: ['investigator_brochure'] }],
+      subTasks: [
+        { id: 'ib_nonclinical', name: 'Nonclinical data summary for IB', estimatedHours: 4 },
+        { id: 'ib_clinical', name: 'Clinical data summary for IB (if prior experience)', estimatedHours: 4 },
+        { id: 'ib_safety', name: 'Safety and risk/benefit assessment', estimatedHours: 4 },
+        { id: 'ib_instructions', name: 'Guidance for investigators', estimatedHours: 4 },
+      ],
+    },
+    {
+      id: 'protocol_finalize',
+      name: 'Finalize protocol (5.3.5)',
+      estimatedHours: 6,
+      role: 'clinical_lead',
+      critical: true,
+      risk: { severity: 'high', probability: 0.15, impact: 'Protocol deficiency is common FDA feedback area', mitigations: ['Internal protocol review committee', 'Verify consistency with IB and nonclinical data'] },
+      timeline: { typicalStartWeek: 28, typicalDurationWeeks: 2 },
+      deliverables: ['Final clinical protocol'],
+      documentBindings: [{ ctdSection: '5.3.5.1', sectionTitle: 'Clinical Study Protocol', ectdLifecycleOp: 'new', artifactTypes: ['protocol'] }],
+    },
   ], phase4.completeId);
   phases.push(phase5.phase);
 
-  const phase6 = buildPhase('phase6', 'Module 4 CMC', 6, [
-    { id: 'drug_substance', name: 'Draft drug substance section', estimatedHours: 10, role: 'cmc_lead', critical: true },
-    { id: 'drug_product', name: 'Draft drug product section', estimatedHours: 10, role: 'cmc_lead' },
-    { id: 'manufacturing', name: 'Describe manufacturing process', estimatedHours: 8, role: 'cmc_lead' },
-    { id: 'control_strategy', name: 'Define control strategy', estimatedHours: 6, role: 'quality' },
-    { id: 'stability', name: 'Compile stability data', estimatedHours: 8, role: 'cmc_lead' },
-    { id: 'cmc_review', name: 'CMC review and finalize', estimatedHours: 6, role: 'qa_manager', critical: true },
+  const phase6 = buildPhase('phase6', 'Module 2 — CTD Summaries', 6, [
+    {
+      id: 'qos',
+      name: 'Quality Overall Summary (2.3)',
+      estimatedHours: 10,
+      role: 'cmc_lead',
+      critical: true,
+      guidance: { ichGuideline: 'ICH M4Q(R1)', keyConsiderations: ['Summary of Module 3 content', 'Highlight any phase-appropriate limitations'] },
+      timeline: { typicalStartWeek: 30, typicalDurationWeeks: 2 },
+      deliverables: ['Quality Overall Summary (2.3)'],
+      documentBindings: [{ ctdSection: '2.3', sectionTitle: 'Quality Overall Summary', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'nonclinical_overview',
+      name: 'Nonclinical Overview (2.4)',
+      estimatedHours: 8,
+      role: 'nonclinical_lead',
+      critical: true,
+      guidance: { ichGuideline: 'ICH M4S(R2)', keyConsiderations: ['Integrated summary of nonclinical findings', 'Risk assessment for proposed clinical use'] },
+      timeline: { typicalStartWeek: 30, typicalDurationWeeks: 2 },
+      deliverables: ['Nonclinical Overview (2.4)'],
+      documentBindings: [{ ctdSection: '2.4', sectionTitle: 'Nonclinical Overview', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'nonclinical_summaries',
+      name: 'Nonclinical Written/Tabulated Summaries (2.6)',
+      estimatedHours: 10,
+      role: 'medical_writer',
+      guidance: { ichGuideline: 'ICH M4S(R2)' },
+      timeline: { typicalStartWeek: 30, typicalDurationWeeks: 3 },
+      deliverables: ['Nonclinical Written Summary', 'Nonclinical Tabulated Summary'],
+      documentBindings: [{ ctdSection: '2.6', sectionTitle: 'Nonclinical Written and Tabulated Summaries', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'clinical_overview',
+      name: 'Clinical Overview (2.5)',
+      estimatedHours: 8,
+      role: 'clinical_lead',
+      critical: true,
+      guidance: { ichGuideline: 'ICH M4E(R2)', keyConsiderations: ['Benefit-risk assessment', 'Summary of proposed clinical approach'] },
+      timeline: { typicalStartWeek: 30, typicalDurationWeeks: 2 },
+      deliverables: ['Clinical Overview (2.5)'],
+      documentBindings: [{ ctdSection: '2.5', sectionTitle: 'Clinical Overview', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'clinical_summary',
+      name: 'Clinical Summary (2.7)',
+      estimatedHours: 10,
+      role: 'medical_writer',
+      guidance: { ichGuideline: 'ICH M4E(R2)' },
+      timeline: { typicalStartWeek: 31, typicalDurationWeeks: 3 },
+      deliverables: ['Clinical Summary (2.7)'],
+      documentBindings: [{ ctdSection: '2.7', sectionTitle: 'Clinical Summary', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'summaries_qc',
+      name: 'Summaries cross-consistency QC',
+      estimatedHours: 6,
+      role: 'qa_manager',
+      critical: true,
+      risk: { severity: 'medium', probability: 0.35, impact: 'Inconsistencies between summaries and source modules create credibility issues', mitigations: ['Cross-reference check between M2 summaries and M3/M4/M5 source data', 'Verify numerical consistency (doses, study results, specifications)'] },
+      timeline: { typicalStartWeek: 33, typicalDurationWeeks: 1 },
+      deliverables: ['Cross-consistency QC report'],
+    },
   ], phase5.completeId);
   phases.push(phase6.phase);
 
-  const phase7 = buildPhase('phase7', 'Module 5 Pharm/Tox', 7, [
-    { id: 'pharm_summary', name: 'Draft pharmacology summary', estimatedHours: 8, role: 'toxicologist' },
-    { id: 'tox_summary', name: 'Draft toxicology summary', estimatedHours: 10, role: 'toxicologist', critical: true },
-    { id: 'study_reports', name: 'Compile study reports', estimatedHours: 8, role: 'toxicologist' },
-    { id: 'integrated_summary', name: 'Integrated nonclinical summary', estimatedHours: 8, role: 'medical_writer' },
-    { id: 'glp_compliance', name: 'Verify GLP compliance', estimatedHours: 4, role: 'qa_manager' },
-    { id: 'module5_finalize', name: 'Finalize Module 5', estimatedHours: 4, role: 'toxicologist', critical: true },
+  const phase7 = buildPhase('phase7', 'Module 1 — Administrative', 7, [
+    {
+      id: 'cover_letter',
+      name: 'Draft cover letter',
+      estimatedHours: 4,
+      role: 'ra_lead',
+      timeline: { typicalStartWeek: 34, typicalDurationWeeks: 1 },
+      deliverables: ['IND cover letter'],
+      documentBindings: [{ ctdSection: '1.1', sectionTitle: 'Cover Letter', ectdLifecycleOp: 'new', artifactTypes: ['cover_letter'] }],
+    },
+    {
+      id: 'form_1571',
+      name: 'Complete FDA Form 1571',
+      estimatedHours: 4,
+      role: 'ra_associate',
+      critical: true,
+      risk: { severity: 'high', probability: 0.1, impact: 'IND will be refused if Form 1571 is incomplete or incorrect', mitigations: ['Use validated form-fill tool', 'Cross-check against CDER/CBER requirements'] },
+      guidance: { cfrReference: '21 CFR 312.23(a)(1)', keyConsiderations: ['Form 1571 is the official IND application form', 'Must be signed by sponsor or authorized representative', 'Includes table of contents for the IND'] },
+      timeline: { typicalStartWeek: 34, typicalDurationWeeks: 1 },
+      deliverables: ['Completed FDA Form 1571'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'FDA Form 1571', ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }],
+    },
+    {
+      id: 'form_1572',
+      name: 'Complete FDA Form 1572 (per investigator)',
+      estimatedHours: 4,
+      role: 'ra_associate',
+      critical: true,
+      guidance: { cfrReference: '21 CFR 312.53', keyConsiderations: ['One Form 1572 per investigator site', 'Must list sub-investigators and IRB', 'Investigator commitments and qualifications'] },
+      timeline: { typicalStartWeek: 34, typicalDurationWeeks: 1 },
+      deliverables: ['Completed FDA Form 1572 (per site)'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'FDA Form 1572', ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }],
+    },
+    {
+      id: 'form_3674',
+      name: 'Complete FDA Form 3674 (ClinicalTrials.gov cert)',
+      estimatedHours: 2,
+      role: 'ra_associate',
+      guidance: { cfrReference: '42 USC 282(j)', keyConsiderations: ['Certification of compliance with ClinicalTrials.gov registration', 'Required for applicable clinical trials under FDAAA 801'] },
+      timeline: { typicalStartWeek: 35, typicalDurationWeeks: 1 },
+      deliverables: ['Completed FDA Form 3674'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'FDA Form 3674', ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }],
+    },
+    {
+      id: 'general_plan',
+      name: 'Draft introductory statement & general investigational plan',
+      estimatedHours: 6,
+      role: 'medical_writer',
+      guidance: { cfrReference: '21 CFR 312.23(a)(3)', keyConsiderations: ['Introductory statement: drug name, structure, pharmacological class, formulation, route', 'General investigational plan: rationale, indication, planned studies, anticipated risks'] },
+      timeline: { typicalStartWeek: 34, typicalDurationWeeks: 2 },
+      deliverables: ['Introductory statement', 'General investigational plan'],
+      documentBindings: [{ ctdSection: '1.3', sectionTitle: 'Introductory Statement and General Investigational Plan', ectdLifecycleOp: 'new' }],
+    },
+    {
+      id: 'toc',
+      name: 'Compile module 1 table of contents',
+      estimatedHours: 3,
+      role: 'regulatory_ops',
+      timeline: { typicalStartWeek: 35, typicalDurationWeeks: 1 },
+      deliverables: ['Module 1 TOC'],
+    },
+    {
+      id: 'env_assessment',
+      name: 'Environmental assessment / categorical exclusion',
+      estimatedHours: 2,
+      role: 'ra_associate',
+      guidance: { cfrReference: '21 CFR 25.31', keyConsiderations: ['Most drugs qualify for categorical exclusion', 'Claim under 21 CFR 25.31(a) for INDs'] },
+      timeline: { typicalStartWeek: 35, typicalDurationWeeks: 1 },
+      deliverables: ['Environmental assessment or categorical exclusion claim'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'Environmental Assessment', ectdLifecycleOp: 'new' }],
+    },
   ], phase6.completeId);
   phases.push(phase7.phase);
 
   const phase8 = buildPhase('phase8', 'QA Review & Submission', 8, [
-    { id: 'qc_check', name: 'QC full IND package', estimatedHours: 8, role: 'qa_manager', critical: true },
-    { id: 'signatures', name: 'Collect signatures', estimatedHours: 4, role: 'ra_lead' },
-    { id: 'ectd_compile', name: 'Compile eCTD', estimatedHours: 6, role: 'regulatory_ops' },
-    { id: 'ectd_validate', name: 'Validate eCTD', estimatedHours: 4, role: 'regulatory_ops', critical: true },
-    { id: 'submit', name: 'Submit IND', estimatedHours: 2, role: 'regulatory_ops', critical: true },
-    { id: 'archive', name: 'Archive submission package', estimatedHours: 3, role: 'regulatory_ops' },
+    {
+      id: 'qc_check',
+      name: 'QC full IND package',
+      estimatedHours: 8,
+      role: 'qa_manager',
+      critical: true,
+      risk: { severity: 'high', probability: 0.3, impact: 'Quality defects in submission package delay filing', mitigations: ['Use comprehensive QC checklist', 'Independent second review of critical sections'] },
+      timeline: { typicalStartWeek: 36, typicalDurationWeeks: 2 },
+      deliverables: ['QC review report', 'Deficiency log with dispositions'],
+      subTasks: [
+        { id: 'cross_ref_check', name: 'Cross-reference consistency check', estimatedHours: 2 },
+        { id: 'format_check', name: 'eCTD formatting and hyperlink verification', estimatedHours: 2 },
+        { id: 'content_check', name: 'Content completeness verification', estimatedHours: 2 },
+        { id: 'regulatory_check', name: 'Regulatory requirements checklist', estimatedHours: 2 },
+      ],
+    },
+    {
+      id: 'signatures',
+      name: 'Collect signatures',
+      estimatedHours: 4,
+      role: 'ra_lead',
+      guidance: { cfrReference: '21 CFR Part 11', keyConsiderations: ['Electronic signatures must comply with 21 CFR Part 11', 'Sponsor signature on Form 1571 required'] },
+      timeline: { typicalStartWeek: 37, typicalDurationWeeks: 1 },
+      deliverables: ['Signed Form 1571', 'Signed Form 1572(s)'],
+    },
+    {
+      id: 'ectd_compile',
+      name: 'Compile eCTD',
+      estimatedHours: 6,
+      role: 'regulatory_ops',
+      timeline: { typicalStartWeek: 37, typicalDurationWeeks: 1 },
+      deliverables: ['Compiled eCTD sequence 0000'],
+    },
+    {
+      id: 'ectd_validate',
+      name: 'Validate eCTD',
+      estimatedHours: 4,
+      role: 'regulatory_ops',
+      critical: true,
+      risk: { severity: 'medium', probability: 0.2, impact: 'FDA ESG rejection if eCTD validation fails', mitigations: ['Use FDA-recognized validation tool', 'Resolve all errors and warnings before submission'] },
+      guidance: { keyConsiderations: ['Must pass FDA ESG technical validation', 'eCTD v4.0 format per FDA specifications'] },
+      timeline: { typicalStartWeek: 38, typicalDurationWeeks: 1 },
+      deliverables: ['eCTD validation report'],
+    },
+    {
+      id: 'submit',
+      name: 'Submit IND',
+      estimatedHours: 2,
+      role: 'regulatory_ops',
+      critical: true,
+      timeline: { typicalStartWeek: 38, typicalDurationWeeks: 1, fdaMilestone: 'IND Submission', regulatoryDeadlineDays: 30 },
+      deliverables: ['FDA ESG submission acknowledgment'],
+    },
+    {
+      id: 'archive',
+      name: 'Archive submission package',
+      estimatedHours: 3,
+      role: 'regulatory_ops',
+      timeline: { typicalStartWeek: 38, typicalDurationWeeks: 1 },
+      deliverables: ['Archived submission package', 'Submission log entry'],
+    },
   ], phase7.completeId);
   phases.push(phase8.phase);
 
   const tasks = phases.flatMap(phase => phase.tasks);
-  return { type: 'IND', phases, tasks };
+  const totalEstimatedHours = tasks.reduce((sum, t) => sum + t.estimatedHours, 0);
+  const criticalPathIds = tasks.filter(t => t.critical).map(t => t.id);
+
+  return { type: 'IND', phases, tasks, totalEstimatedHours, criticalPathIds };
 }

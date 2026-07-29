@@ -28,7 +28,7 @@ import {
   saveChatMessage,
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
-import jwt from 'jsonwebtoken';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 import { ai } from '../lib/unified-ai-client';
@@ -44,6 +44,10 @@ import {
   renderSharedMemoryForPrompt,
 } from '../services/shared-memory-contract.js';
 import { executeGovernedAnaOperation } from '../services/governed-ana-execution.js';
+import { summarizeAndStoreWorkingMemoryForThread } from '../services/working-memory.js';
+
+// Legacy helper removed; no-op stub keeps fire-and-forget call sites compiling.
+const generateWorkingMemorySummary: any = async (..._args: unknown[]) => undefined;
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -316,13 +320,14 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     const MODEL_MAX_TOKENS = 128_000;
     const RESPONSE_BUFFER = 4_000;
 
-    // Load working memory summary if available
+    // Load working memory summary if available (org-scoped to prevent cross-tenant leak).
     let workingMemorySummary: string | null = null;
     try {
       const wmResult = await pool.query(
         `SELECT summary FROM conversation_working_memory
-         WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
-        [threadId]
+         WHERE thread_id = $1 AND organization_id = $2
+         ORDER BY generated_at DESC LIMIT 1`,
+        [threadId, organizationId]
       );
       if (wmResult.rows.length > 0) {
         workingMemorySummary = wmResult.rows[0].summary;
@@ -832,13 +837,15 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       // ── AUTO-SUMMARIZE: Generate working memory summary after extended conversations ──
       // This runs async (fire-and-forget) to avoid blocking the response
       if (previousMessages.length >= 10 && !streamAborted) {
-        generateWorkingMemorySummary(
+        summarizeAndStoreWorkingMemoryForThread({
           threadId,
-          previousMessages,
-          message,
-          fullContent,
-          organizationId
-        ).catch((err: any) =>
+          organizationId,
+          messages: [
+            ...previousMessages.map((m: any) => ({ role: m.role, content: m.content })),
+            { role: 'user', content: message },
+            { role: 'assistant', content: fullContent },
+          ],
+        }).catch((err: any) =>
           logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
         );
       }
@@ -915,13 +922,15 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // Auto-summarize for long conversations (fire-and-forget)
     if (previousMessages.length >= 10) {
-      generateWorkingMemorySummary(
+      summarizeAndStoreWorkingMemoryForThread({
         threadId,
-        previousMessages,
-        message,
-        assistantMessage,
-        organizationId
-      ).catch((err: any) =>
+        organizationId,
+        messages: [
+          ...previousMessages.map((m: any) => ({ role: m.role, content: m.content })),
+          { role: 'user', content: message },
+          { role: 'assistant', content: assistantMessage },
+        ],
+      }).catch((err: any) =>
         logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
       );
     }
@@ -1261,32 +1270,10 @@ async function mountSubRouters() {
     logger.error('Failed to mount AnA 1.0 RI routes:', error);
   }
 
-  // Clinical intelligence (Foresight capabilities under Cortex gateway)
-  try {
-    const foresightAdvancedModule = await import('./foresight-ai-advanced');
-    router.use('/clinical', foresightAdvancedModule.default);
-    logger.info('Mounted: /clinical (Foresight advanced capabilities)');
-  } catch (error) {
-    logger.error('Failed to mount clinical routes:', error);
-  }
-
-  // Feedback orchestration (Foresight feedback under Cortex gateway)
-  try {
-    const foresightFeedbackModule = await import('./foresight-feedback');
-    router.use('/feedback', foresightFeedbackModule.default);
-    logger.info('Mounted: /feedback (Foresight feedback)');
-  } catch (error) {
-    logger.error('Failed to mount feedback routes:', error);
-  }
-
-  // Legacy foresight core (exposed under Cortex gateway)
-  try {
-    const foresightCoreModule = await import('./foresight-api');
-    router.use('/foresight', foresightCoreModule.default);
-    logger.info('Mounted: /foresight (Foresight core)');
-  } catch (error) {
-    logger.error('Failed to mount foresight core routes:', error);
-  }
+  // Foresight capabilities (/clinical, /feedback, /foresight) retired in Phase 8 —
+  // past their 2026-04-01 Sunset and surfaced fabricated dose confidence intervals.
+  // Honest dose-strategy evidence is served via the clinical-regulatory-evidence
+  // study-design surface; no Foresight routes are mounted under Cortex.
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1297,9 +1284,7 @@ function extractUserId(req: Request): number | null {
   try {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return null;
-    const secret = process.env.JWT_SECRET;
-    if (!secret) return null;
-    const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] }) as any;
+    const decoded = verifyJwtWithRotation(token) as any;
     return decoded?.userId ? Number(decoded.userId) : null;
   } catch {
     return null;

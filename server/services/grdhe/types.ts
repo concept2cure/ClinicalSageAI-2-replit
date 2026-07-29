@@ -206,6 +206,8 @@ export type RegulatoryFormat =
   | 'FDA_ECTD_3_2_2'
   | 'FDA_3500A'
   | 'FDA_3500B'
+  | 'FDA_AE_3500A'
+  | 'FDA_AE_3500B'
   | 'FDA_GUDID'
   | 'FDA_SPL'
   | 'FDA_ESG'
@@ -215,6 +217,7 @@ export type RegulatoryFormat =
   | 'EMA_XEVMPD'
   | 'EMA_IDMP_SPOR'
   | 'EMA_E2B_R3'
+  | 'EMA_AE_E2B_R3'
   | 'EMA_EUDAMED'
   | 'EMA_PSUR'
   // Other jurisdictions

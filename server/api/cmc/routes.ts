@@ -28,8 +28,37 @@ import {
   insertDrugProductSchema,
 } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
+import { createScopedLogger } from '../../utils/logger';
+import * as metricsModule from '../../metrics.js';
 
 const router = express.Router();
+const logger = createScopedLogger('cmc-routes');
+
+/**
+ * Observe a failed canonical write-through to the Module 3 submission source
+ * object. The primary response is intentionally NOT blocked on this — but the
+ * failure MUST be observable (logged + metered) rather than silently swallowed.
+ * TODO(GA): consider retry/queue for guaranteed write-through.
+ */
+function observeWriteThroughFailure(
+  propagation: string,
+  recordId: string | number,
+  err: unknown
+): void {
+  logger.error('Module 3 canonical write-through failed', {
+    recordId: String(recordId),
+    propagation,
+    error: err instanceof Error ? err.message : String(err),
+  });
+  try {
+    (metricsModule as any).metrics.concept2cureErrors.inc({
+      operation: `cmc_${propagation}`,
+      error_type: 'propagation_failed',
+    });
+  } catch {
+    /* metric increment must never affect request flow */
+  }
+}
 
 // Helper to read organization ID from authenticated context
 function getOrgId(req: express.Request): number {
@@ -51,12 +80,11 @@ router.get('/analytical-methods', async (req, res) => {
     const methods = await db
       .select({
         id: analyticalMethods.id,
-        projectId: analyticalMethods.projectId,
-        methodName: analyticalMethods.methodName,
-        methodType: analyticalMethods.methodType,
+        methodCode: analyticalMethods.methodCode,
+        title: analyticalMethods.title,
+        technique: analyticalMethods.technique,
         purpose: analyticalMethods.purpose,
-        procedure: analyticalMethods.procedure,
-        validationStatus: analyticalMethods.validationStatus,
+        status: analyticalMethods.status,
         organizationId: analyticalMethods.organizationId,
         createdAt: analyticalMethods.createdAt,
         updatedAt: analyticalMethods.updatedAt,
@@ -74,10 +102,16 @@ router.post('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.parse(req.body);
-    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId }).returning();
+    // createInsertSchemaOmit widens the parsed type to `{}`, so cast the
+    // Zod-validated values to the table insert type at this boundary.
+    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId } as typeof analyticalMethods.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
-    if (method.projectId) {
-      writeThroughAnalyticalMethod(orgId, method.projectId, String(method.id), method).catch(() => {});
+    // projectId is not persisted on this table; it is supplied by the caller for canonical linkage.
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(err =>
+        observeWriteThroughFailure('write_through_analytical_method', method.id, err)
+      );
     }
     res.json({ success: true, data: method });
   } catch (error) {
@@ -88,18 +122,22 @@ router.post('/analytical-methods', async (req, res) => {
 
 router.put('/analytical-methods/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = insertAnalyticalMethodSchema.partial().parse(req.body);
-    const { organizationId: _discard, ...safeData } = validatedData;
+    // Strip organizationId so the tenant scope cannot be overridden by the request body.
+    const { organizationId: _discard, ...safeData } = validatedData as { organizationId?: number } & Record<string, unknown>;
     const [method] = await db
       .update(analyticalMethods)
       .set({ ...safeData, updatedAt: new Date() })
       .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
       .returning();
     // Write-through: upsert canonical source object for Module 3
-    if (method?.projectId) {
-      writeThroughAnalyticalMethod(orgId, method.projectId, String(method.id), method).catch(() => {});
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (method && projectId) {
+      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(err =>
+        observeWriteThroughFailure('write_through_analytical_method', method.id, err)
+      );
     }
     res.json({ success: true, data: method });
   } catch (error) {
@@ -127,10 +165,13 @@ router.post('/process-validation', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertProcessValidationSchema.parse(req.body);
-    const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId }).returning();
+    const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId } as typeof processValidation.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
-    if (validation.projectId) {
-      writeThroughProcessValidation(orgId, validation.projectId, String(validation.id), validation).catch(() => {});
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughProcessValidation(orgId, projectId, String(validation.id), validation).catch(err =>
+        observeWriteThroughFailure('write_through_process_validation', validation.id, err)
+      );
     }
     res.json({ success: true, data: validation });
   } catch (error) {
@@ -146,10 +187,10 @@ router.get('/stability-studies', async (req, res) => {
     const studies = await db
       .select({
         id: stabilityStudies.id,
-        projectId: stabilityStudies.projectId,
-        studyName: stabilityStudies.studyName,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
         studyType: stabilityStudies.studyType,
-        storageCondition: stabilityStudies.storageCondition,
+        storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         status: stabilityStudies.status,
         organizationId: stabilityStudies.organizationId,
@@ -169,10 +210,13 @@ router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertStabilityStudySchema.parse(req.body);
-    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId }).returning();
+    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId } as typeof stabilityStudies.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
-    if (study.projectId) {
-      writeThroughStabilityStudy(orgId, study.projectId, String(study.id), study).catch(() => {});
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughStabilityStudy(orgId, projectId, String(study.id), study).catch(err =>
+        observeWriteThroughFailure('write_through_stability_study', study.id, err)
+      );
     }
     res.json({ success: true, data: study });
   } catch (error) {
@@ -197,7 +241,7 @@ router.post('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertQcTestingSchema.parse(req.body);
-    const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId }).returning();
+    const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId } as typeof qcTesting.$inferInsert).returning();
     res.json({ success: true, data: test });
   } catch (error) {
     console.error('Error creating QC test:', error);
@@ -224,10 +268,13 @@ router.post('/change-control', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertCmcChangeControlSchema.parse(req.body);
-    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId }).returning();
+    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId } as typeof cmcChangeControl.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
-    if (change.projectId) {
-      writeThroughChangeControl(orgId, change.projectId, String(change.id), change).catch(() => {});
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughChangeControl(orgId, projectId, String(change.id), change).catch(err =>
+        observeWriteThroughFailure('write_through_change_control', change.id, err)
+      );
     }
     res.json({ success: true, data: change });
   } catch (error) {
@@ -243,12 +290,11 @@ router.get('/drug-substances', async (req, res) => {
     const substances = await db
       .select({
         id: drugSubstances.id,
-        projectId: drugSubstances.projectId,
         substanceName: drugSubstances.substanceName,
         casNumber: drugSubstances.casNumber,
         molecularFormula: drugSubstances.molecularFormula,
         molecularWeight: drugSubstances.molecularWeight,
-        manufacturingRoute: drugSubstances.manufacturingRoute,
+        manufacturingProcess: drugSubstances.manufacturingProcess,
         organizationId: drugSubstances.organizationId,
         createdAt: drugSubstances.createdAt,
         updatedAt: drugSubstances.updatedAt,
@@ -266,10 +312,13 @@ router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugSubstanceSchema.parse(req.body);
-    const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId }).returning();
+    const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId } as typeof drugSubstances.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
-    if (substance.projectId) {
-      writeThroughDrugSubstance(orgId, substance.projectId, String(substance.id), substance).catch(() => {});
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughDrugSubstance(orgId, projectId, String(substance.id), substance).catch(err =>
+        observeWriteThroughFailure('write_through_drug_substance', substance.id, err)
+      );
     }
     res.json({ success: true, data: substance });
   } catch (error) {
@@ -285,7 +334,6 @@ router.get('/drug-products', async (req, res) => {
     const products = await db
       .select({
         id: drugProducts.id,
-        projectId: drugProducts.projectId,
         productName: drugProducts.productName,
         dosageForm: drugProducts.dosageForm,
         strength: drugProducts.strength,
@@ -308,10 +356,13 @@ router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = insertDrugProductSchema.parse(req.body);
-    const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId }).returning();
+    const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId } as typeof drugProducts.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
-    if (product.projectId) {
-      writeThroughDrugProduct(orgId, product.projectId, String(product.id), product).catch(() => {});
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughDrugProduct(orgId, projectId, String(product.id), product).catch(err =>
+        observeWriteThroughFailure('write_through_drug_product', product.id, err)
+      );
     }
     res.json({ success: true, data: product });
   } catch (error) {
@@ -540,7 +591,9 @@ router.post('/comparability-studies', async (req, res) => {
     );
     // Write-through: read projectId from DB return, not request body
     if (rows[0]?.project_id) {
-      writeThroughComparability(orgId, rows[0].project_id, String(rows[0].id), rows[0]).catch(() => {});
+      writeThroughComparability(orgId, rows[0].project_id, String(rows[0].id), rows[0]).catch(err =>
+        observeWriteThroughFailure('write_through_comparability', rows[0].id, err)
+      );
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
@@ -584,7 +637,9 @@ router.put('/comparability-studies/:id', async (req, res) => {
     }
     // Write-through: read projectId from DB, not request body
     if (rows[0].project_id) {
-      writeThroughComparability(orgId, rows[0].project_id, String(req.params.id), rows[0]).catch(() => {});
+      writeThroughComparability(orgId, rows[0].project_id, String(req.params.id), rows[0]).catch(err =>
+        observeWriteThroughFailure('write_through_comparability', req.params.id, err)
+      );
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
@@ -652,6 +707,126 @@ Write a comprehensive draft for this CMC section following ICH guidelines.`,
   } catch (error) {
     console.error('CMC blueprint generation error:', error);
     res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Generation failed' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA-DRIVEN QUALITY ANALYSIS (replaces hardcoded CQA/CPP heuristics for
+// projects that have CMC source data). The blueprint-generator route keeps
+// its type-string heuristics for upfront blueprint creation where no
+// project data exists yet.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/cmc/quality/qbd/:projectId
+ * Derive CQAs and CPPs from the project's actual stored data
+ * (specifications, methods, stability, processes, source objects).
+ */
+router.get('/quality/qbd/:projectId', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.params.projectId;
+    if (!projectId) {
+      return res.status(400).json({ success: false, error: 'projectId is required' });
+    }
+    const { analyzeQbdFromSources } = await import('../../services/cmc/qbd-analyzer');
+    const result = await analyzeQbdFromSources(orgId, projectId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('QbD analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'QbD analysis failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/ich-compliance
+ * Deterministic ICH compliance check for a project. Runs rule-based
+ * checks across Q1A/Q2/Q3A-B/Q3D/Q6A-B/Q8/Q9/Q10 against the project's
+ * actual stored data. Every finding cites the underlying guideline.
+ */
+router.post('/ich-compliance', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.body?.projectId;
+    if (!projectId || typeof projectId !== 'string') {
+      return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
+    }
+    const { runIchComplianceCheck } = await import('../../services/cmc/ich-compliance-checker');
+    const report = await runIchComplianceCheck(orgId, projectId);
+    res.json({ success: true, data: report });
+  } catch (error) {
+    console.error('ICH compliance check error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'ICH compliance check failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/variations/classify
+ * Deterministic SUPAC / variations classifier. Takes a proposed change
+ * description and returns the FDA reporting category, EMA variation
+ * category, SUPAC tier, bioequivalence requirement, impacted CTD
+ * sections, validation requirements, estimated timeline, and the
+ * cross-module impact analysis. Grounded in 21 CFR 314.70, SUPAC-IR /
+ * MR / SS, Commission Regulation 1234/2008, and ICH Q12.
+ */
+router.post('/variations/classify', async (req, res) => {
+  try {
+    getOrgId(req); // tenant scope enforcement
+    const { classifyVariation } = await import('../../services/cmc/supac-classifier');
+    const input = req.body ?? {};
+    if (!input.dosageFormFamily || !input.changeCategory) {
+      return res.status(400).json({
+        success: false,
+        error: 'dosageFormFamily and changeCategory are required',
+      });
+    }
+    const classification = classifyVariation(input);
+    res.json({ success: true, data: classification });
+  } catch (error) {
+    console.error('Variations classifier error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Classification failed',
+    });
+  }
+});
+
+/**
+ * POST /api/cmc/control-strategy
+ * Deterministic ICH Q8/Q9/Q10/Q11-grade control strategy generator.
+ * Reads CMC source objects, specs, methods, stability — produces a
+ * structured control strategy with risk-based justifications and
+ * cited guidance. Replaces the fallback playbook string.
+ */
+router.post('/control-strategy', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = req.body?.projectId;
+    const scope = req.body?.scope ?? 'both';
+    if (!projectId || typeof projectId !== 'string') {
+      return res.status(400).json({ success: false, error: 'projectId (string UUID) is required' });
+    }
+    if (scope !== 'drug_substance' && scope !== 'drug_product' && scope !== 'both') {
+      return res.status(400).json({
+        success: false,
+        error: 'scope must be one of drug_substance | drug_product | both',
+      });
+    }
+    const { generateControlStrategy } = await import('../../services/cmc/control-strategy-generator');
+    const strategy = await generateControlStrategy(orgId, projectId, scope);
+    res.json({ success: true, data: strategy });
+  } catch (error) {
+    console.error('Control strategy generator error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Control strategy generation failed',
+    });
   }
 });
 

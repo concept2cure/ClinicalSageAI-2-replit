@@ -140,9 +140,14 @@ describe('AIGateway', () => {
 
       expect(response).toBeDefined();
       expect(response.deterministic).toBe(true);
-      expect(response.provider).toBe('openai');
-      expect(response.model).toBe('deterministic');
-      expect(response.content).toContain('deterministic');
+      // The deterministic responder reports `provider: 'anthropic'`,
+      // `model: 'demo-mode'` (see gateway.ts:1175-1176) — the test was
+      // written against the older 'openai' / 'deterministic' shape.
+      expect(response.provider).toBe('anthropic');
+      expect(response.model).toBe('demo-mode');
+      // Content includes the word 'demo' (DETERMINISTIC_RESPONSES) rather
+      // than the literal 'deterministic'.
+      expect(response.content).toMatch(/demo|deterministic/i);
       expect(response.usage.estimatedCostUsd).toBe(0);
       expect(response.requestId).toBeDefined();
     });
@@ -170,7 +175,10 @@ describe('AIGateway', () => {
       const response = await gateway.route(buildTestRequest({ taskType: 'structured_output' }));
       expect(response.content).toContain('"result"');
       const parsed = JSON.parse(response.content);
-      expect(parsed.result).toBe('deterministic');
+      // The deterministic JSON body uses 'demo_mode' as the result value
+      // (see DETERMINISTIC_RESPONSES.structured_output in gateway.ts) —
+      // the test was written when the value was 'deterministic'.
+      expect(parsed.result).toBe('demo_mode');
     });
   });
 
@@ -193,7 +201,87 @@ describe('AIGateway', () => {
     it('structuredOutput() returns parsed JSON', async () => {
       const result = await gateway.structuredOutput<{ result: string }>('Return JSON');
       expect(result).toBeDefined();
-      expect(result.result).toBe('deterministic');
+      // Deterministic structured_output body value is 'demo_mode'.
+      expect(result.result).toBe('demo_mode');
+    });
+  });
+
+  // ─── Anthropic param construction (model-aware) ──────────────────────────
+  //
+  // Opus 4.7+ removed the sampling parameters (temperature/top_p/top_k) and the
+  // manual `thinking: {type:"enabled", budget_tokens}` shape — sending either
+  // now returns a 400. These tests guard that the gateway does NOT emit those
+  // for the Opus 4.7/4.8 family while preserving the legacy surface elsewhere.
+
+  describe('anthropic sampling params', () => {
+    const reasoningOnly = (model: string): boolean =>
+      (gateway as any).isReasoningOnlyModel(model);
+
+    const buildParams = (model: string, request: Partial<GatewayRequest>): any => {
+      const req = buildTestRequest(request);
+      // Mirror executeAnthropic: max_tokens is set on params before the sampling
+      // params are applied, so the legacy thinking-budget clamp can see it.
+      const params: any = { max_tokens: req.maxTokens ?? 4096 };
+      (gateway as any).applyAnthropicSamplingParams(
+        params,
+        { model, provider: 'anthropic' },
+        req
+      );
+      return params;
+    };
+
+    it('classifies Opus 4.7/4.8 (incl. provider-prefixed) as reasoning-only', () => {
+      expect(reasoningOnly('claude-opus-4-7')).toBe(true);
+      expect(reasoningOnly('claude-opus-4-8')).toBe(true);
+      expect(reasoningOnly('anthropic.claude-opus-4-7')).toBe(true);
+    });
+
+    it('does not classify Sonnet 4.6, Haiku 4.5, or the dated 4.0 snapshot', () => {
+      expect(reasoningOnly('claude-sonnet-4-6')).toBe(false);
+      expect(reasoningOnly('claude-haiku-4-5-20251001')).toBe(false);
+      expect(reasoningOnly('claude-opus-4-20250514')).toBe(false);
+    });
+
+    it('omits temperature for Opus 4.7 (would 400)', () => {
+      const params = buildParams('claude-opus-4-7', { temperature: 0.5 });
+      expect(params.temperature).toBeUndefined();
+      expect(params.top_p).toBeUndefined();
+      expect(params.top_k).toBeUndefined();
+      expect(params.thinking).toBeUndefined();
+    });
+
+    it('uses adaptive thinking (no budget_tokens) for Opus 4.7', () => {
+      const params = buildParams('claude-opus-4-7', {
+        thinking: { enabled: true, budgetTokens: 8000 },
+      });
+      expect(params.thinking).toEqual({ type: 'adaptive', display: 'summarized' });
+      expect(params.temperature).toBeUndefined();
+    });
+
+    it('keeps the legacy temperature + budget_tokens surface for Sonnet 4.6', () => {
+      const plain = buildParams('claude-sonnet-4-6', { temperature: 0.3 });
+      expect(plain.temperature).toBe(0.3);
+
+      // Budget passes through unchanged when it fits under max_tokens.
+      const thinking = buildParams('claude-sonnet-4-6', {
+        maxTokens: 16000,
+        thinking: { enabled: true, budgetTokens: 12000 },
+      });
+      expect(thinking.thinking).toEqual({ type: 'enabled', budget_tokens: 12000 });
+      expect(thinking.temperature).toBe(1);
+    });
+
+    it('clamps the legacy budget_tokens below max_tokens (would 400 otherwise)', () => {
+      // Anthropic requires budget_tokens < max_tokens (thinking shares the
+      // output budget). A 12k budget on a 4k-max_tokens turn is clamped so
+      // >=1024 tokens remain for the answer.
+      const clamped = buildParams('claude-sonnet-4-6', {
+        maxTokens: 4096,
+        thinking: { enabled: true, budgetTokens: 12000 },
+      });
+      expect(clamped.thinking.type).toBe('enabled');
+      expect(clamped.thinking.budget_tokens).toBe(3072);
+      expect(clamped.thinking.budget_tokens).toBeLessThan(4096);
     });
   });
 
@@ -297,7 +385,9 @@ describe('GatewayPolicyEngine', () => {
         lastResult = policy.evaluate(buildTestRequest({ organizationId: 'rate-test-org-2' }));
       }
       expect(lastResult!.allowed).toBe(false);
-      expect(lastResult!.reason).toContain('Rate limit');
+      // Reason text was changed from "Rate limit exceeded" to
+      // "Organization rate limit exceeded" with the per-org rate limiter.
+      expect(lastResult!.reason).toMatch(/rate limit/i);
     });
   });
 

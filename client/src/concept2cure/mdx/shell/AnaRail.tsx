@@ -10,6 +10,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, MDX_SUGGESTIONS, type AnaMode } from '../data/nav';
 import type { Program } from '../data/programs';
+import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel, SR_ONLY_STYLE } from '../../hooks/useChatUpload';
 
 export interface AnaMessage {
   role: 'ana' | 'user';
@@ -31,6 +32,8 @@ export interface AnaRailProps {
   onNewThread?: () => void;
   /** Open thread history (host wires to its history surface). */
   onShowHistory?: () => void;
+  /** Scopes uploads to a project so extracted text lands in that project's memory. */
+  projectId?: string;
 }
 
 export function AnaRail({
@@ -44,16 +47,28 @@ export function AnaRail({
   onSend,
   onNewThread,
   onShowHistory,
+  projectId,
 }: AnaRailProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = MDX_SUGGESTIONS[activeNav] || MDX_SUGGESTIONS.overview;
-  const modelName = ANA_MODES.find(m => m.id === mode)?.model ?? '';
+  // Standing rule: all UI says "AnA 1.0" — no raw model names. Surface the AnA
+  // *mode* (Standard / Deep research / …), never the underlying model.
+  const modeLabel = ANA_MODES.find(m => m.id === mode)?.label ?? '';
+  const upload = useChatUpload({ projectId });
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const send = () => {
     const t = draft.trim();
-    if (!t) return;
-    onSend(t);
+    const ready = upload.attachments.filter(a => a.status === 'ready');
+    if (!t && ready.length === 0) return;
+    // Uploaded docs are OCR'd into project memory server-side; reference them
+    // inline when the message is otherwise bare so AnA has a prompt to act on.
+    const names = ready.map(a => a.name).join(', ');
+    const text = t || (names ? `Review the attached: ${names}` : '');
+    if (!text) return;
+    onSend(text);
     setDraft('');
+    upload.clear();
   };
 
   if (!open) {
@@ -78,7 +93,7 @@ export function AnaRail({
           <span className="ana-id-mark">✻</span>
           <div className="ana-id-text">
             <div className="ana-id-name">AnA 1.0 RI</div>
-            <div className="ana-id-model">Claude {modelName}</div>
+            <div className="ana-id-model">{modeLabel}</div>
           </div>
         </div>
         <div className="ana-rail-actions">
@@ -119,10 +134,10 @@ export function AnaRail({
             key={m.id}
             className={`ana-mode-btn${mode === m.id ? ' on' : ''}`}
             onClick={() => setMode(m.id)}
-            title={`${m.desc} · Claude ${m.model}`}
+            title={m.desc}
           >
             <span className="lbl">{m.label}</span>
-            <span className="sub">{m.model}</span>
+            <span className="sub">{m.desc}</span>
           </button>
         ))}
       </div>
@@ -160,7 +175,7 @@ export function AnaRail({
           <div key={i} className={`ana-msg ${m.role}`}>
             <div className="who">
               {m.role === 'ana'
-                ? `AnA · ${ANA_MODES.find(x => x.id === m.mode)?.model || modelName}`
+                ? `AnA · ${ANA_MODES.find(x => x.id === m.mode)?.label || modeLabel}`
                 : 'You'}{' '}
               · {m.when}
             </div>
@@ -170,7 +185,76 @@ export function AnaRail({
       </div>
 
       <div className="ana-rail-foot">
+        <div style={SR_ONLY_STYLE} aria-live="polite" role="status">
+          {upload.statusMessage}
+        </div>
+        {upload.attachments.length > 0 && (
+          <div className="ana-attachments" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+            {upload.attachments.map(a => (
+              <span
+                key={a.id}
+                title={a.error || a.name}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  maxWidth: 200,
+                  padding: '4px 8px',
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                  borderRadius: 6,
+                  border: '1px solid var(--c2c-border, rgba(0,0,0,0.12))',
+                  color: a.status === 'error' ? 'var(--error)' : 'inherit',
+                }}
+              >
+                <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                  <span style={{ opacity: a.status === 'uploading' ? 0.6 : 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                  </span>
+                  {a.status === 'ready' && attachmentReadLabel(a.extractionMethod, a.extractionWords) && (
+                    <span style={{ fontSize: 10, lineHeight: 1.2, color: 'var(--c2c-ink-subtle, #888)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {attachmentReadLabel(a.extractionMethod, a.extractionWords)}
+                    </span>
+                  )}
+                  {a.status === 'error' && a.error && (
+                    <span style={{ fontSize: 10, lineHeight: 1.2, color: 'var(--error)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {a.error}
+                    </span>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="ana-attachment-remove"
+                  aria-label={`Remove ${a.name}`}
+                  onClick={() => upload.removeAttachment(a.id)}
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, color: 'inherit', opacity: 0.6 }}
+                >
+                  {I.close}
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <div className="ana-composer">
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept={CHAT_UPLOAD_ACCEPT}
+            style={{ display: 'none' }}
+            onChange={e => {
+              upload.addFiles(e.target.files);
+              e.target.value = '';
+            }}
+          />
+          <button
+            className="ana-attach"
+            title="Attach files"
+            onClick={() => fileRef.current?.click()}
+            type="button"
+          >
+            {I.attach}
+          </button>
           <textarea
             rows={1}
             placeholder="Ask AnA about this workspace…"
@@ -185,7 +269,7 @@ export function AnaRail({
           />
           <button
             className="ana-send"
-            disabled={!draft.trim()}
+            disabled={(!draft.trim() && upload.attachments.filter(a => a.status === 'ready').length === 0) || upload.uploading}
             title="Send"
             onClick={send}
           >
@@ -193,7 +277,7 @@ export function AnaRail({
           </button>
         </div>
         <div className="ana-foot-meta">
-          Routes via AI gateway · Claude {modelName}
+          Routes via AI gateway · {modeLabel}
         </div>
       </div>
     </aside>

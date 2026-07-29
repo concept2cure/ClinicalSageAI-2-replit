@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-const pullMock = vi.fn();
+const { pullMock } = vi.hoisted(() => ({ pullMock: vi.fn() }));
 
 vi.mock('../section-pull', () => ({
   pullEstarSections: pullMock,
@@ -90,7 +90,7 @@ describe('composeCoverLetterDraft', () => {
     // match the request order, not the lexical order of section numbers.
     pullMock.mockImplementation(async (req) => {
       expect(req.sectionNumbers).toEqual(['6', '3']);
-      return req.sectionNumbers.map((num) => ({
+      return req.sectionNumbers.map((num: string) => ({
         sectionNumber: num,
         sectionTitle: `Section ${num}`,
         content: `content of ${num}`,

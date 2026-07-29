@@ -10,6 +10,7 @@
  */
 import { relations, InferSelectModel } from 'drizzle-orm';
 import {
+  bigint,
   integer,
   pgTable,
   pgEnum,
@@ -37,6 +38,12 @@ import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
 export * from './schema/csr-knowledge-db';
+export * from './schema/submissions';
+export * from './schema/evidence';
+export * from './schema/shadow-review';
+export * from './schema/change-assessments';
+export * from './schema/biopharma-specialty';
+export * from './schema/enablement-content';
 
 // ============================================================
 // SHARED ENUMS
@@ -145,6 +152,9 @@ export const organizations = pgTable('organizations', {
   domain: text('domain'),
   logo: text('logo'),
   industryMode: text('industry_mode'),
+  // Phase 10.2 — tenant IA: which biopharma surfaces this tenant sees.
+  // medtech tenants are redirected to the MDX shell.
+  clientType: text('client_type').default('pharma').notNull(), // medtech | biotech | pharma
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   billingCycle: text('billing_cycle').default('monthly'), // monthly, annual
@@ -162,6 +172,57 @@ export const organizations = pgTable('organizations', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Industry-context tailoring — governed profiles that preset one self-tailoring
+// workspace (see docs/MDX_INDUSTRY_CONTEXT_GAP_ANALYSIS.md). Replaces the
+// free-text industry_mode column, the localStorage admin blob, and the
+// onboarding mock as the authoritative source of a tenant's industry context.
+export const organizationIndustryProfiles = pgTable('organization_industry_profiles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .unique()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  // medical_device_diagnostics | biotech_pharma | cro | regulatory_consulting | academic_research
+  primaryIndustry: text('primary_industry').notNull(),
+  // medical_device | ivd_diagnostics | both | samd | companion_diagnostic | combination_product
+  mdxSpecialization: text('mdx_specialization'),
+  defaultMarkets: jsonb('default_markets').$type<string[]>().default([]).notNull(),
+  defaultPathways: jsonb('default_pathways').$type<string[]>().default([]).notNull(),
+  // single_reviewer | regulated_dual_review | qa_lock | signoff_required
+  defaultApprovalRigor: text('default_approval_rigor'),
+  effectiveAt: timestamp('effective_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+// organization_id is UNIQUE, so Postgres already indexes it — no extra index.
+
+// Per-project override, keyed on the canonical project id space
+// (regulatory_programs.id uuid) that clinical_studies / rbm_* / cdisc_prm share.
+// Inherits org defaults; a project may refine vertical/specialization/pathways
+// without changing navigation.
+export const projectIndustryProfiles = pgTable('project_industry_profiles', {
+  id: serial('id').primaryKey(),
+  programId: uuid('program_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  vertical: text('vertical'), // mdx | biopharma
+  specialization: text('specialization'),
+  productType: text('product_type'),
+  lifecycleStage: text('lifecycle_stage'),
+  targetMarkets: jsonb('target_markets').$type<string[]>().default([]).notNull(),
+  regulatoryPathways: jsonb('regulatory_pathways').$type<string[]>().default([]).notNull(),
+  filingTypes: jsonb('filing_types').$type<string[]>().default([]).notNull(),
+  inheritedFromOrg: boolean('inherited_from_org').default(true).notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  // program_id is UNIQUE (auto-indexed); org needs its own index for list scans.
+  pipOrgIdx: index('pip_org_idx').on(t.organizationId),
+}));
 
 // Organization Insert Schema
 export const insertOrganizationSchema = createInsertSchemaOmit(organizations, {
@@ -1935,12 +1996,36 @@ export const electronicSignatures = pgTable(
     signedAt: timestamp('signed_at').defaultNow().notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow(),
+    // ── Path-to-GA §C.11 (e-sig gate) additions ────────────────────────────
+    //
+    // Tenant scope. Historically this table had no orgId; every release-gate
+    // signature lookup must be scoped by orgId so a cross-tenant resume can't
+    // observe Org A's signature row (Risk R-3 / OQ-7 in the design doc).
+    // Backfilled via migration 20260629_orchestrator_awaiting_signature_status.sql.
+    organizationId: integer('organization_id').references(() => organizations.id),
+    // OQ-6 decision: separate column for the orchestrator's payload-binding
+    // hash. signatureHash is the §11.200 attribution hash over signer
+    // metadata; bound_payload_digest is the §11.70 payload-binding hash over
+    // (leafManifestDigest || validatorOutcomeDigest || submissionIdentityCanonical).
+    boundPayloadDigest: text('bound_payload_digest').notNull().default(''),
+    // OQ-4 decision: §11.70 mandates append-only signature history. Rollback
+    // never deletes a row; it inserts a new row referencing the prior via
+    // superseded_by. Resume-path lookups filter `superseded_by IS NULL`.
+    supersededBy: integer('superseded_by'),
   },
   table => ({
     signatureDocumentIdx: index('signature_document_idx').on(table.documentId, table.versionId),
     signatureSignerIdx: index('signature_signer_idx').on(table.signerId),
     signatureTypeIdx: index('signature_type_idx').on(table.signatureType),
     signedAtIdx: index('signed_at_idx').on(table.signedAt),
+    // Composite index supports the resume-path lookup
+    //   WHERE organization_id = $1 AND bound_payload_digest = $2 AND superseded_by IS NULL
+    // (Drizzle does not express partial indexes; partial WHERE lives in the
+    //  raw SQL migration.)
+    signatureOrgPayloadDigestIdx: index('electronic_signatures_org_payload_digest_idx').on(
+      table.organizationId,
+      table.boundPayloadDigest,
+    ),
   })
 );
 
@@ -2470,7 +2555,11 @@ export const users = pgTable('users', {
   status: text('status').default('active').notNull(), // active, inactive, suspended
   lastLogin: timestamp('last_login'),
   defaultOrganizationId: integer('default_organization_id').references(() => organizations.id),
-  preferences: json('preferences'),
+  // Phase 10.2 — display preferences only (density | railGroups | dockOpen),
+  // merge-patched via PUT /api/users/me/preferences. Never carries tenancy.
+  preferences: jsonb('preferences')
+    .default(sql`'{}'::jsonb`)
+    .notNull(),
   // MFA fields
   mfaEnabled: boolean('mfa_enabled').default(false),
   mfaSecret: text('mfa_secret'), // encrypted TOTP secret
@@ -2523,6 +2612,11 @@ export const organizationUsers = pgTable(
       .notNull()
       .references(() => users.id),
     role: text('role').default('member').notNull(), // admin, manager, member, viewer
+    // Optional job persona (executive | ra_lead | qa | …) from the canonical
+    // REPORT_PERSONAS vocabulary. Personalizes surfaces (role-aware home,
+    // default report-catalog persona); NOT an authorization boundary — access
+    // control stays on `role`. Null = unset.
+    persona: text('persona'),
     permissions: json('permissions'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -2544,6 +2638,104 @@ export const insertOrganizationUserSchema = createInsertSchemaOmit(organizationU
 // Organization User Types
 export type OrganizationUser = InferSelectModel<typeof organizationUsers>;
 export type InsertOrganizationUser = z.infer<typeof insertOrganizationUserSchema>;
+
+/**
+ * Organization Invitations
+ *
+ * Consent register for cross-org invites (decision-register item 12, #727).
+ * When an org admin invites an email that already belongs to a user in
+ * ANOTHER organization, a pending row is created here instead of silently
+ * inserting an organization_users membership; the membership is only created
+ * when the invited user accepts. Resolved rows are retained as an audit
+ * record of consent. See db/migrations/20260611_organization_invitations.sql.
+ */
+export const organizationInvitations = pgTable(
+  'organization_invitations',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // Nullable to allow invites for not-yet-registered emails; the current
+    // invite flow always resolves an existing user, so it is populated today.
+    userId: integer('user_id').references(() => users.id),
+    email: text('email').notNull(),
+    role: text('role').default('member').notNull(), // admin, manager, member, viewer
+    invitedById: integer('invited_by_id').references(() => users.id),
+    status: text('status').default('pending').notNull(), // pending | accepted | declined
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    respondedAt: timestamp('responded_at'),
+  },
+  table => ({
+    orgInvitationsOrgIdx: index('organization_invitations_org_idx').on(table.organizationId),
+    orgInvitationsUserIdx: index('organization_invitations_user_idx').on(table.userId),
+    // One live (pending) invitation per org + email; resolved invitations
+    // don't block a re-invite.
+    orgInvitationsPendingUniq: uniqueIndex('organization_invitations_pending_uniq')
+      .on(table.organizationId, sql`lower(${table.email})`)
+      .where(sql`${table.status} = 'pending'`),
+  })
+);
+
+export const insertOrganizationInvitationSchema = createInsertSchemaOmit(organizationInvitations, {
+  id: true,
+  createdAt: true,
+});
+
+export type OrganizationInvitation = InferSelectModel<typeof organizationInvitations>;
+export type InsertOrganizationInvitation = z.infer<typeof insertOrganizationInvitationSchema>;
+
+/**
+ * SCIM tenant tokens (enterprise identity provisioning).
+ *
+ * DB-backed, per-org SCIM bearer tokens so multiple client orgs can be
+ * provisioned from one deployment without env JSON. Tokens are stored as
+ * SHA-256 hashes only (21 CFR Part 11 §11.10(d) — controlled system access).
+ */
+export const scimTenants = pgTable(
+  'scim_tenants',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    tokenHash: text('token_hash').notNull().unique(),
+    label: text('label'),
+    enabled: boolean('enabled').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    scimTenantsOrgIdx: index('scim_tenants_org_idx').on(table.organizationId),
+    scimTenantsEnabledIdx: index('scim_tenants_enabled_idx').on(table.enabled),
+  })
+);
+
+export type ScimTenant = InferSelectModel<typeof scimTenants>;
+
+// Per-org SCIM source-IP allowlist (network access policy). Opt-in: no enabled
+// rows = unrestricted; once any row is enabled, requests from outside the listed
+// CIDRs are denied (fail-closed). See db/migrations/20260611_scim_ip_allowlist.sql.
+export const scimIpAllowlist = pgTable(
+  'scim_ip_allowlist',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    cidr: text('cidr').notNull(),
+    label: text('label'),
+    enabled: boolean('enabled').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    scimIpAllowlistOrgIdx: index('scim_ip_allowlist_org_idx').on(table.organizationId),
+    scimIpAllowlistEnabledIdx: index('scim_ip_allowlist_enabled_idx').on(table.enabled),
+  })
+);
+
+export type ScimIpAllowlistRow = InferSelectModel<typeof scimIpAllowlist>;
 
 /**
  * CER Projects Table
@@ -5073,6 +5265,13 @@ export const projects = pgTable(
     ownerId: integer('owner_id').references(() => users.id),
     sponsors: text('sponsors').array(), // List of sponsor IDs or names
     tags: text('tags').array(),
+    /**
+     * Therapeutic area slug (Feature 2.7) — resolves to a profile in
+     * server/services/ana/therapeutic-area-profiles/. Free-form string
+     * so adding a new profile is module-only (no migration). Null means
+     * "no profile injected".
+     */
+    therapeuticArea: text('therapeutic_area'),
     criticalToQualityFactors: json('critical_to_quality_factors'), // CtQ factors array
     riskLevel: text('risk_level').default('medium'), // low, medium, high
     riskAssessment: json('risk_assessment'),
@@ -5080,6 +5279,11 @@ export const projects = pgTable(
     moduleReferences: json('module_references'), // References to specific module instances
     settings: json('settings'),
     metadata: json('metadata'),
+    // ── Projects spec A2: two-mode capacity model ────────────────────────────
+    // 'in_context' | 'retrieval', null until first computed. The estimated
+    // token size of the project knowledge corpus drives the selection.
+    retrievalMode: text('retrieval_mode'),
+    knowledgeTokenEstimate: integer('knowledge_token_estimate').default(0).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -5293,6 +5497,13 @@ export const concept2cureArtifacts = pgTable(
     version: integer('version').default(1).notNull(),
     ctdSection: text('ctd_section'), // eCTD section reference
     templateId: text('template_id'), // Reference to source template
+    // AnA Document Studio per-thread version lookup key. Nullable; set only on
+    // artifacts created by the AnA draft-version store so successive drafts of the
+    // same document within a thread append as governed versions. See
+    // server/services/ana/artifactVersionStore.ts and migration
+    // 20260629_ana_artifact_thread_lookup.sql.
+    anaThreadId: text('ana_thread_id'),
+    titleSlug: text('title_slug'),
     status: text('status').default('draft').notNull(), // draft, review, approved, locked
     approvedVersionId: integer('approved_version_id'), // version when last approved
     publishedVersionId: integer('published_version_id'), // version when locked/published
@@ -5301,6 +5512,11 @@ export const concept2cureArtifacts = pgTable(
     lockedById: integer('locked_by_id').references(() => users.id),
     createdById: integer('created_by_id').references(() => users.id),
     metadata: json('metadata'),
+    // Sentence-level citations (Feature 2.1): latest computed citation array
+    // produced by the citation engine. See ana/citation-engine.ts.
+    citations: jsonb('citations').default(sql`'[]'::jsonb`),
+    citationRunId: uuid('citation_run_id'),
+    citationsAt: timestamp('citations_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -5536,6 +5752,11 @@ export const conversationWorkingMemory = pgTable(
       exclusions: string[];
     }>(), // Machine-parseable structured memory
     messageCountAtGeneration: integer('message_count_at_generation').notNull(),
+    // Vector embedding of `summary` for semantic recall, mirroring
+    // client_memory_entries / project_memory_entries. Nullable and additive:
+    // populated only when ENABLE_SEMANTIC_WORKING_MEMORY is on, ignored by the
+    // recency-only read path, and skipped by similarity search when null.
+    embedding: vector('embedding', { dimensions: 1536 }),
     generatedAt: timestamp('generated_at').defaultNow().notNull(),
   },
   table => ({
@@ -6641,6 +6862,157 @@ export type ProjectTask = InferSelectModel<typeof projectTasks>;
 export type InsertProjectTask = z.infer<typeof insertProjectTaskSchema>;
 
 /**
+ * Project Schedule of Events — AnA-managed visual milestone schedule.
+ *
+ * One header row per project. AnA generates the schedule from the project
+ * type, its goals, and the applicable regulatory framework, then keeps it
+ * current: amending milestone dates, re-baselining goals, and recording every
+ * revision. Surfaced visually in the project manager and proactively monitored
+ * by the schedule-of-events sweep.
+ */
+export const projectScheduleOfEvents = pgTable(
+  'project_schedule_of_events',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    status: text('status').default('active').notNull(), // draft, active, superseded
+    projectType: text('project_type'), // submission type basis (IND, 510K, NDA, ...)
+    regulatoryFramework: text('regulatory_framework'), // FDA, EMA, MDR, IVDR, ...
+    goals: json('goals'), // snapshot of the goals the schedule was generated from
+    basisSummary: text('basis_summary'), // AnA's narrative of what this schedule is based on
+    anaSummary: text('ana_summary'), // latest AnA information update / status narrative
+    confidence: text('confidence').default('moderate'), // low, moderate, high
+    version: integer('version').default(1).notNull(),
+    baselineDate: timestamp('baseline_date'), // anchor / project start
+    targetDate: timestamp('target_date'), // overall submission / completion target
+    generatedByAna: boolean('generated_by_ana').default(true).notNull(),
+    lastReviewedByAnaAt: timestamp('last_reviewed_by_ana_at'),
+    lastAmendedAt: timestamp('last_amended_at'),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    // Tenant-aware arbiter. This was `unique('unique_project_schedule')` on
+    // projectId ALONE, and uniqueness is what ON CONFLICT resolves against —
+    // so the org-blind key let an upsert in one organization land on another
+    // organization's row. Never narrow this back to projectId.
+    // See db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql
+    uniqueProjectScheduleOrg: unique('unique_project_schedule_org').on(
+      table.organizationId,
+      table.projectId
+    ),
+    idx_project_schedule_org: index('idx_project_schedule_org').on(table.organizationId),
+    idx_project_schedule_project: index('idx_project_schedule_project').on(table.projectId),
+  })
+);
+
+export const insertProjectScheduleOfEventsSchema = createInsertSchemaOmit(projectScheduleOfEvents, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ProjectScheduleOfEvents = InferSelectModel<typeof projectScheduleOfEvents>;
+export type InsertProjectScheduleOfEvents = z.infer<typeof insertProjectScheduleOfEventsSchema>;
+
+// NOTE: The schedule's visual milestones are NOT stored in a dedicated table —
+// they reuse the existing `projectWorkflowStages` table, tagged via
+// metadata.source = 'ana_schedule_of_events' and linked back to the plan via
+// metadata.scheduleId. This keeps a single source of truth for milestones and
+// lets the existing timeline/rollup logic see them too. The richer
+// schedule-of-events status (at_risk / slipped) is carried in
+// metadata.scheduleStatus alongside the platform-standard `status` column.
+
+/**
+ * Project Schedule Goals — the program goals AnA tracks and re-baselines.
+ *
+ * Goals are the "why" behind the schedule. AnA resets them as context changes
+ * (new regulatory requirement, slipped milestone, changed scope) and records
+ * the rationale on each reset.
+ */
+export const projectScheduleGoals = pgTable(
+  'project_schedule_goals',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    scheduleId: integer('schedule_id').references(() => projectScheduleOfEvents.id),
+    title: text('title').notNull(),
+    description: text('description'),
+    targetDate: timestamp('target_date'),
+    status: text('status').default('active').notNull(), // active, at_risk, achieved, revised, dropped
+    priority: text('priority').default('medium').notNull(), // low, medium, high, critical
+    metric: text('metric'), // success measure
+    currentContext: text('current_context'), // latest contextual note from AnA
+    lastResetByAnaAt: timestamp('last_reset_by_ana_at'),
+    anaRationale: text('ana_rationale'),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_schedule_goal_org: index('idx_schedule_goal_org').on(table.organizationId),
+    idx_schedule_goal_project: index('idx_schedule_goal_project').on(table.projectId),
+  })
+);
+
+export const insertProjectScheduleGoalSchema = createInsertSchemaOmit(projectScheduleGoals, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ProjectScheduleGoal = InferSelectModel<typeof projectScheduleGoals>;
+export type InsertProjectScheduleGoal = z.infer<typeof insertProjectScheduleGoalSchema>;
+
+/**
+ * Project Schedule Revisions — append-only audit of how AnA changed the plan.
+ *
+ * Every generation, amendment, goal reset, or proactive health review writes a
+ * row here so the user can see exactly what AnA did, when, and why.
+ */
+export const projectScheduleRevisions = pgTable(
+  'project_schedule_revisions',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    scheduleId: integer('schedule_id')
+      .notNull()
+      .references(() => projectScheduleOfEvents.id),
+    revisionType: text('revision_type').notNull(), // generated, amended, milestone_slip, goal_reset, health_review
+    summary: text('summary').notNull(),
+    detail: json('detail'), // structured diff / context
+    triggeredBy: text('triggered_by').default('ana_proactive'), // ana_proactive, ana_user, scheduler, user
+    createdByAna: boolean('created_by_ana').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_schedule_revision_schedule: index('idx_schedule_revision_schedule').on(table.scheduleId),
+    idx_schedule_revision_project: index('idx_schedule_revision_project').on(table.projectId),
+  })
+);
+
+export const insertProjectScheduleRevisionSchema = createInsertSchemaOmit(
+  projectScheduleRevisions,
+  { id: true, createdAt: true }
+);
+export type ProjectScheduleRevision = InferSelectModel<typeof projectScheduleRevisions>;
+export type InsertProjectScheduleRevision = z.infer<typeof insertProjectScheduleRevisionSchema>;
+
+/**
  * Unified Tasks Table
  *
  * Central table for managing tasks across ALL modules in the ecosystem.
@@ -6727,6 +7099,14 @@ export const unifiedTasks = pgTable(
     comments: json('comments'),
     metadata: json('metadata'),
 
+    // MDx / regulatory task metadata (20260727_unified_tasks_mdx_metadata.sql)
+    lifecyclePhase: text('lifecycle_phase'), // see LIFECYCLE_PHASES below
+    market: text('market'), // target market/jurisdiction (e.g. US, EU, JP)
+    filingType: text('filing_type'), // e.g. 510(k), PMA, IVDR, IND, NDA
+    studyId: integer('study_id'), // linked study (no FK; tenant-provisioned store)
+    deliverableId: integer('deliverable_id'), // linked deliverable (no FK)
+    clientVisibility: text('client_visibility'), // internal | client_visible
+
     // Audit
     createdById: integer('created_by_id').references(() => users.id),
     lastModifiedBy: integer('last_modified_by').references(() => users.id),
@@ -6742,8 +7122,26 @@ export const unifiedTasks = pgTable(
     priorityIdx: index('unified_priority_idx').on(table.priority),
     projectIdx: index('unified_project_idx').on(table.projectId),
     idx_unified_tasks_org: index('idx_unified_tasks_org').on(table.organizationId),
+    lifecyclePhaseIdx: index('unified_lifecycle_phase_idx').on(table.lifecyclePhase),
   })
 );
+
+/**
+ * Canonical lifecycle phases for unified_tasks.lifecycle_phase (device/IVD
+ * development lifecycle through post-market). App-enforced domain — the column
+ * stays plain text so the migration remains purely additive.
+ */
+export const LIFECYCLE_PHASES = [
+  'strategy',
+  'design',
+  'verification',
+  'clinical_performance',
+  'submission_prep',
+  'authority_review',
+  'market_authorization',
+  'postmarket',
+] as const;
+export type LifecyclePhase = (typeof LIFECYCLE_PHASES)[number];
 
 // Unified Task Insert Schema
 export const insertUnifiedTaskSchema = createInsertSchemaOmit(unifiedTasks, {
@@ -7852,9 +8250,10 @@ export const ectdCompilations = pgTable(
     organizationId: integer('organization_id')
       .references(() => organizations.id)
       .notNull(),
-    moduleId: integer('module_id')
-      .references(() => ectdModules.id)
-      .notNull(),
+    // Nullable: a PROJECT-level compilation (POST /api/ectd-compile/:projectId/compile)
+    // spans every module and has no single module to point at. The column was
+    // NOT NULL, so that route's insert could never succeed — see ledger C-16.
+    moduleId: integer('module_id').references(() => ectdModules.id),
     compilationName: text('compilation_name').notNull(),
     compilationType: text('compilation_type').notNull(), // module, section, custom
     includedGranules: json('included_granules'), // Array of granule IDs
@@ -7863,7 +8262,9 @@ export const ectdCompilations = pgTable(
     xmlBackbone: text('xml_backbone'), // eCTD XML structure
     crossReferences: json('cross_references'), // ICH cross-references
     status: text('status').default('pending').notNull(), // pending, compiling, completed, failed
-    compiledBy: integer('compiled_by').notNull(),
+    // Nullable for the same reason: service-initiated compilations have no
+    // interactive user. The one existing writer that set it used a hardcoded 1.
+    compiledBy: integer('compiled_by'),
     compiledAt: timestamp('compiled_at'),
     version: text('version').default('1.0'),
     changeLog: json('change_log'), // Track changes in compilation
@@ -8214,6 +8615,178 @@ export const sharepointIntegrationRelations = relations(sharepointIntegration, (
   granule: one(ectdGranules, {
     fields: [sharepointIntegration.granuleId],
     references: [ectdGranules.id],
+  }),
+}));
+
+/**
+ * CSR Build Jobs Table
+ *
+ * Phase 3 job-state wrapper for server/services/csr-builder.ts.
+ * One row per CSR build request, with state transitions tracked here so
+ * launchCSRBuild can run asynchronously and survive a worker restart.
+ *
+ * Design doc: docs/reports/CSR_JOB_STATE_SCHEMA_DESIGN_2026-06-28.md
+ * Migration:  migrations/20260628_csr_job_state.sql
+ *
+ * Tenant-scoping: organizationId is non-negotiable. projectId is nullable
+ * with ON DELETE SET NULL so the audit trail survives a project archive.
+ * status is a CHECK constraint (not a pg enum) so it can be loosened with
+ * a single ALTER TABLE in a future migration.
+ */
+export const csrBuildJobs = pgTable(
+  'csr_build_jobs',
+  {
+    id: serial('id').primaryKey(),
+
+    // Tenant scoping (non-negotiable)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // ON DELETE SET NULL: a study can outlive a project archive
+    projectId: integer('project_id').references(() => projects.id, {
+      onDelete: 'set null',
+    }),
+
+    // Study context (the CSR is for a specific study)
+    studyId: text('study_id').notNull(),
+
+    // State machine — CHECK constraint enforced in SQL migration:
+    //   queued | loading_data | drafting | tabulating |
+    //   cross_linking | complete | failed | cancelled
+    status: text('status').notNull().default('queued'),
+    // CHECK (progress >= 0 AND progress <= 100) enforced in SQL migration
+    progress: integer('progress').notNull().default(0),
+
+    // What's being generated (denormalized for fast resume)
+    sectionsToGenerate: text('sections_to_generate').array(),
+    studyInfoSnapshot: jsonb('study_info_snapshot'), // snapshot of CSRBuildRequest at enqueue time
+    error: jsonb('error'), // populated on failed state
+
+    // Audit / lifecycle
+    requestedBy: integer('requested_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    startedAt: timestamp('started_at'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    // Tenant-first index for status dashboards
+    csrBuildJobsOrgProjectIdx: index('csr_build_jobs_org_project_idx').on(
+      table.organizationId,
+      table.projectId
+    ),
+    // Partial status index for the worker poll path is created in the SQL
+    // migration (Drizzle does not express the WHERE clause cleanly here);
+    // the index name is csr_build_jobs_status_idx.
+    csrBuildJobsStatusIdx: index('csr_build_jobs_status_idx').on(table.status),
+    // Org+study lookup for "show me the latest CSR for this study"
+    csrBuildJobsOrgStudyIdx: index('csr_build_jobs_org_study_idx').on(
+      table.organizationId,
+      table.studyId
+    ),
+  })
+);
+
+/**
+ * CSR Section Outputs Table
+ *
+ * Phase 3 per-section persistence. One row per generated ICH-E3 section
+ * so a section-level failure leaves prior work intact.
+ *
+ * Design doc: docs/reports/CSR_JOB_STATE_SCHEMA_DESIGN_2026-06-28.md
+ * Migration:  migrations/20260628_csr_job_state.sql
+ *
+ * organizationId is denormalized from the parent job so "list my org's
+ * CSR sections" reads stay tenant-scoped without a join. ON DELETE CASCADE
+ * on jobId because the section output has no value without its parent job.
+ * UNIQUE (jobId, sectionNumber) keeps regeneration as an upsert.
+ */
+export const csrSectionOutputs = pgTable(
+  'csr_section_outputs',
+  {
+    id: serial('id').primaryKey(),
+
+    // Tenant scoping (denormalized from the job for cheap org-scoped reads)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id, {
+      onDelete: 'set null',
+    }),
+
+    // Foreign key to the job — CASCADE so section content is purged with job
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => csrBuildJobs.id, { onDelete: 'cascade' }),
+
+    // ICH-E3 section identifier (e.g., '2.1', '11.4', '12.2.4')
+    sectionNumber: text('section_number').notNull(),
+
+    // Content
+    content: text('content').notNull(),
+    contentHash: text('content_hash').notNull(), // SHA-256 lowercase hex of content
+
+    // Provenance
+    aiGenerated: boolean('ai_generated').notNull().default(false),
+    model: text('model'), // e.g., 'claude-opus-4-7'
+    tokenCost: integer('token_cost').default(0),
+    lineage: jsonb('lineage'), // which sources, prior section refs
+
+    generatedAt: timestamp('generated_at').defaultNow().notNull(),
+  },
+  table => ({
+    // Tenant-first index for org-scoped section reads
+    csrSectionOutputsOrgProjectIdx: index('csr_section_outputs_org_project_idx').on(
+      table.organizationId,
+      table.projectId
+    ),
+    // Job-scoped lookup for "all sections of this job"
+    csrSectionOutputsJobIdx: index('csr_section_outputs_job_idx').on(table.jobId),
+    // Regeneration upsert key — one row per (job, section_number)
+    csrSectionOutputsJobSectionUnique: unique('csr_section_outputs_job_section_unique').on(
+      table.jobId,
+      table.sectionNumber
+    ),
+  })
+);
+
+// CSR job-state types
+export type CsrBuildJob = typeof csrBuildJobs.$inferSelect;
+export type NewCsrBuildJob = typeof csrBuildJobs.$inferInsert;
+export type CsrSectionOutput = typeof csrSectionOutputs.$inferSelect;
+export type NewCsrSectionOutput = typeof csrSectionOutputs.$inferInsert;
+
+// CSR job-state relations
+export const csrBuildJobsRelations = relations(csrBuildJobs, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [csrBuildJobs.organizationId],
+    references: [organizations.id],
+  }),
+  project: one(projects, {
+    fields: [csrBuildJobs.projectId],
+    references: [projects.id],
+  }),
+  requestedByUser: one(users, {
+    fields: [csrBuildJobs.requestedBy],
+    references: [users.id],
+  }),
+  sections: many(csrSectionOutputs),
+}));
+
+export const csrSectionOutputsRelations = relations(csrSectionOutputs, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [csrSectionOutputs.organizationId],
+    references: [organizations.id],
+  }),
+  project: one(projects, {
+    fields: [csrSectionOutputs.projectId],
+    references: [projects.id],
+  }),
+  job: one(csrBuildJobs, {
+    fields: [csrSectionOutputs.jobId],
+    references: [csrBuildJobs.id],
   }),
 }));
 
@@ -10893,6 +11466,10 @@ export const coauthorDocuments = pgTable(
     moduleNumber: text('module_number'), // e.g., "3.2.S.4.1" for quick lookups
     moduleName: text('module_name'), // Cached module name for display
 
+    // pgvector embedding for RAG grounding (Phase 1, WO-1.2). Canonical eCTD
+    // document table — see RECONCILE.md §2 and the companion migration.
+    embedding: vector('embedding', { dimensions: 1536 }),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -12058,6 +12635,11 @@ export const cdiscPrmStudies = pgTable(
       .notNull()
       .references(() => organizations.id),
     studyId: varchar('study_id', { length: 100 }).notNull().unique(),
+    // Canonical project key (regulatory_programs.id) — shared with
+    // clinical_studies and rbm_*. Nullable: populated on persist from a
+    // design's programId when it is a UUID. Bare uuid, no FK, matching the
+    // clinical-spine convention.
+    programId: uuid('program_id'),
     protocolId: varchar('protocol_id', { length: 100 }).notNull(),
     protocolTitle: text('protocol_title').notNull(),
     protocolVersion: varchar('protocol_version', { length: 20 }).notNull(),
@@ -12086,6 +12668,7 @@ export const cdiscPrmStudies = pgTable(
   table => ({
     tenantStudyIdx: uniqueIndex('prm_tenant_study_idx').on(table.tenantId, table.studyId),
     protocolIdx: index('prm_protocol_idx').on(table.protocolId),
+    programIdx: index('prm_program_idx').on(table.programId),
     phaseIdx: index('prm_phase_idx').on(table.studyPhase),
   })
 );
@@ -12205,197 +12788,6 @@ export const cdiscPrmEndpoints = pgTable(
   })
 );
 
-// ============================================================================
-// 2. STUDY DESIGNER - CDASH Forms Implementation
-// ============================================================================
-
-// CDASH Form Templates - Standardized CRF templates
-export const cdiscCdashForms = pgTable(
-  'cdisc_cdash_forms',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    formId: varchar('form_id', { length: 100 }).notNull(),
-    formName: text('form_name').notNull(),
-    formLabel: text('form_label'),
-    domain: varchar('domain', { length: 20 }).notNull(), // DM, AE, CM, LB, VS, etc.
-    formType: varchar('form_type', { length: 50 }), // Enrollment, Visit, Event
-    cdashVersion: varchar('cdash_version', { length: 20 }).default('1.1'),
-    formStructure: json('form_structure'), // Complete form definition
-    fields: json('fields'), // Array of field definitions
-    validationRules: json('validation_rules'),
-    isStandard: boolean('is_standard').default(true),
-    isActive: boolean('is_active').default(true),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    tenantFormIdx: uniqueIndex('cdash_tenant_form_idx').on(table.tenantId, table.formId),
-    domainIdx: index('cdash_domain_idx').on(table.domain),
-  })
-);
-
-// CDASH Field Definitions - Individual form fields
-export const cdiscCdashFields = pgTable(
-  'cdisc_cdash_fields',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    formId: varchar('form_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscCdashForms.formId),
-    fieldName: varchar('field_name', { length: 50 }).notNull(),
-    cdashVariable: varchar('cdash_variable', { length: 40 }).notNull(),
-    fieldLabel: text('field_label'),
-    fieldType: varchar('field_type', { length: 30 }), // text, number, date, select
-    dataType: varchar('data_type', { length: 30 }), // Char, Num, Date
-    fieldLength: integer('field_length'),
-    required: boolean('required').default(false),
-    controlledTerminology: varchar('controlled_terminology', { length: 100 }),
-    codeList: json('code_list'), // Allowed values
-    validationRules: json('validation_rules'),
-    sdtmMapping: varchar('sdtm_mapping', { length: 40 }), // Target SDTM variable
-    sequenceNumber: integer('sequence_number'),
-    isCore: boolean('is_core').default(false),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    formFieldIdx: uniqueIndex('cdash_form_field_idx').on(table.formId, table.fieldName),
-    variableIdx: index('cdash_variable_idx').on(table.cdashVariable),
-  })
-);
-
-// CDASH to SDTM Mappings
-export const cdiscCdashSdtmMappings = pgTable(
-  'cdisc_cdash_sdtm_mappings',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }),
-    cdashDomain: varchar('cdash_domain', { length: 20 }).notNull(),
-    cdashVariable: varchar('cdash_variable', { length: 40 }).notNull(),
-    sdtmDomain: varchar('sdtm_domain', { length: 20 }).notNull(),
-    sdtmVariable: varchar('sdtm_variable', { length: 40 }).notNull(),
-    mappingType: varchar('mapping_type', { length: 30 }), // Direct, Derived, Conditional
-    mappingLogic: text('mapping_logic'),
-    transformationRule: text('transformation_rule'),
-    isActive: boolean('is_active').default(true),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    cdashSdtmIdx: uniqueIndex('cdash_sdtm_idx').on(
-      table.cdashDomain,
-      table.cdashVariable,
-      table.sdtmVariable
-    ),
-  })
-);
-
-// ============================================================================
-// 3. CSR DATABASE INTELLIGENCE - CDISC Reporting
-// ============================================================================
-
-// CSR Templates - Clinical Study Report templates
-export const cdiscCsrTemplates = pgTable(
-  'cdisc_csr_templates',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    templateId: varchar('template_id', { length: 100 }).notNull(),
-    templateName: text('template_name').notNull(),
-    templateType: varchar('template_type', { length: 50 }), // ICH E3, FDA, EMA
-    sections: json('sections'), // CSR section structure
-    tflSpecs: json('tfl_specs'), // Table, Figure, Listing specifications
-    dataRequirements: json('data_requirements'),
-    version: varchar('version', { length: 20 }).default('1.0'),
-    isActive: boolean('is_active').default(true),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    tenantTemplateIdx: uniqueIndex('csr_tenant_template_idx').on(table.tenantId, table.templateId),
-  })
-);
-
-// TFL Metadata - Tables, Figures, Listings definitions
-export const cdiscCsrTfl = pgTable(
-  'cdisc_csr_tfl',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }),
-    tflId: varchar('tfl_id', { length: 50 }).notNull(),
-    tflType: varchar('tfl_type', { length: 20 }).notNull(), // Table, Figure, Listing
-    tflNumber: varchar('tfl_number', { length: 20 }).notNull(),
-    title: text('title').notNull(),
-    description: text('description'),
-    population: varchar('population', { length: 50 }), // ITT, PP, Safety
-    datasets: json('datasets'), // Required ADaM datasets
-    programmingLogic: text('programming_logic'),
-    shellTemplate: text('shell_template'), // Shell/mock
-    outputFormat: varchar('output_format', { length: 20 }), // RTF, PDF, HTML
-    csrSection: varchar('csr_section', { length: 50 }),
-    priority: varchar('priority', { length: 20 }).default('medium'),
-    status: varchar('status', { length: 30 }).default('planned'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyTflIdx: uniqueIndex('csr_study_tfl_idx').on(table.studyId, table.tflId),
-    tflNumberIdx: index('csr_tfl_number_idx').on(table.tflNumber),
-  })
-);
-
-// Statistical Analysis Plan (SAP) in CDISC format
-export const cdiscCsrSap = pgTable(
-  'cdisc_csr_sap',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscPrmStudies.studyId),
-    sapVersion: varchar('sap_version', { length: 20 }).notNull(),
-    sapDate: date('sap_date'),
-    populations: json('populations'), // Analysis populations
-    endpoints: json('endpoints'), // Statistical endpoints
-    analysisSets: json('analysis_sets'),
-    statisticalMethods: json('statistical_methods'),
-    missingDataHandling: text('missing_data_handling'),
-    interimAnalyses: json('interim_analyses'),
-    multiplicity: text('multiplicity'),
-    sampleSizeCalculation: json('sample_size_calculation'),
-    adamDatasets: json('adam_datasets'), // Required ADaM datasets
-    status: varchar('status', { length: 30 }).default('draft'),
-    approvalDate: date('approval_date'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studySapIdx: uniqueIndex('csr_study_sap_idx').on(table.studyId, table.sapVersion),
-  })
-);
-
 // CSR Reports - Clinical Safety Reports
 export const csrReports = pgTable(
   'csr_reports',
@@ -12428,6 +12820,7 @@ export const csrReports = pgTable(
     metadata: json('metadata'),
     complianceStatus: text('compliance_status'),
     regulatoryAgency: text('regulatory_agency'), // FDA, EMA, PMDA, etc.
+    nctId: text('nct_id'), // ClinicalTrials.gov id; corpus dedupe key (see migration 20260530)
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -12548,818 +12941,6 @@ export const reportDetails = pgTable('report_details', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// ADaM Dataset Specifications
-export const cdiscAdamSpecs = pgTable(
-  'cdisc_adam_specs',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }),
-    datasetName: varchar('dataset_name', { length: 40 }).notNull(),
-    datasetLabel: text('dataset_label'),
-    datasetClass: varchar('dataset_class', { length: 40 }), // ADSL, BDS, OCCDS
-    datasetStructure: json('dataset_structure'),
-    variables: json('variables'), // Variable specifications
-    derivations: json('derivations'), // Derivation rules
-    sourceDatasets: json('source_datasets'), // SDTM sources
-    keyVariables: json('key_variables'),
-    analysisVariables: json('analysis_variables'),
-    version: varchar('version', { length: 20 }).default('1.0'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyDatasetIdx: uniqueIndex('adam_study_dataset_idx').on(table.studyId, table.datasetName),
-  })
-);
-
-// ============================================================================
-// 4. eCTD CO-AUTHOR - CDISC Dataset Generation
-// ============================================================================
-
-// Define-XML Generation Configuration
-export const cdiscEctdDefineXml = pgTable(
-  'cdisc_ectd_define_xml',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscPrmStudies.studyId),
-    defineVersion: varchar('define_version', { length: 20 }).default('2.1'),
-    defineId: varchar('define_id', { length: 100 }).notNull(),
-    creationDateTime: timestamp('creation_date_time').defaultNow().notNull(),
-    studyName: text('study_name'),
-    studyDescription: text('study_description'),
-    protocolName: text('protocol_name'),
-    datasetMetadata: json('dataset_metadata'), // All dataset definitions
-    variableMetadata: json('variable_metadata'), // All variable definitions
-    codeLists: json('code_lists'), // Controlled terminology
-    valueLevelMetadata: json('value_level_metadata'),
-    whereClauseDef: json('where_clause_def'),
-    computationMethods: json('computation_methods'),
-    comments: json('comments'),
-    standards: json('standards'), // SDTM, ADaM versions
-    status: varchar('status', { length: 30 }).default('draft'),
-    xmlContent: text('xml_content'), // Generated XML
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyDefineIdx: uniqueIndex('ectd_study_define_idx').on(table.studyId, table.defineId),
-  })
-);
-
-// Dataset Packaging Configuration
-export const cdiscEctdDatasets = pgTable(
-  'cdisc_ectd_datasets',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscPrmStudies.studyId),
-    datasetType: varchar('dataset_type', { length: 20 }).notNull(), // SDTM, ADaM, SEND
-    datasetName: varchar('dataset_name', { length: 40 }).notNull(),
-    datasetLabel: text('dataset_label'),
-    datasetLocation: text('dataset_location'), // File path/URI
-    fileFormat: varchar('file_format', { length: 20 }).default('xpt'), // xpt, sas7bdat
-    fileSize: integer('file_size'), // in bytes
-    recordCount: integer('record_count'),
-    variableCount: integer('variable_count'),
-    splitMethod: varchar('split_method', { length: 50 }), // For split datasets
-    datasetMd5: varchar('dataset_md5', { length: 32 }),
-    isSupplemental: boolean('is_supplemental').default(false),
-    version: varchar('version', { length: 20 }),
-    status: varchar('status', { length: 30 }).default('pending'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyDatasetIdx: uniqueIndex('ectd_study_dataset_idx').on(table.studyId, table.datasetName),
-  })
-);
-
-// Reviewer's Guide Templates
-export const cdiscEctdReviewersGuide = pgTable(
-  'cdisc_ectd_reviewers_guide',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscPrmStudies.studyId),
-    guideVersion: varchar('guide_version', { length: 20 }).notNull(),
-    guideType: varchar('guide_type', { length: 30 }), // SDRG, ADRG
-    sections: json('sections'), // Guide sections
-    conformanceFindings: json('conformance_findings'),
-    dataIssues: json('data_issues'),
-    traceabilityMatrix: json('traceability_matrix'),
-    customDomains: json('custom_domains'),
-    derivationDetails: json('derivation_details'),
-    validationResults: json('validation_results'),
-    status: varchar('status', { length: 30 }).default('draft'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyGuideIdx: uniqueIndex('ectd_study_guide_idx').on(table.studyId, table.guideVersion),
-  })
-);
-
-// Study Data Standardization Plan (SDSP)
-export const cdiscEctdSdsp = pgTable(
-  'cdisc_ectd_sdsp',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscPrmStudies.studyId),
-    sdspVersion: varchar('sdsp_version', { length: 20 }).notNull(),
-    standardsUsed: json('standards_used'), // CDISC standards and versions
-    domainsPlan: json('domains_plan'), // Planned domains
-    controlledTerminology: json('controlled_terminology'),
-    customVariables: json('custom_variables'),
-    dataFlowDiagram: text('data_flow_diagram'),
-    mappingStrategy: text('mapping_strategy'),
-    validationPlan: text('validation_plan'),
-    deliverySchedule: json('delivery_schedule'),
-    status: varchar('status', { length: 30 }).default('draft'),
-    approvalDate: date('approval_date'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studySdspIdx: uniqueIndex('ectd_study_sdsp_idx').on(table.studyId, table.sdspVersion),
-  })
-);
-
-// ============================================================================
-// 5. IND WIZARD - CDISC Clinical Data Integration
-// ============================================================================
-
-// IND CDISC Integration
-export const cdiscIndIntegration = pgTable(
-  'cdisc_ind_integration',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    indNumber: varchar('ind_number', { length: 50 }).notNull(),
-    studyId: varchar('study_id', { length: 100 }),
-    submissionType: varchar('submission_type', { length: 50 }), // Initial, Amendment, Annual
-    clinicalDataPackage: json('clinical_data_package'), // SDTM/ADaM datasets
-    nonclinicalDataPackage: json('nonclinical_data_package'), // SEND datasets
-    integratedAnalyses: json('integrated_analyses'), // ISS/ISE references
-    dataSubmissionDate: date('data_submission_date'),
-    dataStatus: varchar('data_status', { length: 30 }).default('pending'),
-    validationStatus: varchar('validation_status', { length: 30 }),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    indIntegrationIdx: uniqueIndex('ind_integration_idx').on(table.indNumber, table.studyId),
-  })
-);
-
-// SEND Domains - Nonclinical data
-export const cdiscIndSend = pgTable(
-  'cdisc_ind_send',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }).notNull(),
-    domain: varchar('domain', { length: 20 }).notNull(), // DM, EX, BW, CL, etc.
-    domainLabel: text('domain_label'),
-    datasetName: varchar('dataset_name', { length: 40 }).notNull(),
-    speciesCode: varchar('species_code', { length: 20 }),
-    studyType: varchar('study_type', { length: 50 }), // Tox, PK, Carcinogenicity
-    testArticle: text('test_article'),
-    dataStructure: json('data_structure'),
-    variables: json('variables'),
-    controlledTerms: json('controlled_terms'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    sendDomainIdx: uniqueIndex('send_domain_idx').on(table.studyId, table.domain),
-  })
-);
-
-// Integrated Summary of Safety (ISS)
-export const cdiscIndIss = pgTable(
-  'cdisc_ind_iss',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    issId: varchar('iss_id', { length: 100 }).notNull(),
-    indNumber: varchar('ind_number', { length: 50 }).notNull(),
-    pooledStudies: json('pooled_studies'), // List of study IDs
-    poolingStrategy: text('pooling_strategy'),
-    safetyPopulation: json('safety_population'),
-    adverseEvents: json('adverse_events'), // AE summary
-    seriousAe: json('serious_ae'), // SAE summary
-    deathsSummary: json('deaths_summary'),
-    labAbnormalities: json('lab_abnormalities'),
-    vitalSigns: json('vital_signs'),
-    exposureData: json('exposure_data'),
-    demographicData: json('demographic_data'),
-    analysisDatasets: json('analysis_datasets'), // ADaM datasets used
-    status: varchar('status', { length: 30 }).default('draft'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    issIdx: uniqueIndex('iss_idx').on(table.issId),
-  })
-);
-
-// Integrated Summary of Efficacy (ISE)
-export const cdiscIndIse = pgTable(
-  'cdisc_ind_ise',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    iseId: varchar('ise_id', { length: 100 }).notNull(),
-    indNumber: varchar('ind_number', { length: 50 }).notNull(),
-    pooledStudies: json('pooled_studies'), // List of study IDs
-    poolingRationale: text('pooling_rationale'),
-    efficacyPopulation: json('efficacy_population'),
-    primaryEndpoints: json('primary_endpoints'),
-    secondaryEndpoints: json('secondary_endpoints'),
-    subgroupAnalyses: json('subgroup_analyses'),
-    doseResponse: json('dose_response'),
-    timeToEvent: json('time_to_event'),
-    analysisDatasets: json('analysis_datasets'), // ADaM datasets used
-    status: varchar('status', { length: 30 }).default('draft'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    iseIdx: uniqueIndex('ise_idx').on(table.iseId),
-  })
-);
-
-// ============================================================================
-// 6. REGULATORY INTELLIGENCE - CDISC Compliance
-// ============================================================================
-
-// CDISC Validation Rules Repository
-export const cdiscComplianceRules = pgTable(
-  'cdisc_compliance_rules',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    ruleId: varchar('rule_id', { length: 50 }).notNull(),
-    ruleCategory: varchar('rule_category', { length: 50 }), // Structure, Content, Terminology
-    standard: varchar('standard', { length: 30 }), // SDTM, ADaM, SEND, CDASH
-    standardVersion: varchar('standard_version', { length: 20 }),
-    agency: varchar('agency', { length: 20 }), // FDA, EMA, PMDA
-    ruleType: varchar('rule_type', { length: 30 }), // Error, Warning, Info
-    severity: varchar('severity', { length: 20 }), // Critical, Major, Minor
-    description: text('description'),
-    checkLogic: text('check_logic'), // Validation logic
-    errorMessage: text('error_message'),
-    remediationGuidance: text('remediation_guidance'),
-    isActive: boolean('is_active').default(true),
-    effectiveDate: date('effective_date'),
-    expirationDate: date('expiration_date'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    ruleIdx: uniqueIndex('compliance_rule_idx').on(table.ruleId, table.standard),
-    agencyIdx: index('compliance_agency_idx').on(table.agency),
-  })
-);
-
-// Compliance Check Results
-export const cdiscComplianceResults = pgTable(
-  'cdisc_compliance_results',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }).notNull(),
-    checkRunId: varchar('check_run_id', { length: 100 }).notNull(),
-    checkDate: timestamp('check_date').defaultNow().notNull(),
-    standard: varchar('standard', { length: 30 }),
-    datasetName: varchar('dataset_name', { length: 40 }),
-    ruleId: varchar('rule_id', { length: 50 }),
-    findingType: varchar('finding_type', { length: 30 }), // Error, Warning, Info
-    findingMessage: text('finding_message'),
-    recordId: varchar('record_id', { length: 100 }),
-    variableName: varchar('variable_name', { length: 40 }),
-    value: text('value'),
-    expectedValue: text('expected_value'),
-    isResolved: boolean('is_resolved').default(false),
-    resolutionDate: timestamp('resolution_date'),
-    resolutionNotes: text('resolution_notes'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    checkRunIdx: index('compliance_check_run_idx').on(table.checkRunId),
-    studyCheckIdx: index('compliance_study_check_idx').on(table.studyId, table.checkDate),
-  })
-);
-
-// Regulatory Agency Preferences
-export const cdiscComplianceAgencyPrefs = pgTable(
-  'cdisc_compliance_agency_prefs',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    agency: varchar('agency', { length: 20 }).notNull(), // FDA, EMA, PMDA, HC, TGA
-    region: varchar('region', { length: 50 }),
-    preferredStandards: json('preferred_standards'), // CDISC versions
-    requiredDomains: json('required_domains'),
-    mandatoryVariables: json('mandatory_variables'),
-    submissionFormat: json('submission_format'),
-    specialRequirements: json('special_requirements'),
-    guidanceDocuments: json('guidance_documents'),
-    effectiveDate: date('effective_date'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    agencyPrefIdx: uniqueIndex('agency_pref_idx').on(table.agency, table.region),
-  })
-);
-
-// CDISC Standards Version Control
-export const cdiscComplianceVersions = pgTable(
-  'cdisc_compliance_versions',
-  {
-    id: serial('id').primaryKey(),
-    standard: varchar('standard', { length: 30 }).notNull(),
-    version: varchar('version', { length: 20 }).notNull(),
-    releaseDate: date('release_date'),
-    implementationDate: date('implementation_date'),
-    retirementDate: date('retirement_date'),
-    changes: json('changes'), // Change summary
-    impactedDomains: json('impacted_domains'),
-    migrationNotes: text('migration_notes'),
-    isSupported: boolean('is_supported').default(true),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    standardVersionIdx: uniqueIndex('standard_version_idx').on(table.standard, table.version),
-  })
-);
-
-// ============================================================================
-// 7. VAULT DMS - CDISC Document Management
-// ============================================================================
-
-// CDISC Document Repository
-export const cdiscDocsRepository = pgTable(
-  'cdisc_docs_repository',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    docId: varchar('doc_id', { length: 100 }).notNull(),
-    studyId: varchar('study_id', { length: 100 }),
-    docType: varchar('doc_type', { length: 50 }).notNull(), // aCRF, Define-XML, SDRG, ADRG
-    docName: text('doc_name').notNull(),
-    docVersion: varchar('doc_version', { length: 20 }),
-    filePath: text('file_path'),
-    fileSize: integer('file_size'),
-    mimeType: varchar('mime_type', { length: 100 }),
-    linkedDatasets: json('linked_datasets'), // Associated CDISC datasets
-    annotations: json('annotations'), // Document annotations
-    status: varchar('status', { length: 30 }).default('draft'),
-    checksum: varchar('checksum', { length: 64 }), // SHA-256
-    isLocked: boolean('is_locked').default(false),
-    lockedBy: text('locked_by'),
-    lockedAt: timestamp('locked_at'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-    createdBy: text('created_by'),
-    lastModifiedBy: text('last_modified_by'),
-  },
-  table => ({
-    docIdx: uniqueIndex('docs_doc_idx').on(table.docId, table.docVersion),
-    studyDocIdx: index('docs_study_doc_idx').on(table.studyId, table.docType),
-  })
-);
-
-// Annotated CRF Management
-export const cdiscDocsAcrf = pgTable(
-  'cdisc_docs_acrf',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscPrmStudies.studyId),
-    acrfVersion: varchar('acrf_version', { length: 20 }).notNull(),
-    formName: text('form_name'),
-    pageNumber: integer('page_number'),
-    fieldName: varchar('field_name', { length: 50 }),
-    cdashVariable: varchar('cdash_variable', { length: 40 }),
-    sdtmDomain: varchar('sdtm_domain', { length: 20 }),
-    sdtmVariable: varchar('sdtm_variable', { length: 40 }),
-    annotation: text('annotation'),
-    coordinates: json('coordinates'), // {x, y, width, height}
-    isRequired: boolean('is_required').default(false),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    acrfIdx: index('acrf_idx').on(table.studyId, table.acrfVersion),
-  })
-);
-
-// Define-XML Artifacts
-export const cdiscDocsDefineArtifacts = pgTable(
-  'cdisc_docs_define_artifacts',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    defineId: varchar('define_id', { length: 100 })
-      .notNull()
-      .references(() => cdiscEctdDefineXml.defineId),
-    artifactType: varchar('artifact_type', { length: 50 }), // Stylesheet, PDF, Schema
-    artifactName: text('artifact_name'),
-    artifactPath: text('artifact_path'),
-    version: varchar('version', { length: 20 }),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    defineArtifactIdx: index('define_artifact_idx').on(table.defineId, table.artifactType),
-  })
-);
-
-// ============================================================================
-// 8. CMC & STABILITY - Product Quality CDISC
-// ============================================================================
-
-// Product Quality (PQ) Domains
-export const cdiscPqDomains = pgTable(
-  'cdisc_pq_domains',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    productId: varchar('product_id', { length: 100 }).notNull(),
-    batchId: varchar('batch_id', { length: 100 }),
-    domain: varchar('domain', { length: 20 }).notNull(), // IS, RS, MS, etc.
-    domainLabel: text('domain_label'),
-    testCategory: varchar('test_category', { length: 50 }), // Identity, Potency, Purity
-    testName: text('test_name'),
-    testMethod: text('test_method'),
-    specification: text('specification'),
-    results: json('results'), // Test results
-    units: varchar('units', { length: 50 }),
-    testDate: date('test_date'),
-    laboratoryId: varchar('laboratory_id', { length: 50 }),
-    analystId: varchar('analyst_id', { length: 50 }),
-    equipmentId: varchar('equipment_id', { length: 50 }),
-    complianceStatus: varchar('compliance_status', { length: 30 }),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    pqDomainIdx: index('pq_domain_idx').on(table.productId, table.domain),
-    batchPqIdx: index('batch_pq_idx').on(table.batchId, table.testCategory),
-  })
-);
-
-// Stability Data in CDISC Format
-export const cdiscPqStability = pgTable(
-  'cdisc_pq_stability',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }).notNull(),
-    batchId: varchar('batch_id', { length: 100 }).notNull(),
-    storageCondition: varchar('storage_condition', { length: 50 }), // 25C/60RH, 40C/75RH
-    orientation: varchar('orientation', { length: 30 }), // Upright, Inverted
-    container: varchar('container', { length: 100 }),
-    timepoint: varchar('timepoint', { length: 20 }), // 0M, 3M, 6M, 12M
-    timepointValue: integer('timepoint_value'), // in days
-    parameter: varchar('parameter', { length: 100 }),
-    result: decimal('result', { precision: 15, scale: 5 }),
-    units: varchar('units', { length: 50 }),
-    specification: text('specification'),
-    conformance: boolean('conformance').default(true),
-    oos: boolean('oos').default(false), // Out of specification
-    testDate: date('test_date'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    stabilityStudyIdx: index('stability_study_idx').on(table.studyId, table.batchId),
-    timepointIdx: index('stability_timepoint_idx').on(table.timepoint),
-  })
-);
-
-// Manufacturing Batch Records in CDISC Format
-export const cdiscPqManufacturing = pgTable(
-  'cdisc_pq_manufacturing',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    batchId: varchar('batch_id', { length: 100 }).notNull(),
-    productId: varchar('product_id', { length: 100 }).notNull(),
-    processStep: varchar('process_step', { length: 100 }),
-    stepSequence: integer('step_sequence'),
-    parameter: varchar('parameter', { length: 100 }),
-    targetValue: decimal('target_value', { precision: 15, scale: 5 }),
-    actualValue: decimal('actual_value', { precision: 15, scale: 5 }),
-    lowerLimit: decimal('lower_limit', { precision: 15, scale: 5 }),
-    upperLimit: decimal('upper_limit', { precision: 15, scale: 5 }),
-    units: varchar('units', { length: 50 }),
-    equipment: varchar('equipment', { length: 100 }),
-    operator: varchar('operator', { length: 100 }),
-    startTime: timestamp('start_time'),
-    endTime: timestamp('end_time'),
-    duration: integer('duration'), // in minutes
-    inProcess: boolean('in_process').default(false),
-    deviation: boolean('deviation').default(false),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    batchManufacturingIdx: index('batch_manufacturing_idx').on(table.batchId, table.stepSequence),
-  })
-);
-
-// ============================================================================
-// 9. MEDICAL DEVICE - Device-specific CDISC
-// ============================================================================
-
-// Device Exposure (DX) Domain
-export const cdiscDeviceDx = pgTable(
-  'cdisc_device_dx',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }).notNull(),
-    subjectId: varchar('subject_id', { length: 50 }).notNull(),
-    deviceId: varchar('device_id', { length: 100 }).notNull(),
-    deviceName: text('device_name'),
-    deviceType: varchar('device_type', { length: 50 }),
-    udi: varchar('udi', { length: 100 }), // Unique Device Identifier
-    serialNumber: varchar('serial_number', { length: 100 }),
-    lotNumber: varchar('lot_number', { length: 100 }),
-    implantDate: date('implant_date'),
-    explantDate: date('explant_date'),
-    exposureDuration: integer('exposure_duration'), // in days
-    anatomicalLocation: varchar('anatomical_location', { length: 100 }),
-    laterality: varchar('laterality', { length: 20 }), // Left, Right, Bilateral
-    deviceSize: varchar('device_size', { length: 50 }),
-    reasonForUse: text('reason_for_use'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studySubjectDeviceIdx: index('device_study_subject_idx').on(
-      table.studyId,
-      table.subjectId,
-      table.deviceId
-    ),
-  })
-);
-
-// Device Events (DE) Domain
-export const cdiscDeviceDe = pgTable(
-  'cdisc_device_de',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }).notNull(),
-    subjectId: varchar('subject_id', { length: 50 }).notNull(),
-    deviceId: varchar('device_id', { length: 100 }).notNull(),
-    eventId: varchar('event_id', { length: 100 }).notNull(),
-    eventTerm: text('event_term'),
-    eventType: varchar('event_type', { length: 50 }), // Malfunction, Deficiency, Failure
-    eventDate: date('event_date'),
-    severity: varchar('severity', { length: 30 }), // Mild, Moderate, Severe
-    relationship: varchar('relationship', { length: 50 }), // Related, Possibly Related, Not Related
-    outcome: varchar('outcome', { length: 50 }),
-    actionTaken: text('action_taken'),
-    reportedToFda: boolean('reported_to_fda').default(false),
-    mdrReportNumber: varchar('mdr_report_number', { length: 50 }),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    deviceEventIdx: index('device_event_idx').on(table.studyId, table.subjectId, table.eventId),
-  })
-);
-
-// Device-Subject Relationships
-export const cdiscDeviceRelationships = pgTable(
-  'cdisc_device_relationships',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }).notNull(),
-    subjectId: varchar('subject_id', { length: 50 }).notNull(),
-    deviceId: varchar('device_id', { length: 100 }).notNull(),
-    relationshipType: varchar('relationship_type', { length: 50 }), // Primary, Companion, Accessory
-    startDate: date('start_date'),
-    endDate: date('end_date'),
-    devicePerformance: json('device_performance'), // Performance metrics
-    patientReportedOutcomes: json('patient_reported_outcomes'),
-    clinicianAssessments: json('clinician_assessments'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    deviceRelIdx: index('device_rel_idx').on(table.studyId, table.subjectId, table.deviceId),
-  })
-);
-
-// ============================================================================
-// 10. TASK MANAGEMENT - CDISC Workflow Integration
-// ============================================================================
-
-// CDISC Deliverables
-export const cdiscTaskDeliverables = pgTable(
-  'cdisc_task_deliverables',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    taskId: varchar('task_id', { length: 100 }).notNull(),
-    deliverableId: varchar('deliverable_id', { length: 100 }).notNull(),
-    deliverableType: varchar('deliverable_type', { length: 50 }), // Dataset, Document, Program
-    cdiscStandard: varchar('cdisc_standard', { length: 30 }), // SDTM, ADaM, CDASH
-    deliverableName: text('deliverable_name'),
-    description: text('description'),
-    assignedTo: text('assigned_to'),
-    dueDate: date('due_date'),
-    completionDate: date('completion_date'),
-    status: varchar('status', { length: 30 }).default('pending'),
-    priority: varchar('priority', { length: 20 }).default('medium'),
-    dependencies: json('dependencies'), // Other deliverable IDs
-    validationStatus: varchar('validation_status', { length: 30 }),
-    reviewStatus: varchar('review_status', { length: 30 }),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    taskDeliverableIdx: uniqueIndex('task_deliverable_idx').on(table.taskId, table.deliverableId),
-  })
-);
-
-// CDISC Milestones
-export const cdiscTaskMilestones = pgTable(
-  'cdisc_task_milestones',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    studyId: varchar('study_id', { length: 100 }).notNull(),
-    milestoneId: varchar('milestone_id', { length: 100 }).notNull(),
-    milestoneName: text('milestone_name'),
-    milestoneType: varchar('milestone_type', { length: 50 }), // DBL, SDTM, ADaM, TLF
-    targetDate: date('target_date'),
-    actualDate: date('actual_date'),
-    deliverables: json('deliverables'), // List of deliverable IDs
-    completionCriteria: json('completion_criteria'),
-    status: varchar('status', { length: 30 }).default('pending'),
-    approvalRequired: boolean('approval_required').default(true),
-    approvedBy: text('approved_by'),
-    approvalDate: date('approval_date'),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyMilestoneIdx: uniqueIndex('study_milestone_idx').on(table.studyId, table.milestoneId),
-  })
-);
-
-// Dataset Preparation Workflows
-export const cdiscTaskWorkflows = pgTable(
-  'cdisc_task_workflows',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    workflowId: varchar('workflow_id', { length: 100 }).notNull(),
-    workflowName: text('workflow_name'),
-    workflowType: varchar('workflow_type', { length: 50 }), // SDTM, ADaM, Define-XML
-    studyId: varchar('study_id', { length: 100 }),
-    steps: json('steps'), // Workflow steps
-    currentStep: integer('current_step').default(1),
-    totalSteps: integer('total_steps'),
-    startDate: timestamp('start_date'),
-    completionDate: timestamp('completion_date'),
-    status: varchar('status', { length: 30 }).default('pending'),
-    automationLevel: varchar('automation_level', { length: 30 }), // Manual, Semi-Auto, Fully-Auto
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    workflowIdx: uniqueIndex('workflow_idx').on(table.workflowId),
-  })
-);
-
-// Validation Task Queues
-export const cdiscTaskValidationQueue = pgTable(
-  'cdisc_task_validation_queue',
-  {
-    id: serial('id').primaryKey(),
-    tenantId: integer('tenant_id')
-      .notNull()
-      .references(() => organizations.id),
-    queueId: varchar('queue_id', { length: 100 }).notNull(),
-    studyId: varchar('study_id', { length: 100 }),
-    datasetName: varchar('dataset_name', { length: 40 }),
-    validationType: varchar('validation_type', { length: 50 }), // Structure, Content, Business
-    priority: varchar('priority', { length: 20 }).default('medium'),
-    scheduledTime: timestamp('scheduled_time'),
-    startTime: timestamp('start_time'),
-    endTime: timestamp('end_time'),
-    status: varchar('status', { length: 30 }).default('queued'),
-    resultsSummary: json('results_summary'),
-    errorCount: integer('error_count').default(0),
-    warningCount: integer('warning_count').default(0),
-    retryCount: integer('retry_count').default(0),
-    metadata: json('metadata'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    queueIdx: index('validation_queue_idx').on(table.status, table.priority),
-    studyQueueIdx: index('validation_study_queue_idx').on(table.studyId, table.validationType),
-  })
-);
-
 // ============================================================================
 // CDISC INTEGRATION SCHEMAS AND TYPES
 // ============================================================================
@@ -13395,53 +12976,11 @@ export const insertCdiscPrmEndpointSchema = createInsertSchemaOmit(cdiscPrmEndpo
   updatedAt: true,
 });
 
-export const insertCdiscCdashFormSchema = createInsertSchemaOmit(cdiscCdashForms, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCdiscCdashFieldSchema = createInsertSchemaOmit(cdiscCdashFields, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCdiscCdashSdtmMappingSchema = createInsertSchemaOmit(cdiscCdashSdtmMappings, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCdiscCsrTemplateSchema = createInsertSchemaOmit(cdiscCsrTemplates, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCdiscCsrTflSchema = createInsertSchemaOmit(cdiscCsrTfl, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCdiscCsrSapSchema = createInsertSchemaOmit(cdiscCsrSap, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const insertCsrReportSchema = createInsertSchemaOmit(csrReports, {
   id: true,
   createdAt: true,
   updatedAt: true,
   uploadDate: true,
-});
-
-export const insertCdiscAdamSpecSchema = createInsertSchemaOmit(cdiscAdamSpecs, {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
 });
 
 // Type definitions for CDISC tables
@@ -13460,29 +12999,8 @@ export type InsertCdiscPrmVisit = z.infer<typeof insertCdiscPrmVisitSchema>;
 export type CdiscPrmEndpoint = InferSelectModel<typeof cdiscPrmEndpoints>;
 export type InsertCdiscPrmEndpoint = z.infer<typeof insertCdiscPrmEndpointSchema>;
 
-export type CdiscCdashForm = InferSelectModel<typeof cdiscCdashForms>;
-export type InsertCdiscCdashForm = z.infer<typeof insertCdiscCdashFormSchema>;
-
-export type CdiscCdashField = InferSelectModel<typeof cdiscCdashFields>;
-export type InsertCdiscCdashField = z.infer<typeof insertCdiscCdashFieldSchema>;
-
-export type CdiscCdashSdtmMapping = InferSelectModel<typeof cdiscCdashSdtmMappings>;
-export type InsertCdiscCdashSdtmMapping = z.infer<typeof insertCdiscCdashSdtmMappingSchema>;
-
-export type CdiscCsrTemplate = InferSelectModel<typeof cdiscCsrTemplates>;
-export type InsertCdiscCsrTemplate = z.infer<typeof insertCdiscCsrTemplateSchema>;
-
-export type CdiscCsrTfl = InferSelectModel<typeof cdiscCsrTfl>;
-export type InsertCdiscCsrTfl = z.infer<typeof insertCdiscCsrTflSchema>;
-
-export type CdiscCsrSap = InferSelectModel<typeof cdiscCsrSap>;
-export type InsertCdiscCsrSap = z.infer<typeof insertCdiscCsrSapSchema>;
-
 export type CsrReport = InferSelectModel<typeof csrReports>;
 export type InsertCsrReport = z.infer<typeof insertCsrReportSchema>;
-
-export type CdiscAdamSpec = InferSelectModel<typeof cdiscAdamSpecs>;
-export type InsertCdiscAdamSpec = z.infer<typeof insertCdiscAdamSpecSchema>;
 
 // ============================================================================
 // TYPES (keeping existing types)
@@ -13597,70 +13115,9 @@ export const clinicalOutcomes = pgTable(
   }
 );
 
-/**
- * ForesightAI Predictions Table
- * Stores predictive scores and recommendations for studies
- */
-export const foresightPredictions = pgTable(
-  'foresight_predictions',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    studyId: varchar('study_id', { length: 255 }).notNull(),
-    phase: text('phase').notNull(),
-    predictionType: text('prediction_type').notNull(), // success_score, enrollment_rate, safety_risk
-    successScore: real('success_score'),
-    confidenceInterval: json('confidence_interval'), // {lower: 0.65, upper: 0.85}
-    riskFactors: json('risk_factors'), // [{factor: 'small_sample', impact: -0.15}]
-    recommendations: json('recommendations'), // [{type: 'protocol', action: 'increase_dose'}]
-    similarTrials: json('similar_trials'), // [{id: 'NCT123', similarity: 0.92}]
-    failurePatterns: json('failure_patterns'), // [{pattern: 'dose_toxicity', probability: 0.23}]
-    modelVersion: text('model_version'),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-    expiresAt: timestamp('expires_at'),
-  },
-  table => {
-    return {
-      studyPhaseIdx: index('prediction_study_phase_idx').on(table.studyId, table.phase),
-      orgIdx: index('prediction_org_idx').on(table.organizationId),
-    };
-  }
-);
-
-/**
- * Clinical Feedback Loop Table
- * Captures real-world outcomes for continuous learning
- */
-export const clinicalFeedback = pgTable(
-  'clinical_feedback',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    studyId: varchar('study_id', { length: 255 }).notNull(),
-    predictionId: uuid('prediction_id').references(() => foresightPredictions.id),
-    phase: text('phase'),
-    feedbackType: text('feedback_type').notNull(), // outcome, protocol_change, safety_event
-    actualOutcome: text('actual_outcome'),
-    predictedOutcome: text('predicted_outcome'),
-    accuracyScore: real('accuracy_score'),
-    learningPoints: json('learning_points'), // Extracted insights for model improvement
-    impactOnModel: json('impact_on_model'), // How this feedback affects future predictions
-    verified: boolean('verified').default(false),
-    verifiedBy: text('verified_by'),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    capturedAt: timestamp('captured_at').defaultNow().notNull(),
-    processedAt: timestamp('processed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => {
-    return {
-      studyIdx: index('feedback_study_idx').on(table.studyId),
-      predictionIdx: index('feedback_prediction_idx').on(table.predictionId),
-      idx_clinical_feedback_org: index('idx_clinical_feedback_org').on(table.organizationId),
-    };
-  }
-);
+// foresight_predictions + clinical_feedback tables removed (Phase 8 — foresight
+// retirement). Their code was deleted; the tables are dropped in
+// db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql.
 
 /**
  * Translational Patterns Table
@@ -13705,16 +13162,6 @@ export const insertClinicalOutcomeSchema = createInsertSchemaOmit(clinicalOutcom
   createdAt: true,
 });
 
-export const insertForesightPredictionSchema = createInsertSchemaOmit(foresightPredictions, {
-  id: true,
-  createdAt: true,
-});
-
-export const insertClinicalFeedbackSchema = createInsertSchemaOmit(clinicalFeedback, {
-  id: true,
-  capturedAt: true,
-});
-
 export const insertTranslationalPatternSchema = createInsertSchemaOmit(translationalPatterns, {
   id: true,
   createdAt: true,
@@ -13723,19 +13170,18 @@ export const insertTranslationalPatternSchema = createInsertSchemaOmit(translati
 
 // Type definitions for ForesightAI tables
 export type BiomarkerEndpoint = InferSelectModel<typeof biomarkerEndpoints>;
-export type InsertBiomarkerEndpoint = z.infer<typeof insertBiomarkerEndpointSchema>;
+// Derive from the table's native insert type; the createInsertSchemaOmit
+// zod inference resolves to `{}` here, which broke every consumer's
+// .values()/field access. $inferInsert yields the correct column shape.
+export type InsertBiomarkerEndpoint = typeof biomarkerEndpoints.$inferInsert;
 
+// $inferInsert (not the z.infer<createInsertSchemaOmit(...)> which resolves
+// to `{}` here) — yields the correct column shape for .values() calls.
 export type ClinicalOutcome = InferSelectModel<typeof clinicalOutcomes>;
-export type InsertClinicalOutcome = z.infer<typeof insertClinicalOutcomeSchema>;
-
-export type ForesightPrediction = InferSelectModel<typeof foresightPredictions>;
-export type InsertForesightPrediction = z.infer<typeof insertForesightPredictionSchema>;
-
-export type ClinicalFeedback = InferSelectModel<typeof clinicalFeedback>;
-export type InsertClinicalFeedback = z.infer<typeof insertClinicalFeedbackSchema>;
+export type InsertClinicalOutcome = typeof clinicalOutcomes.$inferInsert;
 
 export type TranslationalPattern = InferSelectModel<typeof translationalPatterns>;
-export type InsertTranslationalPattern = z.infer<typeof insertTranslationalPatternSchema>;
+export type InsertTranslationalPattern = typeof translationalPatterns.$inferInsert;
 
 // ============================================================================
 // PHASE 0/I PRODUCTION MODULES
@@ -14157,14 +13603,16 @@ export const insertPkpdCompartmentSchema = createInsertSchemaOmit(pkpdCompartmen
 });
 
 // Type definitions for new tables
+// $inferInsert — the z.infer<createInsertSchema*(...)> form resolves to `{}`
+// here, breaking .values() calls; native insert type yields correct columns.
 export type DoseEscalationStudy = InferSelectModel<typeof doseEscalationStudies>;
-export type InsertDoseEscalationStudy = z.infer<typeof insertDoseEscalationStudySchema>;
+export type InsertDoseEscalationStudy = typeof doseEscalationStudies.$inferInsert;
 
 export type DoseLevel = InferSelectModel<typeof doseLevels>;
-export type InsertDoseLevel = z.infer<typeof insertDoseLevelSchema>;
+export type InsertDoseLevel = typeof doseLevels.$inferInsert;
 
 export type DoseCohort = InferSelectModel<typeof doseCohorts>;
-export type InsertDoseCohort = z.infer<typeof insertDoseCohortSchema>;
+export type InsertDoseCohort = typeof doseCohorts.$inferInsert;
 
 export type DltEvent = InferSelectModel<typeof dltEvents>;
 export type InsertDltEvent = z.infer<typeof insertDltEventSchema>;
@@ -16369,62 +15817,24 @@ export const concept2cureConversationsRelations = relations(
 );
 
 // ============================================================================
-// SOURCE CITATIONS — Sentence-level source linking for regulatory traceability
+// SOURCE CITATIONS — REMOVED (2026-07-27)
 // ============================================================================
-
-export const sourceTypeEnum = pgEnum('source_type', [
-  'trial_data',
-  'literature',
-  'regulatory_guidance',
-  'internal_data',
-]);
-
-export const sourceCitations = pgTable(
-  'source_citations',
-  {
-    id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => documents.id),
-    sectionId: integer('section_id'),
-    sentenceIndex: integer('sentence_index').notNull(),
-    sentenceText: text('sentence_text').notNull(),
-    sourceType: sourceTypeEnum('source_type').notNull(),
-    sourceId: text('source_id').notNull(),
-    sourceTitle: text('source_title').notNull(),
-    sourceUrl: text('source_url'),
-    confidence: real('confidence').notNull().default(1.0),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    createdBy: integer('created_by').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  table => ({
-    documentIdx: index('source_citations_document_idx').on(table.documentId),
-    orgIdx: index('source_citations_org_idx').on(table.organizationId),
-    sectionIdx: index('source_citations_section_idx').on(table.documentId, table.sectionId),
-  })
-);
-
-export const insertSourceCitationSchema = createInsertSchemaOmit(sourceCitations, {
-  id: true,
-  createdAt: true,
-});
-
-export type SourceCitation = InferSelectModel<typeof sourceCitations>;
-export type InsertSourceCitation = z.infer<typeof insertSourceCitationSchema>;
-
-export const sourceCitationsRelations = relations(sourceCitations, ({ one }) => ({
-  document: one(documents, {
-    fields: [sourceCitations.documentId],
-    references: [documents.id],
-  }),
-  organization: one(organizations, {
-    fields: [sourceCitations.organizationId],
-    references: [organizations.id],
-  }),
-}));
+// The `source_citations` drizzle table that lived here was never backed by DDL:
+// no migration in migrations/, db/migrations/ or sql/ ever created it, so every
+// runtime access 42P01'd (the writer swallowed the error; the reader returned
+// 503). It also could not be salvaged by writing the DDL — the AI-edit writer
+// inserted `concept2cure_artifacts` ids into `document_id` while the declared FK
+// and the Source Tracer's join pointed at `documents.id`, an unrelated serial
+// sequence. Provisioning the table would have turned a silent failure into
+// cross-labelled provenance on a Part 11 surface.
+//
+// Recorded section→source lineage lives in `authoring_citations` under the
+// convention documented in migrations/20260726_authoring_citation_source_usage.sql
+// (source = 'cre_evidence_source', reference_id = cre_evidence_sources.id,
+// payload_sha256 = the source's checksum at cite time), read and written through
+// server/services/clinical-regulatory-evidence/source-usage.service.ts.
+// Model-asserted sentence↔chunk support lives in the ai-trace-chain tables,
+// labelled as inference. Do not reintroduce a third store between them.
 
 // ============================================================
 // BIOSTATISTICS PLATFORM TABLES
@@ -17856,6 +17266,19 @@ export const evidenceClaims = pgTable(
     sourcePath: text('source_path'),
     tags: jsonb('tags').default([]),
     metadata: jsonb('metadata').default({}),
+    // Living Record Spine — value + verification axis (migration 20260603).
+    // The value columns let a claim assert a structured quantity, which is the
+    // join key (program_id, entity, field) into canonical_facts.
+    entity: text('entity'),
+    field: text('field'),
+    valueNum: numeric('value_num'),
+    valueText: text('value_text'),
+    unit: varchar('unit', { length: 40 }),
+    comparator: varchar('comparator', { length: 8 }).default('='),
+    valueType: varchar('value_type', { length: 20 }), // count | measure | date | categorical | boolean | text
+    verification: varchar('verification', { length: 16 }).notNull().default('unverified'),
+    // unverified | verified | drifted | disputed
+    canonicalFactId: uuid('canonical_fact_id'),
     extractedBy: integer('extracted_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -18099,6 +17522,7 @@ export const apiUsageLogs = pgTable(
     userId: integer('user_id'),
     module: text('module').notNull(), // '510k', 'cer', 'ectd', 'cmc', 'ai_assistance', 'vault'
     endpoint: text('endpoint'),
+    model: text('model'), // LLM that served the call (per-model usage buckets)
     requestCount: integer('request_count').default(1).notNull(),
     tokensUsed: integer('tokens_used').default(0).notNull(),
     costCents: integer('cost_cents').default(0).notNull(), // cost in cents
@@ -18108,6 +17532,11 @@ export const apiUsageLogs = pgTable(
   table => ({
     orgDateIdx: index('api_usage_org_date_idx').on(table.organizationId, table.createdAt),
     moduleIdx: index('api_usage_module_idx').on(table.module),
+    orgModelDateIdx: index('api_usage_org_model_date_idx').on(
+      table.organizationId,
+      table.model,
+      table.createdAt
+    ),
   })
 );
 
@@ -18199,6 +17628,135 @@ export const featureToggles = pgTable(
 );
 
 export type FeatureToggle = InferSelectModel<typeof featureToggles>;
+
+// ============================================================
+// BILLING: CREDIT BALANCE LEDGER + AUTO-RELOAD
+// ============================================================
+// Rechargeable usage-credit balance (Anthropic-style): an append-only
+// signed ledger (credits positive, debits negative; balance is the sum)
+// plus per-org auto-reload settings ("top off to $X when balance is $Y").
+
+export const creditLedger = pgTable(
+  'credit_ledger',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    entryType: text('entry_type').notNull(), // grant | purchase | auto_reload | debit | adjustment
+    amountCents: integer('amount_cents').notNull(),
+    balanceAfterCents: integer('balance_after_cents').notNull(),
+    description: text('description'),
+    reference: text('reference'), // Stripe payment intent, feature run id, ...
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgDateIdx: index('credit_ledger_org_date_idx').on(table.organizationId, table.createdAt),
+  })
+);
+
+export type CreditLedgerEntry = InferSelectModel<typeof creditLedger>;
+
+export const creditAutoreloadSettings = pgTable('credit_autoreload_settings', {
+  organizationId: integer('organization_id')
+    .references(() => organizations.id)
+    .primaryKey(),
+  enabled: boolean('enabled').default(false).notNull(),
+  thresholdCents: integer('threshold_cents').default(1000).notNull(),
+  topupCents: integer('topup_cents').default(2500).notNull(),
+  updatedBy: integer('updated_by'),
+  reason: text('reason'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type CreditAutoreloadSettings = InferSelectModel<typeof creditAutoreloadSettings>;
+
+// ============================================================
+// BUSINESS CENTER — cost accounting config (platform-global)
+// ============================================================
+// Platform-wide, NON-tenant configuration the Business Center uses to compute
+// cost-based accounting per client. No tenant column (owner-managed rate
+// cards), so out of scope for RLS / tenant-isolation.
+
+/** Unit cost rates the platform owner attributes to metered usage. */
+export const platformCostRates = pgTable('platform_cost_rates', {
+  id: serial('id').primaryKey(),
+  costKey: text('cost_key').notNull().unique(), // usage feature_id, or 'default'
+  label: text('label'),
+  unitCostCents: integer('unit_cost_cents').default(0).notNull(),
+  unit: text('unit').default('credit').notNull(), // credit | seat | gb_month | month
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertPlatformCostRateSchema = createInsertSchemaOmit(platformCostRates, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type PlatformCostRate = InferSelectModel<typeof platformCostRates>;
+
+/** Per-tier price card used to derive recognized revenue per client. */
+export const tierPricing = pgTable('tier_pricing', {
+  id: serial('id').primaryKey(),
+  tier: text('tier').notNull().unique(), // free | standard | professional | enterprise
+  monthlyPriceCents: integer('monthly_price_cents').default(0).notNull(),
+  perSeatCents: integer('per_seat_cents').default(0).notNull(),
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertTierPricingSchema = createInsertSchemaOmit(tierPricing, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type TierPricing = InferSelectModel<typeof tierPricing>;
+
+// ============================================================
+// PLATFORM ROLE GRANTS — designate personnel (platform tier)
+// ============================================================
+// Platform-level role grants the owner can assign/revoke from inside the app
+// instead of editing env allowlists or the DB by hand. DELIBERATELY SEPARATE
+// from organization_users.role: that column carries ONLY org-scoped roles
+// (admin/manager/member/viewer); platform roles (super_admin/platform_admin/
+// support/business_admin/owner) live here so org-level access can never be
+// corrupted by a platform grant. The platform access guards
+// (requirePlatformAdmin / requireBusinessAdmin) honor active rows here as a
+// DB-backed fallback to the synchronous role/email checks. Owner-managed,
+// non-tenant config (no organization column) → out of scope for RLS / tenant
+// isolation. The unique (user_id, role) index keeps at most one active grant
+// per (user, role) and backs the ON CONFLICT upsert in the access router.
+//
+// @compliance FDA 21 CFR Part 11 §11.10(d) — limiting system access to
+//             authorized individuals; every grant/revoke is audited.
+export const platformRoleGrants = pgTable(
+  'platform_role_grants',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .references(() => users.id)
+      .notNull(),
+    role: text('role').notNull(), // super_admin | platform_admin | support | business_admin | owner
+    grantedBy: text('granted_by'),
+    grantedAt: timestamp('granted_at').defaultNow().notNull(),
+    revokedAt: timestamp('revoked_at'),
+    revokedBy: text('revoked_by'),
+    reason: text('reason'),
+  },
+  table => ({
+    userRoleIdx: uniqueIndex('platform_role_grants_user_role_idx').on(table.userId, table.role),
+  })
+);
+
+export const insertPlatformRoleGrantSchema = createInsertSchemaOmit(platformRoleGrants, {
+  id: true,
+  grantedAt: true,
+});
+export type PlatformRoleGrant = InferSelectModel<typeof platformRoleGrants>;
 
 // ============================================================
 // DATA LINEAGE TRACKING (Regulatory-Grade)
@@ -18319,6 +17877,222 @@ export const evidenceChainRecords = pgTable('evidence_chain_records', {
 
 export type EvidenceChainRecord = InferSelectModel<typeof evidenceChainRecords>;
 
+// ═══════════════════════════════════════════════════════════════════════
+// Guidance Change Impact Scanner (Feature 2.6)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Tracks the current version of every regulatory guidance document AnA
+ * can detect changes against. When a new version is upserted, the row's
+ * previous current_version becomes the "prev" reference for any alerts
+ * that fire on the change.
+ */
+export const guidanceReferenceIndex = pgTable(
+  'guidance_reference_index',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    guidanceCode: text('guidance_code').notNull().unique(),
+    authority: text('authority').notNull(),
+    currentVersion: text('current_version').notNull(),
+    currentVersionAt: timestamp('current_version_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    sourceUrl: text('source_url'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    authorityIdx: index('idx_guidance_reference_authority').on(table.authority),
+  })
+);
+
+/**
+ * Section-level impact alert produced by the guidance-impact-scanner
+ * when an artifact's CTD section is mapped (via gap-classifier rules
+ * or the IND section registry) to a guidance whose version moved.
+ */
+export const guidanceAlerts = pgTable(
+  'guidance_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactId: text('artifact_id').notNull(),
+    artifactPk: integer('artifact_pk').notNull(),
+    guidanceCode: text('guidance_code').notNull(),
+    guidanceAuthority: text('guidance_authority').notNull(),
+    prevVersion: text('prev_version'),
+    newVersion: text('new_version').notNull(),
+    severity: text('severity').notNull(),
+    affectedSections: jsonb('affected_sections').notNull(),
+    status: text('status').notNull().default('open'),
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    acknowledgedBy: integer('acknowledged_by'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy: integer('resolved_by'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_guidance_alerts_org').on(table.organizationId),
+    projectIdx: index('idx_guidance_alerts_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    artifactIdx: index('idx_guidance_alerts_artifact').on(table.artifactId),
+  })
+);
+
+export type GuidanceReferenceIndexRow = InferSelectModel<typeof guidanceReferenceIndex>;
+export type GuidanceAlertRow = InferSelectModel<typeof guidanceAlerts>;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Cross-artifact consistency alerts
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * One row per dossier-internal contradiction surfaced by
+ * cross-artifact-consistency-scanner. Idempotent re-scans via the unique
+ * partial index on (project, artifactA, artifactB, sentenceContentHash)
+ * WHERE status IN ('open','acknowledged') — see the migration.
+ */
+export const crossArtifactConsistencyAlerts = pgTable(
+  'cross_artifact_consistency_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactAId: text('artifact_a_id').notNull(),
+    artifactAPk: integer('artifact_a_pk').notNull(),
+    artifactACtdSection: text('artifact_a_ctd_section'),
+    sentenceContentHash: text('sentence_content_hash').notNull(),
+    sentenceText: text('sentence_text').notNull(),
+    artifactBId: text('artifact_b_id').notNull(),
+    artifactBPk: integer('artifact_b_pk').notNull(),
+    artifactBCtdSection: text('artifact_b_ctd_section'),
+    contradictingPassage: text('contradicting_passage'),
+    severity: text('severity').notNull(),
+    severityRuleId: text('severity_rule_id'),
+    status: text('status').notNull().default('open'),
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    acknowledgedBy: integer('acknowledged_by'),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy: integer('resolved_by'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_consistency_alerts_org').on(table.organizationId),
+    projectIdx: index('idx_consistency_alerts_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    artifactAIdx: index('idx_consistency_alerts_artifact_a').on(
+      table.artifactAId
+    ),
+    artifactBIdx: index('idx_consistency_alerts_artifact_b').on(
+      table.artifactBId
+    ),
+  })
+);
+
+export type CrossArtifactConsistencyAlertRow = InferSelectModel<
+  typeof crossArtifactConsistencyAlerts
+>;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Regulatory Authoring Plans (Feature 2.4)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * One row per (project, ctd_section) authoring plan.
+ *
+ * Captures the AI-assembled "what we'll write" before the artifact is
+ * drafted: source artifacts to cite, cross-references, risk factors from
+ * Shadow Review, contradictions from a Truth Engine pre-scan, and
+ * therapeutic-area-driven reviewer expectations.
+ *
+ * Status flow: draft -> pending_approval -> approved -> executed
+ *                                       -> rejected
+ *
+ * Active uniqueness (draft + pending_approval) is enforced by a partial
+ * unique index — see the migration. Approved/rejected/executed plans are
+ * historical and may co-exist with a fresh active plan.
+ */
+export const authoringPlans = pgTable(
+  'authoring_plans',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+    artifactId: text('artifact_id'),
+    artifactPk: integer('artifact_pk'),
+    ctdSection: text('ctd_section').notNull(),
+    submissionType: text('submission_type'),
+    status: text('status').notNull().default('draft'),
+    title: text('title'),
+    summary: text('summary'),
+    sources: jsonb('sources').notNull().default([]),
+    crossRefs: jsonb('cross_refs').notNull().default([]),
+    riskFactors: jsonb('risk_factors').notNull().default([]),
+    contradictions: jsonb('contradictions').notNull().default([]),
+    reviewerExpectations: jsonb('reviewer_expectations').notNull().default([]),
+    guidanceRefs: jsonb('guidance_refs').notNull().default([]),
+    outline: jsonb('outline').notNull().default([]),
+    therapeuticArea: text('therapeutic_area'),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    approvedBy: integer('approved_by'),
+    rejectedAt: timestamp('rejected_at', { withTimezone: true }),
+    rejectedBy: integer('rejected_by'),
+    rejectedReason: text('rejected_reason'),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+    executedArtifactId: text('executed_artifact_id'),
+    generatorVersion: text('generator_version'),
+    score: integer('score'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: integer('created_by'),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  table => ({
+    orgIdx: index('idx_authoring_plans_org').on(table.organizationId),
+    projectIdx: index('idx_authoring_plans_project').on(
+      table.organizationId,
+      table.projectId
+    ),
+    sectionIdx: index('idx_authoring_plans_section').on(
+      table.organizationId,
+      table.projectId,
+      table.ctdSection
+    ),
+    statusIdx: index('idx_authoring_plans_status').on(
+      table.organizationId,
+      table.status
+    ),
+  })
+);
+
+export type AuthoringPlanRow = InferSelectModel<typeof authoringPlans>;
+
 /**
  * Saved precedent queries — user-saved searches over the predicate /
  * precedent intelligence corpus. Each row stores the canonical search
@@ -18356,3 +18130,1705 @@ export const savedPrecedentQueries = pgTable('saved_precedent_queries', {
 }));
 
 export type SavedPrecedentQuery = InferSelectModel<typeof savedPrecedentQueries>;
+
+/* ════════════════════════════════════════════════════════════════════
+   MDX beta-surface tables (migration 20260507_mdx_beta_surfaces.sql)
+
+   - udi_records             : per-device UDI assignment + GUDID state
+   - risk_items              : ISO 14971 hazard / harm / risk row
+   - risk_controls           : per-risk control measure with V&V evidence
+   - software_lifecycle_items: IEC 62304 deliverable (SRS / SDS / SBOM / ...)
+   - q_sub_section_bodies    : Q-Sub briefing-doc per-section content
+
+   All tenant-scoped via organizationId; program-scoped where applicable
+   via the regulatory_programs UUID. ════════════════════════════════ */
+
+export const udiRecords = pgTable(
+  'udi_records',
+  {
+    id:               serial('id').primaryKey(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    programId:        uuid('program_id'),
+    deviceName:       text('device_name').notNull(),
+    udiDi:            text('udi_di').notNull(),
+    udiPiFormat:      text('udi_pi_format'),
+    issuingAgency:    text('issuing_agency').notNull(),
+    gmdnCode:         text('gmdn_code'),
+    deviceClass:      text('device_class'),
+    productCode:      text('product_code'),
+    brandName:        text('brand_name'),
+    catalogNumber:    text('catalog_number'),
+    versionOrModel:   text('version_or_model'),
+    packageQty:       integer('package_qty'),
+    packageType:      text('package_type'),
+    mriSafety:        text('mri_safety'),
+    lotSerial:        text('lot_serial'),
+    prescriptionUse:  boolean('prescription_use').default(true),
+    hctp:             boolean('hctp').default(false),
+    kit:              boolean('kit').default(false),
+    singleUse:        boolean('single_use').default(false),
+    rxOnly:           boolean('rx_only').default(true),
+    gudidSubmittedAt: timestamp('gudid_submitted_at', { withTimezone: true }),
+    gudidStatus:      text('gudid_status').default('draft'),
+    gudidPayload:     jsonb('gudid_payload'),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:        timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('udi_records_org_idx').on(table.organizationId),
+    programIdx:    index('udi_records_program_idx').on(table.programId),
+    orgProgramIdx: index('udi_records_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type UdiRecord = InferSelectModel<typeof udiRecords>;
+
+export const riskItems = pgTable(
+  'risk_items',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    programId:           uuid('program_id'),
+    refCode:             text('ref_code'),
+    hazard:              text('hazard').notNull(),
+    hazardousSituation:  text('hazardous_situation'),
+    harm:                text('harm').notNull(),
+    sequenceOfEvents:    text('sequence_of_events'),
+    severity:            integer('severity').notNull(),
+    probability:         integer('probability').notNull(),
+    detectability:       integer('detectability'),
+    initialRisk:         integer('initial_risk'),
+    residualSeverity:    integer('residual_severity'),
+    residualProbability: integer('residual_probability'),
+    residualRisk:        integer('residual_risk'),
+    controlStrategy:     text('control_strategy'),
+    acceptable:          boolean('acceptable'),
+    benefitRiskRationale: text('benefit_risk_rationale'),
+    status:              text('status').default('open').notNull(),
+    source:              text('source'),
+    assignedTo:          integer('assigned_to').references(() => users.id),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('risk_items_org_idx').on(table.organizationId),
+    programIdx:    index('risk_items_program_idx').on(table.programId),
+    statusIdx:     index('risk_items_status_idx').on(table.organizationId, table.status),
+    orgProgramIdx: index('risk_items_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RiskItem = InferSelectModel<typeof riskItems>;
+
+export const riskControls = pgTable(
+  'risk_controls',
+  {
+    id:                     serial('id').primaryKey(),
+    riskItemId:             integer('risk_item_id').notNull().references(() => riskItems.id, { onDelete: 'cascade' }),
+    organizationId:         integer('organization_id').notNull().references(() => organizations.id),
+    description:            text('description').notNull(),
+    controlType:            text('control_type').notNull(),
+    implementationEvidence: text('implementation_evidence'),
+    verificationEvidence:   text('verification_evidence'),
+    effectivenessEvidence:  text('effectiveness_evidence'),
+    introducesNewRisk:      boolean('introduces_new_risk').default(false),
+    newRiskItemId:          integer('new_risk_item_id'),
+    status:                 text('status').default('proposed').notNull(),
+    createdAt:              timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:              timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    itemIdx: index('risk_controls_item_idx').on(table.riskItemId),
+    orgIdx:  index('risk_controls_org_idx').on(table.organizationId),
+  }),
+);
+export type RiskControl = InferSelectModel<typeof riskControls>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RISK-BASED MONITORING (RBM / RBQM) — ICH E6(R3) + E8(R1) conduct layer.
+// Mirrors the risk_items conventions: integer organization_id tenant column,
+// nullable uuid program_id (canonical project id space), jsonb metadata,
+// soft-delete deleted_at, org + program indexes. See migrations/20260629_rbm_surfaces.sql.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const rbmRiskAssessments = pgTable(
+  'rbm_risk_assessments',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    title:          text('title').notNull(),
+    framework:      text('framework').default('ich_e6r3').notNull(),
+    overallRisk:    text('overall_risk'),
+    status:         text('status').default('draft').notNull(),
+    version:        integer('version').default(1).notNull(),
+    approvedBy:     integer('approved_by').references(() => users.id),
+    approvedAt:     timestamp('approved_at', { withTimezone: true }),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:      timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_assessments_org_idx').on(table.organizationId),
+    programIdx:    index('rbm_assessments_program_idx').on(table.programId),
+    orgProgramIdx: index('rbm_assessments_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmRiskAssessment = InferSelectModel<typeof rbmRiskAssessments>;
+export const insertRbmRiskAssessmentSchema = createInsertSchemaOmit(rbmRiskAssessments, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmRiskItems = pgTable(
+  'rbm_risk_items',
+  {
+    id:                 serial('id').primaryKey(),
+    organizationId:     integer('organization_id').notNull().references(() => organizations.id),
+    assessmentId:       integer('assessment_id').references(() => rbmRiskAssessments.id, { onDelete: 'cascade' }),
+    programId:          uuid('program_id'),
+    refCode:            text('ref_code'),
+    category:           text('category').default('operational').notNull(),
+    ctqFactor:          text('ctq_factor').notNull(),
+    riskDescription:    text('risk_description'),
+    likelihood:         integer('likelihood').notNull(),
+    impact:             integer('impact').notNull(),
+    detectability:      integer('detectability'),
+    riskScore:          integer('risk_score'),
+    isCritical:         boolean('is_critical').default(false),
+    mitigation:         text('mitigation'),
+    residualLikelihood: integer('residual_likelihood'),
+    residualImpact:     integer('residual_impact'),
+    residualScore:      integer('residual_score'),
+    status:             text('status').default('open').notNull(),
+    assignedTo:         integer('assigned_to').references(() => users.id),
+    metadata:           jsonb('metadata').default('{}'),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:          timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_items_org_idx').on(table.organizationId),
+    assessmentIdx: index('rbm_items_assessment_idx').on(table.assessmentId),
+    orgProgramIdx: index('rbm_items_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmRiskItem = InferSelectModel<typeof rbmRiskItems>;
+export const insertRbmRiskItemSchema = createInsertSchemaOmit(rbmRiskItems, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmKris = pgTable(
+  'rbm_kris',
+  {
+    id:               serial('id').primaryKey(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    programId:        uuid('program_id'),
+    assessmentId:     integer('assessment_id').references(() => rbmRiskAssessments.id, { onDelete: 'set null' }),
+    name:             text('name').notNull(),
+    metricDefinition: text('metric_definition'),
+    dataSource:       text('data_source').default('manual'),
+    unit:             text('unit'),
+    direction:        text('direction').default('higher_worse'),
+    thresholdAmber:   numeric('threshold_amber', { precision: 12, scale: 4 }),
+    thresholdRed:     numeric('threshold_red', { precision: 12, scale: 4 }),
+    currentValue:     numeric('current_value', { precision: 12, scale: 4 }),
+    status:           text('status').default('not_evaluated').notNull(),
+    evaluatedAt:      timestamp('evaluated_at', { withTimezone: true }),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:        timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_kris_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_kris_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmKri = InferSelectModel<typeof rbmKris>;
+export const insertRbmKriSchema = createInsertSchemaOmit(rbmKris, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmKriValues = pgTable(
+  'rbm_kri_values',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    kriId:          integer('kri_id').notNull().references(() => rbmKris.id, { onDelete: 'cascade' }),
+    value:          numeric('value', { precision: 12, scale: 4 }).notNull(),
+    status:         text('status'),
+    observedAt:     timestamp('observed_at', { withTimezone: true }).defaultNow().notNull(),
+    note:           text('note'),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('rbm_kri_values_org_idx').on(table.organizationId),
+    kriIdx: index('rbm_kri_values_kri_idx').on(table.kriId, table.observedAt),
+  }),
+);
+export type RbmKriValue = InferSelectModel<typeof rbmKriValues>;
+
+/**
+ * One ingestion attempt against a program's RBM data. Carries the provenance
+ * an indicator is meaningless without: which feed, as of what cutoff, how many
+ * rows landed and what was rejected. A green KRI computed from a feed that
+ * last succeeded three weeks ago is not evidence of control, and this is the
+ * row that lets the board say so.
+ */
+export const rbmDataRuns = pgTable(
+  'rbm_data_runs',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    source:         text('source').notNull(),
+    sourceRef:      text('source_ref'),
+    /** The date the extract represents — NOT when it was loaded. */
+    dataCutoff:     date('data_cutoff'),
+    status:         text('status').default('running').notNull(),
+    rowsReceived:   integer('rows_received').default(0).notNull(),
+    rowsAccepted:   integer('rows_accepted').default(0).notNull(),
+    rowsRejected:   integer('rows_rejected').default(0).notNull(),
+    /** Per-row reject reasons — a dropped row is never silent. */
+    rejects:        jsonb('rejects').default('[]').notNull(),
+    error:          text('error'),
+    startedAt:      timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+    finishedAt:     timestamp('finished_at', { withTimezone: true }),
+    ingestedBy:     integer('ingested_by').references(() => users.id),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_data_runs_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_data_runs_org_program_idx').on(table.organizationId, table.programId),
+    freshnessIdx:  index('rbm_data_runs_freshness_idx')
+      .on(table.organizationId, table.programId, table.source, table.startedAt),
+  }),
+);
+export type RbmDataRun = InferSelectModel<typeof rbmDataRuns>;
+
+/**
+ * A landed measurement, scoped to the study, a country, a site or a subject,
+ * and tied to the run that produced it. `numerator`/`denominator` are carried
+ * when the source supplies them: a rate over 3 subjects is not the same
+ * evidence as the same rate over 300, and `value` alone cannot express that.
+ */
+export const rbmMetricObservations = pgTable(
+  'rbm_metric_observations',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    runId:          integer('run_id').references(() => rbmDataRuns.id, { onDelete: 'cascade' }),
+    metricKey:      text('metric_key').notNull(),
+    scopeLevel:     text('scope_level').default('study').notNull(),
+    scopeId:        text('scope_id'),
+    value:          numeric('value', { precision: 18, scale: 6 }),
+    numerator:      numeric('numerator', { precision: 18, scale: 6 }),
+    denominator:    numeric('denominator', { precision: 18, scale: 6 }),
+    unit:           text('unit'),
+    observedAt:     timestamp('observed_at', { withTimezone: true }).defaultNow().notNull(),
+    dataCutoff:     date('data_cutoff'),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_metric_obs_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_metric_obs_org_program_idx').on(table.organizationId, table.programId),
+    runIdx:        index('rbm_metric_obs_run_idx').on(table.runId),
+    lookupIdx:     index('rbm_metric_obs_lookup_idx')
+      .on(table.organizationId, table.programId, table.metricKey, table.scopeLevel, table.scopeId, table.observedAt),
+  }),
+);
+export type RbmMetricObservation = InferSelectModel<typeof rbmMetricObservations>;
+
+export const rbmPatientProfiles = pgTable(
+  'rbm_patient_profiles',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    siteId:         text('site_id'),
+    subjectId:      text('subject_id').notNull(),
+    metrics:        jsonb('metrics').default('{}').notNull(),
+    anomalyScore:   numeric('anomaly_score', { precision: 8, scale: 3 }),
+    topDimension:   text('top_dimension'),
+    status:         text('status').default('normal').notNull(),
+    detail:         text('detail'),
+    scoredAt:       timestamp('scored_at', { withTimezone: true }),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:      timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_patient_profiles_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_patient_profiles_org_program_idx').on(table.organizationId, table.programId),
+    statusIdx:     index('rbm_patient_profiles_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type RbmPatientProfile = InferSelectModel<typeof rbmPatientProfiles>;
+
+export const rbmQtls = pgTable(
+  'rbm_qtls',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    programId:         uuid('program_id'),
+    parameter:         text('parameter').notNull(),
+    rationale:         text('rationale'),
+    threshold:         numeric('threshold', { precision: 12, scale: 4 }),
+    secondaryLimit:    numeric('secondary_limit', { precision: 12, scale: 4 }),
+    currentValue:      numeric('current_value', { precision: 12, scale: 4 }),
+    breached:          boolean('breached').default(false),
+    breachActionTaken: text('breach_action_taken'),
+    status:            text('status').default('not_evaluated').notNull(),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_qtls_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_qtls_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmQtl = InferSelectModel<typeof rbmQtls>;
+export const insertRbmQtlSchema = createInsertSchemaOmit(rbmQtls, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmSignals = pgTable(
+  'rbm_signals',
+  {
+    id:              serial('id').primaryKey(),
+    organizationId:  integer('organization_id').notNull().references(() => organizations.id),
+    programId:       uuid('program_id'),
+    siteId:          text('site_id'),
+    source:          text('source').default('manual').notNull(),
+    signalType:      text('signal_type'),
+    severity:        text('severity').default('medium').notNull(),
+    title:           text('title').notNull(),
+    detail:          text('detail'),
+    statistic:       jsonb('statistic').default('{}'),
+    detectedAt:      timestamp('detected_at', { withTimezone: true }).defaultNow().notNull(),
+    status:          text('status').default('new').notNull(),
+    resolutionNotes: text('resolution_notes'),
+    metadata:        jsonb('metadata').default('{}'),
+    createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:       timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_signals_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_signals_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmSignal = InferSelectModel<typeof rbmSignals>;
+export const insertRbmSignalSchema = createInsertSchemaOmit(rbmSignals, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmSiteRiskScores = pgTable(
+  'rbm_site_risk_scores',
+  {
+    id:              serial('id').primaryKey(),
+    organizationId:  integer('organization_id').notNull().references(() => organizations.id),
+    programId:       uuid('program_id'),
+    siteId:          text('site_id'),
+    siteNumber:      text('site_number'),
+    siteName:        text('site_name'),
+    compositeRisk:   numeric('composite_risk', { precision: 6, scale: 2 }),
+    enrollmentRisk:  numeric('enrollment_risk', { precision: 6, scale: 2 }),
+    qualityRisk:     numeric('quality_risk', { precision: 6, scale: 2 }),
+    operationalRisk: numeric('operational_risk', { precision: 6, scale: 2 }),
+    monitoringTier:  text('monitoring_tier').default('standard').notNull(),
+    drivers:         jsonb('drivers').default('[]'),
+    scoredAt:        timestamp('scored_at', { withTimezone: true }).defaultNow().notNull(),
+    metadata:        jsonb('metadata').default('{}'),
+    createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_site_risk_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_site_risk_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmSiteRiskScore = InferSelectModel<typeof rbmSiteRiskScores>;
+
+export const rbmMonitoringPlans = pgTable(
+  'rbm_monitoring_plans',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    assessmentId:   integer('assessment_id').references(() => rbmRiskAssessments.id, { onDelete: 'set null' }),
+    title:          text('title').notNull(),
+    strategy:       text('strategy').default('risk_based').notNull(),
+    status:         text('status').default('draft').notNull(),
+    approvedBy:     integer('approved_by').references(() => users.id),
+    approvedAt:     timestamp('approved_at', { withTimezone: true }),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:      timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_plans_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_plans_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmMonitoringPlan = InferSelectModel<typeof rbmMonitoringPlans>;
+export const insertRbmMonitoringPlanSchema = createInsertSchemaOmit(rbmMonitoringPlans, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmMonitoringActions = pgTable(
+  'rbm_monitoring_actions',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    planId:         integer('plan_id').references(() => rbmMonitoringPlans.id, { onDelete: 'cascade' }),
+    riskItemId:     integer('risk_item_id').references(() => rbmRiskItems.id, { onDelete: 'set null' }),
+    signalId:       integer('signal_id').references(() => rbmSignals.id, { onDelete: 'set null' }),
+    actionType:     text('action_type').default('issue').notNull(),
+    description:    text('description').notNull(),
+    priority:       text('priority').default('medium').notNull(),
+    owner:          integer('owner').references(() => users.id),
+    dueDate:        date('due_date'),
+    status:         text('status').default('open').notNull(),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:  index('rbm_actions_org_idx').on(table.organizationId),
+    planIdx: index('rbm_actions_plan_idx').on(table.planId),
+  }),
+);
+export type RbmMonitoringAction = InferSelectModel<typeof rbmMonitoringActions>;
+export const insertRbmMonitoringActionSchema = createInsertSchemaOmit(rbmMonitoringActions, {
+  id: true, createdAt: true, updatedAt: true,
+});
+
+export const softwareLifecycleItems = pgTable(
+  'software_lifecycle_items',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    programId:           uuid('program_id'),
+    docLevel:            text('doc_level').notNull(),
+    safetyClass:         text('safety_class'),
+    itemKind:            text('item_kind').notNull(),
+    title:               text('title').notNull(),
+    identifier:          text('identifier'),
+    status:              text('status').default('draft').notNull(),
+    evidenceArtifactId:  integer('evidence_artifact_id'),
+    notes:               text('notes'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('software_items_org_idx').on(table.organizationId),
+    programIdx:    index('software_items_program_idx').on(table.programId),
+    kindIdx:       index('software_items_kind_idx').on(table.organizationId, table.itemKind),
+    orgProgramIdx: index('software_items_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type SoftwareLifecycleItem = InferSelectModel<typeof softwareLifecycleItems>;
+
+export const qSubSectionBodies = pgTable(
+  'q_sub_section_bodies',
+  {
+    id:               serial('id').primaryKey(),
+    qSubmissionId:    uuid('q_submission_id').notNull(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    sectionKey:       text('section_key').notNull(),
+    content:          text('content'),
+    draftSource:      text('draft_source'),
+    draftedAt:        timestamp('drafted_at', { withTimezone: true }),
+    draftedSummary:   text('drafted_summary'),
+    acceptedAt:       timestamp('accepted_at', { withTimezone: true }),
+    acceptedBy:       integer('accepted_by').references(() => users.id),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('q_sub_section_org_idx').on(table.organizationId),
+  }),
+);
+export type QSubSectionBody = InferSelectModel<typeof qSubSectionBodies>;
+
+/* ════════════════════════════════════════════════════════════════════
+   IVD + diagnostic surface tables (migration 20260508)
+
+   Distinct from medtech tables because IVDs have their own regulatory
+   pathways (FDA 510(k)/PMA for IVDs, EU IVDR vs MDR, CLIA, CDx
+   pairing, LDT phases). Tenant-scoped via organizationId; soft-delete
+   via deletedAt. ════════════════════════════════════════════════════ */
+
+export const ivdAnalyticalPerformance = pgTable(
+  'ivd_analytical_performance',
+  {
+    id:                 serial('id').primaryKey(),
+    organizationId:     integer('organization_id').notNull().references(() => organizations.id),
+    programId:          uuid('program_id'),
+    studyType:          text('study_type').notNull(),
+    studyId:            text('study_id'),
+    title:              text('title').notNull(),
+    protocolRef:        text('protocol_ref'),
+    acceptanceCriterion: text('acceptance_criterion'),
+    resultSummary:      text('result_summary'),
+    passFail:           text('pass_fail'),
+    nSamples:           integer('n_samples'),
+    nReplicates:        integer('n_replicates'),
+    sites:              text('sites').array(),
+    analytes:           text('analytes').array(),
+    matrixType:         text('matrix_type'),
+    reportArtifactId:   integer('report_artifact_id'),
+    metadata:           jsonb('metadata').default('{}'),
+    startedAt:          date('started_at'),
+    completedAt:        date('completed_at'),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:          timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivd_anal_perf_org_idx').on(table.organizationId),
+    programIdx: index('ivd_anal_perf_program_idx').on(table.programId),
+    typeIdx:    index('ivd_anal_perf_type_idx').on(table.organizationId, table.studyType),
+  }),
+);
+export type IvdAnalyticalPerformance = InferSelectModel<typeof ivdAnalyticalPerformance>;
+
+export const ivdClinicalPerformance = pgTable(
+  'ivd_clinical_performance',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    programId:                uuid('program_id'),
+    studyId:                  text('study_id'),
+    title:                    text('title').notNull(),
+    intendedPopulation:       text('intended_population'),
+    comparator:               text('comparator'),
+    comparatorKind:           text('comparator_kind'),
+    totalSubjects:            integer('total_subjects'),
+    positiveN:                integer('positive_n'),
+    negativeN:                integer('negative_n'),
+    sensitivityPct:           decimal('sensitivity_pct', { precision: 5, scale: 2 }),
+    sensitivityLower:         decimal('sensitivity_lower', { precision: 5, scale: 2 }),
+    sensitivityUpper:         decimal('sensitivity_upper', { precision: 5, scale: 2 }),
+    specificityPct:           decimal('specificity_pct', { precision: 5, scale: 2 }),
+    specificityLower:         decimal('specificity_lower', { precision: 5, scale: 2 }),
+    specificityUpper:         decimal('specificity_upper', { precision: 5, scale: 2 }),
+    ppvPct:                   decimal('ppv_pct', { precision: 5, scale: 2 }),
+    npvPct:                   decimal('npv_pct', { precision: 5, scale: 2 }),
+    prevalencePct:            decimal('prevalence_pct', { precision: 5, scale: 2 }),
+    aucRoc:                   decimal('auc_roc', { precision: 5, scale: 3 }),
+    preSpecifiedEndpointMet:  boolean('pre_specified_endpoint_met'),
+    reportArtifactId:         integer('report_artifact_id'),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivd_clin_perf_org_idx').on(table.organizationId),
+    programIdx: index('ivd_clin_perf_program_idx').on(table.programId),
+  }),
+);
+export type IvdClinicalPerformance = InferSelectModel<typeof ivdClinicalPerformance>;
+
+export const ivdrClassifications = pgTable(
+  'ivdr_classifications',
+  {
+    id:                      serial('id').primaryKey(),
+    organizationId:          integer('organization_id').notNull().references(() => organizations.id),
+    programId:               uuid('program_id'),
+    deviceName:              text('device_name').notNull(),
+    ivdrClass:               text('ivdr_class').notNull(),
+    classificationRule:      text('classification_rule'),
+    rationale:               text('rationale'),
+    companionDiagnostic:     boolean('companion_diagnostic').default(false),
+    selfTest:                boolean('self_test').default(false),
+    nearPatientTest:         boolean('near_patient_test').default(false),
+    notifiedBodyRequired:    boolean('notified_body_required'),
+    notifiedBodyName:        text('notified_body_name'),
+    notifiedBodyId:          text('notified_body_id'),
+    certificateNo:           text('certificate_no'),
+    certificateExpiry:       date('certificate_expiry'),
+    metadata:                jsonb('metadata').default('{}'),
+    createdAt:               timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:               timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:               timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivdr_class_org_idx').on(table.organizationId),
+    programIdx: index('ivdr_class_program_idx').on(table.programId),
+  }),
+);
+export type IvdrClassification = InferSelectModel<typeof ivdrClassifications>;
+
+export const ivdrPerDocuments = pgTable(
+  'ivdr_per_documents',
+  {
+    id:                          serial('id').primaryKey(),
+    organizationId:              integer('organization_id').notNull().references(() => organizations.id),
+    programId:                   uuid('program_id'),
+    deviceName:                  text('device_name').notNull(),
+    perVersion:                  text('per_version').notNull(),
+    perStatus:                   text('per_status').default('draft'),
+    scientificValidityDone:      boolean('scientific_validity_done').default(false),
+    analyticalPerformanceDone:   boolean('analytical_performance_done').default(false),
+    clinicalPerformanceDone:     boolean('clinical_performance_done').default(false),
+    benefitRiskConclusion:       text('benefit_risk_conclusion'),
+    pmpfPlanAttached:            boolean('pmpf_plan_attached').default(false),
+    authorName:                  text('author_name'),
+    authorQualifications:        text('author_qualifications'),
+    perDate:                     date('per_date'),
+    artifactId:                  integer('artifact_id'),
+    metadata:                    jsonb('metadata').default('{}'),
+    createdAt:                   timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                   timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                   timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('ivdr_per_org_idx').on(table.organizationId),
+    programIdx: index('ivdr_per_program_idx').on(table.programId),
+  }),
+);
+export type IvdrPerDocument = InferSelectModel<typeof ivdrPerDocuments>;
+
+export const ivdCliaCategorization = pgTable(
+  'ivd_clia_categorization',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    programId:                uuid('program_id'),
+    testName:                 text('test_name').notNull(),
+    analyte:                  text('analyte'),
+    cliaComplexity:           text('clia_complexity').notNull(),
+    cmsLetterDate:            date('cms_letter_date'),
+    cmsLetterRef:             text('cms_letter_ref'),
+    waiverApplied:            boolean('waiver_applied').default(false),
+    waiverApplicationDate:    date('waiver_application_date'),
+    waiverGranted:            boolean('waiver_granted'),
+    waiverGrantedDate:        date('waiver_granted_date'),
+    waiverRevocationDate:     date('waiver_revocation_date'),
+    ppmpStatus:               text('ppmp_status'),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('clia_cat_org_idx').on(table.organizationId),
+    programIdx: index('clia_cat_program_idx').on(table.programId),
+  }),
+);
+export type IvdCliaCategorization = InferSelectModel<typeof ivdCliaCategorization>;
+
+export const cdxPairings = pgTable(
+  'cdx_pairings',
+  {
+    id:                   serial('id').primaryKey(),
+    organizationId:       integer('organization_id').notNull().references(() => organizations.id),
+    deviceProgramId:      uuid('device_program_id'),
+    drugName:             text('drug_name').notNull(),
+    drugInnn:             text('drug_innn'),
+    drugApplicationType:  text('drug_application_type'),
+    drugApplicationNo:    text('drug_application_no'),
+    drugSponsor:          text('drug_sponsor'),
+    indication:           text('indication'),
+    biomarker:            text('biomarker'),
+    approvalStatus:       text('approval_status').default('planned'),
+    fdaApprovalDate:      date('fda_approval_date'),
+    emaApprovalDate:      date('ema_approval_date'),
+    cdxLabelText:         text('cdx_label_text'),
+    metadata:             jsonb('metadata').default('{}'),
+    createdAt:            timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:            timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:            timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:       index('cdx_pairings_org_idx').on(table.organizationId),
+    programIdx:   index('cdx_pairings_program_idx').on(table.deviceProgramId),
+    biomarkerIdx: index('cdx_pairings_biomarker_idx').on(table.organizationId, table.biomarker),
+  }),
+);
+export type CdxPairing = InferSelectModel<typeof cdxPairings>;
+
+export const cdxConcordanceStudies = pgTable(
+  'cdx_concordance_studies',
+  {
+    id:                     serial('id').primaryKey(),
+    organizationId:         integer('organization_id').notNull().references(() => organizations.id),
+    cdxPairingId:           integer('cdx_pairing_id').notNull().references(() => cdxPairings.id, { onDelete: 'cascade' }),
+    studyId:                text('study_id'),
+    referenceAssay:         text('reference_assay').notNull(),
+    candidateAssay:         text('candidate_assay').notNull(),
+    nSamples:               integer('n_samples'),
+    ppaPct:                 decimal('ppa_pct', { precision: 5, scale: 2 }),
+    ppaLower:               decimal('ppa_lower', { precision: 5, scale: 2 }),
+    ppaUpper:               decimal('ppa_upper', { precision: 5, scale: 2 }),
+    npaPct:                 decimal('npa_pct', { precision: 5, scale: 2 }),
+    npaLower:               decimal('npa_lower', { precision: 5, scale: 2 }),
+    npaUpper:               decimal('npa_upper', { precision: 5, scale: 2 }),
+    opaPct:                 decimal('opa_pct', { precision: 5, scale: 2 }),
+    discordantResolution:   text('discordant_resolution'),
+    reportArtifactId:       integer('report_artifact_id'),
+    metadata:               jsonb('metadata').default('{}'),
+    createdAt:              timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:              timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('cdx_concord_org_idx').on(table.organizationId),
+    pairingIdx: index('cdx_concord_pairing_idx').on(table.cdxPairingId),
+  }),
+);
+export type CdxConcordanceStudy = InferSelectModel<typeof cdxConcordanceStudies>;
+
+export const ldtInventory = pgTable(
+  'ldt_inventory',
+  {
+    id:                              serial('id').primaryKey(),
+    organizationId:                  integer('organization_id').notNull().references(() => organizations.id),
+    labName:                         text('lab_name').notNull(),
+    cliaCertificateNo:               text('clia_certificate_no'),
+    testName:                        text('test_name').notNull(),
+    analyte:                         text('analyte'),
+    intendedUse:                     text('intended_use'),
+    firstOfferedDate:                date('first_offered_date'),
+    grandfathered:                   boolean('grandfathered').default(false),
+    enforcementDiscretionEligible:   boolean('enforcement_discretion_eligible'),
+    enforcementDiscretionBasis:      text('enforcement_discretion_basis'),
+    fdaPathway:                      text('fda_pathway'),
+    currentPhase:                    integer('current_phase').default(1),
+    metadata:                        jsonb('metadata').default('{}'),
+    createdAt:                       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                       timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:   index('ldt_inv_org_idx').on(table.organizationId),
+    phaseIdx: index('ldt_inv_phase_idx').on(table.organizationId, table.currentPhase),
+  }),
+);
+export type LdtInventory = InferSelectModel<typeof ldtInventory>;
+
+export const ldtPhaseMilestones = pgTable(
+  'ldt_phase_milestones',
+  {
+    id:                serial('id').primaryKey(),
+    ldtId:             integer('ldt_id').notNull().references(() => ldtInventory.id, { onDelete: 'cascade' }),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    phase:             integer('phase').notNull(),
+    requirement:       text('requirement').notNull(),
+    dueDate:           date('due_date'),
+    completedAt:       date('completed_at'),
+    evidenceRef:       text('evidence_ref'),
+    status:            text('status').default('pending'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    ldtIdx:    index('ldt_ms_ldt_idx').on(table.ldtId),
+    orgIdx:    index('ldt_ms_org_idx').on(table.organizationId),
+    phaseIdx:  index('ldt_ms_phase_idx').on(table.organizationId, table.phase, table.status),
+  }),
+);
+export type LdtPhaseMilestone = InferSelectModel<typeof ldtPhaseMilestones>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Submission gateway tables (migration 20260509)
+
+   Tracks every transmit attempt to FDA ESG, EMA CESP / EUDAMED, and
+   PMDA Gateway in a single table so ops, audit, and AnA share one
+   source of truth. Validation findings hang off transmittals. ════ */
+
+export const submissionTransmittals = pgTable(
+  'submission_transmittals',
+  {
+    id:                   serial('id').primaryKey(),
+    organizationId:       integer('organization_id').notNull().references(() => organizations.id),
+    programId:            uuid('program_id'),
+    packageId:            integer('package_id'),
+    parentTransmittalId:  integer('parent_transmittal_id'),
+    region:               text('region').notNull(),
+    gateway:              text('gateway').notNull(),
+    format:               text('format').notNull(),
+    submissionType:       text('submission_type'),
+    transport:            text('transport'),
+    bundlePath:           text('bundle_path'),
+    bundleSha256:         text('bundle_sha256'),
+    bundleSizeBytes:      bigint('bundle_size_bytes', { mode: 'number' }),
+    transmissionId:       text('transmission_id'),
+    /**
+     * Raw MDN response body verbatim from the FDA ESG AS2 endpoint. Populated
+     * on a successful AS2 receipt (fda-esg.ts transmit() AS2 branch). NULL for
+     * transmittals predating migration 20260629_submission_transmittals_mdn_raw,
+     * and NULL for non-AS2 transports (SFTP has no MDN). downloadAcknowledgment
+     * returns this when present, otherwise falls back to a synthesised summary.
+     */
+    mdnRaw:               text('mdn_raw'),
+    status:               text('status').default('pending').notNull(),
+    httpStatus:           integer('http_status'),
+    errorClass:           text('error_class'),
+    errorMessage:         text('error_message'),
+    submittedBy:          integer('submitted_by').references(() => users.id),
+    submittedAt:          timestamp('submitted_at', { withTimezone: true }).defaultNow().notNull(),
+    ackReceivedAt:        timestamp('ack_received_at', { withTimezone: true }),
+    completedAt:          timestamp('completed_at', { withTimezone: true }),
+    metadata:             jsonb('metadata').default('{}'),
+    auditTrailRef:        text('audit_trail_ref'),
+    createdAt:            timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:            timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('sub_trans_org_idx').on(table.organizationId),
+    programIdx: index('sub_trans_program_idx').on(table.programId),
+    packageIdx: index('sub_trans_package_idx').on(table.packageId),
+    regionIdx:  index('sub_trans_region_idx').on(table.organizationId, table.region),
+    statusIdx:  index('sub_trans_status_idx').on(table.organizationId, table.status),
+    txnIdx:     index('sub_trans_txn_idx').on(table.transmissionId),
+  }),
+);
+export type SubmissionTransmittal = InferSelectModel<typeof submissionTransmittals>;
+
+export const submissionValidationFindings = pgTable(
+  'submission_validation_findings',
+  {
+    id:               serial('id').primaryKey(),
+    transmittalId:    integer('transmittal_id').notNull().references(() => submissionTransmittals.id, { onDelete: 'cascade' }),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    validator:        text('validator').notNull(),
+    severity:         text('severity').notNull(),
+    ruleId:           text('rule_id'),
+    ruleTitle:        text('rule_title'),
+    message:          text('message').notNull(),
+    filePath:         text('file_path'),
+    lineNumber:       integer('line_number'),
+    resolved:         boolean('resolved').default(false),
+    resolvedAt:       timestamp('resolved_at', { withTimezone: true }),
+    resolvedBy:       integer('resolved_by').references(() => users.id),
+    resolutionNote:   text('resolution_note'),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    transIdx:  index('sub_val_trans_idx').on(table.transmittalId),
+    orgIdx:    index('sub_val_org_idx').on(table.organizationId),
+    sevIdx:    index('sub_val_sev_idx').on(table.organizationId, table.severity, table.resolved),
+  }),
+);
+export type SubmissionValidationFinding = InferSelectModel<typeof submissionValidationFindings>;
+
+export const submissionGatewayCredentials = pgTable(
+  'submission_gateway_credentials',
+  {
+    id:               serial('id').primaryKey(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    region:           text('region').notNull(),
+    gateway:          text('gateway').notNull(),
+    environment:      text('environment').default('production').notNull(),
+    credentialKind:   text('credential_kind').notNull(),
+    identifier:       text('identifier').notNull(),
+    secretsRef:       text('secrets_ref').notNull(),
+    expiresAt:        timestamp('expires_at', { withTimezone: true }),
+    lastRotatedAt:    timestamp('last_rotated_at', { withTimezone: true }),
+    status:           text('status').default('active').notNull(),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:    index('sub_cred_org_idx').on(table.organizationId),
+    statusIdx: index('sub_cred_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type SubmissionGatewayCredential = InferSelectModel<typeof submissionGatewayCredentials>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Notifications + clinical-study tables (migration 20260510)
+   ════════════════════════════════════════════════════════════════ */
+
+export const mdxNotifications = pgTable(
+  'mdx_notifications',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    recipientUserId:     integer('recipient_user_id').references(() => users.id),
+    recipientRole:       text('recipient_role'),
+    category:            text('category').notNull(),
+    severity:            text('severity').notNull(),
+    title:               text('title').notNull(),
+    body:                text('body'),
+    resourceType:        text('resource_type'),
+    resourceId:          text('resource_id'),
+    actionUrl:           text('action_url'),
+    readAt:              timestamp('read_at', { withTimezone: true }),
+    archivedAt:          timestamp('archived_at', { withTimezone: true }),
+    metadata:            jsonb('metadata').default('{}'),
+    expiresAt:           timestamp('expires_at', { withTimezone: true }),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:       index('mdx_notif_org_idx').on(table.organizationId),
+    categoryIdx:  index('mdx_notif_category_idx').on(table.organizationId, table.category),
+  }),
+);
+export type MdxNotification = InferSelectModel<typeof mdxNotifications>;
+
+export const mdxNotificationSubscriptions = pgTable(
+  'mdx_notification_subscriptions',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    userId:            integer('user_id').notNull().references(() => users.id),
+    category:          text('category').notNull(),
+    emailEnabled:      boolean('email_enabled').default(false),
+    pushEnabled:       boolean('push_enabled').default(false),
+    inAppEnabled:      boolean('in_app_enabled').default(true),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('mdx_notif_sub_org_idx').on(table.organizationId),
+  }),
+);
+export type MdxNotificationSubscription = InferSelectModel<typeof mdxNotificationSubscriptions>;
+
+export const clinicalStudies = pgTable(
+  'clinical_studies',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    programId:           uuid('program_id'),
+    studyId:             text('study_id').notNull(),
+    nctId:               text('nct_id'),
+    title:               text('title').notNull(),
+    phase:               text('phase'),
+    studyType:           text('study_type'),
+    intendedUse:         text('intended_use'),
+    primaryEndpoint:     text('primary_endpoint'),
+    primaryEndpointMet:  boolean('primary_endpoint_met'),
+    sampleSizePlanned:   integer('sample_size_planned'),
+    sampleSizeEnrolled:  integer('sample_size_enrolled').default(0),
+    sampleSizeAnalyzed:  integer('sample_size_analyzed').default(0),
+    status:              text('status').default('planning'),
+    startDate:           date('start_date'),
+    pcd:                 date('pcd'),
+    scd:                 date('scd'),
+    ideNumber:           text('ide_number'),
+    irbApproved:         boolean('irb_approved').default(false),
+    irbApprovalDate:     date('irb_approval_date'),
+    protocolVersion:     text('protocol_version'),
+    sapVersion:          text('sap_version'),
+    bimoReady:           boolean('bimo_ready').default(false),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('clin_study_org_idx').on(table.organizationId),
+    programIdx: index('clin_study_program_idx').on(table.programId),
+    statusIdx:  index('clin_study_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type ClinicalStudy = InferSelectModel<typeof clinicalStudies>;
+
+export const clinicalStudySites = pgTable(
+  'clinical_study_sites',
+  {
+    id:                       serial('id').primaryKey(),
+    studyId:                  integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    siteNumber:               text('site_number').notNull(),
+    siteName:                 text('site_name').notNull(),
+    country:                  text('country'),
+    city:                     text('city'),
+    principalInvestigator:    text('principal_investigator'),
+    irbStatus:                text('irb_status').default('pending'),
+    irbApprovalDate:          date('irb_approval_date'),
+    activatedAt:              date('activated_at'),
+    closedAt:                 date('closed_at'),
+    enrolledCount:            integer('enrolled_count').default(0),
+    screenFailures:           integer('screen_failures').default(0),
+    withdrawals:              integer('withdrawals').default(0),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx: index('clin_site_study_idx').on(table.studyId),
+    orgIdx:   index('clin_site_org_idx').on(table.organizationId),
+  }),
+);
+export type ClinicalStudySite = InferSelectModel<typeof clinicalStudySites>;
+
+export const clinicalStudyDeviations = pgTable(
+  'clinical_study_deviations',
+  {
+    id:                serial('id').primaryKey(),
+    studyId:           integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    siteId:            integer('site_id').references(() => clinicalStudySites.id),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    deviationDate:     date('deviation_date').notNull(),
+    category:          text('category').notNull(),
+    description:       text('description').notNull(),
+    subjectId:         text('subject_id'),
+    reportedBy:        integer('reported_by').references(() => users.id),
+    resolvedAt:        date('resolved_at'),
+    resolutionNote:    text('resolution_note'),
+    capaRequired:      boolean('capa_required').default(false),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx:    index('clin_dev_study_idx').on(table.studyId),
+    orgIdx:      index('clin_dev_org_idx').on(table.organizationId),
+    categoryIdx: index('clin_dev_category_idx').on(table.organizationId, table.category),
+  }),
+);
+export type ClinicalStudyDeviation = InferSelectModel<typeof clinicalStudyDeviations>;
+
+export const clinicalStudyAes = pgTable(
+  'clinical_study_aes',
+  {
+    id:                  serial('id').primaryKey(),
+    studyId:             integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    siteId:              integer('site_id').references(() => clinicalStudySites.id),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    aeId:                text('ae_id').notNull(),
+    subjectId:           text('subject_id'),
+    aeDate:              date('ae_date').notNull(),
+    serious:             boolean('serious').default(false),
+    unanticipated:       boolean('unanticipated').default(false),
+    deviceRelated:       text('device_related'),
+    severity:            text('severity'),
+    outcome:             text('outcome'),
+    preferredTerm:       text('preferred_term'),
+    soc:                 text('soc'),
+    reportedToFdaAt:     date('reported_to_fda_at'),
+    reportedToIrbAt:     date('reported_to_irb_at'),
+    mdrEventNumber:      text('mdr_event_number'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx: index('clin_ae_study_idx').on(table.studyId),
+    orgIdx:   index('clin_ae_org_idx').on(table.organizationId),
+  }),
+);
+export type ClinicalStudyAe = InferSelectModel<typeof clinicalStudyAes>;
+
+export const clinicalStudyEndpoints = pgTable(
+  'clinical_study_endpoints',
+  {
+    id:                 serial('id').primaryKey(),
+    studyId:            integer('study_id').notNull().references(() => clinicalStudies.id, { onDelete: 'cascade' }),
+    organizationId:     integer('organization_id').notNull().references(() => organizations.id),
+    endpointKind:       text('endpoint_kind').notNull(),
+    name:               text('name').notNull(),
+    description:        text('description'),
+    preSpecified:       boolean('pre_specified').default(true),
+    targetValue:        text('target_value'),
+    observedValue:      text('observed_value'),
+    ciLower:            text('ci_lower'),
+    ciUpper:            text('ci_upper'),
+    pValue:             decimal('p_value', { precision: 8, scale: 5 }),
+    met:                boolean('met'),
+    analysisNote:       text('analysis_note'),
+    metadata:           jsonb('metadata').default('{}'),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    studyIdx: index('clin_endpoint_study_idx').on(table.studyId),
+    orgIdx:   index('clin_endpoint_org_idx').on(table.organizationId),
+  }),
+);
+export type ClinicalStudyEndpoint = InferSelectModel<typeof clinicalStudyEndpoints>;
+
+/* ════════════════════════════════════════════════════════════════════
+   QMS + labeling tables (migration 20260511) ════════════════════════ */
+
+export const qmsDocuments = pgTable(
+  'qms_documents',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    docNumber:         text('doc_number').notNull(),
+    title:             text('title').notNull(),
+    docType:           text('doc_type').notNull(),
+    category:          text('category'),
+    version:           text('version').default('1.0').notNull(),
+    status:            text('status').default('draft').notNull(),
+    effectiveDate:     date('effective_date'),
+    nextReviewDate:    date('next_review_date'),
+    authorId:          integer('author_id').references(() => users.id),
+    approverId:        integer('approver_id').references(() => users.id),
+    approvedAt:        timestamp('approved_at', { withTimezone: true }),
+    supersededById:    integer('superseded_by_id'),
+    artifactId:        integer('artifact_id'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:    index('qms_doc_org_idx').on(table.organizationId),
+    statusIdx: index('qms_doc_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type QmsDocument = InferSelectModel<typeof qmsDocuments>;
+
+export const qmsTrainingRecords = pgTable(
+  'qms_training_records',
+  {
+    id:                     serial('id').primaryKey(),
+    organizationId:         integer('organization_id').notNull().references(() => organizations.id),
+    userId:                 integer('user_id').notNull().references(() => users.id),
+    documentId:             integer('document_id').notNull().references(() => qmsDocuments.id, { onDelete: 'cascade' }),
+    documentVersion:        text('document_version').notNull(),
+    acknowledgedAt:         timestamp('acknowledged_at', { withTimezone: true }).defaultNow().notNull(),
+    acknowledgmentMethod:   text('acknowledgment_method'),
+    trainerId:              integer('trainer_id').references(() => users.id),
+    quizScore:              integer('quiz_score'),
+    expiresAt:              timestamp('expires_at', { withTimezone: true }),
+    metadata:               jsonb('metadata').default('{}'),
+    createdAt:              timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    userIdx: index('qms_train_user_idx').on(table.userId),
+    docIdx:  index('qms_train_doc_idx').on(table.documentId),
+    orgIdx:  index('qms_train_org_idx').on(table.organizationId),
+  }),
+);
+export type QmsTrainingRecord = InferSelectModel<typeof qmsTrainingRecords>;
+
+export const qmsSuppliers = pgTable(
+  'qms_suppliers',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    supplierName:        text('supplier_name').notNull(),
+    supplierCode:        text('supplier_code'),
+    scope:               text('scope'),
+    criticality:         text('criticality').notNull(),
+    approvalStatus:      text('approval_status').default('pending').notNull(),
+    approvalDate:        date('approval_date'),
+    reapprovalDate:      date('reapproval_date'),
+    qualityAgreementId:  integer('quality_agreement_id'),
+    lastAuditDate:       date('last_audit_date'),
+    nextAuditDate:       date('next_audit_date'),
+    isoCertifications:   text('iso_certifications').array(),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:           timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:    index('qms_supp_org_idx').on(table.organizationId),
+    statusIdx: index('qms_supp_status_idx').on(table.organizationId, table.approvalStatus),
+  }),
+);
+export type QmsSupplier = InferSelectModel<typeof qmsSuppliers>;
+
+export const qmsInternalAudits = pgTable(
+  'qms_internal_audits',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    auditNumber:       text('audit_number').notNull(),
+    scope:             text('scope').notNull(),
+    auditStandard:     text('audit_standard'),
+    auditorLeadId:     integer('auditor_lead_id').references(() => users.id),
+    auditorTeam:       integer('auditor_team').array(),
+    plannedDate:       date('planned_date'),
+    startedAt:         date('started_at'),
+    completedAt:       date('completed_at'),
+    status:            text('status').default('planned').notNull(),
+    findingCount:      integer('finding_count').default(0),
+    majorFindings:     integer('major_findings').default(0),
+    minorFindings:     integer('minor_findings').default(0),
+    observations:      integer('observations').default(0),
+    reportArtifactId:  integer('report_artifact_id'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:    index('qms_audit_org_idx').on(table.organizationId),
+    statusIdx: index('qms_audit_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type QmsInternalAudit = InferSelectModel<typeof qmsInternalAudits>;
+
+export const qmsManagementReviews = pgTable(
+  'qms_management_reviews',
+  {
+    id:                  serial('id').primaryKey(),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    reviewDate:          date('review_date').notNull(),
+    period:              text('period').notNull(),
+    chairId:             integer('chair_id').references(() => users.id),
+    attendees:           integer('attendees').array(),
+    inputs:              jsonb('inputs'),
+    outputs:             jsonb('outputs'),
+    openActionCount:     integer('open_action_count').default(0),
+    closedActionCount:   integer('closed_action_count').default(0),
+    minutesArtifactId:   integer('minutes_artifact_id'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:  index('qms_mr_org_idx').on(table.organizationId),
+  }),
+);
+export type QmsManagementReview = InferSelectModel<typeof qmsManagementReviews>;
+
+export const qmsNonconformingProducts = pgTable(
+  'qms_nonconforming_products',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    ncNumber:                 text('nc_number').notNull(),
+    deviceName:               text('device_name'),
+    lotOrSerial:              text('lot_or_serial'),
+    detectedAt:               timestamp('detected_at', { withTimezone: true }).defaultNow().notNull(),
+    detectedBy:               integer('detected_by').references(() => users.id),
+    source:                   text('source'),
+    description:              text('description').notNull(),
+    disposition:              text('disposition'),
+    dispositionRationale:     text('disposition_rationale'),
+    dispositionAt:            timestamp('disposition_at', { withTimezone: true }),
+    capaLinked:               boolean('capa_linked').default(false),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:   index('qms_nc_org_idx').on(table.organizationId),
+    dispoIdx: index('qms_nc_dispo_idx').on(table.organizationId, table.disposition),
+  }),
+);
+export type QmsNonconformingProduct = InferSelectModel<typeof qmsNonconformingProducts>;
+
+export const labelingDocuments = pgTable(
+  'labeling_documents',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    programId:         uuid('program_id'),
+    deviceName:        text('device_name').notNull(),
+    docKind:           text('doc_kind').notNull(),
+    version:           text('version').default('1.0').notNull(),
+    status:            text('status').default('draft').notNull(),
+    language:          text('language').default('en').notNull(),
+    region:            text('region'),
+    udiDi:             text('udi_di'),
+    effectiveDate:     date('effective_date'),
+    expiresAt:         date('expires_at'),
+    artifactId:        integer('artifact_id'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('lbl_doc_org_idx').on(table.organizationId),
+    programIdx: index('lbl_doc_program_idx').on(table.programId),
+    kindIdx:    index('lbl_doc_kind_idx').on(table.organizationId, table.docKind),
+  }),
+);
+export type LabelingDocument = InferSelectModel<typeof labelingDocuments>;
+
+export const labelingTranslations = pgTable(
+  'labeling_translations',
+  {
+    id:                       serial('id').primaryKey(),
+    labelingDocumentId:       integer('labeling_document_id').notNull().references(() => labelingDocuments.id, { onDelete: 'cascade' }),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    language:                 text('language').notNull(),
+    translator:               text('translator'),
+    translationMethod:        text('translation_method'),
+    backTranslationVerified:  boolean('back_translation_verified').default(false),
+    status:                   text('status').default('pending').notNull(),
+    artifactId:               integer('artifact_id'),
+    approvedAt:               timestamp('approved_at', { withTimezone: true }),
+    approvedBy:               integer('approved_by').references(() => users.id),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('lbl_trans_org_idx').on(table.organizationId),
+  }),
+);
+export type LabelingTranslation = InferSelectModel<typeof labelingTranslations>;
+
+export const labelingSymbols = pgTable(
+  'labeling_symbols',
+  {
+    id:                  serial('id').primaryKey(),
+    labelingDocumentId:  integer('labeling_document_id').notNull().references(() => labelingDocuments.id, { onDelete: 'cascade' }),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    symbolCode:          text('symbol_code').notNull(),
+    symbolName:          text('symbol_name').notNull(),
+    description:         text('description'),
+    requiredBy:          text('required_by').array(),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    docIdx:  index('lbl_sym_doc_idx').on(table.labelingDocumentId),
+    orgIdx:  index('lbl_sym_org_idx').on(table.organizationId),
+    codeIdx: index('lbl_sym_code_idx').on(table.organizationId, table.symbolCode),
+  }),
+);
+export type LabelingSymbol = InferSelectModel<typeof labelingSymbols>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Translation platform (migration 20260629) ═════════════════════════════
+
+   Regulated, tenant-isolated localization for submission content. The
+   workflow is a state machine whose central guardrail is: a segment whose
+   translation `method` is 'machine' can NEVER reach a submission-approved
+   status without human post-edit + back-translation evidence (enforced in
+   the service layer / state machine, surfaced here by the provenance
+   columns: postEditor, reviewer, backTranslationVerified, approvedAt).
+
+   Identifiers that must never be machine-translated (21 CFR / ICH citations,
+   eCTD module labels, agency names, INN / drug names, MedDRA terms, codes,
+   JSON keys, slash commands) are masked before translation and restored
+   after — "translate meaning, not identifiers"
+   (cf. server/services/ana-ri/locale-overlays.ts). Glossary terms below are
+   the do-not-translate (DNT) / forced-translation registry that drives that
+   masking; translation_memory_entries are the reuse cache.
+   ════════════════════════════════════════════════════════════════════ */
+
+export const translationProjects = pgTable(
+  'translation_projects',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    name:              text('name').notNull(),
+    sourceLanguage:    text('source_language').notNull(),
+    // BCP-47 target locales for this project (e.g. ['de-DE','ja-JP']).
+    targetLanguages:   text('target_languages').array().notNull().default(sql`ARRAY[]::text[]`),
+    // 'draft' → 'in_translation' → 'in_review' → 'approved' → 'archived'.
+    status:            text('status').default('draft').notNull(),
+    submissionContext: text('submission_context'),
+    description:       text('description'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdBy:         integer('created_by').notNull().references(() => users.id),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:    index('translation_projects_org_idx').on(table.organizationId),
+    statusIdx: index('translation_projects_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type TranslationProject = InferSelectModel<typeof translationProjects>;
+
+export const translationSegments = pgTable(
+  'translation_segments',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    projectId:                integer('project_id').notNull().references(() => translationProjects.id, { onDelete: 'cascade' }),
+    targetLanguage:           text('target_language').notNull(),
+    // Ordering key within a document/project (stable segment address).
+    segmentKey:               text('segment_key').notNull(),
+    sourceText:               text('source_text').notNull(),
+    targetText:               text('target_text'),
+    // ─── Provenance (Part 11 auditable) ─────────────────────────────────
+    // SHA-256 of the (DNT-masked) source — re-translation is required when
+    // the source changes, so a stored hash detects staleness.
+    sourceHash:               text('source_hash').notNull(),
+    // 'human' | 'machine' | 'translation_memory'. A 'machine' segment can
+    // never reach an approved status without post-edit + back-translation.
+    method:                   text('method').default('machine').notNull(),
+    // 'pending' → 'machine_translated' → 'post_edited' → 'in_review'
+    //   → 'back_translation_pending' → 'approved' | 'rejected'.
+    status:                   text('status').default('pending').notNull(),
+    // MT engine identifier + version, recorded for reproducibility.
+    engine:                   text('engine'),
+    engineVersion:            text('engine_version'),
+    // Human post-editor and independent reviewer (the two-person rule).
+    postEditor:               integer('post_editor').references(() => users.id),
+    reviewer:                 integer('reviewer').references(() => users.id),
+    // Back-translation evidence — required before a machine-origin segment
+    // may be approved for submission.
+    backTranslationVerified:  boolean('back_translation_verified').default(false).notNull(),
+    backTranslationText:      text('back_translation_text'),
+    approvedBy:               integer('approved_by').references(() => users.id),
+    approvedAt:               timestamp('approved_at', { withTimezone: true }),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('translation_segments_org_idx').on(table.organizationId),
+    projectIdx: index('translation_segments_project_idx').on(table.projectId),
+    statusIdx:  index('translation_segments_status_idx').on(table.organizationId, table.status),
+    langIdx:    index('translation_segments_lang_idx').on(table.projectId, table.targetLanguage),
+    hashIdx:    index('translation_segments_hash_idx').on(table.sourceHash),
+  }),
+);
+export type TranslationSegment = InferSelectModel<typeof translationSegments>;
+
+export const glossaryTerms = pgTable(
+  'glossary_terms',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    // Optional project scoping; NULL = org-wide term.
+    projectId:         integer('project_id').references(() => translationProjects.id, { onDelete: 'cascade' }),
+    sourceLanguage:    text('source_language').notNull(),
+    sourceTerm:        text('source_term').notNull(),
+    targetLanguage:    text('target_language'),
+    targetTerm:        text('target_term'),
+    // 'do_not_translate' | 'preferred' | 'forbidden'. DNT terms (regulatory
+    // citations, eCTD labels, agency names, INN, MedDRA, codes) are masked
+    // before MT and restored verbatim afterwards.
+    termType:          text('term_type').default('preferred').notNull(),
+    caseSensitive:     boolean('case_sensitive').default(false).notNull(),
+    notes:             text('notes'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdBy:         integer('created_by').notNull().references(() => users.id),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('glossary_terms_org_idx').on(table.organizationId),
+    projectIdx: index('glossary_terms_project_idx').on(table.projectId),
+    termIdx:    index('glossary_terms_term_idx').on(table.organizationId, table.sourceTerm),
+  }),
+);
+export type GlossaryTerm = InferSelectModel<typeof glossaryTerms>;
+
+export const translationMemoryEntries = pgTable(
+  'translation_memory_entries',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    sourceLanguage:    text('source_language').notNull(),
+    targetLanguage:    text('target_language').notNull(),
+    sourceText:        text('source_text').notNull(),
+    targetText:        text('target_text').notNull(),
+    // SHA-256 of the source text — the exact-match lookup key for reuse.
+    sourceHash:        text('source_hash').notNull(),
+    // 'human' | 'machine' | 'translation_memory'. Only human-approved
+    // entries are eligible to feed back into approved submission content.
+    method:            text('method').default('human').notNull(),
+    // Number of times this entry has been reused (reuse analytics).
+    usageCount:        integer('usage_count').default(0).notNull(),
+    // True once the entry derives from a human-approved, back-translated
+    // segment — only such entries may auto-populate approved output.
+    approvedForReuse:  boolean('approved_for_reuse').default(false).notNull(),
+    originSegmentId:   integer('origin_segment_id').references(() => translationSegments.id, { onDelete: 'set null' }),
+    metadata:          jsonb('metadata').default('{}'),
+    createdBy:         integer('created_by').references(() => users.id),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:  index('translation_memory_org_idx').on(table.organizationId),
+    hashIdx: index('translation_memory_hash_idx').on(table.organizationId, table.sourceHash),
+    langIdx: index('translation_memory_lang_idx').on(table.organizationId, table.sourceLanguage, table.targetLanguage),
+  }),
+);
+export type TranslationMemoryEntry = InferSelectModel<typeof translationMemoryEntries>;
+
+/* ════════════════════════════════════════════════════════════════════
+   Legacy archive importer tables (migration 20260512) ════════════════ */
+
+export const importJobs = pgTable(
+  'import_jobs',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    programId:                uuid('program_id'),
+    sourcePath:               text('source_path').notNull(),
+    sourceKind:               text('source_kind').notNull(),
+    sourceSizeBytes:          bigint('source_size_bytes', { mode: 'number' }),
+    sourceSha256:             text('source_sha256'),
+    sourceFilename:           text('source_filename'),
+    detectedFormat:           text('detected_format'),
+    detectedRegion:           text('detected_region'),
+    detectedApplicationId:    text('detected_application_id'),
+    detectedSequence:         text('detected_sequence'),
+    detectedSponsor:          text('detected_sponsor'),
+    status:                   text('status').default('pending').notNull(),
+    fileCount:                integer('file_count').default(0),
+    mappedCount:              integer('mapped_count').default(0),
+    skippedCount:             integer('skipped_count').default(0),
+    errorCount:               integer('error_count').default(0),
+    artifactsCreated:         integer('artifacts_created').default(0),
+    requestedBy:              integer('requested_by').references(() => users.id),
+    approvedBy:               integer('approved_by').references(() => users.id),
+    approvedAt:               timestamp('approved_at', { withTimezone: true }),
+    errorMessage:             text('error_message'),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('imp_job_org_idx').on(table.organizationId),
+    programIdx: index('imp_job_program_idx').on(table.programId),
+    statusIdx:  index('imp_job_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type ImportJob = InferSelectModel<typeof importJobs>;
+
+export const importJobFiles = pgTable(
+  'import_job_files',
+  {
+    id:                  serial('id').primaryKey(),
+    importJobId:         integer('import_job_id').notNull().references(() => importJobs.id, { onDelete: 'cascade' }),
+    organizationId:      integer('organization_id').notNull().references(() => organizations.id),
+    relativePath:        text('relative_path').notNull(),
+    fileName:            text('file_name').notNull(),
+    sizeBytes:           bigint('size_bytes', { mode: 'number' }),
+    sha256:              text('sha256'),
+    detectedKind:        text('detected_kind'),
+    mappedCtdSection:    text('mapped_ctd_section'),
+    mappedSectionKey:    text('mapped_section_key'),
+    mappedArtifactKind:  text('mapped_artifact_kind'),
+    mappingConfidence:   decimal('mapping_confidence', { precision: 3, scale: 2 }),
+    mappingSource:       text('mapping_source'),
+    artifactId:          integer('artifact_id'),
+    status:              text('status').default('pending').notNull(),
+    errorMessage:        text('error_message'),
+    metadata:            jsonb('metadata').default('{}'),
+    createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    jobIdx:    index('imp_file_job_idx').on(table.importJobId),
+    orgIdx:    index('imp_file_org_idx').on(table.organizationId),
+    statusIdx: index('imp_file_status_idx').on(table.importJobId, table.status),
+  }),
+);
+export type ImportJobFile = InferSelectModel<typeof importJobFiles>;
+
+export const importJobFindings = pgTable(
+  'import_job_findings',
+  {
+    id:              serial('id').primaryKey(),
+    importJobId:     integer('import_job_id').notNull().references(() => importJobs.id, { onDelete: 'cascade' }),
+    organizationId:  integer('organization_id').notNull().references(() => organizations.id),
+    severity:        text('severity').notNull(),
+    code:            text('code'),
+    message:         text('message').notNull(),
+    filePath:        text('file_path'),
+    resolved:        boolean('resolved').default(false),
+    resolutionNote:  text('resolution_note'),
+    createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    jobIdx: index('imp_find_job_idx').on(table.importJobId),
+  }),
+);
+export type ImportJobFinding = InferSelectModel<typeof importJobFindings>;
+
+/**
+ * Per-organization AI placement policy — the data-residency / zero-retention /
+ * allowed-substrate requirements the AI gateway auto-applies to an org's
+ * requests (explicit request values always win). See
+ * server/services/ai-gateway/providers/org-placement.ts and
+ * migrations/20260608_ai_placement_policies.sql. Tenant-scoped + RLS-enforced;
+ * organization_id is INTEGER per the tenant-column-types contract.
+ */
+export const aiPlacementPolicies = pgTable('ai_placement_policies', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .references(() => organizations.id)
+    .notNull()
+    .unique(),
+  requiredDataResidency: text('required_data_residency'), // 'us' | 'eu' | 'apac' | 'on_prem' | null
+  zeroDataRetention: boolean('zero_data_retention').default(false).notNull(),
+  allowedSubstrates: text('allowed_substrates').array(),
+  // Tenant's preferred AI provider (Claude-first; NULL = platform default 'anthropic').
+  // One of the client-selectable provider ids; validated in application code.
+  preferredAiProvider: text('preferred_ai_provider'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+export type AiPlacementPolicy = InferSelectModel<typeof aiPlacementPolicies>;
+
+/* ════════════════════════════════════════════════════════════════════════
+   CLINICAL-REGULATORY EVIDENCE (drizzle mirror) — REMOVED (2026-07-27)
+
+   Eight drizzle tables lived here (clinical_evidence_sources,
+   clinical_study_identities, study_result_observations,
+   regulatory_applications, regulatory_findings,
+   regulatory_application_outcomes, evidence_relationships, design_lessons),
+   mirroring migrations/20260725_clinical_regulatory_evidence.sql. They were a
+   PARALLEL lineage to the cre_* spine
+   (db/migrations/20260724_clinical_regulatory_evidence_spine.sql): same domain,
+   different id space (UUID vs SERIAL), written by a CSR adapter nothing called,
+   read by facade functions that were otherwise hardcoded empty stubs — while
+   the real data flows (CRL ingestion, CSR projection, chat-upload identity,
+   citations) all write cre_*. The split had a concrete casualty: the CRL
+   Library surface read findings through this lineage, so ingested CRLs could
+   never reach the surface built to show them.
+
+   The cre_* spine is the ONE evidence store (recorded decision, 2026-07-26 —
+   "cre_evidence_sources, via its service"). The facade
+   (services/clinical-regulatory-evidence/index.ts) now reads it. Any
+   db:push-created copies of the eight tables are removed by
+   db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql.
+   Do not reintroduce a second evidence lineage here.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════════════
+   AnA onboarding — proposal runs (durable record of what AnA proposed).
+
+   The governed onboarding commit may only apply what the SERVER extracted, so
+   an ingest run records its own proposals here and the commit re-reads them.
+   Persisting them (rather than holding them in memory) means a review survives
+   a restart, and — the part that matters for an audit — the suggestions a human
+   REJECTED remain inspectable, not just the ones they approved. Committed
+   values are already recorded per-field in the sha256-chained audit trail.
+
+   Tenant-scoped by organization_id so RLS applies; rows are deleted once a run
+   is committed or expires, so an abandoned onboarding upload leaves nothing
+   behind. Document text is never stored — only the extracted proposals.
+   ════════════════════════════════════════════════════════════════════════ */
+export const onboardingProposalRuns = pgTable('onboarding_proposal_runs', {
+  id: serial('id').primaryKey(),
+  /** Opaque id handed to the client; the commit references this, never a row id. */
+  runId: text('run_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  /** The user whose review session this is — a run is visible only to them. */
+  userId: integer('user_id').notNull(),
+  /** The server's own extraction: OnboardingProposalField[] keyed by id. */
+  proposals: jsonb('proposals').notNull(),
+  /** Source documents this run read (file names + sizes; never content). */
+  sources: jsonb('sources'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  /** After this instant the run is refused rather than served stale. */
+  expiresAt: timestamp('expires_at').notNull(),
+  /** Set when the run's approved fields were committed, for post-hoc review. */
+  committedAt: timestamp('committed_at'),
+});

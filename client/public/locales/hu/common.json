@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Mentés",
+    "cancel": "Mégse",
+    "close": "Bezárás",
+    "next": "Következő",
+    "previous": "Előző",
+    "delete": "Törlés",
+    "continue": "Folytatás",
+    "back": "Vissza",
+    "search": "Keresés"
+  },
+  "density": {
+    "label": "Sűrűség",
+    "compact": "Kompakt",
+    "comfortable": "Kényelmes",
+    "spacious": "Tágas"
+  },
+  "topbar": {
+    "notifications": "Értesítések",
+    "help": "Súgó",
+    "askAna": "Kérdezze az AnA-t, vagy ugorjon…",
+    "command": "Parancs",
+    "activeProject": "Aktív projekt",
+    "noProjects": "Nincsenek projektek",
+    "selectProject": "Válasszon projektet",
+    "filter": "Szűrés",
+    "clientType": "Ügyféltípus",
+    "pharma": "Gyógyszeripar",
+    "biotech": "Biotechnológia",
+    "switchProgram": "Program váltása"
+  },
+  "language": {
+    "label": "Nyelv",
+    "select": "Válasszon nyelvet"
+  }
+}

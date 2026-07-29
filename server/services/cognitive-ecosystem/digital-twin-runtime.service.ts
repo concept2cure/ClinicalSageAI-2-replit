@@ -443,6 +443,15 @@ export class DigitalTwinRuntime {
         releaseDecision = ReleaseDecision.REJECTED;
       }
 
+      // CQA predictions are synthetic — no ML model is wired (see
+      // simulateCQAPredictions). Synthetic, non-actionable values must never drive
+      // an automated real-time release: force manual review instead of auto-approving.
+      // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: digital-twin CQA Math.random).
+      const cqaPredictionsAreSynthetic = true;
+      if (cqaPredictionsAreSynthetic && releaseDecision === ReleaseDecision.RTRT_APPROVED) {
+        releaseDecision = ReleaseDecision.MANUAL_REVIEW;
+      }
+
       // Store prediction
       const predictionId = uuidv4();
       const result = await client.query(
@@ -472,7 +481,13 @@ export class DigitalTwinRuntime {
         data: this.mapRTRTPrediction(result.rows[0]),
         metadata: {
           executionTimeMs: Date.now() - startTime,
-          warnings: driftAnalysis.driftDetected ? ['Model drift detected'] : undefined
+          warnings: [
+            'CQA predictions are synthetic (no ML model wired); values are illustrative and not actionable for release decisions',
+            ...(cqaPredictionsAreSynthetic && avgConfidence >= 0.95
+              ? ['Release decision forced to manual review: synthetic predictions cannot auto-approve real-time release']
+              : []),
+            ...(driftAnalysis.driftDetected ? ['Model drift detected'] : []),
+          ]
         }
       };
     } catch (error) {
@@ -793,7 +808,9 @@ export class DigitalTwinRuntime {
   // ===========================================================================
 
   /**
-   * Simulate CQA predictions (placeholder for actual ML model)
+   * Simulate CQA predictions — SYNTHETIC placeholder, not a trained ML model.
+   * Output is illustrative only; callers must treat it as non-actionable and never
+   * use it to auto-approve a real-time release (runPrediction enforces this).
    */
   private simulateCQAPredictions(
     modelDef: DigitalTwinModel,

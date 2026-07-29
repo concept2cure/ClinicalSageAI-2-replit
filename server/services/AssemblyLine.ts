@@ -58,12 +58,13 @@ export class AssemblyLine {
     try {
       const { getGateway } = await import('../services/ai-gateway/index.js');
       const gateway = getGateway();
-      const result = await gateway.chat([
-        { role: 'system', content: 'You are a regulatory document editor. Apply the instruction to improve the document text. Return only the improved text, nothing else.' },
-        { role: 'user', content: `Document:\n${currentContent}\n\nInstruction: ${humanInstruction}` },
-      ], { maxTokens: 4000 });
-      if (result && typeof result === 'string') {
-        improvedContent = result;
+      const result = await gateway.chat(
+        'You are a regulatory document editor. Apply the instruction to improve the document text. Return only the improved text, nothing else.',
+        `Document:\n${currentContent}\n\nInstruction: ${humanInstruction}`,
+        { maxTokens: 4000 }
+      );
+      if (result && typeof result.content === 'string' && result.content) {
+        improvedContent = result.content;
         logger.info('AI polish succeeded', { docId });
       }
     } catch (err: any) {

@@ -17,6 +17,59 @@ export type FeatureFlag = {
 
 // Define all available feature flags
 export const featureFlags: Record<string, FeatureFlag> = {
+  // ui-v2 — the full client UI replacement (design_handoff_c2c_v2_ui_replacement
+  // kit: registry-driven shell + ~95 surfaces + AnA rail + ⌘K). Phase 7 flipped
+  // this on: the v2 shell is the product (the legacy ZenApp shell is deleted).
+  // Runtime kill switch without a rebuild: localStorage 'c2c-ui-v2' = '0' or
+  // URL ?ui-v2=0 (see client/src/concept2cure/v2/uiV2Flag.ts) — that path now
+  // only affects the /concept2cure/insights legacy-surface fallback, since no
+  // legacy shell remains to serve the app.
+  ENABLE_UI_V2: {
+    id: 'ENABLE_UI_V2',
+    name: 'Concept2Cure.RI ui-v2 shell',
+    description:
+      'The ui-v2 full UI replacement: registry-driven shell (rail, top bar, AnA rail, command palette) and all kit surfaces. On by default since Phase 7 (cleanup & acceptance).',
+    defaultValue: true,
+    enabled: true,
+  },
+  // Clinical-Regulatory Intelligence Graph — the shared evidence spine joining
+  // CSR intelligence, FDA CRL findings, study design and AnA. Gates the
+  // `crl-library` rail entry, the CSR workflow's regulatory-outcome and
+  // FDA-findings columns, the study-design evidence accordions, and the three
+  // governed evidence report types.
+  //
+  // Ships dark. Flag off restores the current UI EXACTLY — the rail entry is
+  // absent and the added columns/accordions do not render. There is deliberately
+  // no half-state in which the chrome appears without the evidence behind it.
+  // Requires the matching server flag ENABLE_CLINICAL_REGULATORY_GRAPH.
+  ENABLE_CLINICAL_REGULATORY_GRAPH: {
+    id: 'ENABLE_CLINICAL_REGULATORY_GRAPH',
+    name: 'Clinical-Regulatory Intelligence Graph',
+    description:
+      'The shared clinical-regulatory evidence graph: FDA CRL library, regulatory outcome and FDA findings on the CSR board, the study-design evidence panel, and the governed evidence-chain reports.',
+    defaultValue: false,
+    enabled: false,
+  },
+  // AnA Document Studio — split-pane authoring (chat left, live document
+  // preview + verification trust-panel right). Ships dark; enable per-org.
+  ENABLE_ANA_DOCUMENT_STUDIO: {
+    id: 'ENABLE_ANA_DOCUMENT_STUDIO',
+    name: 'AnA Document Studio',
+    description:
+      'Enables the in-AnA split-pane document preview with Download-as-DOCX and the "verified against your source" trust-panel.',
+    defaultValue: false,
+    enabled: false,
+  },
+  // AnA Composer — Fast/Balanced/Thorough effort segmented control + an advanced
+  // model dropdown. Ships dark; enable per-org once validated.
+  ENABLE_MODEL_EFFORT_PICKER: {
+    id: 'ENABLE_MODEL_EFFORT_PICKER',
+    name: 'AnA Model/Effort Picker',
+    description:
+      'Enables the Fast/Balanced/Thorough effort control and the advanced model dropdown in the AnA Composer.',
+    defaultValue: false,
+    enabled: false,
+  },
   // 510k module flags
   ENABLE_510K_MODULE: {
     id: 'ENABLE_510K_MODULE',
@@ -214,6 +267,20 @@ export const featureFlags: Record<string, FeatureFlag> = {
     name: 'Embed Modules in Shell',
     description:
       'When enabled, modules like CERV2 render inside the Concept2Cure shell (sidebar + module frame) instead of as full-page breakouts.',
+    defaultValue: true,
+    enabled: true,
+  },
+
+  // Phase 7 PDEV workstream — IND program lifecycle UI.
+  // The full Phase 7 ship landed (sub-phases 7.0 through 7.4): 8 surfaces +
+  // 3 overlays + universal confirm dialog + all 14 backend routes wired.
+  // Defaults on; deployments that don't have any IND programs can override
+  // via env or per-tenant config.
+  ENABLE_PDEV_SURFACE: {
+    id: 'ENABLE_PDEV_SURFACE',
+    name: 'PDEV workstream surface',
+    description:
+      'Enables the Phase 7 PDEV (Pharmaceutical Development) workstream — IND program dashboard, workstream drill, activity detail with 6 tabs, IND assembly, FDA interactions, contradictions, AI drafting workbench, evidence picker, and universal reason-for-change confirm dialog.',
     defaultValue: true,
     enabled: true,
   },

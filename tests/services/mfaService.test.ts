@@ -95,6 +95,9 @@ let mfaModule: typeof import('../../server/services/mfaService');
 beforeEach(async () => {
   process.env.MFA_ENCRYPTION_KEY = TEST_ENCRYPTION_KEY;
   process.env.JWT_SECRET = 'test-jwt-secret-at-least-32-chars-long!';
+  // verifyJwtWithRotation prefers JWT_SECRET_${ENV} (e.g. JWT_SECRET_DEV in
+  // NODE_ENV=test) over JWT_SECRET. If they differ, sign/verify won't agree.
+  process.env.JWT_SECRET_DEV = 'test-jwt-secret-at-least-32-chars-long!';
   vi.clearAllMocks();
   // Clear any leftover queued DB responses between tests.
   mockSelectLimit.mockReset();

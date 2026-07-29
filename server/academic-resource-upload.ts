@@ -62,9 +62,19 @@ export const academicUpload = multer({
 // Process uploaded academic resource
 export async function processAcademicResource(filePath: string, metadata: any): Promise<number> {
   try {
-    // Register the resource with the knowledge tracker
-    const resourceId = await academicKnowledgeTracker.registerResource(filePath, metadata);
-    return resourceId;
+    // Register the resource with the knowledge tracker. The uploaded file path
+    // is preserved as the source so the full text can be extracted later.
+    const resource = await academicKnowledgeTracker.addResource({
+      title: metadata?.title ?? path.basename(filePath),
+      authors: metadata?.authors ?? null,
+      resourceType: metadata?.resourceType ?? 'document',
+      source: metadata?.source ?? filePath,
+      url: metadata?.url ?? null,
+      category: metadata?.category ?? null,
+      summary: metadata?.summary ?? null,
+      publishedDate: metadata?.publishedDate ? new Date(metadata.publishedDate) : null,
+    });
+    return resource.id;
   } catch (error) {
     console.error('Error processing academic resource:', error);
     throw error;

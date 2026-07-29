@@ -14,12 +14,13 @@
  */
 
 import * as crypto from 'crypto';
+import type { LegacyUpperType } from '../../shared/regulatory/submission-type-bridge.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type SubmissionType = 'IND' | '510K' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'DE_NOVO' | 'EUA';
+export type SubmissionType = LegacyUpperType;
 
 export type RuleSeverity = 'error' | 'warning' | 'info';
 

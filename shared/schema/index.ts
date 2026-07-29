@@ -11,7 +11,7 @@
  * - clinical.ts: csr_*, trials, protocols, biomarkers (PLANNED — not yet extracted)
  * - ai.ts: rag_*, embeddings, knowledge_graph (PLANNED — not yet extracted)
  * - compliance.ts: audit_*, compliance_*, validation (PLANNED — not yet extracted)
- * - cdisc-reference.ts: 37 CDISC standard tables (DEFINED — no routes/services use these yet)
+ * - cdisc-reference.ts: 5 CDISC PRM tables (ACTIVE — study-design spine; ~32 unused dropped in #846)
  * - qc-schemas.ts: 6 QC tables (DEFINED — no routes/services use these yet)
  * - vault.ts: vaultDocumentChunks, vaultEvidenceCitations (DEFINED — not wired to services)
  *
@@ -152,6 +152,12 @@ export * from './project-charter';
 // AnA Intelligence System (CLAUDE.md Memory Compression Model)
 export * from './ana-intelligence';
 
+// AnA Relational Profiles (self-developed per-user/per-project personality)
+export * from './ana-relational';
+
+// External Intelligence (nightly regulatory + study-methodology monitoring)
+export * from './external-intelligence';
+
 export * from './report-os';
 
 // Programs & Evidence
@@ -209,6 +215,50 @@ export type {
   ReviewerSimulationRun,
   InsertReviewerSimulationRun,
 } from './reviewer-simulation';
+
+// PDEV → IND Workflow — per-program activity state + readiness snapshots
+// See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the audit that justifies
+// these tables existing alongside the existing IND / regulatory primitives.
+export {
+  pdevProgramActivities,
+  pdevReadinessSnapshots,
+  pdevProgramActivitiesRelations,
+  pdevReadinessSnapshotsRelations,
+  insertPdevProgramActivitySchema,
+  insertPdevReadinessSnapshotSchema,
+} from './pdev-workflow';
+
+// Organization Lifecycle — beta self-serve trial state machine.
+// See /root/.claude/plans/mossy-dancing-dusk.md (Track A) for the rationale.
+// State map lives in shared/schema/org-lifecycle.ts; transition service is
+// server/services/lifecycle/org-lifecycle.ts.
+export {
+  orgLifecycleState,
+  orgLifecycleStateHistory,
+  orgLifecycleStateRelations,
+  orgLifecycleStateHistoryRelations,
+  insertOrgLifecycleStateSchema,
+  insertOrgLifecycleStateHistorySchema,
+  ORG_LIFECYCLE_STATES,
+  ORG_LIFECYCLE_TRANSITIONS,
+  ORG_LIFECYCLE_PRODUCTIVE_STATES,
+  ORG_LIFECYCLE_TRIGGERS,
+} from './org-lifecycle';
+export type {
+  OrgLifecycleState,
+  OrgLifecycleStateRow,
+  OrgLifecycleStateHistoryRow,
+  InsertOrgLifecycleState,
+  InsertOrgLifecycleStateHistory,
+  OrgLifecycleTrigger,
+} from './org-lifecycle';
+export type {
+  PdevProgramActivity,
+  PdevReadinessSnapshot,
+  PdevReadinessFinding,
+  InsertPdevProgramActivity,
+  InsertPdevReadinessSnapshot,
+} from './pdev-workflow';
 
 // AI/ML Predetermined Change Control Plan (PCCP)
 export {
@@ -350,3 +400,142 @@ export type {
   ActionType,
   VigilanceEventKind,
 } from './capa-mdr';
+
+// Living Record Spine — the canonical fact store, derived-value bindings, drift
+// sentinel output, the eCTD sequence node, and the graph overlay. The value
+// layer underneath the existing living-file cascade.
+// See docs/architecture/LIVING_RECORD_SPINE.md.
+export * from './living-record-spine';
+
+// IND master data — sponsor, US agent (21 CFR 312.3) and investigator
+// registries that feed FDA Forms 1571/1572/3674 and submission metadata.
+// Service: server/services/ind-master-data; migration: migrations/20260609_ind_master_data.sql.
+export * from './ind-master-data';
+
+// IND dispatch-readiness snapshots — auditable point-in-time go/no-go records.
+// Service: server/services/ind-lifecycle/ind-dispatch-snapshot-service;
+// migration: migrations/20260610_ind_dispatch_snapshots.sql.
+export * from './ind-dispatch-snapshots';
+
+// IND cross-references — external files (DMF/IND/NDA/BLA) an IND depends on (m1.4).
+// Service: server/services/ind-lifecycle/ind-cross-reference-persistence;
+// migration: migrations/20260614_ind_cross_references.sql.
+export * from './ind-cross-references';
+
+// IND safety reports — durable 312.32 expedited-report drafts (draft → filed).
+// Service: server/services/ind-lifecycle/ind-safety-report-persistence;
+// migration: migrations/20260614_ind_safety_reports.sql.
+export * from './ind-safety-reports';
+
+// IND annual reports — durable 312.33 annual-report / DSUR drafts (draft → filed).
+// Service: server/services/ind-lifecycle/ind-annual-report-persistence;
+// migration: migrations/20260615_ind_annual_reports.sql.
+export * from './ind-annual-reports';
+
+// IND amendments — durable 312.30/.31 amendment-plan drafts (draft → filed).
+// Service: server/services/ind-lifecycle/ind-amendment-persistence;
+// migration: migrations/20260615_ind_amendments.sql.
+export * from './ind-amendments';
+
+// IND ICSR transmissions — durable E2B(R3) safety-message records (prepared →
+// transmitted → acknowledged). Service: ind-icsr-transmission-persistence;
+// migration: migrations/20260615_ind_icsr_transmissions.sql.
+export * from './ind-icsr-transmissions';
+
+// Regulatory assessments — durable RI/CDISC/eTMF verdict snapshots per program.
+// Service: regulatory-assessments/regulatory-assessment-persistence;
+// migration: migrations/20260615_regulatory_assessments.sql.
+export * from './regulatory-assessments';
+
+// TMF artifact filings — durable per-trial log of filed reference-model artifact
+// codes (powers the code-based completeness checker; distinct from etmf.ts).
+// Service: etmf/tmf-artifact-persistence;
+// migration: migrations/20260615_tmf_artifact_filings.sql.
+export * from './tmf-artifacts';
+
+// Clinical investigator financial disclosure — 21 CFR 54 (C2C-01) + the generic
+// ALCOA+ provenance spine seed (C2C-02). Forms FDA 3454/3455 → Module 1.
+// Service: server/services/financial-disclosures; migration: migrations/20260610_financial_disclosure_21cfr54.sql.
+export * from './financial-disclosures';
+
+// HA interaction & commitment management (C2C-03): agency meetings (Pre-IND/
+// EOP2/pre-NDA) → questions → commitments (PMR/PMC/REMS) → fulfillment, threaded
+// onto the provenance spine. Service: server/services/ha-interactions;
+// migration: migrations/20260610_ha_interactions_commitments.sql.
+export * from './ha-interactions';
+
+// IACUC / animal study governance (C2C-05): animal-use protocols, census,
+// committee review/determinations, amendments, semi-annual facility inspections.
+// Origin node of the preclinical provenance chain (→ Module 4). PHS Policy / AWA
+// / OLAW; USDA pain categories B-E. Service: server/services/iacuc;
+// migration: migrations/20260610_iacuc_animal_governance.sql.
+export * from './iacuc';
+
+// IRB / IEC submission & amendment management (C2C-06): human-subjects ethics
+// review, sIRB multi-site coordination, informed consent, determinations,
+// amendments, reportable events. Threads ethics approval → Module 5. Common Rule
+// (45 CFR 46), 21 CFR 56, ICH E6. Service: server/services/irb;
+// migration: migrations/20260610_irb_submissions.sql.
+export * from './irb';
+
+// IBC / biosafety (C2C-07): recombinant/synthetic nucleic acid registrations,
+// biological agents (risk groups RG1-4), containment (BSL-1..4) and committee
+// determinations — clearance for modality-heavy CGT/mRNA programs. NIH Guidelines
+// / BMBL. Service: server/services/ibc;
+// migration: migrations/20260610_ibc_biosafety.sql.
+export * from './ibc';
+
+// Nonclinical study management + SEND (C2C-04): governed, submission-linked tox/
+// pharmacology study registry + CDISC SEND dataset packaging, threading
+// IACUC → study → Module 4. ICH M4/S-series; SENDIG. Service: server/services/
+// nonclinical; migration: migrations/20260610_nonclinical_send.sql.
+export * from './nonclinical';
+
+// eGrants / funder-milestone management (C2C-14): sponsored-programs grant
+// lifecycle — opportunities (pre-award) → proposals → awards (post-award) →
+// milestones/reporting → sponsor invoicing. 2 CFR 200; SBIR/STTR; NIH RPPR.
+// Service: server/services/grants; migration: migrations/20260610_egrants.sql.
+export * from './grants';
+
+// RIM-lite — registration grid + labeling (C2C-12): product registry, product ×
+// country registration status grid (renewals), and label versions (USPI/SmPC/PIL/
+// CCDS). FDA 21 CFR 201; EU Directive 2001/83/EC. Service: server/services/rim;
+// migration: migrations/20260610_rim_lite.sql.
+export * from './rim';
+
+// Inspection readiness (C2C-13): BIMO/PAI inspections, Form 483 observations +
+// responses (15-business-day clock), per-area readiness. FDA BIMO/PAI; EMA GCP/
+// GMP. Service: server/services/inspection; migration: migrations/20260610_inspection_readiness.sql.
+export * from './inspection';
+
+// Controlled substances tracking (C2C-15): DEA registrations, controlled-
+// substance inventory, perpetual transaction ledger. CSA / 21 CFR 1300s.
+// Service: server/services/controlled-substances; migration: migrations/20260610_controlled_substances.sql.
+export * from './controlled-substances';
+
+// Lifecycle obligation tracking (C2C-11): post-approval recurring-obligation
+// engine — variations (IA/IB/II), supplements (PAS/CBE), periodic reports (PSUR
+// cadence), pediatric (PREA/PIP), renewals. EU Reg 1234/2008; 21 CFR 314.70;
+// ICH E2C. Service: server/services/lifecycle-obligations; migration:
+// migrations/20260610_lifecycle_obligations.sql.
+export * from './lifecycle';
+
+// AI-native eTMF (C2C-08): Trial Master File against the DIA TMF Reference Model
+// — per-study container + classified artifacts + completeness gap-check feeding
+// inspection readiness. ICH E6(R2) §8. Service: server/services/etmf; migration:
+// migrations/20260610_etmf.sql.
+export * from './etmf';
+
+// Research-compliance shared foundation: personnel roster + training/clearance
+// records that gate committee approvals ("no index until trained"), feeding the
+// compliance-checklist reasoning engine. Service: server/services/research-
+// compliance; migration: migrations/20260611_research_compliance.sql.
+export * from './research-compliance';
+
+// Effort certification (add-on): per-person per-period committed-vs-actual effort
+// across awards; total <= 100%; deviation triggers recertification. 2 CFR 200.430.
+export * from './effort-certification';
+
+// Research security / COI-FCOI disclosure (add-on; NOT-OD-26-017 / NSPM-33):
+// outside activities, foreign appointments/support, financial interests + review.
+export * from './research-security';

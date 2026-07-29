@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "Laat aan het werk",
+    "morning": "Goedemorgen",
+    "afternoon": "Goedemiddag",
+    "evening": "Goedenavond"
+  },
+  "greetingLine": "{{greeting}}, {{name}}",
+  "prompt": "Waar wilt u aan werken? Vraag het AnA of duik in een module hieronder."
+}

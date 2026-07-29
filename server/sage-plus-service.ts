@@ -6,7 +6,7 @@
 import { createContextLogger } from './utils/logger';
 import { pool, query } from './db';
 
-const logger = createContextLogger({ module: 'sage-plus-service' });
+const logger = createContextLogger('sage-plus-service');
 
 // SagePlus service configuration
 const DEFAULT_CONFIG = {

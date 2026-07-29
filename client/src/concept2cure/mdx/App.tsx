@@ -8,7 +8,6 @@
  */
 
 import * as React from 'react';
-import { I } from './icons';
 import { Rail } from './shell/Rail';
 import { TopBar } from './shell/TopBar';
 import { TabBar } from './shell/TabBar';
@@ -18,24 +17,26 @@ import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
+import { IvdSurface } from './surfaces/IvdSurface';
+import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
+import { SoftwareSurface } from './surfaces/SoftwareSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
-import { InDesignSurface } from './surfaces/InDesignSurface';
+import { EngineeringSurface } from './surfaces/EngineeringSurface';
+import { UdiSurface } from './surfaces/UdiSurface';
+import { PostmarketSurface } from './surfaces/PostmarketSurface';
+import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
+import { MemorySurface } from './surfaces/MemorySurface';
+import { VaultSurface } from './surfaces/VaultSurface';
 import {
   TasksSurface,
-  VaultSurface,
   ValidationSurface,
   SubmissionsSurface,
   TemplatesSurface,
 } from './workbench/Workbench';
 import { ProjectHome } from './projectHome/ProjectHome';
-import { EstarEditor } from './editors/EstarEditor';
-import { PmaEditor } from './editors/PmaEditor';
-import { CerEditor } from './editors/CerEditor';
-import { CerWorkbench } from './surfaces/cer/CerWorkbench';
 import { PreSubManager } from './presub/PreSubManager';
-import { MDX_STUBS, type AnaMode } from './data/nav';
+import { type AnaMode } from './data/nav';
 import { MDX_PROGRAMS, type Program } from './data/programs';
-import { EDITOR_PROGRAM } from './data/editor';
 import { useAnaChat } from '../components/ana/useAnaChat';
 import { useMdxPrograms } from './hooks/useMdxPrograms';
 
@@ -45,6 +46,9 @@ const HERE_LABEL: Record<string, string> = {
   k510:           '510(k) Submissions',
   pma:            'PMA Submissions',
   cer:            'CER Generator',
+  'device-diagnostics-workbench': 'IVD diagnostics workbench',
+  'clinical-studies': 'Clinical studies',
+  software:        'Software lifecycle',
   predicate:      'Precedent intelligence',
   engineering:    'Device engineering',
   udi:            'UDI and labeling',
@@ -57,11 +61,7 @@ const HERE_LABEL: Record<string, string> = {
   analytics:      'Analytics',
   memory:         'Claude memory',
   admin:          'Admin and access',
-  editor:         '510(k) module editor',
-  'cer-workbench':'CER workbench (Equivalence · GSPR · PMS)',
   'pre-sub':      'Pre-submission manager',
-  'pma-editor':   'PMA module editor',
-  'cer-editor':   'CER section editor',
 };
 
 function getStored<T>(key: string, fallback: T): T {
@@ -94,9 +94,17 @@ export interface AppProps {
   /** Optional project display name to override the program-fixture title in
    *  context. Surfaces the correct project name in topbar / AnA grounding. */
   projectName?: string | null;
+  /** Open the Phase 9 Universal Authoring shell on a doc type. The host swaps
+   *  to the authoring layout — MDX no longer owns per-pathway editors. */
+  onOpenAuthoring?: (docType?: string) => void;
+  /** Numeric project id (as a string) for the project MDX is embedded under.
+   *  Scopes AnA chat uploads into that project's memory. MDX's own program
+   *  fixtures carry only device/program ids (not project ids), so this must be
+   *  supplied by the host; when absent, uploads stay org-scoped. */
+  projectId?: string;
 }
 
-export function App({ initialNav, projectName }: AppProps = {}) {
+export function App({ initialNav, projectName, onOpenAuthoring, projectId }: AppProps = {}) {
   const [activeNav,    setActiveNav]    = React.useState<string>(() =>
     initialNav ?? getStored('mdx.activeNav', 'overview'),
   );
@@ -153,13 +161,21 @@ export function App({ initialNav, projectName }: AppProps = {}) {
   const openWorkbench = () => {
     if (selectedProgram) setActiveNav(selectedProgram.pathway);
   };
-  const openEditor = () => setActiveNav('editor');
+  // Phase 9: authoring is the single editor. The host (ZenApp) owns the
+  // authoring layout; MDX hands off the doc type derived from the pathway.
+  const openAuthoring = (docType?: string) => onOpenAuthoring?.(docType);
 
   const programForContext = React.useMemo<Program | null>(() => {
     if (selectedProgram) return selectedProgram;
     if (activeNav === 'k510')         return programs.find(p => p.pathway === 'k510') ?? null;
     if (activeNav === 'pma')          return programs.find(p => p.pathway === 'pma')  ?? null;
     if (activeNav === 'cer')          return programs.find(p => p.pathway === 'cer')  ?? null;
+    // IVD workbench is org-scoped (IVDR lists), but anchor to a device program
+    // for the GSPR matrix + dossier scope when one exists.
+    if (activeNav === 'device-diagnostics-workbench') return programs.find(p => p.pathway === 'k510') ?? null;
+    // Software lifecycle is project-scoped; anchor to a device program when
+    // none is explicitly selected so the completeness summary can load.
+    if (activeNav === 'software') return programs.find(p => p.pathway === 'k510') ?? programs[0] ?? null;
     if (activeNav === 'project-home') return programs[0] ?? null;
     return null;
   }, [activeNav, selectedProgram, programs]);
@@ -210,33 +226,46 @@ export function App({ initialNav, projectName }: AppProps = {}) {
     [anaChat],
   );
 
-  const editorRoute: 'estar' | 'pma' | 'cer' | null =
-    activeNav === 'editor'      ? 'estar' :
-    activeNav === 'pma-editor'  ? 'pma'   :
-    activeNav === 'cer-editor'  ? 'cer'   :
-    null;
-  const inEditor = editorRoute !== null;
   const hereLabel = HERE_LABEL[activeNav] || 'Overview';
 
   let surface: React.ReactNode;
-  if (editorRoute === 'estar') {
-    surface = <EstarEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
-  } else if (editorRoute === 'pma') {
-    surface = <PmaEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
-  } else if (editorRoute === 'cer') {
-    surface = <CerEditor initialMode={anaMode} programIdent={programForContext?.code ?? programForContext?.id ?? null} />;
-  } else if (MDX_STUBS[activeNav]) {
-    surface = <InDesignSurface stub={MDX_STUBS[activeNav]} />;
-  } else {
+  {
     switch (activeNav) {
+      case 'engineering':
+        surface = <EngineeringSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'udi':
+        surface = <UdiSurface onAskAna={askAna} />;
+        break;
+      case 'postmarket':
+        surface = <PostmarketSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'analytics':
+        surface = <AnalyticsSurface onAskAna={askAna} />;
+        break;
+      case 'memory':
+        surface = <MemorySurface onAskAna={askAna} />;
+        break;
+      // 'admin' intentionally removed — admin is product-level (ui-v2
+      // AdminConsole), shared by all client types, not a per-workstream
+      // surface. A stale stored activeNav='admin' falls through to Overview.
       case 'k510':
-        surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={openEditor} />;
+        surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('k510')} />;
         break;
       case 'pma':
-        surface = <PmaSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => setActiveNav('pma-editor')} />;
+        surface = <PmaSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('pma')} />;
         break;
       case 'cer':
         surface = <CerSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'device-diagnostics-workbench':
+        surface = <IvdSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('device-diagnostics-workbench')} />;
+        break;
+      case 'clinical-studies':
+        surface = <ClinicalStudiesSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'software':
+        surface = <SoftwareSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;
@@ -245,7 +274,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
         surface = <TasksSurface onAskAna={askAna} />;
         break;
       case 'vault':
-        surface = <VaultSurface onAskAna={askAna} />;
+        surface = <VaultSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'validation':
         surface = <ValidationSurface onAskAna={askAna} />;
@@ -269,15 +298,6 @@ export function App({ initialNav, projectName }: AppProps = {}) {
           />
         );
         break;
-      case 'cer-workbench':
-        surface = (
-          <CerWorkbench
-            program={programForContext}
-            onAskAna={askAna}
-            onOpenEditor={() => setActiveNav('cer-editor')}
-          />
-        );
-        break;
       case 'pre-sub':
         surface = <PreSubManager onAskAna={askAna} />;
         break;
@@ -288,79 +308,33 @@ export function App({ initialNav, projectName }: AppProps = {}) {
 
   return (
     <div
-      className={`shell${inEditor ? ' editor-mode' : ''}`}
-      data-collapsed={inEditor ? true : railCollapsed}
-      data-ana-open={inEditor ? false : anaOpen}
+      className="shell"
+      data-collapsed={railCollapsed}
+      data-ana-open={anaOpen}
     >
       <Rail
         activeNav={activeNav}
         setActiveNav={setActiveNav}
-        collapsed={inEditor ? true : railCollapsed}
+        collapsed={railCollapsed}
         setCollapsed={setRailCollapsed}
         user={DEFAULT_USER}
       />
       <main className="main">
-        {inEditor ? (() => {
-          const exitNav: string =
-            editorRoute === 'pma' ? 'pma' :
-            editorRoute === 'cer' ? 'cer-workbench' :
-            'k510';
-          const exitLabel: string =
-            editorRoute === 'pma' ? 'Back to PMA' :
-            editorRoute === 'cer' ? 'Back to CER workbench' :
-            'Back to 510(k)';
-          const editorLabel: string =
-            editorRoute === 'pma' ? 'PMA module editor' :
-            editorRoute === 'cer' ? 'CER section editor' :
-            '510(k) module editor';
-          return (
-            <div className="ed-breadcrumb-bar">
-              <button
-                className="ed-exit"
-                onClick={() => setActiveNav(exitNav)}
-                title={exitLabel}
-              >
-                {I.arrowLeft}
-                <span>{exitLabel}</span>
-              </button>
-              <span className="ed-crumb-sep">{I.right}</span>
-              <span className="ed-crumb">{EDITOR_PROGRAM.title}</span>
-              <span className="ed-crumb-sep">{I.right}</span>
-              <span className="ed-crumb here">{editorLabel}</span>
-              <span className="tb-spacer" style={{ flex: 1 }} />
-              <button
-                className="tb-btn"
-                onClick={() => setCmdkOpen(true)}
-                title="Command palette"
-              >
-                {I.search}
-              </button>
-            </div>
-          );
-        })() : (
-          <>
-            <TopBar
-              hereLabel={hereLabel}
-              program={programForContext}
-              onOpenPalette={() => setCmdkOpen(true)}
-            />
-            <TabBar activeNav={activeNav} setActiveNav={setActiveNav} programs={programs} />
-          </>
-        )}
-        {inEditor ? (
-          <div
-            className="ed-main-scroll"
-            data-screen-label={`MDX · ${editorRoute === 'pma' ? 'PMA editor' : editorRoute === 'cer' ? 'CER editor' : '510(k) editor'}`}
-          >
-            {surface}
-          </div>
-        ) : (
-          <div className="page" data-screen-label={`MDX · ${hereLabel}`}>
-            <div className="page-inner">{surface}</div>
-          </div>
-        )}
+        <TopBar
+          hereLabel={hereLabel}
+          program={programForContext}
+          onOpenPalette={() => setCmdkOpen(true)}
+        />
+        <TabBar activeNav={activeNav} setActiveNav={setActiveNav} programs={programs} />
+        <div className="page" data-screen-label={`MDX · ${hereLabel}`}>
+          <div className="page-inner">{surface}</div>
+        </div>
       </main>
-      {!inEditor && (
+      {true && (
+        // projectId is the host-supplied numeric project id (string), not MDX's
+        // own device/program id — /api/chat/upload 400s on a non-numeric id, so
+        // we forward only the real one. When the host omits it, uploads stay
+        // org-scoped (AnaRail leaves projectId undefined).
         <AnaRail
           open={anaOpen}
           setOpen={setAnaOpen}
@@ -371,6 +345,7 @@ export function App({ initialNav, projectName }: AppProps = {}) {
           messages={messages}
           onSend={askAna}
           onNewThread={() => anaChat.reset()}
+          projectId={projectId}
         />
       )}
 

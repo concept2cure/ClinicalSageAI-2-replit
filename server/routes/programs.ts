@@ -16,6 +16,20 @@ import { cerProjects } from '@shared/schema';
 
 const router = Router();
 
+// Shape of the untyped `metadata` JSON column on cerProjects that this router reads.
+interface ProgramMetadata {
+  phase?: string;
+  priority?: string;
+  progressPercent?: number;
+  completedMilestones?: number;
+  totalMilestones?: number;
+  tags?: unknown[];
+}
+
+// `metadata` is an untyped JSON column; narrow it to the fields this router uses.
+const readMetadata = (metadata: unknown): ProgramMetadata =>
+  (metadata as ProgramMetadata | null) ?? {};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION SCHEMAS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -151,7 +165,7 @@ const validateQuery =
 router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Response) => {
   try {
     const { page, limit, status, programType, productType, agency, search, sortBy, sortOrder } =
-      req.query as z.infer<typeof queryParamsSchema>;
+      req.query as unknown as z.infer<typeof queryParamsSchema>;
     const tenantId = (req as any).tenantContext?.tenantId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
@@ -188,23 +202,26 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       .from(cerProjects)
       .where(and(...whereClauses));
 
-    const programs = rows.map(row => ({
-      id: String(row.id),
-      name: row.name,
-      code: row.version || `PRG-${row.id}`,
-      programType: row.regulatoryContext || 'CER',
-      productType: row.deviceType || 'device',
-      deviceClass: row.deviceClass,
-      primaryAgency: row.regulatoryContext || 'FDA',
-      productName: row.deviceName,
-      status: row.status,
-      phase: row.metadata?.phase || 'planning',
-      priority: row.metadata?.priority || 'medium',
-      progressPercent: row.metadata?.progressPercent || 0,
-      targetSubmissionDate: row.dueDate,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
+    const programs = rows.map(row => {
+      const metadata = readMetadata(row.metadata);
+      return {
+        id: String(row.id),
+        name: row.name,
+        code: row.version || `PRG-${row.id}`,
+        programType: row.regulatoryContext || 'CER',
+        productType: row.deviceType || 'device',
+        deviceClass: row.deviceClass,
+        primaryAgency: row.regulatoryContext || 'FDA',
+        productName: row.deviceName,
+        status: row.status,
+        phase: metadata.phase || 'planning',
+        priority: metadata.priority || 'medium',
+        progressPercent: metadata.progressPercent || 0,
+        targetSubmissionDate: row.dueDate,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      };
+    });
 
     res.json({
       success: true,
@@ -248,6 +265,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
+    const metadata = readMetadata(row.metadata);
     const program = {
       id: String(row.id),
       name: row.name,
@@ -266,18 +284,18 @@ router.get('/:id', async (req: Request, res: Response) => {
       predicateDevices: [],
       equivalentDevices: [],
       status: row.status,
-      phase: row.metadata?.phase || 'planning',
-      priority: row.metadata?.priority || 'medium',
+      phase: metadata.phase || 'planning',
+      priority: metadata.priority || 'medium',
       targetSubmissionDate: row.dueDate,
       actualSubmissionDate: row.completionDate,
       approvalDate: row.reviewDate,
-      progressPercent: row.metadata?.progressPercent || 0,
-      completedMilestones: row.metadata?.completedMilestones || 0,
-      totalMilestones: row.metadata?.totalMilestones || 0,
+      progressPercent: metadata.progressPercent || 0,
+      completedMilestones: metadata.completedMilestones || 0,
+      totalMilestones: metadata.totalMilestones || 0,
       leadUserId: row.createdById,
       teamMembers: [],
       settings: row.settings ?? {},
-      tags: row.metadata?.tags ?? [],
+      tags: metadata.tags ?? [],
       createdBy: row.createdById,
       updatedBy: row.assignedToId,
       createdAt: row.createdAt,

@@ -17,6 +17,20 @@ const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[
 
 import { aiDraftIR } from './regulatory_aiDraft'; // created below
 import { buildIRPackageZip } from './regulatory_irPackager'; // created below
+import { authedActorName } from '../../utils/authedActor';
+
+/**
+ * Verified actor for regulatory-IR audit rows. This was
+ * `req.headers['x-user-name'] || 'user'` — attacker-controlled, and defaulting
+ * to a placeholder that identifies nobody while still satisfying the column.
+ * See ledger C-18.
+ */
+function requireActor(req: any): string {
+  const actor = authedActorName(req);
+  if (!actor) throw new Error('Actor identity required');
+  return actor;
+}
+
 
 const router: RouterT = express.Router();
 
@@ -57,7 +71,7 @@ router.post('/submissions/:id/questions', async (req: Request, res: Response) =>
     await q(
       `insert into reg_question_events (q_id, sub_id, action, by_user, payload_json)
        values ($1,$2,'CREATED',$3,$4)`,
-      [rows[0].q_id, subId, (req.headers['x-user-name'] || 'user').toString(), rows[0]]
+      [rows[0].q_id, subId, requireActor(req), rows[0]]
     );
     res.json(rows[0]);
   } catch (error) {
@@ -78,7 +92,7 @@ router.post('/questions/:qId/ai-draft', async (req: Request, res: Response) => {
     await q(
       `insert into reg_question_events (q_id, sub_id, action, by_user)
        values ($1,$2,'AI_DRAFTED',$3)`,
-      [qrow.q_id, qrow.sub_id, (req.headers['x-user-name'] || 'user').toString()]
+      [qrow.q_id, qrow.sub_id, requireActor(req)]
     );
     res.json({ ok: true, ai_draft_md: md, question: rows[0] });
   } catch (error) {
@@ -118,7 +132,7 @@ router.patch('/questions/:qId', async (req: Request, res: Response) => {
       [
         rows[0].q_id,
         rows[0].sub_id,
-        (req.headers['x-user-name'] || 'user').toString(),
+        requireActor(req),
         { fields: Object.keys(b) },
       ]
     );
@@ -138,7 +152,7 @@ router.post('/questions/:qId/submit', async (req: Request, res: Response) => {
     await q(
       `insert into reg_question_events (q_id, sub_id, action, by_user)
        values ($1,$2,'SUBMITTED',$3)`,
-      [rows[0].q_id, rows[0].sub_id, (req.headers['x-user-name'] || 'user').toString()]
+      [rows[0].q_id, rows[0].sub_id, requireActor(req)]
     );
     res.json(rows[0]);
   } catch (error) {
@@ -162,7 +176,7 @@ router.get('/questions/:qId/events', async (req: Request, res: Response) => {
 // Package all IR responses (.zip)
 router.post('/submissions/:id/questions/pack', async (req: Request, res: Response) => {
   try {
-    const outPath = await buildIRPackageZip(req.params.id);
+    const outPath = await buildIRPackageZip(String(req.params.id));
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${path.basename(outPath)}"`);
     fs.createReadStream(outPath).pipe(res);

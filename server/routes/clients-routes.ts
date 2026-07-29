@@ -16,10 +16,88 @@ import { authMiddleware } from '../auth';
 const router = Router();
 
 import { createScopedLogger } from '../utils/logger.js';
+import { mapWithConcurrency } from '../services/ana/agentic-loop';
 const log = createScopedLogger('clients-routes');
+
+// Bound per-row metric fan-out so listing a tenant with many workspaces
+// can't issue one concurrent DB round-trip per row and exhaust the
+// connection pool. mapWithConcurrency preserves input order, so the
+// transformed result array stays 1:1 with `clients`.
+const WORKSPACE_METRICS_CONCURRENCY = 8;
 
 // SECURITY: All client endpoints require authentication
 router.use(authMiddleware);
+
+/**
+ * Extract the authenticated org id from req.user (JWT-derived). Returns
+ * null if the JWT didn't carry an organizationId — callers must treat
+ * that as 403.
+ *
+ * NEVER source the org id from query params, body, or headers: those are
+ * attacker-controlled. This is the contract that makes the multi-tenant
+ * isolation guarantee enforceable. The audit trail bug we just closed
+ * (GET /api/clients?organizationId=X reading any org's workspaces by
+ * trusting the query param) was a direct violation.
+ */
+function getAuthedOrgId(req: any): number | null {
+  const raw =
+    req.user?.organizationId ??
+    req.tenantContext?.organizationId ??
+    req.organizationId;
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function getAuthedRole(req: any): string | undefined {
+  return req.user?.role ?? req.userRole;
+}
+
+/**
+ * Tenant guard for `/:id`-scoped routes. Fetches the workspace row and
+ * confirms it belongs to the caller's org. Returns:
+ *   - { ok: true, workspace } on success
+ *   - { ok: false, response: { status, body } } when the caller should
+ *     send that response and stop.
+ *
+ * Returns 404 (not 403) on tenant mismatch so a foreign workspace looks
+ * identical to "not found" — no existence enumeration.
+ *
+ * super_admin (platform staff) bypasses the org filter and gets the row
+ * verbatim. Every other role is org-scoped.
+ */
+async function loadWorkspaceForCaller(
+  workspaceIdRaw: string | undefined,
+  req: any,
+): Promise<
+  | { ok: true; workspaceId: number; workspace: typeof clientWorkspaces.$inferSelect; isSuperAdmin: boolean }
+  | { ok: false; status: number; error: string }
+> {
+  const workspaceId = parseInt(workspaceIdRaw ?? '', 10);
+  if (!Number.isFinite(workspaceId)) {
+    return { ok: false, status: 400, error: 'Invalid workspace id' };
+  }
+
+  const callerOrgId = getAuthedOrgId(req);
+  const isSuperAdmin = getAuthedRole(req) === 'super_admin';
+
+  if (!isSuperAdmin && callerOrgId == null) {
+    return { ok: false, status: 403, error: 'Tenant context required' };
+  }
+
+  const whereExpr = isSuperAdmin
+    ? eq(clientWorkspaces.id, workspaceId)
+    : and(
+        eq(clientWorkspaces.id, workspaceId),
+        eq(clientWorkspaces.organizationId, callerOrgId as number),
+      );
+
+  const [workspace] = await db.select().from(clientWorkspaces).where(whereExpr);
+  if (!workspace) {
+    return { ok: false, status: 404, error: 'Client workspace not found' };
+  }
+  return { ok: true, workspaceId, workspace, isSuperAdmin };
+}
 
 // Helper: compute real workspace metrics from DB
 async function getWorkspaceMetrics(workspaceId: number): Promise<{
@@ -35,7 +113,7 @@ async function getWorkspaceMetrics(workspaceId: number): Promise<{
     const [memberCount] = await db
       .select({ count: count() })
       .from(users)
-      .where(eq(users.organizationId, workspaceId));
+      .where(eq(users.defaultOrganizationId, workspaceId));
 
     return {
       activeProjects: projectCount?.count ?? 0,
@@ -87,8 +165,10 @@ router.get('/all', async (req, res) => {
 
     log.debug(`Found ${clients.length} total client workspaces across all organizations`);
 
-    // Transform data to match frontend expectations — compute real metrics
-    const transformedClients = await Promise.all(clients.map(async client => {
+    // Transform data to match frontend expectations — compute real metrics.
+    // Bounded concurrency (order-preserving) instead of an unbounded
+    // Promise.all, which would open one DB round-trip per workspace at once.
+    const transformedClients = await mapWithConcurrency(clients, async client => {
       const metrics = await getWorkspaceMetrics(client.id);
       return {
         id: String(client.id),
@@ -106,7 +186,7 @@ router.get('/all', async (req, res) => {
         teamMembers: metrics.teamMembers,
         status: client.status || 'active',
       };
-    }));
+    }, WORKSPACE_METRICS_CONCURRENCY);
 
     return res.json({
       success: true,
@@ -127,12 +207,15 @@ router.get('/all', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const { organizationId } = req.query;
-
-    if (!organizationId) {
-      return res.status(400).json({
+    // SECURITY: The org id comes from the JWT, never from the query
+    // string. The legacy `?organizationId=` query param was an IDOR —
+    // any authenticated user could pass any org id and list another
+    // tenant's workspaces. The param is now ignored.
+    const organizationId = getAuthedOrgId(req);
+    if (organizationId == null) {
+      return res.status(403).json({
         success: false,
-        error: 'Organization ID is required',
+        error: 'Tenant context required',
       });
     }
 
@@ -159,12 +242,13 @@ router.get('/', async (req, res) => {
       })
       .from(clientWorkspaces)
       .leftJoin(organizations, eq(clientWorkspaces.organizationId, organizations.id))
-      .where(eq(clientWorkspaces.organizationId, parseInt(organizationId as string)));
+      .where(eq(clientWorkspaces.organizationId, organizationId));
 
     log.debug(`Found ${clients.length} client workspaces for organization ${organizationId}`);
 
-    // Transform data with real metrics
-    const transformedClients = await Promise.all(clients.map(async client => {
+    // Transform data with real metrics. Bounded concurrency
+    // (order-preserving) instead of an unbounded Promise.all.
+    const transformedClients = await mapWithConcurrency(clients, async client => {
       const metrics = await getWorkspaceMetrics(client.id);
       return {
         id: String(client.id),
@@ -181,7 +265,7 @@ router.get('/', async (req, res) => {
         teamMembers: metrics.teamMembers,
         status: client.status || 'active',
       };
-    }));
+    }, WORKSPACE_METRICS_CONCURRENCY);
 
     return res.json({
       success: true,
@@ -202,13 +286,26 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { name, slug, quotaProjects, quotaStorageGB, organizationId = '1' } = req.body;
+    const { name, slug, quotaProjects, quotaStorageGB } = req.body;
 
     // Validate required fields
     if (!name || !slug) {
       return res.status(400).json({
         success: false,
         error: 'Client name and slug are required',
+      });
+    }
+
+    // SECURITY: New workspaces always belong to the caller's org. The
+    // old `organizationId = '1'` body default let any authenticated user
+    // create workspaces inside org 1 (or any other org id they chose to
+    // post). The org id now comes from the JWT only; body.organizationId
+    // is ignored.
+    const organizationId = getAuthedOrgId(req);
+    if (organizationId == null) {
+      return res.status(403).json({
+        success: false,
+        error: 'Tenant context required',
       });
     }
 
@@ -220,7 +317,7 @@ router.post('/', async (req, res) => {
       .values({
         name,
         slug,
-        organizationId: parseInt(organizationId),
+        organizationId,
         description: `Client workspace for ${name}`,
         logo: '/logos/default-client.png',
         status: 'active',
@@ -289,11 +386,20 @@ router.post('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching client details for ID: ${id}`);
 
-    // Fetch client from database
+    // Tenant guard — workspace must belong to the caller's org (or
+    // caller is super_admin). Foreign tenant ⇒ 404.
+    const guard = await loadWorkspaceForCaller(id, req);
+    if (!guard.ok) {
+      return res.status(guard.status).json({ success: false, error: guard.error });
+    }
+    const workspaceId = guard.workspaceId;
+
+    // Re-fetch with the organization join so the response shape stays
+    // identical to what the client expects.
     const [client] = await db
       .select({
         id: clientWorkspaces.id,
@@ -314,10 +420,10 @@ router.get('/:id', async (req, res) => {
       })
       .from(clientWorkspaces)
       .leftJoin(organizations, eq(clientWorkspaces.organizationId, organizations.id))
-      .where(eq(clientWorkspaces.id, parseInt(id)));
+      .where(eq(clientWorkspaces.id, workspaceId));
 
     if (!client) {
-      log.debug(`Client not found for ID: ${id}`);
+      // Race with concurrent delete — treat as not found.
       return res.status(404).json({
         success: false,
         error: 'Client workspace not found',
@@ -388,12 +494,22 @@ router.get('/:id', async (req, res) => {
  */
 router.patch('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const updates = req.body;
 
     log.debug(`Updating client workspace ${id} with data:`, updates);
 
-    // Prepare update data, filtering out any undefined values
+    // Tenant guard. Mismatch ⇒ 404 (no enumeration).
+    const guard = await loadWorkspaceForCaller(id, req);
+    if (!guard.ok) {
+      return res.status(guard.status).json({ success: false, error: guard.error });
+    }
+    const workspaceId = guard.workspaceId;
+
+    // Prepare update data, filtering out any undefined values.
+    // organizationId is NEVER taken from the body — that would let a
+    // caller relocate a workspace into another tenant. The row's
+    // organizationId is immutable through this endpoint.
     const updateData: any = {};
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.slug !== undefined) updateData.slug = updates.slug;
@@ -413,7 +529,7 @@ router.patch('/:id', async (req, res) => {
     const [updatedClient] = await db
       .update(clientWorkspaces)
       .set(updateData)
-      .where(eq(clientWorkspaces.id, parseInt(id)))
+      .where(eq(clientWorkspaces.id, workspaceId))
       .returning();
 
     if (!updatedClient) {
@@ -435,8 +551,9 @@ router.patch('/:id', async (req, res) => {
 
       if (existingSettings) {
         // Update existing workspace settings general section
-        const currentGeneralSettings = existingSettings.generalSettings || {};
-        const updatedGeneralSettings = {
+        // generalSettings is an untyped JSON column; narrow to a record so we can merge.
+        const currentGeneralSettings = (existingSettings.generalSettings as Record<string, unknown>) || {};
+        const updatedGeneralSettings: Record<string, unknown> = {
           ...currentGeneralSettings,
         };
 
@@ -542,15 +659,24 @@ router.patch('/:id', async (req, res) => {
  */
 router.get('/:id/security-settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching security settings for client: ${id}`);
+
+    // Tenant guard — security settings expose password policy, MFA
+    // requirements, retention. Leaking them cross-tenant gives an
+    // attacker the blueprint of another tenant's auth posture.
+    const guard = await loadWorkspaceForCaller(id, req);
+    if (!guard.ok) {
+      return res.status(guard.status).json({ success: false, error: guard.error });
+    }
+    const workspaceId = guard.workspaceId;
 
     // Try to fetch existing security settings from database
     const [existingSettings] = await db
       .select()
       .from(clientSecuritySettings)
-      .where(eq(clientSecuritySettings.clientWorkspaceId, parseInt(id)));
+      .where(eq(clientSecuritySettings.clientWorkspaceId, workspaceId));
 
     const defaultSettings = {
       passwordPolicy: {
@@ -603,23 +729,27 @@ router.get('/:id/security-settings', async (req, res) => {
     // Merge saved settings with defaults
     let settings = defaultSettings;
     if (existingSettings) {
+      // The *Settings columns are untyped JSON; narrow to records before merging.
       settings = {
         passwordPolicy: {
           ...defaultSettings.passwordPolicy,
-          ...existingSettings.passwordPolicySettings,
+          ...(existingSettings.passwordPolicySettings as Record<string, unknown>),
         },
         sessionSettings: {
           ...defaultSettings.sessionSettings,
-          ...existingSettings.sessionSettings,
+          ...(existingSettings.sessionSettings as Record<string, unknown>),
         },
         dataProtection: {
           ...defaultSettings.dataProtection,
-          ...existingSettings.dataProtectionSettings,
+          ...(existingSettings.dataProtectionSettings as Record<string, unknown>),
         },
-        auditSettings: { ...defaultSettings.auditSettings, ...existingSettings.auditSettings },
+        auditSettings: {
+          ...defaultSettings.auditSettings,
+          ...(existingSettings.auditSettings as Record<string, unknown>),
+        },
         fdaCompliance: {
           ...defaultSettings.fdaCompliance,
-          ...existingSettings.fdaComplianceSettings,
+          ...(existingSettings.fdaComplianceSettings as Record<string, unknown>),
         },
       };
     }
@@ -643,37 +773,27 @@ router.get('/:id/security-settings', async (req, res) => {
  */
 router.patch('/:id/security-settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const settings = req.body;
 
-    log.debug('Updating security settings for client', id, ':', Object.keys(settings));
+    log.debug(`Updating security settings for client ${id}`, { keys: Object.keys(settings) });
 
-    // Validate that client ID exists
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Client ID is required',
-      });
+    // Tenant guard — this is the MOST sensitive endpoint in the file.
+    // Pre-fix it let any authenticated user weaken another tenant's
+    // password policy, session timeout, MFA requirements, or audit
+    // retention. That's essentially a backdoor.
+    const guard = await loadWorkspaceForCaller(id, req);
+    if (!guard.ok) {
+      return res.status(guard.status).json({ success: false, error: guard.error });
     }
-
-    // Get client workspace to validate existence and get organizationId
-    const [clientWorkspace] = await db
-      .select()
-      .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.id, parseInt(id)));
-
-    if (!clientWorkspace) {
-      return res.status(404).json({
-        success: false,
-        error: 'Client workspace not found',
-      });
-    }
+    const workspaceId = guard.workspaceId;
+    const clientWorkspace = guard.workspace;
 
     // Check if security settings already exist
     const [existingSettings] = await db
       .select()
       .from(clientSecuritySettings)
-      .where(eq(clientSecuritySettings.clientWorkspaceId, parseInt(id)));
+      .where(eq(clientSecuritySettings.clientWorkspaceId, workspaceId));
 
     if (existingSettings) {
       // Update existing settings
@@ -729,14 +849,23 @@ router.patch('/:id/security-settings', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const clientId = parseInt(id);
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Deleting client workspace ${id} with cascade deletion from database`);
 
+    // Tenant guard — DELETE cascades through projects, project_modules,
+    // workspace_settings, security_settings. Without the guard a single
+    // authenticated request could wipe out another tenant's entire
+    // workspace tree.
+    const guard = await loadWorkspaceForCaller(id, req);
+    if (!guard.ok) {
+      return res.status(guard.status).json({ success: false, error: guard.error });
+    }
+    const clientId = guard.workspaceId;
+
     // Start a transaction for safe cascade deletion
     const result = await db.transaction(async tx => {
-      // First, check if client exists
+      // First, check if client exists (race with concurrent delete).
       const existingClient = await tx
         .select()
         .from(clientWorkspaces)
@@ -819,21 +948,24 @@ router.delete('/:id', async (req, res) => {
  */
 router.get('/:id/settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
     log.debug(`Fetching workspace settings for client: ${id}`);
+
+    // Tenant guard. Workspace settings include integration secrets,
+    // webhook URLs, and quota config — never cross-tenant.
+    const guard = await loadWorkspaceForCaller(id, req);
+    if (!guard.ok) {
+      return res.status(guard.status).json({ success: false, error: guard.error });
+    }
+    const workspaceId = guard.workspaceId;
+    const clientWorkspace = guard.workspace;
 
     // Try to fetch existing workspace settings from database
     const [existingSettings] = await db
       .select()
       .from(clientWorkspaceSettings)
-      .where(eq(clientWorkspaceSettings.clientWorkspaceId, parseInt(id)));
-
-    // Get current client workspace for defaults
-    const [clientWorkspace] = await db
-      .select()
-      .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.id, parseInt(id)));
+      .where(eq(clientWorkspaceSettings.clientWorkspaceId, workspaceId));
 
     const defaultSettings = {
       general: {
@@ -897,15 +1029,16 @@ router.get('/:id/settings', async (req, res) => {
     // Merge saved settings with defaults
     let settings = defaultSettings;
     if (existingSettings) {
+      // The *Settings columns are untyped JSON; narrow to records before merging.
       settings = {
-        general: { ...defaultSettings.general, ...existingSettings.generalSettings },
-        quotas: { ...defaultSettings.quotas, ...existingSettings.quotaSettings },
-        modules: { ...defaultSettings.modules, ...existingSettings.moduleSettings },
-        integration: { ...defaultSettings.integration, ...existingSettings.integrationSettings },
-        appearance: { ...defaultSettings.appearance, ...existingSettings.appearanceSettings },
+        general: { ...defaultSettings.general, ...(existingSettings.generalSettings as Record<string, unknown>) },
+        quotas: { ...defaultSettings.quotas, ...(existingSettings.quotaSettings as Record<string, unknown>) },
+        modules: { ...defaultSettings.modules, ...(existingSettings.moduleSettings as Record<string, unknown>) },
+        integration: { ...defaultSettings.integration, ...(existingSettings.integrationSettings as Record<string, unknown>) },
+        appearance: { ...defaultSettings.appearance, ...(existingSettings.appearanceSettings as Record<string, unknown>) },
         notifications: {
           ...defaultSettings.notifications,
-          ...existingSettings.notificationSettings,
+          ...(existingSettings.notificationSettings as Record<string, unknown>),
         },
       };
     }
@@ -929,31 +1062,20 @@ router.get('/:id/settings', async (req, res) => {
  */
 router.patch('/:id/settings', async (req, res) => {
   try {
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const settings = req.body;
 
     log.debug('Updating workspace settings for client', id);
 
-    // Validate that client ID exists
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Client ID is required',
-      });
+    // Tenant guard — workspace settings include feature toggles and
+    // integration credentials. Cross-tenant writes here would let one
+    // customer disable another customer's features or swap webhook URLs.
+    const guard = await loadWorkspaceForCaller(id, req);
+    if (!guard.ok) {
+      return res.status(guard.status).json({ success: false, error: guard.error });
     }
-
-    // Get client workspace to validate existence and get organizationId
-    const [clientWorkspace] = await db
-      .select()
-      .from(clientWorkspaces)
-      .where(eq(clientWorkspaces.id, parseInt(id)));
-
-    if (!clientWorkspace) {
-      return res.status(404).json({
-        success: false,
-        error: 'Client workspace not found',
-      });
-    }
+    const workspaceId = guard.workspaceId;
+    const clientWorkspace = guard.workspace;
 
     // Check if workspace settings already exist
     const [existingSettings] = await db

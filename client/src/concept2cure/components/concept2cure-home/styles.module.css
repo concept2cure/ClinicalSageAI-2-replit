@@ -76,7 +76,7 @@
 /* Shell grid */
 .shell {
   /* Bundle-local token overrides (bundle ui_kits/home/styles.css :root).
-     These three colors differ from claude-design.css and the bundle is the
+     These three colors differ from design-system/colors_and_type.css and the bundle is the
      authority for the home surface — so scope the overrides to .shell. */
   --border: #e3e1d7;
   --warning: #c87d2e;
@@ -618,6 +618,14 @@
   font-size: 10.5px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.08em;
   color: var(--text-400);
+}
+/* Per-tile "Sample data" honesty pill — composes with the global .ptl-pill
+   from projects-prototype.css; undoes the uppercase label styling. */
+.dashSamplePill {
+  margin-left: 6px;
+  vertical-align: 1px;
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 .dashMetric {
   font-size: 26px;

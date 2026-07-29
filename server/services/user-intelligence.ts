@@ -21,6 +21,9 @@
  */
 
 import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('UserIntelligence');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES — Deep User Profile
@@ -172,7 +175,7 @@ async function loadUserIdentity(
       lastLogin: u.last_login?.toISOString() || null,
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load identity:', error);
+    logger.warn('Failed to load identity', { error });
     return null;
   }
 }
@@ -213,7 +216,7 @@ async function loadOrganizationProfile(
       settings: o.settings || {},
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load org profile:', error);
+    logger.warn('Failed to load org profile', { error });
     return null;
   }
 }
@@ -254,7 +257,7 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
       };
     });
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load projects:', error);
+    logger.warn('Failed to load projects', { error });
     return [];
   }
 }
@@ -262,19 +265,21 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
 /**
  * Load the user's current active work session (if any).
  */
-async function loadCurrentSession(userId: number): Promise<WorkSession | null> {
+async function loadCurrentSession(userId: number, organizationId: number): Promise<WorkSession | null> {
   try {
+    // Project-name resolution is org-scoped so a session row can never
+    // surface another org's project name.
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
               uws.started_at, uws.last_activity_at, uws.duration_minutes,
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
-       LEFT JOIN projects p ON p.id = uws.project_id
+       LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
        WHERE uws.user_id = $1 AND uws.session_type = 'active'
        ORDER BY uws.last_activity_at DESC
        LIMIT 1`,
-      [userId]
+      [userId, organizationId]
     );
 
     if (result.rows.length === 0) return null;
@@ -293,7 +298,7 @@ async function loadCurrentSession(userId: number): Promise<WorkSession | null> {
       artifactsCreated: s.artifacts_created || 0,
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load current session:', error);
+    logger.warn('Failed to load current session', { error });
     return null;
   }
 }
@@ -301,19 +306,21 @@ async function loadCurrentSession(userId: number): Promise<WorkSession | null> {
 /**
  * Load recent completed work sessions.
  */
-async function loadRecentSessions(userId: number): Promise<WorkSession[]> {
+async function loadRecentSessions(userId: number, organizationId: number): Promise<WorkSession[]> {
   try {
+    // Project-name resolution is org-scoped so a session row can never
+    // surface another org's project name.
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
               uws.started_at, uws.last_activity_at, uws.duration_minutes,
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
-       LEFT JOIN projects p ON p.id = uws.project_id
+       LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
        WHERE uws.user_id = $1 AND uws.session_type = 'completed'
        ORDER BY uws.last_activity_at DESC
        LIMIT 5`,
-      [userId]
+      [userId, organizationId]
     );
 
     return result.rows.map((s: any) => ({
@@ -329,7 +336,7 @@ async function loadRecentSessions(userId: number): Promise<WorkSession[]> {
       artifactsCreated: s.artifacts_created || 0,
     }));
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load recent sessions:', error);
+    logger.warn('Failed to load recent sessions', { error });
     return [];
   }
 }
@@ -369,7 +376,7 @@ async function loadWorkQueue(userId: number, organizationId: number): Promise<Wo
       aiReasoning: q.ai_reasoning,
     }));
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load work queue:', error);
+    logger.warn('Failed to load work queue', { error });
     return [];
   }
 }
@@ -388,13 +395,13 @@ async function loadRecentActivity(
               p.name as project_name
        FROM activity_feed af
        LEFT JOIN projects p ON p.id = CASE
-         WHEN af.entity_type = 'project' THEN CAST(af.entity_id AS INTEGER)
+         WHEN af.entity_type = $3 THEN CAST(af.entity_id AS INTEGER)
          ELSE NULL
        END
        WHERE af.user_id = $1 AND af.organization_id = $2
        ORDER BY af.created_at DESC
        LIMIT 10`,
-      [userId, organizationId]
+      [userId, organizationId, 'project']
     );
 
     return result.rows.map((a: any) => ({
@@ -406,7 +413,7 @@ async function loadRecentActivity(
       createdAt: a.created_at?.toISOString(),
     }));
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load activity:', error);
+    logger.warn('Failed to load activity', { error });
     return [];
   }
 }
@@ -460,7 +467,7 @@ async function loadConversationMemory(
       frequentTopics: frequentTopicsResult.rows.map((r: any) => r.topic),
     };
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to load conversation memory:', error);
+    logger.warn('Failed to load conversation memory', { error });
     return { totalConversations: 0, totalMessages: 0, lastTopics: [], frequentTopics: [] };
   }
 }
@@ -496,8 +503,8 @@ export async function loadUserIntelligence(params: {
     loadUserIdentity(userId, organizationId),
     loadOrganizationProfile(organizationId),
     loadUserProjects(userId, organizationId),
-    loadCurrentSession(userId),
-    loadRecentSessions(userId),
+    loadCurrentSession(userId, organizationId),
+    loadRecentSessions(userId, organizationId),
     loadWorkQueue(userId, organizationId),
     loadRecentActivity(userId, organizationId),
     loadConversationMemory(userId, organizationId),
@@ -614,7 +621,7 @@ export async function touchWorkSession(params: {
 
     return insertResult.rows[0]?.id || null;
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to touch session:', error);
+    logger.warn('Failed to touch session', { error });
     return null;
   }
 }
@@ -686,7 +693,7 @@ export async function addToWorkQueue(params: {
     );
     return result.rows[0]?.id || null;
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to add to queue:', error);
+    logger.warn('Failed to add to queue', { error });
     return null;
   }
 }
@@ -804,6 +811,6 @@ export async function generateWorkRecommendations(params: {
       });
     }
   } catch (error) {
-    console.warn('[UserIntelligence] Failed to generate recommendations:', error);
+    logger.warn('Failed to generate recommendations', { error });
   }
 }

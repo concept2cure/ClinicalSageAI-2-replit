@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "Késő estig dolgozik",
+    "morning": "Jó reggelt",
+    "afternoon": "Jó napot",
+    "evening": "Jó estét"
+  },
+  "greetingLine": "{{greeting}}, {{name}}",
+  "prompt": "Min szeretne dolgozni? Kérdezze az AnA-t, vagy lépjen be egy alábbi modulba."
+}

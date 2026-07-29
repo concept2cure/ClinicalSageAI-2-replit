@@ -68,6 +68,7 @@ export function Sidebar({
           className={styles.sbCollapse}
           onClick={() => setCollapsed(!collapsed)}
           title="Toggle sidebar"
+          aria-label="Toggle sidebar"
           type="button"
         >
           <PanelLeftIco size={16} />
@@ -90,7 +91,7 @@ export function Sidebar({
 
       <button
         className={styles.sbItem}
-        aria-selected={itemSelected('home') || undefined}
+        aria-current={itemSelected('home') ? 'page' : undefined}
         onClick={() => setView('home')}
         type="button"
       >
@@ -102,7 +103,7 @@ export function Sidebar({
 
       <button
         className={styles.sbItem}
-        aria-selected={itemSelected('projects') || undefined}
+        aria-current={itemSelected('projects') ? 'page' : undefined}
         onClick={() => setView('projects')}
         type="button"
       >
@@ -114,7 +115,7 @@ export function Sidebar({
 
       <button
         className={styles.sbItem}
-        aria-selected={itemSelected('artifacts') || undefined}
+        aria-current={itemSelected('artifacts') ? 'page' : undefined}
         onClick={() => setView('artifacts')}
         type="button"
       >
@@ -125,11 +126,14 @@ export function Sidebar({
       </button>
 
       <div className={styles.sbSection}>Recents</div>
+      {recents.length === 0 && (
+        <div className={styles.sbEmpty}>No recent chats yet</div>
+      )}
       {recents.map(r => (
         <button
           key={r.id}
           className={styles.sbItem}
-          aria-selected={(view === 'chat' && activeRecentId === r.id) || undefined}
+          aria-current={view === 'chat' && activeRecentId === r.id ? 'page' : undefined}
           onClick={() => {
             onSelectRecent(r.id);
             setView('chat');

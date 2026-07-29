@@ -9,6 +9,7 @@
 
 import { pool } from '../db.js';
 import { searchConnectors } from './connectors/connector-registry.js';
+import { rankResultsByProvenance } from './search/provenance-ranking.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
 import { getAnthropicClient, CLAUDE_MODELS } from './anthropic-client.js';
 import type { ConnectorQuery, ConnectorResult } from './connectors/connector-interface.js';
@@ -107,9 +108,15 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
   executeResearchJob(jobId, request).catch(err => {
     console.error(`[DeepResearch] Job ${jobId} failed:`, err);
     pool.query(
-      `UPDATE deep_research_jobs SET status = 'failed', completed_at = NOW() WHERE id = $1`,
-      [jobId]
-    ).catch(() => {});
+      `UPDATE deep_research_jobs SET status = $2, completed_at = NOW() WHERE id = $1 AND organization_id = $3`,
+      [jobId, 'failed', request.organizationId]
+    ).catch((updateErr) => {
+      // If this fails the job is left without a terminal status — surface it.
+      console.error(
+        `[DeepResearch] Failed to mark job ${jobId} as failed:`,
+        updateErr,
+      );
+    });
   });
 
   return getJobStatus(jobId);
@@ -120,7 +127,7 @@ export async function launchResearchJob(request: DeepResearchRequest): Promise<D
  */
 async function executeResearchJob(jobId: number, request: DeepResearchRequest): Promise<void> {
   // Update status to running
-  await updateJobProgress(jobId, 5, 'running');
+  await updateJobProgress(jobId, 5, 'running', request.organizationId);
 
   const connectorQuery: ConnectorQuery = {
     indication: request.query.indication,
@@ -133,7 +140,7 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   };
 
   // Fan out to connectors
-  await updateJobProgress(jobId, 15, 'running');
+  await updateJobProgress(jobId, 15, 'running', request.organizationId);
   const connectorResults = await searchConnectors(
     request.organizationId,
     request.connectorIds,
@@ -154,17 +161,17 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
   }
 
   await pool.query(
-    `UPDATE deep_research_jobs SET connector_logs = $1 WHERE id = $2`,
-    [JSON.stringify(connectorLogs), jobId]
+    `UPDATE deep_research_jobs SET connector_logs = $1 WHERE id = $2 AND organization_id = $3`,
+    [JSON.stringify(connectorLogs), jobId, request.organizationId]
   );
 
-  await updateJobProgress(jobId, 60, 'running');
+  await updateJobProgress(jobId, 60, 'running', request.organizationId);
 
-  // Aggregate and rank results
+  // Aggregate and rank results — by source AUTHORITY tier first (regulatory /
+  // registry / peer-reviewed lead over preprints), then relevance within a tier.
+  // Each result is annotated with its provenanceTier for credibility badging.
   const allResults = connectorResults.flatMap(cr => cr.results);
-  const topResults = allResults
-    .sort((a, b) => b.relevanceScore - a.relevanceScore)
-    .slice(0, 30);
+  const topResults = rankResultsByProvenance(allResults).slice(0, 30);
 
   // Categorize
   const csrMatches = allResults.filter(r =>
@@ -186,19 +193,19 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
     literatureResults,
   };
 
-  await updateJobProgress(jobId, 75, 'synthesizing');
+  await updateJobProgress(jobId, 75, 'synthesizing', request.organizationId);
 
   // Generate LLM synthesis
   const synthesis = await generateSynthesis(request.query, aggregated);
 
-  await updateJobProgress(jobId, 95, 'synthesizing');
+  await updateJobProgress(jobId, 95, 'synthesizing', request.organizationId);
 
   // Save final results
   await pool.query(
     `UPDATE deep_research_jobs SET
-     status = 'complete', progress = 100, results = $1, synthesis = $2, completed_at = NOW()
-     WHERE id = $3`,
-    [JSON.stringify(aggregated), synthesis, jobId]
+     status = $4, progress = 100, results = $1, synthesis = $2, completed_at = NOW()
+     WHERE id = $3 AND organization_id = $5`,
+    [JSON.stringify(aggregated), synthesis, jobId, 'complete', request.organizationId]
   );
 
   // Notify SSE listeners
@@ -264,8 +271,8 @@ async function generateSynthesis(
     });
 
     const text = response.content
-      .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
-      .map(block => block.text)
+      .map(block => (block.type === 'text' ? block.text : ''))
+      .filter(Boolean)
       .join('\n');
 
     if (text.length > 0) return text;
@@ -284,9 +291,11 @@ async function generateSynthesis(
 function buildEvidenceDigest(results: AggregatedResults): string {
   const sections: string[] = [];
 
+  // Rank each category by source authority before truncating, so the cap drops
+  // the LEAST credible sources (not arbitrary connector order) from the prompt.
   if (results.csrMatches.length > 0) {
     sections.push(`### Clinical Trials (${results.csrMatches.length} total)`);
-    results.csrMatches.slice(0, 15).forEach(r => {
+    rankResultsByProvenance(results.csrMatches).slice(0, 15).forEach(r => {
       sections.push(`- [${r.id}] ${r.title} — ${r.summary}`);
     });
     if (results.csrMatches.length > 15) {
@@ -296,7 +305,7 @@ function buildEvidenceDigest(results: AggregatedResults): string {
 
   if (results.regulatoryIntelligence.length > 0) {
     sections.push(`### Regulatory Records (${results.regulatoryIntelligence.length} total)`);
-    results.regulatoryIntelligence.slice(0, 10).forEach(r => {
+    rankResultsByProvenance(results.regulatoryIntelligence).slice(0, 10).forEach(r => {
       sections.push(`- [${r.sourceConnector}] ${r.title} — ${r.summary}`);
     });
     if (results.regulatoryIntelligence.length > 10) {
@@ -306,7 +315,7 @@ function buildEvidenceDigest(results: AggregatedResults): string {
 
   if (results.literatureResults.length > 0) {
     sections.push(`### Literature (${results.literatureResults.length} total)`);
-    results.literatureResults.slice(0, 10).forEach(r => {
+    rankResultsByProvenance(results.literatureResults).slice(0, 10).forEach(r => {
       sections.push(`- [${r.id}] ${r.title} — ${r.summary}`);
     });
     if (results.literatureResults.length > 10) {
@@ -374,12 +383,15 @@ function buildFallbackSynthesis(
 // JOB QUERIES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function getJobStatus(jobId: number): Promise<DeepResearchJob> {
+export async function getJobStatus(jobId: number, organizationId?: number): Promise<DeepResearchJob> {
+  // organizationId is optional only for internal callers that just created the
+  // job. Route handlers MUST pass the authenticated org so a caller can't read
+  // another tenant's job (results/synthesis included) by guessing ids.
   const result = await pool.query(
     `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
             results, synthesis, credits_used, connector_logs, created_at, completed_at
-     FROM deep_research_jobs WHERE id = $1`,
-    [jobId]
+     FROM deep_research_jobs WHERE id = $1 AND ($2::int IS NULL OR organization_id = $2)`,
+    [jobId, organizationId ?? null]
   );
 
   if (result.rows.length === 0) throw new Error(`Job ${jobId} not found`);
@@ -434,10 +446,11 @@ export async function listJobs(
   }));
 }
 
-export async function cancelJob(jobId: number): Promise<void> {
+export async function cancelJob(jobId: number, organizationId: number): Promise<void> {
   await pool.query(
-    `UPDATE deep_research_jobs SET status = 'failed', completed_at = NOW() WHERE id = $1 AND status IN ('queued', 'running')`,
-    [jobId]
+    `UPDATE deep_research_jobs SET status = $3, completed_at = NOW()
+     WHERE id = $1 AND organization_id = $2 AND status IN ('queued', 'running')`,
+    [jobId, organizationId, 'failed']
   );
   jobCallbacks.delete(jobId);
 }
@@ -453,10 +466,18 @@ export function onJobProgress(jobId: number, callback: (progress: number, status
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function updateJobProgress(jobId: number, progress: number, status: string): Promise<void> {
+async function updateJobProgress(
+  jobId: number,
+  progress: number,
+  status: string,
+  organizationId: number,
+): Promise<void> {
+  // Tenant-scoped: every other deep_research_jobs write in this file already
+  // carries `AND organization_id = $n`; match that so a job can only be mutated
+  // within its owning org (defense-in-depth + silences the tenant-isolation gate).
   await pool.query(
-    `UPDATE deep_research_jobs SET progress = $1, status = $2 WHERE id = $3`,
-    [progress, status, jobId]
+    `UPDATE deep_research_jobs SET progress = $1, status = $2 WHERE id = $3 AND organization_id = $4`,
+    [progress, status, jobId, organizationId]
   );
 
   const cb = jobCallbacks.get(jobId);

@@ -208,7 +208,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const result = await proxyToShadow(
-        `/docx/templates/${encodeURIComponent(req.params.templateId)}/versions`,
+        `/docx/templates/${encodeURIComponent(String(req.params.templateId))}/versions`,
         { method: 'POST', body: req.body }
       );
       res.status(result.status).type(result.contentType).send(result.body);
@@ -232,7 +232,7 @@ router.get(
     const programId = String(req.query.program_id || '');
     try {
       const result = await proxyToShadow(
-        `/docx/templates/${encodeURIComponent(req.params.templateId)}/versions`,
+        `/docx/templates/${encodeURIComponent(String(req.params.templateId))}/versions`,
         { query: { program_id: programId } }
       );
       res.status(result.status).type(result.contentType).send(result.body);
@@ -306,7 +306,7 @@ router.get(
     const programId = String(req.query.program_id || '');
     try {
       const result = await proxyToShadow(
-        `/docx/renders/${encodeURIComponent(req.params.renderId)}`,
+        `/docx/renders/${encodeURIComponent(String(req.params.renderId))}`,
         { query: { program_id: programId } }
       );
       res.status(result.status).type(result.contentType).send(result.body);
@@ -334,7 +334,7 @@ router.get(
     const programId = String(req.query.program_id || '');
     try {
       const result = await proxyToShadow(
-        `/docx/renders/${encodeURIComponent(req.params.renderId)}/events`,
+        `/docx/renders/${encodeURIComponent(String(req.params.renderId))}/events`,
         { query: { program_id: programId } }
       );
       res.status(result.status).type(result.contentType).send(result.body);
@@ -362,7 +362,7 @@ router.post(
     try {
       const programId = String(req.query.program_id || req.body?.program_id || '');
       const result = await proxyToShadow(
-        `/docx/renders/${encodeURIComponent(req.params.renderId)}/execute`,
+        `/docx/renders/${encodeURIComponent(String(req.params.renderId))}/execute`,
         { method: 'POST', query: { program_id: programId } }
       );
       res.status(result.status).type(result.contentType).send(result.body);
@@ -393,7 +393,7 @@ router.get(
     try {
       const programId = String(req.query.program_id || '');
       const url = new URL(
-        `/docx/artifacts/${encodeURIComponent(req.params.artifactId)}/download`,
+        `/docx/artifacts/${encodeURIComponent(String(req.params.artifactId))}/download`,
         getShadowUrl()
       );
       url.searchParams.set('program_id', programId);
@@ -421,12 +421,19 @@ router.get(
         res.setHeader('X-Artifact-SHA256', sha256Header);
       }
 
-      // Register governed export (fail-closed for regulated exports)
+      // Register governed export (fail-closed for regulated exports).
+      // SECURITY: audit attribution must be the JWT principal — a
+      // `|| 1` / `|| 0` fallback would stamp every export from an
+      // unauth path under org 1 / userId 0, polluting the audit trail.
       const user = (req as any).user;
+      const orgIdRaw = user?.organizationId ?? (req as any).tenantContext?.organizationId;
+      if (orgIdRaw == null || user?.id == null) {
+        return res.status(403).json({ error: 'Tenant context required for governed export' });
+      }
       await registerExportGovernanceQuick({
-        organizationId: user?.organizationId || 1,
+        organizationId: Number(orgIdRaw),
         projectId: Number(programId) || 0,
-        userId: user?.id || 0,
+        userId: Number(user.id),
         userName: user?.name || user?.email || 'unknown',
         title: `DOCX Artifact: ${req.params.artifactId}`,
         exportFormat: 'docx',

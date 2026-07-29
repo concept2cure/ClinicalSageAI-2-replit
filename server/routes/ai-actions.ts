@@ -10,6 +10,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import {
   dispatchAction,
   getRegisteredActions,
@@ -28,7 +29,59 @@ import { getRedisHealth } from '../services/ai-actions/redis-manager';
 import { handleSSEStream, getSSEConnectionCount } from '../services/ai-actions/sse-stream';
 import type { AIActionRequest, AIActionResponse, AIActionSourceSurface } from '../../shared/types/ai-actions';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ai-actions');
+
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// Body validation schema (typed, format/range-checked)
+//
+// NOTE: userId / organizationId / userName / userRole are intentionally NOT in
+// this schema — they are always derived from the authenticated request
+// (req.user / tenant context), never from the body. actionType and
+// sourceSurface keep their dedicated registry-backed guards below (which emit
+// contract-specific error codes); this schema validates the remaining field
+// TYPES and FORMATS so a malformed-but-present field is rejected with 400
+// instead of flowing into the dispatcher.
+// ---------------------------------------------------------------------------
+const AI_ACTION_TARGET_TYPES = [
+  'artifact',
+  'document',
+  'project',
+  'section',
+  'task',
+  'template',
+] as const;
+
+const AI_ACTION_MODULE_TYPES = [
+  'cmc',
+  'cer',
+  'study',
+  'ectd',
+  '510k',
+  'vault',
+  'ind',
+  'nda',
+  'ivdr',
+] as const;
+
+const executeActionBodySchema = z
+  .object({
+    targetType: z.enum(AI_ACTION_TARGET_TYPES),
+    targetId: z.union([z.string(), z.number(), z.null()]).optional(),
+    projectId: z.coerce.number().int().positive(),
+    module: z.enum(AI_ACTION_MODULE_TYPES).optional(),
+    context: z.record(z.unknown()).optional(),
+    payload: z.record(z.unknown()).optional(),
+    conversationId: z.union([z.number(), z.string()]).optional(),
+    threadId: z.string().optional(),
+    async: z.boolean().optional(),
+  })
+  // actionType / sourceSurface are validated separately (registry-backed);
+  // allow any other keys to pass through unchanged.
+  .passthrough();
 
 // ---------------------------------------------------------------------------
 // Error helper
@@ -83,18 +136,29 @@ function getOrganizationId(req: Request): number {
       ? (req as any).organizationId
       : parseInt((req as any).organizationId as string, 10);
   }
-  if (req.user?.organizationId) return req.user.organizationId;
+  if (req.user?.organizationId != null) {
+    const orgId = typeof req.user.organizationId === 'number'
+      ? req.user.organizationId
+      : parseInt(String(req.user.organizationId), 10);
+    if (!isNaN(orgId)) return orgId;
+  }
   throw new Error('Organization context required');
 }
 
 function getUserId(req: Request): number {
-  if (req.userId) return req.userId;
-  if (req.user?.id) return req.user.id;
+  if (req.userId != null) {
+    const id = typeof req.userId === 'number' ? req.userId : parseInt(String(req.userId), 10);
+    if (!isNaN(id)) return id;
+  }
+  if (req.user?.id != null) {
+    const id = typeof req.user.id === 'number' ? req.user.id : parseInt(String(req.user.id), 10);
+    if (!isNaN(id)) return id;
+  }
   throw new Error('Authentication required');
 }
 
 function getUserName(req: Request): string {
-  return req.user?.name || req.user?.email || `user-${getUserId(req)}`;
+  return (req.user as { name?: string } | undefined)?.name || req.user?.email || `user-${getUserId(req)}`;
 }
 
 function getUserRole(req: Request): string {
@@ -179,6 +243,25 @@ router.post('/execute', async (req: Request, res: Response) => {
       );
     }
 
+    // 2c. Typed/format validation of the remaining body fields. actionType,
+    // sourceSurface, targetType and projectId presence were already checked
+    // above with contract-specific codes; this rejects present-but-malformed
+    // values (e.g. non-numeric projectId, unknown targetType/module, wrong
+    // field types) before they reach the dispatcher.
+    const parsedBody = executeActionBodySchema.safeParse(body);
+    if (!parsedBody.success) {
+      return res.status(400).json(
+        buildRouteError(
+          body.actionType,
+          parsedBody.error.errors.map(e => ({
+            code: 'INVALID_REQUEST',
+            message: `${e.path.join('.') || 'body'}: ${e.message}`,
+          })),
+          correlationId
+        )
+      );
+    }
+
     // 3. Build canonical request
     const actionRequest: AIActionRequest = {
       actionType: body.actionType,
@@ -252,7 +335,7 @@ router.post('/execute', async (req: Request, res: Response) => {
       _meta: { ...(response as any)._meta, correlationId },
     });
   } catch (err: any) {
-    console.error('[AI Actions Route] Unhandled error:', err);
+    logger.error('Unhandled error', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json(
       buildRouteError(
         req.body?.actionType || 'unknown',
@@ -296,7 +379,7 @@ router.get('/jobs/:jobId', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  const result = await getQueuedActionStatus(req.params.jobId);
+  const result = await getQueuedActionStatus(String(req.params.jobId));
   const httpStatus = result.status === 'completed' ? 200
     : result.status === 'failed' ? 422
     : result.status === 'active' ? 200
@@ -317,7 +400,7 @@ router.delete('/jobs/:jobId', async (req: Request, res: Response) => {
   }
 
   const { cancelQueuedAction } = await import('../services/ai-actions/action-queue');
-  const result = await cancelQueuedAction(req.params.jobId);
+  const result = await cancelQueuedAction(String(req.params.jobId));
 
   if (!result.success) {
     return res.status(result.status === 'not_found' ? 404 : 409).json(result);

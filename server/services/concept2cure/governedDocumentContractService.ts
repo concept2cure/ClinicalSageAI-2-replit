@@ -6,6 +6,10 @@ import {
 } from '../../../shared/types/document-contract';
 import { resolveRulePack } from './rules/ruleResolver';
 import { getDocumentClassSemantics } from './authority/documentClassSemantics';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 export type GovernedMutationContext = {
   req: Request;
@@ -55,18 +59,77 @@ export type GovernedResolutionResult = {
   };
 };
 
+/**
+ * Maps a canonical registry application-family (or segment) to the narrow
+ * `submissionProgram` union used by the governed-document contract.
+ */
+const FAMILY_TO_SUBMISSION_PROGRAM: Record<string, GovernedDocumentActionContract['submissionProgram']> = {
+  clinical_trial: 'ind',
+  marketing_authorization: 'ectd',
+  supplement: 'ectd',
+  variation: 'ectd',
+  renewal: 'ectd',
+  master_file: 'ectd',
+  pediatric: 'ind',
+  orphan: 'ind',
+  safety_report: 'general_ri',
+  pre_submission: 'general_ri',
+  device_clearance: '510k',
+  device_approval: 'pma',
+  designation: 'general_ri',
+  quality_cmc: 'ectd',
+  quality_system: 'general_ri',
+  post_market: 'general_ri',
+  software_documentation: '510k',
+  companion_diagnostic: 'pma',
+  clinical_document: 'ectd',
+  dossier_module: 'ectd',
+};
+
+/**
+ * Registry-ID overrides for filing types that need a specific submissionProgram
+ * not inferable from their application family alone.
+ */
+const REGISTRY_ID_TO_SUBMISSION_PROGRAM: Record<string, GovernedDocumentActionContract['submissionProgram']> = {
+  US_IND: 'ind',
+  US_510K: '510k',
+  US_PMA: 'pma',
+  US_DE_NOVO: '510k',
+  EU_CER: 'cer',
+  EU_MDR_TECHDOC: 'cer',
+  EU_IVDR_TECHDOC: 'ivdr',
+};
+
 function normalizeSubmissionProgram(
   raw: unknown
 ): GovernedDocumentActionContract['submissionProgram'] | undefined {
   if (typeof raw !== 'string') return undefined;
-  const value = raw.toLowerCase();
-  if (value === 'ind') return 'ind';
-  if (value === 'ectd') return 'ectd';
-  if (value === '510k' || value === '510(k)') return '510k';
-  if (value === 'pma') return 'pma';
-  if (value === 'cer') return 'cer';
-  if (value === 'ivdr') return 'ivdr';
-  if (value === 'general_ri' || value === 'general-ri' || value === 'ri') return 'general_ri';
+  const value = raw.trim();
+  if (!value) return undefined;
+
+  // Fast path: check if the value is already a recognized submissionProgram literal.
+  const lower = value.toLowerCase();
+  if (lower === 'ind') return 'ind';
+  if (lower === 'ectd') return 'ectd';
+  if (lower === '510k' || lower === '510(k)') return '510k';
+  if (lower === 'pma') return 'pma';
+  if (lower === 'cer') return 'cer';
+  if (lower === 'ivdr') return 'ivdr';
+  if (lower === 'general_ri' || lower === 'general-ri' || lower === 'ri') return 'general_ri';
+
+  // Bridge resolution: resolve broader / international type strings via the
+  // canonical Global Document Registry.
+  const entry = resolveToRegistryEntry(value);
+  if (entry) {
+    // 1. Explicit registry-ID mapping
+    const byId = REGISTRY_ID_TO_SUBMISSION_PROGRAM[entry.id];
+    if (byId) return byId;
+
+    // 2. Application-family mapping
+    const byFamily = FAMILY_TO_SUBMISSION_PROGRAM[entry.applicationFamily];
+    if (byFamily) return byFamily;
+  }
+
   return undefined;
 }
 
@@ -139,6 +202,16 @@ function resolveOriginSurface(context: GovernedMutationContext): GovernedDocumen
   return 'api_route';
 }
 
+/**
+ * Maps bridge segment strings to the narrow `clientTrack` union.
+ */
+const BRIDGE_SEGMENT_TO_CLIENT_TRACK: Record<string, GovernedDocumentActionContract['clientTrack']> = {
+  medical_devices: 'device',
+  diagnostics_ivd: 'diagnostics',
+  pharma_biotech: 'biotech',
+  cross_cutting: 'biotech',
+};
+
 function resolveClientTrack(context: GovernedMutationContext): GovernedDocumentActionContract['clientTrack'] {
   if (context.clientTrack) return context.clientTrack;
   const body = (context.req.body || {}) as Record<string, unknown>;
@@ -146,6 +219,19 @@ function resolveClientTrack(context: GovernedMutationContext): GovernedDocumentA
   const candidate = (metadata.clientTrack || body.clientTrack || '').toString().toLowerCase();
   if (candidate === 'device') return 'device';
   if (candidate === 'diagnostics') return 'diagnostics';
+  if (candidate === 'biotech') return 'biotech';
+
+  // Bridge-assisted inference: derive the client track from the submission
+  // type's segment when no explicit track was supplied.
+  const programRaw = (metadata.submissionProgram || body.submissionProgram || body.type || '') as string;
+  if (programRaw) {
+    const entry = resolveToRegistryEntry(programRaw);
+    if (entry?.segment) {
+      const mapped = BRIDGE_SEGMENT_TO_CLIENT_TRACK[entry.segment];
+      if (mapped) return mapped;
+    }
+  }
+
   return 'biotech';
 }
 
@@ -175,6 +261,19 @@ function resolvePersona(context: GovernedMutationContext): GovernedDocumentActio
   return 'regulatory';
 }
 
+/**
+ * Maps bridge region strings to the narrow `regulatorScope` union.
+ */
+const BRIDGE_REGION_TO_REGULATOR_SCOPE: Record<string, GovernedDocumentActionContract['regulatorScope']> = {
+  US: 'fda',
+  EU: 'ema',
+  UK: 'mhra',
+  CA: 'hc',
+  JP: 'pmda',
+  MULTI: 'multi',
+  ICH: 'multi',
+};
+
 function resolveRegulatorScope(context: GovernedMutationContext): GovernedDocumentActionContract['regulatorScope'] {
   if (context.regulatorScope) return context.regulatorScope;
   const body = (context.req.body || {}) as Record<string, unknown>;
@@ -185,6 +284,19 @@ function resolveRegulatorScope(context: GovernedMutationContext): GovernedDocume
   if (region === 'hc' || region === 'health_canada') return 'hc';
   if (region === 'pmda') return 'pmda';
   if (region === 'multi') return 'multi';
+  if (region === 'fda') return 'fda';
+
+  // Bridge-assisted inference: if a submission program / type string is present,
+  // use the bridge to derive the regulator scope from the registry entry's region.
+  const programRaw = (metadata.submissionProgram || body.submissionProgram || body.type || '') as string;
+  if (programRaw) {
+    const bridgeCtx = getSubmissionTypeContext(programRaw);
+    if (bridgeCtx) {
+      const mapped = BRIDGE_REGION_TO_REGULATOR_SCOPE[bridgeCtx.region];
+      if (mapped) return mapped;
+    }
+  }
+
   return 'fda';
 }
 
@@ -336,7 +448,7 @@ function resolveApprovalPathType(
   documentClass: GovernedDocumentActionContract['documentClass'],
   readinessGate: GovernedDocumentActionContract['readinessGate'],
   personaOverlay: ReturnType<typeof resolveRulePack>['personaOverlay'],
-  semantics: ReturnType<typeof getDocumentClassSemantics>
+  semantics: NonNullable<ReturnType<typeof getDocumentClassSemantics>>
 ): GovernedDocumentActionContract['approvalPathType'] {
   if (context.approvalPathType) return context.approvalPathType;
   if (personaOverlay.approvalPathOverride) return personaOverlay.approvalPathOverride;
@@ -344,7 +456,7 @@ function resolveApprovalPathType(
   if (documentClass === 'submission_component' || documentClass === 'module3_output') {
     return 'regulated_dual_review';
   }
-  return semantics.defaultApprovalPath;
+  return semantics!.defaultApprovalPath;
 }
 
 function evaluateExportGates(
@@ -436,7 +548,7 @@ function evaluateExportGates(
 
 export function resolveGovernedContext(context: GovernedMutationContext): GovernedResolutionResult {
   const now = new Date().toISOString();
-  const actorId = context.req.userId || context.req.userEmail || 'unknown';
+  const actorId = String(context.req.userId || context.req.userEmail || 'unknown');
   const body = (context.req.body || {}) as Record<string, unknown>;
   const metadata = (body.metadata || {}) as Record<string, unknown>;
   const traceId =
@@ -453,6 +565,9 @@ export function resolveGovernedContext(context: GovernedMutationContext): Govern
   const workspaceTarget = resolveWorkspaceTarget(context, documentClass, readinessGate);
   const placement = resolvePlacementTarget(context, workspaceTarget);
   const semantics = getDocumentClassSemantics(documentClass);
+  if (!semantics) {
+    throw new Error(`No document-class semantics registered for documentClass "${documentClass}"`);
+  }
   const provisionalContract: GovernedDocumentActionContract = {
     projectId: context.projectId,
     artifactId: context.artifactId,
@@ -467,7 +582,7 @@ export function resolveGovernedContext(context: GovernedMutationContext): Govern
     evidenceMode,
     documentClass,
     readinessGate,
-    approvalPathType: context.approvalPathType || semantics.defaultApprovalPath,
+    approvalPathType: context.approvalPathType || semantics!.defaultApprovalPath,
     recommendationSource: resolveRecommendationSource(context, originSurface, submissionProgram),
     workspaceTarget,
     dossierContainerId: placement.dossierContainerId,

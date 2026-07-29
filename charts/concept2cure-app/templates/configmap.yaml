@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "concept2cure-app.fullname" . }}
+  namespace: {{ .Values.namespaceOverride | default .Release.Namespace }}
+  labels:
+    {{- include "concept2cure-app.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.env.NODE_ENV | quote }}
+  LOG_LEVEL: {{ .Values.env.LOG_LEVEL | quote }}
+  SEED_DEMO_USER: {{ .Values.env.SEED_DEMO_USER | quote }}
+  SINGLE_TENANT_MODE: {{ .Values.env.SINGLE_TENANT_MODE | quote }}
+  STRIPE_DISABLED: {{ .Values.env.STRIPE_DISABLED | quote }}
+  {{- range $key, $value := .Values.env.extra }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

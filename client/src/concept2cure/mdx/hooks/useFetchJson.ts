@@ -24,6 +24,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { getAuthToken, getOrgId } from '@/utils/authToken';
 
 export interface UseFetchJsonResult<T> {
   /** Resolved JSON payload, or null while loading / on error / when url is null. */
@@ -78,9 +79,22 @@ export function useFetchJson<T>(
     let cancelled = false;
     setState((s) => ({ ...s, loading: true, error: null }));
 
+    // The c2c/mdx/intelligence routes sit behind the global /api auth gate,
+    // which accepts a Bearer JWT only (server/auth.ts authMiddleware) and reads
+    // tenant scope from x-organization-id. The token lives in
+    // trialsage_access_token (not a cookie), so credentials:'include' alone
+    // 401s — attach the same headers queryClient uses. Without this the c2c
+    // surfaces silently fall back to fixtures and never show live data.
+    const authToken = getAuthToken();
+    const orgId = getOrgId();
+    const authHeaders: Record<string, string> = {};
+    if (authToken) authHeaders.Authorization = `Bearer ${authToken}`;
+    if (orgId) authHeaders['x-organization-id'] = orgId;
+
     fetch(url, {
       ...DEFAULT_INIT,
       ...opts.init,
+      headers: { ...authHeaders, ...(opts.init?.headers as Record<string, string> | undefined) },
       signal: controller.signal,
     })
       .then(async (res) => {

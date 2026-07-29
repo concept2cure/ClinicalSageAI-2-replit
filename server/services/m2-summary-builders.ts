@@ -6,6 +6,7 @@
  *
  *   2.3 Quality Overall Summary (QOS) ← Module 3 (S, P, A, R)
  *   2.4 Nonclinical Overview        ← Module 4 study reports
+ *   2.5 Clinical Overview           ← CSR critical benefit-risk assessment
  *   2.7 Clinical Summary            ← CSR §11–12, M5.3
  *
  * These services do NOT produce the upstream content — they consume it. The
@@ -59,6 +60,19 @@ export interface NonclinicalStudy {
   noel?: string;
   glpStatus?: 'GLP' | 'non-GLP';
   reportSection: string;
+}
+
+export interface M25BuildContext {
+  /** CSRs (one per clinical study) — same clinical inputs as the 2.7 summary. */
+  csrs: CSRSummaryInput[];
+  /** Indication being summarized */
+  indication: string;
+  /** Investigational product name */
+  investigationalProduct: string;
+  /** Disease background / unmet need for 2.5.1 (optional). */
+  developmentRationale?: string;
+  /** One-line nonclinical safety conclusion carried from the 2.4 overview (optional). */
+  nonclinicalConclusion?: string;
 }
 
 export interface M27BuildContext {
@@ -309,6 +323,134 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     narrative,
     tables,
     inputSectionKeys: studies.map(s => s.reportSection),
+    completeness,
+    gaps,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+// ── 2.5 Clinical Overview ───────────────────────────────────────────────────
+
+/**
+ * Build M2.5 Clinical Overview from CSR data.
+ * Per ICH M4E(R2), this is the *critical assessment* of the clinical data —
+ * shorter and more integrative than the 2.7 Clinical Summary — culminating in
+ * an explicit benefit-risk conclusion. The six subsections are:
+ *   2.5.1 Product Development Rationale
+ *   2.5.2 Overview of Biopharmaceutics
+ *   2.5.3 Overview of Clinical Pharmacology
+ *   2.5.4 Overview of Efficacy
+ *   2.5.5 Overview of Safety
+ *   2.5.6 Benefits and Risks Conclusions
+ */
+export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
+  const csrs = ctx.csrs;
+  const pivotal = csrs.filter(c => c.phase.startsWith('3'));
+  const clinPharm = csrs.filter(c => c.phase.startsWith('1'));
+  const controlled = csrs.filter(c => /^[2-3]/.test(c.phase));
+  const totalSubjects = csrs.reduce((s, c) => s + (c.ittPopulation || c.sampleSize || 0), 0);
+  const totalSAEs = csrs.reduce((s, c) => s + (c.saeCount || 0), 0);
+  const totalDeaths = csrs.reduce((s, c) => s + (c.deathCount || 0), 0);
+
+  const gaps: string[] = [];
+  if (csrs.length === 0) gaps.push('no clinical studies available');
+  if (clinPharm.length === 0) gaps.push('clinical pharmacology (Phase 1) characterization');
+  if (pivotal.length === 0) gaps.push('pivotal (Phase 3) efficacy evidence');
+  if (totalSubjects === 0) gaps.push('safety database (no exposure data)');
+
+  const efficacyShown = pivotal.length > 0;
+  const benefitRisk =
+    csrs.length === 0
+      ? '[Benefit-risk cannot be concluded — no clinical data]'
+      : efficacyShown
+        ? `Efficacy is supported by ${pivotal.length} pivotal study/ies; against a safety database of ${totalSubjects} subjects with ${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s), the benefit-risk balance is favorable for ${ctx.indication}${gaps.length > 0 ? ', pending the open items below' : ''}.`
+        : `Efficacy is not yet established (no pivotal study); the benefit-risk balance cannot be concluded for ${ctx.indication} until controlled efficacy data are available.`;
+
+  const narrative = [
+    `MODULE 2.5 — CLINICAL OVERVIEW`,
+    ``,
+    `This Clinical Overview provides a critical assessment of the clinical data for ${ctx.investigationalProduct} in ${ctx.indication}, per ICH M4E(R2). It is intended to be read alongside the Clinical Summary (Module 2.7) and the full study reports in Module 5.`,
+    ``,
+    `2.5.1 PRODUCT DEVELOPMENT RATIONALE`,
+    ctx.developmentRationale ||
+      `[Disease background, current therapeutic options, unmet medical need, and the scientific rationale for ${ctx.investigationalProduct} — to be provided.]`,
+    ctx.nonclinicalConclusion ? `Nonclinical basis: ${ctx.nonclinicalConclusion}` : ``,
+    ``,
+    `2.5.2 OVERVIEW OF BIOPHARMACEUTICS`,
+    `Biopharmaceutic and analytical-method data are summarized in Module 2.7.1; they support the proposed dosage form and raise no issue affecting the benefit-risk assessment.`,
+    ``,
+    `2.5.3 OVERVIEW OF CLINICAL PHARMACOLOGY`,
+    clinPharm.length > 0
+      ? `Clinical pharmacology (${clinPharm.length} Phase 1 study/ies) characterizes pharmacokinetics, pharmacodynamics, and exposure-response, supporting the dose rationale (see Module 2.7.2).`
+      : `[Clinical pharmacology characterization missing — required to justify the dose per ICH M4E.]`,
+    ``,
+    `2.5.4 OVERVIEW OF EFFICACY`,
+    efficacyShown
+      ? `Efficacy was demonstrated in ${pivotal.length} pivotal study/ies across ${controlled.length} controlled study/ies:`
+      : `[No pivotal efficacy study available — efficacy is not yet established.]`,
+    ...pivotal.map(
+      c => `  • ${c.protocolNumber} (Phase ${c.phase}, n=${c.sampleSize}): ${c.primaryEndpoint} — ${c.primaryResult}.`,
+    ),
+    ``,
+    `2.5.5 OVERVIEW OF SAFETY`,
+    csrs.length > 0
+      ? `The safety database comprises ${totalSubjects} subjects exposed to ${ctx.investigationalProduct} across ${csrs.length} study/ies, with ${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s). The detailed safety analysis is in Module 2.7.4.`
+      : `[No safety database — clinical exposure data missing.]`,
+    ``,
+    `2.5.6 BENEFITS AND RISKS CONCLUSIONS`,
+    benefitRisk,
+    gaps.length > 0
+      ? `Open items before a definitive benefit-risk conclusion: ${gaps.join('; ')}.`
+      : `No open items preclude the benefit-risk conclusion.`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const tables: GeneratedTable[] = [];
+  if (controlled.length > 0) {
+    tables.push({
+      title: 'Pivotal and Controlled Efficacy Studies',
+      headers: ['Study', 'Phase', 'Design', 'N', 'Primary Endpoint', 'Result'],
+      rows: controlled.map(c => [
+        c.protocolNumber,
+        c.phase,
+        c.studyDesign,
+        String(c.ittPopulation || c.sampleSize),
+        c.primaryEndpoint,
+        c.primaryResult,
+      ]),
+    });
+  }
+  if (csrs.length > 0) {
+    tables.push({
+      title: 'Benefit-Risk Safety Overview',
+      headers: ['Metric', 'Value'],
+      rows: [
+        ['Total subjects exposed', String(totalSubjects)],
+        ['Studies', String(csrs.length)],
+        ['Serious adverse events', String(totalSAEs)],
+        ['Deaths', String(totalDeaths)],
+      ],
+    });
+  }
+
+  const expected = 6;
+  const present = [
+    Boolean(ctx.developmentRationale),
+    true, // 2.5.2 biopharmaceutics — always summarized
+    clinPharm.length > 0,
+    efficacyShown,
+    totalSubjects > 0,
+    csrs.length > 0, // 2.5.6 conclusion is possible
+  ].filter(Boolean).length;
+  const completeness = Math.round((present / expected) * 100);
+
+  return {
+    sectionKey: '2.5',
+    title: 'Clinical Overview',
+    narrative,
+    tables,
+    inputSectionKeys: csrs.map(c => `m5.3.5/${c.studyId}`),
     completeness,
     gaps,
     generatedAt: new Date().toISOString(),

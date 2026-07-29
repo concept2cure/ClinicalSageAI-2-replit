@@ -4,7 +4,6 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
-import { PMEM_LEARNINGS } from '../data';
 import type { Project, DetailTab } from '../types';
 
 interface SearchResult {
@@ -29,7 +28,7 @@ export function ProjectInternalSearch({ open, project, onClose, onJump }: Props)
     if (open) { setQ(''); setIdx(0); }
   }, [open]);
 
-  const learnings = (project && PMEM_LEARNINGS[project.id]) || [];
+  const learnings: import('../types').MemoryLearning[] = [];
 
   const results = useMemo<SearchResult[]>(() => {
     if (!project || !q) return [];

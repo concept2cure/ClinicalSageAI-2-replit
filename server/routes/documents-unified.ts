@@ -3,14 +3,20 @@
  *
  * Consolidates all document related routes into a single entry point.
  *
- * Consolidated from:
- * - document-routes.ts (core document operations)
- * - documentAuthoring.routes.ts (document authoring)
- * - documentOrchestrationRoutes.ts (document orchestration)
- * - document_qc_routes.ts (document QC)
- * - document-data-center.ts (document data center)
- * - authoring.router.ts (authoring workflows)
- * - dossier_routes.ts (dossier management)
+ * Mounts (the live set):
+ * - document-routes.ts  -> /core     (core document CRUD; its only mount)
+ * - dossier_routes.ts   -> /dossier  (dossier management; its only mount)
+ *
+ * NO LONGER MOUNTED HERE — see mountSubRouters() below for the full reasoning:
+ * - documentAuthoring.routes.ts      mounted at /api/document-authoring
+ * - documentOrchestrationRoutes.ts   mounted at the app root
+ * - document-data-center.ts          mounted at /api/device-data-center
+ * - document_qc_routes.ts            DELETED (unreachable by construction)
+ *
+ * "Consolidated from" was the original framing, and it was inaccurate: nothing
+ * was consolidated. Each router kept its own mount elsewhere and gained a
+ * second one here, so this file multiplied the URL surface rather than reducing
+ * it. authoring.router.ts was listed above but was never mounted here at all.
  *
  * @version 2.0.0
  * @module server/routes/documents-unified
@@ -112,8 +118,8 @@ router.get('/docs', (_req: Request, res: Response) => {
         legacyPath: '/api/documents/*',
       },
       '/authoring': {
-        description: 'Document authoring and editing',
-        methods: ['GET', 'POST', 'PUT'],
+        description: 'Document authoring (create, fetch) — 21 CFR Part 11',
+        methods: ['GET', 'POST'],
         legacyPath: '/api/document-authoring/*',
       },
       '/orchestration': {
@@ -159,41 +165,38 @@ async function mountSubRouters() {
     logger.error('Failed to mount core document routes:', error);
   }
 
-  // Document authoring
-  try {
-    const authoringModule = await import('./documentAuthoring.routes');
-    router.use('/authoring', authoringModule.default);
-    logger.info('Mounted: /authoring (document authoring)');
-  } catch (error) {
-    logger.error('Failed to mount authoring routes:', error);
-  }
-
-  // Document orchestration
-  try {
-    const orchestrationModule = await import('./documentOrchestrationRoutes');
-    router.use('/orchestration', orchestrationModule.default);
-    logger.info('Mounted: /orchestration (document orchestration)');
-  } catch (error) {
-    logger.error('Failed to mount orchestration routes:', error);
-  }
-
-  // Document QC
-  try {
-    const qcModule = await import('./document_qc_routes');
-    router.use('/qc', qcModule.default);
-    logger.info('Mounted: /qc (document QC)');
-  } catch (error) {
-    logger.error('Failed to mount QC routes:', error);
-  }
-
-  // Document data center
-  try {
-    const dataCenterModule = await import('./document-data-center');
-    router.use('/data-center', dataCenterModule.default);
-    logger.info('Mounted: /data-center (document data center)');
-  } catch (error) {
-    logger.error('Failed to mount data center routes:', error);
-  }
+  // ── REMOVED: three shadow mounts and one structurally unreachable router ────
+  //
+  // /authoring     -> documentAuthoring.routes, already mounted at
+  //                   /api/document-authoring by
+  //                   bootstrap/register-document-routes.ts:40
+  // /orchestration -> documentOrchestrationRoutes, already mounted at the app
+  //                   root by bootstrap/register-regulatory-routes.ts:26
+  // /data-center   -> document-data-center, already mounted at
+  //                   /api/device-data-center by
+  //                   bootstrap/register-document-routes.ts:201
+  //
+  // Each router was reachable at two URLs with identical behaviour. The second
+  // URL added no capability, doubled the surface a reviewer has to reason about,
+  // and gave any future auth or rate-limit change two places to be applied
+  // consistently — which is how a gate ends up on one path and not the other.
+  //
+  // The orchestration one could not have worked regardless: that router declares
+  // ABSOLUTE paths (router.post('/api/510k/:projectId/generate-documents'), …),
+  // so under a '/orchestration' prefix beneath '/api/documents' its URLs
+  // concatenated to /api/documents/orchestration/api/510k/… — reachable only by
+  // someone typing that by hand.
+  //
+  // /qc -> document_qc_routes.ts, DELETED. Same absolute-path problem with no
+  // second mount to fall back on: its three endpoints are declared as
+  // '/api/documents/bulk-approve', '/api/documents/:id/qc-complete' and
+  // '/api/documents/builder-order' under this '/qc' prefix, so the only URLs
+  // they ever answered on were /api/documents/qc/api/documents/… . The file
+  // also opened with `const io = null`, making its websocket notifications
+  // unconditional no-ops, and it wrote to no table.
+  //
+  // Nothing in client/src requests /api/documents/* at all — verified by
+  // exhaustive grep — so no caller changes with any of this.
 
   // Dossier routes
   try {

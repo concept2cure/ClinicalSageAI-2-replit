@@ -20,6 +20,16 @@ An Architecture Decision Record (ADR) is a document that captures an important a
 | [ADR-0003](0003-21-cfr-part-11-compliance-strategy.md) | 21 CFR Part 11 Compliance Strategy | Accepted | 2025-08-20 |
 | [ADR-0004](0004-lumen-cortex-ai-architecture.md)       | LUMEN CORTEX AI Architecture       | Accepted | 2026-01-15 |
 | [ADR-0005](0005-client-portal-v2-design.md)            | Client Portal V2 Design Approach   | Proposed | 2026-01-25 |
+| [ADR-0006](0006-canonical-migration-lineage.md)        | Canonical migration lineage        | Proposed | 2026-07-24 |
+| [ADR-0007](0007-canonical-operating-system-schema.md)  | Canonical operating-system schema  | Proposed | 2026-07-24 |
+| [ADR-0008](0008-canonical-contradiction-and-overlay-stores.md) | Canonical contradiction and overlay stores | Proposed | 2026-07-24 |
+| [ADR-0009](0009-resolution-receipt-persistence.md)     | Resolution receipt persistence     | Proposed | 2026-07-24 |
+| [ADR-0010](0010-schema-contract-test-tier.md)          | Schema-contract test tier          | Proposed | 2026-07-24 |
+
+> ADR-0006 … ADR-0010 arise from the WO-00 architecture conflict audit
+> (`docs/architecture/C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md`). **ADR-0006 must be
+> decided first** — the others depend on knowing which migration lineage is real.
+> All five require a read-only production schema survey before execution.
 
 ## Creating a New ADR
 

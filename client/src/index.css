@@ -1,13 +1,24 @@
-/* Canonical Concept2Cure design-system tokens — must precede every other
-   import. Sources colors, type, spacing, radii, motion and shadow. The
-   design-system folder is the single source of truth; do not copy its
+/* Canonical Concept2Cure design-system tokens are loaded ONCE, by
+   client/src/main.tsx, before this file. They are deliberately NOT re-imported
+   here.
+
+   They used to be, and the two imports resolved to the same path — so Vite
+   inlined design-system/colors_and_type.css into the entry chunk twice
+   (~19 KB duplicated, both a full and a minified copy of the same :root and
+   .dark blocks). Removing the duplicate is safe because the only stylesheet
+   loaded between main.tsx's import and this one — styles/projects-prototype.css
+   — declares zero custom properties, so nothing was relying on the second copy
+   to win a cascade.
+
+   The design-system folder remains the single source of truth; do not copy its
    contents into v2's own CSS (that re-introduces the 2026-04-26 regression
-   class). See design-system/CLAUDE.md. */
-@import "../../design-system/colors_and_type.css";
+   class). See design-system/CLAUDE.md.
 
-/* Zen Design System — enterprise UI foundation (legacy) */
-@import './concept2cure/design/zen.css';
-
+   `zen.css` (799 lines, 49 --zen-* tokens, 92 .zen-* selectors) was imported
+   here and shipped on every page load with zero consumers: no var(--zen-*) and
+   no .zen-* class name appeared in any source file in the repository. It is
+   deleted rather than left loading. tests/ui/token-authority.test.ts pins both
+   facts so neither can come back silently. */
 @import "tailwindcss";
 
 /* ─── Global token-name shim ──────────────────────────────────────
@@ -27,10 +38,55 @@
   --dur: var(--dur-normal);
 
   --border-light: var(--border-subtle, var(--border));
+  /* projects-prototype.css references --border-200 (defined only inside the
+     pdev module's scoped sheet); alias to the same bg-300 value globally so
+     the per-file token-cascade gate resolves it. */
+  --border-200: var(--bg-300);
+  --border-100: var(--bg-200);
+
+  /* Layout widths — the v2/biopharma/mdx family sheets reference these; the
+     module roots re-declare them scoped (app-v2.css .c2c-v2, mdx app.css),
+     which wins over this :root fallback. Declared here so the per-file
+     token-cascade gate resolves them in every family sheet. */
+  --rail: 264px;
+  --rail-collapsed: 56px;
+  --rail-expanded: 260px;
+
+  /* pdev module vars — defined on the module's scoped root in
+     concept2cure/pdev/app.css (which wins); mirrored here for the gate. */
+  --pdev-rail-w: 280px;
+  --pdev-rail-collapsed: 56px;
+  --pdev-ana-w: 380px;
+  --pdev-ana-seam: 32px;
+  --pdev-dur: var(--dur-normal, 200ms);
+  --pdev-ease: var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  --error-text: #8a2929;
+
+  /* Element-scoped dynamic vars: [data-tone] rules set --t/--tm per tone and
+     gauges set --pct inline; these :root defaults only give var() a resolvable
+     fallback (idle tone, empty gauge) and are always overridden in use. */
+  --t: var(--text-400);
+  --tm: var(--idle-muted);
+  --pct: 0;
+  --bg-50: var(--bg-100);
 
   /* Status colors — projects-prototype.css uses bare --err/--ok aliases. */
   --err: var(--error);
   --ok:  var(--success);
+
+  /* ui-v2 kit shared vars — the concept2cure/v2 family stylesheets reference
+     these (they are also declared in v2/styles/app-v2.css for the .c2c-v2 root,
+     with the dark override on .c2c-v2.dark). Declared here too so the
+     per-file token-cascade gate resolves them across every family sheet.
+     Values match app-v2.css light mode. */
+  --idle: #b0aea5;
+  --idle-muted: #eeece4;
+  --accent-bg: var(--accent-main-000);
+  --p: 0; /* progress-ring fill %, set per-element at runtime (.cp-ring) */
+  --v2-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / .04);
+  --v2-shadow-sm: 0 1px 3px 0 rgb(20 20 19 / .06), 0 1px 2px -1px rgb(20 20 19 / .06);
+  --v2-shadow-md: 0 4px 8px -2px rgb(20 20 19 / .08), 0 2px 4px -2px rgb(20 20 19 / .06);
+  --v2-shadow-lg: 0 12px 28px -6px rgb(20 20 19 / .14), 0 4px 10px -4px rgb(20 20 19 / .08);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -855,4 +911,37 @@ button:focus-visible {
   .ProseMirror h3 {
     page-break-after: avoid;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CJK typography fallbacks (i18n)
+ *
+ * When the active language is Japanese, Chinese or Korean, append
+ * locale-appropriate CJK font families so glyphs render with native shaping
+ * rather than tofu. Driven by the <html lang> attribute that i18next keeps in
+ * sync, so the :lang() selectors activate automatically on language switch.
+ * CJK scripts also read better with slightly looser line-height.
+ * ───────────────────────────────────────────────────────────────────────── */
+:lang(ja) {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+}
+
+:lang(zh) {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+}
+
+:lang(ko) {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Noto Sans KR", "Malgun Gothic", "Nanum Gothic", system-ui, sans-serif;
+}
+
+:lang(ja) body,
+:lang(zh) body,
+:lang(ko) body,
+html:lang(ja) .greetH1,
+html:lang(zh) .greetH1,
+html:lang(ko) .greetH1 {
+  line-height: 1.7;
 }

@@ -91,6 +91,55 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'clinical_ops.studies',                 role: 'PmaSurface trial metrics (Enrolled/Sites)',   required: false },
   { name: 'clinical_ops.deviations',              role: 'PmaSurface AE rate KPI',                      required: false },
   { name: 'clinical_ops.endpoint_results',        role: 'PmaSurface endpoints-achieved KPI',           required: false },
+
+  /* Beta-surface tables (migration 20260507). Required for the kit
+     surfaces UDI, Risk Management, Software lifecycle, and the Q-Sub
+     briefing-document editor. */
+  { name: 'public.udi_records',                   role: 'UdiSurface device records table',             required: true  },
+  { name: 'public.risk_items',                    role: 'Risk management ISO 14971 hazard matrix',     required: true  },
+  { name: 'public.risk_controls',                 role: 'Risk control measures (per risk item)',       required: true  },
+  { name: 'public.software_lifecycle_items',      role: 'Software lifecycle IEC 62304 deliverables',   required: true  },
+  { name: 'public.q_sub_section_bodies',          role: 'Q-Sub briefing-document section bodies',      required: true  },
+  /* IVD + diagnostic tables (migration 20260508). Required when serving
+     IVD / CDx / LDT clients; classed as 'required' so the health probe
+     keeps the operator honest about applying the migration. */
+  { name: 'public.ivd_analytical_performance',    role: 'IVD analytical performance studies',          required: true  },
+  { name: 'public.ivd_clinical_performance',      role: 'IVD clinical performance studies',            required: true  },
+  { name: 'public.ivdr_classifications',          role: 'EU IVDR Class A/B/C/D classifications',       required: true  },
+  { name: 'public.ivdr_per_documents',            role: 'IVDR Performance Evaluation Reports',         required: true  },
+  { name: 'public.ivd_clia_categorization',       role: 'CLIA complexity + waiver tracking',           required: true  },
+  { name: 'public.cdx_pairings',                  role: 'Companion diagnostic pairings (drug ↔ device)', required: true },
+  { name: 'public.cdx_concordance_studies',       role: 'CDx concordance to trial assay',              required: true  },
+  { name: 'public.ldt_inventory',                 role: 'Laboratory-developed test inventory',         required: true  },
+  { name: 'public.ldt_phase_milestones',          role: 'FDA LDT phase tracker milestones',            required: true  },
+  /* Submission gateway tables (migration 20260509). */
+  { name: 'public.submission_transmittals',       role: 'Multi-region submission transmittal log',     required: true  },
+  { name: 'public.submission_validation_findings',role: 'Per-transmittal validator findings',          required: true  },
+  { name: 'public.submission_gateway_credentials',role: 'Per-org gateway credentials registry',        required: true  },
+  /* Notifications + clinical study tables (migration 20260510). */
+  { name: 'public.mdx_notifications',             role: 'Cross-cutting MDX notification inbox',        required: true  },
+  { name: 'public.mdx_notification_subscriptions',role: 'Per-user MDX notification opt-in matrix',     required: true  },
+  { name: 'public.clinical_studies',              role: 'PMA / 510(k) clinical study records',         required: true  },
+  { name: 'public.clinical_study_sites',          role: 'Study site list + enrollment counts',         required: true  },
+  { name: 'public.clinical_study_deviations',     role: 'Study deviation log',                         required: true  },
+  { name: 'public.clinical_study_aes',            role: 'Adverse event log + UADE flag',               required: true  },
+  { name: 'public.clinical_study_endpoints',      role: 'Pre-specified endpoint results',              required: true  },
+  /* QMS + labeling tables (migration 20260511). */
+  { name: 'public.qms_documents',                 role: 'Controlled-document register (QMSR)',         required: true  },
+  { name: 'public.qms_training_records',          role: 'Per-user training acknowledgments',           required: true  },
+  { name: 'public.qms_suppliers',                 role: 'Approved supplier list + quality agreements', required: true  },
+  { name: 'public.qms_internal_audits',           role: 'Internal audit schedule + reports',           required: true  },
+  { name: 'public.qms_management_reviews',        role: 'Management review records',                   required: true  },
+  { name: 'public.qms_nonconforming_products',    role: 'Nonconforming product log + dispositions',    required: true  },
+  { name: 'public.labeling_documents',            role: 'IFU / package insert / patient label / manual', required: true },
+  { name: 'public.labeling_translations',         role: 'Language variants per labeling document',     required: true  },
+  { name: 'public.labeling_symbols',              role: 'ISO 15223-1 symbols per labeling document',   required: true  },
+  /* Legacy archive importer (migration 20260512). */
+  { name: 'public.import_jobs',                   role: 'Legacy archive import jobs',                  required: true  },
+  { name: 'public.import_job_files',              role: 'Per-file mapping outcome for imports',        required: true  },
+  { name: 'public.import_job_findings',           role: 'Import job validation findings',              required: true  },
+
+
 ];
 
 /* Shadow services we proxy to. Configured = env var present; we don't

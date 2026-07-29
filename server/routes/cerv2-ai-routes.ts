@@ -15,16 +15,10 @@ import rateLimit from 'express-rate-limit';
 import { authMiddleware } from '../auth';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { getGateway } from '../services/ai-gateway/gateway.js';
-import ragService from '../services/biotechRagService.js';
+import { ragRouter } from '../services/ragRouter.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
-// Initialize OpenAI for real AI generation
-let openai: OpenAI | null = null;
-try {
-
-} catch {
-  console.log('[CERV2 AI] OpenAI not available, using template fallback');
-}
+// AI generation is routed through the unified AI client (gateway-backed).
 import { ai } from '../lib/unified-ai-client';
 
 const router = Router();
@@ -207,21 +201,26 @@ async function generateWithRAG(
   let ragContext = '';
   let ragSources: any[] = [];
   try {
-    const searchResults = await ragService.search({
+    // Retrieve through the single router against the rag_chunks corpus, scoped
+    // to this organization. Passing organizationId closes the previous
+    // cross-tenant gap (the old ragService.search call was unscoped).
+    const ctx = await ragRouter.retrieve({
       query: ragQuery,
-      topK: 5,
-      minScore: 0.5,
-      searchMode: 'hybrid',
+      corpus: 'rag_chunks',
+      organizationId,
+      strategy: 'basic',
+      limit: 5,
+      threshold: 0.5,
+      useReranking: true,
+      useMmr: false,
     });
-    if (searchResults?.results?.length > 0) {
-      ragSources = searchResults.results.map((r: any) => ({
-        title: r.documentTitle || r.sectionTitle || 'Document',
-        score: r.score,
-        snippet: (r.content || '').substring(0, 200),
+    if (ctx.documents.length > 0) {
+      ragSources = ctx.documents.map(d => ({
+        title: d.title || 'Document',
+        score: d.finalScore,
+        snippet: (d.content || '').substring(0, 200),
       }));
-      ragContext = searchResults.results
-        .map((r: any) => r.content)
-        .join('\n\n---\n\n');
+      ragContext = ctx.documents.map(d => d.content).join('\n\n---\n\n');
     }
   } catch (ragErr) {
     console.warn('[CERV2 AI] RAG retrieval failed, continuing without context:', ragErr);
@@ -540,7 +539,7 @@ router.get(
   requireEditorAccess,
   (req: Request, res: Response) => {
     try {
-      const docType = req.params.docType;
+      const docType = String(req.params.docType);
       if (!validDocTypes.includes(docType as any)) {
         return res.status(400).json({
           error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
@@ -549,7 +548,7 @@ router.get(
 
       return res.json({
         docType,
-        templates: sectionTemplates[docType] || {},
+        templates: sectionTemplates[String(docType)] || {},
         note: 'Template text — fill in device-specific details before use.',
       });
     } catch (err: any) {
@@ -747,11 +746,12 @@ router.post(
       }
 
       // Fallback: enhanced section content, then base templates
-      const enhancedFn = enhancedMockContent[docType]?.[sectionId];
+      const enhancedSection = enhancedMockContent[docType];
+      const hasEnhancedFn = !!(enhancedSection && enhancedSection[sectionId]);
       let suggestion: string;
 
-      if (enhancedFn) {
-        suggestion = enhancedFn(ctx);
+      if (hasEnhancedFn) {
+        suggestion = enhancedSection[sectionId](ctx);
       } else {
         const templates = sectionTemplates[docType] || {};
         suggestion =
@@ -774,7 +774,7 @@ router.post(
 
       return res.json({
         suggestion,
-        source: enhancedFn ? 'enhanced-template' : 'template',
+        source: hasEnhancedFn ? 'enhanced-template' : 'template',
         ragSources: [],
         sectionId,
         docType,

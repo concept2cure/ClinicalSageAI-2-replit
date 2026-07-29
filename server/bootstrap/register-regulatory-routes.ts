@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
+import { authenticateToken } from '../middleware/auth.js';
 
 export interface RegulatoryBootstrapContext {
   app: express.Express;
@@ -8,6 +9,12 @@ export interface RegulatoryBootstrapContext {
 }
 
 export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstrapContext) {
+  // SECURITY: every regulatory route family is tenant-scoped. FDA 510(k)
+  // payloads, CER reports, manufacturing batch records, PV case files,
+  // clinical operations data — all per-org. None should reach the
+  // public internet unauthenticated. The two "no path" mounts
+  // (documentOrchestration, esgSubmission) attach to the root router,
+  // so they get auth applied at app.use() level.
   // ── FDA/CERV2/Device regulatory routes (parallelized) ──
   {
     const regulatoryRouteResults = await Promise.allSettled([
@@ -37,11 +44,20 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
       if (result.status === 'fulfilled') {
         const router = result.value.default;
         if (mountPath) {
-          app.use(mountPath, router);
+          app.use(mountPath, authenticateToken, router);
         } else {
-          app.use(router);
+          // No path: these routers declare absolute /api/510k/... paths, so
+          // they must mount at app root for those paths to resolve. But a
+          // bare `app.use(authenticateToken, router)` runs authenticateToken
+          // on EVERY request — including the SPA shell and Vite dev assets —
+          // which 401s the entire frontend. Scope the gate to /api paths so
+          // non-API requests fall through to the frontend handler.
+          app.use((req, res, next) => {
+            if (!req.path.startsWith('/api')) return next();
+            return authenticateToken(req, res, next);
+          }, router);
         }
-        console.log(`✅ ${label} routes mounted`);
+        console.log(`✅ ${label} routes mounted (auth-gated)`);
       } else {
         console.error(`❌ Failed to mount ${label} routes:`, result.reason);
       }
@@ -49,6 +65,10 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   }
 
   // ── IVDR (In Vitro Diagnostic Regulation EU 2017/746) ──
+  // Already auth-gated via the requireIVDRAccess wrapper below, which
+  // checks `req.userId` and rejects with 401 if missing. authenticateToken
+  // is still added in front so the JWT is parsed (and the role/perms
+  // claims become available) before requireIVDRAccess fires.
   try {
     const ivdrModule = await import('../routes/ivdr-routes');
     const createIVDRRoutes = ivdrModule.default;
@@ -169,7 +189,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
       console.error('❌ Failed to mount IVDR Binder routes:', binderErr);
     }
 
-    app.use('/api/ivdr', requireIVDRAccess, ivdrGateway);
+    app.use('/api/ivdr', authenticateToken, requireIVDRAccess, ivdrGateway);
     console.log('✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)');
 
     try {
@@ -187,7 +207,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   try {
     const mfgModule = await import('../routes/manufacturing-routes');
     const createManufacturingRoutes = mfgModule.default;
-    app.use('/api/manufacturing', createManufacturingRoutes(pool));
+    app.use('/api/manufacturing', authenticateToken, createManufacturingRoutes(pool));
     console.log('✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)');
   } catch (error) {
     console.error('❌ Failed to mount Manufacturing routes:', error);
@@ -197,17 +217,109 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   try {
     const pvModule = await import('../routes/pharmacovigilance-routes');
     const createPharmacovigilanceRoutes = pvModule.default;
-    app.use('/api/pharmacovigilance', createPharmacovigilanceRoutes());
+    app.use('/api/pharmacovigilance', authenticateToken, createPharmacovigilanceRoutes());
     console.log('✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)');
   } catch (error) {
     console.error('❌ Failed to mount Pharmacovigilance routes:', error);
+  }
+
+  // ── Pharmacovigilance Surveillance Board (derived signals + periodic reports) ──
+  // Read-model for the ui-v2 safety-surveillance surface: signals are DERIVED on
+  // read (adverse-event disproportionality via the existing screen); no new SQL.
+  try {
+    const pvBoardModule = await import('../routes/pharmacovigilance-board.routes');
+    app.use('/api/pharmacovigilance/board', authenticateToken, pvBoardModule.default());
+    console.log('✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Pharmacovigilance Board route:', error);
+  }
+
+  // ── CSR Workflow board (ICH E3 section readiness read-model) ──
+  try {
+    const csrWorkflowModule = await import('../routes/csr-workflow-routes');
+    app.use('/api/csr-workflow', authenticateToken, csrWorkflowModule.default());
+    console.log('✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount CSR Workflow routes:', error);
+  }
+
+  // ── Review board (approval/QC pipeline read-model) ──
+  try {
+    const reviewBoardModule = await import('../routes/review-board-routes');
+    app.use('/api/review', authenticateToken, reviewBoardModule.default());
+    console.log('✅ Review board routes mounted (GET /api/review/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Review board routes:', error);
+  }
+
+  // ── Regulatory Workspace (CTD authoring substrate read-model) ──
+  try {
+    const regulatoryWorkspaceModule = await import('../routes/regulatory-workspace-routes');
+    app.use('/api/regulatory-workspace', authenticateToken, regulatoryWorkspaceModule.default());
+    console.log('✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)');
+  } catch (error) {
+    console.error('❌ Failed to mount Regulatory Workspace routes:', error);
+  }
+
+  // ── Audit trail ledger (append-only signed chain read-model) ──
+  try {
+    const auditLedgerModule = await import('../routes/audit-trail-ledger.routes');
+    app.use('/api/audit-trail', authenticateToken, auditLedgerModule.default(pool));
+    console.log('✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)');
+  } catch (error) {
+    console.error('❌ Failed to mount Audit trail ledger routes:', error);
+  }
+
+  // ── Task management board (cross-project task read-model) ──
+  try {
+    const taskBoardModule = await import('../routes/taskBoard.routes');
+    app.use('/api/task-management', authenticateToken, taskBoardModule.default());
+    console.log('✅ Task management board route mounted (GET /api/task-management/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Task management board routes:', error);
+  }
+
+  // ── Artifacts center (governed artifact catalog read-model) ──
+  try {
+    const artifactsCenterModule = await import('../routes/artifacts-center-routes');
+    app.use('/api/artifacts-center', authenticateToken, artifactsCenterModule.default());
+    console.log('✅ Artifacts center route mounted (GET /api/artifacts-center)');
+  } catch (error) {
+    console.error('❌ Failed to mount Artifacts center routes:', error);
+  }
+
+  // ── Project home (project cockpit read-model) ──
+  try {
+    const projectHomeModule = await import('../routes/project-home-routes');
+    app.use('/api/project-home', authenticateToken, projectHomeModule.default());
+    console.log('✅ Project home route mounted (GET /api/project-home/:projectId)');
+  } catch (error) {
+    console.error('❌ Failed to mount Project home routes:', error);
+  }
+
+  // ── IVD completeness (IVDR technical-documentation readiness) ──
+  try {
+    const ivdCompletenessModule = await import('../routes/ivd-completeness-routes');
+    app.use('/api/ivd-completeness', authenticateToken, ivdCompletenessModule.default());
+    console.log('✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)');
+  } catch (error) {
+    console.error('❌ Failed to mount IVD completeness routes:', error);
+  }
+
+  // ── Batch draft (multi-section drafting spine read-model) ──
+  try {
+    const batchDraftModule = await import('../routes/batch-draft-routes');
+    app.use('/api/batch-draft', authenticateToken, batchDraftModule.default());
+    console.log('✅ Batch draft route mounted (GET /api/batch-draft/spine)');
+  } catch (error) {
+    console.error('❌ Failed to mount Batch draft routes:', error);
   }
 
   // ── Clinical Operations (study/site/enrollment/monitoring) ──
   try {
     const clinOpsModule = await import('../routes/clinical-operations-routes');
     const createClinicalOperationsRoutes = clinOpsModule.default;
-    app.use('/api/clinical-operations', createClinicalOperationsRoutes(pool));
+    app.use('/api/clinical-operations', authenticateToken, createClinicalOperationsRoutes(pool));
     console.log(
       '✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)'
     );
@@ -218,10 +330,27 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── CER (Clinical Evaluation Report) ──
   try {
     const cerModule = await import('../routes/cer-routes.js');
-    app.use('/api/cer', cerModule.default);
+    app.use('/api/cer', authenticateToken, cerModule.default);
     console.log('✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)');
   } catch (error) {
     console.error('❌ Failed to mount CER routes:', error);
+  }
+
+  // ── Knowledge Base (static, citable reference corpora) ──
+  try {
+    const knowledgeModule = await import('../routes/knowledge.js');
+    app.use('/api/knowledge', authenticateToken, knowledgeModule.default);
+    console.log('✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)');
+  } catch (error) {
+    console.error('❌ Failed to mount Knowledge Base routes:', error);
+  }
+
+  // ── Learning Horizon (continuous self-study loop, read-only window) ──
+  try {
+    const horizonModule = await import('../routes/learning-horizon.js');
+    app.use('/api/learning/horizon', authenticateToken, horizonModule.default);
+  } catch (error) {
+    console.error('❌ Failed to mount Regulatory Horizon routes:', error);
   }
 
   // ── Preclinical (Module 4) ingestion ──
@@ -229,7 +358,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // PRECLINICAL_INGEST_ENABLED is unset so the deny is uniform per env.
   try {
     const preclinicalModule = await import('../routes/preclinical');
-    app.use('/api/preclinical', preclinicalModule.default);
+    app.use('/api/preclinical', authenticateToken, preclinicalModule.default);
     console.log('✅ Preclinical (Module 4) ingestion routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount Preclinical routes:', error);
@@ -238,7 +367,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── PDF task + compression ──
   try {
     const pdfTasksModule = await import('../routes/pdf-task-routes');
-    app.use('/api/pdf-tasks', pdfTasksModule.default);
+    app.use('/api/pdf-tasks', authenticateToken, pdfTasksModule.default);
     console.log('✅ PDF task + compression routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount PDF task routes:', error);
@@ -247,7 +376,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── GRDHE (Global Regulatory Data Harmonization Engine) ──
   try {
     const grdheModule = await import('../routes/grdheRoutes.js');
-    app.use('/api/grdhe', grdheModule.default);
+    app.use('/api/grdhe', authenticateToken, grdheModule.default);
     console.log('✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)');
   } catch (error) {
     console.error('❌ Failed to mount GRDHE routes:', error);
@@ -256,10 +385,41 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── CERV2 Unified Document Routes ──
   try {
     const cerv2DocumentModule = await import('../routes/cerv2-document-routes');
-    app.use('/api/cerv2', cerv2DocumentModule.default);
+    app.use('/api/cerv2', authenticateToken, cerv2DocumentModule.default);
     console.log('✅ CERV2 unified document routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount CERV2 document routes:', error);
+  }
+
+  // ── PDEV → IND workflow (read-side orchestrator + state writes) ──
+  // See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the architecture
+  // finding. The route family is a thin layer over existing primitives
+  // (regulatoryPrograms, q_submissions, fda_communications,
+  // contradiction engine, etc.). It does NOT read ind_package_plans —
+  // that cluster is defined in shared/schema.ts and touched by no code.
+  try {
+    const pdevModule = await import('../routes/pdev/pdev-routes');
+    app.use('/api/pdev', authenticateToken, pdevModule.default);
+    console.log('✅ PDEV → IND workflow routes mounted');
+  } catch (error) {
+    console.error('❌ Failed to mount PDEV → IND routes:', error);
+  }
+
+  // ── Submission Pyramid (deterministic engine read-model) ──
+  // Pure reads over SubmissionPyramidEngine + globalPyramids — no DB, no tenant
+  // data, no writes, no audit. Mounted at /api/v1 so paths resolve to
+  // /api/v1/pyramids/* and /api/v1/global-pyramids for the ui-v2 `pyramid`
+  // surface. authenticateToken is applied PER-ROUTE inside pyramid.routes.ts
+  // (NOT here) so this mount does not JWT-gate the sibling X-API-Key public API
+  // that shares the /api/v1 prefix and is registered right after this family.
+  try {
+    const pyramidModule = await import('../routes/pyramid.routes');
+    app.use('/api/v1', pyramidModule.default);
+    console.log(
+      '✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount Submission Pyramid routes:', error);
   }
 
   console.log('✅ Regulatory route family registered');

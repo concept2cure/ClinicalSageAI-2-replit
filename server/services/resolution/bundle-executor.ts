@@ -34,6 +34,7 @@ import type {
   ResolutionConfidence,
 } from '../../../shared/types/resolution';
 import { recordSupersession, confirmSupersession } from './supersession-engine';
+import { persistBundleExecutionReceipt } from './receipt-store';
 import { transitionBundleState } from './bundle-builder';
 import { transitionResolutionState } from './resolution-state-machine';
 import { getResolutionPlan } from './resolution-planner';
@@ -300,11 +301,46 @@ export async function executeBundle(
     timestamp: new Date().toISOString(),
   };
 
-  // 8. Store receipt as resolution memo on the bundle
+  // 8. Store receipt as resolution memo on the bundle (human-readable copy;
+  // NOT the proof object — the memo column is mutable text with no integrity
+  // hash).
   await db.update(resolutionBundles).set({
     resolutionMemo: JSON.stringify(receipt, null, 2),
     updatedAt: new Date(),
   }).where(eq(resolutionBundles.id, bundleId));
+
+  // 9. Persist the verifiable receipt (ADR-0009 / C-4): append-only row with
+  // integrity hashes and a snapshot of the durable object states the receipt
+  // asserts. FAIL CLOSED on persistence failure: the execution effects above
+  // are already durable, but an execution whose proof cannot be written must
+  // not be reported as cleanly complete — callers must see the failure, not a
+  // receipt that exists only in memory (master §2: no local-only success
+  // presented as persisted truth).
+  //
+  // Known limitation (recorded in ADR-0009): the effects and the receipt are
+  // not yet one transaction — that requires threading a tx handle through the
+  // supersession engine and bundle builder, and is the ADR's phase-2 scope. In
+  // this failure mode the bundle remains in its post-execution state with the
+  // memo written, and the thrown error names the bundle for operator follow-up.
+  try {
+    const ref = await persistBundleExecutionReceipt({
+      organizationId,
+      projectId: bundle.projectId,
+      bundleId,
+      planId: bundle.planId ?? null,
+      executedBy: userId,
+      receipt,
+    });
+    receipt.receiptId = ref.receiptId;
+    receipt.receiptHash = ref.receiptHash;
+  } catch (err) {
+    throw new Error(
+      `Bundle ${bundleId}: execution effects are durable but the verifiable ` +
+      `receipt could not be persisted (${err instanceof Error ? err.message : 'unknown error'}). ` +
+      `Treating execution as FAILED for proof purposes — do not report this ` +
+      `correction as complete.`,
+    );
+  }
 
   return receipt;
 }

@@ -16,37 +16,57 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// vi.hoisted ensures env vars are set BEFORE any ESM imports (including
+// transitive ones) are evaluated. Loading the auth/db/config chain at
+// module init requires these to be present, or the chain throws.
+vi.hoisted(() => {
+  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+});
+
+
 const { svc, audit } = vi.hoisted(() => ({
   svc: {
-    createQSubmission: vi.fn(async () => ({
+    createQSubmission: vi.fn(async (..._a: any[]) => ({
       id: 'q-1', programId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
       qSubType: 'presub', title: 'x', stage: 'plan',
     })),
-    setCommitmentRolledIn: vi.fn(async () => ({
+    setCommitmentRolledIn: vi.fn(async (..._a: any[]) => ({
       id: 'cccccccc-cccc-cccc-cccc-ccccccccccc1',
       displayCode: 'cm-1', dossierLinkSectionId: '6', rolledIn: true,
     })),
-    upsertMapping: vi.fn(async () => ({ id: 'm-1' })),
-    createDocument: vi.fn(async () => ({ id: 'd-1', code: 'PMCF-1' })),
-    updateDocument: vi.fn(async () => ({ id: 'd-1', updated: true })),
-    validateDocument: vi.fn(() => ({ valid: true, findings: [] })),
-    supersedeDocument: vi.fn(async () => ({ id: 'd-2' })),
-    getDocument: vi.fn(async () => ({ id: 'd-1' })),
-    approveDocument: vi.fn(async () => ({ ok: true })),
-    assessSufficiency: vi.fn(async () => ({ id: 'a-1', verdict: 'sufficient', overallScore: 90 })),
-    runReviewerSimulation: vi.fn(async () => ({ runId: 'rs-1' })),
-    submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
+    upsertMapping: vi.fn(async (..._a: any[]) => ({ id: 'm-1' })),
+    createDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', code: 'PMCF-1' })),
+    updateDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1', updated: true })),
+    validateDocument: vi.fn((..._a: any[]) => ({ valid: true, findings: [] })),
+    supersedeDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-2' })),
+    getDocument: vi.fn(async (..._a: any[]) => ({ id: 'd-1' })),
+    approveDocument: vi.fn(async (..._a: any[]) => ({ ok: true })),
+    assessSufficiency: vi.fn(async (..._a: any[]) => ({ id: 'a-1', verdict: 'sufficient', overallScore: 90 })),
+    runReviewerSimulation: vi.fn(async (..._a: any[]) => ({ runId: 'rs-1' })),
+    submitToFDA: vi.fn(async (..._a: any[]) => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
   },
   audit: { logAction: vi.fn().mockResolvedValue(undefined) },
 }));
 
-class TenantAccessError extends Error {
-  constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
-}
+// vi.hoisted because TenantAccessError is referenced inside the
+// vi.mock factory below, which is hoisted above top-level statements.
+const { TenantAccessError } = vi.hoisted(() => ({
+  TenantAccessError: class extends Error {
+    constructor(m: string) {
+      super(m);
+      this.name = 'TenantAccessError';
+    }
+  },
+}));
 
 vi.mock('../../q-sub/q-sub.service', () => ({
-  createQSubmission: (...a: any[]) => svc.createQSubmission(...a),
-  setCommitmentRolledIn: (...a: any[]) => svc.setCommitmentRolledIn(...a),
+  createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
+  setCommitmentRolledIn: (...a: any[]) => (svc.setCommitmentRolledIn as any)(...a),
   TenantAccessError,
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],
 }));
@@ -54,36 +74,51 @@ vi.mock('../../../shared/schema/q-sub', () => ({
   Q_SUB_TYPES: ['presub', 'sir', 'srd', 'agree', 'info'],
 }));
 vi.mock('../../auditService', () => ({ default: audit }));
-vi.mock('../../db', () => ({
-  pool: {
-    query: vi.fn(async (sql: string) => {
-      if (sql.includes('SELECT id, section_number')) {
-        return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
-      }
-      return { rows: [] };
-    }),
-  },
+const { dbMockFactory } = vi.hoisted(() => ({
+  dbMockFactory: () => ({
+    pool: {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes('SELECT id, section_number')) {
+          return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
+        }
+        return { rows: [] };
+      }),
+    },
+  }),
 }));
-const ESGSubmissionService = vi.fn(() => ({
-  submitToFDA: (...a: any[]) => svc.submitToFDA(...a),
+// The handler imports '../../db' from its own location
+// (server/services/ana-ri/mdx-command-handlers.ts), which resolves to
+// server/db. From this test file (server/services/ana-ri/__tests__/),
+// the equivalent specifier is '../../../db'. Mock both so the resolution
+// works no matter how vitest keys the cache.
+vi.mock('../../db', () => dbMockFactory());
+vi.mock('../../../db', () => dbMockFactory());
+const { ESGSubmissionService } = vi.hoisted(() => ({
+  // Regular function (not arrow) so `new ESGSubmissionService()` in the
+  // handler works — an arrow vi.fn throws "is not a constructor".
+  ESGSubmissionService: vi.fn(function () {
+    return {
+      submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
+    };
+  }),
 }));
 vi.mock('../../ESGSubmissionService', () => ({ default: ESGSubmissionService }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
-  upsertMapping: (...a: any[]) => svc.upsertMapping(...a),
+  upsertMapping: (...a: any[]) => (svc.upsertMapping as any)(...a),
 }));
 vi.mock('../../gspr-postmarket/post-market.service', () => ({
-  approveDocument: (...a: any[]) => svc.approveDocument(...a),
-  createDocument: (...a: any[]) => svc.createDocument(...a),
-  supersedeDocument: (...a: any[]) => svc.supersedeDocument(...a),
-  updateDocument: (...a: any[]) => svc.updateDocument(...a),
-  validateDocument: (...a: any[]) => svc.validateDocument(...a),
-  getDocument: (...a: any[]) => svc.getDocument(...a),
+  approveDocument: (...a: any[]) => (svc.approveDocument as any)(...a),
+  createDocument: (...a: any[]) => (svc.createDocument as any)(...a),
+  supersedeDocument: (...a: any[]) => (svc.supersedeDocument as any)(...a),
+  updateDocument: (...a: any[]) => (svc.updateDocument as any)(...a),
+  validateDocument: (...a: any[]) => (svc.validateDocument as any)(...a),
+  getDocument: (...a: any[]) => (svc.getDocument as any)(...a),
 }));
 vi.mock('../../evidence-sufficiency/evidence-sufficiency.service', () => ({
-  assessSufficiency: (...a: any[]) => svc.assessSufficiency(...a),
+  assessSufficiency: (...a: any[]) => (svc.assessSufficiency as any)(...a),
 }));
 vi.mock('../../intelligence-engine/reviewer-simulator.service', () => ({
-  runReviewerSimulation: (...a: any[]) => svc.runReviewerSimulation(...a),
+  runReviewerSimulation: (...a: any[]) => (svc.runReviewerSimulation as any)(...a),
 }));
 
 import {
@@ -299,9 +334,11 @@ const PROBES: Probe[] = [
     tool: 'audit.explain',
     expectedAction: 'agent.ana.audit.explain',
     invoke: () => {
-      // The handler reads from `pool` lazily via dynamic import. Stub
-      // a minimal db module that returns one row.
-      vi.doMock('../../db', () => ({
+      // The handler reads from `pool` lazily via dynamic import. Stub a
+      // minimal db module that returns one row. explainAuditRow lives in
+      // server/services/ana-ri/, so its '../../db' is server/db; from this
+      // test file that's '../../../db'. doMock both keys.
+      const explainDbFactory = () => ({
         pool: {
           query: vi.fn(async () => ({
             rows: [
@@ -320,7 +357,9 @@ const PROBES: Probe[] = [
             ],
           })),
         },
-      }));
+      });
+      vi.doMock('../../db', explainDbFactory);
+      vi.doMock('../../../db', explainDbFactory);
       return explainAuditRow(CTX, { auditRowId: 1 });
     },
   },
@@ -331,6 +370,14 @@ describe('AnA-MDX audit contract — every tool emits one agent.ana.* audit row'
     audit.logAction.mockClear();
   });
 
+  // All 18 probes run — no skips. section.approve is satisfied by the
+  // top-level db mock: its first query SELECTs id, section_number,
+  // section_title, status from cerv2_510k_sections, which the mock
+  // pool keys on via 'SELECT id, section_number'. audit.explain is
+  // satisfied by the vi.doMock in its probe closure: explainAuditRow
+  // resolves the db module lazily (dynamic import at call time), so
+  // the doMock'd pool — returning one audit_logs row in the caller's
+  // org — is what it reads.
   for (const probe of PROBES) {
     it(`${probe.tool} → ${probe.expectedAction}`, async () => {
       audit.logAction.mockClear();

@@ -9,6 +9,9 @@ on:
       - '.github/workflows/ops-audit-plan.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   ops-audit:
     runs-on: ubuntu-latest
@@ -16,6 +19,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # generate-last-pr-wiring-audit.mjs runs
+          # `git log --merges -n 20` to enumerate the last 20 merged PRs.
+          # The default shallow checkout (depth 1) returns no merge
+          # commits, so the audit step exits 1 with "No merged pull
+          # requests found." Fetch full history.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4

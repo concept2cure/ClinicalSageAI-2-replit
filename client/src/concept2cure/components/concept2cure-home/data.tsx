@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react';
-import styles from './styles.module.css';
+import { isFeatureEnabled } from '@/flags/featureFlags';
 import type { IconName } from './icons';
 
 export type NavGroup = 'domain' | 'work' | 'intelligence' | 'system';
@@ -15,10 +14,12 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { id: 'mdx',        label: 'Medical Device and Diagnostics', icon: 'stethoscope', group: 'domain',       href: null },
   { id: 'biopharma',  label: 'Biotech and Pharma',             icon: 'atom',        group: 'domain',       href: null },
+  { id: 'pdev',       label: 'Pharmaceutical Development',      icon: 'beaker',      group: 'domain',       href: null },
 
   { id: 'projects',   label: 'Projects',                       icon: 'folder',      group: 'work',         href: null },
   { id: 'vault',      label: 'Vault DMS',                      icon: 'vault',       group: 'work',         href: null },
   { id: 'tasking',    label: 'Tasking and Collaboration',      icon: 'checkCircle', group: 'work',         href: null },
+  { id: 'communication', label: 'Communication Center',        icon: 'chat',        group: 'work',         href: null },
   { id: 'submission', label: 'Submission Center',              icon: 'send',        group: 'work',         href: null },
 
   { id: 'protocol',   label: 'Protocol and Study Design',      icon: 'microscope',  group: 'intelligence', href: null },
@@ -37,6 +38,7 @@ export const NAV_SUB: Record<string, string[]> = {
   projects:   ['NDA 212345 · BX-204', '510(k) · BX-204 device', 'EMA scientific advice', 'Pediatric plan'],
   vault:      ['Source documents', 'Controlled copies', 'Audit log'],
   tasking:    ['Assigned to me', 'Open reviews', 'Due this week'],
+  communication: ['Review queue', 'Pending approvals', 'Audit trail'],
   submission: ['In flight · 2', 'Archive · 14'],
   protocol:   ['Active protocols · 3', 'Templates', 'Endpoint library'],
   cmc:        ['Drug substance · §3.2.S', 'Drug product · §3.2.P', 'Stability studies', 'Specifications'],
@@ -54,7 +56,10 @@ export interface DashMetric {
   metric: string;
   unit?: string;
   bar?: { pct: number; tone: 'ok' | 'warn' | 'err' };
-  meta: ReactNode;
+  /** Plain-text summary shown below the metric. The kit used JSX spans for
+   *  delta colouring; those are prototype artefacts — production renders
+   *  plain strings and applies colour via CSS classes on the card itself. */
+  meta: string;
 }
 
 export const DASH: DashMetric[] = [
@@ -73,12 +78,12 @@ export const DASH: DashMetric[] = [
   {
     label: 'Tasks due',
     metric: '7',
-    meta: <><span className={styles.deltaWarn}>3 overdue</span> · 4 due by Friday</>,
+    meta: '3 overdue · 4 due by Friday',
   },
   {
     label: 'Alerts',
     metric: '2',
-    meta: <>FDA guidance update · EMA precedent <span className={styles.deltaUp}>+1</span></>,
+    meta: 'FDA guidance update · EMA precedent +1',
   },
 ];
 
@@ -93,20 +98,35 @@ export interface ModuleCard {
 export const MODULES: ModuleCard[] = [
   { navId: 'mdx',        icon: 'stethoscope', title: 'Medical Device and Diagnostics', desc: 'Class II/III device clearance, IVD submissions, predicate intelligence, UDI and post-market vigilance.',               foot: '6 active · 510(k), De Novo, PMA' },
   { navId: 'biopharma',  icon: 'atom',        title: 'Biotech and Pharma',             desc: 'Small molecule and biologic submissions. IND, NDA, BLA, MAA, pediatric plans.',                                            foot: '8 active · NDA, BLA, MAA' },
+  { navId: 'pdev',       icon: 'beaker',      title: 'Pharmaceutical Development',      desc: 'IND program development across CMC, nonclinical, clinical and regulatory. Assembly, FDA interactions and contradiction tracking.', foot: 'IND programs · CMC, nonclinical, clinical' },
   { navId: 'projects',   icon: 'folder',      title: 'Projects',                       desc: 'Persistent workspaces with shared context, chats, artifacts and files.',                                                   foot: '14 projects · 42 contributors' },
   { navId: 'vault',      icon: 'vault',       title: 'Vault DMS',                      desc: 'Controlled document management with 21 CFR Part 11 audit trail and e-signatures.',                                         foot: '12,480 docs · 99.8% valid' },
   { navId: 'tasking',    icon: 'checkCircle', title: 'Tasking and Collaboration',      desc: 'Review assignments, sign-offs and cross-team handoffs tied to artifacts.',                                                 foot: '7 open · 3 overdue' },
+  { navId: 'communication', icon: 'chat',     title: 'Communication Center',           desc: 'One regulated-handoff hub — review queue, pending e-signature approvals, and the 21 CFR Part 11 audit trail.',            foot: 'Approvals · reviews · audit' },
   { navId: 'submission', icon: 'send',        title: 'Submission Center',              desc: 'Compose, validate and ship eCTD, EU-CTR and other agency packages.',                                                       foot: '2 in flight · next: NDA 212345' },
   { navId: 'protocol',   icon: 'microscope',  title: 'Protocol and Study Design',      desc: 'Draft protocols and study designs grounded in agency precedent and endpoint libraries.',                                  foot: '3 protocols · biostat AnA' },
   { navId: 'cmc',        icon: 'beaker',      title: 'CMC Module',                     desc: 'Chemistry, Manufacturing and Controls — drug substance, drug product, stability, specs.',                                foot: '§3.2.S / §3.2.P · 12 docs' },
   { navId: 'biostat',    icon: 'sigma',       title: 'Biostatistics',                  desc: 'Statistical analysis plans, sample-size calculations, TLFs and interim analyses.',                                         foot: '4 SAPs · R / SAS bridge' },
   { navId: 'quality',    icon: 'shieldCheck', title: 'Quality and Lifecycle',          desc: 'SOPs, CAPA, post-market surveillance, inspection readiness and continuous compliance.',                                    foot: '3 CAPAs open · 1 inspection due' },
-  { navId: 'reporting',  icon: 'barChart',    title: 'Reports',                        desc: 'Readiness dashboards, timeline forecasts and precedent likelihood modeling.',                                             foot: '9 dashboards · RIM v4.2' },
+  { navId: 'reporting',  icon: 'barChart',    title: 'Reports',                        desc: 'Segment-aware report catalog, readiness forecasts and portfolio board packs — live, governed and tier-gated.',            foot: 'Report-OS · Insights' },
   { navId: 'memory',     icon: 'brain',       title: 'AnA Memory',                     desc: 'Browse what AnA remembers — pinned facts, source traces and how the RIM reasons about your programs.',                   foot: '42 recalls · 14 pinned' },
   { navId: 'artifacts',  icon: 'sparkles',    title: 'User Artifacts',                 desc: 'Every artifact AnA has drafted for you — sections, SAPs, responses, slides.',                                             foot: '34 artifacts · 12 this week' },
   { navId: 'audit',      icon: 'scroll',      title: 'Audit and Compliance',           desc: '21 CFR Part 11 audit trail, e-signatures, access logs and full change history.',                                          foot: 'Part 11 ready · 248k events' },
-  { navId: 'admin',      icon: 'settings',    title: 'Admin Settings',                 desc: 'Users and roles, SSO, agency credentials, integrations and billing.',                                                    foot: 'Enterprise tier · SOC 2 Type II' },
+  { navId: 'admin',      icon: 'settings',    title: 'Admin Settings',                 desc: 'Users and roles, SSO, agency credentials, integrations and billing.',                                                    foot: 'Enterprise tier · SSO and RBAC' },
 ];
+
+// PDEV (Phase 7) is a Domain rail item gated by ENABLE_PDEV_SURFACE. When the
+// flag is off the route falls through to projects, so the rail, launcher, and
+// command palette must hide the entry rather than offer a dead destination.
+export function visibleNavItems(): NavItem[] {
+  if (isFeatureEnabled('ENABLE_PDEV_SURFACE')) return NAV_ITEMS;
+  return NAV_ITEMS.filter(n => n.id !== 'pdev');
+}
+
+export function visibleModules(): ModuleCard[] {
+  if (isFeatureEnabled('ENABLE_PDEV_SURFACE')) return MODULES;
+  return MODULES.filter(m => m.navId !== 'pdev');
+}
 
 export interface RecentRow {
   icon: IconName;

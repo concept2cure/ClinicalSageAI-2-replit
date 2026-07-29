@@ -22,7 +22,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 import { authenticateToken } from '../middleware/auth';
 import { db } from '../db';
@@ -73,6 +73,25 @@ router.get('/:projectIdent/document-preview', async (req: Request, res: Response
   const ident = String(req.params.projectIdent);
   if (!ident) {
     return res.status(422).json({ error: 'projectIdent is required' });
+  }
+
+  // 301 redirect: if a c2c_documents row exists for this project identifier,
+  // point to the canonical /api/c2c/documents/:id/outline endpoint.
+  // Fall through if no migrated document found (legacy handler serves the response).
+  if (/^\d+$/.test(ident)) {
+    try {
+      const newDocId = `doc_fda510k_${ident}`;
+      const { rows } = await db.execute(sql`
+        SELECT id FROM c2c_documents WHERE id = ${newDocId} LIMIT 1
+      `);
+      if (rows.length > 0) {
+        res.set('Deprecation', 'true');
+        res.set('Sunset', '2026-08-01');
+        return res.redirect(301, `/api/c2c/documents/${newDocId}/outline`);
+      }
+    } catch {
+      // c2c_documents may not exist yet — fall through.
+    }
   }
 
   // Resolve the identifier in priority order, all tenant-scoped:

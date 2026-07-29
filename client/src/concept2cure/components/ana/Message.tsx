@@ -15,12 +15,20 @@
  *
  * No new tokens or selectors — every style used is already in the bundle.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { marked, setOptions } from 'marked';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { setOptions } from 'marked';
 
 import { I } from './icons';
 import { Composer } from './Composer';
+import { GovernedActionSignoff } from './GovernedActionSignoff';
+import type { MessageAttachment } from './useAnaChat';
+import type { PendingSignoff } from './useGovernedAction';
+import { attachmentReadLabel } from '../../hooks/useChatUpload';
 import styles from './styles.module.css';
+import {
+  renderSafeMarkdown,
+  sanitizeChatHtml,
+} from './renderSafeMarkdown';
 
 // Configure marked once: GitHub-flavoured markdown, no line-break collapsing.
 setOptions({ gfm: true, breaks: false });
@@ -39,11 +47,39 @@ export interface ExecutedActionChip {
   sectionCode?: string;
   executed?: boolean;
   error?: string;
+  /** For an "open in editor" chip produced by a document-generating tool. */
+  draftContent?: string;
+  draftTitle?: string;
+}
+
+export interface ToolCallView {
+  name: string;
+  label: string;
+  status: 'running' | 'success' | 'error';
+  /** Agentic-loop round (1-based); rows are grouped by round when > 1 round ran. */
+  round?: number;
+  /** Input args AnA passed the tool — surfaced in a collapsed audit disclosure. */
+  input?: unknown;
+  /** Capped tool result — surfaced in the same collapsed disclosure. */
+  result?: string;
+}
+
+/** Pretty-print a tool input object for the audit disclosure; never throws. */
+export function formatToolInput(input: unknown): string | null {
+  if (input == null) return null;
+  try {
+    const s = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
+    return s && s !== '{}' ? s : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface MessageProps {
   role: 'user' | 'assistant';
   text: string;
+  /** Files attached to this (user) turn — rendered as chips above the bubble. */
+  attachments?: MessageAttachment[];
   /** Markdown-rendered HTML. If unset, `text` renders as plain paragraph. */
   html?: string;
   streaming?: boolean;
@@ -57,6 +93,8 @@ export interface MessageProps {
   executedActions?: ExecutedActionChip[];
   /** Detected intent lens (audit / risk / strategy / improve / compare). */
   detectedLens?: string;
+  /** Specific regulatory document type detected (e.g. "Clinical Overview"). Shown as "Drafting: X" chip. */
+  detectedDocumentType?: string;
   /** Raw DocumentActionType strings from the orchestrator. */
   suggestedActions?: string[];
   /** Label lookup for DocumentActionType strings. */
@@ -70,9 +108,17 @@ export interface MessageProps {
     groundedClaims: number;
     weakClaims: number;
     missingSupport: number;
+    riskSummary?: string;
+    flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
+  /** Context layers ANA drew on this turn (enrichment source names). */
+  groundingSources?: string[];
   /** Server-side degraded-mode warnings. */
   warnings?: string[];
+  /** Tools AnA invoked this turn — shown as transparency/audit status rows. */
+  toolCalls?: ToolCallView[];
+  /** Governed actions blocked pending a Part 11 sign-off (reason + e-signature). */
+  pendingSignoffs?: PendingSignoff[];
   /** When this turn was sent (ms epoch) — for relative timestamp chip. */
   sentAt?: number;
 
@@ -106,6 +152,7 @@ function formatLatency(ms: number): string {
 export function Message({
   role,
   text,
+  attachments,
   html,
   streaming,
   statusPhase,
@@ -114,11 +161,15 @@ export function Message({
   stopped,
   executedActions,
   detectedLens,
+  detectedDocumentType,
   suggestedActions,
   suggestedActionLabels,
   thinking,
   evidence,
+  groundingSources,
   warnings,
+  toolCalls,
+  pendingSignoffs,
   sentAt,
   onCopy,
   onRetry,
@@ -132,10 +183,44 @@ export function Message({
   // Reasoning section is open while thinking arrives so users see it form,
   // auto-collapses once the answer starts flowing.
   const [thinkingOpen, setThinkingOpen] = useState(true);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  // Per-signoff resolution: 'done' (ran), 'dismissed', or an outcome message.
+  const [signoffOutcomes, setSignoffOutcomes] = useState<Record<number, string>>({});
+  const [dismissedSignoffs, setDismissedSignoffs] = useState<Record<number, boolean>>({});
   const hasText = text.length > 0;
   useEffect(() => {
     if (hasText) setThinkingOpen(false);
   }, [hasText]);
+
+  // Reasoning duration — "Thought for Ns", the contemporary reasoning cue.
+  // Start is stamped when reasoning first streams in; the duration freezes once
+  // the answer begins (or streaming stops), so it reads as a completed thought.
+  // Only measured for turns we actually watched stream — a reloaded historical
+  // message keeps the plain "Show reasoning" affordance rather than a bogus time.
+  const hasThinking = !!thinking && thinking.length > 0;
+  const thinkingStartRef = useRef<number | null>(null);
+  const sawStreamingRef = useRef(false);
+  const [thinkingMs, setThinkingMs] = useState<number | null>(null);
+  useEffect(() => {
+    if (streaming) sawStreamingRef.current = true;
+  }, [streaming]);
+  useEffect(() => {
+    if (hasThinking && thinkingStartRef.current === null) {
+      thinkingStartRef.current = Date.now();
+    }
+  }, [hasThinking]);
+  useEffect(() => {
+    if (
+      sawStreamingRef.current &&
+      thinkingStartRef.current !== null &&
+      thinkingMs === null &&
+      (hasText || !streaming)
+    ) {
+      setThinkingMs(Math.max(0, Date.now() - thinkingStartRef.current));
+    }
+  }, [hasText, streaming, thinkingMs]);
+  const thinkingSeconds =
+    thinkingMs !== null ? Math.max(1, Math.round(thinkingMs / 1000)) : null;
 
   // Render markdown to HTML on every text change — marked v17 handles
   // partial input gracefully (open bold/code/table renders the content it
@@ -143,12 +228,20 @@ export function Message({
   // plain paragraph text during streaming.
   const renderedHtml = useMemo(() => {
     if (role !== 'assistant' || !text) return undefined;
-    try {
-      return marked.parse(text) as string;
-    } catch {
-      return undefined;
-    }
+    // renderSafeMarkdown runs marked.parse(...) then DOMPurify with the
+    // chat allowlist — strips <script>, inline event handlers, javascript:
+    // URLs, and any tag/attr not on the whitelist. Required before
+    // injection because the assistant text is attacker-controllable input
+    // from the model's perspective (prompt injection can emit raw HTML).
+    return renderSafeMarkdown(text);
   }, [role, text]);
+
+  // Reasoning rendered through the same safe-markdown pipeline as the answer,
+  // so lists / emphasis in AnA's thinking read properly (was plain paragraphs).
+  const renderedThinkingHtml = useMemo(
+    () => (hasThinking ? renderSafeMarkdown(thinking as string) : undefined),
+    [hasThinking, thinking],
+  );
 
   // After the markdown HTML mounts, decorate each <pre> block with a copy
   // button + language label. Anthropic shows these on every code block;
@@ -230,7 +323,25 @@ export function Message({
     }
     return (
       <div className={`${styles.msg} ${styles.msgUser}`}>
-        <div className={styles.bubble}>{text}</div>
+        <div className={styles.msgUserStack}>
+          {attachments && attachments.length > 0 && (
+            <div className={styles.msgAttachments}>
+              {attachments.map(a => {
+                const meta = attachmentReadLabel(a.extractionMethod, a.extractionWords);
+                return (
+                  <span key={a.id} className={styles.msgAttachment} title={meta ? `${a.name} — ${meta}` : a.name}>
+                    <I.attach size={12} />
+                    <span className={styles.attachmentText}>
+                      <span className={styles.label}>{a.name}</span>
+                      {meta && <span className={styles.attachmentMeta}>{meta}</span>}
+                    </span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          <div className={styles.bubble}>{text}</div>
+        </div>
         {onEditRegenerate && (
           <button
             className={styles.userEditBtn}
@@ -265,6 +376,14 @@ export function Message({
               {formatLens(detectedLens)}
             </span>
           )}
+          {detectedDocumentType && (
+            <span
+              className={styles.docTypeChip}
+              title={`Drafting document: ${detectedDocumentType}`}
+            >
+              Drafting: {detectedDocumentType}
+            </span>
+          )}
           {fallback && (
             <span className={styles.cite} style={{ marginLeft: 8 }} title="Running in degraded mode">
               Degraded
@@ -275,21 +394,50 @@ export function Message({
               Stopped
             </span>
           )}
-          {evidence && (evidence.sourceCount > 0 || evidence.groundedClaims > 0 || evidence.weakClaims > 0) && (
-            <span
-              className={styles.cite}
-              style={{ marginLeft: 8 }}
-              title={
-                evidence.weakClaims > 0 || evidence.missingSupport > 0
-                  ? `${evidence.weakClaims} weak / ${evidence.missingSupport} unsupported claim(s)`
-                  : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''} · ${evidence.groundedClaims} grounded claim${evidence.groundedClaims !== 1 ? 's' : ''}`
-              }
-            >
-              {evidence.weakClaims > 0 || evidence.missingSupport > 0
-                ? `⚠ ${evidence.weakClaims + evidence.missingSupport} weak`
-                : `✓ ${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''}`}
-            </span>
-          )}
+          {evidence && (evidence.sourceCount > 0 || evidence.groundedClaims > 0 || evidence.weakClaims > 0) && (() => {
+            const weak = evidence.weakClaims > 0 || evidence.missingSupport > 0;
+            const label = weak
+              ? `${evidence.weakClaims + evidence.missingSupport} weak`
+              : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''}`;
+            const detail = weak
+              ? `${evidence.weakClaims} weak / ${evidence.missingSupport} unsupported claim(s)`
+              : `${evidence.sourceCount} source${evidence.sourceCount !== 1 ? 's' : ''} · ${evidence.groundedClaims} grounded claim${evidence.groundedClaims !== 1 ? 's' : ''}`;
+            const icon = weak ? <I.alert size={11} /> : <I.shieldCheck size={11} />;
+            // Only offer a drill-down when the server sent something to show.
+            const expandable =
+              (evidence.flaggedClaims && evidence.flaggedClaims.length > 0) ||
+              !!evidence.riskSummary ||
+              (groundingSources && groundingSources.length > 0);
+            if (!expandable) {
+              return (
+                <span
+                  className={styles.cite}
+                  style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                  title={detail}
+                >
+                  {icon}
+                  {label}
+                </span>
+              );
+            }
+            return (
+              <button
+                type="button"
+                className={styles.citeButton}
+                style={{ marginLeft: 8 }}
+                onClick={() => setEvidenceOpen(v => !v)}
+                aria-expanded={evidenceOpen}
+                title={evidenceOpen ? 'Hide evidence detail' : `${detail} — show detail`}
+              >
+                {icon}
+                {label}
+                <I.down
+                  size={11}
+                  className={`${styles.evidenceChevron}${evidenceOpen ? ' ' + styles.evidenceChevronOpen : ''}`}
+                />
+              </button>
+            );
+          })()}
           {typeof latencyMs === 'number' && latencyMs > 0 && (
             <span className={styles.cite} style={{ marginLeft: 8 }} title={`${latencyMs} ms`}>
               {formatLatency(latencyMs)}
@@ -306,6 +454,51 @@ export function Message({
           )}
         </div>
 
+        {evidence && evidenceOpen && (() => {
+          const weak = evidence.weakClaims > 0 || evidence.missingSupport > 0;
+          const claims = evidence.flaggedClaims ?? [];
+          const kindLabel: Record<string, string> = {
+            ungrounded: 'Ungrounded',
+            overclaim: 'Overclaim',
+            contradiction: 'Contradiction',
+          };
+          return (
+            <div className={styles.evidencePanel}>
+              <div className={styles.evidenceHeading}>
+                {weak ? <I.alert size={12} /> : <I.shieldCheck size={12} />}
+                {weak ? 'Claims to verify' : 'Evidence grounding'}
+              </div>
+              {evidence.riskSummary && (
+                <p className={styles.evidenceSummary}>{evidence.riskSummary}</p>
+              )}
+              {claims.length > 0 ? (
+                <ul className={styles.evidenceClaims}>
+                  {claims.map((c, i) => (
+                    <li key={i} className={styles.evidenceClaim}>
+                      <span className={styles.evidenceKind} data-kind={c.kind}>
+                        {kindLabel[c.kind] ?? c.kind}
+                      </span>
+                      <span className={styles.evidenceClaimText}>{c.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.evidenceSummary}>
+                  No specific claims were flagged this turn.
+                </p>
+              )}
+              {groundingSources && groundingSources.length > 0 && (
+                <div className={styles.evidenceContext}>
+                  <span className={styles.evidenceContextLabel}>Context drawn on</span>
+                  <span className={styles.evidenceContextList}>
+                    {groundingSources.map(s => s.replace(/[-_]/g, ' ')).join(' · ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {thinking && thinking.length > 0 && (
           <div className={styles.thinking}>
             <button
@@ -318,22 +511,104 @@ export function Message({
               <span className={styles.ico}>
                 <I.sparkles size={12} />
               </span>
-              {thinkingOpen ? 'Hide reasoning' : 'Show reasoning'}
-              {!text && streaming && (
-                <span className={styles.cite} style={{ marginLeft: 8, fontStyle: 'italic' }}>
-                  thinking…
-                </span>
-              )}
+              {thinkingSeconds !== null
+                ? `Thought for ${thinkingSeconds}s`
+                : streaming
+                  ? 'Thinking…'
+                  : thinkingOpen
+                    ? 'Hide reasoning'
+                    : 'Show reasoning'}
             </button>
-            {thinkingOpen && (
-              <div className={styles.thinkingBody}>
-                {thinking.split('\n\n').map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
+            {thinkingOpen && renderedThinkingHtml && (
+              <div
+                className={styles.thinkingBody}
+                dangerouslySetInnerHTML={{ __html: renderedThinkingHtml }}
+              />
             )}
           </div>
         )}
+
+        {toolCalls && toolCalls.length > 0 && (() => {
+          // Group by agentic round so a deep investigation reads as the
+          // progression it was (round 1 needs no announcement; later rounds get
+          // a quiet header). Falls back to the classic flat list when the turn
+          // ran a single round or the server sent no round tags.
+          const multiRound = toolCalls.some(tc => (tc.round ?? 1) > 1);
+          return (
+            <div className={styles.toolCalls} role="status" aria-label="Tools AnA used">
+              {toolCalls.map((tc, i) => {
+                const round = tc.round ?? 1;
+                const prevRound = i > 0 ? (toolCalls[i - 1].round ?? 1) : 1;
+                const showRoundHeader = multiRound && round > 1 && round !== prevRound;
+                return (
+                  <div key={`${tc.name}-${i}`}>
+                    {showRoundHeader && (
+                      <div className={styles.cite}>Continuing — investigation round {round}</div>
+                    )}
+                    <div className={styles.toolCall} data-status={tc.status}>
+                      <span className={styles.ico}>
+                        <I.flask size={12} />
+                      </span>
+                      <span className={styles.toolCallLabel}>{tc.label}</span>
+                      {tc.status === 'running' && (
+                        <span className={styles.typing} aria-label="running">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      )}
+                      {tc.status === 'success' && (
+                        <span className={styles.ico} aria-label="done">
+                          <I.check size={12} />
+                        </span>
+                      )}
+                      {tc.status === 'error' && (
+                        <span className={styles.toolCallError}>failed</span>
+                      )}
+                    </div>
+                    {(() => {
+                      // Audit disclosure — collapsed by default so it never
+                      // clutters the calm status row, but a reviewer can open it
+                      // to see exactly what this step queried and returned. Plain
+                      // text in <pre> is React-escaped (XSS-safe); result is
+                      // already capped client-side.
+                      const inputStr = formatToolInput(tc.input);
+                      const resultStr = tc.result && tc.result.trim() ? tc.result : null;
+                      if (!inputStr && !resultStr) return null;
+                      const preStyle: CSSProperties = {
+                        maxHeight: 200,
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        fontSize: 12,
+                        margin: '4px 0 0',
+                      };
+                      return (
+                        <details style={{ margin: '2px 0 0 20px' }}>
+                          <summary className={styles.cite} style={{ cursor: 'pointer' }}>
+                            Inspect this step
+                          </summary>
+                          {inputStr && (
+                            <>
+                              <div className={styles.cite}>Input</div>
+                              <pre style={preStyle}>{inputStr}</pre>
+                            </>
+                          )}
+                          {resultStr && (
+                            <>
+                              <div className={styles.cite}>Result</div>
+                              <pre style={preStyle}>{resultStr}</pre>
+                            </>
+                          )}
+                        </details>
+                      );
+                    })()}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {renderedHtml ? (
           /* Markdown-rendered assistant reply (live during streaming, final after) */
@@ -348,7 +623,13 @@ export function Message({
             )}
           </div>
         ) : html ? (
-          <div className={styles.aiProse} dangerouslySetInnerHTML={{ __html: html }} />
+          // Server-provided HTML — sanitize against the same chat
+          // allowlist so it can never introduce <script> tags or inline
+          // event handlers, regardless of trust in the source.
+          <div
+            className={styles.aiProse}
+            dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(html) }}
+          />
         ) : streaming && text === '' ? (
           /* Show progress phase label before the first token arrives */
           <div className={styles.aiProse}>
@@ -430,23 +711,48 @@ export function Message({
           </div>
         )}
 
+        {pendingSignoffs && pendingSignoffs.length > 0 && (
+          <div className={styles.signoffs}>
+            {pendingSignoffs.map((s, i) => {
+              if (dismissedSignoffs[i]) return null;
+              const outcome = signoffOutcomes[i];
+              if (outcome) {
+                return (
+                  <div key={`${s.command}-${i}`} className={styles.signoffResolved} role="status">
+                    <span className={styles.ico}><CheckIco size={12} /></span>
+                    {outcome}
+                  </div>
+                );
+              }
+              return (
+                <GovernedActionSignoff
+                  key={`${s.command}-${i}`}
+                  signoff={s}
+                  onResolved={o => setSignoffOutcomes(prev => ({ ...prev, [i]: o.message }))}
+                  onCancel={() => setDismissedSignoffs(prev => ({ ...prev, [i]: true }))}
+                />
+              );
+            })}
+          </div>
+        )}
+
         <div className={styles.aiActions}>
           {onCopy && (
-            <button title="Copy" onClick={onCopy} type="button">
+            <button title="Copy" aria-label="Copy response" onClick={onCopy} type="button">
               <CopyIco size={14} />
             </button>
           )}
           {onRetry && (
-            <button title="Retry" onClick={onRetry} type="button">
+            <button title="Retry" aria-label="Retry response" onClick={onRetry} type="button">
               <RedoIco size={14} />
             </button>
           )}
           {onFeedback && (
             <>
-              <button title="Good" onClick={() => onFeedback(true)} type="button">
+              <button title="Good" aria-label="Good response" onClick={() => onFeedback(true)} type="button">
                 <ThumbUpIco size={14} />
               </button>
-              <button title="Bad" onClick={() => onFeedback(false)} type="button">
+              <button title="Bad" aria-label="Bad response" onClick={() => onFeedback(false)} type="button">
                 <ThumbDownIco size={14} />
               </button>
             </>

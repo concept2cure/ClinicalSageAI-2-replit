@@ -148,7 +148,7 @@ function scoreConfidence(params: {
  * Uses a simple hash of the first 200 chars of normalized content + category.
  */
 function generateDedupeKey(content: string, category: string): string {
-  const normalizedContent = content.toLowerCase().replaceAll(/\s+/g, ' ').trim().slice(0, 200);
+  const normalizedContent = content.toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 200);
 
   // Simple string hash (djb2)
   let hash = 5381;

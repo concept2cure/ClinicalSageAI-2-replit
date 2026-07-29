@@ -83,7 +83,7 @@ const updateLinkSchema = z
  */
 router.get('/:projectId/modules', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -103,7 +103,7 @@ router.get('/:projectId/modules', async (req: Request, res: Response) => {
  */
 router.get('/:projectId/modules/summary', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -123,7 +123,7 @@ router.get('/:projectId/modules/summary', async (req: Request, res: Response) =>
  */
 router.post('/:projectId/modules', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -162,7 +162,7 @@ router.post('/:projectId/modules', async (req: Request, res: Response) => {
  */
 router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenant = getTenantContext(req);
@@ -211,9 +211,10 @@ router.delete(
 
       const removed = await projectModuleBridge.unlinkModule(
         params.projectId,
-        tenant.organizationId,
         params.moduleType,
-        params.moduleInstanceId
+        params.moduleInstanceId,
+        tenant.organizationId,
+        tenant.clientWorkspaceId ?? undefined
       );
       if (!removed) {
         return res.status(404).json({ error: 'Module link not found' });
@@ -278,10 +279,11 @@ router.patch(
       const body = statusSchema.parse(req.body);
       const updated = await projectModuleBridge.updateModuleStatus(
         params.projectId,
-        tenant.organizationId,
         params.moduleType,
         params.moduleInstanceId,
-        body.status
+        body.status,
+        tenant.organizationId,
+        tenant.clientWorkspaceId ?? undefined
       );
 
       if (!updated) {
@@ -321,7 +323,8 @@ router.get('/find', async (req: Request, res: Response) => {
     const linkedProjects = await projectModuleBridge.findProjectsForModule(
       moduleTypeResult.data,
       moduleInstanceId,
-      tenant.organizationId
+      tenant.organizationId,
+      tenant.clientWorkspaceId ?? undefined
     );
 
     res.json({ moduleType: moduleTypeResult.data, moduleInstanceId, projects: linkedProjects });

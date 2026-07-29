@@ -47,11 +47,67 @@ import { resolveGovernedContext } from '../services/concept2cure/governedDocumen
 import { extractWithTika } from '../services/ingestion/tikaClient';
 import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
+import { searchConnectedRepositories } from '../services/integrations/connector-search.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
 router.use(authenticateToken);
+
+// ═════════════════════════════════════════════════════════════════════════════
+// GET /api/knowledge-base/search-connectors?q=…[&connectors=a,b][&limit=n]
+//
+// Cross-repository keyword search over the org's connected data sources
+// (Google Drive, Box, OneDrive, SharePoint, Veeva Vault, …). Orchestration
+// lives in services/integrations/connector-search (searchConnectedRepositories),
+// which never throws: connector/credential problems come back in `skipped` so
+// the UI can tell the user which systems to connect. The response shape matches
+// the ui-v2 DmsSearch component (documents + skipped + sample). Org is the JWT's
+// organizationId — never a client-supplied value.
+// ═════════════════════════════════════════════════════════════════════════════
+
+router.get('/search-connectors', async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const orgId = Number(user?.organizationId ?? user?.orgId);
+  if (!orgId || orgId <= 0) {
+    return void res.status(400).json({ error: 'Organization context required' });
+  }
+
+  const query = String(req.query.q ?? req.query.query ?? '').trim();
+  if (!query) {
+    return void res.status(422).json({ error: 'Query parameter "q" is required' });
+  }
+
+  const connectorsParam = req.query.connectors;
+  const connectors =
+    typeof connectorsParam === 'string' && connectorsParam
+      ? connectorsParam
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+  const limitRaw = Number(req.query.limit);
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : undefined;
+
+  try {
+    const result = await searchConnectedRepositories(orgId, { query, connectors, limit });
+    res.json({
+      source: result.source,
+      searched: result.searched,
+      skipped: result.skipped,
+      resultCount: result.resultCount,
+      documents: result.documents,
+      note: result.note,
+      // Live answer from the org's own connectors — an empty documents list with
+      // populated `skipped` means "no systems connected yet", not sample data.
+      sample: false,
+    });
+  } catch (err: any) {
+    console.error('[knowledge-base] connector search failed:', err?.message);
+    res.status(502).json({ error: 'Connector search failed', detail: err?.message });
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Config helpers
@@ -2116,7 +2172,7 @@ router.post(
       }
 
       // Use existing sessionId or create new one
-      let sessionId = req.body?.sessionId || crypto.randomUUID();
+      const sessionId = req.body?.sessionId || crypto.randomUUID();
       let session = autoDraftSessions.get(sessionId);
       if (!session) {
         session = { files: [], createdAt: Date.now() };

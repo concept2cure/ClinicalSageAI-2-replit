@@ -18,7 +18,14 @@ interface Props {
 
 export function InstructionsTab({ project, onSaveInstructions }: Props) {
   const [text, setText] = useState(project.instructions || '');
-  const [active, setActive] = useState(!!project.instructions);
+  // Per HANDOFF item 8: active is persisted on the project payload as
+  // instructionsActive. Use that field when present; fall back to
+  // whether instructions text exists (legacy seed rows don't have it).
+  const [active, setActive] = useState(
+    project.instructionsActive !== undefined
+      ? project.instructionsActive
+      : !!project.instructions,
+  );
   const [saving, setSaving] = useState(false);
   const charCount = text.length;
   const limit = 5000;

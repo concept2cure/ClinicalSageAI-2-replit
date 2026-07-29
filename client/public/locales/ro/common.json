@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "close": "Închide",
+    "next": "Următorul",
+    "previous": "Anteriorul",
+    "delete": "Șterge",
+    "continue": "Continuă",
+    "back": "Înapoi",
+    "search": "Caută"
+  },
+  "density": {
+    "label": "Densitate",
+    "compact": "Compactă",
+    "comfortable": "Confortabilă",
+    "spacious": "Spațioasă"
+  },
+  "topbar": {
+    "notifications": "Notificări",
+    "help": "Ajutor",
+    "askAna": "Întrebați AnA sau accesați…",
+    "command": "Comandă",
+    "activeProject": "Proiect activ",
+    "noProjects": "Niciun proiect",
+    "selectProject": "Selectați un proiect",
+    "filter": "Filtrează",
+    "clientType": "Tip de client",
+    "pharma": "Farmaceutică",
+    "biotech": "Biotehnologie",
+    "switchProgram": "Schimbă programul"
+  },
+  "language": {
+    "label": "Limbă",
+    "select": "Selectați limba"
+  }
+}

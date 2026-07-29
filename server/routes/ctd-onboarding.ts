@@ -11,7 +11,12 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { authMiddleware } from '../auth.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ctd-onboarding');
+
 import {
   createCTDProject,
   listCTDProjects,
@@ -94,7 +99,7 @@ router.post('/projects', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Create project error:', message);
+    logger.error('Create project error', { err: message });
     return res.status(500).json({ error: 'Failed to create CTD project' });
   }
 });
@@ -113,7 +118,7 @@ router.get('/projects', async (req: Request, res: Response) => {
     return res.json({ projects, total: projects.length });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] List projects error:', message);
+    logger.error('List projects error', { err: message });
     return res.status(500).json({ error: 'Failed to list CTD projects' });
   }
 });
@@ -128,7 +133,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const projectId = parseInt(req.params.id, 10);
+    const projectId = parseInt(String(req.params.id), 10);
 
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
@@ -143,7 +148,7 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Get project error:', message);
+    logger.error('Get project error', { err: message });
     return res.status(500).json({ error: 'Failed to get CTD project' });
   }
 });
@@ -158,7 +163,7 @@ router.post('/projects/:id/upload', upload.single('file'), async (req: Request, 
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const projectId = parseInt(req.params.id, 10);
+    const projectId = parseInt(String(req.params.id), 10);
 
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
@@ -166,6 +171,18 @@ router.post('/projects/:id/upload', upload.single('file'), async (req: Request, 
 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before the
+    // file is persisted/processed. Cleans up the temp file on rejection.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json(err.body);
+      }
+      throw err;
     }
 
     const { ctdModule, ctdSection, sectionTitle, documentType } = req.body;
@@ -194,7 +211,7 @@ router.post('/projects/:id/upload', upload.single('file'), async (req: Request, 
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Upload error:', message);
+    logger.error('Upload error', { err: message });
     if (req.file?.path) {
       fs.unlink(req.file.path, () => {
         // Best-effort cleanup for orphaned uploads.
@@ -217,7 +234,7 @@ router.post('/projects/:id/validate', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const projectId = parseInt(req.params.id, 10);
+    const projectId = parseInt(String(req.params.id), 10);
 
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
@@ -232,7 +249,7 @@ router.post('/projects/:id/validate', async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Validation error:', message);
+    logger.error('Validation error', { err: message });
     return res.status(500).json({ error: 'Failed to validate CTD completeness' });
   }
 });
@@ -264,7 +281,7 @@ router.post('/projects/:id/detect-section', async (req: Request, res: Response) 
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[ctd-onboarding] Section detection error:', message);
+    logger.error('Section detection error', { err: message });
     return res.status(500).json({ error: 'Failed to detect section' });
   }
 });

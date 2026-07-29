@@ -67,7 +67,13 @@ describe('ProjectModuleBridge tenant safety', () => {
     const { ProjectModuleBridge } = await import('../../server/services/project-module-bridge');
     const bridge = new ProjectModuleBridge();
 
-    const updated = await bridge.updateModuleStatus(44, 'csr', 55, 'completed', 66);
+    // The signature was refactored from
+    //   (projectId, moduleType, moduleInstanceId, status, organizationId)
+    // to
+    //   (projectId, organizationId, moduleType, moduleInstanceId, status)
+    // — bringing organizationId up to second position to mirror every other
+    // tenant-scoped service method. Args reordered to match the new shape.
+    const updated = await bridge.updateModuleStatus(44, 66, 'csr', 55, 'completed');
 
     expect(updated).toEqual({ id: 2, status: 'completed' });
     expect(mockDb.update).toHaveBeenCalledTimes(1);

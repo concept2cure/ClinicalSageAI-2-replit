@@ -1,0 +1,174 @@
+# Submission Orchestrator — Prometheus Alertmanager rules
+#
+# Companion to server/services/submission-orchestrator-metrics.ts, which
+# emits the metrics referenced here via /api/metrics.
+#
+# Two rule groups:
+#   1. submission_orchestrator.health   — high-severity safety alerts that
+#      must page on-call (gateway-not-ready, sequence-query failures, step
+#      failure rate)
+#   2. submission_orchestrator.latency  — performance alerts (slow runs,
+#      slow steps) that ticket for review
+#
+# Loaded by the Prometheus rules_files config. Path convention follows the
+# existing infra/k8s/ shape used elsewhere in the repo.
+
+groups:
+  - name: submission_orchestrator.health
+    interval: 30s
+    rules:
+
+      # GATEWAY NOT READY — a hardened-validator pass concluded the package
+      # cannot be transmitted to FDA ESG. Every occurrence is a real
+      # regulatory hazard: a customer initiated a submission and the
+      # validator (DTD, sequence, MD5, study-id, regional) said no. Any
+      # rate above zero in a 10-minute window is a paging event.
+      - alert: SubmissionOrchestratorGatewayNotReady
+        expr: |
+          increase(submission_orchestrator_gateway_ready_total{ready="false"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          subsystem: submission_orchestrator
+          page: "true"
+        annotations:
+          summary: "Hardened validator rejected a submission package ({{ $value }} in 10m)"
+          description: |
+            One or more submissions failed gatewayReady inside the last
+            10 minutes. The hardened validator (DTD / sequence / MD5 /
+            study-id / regional checks) said the package cannot be
+            transmitted. The submission did NOT go to FDA ESG.
+
+            Triage: check structured logs for `validateEctdPackageHardened`
+            entries with the affected runId. Map the runId back to
+            organization via the submission_orchestrator_runs.organization_id
+            column. Surface to the customer with the specific finding codes.
+          runbook_url: "docs/runbooks/orchestrator-gateway-not-ready.md"
+
+      # SEQ_QUERY_FAILED — surfaced separately so this DB-outage class of
+      # gateway-not-ready is distinguishable from validation-failure
+      # gateway-not-ready. SEQ_QUERY_FAILED was DEAD CODE until commit
+      # f5833b43 (Move 13) so historical alert tuning has zero baseline —
+      # threshold is conservative.
+      - alert: SubmissionOrchestratorSequenceQueryFailures
+        expr: |
+          increase(submission_orchestrator_sequence_query_failed_total[5m]) >= 2
+        for: 2m
+        labels:
+          severity: critical
+          subsystem: submission_orchestrator
+          page: "true"
+        annotations:
+          summary: "detectSequenceGaps DB queries are failing ({{ $value }} in 5m)"
+          description: |
+            The hardened validator could not verify sequence history for
+            two or more submissions in the last 5 minutes. This is a DB
+            outage signal — ectd_compilations / ectd_submissions are
+            unreachable. Every affected submission is blocked from
+            gateway-ready until the DB is restored. NO submission lost
+            data (the catch is now explicit); but customer-facing
+            workflows are blocked.
+
+            Triage: check Postgres health for the submission-tracking DB.
+            The structured log carries err.name / err.code / err.message
+            server-side (not in the operator-facing finding). See
+            ectd-validator-hardening.ts:467-498.
+          runbook_url: "docs/runbooks/orchestrator-sequence-query-failed.md"
+
+      # STEP FAILURE RATE — sustained step failure rate above noise floor.
+      # Discriminator by error_code so a tenant_isolation_violation pages
+      # immediately (security) while a validation_failed is more permissive.
+      - alert: SubmissionOrchestratorStepFailureRateHigh
+        expr: |
+          (
+            sum(rate(submission_orchestrator_step_failed_total{error_code!="validation_failed"}[10m]))
+            /
+            clamp_min(sum(rate(submission_orchestrator_runs_started_total[10m])), 1)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          subsystem: submission_orchestrator
+        annotations:
+          summary: "Orchestrator step failure rate >5% (excluding validation failures)"
+          description: |
+            More than 5% of orchestrator steps are failing for reasons
+            OTHER than user validation errors (db_query_failed,
+            ai_gateway_error, tenant_isolation_violation,
+            sequence_query_failed, unknown). validation_failed is
+            excluded because user input errors are a normal class.
+
+            Triage: pull submission_orchestrator_step_failed_total by
+            error_code in Prometheus to identify the dominant failure
+            class.
+          runbook_url: "docs/runbooks/orchestrator-step-failure-rate.md"
+
+      # TENANT ISOLATION VIOLATION — any single occurrence is a §11.10(e)
+      # incident. Page immediately.
+      - alert: SubmissionOrchestratorTenantIsolationViolation
+        expr: |
+          increase(submission_orchestrator_step_failed_total{error_code="tenant_isolation_violation"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          subsystem: submission_orchestrator
+          page: "true"
+          # 21 CFR Part 11 inspection-relevant — distinct routing so the
+          # security on-call sees it independent of normal pager.
+          channel: security
+        annotations:
+          summary: "Tenant isolation violation in orchestrator (n={{ $value }})"
+          description: |
+            One or more orchestrator step executions raised a
+            tenant_isolation_violation error code. This means a code
+            path either (a) tried to read another tenant's data and the
+            org filter caught it, or (b) tried to write without an
+            org_id and the guard rejected it. EVERY occurrence is a
+            21 CFR Part 11 §11.10(e) auditable event and a security
+            incident — capture the runId, organization_id, user_id, and
+            request trace immediately.
+          runbook_url: "docs/runbooks/orchestrator-tenant-isolation.md"
+
+  - name: submission_orchestrator.latency
+    interval: 60s
+    rules:
+
+      # SLOW RUNS — the run-duration p95 is creeping. Ticket for review,
+      # don't page (no customer impact yet, but a degradation signal).
+      - alert: SubmissionOrchestratorRunDurationP95High
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(submission_orchestrator_run_duration_ms_bucket[15m])) by (le)
+          ) > 900000
+        for: 10m
+        labels:
+          severity: warning
+          subsystem: submission_orchestrator
+        annotations:
+          summary: "Orchestrator run p95 > 15 min over 15m window"
+          description: |
+            p95 run duration exceeded 15 minutes. Most likely cause:
+            csr.draft-narrative awaiting-async is hanging, or AI gateway
+            is slow. Pull submission_orchestrator_step_duration_ms by
+            step label to identify the slow step.
+
+      # SLOW VALIDATION — package.validate is taking too long. Hardening
+      # validator should be sub-second for typical packages; if it's
+      # >30s p95 there's a DB or DTD-grammar parsing issue.
+      - alert: SubmissionOrchestratorValidateStepSlow
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(submission_orchestrator_step_duration_ms_bucket{step="package.validate"}[10m])) by (le)
+          ) > 30000
+        for: 5m
+        labels:
+          severity: warning
+          subsystem: submission_orchestrator
+        annotations:
+          summary: "package.validate p95 > 30s"
+          description: |
+            The hardened validator step is taking more than 30 seconds
+            at p95 over a 10-minute window. Likely causes: slow
+            ectd_compilations / ectd_submissions queries (check DB),
+            slow DTD-grammar parsing (check vendored DTD file sizes),
+            or a backlog of structural findings being constructed.

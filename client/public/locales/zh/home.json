@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "工作辛苦了",
+    "morning": "早上好",
+    "afternoon": "下午好",
+    "evening": "晚上好"
+  },
+  "greetingLine": "{{greeting}}，{{name}}",
+  "prompt": "您想做些什么？向 AnA 提问，或从下方进入某个模块。"
+}

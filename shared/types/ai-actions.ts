@@ -29,7 +29,12 @@ export type AIActionType =
   | 'compare_selection'
   | 'refine_with_validation_findings'
   | 'create_followup_task'
-  | 'attach_selection_as_source';
+  | 'attach_selection_as_source'
+  // Document formatting — AnA template engine
+  | 'extract_template_from_upload'
+  | 'render_document_with_template'
+  // OCR — extract text from scanned uploads
+  | 'ocr_extract_text';
 
 /** Target entity types that actions can operate on. */
 export type AIActionTargetType =
@@ -37,7 +42,8 @@ export type AIActionTargetType =
   | 'document'
   | 'project'
   | 'section'
-  | 'task'; // Phase 2: add 'dossier', 'submission', etc.
+  | 'task'
+  | 'template'; // Phase 2: add 'dossier', 'submission', etc.
 
 /** Where the action was invoked from — for analytics and context routing. */
 export type AIActionSourceSurface =
@@ -50,6 +56,7 @@ export type AIActionSourceSurface =
   | 'inline_menu'         // Phase 2: InlineAIMenu on tables/forms
   | 'inline_button'       // Phase 2: InlineAIButton on rows/cards
   | 'validation_surface'  // Phase 2: Validation findings refinement
+  | 'recommendation'      // Dispatched from a predictive Recommendation.actionPayload
   | 'api';                // Direct API call
 
 /** Module types aligned with existing moduleTypeEnum. */

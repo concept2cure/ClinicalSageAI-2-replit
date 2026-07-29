@@ -221,7 +221,7 @@ describe('Regulatory Catalog Endpoints (service-level)', () => {
       const catalog = getCatalog();
       expect(catalog.regions.length).toBe(12);
       expect(catalog.agencies.length).toBeGreaterThan(0);
-      expect(catalog.families.length).toBe(12);
+      expect(catalog.families.length).toBe(20);
       expect(catalog.totalApplicationTypes).toBeGreaterThan(50);
     });
   });

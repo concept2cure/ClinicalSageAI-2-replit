@@ -73,10 +73,10 @@ class EventBus {
       // Notify in-memory subscribers
       this.notifySubscribers(event);
 
-      logger.info(\`Event published: \${eventType}\`, { id: result.rows[0].id });
+      logger.info(`Event published: ${eventType}`, { id: result.rows[0].id });
       return result.rows[0];
     } catch (error) {
-      logger.error(\`Failed to publish event: \${eventType}\`, error);
+      logger.error(`Failed to publish event: ${eventType}`, error);
       throw error;
     }
   }
@@ -97,14 +97,14 @@ class EventBus {
     };
 
     subscribers.push(subscriber);
-    logger.info(\`Subscribed to events: \${types.join(', ')}\`);
+    logger.info(`Subscribed to events: ${types.join(', ')}`);
 
     // Return unsubscribe function
     return () => {
       const index = subscribers.indexOf(subscriber);
       if (index > -1) {
         subscribers.splice(index, 1);
-        logger.info(\`Unsubscribed from events: \${types.join(', ')}\`);
+        logger.info(`Unsubscribed from events: ${types.join(', ')}`);
       }
     };
   }
@@ -129,7 +129,7 @@ class EventBus {
         // Call subscriber callback
         subscriber.callback(event);
       } catch (error) {
-        logger.error(\`Error in event subscriber for \${event.eventType}:\`, error);
+        logger.error(`Error in event subscriber for ${event.eventType}:`, error);
       }
     }
   }

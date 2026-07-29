@@ -8,8 +8,8 @@
  * - 510kRoutes.ts (device profiles, predicate finder)
  * - [removed] 510k-api-routes.ts (deprecated non-production data path)
  * - [removed] 510k-compliance-routes.ts (was deprecated, returned 503)
- * - 510k-literature-routes.ts (literature search)
- * - 510k-project.routes.ts (project wizard)
+ * - [removed 2026-06 sunset] 510k-literature-routes.ts (deprecated literature search)
+ * - [removed 2026-06 sunset] 510k-project.routes.ts (deprecated project wizard)
  * - fda510k-routes.ts (production FDA API)
  * - [removed] 510kEstarRoutes.ts (deprecated alternate path; use 510k-estar-routes.ts)
  *
@@ -162,15 +162,7 @@ router.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     service: 'fda510k-unified-api',
     version: '2.0.0',
-    modules: [
-      'device-profiles',
-      'requirements',
-      'compliance',
-      'literature',
-      'projects',
-      'fda-api',
-      'estar',
-    ],
+    modules: ['fda-api', 'estar'],
   });
 });
 
@@ -190,45 +182,6 @@ router.get('/docs', (_req: Request, res: Response) => {
     sunsetDate: '2026-06-30',
     migrationGuide: '/docs/MIGRATION_510K_API.md',
     endpoints: {
-      '/device': {
-        description: 'Device profiles and predicate finder',
-        methods: ['GET', 'POST'],
-        legacyPath: '/api/510k/*',
-        examples: [
-          'GET /api/fda510k-unified/device/device-profile/:id',
-          'POST /api/fda510k-unified/device/predicate-search',
-        ],
-      },
-      '/api': {
-        description: 'Requirements by device class',
-        methods: ['GET'],
-        legacyPath: '/api/fda510k/requirements/*',
-        examples: ['GET /api/fda510k-unified/api/requirements/:deviceClass'],
-      },
-      '/compliance': {
-        description: 'Compliance checks and validation',
-        methods: ['GET', 'POST'],
-        legacyPath: '/api/fda510k/compliance/*',
-        examples: [
-          'GET /api/fda510k-unified/compliance/compliance-results/:projectId',
-          'POST /api/fda510k-unified/compliance/run-checks',
-        ],
-      },
-      '/literature': {
-        description: 'Literature search and management',
-        methods: ['GET', 'POST'],
-        legacyPath: '/api/510k/literature/*',
-        examples: ['POST /api/fda510k-unified/literature/search'],
-      },
-      '/projects': {
-        description: 'Project wizard and management',
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        legacyPath: '/api/510k-projects/*',
-        examples: [
-          'GET /api/fda510k-unified/projects/templates',
-          'POST /api/fda510k-unified/projects/create',
-        ],
-      },
       '/fda': {
         description: 'FDA database queries',
         methods: ['GET'],
@@ -273,36 +226,16 @@ router.get('/docs', (_req: Request, res: Response) => {
  * Mount sub-routers with error handling
  */
 async function mountSubRouters() {
-  // Device Profiles & Predicate Finder (from 510kRoutes.ts)
-  try {
-    const deviceProfilesModule = await import('./510kRoutes');
-    router.use('/device', deviceProfilesModule.default);
-    logger.info('Mounted: /device (device profiles, predicates)');
-  } catch (error) {
-    logger.error('Failed to mount device routes:', error);
-  }
+  // Device Profiles & Predicate Finder — removed at 2026-06-30 sunset
+  // (510kRoutes.ts deleted; production predicate search lives at /fda/predicate-search)
 
   // Requirements by Device Class — removed with the deprecated non-production data path.
 
   // Compliance Checks — removed (510k-compliance-routes returned 503 on all endpoints)
 
-  // Literature Search (from 510k-literature-routes.ts)
-  try {
-    const literatureModule = await import('./510k-literature-routes');
-    router.use('/literature', literatureModule.default);
-    logger.info('Mounted: /literature (literature search)');
-  } catch (error) {
-    logger.error('Failed to mount literature routes:', error);
-  }
+  // Literature Search — removed at 2026-06-30 sunset (510k-literature-routes.ts deleted)
 
-  // Project Wizard (from 510k-project.routes.ts)
-  try {
-    const projectModule = await import('./510k-project.routes');
-    router.use('/projects', projectModule.default);
-    logger.info('Mounted: /projects (project wizard)');
-  } catch (error) {
-    logger.error('Failed to mount project routes:', error);
-  }
+  // Project Wizard — removed at 2026-06-30 sunset (510k-project.routes.ts deleted)
 
   // Production FDA API (from fda510k-routes.ts)
   try {

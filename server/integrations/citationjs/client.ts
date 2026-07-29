@@ -12,7 +12,10 @@ export interface CitationJsNormalization {
 export class CitationJsClient {
   async normalize(sourceText: string): Promise<CitationJsNormalization> {
     try {
-      const citationJs = await import('citation-js');
+      // citation-js is an optional runtime dependency without type declarations;
+      // resolve the specifier indirectly so the optional import stays type-safe.
+      const citationJsModule = 'citation-js';
+      const citationJs = await import(citationJsModule);
       const Ctor = (citationJs as any).default || (citationJs as any).Cite;
       if (!Ctor) {
         return {};

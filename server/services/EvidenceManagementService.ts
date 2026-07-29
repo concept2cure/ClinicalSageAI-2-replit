@@ -6,6 +6,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { getOpenAIClient } from './openai-client';
 
 // FDA Requirement definitions
 const FDA_REQUIREMENTS_MAP = {
@@ -98,13 +99,13 @@ export class EvidenceManagementService {
         Return as JSON with these fields.
       `;
 
-      const response = await this.ai.chat({
+      const response = await getOpenAIClient().chat.completions.create({
         model: 'gpt-4o',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
       });
 
-      const extracted = JSON.parse(aiResult.content || '{}');
+      const extracted = JSON.parse(response.choices[0]?.message?.content || '{}');
 
       return {
         test_type: extracted.test_type || this.inferTestType(fileName),
@@ -248,7 +249,7 @@ export class EvidenceManagementService {
     const partial = [];
 
     for (const [reqId, reqData] of Object.entries(FDA_REQUIREMENTS_MAP)) {
-      const reqFiles = files.filter((f: any) => f.fda_requirement === reqId);
+      const reqFiles = files.rows.filter((f: any) => f.fda_requirement === reqId);
 
       if (reqFiles.length === 0 && reqData.required) {
         gaps.push({
@@ -297,7 +298,7 @@ export class EvidenceManagementService {
       WHERE id = ANY(${fileIds})
     `);
 
-    const citations = files.map((file: any) => {
+    const citations = files.rows.map((file: any) => {
       const extracted = file.extracted_data || {};
       const date = extracted.test_date || file.created_at;
       const lab = extracted.test_lab || file.test_lab_name || 'Unknown Lab';
@@ -387,7 +388,7 @@ export class EvidenceManagementService {
     // Map evidence to form fields
     const formData: any = {};
 
-    for (const file of evidence) {
+    for (const file of evidence.rows as any[]) {
       const extracted = file.extracted_data;
       if (!extracted) continue;
 
@@ -494,10 +495,11 @@ export class EvidenceManagementService {
 
     // Organize by requirement
     const organized: any = {};
-    for (const file of evidence) {
+    for (const file of evidence.rows as any[]) {
       if (!organized[file.fda_requirement]) {
         organized[file.fda_requirement] = {
-          requirement: FDA_REQUIREMENTS_MAP[file.fda_requirement]?.name,
+          requirement:
+            FDA_REQUIREMENTS_MAP[file.fda_requirement as keyof typeof FDA_REQUIREMENTS_MAP]?.name,
           sections: {},
         };
       }
@@ -517,7 +519,7 @@ export class EvidenceManagementService {
       project_id: projectId,
       exported_at: new Date().toISOString(),
       evidence_structure: organized,
-      file_count: evidence.length,
+      file_count: evidence.rows.length,
     };
   }
 }

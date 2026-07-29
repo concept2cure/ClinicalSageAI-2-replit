@@ -38,6 +38,12 @@ function getHandler(path: string, method: 'post' | 'get' = 'post') {
   return layer.route.stack[layer.route.stack.length - 1].handle;
 }
 
+// Unit contract for the eCTD export human-review gate. The route reads the
+// gate from CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW and from the request's
+// governance evidence; these tests drive both. The mocks match the route's
+// current call graph (generateEctdPackage / validateEctdPackage /
+// registerExportGovernanceQuick). Verified meaningful via mutation testing:
+// disabling the gate in ectd-export.ts makes the strict-mode block fail.
 describe('eCTD export governance gate', () => {
   const originalNodeEnv = process.env.NODE_ENV;
   const originalGate = process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW;
@@ -64,7 +70,12 @@ describe('eCTD export governance gate', () => {
       params: { submissionId: '123' },
       body: {},
     }) as any;
-    req.organizationId = 1;
+    // Authenticated, tenant-bound principal (mirrors the sibling tests). The
+    // handler authenticates (→401) and resolves tenant before the governance
+    // gate, so the request must be authenticated to reach the 403 human-review
+    // block this test asserts.
+    req.user = { id: 7, organizationId: 1, name: 'Test User' };
+    req.tenantContext = { organizationId: 1 };
     const res = createMockResponse();
 
     const handler = getHandler('/:submissionId');
@@ -82,7 +93,11 @@ describe('eCTD export governance gate', () => {
       params: { submissionId: '123' },
       body: { region: 'FDA', submissionType: 'initial' },
     }) as any;
-    req.organizationId = 1;
+    // The route reads tenant + user from the JWT principal, not from
+    // req.organizationId. Set both so the governance writeback can attribute
+    // the export to a real user before res.send runs.
+    req.user = { id: 7, organizationId: 1, name: 'Test User' };
+    req.tenantContext = { organizationId: 1 };
     const res = createMockResponse();
 
     const handler = getHandler('/:submissionId');
@@ -109,7 +124,8 @@ describe('eCTD export governance gate', () => {
         },
       },
     }) as any;
-    req.organizationId = 1;
+    req.user = { id: 7, organizationId: 1, name: 'Test User' };
+    req.tenantContext = { organizationId: 1 };
     const res = createMockResponse();
 
     const handler = getHandler('/:submissionId');

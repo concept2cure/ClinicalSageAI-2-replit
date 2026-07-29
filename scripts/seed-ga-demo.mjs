@@ -17,8 +17,19 @@
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import crypto from 'crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const { Pool } = pg;
+
+// ── Safety + modes ──────────────────────────────────────────────────
+// Refuse to mutate a production database; support a non-mutating verify pass.
+const VERIFY_ONLY = process.argv.includes('--verify');
+if (process.env.NODE_ENV === 'production') {
+  console.error('Refusing to run seed-ga-demo in production (NODE_ENV=production).');
+  process.exit(1);
+}
 
 // ── Database Connection ─────────────────────────────────────────────
 function getDbUrl() {
@@ -124,16 +135,24 @@ async function seed() {
       ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'admin'
     `, [org.id, admin.id]);
 
-    // Sync to auth_users if table exists
+    // Sync to auth_users if table exists. Wrapped in a SAVEPOINT: a failed
+    // statement aborts the whole transaction in Postgres (25P02), so catching
+    // the JS error is not enough — without the savepoint, a missing auth_users
+    // table would poison every later step. ROLLBACK TO restores the txn.
     try {
+      await client.query('SAVEPOINT sp_auth_users');
       await client.query(`
         INSERT INTO auth_users (email, username, password_hash, is_active, email_verified)
         VALUES ($1, $2, $3, true, true)
         ON CONFLICT (email) DO UPDATE SET password_hash = $3, is_active = true
       `, ['jm.smith@concept2cure.pro', 'jmsmith', adminPasswordHash]);
+      await client.query('RELEASE SAVEPOINT sp_auth_users');
       console.log('   ✓ auth_users synced');
     } catch {
-      // auth_users table may not exist — that's fine
+      // auth_users table may not exist — roll back to the savepoint so the
+      // outer transaction stays usable, then carry on.
+      await client.query('ROLLBACK TO SAVEPOINT sp_auth_users');
+      console.log('   • auth_users not present — skipped');
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -180,6 +199,30 @@ async function seed() {
     // 4. DEMO PROJECTS
     // ════════════════════════════════════════════════════════════════
     console.log('[4/6] Creating demo projects...');
+
+    // Several core tables (projects, documents, …) have a NOT NULL
+    // client_workspace_id. Ensure a default workspace exists for the org and
+    // reuse its id across the seed.
+    let workspaceId = null;
+    const wsTableExists = await client.query(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'client_workspaces')`,
+    );
+    if (wsTableExists.rows[0].exists) {
+      const wsRes = await client.query(
+        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
+         VALUES ($1, 'Default Workspace', 'default', 'active', $2)
+         ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [org.id, admin.id],
+      );
+      workspaceId = wsRes.rows[0]?.id
+        ?? (await client.query(
+              `SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1`,
+              [org.id],
+           )).rows[0]?.id
+        ?? null;
+      console.log(`   ✓ Client workspace: Default Workspace (id ${workspaceId})`);
+    }
 
     // Check if projects table exists
     const projectsTableExists = await client.query(`
@@ -236,11 +279,11 @@ async function seed() {
 
       for (const proj of projects) {
         await client.query(`
-          INSERT INTO projects (organization_id, name, code, description, status, type,
+          INSERT INTO projects (organization_id, client_workspace_id, name, code, description, status, type,
             depth, priority, progress, risk_level, created_by_id, owner_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
           ON CONFLICT DO NOTHING
-        `, [org.id, proj.name, proj.code, proj.description, proj.status, proj.type,
+        `, [org.id, workspaceId, proj.name, proj.code, proj.description, proj.status, proj.type,
             proj.depth, proj.priority, proj.progress, proj.riskLevel, admin.id]);
         console.log(`   ✓ Project: ${proj.name} (${proj.progress}%)`);
       }
@@ -343,11 +386,11 @@ async function seed() {
 
       for (const doc of documents) {
         await client.query(`
-          INSERT INTO documents (organization_id, title, document_type, category, status,
+          INSERT INTO documents (organization_id, client_workspace_id, title, document_type, category, status,
             document_code, compliance_level, owner_id, created_by_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
           ON CONFLICT DO NOTHING
-        `, [org.id, doc.title, doc.docType, doc.category, doc.status,
+        `, [org.id, workspaceId, doc.title, doc.docType, doc.category, doc.status,
             doc.code, doc.compliance, admin.id]);
         console.log(`   ✓ Doc: ${doc.title}`);
       }
@@ -381,6 +424,528 @@ async function seed() {
       console.log('   ✓ Audit trail seeded');
     } else {
       console.log('   ⚠ auth_audit_log table not found — skipping');
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // 7. SUBMISSION CORE + EVIDENCE GRAPH (Phase 1)
+    // ════════════════════════════════════════════════════════════════
+    // RECONCILE: the work order referenced 3 demo orgs (PharmaCorp/Biotech/CRO)
+    // and a `documents` table; this script seeds a single org (Concept2Cure) and
+    // the canonical eCTD doc table is `coauthor_documents`. We seed submission
+    // core + evidence demo data against THIS org and table. Idempotent via
+    // existence checks (these tables have no natural unique key for ON CONFLICT).
+    console.log('[7/7] Creating submission core + evidence demo data...');
+
+    const subCoreExists = await client.query(`
+      SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'submissions')
+        AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'coauthor_documents') AS ok
+    `);
+
+    if (subCoreExists.rows[0].ok) {
+      // Insert-if-absent helper keyed on a stable selector; returns the row id.
+      const ensureRow = async (selectSql, selectParams, insertSql, insertParams) => {
+        const found = await client.query(selectSql, selectParams);
+        if (found.rows[0]) return found.rows[0].id;
+        const ins = await client.query(insertSql, insertParams);
+        return ins.rows[0].id;
+      };
+
+      // ── Canonical documents (coauthor_documents) ──
+      const ensureDoc = (title, moduleNumber) =>
+        ensureRow(
+          `SELECT id FROM coauthor_documents WHERE organization_id = $1 AND title = $2 LIMIT 1`,
+          [org.id, title],
+          `INSERT INTO coauthor_documents (organization_id, title, content, status, created_by, module_number)
+             VALUES ($1, $2, $3, 'draft', $4, $5) RETURNING id`,
+          [org.id, title, `<p>${title}</p>`, String(admin.id), moduleNumber]
+        );
+
+      const docOverview = await ensureDoc('C2C-001 Clinical Overview (source)', '2.5');
+      const docSummary = await ensureDoc('C2C-001 Clinical Summary (source)', '2.7');
+      const docQuality = await ensureDoc('C2C-001 Quality Overall Summary (source)', '2.3');
+
+      // ── Submissions ──
+      const ensureSubmission = (title, applicationType, clientType, primaryRegion, lifecycleStage) =>
+        ensureRow(
+          `SELECT id FROM submissions WHERE organization_id = $1 AND title = $2 AND deleted_at IS NULL LIMIT 1`,
+          [org.id, title],
+          `INSERT INTO submissions (title, product_name, application_type, client_type, primary_region,
+              status, lifecycle_stage, organization_id, created_by)
+             VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8) RETURNING id`,
+          [title, 'C2C-001', applicationType, clientType, primaryRegion, lifecycleStage, org.id, admin.id]
+        );
+
+      const sub1 = await ensureSubmission('C2C-001 IND (FDA)', 'ind', 'biotech', 'fda', 'original');
+      const sub2 = await ensureSubmission('MDX-100 510(k) (FDA)', '510k', 'mdx', 'fda', 'planning');
+
+      // ── Submission regions ──
+      const ensureRegion = (submissionId, region, pathway) =>
+        ensureRow(
+          `SELECT id FROM submission_regions WHERE submission_id = $1 AND region = $2 LIMIT 1`,
+          [submissionId, region],
+          `INSERT INTO submission_regions (submission_id, region, pathway, organization_id, created_by)
+             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [submissionId, region, pathway, org.id, admin.id]
+        );
+      await ensureRegion(sub1, 'fda', 'ectd_v322');
+      await ensureRegion(sub2, 'fda', 'estar');
+
+      // ── eCTD sequences (original 0000 each) ──
+      const ensureSequence = (submissionId, region) =>
+        ensureRow(
+          `SELECT id FROM ectd_sequences WHERE submission_id = $1 AND region = $2 AND sequence_number = '0000' LIMIT 1`,
+          [submissionId, region],
+          `INSERT INTO ectd_sequences (submission_id, region, sequence_number, type, status, organization_id, created_by)
+             VALUES ($1, $2, '0000', 'original', 'draft', $3, $4) RETURNING id`,
+          [submissionId, region, org.id, admin.id]
+        );
+      const seq1 = await ensureSequence(sub1, 'fda');
+      const seq2 = await ensureSequence(sub2, 'fda');
+
+      // ── Submission leaves (doc -> CTD leaf, polymorphic ref to coauthor_documents) ──
+      const ensureLeaf = (sequenceId, sectionCode, title, documentId) =>
+        ensureRow(
+          `SELECT id FROM submission_leaves WHERE sequence_id = $1 AND section_code = $2 AND deleted_at IS NULL LIMIT 1`,
+          [sequenceId, sectionCode],
+          `INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op,
+              document_table, document_id, organization_id, created_by)
+             VALUES ($1, $2, $3, 'new', 'coauthor_documents', $4, $5, $6) RETURNING id`,
+          [sequenceId, sectionCode, title, documentId, org.id, admin.id]
+        );
+      await ensureLeaf(seq1, '2.3', 'Quality Overall Summary', docQuality);
+      await ensureLeaf(seq1, '2.5', 'Clinical Overview', docOverview);
+      await ensureLeaf(seq1, '2.7', 'Clinical Summary', docSummary);
+      await ensureLeaf(seq2, 'm1.us.cover', 'eSTAR Cover', null);
+
+      // ── Evidence links (provenance: section derives_from source doc) ──
+      const ensureLink = (submissionId, sectionCode, documentId, confidence) =>
+        ensureRow(
+          `SELECT id FROM submission_evidence_links WHERE submission_id = $1 AND target_section_code = $2
+             AND source_document_id = $3 AND deleted_at IS NULL LIMIT 1`,
+          [submissionId, sectionCode, documentId],
+          `INSERT INTO submission_evidence_links (submission_id, target_section_code, source_document_table,
+              source_document_id, source_locator, direction, confidence, organization_id, created_by)
+             VALUES ($1, $2, 'coauthor_documents', $3, $4, 'derives_from', $5, $6, $7) RETURNING id`,
+          [submissionId, sectionCode, documentId, 'seeded provenance', confidence, org.id, admin.id]
+        );
+      await ensureLink(sub1, '2.5', docOverview, 0.9);
+      await ensureLink(sub1, '2.7', docSummary, 0.85);
+      await ensureLink(sub1, '2.3', docQuality, 0.8);
+
+      console.log('   ✓ Submission core + evidence graph seeded');
+
+      // ── Shadow Review demo (the moat) ──
+      const shadowExists = await client.query(
+        `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shadow_review_runs') AS ok`
+      );
+      if (shadowExists.rows[0].ok) {
+        const runId = await ensureRow(
+          `SELECT id FROM shadow_review_runs WHERE sequence_id = $1 AND lens = 'fda_filing' AND deleted_at IS NULL LIMIT 1`,
+          [seq1],
+          `INSERT INTO shadow_review_runs (sequence_id, region, lens, model, prompt_version, status,
+              rtf_risk_score, crl_risk_score, summary, organization_id, created_by)
+             VALUES ($1, 'fda', 'fda_filing', 'claude', 'shadow-review@v1.0', 'complete', $2, $3, $4, $5, $6) RETURNING id`,
+          [seq1, 0.18, 0.31, 'Two filing-readiness gaps and one benefit-risk weakness to resolve before submission.', org.id, admin.id]
+        );
+        const ensureFinding = (dimension, severity, title, basis, recommendation, leafRef) =>
+          ensureRow(
+            `SELECT id FROM shadow_review_findings WHERE run_id = $1 AND title = $2 AND deleted_at IS NULL LIMIT 1`,
+            [runId, title],
+            `INSERT INTO shadow_review_findings (run_id, dimension, severity, title, detail, basis, recommendation, leaf_ref, status, organization_id, created_by)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10) RETURNING id`,
+            [runId, dimension, severity, title, title, basis, recommendation, leafRef, org.id, admin.id]
+          );
+        await ensureFinding('rtf', 'major', 'Form 1571 is not signed', '21 CFR 312.23(a)(1)', 'Attach the signed Form 1571 under Module 1 (US).', 'm1.us');
+        await ensureFinding('crl', 'major', 'Benefit-risk integration is thin in 2.5', 'ICH M4E(R2)', 'Strengthen the integrated benefit-risk in the Clinical Overview.', '2.5');
+        await ensureFinding('format', 'minor', 'One leaf is missing an MD5 checksum', 'eCTD validation criteria', 'Recompute the MD5 for the affected leaf before packaging.', '3.2.S');
+        console.log('   ✓ Shadow review demo seeded');
+      }
+
+      // ── Consistency findings demo (Truth Engine) ──
+      const consExists = await client.query(
+        `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consistency_findings') AS ok`
+      );
+      if (consExists.rows[0].ok) {
+        const ensureCons = (dimension, leftRef, rightRef, status, detail) =>
+          ensureRow(
+            `SELECT id FROM consistency_findings WHERE submission_id = $1 AND dimension = $2 AND left_ref = $3 AND right_ref = $4 AND deleted_at IS NULL LIMIT 1`,
+            [sub1, dimension, leftRef, rightRef],
+            `INSERT INTO consistency_findings (submission_id, dimension, left_ref, right_ref, status, detail, organization_id, created_by)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+            [sub1, dimension, leftRef, rightRef, status, detail, org.id, admin.id]
+          );
+        await ensureCons('subject-counts', '2.7.3', '5.3.5.1', 'match', null);
+        await ensureCons('spec-vs-qos', '2.3', '3.2.S.4.1', 'conflict', 'Assay limit in the 2.3 QOS (98.0%) does not match the Module 3 specification (98.5%).');
+        console.log('   ✓ Consistency findings demo seeded');
+      }
+    } else {
+      console.log('   ⚠ submissions/coauthor_documents not found — run drizzle-kit push first, skipping');
+    }
+
+    // ── Change assessments (Device/Dx lifecycle) — scoped to THIS demo org ──
+    {
+      const caExists = await client.query(`SELECT to_regclass('public.change_assessments') AS t`);
+      if (caExists.rows[0]?.t) {
+        const caRows = [
+          {
+            id: 'CH-118', title: 'Add predictive-low glucose alert algorithm', device: 'BX-204 CGM',
+            area: 'Software / labeling', raised: '2026-06-10', owner: 'R. Okafor',
+            fda: { steps: [
+              { q: 'Is the change made to address a safety issue (e.g. recall/CAPA)?', basis: 'Flowchart A', a: 'no', detail: 'Feature enhancement, not corrective.' },
+              { q: 'Could the change significantly affect clinical functionality or performance specs?', basis: 'Flowchart A.3', a: 'yes', detail: 'A new algorithmic output (predictive low) that drives a clinical alert is a new functional claim.' },
+              { q: 'Does a risk-based assessment show new/increased risk not addressed by existing controls?', basis: 'Flowchart A.4', a: 'yes', gate: true, detail: 'False-negative predictive alert is a new hazard not in the cleared risk file.' },
+            ], outcome: 'new-submission', label: 'New 510(k) required', rationale: 'A new clinical functional claim with a new risk profile exceeds the "could significantly affect" threshold — a new 510(k) is required before marketing the feature.' },
+            eu: { steps: [
+              { q: 'Change to intended purpose?', basis: 'MDCG 2020-3 Chart', a: 'no', detail: 'Intended purpose (CGM for diabetes management) unchanged.' },
+              { q: 'Change to design/performance affecting safety/benefit-risk?', basis: 'Chart A S1', a: 'yes', gate: true, detail: 'New algorithm affects performance and benefit-risk — significant.' },
+            ], outcome: 'nb-notify', label: 'Significant change — NB notification', rationale: 'Per MDCG 2020-3 this is a significant change to design/performance; the notified body must be notified and assess before the change is placed on the EU market.' },
+            doc: { kind: 'New 510(k) + MDR significant-change file', status: 'draft' },
+          },
+          {
+            id: 'CH-121', title: 'Change sensor adhesive supplier (equivalent material)', device: 'BX-204 CGM',
+            area: 'Manufacturing / materials', raised: '2026-06-14', owner: 'M. Webb',
+            fda: { steps: [
+              { q: 'Is the change made to address a safety issue?', basis: 'Flowchart A', a: 'no', detail: 'Supply-chain change.' },
+              { q: 'Change in materials with body contact?', basis: 'Flowchart C', a: 'yes', detail: 'Skin-contact adhesive — new supplier.' },
+              { q: 'Same material chemistry & biocompatibility profile (per risk-based assessment)?', basis: 'Flowchart C.2', a: 'yes', gate: true, detail: 'Identical chemistry; ISO 10993-10/-23 re-test passed equivalent. No new biocompatibility risk.' },
+            ], outcome: 'letter-to-file', label: 'Document to file (no new 510(k))', rationale: 'Materials change with equivalent chemistry and passing biocompatibility re-test does not significantly affect safety/effectiveness — document the rationale in a Letter to File per the 2017 guidance.' },
+            eu: { steps: [
+              { q: 'Change to intended purpose?', basis: 'MDCG 2020-3', a: 'no', detail: 'Unchanged.' },
+              { q: 'Change of material that adversely affects safety/performance or biocompatibility?', basis: 'Chart C', a: 'no', gate: true, detail: 'Equivalent material, biocompatibility maintained.' },
+            ], outcome: 'record-only', label: 'Non-significant — internal change record', rationale: 'Not a significant change under MDCG 2020-3; record under the QMS change-control process and update the technical documentation. No prior NB notification required.' },
+            doc: { kind: 'Letter to File + QMS change record', status: 'in-review' },
+          },
+        ];
+        for (const r of caRows) {
+          await client.query(
+            `INSERT INTO change_assessments (id, organization_id, title, device, area, raised, owner, fda, eu, doc)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.title, r.device, r.area, r.raised, r.owner, JSON.stringify(r.fda), JSON.stringify(r.eu), JSON.stringify(r.doc)],
+          );
+        }
+        console.log('   ✓ Change assessments demo seeded');
+      } else {
+        console.log('   ⚠ change_assessments not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Biopharma specialty (pediatric / orphan / lifecycle) — scoped to org ──
+    {
+      const pedExists = await client.query(`SELECT to_regclass('public.biopharma_pediatric_plans') AS t`);
+      if (pedExists.rows[0]?.t) {
+        const pedRows = [
+          { id: 'pip-420', product: 'BX-420', kind: 'EMA PIP', ageRange: '2--17', deferrals: 2, waivers: 1, milestones: 8, due: 'Trial readout · Q1 2027', status: 'agreed' },
+          { id: 'psp-204', product: 'BX-204', kind: 'FDA iPSP', ageRange: '12--17', deferrals: 1, waivers: 0, milestones: 5, due: 'PREA · post-approval Y2', status: 'submitted' },
+          { id: 'pip-301', product: 'BX-301', kind: 'EMA PIP', ageRange: '0--17', deferrals: 0, waivers: 1, milestones: 6, due: 'CHMP advice · Q3 2026', status: 'in draft' },
+          { id: 'psp-115', product: 'BX-115', kind: 'FDA iPSP', ageRange: '6--17', deferrals: 0, waivers: 0, milestones: 4, due: 'Pre-IND meeting · 28 days', status: 'in draft' },
+        ];
+        for (const r of pedRows) {
+          await client.query(
+            `INSERT INTO biopharma_pediatric_plans (id, organization_id, product, kind, age_range, deferrals, waivers, milestones, due, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.product, r.kind, r.ageRange, r.deferrals, r.waivers, r.milestones, r.due, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma pediatric plans demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_pediatric_plans not found — run migrations first, skipping');
+      }
+
+      const orphExists = await client.query(`SELECT to_regclass('public.biopharma_orphan_designations') AS t`);
+      if (orphExists.rows[0]?.t) {
+        const orphRows = [
+          { id: 'orph-1', product: 'BX-256', agency: 'FDA', indication: 'RPE65-mediated dystrophy', date: '2024-08-12', prevalence: '~3,000 US patients', benefit: '7-yr exclusivity · PDUFA waiver · Tax credit', status: 'designated' },
+          { id: 'orph-2', product: 'BX-256', agency: 'EMA', indication: 'RPE65-mediated dystrophy', date: '2024-11-04', prevalence: '<5 per 10k EU', benefit: '10-yr exclusivity · Protocol assistance · Fee reduction', status: 'designated' },
+          { id: 'orph-3', product: 'BX-301', agency: 'FDA', indication: 'Relapsed multiple myeloma', date: '2026-03-22', prevalence: '<200k US patients', benefit: 'Pending', status: 'requested' },
+          { id: 'orph-4', product: 'BX-420', agency: 'PMDA', indication: 'Pediatric biologic', date: '2025-05-01', prevalence: '~4,200 Japan patients', benefit: 'Re-exam 10-yr · Priority review', status: 'designated' },
+          { id: 'orph-5', product: 'BX-115', agency: 'FDA', indication: 'CNS · rare seizure', date: '--', prevalence: '~7,500 US patients', benefit: 'Pre-submission', status: 'planned' },
+        ];
+        for (const r of orphRows) {
+          await client.query(
+            `INSERT INTO biopharma_orphan_designations (id, organization_id, product, agency, indication, date, prevalence, benefit, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.product, r.agency, r.indication, r.date, r.prevalence, r.benefit, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma orphan designations demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_orphan_designations not found — run migrations first, skipping');
+      }
+
+      const suppExists = await client.query(`SELECT to_regclass('public.biopharma_supplements') AS t`);
+      if (suppExists.rows[0]?.t) {
+        const suppRows = [
+          { id: 'sNDA-211990-001', agency: 'FDA', product: 'BX-099', subject: 'sNDA · Prior Approval -- Pediatric indication extension', filed: '2026-03-04', due: 'PDUFA 2026-09-04', status: 'filed' },
+          { id: 'sNDA-211990-002', agency: 'FDA', product: 'BX-099', subject: 'sNDA · CBE-30 -- Manufacturing site addition (DS)', filed: '2026-04-22', due: 'Effective 2026-05-22', status: 'filed' },
+          { id: 'EU-VAR-006012-1', agency: 'EMA', product: 'BX-099', subject: 'Type II variation -- Specification change (host cell protein)', filed: '2026-02-11', due: 'CHMP day 60', status: 'review' },
+          { id: 'EU-VAR-006012-2', agency: 'EMA', product: 'BX-099', subject: 'Type IB variation -- Container closure update', filed: '--', due: 'Target 2026-06', status: 'drafting' },
+          { id: 'JP-VAR-2024-3', agency: 'PMDA', product: 'BX-099', subject: 'Partial change (Japan) -- Manufacturer change', filed: '2026-01-15', due: 'PMDA day 60', status: 'review' },
+        ];
+        for (const r of suppRows) {
+          await client.query(
+            `INSERT INTO biopharma_supplements (id, organization_id, agency, product, subject, filed, due, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.agency, r.product, r.subject, r.filed, r.due, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma lifecycle supplements demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_supplements not found — run migrations first, skipping');
+      }
+    }
+
+    // ── AnA formatting templates (c2c_template_specs) — scoped to org ─────────
+    {
+      const tplExists = await client.query(`SELECT to_regclass('public.c2c_template_specs') AS t`);
+      if (tplExists.rows[0]?.t) {
+        const baseSpec = {
+          specVersion: 1,
+          page: { size: 'letter', orientation: 'portrait', marginsInches: { top: 1, bottom: 1, left: 1.25, right: 1 } },
+          typography: { bodyFont: 'Times New Roman', headingFont: 'Arial', monoFont: 'Consolas', bodySizePt: 12, heading1SizePt: 16, heading2SizePt: 14, heading3SizePt: 12, lineSpacing: 1.15, paragraphSpaceAfterPt: 6 },
+          colors: { text: '1A1A1A', muted: '666666', accent: '2A6FDB', tableHeaderBg: 'E8EDF3', tableBorder: 'BBBBBB' },
+          brand: { organizationName: 'Concept2Cure', confidentialityNotice: 'CONFIDENTIAL — For Regulatory Use Only', logo: { present: true, placement: 'header' } },
+          header: { text: 'Concept2Cure - {docType}', showLogo: true, alignment: 'left' },
+          footer: { text: '{program}', showPageNumbers: true, pageNumberFormat: 'Page {PAGE} of {PAGES}' },
+          table: { headerBold: true, borderSizePt: 0.5 },
+          formFields: [], namedStyles: [],
+        };
+        const tplRows = [
+          { id: 'tpl_house_ctd', name: 'Concept2Cure House Style — CTD', description: 'Corporate CTD/eCTD body template', src: 'C2C_CTD_house_style.docx', type: 'docx', conf: 0.95, warnings: [], verified: true, docTypes: ['CTD', 'eCTD', 'NDA', 'BLA'], spec: baseSpec },
+          { id: 'tpl_estar_cover', name: 'FDA eSTAR Cover Letter', description: '510(k) cover letter, CDRH format', src: 'eSTAR_cover_letter.docx', type: 'docx', conf: 0.90, warnings: [], verified: true, docTypes: ['510(k)', 'eSTAR'], spec: { ...baseSpec, colors: { ...baseSpec.colors, accent: '1F8A5B' }, header: { text: '{sponsor}', showLogo: true, alignment: 'center' } } },
+          { id: 'tpl_csr_e3', name: 'CSR — ICH E3 House Format', description: 'Clinical study report, ICH E3 structure', src: 'CSR_E3_house.docx', type: 'docx', conf: 0.93, warnings: [], verified: true, docTypes: ['CSR'], spec: { ...baseSpec, page: { ...baseSpec.page, size: 'a4' }, colors: { ...baseSpec.colors, accent: '8250C4' } } },
+          { id: 'tpl_chmp_resp', name: 'EMA CHMP Response Template', description: 'Day-120 / Day-180 LoQ response', src: 'CHMP_response.docx', type: 'docx', conf: 0.72, warnings: ['Heading font not found; using Arial.', 'No embedded logo image found.'], verified: false, docTypes: ['MAA', 'CHMP'], spec: { ...baseSpec, page: { ...baseSpec.page, size: 'a4' }, colors: { ...baseSpec.colors, accent: 'D97757' }, brand: { ...baseSpec.brand, logo: { present: false, placement: 'header' } } } },
+        ];
+        for (const r of tplRows) {
+          await client.query(
+            `INSERT INTO c2c_template_specs
+               (id, org_id, project_id, name, description, source_file_name, source_file_type,
+                spec, doc_types, extraction_confidence, extraction_warnings, verified, is_active, created_by)
+             VALUES ($1,$2,NULL,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9,$10::jsonb,$11,true,$12)
+             ON CONFLICT (id) DO NOTHING`,
+            [r.id, org.id, r.name, r.description, r.src, r.type,
+             JSON.stringify(r.spec), JSON.stringify(r.docTypes), r.conf, JSON.stringify(r.warnings), r.verified, admin.id],
+          );
+        }
+        console.log('   ✓ AnA formatting templates demo seeded');
+      } else {
+        console.log('   ⚠ c2c_template_specs not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Enablement / training (learning paths + certifications) — org-scoped ──
+    {
+      const pathsExists = await client.query(`SELECT to_regclass('public.enablement_learning_paths') AS t`);
+      if (pathsExists.rows[0]?.t) {
+        const pathRows = [
+          { id: 'start', title: 'Getting started with AnA', lessons: 6, done: 6, mins: 35, level: 'Essential', tone: 'ok' },
+          { id: '510k', title: '510(k) submission mastery', lessons: 9, done: 4, mins: 70, level: 'Device', tone: 'ai' },
+          { id: 'ectd', title: 'eCTD authoring & assembly', lessons: 8, done: 1, mins: 60, level: 'Pharma', tone: 'ai' },
+          { id: 'ana', title: 'AnA power user -- slash commands & modes', lessons: 5, done: 0, mins: 25, level: 'All roles', tone: 'idle' },
+          { id: 'part11', title: '21 CFR Part 11 in practice', lessons: 4, done: 2, mins: 30, level: 'Compliance', tone: 'warn' },
+          { id: 'biostat', title: 'Conversational biostatistics', lessons: 7, done: 0, mins: 55, level: 'Clinical', tone: 'idle' },
+        ];
+        for (const r of pathRows) {
+          await client.query(
+            `INSERT INTO enablement_learning_paths (id, organization_id, title, lessons, done, mins, level, tone)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.title, r.lessons, r.done, r.mins, r.level, r.tone],
+          );
+        }
+        console.log('   ✓ Enablement learning paths demo seeded');
+      } else {
+        console.log('   ⚠ enablement_learning_paths not found — run migrations first, skipping');
+      }
+
+      const certsExists = await client.query(`SELECT to_regclass('public.enablement_certifications') AS t`);
+      if (certsExists.rows[0]?.t) {
+        const certRows = [
+          { id: 'cert-author', name: 'AnA Certified -- Regulatory Author', status: 'earned', whenLabel: 'Mar 2026' },
+          { id: 'cert-510k', name: '510(k) Workbench Specialist', status: 'in-progress', whenLabel: '44% complete' },
+          { id: 'cert-ectd', name: 'eCTD Assembly Professional', status: 'locked', whenLabel: 'Complete the path to unlock' },
+        ];
+        for (const r of certRows) {
+          await client.query(
+            `INSERT INTO enablement_certifications (id, organization_id, name, status, when_label)
+             VALUES ($1,$2,$3,$4,$5)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.name, r.status, r.whenLabel],
+          );
+        }
+        console.log('   ✓ Enablement certifications demo seeded');
+      } else {
+        console.log('   ⚠ enablement_certifications not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Nonclinical studies (+ SEND datasets) — org-scoped, review board ──────
+    {
+      const ncExists = await client.query(`SELECT to_regclass('public.nonclinical_studies') AS t`);
+      if (ncExists.rows[0]?.t) {
+        // send: 'passed' → "conforms", 'not_validated' → "in progress",
+        //       null (no dataset) → "n/a" (derived on read).
+        const ncStudies = [
+          { num: 'TX-701', type: 'repeat_dose_tox', species: 'Rat', dur: '26-week', finding: 'Minimal hepatocellular hypertrophy (adaptive)', cls: 'non-adverse', status: 'finalized', send: 'passed' },
+          { num: 'TX-702', type: 'repeat_dose_tox', species: 'Cynomolgus', dur: '39-week', finding: 'No adverse findings to top dose', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'CARC-701', type: 'carcinogenicity', species: 'Tg mouse', dur: '26-week', finding: 'In life -- terminal necropsy pending', cls: 'pending', status: 'in_life', send: 'not_validated' },
+          { num: 'PK-301', type: 'adme_pk', species: 'Rat', dur: '—', finding: 'Dose-proportional exposure, no accumulation', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'SP-201', type: 'safety_pharmacology', species: 'Cynomolgus', dur: '—', finding: 'No QTc or hemodynamic effect', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'GT-101', type: 'genotoxicity', species: 'in vitro / in vivo', dur: '—', finding: 'Negative across the battery', cls: 'clean', status: 'finalized', send: null },
+        ];
+        const sendExists = await client.query(`SELECT to_regclass('public.send_datasets') AS t`);
+        for (const r of ncStudies) {
+          const existing = await client.query(
+            `SELECT id FROM nonclinical_studies WHERE organization_id = $1 AND study_number = $2 LIMIT 1`,
+            [org.id, r.num],
+          );
+          let studyId = existing.rows[0]?.id;
+          if (!studyId) {
+            const ins = await client.query(
+              `INSERT INTO nonclinical_studies
+                 (organization_id, study_number, title, study_type, species, glp_compliant, status, created_by)
+               VALUES ($1,$2,$3,$4,$5,true,$6,$7)
+               RETURNING id`,
+              [org.id, r.num, `${r.num} — ${r.species} ${r.dur}`, r.type, r.species, r.status, admin.id],
+            );
+            studyId = ins.rows[0].id;
+          }
+          if (r.send && sendExists.rows[0]?.t) {
+            const sd = await client.query(`SELECT id FROM send_datasets WHERE study_id = $1 LIMIT 1`, [studyId]);
+            if (!sd.rows[0]) {
+              await client.query(
+                `INSERT INTO send_datasets (organization_id, study_id, validation_status, created_by)
+                 VALUES ($1,$2,$3,$4)`,
+                [org.id, studyId, r.send, admin.id],
+              );
+            }
+          }
+        }
+        console.log('   ✓ Nonclinical studies (+ SEND) demo seeded');
+      } else {
+        console.log('   ⚠ nonclinical_studies not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Clinical operations studies (v2 studies & enrollment board) ──────────
+    {
+      const coExists = await client.query(`SELECT to_regclass('clinical_ops.studies') AS t`);
+      if (coExists.rows[0]?.t) {
+        const orgIdText = String(org.id);
+        const coStudies = [
+          { protocol: 'BX204-301', phase: '3', design: 'Randomized · pivotal', n: 412, target: 412, status: 'active', note: 'Primary ORR readout Q4 2026' },
+          { protocol: 'BX204-201', phase: '2', design: 'Single-arm · dose-expansion', n: 186, target: 186, status: 'complete', note: 'Supportive · CSR locked' },
+          { protocol: 'BX204-101', phase: '1', design: 'Dose-escalation (3+3)', n: 54, target: 54, status: 'complete', note: 'MTD established' },
+        ];
+        for (const r of coStudies) {
+          const exists = await client.query(
+            `SELECT id FROM clinical_ops.studies WHERE org_id = $1 AND protocol = $2 LIMIT 1`,
+            [orgIdText, r.protocol],
+          );
+          if (!exists.rows[0]) {
+            await client.query(
+              `INSERT INTO clinical_ops.studies
+                 (org_id, name, protocol, phase, status, indication, target_enrollment, enrolled, design, note)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+              [orgIdText, `${r.protocol} — BX-204`, r.protocol, r.phase, r.status, 'BX-204 program', r.target, r.n, r.design, r.note],
+            );
+          }
+        }
+        console.log('   ✓ Clinical operations studies demo seeded');
+      } else {
+        console.log('   ⚠ clinical_ops.studies not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Labeling document + translations (v2 translation board) ──────────────
+    // The v2 surface reads /api/mdx/labeling/1/translations, so the demo org
+    // needs a labeling document (its first → id 1 in a fresh DB) with rows.
+    {
+      const lblExists = await client.query(`SELECT to_regclass('public.labeling_documents') AS d, to_regclass('public.labeling_translations') AS t`);
+      if (lblExists.rows[0]?.d && lblExists.rows[0]?.t) {
+        let doc = await client.query(
+          `SELECT id FROM labeling_documents WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY id LIMIT 1`,
+          [org.id],
+        );
+        let docId = doc.rows[0]?.id;
+        if (!docId) {
+          const ins = await client.query(
+            `INSERT INTO labeling_documents (organization_id, device_name, doc_kind, version, status, language, region)
+             VALUES ($1,$2,$3,'1.0','review','en','eu') RETURNING id`,
+            [org.id, 'BX-204 CGM', 'ifu'],
+          );
+          docId = ins.rows[0].id;
+        }
+        const trans = [
+          { language: 'en', translator: 'Source', method: 'human', btv: true, status: 'approved' },
+          { language: 'de', translator: 'L. Weber', method: 'human', btv: true, status: 'approved' },
+          { language: 'fr', translator: 'M. Dubois', method: 'human', btv: true, status: 'approved' },
+          { language: 'es', translator: 'C. Ruiz', method: 'mt_postedited', btv: true, status: 'approved' },
+          { language: 'it', translator: 'G. Bruno', method: 'mt_postedited', btv: true, status: 'approved' },
+          { language: 'nl', translator: 'S. Visser', method: 'mt_postedited', btv: false, status: 'review' },
+          { language: 'pl', translator: 'K. Nowak', method: 'machine', btv: false, status: 'in_progress' },
+        ];
+        for (const t of trans) {
+          const ex = await client.query(
+            `SELECT id FROM labeling_translations WHERE labeling_document_id = $1 AND language = $2 LIMIT 1`,
+            [docId, t.language],
+          );
+          if (!ex.rows[0]) {
+            await client.query(
+              `INSERT INTO labeling_translations
+                 (labeling_document_id, organization_id, language, translator, translation_method, back_translation_verified, status)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+              [docId, org.id, t.language, t.translator, t.method, t.btv, t.status],
+            );
+          }
+        }
+        console.log('   ✓ Labeling document + translations demo seeded');
+      } else {
+        console.log('   ⚠ labeling_documents/translations not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Domain seed modules (scripts/seed/ga-demo.d/*.mjs) ───────────────────
+    // Each module owns one domain's demo rows: it default-exports
+    // `async (client, { org, admin }) => {}` and follows the same conventions as
+    // the inline blocks above (to_regclass-guarded, org-scoped, idempotent).
+    // Modularized so domains can be authored independently without contending
+    // for this file.
+    {
+      const domainDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'seed', 'ga-demo.d');
+      if (fs.existsSync(domainDir)) {
+        const files = fs.readdirSync(domainDir).filter((f) => f.endsWith('.mjs')).sort();
+        let domainOk = 0;
+        let domainSkipped = 0;
+        for (const file of files) {
+          const mod = await import(pathToFileURL(path.join(domainDir, file)).href);
+          if (typeof mod.default !== 'function') {
+            console.log(`   ⚠ ${file} has no default export — skipped`);
+            continue;
+          }
+          // Isolate each domain module in a SAVEPOINT so one whose backing table
+          // is not provisioned (a surface whose backend isn't built yet) skips
+          // cleanly instead of aborting the whole seed transaction. Populates
+          // every built surface; reports the rest honestly.
+          await client.query('SAVEPOINT domain_mod');
+          try {
+            await mod.default(client, { org, admin });
+            await client.query('RELEASE SAVEPOINT domain_mod');
+            domainOk++;
+          } catch (e) {
+            await client.query('ROLLBACK TO SAVEPOINT domain_mod');
+            domainSkipped++;
+            console.log(
+              `   ⚠ ${file} skipped — ${String(e.message || e).split('\n')[0]} ` +
+                `(backing table/columns not provisioned for this surface)`,
+            );
+          }
+        }
+        console.log(`   Domain modules: ${domainOk} seeded, ${domainSkipped} skipped (unbuilt surfaces).`);
+      }
     }
 
     await client.query('COMMIT');
@@ -420,4 +985,47 @@ async function seed() {
   }
 }
 
-seed().catch(() => process.exit(1));
+// ── Verify (non-mutating) ───────────────────────────────────────────
+// Asserts the Phase-1 submission core + evidence demo data is present for the
+// seeded org. Exits non-zero if any threshold is unmet.
+async function verify() {
+  console.log('Verifying submission core + evidence demo data...');
+  const client = await pool.connect();
+  try {
+    const orgRes = await client.query(`SELECT id FROM organizations WHERE slug = 'concept2cure' LIMIT 1`);
+    const orgId = orgRes.rows[0]?.id;
+    if (!orgId) {
+      console.error('✗ Org "concept2cure" not found — run the seed first.');
+      process.exit(1);
+    }
+    const counts = {};
+    for (const table of ['submissions', 'ectd_sequences', 'submission_leaves', 'submission_evidence_links']) {
+      const r = await client.query(
+        `SELECT COUNT(*)::int AS n FROM ${table} WHERE organization_id = $1`,
+        [orgId]
+      );
+      counts[table] = r.rows[0].n;
+    }
+    const thresholds = { submissions: 2, ectd_sequences: 2, submission_leaves: 3, evidence_links: 3 };
+    let ok = true;
+    for (const [table, min] of Object.entries(thresholds)) {
+      const pass = counts[table] >= min;
+      ok = ok && pass;
+      console.log(`   ${pass ? '✓' : '✗'} ${table}: ${counts[table]} (need >= ${min})`);
+    }
+    if (!ok) {
+      console.error('✗ Verification failed.');
+      process.exit(1);
+    }
+    console.log('✓ Verification passed.');
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+if (VERIFY_ONLY) {
+  verify().catch(() => process.exit(1));
+} else {
+  seed().catch(() => process.exit(1));
+}

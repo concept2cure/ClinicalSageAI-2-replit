@@ -64,12 +64,22 @@ function indexReceipt(receipt: DecisionReceipt): void {
 // ─── Persistence Bridge ──────────────────────────────────────────────────────
 
 async function persistDecision(decision: FormalDecisionRecord): Promise<boolean> {
+  // Never fabricate tenant attribution. The in-memory store remains the source
+  // of truth for the session; this DB bridge is best-effort and tenant-scoped.
+  if (decision.organizationId == null) {
+    console.warn(
+      `[decision-lifecycle] Skipping DB persistence for decision ${decision.id}: ` +
+      'no organizationId on decision (caller did not supply tenant context). In-memory record retained.'
+    );
+    return false;
+  }
+
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
     if (!decisionRecordService) return false;
 
     await decisionRecordService.create({
-      organizationId: 1, // Default org — real multi-tenant uses req context
+      organizationId: decision.organizationId,
       projectId: Number(decision.projectId) || 0,
       decisionCode: `${decision.kind}:${decision.id}`,
       title: decision.summary.slice(0, 200),
@@ -120,6 +130,7 @@ export class DecisionLifecycleService {
    */
   recordPreflightDecision(opts: {
     projectId: string;
+    organizationId?: number;
     kind: 'section-preflight-judgment' | 'module-preflight-judgment' | 'dossier-preflight-judgment';
     sectionCode?: string;
     moduleCode?: string;
@@ -162,6 +173,7 @@ export class DecisionLifecycleService {
    */
   recordGovernedActionDecision(opts: {
     projectId: string;
+    organizationId?: number;
     kind: DecisionKind;
     governedAction: GovernedActionType;
     artifactId?: string;
@@ -463,6 +475,7 @@ export class DecisionLifecycleService {
    */
   recordContradictionConsequence(opts: {
     projectId: string;
+    organizationId?: number;
     contradictionId: string;
     severity: 'critical' | 'major' | 'minor';
     explanation: string;
@@ -509,6 +522,7 @@ export class DecisionLifecycleService {
 
     const decision = this.recordGovernedActionDecision({
       projectId: opts.projectId,
+      organizationId: opts.organizationId,
       kind: 'contradiction-resolution-decision',
       governedAction: 'create-contradiction-consequence',
       sectionCode: opts.sectionCode,

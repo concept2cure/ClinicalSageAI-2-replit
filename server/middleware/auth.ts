@@ -1,4 +1,3 @@
-// @ts-nocheck - Express.Request.user type conflicts with tenantContext.ts
 /**
  * Authentication Middleware
  *
@@ -9,10 +8,27 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config/environment';
+import { verifyJwtWithRotation } from '../utils/jwtVerify';
+import { nonAccessTokenReason } from './tokenType';
+import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
+
+/**
+ * Extract the JWT from an Authorization header value, accepting only the
+ * canonical `Bearer <token>` form (case-insensitive scheme, exactly one
+ * space). Returns null if the header is missing, malformed, or the token
+ * is empty. Previously the code used `authHeader.replace('Bearer ', '')`
+ * which stripped the substring anywhere in the value and accepted exotic
+ * shapes like `Foo Bearer realtoken`.
+ */
+export function extractBearerToken(authHeader: string | undefined): string | null {
+  if (!authHeader) return null;
+  const match = /^Bearer\s+(\S+)$/i.exec(authHeader);
+  if (!match) return null;
+  const token = match[1];
+  return token.length > 0 ? token : null;
+}
 
 // JWT token payload interface
 interface JWTPayload {
@@ -25,7 +41,25 @@ interface JWTPayload {
   organizationId?: string;
   orgId?: string;
   permissions?: string[];
+  // Token-class discriminators. Non-access tokens (refresh, MFA challenge,
+  // MFA-partial) are signed with the same secret as access tokens, so the
+  // access path MUST reject them explicitly.
+  type?: string;
+  mfaPending?: boolean;
 }
+
+// Re-exported for callers that import the guard from the auth middleware.
+// The implementation lives in ./tokenType (a module with no `.js` twin) so
+// that TypeScript and the test/runtime resolvers agree on the same file.
+export { nonAccessTokenReason };
+
+// Re-exported so the external importers (tenants.ts, tenants-simple.ts,
+// tenant-users.ts) and this module's default export keep working unchanged.
+// The org-membership re-check (audit finding M1) that authenticateToken relies
+// on now lives in ./orgMembership — a module with no `.js` twin — so a route
+// that composes canonical auth can import enforceOrgMembership without the Vite
+// resolver binding it to the stale auth.js twin (which lacks that control).
+export { invalidateOrgMembershipCache };
 
 // Extend Request type to include user
 declare global {
@@ -54,6 +88,19 @@ declare global {
       tenantId?: number | string;
       userRole?: string;
       userEmail?: string;
+      /**
+       * How the request was authenticated. Set to 'api_key' by
+       * validateApiKey (enterprise-security.ts) when an X-API-Key header
+       * validates. Absent for normal JWT/session requests. Read by
+       * requireScope to decide whether to apply API-key scope enforcement.
+       */
+      authMethod?: 'api_key';
+      /** Scopes granted to the validated API key (validateApiKey). */
+      apiScopes?: string[];
+      /** Numeric id of the validated API key row (validateApiKey). */
+      apiKeyId?: number;
+      /** Per-key rate limit pulled from the api_keys row (validateApiKey). */
+      apiRateLimit?: number;
     }
   }
 }
@@ -65,8 +112,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   // SECURITY FIX: Dev auto-auth removed. All requests must provide a valid JWT.
   // To test locally, create a user via POST /api/auth/signup then login normally.
 
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
+  const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
     return res.status(401).json({
@@ -75,17 +121,40 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as JWTPayload;
+    const decoded = verifyJwtWithRotation(token) as JWTPayload;
+
+    // SECURITY: a non-access token (refresh / MFA challenge / MFA partial) must
+    // never authenticate a normal request, otherwise MFA can be bypassed.
+    const nonAccess = nonAccessTokenReason(decoded);
+    if (nonAccess) {
+      return res.status(401).json({
+        error: { code: 'AUTH_008', message: 'Token is not valid for this operation' },
+      });
+    }
+
+    const subject = decoded.userId ?? decoded.id ?? decoded.sub;
+    if (subject === undefined || subject === null || subject === '' || subject === 0) {
+      // A signed token with no usable subject claim must not authenticate.
+      // Falling back to id=0 (the previous behaviour) would otherwise let
+      // queries like `WHERE user_id = 0` produce inconsistent results and
+      // confuse downstream RBAC checks.
+      return res.status(401).json({
+        error: { code: 'AUTH_007', message: 'Token missing required subject claim' },
+      });
+    }
     req.user = {
-      id: decoded.userId || decoded.id || decoded.sub || 0,
-      userId: decoded.userId || decoded.id || decoded.sub,
+      id: subject,
+      userId: subject,
       email: decoded.email,
       role: decoded.role || 'user',
       roles: decoded.roles || [decoded.role || 'user'],
       organizationId: decoded.organizationId || decoded.orgId,
       permissions: decoded.permissions || [],
     };
-    next();
+    // SECURITY (M1): the organizationId claim was minted at login; re-check
+    // that the membership row still exists so a revoked user loses access
+    // within the cache TTL instead of the full token lifetime.
+    enforceOrgMembership(req, res, next);
   } catch (error) {
     return res.status(401).json({
       error: { code: 'AUTH_002', message: 'Invalid or expired token' },
@@ -209,8 +278,7 @@ export const requirePermission = (resource: string, action: string) => {
  * Optional authentication - attaches user if token present, continues if not
  */
 export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace('Bearer ', '');
+  const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
     // SECURITY FIX: Dev auto-auth removed from optional auth path.
@@ -218,16 +286,25 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as JWTPayload;
-    req.user = {
-      id: decoded.userId || decoded.id || decoded.sub || 0,
-      userId: decoded.userId || decoded.id || decoded.sub,
-      email: decoded.email,
-      role: decoded.role || 'user',
-      roles: decoded.roles || [decoded.role || 'user'],
-      organizationId: decoded.organizationId || decoded.orgId,
-      permissions: decoded.permissions || [],
-    };
+    const decoded = verifyJwtWithRotation(token) as JWTPayload;
+    const subject = decoded.userId ?? decoded.id ?? decoded.sub;
+    // Silently ignore tokens without a usable subject, and never attach a user
+    // from a non-access (refresh / MFA challenge / partial) token — optional
+    // auth continues unauthenticated rather than attaching a phantom user.
+    if (
+      !nonAccessTokenReason(decoded) &&
+      subject !== undefined && subject !== null && subject !== '' && subject !== 0
+    ) {
+      req.user = {
+        id: subject,
+        userId: subject,
+        email: decoded.email,
+        role: decoded.role || 'user',
+        roles: decoded.roles || [decoded.role || 'user'],
+        organizationId: decoded.organizationId || decoded.orgId,
+        permissions: decoded.permissions || [],
+      };
+    }
   } catch {
     // Token invalid but that's okay for optional auth
   }
@@ -245,4 +322,5 @@ export default {
   requireSameOrganization,
   requirePermission,
   optionalAuth,
+  invalidateOrgMembershipCache,
 };

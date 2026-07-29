@@ -505,7 +505,7 @@ ${clientPlanBlock}`,
     };
 
     let response;
-    let resolvedMode = resolveAnaMode();
+    const resolvedMode = resolveAnaMode();
 
     // Choose AI model based on user preference
     if (model === 'gemini' && process.env.GOOGLE_API_KEY) {

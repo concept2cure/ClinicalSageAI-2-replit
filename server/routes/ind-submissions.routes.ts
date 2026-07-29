@@ -10,9 +10,67 @@ import { createScopedLogger } from '../utils/logger';
 import { generateUUID } from '../utils/id-generator';
 import { storage } from '../storage';
 import * as schema from '../../shared/schema';
+import { authenticateToken } from '../middleware/auth.js';
 
 const logger = createScopedLogger('ind-submissions');
 const router = Router();
+
+// SECURITY: every route in this router operates on tenant-scoped IND
+// submissions. The router-level auth middleware enforces an
+// authenticated JWT before any handler runs, eliminating the prior
+// `?? 1` org-id fallback that let unauthenticated requests act as
+// org 1.
+router.use(authenticateToken);
+
+// Second guard: an authenticated user MUST carry an organizationId
+// claim. A token with no org context is treated as 403 once here,
+// rather than letting individual handlers fall through to "what org is
+// this even for" code paths.
+router.use((req: Request, res: Response, next) => {
+  const orgId =
+    (req as any).user?.organizationId ??
+    (req as any).tenantContext?.organizationId ??
+    (req as any).organizationId;
+  const userId = (req as any).user?.id ?? (req as any).userId;
+  if (orgId == null || userId == null) {
+    return res.status(403).json({
+      success: false,
+      error: 'Tenant context required',
+    });
+  }
+  next();
+});
+
+/**
+ * Org / user id getters. Safe by construction — the guard middleware
+ * above guarantees both are present before any handler runs.
+ */
+function getAuthedOrgId(req: Request): number {
+  return Number(
+    (req as any).user?.organizationId ??
+      (req as any).tenantContext?.organizationId ??
+      (req as any).organizationId,
+  );
+}
+
+function getAuthedUserId(req: Request): number {
+  return Number((req as any).user?.id ?? (req as any).userId);
+}
+
+/**
+ * Tenant-isolation guard for resources fetched by ID. The lookup
+ * functions in storage don't all filter by org, so we enforce here:
+ * a submission belonging to another org looks identical to "not found"
+ * (prevents existence enumeration).
+ */
+function assertSameOrg(
+  submission: { organizationId?: number | string | null } | null | undefined,
+  orgId: number,
+): boolean {
+  if (!submission) return false;
+  if (submission.organizationId == null) return false;
+  return Number(submission.organizationId) === orgId;
+}
 
 /**
  * GET /api/ind-submissions/active
@@ -21,16 +79,20 @@ const router = Router();
 router.get('/active', async (req: Request, res: Response) => {
   try {
     const sessionId = req.headers['x-session-id'] as string;
-    // SECURITY: Derive org and user from authenticated JWT context, not headers
-    const organizationId = (req as any).organizationId ?? (req as any).user?.organizationId ?? (req as any).organizationId ?? (req as any).user?.organizationId ?? 1;
-    const userId = (req as any).user?.id ?? (req as any).userId ?? (req as any).user?.id ?? (req as any).userId ?? 1;
-    
+    const organizationId = getAuthedOrgId(req);
+    const userId = getAuthedUserId(req);
+
     logger.info('Fetching active submission', { sessionId, organizationId, userId });
-    
-    // Try to find by session ID first
+
+    // Try to find by session ID first. Enforce tenant isolation post-fetch
+    // because the storage lookup is session-scoped, not org-scoped — a
+    // guessed session id from another org must not return a submission.
     let submission;
     if (sessionId) {
-      submission = await storage.getIndSubmissionBySession(sessionId);
+      const candidate = await storage.getIndSubmissionBySession(sessionId);
+      if (assertSameOrg(candidate, organizationId)) {
+        submission = candidate;
+      }
     }
     
     // If not found by session, try to get the most recent active submission
@@ -98,17 +160,20 @@ router.get('/active', async (req: Request, res: Response) => {
  */
 router.get('/:submissionId', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
-    
+    const submissionId = String(req.params.submissionId);
+    const organizationId = getAuthedOrgId(req);
+
     const submission = await storage.getIndSubmission(submissionId);
-    
-    if (!submission) {
+
+    // Tenant isolation: a submission belonging to another org looks
+    // identical to "not found" so existence can't be enumerated.
+    if (!submission || !assertSameOrg(submission, organizationId)) {
       return res.status(404).json({
         success: false,
         error: 'Submission not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: submission
@@ -128,8 +193,8 @@ router.get('/:submissionId', async (req: Request, res: Response) => {
  */
 router.post('/create', async (req: Request, res: Response) => {
   try {
-    const organizationId = (req as any).organizationId ?? (req as any).user?.organizationId ?? 1;
-    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
+    const organizationId = getAuthedOrgId(req);
+    const userId = getAuthedUserId(req);
     const sessionId = req.headers['x-session-id'] as string || `SESSION-${generateUUID()}`;
     
     const {
@@ -197,24 +262,41 @@ router.post('/create', async (req: Request, res: Response) => {
  */
 router.put('/:submissionId', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
-    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
+    const submissionId = String(req.params.submissionId);
+    const userId = getAuthedUserId(req);
+    const organizationId = getAuthedOrgId(req);
     const updates = req.body;
-    
-    // Add last modified by
+
+    // Tenant isolation: confirm the submission belongs to the caller's
+    // org before mutating. Storage doesn't filter by org, so we gate
+    // here. Foreign tenant looks like "not found" — never reveal that
+    // the record exists.
+    const existing = await storage.getIndSubmission(submissionId);
+    if (!existing || !assertSameOrg(existing, organizationId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Submission not found'
+      });
+    }
+
+    // Prevent the body from re-targeting another tenant or rewriting
+    // immutable provenance fields.
+    delete updates.organizationId;
+    delete updates.createdById;
+    delete updates.submissionId;
     updates.lastModifiedBy = userId;
-    
+
     const submission = await storage.updateIndSubmission(submissionId, updates);
-    
+
     if (!submission) {
       return res.status(404).json({
         success: false,
         error: 'Submission not found'
       });
     }
-    
-    logger.info('Updated submission', { submissionId });
-    
+
+    logger.info('Updated submission', { submissionId, organizationId });
+
     res.json({
       success: true,
       data: submission
@@ -234,27 +316,29 @@ router.put('/:submissionId', async (req: Request, res: Response) => {
  */
 router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
+    const submissionId = String(req.params.submissionId);
     const { stepNumber, stepData, completed = false } = req.body;
-    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
-    
-    // Get current submission
+    const userId = getAuthedUserId(req);
+    const organizationId = getAuthedOrgId(req);
+
+    // Get current submission, gated by org. Foreign tenant ⇒ 404.
     const submission = await storage.getIndSubmission(submissionId);
-    if (!submission) {
+    if (!submission || !assertSameOrg(submission, organizationId)) {
       return res.status(404).json({
         success: false,
         error: 'Submission not found'
       });
     }
     
-    // Update step data
-    const indStepData = submission.indStepData || {};
+    // Update step data. The JSON columns are untyped at the storage
+    // boundary, so narrow them to indexable records here.
+    const indStepData = (submission.indStepData || {}) as Record<string, any>;
     indStepData[`step${stepNumber}`] = stepData;
-    
+
     // Update completion status
-    const indStepsCompleted = submission.indStepsCompleted || {};
+    const indStepsCompleted = (submission.indStepsCompleted || {}) as Record<string, any>;
     indStepsCompleted[`step${stepNumber}`] = completed;
-    
+
     // Check if all steps are completed
     const allStepsCompleted = Object.keys(indStepsCompleted).every(
       key => key.startsWith('step') && indStepsCompleted[key]
@@ -269,7 +353,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
     }
     
     // Generate summary data if step 7 is completed
-    let updates: any = {
+    const updates: any = {
       indStepData,
       indStepsCompleted,
       indWizardStatus,
@@ -285,8 +369,8 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
       
       // Update phase status
       updates.phases = {
-        ...submission.phases,
-        'ind-wizard': { 
+        ...(submission.phases as Record<string, any>),
+        'ind-wizard': {
           status: 'completed', 
           completedAt: new Date().toISOString()
         }
@@ -322,11 +406,12 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
  */
 router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Response) => {
   try {
-    const { submissionId } = req.params;
-    const userId = (req as any).user?.id ?? (req as any).userId ?? 1;
-    
+    const submissionId = String(req.params.submissionId);
+    const userId = getAuthedUserId(req);
+    const organizationId = getAuthedOrgId(req);
+
     const submission = await storage.getIndSubmission(submissionId);
-    if (!submission) {
+    if (!submission || !assertSameOrg(submission, organizationId)) {
       return res.status(404).json({
         success: false,
         error: 'Submission not found'
@@ -353,8 +438,8 @@ router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Respo
       module3Data: extractModule3Data(indStepData),
       module5Data: extractModule5Data(indStepData),
       phases: {
-        ...submission.phases,
-        'ectd-coauthor': { 
+        ...(submission.phases as Record<string, any>),
+        'ectd-coauthor': {
           status: 'in-progress', 
           startedAt: new Date().toISOString()
         }

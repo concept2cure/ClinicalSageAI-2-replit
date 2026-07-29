@@ -121,7 +121,7 @@ export interface ConnectorCatalogEntry {
   requiresCredentials: boolean;
   documentationUrl?: string;
   icon?: string;
-  category: 'regulatory' | 'literature' | 'clinical_data' | 'dms' | 'ehr';
+  category: 'regulatory' | 'literature' | 'clinical_data' | 'dms' | 'ehr' | 'funding' | 'compliance' | 'sor';
   setupGuide?: ConnectorSetupGuide;
 }
 
@@ -218,6 +218,54 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
       troubleshooting: [
         'EMA documents are available in multiple languages. English versions are returned by default.',
         'Some older products may have limited digital documentation.',
+      ],
+    },
+  },
+  {
+    id: 'eudamed',
+    name: 'EUDAMED (EU Medical Device Database)',
+    type: 'api',
+    category: 'regulatory',
+    description: 'European Database on Medical Devices. Search registered devices by Basic UDI-DI, manufacturer (actor SRN), and risk class — the EU analogue of FDA device databases.',
+    requiredTier: 'standard',
+    requiresCredentials: false,
+    documentationUrl: 'https://ec.europa.eu/tools/eudamed/',
+    icon: 'flag',
+    setupGuide: {
+      overview: 'EUDAMED is the public EU medical-device database. No credentials are required — enable and search registered devices.',
+      prerequisites: ['Standard tier subscription or higher'],
+      credentialFields: [],
+      steps: [
+        { step: 1, title: 'Enable the connector', instructions: 'Toggle the connector on to access the EUDAMED public device database.' },
+        { step: 2, title: 'Search by device or manufacturer', instructions: 'Search by device trade name, Basic UDI-DI, or manufacturer name.' },
+      ],
+      troubleshooting: [
+        'EUDAMED is still being progressively populated; some modules contain limited data for older devices.',
+        'If results are empty, broaden the search term — device records are indexed by trade name and Basic UDI-DI.',
+      ],
+    },
+  },
+  {
+    id: 'eu_ctis',
+    name: 'EU CTIS (Clinical Trials Information System)',
+    type: 'api',
+    category: 'clinical_data',
+    description: 'EU Clinical Trials Information System under Regulation (EU) No 536/2014. Search authorised/ongoing EU trials by condition, sponsor, phase, and status — the EU analogue of ClinicalTrials.gov.',
+    requiredTier: 'standard',
+    requiresCredentials: false,
+    documentationUrl: 'https://euclinicaltrials.eu/',
+    icon: 'flask',
+    setupGuide: {
+      overview: 'CTIS is the public EU clinical-trials portal. No credentials are required — enable and search EU trials.',
+      prerequisites: ['Standard tier subscription or higher'],
+      credentialFields: [],
+      steps: [
+        { step: 1, title: 'Enable the connector', instructions: 'Toggle the connector on to access the CTIS public trial registry.' },
+        { step: 2, title: 'Search by condition or sponsor', instructions: 'Search by medical condition, sponsor, phase, or status. Results cite the EU trial number.' },
+      ],
+      troubleshooting: [
+        'CTIS only contains trials submitted under Regulation (EU) No 536/2014 (from 2022 onward); older trials are in the legacy EudraCT register.',
+        'If results are empty, broaden the search term or remove the status filter.',
       ],
     },
   },
@@ -525,6 +573,97 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
         'Error "unauthorized_client": The application has not been authorized by a Box admin. Submit it for approval in the Developer Console.',
         'Error "enterprise_not_found": The Enterprise ID is incorrect. Find it in Admin Console > Account & Billing > Account Info.',
         'If uploads fail with "access_denied", ensure the app has write scopes enabled and the service account has folder access.',
+      ],
+    },
+  },
+
+  // ─── Sponsored Programs / Research Administration ────────────────────────────
+  {
+    id: 'grants_gov',
+    name: 'Grants.gov',
+    type: 'api',
+    category: 'funding',
+    description: 'US federal grant funding opportunities (Grants.gov Search2 API). Discover and track Notices of Funding Opportunity (NOFOs) across all federal agencies for pre-award pipeline building.',
+    requiredTier: 'free',
+    requiresCredentials: false,
+    documentationUrl: 'https://www.grants.gov/web/grants/s2s/grantor/web-services.html',
+    icon: 'landmark',
+    setupGuide: {
+      overview: 'Grants.gov exposes a free, public REST API for searching federal funding opportunities. No credentials are required — enable and start searching for NOFOs by keyword, agency, or status.',
+      prerequisites: ['No prerequisites required'],
+      credentialFields: [],
+      steps: [
+        { step: 1, title: 'Enable the connector', instructions: 'Toggle the connector on. It uses the public Grants.gov Search2 API.' },
+        { step: 2, title: 'Search for opportunities', instructions: 'Search by keyword, CFDA number, or agency. Use the funding pipeline panel or AnA chat to find and track NOFOs into your pre-award workflow.' },
+      ],
+      troubleshooting: [
+        'If results are empty, broaden your keywords or remove the status filter — many opportunities are "forecasted" rather than "posted".',
+        'Grants.gov occasionally rate-limits high-volume polling; the connector caches results briefly to compensate.',
+      ],
+    },
+  },
+  {
+    id: 'sam_exclusions',
+    name: 'SAM.gov Restricted-Party Screening',
+    type: 'api',
+    category: 'compliance',
+    description: 'Screen investigators, sub-recipients, and vendors against the US SAM.gov Exclusions (debarment/suspension) list before award and procurement. Supports research-security and 2 CFR 200.214 suspension-and-debarment checks.',
+    requiredTier: 'professional',
+    requiresCredentials: true,
+    documentationUrl: 'https://open.gsa.gov/api/exclusions-api/',
+    icon: 'shield-alert',
+    setupGuide: {
+      overview: 'SAM.gov provides a free Exclusions API, but it requires a personal API key obtained from a SAM.gov account. Use it to screen parties against the federal exclusions (debarment) list.',
+      prerequisites: [
+        'A free SAM.gov account (sam.gov)',
+        'A personal API key generated from your SAM.gov profile (Account Details > API Key)',
+      ],
+      credentialFields: [
+        { field: 'apiKey', label: 'SAM.gov API Key', placeholder: 'Your SAM.gov personal API key', secret: true },
+      ],
+      steps: [
+        { step: 1, title: 'Create a SAM.gov account', instructions: 'Register a free account at sam.gov and sign in.' },
+        { step: 2, title: 'Generate an API key', instructions: 'Go to your profile > Account Details and generate a personal API key. Copy it.' },
+        { step: 3, title: 'Enter the key', instructions: 'Paste your SAM.gov API key below and test the connection. Screening queries the public exclusions extract.' },
+      ],
+      troubleshooting: [
+        'Error "API_KEY_INVALID": Regenerate your key in your SAM.gov account; keys can be rotated or expire.',
+        'A clean screen (zero matches) is the expected result for most parties — an empty result set means no exclusion was found.',
+        'Name-only matches can be ambiguous; confirm hits using DUNS/UEI or address before acting on them.',
+      ],
+    },
+  },
+  {
+    id: 'ellucian_banner',
+    name: 'Ellucian Banner (Ethos)',
+    type: 'api',
+    category: 'sor',
+    description: 'Connect to Ellucian Banner as the institutional system of record via the Ethos Integration API. Reconcile persons, organizations, and grant/fund records so the platform stays downstream of Banner (no double-entry, Banner remains authoritative).',
+    requiredTier: 'enterprise',
+    requiresCredentials: true,
+    documentationUrl: 'https://elluciandocs.ellucian.com/ethos/',
+    icon: 'building-columns',
+    setupGuide: {
+      overview: 'Ellucian Ethos Integration exposes Banner data through a unified API gated by an API key that is exchanged for a short-lived bearer token. This connector treats Banner as the system of record — it reads persons, organizations, and grant records for reconciliation.',
+      prerequisites: [
+        'Ellucian Ethos Integration subscription with Banner as a source system',
+        'An Ethos API key provisioned by your Ellucian administrator',
+        'The Ethos base URL for your tenant (e.g., https://integrate.elluciancloud.com)',
+      ],
+      credentialFields: [
+        { field: 'baseUrl', label: 'Ethos Base URL', placeholder: 'https://integrate.elluciancloud.com', secret: false },
+        { field: 'apiKey', label: 'Ethos API Key', placeholder: 'Your Ethos Integration API key', secret: true },
+      ],
+      steps: [
+        { step: 1, title: 'Obtain an Ethos API key', instructions: 'Ask your Ellucian administrator to provision an Ethos Integration API key with read access to the persons, organizations, and grants resources.' },
+        { step: 2, title: 'Confirm the base URL', instructions: 'Confirm your tenant Ethos base URL (commonly https://integrate.elluciancloud.com).' },
+        { step: 3, title: 'Enter credentials', instructions: 'Enter the base URL and API key below. The connector exchanges the key for a bearer token automatically on each session.' },
+        { step: 4, title: 'Test connection', instructions: 'Click "Test Connection". The connector authenticates against /auth and reads the resource catalog.' },
+      ],
+      troubleshooting: [
+        'Error "401 Unauthorized" on /auth: The API key is invalid or revoked. Request a new key from your Ellucian administrator.',
+        'Error "403 Forbidden" on a resource: The API key lacks read access to that Ethos resource. Ask your admin to add it to the application configuration.',
+        'Banner remains authoritative — this connector is read-only by design; it does not write back to Banner.',
       ],
     },
   },

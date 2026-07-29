@@ -1,12 +1,13 @@
 /**
  * Cross-program workbench surfaces:
  *   - TasksSurface         Tasks and reviews — Kanban + list + metrics
- *   - VaultSurface         Document vault — folders × files × version drawer
  *   - ValidationSurface    Validation center — programs matrix + rule list
  *   - SubmissionsSurface   Submission center — pipeline + list + detail drawer
  *   - TemplatesSurface     Templates — index of org-approved boilerplate
  *
  * Ported verbatim from design-system/ui_kits/mdx/Workbench.jsx.
+ * The vault lives in surfaces/VaultSurface.tsx (data/vault.ts +
+ * hooks/useVault.ts) alongside the other extracted surfaces.
  */
 
 import * as React from 'react';
@@ -21,14 +22,11 @@ import {
   VALIDATION_PROGRAMS,
   VALIDATION_RULES,
   VALIDATION_SUMMARY,
-  VAULT_FILES,
-  VAULT_FILTERS,
-  VAULT_FOLDERS,
-  VAULT_VERSIONS,
 } from '../data/workbench';
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
 import { useWorkbenchTasks, useWorkbenchTemplates, useWorkbenchValidation } from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -46,8 +44,8 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
      Falls back to the kit fixture during load and on error so the Kanban
      never renders with empty columns. */
   const live = useWorkbenchTasks();
-  const sourceTasks = live.tasks ?? TASKS;
-  const sourceMetrics = live.metrics ?? TASKS_METRICS;
+  const sourceTasks = useSampleRows(live.tasks, TASKS);
+  const sourceMetrics = useSampleRows(live.metrics, TASKS_METRICS);
 
   const byCol = (id: string) =>
     sourceTasks.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
@@ -198,264 +196,6 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Vault
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function VaultSurface({ onAskAna }: WorkbenchProps) {
-  const [folder, setFolder] = React.useState('root');
-  const [filter, setFilter] = React.useState('all');
-  const [query, setQuery] = React.useState('');
-  const [selected, setSelected] = React.useState('f1');
-
-  const files = VAULT_FILES.filter(
-    f =>
-      (folder === 'root' ||
-        folder === 'shared' ||
-        folder === 'corresp' ||
-        f.prog.toLowerCase().replace('-', '') === folder) &&
-      (filter === 'all' || f.kind === filter) &&
-      (!query || f.name.toLowerCase().includes(query.toLowerCase())),
-  );
-  const sel = VAULT_FILES.find(f => f.id === selected) || files[0];
-
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">Workbench</div>
-          <h1 className="page-title">Document vault</h1>
-          <div className="page-sub">
-            Every program artifact, every version, every signature. 21 CFR Part 11 audit trail.
-          </div>
-        </div>
-        <div className="page-actions">
-          <button
-            className="btn ghost small"
-            onClick={() => {
-              const headers = ['Name', 'Type', 'Kind', 'Program', 'Size', 'Version', 'Status', 'Updated', 'Author', 'SHA-256'];
-              const rows = VAULT_FILES.map(f => [
-                f.name, f.type, f.kind, f.prog, f.size, f.ver, f.status, f.updated, f.author, f.hash,
-              ]);
-              const csv = [headers, ...rows]
-                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-                .join('\r\n');
-              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `vault-manifest-${new Date().toISOString().slice(0, 10)}.csv`;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              URL.revokeObjectURL(url);
-            }}
-          >
-            {I.download} Export manifest
-          </button>
-          <button
-            className="btn primary small"
-            onClick={() =>
-              onAskAna(
-                'Walk me through uploading a document to the vault. Confirm the program, section, document type, ' +
-                  'version, and whether an e-signature is required, then file it into the right folder with hash + audit entry.',
-              )
-            }
-          >
-            {I.plus} Upload
-          </button>
-        </div>
-      </div>
-
-      <div className="vault-layout">
-        <aside className="vault-tree">
-          <div className="vault-tree-lbl">Folders</div>
-          {VAULT_FOLDERS.map(f => (
-            <button
-              key={f.id}
-              className="vault-tree-row"
-              data-active={folder === f.id}
-              onClick={() => setFolder(f.id)}
-            >
-              <span className="ico">{I.folder}</span>
-              <span className="lbl">{f.label}</span>
-              <span className="n">{f.count}</span>
-            </button>
-          ))}
-          <div className="vault-tree-lbl" style={{ marginTop: 14 }}>
-            Types
-          </div>
-          {VAULT_FILTERS.map(f => (
-            <button
-              key={f.id}
-              className="vault-tree-row small"
-              data-active={filter === f.id}
-              onClick={() => setFilter(f.id)}
-            >
-              <span className="lbl">{f.label}</span>
-            </button>
-          ))}
-        </aside>
-
-        <section className="vault-main">
-          <div className="vault-searchrow">
-            <div className="vault-search">
-              <span className="ico">{I.search}</span>
-              <input
-                placeholder="Search files, hashes, authors…"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-              />
-            </div>
-            <span className="vault-meta">
-              {files.length} files ·{' '}
-              {files.reduce((s, f) => s + parseFloat(f.size), 0).toFixed(1)} MB
-            </span>
-          </div>
-
-          <div className="ctable">
-            <div
-              className="ctable-head"
-              style={{ gridTemplateColumns: '1fr 80px 80px 100px 100px 120px' }}
-            >
-              <div>Name</div>
-              <div>Type</div>
-              <div>Size</div>
-              <div>Version</div>
-              <div>Status</div>
-              <div>Updated</div>
-            </div>
-            {files.map(f => (
-              <button
-                key={f.id}
-                className="ctable-row"
-                style={{ gridTemplateColumns: '1fr 80px 80px 100px 100px 120px' }}
-                data-on={selected === f.id}
-                onClick={() => setSelected(f.id)}
-              >
-                <div className="vault-name">
-                  <span className={`vault-type ${f.type}`}>{f.type}</span>
-                  <span className="ctable-strong">{f.name}</span>
-                  {f.blocker && <span className="pill-err small">blocker</span>}
-                  {f.esig && (
-                    <span className="vault-esig" title="E-signed">
-                      {I.shieldCheck}
-                    </span>
-                  )}
-                </div>
-                <div>{f.kind}</div>
-                <div className="mono">{f.size}</div>
-                <div className="mono">{f.ver}</div>
-                <div>
-                  <span className={`status-pill ${f.status}`}>{f.status}</span>
-                </div>
-                <div>{f.updated}</div>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <aside className="vault-drawer">
-          {sel && (
-            <>
-              <div className="drawer-head">
-                <div className="drawer-eyebrow">
-                  {sel.prog} · {sel.kind}
-                </div>
-                <div className="drawer-title">{sel.name}</div>
-              </div>
-              <div className="drawer-meta">
-                <div>
-                  <div className="k">Version</div>
-                  <div className="v mono">{sel.ver}</div>
-                </div>
-                <div>
-                  <div className="k">Size</div>
-                  <div className="v mono">{sel.size}</div>
-                </div>
-                <div>
-                  <div className="k">Status</div>
-                  <div className="v">
-                    <span className={`status-pill ${sel.status}`}>{sel.status}</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="k">Linked</div>
-                  <div className="v">{sel.linked} artifacts</div>
-                </div>
-                <div>
-                  <div className="k">Author</div>
-                  <div className="v">{sel.author}</div>
-                </div>
-                <div>
-                  <div className="k">SHA-256</div>
-                  <div className="v mono tiny">{sel.hash}</div>
-                </div>
-              </div>
-
-              <div className="drawer-actions">
-                <button
-                  className="btn primary small"
-                  onClick={() =>
-                    onAskAna(
-                      `Download ${sel.name} (${sel.ver}, ${sel.size}, SHA-256 ${sel.hash}) from the vault — ` +
-                        `confirm export is permitted under the program's distribution policy and log the access in the audit trail.`,
-                    )
-                  }
-                >
-                  {I.download} Download
-                </button>
-                <button
-                  className="btn ghost small"
-                  onClick={() =>
-                    onAskAna(
-                      `Preview ${sel.name} (${sel.kind} · ${sel.ver}). Surface its outline, key claims, and any open blockers without leaving the vault.`,
-                    )
-                  }
-                >
-                  {I.eye} Preview
-                </button>
-                <button className="btn ghost small" onClick={() => onAskAna(`Summarize ${sel.name}`)}>
-                  {I.sparkles} Ask Claude
-                </button>
-              </div>
-
-              <div className="drawer-section-lbl">Version history</div>
-              {VAULT_VERSIONS.map((v, i) => (
-                <div key={i} className="version-row" data-status={v.status}>
-                  <span className="mono version-v">{v.v}</span>
-                  <div className="version-body">
-                    <div className="version-meta">
-                      {v.when} · {v.author}
-                    </div>
-                    <div className="version-note">{v.note}</div>
-                  </div>
-                </div>
-              ))}
-
-              <div className="drawer-section-lbl">Audit trail</div>
-              <div className="audit-row">
-                <span className="mono">AUD-9101</span>
-                <span>
-                  Signed by {sel.author} · {sel.updated}
-                </span>
-              </div>
-              <div className="audit-row">
-                <span className="mono">AUD-9098</span>
-                <span>Checksum verified · system</span>
-              </div>
-              <div className="audit-row">
-                <span className="mono">AUD-9094</span>
-                <span>Uploaded · {sel.author}</span>
-              </div>
-            </>
-          )}
-        </aside>
-      </div>
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Validation
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -470,9 +210,9 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
   const programsState = useMdxPrograms();
   const programsList = programsState.programs ?? [];
   const validation = useWorkbenchValidation(programsList);
-  const sourceRules    = validation.rules    ?? VALIDATION_RULES;
-  const sourcePrograms = validation.programs ?? VALIDATION_PROGRAMS;
-  const sourceSummary  = validation.summary  ?? VALIDATION_SUMMARY;
+  const sourceRules    = useSampleRows(validation.rules, VALIDATION_RULES);
+  const sourcePrograms = useSampleRows(validation.programs, VALIDATION_PROGRAMS);
+  const sourceSummary  = useSampleRows(validation.summary, VALIDATION_SUMMARY);
 
   const rules = sourceRules.filter(
     r =>
@@ -635,7 +375,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
      pane doesn't render with zero counts. When live data returns zero,
      the empty state below is intentional. */
   const live = useSubmissions();
-  const sourceSubmissions = live.submissions ?? SUBMISSIONS;
+  const sourceSubmissions = useSampleRows(live.submissions, SUBMISSIONS);
 
   /* Default selection re-syncs to the first row of the live list when it
      arrives — avoids clicking onto a stale fixture id. */
@@ -885,7 +625,7 @@ export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
      documentTemplates + ectdTemplates server-side). Falls back to fixture
      during load + on error. */
   const live = useWorkbenchTemplates();
-  const sourceTemplates = live.templates ?? TEMPLATES;
+  const sourceTemplates = useSampleRows(live.templates, TEMPLATES);
   return (
     <>
       <div className="page-header">

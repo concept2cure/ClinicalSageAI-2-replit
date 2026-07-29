@@ -111,6 +111,23 @@ export const VALID_ROLES: Set<UserRole> = new Set<UserRole>([
   'medical_writer',
   'clinical_lead',
   'cmc_lead',
+  'biostatistician',
+  'pharmacovigilance',
+  'quality',
   'investor',
   'general',
+]);
+
+// Response languages AnA can answer in. Mirrors the client language registry
+// (client/src/i18n/languages.ts) and persona.ts LANGUAGE_OVERLAYS.
+export const VALID_LANGUAGES: Set<string> = new Set<string>([
+  'en',
+  'fr',
+  'de',
+  'ja',
+  'zh',
+  'ko',
+  'es',
+  'pt',
+  'it',
 ]);

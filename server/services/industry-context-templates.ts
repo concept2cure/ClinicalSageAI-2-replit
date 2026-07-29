@@ -13,6 +13,12 @@
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+/**
+ * @deprecated Use `IndustryMode` from `shared/regulatory/client-type-profiles`
+ * as the canonical segment axis for nav/scope/entitlement. `CompanyType` is
+ * retained only as a content-template detail inside the org profile (modality
+ * granularity that `IndustryMode` does not need).
+ */
 export type CompanyType =
   | 'biotech'
   | 'pharma'
@@ -415,4 +421,27 @@ export function getTemplateForContext(
     projectSections: project.sections,
     agencySections,
   };
+}
+
+/**
+ * Bridge from the legacy CompanyType axis to the canonical IndustryMode axis.
+ * Use this when code that stores CompanyType needs to resolve the canonical
+ * segment for nav/scope/entitlement decisions.
+ */
+export function companyTypeToIndustryMode(
+  ct: CompanyType,
+): 'biotech' | 'pharma' | 'medtech' {
+  switch (ct) {
+    case 'medical_device':
+    case 'combination_product':
+      return 'medtech';
+    case 'pharma':
+      return 'pharma';
+    case 'biotech':
+    case 'cell_gene_therapy':
+    case 'biosimilar':
+      return 'biotech';
+    default:
+      return 'biotech';
+  }
 }

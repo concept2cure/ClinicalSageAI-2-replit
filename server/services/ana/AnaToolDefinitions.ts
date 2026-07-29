@@ -10,62 +10,563 @@
  */
 
 import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
+// Agentic-workflow tool definitions extracted to their own module (first tranche
+// of decomposing this file). Imported so the enabled-tools array can reference
+// them exactly as before.
+import {
+  CONVENE_DRAFTING_COUNCIL,
+  GET_CLIENT_JOURNEY,
+  START_DEEP_INVESTIGATION,
+  CHECK_DEEP_INVESTIGATION,
+} from './agentic-workflow-tools.js';
+// BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
+// own module (decomposition tranche 2). Imported so the enabled-tools array can
+// reference them exactly as before.
+import {
+  ASSESS_ANALYTICAL_SIMILARITY,
+  ASSESS_COMPARABILITY,
+  ASSESS_IMMUNOGENICITY,
+  ASSESS_BLA_FILING_RISK,
+  GENERATE_SOP,
+  RESOLVE_SUBMISSION_PLAN,
+  GET_CTD_MODULE_HOME,
+  COMPUTE_FIH_DOSE,
+  CLASSIFY_TOX_FINDINGS,
+  SELECT_EXPOSURE_RESPONSE_DOSE,
+  DRAFT_NONCLINICAL_OVERVIEW_M2_4,
+  ASSESS_CONCENTRATION_QTC,
+  ASSESS_DDI_RISK,
+  DRAFT_CLINICAL_SUMMARY_M2_7,
+  ASSESS_NONCLINICAL_PROGRAM,
+  CHARACTERIZE_PK,
+  DRAFT_NONCLINICAL_SUMMARIES_M2_6,
+  LOAD_NONCLINICAL_PROGRAM,
+  GET_NONCLINICAL_TEMPLATE,
+  GET_CSR_TEMPLATE,
+  ASSESS_NONCLINICAL_SAFETY,
+  DRAFT_QUALITY_OVERALL_SUMMARY_M2_3,
+  LIST_PLATFORM_COMMANDS,
+  EXECUTE_PLATFORM_COMMAND,
+} from './bla-biologics-tool-defs.js';
+// Document view + operations tool definitions extracted to their own module
+// (decomposition tranche 3). Imported so the enabled-tools array can reference
+// them exactly as before.
+import {
+  LIST_VAULT_DOCUMENTS,
+  READ_VAULT_DOCUMENT,
+  GET_DOCUMENT_VERSIONS,
+  LIST_GOVERNED_DOCUMENTS,
+  READ_GOVERNED_DOCUMENT,
+  GET_TMF_VIEW,
+  SAVE_DOCUMENT_TO_VAULT,
+  UPDATE_VAULT_DOCUMENT,
+  COMPARE_VAULT_VERSIONS,
+  SEED_TMF,
+  UPDATE_TMF_ARTIFACT_STATUS,
+  SEARCH_ALL_DOCUMENTS,
+  GET_PLAN_USAGE,
+  GET_BILLING_CREDITS,
+  GET_ORG_CAPABILITIES,
+} from './document-surface-tool-defs.js';
+// Notification + clinical-study + working-memory tool definitions extracted to
+// their own module (decomposition tranche 4). Imported so the enabled-tools
+// array can reference them exactly as before.
+import {
+  FIRE_NOTIFICATION,
+  CREATE_CLINICAL_STUDY,
+  CREATE_CLINICAL_INVESTIGATOR,
+  CREATE_FINANCIAL_DISCLOSURE,
+  ADD_DISCLOSURE_INTEREST,
+  REVIEW_FINANCIAL_DISCLOSURE,
+  CREATE_HA_INTERACTION,
+  CREATE_REGULATORY_COMMITMENT,
+  REVIEW_COMMITMENT_PORTFOLIO,
+  CREATE_IACUC_PROTOCOL,
+  REGISTER_ANIMAL_COHORT,
+  REVIEW_IACUC_PROTOCOL,
+  CREATE_IRB_SUBMISSION,
+  ADD_IRB_SITE,
+  REVIEW_IRB_SUBMISSION,
+  CREATE_IBC_REGISTRATION,
+  ADD_BIOLOGICAL_AGENT,
+  REVIEW_IBC_REGISTRATION,
+  CREATE_NONCLINICAL_STUDY,
+  REVIEW_SEND_READINESS,
+  CREATE_PROTOCOL_DOCUMENT,
+  UPDATE_PROTOCOL_SECTION,
+  ADD_PROTOCOL_OBJECTIVE,
+  ADD_ELIGIBILITY_CRITERION,
+  REVIEW_PROTOCOL_COMPLETENESS,
+  FINALIZE_PROTOCOL_DOCUMENT,
+  ADD_PROTOCOL_RISK,
+  REVIEW_PROTOCOL_RISK_REGISTER,
+  CREATE_PROTOCOL_AMENDMENT,
+  ADD_AMENDMENT_CHANGE,
+  REVIEW_AMENDMENT,
+  REPORT_PROTOCOL_DEVIATION,
+  ADD_CAPA_ACTION,
+  REVIEW_DEVIATION,
+  ASSIGN_PROTOCOL_REVIEWER,
+  ADD_PROTOCOL_REVIEW_COMMENT,
+  REVIEW_PROTOCOL_REVIEW_STATUS,
+  CREATE_CONSENT_FORM,
+  UPDATE_CONSENT_ELEMENT,
+  REVIEW_CONSENT_COMPLETENESS,
+  CREATE_DMS_PLAN,
+  UPDATE_DMS_PLAN_ELEMENT,
+  REVIEW_DMS_PLAN_COMPLETENESS,
+  FINALIZE_DMS_PLAN,
+  CREATE_OTHER_SUPPORT,
+  ADD_OTHER_SUPPORT_ENTRY,
+  REVIEW_OTHER_SUPPORT,
+  CERTIFY_OTHER_SUPPORT,
+  CREATE_BIOSKETCH,
+  UPDATE_BIOSKETCH_SECTION,
+  REVIEW_BIOSKETCH_COMPLETENESS,
+  FINALIZE_BIOSKETCH,
+  CREATE_INVENTION_DISCLOSURE,
+  UPDATE_INVENTION_DISCLOSURE,
+  REVIEW_INVENTION_DISCLOSURE,
+  SUBMIT_INVENTION_DISCLOSURE,
+  CREATE_EXPORT_CONTROL_REVIEW,
+  UPDATE_EXPORT_CONTROL_REVIEW,
+  REVIEW_EXPORT_CONTROL,
+  FINALIZE_EXPORT_CONTROL_DETERMINATION,
+  CREATE_RESEARCH_AGREEMENT,
+  UPDATE_RESEARCH_AGREEMENT,
+  REVIEW_RESEARCH_AGREEMENT,
+  EXECUTE_RESEARCH_AGREEMENT,
+  CREATE_PROTOCOL_TEMPLATE,
+  CLONE_PROTOCOL_TEMPLATE,
+  SAVE_DOCUMENT_AS_TEMPLATE,
+  LIST_PROTOCOL_TEMPLATES,
+  ADD_PROTOCOL_MILESTONE,
+  SET_PROTOCOL_MILESTONE_STATUS,
+  REVIEW_PROTOCOL_TIMELINE,
+  EXPORT_PROTOCOL_DOCUMENT,
+  GENERATE_CTGOV_REGISTRATION_DRAFT,
+  ADD_SOA_ASSESSMENT,
+  SET_SOA_CELL,
+  REVIEW_SOA_MATRIX,
+  ADD_PROTOCOL_BUDGET_ITEM,
+  SET_PROTOCOL_BUDGET_PARAMS,
+  REVIEW_PROTOCOL_BUDGET,
+  IMPORT_CITI_RECORDS,
+  REVIEW_TRAINING_MATRIX,
+  REVIEW_EXPIRING_TRAINING,
+  SET_FUNDING_PROFILE,
+  FIND_GRANT_OPPORTUNITIES,
+  REVIEW_PROTOCOL_PORTFOLIO_ANALYTICS,
+  ASSIGN_COMMITTEE_MEMBER,
+  CONVENE_COMMITTEE_MEETING,
+  ADD_COMMITTEE_AGENDA_ITEM,
+  CAST_COMMITTEE_VOTE,
+  FINALIZE_COMMITTEE_DETERMINATION,
+  REVIEW_PROTOCOL_PORTFOLIO,
+  CREATE_COVERAGE_ANALYSIS,
+  SET_COVERAGE_QUALIFYING_DETERMINATION,
+  ADD_COVERAGE_ITEM,
+  CLASSIFY_COVERAGE_ITEM,
+  REVIEW_COVERAGE_ANALYSIS,
+  CREATE_GRANT_PROPOSAL,
+  RECORD_GRANT_AWARD,
+  REVIEW_GRANT_REPORTING,
+  SET_GRANT_MILESTONE_STATUS,
+  OPEN_GRANT_CLOSEOUT,
+  UPDATE_GRANT_CLOSEOUT,
+  FINALIZE_GRANT_CLOSEOUT,
+  RECORD_SUBAWARD,
+  SCREEN_SUBAWARD,
+  EXECUTE_SUBAWARD,
+  ADD_GRANT_BUDGET_LINE,
+  RECORD_GRANT_EXPENDITURE,
+  REVIEW_GRANT_BUDGET,
+  RECORD_COST_SHARE_CONTRIBUTION,
+  REVIEW_COST_SHARE,
+  REQUEST_NO_COST_EXTENSION,
+  APPROVE_NO_COST_EXTENSION,
+  RECORD_GRANT_OPPORTUNITY,
+  PREPARE_AWARD_CLOSEOUT,
+  RESEARCH_COMPLIANCE_BRIEFING,
+  TRIAGE_COMPLIANCE_ATTENTION,
+  FULFILL_REGULATORY_COMMITMENT,
+  REVIEW_HA_INTERACTION,
+  PREPARE_MEETING_PACKAGE,
+  REGISTER_CONTROLLED_SUBSTANCE,
+  CREATE_RIM_PRODUCT,
+  SET_REGISTRATION_STATUS,
+  REVIEW_LABEL_CURRENCY,
+  CREATE_INSPECTION,
+  LOG_INSPECTION_FINDING,
+  REVIEW_INSPECTION_READINESS,
+  REGISTER_DEA,
+  LOG_CS_TRANSACTION,
+  REVIEW_CS_BALANCE,
+  CREATE_LIFECYCLE_OBLIGATION,
+  REVIEW_LIFECYCLE_CALENDAR,
+  CREATE_TMF,
+  CLASSIFY_TMF_ARTIFACT,
+  REVIEW_TMF_COMPLETENESS,
+  RUN_COMPLIANCE_CHECKLIST,
+  ASSESS_STUDY_ONBOARDING,
+  ADD_PERSONNEL_TRAINING,
+  REVIEW_TRAINING_GATE,
+  CREATE_EFFORT_CERTIFICATION,
+  ADD_EFFORT_LINE,
+  CREATE_COI_DISCLOSURE,
+  SEARCH_GRANTS_GOV,
+  SCREEN_RESTRICTED_PARTY,
+  LOG_STUDY_DEVIATION,
+  LOG_STUDY_AE,
+  RECORD_ENDPOINT_RESULT,
+  VERIFY_MEMORY_ATOM,
+} from './notifications-study-memory-tool-defs.js';
+// Evidence & literature tool definitions extracted to their own module
+// (decomposition tranche 5). Imported so the enabled-tools array and the
+// drafting/review tool arrays can reference them exactly as before.
+import {
+  SEARCH_CLINICAL_EVIDENCE,
+  SEARCH_MEDICARE_COVERAGE,
+  SEARCH_CONNECTED_REPOSITORIES,
+  ADVISE_STUDY_DESIGN,
+  ADVISE_LABELING_STRUCTURE,
+  PLAN_LABELING_AUTHORING,
+  ADVISE_MEDICAL_INFORMATION,
+  ADVISE_REPORTING_GUIDELINE,
+  ADVISE_DATA_INTEGRITY,
+  ADVISE_RWE_DESIGN,
+  NARRATE_STATISTICAL_RESULT,
+  VALUE_DOSSIER_GUIDANCE,
+  ADVISE_ESTIMAND,
+  ADVISE_PHARMACOVIGILANCE,
+  ADVISE_CTD_STRUCTURE,
+  ADVISE_SPECIAL_DESIGNATION,
+  PLAN_ORPHAN_DRUG_DESIGNATION,
+  PLAN_IND_MODULE_AUTHORING,
+  ADVISE_GCP,
+  REVIEW_INFORMED_CONSENT,
+  ADVISE_COA_SELECTION,
+  ADVISE_RISK_MANAGEMENT,
+  RUN_RBM_ASSESSMENT,
+  ASSESS_SITE_RISK,
+  EVALUATE_KRIS_QTLS,
+  GENERATE_RBM_PLAN,
+  PRIORITIZE_MONITORING_QUERIES,
+  RUN_CENTRAL_MONITORING,
+  SCAN_PATIENT_PROFILES,
+  GENERATE_RBM_REPORT,
+  GET_RBM_ATTENTION,
+  ADD_CTQ_FACTOR,
+  DEFINE_KRI,
+  RECORD_KRI_READING,
+  SET_QTL,
+  RAISE_MONITORING_SIGNAL,
+  TRIAGE_SIGNAL,
+  DRAFT_MONITORING_PLAN,
+  CREATE_MONITORING_ACTION,
+  UPDATE_MONITORING_ACTION,
+  APPROVE_RBM_ASSESSMENT,
+  APPROVE_RBM_PLAN,
+  ADVISE_REGULATORY_PATHWAY,
+  SCREEN_PROMOTIONAL_LANGUAGE,
+  DRAFT_SAFETY_NARRATIVE,
+  LOOKUP_ICD10_CODE,
+  MEDICAL_WRITING_GUIDANCE,
+  ASSESS_READABILITY,
+  BUILD_ABBREVIATION_LIST,
+  MEDICAL_WRITING_REVIEW,
+  DESCRIBE_CAPABILITIES,
+  ASSESS_REGULATORY_LANDSCAPE,
+  SEARCH_DRUG_APPROVALS,
+  SEARCH_DRUG_LABELS,
+  SEARCH_DEVICE_RECALLS,
+  SEARCH_CRM,
+  CREATE_CALENDAR_EVENT,
+  SEARCH_REGULATORY_CORRESPONDENCE,
+  SEARCH_LITERATURE,
+  SEARCH_IVD_KNOWLEDGE,
+  PROJECT_KNOWLEDGE_SEARCH,
+  RENDER_SIGNATURE_MANIFESTATION,
+  ASSESS_OUTPUT_CONFIDENCE,
+  CHECK_GROUNDING,
+  RUN_SUBMISSION_PREMORTEM,
+  ASSEMBLE_CRL_PREMORTEM_ARTIFACT,
+  ASSEMBLE_BRIEFING_BOOK,
+  SCAN_REGULATORY_DEFICIENCIES,
+  SEARCH_LARGE_DOCUMENT,
+  REMEMBER_DOCUMENT_IN_PROJECT,
+  PROJECT_KNOWLEDGE_SEARCH_MULTI,
+  RECALL_SESSION_CONTEXT,
+  SIMULATE_STUDY_DESIGN,
+} from './evidence-literature-tool-defs.js';
+// Legacy-import tool definitions extracted to their own module (decomposition
+// tranche 6). Imported so the enabled-tools array can reference them as before.
+import {
+  START_LEGACY_IMPORT,
+  OVERRIDE_IMPORT_MAPPING,
+  APPROVE_IMPORT,
+  AUTHOR_DOCX_NATIVE,
+  CONVERT_DOCX_TO_PDF,
+  RUN_PYTHON_SCRIPT,
+  INSERT_DOCUMENT_CONTENT,
+  SURGICAL_DOCX_XML_EDIT,
+  INSERT_CLAUSE_TEMPLATE,
+  RUN_IN_CONTAINER,
+  VALIDATE_DOCX,
+  VERIFY_DOCX_AGAINST_SOURCE,
+  WRITE_KIT_SECTION,
+  ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
+  DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
+  DRAFT_CLINICAL_OVERVIEW_M2_5,
+  BATCH_DRAFT_SECTIONS,
+  DRAFT_FDA_IR_RESPONSE,
+} from './legacy-import-tool-defs.js';
+// Submission-center tool definitions extracted to their own module
+// (decomposition tranche 6). Imported so the enabled-tools array can reference
+// them exactly as before.
+import {
+  COMPUTE_LIFECYCLE_OPERATIONS,
+  GENERATE_STF,
+  CHECK_ECTD_CROSS_REFERENCES,
+  CLASSIFY_SUBMISSION_DOCUMENT,
+  EXTRACT_SUBMISSION_DOCUMENT,
+  RUN_SHADOW_REVIEW,
+  VALIDATE_ECTD_PACKAGE,
+  PLAN_SUBMISSION,
+  EXPLAIN_VALIDATION_FINDINGS,
+  CROSS_REGION_GAP_ANALYSIS,
+  DISPATCH_QC_CHECK,
+  TRACE_PROVENANCE,
+  CHECK_CONSISTENCY,
+  ASSESS_PATHWAY_READINESS,
+  BUILD_PATHWAY_MANIFEST,
+  LIST_VALIDATION_RULES,
+  LOOKUP_REGULATORY_PATHWAY,
+  RESOLVE_REGULATORY_STRUCTURE,
+  GET_MARKET_SUBMISSION_SPEC,
+  GET_DOCUMENT_TEMPLATE,
+  VALIDATE_MARKET_FORMATTING,
+  GET_SUBMISSION_REQUIREMENTS,
+  ASSESS_PATHWAY_ELIGIBILITY,
+  CLASSIFY_POST_SUBMISSION_CHANGE,
+  ASSESS_DEVICE_EVIDENCE_STRUCTURE,
+  CLASSIFY_DEVICE,
+  GET_DEVICE_REVIEWER_CHECKLIST,
+  GET_BIOCOMPATIBILITY_ENDPOINTS,
+  BUILD_DEVICE_BLUEPRINT,
+  ASSESS_STORED_CER,
+  BUILD_GLOBAL_DEVICE_STRATEGY,
+  GET_REGULATORY_TIMELINE,
+  VALIDATE_UDI,
+  GET_ELECTRICAL_STANDARDS,
+  GET_STERILIZATION_REQUIREMENTS,
+  ASSESS_COMBINATION_PRODUCT,
+  GET_DEVICE_LABELING,
+  ASSESS_QMS,
+  LIST_REGULATORY_CAPABILITIES,
+  ASSESS_DISPATCH_READINESS,
+} from './submission-center-tool-defs.js';
+// QMS + labeling + search + analytics tool definitions extracted to their own module (tranche 7).
+import {
+  CREATE_QMS_DOCUMENT,
+  APPROVE_QMS_DOCUMENT,
+  ACK_TRAINING,
+  REVISE_QMS_DOCUMENT,
+  RETIRE_QMS_DOCUMENT,
+  REGISTER_SUPPLIER,
+  LOG_NONCONFORMING_PRODUCT,
+  QMS_CHANGE_CREATE,
+  QMS_CHANGE_TRANSITION,
+  QMS_CHANGE_LINK,
+  SEARCH_CLINICAL_REGULATORY_EVIDENCE,
+  COMPARE_PROPOSED_DESIGN_TO_PRECEDENT,
+  EXPLAIN_DESIGN_RISK,
+  STRESS_TEST_PROTOCOL,
+  TRACE_DESIGN_RECOMMENDATION,
+  CREATE_LABELING_DOCUMENT,
+  ADD_LABELING_TRANSLATION,
+  ADD_LABELING_SYMBOL,
+  GLOBAL_SEARCH,
+} from './qms-labeling-analytics-tool-defs.js';
+// MDX + beta + IVD mutation tool definitions extracted to their own module (tranche 7).
+import {
+  CREATE_Q_SUB,
+  UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,
+  LINK_PROGRAM_CLINICAL_STUDY,
+  SET_PROGRAM_METADATA,
+  CREATE_UDI_RECORD,
+  CREATE_RISK_ITEM,
+  ADD_RISK_CONTROL,
+  CREATE_SOFTWARE_LIFECYCLE_ITEM,
+  WRITE_Q_SUB_SECTION,
+  RECORD_ANALYTICAL_PERFORMANCE_STUDY,
+  RECORD_CLINICAL_PERFORMANCE_STUDY,
+  CLASSIFY_IVD_DEVICE,
+  CREATE_PER_DOCUMENT,
+  CATEGORIZE_CLIA_COMPLEXITY,
+  PAIR_COMPANION_DIAGNOSTIC,
+  REGISTER_LDT,
+} from './mutation-surface-tool-defs.js';
+// Document intake + OCR + spreadsheet tool definitions extracted to their own module (tranche 7).
+import {
+  INSPECT_UPLOADED_DOCUMENT,
+  READ_UPLOADED_DOCUMENT,
+  OCR_DOCUMENT_PAGES,
+  READ_SPREADSHEET,
+  EDIT_SPREADSHEET,
+  MINE_PRECEDENTS,
+  CHECK_NUMERICAL_INTEGRITY,
+  COMPUTE_SAMPLE_SIZE,
+  COMPARE_STATISTICAL_SCENARIOS,
+  ASSESS_STATISTICAL_DEFENSIBILITY,
+  ANALYZE_MISSING_DATA_IMPACT,
+  GENERATE_STATISTICAL_DOCUMENT,
+  CHECK_DOSSIER_CONSISTENCY,
+} from './document-intake-tool-defs.js';
+// ./index.ts re-exports these two from this module, so keep them on the public
+// surface of this file even though the definitions now live in the sibling.
+export { SEARCH_CLINICAL_EVIDENCE, SEARCH_LITERATURE } from './evidence-literature-tool-defs.js';
+// Discovery & cheminformatics tool definitions extracted to their own module
+// (decomposition tranche 3). Imported so the enabled-tools array can reference
+// them exactly as before.
+import {
+  SEARCH_CHEMBL_COMPOUND,
+  ASSESS_TRIAL_FEASIBILITY,
+  SEARCH_PREPRINTS,
+  SCREEN_COMPOUND_LIABILITIES,
+  GENERATE_SCHEDULE_OF_EVENTS,
+  AMEND_SCHEDULE_OF_EVENTS,
+  REVIEW_SCHEDULE_OF_EVENTS_HEALTH,
+  RESET_PROJECT_GOALS,
+  RECONCILE_DOSSIER_NUMBERS,
+} from './discovery-cheminformatics-tool-defs.js';
+import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
+import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
+import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
+import { RECONCILIATION_TOOLS } from './reconciliationTools';
+import { CHANGE_PROPAGATION_TOOLS } from './changePropagationTools';
+import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools';
+import { CAPA_MDR_TOOLS } from './capaMdrTools';
+import { PREDICATE_INTELLIGENCE_TOOLS } from './predicateIntelligenceTools';
+import { REGULATORY_CURRENCY_TOOLS } from './regulatoryCurrencyTools';
+import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
+import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
+import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
+import { CODING_TOOLS } from './codingTools';
+import { NAVIGATION_TOOLS } from './navigationTools';
+import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
+import { HEOR_MARKET_ACCESS_TOOLS } from './heorTools';
+import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
+import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
+import { ADVANCED_MODELING_TOOLS } from './advancedModelingTools';
+import { COVER_LETTER_TOOLS } from './coverLetterTools';
+import { SHELF_LIFE_TOOLS } from './shelfLifeTools';
+import { DEEPENING_TOOLS } from './deepeningTools';
+import { DAILYMED_TOOLS } from './dailymedTools';
+import { RIM_TOOLS } from './rimTools';
+import { RIM_QUERY_TOOLS } from './rimQueryTools';
+import { EU_DATA_TOOLS } from './euDataTools';
+import { CDISC_TOOLS } from './cdiscTools';
+import { GUIDANCE_INGESTION_TOOLS } from './guidanceIngestionTools';
+import { SPL_SAFETY_TOOLS } from './splSafetyTools';
+import { BIOEQUIVALENCE_TOOLS } from './bioequivalenceTools';
+import { PHARMACOMETRICS_TOOLS } from './pharmacometricsTools';
+import { TOXICOLOGY_TOOLS } from './toxicologyTools';
+import { PEDIATRIC_TOOLS } from './pediatricTools';
+import { ADVANCED_THERAPY_TOOLS } from './advancedTherapyTools';
+import { RWE_METHODOLOGY_TOOLS } from './rweMethodologyTools';
+import { CLINICAL_PHARMACOLOGY_TOOLS } from './clinicalPharmacologyTools';
+import { CMC_QUALITY_TOOLS } from './cmcQualityTools';
+import { REGULATORY_STRATEGY_TOOLS } from './regulatoryStrategyTools';
+import { BIOSIMILAR_TOOLS } from './biosimilarTools';
+import { MUTAGENIC_IMPURITY_TOOLS } from './mutagenicImpurityTools';
+import { LABELING_INTELLIGENCE_TOOLS } from './labelingIntelligenceTools';
+import { IMMUNOGENICITY_TOOLS } from './immunogenicityTools';
+import { SAFETY_PHARMACOLOGY_TOOLS } from './safetyPharmacologyTools';
+import { PHARMACOVIGILANCE_TOOLS } from './pharmacovigilanceTools';
+import { COA_PRO_TOOLS } from './coaProTools';
+import { DOSE_OPTIMIZATION_TOOLS } from './doseOptimizationTools';
+import { COMBINATION_PRODUCTS_TOOLS } from './combinationProductsTools';
+import { TRIAL_STATISTICS_TOOLS } from './trialStatisticsTools';
+import { GMP_QUALITY_SYSTEMS_TOOLS } from './gmpQualitySystemsTools';
+import { NONCLINICAL_ADME_TOOLS } from './nonclinicalAdmeTools';
+import { BIOMARKER_TOOLS } from './biomarkerTools';
+import { RARE_DISEASE_TOOLS } from './rareDiseaseTools';
+import { GCP_OPERATIONS_TOOLS } from './gcpOperationsTools';
+import { MEDICAL_DEVICE_TOOLS } from './medicalDeviceTools';
+import { DIGITAL_HEALTH_TOOLS } from './digitalHealthTools';
+import { VACCINE_TOOLS } from './vaccineTools';
+import { BENEFIT_RISK_TOOLS } from './benefitRiskTools';
+import { POST_APPROVAL_TOOLS } from './postApprovalTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Evidence & Literature Tools
+// Evidence & literature tool definitions moved to
+// ./evidence-literature-tool-defs.ts (decomposition tranche 5) and imported at
+// the top of this file, so ALL_ANA_TOOLS_RAW and the drafting/review tool
+// arrays reference them unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const SEARCH_CLINICAL_EVIDENCE: AnaTool = {
-  name: 'search_clinical_evidence',
+// ─────────────────────────────────────────────────────────────────────────────
+// Onboarding (read-only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lets a client ask AnA, in conversation, what its workspace still needs and
+ * what a document could contribute — WITHOUT giving the model a way to write.
+ *
+ * Deliberately read-only. There is no `onboarding_commit` tool and there will
+ * not be one: a model-callable commit could self-invoke inside the agentic loop,
+ * which would defeat the human-approval gate the whole onboarding flow is built
+ * on. Applying proposals stays a human action through the governed endpoint.
+ */
+export const SUMMARIZE_ONBOARDING_READINESS: AnaTool = {
+  name: 'summarize_onboarding_readiness',
   description:
-    'Search for clinical evidence by condition, intervention, or outcome. Returns relevant clinical trial data, study results, and evidence summaries from ClinicalTrials.gov and internal databases.',
+    "Report which onboarding fields this organization's profile already has and which are still blank, and explain what a client can upload to fill the gaps. Read-only: it inspects the org profile and never changes it. Use when a client asks what setup they still need, or what a document could help with. To actually apply values from a document, direct the client to the 'Set up from a document' flow — extraction proposes, the client reviews and approves, and only then is anything written.",
   input_schema: {
     type: 'object',
-    properties: {
-      query: {
-        type: 'string',
-        description: 'Search query for clinical evidence (condition, drug, device, etc.)',
-      },
-      evidence_type: {
-        type: 'string',
-        enum: ['clinical_trial', 'literature', 'real_world_evidence', 'meta_analysis'],
-        description: 'Type of evidence to search for',
-      },
-      max_results: {
-        type: 'number',
-        description: 'Maximum number of results to return (default: 5)',
-      },
-    },
-    required: ['query'],
+    properties: {},
+    required: [],
   },
 };
 
-export const SEARCH_LITERATURE: AnaTool = {
-  name: 'search_literature',
+// ─────────────────────────────────────────────────────────────────────────────
+// FDA Postmarket Surveillance Tools (live openFDA)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SEARCH_DEVICE_ADVERSE_EVENTS: AnaTool = {
+  name: 'search_device_adverse_events',
   description:
-    'Search published literature databases (PubMed, internal corpus) for relevant publications. Returns titles, abstracts, DOIs, and key findings.',
+    'Search the FDA MAUDE database (live openFDA) for medical-device adverse-event reports by product code, device name, or manufacturer. Returns a summary (total reports, serious events, top event types, date range) plus a capped sample of recent reports. Use for device postmarket surveillance and CER vigilance sections.',
   input_schema: {
     type: 'object',
     properties: {
-      query: {
-        type: 'string',
-        description: 'Literature search query',
-      },
-      date_range: {
-        type: 'string',
-        description: 'Date range filter, e.g. "2020-2025"',
-      },
-      study_type: {
-        type: 'string',
-        enum: ['rct', 'observational', 'systematic_review', 'case_report', 'any'],
-        description: 'Filter by study type',
-      },
-      max_results: {
-        type: 'number',
-        description: 'Maximum results (default: 10)',
-      },
+      product_code: { type: 'string', description: 'FDA product code (e.g. "MDS"), most precise filter' },
+      device_name: { type: 'string', description: 'Generic device name' },
+      manufacturer: { type: 'string', description: 'Manufacturer name' },
+      date_from: { type: 'string', description: 'Start date YYYY-MM-DD' },
+      date_to: { type: 'string', description: 'End date YYYY-MM-DD' },
+      max_results: { type: 'number', description: 'Maximum reports to summarize (default: 50)' },
     },
-    required: ['query'],
+    required: [],
+  },
+};
+
+export const SEARCH_DRUG_ADVERSE_EVENTS: AnaTool = {
+  name: 'search_drug_adverse_events',
+  description:
+    'Search the FDA FAERS database (live openFDA) for drug adverse-event reports by product NDC, product name, or manufacturer. Returns a summary (total reports, serious events, top reactions, date range) plus a capped sample. Use for pharmacovigilance and safety-signal context.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      product_ndc: { type: 'string', description: 'Product NDC code, most precise filter' },
+      product_name: { type: 'string', description: 'Drug product or brand name' },
+      manufacturer: { type: 'string', description: 'Manufacturer name' },
+      date_from: { type: 'string', description: 'Start date YYYY-MM-DD' },
+      date_to: { type: 'string', description: 'End date YYYY-MM-DD' },
+      max_results: { type: 'number', description: 'Maximum reports to summarize (default: 50)' },
+    },
+    required: [],
   },
 };
 
@@ -223,91 +724,59 @@ export const ANALYZE_PREDICATE_DEVICE: AnaTool = {
 export const EXTRACT_DOCUMENT_STRUCTURE: AnaTool = {
   name: 'extract_document_structure',
   description:
-    'Extract and analyze the structure of an uploaded document — headings, sections, tables, figures, references. Useful for gap analysis and template matching.',
+    'Parse the structure of a document from its extracted text — the heading/section/clause outline, a table of contents, and counts of tables and figures. Headings are detected from markdown, decimal numbering (e.g. "2.3 Scope"), Article/Section/Clause prefixes, or ALL-CAPS lines. Pass the document text in `text`. Use this to understand a client document before reviewing or comparing it.',
   input_schema: {
     type: 'object',
     properties: {
+      text: {
+        type: 'string',
+        description: 'The extracted plain text of the document to analyze.',
+      },
       document_id: {
         type: 'string',
-        description: 'Internal document ID to analyze',
-      },
-      extract_elements: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'Elements to extract (e.g., ["headings", "tables", "figures", "references", "acronyms"])',
+        description: 'Optional internal document ID (informational; the analysis runs on `text`).',
       },
     },
-    required: ['document_id'],
+    required: ['text'],
   },
 };
 
-export const MINE_PRECEDENTS: AnaTool = {
-  name: 'mine_precedents',
+export const COMPARE_DOCUMENT_VERSIONS: AnaTool = {
+  name: 'compare_document_versions',
   description:
-    "Construct a precedent-mining plan for a regulatory document type: how did recently approved drugs/devices frame the same type of content? Returns structured search targets across Drugs@FDA, EMA EPARs, FDA 510(k), PMA/De Novo databases, EUDAMED, EMA guidelines, and relevant scientific repositories — with URL templates, web_search query strings, and 'what to look for' guidance specific to the document type. This is how senior regulatory consultants calibrate: read the last three approved NDAs in the indication, read the CHMP rapporteur comments, read the FDA medical review. When web_search is enabled, AnA can execute the returned queries directly; when not, the URLs serve as a handoff for the regulatory author. Use this BEFORE drafting a document type that has meaningful precedent (Module 2.5, 510(k) SE, CER, CRL response, PIP) — the time to learn from precedent is BEFORE the first draft, not during revision.",
+    'Compare two versions of a document and report what changed — at the section/clause level (which sections were added, removed, or modified) and as a line-level diff. Pass the two texts as `old_text` and `new_text`. Use this for redline-style version review of client documents (e.g. a brief, protocol, or contract).',
   input_schema: {
     type: 'object',
     properties: {
-      document_type: {
-        type: 'string',
-        description: "Canonical document type. One of: clinical_overview (M2.5), clinical_summary (M2.7), quality_overall_summary (M2.3), nonclinical_overview (M2.4), ind_briefing_document, nda_response, labeling, 510k_substantial_equivalence, pma_ssed, de_novo_classification, clinical_evaluation_report (CER), ivdr_technical_file, risk_management_plan, pediatric_investigation_plan, breakthrough_designation_request, fast_track_request.",
-      },
-      search_context: {
-        type: 'string',
-        description: 'Therapeutic area, indication, device class, sponsor name, or other disambiguation to scope the precedent search (e.g. "SGLT2 inhibitor type 2 diabetes", "pulse oximeter pediatric", "GLP-1 receptor agonist obesity").',
-      },
+      old_text: { type: 'string', description: 'Text of the earlier version.' },
+      new_text: { type: 'string', description: 'Text of the later version.' },
     },
-    required: ['document_type', 'search_context'],
+    required: ['old_text', 'new_text'],
   },
 };
 
-export const CHECK_NUMERICAL_INTEGRITY: AnaTool = {
-  name: 'check_numerical_integrity',
+export const SEARCH_DOCUMENT: AnaTool = {
+  name: 'search_document',
   description:
-    "Scan a single drafted artifact for same labelled quantity stated with multiple distinct values. Surfaces candidates like: sample size N=648 in the narrative but N=641 in Table 14.1; p<0.001 in text but p<0.01 in the forest plot; 100 mg/kg NOAEL in one paragraph and 200 mg/kg two pages later. This is the classic 'numbers drift between text and table' failure that triggers FDA RTFs. The checker reports CANDIDATES — multi-arm studies legitimately report different N per arm or timepoint — so the author or model must adjudicate whether each candidate is a real inconsistency or documented variance. Call this AFTER drafting a regulatory artifact containing numerical claims and BEFORE finalizing. Returns verdict (clean | review_candidates | likely_inconsistency) with per-candidate severity and context snippets.",
+    'Search within a document\'s text for a term or pattern ("grep" the document) and return each hit with its line number and the section it falls under. Set `regex` to true to treat `query` as a regular expression. Use this to locate clauses, defined terms, obligations, or specific values inside a client document.',
   input_schema: {
     type: 'object',
     properties: {
-      content: {
-        type: 'string',
-        description: 'The drafted artifact content to scan for internal numerical inconsistency.',
-      },
+      text: { type: 'string', description: 'The extracted plain text of the document to search.' },
+      query: { type: 'string', description: 'The term or pattern to find.' },
+      regex: { type: 'boolean', description: 'Treat `query` as a regular expression (default false).' },
+      case_sensitive: { type: 'boolean', description: 'Case-sensitive match (default false).' },
+      max_results: { type: 'number', description: 'Maximum matches to return (default 200).' },
     },
-    required: ['content'],
+    required: ['text', 'query'],
   },
 };
 
-export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
-  name: 'check_dossier_consistency',
-  description:
-    "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      draft_content: {
-        type: 'string',
-        description: 'The drafted artifact content to check against the project dossier.',
-      },
-      project_id: {
-        type: 'number',
-        description: 'The project the draft belongs to. Required so the check is scoped to the correct dossier.',
-      },
-      organization_id: {
-        type: 'number',
-        description: 'The organization that owns the project (for tenant scoping).',
-      },
-      ctd_section: {
-        type: 'string',
-        description: 'Optional CTD section code for this draft (e.g. "2.5", "3.2.P.8.1"). Used to skip self-reference cross-checks.',
-      },
-      exclude_artifact_id: {
-        type: 'number',
-        description: 'Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version.',
-      },
-    },
-    required: ['draft_content', 'project_id', 'organization_id'],
-  },
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// Document intake + OCR + spreadsheet tool definitions moved to ./document-intake-tool-defs.ts
+// (decomposition tranche 7) and imported at the top of this file, so
+// ALL_ANA_TOOLS_RAW and the drafting/review arrays resolve unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Collections by Use Case
@@ -338,6 +807,17 @@ export const GAP_ANALYSIS_TOOLS: AnaTool[] = [
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
   VALIDATE_CROSS_REFERENCES,
+];
+
+/** Tools for reviewing and comparing client documents */
+export const DOCUMENT_REVIEW_TOOLS: AnaTool[] = [
+  EXTRACT_DOCUMENT_STRUCTURE,
+  COMPARE_DOCUMENT_VERSIONS,
+  SEARCH_DOCUMENT,
+  INSPECT_UPLOADED_DOCUMENT,
+  READ_UPLOADED_DOCUMENT,
+  OCR_DOCUMENT_PAGES,
+  READ_SPREADSHEET,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -755,387 +1235,563 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MDX mutation tools — let AnA take action against the kit's data domain.
-// These complement the read tools (lookup_*, search_*, etc.) and the
-// document-authoring tools (author_docx_native, generate_document, etc.):
-// once AnA has gathered the facts and drafted the deliverable, she can
-// also commit state changes back into the system of record. Every
-// mutation is tenant-scoped via ToolContext.organizationId and audit-logged
-// through the global mutation-audit middleware (server/middleware/setup.ts).
+// MDX + beta + IVD mutation tool definitions moved to ./mutation-surface-tool-defs.ts
+// (decomposition tranche 7) and imported at the top of this file, so
+// ALL_ANA_TOOLS_RAW and the drafting/review arrays resolve unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const CREATE_Q_SUB: AnaTool = {
-  name: 'create_q_sub',
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission gateway tools — package an eCTD bundle for a region, transmit
+// to FDA ESG / EMA CESP / EMA EUDAMED / PMDA Gateway, poll status, and
+// download acknowledgements. Backed by server/services/submission-gateways/.
+// Tenant-scoped via ToolContext.organizationId. All transports are real
+// protocol code, credential-gated through env vars.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
+  name: 'package_ectd_for_region',
   description:
-    "Create a new Q-Submission (Pre-Sub, SIR, study-risk determination, informational meeting) for a regulatory program. Use after the user agrees on the meeting topic + questions, or after AnA has identified that a Pre-Sub is the right next step. Returns the created row including the q-number, stage ('plan'), and target date so AnA can reference it in subsequent turns. Tenant-scoped: programId must belong to the caller's org.",
+    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml / Health Canada ca-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
   input_schema: {
     type: 'object',
     properties: {
-      program_id: {
-        type: 'string',
-        description: "regulatory_programs.id (UUID) the Q-Sub is filed under.",
+      region:          { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
+      sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
+      submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
+      sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
+      sponsor_name:    { type: 'string' },
+      product_name:    { type: 'string' },
+      leaves: {
+        type: 'array',
+        description: 'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title }.',
+        items: {
+          type: 'object',
+          properties: {
+            ctd_section: { type: 'string' },
+            operation:   { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
+            source_path: { type: 'string' },
+            file_name:   { type: 'string' },
+            title:       { type: 'string' },
+          },
+          required: ['ctd_section', 'operation', 'source_path', 'file_name', 'title'],
+        },
       },
-      q_sub_type: {
+      output_dir: { type: 'string', description: 'Where to write the zip. Defaults to tmp/submissions.' },
+    },
+    required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
+  },
+};
+
+export const TRANSMIT_SUBMISSION: AnaTool = {
+  name: 'transmit_submission',
+  // The description states the refusal, because a tool whose description
+  // promises transmission will be called for transmission and its refusal
+  // reported to the user as a failure. It does not transmit — see the handler
+  // in AnaToolExecutor.ts and the gateway guard in submission-gateways/index.ts.
+  description:
+    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      region:      { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] },
+      environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
+      bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
+      bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },
+      bundle_size_bytes: { type: 'number' },
+      format:      { type: 'string', enum: ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] },
+      program_id:  { type: 'string', description: 'regulatory_programs.id (UUID).' },
+      package_id:  { type: 'number', description: 'c2c_submission_packages.id (when applicable).' },
+      submission_type: { type: 'string' },
+      application_id:  { type: 'string', description: 'Stored on metadata; consumed by gateway-specific transports.' },
+      sequence:    { type: 'string', description: 'Stored on metadata.' },
+    },
+    required: ['region', 'gateway', 'bundle_path', 'bundle_sha256', 'bundle_size_bytes', 'format'],
+  },
+};
+
+export const CHECK_SUBMISSION_STATUS: AnaTool = {
+  name: 'check_submission_status',
+  description:
+    "Poll the latest status for a transmitted submission. For FDA ESG, fetches the AS2 MDN / SFTP ack chain. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
+  input_schema: {
+    type: 'object',
+    properties: { transmittal_id: { type: 'number' } },
+    required: ['transmittal_id'],
+  },
+};
+
+export const GET_SUBMISSION_ACK: AnaTool = {
+  name: 'get_submission_ack',
+  description:
+    "Download the latest acknowledgment for a transmittal as a text summary. Includes the gateway's transmission id, current status, ack timestamp, and (when present) the raw acknowledgment payload. Use when the user wants to inspect the receipt or attach it to the audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: { transmittal_id: { type: 'number' } },
+    required: ['transmittal_id'],
+  },
+};
+
+export const RECORD_VALIDATION_FINDING: AnaTool = {
+  name: 'record_validation_finding',
+  description:
+    "Record a validator finding against a transmittal (FDA eValidator, EMA-validator, PMDA pre-check, commercial validators Lorenz / GlobalSubmit, or AnA's internal pre-check). Severity 'error' blocks acceptance; 'warning' is advisory; 'info' is contextual. After the finding lands, the kit's transmittal view shows it; use resolve_validation_finding to mark it addressed.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      transmittal_id: { type: 'number' },
+      validator:      { type: 'string', enum: ['fda_evalidator', 'ema_validator', 'pmda_precheck', 'lorenz', 'globalsubmit', 'internal'] },
+      severity:       { type: 'string', enum: ['error', 'warning', 'info'] },
+      rule_id:        { type: 'string' },
+      rule_title:     { type: 'string' },
+      message:        { type: 'string' },
+      file_path:      { type: 'string' },
+      line_number:    { type: 'number' },
+    },
+    required: ['transmittal_id', 'validator', 'severity', 'message'],
+  },
+};
+
+export const RESOLVE_VALIDATION_FINDING: AnaTool = {
+  name: 'resolve_validation_finding',
+  description:
+    "Mark a validator finding as resolved with a short note describing how the issue was addressed. Captures resolved_by + resolved_at for the 21 CFR Part 11 audit trail.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      finding_id:       { type: 'number' },
+      resolution_note:  { type: 'string' },
+    },
+    required: ['finding_id'],
+  },
+};
+
+export const GATEWAY_CONFIGURATION_STATUS: AnaTool = {
+  name: 'gateway_configuration_status',
+  description:
+    "Report which submission gateways are configured for the caller's organization × environment. Returns one row per (region, gateway) with a boolean configured flag. Use before transmitting to give the user a clear answer to 'which regions can we submit to today?'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
+    },
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission-center tool definitions moved to ./submission-center-tool-defs.ts
+// (decomposition tranche 6) and imported at the top of this file, so
+// ALL_ANA_TOOLS_RAW references them unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification + clinical-study + working-memory tool definitions moved to
+// ./notifications-study-memory-tool-defs.ts (decomposition tranche 4) and
+// imported at the top of this file, so ALL_ANA_TOOLS_RAW references them
+// unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QMS + labeling + search + analytics tool definitions moved to ./qms-labeling-analytics-tool-defs.ts
+// (decomposition tranche 7) and imported at the top of this file, so
+// ALL_ANA_TOOLS_RAW and the drafting/review arrays resolve unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy-import tool definitions moved to ./legacy-import-tool-defs.ts
+// (decomposition tranche 6) and imported at the top of this file, so
+// ALL_ANA_TOOLS_RAW references them unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BLA 351(a) biologics + CTD nonclinical/clinical tool definitions moved to
+// ./bla-biologics-tool-defs.ts (decomposition tranche 2) and imported at the top
+// of this file, so ALL_ANA_TOOLS_RAW references them unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Discovery & cheminformatics tool definitions moved to
+// ./discovery-cheminformatics-tool-defs.ts (decomposition tranche 3) and
+// imported at the top of this file, so ALL_ANA_TOOLS_RAW references them
+// unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Intelligence Questioning Engine Tools
+// ─────────────────────────────────────────────────────────────────────────────
+
+const START_INTELLIGENCE_FLOW: AnaTool = {
+  name: 'start_intelligence_flow',
+  description:
+    'Start an intelligence questioning flow for a regulatory document type. ' +
+    'When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, or other regulatory document, ' +
+    'invoke this tool to launch the guided questioning flow. The engine will return structured questions ' +
+    'that the user answers step by step, with branching logic, validation, and regulatory issue detection.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
         type: 'string',
-        enum: ['presub', 'sir', 'srd', 'agree', 'info'],
         description:
-          "Q-Sub category. presub = standard Pre-Submission meeting; sir = Submission Issue Request; srd = Study Risk Determination; agree = Agreement Meeting; info = Informational Meeting.",
-      },
-      title: {
-        type: 'string',
-        description:
-          "Short topic title (e.g. 'Pre-Sub on biocompatibility strategy for IV-415').",
-      },
-      fda_team: {
-        type: 'string',
-        description: "Optional FDA branch/team (e.g. 'CDRH/OHT3/DOG/DOG2').",
-      },
-      target_date: {
-        type: 'string',
-        description: "Optional ISO-8601 target date for the meeting/feedback.",
-      },
-      summary: {
-        type: 'string',
-        description: 'Optional summary/agenda paragraph for the briefing document.',
+          'The type of regulatory document to build. Examples: "protocol", "csr", "ind", "sop", "510k", "cer", ' +
+          '"clinical protocol", "clinical study report", "IND submission", "standard operating procedure".',
       },
     },
-    required: ['program_id', 'q_sub_type', 'title'],
+    required: ['document_type'],
   },
 };
 
-export const UPDATE_Q_SUB_COMMITMENT_ROLLED_IN: AnaTool = {
-  name: 'update_q_sub_commitment_rolled_in',
+const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
+  name: 'answer_intelligence_question',
   description:
-    "Mark a Q-Sub commitment as rolled-in (or revert) — i.e. confirmation that the agreed-to commitment is reflected in the dossier. Used after AnA verifies the dossier section that addresses the commitment. Tenant-scoped via the parent Q-Sub's program org.",
+    'Submit an answer to the current intelligence question in an active flow. ' +
+    'The engine validates the answer, runs issue checks, and advances to the next question ' +
+    'or completes the flow with a structured output.',
   input_schema: {
     type: 'object',
     properties: {
-      commitment_id: {
+      flow_id: {
         type: 'string',
-        description: 'q_sub_commitments.id (UUID) of the commitment row.',
+        description: 'The flow ID returned by start_intelligence_flow.',
       },
-      rolled_in: {
-        type: 'boolean',
-        description: 'true to mark as rolled-in, false to revert.',
-      },
-    },
-    required: ['commitment_id', 'rolled_in'],
-  },
-};
-
-export const LINK_PROGRAM_CLINICAL_STUDY: AnaTool = {
-  name: 'link_program_clinical_study',
-  description:
-    "Bind a regulatory program to a specific clinical_ops.studies row by writing the study UUID into program.metadata.clinicalStudyId. The PMA trial-metrics endpoint reads this binding to compute Enrolled / Sites / AE rate / Endpoints-achieved — without it the endpoint falls back to a fuzzy product-name match that can pick up the wrong study in orgs running multiple trials. Use whenever the user identifies which clinical study backs a program. Tenant-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      program_id: {
+      node_id: {
         type: 'string',
-        description: 'regulatory_programs.id (UUID).',
+        description: 'The ID of the question node being answered.',
       },
-      clinical_study_id: {
-        type: 'string',
-        description: 'clinical_ops.studies.id (UUID).',
-      },
-    },
-    required: ['program_id', 'clinical_study_id'],
-  },
-};
-
-export const SET_PROGRAM_METADATA: AnaTool = {
-  name: 'set_program_metadata',
-  description:
-    "Merge keys into a regulatory program's metadata jsonb (program.metadata). Used to set production-recommended keys: clinicalStudyId (binds to clinical_ops.studies — prefer the dedicated link_program_clinical_study tool), ndcCode (FAERS lookups), programCode (display override), stage (richer stage state), gateErrs/gateWarns/gateOk (per-package transmit gate counts), fileCount/bytes/cover/esig/transmitAt (rich submission-list fields). Performs a shallow JSON merge — passing { foo: null } removes that key. Tenant-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      program_id: {
-        type: 'string',
-        description: 'regulatory_programs.id (UUID).',
-      },
-      metadata: {
+      answers: {
         type: 'object',
         description:
-          'Object whose keys are merged into program.metadata. Values must be JSON-serializable (string|number|boolean|object|null).',
-        additionalProperties: true,
+          'Map of field IDs to their values. Keys are the field IDs from the question node, ' +
+          'values are the user\'s answers (strings, numbers, booleans, or arrays for multi-select).',
       },
     },
-    required: ['program_id', 'metadata'],
+    required: ['flow_id', 'node_id', 'answers'],
+  },
+};
+
+const LIST_INTELLIGENCE_FLOWS: AnaTool = {
+  name: 'list_intelligence_flows',
+  description:
+    'List all available intelligence questioning flows for the current client context. ' +
+    'Returns flow categories, names, descriptions, and estimated completion times.',
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Native python-docx authoring — canonical Word-grade authoring path.
-// Spawns workers/artifact-compute/docx-python-runtime.py inside the isolated
-// compute worker (no network egress, bounded timeout) which uses python-docx
-// directly: real Document with configured fonts, page margins, headers,
-// footers, headings (h0–h3), bullet/numbered lists, tables (pipe-delimited),
-// page breaks (--- marker), inline images. Returns the .docx and — when
-// output_format='pdf' — chains through headless LibreOffice
-// (server/scripts/docx_pdf_pipeline.py) to produce a native-fidelity PDF.
-//
-// Prefer this over generate_document for paying-client deliverables that
-// must look like real Word output (regulatory submissions, investor decks,
-// signed cover letters). Keep generate_document for lightweight inline
-// composition where JSZip+OOXML fidelity is sufficient.
+// War Game Simulation Tool
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const AUTHOR_DOCX_NATIVE: AnaTool = {
-  name: 'author_docx_native',
+const START_WAR_GAME: AnaTool = {
+  name: 'start_war_game',
   description:
-    "Author a native Word-grade .docx using python-docx (workers/artifact-compute/docx-python-runtime.py) running inside the isolated compute worker. Real headers, footers, configured fonts (Calibri 11pt), page margins, heading levels, bullet/numbered lists (markdown-style ‐ and 1. prefixes), pipe-delimited tables, page breaks (--- marker), inline base64 images via ![alt](key). When output_format='pdf', the .docx is then converted via headless LibreOffice for native Word→PDF fidelity. Use for regulatory submissions, signed cover letters, paying-client deliverables — anything that must look like real Word output. Tenant-scoped via ToolContext (organizationId, userId, projectId).",
+    'Simulate an FDA auditor review of collected intelligence data. Pressure-tests the document ' +
+    'against regulatory requirements and produces an advisory report with findings and remediation ' +
+    'recommendations. Use this after completing an intelligence questioning flow to war-game the ' +
+    'document before submission.',
   input_schema: {
     type: 'object',
     properties: {
-      title: {
+      war_game_category: {
         type: 'string',
-        description:
-          'Document title. Used for the title page heading, the running header, and the output filename.',
+        enum: ['protocol', 'ind', 'csr', '510k', 'cer', 'sop', 'nda', 'bla', 'pma', 'cmc', 'risk_management', 'safety_narrative', 'labeling', 'briefing_book', 'stability'],
+        description: 'The type of document to war-game.',
       },
-      content: {
+      source_flow_id: {
         type: 'string',
-        description:
-          "Markdown-style content. Supported syntax: '# H1' through '#### H4' headings, '- ' or '* ' for bullets, '1. ' for numbered, '|col|col|' rows + '|---|---|' separator for tables, '---' on its own line for a page break, '![alt](image_key)' for inline images keyed against the images map. Plain paragraphs render as Calibri body text.",
+        description: 'The flow ID of the completed intelligence questionnaire to audit.',
       },
-      images: {
+      answers: {
         type: 'object',
-        description:
-          'Optional map of image_key → base64-encoded PNG/JPEG bytes. Referenced from content via ![alt](image_key). Omit if the document has no inline images.',
-        additionalProperties: { type: 'string' },
-      },
-      output_format: {
-        type: 'string',
-        enum: ['docx', 'pdf'],
-        description:
-          "Output format. 'docx' returns the python-docx authored Word document; 'pdf' additionally converts via headless LibreOffice. Default 'docx'.",
-      },
-      pdf_compress: {
-        type: 'boolean',
-        description:
-          'When output_format=pdf, run a Ghostscript compression pass after conversion. Useful for submission gateways that cap file size.',
-      },
-      pdf_quality: {
-        type: 'string',
-        enum: ['screen', 'ebook', 'printer', 'prepress', 'default'],
-        description:
-          "Ghostscript PDFSETTINGS preset when pdf_compress=true. Default 'ebook'.",
+        description: 'The collected answers from the intelligence flow.',
       },
     },
-    required: ['title', 'content'],
+    required: ['war_game_category', 'source_flow_id', 'answers'],
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DOCX → PDF — canonical Word-grade rendering. Wraps the Python pipeline
-// (server/scripts/docx_pdf_pipeline.py) which shells out to headless
-// LibreOffice (`soffice --headless --convert-to pdf`). The .docx remains the
-// editable source of truth; the PDF is a downstream rendering with native
-// Word fidelity (fonts, headers/footers, page breaks, tables, styles). We
-// never render PDF directly via reportlab — see
-// docs/architecture/docx-pipeline-canonical-designation.md.
-//
-// Use after generate_document, fetch_template_and_fill, or
-// assemble_ectd_module_from_artifacts when the user asks for a PDF
-// deliverable. Optional Ghostscript compression for size-sensitive shipping
-// (FDA submission gateways, email attachments).
+// Document view + operations tool definitions moved to
+// ./document-surface-tool-defs.ts (decomposition tranche 3) and imported at the
+// top of this file, so ALL_ANA_TOOLS_RAW references them unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const CONVERT_DOCX_TO_PDF: AnaTool = {
-  name: 'convert_docx_to_pdf',
+// ─────────────────────────────────────────────────────────────────────────────
+// Reporting View Tools — read/list access over the governed Report-OS
+// product, segment-anchored and entitlement-aware. AnA NARRATES report
+// outputs; it never originates a metric, score, or probability — those come
+// only from deterministic providers (report-os/ana/report-tools.ts
+// ANA_REPORTING_GUARDRAIL). All tenant-scoped, read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const LIST_REPORT_TYPES: AnaTool = {
+  name: 'list_report_types',
   description:
-    "Convert an existing .docx to a .pdf using headless LibreOffice — the canonical Word-grade rendering path. The .docx must already exist on disk (typically produced by generate_document, fetch_template_and_fill, or assemble_ectd_module_from_artifacts). Returns the path to the produced PDF, plus optional Ghostscript-compressed variant for submission gateways. The .docx is preserved as the editable source; the PDF is a downstream rendering with native fonts, page layout, headers, and footers — not a reportlab-flat render.",
+    "List the governed report types available to this organization for a given scope — already " +
+    "filtered to the org's client segment(s) and annotated with the entitlement verdict for its " +
+    "plan tier (entitled vs the tier that unlocks it). Use before generating or discussing a report " +
+    "so the user is only offered report types their segment, scope, and plan actually permit. " +
+    "AnA narrates these; it never invents a report type. Tenant-scoped, read-only.",
   input_schema: {
     type: 'object',
     properties: {
-      input_docx_path: {
+      scope: {
         type: 'string',
-        description:
-          'Absolute path to the source .docx file. Typically the outputPath returned by a prior generate_document / fetch_template_and_fill / assemble_ectd_module_from_artifacts call.',
+        enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
+        description: 'The report scope to list types for.',
       },
-      output_pdf_path: {
-        type: 'string',
-        description:
-          'Optional output path for the PDF. Defaults to the same directory as the input with a .pdf extension.',
-      },
-      compress: {
-        type: 'boolean',
-        description:
-          'When true, run a Ghostscript compression pass after conversion. Useful for FDA submission gateways that cap file size.',
-      },
-      quality: {
-        type: 'string',
-        enum: ['screen', 'ebook', 'printer', 'prepress', 'default'],
-        description:
-          "Ghostscript PDFSETTINGS preset. Default 'ebook' (~150dpi, web-grade). Use 'prepress' for color-critical print, 'screen' for the smallest file.",
-      },
+      persona: { type: 'string', description: 'Optional persona filter (e.g. executive, ra_lead, qa).' },
     },
-    required: ['input_docx_path'],
+    required: ['scope'],
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MDX kit-section write-back — closes the loop between AnA's drafting and the
-// kit's section editors (K510Surface, PmaSurface, CerSurface). When the model
-// has produced a draft section (cover letter, SE discussion, device
-// description, software documentation, PMA module narrative, CER body, etc.),
-// this tool persists that content into cerv2_510k_sections.content for the
-// matching section_key — flagged as draft_source='ana' so the surface can
-// render an "AnA drafted this — accept / refine" affordance. Audit-logged.
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const WRITE_KIT_SECTION: AnaTool = {
-  name: 'write_kit_section',
+export const GET_PORTFOLIO_READINESS: AnaTool = {
+  name: 'get_portfolio_readiness',
   description:
-    "Write drafted section content back into the MDX kit's section editor (cerv2_510k_sections), so the user sees it inside K510Surface / PmaSurface / CerSurface instead of only in chat. Use after producing a drafted section narrative the user has asked you to author — typical section_keys include 'cover-letter', 'indications-for-use', '510k-summary', 'device-description', 'substantial-equivalence', 'software', 'cybersecurity', 'biocompatibility', 'sterilization', 'electromagnetic', 'performance-bench', 'performance-clinical', 'labeling', 'cer-main', 'cer-pmcf', 'pma-module-1' through 'pma-module-6', 'qsub-briefing', 'qsub-cover'. The section is marked as drafted-by-AnA and surfaces a review affordance; the user accepts or refines from inside the editor. Section row is matched by (organization_id, section_key); tenant-scoped via ToolContext.organizationId. Returns the updated row's id, status, and completionPercentage.",
+    "The enterprise portfolio board-pack rollup for a program group: average readiness and " +
+    "confidence, worst risk, ready/partial/missing counts, total critical blockers, the " +
+    "attention-ranked worklist (lowest readiness first), and top blocker themes. Every number is " +
+    "computed by the deterministic orchestrator — AnA explains the rollup, never originates it. " +
+    "Requires the enterprise plan (portfolio_rollup); returns a locked notice otherwise. " +
+    "Tenant-scoped, read-only.",
   input_schema: {
     type: 'object',
     properties: {
-      section_key: {
-        type: 'string',
-        description:
-          "Stable section identifier matching cerv2_510k_sections.section_key (e.g. 'substantial-equivalence', 'cybersecurity', 'cer-main').",
-      },
-      content: {
-        type: 'string',
-        description:
-          'The drafted section content (markdown or plain text). Replaces the existing content of the row. Must be the finished prose intended for review, not raw notes.',
-      },
-      status: {
-        type: 'string',
-        enum: ['drafting', 'ready_for_review', 'in_review'],
-        description:
-          "Workflow status to set. Default 'drafting'. Use 'ready_for_review' when the draft is comprehensive enough for human review.",
-      },
-      completion_percentage: {
-        type: 'number',
-        description:
-          'Optional explicit completion %. If omitted, status drives a sensible default (drafting=60, ready_for_review=85, in_review=90).',
-      },
-      summary_note: {
-        type: 'string',
-        description:
-          'One-line note for the audit trail describing what this draft covers (e.g. "drafted SE discussion citing K251234 + reference device").',
-      },
+      program_group_id: { type: 'number', description: 'The program group id to roll up.' },
     },
-    required: ['section_key', 'content'],
+    required: ['program_group_id'],
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// eCTD Module Assembly — collects existing artifacts in a project belonging
-// to a CTD module prefix (e.g. "3.2.S") and assembles them into a single DOCX
-// via masterDocumentBuilder.generateFromScratch. Pure assembly, no AI.
+// AnA Reporting Canvas tools — AnA conversationally generates governed reports,
+// suggests a best-practices dashboard grounded in the client's programs, answers
+// reporting questions, and saves dashboards. Every report is a governed run
+// (same orchestrator + entitlement gate + truthfulness gate as a direct run):
+// AnA composes and narrates, it NEVER originates a metric.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS: AnaTool = {
-  name: 'assemble_ectd_module_from_artifacts',
+export const GENERATE_REPORT: AnaTool = {
+  name: 'generate_report',
   description:
-    "Collect every artifact in a project whose CTD section starts with a given module prefix (e.g. '3.2.S' for drug substance, '2.5' for clinical overview, '5.3.5' for clinical study reports), order them by section number, and assemble a single DOCX with proper headings. Use when the user has drafted several module sections as separate artifacts and wants the assembled module document for review or submission. Pulls the latest non-archived version of each artifact, dedupes by section, and emits the output to disk. Tenant-scoped via ToolContext.organizationId.",
+    'Generate one governed report LIVE for the reporting canvas: runs the given report type over a ' +
+    'scope through the same orchestrator + truthfulness gate as a direct run, and returns the rendered ' +
+    'report (sections + typed blocks: metrics, tables, charts, blockers, gaps, disclosures). Use to ' +
+    'build a report the user asked for or to populate a dashboard panel. Entitlement-gated (returns a ' +
+    'locked notice with the required tier otherwise). AnA presents and explains this report; every ' +
+    'number is computed by the engine, never by AnA. Tenant-scoped.',
   input_schema: {
     type: 'object',
     properties: {
-      project_id: {
-        type: 'number',
-        description: 'Project ID whose artifacts should be assembled.',
-      },
-      module_number: {
+      report_type_id: { type: 'string', description: 'A governed report type id (from list_report_types).' },
+      scope_type: {
         type: 'string',
-        description:
-          'CTD module prefix to match on artifact.ctd_section (e.g. "3.2.S", "3.2.P", "2.5", "2.7", "5.3.5"). Trailing dot/wildcard not required.',
+        enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
+        description: 'The scope to run the report at.',
       },
-      output_format: {
-        type: 'string',
-        enum: ['docx', 'pdf'],
-        description: 'Output format. Defaults to docx.',
-      },
+      scope_id: { type: 'string', description: 'The id of the scope entity (e.g. project id).' },
+      submission_type: { type: 'string', description: 'Optional submission type hint (e.g. NDA, 510k).' },
     },
-    required: ['project_id', 'module_number'],
+    required: ['report_type_id', 'scope_type', 'scope_id'],
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Section-aware drafting scaffolds — return a structured outline + anchor
-// data that the model uses to draft prose inline in its own response.
-// Following the mine_precedents pattern: tool provides STRUCTURE, LLM
-// provides PROSE.
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
-  name: 'draft_510k_substantial_equivalence',
+export const EXPLAIN_REPORT_BLOCKERS: AnaTool = {
+  name: 'explain_report_blockers',
   description:
-    "Return the canonical FDA 510(k) Substantial Equivalence comparison structure for a subject-vs-predicate device pair, with per-section guidance and the SE table column format. Use when drafting the SE section of a 510(k) — the structure is what FDA reviewers expect, the table format is what the SE summary requires. The tool does NOT draft prose; the model uses the returned structure + the user's device data to draft each section inline. Pair with analyze_predicate_device first if predicate technical details are needed.",
+    'Generate a governed report and return its blockers + gaps for AnA to explain in plain language — ' +
+    'what is blocking readiness/finality and why. Reuses generate_report under the hood (same governed ' +
+    'engine); AnA narrates the returned blockers, it never invents one. Entitlement-gated. Tenant-scoped.',
   input_schema: {
     type: 'object',
     properties: {
-      predicate_510k_number: {
+      report_type_id: { type: 'string', description: 'A governed report type id.' },
+      scope_type: {
         type: 'string',
-        description: 'Primary predicate K-number (e.g. "K223456").',
+        enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
       },
-      device_name: {
-        type: 'string',
-        description: 'Subject device name.',
-      },
-      intended_use: {
-        type: 'string',
-        description: 'Subject device intended use statement.',
-      },
-      technology_summary: {
-        type: 'string',
-        description:
-          'Brief summary of subject device technology (energy source, sensors, materials, software, principles of operation).',
-      },
+      scope_id: { type: 'string' },
     },
-    required: ['predicate_510k_number', 'device_name', 'intended_use'],
+    required: ['report_type_id', 'scope_type', 'scope_id'],
   },
 };
 
-export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
-  name: 'draft_clinical_overview_m2_5',
+export const SUGGEST_REPORTS: AnaTool = {
+  name: 'suggest_reports',
   description:
-    "Return the ICH M4E(R2) Clinical Overview (Module 2.5) outline with the six canonical subsections (2.5.1 Product Development Rationale through 2.5.6 Benefits and Risks Conclusions), per-section drafting guidance, and per-section citation hints showing which Module 2.7 summary should be referenced. When called with project_id, also returns the project's existing artifacts so the model can suggest which ones to cite where. Use when drafting the M2.5 — pair with draft_clinical_overview_m2_5 first, then draft each section inline using the returned outline.",
+    "Suggest the best-practice reports and a preset dashboard for THIS client, grounded in their real " +
+    "programs, segment, entitlement tier, and what they already run/subscribe to. Returns a ranked, " +
+    "reasoned list (each with a plain-language why) plus a ready-to-save preset dashboard spec of " +
+    "governed report panels. Locked-but-relevant reports are surfaced with the tier that unlocks them, " +
+    "never as available picks. AnA proposes; the numbers come only when each report is generated. " +
+    "Tenant-scoped, read-only.",
   input_schema: {
     type: 'object',
     properties: {
-      product_name: {
-        type: 'string',
-        description: 'Drug substance / product name.',
-      },
-      indication: {
-        type: 'string',
-        description: 'Target indication.',
-      },
-      project_id: {
-        type: 'number',
-        description:
-          'Project ID — when provided, the tool returns up to 50 existing artifacts so you can pick citations.',
-      },
+      persona: { type: 'string', description: 'Optional persona lens (e.g. executive, ra_lead, qa).' },
     },
-    required: ['product_name', 'indication'],
+    required: [],
   },
 };
 
-export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
-  name: 'draft_fda_ir_response',
+export const SAVE_REPORT_DEFINITION: AnaTool = {
+  name: 'save_report_definition',
   description:
-    "Parse a pasted FDA Information Request letter, extract the numbered questions, and return a per-question response scaffold with the canonical 3-section format (FDA Question verbatim · Sponsor Response · Supporting Data/Citation) plus cover-letter guidance. Use when the user has received an IR (typically Day 74 RTF or mid-cycle) and needs to draft a response within the 14-day window. The tool extracts questions heuristically (numbered '1.', '1.1', or 'Question N:'); if extraction fails, it tells you so you can paste a more structured version. The model drafts each response inline using the scaffold; the tool itself does not call any AI.",
+    'Save an AnA-authored dashboard/report canvas: a titled, ordered set of governed report-type panels. ' +
+    'Every panel is validated against the report catalog + the org entitlement tier before saving — an ' +
+    'unknown or un-entitled panel is rejected with the reason. Use after the user approves a suggested or ' +
+    'assembled dashboard so it persists and can be re-opened. Tenant-scoped.',
   input_schema: {
     type: 'object',
     properties: {
-      ir_text: {
-        type: 'string',
-        description:
-          'The full text of the Information Request letter (pasted as plain text). PDF parsing is out of scope — paste the text manually.',
+      title: { type: 'string', description: 'The dashboard/report title.' },
+      description: { type: 'string', description: 'Optional description.' },
+      persona: { type: 'string', description: 'Optional persona lens the canvas was framed for.' },
+      panels: {
+        type: 'array',
+        description: 'Ordered governed panels.',
+        items: {
+          type: 'object',
+          properties: {
+            report_type_id: { type: 'string' },
+            scope_type: {
+              type: 'string',
+              enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
+            },
+            scope_id: { type: 'string', description: 'Optional pinned scope id.' },
+            label: { type: 'string', description: 'Optional panel label override.' },
+          },
+          required: ['report_type_id', 'scope_type'],
+        },
       },
     },
-    required: ['ir_text'],
+    required: ['title', 'panels'],
   },
 };
 
-/** Custom JSON-schema tools dispatched by our local AnaToolExecutor. */
-export const ALL_ANA_TOOLS: AnaTool[] = [
+export const LIST_REPORT_DEFINITIONS: AnaTool = {
+  name: 'list_report_definitions',
+  description:
+    "List the org's saved report dashboards/canvases (title, kind, origin, persona, panel count). Use to " +
+    'let the user re-open or extend a dashboard they saved earlier. Tenant-scoped, read-only.',
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
+const ALL_ANA_TOOLS_RAW: AnaTool[] = [
+  LIST_VAULT_DOCUMENTS,
+  READ_VAULT_DOCUMENT,
+  GET_DOCUMENT_VERSIONS,
+  LIST_GOVERNED_DOCUMENTS,
+  READ_GOVERNED_DOCUMENT,
+  GET_TMF_VIEW,
+  LIST_REPORT_TYPES,
+  GET_PORTFOLIO_READINESS,
+  GENERATE_REPORT,
+  EXPLAIN_REPORT_BLOCKERS,
+  SUGGEST_REPORTS,
+  SAVE_REPORT_DEFINITION,
+  LIST_REPORT_DEFINITIONS,
+  SAVE_DOCUMENT_TO_VAULT,
+  UPDATE_VAULT_DOCUMENT,
+  COMPARE_VAULT_VERSIONS,
+  SEED_TMF,
+  UPDATE_TMF_ARTIFACT_STATUS,
+  SEARCH_ALL_DOCUMENTS,
+  GET_PLAN_USAGE,
+  GET_BILLING_CREDITS,
+  GET_ORG_CAPABILITIES,
+  RECONCILE_DOSSIER_NUMBERS,
+  GENERATE_SCHEDULE_OF_EVENTS,
+  AMEND_SCHEDULE_OF_EVENTS,
+  REVIEW_SCHEDULE_OF_EVENTS_HEALTH,
+  RESET_PROJECT_GOALS,
+  LIST_PLATFORM_COMMANDS,
+  EXECUTE_PLATFORM_COMMAND,
+  SEARCH_CHEMBL_COMPOUND,
+  SCREEN_COMPOUND_LIABILITIES,
+  SEARCH_PREPRINTS,
+  ASSESS_TRIAL_FEASIBILITY,
   SEARCH_CLINICAL_EVIDENCE,
   SEARCH_LITERATURE,
+  SEARCH_MEDICARE_COVERAGE,
+  SEARCH_CONNECTED_REPOSITORIES,
+  SEARCH_REGULATORY_CORRESPONDENCE,
+  CREATE_CALENDAR_EVENT,
+  SEARCH_CRM,
+  SEARCH_IVD_KNOWLEDGE,
+  SEARCH_DEVICE_RECALLS,
+  SEARCH_DRUG_LABELS,
+  SEARCH_DRUG_APPROVALS,
+  ASSESS_REGULATORY_LANDSCAPE,
+  LOOKUP_ICD10_CODE,
+  DRAFT_SAFETY_NARRATIVE,
+  NARRATE_STATISTICAL_RESULT,
+  VALUE_DOSSIER_GUIDANCE,
+  ADVISE_REGULATORY_PATHWAY,
+  ADVISE_RISK_MANAGEMENT,
+  RUN_RBM_ASSESSMENT,
+  ASSESS_SITE_RISK,
+  EVALUATE_KRIS_QTLS,
+  GENERATE_RBM_PLAN,
+  PRIORITIZE_MONITORING_QUERIES,
+  RUN_CENTRAL_MONITORING,
+  SCAN_PATIENT_PROFILES,
+  GENERATE_RBM_REPORT,
+  GET_RBM_ATTENTION,
+  // RBM actuation (conversation replaces forms) — see rbm-actuator.ts.
+  ADD_CTQ_FACTOR,
+  DEFINE_KRI,
+  RECORD_KRI_READING,
+  SET_QTL,
+  RAISE_MONITORING_SIGNAL,
+  TRIAGE_SIGNAL,
+  DRAFT_MONITORING_PLAN,
+  CREATE_MONITORING_ACTION,
+  UPDATE_MONITORING_ACTION,
+  APPROVE_RBM_ASSESSMENT,
+  APPROVE_RBM_PLAN,
+  ADVISE_GCP,
+  REVIEW_INFORMED_CONSENT,
+  ADVISE_COA_SELECTION,
+  ADVISE_CTD_STRUCTURE,
+  ADVISE_SPECIAL_DESIGNATION,
+  PLAN_ORPHAN_DRUG_DESIGNATION,
+  PLAN_IND_MODULE_AUTHORING,
+  ADVISE_ESTIMAND,
+  ADVISE_PHARMACOVIGILANCE,
+  ADVISE_STUDY_DESIGN,
+  ADVISE_LABELING_STRUCTURE,
+  PLAN_LABELING_AUTHORING,
+  ADVISE_MEDICAL_INFORMATION,
+  ADVISE_REPORTING_GUIDELINE,
+  ADVISE_DATA_INTEGRITY,
+  ADVISE_RWE_DESIGN,
+  SCREEN_PROMOTIONAL_LANGUAGE,
+  MEDICAL_WRITING_GUIDANCE,
+  MEDICAL_WRITING_REVIEW,
+  ASSESS_READABILITY,
+  BUILD_ABBREVIATION_LIST,
+  DESCRIBE_CAPABILITIES,
+  PROJECT_KNOWLEDGE_SEARCH,
+  PROJECT_KNOWLEDGE_SEARCH_MULTI,
+  SEARCH_LARGE_DOCUMENT,
+  REMEMBER_DOCUMENT_IN_PROJECT,
+  RUN_SUBMISSION_PREMORTEM,
+  ASSEMBLE_CRL_PREMORTEM_ARTIFACT,
+  ASSEMBLE_BRIEFING_BOOK,
+  ASSESS_OUTPUT_CONFIDENCE,
+  CHECK_GROUNDING,
+  RENDER_SIGNATURE_MANIFESTATION,
+  SCAN_REGULATORY_DEFICIENCIES,
+  RECALL_SESSION_CONTEXT,
+  SIMULATE_STUDY_DESIGN,
+  SEARCH_DEVICE_ADVERSE_EVENTS,
+  SEARCH_DRUG_ADVERSE_EVENTS,
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
   CHECK_REGULATORY_COMPLIANCE,
@@ -1149,19 +1805,294 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   FETCH_TEMPLATE_AND_FILL,
   AUTHOR_DOCX_NATIVE,
   CONVERT_DOCX_TO_PDF,
+  RUN_PYTHON_SCRIPT,
+  INSERT_DOCUMENT_CONTENT,
+  SURGICAL_DOCX_XML_EDIT,
+  VERIFY_DOCX_AGAINST_SOURCE,
+  INSERT_CLAUSE_TEMPLATE,
+  VALIDATE_DOCX,
+  RUN_IN_CONTAINER,
   WRITE_KIT_SECTION,
   CREATE_Q_SUB,
   UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,
   LINK_PROGRAM_CLINICAL_STUDY,
   SET_PROGRAM_METADATA,
+  WRITE_Q_SUB_SECTION,
+  CREATE_UDI_RECORD,
+  CREATE_RISK_ITEM,
+  ADD_RISK_CONTROL,
+  CREATE_SOFTWARE_LIFECYCLE_ITEM,
+  RECORD_ANALYTICAL_PERFORMANCE_STUDY,
+  RECORD_CLINICAL_PERFORMANCE_STUDY,
+  CLASSIFY_IVD_DEVICE,
+  CREATE_PER_DOCUMENT,
+  CATEGORIZE_CLIA_COMPLEXITY,
+  PAIR_COMPANION_DIAGNOSTIC,
+  REGISTER_LDT,
+  PACKAGE_ECTD_FOR_REGION,
+  TRANSMIT_SUBMISSION,
+  CHECK_SUBMISSION_STATUS,
+  GET_SUBMISSION_ACK,
+  RECORD_VALIDATION_FINDING,
+  RESOLVE_VALIDATION_FINDING,
+  GATEWAY_CONFIGURATION_STATUS,
+  COMPUTE_LIFECYCLE_OPERATIONS,
+  GENERATE_STF,
+  CHECK_ECTD_CROSS_REFERENCES,
+  CLASSIFY_SUBMISSION_DOCUMENT,
+  EXTRACT_SUBMISSION_DOCUMENT,
+  RUN_SHADOW_REVIEW,
+  VALIDATE_ECTD_PACKAGE,
+  PLAN_SUBMISSION,
+  EXPLAIN_VALIDATION_FINDINGS,
+  CROSS_REGION_GAP_ANALYSIS,
+  DISPATCH_QC_CHECK,
+  TRACE_PROVENANCE,
+  CHECK_CONSISTENCY,
+  ASSESS_PATHWAY_READINESS,
+  BUILD_PATHWAY_MANIFEST,
+  LIST_VALIDATION_RULES,
+  LOOKUP_REGULATORY_PATHWAY,
+  RESOLVE_REGULATORY_STRUCTURE,
+  GET_MARKET_SUBMISSION_SPEC,
+  GET_DOCUMENT_TEMPLATE,
+  VALIDATE_MARKET_FORMATTING,
+  GET_SUBMISSION_REQUIREMENTS,
+  ASSESS_PATHWAY_ELIGIBILITY,
+  CLASSIFY_POST_SUBMISSION_CHANGE,
+  ASSESS_DEVICE_EVIDENCE_STRUCTURE,
+  CLASSIFY_DEVICE,
+  GET_DEVICE_REVIEWER_CHECKLIST,
+  GET_BIOCOMPATIBILITY_ENDPOINTS,
+  BUILD_DEVICE_BLUEPRINT,
+  ASSESS_STORED_CER,
+  BUILD_GLOBAL_DEVICE_STRATEGY,
+  GET_REGULATORY_TIMELINE,
+  VALIDATE_UDI,
+  GET_ELECTRICAL_STANDARDS,
+  GET_STERILIZATION_REQUIREMENTS,
+  ASSESS_COMBINATION_PRODUCT,
+  GET_DEVICE_LABELING,
+  ASSESS_QMS,
+  LIST_REGULATORY_CAPABILITIES,
+  ASSESS_DISPATCH_READINESS,
+  FIRE_NOTIFICATION,
+  CREATE_CLINICAL_STUDY,
+  CREATE_CLINICAL_INVESTIGATOR,
+  CREATE_FINANCIAL_DISCLOSURE,
+  ADD_DISCLOSURE_INTEREST,
+  REVIEW_FINANCIAL_DISCLOSURE,
+  CREATE_HA_INTERACTION,
+  CREATE_REGULATORY_COMMITMENT,
+  REVIEW_COMMITMENT_PORTFOLIO,
+  CREATE_IACUC_PROTOCOL,
+  REGISTER_ANIMAL_COHORT,
+  REVIEW_IACUC_PROTOCOL,
+  CREATE_IRB_SUBMISSION,
+  ADD_IRB_SITE,
+  REVIEW_IRB_SUBMISSION,
+  CREATE_IBC_REGISTRATION,
+  ADD_BIOLOGICAL_AGENT,
+  REVIEW_IBC_REGISTRATION,
+  CREATE_NONCLINICAL_STUDY,
+  REVIEW_SEND_READINESS,
+  CREATE_PROTOCOL_DOCUMENT,
+  UPDATE_PROTOCOL_SECTION,
+  ADD_PROTOCOL_OBJECTIVE,
+  ADD_ELIGIBILITY_CRITERION,
+  REVIEW_PROTOCOL_COMPLETENESS,
+  FINALIZE_PROTOCOL_DOCUMENT,
+  ADD_PROTOCOL_RISK,
+  REVIEW_PROTOCOL_RISK_REGISTER,
+  CREATE_PROTOCOL_TEMPLATE,
+  CLONE_PROTOCOL_TEMPLATE,
+  SAVE_DOCUMENT_AS_TEMPLATE,
+  LIST_PROTOCOL_TEMPLATES,
+  ADD_PROTOCOL_MILESTONE,
+  SET_PROTOCOL_MILESTONE_STATUS,
+  REVIEW_PROTOCOL_TIMELINE,
+  EXPORT_PROTOCOL_DOCUMENT,
+  GENERATE_CTGOV_REGISTRATION_DRAFT,
+  ADD_SOA_ASSESSMENT,
+  SET_SOA_CELL,
+  REVIEW_SOA_MATRIX,
+  ADD_PROTOCOL_BUDGET_ITEM,
+  SET_PROTOCOL_BUDGET_PARAMS,
+  REVIEW_PROTOCOL_BUDGET,
+  CREATE_PROTOCOL_AMENDMENT,
+  ADD_AMENDMENT_CHANGE,
+  REVIEW_AMENDMENT,
+  REPORT_PROTOCOL_DEVIATION,
+  ADD_CAPA_ACTION,
+  REVIEW_DEVIATION,
+  ASSIGN_PROTOCOL_REVIEWER,
+  ADD_PROTOCOL_REVIEW_COMMENT,
+  REVIEW_PROTOCOL_REVIEW_STATUS,
+  CREATE_CONSENT_FORM,
+  UPDATE_CONSENT_ELEMENT,
+  REVIEW_CONSENT_COMPLETENESS,
+  CREATE_DMS_PLAN,
+  UPDATE_DMS_PLAN_ELEMENT,
+  REVIEW_DMS_PLAN_COMPLETENESS,
+  FINALIZE_DMS_PLAN,
+  CREATE_OTHER_SUPPORT,
+  ADD_OTHER_SUPPORT_ENTRY,
+  REVIEW_OTHER_SUPPORT,
+  CERTIFY_OTHER_SUPPORT,
+  CREATE_BIOSKETCH,
+  UPDATE_BIOSKETCH_SECTION,
+  REVIEW_BIOSKETCH_COMPLETENESS,
+  FINALIZE_BIOSKETCH,
+  CREATE_INVENTION_DISCLOSURE,
+  UPDATE_INVENTION_DISCLOSURE,
+  REVIEW_INVENTION_DISCLOSURE,
+  SUBMIT_INVENTION_DISCLOSURE,
+  CREATE_EXPORT_CONTROL_REVIEW,
+  UPDATE_EXPORT_CONTROL_REVIEW,
+  REVIEW_EXPORT_CONTROL,
+  FINALIZE_EXPORT_CONTROL_DETERMINATION,
+  CREATE_RESEARCH_AGREEMENT,
+  UPDATE_RESEARCH_AGREEMENT,
+  REVIEW_RESEARCH_AGREEMENT,
+  EXECUTE_RESEARCH_AGREEMENT,
+  IMPORT_CITI_RECORDS,
+  REVIEW_TRAINING_MATRIX,
+  REVIEW_EXPIRING_TRAINING,
+  REVIEW_PROTOCOL_PORTFOLIO_ANALYTICS,
+  SET_FUNDING_PROFILE,
+  FIND_GRANT_OPPORTUNITIES,
+  ASSIGN_COMMITTEE_MEMBER,
+  CONVENE_COMMITTEE_MEETING,
+  ADD_COMMITTEE_AGENDA_ITEM,
+  CAST_COMMITTEE_VOTE,
+  FINALIZE_COMMITTEE_DETERMINATION,
+  REVIEW_PROTOCOL_PORTFOLIO,
+  CREATE_COVERAGE_ANALYSIS,
+  SET_COVERAGE_QUALIFYING_DETERMINATION,
+  ADD_COVERAGE_ITEM,
+  CLASSIFY_COVERAGE_ITEM,
+  REVIEW_COVERAGE_ANALYSIS,
+  CREATE_GRANT_PROPOSAL,
+  RECORD_GRANT_AWARD,
+  REVIEW_GRANT_REPORTING,
+  SET_GRANT_MILESTONE_STATUS,
+  OPEN_GRANT_CLOSEOUT,
+  UPDATE_GRANT_CLOSEOUT,
+  FINALIZE_GRANT_CLOSEOUT,
+  RECORD_SUBAWARD,
+  SCREEN_SUBAWARD,
+  EXECUTE_SUBAWARD,
+  ADD_GRANT_BUDGET_LINE,
+  RECORD_GRANT_EXPENDITURE,
+  REVIEW_GRANT_BUDGET,
+  RECORD_COST_SHARE_CONTRIBUTION,
+  REVIEW_COST_SHARE,
+  REQUEST_NO_COST_EXTENSION,
+  APPROVE_NO_COST_EXTENSION,
+  RECORD_GRANT_OPPORTUNITY,
+  PREPARE_AWARD_CLOSEOUT,
+  RESEARCH_COMPLIANCE_BRIEFING,
+  TRIAGE_COMPLIANCE_ATTENTION,
+  FULFILL_REGULATORY_COMMITMENT,
+  REVIEW_HA_INTERACTION,
+  PREPARE_MEETING_PACKAGE,
+  REGISTER_CONTROLLED_SUBSTANCE,
+  CREATE_RIM_PRODUCT,
+  SET_REGISTRATION_STATUS,
+  REVIEW_LABEL_CURRENCY,
+  CREATE_INSPECTION,
+  LOG_INSPECTION_FINDING,
+  REVIEW_INSPECTION_READINESS,
+  REGISTER_DEA,
+  LOG_CS_TRANSACTION,
+  REVIEW_CS_BALANCE,
+  CREATE_LIFECYCLE_OBLIGATION,
+  REVIEW_LIFECYCLE_CALENDAR,
+  CREATE_TMF,
+  CLASSIFY_TMF_ARTIFACT,
+  REVIEW_TMF_COMPLETENESS,
+  RUN_COMPLIANCE_CHECKLIST,
+  ASSESS_STUDY_ONBOARDING,
+  ADD_PERSONNEL_TRAINING,
+  REVIEW_TRAINING_GATE,
+  CREATE_EFFORT_CERTIFICATION,
+  ADD_EFFORT_LINE,
+  CREATE_COI_DISCLOSURE,
+  SEARCH_GRANTS_GOV,
+  SCREEN_RESTRICTED_PARTY,
+  LOG_STUDY_DEVIATION,
+  LOG_STUDY_AE,
+  RECORD_ENDPOINT_RESULT,
+  VERIFY_MEMORY_ATOM,
+  CREATE_QMS_DOCUMENT,
+  APPROVE_QMS_DOCUMENT,
+  REVISE_QMS_DOCUMENT,
+  RETIRE_QMS_DOCUMENT,
+  ACK_TRAINING,
+  REGISTER_SUPPLIER,
+  LOG_NONCONFORMING_PRODUCT,
+  QMS_CHANGE_CREATE,
+  QMS_CHANGE_TRANSITION,
+  QMS_CHANGE_LINK,
+  SEARCH_CLINICAL_REGULATORY_EVIDENCE,
+  COMPARE_PROPOSED_DESIGN_TO_PRECEDENT,
+  EXPLAIN_DESIGN_RISK,
+  STRESS_TEST_PROTOCOL,
+  TRACE_DESIGN_RECOMMENDATION,
+  CREATE_LABELING_DOCUMENT,
+  ADD_LABELING_TRANSLATION,
+  ADD_LABELING_SYMBOL,
+  GLOBAL_SEARCH,
+  START_LEGACY_IMPORT,
+  OVERRIDE_IMPORT_MAPPING,
+  APPROVE_IMPORT,
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,
+  BATCH_DRAFT_SECTIONS,
+  CONVENE_DRAFTING_COUNCIL,
+  GET_CLIENT_JOURNEY,
+  START_DEEP_INVESTIGATION,
+  CHECK_DEEP_INVESTIGATION,
   DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
+  COMPARE_DOCUMENT_VERSIONS,
+  SEARCH_DOCUMENT,
+  INSPECT_UPLOADED_DOCUMENT,
+  READ_UPLOADED_DOCUMENT,
+  OCR_DOCUMENT_PAGES,
+  READ_SPREADSHEET,
+  EDIT_SPREADSHEET,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
+  COMPUTE_SAMPLE_SIZE,
+  COMPARE_STATISTICAL_SCENARIOS,
+  ASSESS_STATISTICAL_DEFENSIBILITY,
+  ANALYZE_MISSING_DATA_IMPACT,
+  GENERATE_STATISTICAL_DOCUMENT,
+  COMPUTE_FIH_DOSE,
+  CLASSIFY_TOX_FINDINGS,
+  SELECT_EXPOSURE_RESPONSE_DOSE,
+  LOAD_NONCLINICAL_PROGRAM,
+  GET_NONCLINICAL_TEMPLATE,
+  GET_CSR_TEMPLATE,
+  DRAFT_NONCLINICAL_OVERVIEW_M2_4,
+  DRAFT_QUALITY_OVERALL_SUMMARY_M2_3,
+  DRAFT_NONCLINICAL_SUMMARIES_M2_6,
+  ASSESS_NONCLINICAL_PROGRAM,
+  ASSESS_NONCLINICAL_SAFETY,
+  ASSESS_CONCENTRATION_QTC,
+  ASSESS_DDI_RISK,
+  CHARACTERIZE_PK,
+  DRAFT_CLINICAL_SUMMARY_M2_7,
+  ASSESS_ANALYTICAL_SIMILARITY,
+  ASSESS_COMPARABILITY,
+  ASSESS_IMMUNOGENICITY,
+  ASSESS_BLA_FILING_RISK,
+  GENERATE_SOP,
+  RESOLVE_SUBMISSION_PLAN,
+  GET_CTD_MODULE_HOME,
   MINE_PRECEDENTS,
   GENERATE_DOCUMENT,
   BUILD_FROM_TEMPLATE,
@@ -1169,7 +2100,450 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   IND_GET_STATUS,
   RASTERIZE_PAGE,
   PDF_OVERLAY,
+  // AnA device/IVD + global-market advisory (grounded, non-LLM; honest about
+  // assemble/transmit limits). Handlers registered in AnaToolExecutor; specs
+  // authored in services/ana-advisory.
+  ...(ANA_ADVISORY_TOOL_SPECS as unknown as AnaTool[]),
+  SUBMISSION_PLAN_TOOL_SPEC as unknown as AnaTool,
+  PMA_ADVISORY_TOOL_SPEC as unknown as AnaTool,
+  EU_TECHDOC_TOOL_SPEC as unknown as AnaTool,
+  IVD_KNOWLEDGE_TOOL_SPEC as unknown as AnaTool,
+  // Global-RI deterministic expert tools (registry-grounded, no LLM, no
+  // fabrication). Specs authored in services/global-ri/ana-tools; handlers
+  // loop-registered in AnaToolExecutor.
+  ...(GLOBAL_RI_TOOL_SPECS as unknown as AnaTool[]),
+  // Bioequivalence & generic drug intelligence (BCS, BE study design, dissolution,
+  // biowaiver, ANDA/505(b)(2) pathway). Deterministic registry lookups.
+  ...BIOEQUIVALENCE_TOOLS,
+  // Pharmacometrics intelligence (PopPK, PBPK, exposure-response, MIDD, dose
+  // selection). Deterministic knowledge base.
+  ...PHARMACOMETRICS_TOOLS,
+  // Preclinical toxicology intelligence (species selection, repeat-dose design,
+  // safety margins, genotoxicity, carcinogenicity, reproductive tox). Deterministic.
+  ...TOXICOLOGY_TOOLS,
+  // Pediatric development intelligence (age classification, PIP/PSP, extrapolation,
+  // formulation, dose selection, regulatory requirements). Deterministic.
+  ...PEDIATRIC_TOOLS,
+  // Advanced therapy (ATMP/CGT) intelligence (classification, gene therapy, cell
+  // therapy manufacturing, CAR-T, pathway selection, comparability). Deterministic.
+  ...ADVANCED_THERAPY_TOOLS,
+  // Real-world evidence methodology intelligence (target trial emulation, data
+  // source scoring, propensity scores, study design, bias, regulatory). Deterministic.
+  ...RWE_METHODOLOGY_TOOLS,
+  // Wave 2 — Clinical pharmacology intelligence (DDI risk, QTc/E14-S7B, organ
+  // impairment, CYP phenotype, bioanalytical method, food effect). Deterministic.
+  ...CLINICAL_PHARMACOLOGY_TOOLS,
+  // Wave 2 — CMC quality intelligence (stability, analytical validation, impurity
+  // classification, specifications, process validation, comparability). Deterministic.
+  ...CMC_QUALITY_TOOLS,
+  // Wave 2 — Regulatory strategy intelligence (expedited programs, FDA meetings,
+  // orphan designation, 505 pathway, rolling submission, global pathways). Deterministic.
+  ...REGULATORY_STRATEGY_TOOLS,
+  // Wave 2 — Biosimilar development intelligence (analytical similarity, clinical
+  // program, extrapolation, interchangeability, IP strategy, CMC). Deterministic.
+  ...BIOSIMILAR_TOOLS,
+  // Wave 2 — Mutagenic impurity intelligence (ICH M7 classification, TTC, structural
+  // alerts, purge study, nitrosamine risk, control strategy). Deterministic.
+  ...MUTAGENIC_IMPURITY_TOOLS,
+  // Wave 2 — Labeling intelligence (PLR structure, boxed warning, REMS, PLLR,
+  // EU SmPC, OTC Drug Facts). Deterministic.
+  ...LABELING_INTELLIGENCE_TOOLS,
+  // Wave 3 — Immunogenicity intelligence (risk assessment, ADA/NAb assay
+  // strategy, clinical impact, sampling, comparability). FDA 2019 / EMA. Deterministic.
+  ...IMMUNOGENICITY_TOOLS,
+  // Wave 3 — Safety pharmacology intelligence (ICH S7A core battery: CV/CNS/
+  // respiratory, follow-up studies, abuse liability). Deterministic.
+  ...SAFETY_PHARMACOLOGY_TOOLS,
+  // Wave 3 — Pharmacovigilance & signal detection (ICH E2A-E2F, causality,
+  // disproportionality, signal priority, PV system). Deterministic.
+  ...PHARMACOVIGILANCE_TOOLS,
+  // Wave 3 — Clinical outcome assessment / PRO (COA type, validation, meaningful
+  // change, fit-for-purpose, endpoint positioning, development plan). Deterministic.
+  ...COA_PRO_TOOLS,
+  // Wave 3 — Oncology dose optimization (Project Optimus: dose-finding design,
+  // alignment, randomized comparison, RP2D, backfill, exposure-response). Deterministic.
+  ...DOSE_OPTIMIZATION_TOOLS,
+  // Wave 3 — Combination products & device constituent (PMOA, classification,
+  // cGMP, human factors, design controls, submission pathway). Deterministic.
+  ...COMBINATION_PRODUCTS_TOOLS,
+  // Wave 4 — Clinical trial statistics & estimands (ICH E9(R1) estimands,
+  // intercurrent events, multiplicity, adaptive, missing data, sample size). Deterministic.
+  ...TRIAL_STATISTICS_TOOLS,
+  // Wave 4 — GMP quality systems & data integrity (ICH Q7, ALCOA+, CAPA,
+  // deviations, Annex 1 sterile, computer system validation). Deterministic.
+  ...GMP_QUALITY_SYSTEMS_TOOLS,
+  // Wave 4 — Nonclinical PK/ADME & toxicokinetics (ADME program, mass balance,
+  // metabolite safety/MIST, TK, reaction phenotyping, protein binding). Deterministic.
+  ...NONCLINICAL_ADME_TOOLS,
+  // Wave 4 — Biomarkers & companion diagnostics (BEST classification, qualification,
+  // CDx co-development, analytical/clinical validation, enrichment). Deterministic.
+  ...BIOMARKER_TOOLS,
+  // Wave 4 — Rare disease & external control arms (natural history, external
+  // controls, small-population design, Bayesian borrowing, endpoints). Deterministic.
+  ...RARE_DISEASE_TOOLS,
+  // Wave 4 — GCP & clinical trial operations (risk-based monitoring, inspection
+  // readiness, GCP compliance, informed consent, deviations, TMF). Deterministic.
+  ...GCP_OPERATIONS_TOOLS,
+  // Wave 5 — Medical device & IVD regulatory (classification, pathway, substantial
+  // equivalence, clinical evidence, essential principles/GSPR, submission). Deterministic.
+  ...MEDICAL_DEVICE_TOOLS,
+  // Wave 5 — Digital health, SaMD & AI/ML devices (IMDRF SaMD class, AI/ML, PCCP,
+  // GMLP, SaMD clinical validation, premarket cybersecurity). Deterministic.
+  ...DIGITAL_HEALTH_TOOLS,
+  // Wave 5 — Vaccine development (CMC, correlate of protection, clinical program,
+  // lot consistency, platform technology, special populations). Deterministic.
+  ...VACCINE_TOOLS,
+  // Wave 5 — Structured benefit-risk (FDA BR framework, effects table, balance,
+  // value tree, uncertainty, communication). Deterministic.
+  ...BENEFIT_RISK_TOOLS,
+  // Wave 5 — Post-approval lifecycle / ICH Q12 (change classification, established
+  // conditions, PACMP, annual report, comparability, lifecycle plan). Deterministic.
+  ...POST_APPROVAL_TOOLS,
+  // Inference self-awareness: classify a tool's output by determinism pedigree
+  // (deterministic_registry / deterministic_query / external_api_live /
+  // model_assisted) so AnA can weight bulletproof registry facts above
+  // model-assisted narrative. Handler registered in AnaToolExecutor.
+  {
+    name: 'ana_tool_pedigree',
+    description:
+      'Determinism pedigree of AnA tools: how trustworthy a tool\'s output is. Pass a tool name to classify it ' +
+      '(deterministic_registry = bulletproof registry lookup; external_api_live = authoritative but time-varying; ' +
+      'model_assisted = verify before relying), or omit it to list the pedigree levels and the known deterministic tools. ' +
+      'Use this to decide whether a claim can be stated as fact or must be flagged for verification.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tool: { type: 'string', description: 'Optional tool name to classify. Omit to list levels + deterministic tools.' },
+      },
+    },
+  } as unknown as AnaTool,
+  // Evidence self-check: deterministically flag contradictions across gathered
+  // evidence claims (numeric mismatch / opposing polarity) BEFORE synthesis.
+  // Handler registered in AnaToolExecutor.
+  {
+    name: 'detect_evidence_contradictions',
+    description:
+      'Deterministically flag contradictions across gathered evidence (no LLM): same-subject numeric mismatches and ' +
+      'opposing positive/negative assertions. Pass structured claims (subject required; optional metric/value/polarity/date). ' +
+      'Use before stating a synthesized conclusion to catch self-contradicting sources.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        claims: {
+          type: 'array',
+          description: 'Structured evidence claims to cross-check.',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              source: { type: 'string' },
+              subject: { type: 'string', description: 'Entity the claim is about (required to pair claims).' },
+              metric: { type: 'string' },
+              value: { type: 'number' },
+              unit: { type: 'string' },
+              polarity: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
+              date: { type: 'string' },
+              text: { type: 'string' },
+            },
+            required: ['subject'],
+          },
+        },
+        relativeTolerance: { type: 'number', description: 'Optional relative tolerance for numeric-mismatch detection (default 0.1).' },
+      },
+      required: ['claims'],
+    },
+  } as unknown as AnaTool,
+  // Evidence sufficiency: deterministically detect coverage gaps (geographic /
+  // population / outcome / temporal) so AnA offers to search further rather than
+  // answer on partial data. Handler registered in AnaToolExecutor.
+  {
+    name: 'detect_evidence_gaps',
+    description:
+      'Deterministically detect what the gathered evidence is MISSING relative to the question (no LLM): geographic, ' +
+      'population, outcome, and temporal/recency gaps. Returns gaps with suggested follow-up queries. Use to decide whether ' +
+      'to answer now or first offer to broaden the search.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'object',
+          description: 'What the answer should cover.',
+          properties: {
+            regions: { type: 'array', items: { type: 'string' }, description: 'Regions the answer should cover.' },
+            population: { type: 'string', description: 'Population the answer should cover (e.g. pediatric).' },
+            outcomeTypes: { type: 'array', items: { type: 'string', enum: ['efficacy', 'safety'] }, description: 'Outcome types required.' },
+            recencyYears: { type: 'number', description: 'Evidence should include something within this many years of asOfYear.' },
+            asOfYear: { type: 'number', description: 'Reference year for recency (required if recencyYears is set).' },
+          },
+        },
+        evidence: {
+          type: 'array',
+          description: 'The gathered evidence items.',
+          items: {
+            type: 'object',
+            properties: {
+              region: { type: 'string' },
+              population: { type: 'string' },
+              outcomeType: { type: 'string', enum: ['efficacy', 'safety', 'other'] },
+              year: { type: 'number' },
+            },
+          },
+        },
+      },
+      required: ['query', 'evidence'],
+    },
+  } as unknown as AnaTool,
+  // Submission deficiency taxonomy lookup: surface likely reviewer deficiencies,
+  // their reviewer language, mitigations, and references for a submission type.
+  // Handler wraps the deterministic deficiency-taxonomy (no LLM, no fabrication).
+  {
+    name: 'lookup_submission_deficiencies',
+    description:
+      'Look up the curated taxonomy of likely reviewer deficiencies for a submission type ' +
+      '(ind, nda, bla, 510k, pma, de_novo, cer, ectd, general). Returns each deficiency with severity, ' +
+      'likelihood, common reviewer language, concrete mitigations, and regulatory references. Use ' +
+      'proactively to pre-empt agency findings and to ground "what could go wrong / how to prevent it" ' +
+      'advice for the user\'s pathway. Set critical_only to focus on the highest-severity items.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        submission_type: {
+          type: 'string',
+          enum: ['ind', 'nda', 'bla', '510k', 'pma', 'de_novo', 'cer', 'ectd', 'general'],
+          description: 'The regulatory submission type to look up deficiencies for.',
+        },
+        critical_only: {
+          type: 'boolean',
+          description: 'When true, return only CRITICAL-severity deficiencies.',
+        },
+      },
+      required: ['submission_type'],
+    },
+  } as unknown as AnaTool,
+  // Regulatory deadline radar: aggregate the org's regulatory obligations /
+  // commitments into overdue / due-soon / upcoming buckets. Handler is tenant-
+  // scoped from context; deterministic (no LLM, no fabrication).
+  {
+    name: 'regulatory_deadline_radar',
+    description:
+      'Surface the active organization\'s regulatory deadlines (from tracked regulatory ' +
+      'obligations & agency commitments): what is OVERDUE, DUE SOON, and UPCOMING, sorted by ' +
+      'urgency, each with agency, obligation type, priority, days-until-due, legal basis, and the ' +
+      'consequence of non-compliance. Use proactively to open a session, answer "what\'s due?", or ' +
+      'flag time-critical risk. Scoped to the user\'s organization automatically.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        window_days: {
+          type: 'number',
+          description: 'Days ahead that count as "due soon" (default 30, max 365).',
+        },
+        include_completed: {
+          type: 'boolean',
+          description: 'When true, also include completed/cancelled obligations (default false).',
+        },
+      },
+    },
+  } as unknown as AnaTool,
+  // Governed correspondence response package: deterministic assembly of an
+  // issue matrix, evidence checklist, and readiness state from structured,
+  // already-parsed agency-correspondence issues. Complements draft_fda_ir_response
+  // (which scaffolds from raw IR text); this works on tracked/structured issues
+  // and gates readiness on evidence gaps. Handler wraps the deterministic
+  // response-package compiler — no LLM, no fabrication.
+  {
+    name: 'compile_correspondence_response_package',
+    description:
+      'Assemble a GOVERNED response package for a health-authority correspondence (FDA IR, EMA LoQ/RSI, ' +
+      'PMDA inquiry) from already-structured issues: returns a per-issue matrix (category, severity, ' +
+      'blocker, impacted CTD sections, artifacts), an evidence checklist (each item missing/satisfied), ' +
+      'unresolved gaps, and a readiness_state (evidence_gap until all evidence is satisfied, else ' +
+      'review_ready). Use after issues have been identified/parsed to plan the response and see what ' +
+      'still blocks sending. Deterministic — never invents evidence or marks a gap satisfied on its own.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        correspondence_id: {
+          type: 'string',
+          description: 'Identifier for the correspondence being responded to.',
+        },
+        issues: {
+          type: 'array',
+          description: 'Structured issues extracted from the correspondence.',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Issue identifier.' },
+              category: { type: 'string', description: 'Issue category (e.g. cmc_quality, clinical, safety).' },
+              severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+              blocker: { type: 'boolean', description: 'Whether the issue blocks the submission.' },
+              mappedCtdSections: { type: 'array', items: { type: 'string' }, description: 'Impacted CTD section keys.' },
+              mappedArtifactIds: { type: 'array', items: { type: 'string' }, description: 'Related artifact IDs.' },
+              evidenceNeeds: { type: 'array', items: { type: 'string' }, description: 'Evidence required to resolve the issue.' },
+            },
+            required: ['id', 'category', 'severity'],
+          },
+        },
+        selected_issue_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional subset of issue IDs to include (default: all).',
+        },
+        revised_artifact_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional artifact IDs already revised in response.',
+        },
+      },
+      required: ['correspondence_id', 'issues'],
+    },
+  } as unknown as AnaTool,
+  // Session briefing: reconcile where the program stands right now — overdue/
+  // due-soon regulatory deadlines + recent formal decisions — so AnA can open
+  // with a calm situational brief. Handler is tenant-scoped from context;
+  // deterministic (no LLM, no fabrication).
+  {
+    name: 'get_session_briefing',
+    description:
+      'Produce a short situational briefing for the active organization/project: overdue and due-soon ' +
+      'regulatory deadlines plus the most recent formal decisions. Use to open a session ("where do things ' +
+      'stand?") or whenever the user wants to re-orient. Scoped to the user\'s org/project automatically; ' +
+      'deterministic — surfaces only tracked items, never invents deadlines or decisions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        decision_limit: {
+          type: 'number',
+          description: 'Max recent decisions to include (default 5).',
+        },
+        window_days: {
+          type: 'number',
+          description: 'Days ahead that count as "due soon" for deadlines (default 30).',
+        },
+      },
+    },
+  } as unknown as AnaTool,
+  // Risk watch: surface a project's OPEN blockers (contradiction/dispatch/
+  // correspondence findings) severity-first. Handler is tenant+project scoped
+  // from context; deterministic (no LLM, no fabrication).
+  {
+    name: 'scan_project_risks',
+    description:
+      'List the active project\'s OPEN blockers — the live risks tracked by the platform (contradiction ' +
+      'findings, dispatch-gate failures, correspondence-driven blockers) — ordered by severity ' +
+      '(critical → low), each with type, owner, and next action. Use to answer "what\'s blocking us?", ' +
+      'before committing to a plan, or to proactively flag risk. Scoped to the user\'s org/project ' +
+      'automatically; deterministic — surfaces only tracked, open blockers, never invented ones.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Max blockers to return (default 20).',
+        },
+      },
+    },
+  } as unknown as AnaTool,
+  // Deterministic statistical design & analysis engines (server/services/stats/*),
+  // previously implemented but unreachable by AnA. See statisticalDesignTools.ts.
+  ...STATISTICAL_DESIGN_TOOLS,
+  // Cross-document number reconciliation — flags figures that disagree ACROSS a
+  // submission's documents (enrolled N in 2.5 ≠ 2.7.3 ≠ CSR). The cross-module
+  // reconciliation check_numerical_integrity / check_dossier_consistency lack.
+  ...RECONCILIATION_TOOLS,
+  // Change propagation / Inconsistency Intelligence — preview the blast radius of
+  // changing a governed value, apply the change under governance (flag + cascade +
+  // resolution plan), trace a value to its source, and explain the resulting plan.
+  ...CHANGE_PROPAGATION_TOOLS,
+  // IVD lifecycle deterministic calculators — signal disproportionality, ISO
+  // 17511 traceability, scientific validity, cutoff, stability, DoC, and the
+  // post-market report authoring (eMDR/MIR/FSN/PSUR).
+  ...IVD_LIFECYCLE_TOOLS,
+  // CAPA / complaint / MDR / vigilance — the device post-market safety
+  // workstream: deterministic reportability triage, the triage queue, the
+  // vigilance timeline, and governed complaint/CAPA creation.
+  ...CAPA_MDR_TOOLS,
+  // Predicate intelligence — discover/rank candidate predicates, auto-build the
+  // substantial-equivalence matrix, and read the defense preview (shadow-service
+  // proxy with org→program ownership).
+  ...PREDICATE_INTELLIGENCE_TOOLS,
+  // Regulatory Currency Engine: curated, freshness-stamped registry of DATED facts
+  // (vacated/superseded/upcoming-mandatory rules) so AnA never advises on a VOID
+  // rule from its static knowledge. See regulatoryCurrencyTools.ts.
+  ...REGULATORY_CURRENCY_TOOLS,
+  // Submission intelligence: precedent benchmarking + package completeness.
+  ...SUBMISSION_INTELLIGENCE_TOOLS,
+  // Device/IVD submission assembly, predicate-adequacy scoring, drug coding —
+  // engines/data sources previously unreachable by AnA. See deviceSubmissionTools.ts.
+  ...DEVICE_SUBMISSION_TOOLS,
+  // License-gated medical coding (MedDRA / WHODrug). Proprietary dictionaries are
+  // NOT shipped: these fail closed with license_required until a licensed dictionary
+  // is configured, then code deterministically over it. See codingTools.ts.
+  ...CODING_TOOLS,
+  // Read-only window into enterprise usage controls (weekly limits, overage, seats).
+  ...LICENSE_STATUS_TOOLS,
+  // Self-navigation: discover + navigate to any app screen via the governed
+  // navigation registry (shared/navigation). See navigationTools.ts.
+  ...NAVIGATION_TOOLS,
+  // HEOR modeling, SPL labeling XML, CDISC define.xml/conformance, and reference
+  // formatting — deterministic engines newly reachable by AnA. See
+  // extendedRegulatoryTools.ts.
+  ...EXTENDED_REGULATORY_TOOLS,
+  // HEOR / market-access modeling — comparator-mix budget impact and net-monetary-
+  // benefit cost-effectiveness for payer/AMCP dossiers. See heorTools.ts.
+  ...HEOR_MARKET_ACCESS_TOOLS,
+  // Pharmacovigilance reporting: SAE line listing + E2B(R3) ICSR composition
+  // over the org's recorded adverse events. See pharmacovigilanceReportingTools.ts.
+  ...PHARMACOVIGILANCE_REPORTING_TOOLS,
+  // ICH Q2 analytical method-validation assessment (linearity/precision/accuracy).
+  // See analyticalMethodTools.ts.
+  ...ANALYTICAL_METHOD_TOOLS,
+  // Advanced HEOR (Markov cohort + probabilistic sensitivity) and the full CDISC
+  // pipeline. See advancedModelingTools.ts.
+  ...ADVANCED_MODELING_TOOLS,
+  // 510(k) cover-letter + 510(k) summary composition (tenant-scoped). See
+  // coverLetterTools.ts.
+  ...COVER_LETTER_TOOLS,
+  // ICH Q1E shelf-life / retest-period estimation by regression. See shelfLifeTools.ts.
+  ...SHELF_LIFE_TOOLS,
+  // Multi-batch ICH Q1E poolability + structured benefit-risk. See deepeningTools.ts.
+  ...DEEPENING_TOOLS,
+  // DailyMed (NLM) published-label lookup. See dailymedTools.ts.
+  ...DAILYMED_TOOLS,
+  // RIM learning-loop read path: recall the org's learned regulatory patterns
+  // (deterministic_query over the tenant-scoped RIM pattern store). See rimTools.ts.
+  ...RIM_TOOLS,
+  // RIM domain query + summarization: filter by domain/confidence/occurrences,
+  // and get a high-level summary of accumulated RIM intelligence. See rimQueryTools.ts.
+  ...RIM_QUERY_TOOLS,
+  // Live EU/global data: EUDAMED, EMA EPAR, EU CTIS. See euDataTools.ts.
+  ...EU_DATA_TOOLS,
+  // CDISC SDTM/ADaM conformance + define.xml generation. See cdiscTools.ts.
+  ...CDISC_TOOLS,
+  // Live guidance ingestion: FDA guidance API, ICH guideline registry, freshness checks.
+  // See guidanceIngestionTools.ts + ../regulatory-currency/guidance-ingestion-service.ts.
+  ...GUIDANCE_INGESTION_TOOLS,
+  // SPL generation + PSUR/DSUR safety-report structure. See splSafetyTools.ts.
+  ...SPL_SAFETY_TOOLS,
+  // Intelligence Questioning Engine — guided flows for document generation
+  START_INTELLIGENCE_FLOW,
+  ANSWER_INTELLIGENCE_QUESTION,
+  LIST_INTELLIGENCE_FLOWS,
+  // War Game Simulation — FDA auditor pressure-testing of intelligence flow output
+  START_WAR_GAME,
+  // Onboarding — read-only look at what a document could contribute to setup.
+  SUMMARIZE_ONBOARDING_READINESS,
 ];
+
+// Defensive registry guard: v2's cdiscTools.ts currently re-registers
+// run_cdisc_pipeline / generate_define_xml, which also live in
+// EXTENDED_REGULATORY_TOOLS — producing duplicate tool names in the raw list.
+// Dedupe by name (first occurrence wins) so the ALL_ANA_TOOLS invariant holds
+// regardless of upstream double-registration. Remove once the duplicate is
+// resolved at source in the CDISC tools refactor.
+export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
+  (tool, index) => ALL_ANA_TOOLS_RAW.findIndex((t) => t.name === tool.name) === index,
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Anthropic server-side tools (executed by Anthropic's infrastructure)

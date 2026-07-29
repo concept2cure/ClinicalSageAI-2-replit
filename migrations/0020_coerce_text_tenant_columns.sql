@@ -107,6 +107,47 @@ BEGIN
 
     RAISE NOTICE '[type-coerce] altered %.%  → integer', tbl, col;
   END LOOP;
+
+  -- Phase 3: handle UUID-typed tenant columns introduced by the GCC
+  -- migration set. These can't be cast to INTEGER while data exists, but
+  -- on a fresh DB (integration tests, brand-new tenant) the rows-clean
+  -- case is safe: drop the column and add it back as INTEGER. The
+  -- `bad_count > 0` gate ensures production deployments where rows exist
+  -- abort loudly so a human triages the data migration before RLS attaches.
+  DECLARE
+    uuid_rec record;
+  BEGIN
+    FOR uuid_rec IN
+      SELECT table_schema, table_name, column_name
+        FROM information_schema.columns
+       WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+         AND column_name IN ('organization_id', 'org_id', 'tenant_id')
+         AND data_type = 'uuid'
+    LOOP
+      EXECUTE format(
+        'SELECT COUNT(*) FROM %I.%I WHERE %I IS NOT NULL',
+        uuid_rec.table_schema, uuid_rec.table_name, uuid_rec.column_name
+      ) INTO bad_count;
+
+      IF bad_count > 0 THEN
+        RAISE EXCEPTION
+          '[type-coerce] %.%.%  is UUID with % non-null row(s); cannot auto-coerce. Map UUIDs → INTEGER tenant ids before re-running.',
+          uuid_rec.table_schema, uuid_rec.table_name, uuid_rec.column_name, bad_count;
+      END IF;
+
+      EXECUTE format(
+        'ALTER TABLE %I.%I DROP COLUMN %I',
+        uuid_rec.table_schema, uuid_rec.table_name, uuid_rec.column_name
+      );
+      EXECUTE format(
+        'ALTER TABLE %I.%I ADD COLUMN %I INTEGER',
+        uuid_rec.table_schema, uuid_rec.table_name, uuid_rec.column_name
+      );
+
+      RAISE NOTICE '[type-coerce] coerced %.%.%  UUID → INTEGER (was empty)',
+        uuid_rec.table_schema, uuid_rec.table_name, uuid_rec.column_name;
+    END LOOP;
+  END;
 END
 $$;
 

@@ -91,6 +91,23 @@ const LABELLED_NUMERIC_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
   { label: 'duration_weeks',  pattern: /\b(?:at\s+week|week\s+|through\s+week\s+)([0-9]+)\b/gi },
   { label: 'age_range',       pattern: /\bages?\s+([0-9]+)\s*(?:to|-|–)\s*([0-9]+)\s*(?:years?|yrs?)?/gi },
   { label: 'batches',         pattern: /\b([0-9]+)\s+(?:of\s+[0-9]+\s+)?(?:pivotal\s+|registration\s+|validation\s+)?batches?\b/gi },
+  // ── Medical device / IVD quantities ──────────────────────────────────────
+  // Anchored on an explicit label + connector so a bare percentage is never
+  // captured. Clinical performance, analytical performance, submission
+  // identifiers, and risk metrics — the governed values device/IVD documents
+  // cite across the technical documentation, SE discussion, CER, and IFU.
+  { label: 'sensitivity',      pattern: /\b(?:clinical\s+)?sensitivity(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
+  { label: 'specificity',      pattern: /\b(?:clinical\s+)?specificity(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
+  { label: 'ppa',              pattern: /\b(?:positive\s+percent\s+agreement|PPA)(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
+  { label: 'npa',              pattern: /\b(?:negative\s+percent\s+agreement|NPA)(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
+  { label: 'lod',              pattern: /\b(?:LoD|limit\s+of\s+detection)\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)\s*(copies\/mL|IU\/mL|ng\/mL|pg\/mL|cfu\/mL|mg\/L|%)?/gi },
+  { label: 'lob',              pattern: /\b(?:LoB|limit\s+of\s+blank)\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
+  { label: 'loq',              pattern: /\b(?:LoQ|limit\s+of\s+quantitation)\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
+  { label: 'precision_cv',     pattern: /\b(?:CV|coefficient\s+of\s+variation)(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)\s*%/gi },
+  { label: 'predicate_knumber', pattern: /\b(K[0-9]{6})\b/g },
+  { label: 'de_novo_number',   pattern: /\b(DEN[0-9]{6})\b/g },
+  { label: 'pma_number',       pattern: /\b(P[0-9]{6})\b/g },
+  { label: 'rpn',              pattern: /\bRPN\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
 ];
 
 export function extractNumericalFacts(text: string): NumericalFact[] {
@@ -166,6 +183,20 @@ const SEVERITY_BY_LABEL: Record<string, DivergenceSeverity> = {
   duration_weeks: 'medium',
   age_range: 'medium',
   batches: 'medium',
+  // Device / IVD — a performance-claim or predicate mismatch is a submission
+  // blocker (substantial-equivalence / performance-evaluation collapses).
+  sensitivity: 'critical',
+  specificity: 'critical',
+  ppa: 'critical',
+  npa: 'critical',
+  lod: 'high',
+  lob: 'high',
+  loq: 'high',
+  precision_cv: 'high',
+  predicate_knumber: 'critical', // wrong predicate breaks the SE argument
+  de_novo_number: 'high',
+  pma_number: 'high',
+  rpn: 'high',                    // risk acceptability threshold
 };
 
 function severityFor(label: string): DivergenceSeverity {
@@ -353,6 +384,18 @@ function humanLabel(label: string): string {
     duration_weeks: 'Study duration (weeks)',
     age_range: 'Age range',
     batches: 'Batch count',
+    sensitivity: 'Clinical sensitivity (%)',
+    specificity: 'Clinical specificity (%)',
+    ppa: 'Positive percent agreement (%)',
+    npa: 'Negative percent agreement (%)',
+    lod: 'Limit of detection',
+    lob: 'Limit of blank',
+    loq: 'Limit of quantitation',
+    precision_cv: 'Precision (CV%)',
+    predicate_knumber: 'Predicate 510(k) number',
+    de_novo_number: 'De Novo number',
+    pma_number: 'PMA number',
+    rpn: 'Risk priority number',
   };
   return map[label] ?? label;
 }

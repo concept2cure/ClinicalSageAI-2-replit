@@ -78,8 +78,8 @@ router.get('/programs', async (req: Request, res: Response) => {
     const programsWithCounts = await Promise.all(
       programs.map(async (program: any) => {
         const countResult = await pool.query(
-          `SELECT COUNT(*)::int as child_count FROM projects WHERE parent_project_id = $1`,
-          [program.id]
+          `SELECT COUNT(*)::int as child_count FROM projects WHERE parent_project_id = $1 AND organization_id = $2`,
+          [program.id, organizationId]
         );
         return {
           ...program,
@@ -105,7 +105,7 @@ router.get('/programs', async (req: Request, res: Response) => {
 
 router.get('/:projectId/tree', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -129,7 +129,7 @@ router.get('/:projectId/tree', async (req: Request, res: Response) => {
 
 router.get('/:projectId/ancestors', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -156,7 +156,7 @@ router.get('/:projectId/ancestors', async (req: Request, res: Response) => {
 
 router.get('/:projectId/children', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -191,7 +191,7 @@ router.get('/:projectId/children', async (req: Request, res: Response) => {
 
 router.post('/:projectId/children', async (req: Request, res: Response) => {
   try {
-    const parentId = parseInt(req.params.projectId, 10);
+    const parentId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(parentId)) return res.status(400).json({ error: 'Invalid parent project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -288,7 +288,11 @@ router.post('/:projectId/children', async (req: Request, res: Response) => {
 
     // Update the path to include the new project's own ID
     const finalPath = `${childPath}/${newProject.id}`;
-    await pool.query(`UPDATE projects SET path = $1 WHERE id = $2`, [finalPath, newProject.id]);
+    await pool.query(`UPDATE projects SET path = $1 WHERE id = $2 AND organization_id = $3`, [
+      finalPath,
+      newProject.id,
+      organizationId,
+    ]);
     newProject.path = finalPath;
 
     // Audit trail
@@ -340,7 +344,7 @@ router.post('/:projectId/children', async (req: Request, res: Response) => {
 
 router.patch('/:projectId/move', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);
@@ -367,7 +371,7 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
     const project = projResult.rows[0];
 
     // Validate the move
-    const validation = await rollupService.validateMove(projectId, newParentId, MAX_DEPTH);
+    const validation = await rollupService.validateMove(projectId, newParentId, MAX_DEPTH, organizationId);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.reason });
     }
@@ -375,8 +379,8 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
     // If moving to root
     if (newParentId === null) {
       await pool.query(
-        `UPDATE projects SET parent_project_id = NULL, depth = 0, path = $1::text, updated_at = NOW() WHERE id = $2`,
-        [String(projectId), projectId]
+        `UPDATE projects SET parent_project_id = NULL, depth = 0, path = $1::text, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
+        [String(projectId), projectId, organizationId]
       );
     } else {
       // Verify new parent belongs to same org
@@ -405,13 +409,13 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
         : `${newParentId}/${projectId}`;
 
       await pool.query(
-        `UPDATE projects SET parent_project_id = $1, depth = $2, path = $3, updated_at = NOW() WHERE id = $4`,
-        [newParentId, newDepth, newPath, projectId]
+        `UPDATE projects SET parent_project_id = $1, depth = $2, path = $3, updated_at = NOW() WHERE id = $4 AND organization_id = $5`,
+        [newParentId, newDepth, newPath, projectId, organizationId]
       );
     }
 
     // Recompute paths for all descendants
-    await rollupService.recomputePaths(projectId);
+    await rollupService.recomputePaths(projectId, organizationId);
 
     // Audit trail
     try {
@@ -476,7 +480,7 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
 
 router.get('/:projectId/rollup', async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId, 10);
+    const projectId = parseInt(String(req.params.projectId), 10);
     if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
     const tenantContext = getTenantContext(req);

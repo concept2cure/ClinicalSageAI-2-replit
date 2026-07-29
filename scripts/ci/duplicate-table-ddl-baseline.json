@@ -1,0 +1,262 @@
+{
+  "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
+  "generatedAt": "2026-07-25T19:50:50.838Z",
+  "total": 63,
+  "entries": {
+    "api_usage_logs": [
+      "db/migrations/20260319_billing_usage_budgets_alerts.sql",
+      "migrations/20260702_usage_model_credit_ledger.sql"
+    ],
+    "assumption_records": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "audit_logs": [
+      "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql",
+      "scripts/db-verify/00_bootstrap_base.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "c2c_ana_actions": [
+      "migrations/20260527_mutation_primitives.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "c2c_bla_assessments": [
+      "db/migrations/20260718_bla_assessments_store.sql",
+      "migrations/20260604_bla_workbench.sql"
+    ],
+    "c2c_blockers": [
+      "migrations/0002_phase15_submission_ops.sql",
+      "migrations/20260524_c2c_blockers.sql"
+    ],
+    "c2c_template_specs": [
+      "migrations/20260531_template_specs.sql",
+      "migrations/20260716_template_doc_types.sql"
+    ],
+    "cdx_concordance_studies": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "cdx_pairings": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "charter_sections": [
+      "migrations/0012_project_charter_timeline.sql",
+      "migrations/20260629_charter_tables_rebuild.sql"
+    ],
+    "clinical_studies": [
+      "migrations/20260510_notifications_and_clinical.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "coi_disclosures": [
+      "migrations/20260611_research_security.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "concept2cure_artifact_versions": [
+      "db/migrations/20260128_concept2cure_foundation.sql",
+      "db/migrations/20260311_concept2cure_artifacts.sql"
+    ],
+    "concept2cure_artifacts": [
+      "db/migrations/20260128_concept2cure_foundation.sql",
+      "db/migrations/20260311_concept2cure_artifacts.sql"
+    ],
+    "concept2cure_provenance_events": [
+      "db/migrations/20260311_concept2cure_provenance_events.sql",
+      "db/migrations/20260313_phase11_governed_workflow.sql"
+    ],
+    "concept2cure_review_comments": [
+      "db/migrations/20260313_concept2cure_submission_snapshots.sql",
+      "db/migrations/20260313_phase11_governed_workflow.sql"
+    ],
+    "concept2cure_submission_snapshots": [
+      "db/migrations/20260313_concept2cure_submission_snapshots.sql",
+      "db/migrations/20260313_phase11_governed_workflow.sql"
+    ],
+    "contradiction_consequence_log": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/20260524_contradiction_engine_schema.sql"
+    ],
+    "contradiction_findings": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/20260524_contradiction_engine_schema.sql"
+    ],
+    "contradiction_overlay_rules": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/20260524_contradiction_engine_schema.sql"
+    ],
+    "core.programs": [
+      "db/migrations/000_gcc_bootstrap_core.sql",
+      "db/migrations/044b_gcc_lumen_schema_prerequisite.sql"
+    ],
+    "cortex.agents": [
+      "db/migrations/073_cortex_prime_unified_brain.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.atoms": [
+      "db/migrations/073_cortex_prime_unified_brain.sql",
+      "db/migrations/074_gcc_regulatory_intuition_engine.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.distilled_insights": [
+      "db/migrations/077_gcc_self_evolving_intelligence.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.domain_knowledge": [
+      "db/migrations/078_gcc_cross_domain_transfer.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.edges": [
+      "db/migrations/073_cortex_prime_unified_brain.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.evolution_ledger": [
+      "db/migrations/077_gcc_self_evolving_intelligence.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.expertise_scores": [
+      "db/migrations/077_gcc_self_evolving_intelligence.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.learning_experiences": [
+      "db/migrations/077_gcc_self_evolving_intelligence.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.regulatory_signals": [
+      "db/migrations/074_gcc_regulatory_intuition_engine.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.rejection_patterns": [
+      "db/migrations/074_gcc_regulatory_intuition_engine.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.threads": [
+      "db/migrations/073_cortex_prime_unified_brain.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "cortex.traces": [
+      "db/migrations/073_cortex_prime_unified_brain.sql",
+      "db/migrations/079_gcc_unified_functions_views.sql"
+    ],
+    "decision_records": [
+      "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "document_versions": [
+      "sql/cro_database_schema.sql",
+      "sql/document_versions.sql"
+    ],
+    "effort_certifications": [
+      "migrations/20260611_effort_certification.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "effort_lines": [
+      "migrations/20260611_effort_certification.sql",
+      "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "governance_boundary_rules": [
+      "db/migrations/20260725_governance_boundary_tables.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "governance_boundary_transitions": [
+      "db/migrations/20260725_governance_boundary_tables.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "ind_cross_references": [
+      "migrations/20260614_ind_cross_references.sql",
+      "sql/ind_data_model.sql"
+    ],
+    "ivd_analytical_performance": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivd_performance.sql"
+    ],
+    "ivd_clinical_performance": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivd_performance.sql"
+    ],
+    "ivdr_classifications": [
+      "migrations/001_create_ivdr_tables.sql",
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "ivdr_per_documents": [
+      "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "migrations/20260524_ivdr_cdx.sql"
+    ],
+    "organizations": [
+      "scripts/db-verify/00_bootstrap_base.sql",
+      "sql/cro_database_schema.sql"
+    ],
+    "project_commitments": [
+      "migrations/0012_project_charter_timeline.sql",
+      "migrations/20260629_charter_tables_rebuild.sql"
+    ],
+    "q_sub_commitments": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_sub_meetings": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_sub_questions": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_sub_timeline_entries": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "q_submissions": [
+      "db/migrations/20260501_q_sub.sql",
+      "migrations/20260501_q_sub.sql"
+    ],
+    "regulatory_commitments": [
+      "migrations/20260610_ha_interactions_commitments.sql",
+      "sql/create_regulatory_commitments_table.sql"
+    ],
+    "resolution_bundle_items": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "resolution_bundles": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "resolution_plans": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "risk_controls": [
+      "migrations/20260507_mdx_beta_surfaces.sql",
+      "migrations/20260609_design_risk.sql"
+    ],
+    "risk_items": [
+      "migrations/20260507_mdx_beta_surfaces.sql",
+      "migrations/20260609_design_risk.sql"
+    ],
+    "stab_results": [
+      "db/migrations/022_stability_v2.sql",
+      "db/migrations/030_stability_results.sql"
+    ],
+    "strategy_p34_exports": [
+      "db/migrations/029_strategy_step2.sql",
+      "db/migrations/030_stability_results.sql"
+    ],
+    "supersession_records": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "timeline_phases": [
+      "migrations/0012_project_charter_timeline.sql",
+      "migrations/20260629_charter_tables_rebuild.sql"
+    ],
+    "udi_records": [
+      "migrations/20260507_mdx_beta_surfaces.sql",
+      "migrations/20260524_udi_records.sql"
+    ],
+    "users": [
+      "scripts/db-verify/00_bootstrap_base.sql",
+      "sql/cro_database_schema.sql"
+    ]
+  }
+}

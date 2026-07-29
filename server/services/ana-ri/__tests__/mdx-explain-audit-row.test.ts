@@ -4,6 +4,19 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// vi.hoisted ensures env vars are set BEFORE any ESM imports (including
+// transitive ones) are evaluated. Loading the auth/db/config chain at
+// module init requires these to be present, or the chain throws.
+vi.hoisted(() => {
+  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+});
+
+
 const { audit, dbState } = vi.hoisted(() => ({
   audit: { logAction: vi.fn().mockResolvedValue(undefined) },
   dbState: { rows: [] as any[] },
@@ -11,7 +24,7 @@ const { audit, dbState } = vi.hoisted(() => ({
 
 vi.mock('../../auditService', () => ({ default: audit }));
 
-vi.mock('../../db', () => ({
+vi.mock('../../../db', () => ({
   pool: {
     query: vi.fn(async () => ({ rows: dbState.rows })),
   },
@@ -49,6 +62,10 @@ describe('audit.explain', () => {
     expect(r.error).toBe('NOT_FOUND');
   });
 
+  // These 4 tests exercise the explainAuditRow rendering path. The mock
+  // rows mirror the exact column list the impl SELECTs from audit_logs:
+  // id, tenant_id, user_id, action, table_name, record_id, new_values,
+  // ip_address, user_agent, created_at.
   it('renders an explainer for an agent-initiated Q-Sub create', async () => {
     dbState.rows = [
       {

@@ -49,6 +49,16 @@ export function isPdfCitationsEnabled(): boolean {
 }
 
 /**
+ * Lighter-weight intake path than full Files-API citations: when enabled,
+ * attached PDFs/text are sent to the model inline as base64 document blocks
+ * (GA, no beta header) so ANA can actually read uploaded files. Default off
+ * so the metadata-only behaviour is unchanged unless an operator opts in.
+ */
+export function isPdfIntakeEnabled(): boolean {
+  return process.env.ANA_ENABLE_PDF_INTAKE === 'true';
+}
+
+/**
  * Upload a file buffer to Anthropic's Files API. Returns the Anthropic
  * file_id which can be referenced in document content blocks.
  *

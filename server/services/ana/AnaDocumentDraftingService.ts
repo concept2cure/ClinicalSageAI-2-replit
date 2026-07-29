@@ -30,6 +30,10 @@ import {
   COMPLIANCE_REVIEW_TOOLS,
   GAP_ANALYSIS_TOOLS,
 } from './AnaToolDefinitions';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -127,6 +131,77 @@ DOCUMENT STRUCTURE:
   general_regulatory: `You are AnA, a senior regulatory intelligence operator for the Concept2Cure platform. You write with the precision, judgment, and authority of a 30-year regulatory veteran. Every document you produce reflects deep regulatory expertise — proper citations, evidence-grounded content, and the quality of judgment that distinguishes a senior operator from a competent generalist. Issue clear verdicts on defensibility, prioritize issues by regulatory impact, and never present all findings as equal.`,
 };
 
+// ─── Dynamic Framework Resolution ─────────────────────────────────────────────
+// Maps ANY submission type (including the 158+ registry entries) to the best
+// available system prompt, using hardcoded prompts for known frameworks and
+// generating registry-driven prompts for everything else.
+
+const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
+  US_510K: 'fda_510k', '510k': 'fda_510k', '510K': 'fda_510k',
+  US_PMA: 'fda_pma', pma: 'fda_pma', PMA: 'fda_pma',
+  EU_MDR_TECHDOC: 'eu_mdr', EU_IVDR_TECHDOC: 'eu_mdr',
+  EU_CER: 'cer_clinical_evaluation', cer: 'cer_clinical_evaluation',
+  US_IND: 'ich_clinical', US_NDA: 'ich_clinical', US_BLA: 'ich_clinical',
+  EU_MAA: 'ich_clinical', EU_CTA: 'ich_clinical',
+  ind: 'ich_clinical', nda: 'ich_clinical', bla: 'ich_clinical',
+  maa: 'ich_clinical', cta: 'ich_clinical',
+};
+
+function buildDynamicSystemPrompt(submissionType: string): string {
+  const ctx = getSubmissionTypeContext(submissionType);
+  if (!ctx) return REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+
+  return `You are AnA, a senior regulatory intelligence operator with deep expertise in ${ctx.displayName} submissions for ${ctx.agency}. You write with the precision and judgment authority of someone who has prepared dozens of ${ctx.displayName} filings and understands ${ctx.agency} reviewer expectations.
+
+KEY REGULATORY CONTEXT:
+- Filing Type: ${ctx.displayName} (${ctx.registryId})
+- Region: ${ctx.region} — Agency: ${ctx.agency}
+- Dossier Standard: ${ctx.dossierStandard}
+${ctx.segment ? `- Segment: ${ctx.segment}` : ''}
+${ctx.category ? `- Category: ${ctx.category}` : ''}
+${ctx.submissionFormat ? `- Submission Format: ${ctx.submissionFormat}` : ''}
+${ctx.ctdModule ? `- Primary CTD Module: ${ctx.ctdModule}` : ''}
+${ctx.description ? `\nSCOPE: ${ctx.description}` : ''}
+
+DOCUMENT STANDARDS:
+- Use formal regulatory language appropriate for ${ctx.agency} submissions
+- Follow the ${ctx.dossierStandard} dossier structure
+- Cite applicable regulations and guidance documents for the ${ctx.region} region
+- Ensure consistency with ${ctx.agency} formatting expectations
+${ctx.submissionFormat ? `- Use ${ctx.submissionFormat} formatting requirements` : ''}
+
+QUALITY REQUIREMENTS:
+- Every claim must be supported by evidence or regulatory reference
+- Use structured tables for comparisons and data summaries
+- Include cross-references to supporting data sections
+- Flag any gaps or areas needing additional data
+- Issue clear verdicts on defensibility and prioritize by regulatory impact`;
+}
+
+/**
+ * Resolve any submission type string to the best system prompt.
+ * Checks hardcoded frameworks first, then builds a dynamic prompt from registry data.
+ */
+export function resolveSystemPrompt(submissionType: string): string {
+  // Direct framework key (e.g. 'fda_510k', 'ich_clinical') — backward compatible.
+  if (REGULATORY_SYSTEM_PROMPTS[submissionType]) {
+    return REGULATORY_SYSTEM_PROMPTS[submissionType];
+  }
+  const frameworkKey = SUBMISSION_TYPE_TO_FRAMEWORK[submissionType];
+  if (frameworkKey && REGULATORY_SYSTEM_PROMPTS[frameworkKey]) {
+    return REGULATORY_SYSTEM_PROMPTS[frameworkKey];
+  }
+  const entry = resolveToRegistryEntry(submissionType);
+  if (entry) {
+    const idKey = SUBMISSION_TYPE_TO_FRAMEWORK[entry.id];
+    if (idKey && REGULATORY_SYSTEM_PROMPTS[idKey]) {
+      return REGULATORY_SYSTEM_PROMPTS[idKey];
+    }
+    return buildDynamicSystemPrompt(entry.id);
+  }
+  return REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,6 +211,14 @@ export type RegulatoryFramework = 'fda_510k' | 'fda_pma' | 'eu_mdr' | 'ich_clini
 export interface DocumentDraftRequest {
   /** Regulatory framework context */
   framework: RegulatoryFramework;
+  /**
+   * Canonical submission/filing type (any of the 158+ registry IDs or aliases,
+   * e.g. 'US_IND', 'CA_NDS', 'JP_MKT_APPROVAL', '510k'). When provided, the
+   * system prompt is resolved from the Global Document Registry via the bridge,
+   * unlocking framework-grade authoring for ALL filing types — not just the six
+   * hardcoded frameworks. Falls back to `framework` when absent/unrecognized.
+   */
+  submissionType?: string;
   /** Document section or type to draft */
   sectionType: string;
   /** User instructions / content requirements */
@@ -194,6 +277,8 @@ export interface VisionAnalysisRequest {
   instructions: string;
   /** Regulatory framework for context */
   framework?: RegulatoryFramework;
+  /** Canonical submission/filing type — registry-driven prompt for any of 158+ types. */
+  submissionType?: string;
   /** Enable extended thinking */
   enableThinking?: boolean;
   /** Streaming callback */
@@ -230,7 +315,11 @@ export class AnaDocumentDraftingService {
     const gateway = getGateway();
     const startTime = Date.now();
 
-    const systemPrompt = REGULATORY_SYSTEM_PROMPTS[req.framework] || REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+    // Prefer registry-driven prompt resolution (all 158+ types) when a
+    // submissionType is supplied; otherwise use the hardcoded framework prompt.
+    const systemPrompt = req.submissionType
+      ? resolveSystemPrompt(req.submissionType)
+      : REGULATORY_SYSTEM_PROMPTS[req.framework] || REGULATORY_SYSTEM_PROMPTS.general_regulatory;
 
     // Build user prompt with project context
     let userPrompt = '';
@@ -270,6 +359,7 @@ export class AnaDocumentDraftingService {
       callerModule: 'AnaDocumentDraftingService',
       metadata: {
         framework: req.framework,
+        submissionType: req.submissionType,
         sectionType: req.sectionType,
       },
     };
@@ -317,9 +407,11 @@ export class AnaDocumentDraftingService {
   async analyzeImage(req: VisionAnalysisRequest): Promise<DocumentDraftResponse> {
     const gateway = getGateway();
 
-    const systemPrompt = req.framework
-      ? REGULATORY_SYSTEM_PROMPTS[req.framework] || REGULATORY_SYSTEM_PROMPTS.general_regulatory
-      : 'You are a document analysis expert specializing in regulatory and clinical documents. Analyze the provided image and extract all relevant information.';
+    const systemPrompt = req.submissionType
+      ? resolveSystemPrompt(req.submissionType)
+      : req.framework
+        ? resolveSystemPrompt(req.framework)
+        : 'You are a document analysis expert specializing in regulatory and clinical documents. Analyze the provided image and extract all relevant information.';
 
     const imageBlock: ImageBlock = {
       type: 'image',
@@ -380,7 +472,7 @@ export class AnaDocumentDraftingService {
    */
   async reviewCompliance(
     content: string,
-    framework: RegulatoryFramework,
+    framework: RegulatoryFramework | string,
     options?: {
       enableThinking?: boolean;
       onStream?: StreamCallback;
@@ -390,7 +482,9 @@ export class AnaDocumentDraftingService {
   ): Promise<DocumentDraftResponse> {
     const gateway = getGateway();
 
-    const systemPrompt = REGULATORY_SYSTEM_PROMPTS[framework] || REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+    // Universal resolver: accepts a hardcoded framework key OR any of the 158+
+    // registry submission types/aliases.
+    const systemPrompt = resolveSystemPrompt(framework);
 
     const gatewayRequest: GatewayRequest = {
       taskType: 'regulatory_review',
@@ -443,7 +537,7 @@ export class AnaDocumentDraftingService {
    */
   async analyzeGaps(
     documentContent: string,
-    framework: RegulatoryFramework,
+    framework: RegulatoryFramework | string,
     targetSections: string[],
     options?: {
       enableThinking?: boolean;
@@ -454,7 +548,8 @@ export class AnaDocumentDraftingService {
   ): Promise<DocumentDraftResponse> {
     const gateway = getGateway();
 
-    const systemPrompt = REGULATORY_SYSTEM_PROMPTS[framework] || REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+    // Universal resolver: hardcoded framework key OR any registry submission type.
+    const systemPrompt = resolveSystemPrompt(framework);
 
     const gatewayRequest: GatewayRequest = {
       taskType: 'document_analysis',
@@ -541,7 +636,7 @@ ${documentContent}`,
   async quickComplete(
     prompt: string,
     options?: {
-      framework?: RegulatoryFramework;
+      framework?: RegulatoryFramework | string;
       maxTokens?: number;
       organizationId?: string | number;
       userId?: string | number;
@@ -551,7 +646,8 @@ ${documentContent}`,
 
     const messages: { role: 'system' | 'user'; content: string }[] = [];
     if (options?.framework) {
-      const sys = REGULATORY_SYSTEM_PROMPTS[options.framework];
+      // Universal resolver: hardcoded framework key OR any registry submission type.
+      const sys = resolveSystemPrompt(options.framework);
       if (sys) messages.push({ role: 'system', content: sys });
     }
     messages.push({ role: 'user', content: prompt });

@@ -18,6 +18,7 @@
 
 import { Router, raw } from 'express';
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import Stripe from 'stripe';
 import {
   createCheckoutSession,
@@ -29,8 +30,57 @@ import {
   DTC_PRICING,
 } from '../services/billing.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { createScopedLogger } from '../utils/logger';
 
+const logger = createScopedLogger('billing');
 const router = Router();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Validation schemas (financial mutation inputs)
+//
+// NOTE: organizationId is intentionally NOT part of any schema — it is always
+// derived from the authenticated JWT / tenant context, never from the body.
+// Optional URL fields are constrained to absolute http(s) URLs to avoid
+// open-redirect style abuse via Stripe success/cancel redirects.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const redirectUrlSchema = z.string().url().startsWith('http', {
+  message: 'must be an absolute http(s) URL',
+});
+
+const checkoutBodySchema = z.object({
+  tier: z.enum(['standard', 'professional', 'enterprise']),
+  billingCycle: z.enum(['monthly', 'annual']),
+  seats: z.coerce.number().int().min(1).max(10000).optional(),
+  successUrl: redirectUrlSchema.optional(),
+  cancelUrl: redirectUrlSchema.optional(),
+});
+
+const portalBodySchema = z.object({
+  returnUrl: redirectUrlSchema.optional(),
+});
+
+const dtcCheckoutBodySchema = z.object({
+  tier: z.enum(['standard', 'professional', 'enterprise']).optional(),
+  billingCycle: z.enum(['monthly', 'annual']).optional(),
+  currency: z
+    .string()
+    .regex(/^[A-Za-z]{3}$/, 'currency must be a 3-letter ISO code')
+    .optional(),
+  successUrl: redirectUrlSchema.optional(),
+  cancelUrl: redirectUrlSchema.optional(),
+});
+
+function respondValidationError(res: Response, error: z.ZodError) {
+  return res.status(400).json({
+    error: 'Validation Error',
+    details: error.errors.map(e => ({
+      field: e.path.join('.'),
+      message: e.message,
+      code: e.code,
+    })),
+  });
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /checkout — Create Stripe Checkout Session with Link
@@ -44,22 +94,11 @@ router.post('/checkout', authenticateToken, async (req: Request, res: Response) 
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const { tier, billingCycle, seats, successUrl, cancelUrl } = req.body;
-
-    if (!tier || !billingCycle) {
-      return res.status(400).json({
-        error: 'Missing required fields',
-        required: ['tier', 'billingCycle'],
-      });
+    const parsed = checkoutBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return respondValidationError(res, parsed.error);
     }
-
-    if (!['monthly', 'annual'].includes(billingCycle)) {
-      return res.status(400).json({ error: 'billingCycle must be "monthly" or "annual"' });
-    }
-
-    if (!['standard', 'professional', 'enterprise'].includes(tier)) {
-      return res.status(400).json({ error: 'tier must be "standard", "professional", or "enterprise"' });
-    }
+    const { tier, billingCycle, seats, successUrl, cancelUrl } = parsed.data;
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const checkoutSuccessUrl =
@@ -85,9 +124,8 @@ router.post('/checkout', authenticateToken, async (req: Request, res: Response) 
       sessionId: result.sessionId,
     });
   } catch (error) {
-    console.error('[Billing] Checkout error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create checkout session';
-    res.status(500).json({ error: message });
+    logger.error('Checkout error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to create checkout session' });
   }
 });
 
@@ -103,16 +141,20 @@ router.post('/portal', authenticateToken, async (req: Request, res: Response) =>
       return res.status(401).json({ error: 'Organization context required' });
     }
 
+    const parsed = portalBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return respondValidationError(res, parsed.error);
+    }
+
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const returnUrl = req.body.returnUrl || `${baseUrl}/settings/billing`;
+    const returnUrl = parsed.data.returnUrl || `${baseUrl}/settings/billing`;
 
     const portalUrl = await createPortalSession(Number(orgId), returnUrl);
 
     res.json({ portalUrl });
   } catch (error) {
-    console.error('[Billing] Portal error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create portal session';
-    res.status(500).json({ error: message });
+    logger.error('Portal error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to create portal session' });
   }
 });
 
@@ -131,7 +173,7 @@ router.get('/status', authenticateToken, async (req: Request, res: Response) => 
     const status = await getSubscriptionStatus(Number(orgId));
     res.json(status);
   } catch (error) {
-    console.error('[Billing] Status error:', error);
+    logger.error('Status error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch subscription status' });
   }
 });
@@ -145,13 +187,11 @@ router.get('/pricing', async (req: Request, res: Response) => {
     const pricing = PRICING[industryMode] || PRICING.virtual_biotech;
 
     // Format for frontend display (convert cents to dollars)
-    const tiers = pricing.map(p => ({
+    const tiers = pricing.map((p: any) => ({
       name: p.name,
       tier: p.tier,
-      baseMonthly: p.baseMonthly / 100,
-      perSeatMonthly: p.perSeatMonthly / 100,
+      perUserMonthly: p.perUserMonthly / 100,
       annualDiscountPct: p.annualDiscountPct,
-      maxUsers: p.maxUsers,
       maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,
       maxStorageGB: p.maxStorageGB,
     }));
@@ -167,15 +207,21 @@ router.get('/pricing', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const orgId = req.body.organizationId
-      || (req as any).tenantContext?.organizationId
-      || (req as any).user?.organizationId;
+    // SECURITY: a body-supplied organizationId would have let a caller
+    // start a DTC checkout that bills another tenant's payment method.
+    // Source the org from the JWT only.
+    const orgId =
+      (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
 
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const { tier, billingCycle, currency } = req.body;
+    const parsed = dtcCheckoutBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return respondValidationError(res, parsed.error);
+    }
+    const { tier, billingCycle, currency, successUrl, cancelUrl } = parsed.data;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     const result = await createDTCCheckoutSession({
@@ -183,17 +229,16 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
       tier: tier || 'standard',
       billingCycle: billingCycle || 'monthly',
       successUrl:
-        req.body.successUrl ||
+        successUrl ||
         `${baseUrl}/concept2cure/billing?checkout=success&welcome=true`,
-      cancelUrl: req.body.cancelUrl || `${baseUrl}/concept2cure/signup`,
+      cancelUrl: cancelUrl || `${baseUrl}/concept2cure/signup`,
       currency,
     });
 
     res.json(result);
   } catch (error) {
-    console.error('[Billing] DTC checkout error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create DTC checkout';
-    res.status(500).json({ error: message });
+    logger.error('DTC checkout error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to create DTC checkout' });
   }
 });
 
@@ -201,10 +246,10 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
 // GET /dtc-pricing — Get DTC pricing tiers (public, no auth)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/dtc-pricing', async (_req: Request, res: Response) => {
-  const tiers = DTC_PRICING.map(p => ({
+  const tiers = DTC_PRICING.map((p: any) => ({
     name: p.name,
     tier: p.tier,
-    priceMonthly: p.baseMonthly / 100,
+    priceMonthly: (p.baseMonthly ?? 0) / 100,
     annualDiscountPct: p.annualDiscountPct,
     maxUsers: p.maxUsers === -1 ? 'Unlimited' : p.maxUsers,
     maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,
@@ -225,7 +270,7 @@ router.post('/webhooks/stripe', raw({ type: 'application/json' }), async (req: R
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error('[Billing] STRIPE_WEBHOOK_SECRET not configured');
+    logger.error('STRIPE_WEBHOOK_SECRET not configured');
     return res.status(500).json({ error: 'Webhook not configured' });
   }
 
@@ -240,18 +285,26 @@ router.post('/webhooks/stripe', raw({ type: 'application/json' }), async (req: R
     const stripe = new Stripe(stripeKey!, { apiVersion: '2023-10-16' as any });
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid signature';
-    console.error('[Billing] Webhook signature verification failed:', message);
-    return res.status(400).json({ error: `Webhook Error: ${message}` });
+    // Log details server-side for triage but never echo the SDK message
+    // back — that fingerprints our implementation (Stripe library version,
+    // exact verification path) for whoever is probing the endpoint.
+    logger.error('Webhook signature verification failed', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(400).json({ error: 'Invalid signature' });
   }
 
   try {
     await processWebhookEvent(event);
     res.json({ received: true });
   } catch (error) {
-    console.error('[Billing] Webhook processing error:', error);
-    // Return 200 to prevent Stripe retries for processing errors
-    // The error is logged and stored in stripe_events table
+    logger.error('Webhook processing error', {
+      err: error instanceof Error ? error.message : String(error),
+      eventType: event?.type,
+    });
+    // Return 200 to prevent Stripe retries for processing errors —
+    // the error is logged and the event was already stored in
+    // stripe_events for replay.
     res.json({ received: true, error: 'Processing error logged' });
   }
 });

@@ -13,14 +13,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { I } from './icons';
-import { Composer } from './Composer';
-import { Message, type ExecutedActionChip } from './Message';
+import { Composer, type ComposerReadyAttachment } from './Composer';
+import type { EffortLevel } from './ModelEffortPicker';
+import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
+import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
+import { IntelligenceQuestionWidget } from './IntelligenceQuestionWidget';
+import { WarGameReport } from './WarGameReport';
+import { AnaReportCanvas } from './AnaReportCanvas';
+import type { MessageAttachment } from './useAnaChat';
+import type { PendingSignoff } from './useGovernedAction';
 import styles from './styles.module.css';
 
 export interface ChatMessageView {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  /** Files attached to this (user) turn — rendered as chips above the bubble. */
+  attachments?: MessageAttachment[];
   html?: string;
   streaming?: boolean;
   /** Progress label shown before the first token arrives. */
@@ -31,6 +40,8 @@ export interface ChatMessageView {
   executedActions?: ExecutedActionChip[];
   /** Detected intent lens (e.g. "audit", "risk"). Rendered as a meta chip. */
   detectedLens?: string;
+  /** Specific regulatory document type detected (e.g. "Clinical Overview"). Rendered as "Drafting: X" chip. */
+  detectedDocumentType?: string;
   /** Server-suggested follow-up document actions (raw type strings). */
   suggestedActions?: string[];
   /** Extended-thinking reasoning content (collapsible section). */
@@ -42,16 +53,34 @@ export interface ChatMessageView {
     groundedClaims: number;
     weakClaims: number;
     missingSupport: number;
+    riskSummary?: string;
+    flaggedClaims?: { kind: 'ungrounded' | 'overclaim' | 'contradiction'; text: string }[];
   };
+  /** Context layers ANA drew on this turn (enrichment source names). */
+  groundingSources?: string[];
   /** Degraded-mode warnings to surface as a chip. */
   warnings?: string[];
+  /** Tools AnA invoked this turn, shown as transparency/audit status rows. */
+  toolCalls?: ToolCallView[];
+  /** Governed actions blocked pending a Part 11 sign-off. */
+  pendingSignoffs?: PendingSignoff[];
   /** When this turn was sent (ms epoch) — relative timestamp source. */
   sentAt?: number;
+  /** Intelligence questioning flow — current question event. */
+  intelligenceQuestion?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceQuestionEvent;
+  /** Flow state for submitting answers back. */
+  intelligenceFlowState?: import('../../../../../shared/types/intelligence-questions.js').FlowState;
+  /** Intelligence flow completion event. */
+  intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
+  /** War Game report — FDA auditor simulation results. */
+  warGameReport?: import('./useAnaChat').AnaChatMessage['warGameReport'];
+  /** Reporting Canvas — governed report render / best-practices suggestions. */
+  reportCanvas?: import('./useAnaChat').AnaChatMessage['reportCanvas'];
 }
 
 export interface ChatViewProps {
   messages: ChatMessageView[];
-  onSend: (text: string) => void;
+  onSend: (text: string, attachments?: MessageAttachment[]) => void;
   onStop?: () => void;
   isStreaming?: boolean;
   onCopy?: (messageId: string, text: string) => void;
@@ -63,6 +92,24 @@ export interface ChatViewProps {
   onSuggestedAction?: (actionType: string) => void;
   /** Client-side label map for DocumentActionType strings. */
   suggestedActionLabels?: Record<string, string>;
+  /** Scopes composer uploads to a project so extracted text lands in its memory. */
+  projectId?: string;
+  /** Tools pinned for the next turn, forwarded to the composer's tool picker. */
+  selectedTools?: string[];
+  onSelectedToolsChange?: (tools: string[]) => void;
+  /** Response effort + advanced model override, forwarded to the composer's picker. */
+  effort?: EffortLevel;
+  onEffortChange?: (effort: EffortLevel) => void;
+  modelOverride?: string | null;
+  onModelOverrideChange?: (modelId: string | null) => void;
+  /** Guided Safety Narrative submit (E5). Forwarded to the composer's affordance. */
+  onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
+  /** Called when the user submits an intelligence question answer. */
+  onIntelligenceAnswer?: (flowState: any, nodeId: string, answers: Record<string, unknown>) => void;
+  /** Called when the user clicks a suggested action after flow completion. */
+  onIntelligenceAction?: (actionType: string) => void;
+  /** Called when the user clicks "Remediate" on a war game finding. */
+  onWarGameRemediate?: (findingId: string, findingTitle: string) => void;
 }
 
 export function ChatView({
@@ -77,8 +124,21 @@ export function ChatView({
   onEditRegenerate,
   onSuggestedAction,
   suggestedActionLabels,
+  projectId,
+  selectedTools,
+  onSelectedToolsChange,
+  effort,
+  onEffortChange,
+  modelOverride,
+  onModelOverrideChange,
+  onSafetyNarrative,
+  onIntelligenceAnswer,
+  onIntelligenceAction,
+  onWarGameRemediate,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
+  // Attachments the composer hands up at send time, consumed by `send`.
+  const pendingAttachmentsRef = useRef<MessageAttachment[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
@@ -113,7 +173,9 @@ export function ChatView({
   const send = () => {
     const out = draft.trim();
     if (!out) return;
-    onSend(out);
+    const attachments = pendingAttachmentsRef.current;
+    pendingAttachmentsRef.current = [];
+    onSend(out, attachments.length > 0 ? attachments : undefined);
     setDraft('');
     // Sending a new message implies user wants to follow it.
     setStickToBottom(true);
@@ -125,37 +187,66 @@ export function ChatView({
       <div className={styles.chatScroll} ref={scrollerRef} onScroll={handleScroll}>
         <div className={styles.chatThread}>
           {messages.map(m => (
-            <Message
-              key={m.id}
-              role={m.role}
-              text={m.text}
-              html={m.html}
-              streaming={m.streaming}
-              statusPhase={m.statusPhase}
-              latencyMs={m.latencyMs}
-              fallback={m.fallback}
-              stopped={m.stopped}
-              executedActions={m.executedActions}
-              detectedLens={m.detectedLens}
-              suggestedActions={m.suggestedActions}
-              suggestedActionLabels={suggestedActionLabels}
-              thinking={m.thinking}
-              evidence={m.evidence}
-              warnings={m.warnings}
-              sentAt={m.sentAt}
-              onSuggestedAction={onSuggestedAction}
-              onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
-              onRetry={onRetry ? () => onRetry(m.id) : undefined}
-              onFeedback={onFeedback ? pos => onFeedback(m.id, pos) : undefined}
-              onActionClick={
-                onActionClick ? action => onActionClick(m.id, action) : undefined
-              }
-              onEditRegenerate={
-                onEditRegenerate && m.role === 'user'
-                  ? nt => onEditRegenerate(m.id, nt)
-                  : undefined
-              }
-            />
+            <div key={m.id}>
+              <Message
+                role={m.role}
+                text={m.text}
+                attachments={m.attachments}
+                html={m.html}
+                streaming={m.streaming}
+                statusPhase={m.statusPhase}
+                latencyMs={m.latencyMs}
+                fallback={m.fallback}
+                stopped={m.stopped}
+                executedActions={m.executedActions}
+                detectedLens={m.detectedLens}
+                detectedDocumentType={m.detectedDocumentType}
+                suggestedActions={m.suggestedActions}
+                suggestedActionLabels={suggestedActionLabels}
+                thinking={m.thinking}
+                evidence={m.evidence}
+                groundingSources={m.groundingSources}
+                warnings={m.warnings}
+                toolCalls={m.toolCalls}
+                pendingSignoffs={m.pendingSignoffs}
+                sentAt={m.sentAt}
+                onSuggestedAction={onSuggestedAction}
+                onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
+                onRetry={onRetry ? () => onRetry(m.id) : undefined}
+                onFeedback={onFeedback ? pos => onFeedback(m.id, pos) : undefined}
+                onActionClick={
+                  onActionClick ? action => onActionClick(m.id, action) : undefined
+                }
+                onEditRegenerate={
+                  onEditRegenerate && m.role === 'user'
+                    ? nt => onEditRegenerate(m.id, nt)
+                    : undefined
+                }
+              />
+              {(m.intelligenceQuestion || m.intelligenceFlowComplete) && (
+                <IntelligenceQuestionWidget
+                  question={m.intelligenceQuestion}
+                  flowState={m.intelligenceFlowState}
+                  completion={m.intelligenceFlowComplete}
+                  onAnswer={onIntelligenceAnswer}
+                  onAction={onIntelligenceAction}
+                  isStreaming={isStreaming}
+                />
+              )}
+              {m.warGameReport && (
+                <WarGameReport
+                  report={m.warGameReport}
+                  onDismiss={() => {/* war game report remains visible until dismissed */}}
+                  onRemediate={(findingId) => {
+                    const finding = m.warGameReport?.findings.find(f => f.id === findingId);
+                    onWarGameRemediate?.(findingId, finding?.title || findingId);
+                  }}
+                />
+              )}
+              {m.reportCanvas && (
+                <AnaReportCanvas canvas={m.reportCanvas} onAction={(prompt) => onSend(prompt)} />
+              )}
+            </div>
           ))}
           <div ref={endRef} />
         </div>
@@ -177,9 +268,20 @@ export function ChatView({
           value={draft}
           onChange={setDraft}
           onSend={send}
+          onAttachmentsSend={(atts: ComposerReadyAttachment[]) => {
+            pendingAttachmentsRef.current = atts;
+          }}
           onStop={onStop}
           isStreaming={isStreaming}
           placeholder="Reply to AnA…"
+          projectId={projectId}
+          selectedTools={selectedTools}
+          onSelectedToolsChange={onSelectedToolsChange}
+          effort={effort}
+          onEffortChange={onEffortChange}
+          modelOverride={modelOverride}
+          onModelOverrideChange={onModelOverrideChange}
+          onSafetyNarrative={onSafetyNarrative}
         />
       </div>
     </div>

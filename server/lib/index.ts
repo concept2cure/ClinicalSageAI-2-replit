@@ -33,15 +33,8 @@ export {
   type CircuitBreakerMetrics
 } from './circuit-breaker';
 
-// Multi-Provider LLM - Kimi AI primary, OpenAI secondary
-export {
-  MultiProviderLLMService,
-  type LLMProvider,
-  type LLMProviderConfig,
-  type LLMRequest,
-  type LLMResponse,
-  type ProviderHealth
-} from './multi-provider-llm';
+// Multi-Provider LLM removed — all LLM calls now route through the governed
+// AI gateway (server/services/ai-gateway). See gateway-bypass-baseline.json.
 
 // Prompt Injection Protection - LLM security
 export {
@@ -103,12 +96,16 @@ import { getOpenAICircuitBreaker } from './circuit-breaker';
 import { getGracefulDegradationService } from './graceful-degradation';
 import { getTamperProofAuditLog } from './tamper-proof-audit';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('index');
+
 /**
  * Initialize all survivability components
  * Call this during application startup
  */
 export async function initializeSurvivabilityLayer(pool: Pool): Promise<void> {
-  console.log('[Survivability] Initializing survivability layer...');
+  logger.info('Initializing survivability layer...');
 
   // Initialize tamper-proof audit log
   const auditLog = getTamperProofAuditLog(pool);
@@ -139,7 +136,7 @@ export async function initializeSurvivabilityLayer(pool: Pool): Promise<void> {
     }
   );
 
-  console.log('[Survivability] Survivability layer initialized successfully');
+  logger.info('Survivability layer initialized successfully');
 }
 
 /**
@@ -147,7 +144,7 @@ export async function initializeSurvivabilityLayer(pool: Pool): Promise<void> {
  * Call this during graceful shutdown
  */
 export async function shutdownSurvivabilityLayer(pool: Pool): Promise<void> {
-  console.log('[Survivability] Shutting down survivability layer...');
+  logger.info('Shutting down survivability layer...');
 
   // Log shutdown event
   const auditLog = getTamperProofAuditLog(pool);
@@ -161,5 +158,5 @@ export async function shutdownSurvivabilityLayer(pool: Pool): Promise<void> {
   const degradation = getGracefulDegradationService();
   degradation.stopMonitoring();
 
-  console.log('[Survivability] Survivability layer shut down');
+  logger.info('Survivability layer shut down');
 }

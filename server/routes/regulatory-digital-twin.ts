@@ -24,6 +24,26 @@ import { sql } from 'drizzle-orm';
 
 const router = Router();
 
+/**
+ * Honesty disclosure attached to every prediction-bearing response from this router.
+ * These simulations are stochastic illustrations driven by fixed assumptions and
+ * randomized panelist/timing draws — they are NOT trained on, or validated against,
+ * historical regulatory decisions. Presenting them without this disclosure would
+ * misrepresent RNG output as predictive analysis.
+ * See FORENSIC_CODE_AUDIT_2026-05-29.md HI-1.
+ */
+const SIMULATION_DISCLOSURE = {
+  predictive: false,
+  methodology: 'monte-carlo-illustration',
+  validatedAgainstHistoricalDecisions: false,
+  note:
+    'Illustrative simulation, not a validated prediction of any regulatory outcome. ' +
+    'Panelist votes, review timing, RTF/deficiency likelihoods, and advisory-committee ' +
+    'sentiment are produced by a stochastic model using fixed assumptions — not by a model ' +
+    'trained on historical FDA/EMA/PMDA decisions. Do not rely on these figures for ' +
+    'regulatory decision-making.',
+} as const;
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DB Table Initialization
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -583,7 +603,7 @@ const DEFICIENCY_PATTERNS: Record<string, DeficiencyItem[]> = {
 // Core Simulation Engine
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class RegulatoryDigitalTwin {
+export class RegulatoryDigitalTwin {
   private simulationId: string;
   private createdAt: string;
 
@@ -1120,18 +1140,19 @@ class RegulatoryDigitalTwin {
 
     approvalSentiment = Math.max(0.1, Math.min(0.95, approvalSentiment));
 
-    // Simulate each panelist vote (slightly randomized)
-    for (let i = 0; i < totalPanelists; i++) {
-      const personalBias = (Math.random() - 0.5) * 0.2;
-      if (approvalSentiment + personalBias > 0.5) {
-        yesVotes++;
-      } else {
-        noVotes++;
-      }
-    }
-
-    const abstain = Math.random() > 0.85 ? 1 : 0;
-    if (abstain && yesVotes > 0) yesVotes--;
+    // Deterministic expected vote split from the sentiment derived above.
+    // Previously each panelist vote was drawn with a Math.random() "personal
+    // bias" plus a random abstention, so the predicted tally was noise that
+    // changed on every call. Report the expected split implied by the disclosed
+    // sentiment factors instead — reproducible, and honest that it is an
+    // estimate from those factors rather than a stochastic forecast. (The
+    // Monte Carlo timing simulation below legitimately samples randomness, but
+    // it aggregates over thousands of iterations; a single advisory-committee
+    // draw does not.) Abstentions are not derivable from the available data and
+    // are reported as 0 rather than invented.
+    yesVotes = Math.round(totalPanelists * approvalSentiment);
+    noVotes = totalPanelists - yesVotes;
+    const abstain = 0;
 
     const overallSentiment =
       yesVotes > totalPanelists * 0.65
@@ -1411,6 +1432,24 @@ class RegulatoryDigitalTwin {
 // DB Persistence Helpers
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// SECURITY: agencies are written into a TEXT[] column. Validate against the
+// known reviewer-agency allow-list and bind each element as a parameter rather
+// than string-interpolating into SQL (prevents SQL injection via request body).
+const VALID_AGENCIES: ReadonlySet<string> = new Set([
+  'FDA', 'EMA', 'PMDA', 'Health_Canada', 'TGA',
+]);
+
+function buildAgencyArray(agencies: readonly string[]) {
+  const values = (agencies && agencies.length > 0 ? agencies : ['FDA']);
+  for (const a of values) {
+    if (!VALID_AGENCIES.has(a)) {
+      throw new Error(`Invalid agency: ${JSON.stringify(a)}`);
+    }
+  }
+  const elements = sql.join(values.map((a) => sql`${a}`), sql`, `);
+  return sql`ARRAY[${elements}]::text[]`;
+}
+
 async function dbInsertSimulation(
   simulationId: string,
   submission: SubmissionProfile,
@@ -1425,7 +1464,7 @@ async function dbInsertSimulation(
       ${simulationId},
       ${submission.type},
       ${submission.therapeuticArea},
-      ${sql.raw(`ARRAY[${agencies.map(a => `'${a}'`).join(',')}]::text[]`)},
+      ${buildAgencyArray(agencies)},
       ${JSON.stringify(submission)}::jsonb,
       ${JSON.stringify(results)}::jsonb,
       ${JSON.stringify(summary)}::jsonb,
@@ -1555,6 +1594,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
       therapeuticArea: submission.therapeuticArea,
       summary,
       results,
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     console.error('[regulatory-digital-twin] Simulation error:', error);
@@ -1567,7 +1607,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
  */
 router.get('/simulations/:id', async (req: Request, res: Response) => {
   try {
-    const sim = await dbGetSimulation(req.params.id);
+    const sim = await dbGetSimulation(String(req.params.id));
     if (!sim) {
       return res.status(404).json({ error: 'Simulation not found' });
     }
@@ -1576,6 +1616,7 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
       createdAt: sim.createdAt,
       submission: sim.submissionProfile,
       results: sim.results,
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to retrieve simulation:', error);
@@ -1589,7 +1630,7 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
 router.get('/simulations', async (_req: Request, res: Response) => {
   try {
     const simulations = await dbListSimulations();
-    res.json({ simulations, total: simulations.length });
+    res.json({ simulations, total: simulations.length, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to list simulations:', error);
     res.status(500).json({ error: 'Failed to list simulations', details: error.message });
@@ -1614,6 +1655,7 @@ router.post('/predict-questions', async (req: Request, res: Response) => {
       },
       byCategory: groupBy(questions, 'category'),
       questions,
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -1628,7 +1670,7 @@ router.post('/rtf-assessment', (req: Request, res: Response) => {
     const { submission } = req.body;
     const twin = new RegulatoryDigitalTwin();
     const assessment = twin.assessRTFRisk(submission);
-    res.json(assessment);
+    res.json({ ...assessment, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1643,7 +1685,7 @@ router.post('/deficiency-prediction', (req: Request, res: Response) => {
     const twin = new RegulatoryDigitalTwin();
     const rtfRisk = twin.assessRTFRisk(submission);
     const prediction = twin.predictDeficiencyLetter(submission, rtfRisk);
-    res.json(prediction);
+    res.json({ ...prediction, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1657,7 +1699,7 @@ router.post('/advisory-committee', (req: Request, res: Response) => {
     const { submission, committeeType } = req.body;
     const twin = new RegulatoryDigitalTwin();
     const simulation = twin.simulateAdvisoryCommittee(submission, committeeType);
-    res.json(simulation);
+    res.json({ ...simulation, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1675,7 +1717,7 @@ router.post('/monte-carlo-timing', (req: Request, res: Response) => {
       targetDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       iterations || 10000
     );
-    res.json(result);
+    res.json({ ...result, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1694,6 +1736,7 @@ router.post('/cross-agency', async (req: Request, res: Response) => {
       agencies: Object.keys(comparison),
       comparison,
       harmonizationOpportunities: identifyHarmonizationOpportunities(comparison),
+      _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

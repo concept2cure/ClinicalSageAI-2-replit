@@ -1,16 +1,36 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { PlatformBootstrapContext } from './types';
+import cspReportRouter from '../routes/csp-report';
+import adminSecurityRouter from '../routes/admin-security';
+import { CSP_REPORT_URI } from '../middleware/enterprise-security';
 
 export async function registerPlatformRoutes({ app, pool, authMiddleware }: PlatformBootstrapContext) {
-  app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
-  app.get('/readyz', async (_req, res) => {
-    try {
-      await pool.query('select 1');
-      return res.json({ ready: true });
-    } catch {
-      return res.status(500).json({ ready: false });
-    }
-  });
+  // CSP violation reporting — must match the report-uri set on the policy.
+  // Mounted on the platform router so it's available before any auth-gated
+  // routes need it, and so it survives the validateTenantContext skip list.
+  app.use(CSP_REPORT_URI, cspReportRouter);
+
+  // Admin security-health endpoint. Lives under /api/admin so the
+  // global /api auth gate runs first (auth + admin role enforced
+  // by the router itself). Returns the security self-test report
+  // on demand for ops dashboards and SOC tooling.
+  app.use('/api/admin', adminSecurityRouter);
+
+  // /healthz and /readyz are NOT registered here.
+  //
+  // They are mounted by mountFastPathHealthEndpoints (server/startup/
+  // inline-endpoints.ts) at server/index.ts:111 — module level, before
+  // startServer() and therefore before this function runs. Express keeps the
+  // first handler registered for a method+path, so the definitions that used to
+  // live here were permanently shadowed dead code.
+  //
+  // That mattered more than dead code usually does. The shadowed /readyz only
+  // ran `select 1` and returned `{ ready: true }` — no schema verification at
+  // all. Any future change to boot ordering would have silently swapped the
+  // real, schema-aware, fail-closed probe for one that reports healthy against
+  // a completely unmigrated database, with no test or type error to notice.
+  // Removed rather than left in place: a second definition of a safety probe is
+  // a trap, not a fallback.
 
   app.get('/api/health', async (_req: Request, res: Response) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
@@ -91,15 +111,12 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     }
   });
 
-  app.get('/api/time', (_req: Request, res: Response) => {
-    const now = new Date();
-    res.json({ iso: now.toISOString(), epoch: now.getTime(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
-  });
-
-  app.get('/api/diag', (_req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.send(`<!DOCTYPE html><html><head><title>Diag</title></head><body style="font-family:system-ui;padding:40px;background:#f0fdf4"><h1 style="color:#16a34a">✅ Server is alive</h1><p>If you see this, the Simple Browser can render HTML from this server.</p><p>Timestamp: ${new Date().toISOString()}</p><p><a href="/">← Go to main app</a></p></body></html>`);
-  });
+  // NOTE: /api/time and /api/diag intentionally MOVED below the global auth
+  // gate (see further down). Everything registered ABOVE the gate bypasses
+  // auth entirely, so this pre-gate surface MUST stay minimal and limited to
+  // health/readiness probes that expose zero sensitive data. Do not add new
+  // pre-gate /api/* routes here; register them after the gate (and allowlist
+  // them only if they must be public).
 
   try {
     const authModule = await import('../routes/auth');
@@ -127,6 +144,18 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
   app.post('/api/logout', (_req, res) => res.redirect(307, '/api/auth/logout'));
   app.post('/api/register', (_req, res) => res.redirect(307, '/api/auth/signup'));
 
+  // First-run setup for private / single-tenant installs (self-closing once a
+  // user exists — see routes/setup.ts). Open prefix added to the auth gate below.
+  try {
+    const setupModule = await import('../routes/setup');
+    const setupRouter = setupModule.default;
+    if (setupRouter && (typeof setupRouter === 'function' || (setupRouter as any).handle)) {
+      app.use('/api/setup', setupRouter);
+    }
+  } catch (error) {
+    console.error('❌ Failed to mount setup routes:', error);
+  }
+
   try {
     const authEnterpriseModule = await import('../routes/authEnterprise');
     const authEnterpriseRouter = authEnterpriseModule.default;
@@ -147,12 +176,71 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     console.warn('⚠️ SSO helper routes not mounted - continuing without SSO helpers');
   }
 
+  // SCIM 2.0 provisioning — mounted OUTSIDE /api (it uses its own bearer-token
+  // auth, not session auth). Inert until SCIM_BEARER_TOKEN/SCIM_ORG_ID are set.
+  try {
+    const scimModule = await import('../routes/scim');
+    const scimRouter = scimModule.default;
+    if (scimRouter && (typeof scimRouter === 'function' || (scimRouter as any).handle)) {
+      app.use('/scim/v2', scimRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM routes not mounted - continuing without SCIM provisioning');
+  }
+
+  // Admin API for SCIM tenant tokens (super-admin only; session-authed under /api).
+  try {
+    const scimAdminModule = await import('../routes/admin/scim-tenants');
+    const scimAdminRouter = scimAdminModule.default;
+    if (scimAdminRouter && (typeof scimAdminRouter === 'function' || (scimAdminRouter as any).handle)) {
+      app.use('/api/admin/scim-tenants', scimAdminRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM tenant admin routes not mounted');
+  }
+
+  // SIEM audit feed (admin; org-scoped). Incremental, cursor-paginated NDJSON
+  // pull of this tenant's Part 11 audit trail for SOC/SIEM ingestion.
+  try {
+    const auditSiemModule = await import('../routes/admin/audit-siem');
+    const auditSiemRouter = auditSiemModule.default;
+    if (auditSiemRouter && (typeof auditSiemRouter === 'function' || (auditSiemRouter as any).handle)) {
+      app.use('/api/admin/audit', auditSiemRouter);
+    }
+  } catch {
+    console.warn('⚠️ SIEM audit feed routes not mounted');
+  }
+
+  // Admin API for the SCIM source-IP allowlist (super-admin; session-authed).
+  try {
+    const scimIpModule = await import('../routes/admin/scim-ip-allowlist');
+    const scimIpRouter = scimIpModule.default;
+    if (scimIpRouter && (typeof scimIpRouter === 'function' || (scimIpRouter as any).handle)) {
+      app.use('/api/admin/scim-ip-allowlist', scimIpRouter);
+    }
+  } catch {
+    console.warn('⚠️ SCIM IP allowlist admin routes not mounted');
+  }
+
+  // RFC 9116 vulnerability disclosure — /.well-known/security.txt (public).
+  try {
+    const wellKnownModule = await import('../routes/well-known');
+    const wellKnownRouter = wellKnownModule.default;
+    if (wellKnownRouter && (typeof wellKnownRouter === 'function' || (wellKnownRouter as any).handle)) {
+      app.use('/.well-known', wellKnownRouter);
+    }
+  } catch {
+    console.warn('⚠️ .well-known routes not mounted');
+  }
+
   // Global /api auth gate — routes not in the allowlist require session auth.
   // Routes that use their own auth (API keys, webhook signatures, etc.) MUST be listed here.
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     const openPrefixes = [
       // Auth & session management
       '/api/auth', '/api/login', '/api/logout', '/api/register',
+      // First-run install setup — self-closing once any user exists.
+      '/api/setup',
       // Health & observability
       '/api/health', '/api/health/full', '/api/metrics',
       '/api/cortex/health', '/api/claude/health', '/api/ai-gateway/health',
@@ -165,11 +253,35 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
       '/api/billing/webhooks',
       // Firecrawl webhooks — signature verification (also mounted before body parser)
       '/api/firecrawl-webhooks',
+      // CSP violation reports — sent by browsers from any origin (the
+      // reporting endpoint must accept cross-origin POSTs by spec).
+      // No session auth; rate-limited at the route level.
+      '/api/csp-report',
+      // DTC pricing — public marketing page reads this. No tenant data.
+      '/api/billing/dtc-pricing',
+      // Diagnostics — server-authoritative timestamp + a static "is the
+      // server alive" HTML page. No tenant/user data. Public by design so
+      // the in-editor Simple Browser can probe connectivity.
+      '/api/time', '/api/diag',
     ];
     const fullPath = req.baseUrl + req.path;
     const isOpen = openPrefixes.some(p => fullPath === p || fullPath.startsWith(p + '/'));
     if (isOpen) return next();
     return authMiddleware(req, res, next);
+  });
+
+  // Diagnostics — registered AFTER the gate so they pass through the same
+  // middleware chain as every other /api route; they remain reachable only
+  // because they're explicitly allowlisted above. Both expose nothing beyond
+  // a timestamp and a static liveness page.
+  app.get('/api/time', (_req: Request, res: Response) => {
+    const now = new Date();
+    res.json({ iso: now.toISOString(), epoch: now.getTime(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+  });
+
+  app.get('/api/diag', (_req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!DOCTYPE html><html><head><title>Diag</title></head><body style="font-family:system-ui;padding:40px;background:#f0fdf4"><h1 style="color:#16a34a">✅ Server is alive</h1><p>If you see this, the Simple Browser can render HTML from this server.</p><p>Timestamp: ${new Date().toISOString()}</p><p><a href="/">← Go to main app</a></p></body></html>`);
   });
 
   console.log('✅ Platform health/auth routes mounted');

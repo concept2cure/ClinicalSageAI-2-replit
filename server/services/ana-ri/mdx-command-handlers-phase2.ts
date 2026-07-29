@@ -204,7 +204,7 @@ export async function postMarketDocumentApprove(
         action,
         message: `Approve refused: ${code}.`,
         error: code === 'NOT_FOUND' ? 'NOT_FOUND' : 'GATE_BLOCKED',
-        data: result as Record<string, unknown>,
+        data: result as unknown as Record<string, unknown>,
       };
     }
 
@@ -223,7 +223,7 @@ export async function postMarketDocumentApprove(
     return {
       success: true,
       action,
-      data: result as Record<string, unknown>,
+      data: result as unknown as Record<string, unknown>,
       message: `Approved post-market document ${documentId}.`,
     };
   } catch (err) {
@@ -296,7 +296,8 @@ export async function evidenceSufficiencyAssess(
     return {
       success: true,
       action,
-      data: result as Record<string, unknown>,
+      // Serialization boundary: a typed SufficiencyResult is a plain JSON object.
+      data: result as unknown as Record<string, unknown>,
       message: `Assessed evidence sufficiency: verdict=${(result as any)?.verdict}.`,
     };
   } catch (err) {
@@ -356,7 +357,8 @@ export async function reviewerSimulationRun(
     return {
       success: true,
       action,
-      data: result as Record<string, unknown>,
+      // Serialization boundary: a typed SimulatorResult is a plain JSON object.
+      data: result as unknown as Record<string, unknown>,
       message: `Ran reviewer simulation on program ${programId}.`,
     };
   } catch (err) {
@@ -456,7 +458,8 @@ export async function postMarketDocumentValidate(
     return {
       success: true,
       action,
-      data: result as Record<string, unknown>,
+      // Serialization boundary: a typed PostMarketValidationResult is a plain JSON object.
+      data: result as unknown as Record<string, unknown>,
       message: `Validated post-market document ${documentId}: ${
         (result as any)?.valid ? 'pass' : 'findings present'
       }.`,

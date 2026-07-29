@@ -26,6 +26,16 @@
       "contact": "server/routes/reports*.ts"
     },
     {
+      "prefix": "/api/device-cockpit",
+      "owner": "Device & Diagnostics",
+      "contact": "server/routes/device-cockpit.ts"
+    },
+    {
+      "prefix": "/api/global-markets",
+      "owner": "Device & Diagnostics",
+      "contact": "server/routes/global-markets.ts"
+    },
+    {
       "prefix": "/api/ind",
       "owner": "Submission Workflows",
       "contact": "server/routes/ind*.ts"

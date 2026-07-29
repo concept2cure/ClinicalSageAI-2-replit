@@ -667,7 +667,7 @@ export async function esgTransmit(
     return {
       success: true,
       action,
-      data: response as Record<string, unknown>,
+      data: response as unknown as Record<string, unknown>,
       message: `Transmitted project ${projectId} to FDA ESG.`,
     };
   } catch (err) {

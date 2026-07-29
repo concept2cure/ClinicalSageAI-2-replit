@@ -38,6 +38,7 @@ import { registerAiRoutes } from '../bootstrap/register-ai-routes';
 import { registerAdminRoutes } from '../bootstrap/register-admin-routes';
 import { registerIntegrationRoutes } from '../bootstrap/register-integrations-routes';
 import { registerGovernanceRoutes } from '../bootstrap/register-governance-routes';
+import { registerIndLifecycleRoutes } from '../bootstrap/register-ind-lifecycle-routes';
 import { registerPlatformRoutes } from '../bootstrap/register-platform-routes';
 import { registerRegulatoryRoutes } from '../bootstrap/register-regulatory-routes';
 import { registerDocumentRoutes } from '../bootstrap/register-document-routes';
@@ -59,6 +60,7 @@ export interface RouteRegistrationContext {
   pool: Pool;
   experimentalRoutesEnabled: boolean;
   demoRoutesEnabled: boolean;
+  testRoutesEnabled: boolean;
 }
 
 /**
@@ -80,7 +82,7 @@ export async function registerPreStartRoutes(
   ctx: RouteRegistrationContext,
   aiCircuitBreaker: CircuitBreakerMiddleware
 ): Promise<void> {
-  const { app, pool, experimentalRoutesEnabled, demoRoutesEnabled } = ctx;
+  const { app, pool, experimentalRoutesEnabled, demoRoutesEnabled, testRoutesEnabled } = ctx;
   const inlineCtx = { app, pool };
 
   // Platform: /api/auth, /api/v1/auth, /api/users, /api/user, legacy auth
@@ -92,7 +94,7 @@ export async function registerPreStartRoutes(
 
   // Core bootstrap family (templates, AI, CMC, AI assistance, intelligent
   // docs, PM settings, control plane) + Integrations family.
-  registerCoreRoutes({ app, pool, aiCircuitBreaker });
+  registerCoreRoutes({ app, pool, aiCircuitBreaker, testRoutesEnabled });
   registerIntegrationRoutes(app);
 
   // Slot 2 — AnA Cortex / Nano Banana / Predictive / Foresight alias / Biotech RAG.
@@ -129,6 +131,10 @@ export async function registerPreStartRoutes(
   // Governance + intelligence bundle.
   await registerGovernanceRoutes(app);
 
+  // IND lifecycle bundle — FDA forms, sponsor/agent/investigator master data,
+  // and RA lifecycle workflows (safety reports / annual report / amendments).
+  await registerIndLifecycleRoutes(app);
+
   // Slot 6 — Regulatory submissions / Submission ops / Correspondence /
   // 510k + PMA workflows / beta-safe / FDA forms / field sync / content
   // assembly / misc inline.
@@ -141,7 +147,7 @@ export async function registerPreStartRoutes(
  * Proof System being ready.
  */
 export async function registerPostStartRoutes(ctx: RouteRegistrationContext): Promise<void> {
-  const { app, pool } = ctx;
+  const { app, pool, testRoutesEnabled } = ctx;
 
   await registerTenantRoutes({ app, pool });
   await registerProjectRoutes({ app, pool });
@@ -151,5 +157,6 @@ export async function registerPostStartRoutes(ctx: RouteRegistrationContext): Pr
     pool,
     isStaticDataEnabled,
     mountStaticBusinessDataGuard: buildStaticBusinessDataGuard(app),
+    testRoutesEnabled,
   });
 }

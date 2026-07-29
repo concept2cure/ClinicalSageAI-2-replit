@@ -11,7 +11,14 @@
  * - Deterministic mode for testing
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
+import {
+  gatewayRetryAttempts,
+  overloadRetryAttempts,
+  isHardClientError,
+  isOverloadStatus,
+  OVERLOAD_BASE_DELAY_MS,
+} from './retry-policy.js';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
@@ -31,15 +38,45 @@ import type {
   ContentBlock,
 } from './types';
 import { GatewayAuditLogger } from './audit';
-import { GatewayPolicyEngine } from './policy';
+import {
+  GatewayPolicyEngine,
+  type ContentPolicyAction,
+  type PolicyFinding,
+} from './policy';
+import { CLOUD_MODELS } from './providers/cloud-models';
+import {
+  parseOpenAIStreamDelta,
+  extractOpenAIReasoning,
+} from './openai-stream.js';
+import {
+  createBedrockClient,
+  createVertexClient,
+  createAzureClient,
+  createLocalClient,
+} from './providers/clients';
+import {
+  resolvePlacement,
+  isPlacementCompliant,
+} from './providers/placement';
+import {
+  getOrgPlacementResolver,
+  mergeOrgPolicyDefaults,
+} from './providers/org-placement';
+import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { getContentClassifier } from '../ai-governance/classification/index.js';
+import {
+  extractRequestText,
+  decideSensitiveDataPlacement,
+  getPiiEnforcement,
+} from './pii-screen.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Default Model Registry
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_MODELS: ModelConfig[] = [
+export const DEFAULT_MODELS: ModelConfig[] = [
   {
     id: 'gpt-4o',
     provider: 'openai',
@@ -75,9 +112,12 @@ const DEFAULT_MODELS: ModelConfig[] = [
   {
     // Internal id kept stable for alias continuity; the `model` field is the
     // actual ID sent to Anthropic and tracks the current flagship release.
+    // Bumping this string is the sanctioned way to move AnA to a newer flagship
+    // — the reasoning-only surface (adaptive thinking, no sampling params) is
+    // auto-detected from the version (see isReasoningOnlyModel).
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-7',
+    model: 'claude-opus-4-8',
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -95,16 +135,17 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Opus 4 legacy — dated snapshot from May 2025. Kept enabled as an
-    // intra-provider fallback if 4.7 is not yet GA for the tenant's tier
-    // or is temporarily unavailable (rate limit, overloaded). Same
-    // capabilities as 4.7, marginally lower quality score so the
-    // fallback chain prefers 4.7 when both are reachable.
+    // Opus 4.7 — the previous flagship. Kept enabled as the top intra-provider
+    // fallback rung: if 4.8 is not yet GA for the tenant's tier or is
+    // temporarily unavailable (rate limit, overloaded), the chain drops to 4.7
+    // before Sonnet. It shares the reasoning-only surface (adaptive thinking),
+    // so a fallback preserves the same reasoning behavior. Marginally lower
+    // quality score than 4.8 so the chain prefers 4.8 when both are reachable.
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
-    model: 'claude-opus-4-20250514',
+    model: 'claude-opus-4-7',
     contextWindow: 200000,
-    qualityScore: 95,
+    qualityScore: 98,
     costPer1kInput: 0.015,
     costPer1kOutput: 0.075,
     capabilities: [
@@ -207,6 +248,10 @@ const DEFAULT_MODELS: ModelConfig[] = [
     capabilities: ['chat', 'general'],
     enabled: true,
   },
+  // Private-cloud (Bedrock/Vertex/Azure) + self-hosted (local) substrates.
+  // Always present in the static registry so the approved-models drift gate can
+  // pin them; enabled at runtime only when their provider env is configured.
+  ...CLOUD_MODELS,
 ];
 
 // Task → preferred provider order
@@ -280,6 +325,61 @@ const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// In-flight concurrency limiter (bounded outbound AI calls)
+//
+// The gateway has retry / circuit-breaker / timeout, but nothing previously
+// capped the number of simultaneously in-flight outbound provider calls. A
+// burst of requests could pile up unbounded concurrent calls — driving cost,
+// latency, and provider rate-limit cascades. This semaphore bounds the number
+// of concurrent outbound calls; excess callers queue (FIFO) until a slot frees
+// up, so every request still completes, just not all at once.
+//
+// Tunable via AI_GATEWAY_MAX_CONCURRENCY (default 20). <= 0 / unset → default.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class Semaphore {
+  private permits: number;
+  private readonly queue: Array<() => void> = [];
+
+  constructor(maxConcurrent: number) {
+    this.permits = Math.max(1, maxConcurrent);
+  }
+
+  private acquire(): Promise<void> {
+    if (this.permits > 0) {
+      this.permits--;
+      return Promise.resolve();
+    }
+    return new Promise<void>(resolve => this.queue.push(resolve));
+  }
+
+  private release(): void {
+    const next = this.queue.shift();
+    if (next) {
+      // Hand the permit directly to the next waiter (keeps the count balanced).
+      next();
+    } else {
+      this.permits++;
+    }
+  }
+
+  /** Run `fn` while holding a permit; the permit is always released, even on throw. */
+  async run<T>(fn: () => Promise<T>): Promise<T> {
+    await this.acquire();
+    try {
+      return await fn();
+    } finally {
+      this.release();
+    }
+  }
+}
+
+function resolveMaxConcurrency(): number {
+  const raw = Number.parseInt(process.env.AI_GATEWAY_MAX_CONCURRENCY ?? '', 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 20;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Gateway Class
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -289,11 +389,18 @@ export class AIGateway {
   private providerHealth: Map<ProviderName, ProviderHealth>;
   private auditLogger: GatewayAuditLogger;
   private policyEngine: GatewayPolicyEngine;
+  // Bounds the number of concurrent in-flight outbound provider calls.
+  private outboundLimiter: Semaphore;
 
   // Provider SDK instances (lazy-initialized)
   private openaiClient: any = null;
   private anthropicClient: any = null;
   private moonshotClient: any = null;
+  // Private-cloud + self-hosted substrate clients.
+  private bedrockClient: any = null;
+  private vertexClient: any = null;
+  private azureClient: any = null;
+  private localClient: any = null;
 
   private roundRobinIndex = 0;
 
@@ -303,6 +410,7 @@ export class AIGateway {
     this.providerHealth = new Map();
     this.auditLogger = new GatewayAuditLogger(this.config.dbPool);
     this.policyEngine = new GatewayPolicyEngine(this.config.policy);
+    this.outboundLimiter = new Semaphore(resolveMaxConcurrency());
 
     this.initProviderHealth();
     this.initProviderClients();
@@ -319,26 +427,31 @@ export class AIGateway {
   private async retryWithBackoff<T>(
     fn: () => Promise<T>,
     maxRetries: number = 1,
-    baseDelayMs: number = 1000
+    baseDelayMs: number = 1000,
+    overload: { maxRetries: number; baseDelayMs: number } = { maxRetries, baseDelayMs }
   ): Promise<T> {
-    let lastError: Error | undefined;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let attempt = 0;
+    for (;;) {
       try {
         return await fn();
       } catch (err: any) {
-        lastError = err;
-        // Don't retry on non-transient errors
         const status = err?.status || err?.statusCode;
-        if (status === 400 || status === 401 || status === 403) throw err;
+        // Hard client errors (400/401/403/404/422, …) never succeed on retry.
+        if (isHardClientError(status)) throw err;
 
-        if (attempt < maxRetries) {
-          const delay = baseDelayMs * Math.pow(2, attempt);
-          const jitter = delay * 0.3 * Math.random(); // 0-30% jitter
-          await new Promise(r => setTimeout(r, delay + jitter));
-        }
+        // Overload (429/503/529 — incl. Anthropic "Overloaded") self-heals, so
+        // it earns a larger budget and longer backoff than a generic transient.
+        const overloaded = isOverloadStatus(status);
+        const budget = overloaded ? overload.maxRetries : maxRetries;
+        const base = overloaded ? overload.baseDelayMs : baseDelayMs;
+
+        if (attempt >= budget) throw err;
+        const delay = base * Math.pow(2, attempt);
+        const jitter = delay * 0.3 * Math.random(); // 0-30% jitter
+        await new Promise(r => setTimeout(r, delay + jitter));
+        attempt++;
       }
     }
-    throw lastError;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -354,11 +467,53 @@ export class AIGateway {
     const startTime = Date.now();
     const strategy = request.strategy || this.config.defaultStrategy;
 
-    // Policy check
+    // Apply the org's default placement policy (residency / zero-retention) when
+    // the request doesn't specify it. Explicit request values always win; if no
+    // policy or the lookup fails, behavior is unchanged (explicit-only).
+    request = await this.applyOrgPlacementDefaults(request);
+
+    // Policy check (sync: token budget, prompt-injection scan, blocked
+    // patterns, rate limits)
     const policyResult = this.policyEngine.evaluate(request);
     if (!policyResult.allowed) {
+      // Content-security refusals (injection blocks) are compliance events and
+      // leave an audit trace. Budget/rate denials carry no block findings and
+      // keep their existing unaudited behavior (no rate-limit audit spam).
+      await this.logContentPolicyBlock(
+        request, strategy, requestId, startTime, policyResult.reason, policyResult.findings
+      );
       throw new GatewayPolicyError(policyResult.reason || 'Request blocked by policy');
     }
+
+    // PII/PHI content pass (async — governed ai-governance classifier).
+    // Blocks fail closed; 'redact' swaps a scrubbed COPY of the messages into
+    // the dispatch request, leaving the caller's original request untouched.
+    const piiVerdict = await this.policyEngine.evaluatePiiPolicy(request);
+    if (!piiVerdict.allowed) {
+      await this.logContentPolicyBlock(
+        request, strategy, requestId, startTime, piiVerdict.reason, piiVerdict.findings
+      );
+      throw new GatewayPolicyError(piiVerdict.reason || 'Request blocked by PII policy');
+    }
+    if (piiVerdict.action === 'redact' && piiVerdict.messages) {
+      request = { ...request, messages: piiVerdict.messages };
+    }
+
+    // Non-blocking findings (injection flags, applied redactions, coverage
+    // gaps) ride into the audit entry alongside the prompt hash.
+    const contentFindings: PolicyFinding[] = [
+      ...(policyResult.findings ?? []),
+      ...piiVerdict.findings,
+    ];
+    const contentPolicy =
+      contentFindings.length > 0
+        ? {
+            action: (piiVerdict.action === 'allow'
+              ? 'flag'
+              : piiVerdict.action) as ContentPolicyAction,
+            findings: contentFindings,
+          }
+        : undefined;
 
     // Deterministic mode
     if (this.config.deterministicMode) {
@@ -368,10 +523,59 @@ export class AIGateway {
     // Select model — fall back to deterministic if no providers available
     const selectedModel = this.selectModel(request, strategy);
     if (!selectedModel) {
+      // Fail closed in production: serving demo-mode ("[KNOWN]"/placeholder)
+      // regulatory text from a keyless prod deploy would silently present
+      // fabricated content as a real AI response. Demo fallback is for dev only;
+      // an explicit deterministicMode (handled above) remains a deliberate opt-in.
+      // See FORENSIC_CODE_AUDIT_2026-05-29.md (LOW: keyless-prod demo mode).
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          '[AI Gateway] No AI provider is configured in production; refusing to serve demo-mode content. ' +
+            'Set ANTHROPIC_API_KEY / OPENAI_API_KEY, or enable deterministicMode explicitly.'
+        );
+      }
       log.warn(
         '[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.'
       );
       return this.buildDeterministicResponse(request, requestId, startTime);
+    }
+
+    // PHI/PII placement screen. When piiDetection is enabled, classify the
+    // request content and (under 'block' enforcement) refuse to send protected
+    // data to a provider without a zero-data-retention guarantee. Always
+    // records a structured signal when detected; never logs raw content.
+    if (this.config.policy.piiDetection) {
+      try {
+        const text = extractRequestText(request);
+        if (text.trim()) {
+          const classification = await getContentClassifier().classify(text);
+          if (classification.phi || classification.pii) {
+            const placement = resolvePlacement(selectedModel.provider);
+            const decision = decideSensitiveDataPlacement({
+              classification,
+              zeroDataRetention: placement.zeroDataRetention,
+              enforcement: getPiiEnforcement(),
+              provider: selectedModel.provider,
+            });
+            log.warn('[ai-gateway] sensitive-data screen', {
+              classes: classification.classes,
+              provider: selectedModel.provider,
+              zeroDataRetention: placement.zeroDataRetention,
+              blocked: decision.block,
+            });
+            if (decision.block) {
+              throw new GatewayPolicyError(decision.reason || 'Blocked by PHI/PII placement policy');
+            }
+          }
+        }
+      } catch (err) {
+        // A real block must propagate; a classifier failure must not take the
+        // request down (fail-open on the classifier itself, closed on findings).
+        if (err instanceof GatewayPolicyError) throw err;
+        log.warn('[ai-gateway] sensitive-data screen skipped (classifier error)', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
 
     // Execute with fallback. Track tried MODELS (not just providers) so
@@ -383,13 +587,19 @@ export class AIGateway {
     let lastError: Error | null = null;
     const triedModels: string[] = [];
 
-    // Try primary model (with per-request retry: 2 attempts, 1s base delay)
+    // Try primary model (per-request retry: 2 attempts, 1s base delay for
+    // non-streaming). Streaming is not retried — replaying would re-emit tokens
+    // already delivered to request.onStream.
+    const isStreaming = Boolean(request.stream && request.onStream);
+    const primaryRetries = gatewayRetryAttempts(isStreaming);
+    const overloadPolicy = { maxRetries: overloadRetryAttempts(isStreaming), baseDelayMs: OVERLOAD_BASE_DELAY_MS };
     try {
       const response = await this.retryWithBackoff(
-        () => this.executeProvider(selectedModel, request, requestId, startTime), 1, 1000
+        () => this.executeProvider(selectedModel, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
       );
       this.recordSuccess(selectedModel.provider, response.latencyMs);
-      await this.logAudit(request, response, strategy, true);
+      this.recordTenantUsage(request, response, true);
+      await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
       return response;
     } catch (error: any) {
       lastError = error;
@@ -402,7 +612,7 @@ export class AIGateway {
 
     // Try fallback models — same provider first (quality-desc), then cross-provider.
     const fallbacks = this.getFallbackModels(
-      request.taskType,
+      request,
       triedModels,
       selectedModel.provider,
     );
@@ -410,10 +620,11 @@ export class AIGateway {
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
         const response = await this.retryWithBackoff(
-          () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000
+          () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000, overloadPolicy
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
-        await this.logAudit(request, response, strategy, true);
+        this.recordTenantUsage(request, response, true);
+        await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
         return response;
       } catch (error: any) {
         lastError = error;
@@ -437,7 +648,10 @@ export class AIGateway {
       deterministic: false,
       finishReason: 'error',
     };
-    await this.logAudit(request, errorResponse, strategy, false, lastError?.message);
+    this.recordTenantUsage(request, errorResponse, false);
+    await this.logAudit(
+      request, errorResponse, strategy, false, lastError?.message, triedModels, contentPolicy
+    );
 
     throw new GatewayAllProvidersFailedError(
       `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}`
@@ -515,6 +729,16 @@ export class AIGateway {
   }
 
   /**
+   * Get the model registry (built at construction, gated on API-key presence).
+   * Read-only accessor for surfaces that need to project the available models —
+   * e.g. the Composer's model picker. Returns the live array reference; callers
+   * must not mutate it (project/filter into a new array instead).
+   */
+  getModels(): ModelConfig[] {
+    return this.models;
+  }
+
+  /**
    * Check if gateway is in deterministic mode.
    */
   isDeterministic(): boolean {
@@ -539,10 +763,33 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<GatewayResponse> {
+    // Bound concurrent in-flight outbound calls. This is the single chokepoint
+    // for every provider invocation (primary + fallback paths), so wrapping it
+    // here caps outbound concurrency without touching the retry / circuit-
+    // breaker / timeout logic, which all run inside the provider executors.
+    return this.outboundLimiter.run(() =>
+      this.dispatchProvider(modelConfig, request, requestId, startTime)
+    );
+  }
+
+  private async dispatchProvider(
+    modelConfig: ModelConfig,
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number
+  ): Promise<GatewayResponse> {
     switch (modelConfig.provider) {
       case 'openai':
+      case 'azure':
+      case 'local':
+        // OpenAI-compatible substrates share one execution path; the client is
+        // resolved per provider inside executeOpenAI.
         return this.executeOpenAI(modelConfig, request, requestId, startTime);
       case 'anthropic':
+      case 'bedrock':
+      case 'vertex':
+        // Anthropic-family substrates (first-party + Bedrock + Vertex) share the
+        // proven Claude path; the client is resolved per provider.
         return this.executeAnthropic(modelConfig, request, requestId, startTime);
       case 'moonshot':
         return this.executeMoonshot(modelConfig, request, requestId, startTime);
@@ -551,14 +798,58 @@ export class AIGateway {
     }
   }
 
+  /**
+   * Resolve the Anthropic-family SDK client for a provider. First-party,
+   * Bedrock, and Vertex all expose the same messages.create() surface, so the
+   * gateway can run them through the single executeAnthropic path.
+   */
+  private anthropicFamilyClient(provider: ProviderName): any {
+    switch (provider) {
+      case 'bedrock':
+        return this.bedrockClient;
+      case 'vertex':
+        return this.vertexClient;
+      default:
+        return this.anthropicClient;
+    }
+  }
+
+  /** Resolve the OpenAI-compatible SDK client for a provider. */
+  private openaiFamilyClient(provider: ProviderName): any {
+    switch (provider) {
+      case 'azure':
+        return this.azureClient;
+      case 'local':
+        return this.localClient;
+      default:
+        return this.openaiClient;
+    }
+  }
+
   private async executeOpenAI(
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<GatewayResponse> {
-    if (!this.openaiClient) {
-      throw new Error('OpenAI client not initialized (missing OPENAI_API_KEY)');
+  ): Promise<AnaGatewayResponse> {
+    // Resolve the OpenAI-compatible client for this provider (openai / azure / local).
+    const client = this.openaiFamilyClient(modelConfig.provider);
+    if (!client) {
+      throw new Error(
+        `${modelConfig.provider} client not initialized (missing credentials/endpoint for ${modelConfig.provider})`
+      );
+    }
+
+    // Streaming requested — deliver tokens (and reasoning, where the provider
+    // emits it) incrementally, at parity with the Anthropic path.
+    if (request.stream && request.onStream) {
+      return this.executeOpenAICompatibleStream(
+        client,
+        modelConfig,
+        request,
+        requestId,
+        startTime
+      );
     }
 
     const params: any = {
@@ -568,8 +859,16 @@ export class AIGateway {
       temperature: request.temperature ?? 0.7,
     };
 
+    // Pass the sampling seed through for reproducible output where supported.
+    if (request.seed !== undefined) {
+      params.seed = request.seed;
+    }
+
     if (request.jsonMode) {
-      if (request.jsonSchema) {
+      // Strict json_schema is a frontier/Azure feature; self-hosted
+      // OpenAI-compatible servers generally support only json_object.
+      const supportsStrictSchema = modelConfig.provider !== 'local';
+      if (request.jsonSchema && supportsStrictSchema) {
         params.response_format = {
           type: 'json_schema',
           json_schema: {
@@ -584,21 +883,23 @@ export class AIGateway {
     }
 
     const completion = await Promise.race([
-      this.openaiClient.chat.completions.create(params),
+      client.chat.completions.create(params),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('OpenAI API call timed out after 120s')), 120_000)
+        setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
     ]).catch((error: Error) => {
       if (error.message.includes('timed out')) {
-        this.recordFailure('openai', error);
+        this.recordFailure(modelConfig.provider, error);
       }
       throw error;
     });
     const choice = completion.choices?.[0];
+    const reasoning = extractOpenAIReasoning(choice?.message);
 
     return {
       content: choice?.message?.content || '',
-      provider: 'openai',
+      thinking: reasoning || undefined,
+      provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
         inputTokens: completion.usage?.prompt_tokens || 0,
@@ -615,7 +916,58 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: choice?.finish_reason || 'unknown',
-    };
+    } as AnaGatewayResponse;
+  }
+
+  /**
+   * Opus 4.7 and later removed the sampling parameters (temperature/top_p/top_k)
+   * and the manual extended-thinking shape (thinking.type "enabled" with
+   * budget_tokens) — sending any of them now returns a 400. Matches
+   * claude-opus-4-7 / claude-opus-4-8 and provider-prefixed variants
+   * (anthropic.claude-opus-4-7), but NOT the dated 4.0 snapshot
+   * claude-opus-4-20250514, which still accepts the legacy surface.
+   */
+  private isReasoningOnlyModel(model: string): boolean {
+    const m = /claude-opus-4-(\d{1,2})(?!\d)/.exec(model);
+    return m ? Number(m[1]) >= 7 : false;
+  }
+
+  /**
+   * Apply Anthropic sampling + thinking params in a model-aware way.
+   *
+   * Reasoning-only models (Opus 4.7/4.8 family) reject sampling params and
+   * manual thinking — they use adaptive thinking with no sampling controls.
+   * Summarized display keeps reasoning visible for the streaming path. Older
+   * Claude models (Sonnet 4.6, Haiku 4.5, the dated 4.0 snapshots) keep the
+   * legacy temperature + budget_tokens surface.
+   */
+  private applyAnthropicSamplingParams(
+    params: any,
+    modelConfig: ModelConfig,
+    request: GatewayRequest
+  ): void {
+    if (this.isReasoningOnlyModel(modelConfig.model)) {
+      if (request.thinking?.enabled) {
+        // Adaptive thinking self-budgets — the resolver's budgetTokens is a hint
+        // that only the legacy surface below consumes. Summarized display keeps
+        // the reasoning stream visible to the client on the SSE path.
+        params.thinking = { type: 'adaptive', display: 'summarized' };
+      }
+      return;
+    }
+    if (request.thinking?.enabled) {
+      // Legacy manual extended thinking requires temperature=1 and no top_p/top_k.
+      // Anthropic also requires budget_tokens < max_tokens (thinking shares the
+      // output budget) — clamp so a large effort-scaled budget on a small
+      // max_tokens turn can never 400. Leave >=1024 headroom for the answer.
+      const maxTok = typeof params.max_tokens === 'number' ? params.max_tokens : 4096;
+      const requested = request.thinking.budgetTokens || 10000;
+      const budget = Math.max(1024, Math.min(requested, maxTok - 1024));
+      params.thinking = { type: 'enabled', budget_tokens: budget };
+      params.temperature = 1;
+    } else {
+      params.temperature = request.temperature ?? 0.7;
+    }
   }
 
   private async executeAnthropic(
@@ -624,8 +976,12 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<AnaGatewayResponse> {
-    if (!this.anthropicClient) {
-      throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
+    // Resolve the Anthropic-family client (first-party / Bedrock / Vertex).
+    const client = this.anthropicFamilyClient(modelConfig.provider);
+    if (!client) {
+      throw new Error(
+        `${modelConfig.provider} client not initialized (missing credentials for ${modelConfig.provider})`
+      );
     }
 
     // If streaming requested, delegate to streaming method
@@ -649,6 +1005,15 @@ export class AIGateway {
         const blocks = m.contentBlocks.map(block => {
           if (block.type === 'image') {
             return { type: 'image' as const, source: block.source } as any;
+          }
+          if (block.type === 'document') {
+            return {
+              type: 'document' as const,
+              source: block.source,
+              ...(block.title ? { title: block.title } : {}),
+              ...(block.context ? { context: block.context } : {}),
+              ...(block.citations ? { citations: block.citations } : {}),
+            } as any;
           }
           return { type: 'text' as const, text: block.text } as any;
         });
@@ -709,17 +1074,9 @@ export class AIGateway {
       }
     }
 
-    // Extended thinking — requires temperature unset or 1
-    if (request.thinking?.enabled) {
-      params.thinking = {
-        type: 'enabled',
-        budget_tokens: request.thinking.budgetTokens || 10000,
-      };
-      // Extended thinking requires temperature=1 and no top_p/top_k
-      params.temperature = 1;
-    } else {
-      params.temperature = request.temperature ?? 0.7;
-    }
+    // Sampling + extended thinking (model-aware: Opus 4.7+ rejects temperature
+    // and manual budget_tokens thinking; older models keep the legacy surface).
+    this.applyAnthropicSamplingParams(params, modelConfig, request);
 
     // Tool use
     if (request.tools && request.tools.length > 0) {
@@ -732,14 +1089,21 @@ export class AIGateway {
       }
     }
 
+    const usesFilesApiDoc = (request.messages || []).some(m =>
+      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
+    );
+    const reqOptions = usesFilesApiDoc
+      ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } }
+      : undefined;
+
     const response = await Promise.race([
-      this.anthropicClient.messages.create(params),
+      client.messages.create(params, reqOptions),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Anthropic API call timed out after 120s')), 120_000)
+        setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
     ]).catch((error: Error) => {
       if (error.message.includes('timed out')) {
-        this.recordFailure('anthropic', error);
+        this.recordFailure(modelConfig.provider, error);
       }
       throw error;
     });
@@ -779,7 +1143,7 @@ export class AIGateway {
       content,
       thinking: thinking || undefined,
       toolUses: toolUses.length > 0 ? toolUses : undefined,
-      provider: 'anthropic',
+      provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
         inputTokens,
@@ -806,8 +1170,11 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<AnaGatewayResponse> {
-    if (!this.anthropicClient) {
-      throw new Error('Anthropic client not initialized (missing ANTHROPIC_API_KEY)');
+    const client = this.anthropicFamilyClient(modelConfig.provider);
+    if (!client) {
+      throw new Error(
+        `${modelConfig.provider} client not initialized (missing credentials for ${modelConfig.provider})`
+      );
     }
 
     const onStream = request.onStream!;
@@ -820,11 +1187,21 @@ export class AIGateway {
     const messages = nonSystemMessages.map(m => {
       const shouldCache = streamCacheEnabled && m.cacheControl === true;
       if (m.contentBlocks && m.contentBlocks.length > 0) {
-        const blocks: any[] = m.contentBlocks.map(block =>
-          block.type === 'image'
-            ? { type: 'image' as const, source: block.source }
-            : { type: 'text' as const, text: block.text }
-        );
+        const blocks: any[] = m.contentBlocks.map(block => {
+          if (block.type === 'image') {
+            return { type: 'image' as const, source: block.source };
+          }
+          if (block.type === 'document') {
+            return {
+              type: 'document' as const,
+              source: block.source,
+              ...(block.title ? { title: block.title } : {}),
+              ...(block.context ? { context: block.context } : {}),
+              ...(block.citations ? { citations: block.citations } : {}),
+            };
+          }
+          return { type: 'text' as const, text: block.text };
+        });
         if (shouldCache && blocks.length > 0) {
           blocks[blocks.length - 1].cache_control = { type: streamCacheType };
         }
@@ -868,15 +1245,9 @@ export class AIGateway {
       }
     }
 
-    if (request.thinking?.enabled) {
-      params.thinking = {
-        type: 'enabled',
-        budget_tokens: request.thinking.budgetTokens || 10000,
-      };
-      params.temperature = 1;
-    } else {
-      params.temperature = request.temperature ?? 0.7;
-    }
+    // Sampling + extended thinking (model-aware: Opus 4.7+ rejects temperature
+    // and manual budget_tokens thinking; older models keep the legacy surface).
+    this.applyAnthropicSamplingParams(params, modelConfig, request);
 
     if (request.tools && request.tools.length > 0) {
       params.tools = request.tools;
@@ -889,7 +1260,13 @@ export class AIGateway {
     }
 
     // Use the Anthropic SDK streaming API
-    const stream = await this.anthropicClient.messages.create(params);
+    const streamUsesFilesApiDoc = (request.messages || []).some(m =>
+      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
+    );
+    const stream = await client.messages.create(
+      params,
+      streamUsesFilesApiDoc ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } } : undefined
+    );
 
     let content = '';
     let thinking = '';
@@ -985,7 +1362,7 @@ export class AIGateway {
       content,
       thinking: thinking || undefined,
       toolUses: toolUses.length > 0 ? toolUses : undefined,
-      provider: 'anthropic',
+      provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
         inputTokens,
@@ -1008,9 +1385,21 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<GatewayResponse> {
+  ): Promise<AnaGatewayResponse> {
     if (!this.moonshotClient) {
       throw new Error('Moonshot client not initialized (missing KIMI_API_KEY or MOONSHOT_API_KEY)');
+    }
+
+    // Streaming requested — Kimi thinking models emit reasoning_content, so this
+    // surfaces both tokens and reasoning incrementally, at Anthropic parity.
+    if (request.stream && request.onStream) {
+      return this.executeOpenAICompatibleStream(
+        this.moonshotClient,
+        modelConfig,
+        request,
+        requestId,
+        startTime
+      );
     }
 
     const params: any = {
@@ -1019,6 +1408,11 @@ export class AIGateway {
       max_tokens: request.maxTokens || 2000,
       temperature: request.temperature ?? 0.7,
     };
+
+    // Pass the sampling seed through for reproducible output where supported.
+    if (request.seed !== undefined) {
+      params.seed = request.seed;
+    }
 
     if (request.jsonMode) {
       params.response_format = { type: 'json_object' };
@@ -1036,9 +1430,11 @@ export class AIGateway {
       throw error;
     });
     const choice = completion.choices?.[0];
+    const reasoning = extractOpenAIReasoning(choice?.message);
 
     return {
       content: choice?.message?.content || '',
+      thinking: reasoning || undefined,
       provider: 'moonshot',
       model: modelConfig.model,
       usage: {
@@ -1056,7 +1452,127 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: choice?.finish_reason || 'unknown',
+    } as AnaGatewayResponse;
+  }
+
+  /**
+   * Streaming path shared by every OpenAI-compatible provider (openai / azure /
+   * local / moonshot). Delivers text and — where the provider emits it —
+   * reasoning incrementally through request.onStream, at parity with the
+   * Anthropic streaming path: same text/thinking callback contract, the same
+   * 30s per-chunk stall watchdog, and the same return-partial-on-error
+   * resilience. Usage is read from the final include_usage chunk.
+   */
+  private async executeOpenAICompatibleStream(
+    client: any,
+    modelConfig: ModelConfig,
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number
+  ): Promise<AnaGatewayResponse> {
+    const onStream = request.onStream!;
+    const provider = modelConfig.provider;
+
+    const params: any = {
+      model: modelConfig.model,
+      messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+      max_tokens: request.maxTokens || 2000,
+      temperature: request.temperature ?? 0.7,
+      stream: true,
+      // Ask the server to append a final usage-only chunk so cost/telemetry
+      // stay accurate on the streaming path (ignored by servers that lack it).
+      stream_options: { include_usage: true },
     };
+    if (request.seed !== undefined) params.seed = request.seed;
+    if (request.jsonMode) {
+      const supportsStrictSchema = provider !== 'local';
+      params.response_format =
+        request.jsonSchema && supportsStrictSchema
+          ? { type: 'json_schema', json_schema: { name: 'response', strict: true, schema: request.jsonSchema } }
+          : { type: 'json_object' };
+    }
+
+    const stream = await client.chat.completions.create(params);
+
+    let content = '';
+    let thinking = '';
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let totalTokens = 0;
+    let finishReason = 'unknown';
+
+    // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
+    // Anthropic path) so a hung provider can't wedge the turn.
+    let lastChunkTime = Date.now();
+    const chunkTimeoutMs = 30_000;
+    let streamStalled = false;
+    const chunkWatchdog = setInterval(() => {
+      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
+        streamStalled = true;
+        clearInterval(chunkWatchdog);
+        log.warn(
+          `[AI Gateway] ${provider} stream stalled — no chunk for ${chunkTimeoutMs / 1000}s. ` +
+          `Accumulated ${content.length} chars. Aborting stream.`
+        );
+        try {
+          if (stream && typeof (stream as any).controller?.abort === 'function') {
+            (stream as any).controller.abort();
+          }
+        } catch { /* best-effort abort */ }
+      }
+    }, 5_000);
+
+    try {
+      for await (const chunk of stream as AsyncIterable<any>) {
+        lastChunkTime = Date.now();
+        if (streamStalled) break;
+
+        const delta = parseOpenAIStreamDelta(chunk);
+        // Reasoning precedes the answer within a turn — emit it first.
+        if (delta.reasoning) {
+          thinking += delta.reasoning;
+          onStream('', { type: 'thinking', thinkingContent: delta.reasoning });
+        }
+        if (delta.text) {
+          content += delta.text;
+          onStream(delta.text, { type: 'text' });
+        }
+        if (delta.finishReason) finishReason = delta.finishReason;
+        if (delta.usage) {
+          inputTokens = delta.usage.inputTokens;
+          outputTokens = delta.usage.outputTokens;
+          totalTokens = delta.usage.totalTokens;
+        }
+      }
+    } catch (streamErr: any) {
+      log.error(`[AI Gateway] ${provider} stream interrupted:`, streamErr?.message);
+      if (!content) throw streamErr; // nothing captured — surface the failure
+    } finally {
+      clearInterval(chunkWatchdog);
+    }
+
+    if (streamStalled && content) {
+      finishReason = 'chunk_timeout';
+      log.warn(`[AI Gateway] Returning partial ${provider} response (${content.length} chars) after stall`);
+    }
+
+    return {
+      content,
+      thinking: thinking || undefined,
+      provider,
+      model: modelConfig.model,
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens: totalTokens || inputTokens + outputTokens,
+        estimatedCostUsd: this.estimateCost(modelConfig, inputTokens, outputTokens),
+      },
+      latencyMs: Date.now() - startTime,
+      requestId,
+      cached: false,
+      deterministic: false,
+      finishReason,
+    } as AnaGatewayResponse;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1070,7 +1586,8 @@ export class AIGateway {
         m =>
           m.enabled &&
           (!request.provider || m.provider === request.provider) &&
-          (!request.model || m.model === request.model || m.id === request.model)
+          (!request.model || m.model === request.model || m.id === request.model) &&
+          this.meetsPlacementRequirements(m.provider, request)
       );
       if (explicit && this.isProviderHealthy(explicit.provider)) return explicit;
       // Even if unhealthy, honor explicit if it's the only option
@@ -1079,13 +1596,20 @@ export class AIGateway {
 
     const eligible = this.models.filter(
       m =>
-        m.enabled && m.capabilities.includes(request.taskType) && this.isProviderHealthy(m.provider)
+        m.enabled &&
+        m.capabilities.includes(request.taskType) &&
+        this.meetsPlacementRequirements(m.provider, request) &&
+        this.isProviderHealthy(m.provider)
     );
 
     if (eligible.length === 0) {
-      // Relax health check
+      // Relax health check (but never relax placement: residency/ZDR are hard
+      // compliance constraints, not preferences).
       const relaxed = this.models.filter(
-        m => m.enabled && m.capabilities.includes(request.taskType)
+        m =>
+          m.enabled &&
+          m.capabilities.includes(request.taskType) &&
+          this.meetsPlacementRequirements(m.provider, request)
       );
       return relaxed[0] || null;
     }
@@ -1131,10 +1655,10 @@ export class AIGateway {
 
   /**
    * Build the fallback chain, exhausting the primary provider's quality
-   * ladder before crossing to a different provider. This means if Opus 4.7
-   * fails, the chain is:
+   * ladder before crossing to a different provider. This means if Opus 4.8
+   * fails, the chain is (same-provider bucket, quality-descending):
    *
-   *   Opus 4 legacy (same provider, lower quality)
+   *   Opus 4.7 (same provider, previous flagship)
    *   → Sonnet 4.6 (same provider, lower quality)
    *   → Sonnet 4 legacy (same provider, lower quality)
    *   → Haiku 4.5 (same provider, lowest Anthropic quality)
@@ -1145,12 +1669,17 @@ export class AIGateway {
    * prompt-cache hits, tool-schema consistency, and telemetry continuity.
    */
   private getFallbackModels(
-    taskType: TaskType,
+    request: GatewayRequest,
     triedModels: string[],
     primaryProvider: ProviderName,
   ): ModelConfig[] {
     const eligible = this.models.filter(
-      m => m.enabled && m.capabilities.includes(taskType) && !triedModels.includes(m.id),
+      m =>
+        m.enabled &&
+        m.capabilities.includes(request.taskType) &&
+        !triedModels.includes(m.id) &&
+        // Residency / ZDR are hard constraints — never fall back across them.
+        this.meetsPlacementRequirements(m.provider, request),
     );
     const samePriority = eligible.filter(m => m.provider === primaryProvider);
     const otherProviders = eligible.filter(m => m.provider !== primaryProvider);
@@ -1158,6 +1687,58 @@ export class AIGateway {
     const sortByQuality = (list: ModelConfig[]) =>
       [...list].sort((a, b) => b.qualityScore - a.qualityScore);
     return [...sortByQuality(samePriority), ...sortByQuality(otherProviders)];
+  }
+
+  /**
+   * True when a provider's placement satisfies the request's residency / ZDR
+   * requirements. Returns true when the request declares no constraints, so
+   * existing callers are unaffected.
+   */
+  private meetsPlacementRequirements(
+    provider: ProviderName,
+    request: GatewayRequest,
+  ): boolean {
+    const needsZdr = request.zeroDataRetention === true;
+    const residency =
+      request.dataResidency && request.dataResidency !== 'any'
+        ? request.dataResidency
+        : null;
+    if (!needsZdr && !residency) return true;
+    return isPlacementCompliant(resolvePlacement(provider), {
+      zeroDataRetention: needsZdr,
+      residency,
+    });
+  }
+
+  /**
+   * Fill in residency / zero-retention from the org's placement policy when the
+   * request didn't specify them. Explicit request values always win. Never
+   * throws — a failed lookup leaves the request unchanged (explicit-only).
+   */
+  private async applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest> {
+    if (request.organizationId === undefined || request.organizationId === null) return request;
+    // Both already pinned — nothing for a default to fill.
+    if (request.dataResidency !== undefined && request.zeroDataRetention !== undefined) {
+      return request;
+    }
+    try {
+      const policy = await getOrgPlacementResolver().resolve(request.organizationId);
+      if (!policy) return request;
+      const merged = mergeOrgPolicyDefaults(
+        { dataResidency: request.dataResidency, zeroDataRetention: request.zeroDataRetention },
+        policy,
+      );
+      return { ...request, ...merged };
+    } catch (err) {
+      // Deliberate fail-soft: a policy-store failure must not break the request.
+      // But surface it — silently skipping a tenant's residency / zero-retention
+      // default is a compliance-visibility gap, not a no-op.
+      log.warn(
+        `[AI Gateway] Org placement policy lookup failed for org ${request.organizationId}; ` +
+          `proceeding without org defaults: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return request; // never let policy resolution break a request
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1280,11 +1861,24 @@ export class AIGateway {
     response: GatewayResponse,
     strategy: RoutingStrategy,
     success: boolean,
-    error?: string
+    error?: string,
+    triedModels?: string[],
+    contentPolicy?: { action: ContentPolicyAction; findings: PolicyFinding[] }
   ): Promise<void> {
     if (!this.config.auditEnabled) return;
 
     try {
+      const promptVersion =
+        request.promptVersion ??
+        (typeof request.metadata?.promptVersion === 'string'
+          ? (request.metadata.promptVersion as string)
+          : undefined);
+
+      // Resolve the substrate/region/retention the serving provider ran under,
+      // so the audit ledger records *where* regulated data was processed — the
+      // evidence a residency- or BAA-constrained tenant asks for.
+      const placement = resolvePlacement(response.provider);
+
       await this.auditLogger.log({
         requestId: response.requestId,
         timestamp: new Date(),
@@ -1305,11 +1899,126 @@ export class AIGateway {
         error,
         cached: response.cached,
         deterministic: response.deterministic,
-        metadata: request.metadata,
+        // Reproducibility: which params + prompt produced this output.
+        temperature: request.temperature ?? 0.7,
+        seed: request.seed,
+        promptHash: this.hashPrompt(request.messages),
+        promptVersion,
+        triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
+        // Placement / residency evidence.
+        substrate: placement.substrate,
+        region:
+          request.dataResidency && request.dataResidency !== 'any'
+            ? request.dataResidency
+            : placement.regions[0],
+        retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
+        // Content-policy findings carry only detector names, classes and
+        // classifier-redacted excerpts — never raw content (the prompt itself
+        // is represented by promptHash alone).
+        metadata: contentPolicy
+          ? { ...(request.metadata ?? {}), contentPolicy }
+          : request.metadata,
       });
     } catch (auditError: any) {
       log.error(`[AI Gateway] Audit log failed: ${auditError.message}`);
     }
+  }
+
+  /**
+   * Audit a content-policy refusal (prompt-injection or PII/PHI block).
+   * Refusals are compliance events: a request the gateway declined must be as
+   * traceable as one it served. Fires only when block findings exist —
+   * budget / rate-limit denials are not content events and keep their
+   * pre-existing unaudited behavior. Records the prompt hash, never raw
+   * content; provider/model are 'none' because nothing was dispatched.
+   */
+  private async logContentPolicyBlock(
+    request: GatewayRequest,
+    strategy: RoutingStrategy,
+    requestId: string,
+    startTime: number,
+    reason?: string,
+    findings?: PolicyFinding[]
+  ): Promise<void> {
+    if (!this.config.auditEnabled) return;
+    if (!findings || !findings.some(f => f.action === 'block')) return;
+
+    try {
+      await this.auditLogger.log({
+        requestId,
+        timestamp: new Date(),
+        provider: 'none',
+        model: 'none',
+        taskType: request.taskType,
+        strategy,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        projectId: request.projectId,
+        callerModule: request.callerModule,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        estimatedCostUsd: 0,
+        latencyMs: Date.now() - startTime,
+        success: false,
+        error: reason,
+        cached: false,
+        deterministic: false,
+        promptHash: this.hashPrompt(request.messages),
+        metadata: {
+          ...(request.metadata ?? {}),
+          contentPolicy: { action: 'block' as ContentPolicyAction, findings },
+        },
+      });
+    } catch (auditError: any) {
+      log.error(`[AI Gateway] Content-policy audit log failed: ${auditError.message}`);
+    }
+  }
+
+  /**
+   * Meter this call into api_usage_logs — the billing/limits source table
+   * (dashboard usage, weekly limits, session/weekly plan windows). Distinct
+   * from logAudit: audit is the compliance ledger and can be toggled off;
+   * tenant metering must survive that toggle. Fire-and-forget — a metering
+   * outage never fails the AI call. Calls without a tenant org id are not
+   * metered (the recorder drops them rather than guessing attribution).
+   */
+  private recordTenantUsage(
+    request: GatewayRequest,
+    response: GatewayResponse,
+    success: boolean
+  ): void {
+    const orgRaw = request.organizationId;
+    const orgId = typeof orgRaw === 'string' ? Number.parseInt(orgRaw, 10) : orgRaw;
+    if (orgId == null || !Number.isFinite(orgId) || orgId <= 0) return;
+    const userRaw = request.userId;
+    const userId = typeof userRaw === 'string' ? Number.parseInt(userRaw, 10) : userRaw;
+    recordApiUsageSafe({
+      organizationId: orgId,
+      userId: userId != null && Number.isFinite(userId) ? userId : null,
+      module: request.callerModule || 'ai_assistance',
+      endpoint: request.taskType,
+      model: response.model,
+      // Failed calls are recorded (observability) but must not consume the
+      // weekly 'requests' quota — a provider outage would otherwise burn an
+      // org's limit on calls that returned nothing.
+      requestCount: success ? 1 : 0,
+      tokensUsed: response.usage.totalTokens,
+      costCents: usdToCents(response.usage.estimatedCostUsd),
+      metadata: {
+        provider: response.provider,
+        requestId: response.requestId,
+        success,
+        estimatedCostUsd: response.usage.estimatedCostUsd,
+        cached: response.cached === true,
+      },
+    });
+  }
+
+  /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */
+  private hashPrompt(messages: GatewayMessage[]): string {
+    const canonical = messages.map(m => `${m.role}:${m.content}`).join('\n');
+    return createHash('sha256').update(canonical, 'utf8').digest('hex');
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1321,12 +2030,30 @@ export class AIGateway {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const moonshotKey = process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY;
 
+    // Private-cloud + self-hosted substrates. Each is opt-in: a deployment only
+    // turns one on when it has the credentials/infra and a tenant that needs it.
+    const bedrockEnabled = process.env.AI_BEDROCK_ENABLED === 'true';
+    const vertexEnabled = process.env.AI_VERTEX_ENABLED === 'true';
+    const azureEnabled = !!(
+      process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_ENDPOINT
+    );
+    const localBaseUrl = process.env.LOCAL_AI_BASE_URL || process.env.LITELLM_BASE_URL;
+    const localEnabled = process.env.AI_LOCAL_ENABLED === 'true' && !!localBaseUrl;
+
     return {
+      // AI_GATEWAY_DETERMINISTIC is the canonical switch; DETERMINISTIC_MODE
+      // is honored as a legacy alias only — set the canonical var in new
+      // environments.
       deterministicMode:
         process.env.AI_GATEWAY_DETERMINISTIC === 'true' ||
         process.env.DETERMINISTIC_MODE === 'true' ||
         false,
       defaultStrategy: (process.env.AI_GATEWAY_STRATEGY as RoutingStrategy) || 'task_based',
+      // NOTE: model *selection* is driven by the DEFAULT_MODELS registry above
+      // (task/quality strategies over qualityScore), not by these per-provider
+      // `defaultModel` fields. They are a provider-level default of last resort
+      // for substrates without a registry — the flagship is set on the registry
+      // entry (`claude-opus-4` → claude-opus-4-8), not here.
       providers: [
         {
           name: 'openai',
@@ -1350,6 +2077,33 @@ export class AIGateway {
           defaultModel: 'kimi-k2-0711-preview',
           models: [],
         },
+        {
+          name: 'bedrock',
+          enabled: bedrockEnabled,
+          defaultModel: 'anthropic.claude-opus-4-7',
+          models: [],
+        },
+        {
+          name: 'vertex',
+          enabled: vertexEnabled,
+          defaultModel: 'claude-opus-4-7',
+          models: [],
+        },
+        {
+          name: 'azure',
+          enabled: azureEnabled,
+          apiKey: process.env.AZURE_OPENAI_API_KEY,
+          baseUrl: process.env.AZURE_OPENAI_ENDPOINT,
+          defaultModel: 'gpt-4o',
+          models: [],
+        },
+        {
+          name: 'local',
+          enabled: localEnabled,
+          baseUrl: localBaseUrl,
+          defaultModel: 'local-default',
+          models: [],
+        },
       ],
       policy: {
         maxTokensPerRequest: 16000,
@@ -1357,6 +2111,11 @@ export class AIGateway {
         maxRequestsPerMinutePerUser: 30,
         blockedPatterns: [],
         contentFilters: true,
+        // Platform default posture: PII/PHI pass ON. Outbound content is
+        // classified before dispatch (policy.ts::evaluatePiiPolicy) —
+        // structured PHI blocks fail-closed, email/SSN spans are redacted
+        // from the provider payload, FP-prone identifiers are flagged into
+        // the audit trail. Opt out per-deployment with an explicit override.
         piiDetection: true,
       },
       auditEnabled: true,
@@ -1408,6 +2167,31 @@ export class AIGateway {
       } catch (e: any) {
         log.warn(`  ⚠️ Moonshot provider init failed: ${e.message}`);
       }
+    }
+
+    // ── Private-cloud + self-hosted substrates ───────────────────────────────
+    // Each factory returns null (with a logged hint) when its optional SDK or
+    // credentials are absent, so an enabled-but-unconfigured provider degrades
+    // to "unhealthy" rather than crashing the gateway.
+
+    if (this.config.providers.find(p => p.name === 'bedrock')?.enabled) {
+      this.bedrockClient = createBedrockClient();
+      if (this.bedrockClient) log.debug('  ✅ Bedrock (Claude, private-cloud) provider ready');
+    }
+
+    if (this.config.providers.find(p => p.name === 'vertex')?.enabled) {
+      this.vertexClient = createVertexClient();
+      if (this.vertexClient) log.debug('  ✅ Vertex (Claude, private-cloud) provider ready');
+    }
+
+    if (this.config.providers.find(p => p.name === 'azure')?.enabled) {
+      this.azureClient = createAzureClient();
+      if (this.azureClient) log.debug('  ✅ Azure OpenAI (private-cloud) provider ready');
+    }
+
+    if (this.config.providers.find(p => p.name === 'local')?.enabled) {
+      this.localClient = createLocalClient();
+      if (this.localClient) log.debug('  ✅ Local / self-hosted provider ready');
     }
   }
 }

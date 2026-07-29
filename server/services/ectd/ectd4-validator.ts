@@ -20,6 +20,12 @@
  */
 
 import crypto from 'crypto';
+import {
+  validateRegionalPackage,
+  type RegulatoryRegion,
+  type RegionalContext,
+  type RegionalLeafRef,
+} from './ectd-regional-rules';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -75,6 +81,12 @@ export interface ECTDLeaf {
   mimeType: string;
   /** File size in bytes */
   fileSize: number;
+  /** Optional raw file buffer — when provided, used for MD5 verification against declared checksum */
+  buffer?: Buffer;
+  /** Optional study identifier — required for M5 clinical leaves (m5.3.*) per ICH M8 v4.0 */
+  studyId?: string;
+  /** Optional lifecycle target leaf id — required for replace/append/delete operations */
+  lifecycleTarget?: string;
 }
 
 /** eCTD 4.0 backbone context of use entry (ICH M8) */
@@ -195,6 +207,77 @@ const IND_REQUIRED_SECTIONS = new Set([
   'm5.3.5', // Phase 1 Protocol
 ]);
 
+/** Sections required for an NDA filing per 21 CFR 314.50 / ICH M4 */
+const NDA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([
+  'm1.1', // FDA Forms (356h)
+  'm1.2', // Cover Letter
+  'm1.3', // Administrative Information
+  'm1.5', // Table of Contents
+  'm1.14', // Labeling
+  'm1.15', // Annotated Labeling
+  'm2.2', // Introduction
+  'm2.3', // Quality Overall Summary
+  'm2.4', // Nonclinical Overview
+  'm2.5', // Clinical Overview
+  'm2.6', // Nonclinical Written & Tabulated Summaries
+  'm2.7', // Clinical Summary
+  'm3.2.S', // Drug Substance
+  'm3.2.P', // Drug Product
+  'm3.2.A', // Appendices (facilities, adventitious agents, excipients)
+  'm3.2.R', // Regional Information
+  'm4.2.1', // Pharmacology
+  'm4.2.2', // Pharmacokinetics
+  'm4.2.3', // Toxicology
+  'm5.2', // Tabular Listing of Clinical Studies
+  'm5.3.5', // Reports of Efficacy and Safety Studies (CSRs)
+]);
+
+/** Sections required for a BLA filing per 21 CFR 601 / ICH M4 */
+const BLA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([
+  'm1.1', // FDA Forms (356h)
+  'm1.2', // Cover Letter
+  'm1.3', // Administrative Information
+  'm1.5', // Table of Contents
+  'm1.14', // Labeling
+  'm2.2', // Introduction
+  'm2.3', // Quality Overall Summary (incl. characterization for biologics)
+  'm2.4', // Nonclinical Overview
+  'm2.5', // Clinical Overview
+  'm2.6', // Nonclinical Written & Tabulated Summaries
+  'm2.7', // Clinical Summary (incl. immunogenicity)
+  'm3.2.S', // Drug Substance
+  'm3.2.P', // Drug Product
+  'm3.2.A', // Appendices (adventitious agents required for biologics)
+  'm3.2.R', // Regional Information
+  'm4.2.1', // Pharmacology
+  'm4.2.3', // Toxicology
+  'm5.2', // Tabular Listing of Clinical Studies
+  'm5.3.5', // Reports of Efficacy and Safety Studies (CSRs)
+]);
+
+const EMPTY_REQUIRED_SECTIONS: ReadonlySet<string> = new Set();
+
+/**
+ * The required-section profile for a submission type. Unrecognized submission
+ * types return an empty set so the completeness check does not falsely flag
+ * IND-specific sections as "missing" on a non-IND submission. (Previously both
+ * ternary branches were IND_REQUIRED_SECTIONS, so every type — including NDA
+ * and BLA — was validated against IND's sections.)
+ */
+function requiredSectionsFor(submissionType: string): ReadonlySet<string> {
+  const normalized = submissionType?.toUpperCase?.() ?? 'IND';
+  switch (normalized) {
+    case 'IND':
+      return IND_REQUIRED_SECTIONS;
+    case 'NDA':
+      return NDA_REQUIRED_SECTIONS;
+    case 'BLA':
+      return BLA_REQUIRED_SECTIONS;
+    default:
+      return EMPTY_REQUIRED_SECTIONS;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION ENGINE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -204,17 +287,38 @@ const IND_REQUIRED_SECTIONS = new Set([
  *
  * @param leaves - Array of document leaves in the package
  * @param submissionType - Type of submission (default: IND)
+ * @param options - Optional validation context:
+ *   - region: when set, applies the regional rule pack. Accepts either the
+ *     canonical RegulatoryRegion code ('US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR'
+ *     | 'UK' | 'AU' | 'CH' | 'BR' | 'IN' | 'SG') or the legacy agency token
+ *     ('FDA' | 'EMA' | 'PMDA'). Agency tokens are kept for HTTP-route
+ *     backwards-compatibility and are internally normalized to the matching
+ *     RegulatoryRegion code.
+ *   - applicationNumber + sequenceNumber: passed through to the regional
+ *     validator for gateway-prefix and 4-digit-sequence checks.
+ *   - priorSequenceNumbers + sequenceNumber: enables sequence-gap detection
+ *   - priorLeafIds: enables lifecycle-operation target-leaf reference check
  * @returns Validation result with findings and score
  */
+export type LegacyAgencyRegion = 'FDA' | 'EMA' | 'PMDA';
+export type ValidatePackageRegion = RegulatoryRegion | LegacyAgencyRegion;
+
 export function validatePackage(
   leaves: ECTDLeaf[],
-  submissionType: string = 'IND'
+  submissionType: string = 'IND',
+  options?: {
+    region?: ValidatePackageRegion;
+    applicationNumber?: string;
+    priorSequenceNumbers?: string[];
+    sequenceNumber?: string;
+    priorLeafIds?: Set<string>;
+  }
 ): ValidationResult {
   const findings: ValidationFinding[] = [];
   let findingId = 0;
 
   const presentSections = new Set(leaves.map(l => l.sectionCode));
-  const requiredSections = submissionType === 'IND' ? IND_REQUIRED_SECTIONS : IND_REQUIRED_SECTIONS;
+  const requiredSections = requiredSectionsFor(submissionType);
   const missingSections: string[] = [];
 
   // 1. Check required sections
@@ -249,8 +353,10 @@ export function validatePackage(
       });
     }
 
-    // Checksum validation
-    if (!leaf.checksum || leaf.checksum.length !== 32) {
+    // Checksum validation — MD5 must be exactly 32 hexadecimal characters.
+    // Previously this only checked length, which let 32-character non-hex
+    // strings (e.g., base64-like blobs) pass when no buffer was attached.
+    if (!leaf.checksum) {
       findings.push({
         id: `V${++findingId}`,
         severity: 'error',
@@ -258,8 +364,95 @@ export function validatePackage(
         sectionCode: leaf.sectionCode,
         message: `Document "${leaf.title}" has invalid or missing MD5 checksum`,
         fix: 'Regenerate MD5 checksum for the document file',
-        rule: 'FDA ESG Technical Conformance Guide',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
       });
+    } else if (leaf.checksum.length !== 32) {
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'error',
+        code: 'INVALID_CHECKSUM_LENGTH',
+        sectionCode: leaf.sectionCode,
+        message: `Document "${leaf.title}" MD5 checksum is ${leaf.checksum.length} characters; expected 32`,
+        fix: 'Regenerate the MD5 hex digest — it must be exactly 32 characters',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
+      });
+    } else if (!/^[a-f0-9]{32}$/i.test(leaf.checksum)) {
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'error',
+        code: 'INVALID_CHECKSUM_FORMAT',
+        sectionCode: leaf.sectionCode,
+        message: `Document "${leaf.title}" MD5 checksum is not a valid hex digest`,
+        fix: 'Regenerate the MD5 as a 32-character hexadecimal string ([0-9a-f])',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
+      });
+    } else if (leaf.checksum !== leaf.checksum.toLowerCase()) {
+      // FDA ESG TCG §3.3: MD5 digests SHOULD be lowercase. Flag uppercase/mixed
+      // case so the team normalizes before submission rather than silently
+      // accepting either case.
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'warning',
+        code: 'CHECKSUM_NOT_LOWERCASE',
+        sectionCode: leaf.sectionCode,
+        message: `Document "${leaf.title}" MD5 checksum is not lowercase`,
+        fix: 'Normalize the MD5 hex digest to lowercase before submission',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
+      });
+    }
+
+    // MD5 buffer-vs-declared-checksum verification (only when buffer is provided)
+    if (leaf.buffer) {
+      const computed = computeChecksum(leaf.buffer);
+      const declared = leaf.checksum ?? '';
+      if (computed.toLowerCase() !== declared.toLowerCase()) {
+        findings.push({
+          id: `V${++findingId}`,
+          severity: 'error',
+          code: 'CHECKSUM_MISMATCH',
+          sectionCode: leaf.sectionCode,
+          message: `Declared MD5 does not match computed MD5 for "${leaf.title}"`,
+          fix: 'Recompute MD5 with computeChecksum() and re-store on the leaf',
+          rule: 'FDA ESG Technical Conformance Guide §3.3',
+        });
+      }
+    }
+
+    // M5 clinical study-id mandatory check (m5.3.* — not m5.3 alone)
+    if (/^m5\.3\..+/i.test(leaf.sectionCode)) {
+      if (!leaf.studyId || leaf.studyId.trim() === '') {
+        findings.push({
+          id: `V${++findingId}`,
+          severity: 'error',
+          code: 'MISSING_STUDY_ID',
+          sectionCode: leaf.sectionCode,
+          message: 'M5 clinical leaf has no studyId',
+          fix: 'Set leaf.studyId to the study identifier (e.g., "NCT12345678" or sponsor study code)',
+          rule: 'ICH M8 v4.0 study-tag attribute (M5 clinical)',
+        });
+      }
+    }
+
+    // Lifecycle-op target-leaf reference check (only when priorLeafIds is provided)
+    if (options?.priorLeafIds !== undefined) {
+      if (
+        leaf.operation === 'replace' ||
+        leaf.operation === 'append' ||
+        leaf.operation === 'delete'
+      ) {
+        const target = leaf.lifecycleTarget;
+        if (!target || !options.priorLeafIds.has(target)) {
+          findings.push({
+            id: `V${++findingId}`,
+            severity: 'error',
+            code: 'INVALID_LIFECYCLE_TARGET',
+            sectionCode: leaf.sectionCode,
+            message: 'Lifecycle operation references missing prior leaf',
+            fix: 'Set leaf.lifecycleTarget to a valid prior-leaf id, or change operation to "new"',
+            rule: 'ICH M8 Lifecycle Operations',
+          });
+        }
+      }
     }
 
     // PDF-specific checks
@@ -310,6 +503,92 @@ export function validatePackage(
     }
   }
 
+  // 4. Sequence-number gap detection
+  if (options?.priorSequenceNumbers !== undefined && options?.sequenceNumber !== undefined) {
+    const combined = [...options.priorSequenceNumbers, options.sequenceNumber];
+    const gaps = detectSequenceGapsFromArray(combined);
+    for (const missing of gaps) {
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'warning',
+        code: 'SEQUENCE_GAP',
+        sectionCode: '',
+        message: `Sequence ${missing} is missing`,
+        fix: 'Submit the missing sequence or document the skip',
+        rule: 'eCTD sequence numbering',
+      });
+    }
+  }
+
+  // 5. Regional rule packs — delegated to the canonical
+  // ectd-regional-rules.validateRegionalPackage. The Phase-1 thin presence
+  // check (regional-rules.ts) was retired in favor of the 12-region rule
+  // catalog. To preserve the historical wire-contract that downstream
+  // consumers (server/routes/ectd-export.ts + tests) assert on — namely
+  // the MISSING_REGIONAL_FDA / MISSING_REGIONAL_EMA / MISSING_REGIONAL_PMDA
+  // finding codes and the loose "any leaf under m1/{region}/ counts" rule —
+  // we do a looseness pre-check here, then merge the canonical findings
+  // (mapped from RegionalFinding shape into the ValidationFinding shape).
+  if (options?.region) {
+    const region = normalizeRegion(options.region);
+
+    // Legacy looseness check — kept verbatim from the retired
+    // server/services/ectd/regional-rules.ts so MISSING_REGIONAL_* codes that
+    // the HTTP /api/ectd/export/:id/validate route emits remain stable.
+    const looseFinding = legacyRegionalLooseCheck(leaves, options.region);
+    if (looseFinding) {
+      findings.push({ ...looseFinding, id: `V${++findingId}` });
+    }
+
+    // Canonical strict findings (backbone file, application-number prefix,
+    // gateway size limit, ASCII filenames, etc.). These complement — they do
+    // not replace — the looseness check above.
+    const context: RegionalContext = {
+      region,
+      applicationNumber: options.applicationNumber ?? '',
+      sequenceNumber: options.sequenceNumber ?? '',
+      submissionType,
+    };
+    const regionalLeafRefs: RegionalLeafRef[] = leaves.map(l => ({
+      sectionCode: l.sectionCode,
+      filePath: l.filePath,
+      mimeType: l.mimeType,
+      fileSize: l.fileSize,
+      studyId: l.studyId,
+    }));
+    const regional = validateRegionalPackage(context, regionalLeafRefs);
+    // When the legacy loose check already fired MISSING_REGIONAL_* for the
+    // region, suppress the canonical backbone-presence finding for the SAME
+    // semantic violation (FDA-ESG-004 / EMA-CESP-001 / PMDA-001 / HC-REP-001).
+    // Without this suppression validatePackage would emit two findings for
+    // one underlying problem and double-deduct the score (15 + 15 = 30).
+    // The loose code is the user-facing one; the canonical strict backbone
+    // check still runs unsuppressed via the direct validateRegionalPackage
+    // entrypoint that ectd-validator-hardening calls.
+    const canonicalBackboneCode = looseFinding ? regionalBackboneRuleId(region) : null;
+    for (const rf of regional) {
+      // Suppress validateRegionalPackage findings that the caller cannot
+      // act on because they require RegionalContext fields that the
+      // ectd4-validator caller did not supply (applicationNumber,
+      // sequenceNumber). These are surfaced by ectd-validator-hardening
+      // where the full submission context is available.
+      if (!options.applicationNumber && isApplicationNumberFinding(rf)) continue;
+      if (!options.sequenceNumber && rf.ruleId === 'FDA-ESG-001') continue;
+      // Suppress the canonical backbone-presence rule when the legacy loose
+      // check already covered it for this region (see comment above).
+      if (canonicalBackboneCode && rf.ruleId === canonicalBackboneCode) continue;
+      findings.push({
+        id: `V${++findingId}`,
+        severity: rf.severity === 'info' ? 'info' : rf.severity,
+        code: rf.ruleId,
+        sectionCode: '',
+        message: rf.message,
+        fix: rf.fix,
+        rule: rf.ruleId,
+      });
+    }
+  }
+
   // Calculate score
   const errorCount = findings.filter(f => f.severity === 'error').length;
   const warningCount = findings.filter(f => f.severity === 'warning').length;
@@ -331,6 +610,49 @@ export function validatePackage(
     },
     timestamp: new Date().toISOString(),
   };
+}
+
+/**
+ * Detect gaps in a caller-supplied list of 4-digit eCTD sequence numbers
+ * (synchronous, array variant).
+ *
+ * Inputs are zero-padded to 4 digits internally; the result lists any
+ * missing 4-digit sequences between '0000' and the maximum submitted.
+ *
+ * Example: detectSequenceGapsFromArray(['0000', '0002']) → ['0001']
+ *
+ * NOTE: This is the Phase 1 sync, array-based variant — it operates purely on
+ * the list the caller passes in. The canonical FDA-ESG sequence-gap check is
+ * the DB-backed `detectSequenceGaps(applicationNumber, newSequenceNumber)`
+ * exported from `./ectd-validator-hardening.ts`, which queries
+ * `ectd_compilations` / `ectd_submissions` for the true submission history
+ * and returns structured `SequenceFinding[]` (duplicates, regressions,
+ * historical gaps, first-must-be-0000). Prefer the hardening variant for
+ * gateway-readiness checks; use this one only when the caller already has
+ * the full list in hand and just needs the missing slot strings.
+ */
+export function detectSequenceGapsFromArray(submitted: string[]): string[] {
+  if (!submitted || submitted.length === 0) return [];
+
+  // Normalize: zero-pad to 4 digits, drop blanks/non-numerics
+  const normalized = new Set<number>();
+  for (const raw of submitted) {
+    if (raw === undefined || raw === null) continue;
+    const trimmed = String(raw).trim();
+    if (trimmed === '') continue;
+    if (!/^\d+$/.test(trimmed)) continue;
+    normalized.add(parseInt(trimmed, 10));
+  }
+  if (normalized.size === 0) return [];
+
+  const max = Math.max(...Array.from(normalized));
+  const missing: string[] = [];
+  for (let i = 0; i <= max; i++) {
+    if (!normalized.has(i)) {
+      missing.push(String(i).padStart(4, '0'));
+    }
+  }
+  return missing;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -429,7 +751,7 @@ export function quickValidate(
   presentSectionCodes: string[],
   submissionType: string = 'IND'
 ): { completeness: number; missing: string[] } {
-  const required = submissionType === 'IND' ? IND_REQUIRED_SECTIONS : IND_REQUIRED_SECTIONS;
+  const required = requiredSectionsFor(submissionType);
   const present = new Set(presentSectionCodes);
   const missing: string[] = [];
 
@@ -441,4 +763,147 @@ export function quickValidate(
     required.size > 0 ? Math.round(((required.size - missing.length) / required.size) * 100) : 100;
 
   return { completeness, missing };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REGIONAL ADAPTER — bridges validatePackage's legacy agency-token API to
+// the canonical 12-region rule catalog in ectd-regional-rules.ts.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Normalize the validatePackage region argument to a RegulatoryRegion code.
+ * Accepts either the legacy agency token (FDA/EMA/PMDA — kept for HTTP-route
+ * backwards-compatibility) or a canonical RegulatoryRegion.
+ */
+function normalizeRegion(region: ValidatePackageRegion): RegulatoryRegion {
+  switch (region) {
+    case 'FDA': return 'US';
+    case 'EMA': return 'EU';
+    case 'PMDA': return 'JP';
+    default: return region;
+  }
+}
+
+/**
+ * Map the agency-token region (or a canonical region known to have a legacy
+ * code) to the historical MISSING_REGIONAL_* finding code that the HTTP
+ * /api/ectd/export/:id/validate route contract depends on. Returns null for
+ * regions that never had a legacy presence code.
+ */
+function legacyMissingRegionalCode(region: ValidatePackageRegion): string | null {
+  switch (region) {
+    case 'FDA':
+    case 'US':
+      return 'MISSING_REGIONAL_FDA';
+    case 'EMA':
+    case 'EU':
+      return 'MISSING_REGIONAL_EMA';
+    case 'PMDA':
+    case 'JP':
+      return 'MISSING_REGIONAL_PMDA';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Loose presence check carried forward from the retired
+ * server/services/ectd/regional-rules.ts. Returns a MISSING_REGIONAL_*
+ * ValidationFinding (without an id — caller assigns one) when the package
+ * has no Module-1 regional content for the region, or null otherwise.
+ *
+ * For FDA, "regional content" is any leaf with sectionCode m1.1 OR a file
+ * path containing /m1/us/. EMA matches /m1/eu/, PMDA matches /m1/jp/. This
+ * is intentionally looser than the canonical us-regional.xml backbone check
+ * in validateRegionalPackage — the strict backbone check still runs via the
+ * canonical path below.
+ */
+function legacyRegionalLooseCheck(
+  leaves: ECTDLeaf[],
+  region: ValidatePackageRegion
+): Omit<ValidationFinding, 'id'> | null {
+  const code = legacyMissingRegionalCode(region);
+  if (!code) return null;
+
+  const normalized = normalizeRegion(region);
+
+  if (normalized === 'US') {
+    const hasFDA = leaves.some(
+      l =>
+        (l.sectionCode || '').toLowerCase() === 'm1.1' ||
+        /(^|\/)m1\/us\//i.test(l.filePath || '')
+    );
+    if (hasFDA) return null;
+    return {
+      severity: 'error',
+      code,
+      sectionCode: '',
+      message: 'Submission has no FDA regional content (m1.1 or m1/us/* leaf)',
+      fix: 'Add an FDA Module 1 regional leaf — for example a section m1.1 document or a file under m1/us/',
+      rule: 'FDA ESG 21 CFR 312.23 / 314.50',
+    };
+  }
+
+  if (normalized === 'EU') {
+    const hasEMA = leaves.some(l => /(^|\/)m1\/eu\//i.test(l.filePath || ''));
+    if (hasEMA) return null;
+    return {
+      severity: 'error',
+      code,
+      sectionCode: '',
+      message: 'Submission has no EMA regional content (no leaf under m1/eu/)',
+      fix: 'Add an EMA Module 1 regional leaf under the m1/eu/ path',
+      rule: 'EMA CESP',
+    };
+  }
+
+  if (normalized === 'JP') {
+    const hasPMDA = leaves.some(l => /(^|\/)m1\/jp\//i.test(l.filePath || ''));
+    if (hasPMDA) return null;
+    return {
+      severity: 'error',
+      code,
+      sectionCode: '',
+      message: 'Submission has no PMDA regional content (no leaf under m1/jp/)',
+      fix: 'Add a PMDA Module 1 regional leaf under the m1/jp/ path',
+      rule: 'PMDA Gateway',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Returns true when a RegionalFinding is reporting an application-number
+ * format violation. These rules require the caller to have supplied
+ * options.applicationNumber on validatePackage; when it is absent (the
+ * common case from the leaf-only HTTP path) the finding would fire as a
+ * false positive on "" (the empty default), so the call site suppresses it.
+ */
+function isApplicationNumberFinding(rf: { ruleId: string }): boolean {
+  return (
+    rf.ruleId === 'FDA-ESG-002' ||
+    rf.ruleId === 'EMA-CESP-002' ||
+    rf.ruleId === 'PMDA-002' ||
+    rf.ruleId === 'HC-REP-003'
+  );
+}
+
+/**
+ * Map a RegulatoryRegion to its canonical M1 regional-backbone rule ID.
+ * Used to suppress the canonical strict backbone-presence finding when the
+ * legacy loose presence check (MISSING_REGIONAL_*) has already fired for the
+ * same semantic violation — avoids emitting two findings for one underlying
+ * problem and double-deducting the score. Returns null for regions whose
+ * backbone presence rule is not in scope for the loose-check shim (i.e. all
+ * regions other than US/EU/JP/CA today).
+ */
+function regionalBackboneRuleId(region: RegulatoryRegion): string | null {
+  switch (region) {
+    case 'US': return 'FDA-ESG-004';
+    case 'EU': return 'EMA-CESP-001';
+    case 'JP': return 'PMDA-001';
+    case 'CA': return 'HC-REP-001';
+    default: return null;
+  }
 }

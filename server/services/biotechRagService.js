@@ -1,22 +1,53 @@
 /**
  * Biotech AI Intelligence RAG Service
  * Production-ready service for biotech document processing, embeddings, and retrieval
+ *
+ * @deprecated Legacy RAG path. Retrieval is converging on `ragRouter`
+ * (server/services/ragRouter.ts), which delegates to the AdvancedRAGPipeline
+ * over the vault / lumen_data_atoms corpora. This service maintains its own
+ * separate corpus (ragDocuments / ragChunks / ragKnowledgeGraph) and powers the
+ * live /api/biotech-rag endpoints, so it cannot be repointed by a code swap —
+ * fully retiring it requires migrating that corpus into the vault and porting
+ * the /api/biotech-rag routes. Do not add new callers; new retrieval should go
+ * through `ragRouter`.
  */
 
-import { db } from '../db';
+import { db } from '../db.js';
 import { ragDocuments, ragChunks, ragQueries, ragKnowledgeGraph } from '@shared/schema';
 import { eq, and, sql, desc, inArray, like, ilike, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import mammoth from 'mammoth';
 import * as cheerio from 'cheerio';
+import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
+import { ai } from '../lib/unified-ai-client';
 
-// Initialize OpenAI if API key is available
-let openai = null;
-try {
-} catch (error) {
-  console.log('OpenAI initialization failed, using fallback embeddings');
+// Embeddings are produced through the governed seam (getEmbeddingProvider), not
+// a direct client, so this service honors EMBEDDING_PROVIDER — including a
+// self-hosted/offline embedder — and is not a gateway bypass.
+//
+// The TF-IDF fallback produces 384-dim, statefully-built vectors that are not
+// comparable to real 1536-dim embeddings (or to each other across queries), so
+// silently using it degrades retrieval to near-noise. We therefore hard-fail by
+// default when no real embedder is configured. Set ALLOW_FALLBACK_EMBEDDINGS=true
+// to explicitly opt into the lexical fallback (local dev / offline only).
+// See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: degraded-by-default RAG).
+const allowFallbackEmbeddings = process.env.ALLOW_FALLBACK_EMBEDDINGS === 'true';
+
+// A real embedder is available when an OpenAI key or a self-hosted embedding
+// endpoint is configured (the seam resolves which one to use at call time).
+const embeddingsEnabled = Boolean(
+  process.env.OPENAI_API_KEY ||
+    process.env.EMBEDDING_LOCAL_BASE_URL ||
+    process.env.LOCAL_AI_BASE_URL
+);
+if (!embeddingsEnabled) {
+  if (allowFallbackEmbeddings) {
+    console.warn('biotechRagService: no embedding provider configured — using opt-in fallback TF-IDF embeddings');
+  } else {
+    console.error('biotechRagService: no embedding provider configured — embeddings will hard-fail. Set OPENAI_API_KEY (or a local EMBEDDING_LOCAL_BASE_URL), or ALLOW_FALLBACK_EMBEDDINGS=true to permit the degraded lexical fallback.');
+  }
 }
 
 // Fallback embedding generator (simple TF-IDF based)
@@ -108,21 +139,35 @@ class BiotechRagService {
 
     let embedding;
 
-    if (openai) {
+    if (embeddingsEnabled) {
       try {
-        const response = await openai.embeddings.create({
-          model: model,
+        // Route through the governed embedding seam.
+        const { embeddings } = await getEmbeddingProvider().embed({
+          model,
           input: text,
         });
-        embedding = response.data[0].embedding;
+        embedding = embeddings[0];
       } catch (error) {
-        console.error('OpenAI embedding error:', error);
-        // Fall back to local embeddings
+        console.error('Embedding generation error:', error);
+        // Only degrade to the lexical fallback when explicitly permitted;
+        // otherwise surface the failure rather than poison the index with
+        // dimension-mismatched, non-comparable vectors.
+        if (!allowFallbackEmbeddings) {
+          throw new Error(
+            `biotechRagService: embedding generation failed and fallback is disabled (${error?.message}). ` +
+              'Set ALLOW_FALLBACK_EMBEDDINGS=true to permit the degraded lexical fallback.'
+          );
+        }
         embedding = await fallbackEmbeddings.generateEmbedding(text);
       }
-    } else {
-      // Use fallback embeddings
+    } else if (allowFallbackEmbeddings) {
+      // Explicitly opted-in lexical fallback (local dev / offline only).
       embedding = await fallbackEmbeddings.generateEmbedding(text);
+    } else {
+      throw new Error(
+        'biotechRagService: no embedding provider configured and fallback is disabled. ' +
+          'Set OPENAI_API_KEY (or a local EMBEDDING_LOCAL_BASE_URL), or ALLOW_FALLBACK_EMBEDDINGS=true to permit the degraded lexical fallback.'
+      );
     }
 
     // Cache the embedding
@@ -379,7 +424,7 @@ class BiotechRagService {
             contentHash,
             sectionTitle: chunk.section,
             embedding,
-            embeddingModel: openai ? 'text-embedding-3-small' : 'fallback-tfidf',
+            embeddingModel: embeddingsEnabled ? 'text-embedding-3-small' : 'fallback-tfidf',
             tokenCount: chunk.content.split(/\s+/).length,
             characterCount: chunk.content.length,
             chunkType: 'paragraph',
@@ -686,8 +731,8 @@ class BiotechRagService {
       const chunkEmbedding = rag_chunks.embedding;
       let similarity = 0;
 
-      if (openai && chunkEmbedding) {
-        // Cosine similarity for OpenAI embeddings
+      if (embeddingsEnabled && chunkEmbedding) {
+        // Cosine similarity for real (non-fallback) embeddings
         similarity = this.cosineSimilarity(queryEmbedding, chunkEmbedding);
       } else if (chunkEmbedding) {
         // Use fallback similarity
@@ -887,7 +932,7 @@ class BiotechRagService {
    * Generate answer using RAG
    */
   async generateAnswer(query, context, options = {}) {
-    if (!openai) {
+    if (!embeddingsEnabled) {
       // Fallback: return concatenated context
       return {
         answer: `Based on the available information:\n\n${context.slice(0, 1000)}...`,
@@ -913,8 +958,8 @@ class BiotechRagService {
       return {
         answer: aiResult.content,
         confidence: 0.9,
-        model: response.model,
-        usage: response.usage,
+        model: aiResult.model,
+        usage: aiResult.usage,
       };
     } catch (error) {
       console.error('Answer generation error:', error);

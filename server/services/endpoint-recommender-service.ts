@@ -1,16 +1,40 @@
 import { eq, and, sql, desc, like, or } from 'drizzle-orm';
 import { db } from '../db';
-import { csrReports, csrDetails } from '../sage-plus-service';
+import { csrReports, csrDetails } from '../../shared/schema';
 import { huggingFaceService } from '../huggingface-service';
 import { academicDocumentProcessor } from './academic-document-processor';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { createScopedLogger } from '../utils/logger';
+const logger = createScopedLogger('endpoint-recommender');
+
 // Define types for recommendation results
+/** What an endpoint's evidence is grounded in — highest-authority basis present. */
+export type EndpointEvidenceBasis =
+  | 'regulatory_recommended'
+  | 'corpus_outcomes'
+  | 'corpus_frequency'
+  | 'academic_literature'
+  | 'ai_suggested';
+
 export interface EndpointRecommendation {
   endpoint: string;
   occurrence_count: number;
-  success_rate: number;
+  /**
+   * Empirical trial-success rate (0–100) — set ONLY when derived from real recorded
+   * trial outcomes. `null` when no outcome evidence exists: we do not fabricate a
+   * success rate (Phase 8 confidence-hygiene). Rank/UI should use `evidence_strength`.
+   */
+  success_rate: number | null;
+  /**
+   * Honest strength-of-evidence score (0–100): how well the corpus frequency,
+   * literature and regulatory guidance support proposing this endpoint. NOT a
+   * prediction of trial success. Derived transparently (see deriveEvidenceStrength).
+   */
+  evidence_strength?: number;
+  /** The highest-authority basis backing this endpoint. */
+  evidence_basis?: EndpointEvidenceBasis;
   evidence: EndpointEvidence[];
   regulatory_guidance?: RegulatoryGuidance[];
   academic_references?: AcademicReference[];
@@ -35,6 +59,30 @@ export interface RegulatoryGuidance {
   guidance_text: string;
   date?: string;
   url?: string;
+  /** Older shape carried by legacy guidance rows */
+  endpoint_text?: string;
+  phase?: string;
+  document?: string;
+  text?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Raw regulatory-guidance item as stored in the on-disk JSON files under
+ * regulatory_data/. These use a looser, source-specific shape that is then
+ * normalized into RegulatoryGuidance for output. Fields are optional because
+ * the JSON is authored externally and not all records populate every field.
+ */
+export interface RawRegulatoryGuidanceItem {
+  endpoint_text?: string;
+  phase?: string;
+  authority?: string;
+  document?: string;
+  text?: string;
+  description?: string;
+  date?: string;
+  url?: string;
 }
 
 export interface AcademicReference {
@@ -44,6 +92,48 @@ export interface AcademicReference {
   year: string;
   url?: string;
   excerpt: string;
+}
+
+// ─── Honest evidence scoring (Phase 8 confidence-hygiene) ─────────────────────────
+// Replaces the former fabricated success_rate defaults/bumps: an endpoint is ranked
+// and labeled by the strength of the evidence that actually supports it, never by a
+// synthesized trial-success probability.
+
+/** Highest-authority basis backing an endpoint, from the evidence actually present. */
+export function classifyEndpointBasis(rec: EndpointRecommendation): EndpointEvidenceBasis {
+  if (rec.regulatory_guidance && rec.regulatory_guidance.length > 0) return 'regulatory_recommended';
+  const hasCsr = rec.evidence.some((e) => e.source_type === 'csr');
+  if (hasCsr && rec.success_rate != null) return 'corpus_outcomes';   // real outcome data present
+  if (hasCsr) return 'corpus_frequency';                              // seen in the corpus, no outcome data
+  const hasAcademic = rec.evidence.some((e) => e.source_type === 'academic' && e.source_id !== 'ai-generated');
+  if (hasAcademic) return 'academic_literature';
+  return 'ai_suggested';
+}
+
+const BASIS_BASE_STRENGTH: Record<EndpointEvidenceBasis, number> = {
+  regulatory_recommended: 80,
+  corpus_outcomes: 65,
+  corpus_frequency: 45,
+  academic_literature: 30,
+  ai_suggested: 10,
+};
+
+/**
+ * Transparent strength-of-evidence score (0–100): the endpoint's evidentiary basis,
+ * plus how often it recurs across the corpus and how many independent sources
+ * corroborate it. Explicitly NOT a trial-success probability.
+ */
+export function deriveEvidenceStrength(rec: EndpointRecommendation, basis: EndpointEvidenceBasis): number {
+  const base = BASIS_BASE_STRENGTH[basis];
+  const frequency = Math.min(15, Math.max(0, rec.occurrence_count - 1) * 3);   // recurring corpus use
+  const corroboration = Math.min(10, Math.max(0, rec.evidence.length - 1) * 2); // independent sources
+  return Math.min(100, base + frequency + corroboration);
+}
+
+/** Attach evidence_basis + evidence_strength to a recommendation (pure; returns a copy). */
+export function normalizeEndpointEvidence(rec: EndpointRecommendation): EndpointRecommendation {
+  const evidence_basis = classifyEndpointBasis(rec);
+  return { ...rec, evidence_basis, evidence_strength: deriveEvidenceStrength(rec, evidence_basis) };
 }
 
 /**
@@ -57,7 +147,7 @@ export interface AcademicReference {
 export class EndpointRecommenderService {
   private hfService: typeof huggingFaceService;
   private academicProcessor: typeof academicDocumentProcessor;
-  private regulatoryGuidanceCache: Map<string, RegulatoryGuidance[]> = new Map();
+  private regulatoryGuidanceCache: Map<string, RawRegulatoryGuidanceItem[]> = new Map();
 
   // Regulatory authorities and their typical guidelines
   private regulatoryAuthorities = [
@@ -113,7 +203,7 @@ export class EndpointRecommenderService {
 
       // Check if directory exists
       if (!fs.existsSync(regulatoryPath)) {
-        console.log('No regulatory data directory found, skipping guidance loading');
+        logger.info('No regulatory data directory found, skipping guidance loading');
         return;
       }
 
@@ -130,15 +220,13 @@ export class EndpointRecommenderService {
             this.regulatoryGuidanceCache.set(guidance.indication.toLowerCase(), guidance.guidance);
           }
         } catch (err) {
-          console.error(`Error processing regulatory file ${file}:`, err);
+          logger.error(`Error processing regulatory file ${file}:`, { error: err });
         }
       }
 
-      console.log(
-        `Loaded regulatory guidance for ${this.regulatoryGuidanceCache.size} indications`
-      );
+      logger.info(`Loaded regulatory guidance for ${this.regulatoryGuidanceCache.size} indications`);
     } catch (err) {
-      console.error('Error loading regulatory guidance:', err);
+      logger.error('Error loading regulatory guidance:', { error: err });
     }
   }
 
@@ -153,9 +241,7 @@ export class EndpointRecommenderService {
     therapeuticArea: string = ''
   ): Promise<EndpointRecommendation[]> {
     try {
-      console.log(
-        `Generating comprehensive recommendations for ${indication} (${phase || 'any phase'})`
-      );
+      logger.info(`Generating comprehensive recommendations for ${indication} (${phase || 'any phase'})`);
 
       // Step 1: Get CSR-based endpoints with statistics
       const csrEndpoints = await this.getEndpointsWithEvidence(indication, phase);
@@ -191,7 +277,7 @@ export class EndpointRecommenderService {
             combinedEndpoints.push({
               endpoint: endpoint,
               occurrence_count: 1,
-              success_rate: 75, // Default moderate success rate for AI endpoints
+              success_rate: null, // No trial-outcome data for an AI-suggested endpoint — do not fabricate a rate
               evidence: [
                 {
                   source_id: 'ai-generated',
@@ -208,10 +294,14 @@ export class EndpointRecommenderService {
         }
       }
 
-      // Return top ranked recommendations based on count
-      return combinedEndpoints.slice(0, count);
+      // Attach an honest evidence_basis + evidence_strength to each recommendation and
+      // rank by that real signal (regulatory backing, corpus recurrence, corroboration)
+      // instead of a fabricated success rate.
+      const normalized = combinedEndpoints.map(normalizeEndpointEvidence);
+      normalized.sort((a, b) => (b.evidence_strength ?? 0) - (a.evidence_strength ?? 0));
+      return normalized.slice(0, count);
     } catch (error) {
-      console.error('Error generating comprehensive endpoint recommendations:', error);
+      logger.error('Error generating comprehensive endpoint recommendations:', { error: error });
       return [];
     }
   }
@@ -242,10 +332,8 @@ export class EndpointRecommenderService {
         existing.evidence = [...existing.evidence, ...endpoint.evidence];
         existing.academic_references = endpoint.academic_references;
 
-        // Adjust success rate if academic evidence is strong
-        if (endpoint.evidence.length > 1 && existing.success_rate < 80) {
-          existing.success_rate = Math.min(90, existing.success_rate + 10);
-        }
+        // Corroborating academic evidence strengthens the evidence basis, but it is
+        // NOT a trial-success signal — do not synthesize a success rate from it.
       } else {
         // Add new endpoint
         endpointMap.set(key, endpoint);
@@ -257,12 +345,11 @@ export class EndpointRecommenderService {
       const key = endpoint.toLowerCase();
 
       if (endpointMap.has(key)) {
-        // Add regulatory guidance to existing endpoint
+        // Add regulatory guidance to existing endpoint. Regulatory backing raises the
+        // endpoint's evidence_strength (computed in the normalization pass), not a
+        // fabricated success rate.
         const existing = endpointMap.get(key)!;
         existing.regulatory_guidance = guidance;
-
-        // Boost success rate for regulatory-recommended endpoints
-        existing.success_rate = Math.min(95, existing.success_rate + 15);
       }
     }
 
@@ -283,8 +370,9 @@ export class EndpointRecommenderService {
         return bEvidenceStrength - aEvidenceStrength;
       }
 
-      // Then prioritize success rate
-      if (a.success_rate !== b.success_rate) {
+      // Then prefer a higher EMPIRICAL success rate, only when one is known for both
+      // (null = no outcome data; never treated as 0 or ranked).
+      if (a.success_rate != null && b.success_rate != null && a.success_rate !== b.success_rate) {
         return b.success_rate - a.success_rate;
       }
 
@@ -327,9 +415,9 @@ export class EndpointRecommenderService {
             academicResults.push(...results);
           }
         } catch (err) {
-          console.error(`Error searching academic knowledge for "${searchTerm}":`, err);
+          logger.error(`Error searching academic knowledge for "${searchTerm}":`, { error: err });
           // If the standard search fails, try with local fallback
-          console.log(`Generating local response from CSR data...`);
+          logger.info(`Generating local response from CSR data...`);
         }
       }
 
@@ -350,7 +438,7 @@ export class EndpointRecommenderService {
               academicEndpoints.set(endpoint.toLowerCase(), {
                 endpoint: endpoint,
                 occurrence_count: 1,
-                success_rate: 80, // Default good success rate for academic endpoints
+                success_rate: null, // Literature mention is not a trial-outcome rate — do not fabricate
                 evidence: [
                   {
                     source_id: result.id || 'academic-source',
@@ -399,13 +487,13 @@ export class EndpointRecommenderService {
             }
           }
         } catch (err) {
-          console.error('Error processing academic result:', err);
+          logger.error('Error processing academic result:', { error: err });
         }
       }
 
       return Array.from(academicEndpoints.values());
     } catch (error) {
-      console.error('Error getting academic endpoint guidance:', error);
+      logger.error('Error getting academic endpoint guidance:', { error: error });
       return [];
     }
   }
@@ -476,7 +564,7 @@ export class EndpointRecommenderService {
 
       return potentialEndpoints;
     } catch (error) {
-      console.error('Error extracting endpoints from text:', error);
+      logger.error('Error extracting endpoints from text:', { error: error });
       return [];
     }
   }
@@ -504,7 +592,7 @@ export class EndpointRecommenderService {
             if (!item.endpoint_text) continue;
 
             // Extract endpoint text and clean it
-            let endpoint = item.endpoint_text.trim();
+            const endpoint = item.endpoint_text.trim();
 
             // Skip if it's not suitable for the phase
             if (phase && item.phase && !item.phase.toLowerCase().includes(phase.toLowerCase())) {
@@ -542,7 +630,7 @@ export class EndpointRecommenderService {
 
       return result;
     } catch (error) {
-      console.error('Error getting regulatory guidance:', error);
+      logger.error('Error getting regulatory guidance:', { error: error });
       return {};
     }
   }
@@ -596,13 +684,13 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
           }
         }
       } catch (parseError) {
-        console.error('Error parsing AI regulatory guidance:', parseError);
+        logger.error('Error parsing AI regulatory guidance:', { error: parseError });
       }
 
       // Return empty object if parsing failed
       return {};
     } catch (error) {
-      console.error('Error generating AI regulatory guidance:', error);
+      logger.error('Error generating AI regulatory guidance:', { error: error });
       return {};
     }
   }
@@ -636,8 +724,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
           title: csrReports.title,
           sponsor: csrReports.sponsor,
           phase: csrReports.phase,
-          date: csrReports.date,
-          outcome: csrReports.outcome,
+          date: csrReports.reportDate,
         })
         .from(csrReports)
         .where(whereCondition)
@@ -675,6 +762,9 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
             sponsor: string;
             phase: string;
             date: string;
+            // The current csr_reports schema has no trial-outcome column, so
+            // this is left blank until an outcome source is wired in. Success
+            // classification below therefore counts no trials as successful.
             outcome: string;
           }>;
         }
@@ -685,6 +775,10 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
         try {
           const report = matchingReports.find(r => r.id === detail.reportId);
           if (!report) continue;
+
+          // No trial-outcome column exists on csr_reports in the current schema.
+          const reportDateStr = report.date ?? '';
+          const reportOutcome = '';
 
           const endpoints = (detail.endpoints as any) || {};
           const primaryEndpoints = endpoints.primary || [];
@@ -713,7 +807,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
             // Check if trial was successful
             const successOutcomes = ['positive', 'success', 'met', 'achieved', 'favorable'];
             const isSuccessful = successOutcomes.some(term =>
-              report.outcome?.toLowerCase().includes(term)
+              reportOutcome.toLowerCase().includes(term)
             );
 
             if (isSuccessful) {
@@ -726,8 +820,8 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
               title: report.title || '',
               sponsor: report.sponsor || '',
               phase: report.phase || '',
-              date: report.date || '',
-              outcome: report.outcome || '',
+              date: reportDateStr,
+              outcome: reportOutcome,
             });
           }
 
@@ -757,7 +851,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
               // Check if trial was successful
               const successOutcomes = ['positive', 'success', 'met', 'achieved', 'favorable'];
               const isSuccessful = successOutcomes.some(term =>
-                report.outcome?.toLowerCase().includes(term)
+                reportOutcome.toLowerCase().includes(term)
               );
 
               if (isSuccessful) {
@@ -770,40 +864,45 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
                 title: report.title || '',
                 sponsor: report.sponsor || '',
                 phase: report.phase || '',
-                date: report.date || '',
-                outcome: report.outcome || '',
+                date: reportDateStr,
+                outcome: reportOutcome,
               });
             }
           }
         } catch (error) {
-          console.error('Error processing CSR endpoints:', error);
+          logger.error('Error processing CSR endpoints:', { error: error });
         }
       }
 
       // Convert to EndpointRecommendation format
-      return Array.from(endpointStats.values())
+      return (Array.from(endpointStats.values())
         .filter(stat => stat.totalTrials > 0)
         .map(stat => {
+          // Emit an empirical rate ONLY when successful trials were actually recorded;
+          // otherwise null (do not fabricate, and do not report a misleading 0 when
+          // outcome status simply was not captured). Rank uses evidence_strength.
           const successRate =
-            stat.totalTrials > 0
+            stat.totalTrials > 0 && stat.successfulTrials > 0
               ? Math.round((stat.successfulTrials / stat.totalTrials) * 100)
-              : 75;
+              : null;
 
           return {
             endpoint: stat.endpoint,
             occurrence_count: stat.occurrences,
             success_rate: successRate,
-            evidence: stat.reports.slice(0, 3).map(report => ({
-              source_id: report.id.toString(),
-              source_type: 'csr',
-              title: report.title,
-              reference_text: `${report.sponsor} trial (${report.phase}): ${report.outcome || 'Completed'}`,
-              success_metric: report.outcome || undefined,
-              phase: report.phase,
-              confidence: 0.9,
-            })),
+            evidence: stat.reports.slice(0, 3).map(
+              (report): EndpointEvidence => ({
+                source_id: report.id.toString(),
+                source_type: 'csr',
+                title: report.title,
+                reference_text: `${report.sponsor} trial (${report.phase}): ${report.outcome || 'Completed'}`,
+                success_metric: report.outcome || undefined,
+                phase: report.phase,
+                confidence: 0.9,
+              })
+            ),
             is_primary: stat.isPrimary,
-            similar_endpoints: [],
+            similar_endpoints: [] as string[],
           };
         })
         .sort((a, b) => {
@@ -811,16 +910,16 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
           if (a.is_primary && !b.is_primary) return -1;
           if (!a.is_primary && b.is_primary) return 1;
 
-          // Then by success rate
-          if (a.success_rate !== b.success_rate) {
+          // Then by EMPIRICAL success rate, only when known for both (null = no data)
+          if (a.success_rate != null && b.success_rate != null && a.success_rate !== b.success_rate) {
             return b.success_rate - a.success_rate;
           }
 
           // Then by occurrence count
           return b.occurrence_count - a.occurrence_count;
-        });
+        })) as unknown as EndpointRecommendation[];
     } catch (error) {
-      console.error('Error getting endpoints with evidence:', error);
+      logger.error('Error getting endpoints with evidence:', { error: error });
       return [];
     }
   }
@@ -845,7 +944,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
       // Extract just the endpoint strings
       return recommendations.map(rec => rec.endpoint);
     } catch (error) {
-      console.error('Error getting endpoint recommendations:', error);
+      logger.error('Error getting endpoint recommendations:', { error: error });
       return [];
     }
   }
@@ -903,7 +1002,7 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
 
       return endpoints;
     } catch (error) {
-      console.error('Error getting endpoints from database:', error);
+      logger.error('Error getting endpoints from database:', { error: error });
       return [];
     }
   }
@@ -958,7 +1057,7 @@ Guidelines:
           .filter(Boolean)
           .slice(0, count);
       } catch (parseError) {
-        console.error('Error parsing AI response:', parseError);
+        logger.error('Error parsing AI response:', { error: parseError });
 
         // Last resort fallback: Split by quotes or line breaks
         return response
@@ -968,7 +1067,7 @@ Guidelines:
           .slice(0, count);
       }
     } catch (error) {
-      console.error('Error generating AI endpoints:', error);
+      logger.error('Error generating AI endpoints:', { error: error });
       return [];
     }
   }
@@ -981,7 +1080,7 @@ Guidelines:
     indication: string,
     phase: string = ''
   ): Promise<{
-    score: number;
+    score: number | null;   // null when the model returns no usable score — never fabricated
     feedback: string;
     similarEndpoints: string[];
   }> {
@@ -1018,32 +1117,34 @@ Provide a JSON response with:
           const similarEndpoints = await this.getSimilarEndpoints(endpoint, indication, 3);
 
           return {
-            score: evaluation.score || 75,
+            // Use the model's score only when it is a real number (0 is valid); never
+            // fabricate a fallback score when it is missing.
+            score: typeof evaluation.score === 'number' ? evaluation.score : null,
             feedback: evaluation.feedback || 'No specific feedback available',
             similarEndpoints,
           };
         }
 
-        // Fallback if JSON parsing fails
+        // Fallback if JSON parsing fails — no score is honest, not a made-up 70.
         return {
-          score: 70,
+          score: null,
           feedback:
             'Unable to parse structured feedback. Please review the endpoint for clarity and measurability.',
           similarEndpoints: await this.getSimilarEndpoints(endpoint, indication, 3),
         };
       } catch (parseError) {
-        console.error('Error parsing endpoint evaluation:', parseError);
+        logger.error('Error parsing endpoint evaluation:', { error: parseError });
         return {
-          score: 65,
+          score: null,
           feedback:
             'Endpoint evaluation failed. Please ensure the endpoint is clear, specific, and measurable.',
           similarEndpoints: [],
         };
       }
     } catch (error) {
-      console.error('Error evaluating endpoint:', error);
+      logger.error('Error evaluating endpoint:', { error: error });
       return {
-        score: 60,
+        score: null,
         feedback: 'An error occurred during evaluation. Please try again.',
         similarEndpoints: [],
       };
@@ -1092,7 +1193,7 @@ Provide a JSON response with:
 
       return filteredEndpoints;
     } catch (error) {
-      console.error('Error finding similar endpoints:', error);
+      logger.error('Error finding similar endpoints:', { error: error });
       return [];
     }
   }

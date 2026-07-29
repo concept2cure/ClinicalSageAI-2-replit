@@ -138,3 +138,43 @@ export {
   formatFabricStateForPrompt,
   type GovernedContextEnvelope,
 } from './governed-context-envelope.js';
+export {
+  ICH_GUIDELINES,
+  ICH_IMPLEMENTING_REGULATORS,
+  getGuideline,
+  guidelinesByCategory,
+  guidelinesForSegment,
+  searchGuidelines,
+  buildIchGuidelineBlock,
+  ichCorpusSummary,
+  type IchGuideline,
+  type IchCategory,
+  type IchStatus,
+  type IchCorpusSummary,
+} from './ich-guideline-corpus.js';
+export {
+  REGULATORY_PATHWAYS,
+  getPathway,
+  pathwaysByAgency,
+  pathwaysByKind,
+  searchPathways,
+  buildPathwaysBlock,
+  pathwaysSummary,
+  type RegulatoryPathway,
+  type PathwayAgency,
+  type PathwayKind,
+  type PathwaysSummary,
+} from './regulatory-pathways-corpus.js';
+export {
+  PHARMACOPOEIAS,
+  PHARMACOPOEIAL_CHAPTERS,
+  getPharmacopoeia,
+  getChapter,
+  harmonizedChapters,
+  searchChapters,
+  buildPharmacopoeiaBlock,
+  pharmacopoeiaSummary,
+  type Pharmacopoeia,
+  type PharmacopoeialChapter,
+  type PharmacopoeiaSummary,
+} from './pharmacopoeia-corpus.js';

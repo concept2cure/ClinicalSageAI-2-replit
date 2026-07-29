@@ -276,7 +276,7 @@ export default class FDAFormGenerator {
     };
 
     // Calculate completeness
-    const requiredFields = ['applicantName', 'deviceName', 'deviceClass', 'productCode'];
+    const requiredFields: (keyof typeof formData3514)[] = ['applicantName', 'deviceName', 'deviceClass', 'productCode'];
     const filledFields = requiredFields.filter(field => formData3514[field] && formData3514[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
@@ -309,7 +309,7 @@ export default class FDAFormGenerator {
     };
 
     // Calculate completeness
-    const requiredFields = ['applicantName', 'deviceName', 'feeCategory', 'paymentMethod', 'feeAmount'];
+    const requiredFields: (keyof typeof formData3601)[] = ['applicantName', 'deviceName', 'feeCategory', 'paymentMethod', 'feeAmount'];
     const filledFields = requiredFields.filter(field => formData3601[field] && formData3601[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
@@ -354,7 +354,7 @@ export default class FDAFormGenerator {
     };
 
     // Calculate completeness
-    const requiredFields = ['deviceName', 'intendedUse', 'indications'];
+    const requiredFields: (keyof typeof formData3881)[] = ['deviceName', 'intendedUse', 'indications'];
     const filledFields = requiredFields.filter(field => formData3881[field] && formData3881[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
@@ -389,7 +389,7 @@ export default class FDAFormGenerator {
     };
 
     // Calculate completeness
-    const requiredFields = ['applicantName', 'deviceName', 'certifierName', 'certifierTitle'];
+    const requiredFields: (keyof typeof formData3654)[] = ['applicantName', 'deviceName', 'certifierName', 'certifierTitle'];
     const filledFields = requiredFields.filter(field => formData3654[field] && formData3654[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 

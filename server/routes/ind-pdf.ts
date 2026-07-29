@@ -22,6 +22,7 @@ import { registerExportGovernanceQuick } from '../services/compute/exportGoverna
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
+// @ts-ignore — JS module without bundled types
 import { extractPdfWithPython } from '../services/unifiedDocumentIngestion.js';
 
 const router = Router();
@@ -251,7 +252,7 @@ function buildINDHtml(opts: {
 async function renderWithPuppeteer(html: string): Promise<Buffer> {
   const cluster = await getCluster();
   if (cluster) {
-    return cluster.execute(async ({ page }) => {
+    return cluster.execute(async ({ page }: { page: any }) => {
       await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
       const pdf = await page.pdf({
         format: 'Letter',
@@ -274,7 +275,7 @@ async function renderWithPuppeteer(html: string): Promise<Buffer> {
 
 function renderFallbackPdf(html: string): Promise<Buffer> {
   return new Promise(resolve => {
-    const doc = new PDFDocument({ margin: 72, size: 'LETTER' });
+    const doc = new PDFDocument({ margins: { top: 72, bottom: 72, left: 72, right: 72 }, size: 'LETTER' });
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -324,7 +325,7 @@ function renderFallbackPdf(html: string): Promise<Buffer> {
  * POST /:projectId/generate — Generate full IND PDF
  */
 router.post('/:projectId/generate', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -444,12 +445,18 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
 
     console.log(`[IND-PDF] Generated ${pdfBuffer.length} bytes → ${filepath}`);
 
-    // Register governed export (fail-closed for regulated outputs)
+    // Register governed export (fail-closed for regulated outputs).
+    // SECURITY: JWT-bound. The previous `|| 1` / `|| 0` fallback
+    // attributed exports to org 1 / user 0 when JWT was missing.
     const user = (req as any).user;
+    const govOrgId = user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (govOrgId == null || user?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
     await registerExportGovernanceQuick({
-      organizationId: user?.organizationId || 1,
+      organizationId: Number(govOrgId),
       projectId: Number(projectId) || 0,
-      userId: user?.id || 0,
+      userId: Number(user.id),
       userName: user?.name || user?.email || 'unknown',
       title: `IND PDF: Project ${projectId}`,
       exportFormat: 'pdf',
@@ -490,7 +497,7 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
  * POST /:projectId/section — Generate PDF for a single section
  */
 router.post('/:projectId/section', async (req: Request, res: Response) => {
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
@@ -545,12 +552,17 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
     );
     res.setHeader('Content-Length', String(pdfBuffer.length));
 
-    // Register governed export (fail-closed for regulated outputs)
+    // Register governed export (fail-closed for regulated outputs).
+    // SECURITY: JWT-bound — see the export above.
     const secUser = (req as any).user;
+    const secOrgId = secUser?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (secOrgId == null || secUser?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
     await registerExportGovernanceQuick({
-      organizationId: secUser?.organizationId || 1,
+      organizationId: Number(secOrgId),
       projectId: Number(projectId) || 0,
-      userId: secUser?.id || 0,
+      userId: Number(secUser.id),
       userName: secUser?.name || secUser?.email || 'unknown',
       title: `IND Section PDF: ${sectionCode}`,
       exportFormat: 'pdf',
@@ -574,10 +586,10 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
  */
 router.get('/:projectId/download/:filename', async (req: Request, res: Response) => {
   try {
-    const { filename } = req.params;
+    const { filename } = req.params as { filename: string };
 
     // Sanitize filename to prevent path traversal
-    const safeName = path.basename(filename);
+    const safeName = path.basename(String(filename));
     const filepath = path.join(process.cwd(), 'exports', 'pdf', safeName);
 
     if (!fs.existsSync(filepath)) {
@@ -710,7 +722,8 @@ router.post('/:projectId/import-content', upload.single('file'), async (req: Req
  */
 router.get('/conversion/health', async (_req: Request, res: Response) => {
   try {
-    const { isPdfConversionAvailable } = await import('../services/pdfConversionService.js');
+    const mod = (await import('../services/pdfConversionService.js' as any)) as any;
+    const isPdfConversionAvailable = mod.isPdfConversionAvailable;
     const available = await isPdfConversionAvailable();
     res.json({
       service: 'docx-to-pdf',
@@ -752,7 +765,8 @@ router.post('/convert/docx-to-pdf', docxUpload.single('file'), async (req: Reque
       return res.status(400).json({ error: 'No DOCX file provided. Use field name "file".' });
     }
 
-    const { convertDocxToPdf } = await import('../services/pdfConversionService.js');
+    const mod = (await import('../services/pdfConversionService.js' as any)) as any;
+    const convertDocxToPdf = mod.convertDocxToPdf;
     const pdfBuffer = await convertDocxToPdf(req.file.buffer);
 
     const baseName = path.basename(req.file.originalname, '.docx');

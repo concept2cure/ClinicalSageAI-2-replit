@@ -23,6 +23,7 @@ import { regulatoryOutcomeOptimizerService } from '../services/regulatory-outcom
 import { estimandEngineService } from '../services/estimand-engine-service';
 import { CollaborativeSapService } from '../services/collaborative-sap-service';
 import { ExternalControlArmService } from '../services/external-control-arm-service';
+import biostatDesignStatsRouter from './biostat-design-stats';
 import {
   runJudgmentPipeline,
   runPipelineAndGenerateArtifact,
@@ -73,7 +74,7 @@ router.post('/continuum/initialize', authMiddleware, async (req: Request, res: R
     const { title, indication, phase, designType, endpoints, regulatoryContext } = req.body;
 
     const result = await statisticalContinuumService.initializeThread(
-      { title, indication, phase, primary_endpoint: endpoints?.[0], sample_size: req.body.sampleSize || 200 },
+      { title, indication, phase, primaryEndpoint: endpoints?.[0], sampleSize: req.body.sampleSize || 200 },
       orgId,
       userId
     );
@@ -222,7 +223,7 @@ router.post('/design-optimizer/recommend', authMiddleware, async (req: Request, 
     const { indication, phase, endpoints, constraints, regulatoryAgencies } = req.body;
 
     const result = await regulatoryOutcomeOptimizerService.recommendDesign(
-      { indication, phase, endpoints, constraints },
+      { indication, phase, endpoint: endpoints?.[0] },
       orgId
     );
     res.json({ success: true, data: result });
@@ -238,7 +239,7 @@ router.post('/design-optimizer/recommend', authMiddleware, async (req: Request, 
 router.get('/design-optimizer/regulatory-precedents/:indication', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const indication = req.params.indication;
+    const indication = String(req.params.indication);
     const { agency, phase, year } = req.query;
 
     const result = await regulatoryOutcomeOptimizerService.getRegulatoryPrecedents(indication, orgId);
@@ -339,10 +340,22 @@ router.post('/multiplicity/design', authMiddleware, async (req: Request, res: Re
 router.get('/estimand/regulatory-examples/:indication', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const indication = req.params.indication;
+    const indication = String(req.params.indication);
     const { agency, phase } = req.query;
 
-    const strategy = req.query.strategy as string | undefined;
+    const VALID_STRATEGIES = [
+      'treatment_policy',
+      'hypothetical',
+      'composite',
+      'principal_stratum',
+      'while_on_treatment',
+    ] as const;
+    const rawStrategy = req.query.strategy;
+    const strategy =
+      typeof rawStrategy === 'string' &&
+      (VALID_STRATEGIES as readonly string[]).includes(rawStrategy)
+        ? (rawStrategy as (typeof VALID_STRATEGIES)[number])
+        : undefined;
     const result = await estimandEngineService.getRegulatoryExamples(indication, strategy, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
@@ -399,7 +412,7 @@ router.put('/sap/:sapVersionId/section/:sectionId', authMiddleware, async (req: 
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
     const sapVersionId = Number(req.params.sapVersionId);
-    const sectionId = req.params.sectionId;
+    const sectionId = String(req.params.sectionId);
     const { content, trackChanges } = req.body;
 
     const result = await collaborativeSapService.updateSection(
@@ -828,6 +841,11 @@ router.get('/adaptive/:planId/operating-characteristics', authMiddleware, async 
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Design-statistics routes (extracted to biostat-design-stats.ts)
+// ═══════════════════════════════════════════════════════════════════════════════
+router.use(biostatDesignStatsRouter);
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CAPABILITY 7: Biostatistics Knowledge Graph
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -854,7 +872,7 @@ router.post('/knowledge/query', authMiddleware, async (req: Request, res: Respon
 router.get('/knowledge/method-landscape/:indication', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const indication = req.params.indication;
+    const indication = String(req.params.indication);
     const { phase, agency } = req.query;
 
     const result = await biostatKnowledgeGraphService.getMethodLandscape(indication, orgId);
@@ -908,7 +926,7 @@ router.post('/knowledge/ingest-csr', authMiddleware, async (req: Request, res: R
 router.get('/knowledge/trend/:concept', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const concept = req.params.concept;
+    const concept = String(req.params.concept);
     const { startYear, endYear, granularity } = req.query;
 
     const result = await biostatKnowledgeGraphService.getMethodTrend(concept, orgId);

@@ -19,10 +19,24 @@ import {
 import { getAllActions, getActionsForLens } from '../../services/ana-ri/document-actions.js';
 import { getFullRubric } from '../../services/ana-ri/evaluation.js';
 import type { IntentLens } from '../../services/ana-ri/index.js';
-import { sendSuccess } from './shared.js';
+import { sendSuccess, sendError } from './shared.js';
+import { validateDraftSection } from '../../services/authoring/section-validation.js';
 
 /** Register catalog / lookup endpoints on the given router. */
 export function mountLookupRoutes(router: Router): void {
+  // ─────────────────────────────────────────────────────────────────────────
+  // POST /api/ana-ri/validate-draft — run AnA's evidence-discipline check on a
+  // user's DRAFT section text (grounding verdict + one-line trust summary).
+  // Pure / stateless: analyzes only the supplied text. A UI can call it on a
+  // debounce for live "is this defensible?" feedback while authoring.
+  // ─────────────────────────────────────────────────────────────────────────
+  router.post('/validate-draft', (req: Request, res: Response) => {
+    const text = typeof req.body?.text === 'string' ? req.body.text : null;
+    if (text === null) {
+      return sendError(res, 400, 'A "text" string is required', null, 'INVALID_TEXT');
+    }
+    return sendSuccess(res, validateDraftSection(text));
+  });
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/deficiencies — Query Deficiency Taxonomy
   // ─────────────────────────────────────────────────────────────────────────

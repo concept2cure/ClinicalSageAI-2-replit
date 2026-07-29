@@ -12,7 +12,12 @@ import { ProjectQuickSwitcher } from './modals/ProjectQuickSwitcher';
 import { ProjectNotifications } from './modals/ProjectNotifications';
 import { NewProjectDialog } from './modals/NewProjectDialog';
 
-export function ProjectsScreen() {
+interface Props {
+  /** Deep-link an IND program into a PDEV surface (overview / ind_assembly / fda_interactions). */
+  onOpenPdev?: (programId: string, nav: string) => void;
+}
+
+export function ProjectsScreen({ onOpenPdev }: Props = {}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -42,6 +47,7 @@ export function ProjectsScreen() {
           project={project}
           onBack={() => setOpenId(null)}
           onProjectMutated={refetch}
+          onOpenPdev={onOpenPdev}
         />
       ) : (
         <ProjectsList

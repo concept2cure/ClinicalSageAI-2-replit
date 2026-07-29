@@ -121,36 +121,56 @@ export const EMA_TEMPLATE: RegionalTemplate = {
     'English preferred for centralised procedure',
     'Pharmacovigilance System Master File required',
   ],
+  // Module 1 per the authoritative EU Module 1 eCTD Specification (EMA eSubmission
+  // portal / Notice to Applicants). Verified headings: 1.0 Cover Letter, 1.1 TOC,
+  // 1.2 Application Form, 1.3 Product Information, 1.4 Experts, 1.5 Specific
+  // Requirements, 1.6 Environmental Risk Assessment, 1.7 Orphan Market Exclusivity,
+  // 1.8 Pharmacovigilance (1.8.1 PSMF / 1.8.2 RMP), 1.9 Clinical Trials, 1.10 Paediatrics.
   module1Sections: [
-    { number: '1.0', title: 'Regional Cover Letter', required: true, description: 'EU-specific cover letter' },
-    { number: '1.2', title: 'Application Form', required: true, description: 'Completed EMA application form' },
+    { number: '1.0', title: 'Cover Letter', required: true, description: 'EU regional cover letter' },
+    { number: '1.1', title: 'Comprehensive Table of Contents', required: true, description: 'Table of contents covering Modules 1–5' },
+    { number: '1.2', title: 'Application Form', required: true, description: 'Completed EU application form' },
     {
-      number: '1.3', title: 'Product Information', required: true, description: 'SmPC, PIL, Labelling',
+      number: '1.3', title: 'Product Information', required: true, description: 'SmPC, labelling and package leaflet',
       childSections: [
-        { number: '1.3.1', title: 'Summary of Product Characteristics (SmPC)', titleLocal: 'SmPC', required: true, description: 'Harmonised SmPC for all EU member states' },
-        { number: '1.3.2', title: 'Mock-up/Specimen of Outer/Inner Packaging', required: true, description: 'Artwork for packaging' },
-        { number: '1.3.3', title: 'Package Leaflet (PIL)', required: true, description: 'Patient Information Leaflet' },
-        { number: '1.3.4', title: 'Labelling', required: true, description: 'Labelling text' },
+        { number: '1.3.1', title: 'SmPC, Labelling and Package Leaflet', titleLocal: 'SmPC', required: true, description: 'Proposed Summary of Product Characteristics, labelling and package leaflet' },
+        { number: '1.3.2', title: 'Mock-up', required: false, description: 'Mock-ups of the outer/immediate packaging and the package leaflet' },
+        { number: '1.3.3', title: 'Specimen', required: false, description: 'Specimens of the packaging, where applicable' },
+        { number: '1.3.4', title: 'Consultation with Target Patient Groups', required: false, description: 'Package-leaflet readability / user-testing results' },
       ],
     },
-    { number: '1.4', title: 'Information about the Experts', required: true, description: 'Qualifications of module 2-5 experts' },
     {
-      number: '1.5', title: 'Specific Requirements for Different Types of Applications', required: false, description: 'Additional requirements by procedure type',
+      number: '1.4', title: 'Information about the Experts', required: true, description: 'Expert declarations and signatures',
       childSections: [
-        { number: '1.5.1', title: 'Bibliographic Applications', required: false, description: 'For well-established use applications' },
-        { number: '1.5.2', title: 'Generic/Hybrid/Biosimilar', required: false, description: 'For generic, hybrid, or biosimilar applications' },
+        { number: '1.4.1', title: 'Quality', required: true, description: 'Quality expert declaration' },
+        { number: '1.4.2', title: 'Non-Clinical', required: true, description: 'Non-clinical expert declaration' },
+        { number: '1.4.3', title: 'Clinical', required: true, description: 'Clinical expert declaration' },
       ],
     },
-    { number: '1.6', title: 'Environmental Risk Assessment', required: true, description: 'ERA as per CHMP/SWP/4447/00' },
-    { number: '1.7', title: 'Pharmacovigilance System', required: true, description: 'PSMF summary, QPPV information, RMP summary' },
     {
-      number: '1.8', title: 'Risk Management Plan', required: true, description: 'Full RMP per GVP Module V',
+      number: '1.5', title: 'Specific Requirements for Different Types of Applications', required: false, description: 'Additional requirements by application type',
       childSections: [
-        { number: '1.8.1', title: 'Risk Management Plan', required: true, description: 'Complete EU-RMP' },
-        { number: '1.8.2', title: 'RMP Summary', required: true, description: 'Summary of the RMP for public assessment' },
+        { number: '1.5.1', title: 'Information for Bibliographical Applications', required: false, description: 'Well-established use applications' },
+        { number: '1.5.2', title: 'Information for Generic, Hybrid or Bio-similar Applications', required: false, description: 'Generic / hybrid / biosimilar applications' },
       ],
     },
-    { number: '1.9', title: 'Information Relating to Orphan Market Exclusivity', required: false, description: 'Orphan designation details' },
+    { number: '1.6', title: 'Environmental Risk Assessment', required: true, description: 'ERA (incl. GMO aspects where applicable)' },
+    {
+      number: '1.7', title: 'Information relating to Orphan Market Exclusivity', required: false, description: 'Orphan similarity and market exclusivity',
+      childSections: [
+        { number: '1.7.1', title: 'Similarity', required: false, description: 'Report on similarity with authorised orphan medicinal products' },
+        { number: '1.7.2', title: 'Market Exclusivity', required: false, description: 'Market-exclusivity considerations' },
+      ],
+    },
+    {
+      number: '1.8', title: 'Information relating to Pharmacovigilance', required: true, description: 'Pharmacovigilance system and risk management',
+      childSections: [
+        { number: '1.8.1', title: 'Pharmacovigilance System', required: true, description: 'Summary of the pharmacovigilance system (PSMF summary), incl. the QPPV' },
+        { number: '1.8.2', title: 'Risk Management System', required: true, description: 'EU Risk Management Plan (EU-RMP)' },
+      ],
+    },
+    { number: '1.9', title: 'Information relating to Clinical Trials', required: false, description: 'Statement on GCP compliance for clinical trials conducted outside the EU/EEA' },
+    { number: '1.10', title: 'Information relating to Paediatrics', required: false, description: 'PIP / PDCO decision, deferral or waiver information' },
   ],
 };
 
@@ -172,20 +192,33 @@ export const PMDA_TEMPLATE: RegionalTemplate = {
     'PMDA pre-submission consultation recommended',
     'Japanese language required for Module 1',
     'J-NDA or J-BLA submission format',
-    'eCTD format required since 2017',
+    'eCTD is the required submission format (eCTD v4.0 mandatory for new applications from 1 April 2026)',
     'PMDA review fee required',
     'Bridging study data may be required',
+    'Reexamination period (再審査期間): 8 years for a new active ingredient, 10 for orphan drugs, 6 for a new combination or route of administration, 4 for new efficacy/indication or dosage',
+    'Electronic study data (申請電子データ, CDISC-compliant) required for new drug applications',
+    'Risk Management Plan (J-RMP) and Early Post-marketing Phase Vigilance (市販直後調査 / EPPV) required',
+    'Overseas sponsors without a Japanese MAH use the Foreign Special Approval system (外国特例承認) with a Designated MAH (選任製造販売業者 / D-MAH)',
+    'NHI price listing (薬価収載) via Chuikyo (中医協) follows approval and gates reimbursement',
   ],
+  // Module 1 structure per the Japanese CTD framework (MHLW/PMDA CTD構成 notification
+  // and the JPMA eCTD 作成の手引き). Section numbers verified against authoritative JP
+  // guidance: 承認申請書 = 1.2, 同種同効品一覧表 = 1.7, 添付文書 = 1.8,
+  // 製造販売後調査基本計画書 = 1.11 (the J-RMP draft is submitted here), その他 = 1.13.
   module1Sections: [
-    { number: '1.1', title: 'Application Form', titleLocal: '承認申請書', required: true, description: 'PMDA application form (Japanese)' },
-    { number: '1.2', title: 'Certificate of Compliance with GMP', titleLocal: '適合性調査結果通知書', required: true, description: 'GMP compliance certificate' },
-    { number: '1.3', title: 'Origin and Manufacturing Certificate', titleLocal: '原薬等製造管理証明書', required: true, description: 'Certificate of origin and manufacturing location' },
-    { number: '1.4', title: 'Drug Master File Information', titleLocal: 'MF登録情報', required: false, description: 'MF registration details if applicable' },
-    { number: '1.5', title: 'Response to Preliminary Review', titleLocal: '照会事項回答', required: false, description: 'Responses to PMDA review questions' },
-    { number: '1.6', title: 'Package Insert', titleLocal: '添付文書', required: true, description: 'Japanese Package Insert (JPI)' },
-    { number: '1.7', title: 'Risk Management Plan', titleLocal: '医薬品リスク管理計画書', required: true, description: 'J-RMP (Japanese Risk Management Plan)' },
-    { number: '1.8', title: 'Information on Similar Drugs in Japan', titleLocal: '類似薬選定情報', required: false, description: 'Comparison with similar products approved in Japan' },
-    { number: '1.12', title: 'SAKIGAKE/Conditional Approval Information', titleLocal: '先駆け審査指定情報', required: false, description: 'If applicable to accelerated review programs' },
+    { number: '1.1', title: 'Table of Contents', titleLocal: '第1部（モジュール1）目次', required: true, description: 'Module 1 table of contents' },
+    { number: '1.2', title: 'Application Form', titleLocal: '承認申請書(写)', required: true, description: 'Copy of the marketing-approval application form (承認申請書)' },
+    { number: '1.3', title: 'Certificates', titleLocal: '証明書類', required: false, description: 'Certificates required for the application (e.g. GMP compliance, foreign approval)' },
+    { number: '1.4', title: 'Patent Status', titleLocal: '特許状況', required: false, description: 'Patent information relevant to the application' },
+    { number: '1.5', title: 'Origin / History of Discovery and Development', titleLocal: '起原又は発見の経緯及び開発の経緯', required: true, description: 'Background on the origin/discovery and the development history' },
+    { number: '1.6', title: 'Status of Use in Foreign Countries', titleLocal: '外国における使用状況等に関する資料', required: false, description: 'Approval and use status in other countries' },
+    { number: '1.7', title: 'List of Drugs with Similar Indications/Efficacy', titleLocal: '同種同効品一覧表', required: true, description: 'Comparison table of products with similar indications/efficacy in Japan' },
+    { number: '1.8', title: 'Package Insert (Draft)', titleLocal: '添付文書(案)', required: true, description: 'Draft Japanese Package Insert (添付文書 / JPI)' },
+    { number: '1.9', title: 'Documents on the Nonproprietary Name', titleLocal: '一般的名称に係る文書', required: false, description: 'Documents related to the Japanese Accepted Name (JAN), if applicable' },
+    { number: '1.10', title: 'Poisonous/Powerful Drug Designation Materials', titleLocal: '毒薬・劇薬等の指定審査資料のまとめ', required: false, description: 'Summary supporting poisonous/powerful-drug or related designations' },
+    { number: '1.11', title: 'Post-Marketing Surveillance Plan / Risk Management Plan', titleLocal: '製造販売後調査基本計画書(案)／医薬品リスク管理計画書(案)', required: false, description: 'Post-marketing surveillance basic plan; the J-RMP (医薬品リスク管理計画(案)) is submitted here for new drug applications' },
+    { number: '1.12', title: 'List of Attached Materials', titleLocal: '添付資料一覧', required: true, description: 'Index/list of all attached data and materials' },
+    { number: '1.13', title: 'Others', titleLocal: 'その他', required: false, description: 'Japan-specific items (e.g. 1.13.x: references to previously approved products, electronic study-data notices, and accelerated-review / SAKIGAKE / 先駆的医薬品 designation information)' },
   ],
 };
 
@@ -211,16 +244,67 @@ export const NMPA_TEMPLATE: RegionalTemplate = {
     'Drug MAH (Marketing Authorization Holder) system since 2019',
     'Drug agent in China required for overseas applicants',
   ],
+  // Module 1 per the authoritative NMPA M4 Module 1 — Administrative Documents and
+  // Drug Information (行政文件和药品信息, NMPA notice 2019 No. 17, effective 1 July 2019;
+  // nmpa.gov.cn). Verified headings: 1.0 说明函 Cover Letter, 1.1 目录 Table of
+  // Contents, 1.2 申请表 Application Form, 1.3 产品信息相关材料 Product Information
+  // (说明书 / 包装标签 / 产品质量标准和生产工艺 / 临床试验相关资料 / 产品证明性文件).
   module1Sections: [
-    { number: '1.1', title: 'Application Form', titleLocal: '药品注册申请表', required: true, description: 'CDE application form in Chinese' },
-    { number: '1.2', title: 'Drug Certificate', titleLocal: '药品证书', required: true, description: 'Proof of approval in country of origin (if imported)' },
-    { number: '1.3', title: 'GMP Certificate', titleLocal: 'GMP证书', required: true, description: 'GMP compliance certification' },
-    { number: '1.4', title: 'Manufacturer Authorization', titleLocal: '生产企业授权书', required: true, description: 'Authorization from manufacturer to MAH' },
-    { number: '1.5', title: 'Agent Authorization', titleLocal: '代理人授权书', required: false, description: 'Authorization for Chinese agent (imported drugs)' },
-    { number: '1.6', title: 'Package Label and Insert', titleLocal: '说明书和标签', required: true, description: 'Chinese labeling and package insert' },
-    { number: '1.7', title: 'Drug Sample Information', titleLocal: '药品样品信息', required: false, description: 'Sample submission requirements' },
-    { number: '1.8', title: 'Self-Inspection Report', titleLocal: '自查报告', required: true, description: 'Clinical trial data self-inspection report' },
-    { number: '1.15', title: 'Clinical Trial Protocol', titleLocal: '临床试验方案', required: false, description: 'Protocol for Chinese clinical trials if required' },
+    { number: '1.0', title: 'Cover Letter', titleLocal: '说明函', required: true, description: 'Cover letter summarizing the key information of the application' },
+    { number: '1.1', title: 'Comprehensive Table of Contents', titleLocal: '目录', required: true, description: 'Table of contents / navigation structure for the submission' },
+    { number: '1.2', title: 'Application Form', titleLocal: '申请表', required: true, description: 'CDE drug registration application form (Chinese)' },
+    {
+      number: '1.3', title: 'Product Information', titleLocal: '产品信息相关材料', required: true, description: 'Prescribing information, labelling, quality/process, clinical and certification documents',
+      childSections: [
+        { number: '1.3.1', title: 'Prescribing Information', titleLocal: '说明书', required: true, description: 'Chinese package insert / prescribing information' },
+        { number: '1.3.2', title: 'Packaging and Labels', titleLocal: '包装标签', required: true, description: 'Chinese packaging and label text' },
+        { number: '1.3.3', title: 'Product Quality Standards and Manufacturing Process', titleLocal: '产品质量标准和生产工艺', required: true, description: 'Drug quality standards and manufacturing process (incl. GMP compliance)' },
+        { number: '1.3.4', title: 'Clinical Trial Materials', titleLocal: '临床试验相关资料', required: false, description: 'Clinical trial protocol/data and self-inspection report, where applicable' },
+        { number: '1.3.5', title: 'Product Certification Documents', titleLocal: '产品证明性文件', required: true, description: 'Drug approval/origin certificate, manufacturer authorization, and Chinese agent authorization (imported drugs)' },
+      ],
+    },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MFDS (South Korea)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const MFDS_TEMPLATE: RegionalTemplate = {
+  agency: 'MFDS',
+  region: 'KR',
+  language: 'ko',
+  currency: 'KRW',
+  forms: [
+    { name: 'Marketing Authorization Application', formId: 'mfds-maa', required: true, description: '의약품 품목허가·신고 신청서 (MFDS marketing-authorization / notification application form, Korean)' },
+  ],
+  prescribingInfoTemplate: 'mfds-prescribing-information',
+  coverLetterTemplate: 'mfds-cover-letter',
+  specificRequirements: [
+    'Korea uses the K-CTD (의약품 국제공통기술문서); Module 1 = Administrative Information and Prescribing Information',
+    'Korean-language Module 1 documents required (행정정보 / 표지문서 / 신청서 / 제품정보)',
+    'MFDS electronic submission; eCTD v4.0 voluntary phase expected from 2027 (mandatory date not yet set)',
+    'Korean GMP (KGMP) compliance; DMF (Drug Master File) where applicable',
+    'Local marketing-authorization holder or Korean agent required for foreign applicants',
+    '⚠ APPROXIMATE: the Module 1 section numbering below reflects confirmed K-CTD content areas and general ICH M1 convention — verify against the official MFDS K-CTD guidance (의약품 국제공통기술문서(CTD) 해설서) before relying on exact numbers',
+  ],
+  // NOTE: K-CTD Module 1 — Administrative Information and Prescribing Information.
+  // The content areas (행정정보 / 표지문서 / 신청서 / 제품정보) are confirmed from MFDS
+  // guidance, but the exact section numbering is not published in accessible English
+  // sources; the numbering below is an ICH-M1-convention approximation and is flagged
+  // as such in specificRequirements above. Verify against the official MFDS K-CTD 해설서.
+  module1Sections: [
+    { number: '1.1', title: 'Comprehensive Table of Contents', titleLocal: '목차', required: true, description: 'Table of contents for the K-CTD submission' },
+    { number: '1.2', title: 'Cover Letter', titleLocal: '표지문서', required: true, description: 'Submission cover document' },
+    { number: '1.3', title: 'Application Form', titleLocal: '신청서', required: true, description: '의약품 품목허가·신고 신청서 (MFDS marketing-authorization application form, Korean)' },
+    { number: '1.4', title: 'Administrative Information', titleLocal: '행정정보', required: true, description: 'Certificates, authorizations and qualification documents (e.g., KGMP, manufacturer / Korean-agent authorization)' },
+    {
+      number: '1.5', title: 'Product Information', titleLocal: '제품정보', required: true, description: 'Korean prescribing information and labeling',
+      childSections: [
+        { number: '1.5.1', title: 'Prescribing Information', titleLocal: '첨부문서(허가사항)', required: true, description: 'Korean prescribing information / package insert' },
+        { number: '1.5.2', title: 'Labeling', titleLocal: '표시기재', required: true, description: 'Korean labeling and packaging text' },
+      ],
+    },
   ],
 };
 
@@ -233,6 +317,7 @@ const TEMPLATES: Record<string, RegionalTemplate> = {
   EMA: EMA_TEMPLATE,
   PMDA: PMDA_TEMPLATE,
   NMPA: NMPA_TEMPLATE,
+  MFDS: MFDS_TEMPLATE,
 };
 
 /**

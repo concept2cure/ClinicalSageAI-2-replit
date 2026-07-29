@@ -9,6 +9,8 @@ import { Router, Request, Response } from 'express';
 import unifiedTaskService, { MODULE_CONFIG } from '../services/unifiedTaskService';
 import { storage } from '../storage';
 import { z } from 'zod';
+import { getSecureOrgId } from '../utils/tenantContext';
+import { auditTaskAction } from '../services/tasking/task-audit';
 
 const router = Router();
 
@@ -44,20 +46,64 @@ const linkTaskSchema = z.object({
 });
 
 /**
+ * Resolve the tenant org id from the verified JWT (never from client-supplied
+ * headers / query / body). Writes a 401 and returns null when there is no org
+ * context. Every handler in this router scopes to this value — historically the
+ * router trusted a client `organizationId`, which was a cross-tenant IDOR.
+ */
+function requireOrgId(req: Request, res: Response): number | null {
+  const raw = getSecureOrgId(req);
+  const org = raw ? Number(raw) : NaN;
+  if (!Number.isFinite(org) || org <= 0) {
+    res.status(401).json({ success: false, error: 'Organization context required' });
+    return null;
+  }
+  return org;
+}
+
+/**
+ * Find a single task by taskId/id, scoped to the caller's org, so the by-id
+ * read/mutation paths cannot touch another tenant's task. Returns null when the
+ * id is not present in the caller's org (the caller then responds 404).
+ */
+async function findOrgTask(org: number, id: string) {
+  const tasks = await unifiedTaskService.getAllUnifiedTasks({ organizationId: org, limit: 2000 });
+  return tasks.find((t) => t.taskId === id || t.id === parseInt(id)) ?? null;
+}
+
+/**
  * POST /api/regulatory/tasks/unified
  * Create tasks from any module
  */
 router.post('/unified', async (req: Request, res: Response) => {
   try {
+    const org = requireOrgId(req, res);
+    if (org == null) return;
     const validatedData = createTaskSchema.parse(req.body);
-    
-    // Convert dueDate string to Date object if present
+
+    // Convert dueDate string to Date object if present. The org id is taken
+    // from the verified JWT, never the client-supplied body value.
     const taskData = {
       ...validatedData,
+      organizationId: org,
       dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
     };
     
     const task = await unifiedTaskService.createUnifiedTask(taskData);
+
+    await auditTaskAction({
+      orgId: org,
+      userId: (req as any).user?.id,
+      command: 'task.create',
+      taskId: task?.taskId ?? String(task?.id ?? ''),
+      payload: {
+        moduleType: validatedData.moduleType,
+        title: validatedData.title,
+        priority: validatedData.priority ?? 'medium',
+        status: 'pending',
+      },
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
     
     res.status(201).json({
       success: true,
@@ -79,8 +125,9 @@ router.post('/unified', async (req: Request, res: Response) => {
  */
 router.get('/all', async (req: Request, res: Response) => {
   try {
+    const org = requireOrgId(req, res);
+    if (org == null) return;
     const {
-      organizationId,
       clientWorkspaceId,
       projectId,
       status,
@@ -90,8 +137,11 @@ router.get('/all', async (req: Request, res: Response) => {
       offset = '0',
     } = req.query;
 
+    // Org id is always the verified JWT org — the client-supplied
+    // organizationId query param is ignored (was a cross-tenant IDOR where an
+    // absent param returned every tenant's tasks).
     const tasks = await unifiedTaskService.getAllUnifiedTasks({
-      organizationId: organizationId ? parseInt(organizationId as string) : undefined,
+      organizationId: org,
       clientWorkspaceId: clientWorkspaceId ? parseInt(clientWorkspaceId as string) : undefined,
       projectId: projectId ? parseInt(projectId as string) : undefined,
       status: status as string,
@@ -137,8 +187,8 @@ router.get('/all', async (req: Request, res: Response) => {
  */
 router.get('/by-module/:module', async (req: Request, res: Response) => {
   try {
-    const { module } = req.params;
-    const { organizationId, status, limit = '50' } = req.query;
+    const module = String(req.params.module);
+    const { status, limit = '50' } = req.query;
 
     if (!['CMC', 'IND', 'MedicalDevice', 'eCTD', 'Vault', 'ProtocolDesign'].includes(module)) {
       return res.status(400).json({
@@ -147,10 +197,12 @@ router.get('/by-module/:module', async (req: Request, res: Response) => {
       });
     }
 
+    const org = requireOrgId(req, res);
+    if (org == null) return;
     const tasks = await unifiedTaskService.getTasksByModule(
       module as keyof typeof MODULE_CONFIG,
       {
-        organizationId: organizationId ? parseInt(organizationId as string) : undefined,
+        organizationId: org,
         status: status as string,
         limit: parseInt(limit as string),
       }
@@ -187,13 +239,32 @@ router.get('/by-module/:module', async (req: Request, res: Response) => {
  */
 router.post('/:id/link', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const org = requireOrgId(req, res);
+    if (org == null) return;
+    const { id } = req.params as { id: string };
     const linkData = linkTaskSchema.parse({
       ...req.body,
       sourceTaskId: id,
     });
 
+    // Both endpoints of the link must belong to the caller's org.
+    const [source, target] = await Promise.all([
+      findOrgTask(org, linkData.sourceTaskId),
+      findOrgTask(org, linkData.targetTaskId),
+    ]);
+    if (!source || !target) {
+      return res.status(404).json({ success: false, error: 'Task not found' });
+    }
+
     const link = await unifiedTaskService.linkTasks(linkData);
+
+    await auditTaskAction({
+      orgId: org,
+      userId: (req as any).user?.id,
+      command: 'task.link',
+      taskId: linkData.sourceTaskId,
+      payload: { targetTaskId: linkData.targetTaskId, linkType: linkData.linkType },
+    });
 
     res.json({
       success: true,
@@ -215,17 +286,12 @@ router.post('/:id/link', async (req: Request, res: Response) => {
  */
 router.get('/dashboard/unified', async (req: Request, res: Response) => {
   try {
-    const { organizationId, projectId } = req.query;
-
-    if (!organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'organizationId is required',
-      });
-    }
+    const { projectId } = req.query;
+    const org = requireOrgId(req, res);
+    if (org == null) return;
 
     const metrics = await unifiedTaskService.getUnifiedDashboardMetrics(
-      parseInt(organizationId as string),
+      org,
       projectId ? parseInt(projectId as string) : undefined
     );
 
@@ -257,8 +323,7 @@ router.get('/dashboard/unified', async (req: Request, res: Response) => {
  */
 router.post('/sync/:module', async (req: Request, res: Response) => {
   try {
-    const { module } = req.params;
-    const { organizationId } = req.body;
+    const module = String(req.params.module);
 
     if (!['CMC', 'IND', 'MedicalDevice', 'eCTD', 'Vault', 'ProtocolDesign'].includes(module)) {
       return res.status(400).json({
@@ -267,16 +332,11 @@ router.post('/sync/:module', async (req: Request, res: Response) => {
       });
     }
 
-    if (!organizationId) {
-      return res.status(400).json({
-        success: false,
-        error: 'organizationId is required',
-      });
-    }
-
+    const org = requireOrgId(req, res);
+    if (org == null) return;
     const result = await unifiedTaskService.syncTasksFromModule(
       module as keyof typeof MODULE_CONFIG,
-      parseInt(organizationId)
+      org
     );
 
     res.json({
@@ -300,7 +360,9 @@ router.post('/sync/:module', async (req: Request, res: Response) => {
  */
 router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const org = requireOrgId(req, res);
+    if (org == null) return;
+    const id = String(req.params.id);
     const { status, userId } = req.body;
 
     if (!status) {
@@ -310,7 +372,22 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
       });
     }
 
+    // The task must belong to the caller's org before it can be mutated.
+    const existing = await findOrgTask(org, id);
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'Task not found' });
+    }
+
     const updatedTask = await unifiedTaskService.updateTaskStatus(id, status, userId);
+
+    await auditTaskAction({
+      orgId: org,
+      userId: (req as any).user?.id,
+      command: 'task.transition',
+      taskId: id,
+      payload: { from: (existing as any).status, to: status },
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
 
     res.json({
       success: true,
@@ -332,13 +409,11 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const org = requireOrgId(req, res);
+    if (org == null) return;
+    const id = String(req.params.id);
 
-    const tasks = await unifiedTaskService.getAllUnifiedTasks({
-      limit: 1,
-    });
-
-    const task = tasks.find((t) => t.taskId === id || t.id === parseInt(id));
+    const task = await findOrgTask(org, id);
 
     if (!task) {
       return res.status(404).json({

@@ -1,3 +1,7 @@
+
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('s3-provider');
 /**
  * AWS S3 Storage Provider
  *
@@ -43,7 +47,7 @@ try {
   const presigner = require('@aws-sdk/s3-request-presigner');
   getSignedUrlFn = presigner.getSignedUrl;
 } catch {
-  console.warn('[S3Provider] AWS SDK not installed — S3 provider unavailable');
+  logger.warn('AWS SDK not installed — S3 provider unavailable');
 }
 
 export class S3StorageProvider implements IStorageProvider {

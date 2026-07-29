@@ -18,6 +18,8 @@ import { Pool } from 'pg';
 import { z } from 'zod';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 import { createScopedLogger } from '../utils/logger.js';
+import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
+import { getEntry as getKnowledgeEntry } from '../services/ivd-knowledge/knowledge.service';
 
 const log = createScopedLogger('ivdr-routes');
 
@@ -85,6 +87,27 @@ export default function createIVDRRoutes(pool: Pool): Router {
       throw new Error('IVDR_BAD_TENANT: invalid organization ID in session');
     }
     return n;
+  }
+
+  /* ── Optional programme scoping ───────────────────────────────────────
+     The IVD workbench names one diagnostic programme in its header but its
+     classification, validation and clinical-evidence panels were reading the
+     whole organisation. A user could attribute another assay's Class C
+     determination, LoD or sensitivity to the device in front of them.
+
+     `program_id` is optional so existing callers keep the portfolio-wide
+     view. A malformed value is rejected rather than ignored: silently
+     returning the unscoped list for a typo'd UUID is how a scoped panel
+     starts showing everything again. */
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /** Sentinel distinguishing "absent" (undefined) from "present but bad". */
+  const INVALID = Symbol('invalid-program-id');
+
+  function parseProgramId(req: Request): string | undefined | typeof INVALID {
+    const raw = req.query.program_id;
+    if (raw === undefined || raw === '') return undefined;
+    if (typeof raw !== 'string' || !UUID_RE.test(raw)) return INVALID;
+    return raw;
   }
 
   /**
@@ -183,113 +206,23 @@ export default function createIVDRRoutes(pool: Pool): Router {
       // Org from authenticated session — NEVER from req.body
       const orgId = getServerOrgId(req);
 
-      // ── Annex VIII Rule Engine ───────────────────────────────────────────
-      const ruleTrace: Array<{ rule: string; description: string; matched: boolean }> = [];
-      let classResult: 'A' | 'B' | 'C' | 'D' = 'A'; // Default lowest risk
-      const classPriority: Record<string, number> = { A: 1, B: 2, C: 3, D: 4 };
-      const upgradeClass = (target: 'B' | 'C' | 'D') => {
-        if (classPriority[target] > classPriority[classResult]) classResult = target;
-      };
-
-      // Rule 1 — Class D: Blood/tissue screening for transmissible agents
-      const rule1Match = bloodScreening === true && detectsTransmissibleAgent === true;
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 1 (Class D)',
-        description:
-          'IVDs intended to be used for blood screening, assessing eligibility of blood/tissue donations, and detecting transmissible agents (HIV, HBV, HCV, HTLV, Treponema pallidum, CMV, Chlamydia, RhD, Kell, Duffy/Kidd)',
-        matched: rule1Match,
+      // ── Annex VIII Rule Engine (server/services/regulatory/ivdr-classification.ts) ──
+      const classification = classifyIvdrAnnexVIII({
+        deviceName,
+        intendedPurpose,
+        isSelfTest,
+        isNearPatient,
+        isCompanionDiagnostic,
+        detectsTransmissibleAgent,
+        bloodScreening,
+        detectsCancer,
+        prenatalScreening,
+        riskToPatient,
+        isGeneticTest,
+        analytes,
       });
-      if (rule1Match) classResult = 'D';
-
-      // Rule 2 — Class D: Blood group typing (ABO, Rh, Kell, Kidd, Duffy)
-      const isBloodGrouping =
-        intendedPurpose.toLowerCase().includes('blood group') ||
-        intendedPurpose.toLowerCase().includes('blood typing');
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 2 (Class D)',
-        description:
-          'IVDs intended for blood grouping or tissue typing to ensure immunological compatibility of blood, blood components, cells, tissues, or organs intended for transfusion/transplant (ABO, Rh, anti-Kell)',
-        matched: isBloodGrouping,
-      });
-      if (isBloodGrouping && classResult !== 'D') classResult = 'D';
-
-      // Rule 3a — Class C: Companion Diagnostics
-      const rule3aMatch = isCompanionDiagnostic === true;
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 3a (Class C)',
-        description:
-          'IVDs intended as companion diagnostics — devices essential for the safe and effective use of a corresponding medicinal product, to identify patients most likely to benefit or at increased risk of serious adverse reactions',
-        matched: rule3aMatch,
-      });
-      if (rule3aMatch) upgradeClass('C');
-
-      // Rule 3b — Class C: Cancer screening/diagnosis as first-line
-      const rule3bMatch = detectsCancer === true;
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 3b (Class C)',
-        description:
-          'IVDs intended for screening, diagnosis, or staging of cancer. First-line standalone diagnostic use for detecting cancer markers (CEA, PSA, CA-125, HER2, etc.)',
-        matched: rule3bMatch,
-      });
-      if (rule3bMatch) upgradeClass('C');
-
-      // Rule 3c — Class C: Genetic testing with direct patient management impact
-      const rule3cMatch = isGeneticTest === true;
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 3c (Class C)',
-        description:
-          'IVDs intended to provide information about genetic predisposition. Human genetic testing whose results directly lead to patient management decisions (pharmacogenomic, hereditary condition screening)',
-        matched: rule3cMatch,
-      });
-      if (rule3cMatch) upgradeClass('C');
-
-      // Rule 3d — Class C: Prenatal screening / congenital abnormalities
-      const rule3dMatch = prenatalScreening === true;
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 3d (Class C)',
-        description:
-          'IVDs intended for prenatal screening of women to determine their immune status, for detecting congenital abnormalities of the foetus, or for determining foetal status where there is an imminent risk to the foetus',
-        matched: rule3dMatch,
-      });
-      if (rule3dMatch) upgradeClass('C');
-
-      // Rule 4 — Class B: Self-testing devices
-      const rule4Match = isSelfTest === true;
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 4 (Class B)',
-        description:
-          'IVDs intended for self-testing — devices intended to be used by lay persons including tests for self-monitoring of chronic conditions (glucose, coagulation, cholesterol self-tests)',
-        matched: rule4Match,
-      });
-      if (rule4Match) upgradeClass('B');
-
-      // Rule 5 — Class B: Near-patient testing
-      const rule5Match = isNearPatient === true && !isSelfTest;
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 5 (Class B)',
-        description:
-          'IVDs intended for near-patient testing (point-of-care) — devices intended to be used outside a laboratory environment, including in the immediate patient environment (bedside, ambulance, pharmacy, workplace)',
-        matched: rule5Match,
-      });
-      if (rule5Match) upgradeClass('B');
-
-      // Rule 6 — Class B: Devices whose failure poses risk
-      const rule6Match = riskToPatient === 'high' || riskToPatient === 'medium';
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 6 (Class B)',
-        description:
-          'IVDs not covered by higher classes but whose results could pose a medium/high risk to the individual patient or to public health. Includes IVDs measuring analytes used in critical patient management decisions',
-        matched: rule6Match,
-      });
-      if (rule6Match) upgradeClass('B');
-
-      // Rule 7 — Class A: General IVDs / instruments / accessories
-      ruleTrace.push({
-        rule: 'Annex VIII, Rule 7 (Class A)',
-        description:
-          'All other IVDs not covered by Rules 1-6. General laboratory instruments, specimen receptacles, buffer solutions, wash solutions, general culture media, and laboratory equipment without specific risk classification',
-        matched: classResult === 'A',
-      });
+      const classResult = classification.classification;
+      const ruleTrace = classification.ruleTrace;
 
       // Persist classification result
       const insertResult = await pool.query(
@@ -317,6 +250,14 @@ export default function createIVDRRoutes(pool: Pool): Router {
         matchedRules: ruleTrace.filter(r => r.matched),
         record: insertResult.rows[0],
         regulatoryPath: getClassPath(classResult),
+        notifiedBodyRequired: classification.notifiedBodyRequired,
+        // Citable knowledge-base entries justifying the classification.
+        knowledge: classification.knowledgeRefs
+          .map(id => {
+            const e = getKnowledgeEntry(id);
+            return e ? { id: e.id, title: e.title, summary: e.summary, citations: e.citations } : null;
+          })
+          .filter(Boolean),
       });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_CLASSIFY_ERROR', 'Classification');
@@ -330,11 +271,28 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/classifications', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      /* Optional narrowing to one diagnostic programme. Without it the IVD
+         workbench showed every classification in the organisation while its
+         header named a single programme — so a user reading "Class C, Rule 3"
+         could attribute another assay's classification to the device in front
+         of them. program_id is guaranteed present by 20260524_ivdr_cdx.sql,
+         which adds it idempotently regardless of which of the three competing
+         CREATE TABLE definitions for this table won on a given deployment. */
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      const scoped = programId !== undefined;
       const result = await pool.query(
-        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
-        [orgId]
+        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at
+           FROM ivdr_classifications
+          WHERE organization_id = $1${scoped ? ' AND program_id = $2' : ''}
+          ORDER BY created_at DESC`,
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ classifications: result.rows });
+      return res.json({
+        classifications: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_CLASS_ERROR', 'List classifications');
     }
@@ -346,7 +304,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/classify/:id/report', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE id = $1 AND organization_id = $2`,
@@ -383,7 +341,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         },
       };
       res.setHeader('Content-Type', 'application/json');
-      const safeId = id.replace(/[^a-zA-Z0-9\-_]/g, '');
+      const safeId = String(id).replace(/[^a-zA-Z0-9\-_]/g, '');
       res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
 
       // Register governed export (fail-closed for governed flows)
@@ -451,15 +409,27 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/validations', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      /* Validations reach a programme through their classification. The join
+         stays LEFT so an unclassified validation is still visible in the
+         portfolio view; adding the programme predicate necessarily excludes
+         those rows when scoping, which is correct — a validation with no
+         classification cannot be claimed for a programme. */
+      const scoped = programId !== undefined;
       const result = await pool.query(
         `SELECT v.*, c.classification, c.is_cdx
          FROM ivdr_analytical_validations v
          LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
-         WHERE v.organization_id = $1
+         WHERE v.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
          ORDER BY v.created_at DESC`,
-        [orgId]
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ validations: result.rows });
+      return res.json({
+        validations: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_VALID_ERROR', 'List validations');
     }
@@ -473,7 +443,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.put('/validations/:id/parameters', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const userId = (req as any).userId || (req as any).user?.id || 'system';
       const {
@@ -601,7 +571,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/validations/:id/history', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT h.* FROM ivdr_validation_parameter_history h
@@ -682,15 +652,25 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/clinical-evidence', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      /* Same reachability as validations: clinical evidence belongs to a
+         programme via its classification. Sensitivity and specificity are
+         exactly the numbers a user must not read off the wrong assay. */
+      const scoped = programId !== undefined;
       const result = await pool.query(
         `SELECT e.*, c.device_name, c.classification, c.is_cdx
          FROM ivdr_clinical_evidence e
          LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
-         WHERE e.organization_id = $1
+         WHERE e.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
          ORDER BY e.created_at DESC`,
-        [orgId]
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ evidence: result.rows });
+      return res.json({
+        evidence: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_EVID_ERROR', 'List clinical evidence');
     }
@@ -702,7 +682,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.put('/clinical-evidence/:id/results', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const {
         truePositive,
@@ -806,7 +786,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/clinical-evidence/:id/history', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT h.* FROM ivdr_evidence_result_history h
@@ -918,7 +898,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         });
       }
 
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const { status, notes } = req.body;
       const userId = (req as any).userId || 'system';
@@ -963,7 +943,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
    */
   router.get('/cdx-workflows/:id/history', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const result = await pool.query(
         `SELECT h.* FROM ivdr_cdx_status_history h
@@ -1515,16 +1495,20 @@ export default function createIVDRRoutes(pool: Pool): Router {
         exportDate: new Date().toISOString(),
         regulatoryFramework: 'IVDR EU 2017/746',
         deviceIdentification: {
-          basicUdiDi: `IVDR-${orgId}-${projectId}-BUDI`,
-          udiDi: `IVDR-${orgId}-${projectId}-UDI`,
+          // UDI-DI / Basic UDI-DI / manufacturer SRN are issued by GS1/HIBCC/EUDAMED
+          // and must not be synthesized from internal IDs. No stored registration
+          // record exists for this org/project, so they are reported as null
+          // (identifiers not yet issued/recorded).
+          basicUdiDi: null,
+          udiDi: null,
           deviceName: classification?.device_name || gspr?.device_name || 'Unknown Device',
           tradeName: classification?.device_name || gspr?.device_name || null,
-          manufacturerSRN: `SRN-ORG-${orgId}`,
+          manufacturerSRN: null,
         },
         manufacturer: {
           organizationId: orgId,
           role: 'manufacturer',
-          registrationStatus: 'registered',
+          registrationStatus: 'not_registered',
         },
         classification: {
           riskClass: classification?.classification || 'Not classified',
@@ -1541,7 +1525,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
         certificates: {
           euDeclarationOfConformity: classification?.classification === 'A' ? 'self-declaration' : 'notified_body_required',
           notifiedBodyRequired: classification?.classification !== 'A',
-          certificateStatus: 'pending',
+          // No certificate record is tracked here; do not fabricate a status.
+          certificateStatus: null,
         },
         clinicalEvidence: {
           totalStudies: Number(evidenceSummary.total) || 0,

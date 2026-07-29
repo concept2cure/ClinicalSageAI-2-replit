@@ -16,7 +16,13 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { validateApiKey } from '../services/api-key-service.js';
+// Centralized, fleet-wide scope guard (server/middleware/enterprise-security.ts).
+// Imported as requireApiScope to avoid colliding with the legacy single-scope
+// helper below. Demonstrates the shared mechanism on the two most sensitive
+// endpoints; see usage at /precedent/search and /trial-design/suggest.
+import { requireScope as requireApiScope } from '../middleware/enterprise-security.js';
 import { recordUsage, checkQuota } from '../services/usage-metering.js';
+import { checkWeeklyLimit, recordWeeklyAlerts, recordOverageUnits } from '../services/weekly-usage-limits.js';
 import { csrSearchService } from '../services/csr-search-service.js';
 import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
@@ -100,6 +106,11 @@ async function requireApiKey(req: ApiRequest, res: Response, next: NextFunction)
   req.apiOrganizationId = result.organizationId;
   req.apiScopes = result.scopes;
   req.apiKeyId = result.keyId;
+  // Mark the request as API-key authenticated so the shared requireApiScope
+  // guard (server/middleware/enterprise-security.ts) engages. Every route on
+  // this router reaches handlers only via this middleware, so the flag is
+  // always set before any requireApiScope check runs.
+  (req as Request).authMethod = 'api_key';
   next();
 }
 
@@ -138,7 +149,10 @@ function requireQuota(featureId: string) {
       }
     } catch {
       // Quota check failure should not block the request — log and continue
-      log.warn('[public-api] Quota check failed for org', req.apiOrganizationId, featureId);
+      log.warn('[public-api] Quota check failed for org', {
+        organizationId: req.apiOrganizationId,
+        featureId,
+      });
     }
 
     next();
@@ -265,6 +279,53 @@ router.use((req: ApiRequest, _res: Response, next: NextFunction) => {
   next();
 });
 
+// Enforce the per-org WEEKLY request limit + overage cap (opt-in; orgs with no
+// configured limit pass straight through). Fails open on a metering error so a
+// monitoring outage never blocks the API. Per-feature monthly quotas are still
+// enforced separately by requireQuota() on each route.
+router.use((req: ApiRequest, res: Response, next: NextFunction) => {
+  const orgId = req.apiOrganizationId;
+  if (orgId == null) {
+    next();
+    return;
+  }
+  checkWeeklyLimit(orgId, 'requests', 1)
+    .then((decision) => {
+      res.setHeader('X-Weekly-State', decision.state);
+      if (Number.isFinite(decision.weeklyLimit)) res.setHeader('X-Weekly-Limit', String(decision.weeklyLimit));
+      res.setHeader('X-Weekly-Used', String(decision.used));
+      res.setHeader('X-Weekly-Reset', decision.resetAt.toISOString());
+      if (decision.state === 'warn' || decision.state === 'overage' || decision.state === 'blocked') {
+        void recordWeeklyAlerts(orgId, decision);
+      }
+      if (!decision.allowed) {
+        const retrySecs = Math.max(1, Math.ceil((decision.resetAt.getTime() - Date.now()) / 1000));
+        res.setHeader('Retry-After', String(retrySecs));
+        res.status(429).json({
+          error: 'Weekly usage limit reached',
+          code: 'WEEKLY_LIMIT_EXCEEDED',
+          metric: 'requests',
+          used: decision.used,
+          limit: decision.weeklyLimit,
+          cap: decision.effectiveCap,
+          resetAt: decision.resetAt.toISOString(),
+        });
+        return;
+      }
+      if (decision.state === 'overage') {
+        req.weeklyOverage = decision;
+        void recordOverageUnits(orgId, decision);
+      }
+      next();
+    })
+    .catch((err: unknown) => {
+      log.error('[public-api] weekly limit check failed (fail-open)', {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      next();
+    });
+});
+
 // ============================================================================
 // GET /api/v1/csr/search — Search CSR Knowledge Base
 // ============================================================================
@@ -282,7 +343,11 @@ router.get('/csr/search', requireScope('csr:read'), requireQuota('api_csr_search
       recordUsage(req.apiOrganizationId, 0, 'api_csr_search', 1, {
         apiKeyId: req.apiKeyId,
         query: { indication, phase, endpoint, sponsor },
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_csr_search)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     const searchResults = await csrSearchService.searchCSRs({
@@ -317,7 +382,11 @@ router.get('/regulatory/pathways', requireScope('regulatory:read'), requireQuota
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_regulatory_pathways', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_regulatory_pathways)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     const agencies = targetAgencies
@@ -356,7 +425,11 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_endpoint_recommend', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_endpoint_recommend)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     const recommender = getEndpointRecommenderService();
@@ -385,7 +458,10 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
 // GET /api/v1/precedent/search — Regulatory Precedent Search
 // ============================================================================
 
-router.get('/precedent/search', requireScope('precedent:read'), requireQuota('api_precedent_search'), async (req: ApiRequest, res: Response) => {
+// Sensitive: exposes historical regulatory submission outcomes / deficiency
+// patterns. Guarded by the shared fleet-wide requireApiScope in addition to
+// the legacy local requireScope (defense in depth — both must pass).
+router.get('/precedent/search', requireApiScope('precedent:read'), requireScope('precedent:read'), requireQuota('api_precedent_search'), async (req: ApiRequest, res: Response) => {
   try {
     const indication = sanitizeQueryParam(req.query.indication);
     const agency = sanitizeQueryParam(req.query.agency);
@@ -395,7 +471,11 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_precedent_search', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_precedent_search)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     let precedents = await precedentEngine.search({
@@ -431,7 +511,10 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
 // GET /api/v1/trial-design/suggest — Trial Design Suggestions
 // ============================================================================
 
-router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
+// Sensitive: synthesizes precedent strategy + endpoint analytics into trial
+// design guidance. Guarded by the shared fleet-wide requireApiScope plus the
+// legacy local requireScope (both must pass).
+router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, phase, primaryEndpoint, submissionType } = req.query;
     const resolvedSubmissionType = sanitizeQueryParam(submissionType) || 'NDA';
@@ -439,7 +522,11 @@ router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQu
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_trial_design', 1, {
         apiKeyId: req.apiKeyId,
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        log.error('[public-api] recordUsage failed (api_trial_design)', {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     // Combine precedent strategy + endpoint recommendations for trial design suggestions

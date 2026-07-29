@@ -172,18 +172,15 @@ export class ExportService {
    * Get the latest protocol content for a study
    */
   private async getLatestProtocol(studyId: string): Promise<any> {
-    try {
-      // This would typically be a database call
-      // For now, we'll simulate the response
-      const response = await fetch(`/api/protocol/get-latest?study_id=${studyId}`);
-      if (response.ok) {
-        return await response.json();
-      }
-      return null;
-    } catch (error) {
-      console.error('Error fetching protocol:', error);
-      return null;
-    }
+    // Protocol retrieval is not wired (the previous implementation issued a
+    // server-side fetch of a relative URL, which can never resolve in Node and
+    // always failed silently). Return null honestly so the export omits the
+    // protocol files rather than appearing to attempt a fetch.
+    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
+    console.warn(
+      `getLatestProtocol: protocol retrieval not wired for study ${studyId}; omitting from export.`
+    );
+    return null;
   }
 
   /**
@@ -205,37 +202,26 @@ export class ExportService {
    * Get prediction results for a study
    */
   private async getPredictionResults(studyId: string): Promise<any> {
-    try {
-      // This would typically be a database call
-      return {
-        probability: 0.83,
-        method: 'Monte Carlo simulation',
-        factors: [
-          { name: 'Sample Size', impact: 'positive' },
-          { name: 'Endpoint Selection', impact: 'neutral' },
-          { name: 'Protocol Design', impact: 'positive' },
-        ],
-      };
-    } catch (error) {
-      console.error('Error fetching prediction results:', error);
-      return null;
-    }
+    // No success-prediction model is wired. Return null so the export simply omits
+    // success_prediction.json, rather than writing a fabricated probability into a
+    // user's deliverable. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
+    console.warn(
+      `getPredictionResults: no prediction model wired for study ${studyId}; omitting from export.`
+    );
+    return null;
   }
 
   /**
    * Get summary report for a study
    */
   private async getSummaryReport(studyId: string): Promise<any> {
-    try {
-      // This would typically be a database call
-      return {
-        id: studyId,
-        content: `# Study Summary Report\n\n## Protocol Overview\nThis is a Phase 2 clinical trial...\n\n## Key Findings\n- Sample size calculation: 120 participants\n- Estimated dropout rate: it`,
-      };
-    } catch (error) {
-      console.error('Error fetching summary report:', error);
-      return null;
-    }
+    // No summary-report generator is wired. Return null so the export omits
+    // summary_report.md, rather than writing a fabricated study summary into a
+    // user's deliverable. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
+    console.warn(
+      `getSummaryReport: no summary generator wired for study ${studyId}; omitting from export.`
+    );
+    return null;
   }
 }
 

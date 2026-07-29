@@ -16,7 +16,7 @@
  * @module server/routes/project-rules.ts
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { getPool } from '../db';
@@ -389,10 +389,12 @@ router.post('/:ruleId/test', asyncHandler(async (req: Request, res: Response) =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Alias: frontend calls /logs (shorthand)
-router.get('/logs', (req: Request, res: Response, next: Function) => {
+router.get('/logs', (req: Request, res: Response, next: NextFunction) => {
   req.url =
     '/executions/log' + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
-  router.handle(req, res, next);
+  // A Router is itself a RequestHandler; invoking it re-dispatches the request
+  // (equivalent to the internal router.handle).
+  router(req, res, next);
 });
 
 router.get('/executions/log', asyncHandler(async (req: Request, res: Response) => {
@@ -454,9 +456,11 @@ router.get('/executions/log', asyncHandler(async (req: Request, res: Response) =
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Alias: frontend calls /templates (shorthand)
-router.get('/templates', (req: Request, res: Response, next: Function) => {
+router.get('/templates', (req: Request, res: Response, next: NextFunction) => {
   req.url = '/templates/catalog';
-  router.handle(req, res, next);
+  // A Router is itself a RequestHandler; invoking it re-dispatches the request
+  // (equivalent to the internal router.handle).
+  router(req, res, next);
 });
 
 router.get('/templates/catalog', async (_req: Request, res: Response) => {

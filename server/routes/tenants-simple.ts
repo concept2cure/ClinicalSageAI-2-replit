@@ -5,7 +5,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
+import { requireRole, invalidateOrgMembershipCache } from '../middleware/auth';
+import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
+import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 
 const log = createScopedLogger('tenants-simple');
 
@@ -13,6 +16,12 @@ const router = Router();
 
 // SECURITY: All tenant management endpoints require authentication
 router.use(authMiddleware);
+
+/** True for platform operators who may see/manage every tenant. */
+function isPlatformAdmin(req: any): boolean {
+  const roles = req.user?.roles || [req.user?.role];
+  return ['admin', 'super_admin', 'platform_admin'].some(r => roles?.includes(r));
+}
 
 /**
  * Clean a database URL by removing common wrapper artifacts
@@ -95,13 +104,29 @@ const updateTenantSchema = z.object({
  */
 router.get('/', async (req, res) => {
   try {
-    const result = await sql`
-      SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers",
-             max_projects as "maxProjects", max_storage as "maxStorage",
-             status, created_at as "createdAt", updated_at as "updatedAt"
-      FROM organizations
-      ORDER BY created_at DESC
-    `;
+    // SECURITY: a non-admin may only see the organizations they belong to.
+    // Returning every organization leaked the full customer list (names,
+    // slugs, domains, tiers) to any authenticated user. Platform admins still
+    // get the full list for tenant management.
+    const userId = Number((req as any).user?.id ?? (req as any).user?.userId ?? 0);
+    const result = isPlatformAdmin(req)
+      ? await sql`
+          SELECT id, name, slug, domain, logo, tier, max_users as "maxUsers",
+                 max_projects as "maxProjects", max_storage as "maxStorage",
+                 status, created_at as "createdAt", updated_at as "updatedAt"
+          FROM organizations
+          ORDER BY created_at DESC
+        `
+      : await sql`
+          SELECT o.id, o.name, o.slug, o.domain, o.logo, o.tier,
+                 o.max_users as "maxUsers", o.max_projects as "maxProjects",
+                 o.max_storage as "maxStorage", o.status,
+                 o.created_at as "createdAt", o.updated_at as "updatedAt"
+          FROM organizations o
+          INNER JOIN organization_users ou ON ou.organization_id = o.id
+          WHERE ou.user_id = ${userId}
+          ORDER BY o.created_at DESC
+        `;
 
     log.debug('Retrieved tenants from database:', result.length);
 
@@ -116,7 +141,7 @@ router.get('/', async (req, res) => {
  * POST /api/tenants
  * Create a new tenant - simple version
  */
-router.post('/', async (req, res) => {
+router.post('/', requireRole('super_admin', 'platform_admin'), async (req, res) => {
   try {
     log.debug('Create tenant request received');
 
@@ -126,6 +151,11 @@ router.post('/', async (req, res) => {
     // SECURITY: Use crypto.randomBytes for API key generation (not Math.random)
     const crypto = await import('crypto');
     const apiKey = 'c2c_' + crypto.randomBytes(24).toString('base64url');
+
+    // Tenant isolation posture: refuse to make this deployment multi-tenant while
+    // Postgres RLS is not filtering rows. No-ops locally and for the founding
+    // organization. See server/db/tenantAdmission.ts.
+    await assertCanAdmitNewTenant();
 
     // Use postgres to create tenant
     const result = await sql`
@@ -148,6 +178,38 @@ router.post('/', async (req, res) => {
 
     const newTenant = result[0];
     log.debug('Created tenant in database:', newTenant);
+
+    // Fire-and-forget: seed every regulatory precedent pattern library for
+    // the new org. The seeders are idempotent and the orchestrator never
+    // rejects, so failure here cannot block tenant creation. Real FDA / ICH
+    // citations land per org so the CRL/RTF/AC engines have data to score
+    // against from day one.
+    if (newTenant?.id != null) {
+      const orgIdStr = String(newTenant.id);
+      void (async () => {
+        try {
+          const { seedAllRegulatoryPatterns } = await import(
+            '../services/regulatory-precedent-intelligence'
+          );
+          const r = await seedAllRegulatoryPatterns(orgIdStr);
+          log.debug('Regulatory patterns seeded for new tenant', {
+            tenantId: newTenant.id,
+            inserted: {
+              crl: r.crl.inserted,
+              rtfNonclinical: r.rtfNonclinical.inserted,
+              rtfCmc: r.rtfCmc.inserted,
+              advisoryCommittee: r.advisoryCommittee.inserted,
+            },
+          });
+        } catch (seedErr) {
+          log.error('Regulatory pattern seed failed for new tenant', {
+            tenantId: newTenant.id,
+            error: seedErr instanceof Error ? seedErr.message : String(seedErr),
+          });
+        }
+      })();
+    }
+
     res.status(201).json(newTenant);
   } catch (error) {
     log.error('Error creating tenant:', error);
@@ -162,9 +224,9 @@ router.post('/', async (req, res) => {
  * PATCH /api/tenants/:id
  * Update an existing tenant/organization
  */
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', requireRole('super_admin', 'platform_admin'), async (req, res) => {
   try {
-    const tenantId = parseInt(req.params.id);
+    const tenantId = parseInt(String(req.params.id));
 
     const validatedData = updateTenantSchema.parse(req.body);
 
@@ -218,9 +280,16 @@ router.patch('/:id', async (req, res) => {
  */
 router.get('/:tenantId/users', async (req, res) => {
   try {
-    const tenantId = parseInt(req.params.tenantId);
+    const tenantId = parseInt(String(req.params.tenantId));
     if (isNaN(tenantId)) {
       return res.status(400).json({ error: 'Invalid tenant ID' });
+    }
+
+    // SECURITY: only a platform admin, or a member of the tenant, may list its
+    // users (emails, names, roles). Otherwise any authenticated user could read
+    // any tenant's directory by changing the path id.
+    if (!isPlatformAdmin(req) && authedOrgId(req) !== tenantId) {
+      return res.status(403).json({ error: 'Tenant context mismatch' });
     }
 
     // Get users for this organization with their roles
@@ -254,9 +323,9 @@ router.get('/:tenantId/users', async (req, res) => {
  * DELETE /api/tenants/:id
  * Delete an organization and all its related data
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, res) => {
   try {
-    const tenantId = parseInt(req.params.id);
+    const tenantId = parseInt(String(req.params.id));
     if (isNaN(tenantId)) {
       return res.status(400).json({ error: 'Invalid organization ID' });
     }
@@ -293,6 +362,9 @@ router.delete('/:id', async (req, res) => {
 
       // 2. Delete organization_users relationships
       await sql`DELETE FROM organization_users WHERE organization_id = ${tenantId}`;
+      // Every membership in this org just vanished — revoke cached
+      // auth-middleware membership results immediately.
+      invalidateOrgMembershipCache(undefined, tenantId);
       log.debug(`Deleted organization_users for organization ${tenantId}`);
 
       // 3. Delete client_workspaces
@@ -326,9 +398,9 @@ router.delete('/:id', async (req, res) => {
  * POST /api/tenants/:id/api-key
  * Generate a new API key for an organization
  */
-router.post('/:id/api-key', async (req, res) => {
+router.post('/:id/api-key', requireRole('super_admin', 'platform_admin'), async (req, res) => {
   try {
-    const tenantId = parseInt(req.params.id);
+    const tenantId = parseInt(String(req.params.id));
     if (isNaN(tenantId)) {
       return res.status(400).json({ error: 'Invalid organization ID' });
     }

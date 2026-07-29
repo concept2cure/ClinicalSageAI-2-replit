@@ -112,10 +112,38 @@ export async function searchEudamedReports({
     console.log(
       `Note: EU EUDAMED is currently partially operational, with limited access to vigilance data`
     );
-    console.log(`Fetching EUDAMED data for ${deviceId || deviceName}...`);
 
-    // For this implementation, we'll provide the structure but use deterministic generation
-    // since EUDAMED API is not fully available for public access yet
+    // EUDAMED has no public vigilance API. Rather than fabricate incidents
+    // that could silently land in a regulated CER as if they were real EU
+    // data, default to an explicit "not available" response. Illustrative
+    // demo data is only generated when EUDAMED_ALLOW_SIMULATED=true, and it
+    // is tagged simulated end-to-end so the UI and downstream consumers can
+    // label it as non-live.
+    const allowSimulated = process.env.EUDAMED_ALLOW_SIMULATED === 'true';
+    if (!allowSimulated) {
+      const unavailable = {
+        meta: {
+          dataSource: 'unavailable',
+          isLiveData: false,
+          simulated: false,
+          disclaimer:
+            'Live EUDAMED vigilance data is not publicly accessible. No incidents are returned. ' +
+            'Set EUDAMED_ALLOW_SIMULATED=true to preview the workflow with illustrative (non-live) data.',
+          source: 'European Database on Medical Devices (EUDAMED)',
+          date_accessed: new Date().toISOString().split('T')[0],
+          total_records: 0,
+        },
+        search_criteria: { device_id: deviceId, device_name: deviceName, manufacturer },
+        incidents: [],
+      };
+      await cacheManager.saveToCacheWithExpiry(cacheKey, unavailable, 60 * 60); // 1 hour
+      return unavailable;
+    }
+
+    console.log(`Generating illustrative (non-live) EUDAMED data for ${deviceId || deviceName}...`);
+
+    // Illustrative-only path: deterministic generation gated behind the
+    // EUDAMED_ALLOW_SIMULATED flag. Every record is tagged simulated.
 
     // Calculate date range
     const startDate = dateFrom
@@ -178,6 +206,7 @@ export async function searchEudamedReports({
             ? 'Field Safety Corrective Action initiated'
             : 'Investigation ongoing',
         member_state: ['Germany', 'France', 'Italy', 'Spain', 'Netherlands'][pseudoRandom(5)],
+        simulated: true,
       });
     }
 
@@ -189,7 +218,12 @@ export async function searchEudamedReports({
     // Create response structure
     const response = {
       meta: {
-        disclaimer: 'EUDAMED data is partially available and subject to access restrictions.',
+        dataSource: 'illustrative',
+        isLiveData: false,
+        simulated: true,
+        disclaimer:
+          'Illustrative (non-live) EUDAMED data, generated for workflow preview only. ' +
+          'Not real European vigilance records.',
         source: 'European Database on Medical Devices (EUDAMED)',
         date_accessed: new Date().toISOString().split('T')[0],
         total_records: incidents.length,

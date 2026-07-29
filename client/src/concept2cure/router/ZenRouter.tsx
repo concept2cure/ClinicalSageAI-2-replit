@@ -17,13 +17,15 @@
  * - WCAG 2.1 AA: Accessible routing with focus management
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
-import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
+// Master Administration + Business Center UI is owned by Claude Design (built
+// from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
+// API ship here; route registrations are added back when the designed UI lands.
 import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
@@ -36,10 +38,17 @@ import {
 // SalesLandingPage) have been removed — none of those surfaces are in the
 // design-system bundle. Their routes were stripped above.
 
+// ui-v2 — the full UI replacement shell (design_handoff_c2c_v2_ui_replacement).
+// Phase 7: the legacy ZenApp shell is deleted; the v2 shell IS the product.
+// Lazy so auth entry pages never download the app chunk (or its stylesheet).
+const V2App = lazy(() => import('../v2/V2App'));
+
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
     <ProjectProvider>
-      <ZenApp />
+      <Suspense fallback={<ZenLoadingScreen />}>
+        <V2App />
+      </Suspense>
     </ProjectProvider>
   </ProtectedRoute>
 );
@@ -139,6 +148,26 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
 export const ZenRouter: React.FC = () => {
   const [location] = useLocation();
 
+  // ui-v2 owns its routing internally (wouter location -> surface id), so the
+  // shell must persist across in-app navigations. Rendering it inside the
+  // location-keyed <Switch>/<AnimatePresence> below would remount the whole
+  // shell on every nav (dropping palette/AnA/scroll state and replaying the
+  // enter animation). Auth entry routes and the standalone MDX module keep
+  // the legacy transition switch.
+  const uiV2AuthRoute =
+    /^\/(concept2cure\/)?(login|signup|password-reset)(\/|\?|$)/.test(location);
+  const uiV2Owns =
+    !uiV2AuthRoute &&
+    !location.startsWith('/concept2cure/mdx') &&
+    (location === '/' || location.startsWith('/concept2cure'));
+  if (uiV2Owns) {
+    return (
+      <PortalAuthProvider>
+        <ProtectedZenApp />
+      </PortalAuthProvider>
+    );
+  }
+
   return (
     <PortalAuthProvider>
       <AnimatePresence mode="wait">
@@ -199,45 +228,13 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Bundle surfaces — ZenApp resolves layoutMode + URL into one of
-              the four designed surfaces (home, mdx, ana_ri, ectd_coauthor). */}
-          <Route path="/">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/project/:projectId/:rest*">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/project/:projectId">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/*">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
+          {/* App routes — /, /concept2cure and every surface/project deep link —
+              are owned by the ui-v2 fast path above this Switch (the shell must
+              persist across navs, so it renders outside the location-keyed
+              transition). Only auth entry, the standalone MDX module, and
+              legacy redirects reach this Switch. */}
 
-          {/* Catch-all — anything we didn't recognize lands on the bundle home. */}
+          {/* Catch-all — anything we didn't recognize lands on the shell home. */}
           <Route>{() => <Redirect to="/concept2cure" />}</Route>
         </Switch>
       </AnimatePresence>

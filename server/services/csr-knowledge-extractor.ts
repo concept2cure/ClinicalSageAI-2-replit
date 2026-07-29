@@ -46,10 +46,10 @@ interface BiomarkerCorrelation {
   biomarkerName: string;
   biomarkerType: 'protein' | 'gene' | 'metabolite' | 'cell' | 'cytokine';
   baselineLevel: number;
-  changeFromBaseline: number;
+  changeFromBaseline: number | null;
   responseAssociation: 'positive' | 'negative' | 'neutral';
   correlationScore: number;
-  pValue: number;
+  pValue: number | null;
 }
 
 interface DoseExposureRelationship {
@@ -76,11 +76,11 @@ export class CSRKnowledgeExtractor {
         .from(csrDetails)
         .where(eq(csrDetails.reportId, parseInt(csrId)));
 
-      if (!csr || !csr.safety) {
+      // safety payload is stored under csr_details.metadata (no dedicated column).
+      const safetyData = (csr?.metadata as any)?.safety;
+      if (!csr || !safetyData) {
         return [];
       }
-
-      const safetyData = csr.safety as any;
       const signals: SafetySignal[] = [];
 
       // Extract adverse events
@@ -261,59 +261,83 @@ export class CSRKnowledgeExtractor {
       }
 
       const correlations: BiomarkerCorrelation[] = [];
-      
-      // Parse biomarker data from various sections
-      const fullText = JSON.stringify(csr).toLowerCase();
-      
-      // Common biomarkers to look for
-      const biomarkers = [
-        { name: 'PD-L1', type: 'protein' as const },
-        { name: 'EGFR', type: 'gene' as const },
-        { name: 'KRAS', type: 'gene' as const },
-        { name: 'CD4', type: 'cell' as const },
-        { name: 'CD8', type: 'cell' as const },
-        { name: 'IL-6', type: 'cytokine' as const },
-        { name: 'TNF-alpha', type: 'cytokine' as const },
-        { name: 'CRP', type: 'protein' as const },
-        { name: 'HbA1c', type: 'metabolite' as const },
-        { name: 'LDH', type: 'metabolite' as const }
+
+      // Prefer the study's result-bearing fields as the analysis corpus; only
+      // fall back to the whole record when those are empty. The `results` JSON
+      // carries dedicated narrative fields (biomarkerResults / primaryResults /
+      // secondaryResults) — extract those as clean text so the correlation /
+      // p-value windows are anchored to the statistical narrative, with the
+      // biomarker-specific field first.
+      const resultsText = this.flattenResultsText(csr.results);
+      const resultText = [
+        resultsText,
+        csr.efficacyResults,
+        csr.statisticalMethods,
+        csr.safetyResults,
+        csr.patientReportedOutcome,
+      ]
+        .filter(Boolean)
+        .join('\n');
+      const analysisText = (resultText || JSON.stringify(csr)).toLowerCase();
+
+      // Candidate biomarkers: the ones the study actually declares
+      // (csr.biomarkerUsed) merged with a set of common biomarkers.
+      const knownBiomarkers: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] = [
+        { name: 'PD-L1', type: 'protein' },
+        { name: 'EGFR', type: 'gene' },
+        { name: 'KRAS', type: 'gene' },
+        { name: 'CD4', type: 'cell' },
+        { name: 'CD8', type: 'cell' },
+        { name: 'IL-6', type: 'cytokine' },
+        { name: 'TNF-alpha', type: 'cytokine' },
+        { name: 'CRP', type: 'protein' },
+        { name: 'HbA1c', type: 'metabolite' },
+        { name: 'LDH', type: 'metabolite' },
       ];
+      const candidates = this.mergeBiomarkers(
+        knownBiomarkers,
+        this.parseStudyBiomarkers(csr.biomarkerUsed)
+      );
 
-      for (const biomarker of biomarkers) {
-        const pattern = new RegExp(`${biomarker.name.toLowerCase()}[^.]*?(\\d+\\.?\\d*)`, 'i');
-        const match = fullText.match(pattern);
-        
-        if (match) {
-          // Extract correlation data if biomarker is mentioned
-          const value = parseFloat(match[1]);
-          
-          // Determine response association based on context
-          const positiveTerms = ['response', 'benefit', 'improved', 'higher', 'increased'];
-          const negativeTerms = ['resistance', 'poor', 'lower', 'decreased', 'worse'];
-          
-          let association: 'positive' | 'negative' | 'neutral' = 'neutral';
-          const contextStart = Math.max(0, match.index! - 100);
-          const contextEnd = Math.min(fullText.length, match.index! + 100);
-          const context = fullText.substring(contextStart, contextEnd);
-          
-          if (positiveTerms.some(term => context.includes(term))) {
-            association = 'positive';
-          } else if (negativeTerms.some(term => context.includes(term))) {
-            association = 'negative';
-          }
+      for (const biomarker of candidates) {
+        const pattern = new RegExp(
+          `${this.escapeRegex(biomarker.name.toLowerCase())}[^.]*?(\\d+\\.?\\d*)`,
+          'i'
+        );
+        const match = analysisText.match(pattern);
+        if (!match) continue;
 
-          correlations.push({
-            biomarkerName: biomarker.name,
-            biomarkerType: biomarker.type,
-            baselineLevel: value,
-            changeFromBaseline: Math.random() * 20 - 10, // Simulated for now
-            responseAssociation: association,
-            correlationScore: association === 'positive' ? 0.7 + Math.random() * 0.3 : 
-                            association === 'negative' ? -0.7 - Math.random() * 0.3 : 
-                            Math.random() * 0.4 - 0.2,
-            pValue: Math.random() * 0.1
-          });
+        const value = parseFloat(match[1]);
+
+        const positiveTerms = ['response', 'benefit', 'improved', 'higher', 'increased'];
+        const negativeTerms = ['resistance', 'poor', 'lower', 'decreased', 'worse'];
+        let association: 'positive' | 'negative' | 'neutral' = 'neutral';
+        const contextStart = Math.max(0, match.index! - 120);
+        const contextEnd = Math.min(analysisText.length, match.index! + 120);
+        const context = analysisText.substring(contextStart, contextEnd);
+        if (positiveTerms.some(term => context.includes(term))) {
+          association = 'positive';
+        } else if (negativeTerms.some(term => context.includes(term))) {
+          association = 'negative';
         }
+
+        // Only emit a correlation when a real coefficient is present in the
+        // source text. Without it there is no quantitative basis, so the row
+        // is skipped rather than fabricated.
+        const correlationScore = this.extractCorrelationScore(context);
+        if (correlationScore === null) {
+          continue;
+        }
+
+        correlations.push({
+          biomarkerName: biomarker.name,
+          biomarkerType: biomarker.type,
+          baselineLevel: value,
+          changeFromBaseline: this.extractChangeFromBaseline(context),
+          responseAssociation: association,
+          correlationScore,
+          pValue: this.extractPValue(context) ?? null,
+        });
       }
 
       return correlations;
@@ -377,7 +401,10 @@ export class CSRKnowledgeExtractor {
     biomarkerCorrelations: BiomarkerCorrelation[],
     doseRelationships: DoseExposureRelationship[]
   ) {
+    const orgId = Number(organizationId);
     try {
+      // The `organization_id` columns are integers; coerce the string param.
+      const orgIdNum = Number.isNaN(Number(organizationId)) ? null : Number(organizationId);
       // Store biomarker-endpoint relationships
       for (const biomarker of biomarkerCorrelations) {
         for (const outcome of efficacyOutcomes) {
@@ -400,17 +427,17 @@ export class CSRKnowledgeExtractor {
               pValue: biomarker.pValue,
               responseAssociation: biomarker.responseAssociation
             },
-            organizationId
+            organizationId: orgIdNum
           };
           
-          await db!.insert(biomarkerEndpoints)
+          await (db!.insert(biomarkerEndpoints) as any)
             .values(biomarkerEndpointData)
             .onConflictDoUpdate({
               target: [biomarkerEndpoints.biomarkerId, biomarkerEndpoints.endpointId],
               set: {
-                correlationScore: sql`(${biomarkerEndpoints.correlationScore} + ${biomarkerEndpointData.correlationScore}) / 2`,
+                correlationScore: sql`(${biomarkerEndpoints.correlationScore} + ${(biomarkerEndpointData as any).correlationScore}) / 2`,
                 evidenceCount: sql`${biomarkerEndpoints.evidenceCount} + 1`,
-                confidence: sql`(${biomarkerEndpoints.confidence} + ${biomarkerEndpointData.confidence}) / 2`
+                confidence: sql`(${biomarkerEndpoints.confidence} + ${(biomarkerEndpointData as any).confidence}) / 2`
               }
             });
         }
@@ -444,96 +471,106 @@ export class CSRKnowledgeExtractor {
             csrId,
             extractionDate: new Date().toISOString()
           },
-          organizationId
+          organizationId: orgIdNum
         };
-        
+
         await db!.insert(clinicalOutcomes).values(clinicalOutcomeData);
       }
 
       // Store translational patterns
       if (biomarkerCorrelations.length > 0 && efficacyOutcomes.length > 0) {
         const pattern: InsertTranslationalPattern = {
-          organizationId,
-          sourcePhase: 'preclinical',
-          targetPhase: 'clinical',
+          patternName: `biomarker_efficacy_${csrId}`,
           patternType: 'biomarker_efficacy',
-          patternData: {
-            biomarkers: biomarkerCorrelations.map(b => ({
-              name: b.biomarkerName,
-              correlation: b.correlationScore,
-              association: b.responseAssociation
-            })),
-            outcomes: efficacyOutcomes.map(o => ({
-              type: o.type,
-              value: o.value,
-              unit: o.unit
-            })),
+          preclinicalMarkers: biomarkerCorrelations.map(b => ({
+            name: b.biomarkerName,
+            correlation: b.correlationScore,
+            association: b.responseAssociation
+          })),
+          clinicalEndpoints: efficacyOutcomes.map(o => ({
+            type: o.type,
+            value: o.value,
+            unit: o.unit
+          })),
+          occurrenceCount: 1,
+          confidence: this.calculatePatternConfidence(biomarkerCorrelations, efficacyOutcomes),
+          lastObserved: new Date(),
+          metadata: {
+            csrId,
+            organizationId: orgIdNum,
+            extractionDate: new Date().toISOString(),
             safetyProfile: {
               aes: safetySignals.filter(s => s.type === 'AE').length,
               saes: safetySignals.filter(s => s.type === 'SAE').length,
               dlts: safetySignals.filter(s => s.type === 'DLT').length
             }
-          },
-          confidenceScore: this.calculatePatternConfidence(biomarkerCorrelations, efficacyOutcomes),
-          evidenceCount: 1,
-          metadata: {
-            csrId,
-            extractionDate: new Date().toISOString()
           }
         };
-        
+
         await db!.insert(translationalPatterns).values(pattern);
       }
 
       // Store dose escalation data if available
       if (doseRelationships.length > 0) {
-        const [report] = await db!.select()
-          .from(csrReports)
-          .where(eq(csrReports.id, csrId));
+        const csrIdNum = Number(csrId);
+        const [report] = Number.isNaN(csrIdNum)
+          ? [undefined]
+          : await db!.select().from(csrReports).where(eq(csrReports.id, csrIdNum));
 
+        const doseUnit = doseRelationships[0]?.doseUnit || 'mg';
+        // Decimal columns are typed as strings by the driver; stringify the
+        // computed dose figures. The escalation-study study id is a varchar,
+        // so it can carry the CSR-derived identifier directly.
         const studyData: InsertDoseEscalationStudy = {
-          organizationId,
-          studyName: report?.title || `CSR Study ${csrId}`,
-          compoundName: report?.drugName || 'Unknown',
+          organizationId: orgIdNum,
+          studyId: `CSR_${csrId}`,
+          protocolNumber: report?.studyId || `CSR-${csrId}`,
+          title: report?.title || `CSR Study ${csrId}`,
           indication: report?.indication || 'Unknown',
-          escalationMethod: '3_plus_3',
-          startingDose: Math.min(...doseRelationships.map(d => d.doseLevel)),
-          maxDose: Math.max(...doseRelationships.map(d => d.doseLevel)),
+          phase: report?.phase || 'I',
+          escalationMethod: '3+3',
+          startingDose: String(Math.min(...doseRelationships.map(d => d.doseLevel))),
+          maxDose: String(Math.max(...doseRelationships.map(d => d.doseLevel))),
+          doseUnit,
           currentDoseLevel: doseRelationships[0]?.doseLevel || 0,
           status: 'completed',
-          metadata: {
+          escalationParameters: {
             csrId,
+            drugName: ((report?.metadata as Record<string, unknown> | null)?.drugName as string) || 'Unknown',
             doseRelationships,
             mtdEstimate: doseRelationships.find(d => d.mtdReached)?.doseLevel
           }
         };
-        
+
         const [study] = await db!.insert(doseEscalationStudies)
           .values(studyData)
           .returning();
 
-        // Store dose cohorts
+        // Store dose levels and a representative cohort for each.
         for (const doseRel of doseRelationships) {
-          const [doseLevel] = await db!.insert(doseLevels)
+          const [doseLevel] = await (db!.insert(doseLevels) as any)
             .values({
               studyId: study.id,
               levelNumber: doseRelationships.indexOf(doseRel) + 1,
-              doseAmount: doseRel.doseLevel,
+              doseAmount: String(doseRel.doseLevel),
               doseUnit: doseRel.doseUnit,
-              isDLT: doseRel.dltRate > 0.33
+              dltsInCohort: Math.round(doseRel.dltRate * 3),
+              status: 'completed'
             })
             .returning();
 
+          // The schema models cohorts per patient; CSR extraction only has
+          // aggregate figures, so we persist one representative row with the
+          // aggregate detail in metadata.
           await db!.insert(doseCohorts)
             .values({
               studyId: study.id,
               doseLevelId: doseLevel.id,
               cohortNumber: doseRelationships.indexOf(doseRel) + 1,
-              plannedPatients: 3,
-              enrolledPatients: 3,
-              evaluablePatients: 3,
-              dltsObserved: Math.round(doseRel.dltRate * 3),
-              status: 'completed'
+              patientId: `${study.id}_cohort_${doseRelationships.indexOf(doseRel) + 1}`,
+              enrollmentDate: new Date().toISOString().slice(0, 10),
+              dltOccurred: doseRel.dltRate > 0.33,
+              metadata: { dltsObserved: Math.round(doseRel.dltRate * 3) }
             });
         }
       }
@@ -575,6 +612,101 @@ export class CSRKnowledgeExtractor {
       return parseFloat(pMatch[1]);
     }
     return undefined;
+  }
+
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
+   * Extract clean narrative text from the CSR `results` JSON, putting the
+   * biomarker-specific field first so biomarker extraction anchors to it.
+   */
+  private flattenResultsText(results: unknown): string {
+    if (!results || typeof results !== 'object') {
+      return typeof results === 'string' ? results : '';
+    }
+    const obj = results as Record<string, unknown>;
+    const ordered = ['biomarkerResults', 'primaryResults', 'secondaryResults'];
+    const parts: string[] = [];
+    for (const key of ordered) {
+      if (typeof obj[key] === 'string') parts.push(obj[key] as string);
+    }
+    for (const [key, value] of Object.entries(obj)) {
+      if (ordered.includes(key)) continue;
+      if (typeof value === 'string') parts.push(value);
+    }
+    return parts.join('\n');
+  }
+
+  /** Infer a biomarker type from its name. */
+  private inferBiomarkerType(name: string): BiomarkerCorrelation['biomarkerType'] {
+    if (/\b(IL-?\d+|TNF|IFN|interferon|interleukin)\b/i.test(name)) return 'cytokine';
+    if (/\b(CD\d+|lymphocyte|neutrophil|cell)\b/i.test(name)) return 'cell';
+    if (/\b(EGFR|KRAS|BRAF|ALK|ROS1|HER2|gene|mutation)\b/i.test(name)) return 'gene';
+    if (/\b(HbA1c|glucose|LDH|creatinine|cholesterol|metabolite)\b/i.test(name)) return 'metabolite';
+    return 'protein';
+  }
+
+  /** Parse the study's declared biomarkers from the free-text biomarkerUsed field. */
+  private parseStudyBiomarkers(
+    biomarkerUsed: string | null | undefined
+  ): { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] {
+    if (!biomarkerUsed) return [];
+    return biomarkerUsed
+      .split(/[,;/\n]|\band\b/i)
+      .map(token => token.replace(/\(.*?\)/g, '').trim())
+      .filter(name => name.length >= 2 && name.length <= 40)
+      .map(name => ({ name, type: this.inferBiomarkerType(name) }));
+  }
+
+  /** Merge biomarker lists, de-duplicating case-insensitively by name. */
+  private mergeBiomarkers(
+    a: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[],
+    b: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[]
+  ): { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] {
+    const seen = new Set<string>();
+    const merged: { name: string; type: BiomarkerCorrelation['biomarkerType'] }[] = [];
+    for (const item of [...a, ...b]) {
+      const key = item.name.toUpperCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(item);
+    }
+    return merged;
+  }
+
+  /**
+   * Extract a correlation coefficient stated in the text (e.g. "r = -0.62").
+   * Returns null when no value in the valid [-1, 1] range is present.
+   */
+  private extractCorrelationScore(text: string): number | null {
+    const match =
+      text.match(/r\s*=\s*(-?\d+\.?\d*)/i) ||
+      text.match(/correlation[^.\d-]*(-?\d+\.?\d*)/i);
+    if (!match) return null;
+    const value = parseFloat(match[1]);
+    if (Number.isNaN(value) || value < -1 || value > 1) return null;
+    return value;
+  }
+
+  /**
+   * Extract a stated change-from-baseline value (e.g. "decreased by 12.4").
+   * Returns null when not present; sign reflects increase/decrease wording.
+   */
+  private extractChangeFromBaseline(text: string): number | null {
+    const explicit = text.match(/change from baseline[^.\d-]*(-?\d+\.?\d*)/i);
+    if (explicit) {
+      const value = parseFloat(explicit[1]);
+      return Number.isNaN(value) ? null : value;
+    }
+    const directional = text.match(/(decreased|reduced|reduction|increased|increase)[^.\d]*(\d+\.?\d*)/i);
+    if (directional) {
+      const magnitude = parseFloat(directional[2]);
+      if (Number.isNaN(magnitude)) return null;
+      return /decreas|reduc/i.test(directional[1]) ? -magnitude : magnitude;
+    }
+    return null;
   }
 
   private extractDoseLevels(text: string): number[] {

@@ -24,7 +24,7 @@ import pg from 'pg';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayRequest, RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
-import { getRAGPipeline, RetrievalOptions } from '../services/advancedRAGPipeline.js';
+import { ragRouter } from '../services/ragRouter.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -155,7 +155,7 @@ router.post('/query', async (req: Request, res: Response) => {
         );
         break;
       case 'graph':
-        response = await handleGraphMode(query, options);
+        response = await handleGraphMode(query, options, organizationUuid);
         break;
       case 'advisory':
         response = await handleAdvisoryMode(query, options, context, organizationUuid);
@@ -231,11 +231,10 @@ async function handleGenerateMode(
   organizationUuid?: string,
   persistCitations?: boolean
 ): Promise<CortexQueryResponse> {
-  const ragPipeline = getRAGPipeline(pool!);
-  const gateway = getGateway();
-
-  // Configure retrieval options
-  const retrievalOptions: RetrievalOptions = {
+  // Execute RAG query with generation through the single router.
+  const result = await ragRouter.query({
+    query,
+    intent: 'regulatory_qa',
     strategy: options?.retrievalStrategy || 'advanced',
     limit: options?.limit || 8,
     threshold: options?.threshold || 0.5,
@@ -245,15 +244,8 @@ async function handleGenerateMode(
     useCompression: true,
     organizationUuid,
     persistCitations: !!persistCitations,
-    filters: options?.filters
-      ? {
-          atomType: options.filters.atomType,
-        }
-      : undefined,
-  };
-
-  // Execute RAG query with generation
-  const result = await ragPipeline.queryWithGeneration(query, retrievalOptions);
+    filters: options?.filters ? { atomType: options.filters.atomType } : undefined,
+  });
 
   return {
     success: true,
@@ -282,15 +274,28 @@ async function handleGenerateMode(
 }
 
 /**
- * Graph mode: Knowledge graph traversal
+ * Graph mode: Knowledge graph traversal. Org-scoped — refuses to traverse
+ * when organizationUuid is missing so atoms never leak across tenants
+ * (both the candidate search and the edge traversal join lumen_data_atoms
+ * to the requesting org).
  */
 async function handleGraphMode(
   query: string,
-  options: CortexQueryRequest['options']
+  options: CortexQueryRequest['options'],
+  organizationUuid?: string
 ): Promise<CortexQueryResponse> {
-  // First, find relevant atoms via search
+  if (!organizationUuid) {
+    return {
+      success: true,
+      mode: 'graph',
+      query,
+      results: { graph: { nodes: [], edges: [] } },
+      metadata: { processingTimeMs: 0, tokensUsed: 0 },
+    };
+  }
+
   const embeddingService = getEmbeddingService(pool!);
-  const searchResults = await embeddingService.searchSimilar(query, 5, 0.5);
+  const searchResults = await embeddingService.searchSimilar(query, 5, 0.5, organizationUuid);
 
   if (searchResults.length === 0) {
     return {
@@ -304,7 +309,9 @@ async function handleGraphMode(
     };
   }
 
-  // Get graph neighborhood for found atoms
+  // Get graph neighborhood for found atoms. Both endpoint-atoms are joined
+  // to the requesting org so a cross-tenant edge cannot surface even when an
+  // attacker guesses an atom id — the JOINs filter both sides explicitly.
   const atomIds = searchResults.map(r => r.id);
 
   const { rows: edges } = await pool!.query(
@@ -316,10 +323,14 @@ async function handleGraphMode(
     FROM lumen_knowledge_graph_edges e
     JOIN lumen_data_atoms sa ON e.source_atom_id = sa.id
     JOIN lumen_data_atoms ta ON e.target_atom_id = ta.id
-    WHERE e.source_atom_id = ANY($1) OR e.target_atom_id = ANY($1)
+    JOIN organizations osa ON sa.organization_id = osa.id
+    JOIN organizations ota ON ta.organization_id = ota.id
+    WHERE (e.source_atom_id = ANY($1) OR e.target_atom_id = ANY($1))
+      AND osa.uuid = $2
+      AND ota.uuid = $2
     LIMIT 50
   `,
-    [atomIds]
+    [atomIds, organizationUuid]
   );
 
   // Build graph response
@@ -375,13 +386,15 @@ async function handleAdvisoryMode(
   organizationUuid?: string
 ): Promise<CortexQueryResponse> {
   const gateway = getGateway();
-  const ragPipeline = getRAGPipeline(pool!);
 
-  // Get relevant context
-  const ragContext = await ragPipeline.retrieve(query, {
-    strategy: 'advanced',
+  // Get relevant context (retrieve only; this mode does its own generation).
+  // useMmr:false preserves the prior behaviour (MMR was not enabled here).
+  const ragContext = await ragRouter.retrieve({
+    query,
+    intent: 'regulatory_qa',
     limit: 5,
     useReranking: true,
+    useMmr: false,
     organizationUuid,
   });
 

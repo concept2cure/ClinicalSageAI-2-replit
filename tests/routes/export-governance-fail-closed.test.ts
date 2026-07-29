@@ -1,7 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-const mockRegisterExportGovernanceQuick = vi.fn();
-
+const { mockRegisterExportGovernanceQuick } = vi.hoisted(() => ({ mockRegisterExportGovernanceQuick: vi.fn() }));
 vi.mock('../../server/services/compute/exportGovernance', () => ({
   registerExportGovernanceQuick: mockRegisterExportGovernanceQuick,
 }));

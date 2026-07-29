@@ -1,21 +1,19 @@
 # Route Ownership Matrix (Required Review Artifact)
 
-- Generated from: `docs/reports/route-mount-audit-latest.json`
-- Source timestamp: 2026-04-01T22:36:02.861Z
-- Total mounts: 235
-- Errors: 0
-- Warnings: 0
+- Source: `docs/reports/route-mount-audit-latest.json`
 
 ## Prefix Ownership
 
 | Prefix | Owner | Contact | Warning types |
 |---|---|---|---|
 | `/api` | Platform API Gateway | `server/index.ts` | none |
-| `/api/ai` | AI Platform | `server/services/ai-gateway/` | none |
+| `/api/ai` | AI Platform | `server/services/ai-gateway/` | multi-use-prefix |
 | `/api/auth` | Identity Access | `server/routes/auth.ts` | none |
-| `/api/cmc` | CMC Platform | `server/routes/cmc*.ts` | none |
-| `/api/concept2cure` | Platform Kernel | `server/routes/concept2cure.ts` | none |
+| `/api/cmc` | CMC Platform | `server/routes/cmc*.ts` | multi-use-prefix |
+| `/api/concept2cure` | Platform Kernel | `server/routes/concept2cure.ts` | multi-use-prefix |
+| `/api/device-cockpit` | Device & Diagnostics | `server/routes/device-cockpit.ts` | none |
 | `/api/documents` | Authoring Governance | `server/routes/documents-unified.ts` | none |
+| `/api/global-markets` | Device & Diagnostics | `server/routes/global-markets.ts` | none |
 | `/api/ind` | Submission Workflows | `server/routes/ind*.ts` | none |
 | `/api/projects` | Workspace Core | `server/routes/projects-management.ts` | none |
 | `/api/regulatory` | Regulatory Intelligence | `server/routes/regulatory*.ts` | none |

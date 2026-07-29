@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs/promises';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import path from 'path';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
@@ -14,6 +15,10 @@ import { getSecureOrgId } from '../utils/tenantContext';
 import { extractWithTika } from '../services/ingestion/tikaClient';
 import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
+
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('evidence-management');
 
 const router = Router();
 const evidenceService = new EvidenceManagementService();
@@ -72,8 +77,9 @@ router.use((req: Request, res: Response, next) => {
  */
 router.get('/requirements/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     // Get all files mapped to requirements
     const files = await db.execute(sql`
@@ -95,8 +101,8 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
     const totalRequired = 8; // Number of required FDA categories
     let completedCount = 0;
 
-    // Process files by requirement
-    for (const file of files) {
+    // Process files by requirement (raw SQL rows are untyped)
+    for (const file of files.rows as any[]) {
       if (!requirements[file.fda_requirement]) {
         requirements[file.fda_requirement] = {
           total: 0,
@@ -133,7 +139,7 @@ router.get('/requirements/:projectId', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[Evidence Management] Error fetching requirements:', error);
+    logger.error('Error fetching requirements', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch requirement status' });
   }
 });
@@ -146,10 +152,25 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
   try {
     const files = req.files as Express.Multer.File[];
     const { fda_requirement, fda_section, workflow_stage, project_id } = req.body;
-    const organizationId = req.organizationId;
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     if (!files || files.length === 0) {
       return res.status(400).json({ error: 'No files provided' });
+    }
+
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) on every
+    // file before any is persisted/processed. Reject the whole batch on failure.
+    for (const file of files) {
+      try {
+        await assertUploadSafe(file.path, file.mimetype, file.originalname);
+      } catch (err) {
+        if (err instanceof UploadSafetyError) {
+          await Promise.all(files.map(f => fs.unlink(f.path).catch(() => {})));
+          return res.status(err.status).json(err.body);
+        }
+        throw err;
+      }
     }
 
     const uploadedFiles = [];
@@ -265,7 +286,7 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
       message: `Successfully uploaded ${uploadedFiles.length} file(s)`,
     });
   } catch (error) {
-    console.error('[Evidence Management] Upload error:', error);
+    logger.error('Upload error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to upload files' });
   }
 });
@@ -276,8 +297,9 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
  */
 router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     const analysis = await evidenceService.performGapAnalysis(projectId, organizationId);
 
@@ -288,7 +310,7 @@ router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[Evidence Management] Gap analysis error:', error);
+    logger.error('Gap analysis error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to perform gap analysis' });
   }
 });
@@ -313,7 +335,7 @@ router.post('/generate-citations', async (req: Request, res: Response) => {
       count: citations.length,
     });
   } catch (error) {
-    console.error('[Evidence Management] Citation generation error:', error);
+    logger.error('Citation generation error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to generate citations' });
   }
 });
@@ -333,7 +355,7 @@ router.post('/link-workflow', async (req: Request, res: Response) => {
       message: `File linked to workflow stage ${workflowStage}`,
     });
   } catch (error) {
-    console.error('[Evidence Management] Workflow linking error:', error);
+    logger.error('Workflow linking error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to link to workflow' });
   }
 });
@@ -344,7 +366,8 @@ router.post('/link-workflow', async (req: Request, res: Response) => {
  */
 router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Response) => {
   try {
-    const { projectId, stage } = req.params;
+    const projectId = String(req.params.projectId);
+    const stage = String(req.params.stage);
 
     const evidence = await evidenceService.getStageEvidence(projectId, parseInt(stage));
 
@@ -353,10 +376,10 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
       projectId,
       stage: parseInt(stage),
       evidence,
-      count: evidence.length,
+      count: evidence.rows.length,
     });
   } catch (error) {
-    console.error('[Evidence Management] Stage evidence error:', error);
+    logger.error('Stage evidence error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch stage evidence' });
   }
 });
@@ -367,7 +390,7 @@ router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Respon
  */
 router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
   try {
-    const { formId } = req.params;
+    const formId = String(req.params.formId);
     const { projectId } = req.body;
 
     const formData = await evidenceService.autoPopulateForm(formId, projectId);
@@ -379,7 +402,7 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
       fieldsPopulated: Object.keys(formData).length,
     });
   } catch (error) {
-    console.error('[Evidence Management] Auto-populate error:', error);
+    logger.error('Auto-populate error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to auto-populate form' });
   }
 });
@@ -390,7 +413,7 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
  */
 router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileId = String(req.params.fileId);
     const { reviewerId } = req.body;
 
     await evidenceService.submitForReview(fileId, reviewerId || 'system');
@@ -400,7 +423,7 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
       message: 'Evidence submitted for review',
     });
   } catch (error) {
-    console.error('[Evidence Management] Review submission error:', error);
+    logger.error('Review submission error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to submit for review' });
   }
 });
@@ -411,7 +434,7 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
  */
 router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileId = String(req.params.fileId);
     const { reviewerId, comments } = req.body;
 
     await evidenceService.approveEvidence(fileId, reviewerId || 'system', comments);
@@ -421,7 +444,7 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
       message: 'Evidence approved',
     });
   } catch (error) {
-    console.error('[Evidence Management] Approval error:', error);
+    logger.error('Approval error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to approve evidence' });
   }
 });
@@ -432,7 +455,7 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
  */
 router.post('/review/request-changes/:fileId', async (req: Request, res: Response) => {
   try {
-    const { fileId } = req.params;
+    const fileId = String(req.params.fileId);
     const { reviewerId, comments } = req.body;
 
     if (!comments) {
@@ -446,7 +469,7 @@ router.post('/review/request-changes/:fileId', async (req: Request, res: Respons
       message: 'Changes requested',
     });
   } catch (error) {
-    console.error('[Evidence Management] Change request error:', error);
+    logger.error('Change request error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to request changes' });
   }
 });
@@ -457,8 +480,9 @@ router.post('/review/request-changes/:fileId', async (req: Request, res: Respons
  */
 router.get('/export/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     const evidencePackage = await evidenceService.exportEvidencePackage(projectId, organizationId);
 
@@ -467,7 +491,7 @@ router.get('/export/:projectId', async (req: Request, res: Response) => {
       package: evidencePackage,
     });
   } catch (error) {
-    console.error('[Evidence Management] Export error:', error);
+    logger.error('Export error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to export evidence package' });
   }
 });
@@ -478,8 +502,9 @@ router.get('/export/:projectId', async (req: Request, res: Response) => {
  */
 router.get('/analytics/:projectId', async (req: Request, res: Response) => {
   try {
-    const { projectId } = req.params;
-    const organizationId = req.organizationId;
+    const projectId = String(req.params.projectId);
+    // Router-level middleware (above) guarantees req.organizationId is a valid number.
+    const organizationId = req.organizationId as number;
 
     const analytics = await db.execute(sql`
       SELECT
@@ -498,20 +523,23 @@ router.get('/analytics/:projectId', async (req: Request, res: Response) => {
     // Get gap analysis
     const gapAnalysis = await evidenceService.performGapAnalysis(projectId, organizationId);
 
+    // Raw SQL aggregate row is untyped.
+    const analyticsRow = (analytics.rows[0] as any) || {};
+
     res.json({
       success: true,
       projectId,
-      totalFiles: parseInt(analytics[0]?.total_files || 0),
-      approvedFiles: parseInt(analytics[0]?.approved_files || 0),
-      underReview: parseInt(analytics[0]?.under_review || 0),
-      draftFiles: parseInt(analytics[0]?.draft_files || 0),
-      requirementsCovered: parseInt(analytics[0]?.requirements_covered || 0),
-      unmappedFiles: parseInt(analytics[0]?.unmapped_files || 0),
+      totalFiles: parseInt(analyticsRow.total_files || 0),
+      approvedFiles: parseInt(analyticsRow.approved_files || 0),
+      underReview: parseInt(analyticsRow.under_review || 0),
+      draftFiles: parseInt(analyticsRow.draft_files || 0),
+      requirementsCovered: parseInt(analyticsRow.requirements_covered || 0),
+      unmappedFiles: parseInt(analyticsRow.unmapped_files || 0),
       gaps: gapAnalysis.gaps.length,
       completeness: gapAnalysis.completeness,
     });
   } catch (error) {
-    console.error('[Evidence Management] Analytics error:', error);
+    logger.error('Analytics error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });

@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { ai } from '../../lib/unified-ai-client';
+import { requireAuthedOrgId } from '../../utils/authedOrgId.js';
 
 const router = Router();
 
@@ -28,24 +30,22 @@ interface TaskTemplate {
 // Get all available workflows
 router.get('/workflows', async (req: Request, res: Response) => {
   try {
-    const { organizationId } = req.query;
-
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID required' });
-    }
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
 
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    // Get workflows from database or return default templates
+    // Get workflows from database or return default templates. organization_id
+    // = 0 is the reserved system tenant holding the shared global templates.
     const query = `
-      SELECT * FROM cmc_workflows 
+      SELECT * FROM cmc_workflows
       WHERE organization_id = $1 OR organization_id = 0
       ORDER BY created_at DESC
     `;
 
-    const result = await pool.query(query, [organizationId]);
+    const result = await pool.query(query, [guard.orgId]);
 
     // If no workflows exist, return default templates
     if (result.rows.length === 0) {
@@ -97,12 +97,10 @@ router.get('/workflows', async (req: Request, res: Response) => {
 // Start a new workflow
 router.post('/workflows/:id/start', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { organizationId, projectName, assignedTeam = [] } = req.body;
-
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID required' });
-    }
+    const { id } = req.params as { id: string };
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { projectName, assignedTeam = [] } = req.body;
 
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
@@ -117,12 +115,12 @@ router.post('/workflows/:id/start', async (req: Request, res: Response) => {
       RETURNING *
     `;
 
-    const workflowInstanceId = `wf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const workflowInstanceId = `wf_${randomUUID()}`;
 
     const result = await pool.query(insertQuery, [
       workflowInstanceId,
       id,
-      organizationId,
+      guard.orgId,
       projectName || `Workflow ${id}`,
       JSON.stringify(assignedTeam),
       'active',
@@ -130,7 +128,7 @@ router.post('/workflows/:id/start', async (req: Request, res: Response) => {
     ]);
 
     // Create initial tasks for the workflow
-    await createWorkflowTasks(workflowInstanceId, id);
+    await createWorkflowTasks(workflowInstanceId, String(id));
 
     res.json({
       success: true,
@@ -148,10 +146,12 @@ router.post('/workflows/:id/start', async (req: Request, res: Response) => {
 // Execute AI tool
 router.post('/ai-tools/execute', async (req: Request, res: Response) => {
   try {
-    const { command, organizationId, drugName, additionalContext = {} } = req.body;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { command, drugName, additionalContext = {} } = req.body;
 
-    if (!command || !organizationId) {
-      return res.status(400).json({ error: 'Command and organization ID required' });
+    if (!command) {
+      return res.status(400).json({ error: 'Command required' });
     }
 
     if (!pool) {
@@ -166,11 +166,11 @@ router.post('/ai-tools/execute', async (req: Request, res: Response) => {
       RETURNING *
     `;
 
-    const executionId = `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const executionId = `ai_${randomUUID()}`;
 
     await pool.query(logQuery, [
       executionId,
-      organizationId,
+      guard.orgId,
       command,
       drugName || 'Unknown',
       JSON.stringify(additionalContext),
@@ -178,7 +178,7 @@ router.post('/ai-tools/execute', async (req: Request, res: Response) => {
     ]);
 
     // Execute the AI tool based on command
-    let result = await executeAITool(command, drugName, additionalContext);
+    const result = await executeAITool(command, drugName, additionalContext);
 
     // Update execution status
     await pool.query(
@@ -244,17 +244,15 @@ router.get('/checklists', async (req: Request, res: Response) => {
 router.post('/checklists/:id/create', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { organizationId, projectName } = req.body;
-
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID required' });
-    }
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { projectName } = req.body;
 
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const instanceId = `checklist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const instanceId = `checklist_${randomUUID()}`;
 
     const insertQuery = `
       INSERT INTO cmc_checklist_instances (
@@ -267,7 +265,7 @@ router.post('/checklists/:id/create', async (req: Request, res: Response) => {
     const result = await pool.query(insertQuery, [
       instanceId,
       id,
-      organizationId,
+      guard.orgId,
       projectName || `Checklist ${id}`,
       'active',
       0,
@@ -373,7 +371,7 @@ async function createWorkflowTasks(workflowInstanceId: string, templateId: strin
       ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
     `,
       [
-        `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        `task_${randomUUID()}`,
         workflowInstanceId,
         task.name,
         task.order,

@@ -138,7 +138,7 @@ export async function setupRlsForAllTables() {
 
     // Set up RLS for each table
     for (const row of tablesResult.rows) {
-      await setupTableRls(row.table_name);
+      await setupTableRls(String(row.table_name));
     }
 
     logger.info('RLS setup completed for all tables');

@@ -1,16 +1,8 @@
-import {
-  summaryPackets,
-  projects,
-  insightMemories,
-  wisdomTraces,
-  studySessions,
-  csrReports,
-} from 'shared/schema';
+import { csrReports } from 'shared/schema';
 import { db } from './db';
 import { eq, and, like, or, desc } from 'drizzle-orm';
 import { huggingFaceService, HFModel } from './huggingface-service';
 import { academicKnowledgeService } from './academic-knowledge-service';
-import { protocolKnowledgeService } from './protocol-knowledge-service';
 
 interface ResearchCompanionMemory {
   recentTopics: string[];
@@ -598,7 +590,10 @@ class ResearchCompanionService {
   private async findRelevantAcademicSources(query: string, limit: number = 3) {
     try {
       // Leverage the academic knowledge service
-      const evidence = await academicKnowledgeService.getAcademicEvidence(query, {});
+      const embeddings = await huggingFaceService.generateEmbeddings(query);
+      const evidence = await academicKnowledgeService.retrieveKnowledge(query, embeddings, {
+        limit,
+      });
       return evidence.slice(0, limit);
     } catch (error) {
       console.error('Error finding relevant academic sources:', error);

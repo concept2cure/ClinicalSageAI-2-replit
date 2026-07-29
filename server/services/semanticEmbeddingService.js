@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db } from '../db.js';
 import { documentVectors, components, componentVersions } from '../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import regulatoryAIPhase3 from './regulatoryAIServicePhase3.js';
@@ -137,11 +137,11 @@ class SemanticEmbeddingService {
       const vectorIds = results.map(r => r.id);
       if (vectorIds.length > 0) {
         await db.execute(sql`
-          UPDATE document_vectors 
-          SET 
+          UPDATE document_vectors
+          SET
             last_accessed_at = NOW(),
             access_count = access_count + 1
-          WHERE id = ANY(${vectorIds})
+          WHERE id = ANY(${vectorIds}) AND organization_id = ${organizationId}
         `);
       }
       

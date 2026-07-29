@@ -1,11 +1,33 @@
 node_modules/
-.env
 dist/
 .cache/
 .cerv2_program_id
 
+# Secrets & environment files — never commit real values.
+# Ignore all .env variants but keep the *.example templates tracked.
+.env
+.env.*
+!.env.example
+!.env*.example
+!.env.beta.example
+
+# Private keys, certificates, and credential bundles
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+secrets.json
+secrets.*.json
+*.secret
+
 # Stray runtime artifacts (not part of source)
 tmp/
+uploads/
 logs/
 bun.lock
 __pycache__/
@@ -63,3 +85,18 @@ test-artifacts/
 generated_documents/
 .claude/worktrees/
 .gstack/
+
+# Tesseract decompressed-data cache (the vendored *.traineddata.gz is tracked)
+/*.traineddata
+tesseract-cache/
+
+# Generated SBOM (produced in CI, published as an artifact)
+sbom.cyclonedx.json
+docs/reports/workflow-audit-results.json
+
+# Golden-journey run artifacts (regenerated every run; the committed docs in
+# docs/proof/golden-journeys describe the journeys, the manifests prove a run)
+tests/golden-journeys/__reports__/
+
+# generated report intermediates
+docs/audit-2026-07/evidence/.report-*.html

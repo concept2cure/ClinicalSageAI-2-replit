@@ -6,6 +6,7 @@
  */
 
 import express from 'express';
+import { requireAuth } from '../../middleware/auth.js';
 import blueprintGeneratorRouter from './blueprint-generator.js';
 import changeImpactSimulatorRouter from './change-impact-simulator.js';
 import manufacturingTunerRouter from './manufacturing-tuner.js';
@@ -25,74 +26,111 @@ router.use('/global-compliance', globalComplianceRouter);
 router.use('/audit-risk-monitor', auditRiskMonitorRouter);
 router.use('/cmc-copilot', cmcCopilotRouter);
 
-// Test endpoint to trigger CMC events
-router.post('/test-event', async (req, res) => {
-  const { eventType, data } = req.body;
-  
+// Allowed CMC lifecycle event types that the test hook may emit.
+// Mirrors the switch in server/services/cmcEvents.js::emitCMCEvent.
+const ALLOWED_TEST_EVENT_TYPES = new Set([
+  'spec.approved',
+  'stability.updated',
+  'method.validated',
+  'manufacturing.updated',
+  'batch.released',
+]);
+
+// Test endpoint to trigger CMC events.
+//
+// SECURITY: This is a development-only test hook that emits arbitrary CMC
+// lifecycle events. It is hard-blocked in production (returns 404) and
+// requires authentication everywhere else, and validates its input before
+// emitting. Mirrors the gating pattern used by other test/demo routes in
+// this repo (see server/routes/seed-demo.ts).
+router.post('/test-event', requireAuth, async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  const { eventType, data } = req.body ?? {};
+
+  if (typeof eventType !== 'string' || !ALLOWED_TEST_EVENT_TYPES.has(eventType)) {
+    return res.status(400).json({
+      error: 'Invalid or missing eventType',
+      allowedEventTypes: Array.from(ALLOWED_TEST_EVENT_TYPES),
+    });
+  }
+
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    return res.status(400).json({ error: 'Invalid or missing data: expected an object' });
+  }
+
   try {
     const { emitCMCEvent } = await import('../../services/cmcEvents.js');
     const patch = await emitCMCEvent(eventType, data);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: `Event ${eventType} triggered`,
-      patch 
+      patch,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get CMC module status and capabilities
+// Get CMC module capability manifest.
+//
+// HONESTY: This is a static capability manifest (source: 'manifest'), not a
+// live health probe. Each module is reported as 'available' because its router
+// is mounted above via router.use(); we do not claim per-module 'operational'
+// health that was never checked, and we do not report a fabricated build
+// version. The API itself is 'active' by virtue of serving this response.
 router.get('/status', (req, res) => {
   res.status(200).json({
     status: 'active',
+    source: 'manifest',
     modules: [
       {
         id: 'blueprint-generator',
         name: 'AI-CMC Blueprint Generator',
         description: 'Auto-generate ICH-compliant Module 3 documents from molecule + process data.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'change-impact-simulator',
         name: 'AI Change Impact Simulator (AICIS)',
         description:
           'Simulate change consequences across global filings before making a CMC change.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'manufacturing-tuner',
         name: 'Manufacturing Intelligence Tuner',
         description: 'Benchmark and improve your process using AI + global precedent mining.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'preclinical-translator',
         name: 'Preclinical-to-Process Translator',
         description: 'Instantly scale lab discoveries into commercial process frameworks.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'global-compliance',
         name: 'Global Compliance Auto-Match',
         description: 'Auto-localize content for multiple health authorities.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'audit-risk-monitor',
         name: 'Real-Time Audit Risk Monitor',
         description: 'AI-powered surveillance of compliance gaps.',
-        status: 'operational',
+        status: 'available',
       },
       {
         id: 'cmc-copilot',
         name: 'CMC CoPilot',
         description: 'AI assistant available in every CMC screen.',
-        status: 'operational',
+        status: 'available',
       },
     ],
-    version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
 });

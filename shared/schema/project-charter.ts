@@ -1,34 +1,54 @@
 /**
- * Project Charter & Timeline Schema
+ * Project Charter Schema
  *
- * Regulatory project charter system with submission-specific templates,
- * timeline phases, commitment tracking, and FDA meeting management.
+ * Regulatory project charter with pathway-specific intelligence + commitment
+ * tracking with a charter-scoped append-only audit trail (21 CFR 11.10(e)).
  *
  * Tables:
- * - projectCharters: Charter document per project with pathway-specific intelligence
- * - charterSections: Hierarchical sections with version control and content hashing
- * - timelinePhases: Phase-based schedule with cross-functional dependencies
- * - projectCommitments: Regulatory commitments with 21 CFR Part 11 signing
- * - regulatoryMeetings: FDA/EMA/PMDA meeting tracking (pre-IND, EOP2, pre-NDA, etc.)
- * - charterAuditEvents: Immutable audit trail for charter modifications
+ * - projectCharters:      Charter document per project (pathway-specific intelligence)
+ * - charterSections:      Hierarchical content blocks (rebuilt 2026-06-29, Task #20)
+ * - timelinePhases:       Phase-based schedule (rebuilt 2026-06-29, Task #20)
+ * - projectCommitments:   Regulatory obligations (rebuilt 2026-06-29, Task #20)
+ * - charterAuditEvents:   Per-entity append-only audit trail for charter-scoped
+ *                         writes, coupled to entity INSERTs in the same db.tx
+ *                         (new 2026-06-29, Task #20; never previously migrated)
  *
- * MULTI-TENANT: All tables include organizationId for RLS isolation.
- * 21 CFR Part 11: Electronic signatures with password challenge, intent, and audit trail.
+ * History
+ * -------
+ *  - Created by migrations/0012_project_charter_timeline.sql (2026-03-27):
+ *    project_charters, charter_sections, timeline_phases, project_commitments.
+ *  - Three tables dropped by migrations/20260611_drop_charter_staging_tables.sql
+ *    (decision register #727 item 10) on the basis that they were
+ *    migrated-but-never-queried.
+ *  - Rebuilt by migrations/20260629_charter_tables_rebuild.sql (Task #20,
+ *    PATH_TO_GA §C.10) to support the commitments CRUD surface in
+ *    server/routes/charters.ts. charter_audit_events is net-new and lets the
+ *    commitment INSERT couple transactionally with its audit row — closing the
+ *    AUDIT_BEST_EFFORT_DOCUMENTED_BUT_RISKY finding for the charter scope (the
+ *    canonical audit_logs surface remains best-effort because auditService
+ *    opens its own pool connection; we cannot enlist it in a caller-side tx).
+ *
+ * NOTE: regulatoryMeetings was named in earlier headers but no migration ever
+ * shipped — it is intentionally NOT rebuilt here. If/when it is needed, it
+ * should land in a separate, scoped change.
+ *
+ * MULTI-TENANT: All tables include organizationId (or are joined via charterId
+ * which carries organizationId on projectCharters) for RLS isolation.
  * All timestamps use UTC (withTimezone: true) per 21 CFR 11.70(a).
  *
  * @module shared/schema/project-charter
  */
 
-import { relations, InferSelectModel, sql } from 'drizzle-orm';
+import { InferSelectModel } from 'drizzle-orm';
 import {
+  boolean,
   integer,
   pgTable,
+  real,
   serial,
   text,
   timestamp,
-  boolean,
   json,
-  real,
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
@@ -143,17 +163,22 @@ export const projectCharters = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CHARTER SECTIONS
+// CHARTER SECTIONS — rebuilt 2026-06-29 (Task #20)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Charter Sections — hierarchical content blocks with version control.
  *
- * Each section has a key (e.g., 'objectives', 'regulatory_strategy', 'cmc_readiness'),
- * content, status, and version tracking. Content hashing (SHA-256) provides
- * immutability proof per 21 CFR Part 11.70(b).
+ * Each section has a key (e.g., 'objectives', 'regulatory_strategy',
+ * 'cmc_readiness'), content, status, and version tracking. Content hashing
+ * (SHA-256) provides immutability proof per 21 CFR Part 11.70(b).
  *
  * Status transitions are logged in statusTransitionLog for full audit trail.
+ *
+ * Shape recovered verbatim from pre-drop git HEAD (commit 3341dd1f) — the
+ * column set, index set, and FK cascade behaviour match 1:1 with what
+ * migration 0012 originally created. The rebuild migration 20260629 mirrors
+ * this Drizzle definition.
  */
 export const charterSections = pgTable(
   'charter_sections',
@@ -203,19 +228,22 @@ export const charterSections = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TIMELINE PHASES
+// TIMELINE PHASES — rebuilt 2026-06-29 (Task #20)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Timeline Phases — phase-based project schedule with cross-functional dependencies.
+ * Timeline Phases — phase-based project schedule with cross-functional
+ * dependencies.
  *
  * Each phase represents a major work period (e.g., "CMC Development",
  * "Clinical Protocol", "Submission & Review"). Phases have start/end dates,
  * progress tracking, deliverables, and predecessor dependencies.
  *
- * Cross-functional dependencies model real biotech parallelism:
- * CMC, nonclinical, clinical, and regulatory tracks run in parallel
- * with blocking gates between them.
+ * Cross-functional dependencies model real biotech parallelism: CMC,
+ * nonclinical, clinical, and regulatory tracks run in parallel with blocking
+ * gates between them.
+ *
+ * Shape recovered verbatim from pre-drop git HEAD (commit 3341dd1f).
  */
 export const timelinePhases = pgTable(
   'timeline_phases',
@@ -230,7 +258,7 @@ export const timelinePhases = pgTable(
 
     // ── Functional Track ───────────────────────────────────────────────────
     functionalTeam: text('functional_team'), // cmc, nonclinical, clinical, regulatory, medical_writing, biostatistics, qa
-    developmentStage: text('development_stage'), // discovery, preclinical, ind_enabling, phase_1, phase_2, phase_3, nda_bla, post_market
+    developmentStage: text('development_stage'),
 
     // ── Dates ──────────────────────────────────────────────────────────────
     startDate: timestamp('start_date', { withTimezone: true }),
@@ -242,12 +270,12 @@ export const timelinePhases = pgTable(
     progress: integer('progress').default(0), // 0-100
 
     // ── Dependencies (cross-functional) ────────────────────────────────────
-    predecessors: json('predecessors').$type<number[]>(), // phase IDs
-    blockedBy: json('blocked_by').$type<PhaseBlocker[]>(), // cross-functional blockers
+    predecessors: json('predecessors').$type<number[]>(),
+    blockedBy: json('blocked_by').$type<PhaseBlocker[]>(),
     isCriticalPath: boolean('is_critical_path').default(false),
-    slackDays: integer('slack_days'), // buffer before this becomes critical
+    slackDays: integer('slack_days'),
 
-    // ── Phase Gate (readiness requirements to enter this phase) ─────────
+    // ── Phase Gate (readiness requirements to enter this phase) ────────────
     gateRequirements: json('gate_requirements').$type<GateRequirement[]>(),
 
     // ── Deliverables ───────────────────────────────────────────────────────
@@ -257,11 +285,11 @@ export const timelinePhases = pgTable(
     // ── Duration estimates ─────────────────────────────────────────────────
     estimatedWeeks: integer('estimated_weeks'),
     actualWeeks: integer('actual_weeks'),
-    benchmarkMinWeeks: integer('benchmark_min_weeks'), // FDA historical minimum
-    benchmarkMaxWeeks: integer('benchmark_max_weeks'), // FDA historical maximum
+    benchmarkMinWeeks: integer('benchmark_min_weeks'),
+    benchmarkMaxWeeks: integer('benchmark_max_weeks'),
 
     // ── Rendering ──────────────────────────────────────────────────────────
-    color: text('color'), // hex for Gantt bar
+    color: text('color'),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -274,7 +302,7 @@ export const timelinePhases = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PROJECT COMMITMENTS
+// PROJECT COMMITMENTS — rebuilt 2026-06-29 (Task #20)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -283,12 +311,14 @@ export const timelinePhases = pgTable(
  * Commitments are created from:
  * - Charter generation (auto-generated from submission-type template)
  * - Document extraction (AI-powered obligation mining from uploads)
- * - Manual entry (user-defined commitments)
+ * - Manual entry (user-defined commitments) — POST /api/charters/:id/commitments
  * - Proactive engine (readiness gaps → auto-generated commitments)
  * - Agency correspondence (FDA letters, meeting minutes → extracted obligations)
  *
- * 20+ regulatory-specific categories. Full 21 CFR Part 11 electronic
- * signature support with password challenge, intent, and audit trail.
+ * 20+ regulatory-specific categories. Full 21 CFR Part 11 electronic signature
+ * support with password challenge, intent, and audit trail.
+ *
+ * Shape recovered verbatim from pre-drop git HEAD (commit 3341dd1f).
  */
 export const projectCommitments = pgTable(
   'project_commitments',
@@ -311,7 +341,7 @@ export const projectCommitments = pgTable(
     // clinical_commitment, data_integrity, ectd_assembly, safety_report,
     // pediatric_commitment, rems_commitment, post_market_commitment
 
-    functionalTeam: text('functional_team'), // cmc, nonclinical, clinical, regulatory, medical_writing, biostatistics, qa
+    functionalTeam: text('functional_team'),
 
     // ── Source Tracking ────────────────────────────────────────────────────
     source: text('source').notNull(), // charter, extracted, manual, proactive, readiness_gap, agency_correspondence
@@ -319,7 +349,7 @@ export const projectCommitments = pgTable(
     extractionConfidence: real('extraction_confidence'),
 
     // ── Dependencies ───────────────────────────────────────────────────────
-    blockedByCommitments: json('blocked_by_commitments').$type<number[]>(), // commitment IDs that must complete first
+    blockedByCommitments: json('blocked_by_commitments').$type<number[]>(),
     isCriticalPath: boolean('is_critical_path').default(false),
 
     // ── Timeline ───────────────────────────────────────────────────────────
@@ -347,10 +377,10 @@ export const projectCommitments = pgTable(
     // ── Signature (21 CFR Part 11) ─────────────────────────────────────────
     requiresSignature: boolean('requires_signature').default(false),
     signedBy: integer('signed_by'),
-    signedByUsername: text('signed_by_username'), // immutable copy
+    signedByUsername: text('signed_by_username'),
     signedByRole: text('signed_by_role'),
     signedAt: timestamp('signed_at', { withTimezone: true }),
-    signatureIntent: text('signature_intent'), // authorship, review, approval, authorization
+    signatureIntent: text('signature_intent'),
     signatureMeaning: text('signature_meaning'),
     passwordChallengeUsed: boolean('password_challenge_used'),
 
@@ -377,6 +407,87 @@ export const projectCommitments = pgTable(
     dueDateIdx: index('proj_commitments_due_idx').on(table.dueDate),
     categoryIdx: index('proj_commitments_category_idx').on(table.category),
     criticalIdx: index('proj_commitments_critical_idx').on(table.isCriticalPath),
+  })
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHARTER AUDIT EVENTS — new 2026-06-29 (Task #20)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Charter Audit Events — append-only audit trail for charter-scoped writes
+ * (21 CFR Part 11 §11.10(e)).
+ *
+ * Net-new in 2026-06-29 (never previously migrated). Purpose: let charter
+ * entity INSERTs (commitments today, sections/phases next) couple a per-entity
+ * audit row to the data write inside a single `db.transaction(...)` so a write
+ * to the charter graph IS its audit row — failure of either rolls back both.
+ *
+ * Contrast with the canonical audit_logs surface (server/services/auditService):
+ * auditService.logAction opens its OWN pool connection, so a caller cannot
+ * enlist it in a Drizzle-managed transaction. That table is the cross-cutting
+ * tamper-evident chain; this one is the charter-domain transactionally-coupled
+ * companion. Both rows are written for each charter mutation — the cross-cutting
+ * one provides SHA256-chain integrity across the whole system; the charter one
+ * provides write-atomicity within the charter graph.
+ *
+ * Append-only-friendly constraints:
+ *  - No UPDATE columns (no `updated_at`, no status fields). The row is written
+ *    once and never modified.
+ *  - `before_value` and `after_value` are JSON snapshots; field-level
+ *    diffing is the caller's responsibility (the row carries enough to
+ *    reproduce the change).
+ *  - `event_hash` is a SHA-256 of (charterId | eventType | actorUserId |
+ *    occurredAt | after_value) computed by the caller — provides per-row
+ *    integrity even without a chain.
+ *  - Trigger-level append-only enforcement (REVOKE UPDATE/DELETE on the
+ *    rebuild migration) lives in the SQL — Drizzle has no construct for it.
+ */
+export const charterAuditEvents = pgTable(
+  'charter_audit_events',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull(),
+    charterId: integer('charter_id')
+      .notNull()
+      .references(() => projectCharters.id, { onDelete: 'restrict' }),
+
+    // What entity inside the charter graph changed
+    entityType: text('entity_type').notNull(), // 'charter' | 'section' | 'phase' | 'commitment'
+    entityId: integer('entity_id').notNull(),
+
+    // What happened
+    eventType: text('event_type').notNull(), // 'created' | 'updated' | 'status_changed' | 'approved' | 'locked' | 'signed' | 'waived' | 'extended'
+
+    // Who did it (21 CFR §11.10(e) attribution)
+    actorUserId: integer('actor_user_id').notNull(),
+    actorRole: text('actor_role'),
+
+    // When (UTC per 11.70(a))
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
+
+    // Before / after snapshots (JSON; PHI-safe — caller responsible for redaction)
+    beforeValue: json('before_value'),
+    afterValue: json('after_value'),
+
+    // Request context
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+
+    // Optional reason / signature meaning for governed actions
+    reason: text('reason'),
+    signatureMeaning: text('signature_meaning'),
+
+    // Per-row integrity digest (SHA-256). Computed by the caller from a
+    // canonical projection so the row is verifiable in isolation.
+    eventHash: text('event_hash').notNull(),
+  },
+  (table) => ({
+    orgIdx: index('charter_audit_events_org_idx').on(table.organizationId),
+    charterIdx: index('charter_audit_events_charter_idx').on(table.charterId),
+    entityIdx: index('charter_audit_events_entity_idx').on(table.entityType, table.entityId),
+    actorIdx: index('charter_audit_events_actor_idx').on(table.actorUserId),
+    occurredAtIdx: index('charter_audit_events_occurred_at_idx').on(table.occurredAt),
   })
 );
 
@@ -549,14 +660,6 @@ export interface PredicateDeviceRef {
   status?: 'active' | 'withdrawn' | 'superseded';
 }
 
-export interface PhaseDeliverable {
-  name: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'not_applicable';
-  owner?: string;
-  artifactId?: number;
-  completedAt?: string;
-}
-
 export interface TeamAssignment {
   role: 'ra_lead' | 'medical_director' | 'cmc_lead' | 'nonclinical_lead' | 'biostatistician' | 'medical_writer' | 'qa_director' | 'project_manager';
   userId?: number;
@@ -564,6 +667,8 @@ export interface TeamAssignment {
   email?: string;
   startDate?: string;
 }
+
+// ── Phase / section supporting types (used by JSON columns above) ─────────────
 
 export interface StatusTransition {
   from: string;
@@ -574,9 +679,13 @@ export interface StatusTransition {
   reason?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PHASE DEPENDENCY TYPES
-// ═══════════════════════════════════════════════════════════════════════════════
+export interface PhaseDeliverable {
+  name: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'not_applicable';
+  owner?: string;
+  artifactId?: number;
+  completedAt?: string;
+}
 
 export interface PhaseBlocker {
   description: string;
@@ -593,133 +702,6 @@ export interface GateRequirement {
   completedDate?: string;
   owner?: string;
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// REGULATORY MEETINGS (Pre-IND, EOP2, Pre-NDA, Advisory Committee, etc.)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Regulatory Meetings — unified tracking for FDA/EMA/PMDA interactions.
- *
- * Covers pre-IND, End-of-Phase 2, pre-NDA/BLA/PMA meetings,
- * Type A/B/C meetings, advisory committees, and information requests.
- * Meeting minutes and action items are captured as the regulatory
- * paper trail that drives strategy.
- */
-export const regulatoryMeetings = pgTable(
-  'regulatory_meetings',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id').notNull(),
-    charterId: integer('charter_id')
-      .notNull()
-      .references(() => projectCharters.id, { onDelete: 'cascade' }),
-
-    // ── Meeting Type ───────────────────────────────────────────────────────
-    meetingType: text('meeting_type').notNull(),
-    // pre_ind, end_of_phase_1, end_of_phase_2, pre_nda, pre_bla, pre_pma,
-    // pre_ide, type_a, type_b, type_c, advisory_committee,
-    // information_request, correspondence, pre_submission
-
-    // ── Agency & Division ──────────────────────────────────────────────────
-    agency: text('agency').notNull(), // FDA, EMA, PMDA, MHRA, HealthCanada, TGA, NMPA
-    division: text('division'), // CDER, CBER, CDRH
-
-    // ── Schedule ───────────────────────────────────────────────────────────
-    requestedDate: timestamp('requested_date', { withTimezone: true }),
-    confirmedDate: timestamp('confirmed_date', { withTimezone: true }),
-    actualDate: timestamp('actual_date', { withTimezone: true }),
-    status: text('status').default('planned'), // planned, requested, confirmed, completed, cancelled
-
-    // ── Content ────────────────────────────────────────────────────────────
-    agenda: text('agenda'),
-    keyQuestions: json('key_questions').$type<string[]>(),
-    sponsorAttendees: json('sponsor_attendees').$type<{ name: string; role: string }[]>(),
-    agencyAttendees: json('agency_attendees').$type<{ name: string; title?: string }[]>(),
-
-    // ── Outcomes ────────────────────────────────────────────────────────────
-    meetingMinutes: text('meeting_minutes'),
-    keyDecisions: json('key_decisions').$type<string[]>(),
-    actionItems: json('action_items').$type<MeetingActionItem[]>(),
-    fdaFeedback: text('fda_feedback'),
-    majorConcerns: json('major_concerns').$type<string[]>(),
-
-    // ── Documents ──────────────────────────────────────────────────────────
-    briefingDocumentId: integer('briefing_document_id'),
-    minutesDocumentId: integer('minutes_document_id'),
-
-    // ── Audit ──────────────────────────────────────────────────────────────
-    createdBy: integer('created_by'),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    charterIdx: index('reg_meetings_charter_idx').on(table.charterId),
-    typeIdx: index('reg_meetings_type_idx').on(table.meetingType),
-    statusIdx: index('reg_meetings_status_idx').on(table.status),
-    orgIdx: index('reg_meetings_org_idx').on(table.organizationId),
-  })
-);
-
-export interface MeetingActionItem {
-  action: string;
-  owner: string;
-  dueDate?: string;
-  status: 'pending' | 'completed';
-  completedDate?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// CHARTER AUDIT EVENTS (21 CFR 11.10(b) — immutable audit trail)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Charter Audit Events — immutable record of all charter modifications.
- *
- * Every change to charter, sections, commitments, or meetings produces
- * an audit event. This satisfies 21 CFR Part 11.10(b) requirements for
- * secure, computer-generated, time-stamped audit trails.
- */
-export const charterAuditEvents = pgTable(
-  'charter_audit_events',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id').notNull(),
-    charterId: integer('charter_id')
-      .notNull()
-      .references(() => projectCharters.id, { onDelete: 'cascade' }),
-
-    // What changed
-    entityType: text('entity_type').notNull(), // charter, section, commitment, meeting, phase
-    entityId: integer('entity_id').notNull(),
-    eventType: text('event_type').notNull(), // created, modified, status_changed, approved, locked, signed, deleted
-
-    // Who changed it
-    performedBy: integer('performed_by').notNull(),
-    performedByUsername: text('performed_by_username'),
-    performedByRole: text('performed_by_role'),
-
-    // Change details
-    previousValues: json('previous_values'), // snapshot before change
-    newValues: json('new_values'), // snapshot after change
-    contentHashBefore: text('content_hash_before'),
-    contentHashAfter: text('content_hash_after'),
-    changeDescription: text('change_description'),
-
-    // Context
-    ipAddress: text('ip_address'),
-    reason: text('reason'),
-
-    // Timestamp (UTC, high precision)
-    timestamp: timestamp('timestamp', { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    charterIdx: index('charter_audit_charter_idx').on(table.charterId),
-    entityIdx: index('charter_audit_entity_idx').on(table.entityType, table.entityId),
-    eventIdx: index('charter_audit_event_idx').on(table.eventType),
-    timestampIdx: index('charter_audit_ts_idx').on(table.timestamp),
-  })
-);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INSERT SCHEMAS (Zod validation)
@@ -749,15 +731,9 @@ export const insertProjectCommitmentSchema = createInsertSchema(projectCommitmen
   updatedAt: true,
 });
 
-export const insertRegulatoryMeetingSchema = createInsertSchema(regulatoryMeetings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const insertCharterAuditEventSchema = createInsertSchema(charterAuditEvents).omit({
   id: true,
-  timestamp: true,
+  occurredAt: true,
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -776,60 +752,5 @@ export type InsertTimelinePhase = z.infer<typeof insertTimelinePhaseSchema>;
 export type ProjectCommitment = InferSelectModel<typeof projectCommitments>;
 export type InsertProjectCommitment = z.infer<typeof insertProjectCommitmentSchema>;
 
-export type RegulatoryMeeting = InferSelectModel<typeof regulatoryMeetings>;
-export type InsertRegulatoryMeeting = z.infer<typeof insertRegulatoryMeetingSchema>;
-
 export type CharterAuditEvent = InferSelectModel<typeof charterAuditEvents>;
 export type InsertCharterAuditEvent = z.infer<typeof insertCharterAuditEventSchema>;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// RELATIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const projectChartersRelations = relations(projectCharters, ({ many }) => ({
-  sections: many(charterSections),
-  phases: many(timelinePhases),
-  commitments: many(projectCommitments),
-  meetings: many(regulatoryMeetings),
-  auditEvents: many(charterAuditEvents),
-}));
-
-export const charterSectionsRelations = relations(charterSections, ({ one }) => ({
-  charter: one(projectCharters, {
-    fields: [charterSections.charterId],
-    references: [projectCharters.id],
-  }),
-}));
-
-export const timelinePhasesRelations = relations(timelinePhases, ({ one, many }) => ({
-  charter: one(projectCharters, {
-    fields: [timelinePhases.charterId],
-    references: [projectCharters.id],
-  }),
-  commitments: many(projectCommitments),
-}));
-
-export const projectCommitmentsRelations = relations(projectCommitments, ({ one }) => ({
-  charter: one(projectCharters, {
-    fields: [projectCommitments.charterId],
-    references: [projectCharters.id],
-  }),
-  phase: one(timelinePhases, {
-    fields: [projectCommitments.phaseId],
-    references: [timelinePhases.id],
-  }),
-}));
-
-export const regulatoryMeetingsRelations = relations(regulatoryMeetings, ({ one }) => ({
-  charter: one(projectCharters, {
-    fields: [regulatoryMeetings.charterId],
-    references: [projectCharters.id],
-  }),
-}));
-
-export const charterAuditEventsRelations = relations(charterAuditEvents, ({ one }) => ({
-  charter: one(projectCharters, {
-    fields: [charterAuditEvents.charterId],
-    references: [projectCharters.id],
-  }),
-}));

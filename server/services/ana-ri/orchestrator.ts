@@ -22,7 +22,13 @@ import {
   type WorkstreamType,
 } from './persona.js';
 import { buildDeficiencyContext, type SubmissionType } from './deficiency-taxonomy.js';
+import { resolveToDeficiencyType, resolveToRegistryEntry, getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge.js';
 import { buildDocumentActionContext, type DocumentActionType } from './document-actions.js';
+import {
+  detectDocumentTemplate,
+  buildDocumentTemplateBlock,
+  type DetectedDocumentTemplate,
+} from './document-templates.js';
 import { buildRoleAdaptiveContext } from './role-adapter.js';
 import { buildCommandContextForPrompt } from './command-executor.js';
 import {
@@ -132,6 +138,8 @@ const INTENT_PATTERNS: Record<IntentLens, RegExp[]> = {
  * Detect the user's intent from their message.
  * Returns the best-matching lens with confidence score.
  */
+export type { IntentLens, UserRole };
+
 export function detectIntent(message: string): DetectedIntent {
   const scores: Array<{ lens: IntentLens; score: number; signals: string[] }> = [];
 
@@ -169,21 +177,25 @@ export function detectIntent(message: string): DetectedIntent {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SUBMISSION_PATTERNS: Record<SubmissionType, RegExp[]> = {
-  ind: [/\bIND\b/, /\binvestigational new drug\b/i, /\bpre-?IND\b/i, /\b21 CFR 312\b/],
-  nda: [/\bNDA\b/, /\bnew drug application\b/i, /\b21 CFR 314\b/],
-  bla: [/\bBLA\b/, /\bbiologics? license\b/i, /\b21 CFR 601\b/],
+  ind: [/\bIND\b/, /\binvestigational new drug\b/i, /\bpre-?IND\b/i, /\b21 CFR 312\b/, /\bCTA\b/, /\bclinical trial a(?:pplication|uthoris?ation)\b/i, /\bCTN\b/, /\bclinical trial notification\b/i],
+  nda: [/\bNDA\b/, /\bnew drug application\b/i, /\b21 CFR 314\b/, /\bMAA\b/, /\bmarketing authori[sz]ation\b/i, /\bNDS\b/, /\bnew drug submission\b/i, /\bJNDA\b/, /\bmarket(?:ing)? approval\b/i],
+  bla: [/\bBLA\b/, /\bbiologics? license\b/i, /\b21 CFR 601\b/, /\bbiosimilar\b/i],
   '510k': [/\b510\(?k\)?\b/, /\bsubstantial equivalence\b/i, /\bpredicate\b/i],
   pma: [/\bPMA\b/, /\bpremarket approval\b/i],
   de_novo: [/\bde novo\b/i, /\bnovel device\b/i],
-  cer: [/\bCER\b/, /\bclinical evaluation report\b/i, /\bMEDDEV\b/i, /\bEU MDR\b/i],
+  cer: [/\bCER\b/, /\bclinical evaluation report\b/i, /\bMEDDEV\b/i, /\bEU MDR\b/i, /\bIVDR\b/i, /\btechnical documentation\b/i],
   ectd: [/\beCTD\b/, /\bcommon technical document\b/i, /\bModule [1-5]\b/],
   general: [], // Never matched
 };
 
 /**
  * Detect submission type from message content.
+ * Uses both pattern matching AND registry resolution so that international
+ * types (EU_MAA, CA_NDS, JP_MKT_APPROVAL, etc.) map to the nearest
+ * deficiency-taxonomy-compatible type for intelligence activation.
  */
 export function detectSubmissionType(message: string): SubmissionType | null {
+  // 1. Pattern match first (fast path for common types)
   for (const [type, patterns] of Object.entries(SUBMISSION_PATTERNS)) {
     if (type === 'general') continue;
     for (const pattern of patterns) {
@@ -192,7 +204,27 @@ export function detectSubmissionType(message: string): SubmissionType | null {
       }
     }
   }
+
+  // 2. Try resolving registry IDs mentioned in the message (e.g. "US_IND", "EU_MAA")
+  const registryIdPattern = /\b([A-Z]{2,6}_[A-Z0-9_]{2,30})\b/g;
+  let match;
+  while ((match = registryIdPattern.exec(message)) !== null) {
+    const entry = resolveToRegistryEntry(match[1]);
+    if (entry) {
+      return resolveToDeficiencyType(entry.id);
+    }
+  }
+
   return null;
+}
+
+/**
+ * Resolve a registry ID or project submission type to a deficiency-compatible
+ * type. This is the bridge that ensures ALL 158+ filing types get intelligence.
+ * Called when the project's submissionType or registryId is known (from DB).
+ */
+export function resolveProjectSubmissionType(submissionTypeOrRegistryId: string): SubmissionType {
+  return resolveToDeficiencyType(submissionTypeOrRegistryId);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -205,10 +237,20 @@ export interface OrchestratorInput {
   intentLens?: IntentLens;
   /** User role (from profile or context) */
   userRole?: UserRole;
+  /** Response language (from the client's UI language). Defaults to English. */
+  language?: AnaRIPromptOptions['language'];
   /** Project context */
   projectContext?: AnaRIPromptOptions['projectContext'];
-  /** Document context */
-  documentContext?: AnaRIPromptOptions['documentContext'];
+  /**
+   * Document context. Extends the persona prompt's document context with the
+   * optional `title` and `status` fields the orchestrator reads when building
+   * grounding-context metadata (the system prompt itself only uses the base
+   * documentType/section/module fields).
+   */
+  documentContext?: AnaRIPromptOptions['documentContext'] & {
+    title?: string;
+    status?: string;
+  };
   /** Submission type override */
   submissionType?: SubmissionType;
   /** Conversation history for context */
@@ -227,6 +269,29 @@ export interface OrchestratorInput {
   };
   /** Pre-fetched project intelligence profile (loaded by route layer, injected into system prompt) */
   _projectIntelligenceProfile?: ProjectIntelligenceSummary | null;
+  /**
+   * Pre-rendered RELATIONAL CONTEXT block — AnA's self-developed notes about
+   * this user + project (loaded async by the route layer via
+   * relational-profile-service). Drives the per-user personality adaptation.
+   */
+  _relationalOverlay?: string | null;
+  /**
+   * Pre-rendered EXTERNAL INTELLIGENCE block — fresh regulatory-agency and
+   * study-methodology findings from the nightly sweep (loaded async by the
+   * route layer via external-intelligence-service).
+   */
+  _externalIntelBlock?: string | null;
+  /**
+   * Pre-rendered REGULATORY DEADLINES block — OVERDUE / DUE-SOON tracked
+   * obligations for the org (loaded async by the route layer via the deadline
+   * radar). Lets AnA proactively lead with time-critical risk.
+   */
+  _deadlineRadarBlock?: string | null;
+  /**
+   * Pre-rendered SESSION BRIEFING block — first-turn situational reconciliation
+   * (deadlines + recent decisions) so AnA can open with where the program stands.
+   */
+  _sessionBriefingBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -239,6 +304,8 @@ export interface OrchestratorOutput {
   systemPrompt: string;
   detectedIntent: DetectedIntent;
   detectedSubmissionType: SubmissionType | null;
+  /** Specific regulatory document type detected from the message (e.g. "CTD Clinical Overview") */
+  detectedDocumentTemplate: DetectedDocumentTemplate | null;
   appliedRole: UserRole;
   activeWorkstream: WorkstreamContext;
   workstreamHandoff: WorkstreamHandoff | null;
@@ -259,10 +326,11 @@ export interface OrchestratorOutput {
   /** Metadata about what was orchestrated */
   orchestrationMeta: {
     intentSource: 'explicit' | 'detected' | 'default';
-    submissionTypeSource: 'explicit' | 'detected' | 'none';
+    submissionTypeSource: 'explicit' | 'project_context' | 'detected' | 'none';
     roleSource: 'explicit' | 'default';
     deficiencyContextInjected: boolean;
     documentActionContextInjected: boolean;
+    documentTemplateInjected: boolean;
     workstreamContextInjected: boolean;
     workstreamHandoffInjected: boolean;
     projectIntelligenceInjected: boolean;
@@ -288,12 +356,17 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
         ? ('detected' as const)
         : ('default' as const);
 
-  // 2. Detect submission type
-  const detectedSubmissionType = input.submissionType || detectSubmissionType(input.message);
+  // 2. Detect submission type — cascade: explicit → project context → message detection
+  const projectSubmissionType = input.projectContext?.submissionType
+    ? resolveToDeficiencyType(input.projectContext.submissionType) as SubmissionType
+    : null;
+  const detectedSubmissionType = input.submissionType || projectSubmissionType || detectSubmissionType(input.message);
   const submissionTypeSource = input.submissionType
     ? ('explicit' as const)
-    : detectedSubmissionType
-      ? ('detected' as const)
+    : projectSubmissionType
+      ? ('project_context' as const)
+      : detectedSubmissionType
+        ? ('detected' as const)
       : ('none' as const);
 
   // 3. Determine role
@@ -304,6 +377,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   const promptOptions: AnaRIPromptOptions = {
     userRole: appliedRole,
     intentLens: detectedIntent.lens,
+    language: input.language,
     projectContext: input.projectContext,
     documentContext: input.documentContext,
   };
@@ -314,8 +388,31 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   if (workstreamHandoff) {
     promptOptions.workstreamHandoff = workstreamHandoff;
   }
+  if (input._relationalOverlay && input._relationalOverlay.trim()) {
+    promptOptions.relationalContext = input._relationalOverlay;
+  }
 
   let systemPrompt = buildAnaRISystemPrompt(promptOptions);
+
+  // 4a. Inject nightly external intelligence (pre-fetched by route layer):
+  //     fresh agency updates + study-methodology findings AnA may surface
+  //     when relevant to the user's program.
+  if (input._externalIntelBlock && input._externalIntelBlock.trim()) {
+    systemPrompt += '\n\n' + input._externalIntelBlock.trim();
+  }
+
+  // 4a-bis. Inject proactive regulatory deadlines (pre-fetched by route layer):
+  //     OVERDUE / DUE-SOON tracked obligations AnA should surface up front.
+  if (input._deadlineRadarBlock && input._deadlineRadarBlock.trim()) {
+    systemPrompt += '\n\n' + input._deadlineRadarBlock.trim();
+  }
+
+  // 4a-ter. Inject the session-start briefing (pre-fetched by route layer):
+  //     a first-turn reconciliation of deadlines + recent decisions. Supersedes
+  //     the standalone deadline block on that turn (the prefetch emits only one).
+  if (input._sessionBriefingBlock && input._sessionBriefingBlock.trim()) {
+    systemPrompt += '\n\n' + input._sessionBriefingBlock.trim();
+  }
 
   // 4b. Inject project intelligence profile (pre-fetched by route layer)
   //     Role-based priorities filter WHAT intelligence surfaces, not just tone.
@@ -329,6 +426,19 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
+  // 4c. Detect specific regulatory document type and inject its template structure.
+  //     This fires ABOVE the intent-lens system — "draft a Clinical Overview" maps
+  //     directly to the 2.5 template, bypassing the generic "improve" lens.
+  const detectedDocumentTemplate = detectDocumentTemplate(input.message);
+  let documentTemplateInjected = false;
+  if (detectedDocumentTemplate) {
+    const templateBlock = buildDocumentTemplateBlock(detectedDocumentTemplate);
+    if (templateBlock) {
+      systemPrompt += '\n\n' + templateBlock;
+      documentTemplateInjected = true;
+    }
+  }
+
   // 5. Inject deficiency context if submission type is known
   let deficiencyContextInjected = false;
   if (detectedSubmissionType) {
@@ -336,6 +446,28 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     if (deficiencyContext) {
       systemPrompt += '\n\n' + deficiencyContext;
       deficiencyContextInjected = true;
+    }
+  }
+
+  // 5b. Inject full registry context when the project has a registry ID or
+  //     international submission type, so AnA knows the exact regulatory framework.
+  const registrySource = input.projectContext?.submissionType || input.submissionType;
+  if (registrySource) {
+    const regCtx = getSubmissionTypeContext(registrySource);
+    if (regCtx && regCtx.registryId !== detectedSubmissionType) {
+      const lines = [
+        `## REGULATORY CONTEXT (${regCtx.registryId})`,
+        `**Filing Type:** ${regCtx.displayName}`,
+        `**Agency:** ${regCtx.agency} (${regCtx.region})`,
+        `**Dossier Standard:** ${regCtx.dossierStandard}`,
+        `**Application Family:** ${regCtx.applicationFamily}`,
+      ];
+      if (regCtx.segment) lines.push(`**Segment:** ${regCtx.segment}`);
+      if (regCtx.category) lines.push(`**Category:** ${regCtx.category}`);
+      if (regCtx.description) lines.push(`**Description:** ${regCtx.description}`);
+      if (regCtx.submissionFormat) lines.push(`**Submission Format:** ${regCtx.submissionFormat}`);
+      if (regCtx.ctdModule) lines.push(`**CTD Module:** ${regCtx.ctdModule}`);
+      systemPrompt += '\n\n' + lines.join('\n');
     }
   }
 
@@ -453,6 +585,21 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
+  // 8e2. Intelligence Questioning Engine — instruct AnA to use the flow tools
+  systemPrompt += `
+
+## INTELLIGENCE QUESTIONING FLOWS
+When a user asks to create, build, draft, or develop a regulatory document (protocol, CSR, IND, SOP, 510(k), CER, etc.), invoke the \`start_intelligence_flow\` tool with the document type. This launches a guided questioning flow that collects structured information through step-by-step questions with validation and regulatory issue detection.
+
+Available document types: protocol, csr, ind, nda, bla, sop, 510k, pma, cer, cmc, risk management, safety narrative, labeling, briefing book, stability study, project setup — plus natural language aliases (e.g., "new drug application", "biologics license", "premarket approval", "prescribing information", "advisory committee briefing").
+
+Do NOT try to ask these questions yourself in free text — always use the intelligence flow tool so the client renders structured form widgets. When suggesting workflows, mention you can "walk through a guided questionnaire" for any of these document types.
+
+## WAR GAME SIMULATION
+When a user asks you to "run a war game", "pressure test", "audit simulation", "FDA review simulation", "stress test", or similar, use the start_war_game tool with the collected intelligence data from the most recent completed flow. If no flow has been completed yet, guide the user to complete a questionnaire first by starting an intelligence flow for the relevant document type. You can also proactively suggest running a war game after completing an intelligence flow by saying something like "Would you like me to run an FDA War Game simulation to pressure-test this [document type] before submission?"
+
+War Game auditors are available for 15 document categories: protocol, ind, csr, 510k, cer, sop, nda, bla, pma, cmc, risk_management, safety_narrative, labeling, briefing_book, stability. Each auditor contains 25-32 adversarial rules across 7 audit dimensions (completeness, consistency, regulatory alignment, scientific rigor, practical feasibility, documentation, risk identification). The simulation scores each dimension starting from 100 and deducting points per finding severity, producing an overall regulatory risk assessment.`;
+
   // 8f. Inject proactive intelligence surfacing protocol + intelligence usage directives + citation protocol
   systemPrompt += `
 
@@ -475,11 +622,16 @@ When your response draws on specific knowledge from the injected context above, 
 - For risk factors: [Risk: {severity} — {risk description}]
 - For learned insights: [Insight: {insight summary}]
 
+For LIVE external evidence returned by tools (each result includes a \`url\` — render it as a clickable markdown link so the user can verify):
+- For ClinicalTrials.gov (search_clinical_evidence): [[{nctId}]({url}) — {title}]
+- For PubMed (search_literature): [[PMID {pmid}]({url}) — {title}{, DOI if present}]
+- For Medicare coverage (search_medicare_coverage): [[{NCD/LCD number}]({url}) — {title}]
+
 Citation rules:
-1. Cite when making specific factual claims derived from injected context, not for general regulatory knowledge
-2. Maximum 3 citations per response — do not over-cite
+1. Cite when making specific factual claims derived from injected context or a tool result, not for general regulatory knowledge
+2. Maximum 3 citations per response for injected context — but when you draw on live tool results (trials, literature, coverage), cite EVERY trial/article/coverage document you reference, with its url, so claims are independently verifiable
 3. Place citations at the end of the relevant sentence or paragraph, not mid-sentence
-4. If no specific source exists for a claim, say "Based on general regulatory practice" — never fabricate a citation
+4. If no specific source exists for a claim, say "Based on general regulatory practice" — never fabricate a citation, NCT/PMID/MCD number, or url (only use identifiers and urls returned by a tool)
 5. When confidence is below 70%, explicitly state: "This recommendation has moderate confidence — {reason}"
 6. Memory atoms injected above use the format [category | "title"] — use those values in your citations
 
@@ -527,12 +679,12 @@ Rules for proactive surfacing:
   // 12. Build grounding context metadata
   const groundingContext = {
     hasProjectContext: !!(input.projectContext?.productName || input.projectContext?.submissionType || input.authoringContext?.projectId),
-    hasArtifactContext: !!(input.documentContext?.documentType || input.documentContext?.title),
+    hasArtifactContext: !!(input.documentContext?.documentType || (input.documentContext as any)?.title),
     hasSectionContext: !!(input.documentContext?.section || input.authoringContext?.sectionCode),
     hasWorkflowContext: !!(activeWorkstream.stream !== 'general'),
     hasEvidenceContext: deficiencyContextInjected,
     hasMemoryContext: !!(input.conversationHistory && input.conversationHistory.length > 0),
-    documentStatus: input.documentContext?.status ?? null,
+    documentStatus: (input.documentContext as any)?.status ?? null,
     enrichmentSources: [] as string[], // populated by caller after enrichment
     enrichmentFailures: [] as string[], // populated by caller if enrichment fails
   };
@@ -541,6 +693,7 @@ Rules for proactive surfacing:
     systemPrompt,
     detectedIntent,
     detectedSubmissionType,
+    detectedDocumentTemplate,
     appliedRole,
     activeWorkstream,
     workstreamHandoff,
@@ -552,6 +705,7 @@ Rules for proactive surfacing:
       roleSource,
       deficiencyContextInjected,
       documentActionContextInjected,
+      documentTemplateInjected,
       workstreamContextInjected: true,
       workstreamHandoffInjected: !!workstreamHandoff,
       projectIntelligenceInjected,

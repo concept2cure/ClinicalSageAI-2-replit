@@ -1,0 +1,7 @@
+# Do NOT set `merge=union` on CSS or code files. Union merge concatenates BOTH
+# sides of a conflict hunk, which for structured content (CSS rules, code)
+# produces duplicated and selector-stripped output — invalid CSS that breaks the
+# client `vite build` (the Build CI job). The AnA styles.module.css previously
+# carried `merge=union` and was repeatedly corrupted this way; the driver has
+# been removed so this file uses normal 3-way merge (surface real conflicts to
+# resolve by hand instead of silently corrupting).

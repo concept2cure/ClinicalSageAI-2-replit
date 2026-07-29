@@ -3,13 +3,15 @@ import {
   fda510kSubmissionPackages,
   fda510kProjects,
   fda510kDocuments,
-  sharepoint_audit_log
+  sharepoint_audit_log,
+  users
 } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
+// @ts-ignore — xml2js has no bundled types
 import xml2js from 'xml2js';
 
 interface ESGSubmissionConfig {
@@ -31,14 +33,33 @@ interface SubmissionPackage {
 interface ESGResponse {
   transactionId: string;
   acknowledgmentNumber?: string;
-  status: 'submitted' | 'processing' | 'accepted' | 'rejected';
+  status: 'submitted' | 'processing' | 'accepted' | 'rejected' | 'simulated_not_transmitted';
   message: string;
   timestamp: Date;
+  /**
+   * True when NOTHING was transmitted to FDA and the identifiers above are
+   * local fabrications. Callers MUST NOT record a submission as made, mint a
+   * receipt, or report success when this is set.
+   */
+  simulated?: boolean;
 }
 
 class ESGSubmissionService {
   private config: ESGSubmissionConfig;
   private xmlBuilder: xml2js.Builder;
+
+  /**
+   * Whether the simulated (non-transmitting) path may be used at all.
+   *
+   * Opt-IN and fail-closed: only an explicitly declared local `development` or
+   * `test` environment. An unset, blank, misspelled, `staging` or `production`
+   * NODE_ENV all refuse to simulate, so no deployed environment can hand a user
+   * a fabricated FDA acceptance.
+   */
+  static simulationAllowed(): boolean {
+    const env = (process.env.NODE_ENV ?? '').trim().toLowerCase();
+    return env === 'development' || env === 'test';
+  }
 
   constructor() {
     // Configure based on environment
@@ -48,7 +69,14 @@ class ESGSubmissionService {
       privateKeyPath: process.env.FDA_ESG_KEY_PATH,
       username: process.env.FDA_ESG_USERNAME,
       password: process.env.FDA_ESG_PASSWORD,
-      testMode: process.env.NODE_ENV !== 'production'
+      // Fail CLOSED. This was `NODE_ENV !== 'production'`, which put every
+      // environment that is not the exact string 'production' — unset, blank,
+      // 'staging', 'preview', 'Production' with a capital P — into a mode that
+      // returns a fabricated FDA acceptance. Simulation is now opt-IN and only
+      // for the two environments that are unambiguously local, matching the
+      // repo's established prod-fail-closed gate (bundleTrustEnforced in
+      // server/services/submission-gateways/bundle-namespace.ts).
+      testMode: ESGSubmissionService.simulationAllowed()
     };
 
     this.xmlBuilder = new xml2js.Builder({
@@ -121,56 +149,75 @@ class ESGSubmissionService {
     userId: number,
     organizationId: number
   ): Promise<SubmissionPackage> {
-    // Fetch all documents for the project
-    const documents = await db!
-      .select()
-      .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.projectId, projectId));
-
-    // Fetch project details
+    // Fetch project details — scoped to the caller's organization to prevent
+    // cross-tenant IDOR on an irreversible FDA submission.
     const [project] = await db!
       .select()
       .from(fda510kProjects)
-      .where(eq(fda510kProjects.id, projectId));
+      .where(
+        and(
+          eq(fda510kProjects.id, projectId),
+          eq(fda510kProjects.organizationId, organizationId)
+        )
+      );
 
     if (!project) {
       throw new Error('Project not found');
     }
 
+    // Fetch all documents for the project, also scoped to the org
+    const documents = await db!
+      .select()
+      .from(fda510kDocuments)
+      .where(
+        and(
+          eq(fda510kDocuments.projectId, projectId),
+          eq(fda510kDocuments.organizationId, organizationId)
+        )
+      );
+
+    // metadata is an untyped JSON column; narrow it at this boundary
+    const projectMetadata = (project.metadata ?? {}) as {
+      deviceName?: string;
+      indicationsForUse?: string;
+      [key: string]: unknown;
+    };
+
     // Generate unique package ID
     const packageId = `PKG-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
     // Create submission package record
+    const proj = project as any;
     await db!.insert(fda510kSubmissionPackages).values({
       organizationId,
       projectId,
       packageId,
-      packageName: `510k_${project.projectName}_${new Date().toISOString().split('T')[0]}`,
+      packageName: `510k_${project.deviceName}_${new Date().toISOString().split('T')[0]}`,
       packageType: '510k',
-      documents: documents.map(d => ({
+      documents: documents.map((d: any) => ({
         documentId: d.documentId,
-        title: d.title,
+        title: d.documentName,
         type: d.documentType,
         version: d.version
       })),
       attachments: [],
       estarData: {
-        projectName: project.projectName,
+        projectName: project.deviceName,
         submissionType: '510k',
-        deviceName: project.projectMetadata?.deviceName || '',
-        indicationsForUse: project.projectMetadata?.indicationsForUse || ''
+        deviceName: projectMetadata?.deviceName || '',
+        indicationsForUse: projectMetadata?.indicationsForUse || ''
       },
       submissionMethod: 'esg',
       status: 'ready',
       createdAt: new Date(),
       updatedAt: new Date()
-    });
+    } as any);
 
     return {
       projectId,
       packageId,
       documents,
-      metadata: project.projectMetadata
+      metadata: projectMetadata
     };
   }
 
@@ -296,36 +343,37 @@ class ESGSubmissionService {
       return this.simulateESGSubmission(packageId);
     }
 
-    // In production, would use actual FDA ESG API/AS2 protocol
-    try {
-      // This would be the actual FDA ESG submission code
-      // Using their AS2 protocol or SFTP gateway
-      
-      // For now, return a mock response
-      return {
-        transactionId: `TXN-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`,
-        acknowledgmentNumber: `ACK${new Date().getFullYear()}${Math.random().toString().slice(2, 8)}`,
-        status: 'submitted',
-        message: 'Submission received and queued for processing',
-        timestamp: new Date()
-      };
-    } catch (error) {
-      console.error('ESG transmission error:', error);
-      throw new Error('Failed to transmit to FDA ESG');
-    }
+    // Production transport (AS2 / SFTP) is not implemented in this repo.
+    // Fail closed rather than fabricate an FDA transaction ID / ACK number
+    // (same policy as downloadAcknowledgment below and
+    // fdaIntegrationService.sendToESG).
+    throw new Error(
+      `ESG production transmission requires the production ESG transport client ` +
+      `(AS2 over HTTPS or SFTP gateway) to be configured. ` +
+      `Package: ${packageId}, bundle: ${bundlePath}. Error class: not-implemented. ` +
+      `See docs/runbooks/esg-production-setup.md.`
+    );
   }
 
   /**
    * Simulate ESG submission for test mode
    */
   private simulateESGSubmission(packageId: string): ESGResponse {
-    // Deterministic test response — always returns 'accepted' for reliable testing
+    // Deterministic local response. It used to report an 'accepted' status with
+    // a reassuring success message and no marker distinguishing it from a real
+    // one, so callers persisted it as a submitted package carrying an FDA
+    // acknowledgment number. Nothing is transmitted here, and the shape now says
+    // so in every field a caller or a human might read.
+    const suffix = packageId.replace(/[^a-z0-9]/gi, '').slice(0, 9);
     return {
-      transactionId: `TEST-TXN-${Date.now()}`,
-      acknowledgmentNumber: `TEST-ACK-${packageId.replace(/[^a-z0-9]/gi, '').slice(0, 9)}`,
-      status: 'accepted' as const,
-      message: 'Test submission accepted successfully',
+      transactionId: `SIMULATED-NOT-SENT-${suffix}`,
+      acknowledgmentNumber: undefined,
+      status: 'simulated_not_transmitted' as const,
+      message:
+        'SIMULATED — nothing was transmitted to FDA. No submission was made and no ' +
+        'FDA acknowledgment exists. This identifier is local and has no agency meaning.',
       timestamp: new Date(),
+      simulated: true,
     };
   }
 
@@ -335,26 +383,33 @@ class ESGSubmissionService {
   async checkSubmissionStatus(
     transactionId: string
   ): Promise<ESGResponse> {
-    // In test mode, return mock status
+    // Local, non-transmitting mode. This is the second place that fabricated an
+    // FDA acceptance: it returned status 'accepted' with a minted ACK number for
+    // a transaction that was never sent, so a status poll would "confirm" the
+    // imaginary submission the simulated transmit had reported. There is no
+    // agency state to report, and saying so is the only honest answer.
     if (this.config.testMode) {
       return {
         transactionId,
-        acknowledgmentNumber: `ACK-${Math.random().toString(36).substr(2, 9)}`,
-        status: 'accepted',
-        message: 'Submission has been accepted',
-        timestamp: new Date()
+        acknowledgmentNumber: undefined,
+        status: 'simulated_not_transmitted',
+        message:
+          'SIMULATED — nothing was transmitted to FDA, so there is no agency status to report. ' +
+          'No submission exists under this identifier.',
+        timestamp: new Date(),
+        simulated: true,
       };
     }
 
-    // In production, would check actual FDA ESG status
-    // This would involve calling FDA ESG API to check status
-    
-    return {
-      transactionId,
-      status: 'processing',
-      message: 'Submission is being processed',
-      timestamp: new Date()
-    };
+    // Production status polling requires the real ESG transport client.
+    // Fail closed rather than report a fabricated 'processing' state
+    // (same policy as transmitToESG / downloadAcknowledgment).
+    throw new Error(
+      `ESG production status check requires the production ESG transport client ` +
+      `(AS2 over HTTPS or SFTP gateway) to be configured. ` +
+      `Tracking number: ${transactionId}. Error class: not-implemented. ` +
+      `See docs/runbooks/esg-production-setup.md.`
+    );
   }
 
   /**
@@ -399,15 +454,25 @@ class ESGSubmissionService {
     action: string,
     metadata: any
   ): Promise<void> {
+    const [actingUser] = await db!
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
     await db!.insert(sharepoint_audit_log).values({
       action,
-      entityType: 'esg-submission',
-      entityId: String(projectId),
+      details: {
+        entityType: 'esg-submission',
+        entityId: String(projectId),
+        projectId,
+        metadata,
+      },
       userId: String(userId),
+      userName: actingUser?.name ?? `user-${userId}`,
       organizationId,
-      metadata: JSON.stringify(metadata),
       timestamp: new Date()
-    });
+    } as any);
   }
 
   /**
@@ -434,21 +499,30 @@ class ESGSubmissionService {
   async downloadAcknowledgment(
     transactionId: string
   ): Promise<Buffer> {
-    // In test mode, generate mock acknowledgment
+    // Local, non-transmitting mode. This used to return a document headed
+    // "FDA Electronic Submission Gateway / Acknowledgment Receipt" reporting
+    // "Status: RECEIVED" — a file a sponsor could archive and later mistake for
+    // agency proof of a submission that never happened. That is exactly the
+    // hazard server/services/submission-gateways/acknowledgement.ts was written
+    // to eliminate; this mirrors its wording rather than inventing a second
+    // convention.
     if (this.config.testMode) {
-      const mockAck = `
-        FDA Electronic Submission Gateway
-        Acknowledgment Receipt
+      const record = [
+        'CONCEPT2CURE LOCAL SIMULATION RECORD',
+        'THIS IS NOT AN AGENCY ACKNOWLEDGEMENT.',
+        '',
+        'No submission was transmitted to FDA. No FDA acknowledgement exists for',
+        'this identifier. This file was produced by a local, non-transmitting',
+        'simulation and has no regulatory meaning whatsoever. Do not archive it',
+        'as evidence of a submission.',
+        '',
+        `Local identifier: ${transactionId}`,
+        `Generated:        ${new Date().toISOString()}`,
+        'Transmitted:      NO',
+        'Agency receipt:   NONE',
+      ].join('\n');
 
-        Transaction ID: ${transactionId}
-        Date: ${new Date().toISOString()}
-        Status: RECEIVED
-
-        Your submission has been received and will be processed.
-        You will receive additional notifications regarding the status of your submission.
-      `;
-
-      return Buffer.from(mockAck, 'utf8');
+      return Buffer.from(record, 'utf8');
     }
 
     // Production path — credential preflight. The repo's existing prefix is

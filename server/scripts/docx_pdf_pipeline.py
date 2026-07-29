@@ -1,9 +1,33 @@
 #!/usr/bin/env python3
+"""DOCX → PDF (LibreOffice) with an optional Ghostscript compression pass.
+
+Robustness contract:
+  - The conversion (soffice) is the load-bearing step; if LibreOffice is not
+    installed the whole operation fails with a clear message.
+  - Compression is *best-effort*. If Ghostscript is missing, or the compression
+    pass fails for any reason, we DO NOT lose the PDF that LibreOffice already
+    produced — we return the uncompressed PDF and report why compression was
+    skipped via `compressionSkipped`. Downstream (AnA tools, submission
+    gateways) can then decide what to do instead of the whole authoring failing.
+
+Binaries are resolved via env overrides (SOFFICE_BINARY, GHOSTSCRIPT_BINARY)
+falling back to `soffice` / `gs` on PATH.
+"""
 import argparse
 import json
 import os
+import shutil
 import subprocess
+import tempfile
 from pathlib import Path
+
+
+def _bin(env_name: str, default: str) -> str:
+    return os.environ.get(env_name) or default
+
+
+def _which(binary: str) -> str | None:
+    return shutil.which(binary)
 
 
 def run_cmd(cmd):
@@ -14,22 +38,37 @@ def run_cmd(cmd):
 
 
 def convert_docx_to_pdf(input_docx: Path, output_pdf: Path | None = None) -> Path:
+    soffice = _bin("SOFFICE_BINARY", "soffice")
+    if _which(soffice) is None:
+        raise RuntimeError(
+            "LibreOffice (soffice) is not installed on this runtime; cannot "
+            "convert DOCX to PDF. Install libreoffice-writer (see "
+            "Dockerfile.optimized) or set SOFFICE_BINARY."
+        )
+
     if output_pdf is None:
         output_pdf = input_docx.with_suffix(".pdf")
     outdir = output_pdf.parent
     outdir.mkdir(parents=True, exist_ok=True)
 
-    run_cmd(
-        [
-            "soffice",
-            "--headless",
-            "--convert-to",
-            "pdf",
-            "--outdir",
-            str(outdir),
-            str(input_docx),
-        ]
-    )
+    # Give each conversion its own LibreOffice user profile. Without this,
+    # concurrent `soffice` invocations collide on the shared default profile
+    # lock (one silently no-ops and produces no PDF), and a non-writable HOME
+    # makes headless conversion fail silently. A per-call temp profile makes
+    # server-side conversion concurrency-safe and deterministic.
+    with tempfile.TemporaryDirectory(prefix="lo_profile_") as profile_dir:
+        run_cmd(
+            [
+                soffice,
+                "--headless",
+                f"-env:UserInstallation=file://{profile_dir}",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                str(outdir),
+                str(input_docx),
+            ]
+        )
 
     generated = outdir / f"{input_docx.stem}.pdf"
     if not generated.exists():
@@ -39,23 +78,26 @@ def convert_docx_to_pdf(input_docx: Path, output_pdf: Path | None = None) -> Pat
     return output_pdf
 
 
+QUALITY_MAP = {
+    "screen": "/screen",
+    "ebook": "/ebook",
+    "printer": "/printer",
+    "prepress": "/prepress",
+    "default": "/default",
+}
+
+
 def compress_pdf(input_pdf: Path, output_pdf: Path, quality: str):
-    quality_map = {
-        "screen": "/screen",
-        "ebook": "/ebook",
-        "printer": "/printer",
-        "prepress": "/prepress",
-        "default": "/default",
-    }
-    if quality not in quality_map:
+    if quality not in QUALITY_MAP:
         raise RuntimeError(f"Unsupported quality: {quality}")
 
+    gs = _bin("GHOSTSCRIPT_BINARY", "gs")
     run_cmd(
         [
-            "gs",
+            gs,
             "-sDEVICE=pdfwrite",
             "-dCompatibilityLevel=1.4",
-            f"-dPDFSETTINGS={quality_map[quality]}",
+            f"-dPDFSETTINGS={QUALITY_MAP[quality]}",
             "-dNOPAUSE",
             "-dQUIET",
             "-dBATCH",
@@ -82,18 +124,32 @@ def main():
 
     final_pdf = converted_pdf
     compression = None
+    compression_skipped = None
+
     if args.compress:
-        compressed_pdf = converted_pdf.with_name(f"{converted_pdf.stem}.compressed.pdf")
-        before = converted_pdf.stat().st_size
-        compress_pdf(converted_pdf, compressed_pdf, args.quality)
-        after = compressed_pdf.stat().st_size
-        final_pdf = compressed_pdf
-        compression = {
-            "quality": args.quality,
-            "originalSizeBytes": before,
-            "compressedSizeBytes": after,
-            "compressionRatio": round((after / before), 4) if before > 0 else 1,
-        }
+        if args.quality not in QUALITY_MAP:
+            # Bad input is worth surfacing, but still return the PDF.
+            compression_skipped = f"unsupported_quality:{args.quality}"
+        elif _which(_bin("GHOSTSCRIPT_BINARY", "gs")) is None:
+            # Best-effort: Ghostscript absent → keep the produced PDF, say why.
+            compression_skipped = "ghostscript_unavailable"
+        else:
+            try:
+                compressed_pdf = converted_pdf.with_name(
+                    f"{converted_pdf.stem}.compressed.pdf"
+                )
+                before = converted_pdf.stat().st_size
+                compress_pdf(converted_pdf, compressed_pdf, args.quality)
+                after = compressed_pdf.stat().st_size
+                final_pdf = compressed_pdf
+                compression = {
+                    "quality": args.quality,
+                    "originalSizeBytes": before,
+                    "compressedSizeBytes": after,
+                    "compressionRatio": round((after / before), 4) if before > 0 else 1,
+                }
+            except Exception as exc:  # noqa: BLE001 — never lose the PDF on a compress error
+                compression_skipped = f"ghostscript_error:{str(exc)[:200]}"
 
     print(
         json.dumps(
@@ -103,6 +159,7 @@ def main():
                 "convertedPdf": str(converted_pdf),
                 "finalPdf": str(final_pdf),
                 "compression": compression,
+                "compressionSkipped": compression_skipped,
             }
         )
     )

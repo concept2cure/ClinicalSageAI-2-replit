@@ -16,11 +16,20 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import {
   governanceBoundaryRules,
   governanceBoundaryTransitions,
-  assumptionRecords,
-  decisionRecords,
   type GovernanceBoundaryRule,
   type GovernanceBoundaryTransition,
 } from '../../shared/schema/operating-system';
+// Gate vocabulary comes from the DEPLOYED schema constants, not from the
+// orphaned Drizzle assumption/decision tables. The previous implementation
+// queried shared/schema/operating-system.ts's assumptionRecords/decisionRecords,
+// whose column set only exists in migrations/0010 — a migration with no
+// execution path. Against real databases those queries threw, callers swallowed
+// the throw, and every gate silently failed open (conflict C-8).
+import {
+  ASSUMPTION_SETTLED_SQL_PREDICATE,
+  UNRESOLVED_DECISION_ACTION_STATES,
+  rankConfidence,
+} from '../../shared/constants/operating-system-vocab';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -172,8 +181,19 @@ export class GovernanceBoundaryService {
       }
     }
 
-    // 2. Find applicable rules
-    const rules = await this.getRules(request.organizationId, request.projectId);
+    // 2. Find applicable rules — FAIL CLOSED if they cannot be loaded.
+    // If this throws to the caller, every caller's catch{} falls back to a
+    // weaker check and the whole rule layer silently disappears (C-8). An
+    // unreadable rule store must block, not bypass.
+    let rules: GovernanceBoundaryRule[] = [];
+    try {
+      rules = await this.getRules(request.organizationId, request.projectId);
+    } catch (err) {
+      blockedReasons.push(
+        `Governance rules could not be loaded (${err instanceof Error ? err.message : 'unknown error'}). ` +
+        `Failing closed: transition to ${request.toBoundary} is blocked until the rule store is reachable.`
+      );
+    }
     const applicableRules = rules.filter(
       r => r.fromBoundary === request.fromBoundary && r.toBoundary === request.toBoundary
     );
@@ -199,75 +219,117 @@ export class GovernanceBoundaryService {
         }
       }
 
-      // Check assumption approval requirement
+      // Check assumption approval requirement — against the DEPLOYED shape.
+      // "Approved" in the deployed vocabulary is status='active' WITH a
+      // reviewer recorded; bare 'active' is the column default (created, never
+      // approved) and must block. See ASSUMPTION_SETTLED_SQL_PREDICATE.
       if (rule.requiresAllAssumptionsApproved && request.projectId) {
-        const unapproved = await database
-          .select()
-          .from(assumptionRecords)
-          .where(and(
-            eq(assumptionRecords.projectId, request.projectId),
-            eq(assumptionRecords.organizationId, request.organizationId),
-            sql`${assumptionRecords.status} NOT IN ('approved', 'superseded')`
-          ));
-
-        if (unapproved.length > 0) {
-          blockedReasons.push(
-            `Rule "${rule.ruleName}": ${unapproved.length} assumption(s) not yet approved. ` +
-            `All assumptions must be approved before transitioning to ${request.toBoundary}.`
-          );
-        }
-      }
-
-      // Check decision resolution requirement
-      if (rule.requiresAllDecisionsResolved && request.projectId) {
-        const unresolved = await database
-          .select()
-          .from(decisionRecords)
-          .where(and(
-            eq(decisionRecords.projectId, request.projectId),
-            eq(decisionRecords.organizationId, request.organizationId),
-            sql`${decisionRecords.actionState} = 'recommended_only'`
-          ));
-
-        if (unresolved.length > 0) {
-          blockedReasons.push(
-            `Rule "${rule.ruleName}": ${unresolved.length} decision(s) still in recommended_only state. ` +
-            `All decisions must be executed, rejected, or superseded before transitioning to ${request.toBoundary}.`
-          );
-        }
-      }
-
-      // Check minimum confidence
-      if (rule.minimumConfidence && request.decisionId) {
-        const [decision] = await database
-          .select()
-          .from(decisionRecords)
-          .where(eq(decisionRecords.id, request.decisionId));
-
-        if (decision) {
-          const confidenceOrder: Record<string, number> = {
-            uncertain: 0, provisional: 1, moderate: 2, strong: 3,
-          };
-          const required = confidenceOrder[rule.minimumConfidence] ?? 0;
-          const actual = confidenceOrder[decision.confidence] ?? 0;
-          if (actual < required) {
+        try {
+          const res = await database.execute(sql`
+            SELECT count(*)::int AS unsettled
+            FROM assumption_records
+            WHERE project_id = ${request.projectId}
+              AND organization_id = ${request.organizationId}
+              AND NOT ${sql.raw(ASSUMPTION_SETTLED_SQL_PREDICATE)}
+          `);
+          const rows = ((res as unknown as { rows?: Array<{ unsettled: number }> }).rows ?? res) as Array<{ unsettled: number }>;
+          const unsettled = Number(rows[0]?.unsettled ?? 0);
+          if (unsettled > 0) {
             blockedReasons.push(
-              `Rule "${rule.ruleName}": Decision confidence "${decision.confidence}" does not meet minimum "${rule.minimumConfidence}".`
+              `Rule "${rule.ruleName}": ${unsettled} assumption(s) not yet approved ` +
+              `(approved = reviewed and active; superseded/withdrawn do not block). ` +
+              `All assumptions must be approved before transitioning to ${request.toBoundary}.`
             );
           }
+        } catch (err) {
+          blockedReasons.push(
+            `Rule "${rule.ruleName}": assumption gate could not be evaluated ` +
+            `(${err instanceof Error ? err.message : 'unknown error'}). Failing closed.`
+          );
+        }
+      }
+
+      // Check decision resolution requirement — against the DEPLOYED
+      // action_state vocabulary. The previous filter value 'recommended_only'
+      // is not legal in the deployed CHECK constraint, so this gate had never
+      // matched a row.
+      if (rule.requiresAllDecisionsResolved && request.projectId) {
+        try {
+          const unresolvedStates = sql.join(
+            UNRESOLVED_DECISION_ACTION_STATES.map((s) => sql`${s}`),
+            sql`, `
+          );
+          const res = await database.execute(sql`
+            SELECT count(*)::int AS unresolved
+            FROM decision_records
+            WHERE project_id = ${request.projectId}
+              AND organization_id = ${request.organizationId}
+              AND action_state IN (${unresolvedStates})
+          `);
+          const rows = ((res as unknown as { rows?: Array<{ unresolved: number }> }).rows ?? res) as Array<{ unresolved: number }>;
+          const unresolved = Number(rows[0]?.unresolved ?? 0);
+          if (unresolved > 0) {
+            blockedReasons.push(
+              `Rule "${rule.ruleName}": ${unresolved} decision(s) unresolved ` +
+              `(${UNRESOLVED_DECISION_ACTION_STATES.join('/')}). ` +
+              `All decisions must be approved, executed, rejected, or superseded before transitioning to ${request.toBoundary}.`
+            );
+          }
+        } catch (err) {
+          blockedReasons.push(
+            `Rule "${rule.ruleName}": decision gate could not be evaluated ` +
+            `(${err instanceof Error ? err.message : 'unknown error'}). Failing closed.`
+          );
+        }
+      }
+
+      // Check minimum confidence — reads the DEPLOYED confidence_level column
+      // and ranks BOTH vocabularies on one ladder (rules were seeded with
+      // 'moderate'/'strong'; deployed decisions carry 'definitive'…'speculative').
+      // An unrecognized value on either side blocks: defaulting unknowns to 0
+      // is what made a 'definitive' decision score equal to 'speculative'.
+      if (rule.minimumConfidence && request.decisionId) {
+        try {
+          const res = await database.execute(sql`
+            SELECT confidence_level
+            FROM decision_records
+            WHERE id = ${request.decisionId}
+              AND organization_id = ${request.organizationId}
+          `);
+          const rows = ((res as unknown as { rows?: Array<{ confidence_level: string }> }).rows ?? res) as Array<{ confidence_level: string }>;
+          const decision = rows[0];
+          if (decision) {
+            const required = rankConfidence(rule.minimumConfidence);
+            const actual = rankConfidence(decision.confidence_level);
+            if (required === null || actual === null) {
+              blockedReasons.push(
+                `Rule "${rule.ruleName}": confidence could not be compared ` +
+                `(required "${rule.minimumConfidence}", actual "${decision.confidence_level}"). Failing closed.`
+              );
+            } else if (actual < required) {
+              blockedReasons.push(
+                `Rule "${rule.ruleName}": Decision confidence "${decision.confidence_level}" does not meet minimum "${rule.minimumConfidence}".`
+              );
+            }
+          }
+        } catch (err) {
+          blockedReasons.push(
+            `Rule "${rule.ruleName}": confidence gate could not be evaluated ` +
+            `(${err instanceof Error ? err.message : 'unknown error'}). Failing closed.`
+          );
         }
       }
     }
 
     // 3. Contradiction gate — block if unresolved blocking contradictions exist
-    if (request.projectId && request.toBoundary !== 'advisory') {
+    if (request.projectId && request.artifactId != null && request.toBoundary !== 'advisory') {
       try {
         const { contradictionEngineService } = await import('./contradiction-engine-service.js');
         if (contradictionEngineService?.checkPromotionBlocked) {
           const contradictionCheck = await contradictionEngineService.checkPromotionBlocked(
             request.organizationId,
             request.projectId,
-            request.artifactId
+            request.artifactId ?? 0
           );
           if (contradictionCheck?.blocked) {
             const blockingCount = contradictionCheck.blockingFindings?.length ?? 0;
@@ -331,26 +393,42 @@ export class GovernanceBoundaryService {
       }
     }
 
-    const allowed = blockedReasons.length === 0;
+    let allowed = blockedReasons.length === 0;
 
-    // 4. Record the transition attempt
-    const [transition] = await database
-      .insert(governanceBoundaryTransitions)
-      .values({
-        organizationId: request.organizationId,
-        projectId: request.projectId,
-        artifactId: request.artifactId,
-        decisionId: request.decisionId,
-        assumptionId: request.assumptionId,
-        fromBoundary: request.fromBoundary,
-        toBoundary: request.toBoundary,
-        ruleId: matchedRuleIds[0],
-        transitionAllowed: allowed,
-        blockedReasons,
-        actorId: request.actorId,
-        actorRole: request.actorRole,
-      })
-      .returning();
+    // 4. Record the transition attempt — the append-only audit trail.
+    // FAIL CLOSED on persistence failure: an allowed=true result whose audit
+    // record was never written is local-only success presented as persisted
+    // truth, which master §2 forbids. If the record cannot be written, the
+    // transition is denied. (Previously an insert failure threw out of this
+    // method; callers swallowed the throw and proceeded ungoverned.)
+    let transition: GovernanceBoundaryTransition | undefined;
+    try {
+      const [row] = await database
+        .insert(governanceBoundaryTransitions)
+        .values({
+          organizationId: request.organizationId,
+          projectId: request.projectId,
+          artifactId: request.artifactId,
+          decisionId: request.decisionId,
+          assumptionId: request.assumptionId,
+          fromBoundary: request.fromBoundary,
+          toBoundary: request.toBoundary,
+          ruleId: matchedRuleIds[0],
+          transitionAllowed: allowed,
+          blockedReasons,
+          actorId: request.actorId,
+          actorRole: request.actorRole,
+        })
+        .returning();
+      transition = row;
+    } catch (err) {
+      allowed = false;
+      blockedReasons.push(
+        `Transition audit record could not be persisted ` +
+        `(${err instanceof Error ? err.message : 'unknown error'}). ` +
+        `Failing closed: a transition without a durable audit record is not allowed.`
+      );
+    }
 
     return {
       allowed,

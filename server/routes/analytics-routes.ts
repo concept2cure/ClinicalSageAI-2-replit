@@ -2,8 +2,9 @@
 import { Router } from 'express';
 import multer from 'multer';
 import fs from 'fs';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import util from 'util';
 import { db } from '../db';
 import { csrReports } from '../../shared/schema';
@@ -12,11 +13,21 @@ import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
+import { powerTwoSampleMeans } from '../services/stats/assurance';
 
 const log = createScopedLogger('analytics-routes');
 
-const execPromise = util.promisify(exec);
+// execFile does not invoke a shell, so arguments are passed verbatim with no
+// shell parsing. Use this for any command that includes user-controlled input.
+const execFilePromise = util.promisify(execFile);
 const router = Router();
+
+// Defensive cap on text passed to Python analyzers as a CLI argument.
+const MAX_ANALYZER_TEXT_LENGTH = 1_000_000;
+
+// Bounded options shared by analyzer subprocess calls (preserves prior defaults
+// of a 10MB stdout buffer; adds a hard timeout to avoid hung processes).
+const ANALYZER_EXEC_OPTIONS = { maxBuffer: 10 * 1024 * 1024, timeout: 120_000 };
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -59,6 +70,17 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before use.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json({ success: false, ...err.body });
+      }
+      throw err;
+    }
+
     // Log file information for troubleshooting
     log.debug(
       `Processing protocol upload: ${req.file.originalname} (${req.file.mimetype}, ${req.file.size} bytes)`
@@ -85,7 +107,11 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
       const scriptPath = path.join(process.cwd(), 'trialsage', 'extract_protocol.py');
 
       try {
-        const { stdout } = await execPromise(`python ${scriptPath} "${filePath}"`);
+        const { stdout } = await execFilePromise(
+          'python3',
+          [scriptPath, filePath],
+          ANALYZER_EXEC_OPTIONS
+        );
         extractedText = stdout;
 
         // Validate we got meaningful text
@@ -125,7 +151,14 @@ For best results, please use PDF format.`;
     let analysisOutput;
 
     try {
-      const result = await execPromise(`python ${analyzerScriptPath} "${extractedText}"`);
+      // Pass extracted text as an argv element (no shell) to prevent command
+      // injection. Truncate to a sane limit to avoid oversized argv.
+      const analyzerText = extractedText.slice(0, MAX_ANALYZER_TEXT_LENGTH);
+      const result = await execFilePromise(
+        'python3',
+        [analyzerScriptPath, analyzerText],
+        ANALYZER_EXEC_OPTIONS
+      );
       analysisOutput = result.stdout;
     } catch (error) {
       log.error('Analysis execution error:', error);
@@ -145,8 +178,14 @@ For best results, please use PDF format.`;
       const tempScoreFile = path.join(process.cwd(), 'temp', `score-${Date.now()}.txt`);
       fs.writeFileSync(tempScoreFile, extractedText);
 
-      const scoreResult = await execPromise(
-        `python -c "from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open('${tempScoreFile}', 'r').read())))"`
+      // Run a fixed inline program (no user input interpolated into source) and
+      // pass the temp file path as an argv element read via sys.argv[1].
+      const confidenceScript =
+        'from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open(sys.argv[1], "r").read())))';
+      const scoreResult = await execFilePromise(
+        'python3',
+        ['-c', confidenceScript, tempScoreFile],
+        ANALYZER_EXEC_OPTIONS
       );
       confidenceOutput = scoreResult.stdout;
 
@@ -167,7 +206,7 @@ For best results, please use PDF format.`;
       });
     }
 
-    let analysisResult;
+    let analysisResult: ProtocolAnalysisResult;
     try {
       analysisResult = JSON.parse(analysisOutput);
 
@@ -282,7 +321,11 @@ router.post('/analyze-protocol-text', async (req, res) => {
     let analysisOutput;
 
     try {
-      const result = await execPromise(`python ${analyzerScriptPath} "${tempFilePath}"`);
+      const result = await execFilePromise(
+        'python3',
+        [analyzerScriptPath, tempFilePath],
+        ANALYZER_EXEC_OPTIONS
+      );
       analysisOutput = result.stdout;
     } catch (error) {
       // Clean up temporary file
@@ -305,8 +348,12 @@ router.post('/analyze-protocol-text', async (req, res) => {
     // Score the protocol confidence
     let confidenceOutput;
     try {
-      const scoreResult = await execPromise(
-        `python -c "from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open('${tempFilePath}', 'r').read())))"`
+      const confidenceScript =
+        'from trialsage.confidence_scorer import score_protocol; import json; import sys; print(json.dumps(score_protocol(open(sys.argv[1], "r").read())))';
+      const scoreResult = await execFilePromise(
+        'python3',
+        ['-c', confidenceScript, tempFilePath],
+        ANALYZER_EXEC_OPTIONS
       );
       confidenceOutput = scoreResult.stdout;
     } catch (error) {
@@ -327,7 +374,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       log.error('Error cleaning up temp file:', e);
     }
 
-    let analysisResult;
+    let analysisResult: ProtocolAnalysisResult;
     try {
       analysisResult = JSON.parse(analysisOutput);
 
@@ -401,18 +448,20 @@ async function findSimilarCsrs(indication: string, phase: string) {
       .where(like(csrReports.indication, `%${indication}%`))
       .limit(5);
 
-    // Format the results
+    // Only real, schema-backed fields are returned. The CSR index stores no
+    // sample size, primary endpoint, study duration, or outcome for these rows,
+    // so those are NOT fabricated here (previously hardcoded to 200 / 'Primary
+    // endpoint' / 24 / success:true) — the recommendation and reference-study
+    // sections downstream render only what we actually know. Likewise no
+    // similarity score is asserted: this is a LIKE match on indication, not a
+    // semantic-similarity engine (previously a `Math.random()` rank).
     return reports.map(report => ({
       id: `CSR_${report.id}`,
-      title: report.title,
-      sponsor: report.sponsor,
-      indication: report.indication,
-      phase: report.phase,
-      sample_size: 200, // Default value since property doesn't exist in schema
-      primary_endpoint: 'Primary endpoint', // Would come from another table in a real implementation
-      duration_weeks: 24, // Default value since property doesn't exist in schema
-      similarity: Math.random() * 0.3 + 0.7, // Simulated similarity score between 0.7 and 1.0
-      success: true, // Assuming all CSRs in the database are from successful studies
+      title: report.title ?? '',
+      sponsor: report.sponsor ?? '',
+      indication: report.indication ?? '',
+      phase: report.phase ?? '',
+      similarity: null,
     }));
   } catch (error) {
     log.error('Error finding similar CSRs:', error);
@@ -440,15 +489,14 @@ interface ProtocolAnalysisResult {
 // Define type for similar CSR
 interface SimilarCSR {
   id: string;
-  title: string;
-  sponsor: string;
-  indication: string;
-  phase: string;
-  sample_size: number;
-  primary_endpoint: string;
-  duration_weeks: number;
-  similarity: number;
-  success: boolean;
+  title: string | null;
+  sponsor: string | null;
+  indication: string | null;
+  phase: string | null;
+  // The CSR index stores no sample size, primary endpoint, duration, or outcome
+  // for these rows, so those fields are intentionally absent rather than
+  // fabricated. Similarity is null unless a real ranking engine sets it.
+  similarity: number | null;
   [key: string]: any; // Allow for additional properties
 }
 
@@ -477,59 +525,24 @@ function generateRecommendations(
   // SECTION: Study Design
   recommendations += `## Study Design\n\n`;
 
-  // Sample size recommendations
+  // Sample size recommendations. The CSR index does not store per-study sample
+  // sizes, so we do NOT compare against a fabricated average (previously every
+  // matched study was stamped with 200 participants). We report the proposed
+  // size and point to the real, computed power breakdown in Statistical Insights.
   if (analysis.sample_size) {
-    const avgSampleSize =
-      similarCsrs.reduce((sum, csr) => sum + (csr.sample_size || 0), 0) / (similarCsrs.length || 1);
-
-    if (similarCsrs.length > 0) {
-      if (analysis.sample_size < avgSampleSize * 0.8) {
-        recommendations += `- **Sample Size:** Consider increasing your sample size from ${analysis.sample_size} to approximately ${Math.round(avgSampleSize)} participants. `;
-        recommendations += `Similar successful studies used ${Math.round(avgSampleSize)} participants on average. `;
-        recommendations += `Insufficient sample size is a common cause of inconclusive results. `;
-
-        // Reference actual studies
-        if (similarCsrs.length > 0) {
-          const exampleStudy = similarCsrs[0];
-          recommendations += `For example, study ${exampleStudy.id} (${exampleStudy.title}) used ${exampleStudy.sample_size} participants.\n\n`;
-        } else {
-          recommendations += `\n\n`;
-        }
-      } else {
-        recommendations += `- **Sample Size:** Your proposed sample size of ${analysis.sample_size} appears adequate based on comparison with similar studies.\n\n`;
-      }
-    } else {
-      recommendations += `- **Sample Size:** Your proposed sample size is ${analysis.sample_size}. Without comparable studies in our database, we recommend consulting a statistician for power analysis.\n\n`;
-    }
+    recommendations += `- **Sample Size:** Your protocol proposes ${analysis.sample_size} participants. `;
+    recommendations += `See the Statistical Insights section for the power this yields against small, medium, and large effect sizes at α=0.05, and confirm the target with a formal power analysis for your primary endpoint.\n\n`;
   } else {
     recommendations += `- **Sample Size:** No sample size was specified in your protocol. We recommend conducting a formal power analysis.\n\n`;
   }
 
-  // Duration recommendations
+  // Duration recommendations. No per-study duration is stored for the matched
+  // CSRs, so we do not invent an average to compare against (previously every
+  // study was stamped with 24 weeks). Report the proposed duration and prompt a
+  // clinical review of its adequacy.
   if (analysis.duration_weeks) {
-    const avgDuration =
-      similarCsrs.reduce((sum, csr) => sum + (csr.duration_weeks || 0), 0) /
-      (similarCsrs.length || 1);
-
-    if (similarCsrs.length > 0) {
-      if (analysis.duration_weeks < avgDuration * 0.8) {
-        recommendations += `- **Study Duration:** Your proposed duration of ${analysis.duration_weeks} weeks may be insufficient. `;
-        recommendations += `Similar studies averaged ${Math.round(avgDuration)} weeks. `;
-        recommendations += `Short study duration can miss important long-term effects or trends. `;
-
-        // Reference actual studies
-        if (similarCsrs.length > 1) {
-          const exampleStudy = similarCsrs[1] || similarCsrs[0];
-          recommendations += `For reference, study ${exampleStudy.id} ran for ${exampleStudy.duration_weeks} weeks.\n\n`;
-        } else {
-          recommendations += `\n\n`;
-        }
-      } else {
-        recommendations += `- **Study Duration:** Your proposed duration of ${analysis.duration_weeks} weeks appears adequate.\n\n`;
-      }
-    } else {
-      recommendations += `- **Study Duration:** Your proposed study duration is ${analysis.duration_weeks} weeks. Review whether this allows sufficient time for the intervention to demonstrate effects.\n\n`;
-    }
+    recommendations += `- **Study Duration:** Your protocol proposes ${analysis.duration_weeks} weeks. `;
+    recommendations += `Confirm this allows enough time for the intervention to demonstrate its effect on the primary endpoint, accounting for onset of action and any required follow-up.\n\n`;
   } else {
     recommendations += `- **Study Duration:** No study duration was specified in your protocol. This is a critical parameter for planning and should be defined explicitly.\n\n`;
   }
@@ -584,11 +597,15 @@ function generateRecommendations(
 
     similarCsrs.slice(0, 3).forEach((study, index) => {
       recommendations += `${index + 1}. **${study.title}** (${study.id})\n`;
+      if (study.sponsor) recommendations += `   - Sponsor: ${study.sponsor}\n`;
       recommendations += `   - Indication: ${study.indication}\n`;
       recommendations += `   - Phase: ${study.phase}\n`;
-      recommendations += `   - Sample Size: ${study.sample_size}\n`;
-      recommendations += `   - Duration: ${study.duration_weeks} weeks\n`;
-      recommendations += `   - Similarity Score: ${(study.similarity * 100).toFixed(1)}%\n\n`;
+      // Sample size / duration are intentionally omitted: the CSR index does not
+      // store them for these rows, and a fabricated value would misinform.
+      if (study.similarity != null) {
+        recommendations += `   - Similarity Score: ${(study.similarity * 100).toFixed(1)}%\n`;
+      }
+      recommendations += `\n`;
     });
   }
 
@@ -619,16 +636,15 @@ function generateStatisticalInsights(analysis: ProtocolAnalysisResult): string {
     ];
 
     insights += `### Power Analysis\n`;
-    insights += `With your proposed sample size of ${analysis.sample_size}, estimated power varies by effect size:\n\n`;
+    insights += `Estimated power for a two-group comparison of means at your proposed total sample size of ${analysis.sample_size} (assumed split evenly between arms), two-sided α=0.05, by standardized effect size (Cohen's d):\n\n`;
 
-    // Show power calculations for different effect sizes
+    // Real two-sample power (replaces a fabricated formula, previously
+    // `Math.min(0.99, 0.4 + n*d/100)`). Delegates to the shared, tested stats
+    // helper — total N split evenly → nPerArm = N/2, two-sided α=0.05.
+    const nPerArm = (analysis.sample_size || 0) / 2;
     effectSizes.forEach(effect => {
-      // This is a simplified approximation - in a real system, use actual power calculations
-      const estimatedPower = Math.min(
-        0.99,
-        0.4 + ((analysis.sample_size || 0) * effect.size) / 100
-      );
-      insights += `- **${effect.desc.charAt(0).toUpperCase() + effect.desc.slice(1)} effect (${effect.size})**: Approximately ${(estimatedPower * 100).toFixed(1)}% power at α=0.05\n`;
+      const power = powerTwoSampleMeans(effect.size, nPerArm, 0.05, false);
+      insights += `- **${effect.desc.charAt(0).toUpperCase() + effect.desc.slice(1)} effect (d=${effect.size})**: ~${(power * 100).toFixed(1)}% power at α=0.05 (two-sided)\n`;
     });
 
     insights += `\n`;
@@ -847,7 +863,12 @@ For each recommendation, include specific citations to relevant regulatory guide
     // Create comprehensive IND assessment
     const indAnalysis = {
       title: 'IND Readiness Assessment',
-      score: Math.floor(Math.random() * 15) + 75, // 75-90 range
+      // No deterministic IND-readiness scorer is wired. The score was
+      // previously `Math.floor(Math.random()*15)+75` — a fabricated value.
+      // The qualitative strengths / improvement areas / citations below are
+      // static regulatory guidance and remain. Score is null until a real
+      // scorer is connected.
+      score: null as number | null,
       strengths: [
         'Well-defined primary and secondary endpoints',
         'Clear inclusion/exclusion criteria',
@@ -874,13 +895,15 @@ For each recommendation, include specific citations to relevant regulatory guide
       ],
     };
 
-    // Statistics-based dropout prediction with references
+    // Qualitative dropout-risk factors with references. There is no
+    // dropout-prediction model wired, so we do NOT emit a numeric
+    // predicted_rate / confidence_interval — those were previously
+    // fabricated with Math.random() yet dressed with academic citations,
+    // which is the dangerous case. The qualitative factors and mitigation
+    // strategies below are real guidance and remain.
     const dropoutPrediction = {
-      predicted_rate: (Math.random() * 0.1 + 0.1).toFixed(3), // 10-20%
-      confidence_interval: [
-        (Math.random() * 0.05 + 0.08).toFixed(3), // 8-13%
-        (Math.random() * 0.1 + 0.15).toFixed(3), // 15-25%
-      ],
+      predicted_rate: null as string | null,
+      confidence_interval: null as [string, string] | null,
       factors: [
         {
           name: 'Treatment duration',
@@ -1114,7 +1137,7 @@ router.get('/export', async (req, res) => {
     let reportData: any = {};
 
     if (type === 'summary') {
-      // Get summary analytics data
+      // Get summary analytics data — all aggregated from real csrReports rows.
       const cohortData = await db
         .select({
           count: count(),
@@ -1126,29 +1149,38 @@ router.get('/export', async (req, res) => {
 
       const totalReports = cohortData.reduce((sum, item) => sum + Number(item.count), 0);
 
+      // Real breakdowns from the grouped rows (previously hardcoded).
+      const reportsByIndication: Record<string, number> = {};
+      const reportsByPhase: Record<string, number> = {};
+      for (const row of cohortData) {
+        const ind = row.indication || 'Unspecified';
+        const ph = row.phase || 'Unspecified';
+        reportsByIndication[ind] = (reportsByIndication[ind] || 0) + Number(row.count);
+        reportsByPhase[ph] = (reportsByPhase[ph] || 0) + Number(row.count);
+      }
+
+      // Real success rate = approved reports / total (csrReports.status).
+      // Previously hardcoded 94.5.
+      const statusRows = await db
+        .select({ count: count(), status: csrReports.status })
+        .from(csrReports)
+        .groupBy(csrReports.status);
+      const approved = statusRows
+        .filter(r => r.status === 'approved')
+        .reduce((s, r) => s + Number(r.count), 0);
+      const successRate = totalReports > 0 ? Number(((approved / totalReports) * 100).toFixed(1)) : null;
+
       reportData = {
         totalReports,
-        averageEndpoints: 3.2,
-        successRate: 94.5,
-        reportsByIndication: {
-          Oncology: 225,
-          Cardiovascular: 143,
-          Neurology: 98,
-          'Infectious Disease': 87,
-        },
-        reportsByPhase: {
-          '1': 105,
-          '2': 287,
-          '3': 325,
-          '4': 62,
-        },
-        mostCommonEndpoints: [
-          'Overall Survival',
-          'Progression-Free Survival',
-          'Objective Response Rate',
-          'Disease-Free Survival',
-          'Change in HbA1c',
-        ],
+        // averageEndpoints + mostCommonEndpoints require per-report endpoint
+        // data that isn't modeled on csrReports; omitted rather than
+        // fabricated. They return when an endpoints table is wired.
+        successRate,
+        reportsByIndication,
+        reportsByPhase,
+        reportsByStatus: Object.fromEntries(
+          statusRows.map(r => [r.status || 'unknown', Number(r.count)])
+        ),
       };
     } else if (type === 'predictive') {
       // Generate predictive analysis data

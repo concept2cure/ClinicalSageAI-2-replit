@@ -20,7 +20,7 @@ interface eSTARSection {
   sectionId: string;
   title: string;
   subsections?: eSTARSection[];
-  fields: string[];
+  fields?: string[];
 }
 
 interface FDAFormField {
@@ -477,7 +477,7 @@ export class CrossReferenceMapper {
         // Iterate through collected data fields
         for (const [fieldKey, fieldValue] of Object.entries(stageDataObj)) {
           // Generate input ID
-          const inputId = `${stage.stageId}.${fieldKey}`;
+          const inputId = `${stage.stageName}.${fieldKey}`;
           
           // Search for matching placeholders in documents
           for (const doc of documents) {
@@ -949,7 +949,7 @@ Date: ${data.signature_date}
   private async persistSmartLinks(projectId: number, smartLinks: any): Promise<void> {
     try {
       // Store in fda510kDataMappings table
-      await db!.insert(fda510kDataMappings).values({
+      await (db!.insert(fda510kDataMappings) as any).values({
         organizationId: smartLinks.organizationId,
         mappingCode: `SMART_LINK_${projectId}_${Date.now()}`,
         mappingName: `Smart Links for Project ${projectId}`,
@@ -964,8 +964,6 @@ Date: ${data.signature_date}
         }),
         validationRules: JSON.stringify(smartLinks.syncStatus),
         isActive: true,
-        createdBy: 1,
-        updatedBy: 1,
         createdAt: new Date(),
         updatedAt: new Date()
       });

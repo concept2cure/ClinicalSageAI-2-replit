@@ -7,6 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 // Get directory name for ES modules
@@ -51,9 +52,13 @@ export function createCache(sourceName) {
    * @returns {string} The full path to the cache file
    */
   function getCacheFilePath(key) {
-    // Sanitize key to ensure it's a valid filename
-    const sanitizedKey = key.replace(/[^a-z0-9_\-]/gi, '_').toLowerCase();
-    return path.join(cacheDir, `${sanitizedKey}.json`);
+    // Sanitize key to ensure it's a valid filename, and append a digest of
+    // the RAW key so two different keys that sanitize identically (e.g.
+    // 'brand:"X-Y"' vs 'brand:"x y"') can never collide on one cache file
+    // and serve each other's data.
+    const digest = crypto.createHash('sha256').update(key).digest('hex').slice(0, 16);
+    const sanitizedKey = key.replace(/[^a-z0-9_\-]/gi, '_').toLowerCase().slice(0, 120);
+    return path.join(cacheDir, `${sanitizedKey}_${digest}.json`);
   }
 
   /**

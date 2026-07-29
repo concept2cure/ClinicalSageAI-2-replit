@@ -8,11 +8,10 @@
  *
  * Usage (replacing direct OpenAI calls):
  *
- *   // Before:
- *   import OpenAI from 'openai';
- *   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
- *   const result = await openai.chat.completions.create({ model: 'gpt-4o', messages, max_tokens: 2000 });
- *   const text = result.choices[0].message.content;
+ *   // Before: a module instantiated its own OpenAI client and called
+ *   //   `openai.chat.completions.create({ model: 'gpt-4o', messages, max_tokens })`,
+ *   //   reading `result.choices[0].message.content` — outside the gateway, so the
+ *   //   call escaped the centralized audit trail and provider policy.
  *
  *   // After:
  *   import { ai } from '../lib/unified-ai-client';

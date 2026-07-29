@@ -32,6 +32,7 @@ import {
   createCanonicalTasksForIssue,
 } from '../services/regulatory-correspondence/operating-layer';
 import { compileGovernedResponseAssembly } from '../services/regulatory-correspondence/response-package-compiler';
+import { recordGovernedAction } from './c2c/actions';
 
 const router = Router();
 router.use(authMiddleware);
@@ -734,35 +735,70 @@ router.patch('/issues/:issueId/review', async (req, res) => {
   req.body = parsed.data;
   const actor = requireActorContext(req, res);
   if (!actor) return;
-  const { orgId } = actor;
+  const { orgId, userId } = actor;
   const pool = getDbClientOrNull();
   const isReady = await tableReady(pool);
   if (!requirePersistentStore(isReady, res, 'review correspondence issue')) {
     return;
   }
-  const upd = await pool!.query(
-    `UPDATE c2c_correspondence_issues AS i
-       SET human_review_status = COALESCE($2, human_review_status),
-           mapped_ctd_sections = COALESCE($3::jsonb, mapped_ctd_sections),
-           mapped_artifact_ids = COALESCE($4::jsonb, mapped_artifact_ids),
-           resolution_status = COALESCE($5, resolution_status),
-           updated_at = NOW()
-       FROM c2c_correspondence AS c
-       WHERE i.id = $1
-         AND c.id = i.correspondence_id
-         AND c.organization_id = $6
-       RETURNING i.*`,
-    [
-      req.params.issueId,
-      req.body.humanReviewStatus || null,
-      req.body.mappedCtdSections ? JSON.stringify(req.body.mappedCtdSections) : null,
-      req.body.mappedArtifactIds ? JSON.stringify(req.body.mappedArtifactIds) : null,
-      req.body.resolutionStatus || null,
+
+  // Governed resolve (medium-risk, no re-auth): UPDATE + ledger write in one
+  // transaction (audit_logs + c2c_ana_actions).
+  const client = await pool!.connect();
+  try {
+    await client.query('BEGIN');
+    const upd = await client.query(
+      `UPDATE c2c_correspondence_issues AS i
+         SET human_review_status = COALESCE($2, human_review_status),
+             mapped_ctd_sections = COALESCE($3::jsonb, mapped_ctd_sections),
+             mapped_artifact_ids = COALESCE($4::jsonb, mapped_artifact_ids),
+             resolution_status = COALESCE($5, resolution_status),
+             updated_at = NOW()
+         FROM c2c_correspondence AS c
+         WHERE i.id = $1
+           AND c.id = i.correspondence_id
+           AND c.organization_id = $6
+         RETURNING i.*`,
+      [
+        req.params.issueId,
+        req.body.humanReviewStatus || null,
+        req.body.mappedCtdSections ? JSON.stringify(req.body.mappedCtdSections) : null,
+        req.body.mappedArtifactIds ? JSON.stringify(req.body.mappedArtifactIds) : null,
+        req.body.resolutionStatus || null,
+        orgId,
+      ]
+    );
+    if (!upd.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Issue not found' });
+    }
+
+    const governance = await recordGovernedAction(client, {
       orgId,
-    ]
-  );
-  if (!upd.rows[0]) return res.status(404).json({ error: 'Issue not found' });
-  return res.json({ data: upd.rows[0] });
+      userId,
+      command: 'resolve',
+      target: `correspondence-issue:${req.params.issueId}`,
+      reason: req.body.reason,
+      payload: {
+        humanReviewStatus: req.body.humanReviewStatus,
+        resolutionStatus: req.body.resolutionStatus,
+      },
+      domain: 'mdx',
+      surface: 'correspondence',
+    });
+
+    await client.query('COMMIT');
+    return res.json({
+      data: upd.rows[0],
+      governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
+    });
+  } catch (err: any) {
+    try { await client.query('ROLLBACK'); } catch { /* noop */ }
+    console.error('[regulatory-correspondence/review]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  } finally {
+    client.release();
+  }
 });
 
 router.post('/response-packages', async (req, res) => {

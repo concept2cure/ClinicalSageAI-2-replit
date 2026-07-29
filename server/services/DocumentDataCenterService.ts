@@ -26,14 +26,14 @@ import {
   organizations,
   deviceAuditTrail 
 } from '../../shared/schema.js';
-import { eq, and, or, inArray, like, sql, desc, asc, isNull } from 'drizzle-orm';
-import part11ComplianceService from './part11ComplianceService.js';
+import { eq, and, or, inArray, like, sql, desc, asc, isNull, arrayOverlaps } from 'drizzle-orm';
+import auditService from './auditService.js';
 import { ai } from '../lib/unified-ai-client';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import mammoth from 'mammoth';
 
 // AI-powered intelligent tagging available via unified client
@@ -464,7 +464,7 @@ class DocumentDataCenterService {
       }).returning();
 
       // Log audit trail for 21 CFR Part 11 compliance
-      await part11ComplianceService.logAction({
+      await auditService.logAction({
         organizationId,
         userId: metadata.userId,
         action: 'DOCUMENT_UPLOADED',
@@ -513,7 +513,7 @@ class DocumentDataCenterService {
       throw new Error('Database connection not available');
     }
     try {
-      let baseQuery = db
+      const baseQuery = db
         .select()
         .from(deviceDataCenter)
         .where(eq(deviceDataCenter.organizationId, organizationId));
@@ -533,25 +533,21 @@ class DocumentDataCenterService {
         );
       }
 
-      // Category filter (supports multi-category)
+      // Category filter (supports multi-category). arrayOverlaps binds each
+      // value as its own array element — the previous join(',') collapsed the
+      // list into ONE element ('a,b'), so multi-value filters never matched.
       if (filters?.categories?.length) {
-        conditions.push(
-          sql`${deviceDataCenter.categories} && ARRAY[${filters.categories.join(',')}]::text[]`
-        );
+        conditions.push(arrayOverlaps(deviceDataCenter.categories, filters.categories));
       }
 
       // Test standards filter
       if (filters?.testStandards?.length) {
-        conditions.push(
-          sql`${deviceDataCenter.testStandards} && ARRAY[${filters.testStandards.join(',')}]::text[]`
-        );
+        conditions.push(arrayOverlaps(deviceDataCenter.testStandards, filters.testStandards));
       }
 
       // Components filter
       if (filters?.components?.length) {
-        conditions.push(
-          sql`${deviceDataCenter.deviceComponents} && ARRAY[${filters.components.join(',')}]::text[]`
-        );
+        conditions.push(arrayOverlaps(deviceDataCenter.deviceComponents, filters.components));
       }
 
       // Date range filter
@@ -705,7 +701,9 @@ class DocumentDataCenterService {
           deviceComponents: updates.components || existing.deviceComponents,
           tags: updates.tags || existing.tags,
           metadata: {
-            ...existing.metadata,
+            // metadata is an untyped json column (typed `unknown` on select);
+            // coerce to an object at this JSON boundary before merging.
+            ...((existing.metadata as Record<string, unknown> | null) ?? {}),
             ...updates.metadata,
             lastUpdated: new Date().toISOString(),
             updatedBy: updates.userId,
@@ -721,7 +719,7 @@ class DocumentDataCenterService {
         .returning();
 
       // Log audit trail
-      await part11ComplianceService.logAction({
+      await auditService.logAction({
         organizationId,
         userId: updates.userId,
         action: 'DOCUMENT_TAGS_UPDATED',
@@ -744,6 +742,74 @@ class DocumentDataCenterService {
       };
     } catch (error) {
       console.error('Error updating document tags:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Permanently delete a document (DB record + stored file) with audit logging
+   */
+  async deleteDocument(
+    organizationId: number,
+    documentId: number,
+    userId: string
+  ): Promise<{ success: boolean; notFound?: boolean; message?: string }> {
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+    try {
+      // Get existing document (org-scoped) so we never delete across tenants
+      const [existing] = await db
+        .select()
+        .from(deviceDataCenter)
+        .where(
+          and(
+            eq(deviceDataCenter.organizationId, organizationId),
+            eq(deviceDataCenter.id, documentId)
+          )
+        );
+
+      if (!existing) {
+        return { success: false, notFound: true };
+      }
+
+      // Remove the DB record (org-scoped)
+      await db
+        .delete(deviceDataCenter)
+        .where(
+          and(
+            eq(deviceDataCenter.organizationId, organizationId),
+            eq(deviceDataCenter.id, documentId)
+          )
+        );
+
+      // Best-effort removal of the stored file from disk
+      if (existing.storageUrl) {
+        try {
+          await fs.unlink(existing.storageUrl);
+        } catch (fileError) {
+          console.error('Error removing stored file during delete:', fileError);
+        }
+      }
+
+      // Log audit trail for 21 CFR Part 11 compliance
+      await auditService.logAction({
+        organizationId,
+        userId,
+        action: 'DOCUMENT_DELETED',
+        resourceType: 'device_data_center',
+        resourceId: documentId.toString(),
+        metadata: {
+          fileName: existing.fileName,
+          checksum: existing.checksum,
+        },
+        ipAddress: '127.0.0.1',
+        userAgent: 'DocumentDataCenterService',
+      });
+
+      return { success: true, message: 'Document deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting document:', error);
       throw error;
     }
   }

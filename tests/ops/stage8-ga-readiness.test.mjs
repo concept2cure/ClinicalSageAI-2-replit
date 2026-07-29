@@ -45,12 +45,28 @@ test('beta pulse e2e covers required core pulse cases', () => {
 });
 
 test('route truth contract remains anchored for root/login/project routes', () => {
+  // After the App.jsx refactor, the root `/` redirect lives inside the
+  // ZenRouter bundle rather than at the App.jsx shell layer. The intent
+  // ("root path is reachable; login + project routes exist under
+  // /concept2cure") is unchanged; the location moved. Test now asserts
+  // the current contract.
   const appSrc = read('client/src/App.jsx');
   const routerSrc = read('client/src/concept2cure/router/ZenRouter.tsx');
 
-  assert.match(appSrc, /<Route path="\/">\{\(\) => <Redirect to="\/concept2cure" \/>\}<\/Route>/);
+  // App.jsx still mounts ZenRouter and the standard auth redirects.
+  assert.match(appSrc, /<Route path="\/sign-in">/);
+  assert.match(appSrc, /Redirect to="\/concept2cure\/login"/);
+
+  // ZenRouter keeps the canonical login route in the transition Switch…
   assert.match(routerSrc, /<Route path="\/concept2cure\/login">/);
-  assert.match(routerSrc, /<Route path="\/concept2cure\/project\/:projectId">/);
+  // …while the root entry point and every /concept2cure surface/project deep
+  // link are owned by the ui-v2 fast path (the shell must persist across
+  // navs, so it renders outside the location-keyed Switch). The contract
+  // ("root reachable; project routes exist under /concept2cure") is
+  // unchanged; ownership moved to the uiV2Owns guard.
+  assert.match(routerSrc, /const uiV2Owns =/);
+  assert.match(routerSrc, /location === '\/' \|\| location\.startsWith\('\/concept2cure'\)/);
+  assert.match(routerSrc, /<ProtectedZenApp \/>/);
 });
 
 test('compare script fails closed when base ref is absent', () => {

@@ -2,6 +2,9 @@ import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughStabilityStudy } from '../../services/cmc-write-through';
+import { createScopedLogger } from '../../utils/logger';
+
+const log = createScopedLogger('cmc-stability-routes');
 
 const router = express.Router();
 
@@ -118,7 +121,13 @@ router.post('/', async (req, res) => {
     console.log(`[CMC Stability] Created study ${study.id}: ${data.studyName}`);
     // Write-through: upsert canonical source object for Module 3
     if (study.project_id) {
-      writeThroughStabilityStudy(Number(tenantId), study.project_id, String(study.id), study).catch(() => {});
+      writeThroughStabilityStudy(Number(tenantId), study.project_id, String(study.id), study).catch((err: unknown) => {
+        log.error('Write-through of canonical Module 3 stability study failed (create)', {
+          studyId: String(study.id),
+          projectId: String(study.project_id),
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     res.status(201).json({
@@ -217,7 +226,13 @@ router.put('/:id', async (req, res) => {
     // Write-through: upsert canonical source object for Module 3
     const updatedStudy = updateResult.rows[0];
     if (updatedStudy?.project_id) {
-      writeThroughStabilityStudy(Number(tenantId), updatedStudy.project_id, String(id), updatedStudy).catch(() => {});
+      writeThroughStabilityStudy(Number(tenantId), updatedStudy.project_id, String(id), updatedStudy).catch((err: unknown) => {
+        log.error('Write-through of canonical Module 3 stability study failed (update)', {
+          studyId: String(id),
+          projectId: String(updatedStudy.project_id),
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
 
     res.json({

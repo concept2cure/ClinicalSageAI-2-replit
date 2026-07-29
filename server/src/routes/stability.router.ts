@@ -19,6 +19,24 @@ import {
 // import { parse } from 'csv-parse/sync';
 import { addMonths, format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
+import { authedActorName } from '../../utils/authedActor';
+
+/**
+ * The VERIFIED acting principal, for GxP attribution columns
+ * (stab_results.reviewed_by, stab_chain.actor, stab_samples.collected_by).
+ *
+ * These read `req.headers['x-user-name'] || '<placeholder>'` — attacker-
+ * controlled, and defaulting to strings like 'user', 'reviewer' and 'collector'
+ * that identify nobody while still satisfying the column. Chain-of-custody and
+ * review attribution that any caller can assert is not attribution.
+ * See ledger C-18.
+ */
+function requireActor(req: any): string {
+  const actor = authedActorName(req);
+  if (!actor) throw new Error('Actor identity required');
+  return actor;
+}
+
 // Stub for barcode generation - would import BWIPJS from "bwip-js" in production
 const BWIPJS = {
   toBuffer: (options: any) => Promise.resolve(Buffer.from('mock-barcode-data')),
@@ -153,7 +171,18 @@ async function executeInternalQuery(tenantId: string, queryText: string, params?
 
 // Helper function for audit trail
 async function audit(studyId: string, action: string, payload: any, req: any) {
-  const actor = (req.headers['x-user-name'] || req.headers['x-user-email'] || 'user').toString();
+  // 21 CFR Part 11 §11.10(e) / ICH Q1A: the audit actor is the VERIFIED
+  // principal. This read `x-user-name || x-user-email || 'user'` — both
+  // client-supplied — so any authenticated caller could attribute a stability
+  // audit record to anyone, and an omitted header recorded the literal string
+  // "user", which identifies nobody. Tenant scope on this router was already
+  // derived from the JWT (below); attribution was the half left on headers.
+  // Same rule as the authoring router's getActorEmail: email, else the token
+  // subject. See ledger C-18.
+  const actor = String(req.user?.email ?? req.user?.id ?? req.user?.userId ?? '');
+  if (!actor) {
+    throw new Error('Actor identity required for audit');
+  }
   const client = await pool.connect();
   try {
     // Set tenant context for audit — derive from JWT-validated context, not raw headers
@@ -210,7 +239,7 @@ router.get('/studies', async (req, res) => {
 
     // fetch one-line condition strings per study for frontend compatibility
     const ids = rows.map((r: any) => r.study_id);
-    let condMap = new Map<string, string[]>();
+    const condMap = new Map<string, string[]>();
     if (ids.length) {
       // Use the same client with tenant context
       const { rows: conds } = await client.query(
@@ -813,55 +842,15 @@ router.post(
       // });
       // const records = parseResult.data;
 
-      // For now, return a simple message about CSV import being temporarily unavailable
+      // CSV import is disabled until a CSV parser (papaparse) is wired in.
+      // The parse + per-row upsert into stab_results lived here; it was removed
+      // as dead code once the early return above made it unreachable. Restore it
+      // alongside the parser when the feature is re-enabled.
       return res.status(200).json({
         message: 'CSV import feature temporarily unavailable',
         imported: 0,
         errors: ['CSV parsing library not available'],
       });
-
-      // Get lookup data
-      const conditionsResult = await client.query(
-        'SELECT * FROM stab_conditions WHERE study_id = $1',
-        [id]
-      );
-      const conditions = new Map(conditionsResult.rows.map(c => [c.kind, c]));
-
-      const timepointsResult = await client.query(
-        'SELECT * FROM stab_timepoints WHERE study_id = $1',
-        [id]
-      );
-      const timepoints = new Map(
-        timepointsResult.rows.map(tp => [`${tp.cond_id}-${tp.label}`, tp])
-      );
-
-      const testsResult = await client.query('SELECT * FROM stab_tests WHERE study_id = $1', [id]);
-      const tests = new Map(testsResult.rows.map(t => [t.name, t]));
-
-      let imported = 0;
-      // CSV import functionality temporarily disabled
-      // const records = parseResult.data;
-
-      // for (const record of records) {
-      //   const row = record as any;
-      //   const condition = conditions.get(row.condition);
-      //   const timepoint = timepoints.get(`${condition?.cond_id}-${row.timepoint}`);
-      //   const test = tests.get(row.test);
-      //
-      //   if (condition && timepoint && test) {
-      //     await client.query(`
-      //       INSERT INTO stab_results (study_id, cond_id, tp_id, test_id, value, unit, pass, remarks)
-      //       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      //       ON CONFLICT (cond_id, tp_id, test_id) DO UPDATE SET
-      //         value = $5, unit = $6, pass = $7, remarks = $8
-      //     `, [id, condition.cond_id, timepoint.tp_id, test.test_id, row.value, row.unit, row.pass === 'true', row.remarks]);
-      //     imported++;
-      //   }
-      // }
-
-      await client.query('COMMIT');
-
-      res.json({ imported, total: 0 });
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Error importing results:', error);
@@ -1132,7 +1121,12 @@ router.post('/studies/:id/p8/push', async (req, res) => {
         .join(', '),
       DURATION_MONTHS: study.duration_months || 24,
       LABEL_STORAGE: study.label_storage || 'Store in a dry place at room temperature',
-      COMPLIANCE_STATUS: 'Compliant with ICH Q1A(R2) guidelines',
+      // Do not certify a compliance verdict in a regulated submission document:
+      // conformance to ICH Q1A(R2) is determined by evaluating completed results
+      // against acceptance criteria, which this token generator does not do.
+      // State the study's design basis instead of asserting "Compliant".
+      COMPLIANCE_STATUS:
+        'Study designed to follow ICH Q1A(R2); conformance to be confirmed against acceptance criteria on completion',
       RESULTS_SUMMARY:
         results.length > 0 ? `${results.length} test results recorded` : 'Testing in progress',
     };
@@ -1813,7 +1807,11 @@ router.get('/oot-surveillance', async (req, res) => {
 
       const { m, s, b } = checkWE(series, rules);
 
-      // Add some outliers for demonstration - force at least one WE1 trigger
+      // Flag a series only when a real signal is present: a Western Electric
+      // rule break from checkWE (b), or a genuine trend — first-to-last shift
+      // beyond 2 SD, or any point beyond 2.5 SD from the mean. (An earlier
+      // version's comment claimed it "forced" a trigger for demonstration; it
+      // does not — detection is computed from the real series statistics.)
       const hasSignificantTrend =
         series.length >= 5 &&
         (Math.abs(series[0] - series[series.length - 1]) > s * 2 ||
@@ -1838,7 +1836,10 @@ router.get('/oot-surveillance', async (req, res) => {
             sd: parseFloat(s.toFixed(3)),
             n: series.length,
           },
-          status: 'confirmed',
+          // Auto-detected statistical signal — NOT yet investigated/confirmed.
+          // 'confirmed' would overstate the investigation state of an OOT signal
+          // in a regulated stability surface; it is 'detected' until reviewed.
+          status: 'detected',
           detected_date: new Date().toISOString(),
           result_value: parseFloat(series[series.length - 1].toFixed(2)),
           specification_limit: `${(m - 3 * s).toFixed(1)} - ${(m + 3 * s).toFixed(1)}`,
@@ -2020,7 +2021,7 @@ router.post('/results/:resultId/review', async (req, res) => {
     [
       rid,
       (b.status || 'REVIEWED').toUpperCase(),
-      (req.headers['x-user-name'] || 'reviewer').toString(),
+      requireActor(req),
       b.reason || null,
     ]
   );
@@ -2612,7 +2613,7 @@ router.post('/studies/:id/samples/collect', async (req, res) => {
     [
       b.sample_id,
       b.collected_at || null,
-      b.collected_by || req.headers['x-user-name'] || 'collector',
+      b.collected_by || requireActor(req),
     ]
   );
   await audit(id, 'sample_collect', { sample_id: b.sample_id }, req);
@@ -2734,7 +2735,7 @@ router.post('/samples/:sampleId/chain', async (req, res) => {
   await pool.query(`insert into stab_chain (sample_id,action,actor,notes) values ($1,$2,$3,$4)`, [
     sid,
     action,
-    (req.headers['x-user-name'] || 'user').toString(),
+    requireActor(req),
     b.notes || null,
   ]);
   if (find[0]) await audit(find[0].study_id, 'coc_add', { sample_id: sid, action }, req);
@@ -2762,7 +2763,7 @@ router.post(
     );
     await pool.query(
       `insert into stab_chain (sample_id,action,actor,attachment_url) values ($1,'OTHER',$2,$3)`,
-      [sid, (req.headers['x-user-name'] || 'user').toString(), url]
+      [sid, requireActor(req), url]
     );
     if (find[0]) await audit(find[0].study_id, 'coc_upload', { sample_id: sid, url }, req);
     res.json({ ok: true, url });

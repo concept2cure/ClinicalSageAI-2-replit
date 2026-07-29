@@ -17,10 +17,29 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./test_shared:/shared_data
+      # Bind the SAME absolute host path at the SAME container path. The worker
+      # launches sibling generator containers through the host Docker daemon,
+      # which interprets -v sources as HOST paths; aligning the paths means a
+      # path the worker sees (/shared_data/...) resolves to the same directory on
+      # the host, so the generated file lands where the api/worker can read it.
+      - /shared_data:/shared_data
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      # Write request input JSON under the shared volume so the worker (and the
+      # sandboxed generator it spawns) can read it across containers.
+      - OUTPUT_DIR_BASE=/shared_data
+      # Job store backing. Without REDIS_URL the store defaults to localhost,
+      # which is unreachable inside the container, so api and worker each fall
+      # back to a SEPARATE in-memory store — the worker marks a job COMPLETED in
+      # its store while the API keeps reading PENDING from its own. Point both at
+      # the shared redis service so job state is visible across processes.
+      - REDIS_URL=redis://redis:6379/0
+      # Shared-secret bearer token for internal service-to-service auth. The API
+      # fails closed (503) when this is unset, so it must be provided here and to
+      # the E2E test runner with the SAME value. A throwaway default keeps the
+      # harness self-contained when the runner doesn't export one.
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-e2e-internal-service-token}
     depends_on:
       - redis
 
@@ -29,11 +48,24 @@ services:
       context: .
       dockerfile: services/worker.Dockerfile
     volumes:
-      - ./test_shared:/shared_data
+      # Same absolute host path alignment as the api service (see note above) so
+      # sibling-container -v mounts resolve correctly on the host daemon.
+      - /shared_data:/shared_data
+      # SECURITY: mounting the host Docker socket grants this container full
+      # root-equivalent control of the host (container escape). It is here so
+      # the worker can launch sibling containers for E2E jobs. Removing it would
+      # break that harness, so it is retained only in this throwaway E2E compose
+      # and must never appear in staging/prod.
+      # TODO(GA-blocker): replace docker.sock with a rootless/sysbox runner or a
+      # scoped docker-socket-proxy (tecnativa/docker-socket-proxy) exposing only
+      # the container APIs the worker actually needs.
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - OUTPUT_DIR_BASE=/shared_data
+      # Share the job store with the api service (see api note above) so the
+      # COMPLETED/FAILED state this worker writes is visible to the API.
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis

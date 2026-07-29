@@ -22,6 +22,7 @@ import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/s
 import { resolveGovernedContext } from '../../concept2cure/governedDocumentContractService.js';
 import { fetchArtifact } from '../shared-utils';
 import { registerActionHandler } from '../action-registry';
+import auditService from '../../auditService';
 import type {
   AIActionHandler,
   AIActionRequest,
@@ -87,6 +88,14 @@ const promoteArtifactHandler: AIActionHandler = {
         409
       );
     }
+
+    // 2a. 21 CFR Part 11 human-approval gate.
+    // Promoting an AI-generated artifact to an 'approved'/governed-submission
+    // document is a governed action and MUST NOT happen without an explicit,
+    // authenticated human approval. Enforced here (in addition to the
+    // dispatcher's role pre-check) because promotion stamps lifecycleStatus
+    // 'approved' and flips the artifact to 'approved'.
+    const approval = requireHumanApproval(request, ctx);
 
     // 2b. Check contradiction governance — hard block if unresolved blocking findings
     try {
@@ -226,6 +235,16 @@ const promoteArtifactHandler: AIActionHandler = {
             ctdSection: artifact.ctdSection || (payload.ctdSection as string) || null,
             contentHash,
             promotionActionId: ctx.actionId,
+            approval: {
+              approvedBy: ctx.user.userId,
+              approvedByName: ctx.user.userName,
+              approverRole: ctx.user.userRole,
+              approvedAt: approval.approvedAt,
+              approvalReason: approval.reason,
+              sourceSurface: request.sourceSurface,
+              // TODO(compliance): require electronic_signatures record (server/routes/esignature.ts)
+              // for promotion to approved — bind signatureId/manifestHash here.
+            },
           },
         })
         .returning();
@@ -250,6 +269,11 @@ const promoteArtifactHandler: AIActionHandler = {
             promotedAt: new Date().toISOString(),
             promotedBy: ctx.user.userId,
             promotionActionId: ctx.actionId,
+            approvedBy: ctx.user.userId,
+            approvedByName: ctx.user.userName,
+            approverRole: ctx.user.userRole,
+            approvedAt: approval.approvedAt,
+            approvalReason: approval.reason,
             harness: {
               ...existingHarness,
               clientTrack: governedResolution.contract.clientTrack,
@@ -272,6 +296,31 @@ const promoteArtifactHandler: AIActionHandler = {
         .where(eq(concept2cureArtifacts.id, artifact.id));
 
       return { newDoc: doc };
+    });
+
+    // 5. Emit audit log for this governed approval/promotion. Awaited (not
+    // fire-and-forget) because this is a 21 CFR Part 11 governed action.
+    await auditService.logAction({
+      organizationId: ctx.user.organizationId,
+      userId: ctx.user.userId,
+      action: 'signature_apply',
+      resourceType: 'document',
+      resourceId: newDoc.id,
+      ipAddress: ctx.ipAddress,
+      details: {
+        event: 'artifact_promoted_to_approved',
+        actionType: 'promote_artifact',
+        actionId: ctx.actionId,
+        artifactId: artifact.id,
+        artifactExternalId: artifact.artifactId,
+        documentId: newDoc.id,
+        projectId: request.projectId,
+        approvedBy: ctx.user.userId,
+        approverRole: ctx.user.userRole,
+        approvalReason: approval.reason,
+        approvedAt: approval.approvedAt,
+        sourceSurface: request.sourceSurface,
+      },
     });
 
     // 6. Build response
@@ -361,6 +410,75 @@ const createDocumentFromArtifactHandler: AIActionHandler = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * 21 CFR Part 11 human-approval gate for promoting an AI-generated artifact
+ * to an 'approved'/governed-submission document.
+ *
+ * Enforces:
+ *  - an authenticated human actor (req.user from JWT) is present;
+ *  - the actor holds an approval-capable role (no AI/system self-approval);
+ *  - automated/AI surfaces (workflow_trigger) cannot self-approve;
+ *  - an explicit approval intent: a non-empty approvalReason/reasonForChange
+ *    plus an explicit confirmation flag.
+ *
+ * Returns the captured approval reason + timestamp to be recorded on the
+ * promotion. Throws AIActionHandlerError (401/403/400) otherwise.
+ *
+ * TODO(compliance): require an electronic_signatures record
+ * (server/routes/esignature.ts) bound to this promotion — capture and verify
+ * a signatureId before flipping status to 'approved'.
+ */
+const APPROVAL_ROLES = ['editor', 'admin', 'super_admin', 'regulatory', 'approver'];
+
+function requireHumanApproval(
+  request: AIActionRequest,
+  ctx: AIActionExecutionContext
+): { reason: string; approvedAt: string } {
+  // 1. Authenticated human actor required.
+  if (!ctx.user || ctx.user.userId == null) {
+    throw new AIActionHandlerError(
+      'APPROVAL_UNAUTHENTICATED',
+      'Promotion to an approved governed document requires an authenticated human approver.',
+      401
+    );
+  }
+
+  // 2. Block AI/automated self-approval — an automated workflow actor must not
+  //    promote an AI-generated artifact to approved without a human in the loop.
+  if (request.sourceSurface === 'workflow_trigger') {
+    throw new AIActionHandlerError(
+      'APPROVAL_HUMAN_REQUIRED',
+      'Automated/AI actors cannot self-approve a governed promotion. A human approver must perform this action.',
+      403
+    );
+  }
+
+  // 3. Approval-capable role required (defense-in-depth over the dispatcher check).
+  const role = ctx.user.userRole;
+  if (!role || !APPROVAL_ROLES.includes(role)) {
+    throw new AIActionHandlerError(
+      'APPROVAL_FORBIDDEN',
+      `Role '${role ?? 'none'}' is not permitted to approve a governed promotion. Required: ${APPROVAL_ROLES.join(', ')}`,
+      403
+    );
+  }
+
+  // 4. Explicit approval intent + reason-for-change.
+  const payload = request.payload || {};
+  const rawReason = (payload.approvalReason ?? payload.reasonForChange) as unknown;
+  const reason = typeof rawReason === 'string' ? rawReason.trim() : '';
+  const confirmed = payload.confirmApproval === true;
+  if (!reason || !confirmed) {
+    throw new AIActionHandlerError(
+      'APPROVAL_REASON_REQUIRED',
+      'Promotion to an approved governed document requires an explicit approvalReason (reason-for-change) and confirmApproval: true.',
+      400
+    );
+  }
+
+  return { reason, approvedAt: new Date().toISOString() };
+}
 
 function mapArtifactTypeToDocType(artifactType: string): string {
   const mapping: Record<string, string> = {

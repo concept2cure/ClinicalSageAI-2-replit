@@ -1,6 +1,9 @@
-import { db } from '../db';
-// import { clinicalEvaluationReports } from '../../shared/schema';
-import { and, eq, isNull } from 'drizzle-orm';
+import { db, query } from '../db';
+// The legacy clinical_evaluation_reports table was consolidated into
+// cer_reports. Alias it here and map the old column names at the call sites
+// (cer_id → reportId, content_text → content, indication → clinicalBackground).
+import { cerReports as clinicalEvaluationReports } from '../../shared/schema';
+import { and, eq, isNull, like, sql } from 'drizzle-orm';
 import {
   generateEmbeddings,
   generateStructuredResponse,
@@ -658,22 +661,23 @@ class ClinicalIntelligenceService {
 
       if (documentType === 'CER') {
         const [cer] = await db
-          .select({ content: clinicalEvaluationReports.content_text })
+          .select({ content: clinicalEvaluationReports.content })
           .from(clinicalEvaluationReports)
-          .where(eq(clinicalEvaluationReports.cer_id, documentId));
+          .where(eq(clinicalEvaluationReports.reportId, documentId));
 
         if (!cer) {
           log.error(`CER ${documentId} not found`);
           return false;
         }
 
-        documentText = cer.content;
+        documentText = String(cer.content ?? '');
       } else {
         // Replace with CSR retrieval logic
-        const [csr] = await db.execute(
+        const csrResult = await query(
           'SELECT content_text FROM csr_reports WHERE report_id = $1',
           [documentId]
         );
+        const csr = csrResult.rows[0];
 
         if (!csr) {
           log.error(`CSR ${documentId} not found`);
@@ -695,11 +699,15 @@ class ClinicalIntelligenceService {
       if (documentType === 'CER') {
         await db
           .update(clinicalEvaluationReports)
-          .set({ content_vector: JSON.stringify(embeddings) })
-          .where(eq(clinicalEvaluationReports.cer_id, documentId));
+          // cer_reports has no content_vector column; persist the embedding in
+          // metadata (merge, preserving existing keys).
+          .set({
+            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}, '{}'::jsonb) || jsonb_build_object('content_vector', ${JSON.stringify(embeddings)}::jsonb)`,
+          })
+          .where(eq(clinicalEvaluationReports.reportId, documentId));
       } else {
         // Replace with CSR update logic
-        await db.execute('UPDATE csr_reports SET content_vector = $1 WHERE report_id = $2', [
+        await query('UPDATE csr_reports SET content_vector = $1 WHERE report_id = $2', [
           JSON.stringify(embeddings),
           documentId,
         ]);
@@ -732,25 +740,26 @@ class ClinicalIntelligenceService {
         const [cer] = await db
           .select()
           .from(clinicalEvaluationReports)
-          .where(eq(clinicalEvaluationReports.cer_id, documentId));
+          .where(eq(clinicalEvaluationReports.reportId, documentId));
 
         if (!cer) {
           log.error(`CER ${documentId} not found`);
           return [];
         }
 
-        documentText = cer.content_text;
+        documentText = String(cer.content ?? '');
         documentMeta = {
-          title: cer.title,
-          device_name: cer.device_name,
-          manufacturer: cer.manufacturer,
-          indication: cer.indication,
+          title: cer.deviceName,
+          device_name: cer.deviceName,
+          manufacturer: cer.deviceManufacturer,
+          indication: cer.clinicalBackground,
         };
       } else {
         // Replace with CSR retrieval logic
-        const [csr] = await db.execute('SELECT * FROM csr_reports WHERE report_id = $1', [
+        const csrResult = await query('SELECT * FROM csr_reports WHERE report_id = $1', [
           documentId,
         ]);
+        const csr = csrResult.rows[0];
 
         if (!csr) {
           log.error(`CSR ${documentId} not found`);
@@ -838,8 +847,9 @@ class ClinicalIntelligenceService {
       }
 
       // Get cached connections if available
-      if (this.semanticConnectionCache.has(documentId)) {
-        return this.semanticConnectionCache.get(documentId);
+      const cachedConnections = this.semanticConnectionCache.get(documentId);
+      if (cachedConnections) {
+        return cachedConnections;
       }
 
       // Prepare variables for analysis
@@ -974,15 +984,14 @@ class ClinicalIntelligenceService {
       if (documentType === 'CER') {
         await db
           .update(clinicalEvaluationReports)
+          // processing-state flags have no cer_reports columns; record them in metadata.
           .set({
-            processed: true,
-            processed_at: new Date(),
-            semantic_processing_complete: true,
+            metadata: sql`COALESCE(${clinicalEvaluationReports.metadata}, '{}'::jsonb) || jsonb_build_object('processed', true, 'processed_at', now(), 'semantic_processing_complete', true)`,
           })
-          .where(eq(clinicalEvaluationReports.cer_id, documentId));
+          .where(eq(clinicalEvaluationReports.reportId, documentId));
       } else {
         // CSR update
-        await db.execute(
+        await query(
           'UPDATE csr_reports SET processed = true, processed_at = NOW(), semantic_processing_complete = true WHERE report_id = $1',
           [documentId]
         );
@@ -1369,20 +1378,16 @@ class ClinicalIntelligenceService {
   }> {
     try {
       // Find relevant CSRs and CERs for this indication and phase
-      const relevantCSRs = await db.execute(
+      const relevantCSRsResult = await query(
         'SELECT report_id FROM csr_reports WHERE indication ILIKE $1 AND phase = $2 AND "deletedAt" IS NULL LIMIT 10',
         [`%${indication}%`, phase]
       );
+      const relevantCSRs = relevantCSRsResult.rows;
 
       const relevantCERs = await db
-        .select({ cer_id: clinicalEvaluationReports.cer_id })
+        .select({ cer_id: clinicalEvaluationReports.reportId })
         .from(clinicalEvaluationReports)
-        .where(
-          and(
-            like(clinicalEvaluationReports.indication, `%${indication}%`),
-            isNull(clinicalEvaluationReports.deletedAt)
-          )
-        )
+        .where(like(clinicalEvaluationReports.clinicalBackground, `%${indication}%`))
         .limit(10);
 
       // Combine document IDs

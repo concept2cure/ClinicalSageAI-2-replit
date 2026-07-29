@@ -55,9 +55,11 @@ router.get('/tasks', (req, res) => {
 });
 
 router.post('/tasks', (req, res) => {
-  return sendSuccess(res, {
-    task: { id: Date.now(), ...req.body },
-  });
+  // No task store is wired to this public (unauthenticated) endpoint, so it cannot
+  // honestly create or persist a task. It previously echoed the request body back
+  // with a fabricated Date.now() id, implying a save that never happened. Authenticated,
+  // org-scoped task creation lives in the unified task API (POST /api/regulatory/tasks/unified).
+  return sendError(res, 501, 'Task creation is not implemented on this endpoint');
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

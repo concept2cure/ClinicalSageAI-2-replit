@@ -19,11 +19,15 @@
  * =============================================================================
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
+import rbacService from '../services/roleBasedAccess';
+import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -65,6 +69,72 @@ export type SignatureMeaning =
   | 'witnessing' // Witnessed the signing
   | 'responsibility' // Takes responsibility for content
   | 'custom'; // Custom meaning (see customMeaning field)
+
+/** Human-readable label for each signature meaning, per 21 CFR Part 11 §11.50(a)(3). */
+const SIGNATURE_MEANING_LABELS: Record<SignatureMeaning, string> = {
+  authorship: 'Authorship',
+  review: 'Reviewed',
+  approval: 'Approved',
+  rejection: 'Rejected',
+  verification: 'Verified',
+  authorization: 'Authorized for release',
+  acknowledgment: 'Acknowledged',
+  witnessing: 'Witnessed',
+  responsibility: 'Responsibility for content',
+  custom: 'Custom',
+};
+
+/** The fields needed to manifest a signature; a subset of a stored row. */
+export interface SignatureManifestInput {
+  signerName: string;
+  signerTitle?: string | null;
+  signerOrganization?: string | null;
+  meaning: SignatureMeaning | string;
+  customMeaning?: string | null;
+  timestamp: Date | string;
+}
+
+/**
+ * Assemble the human-readable signature manifestation required by 21 CFR Part 11
+ * §11.50 — the signed record must display (1) the printed name of the signer,
+ * (2) the date and time of signing, and (3) the meaning of the signature. Pure
+ * and deterministic so it can be embedded in a PDF/printed record and unit-tested
+ * without a database.
+ */
+export function buildSignatureManifest(sig: SignatureManifestInput): {
+  signerName: string;
+  signerTitle: string | null;
+  signerOrganization: string | null;
+  meaning: string;
+  meaningLabel: string;
+  signedAt: string;
+  manifestText: string;
+} {
+  const meaning = String(sig.meaning);
+  const meaningLabel =
+    meaning === 'custom' && sig.customMeaning
+      ? sig.customMeaning
+      : SIGNATURE_MEANING_LABELS[meaning as SignatureMeaning] ?? meaning;
+  const signedAt = new Date(sig.timestamp).toISOString();
+  const manifestText = [
+    sig.signerName,
+    sig.signerTitle ? `Title: ${sig.signerTitle}` : '',
+    sig.signerOrganization ? `Organization: ${sig.signerOrganization}` : '',
+    `Date/Time: ${signedAt}`,
+    `Meaning: ${meaningLabel}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return {
+    signerName: sig.signerName,
+    signerTitle: sig.signerTitle ?? null,
+    signerOrganization: sig.signerOrganization ?? null,
+    meaning,
+    meaningLabel,
+    signedAt,
+    manifestText,
+  };
+}
 
 export interface AuditTrailEntry {
   id: string;
@@ -300,7 +370,7 @@ router.post(
       documentId,
       documentVersion,
       documentContent,
-      signerId,
+      signerId: bodySignerId,
       signerName,
       signerTitle,
       signerOrganization,
@@ -309,15 +379,68 @@ router.post(
       password,
     } = req.body;
 
-    if (!documentId || !signerId || !meaning || !password) {
-      return res.status(400).json({
+    // §11.200(a)(2): an electronic signature may be "used only by [its] genuine
+    // owner." The signer identity is therefore BOUND to the authenticated session
+    // user — never taken from the request body. A client-supplied `signerId` is
+    // only accepted as a redundant assertion that must match the authenticated
+    // user; any mismatch is rejected so a logged-in user cannot record a
+    // signature attributed to (and password-verified against) a different account.
+    const authUser = (req as any).user || {};
+    const authSignerId = authUser.userId ?? authUser.id;
+    if (authSignerId === undefined || authSignerId === null || authSignerId === '') {
+      return res.status(401).json({
+        error: 'Authenticated session required to sign per 21 CFR Part 11 §11.200',
+      });
+    }
+    const signerId = String(authSignerId);
+    if (
+      bodySignerId !== undefined &&
+      bodySignerId !== null &&
+      String(bodySignerId) !== signerId &&
+      String(bodySignerId) !== String(authUser.email ?? '')
+    ) {
+      return res.status(403).json({
         error:
-          'documentId, signerId, meaning, and password are required per 21 CFR Part 11 §11.100',
+          'signerId does not match the authenticated user; an e-signature may be used only by its genuine owner (§11.200(a)(2))',
       });
     }
 
-    // §11.100(a): Verify identity before signing against stored credential hash
-    const passwordVerified = await verifySignerPassword(pool, String(signerId), password);
+    if (!documentId || !meaning || !password) {
+      return res.status(400).json({
+        error:
+          'documentId, meaning, and password are required per 21 CFR Part 11 §11.100',
+      });
+    }
+
+    // §11.70 signature/record linking: a signature must bind the CONTENT being
+    // signed. This route hashes caller-supplied `documentContent`, so it must be
+    // present and non-empty — otherwise the "signature" would bind nothing (an
+    // empty-string digest), which is not a valid signature. Fail closed.
+    if (typeof documentContent !== 'string' || documentContent.length === 0) {
+      return res.status(400).json({
+        error:
+          'documentContent is required and must be non-empty — an electronic signature must bind the content being signed (21 CFR Part 11 §11.70).',
+        code: 'ESIGNATURE_CONTENT_REQUIRED',
+      });
+    }
+
+    // §11.10(g): identity is not authority. Enforce signing authority for the
+    // authenticated user before credential work, matching the policy on the
+    // other signing routes. Role from the membership record (never the body).
+    const signerOrgId = Number(
+      authUser.organizationId ?? (req as any).tenantContext?.organizationId,
+    );
+    const signerRole = await resolveSignerOrgRole(Number(signerId), signerOrgId);
+    if (!isSigningAuthorized(signerRole)) {
+      return res.status(403).json({
+        error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+        code: 'ESIGNATURE_NO_AUTHORITY',
+      });
+    }
+
+    // §11.100(a): Verify identity before signing against stored credential hash.
+    // The credential checked is ALWAYS the authenticated user's, not a body value.
+    const passwordVerified = await verifySignerPassword(pool, signerId, password);
     if (!passwordVerified) {
       appendAuditEntry({
         entityType: 'signature',
@@ -336,7 +459,7 @@ router.post(
         .json({ error: 'Password verification failed — signature rejected per §11.100(a)' });
     }
 
-    const signatureHash = computeSignatureHash(documentId, documentContent || '', signerId, new Date());
+    const signatureHash = computeSignatureHash(documentId, documentContent, signerId, new Date());
 
     const signature: ElectronicSignature = {
       id: uuidv4(),
@@ -389,7 +512,21 @@ router.post(
         ]
       );
     } catch (error) {
-      console.error('[Part11] Signature persistence warning:', (error as Error).message);
+      // §11.70/§11.10(e): a signature that isn't durably persisted did not
+      // happen. Never report success after a failed insert — fail the request
+      // so the caller (and the audit trail) never records a phantom signature.
+      const code = (error as { code?: string })?.code;
+      console.error('[Part11] Signature persistence FAILED — signing aborted:', (error as Error).message);
+      if (code === '42P01') {
+        return res.status(503).json({
+          error: 'E-signature schema not present — run migrations before signing.',
+          code: 'ESIGNATURE_SCHEMA_MISSING',
+        });
+      }
+      return res.status(500).json({
+        error: 'Signature could not be persisted; signing aborted (no signature without a durable record).',
+        code: 'ESIGNATURE_PERSIST_FAILED',
+      });
     }
 
     appendAuditEntry({
@@ -457,6 +594,48 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /signatures/:signatureId/manifest
+ * Return the 21 CFR Part 11 §11.50 signature manifestation — printed name,
+ * date/time, and meaning — pre-formatted for embedding in a PDF or printed
+ * record. Read-only; the data is captured at signing time, this assembles it.
+ */
+router.get('/signatures/:signatureId/manifest', async (req: Request, res: Response) => {
+  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const { signatureId } = req.params as { signatureId: string };
+
+  try {
+    const result = await pool.query(
+      `SELECT id, signer_name, signer_title, signer_organization,
+              meaning, custom_meaning, timestamp
+       FROM electronic_signatures
+       WHERE id = $1`,
+      [signatureId]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: 'Signature not found' });
+    }
+    const row = result.rows[0];
+    const manifest = buildSignatureManifest({
+      signerName: row.signer_name,
+      signerTitle: row.signer_title,
+      signerOrganization: row.signer_organization,
+      meaning: row.meaning,
+      customMeaning: row.custom_meaning,
+      timestamp: row.timestamp,
+    });
+    res.json({
+      success: true,
+      data: { id: row.id, ...manifest, compliance: '21 CFR Part 11 §11.50' },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to build signature manifest',
+    });
+  }
+});
+
+/**
  * POST /signatures/:signatureId/revoke
  * Revoke an electronic signature with reason documentation
  */
@@ -468,7 +647,7 @@ router.post(
     resourceType: 'electronic_signature',
   }),
   async (req: Request, res: Response) => {
-    const { signatureId } = req.params;
+    const { signatureId } = req.params as { signatureId: string };
     const { revokedBy, reason } = req.body;
 
     if (!revokedBy || !reason) {
@@ -477,7 +656,7 @@ router.post(
 
     appendAuditEntry({
       entityType: 'signature',
-      entityId: signatureId,
+      entityId: String(signatureId),
       action: 'revoke_signature',
       userId: revokedBy,
       userName: revokedBy,
@@ -504,9 +683,17 @@ router.post(
  * GET /audit-trail/:entityId
  * Get the complete audit trail for an entity
  */
-router.get('/audit-trail/:entityId', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+router.get('/audit-trail/:entityId', async (req: Request, res: Response, next: NextFunction) => {
   const { entityId } = req.params;
+  // `/audit-trail/chain-integrity` and `/audit-trail/seal-integrity` are
+  // dedicated GET routes registered later in this file; because this param
+  // route is registered first, Express would otherwise match them here with
+  // entityId='chain-integrity'/'seal-integrity'. Fall through so their real
+  // handlers run instead of treating the reserved word as an entity id.
+  if (entityId === 'chain-integrity' || entityId === 'seal-integrity') {
+    return next();
+  }
+  const pool: Pool = (req as any).pool || (req.app as any).pool;
   const entityType = req.query.type as string;
 
   try {
@@ -603,12 +790,21 @@ router.post('/audit-trail', (req: Request, res: Response) => {
  */
 router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) => {
   const pool: Pool = (req as any).pool || (req.app as any).pool;
-  const orgId = req.query.org_id || req.query.organizationId;
+  // SECURITY: pre-fix the orgId came from req.query, so any caller
+  // could verify the chain integrity of any tenant's audit trail.
+  // When the query was empty the filter was OMITTED entirely — meaning
+  // the verifier ran across all tenants combined, which would fail
+  // chain consistency and leak hash data from foreign rows. JWT-bound now.
+  const orgIdRaw =
+    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+  if (orgIdRaw == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const orgId = Number(orgIdRaw);
 
   try {
-    // Build WHERE clause scoped by org if provided
-    const orgFilter = orgId ? `WHERE organization_id = $1` : '';
-    const params = orgId ? [parseInt(String(orgId), 10)] : [];
+    const orgFilter = `WHERE organization_id = $1`;
+    const params = [orgId];
 
     // Fetch all audit_events rows in chain order
     const { rows } = await pool.query(
@@ -639,7 +835,7 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
 
     // Walk the chain and recompute hashes
     const brokenLinks: Array<{ id: number; sequenceNumber: number; orgId: number; expected: string; actual: string }> = [];
-    let prevHashByOrg: Record<number, string> = {};
+    const prevHashByOrg: Record<number, string> = {};
     let totalVerified = 0;
 
     for (const row of rows) {
@@ -681,7 +877,7 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
           (row.entity_id ?? '') + '|' +
           (row.user_id ?? '') + '|' +
           (row.user_name ?? '') + '|' +
-          (String(row.timestamp) ?? '') + '|' +
+          String(row.timestamp ?? '') + '|' +
           (row.reason ?? '') + '|' +
           (row.previous_hash ?? 'GENESIS');
 
@@ -750,19 +946,33 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
  * POST /authority-check
  * Verify a user's authority to perform an action
  */
-router.post('/authority-check', (req: Request, res: Response) => {
+router.post('/authority-check', async (req: Request, res: Response) => {
   const { userId, action, resource, resourceId } = req.body;
   if (!userId || !action || !resource) {
     return res.status(400).json({ error: 'userId, action, resource required' });
   }
 
-  // In production, this checks RBAC, delegation chains, and Part 11 authority matrix
+  // Real authority check: the DB-backed RBAC service (fail-closed — returns
+  // false on any error or unknown grant). Previously this endpoint returned
+  // authorized:true unconditionally, which made the §11.10(d) authority gate
+  // a rubber stamp. The org is taken from the authenticated request context.
+  const orgId =
+    (req as any).user?.organizationId ?? (req as any).tenantId ?? null;
+
+  let authorized = false;
+  try {
+    authorized = await rbacService.checkPermission(userId, resource, action, orgId);
+  } catch (err: any) {
+    console.error('[Part11] authority-check failed:', err?.message);
+    authorized = false; // fail closed
+  }
+
   const check: AuthorityCheck = {
     userId,
     action,
     resource,
     resourceId: resourceId || '',
-    authorized: true, // Default allow; production enforces RBAC
+    authorized,
     checkedAt: new Date(),
     authoritySource: 'RBAC',
     requiresMFA: ['sign', 'approve', 'delete', 'config_change'].includes(action),
@@ -781,64 +991,20 @@ router.post('/authority-check', (req: Request, res: Response) => {
  * Get system validation records (IQ/OQ/PQ)
  */
 router.get('/validation', (_req: Request, res: Response) => {
-  const records: ValidationRecord[] = [
-    {
-      id: uuidv4(),
-      systemName: 'Concept2Cure Platform',
-      validationType: 'IQ',
-      status: 'completed',
-      protocol: 'TSG-IQ-001',
-      summary:
-        'Installation Qualification verified: all components installed per specification, database connectivity confirmed, service endpoints operational.',
-      testedBy: 'QA Team',
-      approvedBy: 'QA Director',
-      executedAt: new Date('2026-01-15'),
-      completedAt: new Date('2026-01-16'),
-      deviations: [],
-      attachmentIds: [],
+  // System validation (IQ/OQ/PQ) records are formal qualification artifacts the
+  // QA organization produces and records. The platform reports the recorded set
+  // rather than shipping or fabricating qualification evidence. No in-app
+  // validation-records store is provisioned, so this honestly returns none
+  // (previously it returned hardcoded IQ/OQ/PQ records with invented protocols,
+  // testers, and dates).
+  res.json({
+    success: true,
+    data: [],
+    meta: {
+      recorded: 0,
+      note: 'No system validation (IQ/OQ/PQ) records are tracked in the platform. Qualification is performed and recorded by your QA organization.',
     },
-    {
-      id: uuidv4(),
-      systemName: 'Concept2Cure Platform',
-      validationType: 'OQ',
-      status: 'completed',
-      protocol: 'TSG-OQ-001',
-      summary:
-        'Operational Qualification verified: e-signature workflow, audit trail immutability, access controls, document versioning, and data integrity checks all passed.',
-      testedBy: 'QA Team',
-      approvedBy: 'QA Director',
-      executedAt: new Date('2026-01-20'),
-      completedAt: new Date('2026-01-22'),
-      deviations: [
-        {
-          id: uuidv4(),
-          description:
-            'Minor: Audit trail timestamp precision was millisecond instead of microsecond',
-          severity: 'minor',
-          resolution: 'Acceptable — millisecond precision exceeds FDA requirements',
-          resolved: true,
-        },
-      ],
-      attachmentIds: [],
-    },
-    {
-      id: uuidv4(),
-      systemName: 'Concept2Cure Platform',
-      validationType: 'PQ',
-      status: 'completed',
-      protocol: 'TSG-PQ-001',
-      summary:
-        'Performance Qualification verified: system performs as intended under production-equivalent conditions including concurrent users, document load testing, and audit trail stress testing.',
-      testedBy: 'QA Team',
-      approvedBy: 'VP Quality',
-      executedAt: new Date('2026-02-01'),
-      completedAt: new Date('2026-02-03'),
-      deviations: [],
-      attachmentIds: [],
-    },
-  ];
-
-  res.json({ success: true, data: records });
+  });
 });
 
 // ============================
@@ -850,104 +1016,48 @@ router.get('/validation', (_req: Request, res: Response) => {
  * Get SOC 2 Type II control mapping and evidence status
  */
 router.get('/soc2/controls', (_req: Request, res: Response) => {
-  const controls = [
-    {
-      controlId: 'CC1.1',
-      category: 'security',
-      title: 'Control Environment — COSO Entity-Level Controls',
-      description: 'Management demonstrates commitment to integrity and ethical values',
-      evidenceStatus: 'collected',
-      evidenceCount: 3,
-    },
-    {
-      controlId: 'CC5.1',
-      category: 'security',
-      title: 'Control Activities — Logical Access',
-      description: 'Logical access controls restrict access to information assets',
-      evidenceStatus: 'collected',
-      evidenceCount: 5,
-      part11Mapping: '§11.10(d) — Authority checks limiting system access',
-    },
-    {
-      controlId: 'CC6.1',
-      category: 'security',
-      title: 'Logical and Physical Access — Authentication',
-      description: 'Multi-factor authentication for system access',
-      evidenceStatus: 'collected',
-      evidenceCount: 4,
-      part11Mapping: '§11.100 — Unique identification codes and passwords',
-    },
-    {
-      controlId: 'CC7.1',
-      category: 'security',
-      title: 'System Operations — Change Management',
-      description: 'Changes to infrastructure and software follow change management process',
-      evidenceStatus: 'collected',
-      evidenceCount: 6,
-    },
-    {
-      controlId: 'CC7.2',
-      category: 'security',
-      title: 'System Operations — Monitoring',
-      description: 'System components monitored for anomalies and security events',
-      evidenceStatus: 'collected',
-      evidenceCount: 3,
-      part11Mapping: '§11.10(e) — Audit trail monitoring',
-    },
-    {
-      controlId: 'CC8.1',
-      category: 'security',
-      title: 'Change Management — Authorization',
-      description: 'Changes authorized, designed, tested before implementation',
-      evidenceStatus: 'collected',
-      evidenceCount: 4,
-    },
-    {
-      controlId: 'A1.1',
-      category: 'availability',
-      title: 'Availability — System Availability',
-      description: 'System availability maintained per SLA commitments',
-      evidenceStatus: 'collected',
-      evidenceCount: 2,
-    },
-    {
-      controlId: 'PI1.1',
-      category: 'processing_integrity',
-      title: 'Processing Integrity — Data Accuracy',
-      description: 'Data processing is complete, valid, accurate, and timely',
-      evidenceStatus: 'collected',
-      evidenceCount: 5,
-      part11Mapping: '§11.10(a) — Validation of systems for accuracy and reliability',
-    },
-    {
-      controlId: 'C1.1',
-      category: 'confidentiality',
-      title: 'Confidentiality — Data Classification',
-      description: 'Confidential information identified and protected',
-      evidenceStatus: 'collected',
-      evidenceCount: 3,
-    },
-    {
-      controlId: 'P1.1',
-      category: 'privacy',
-      title: 'Privacy — Notice',
-      description: 'Privacy notices provide clear information about data practices',
-      evidenceStatus: 'collected',
-      evidenceCount: 2,
-    },
+  // SOC 2 Trust Services Criteria control framework (reference). Evidence
+  // collection and audit readiness are owned by the organization's GRC/audit
+  // program and are not tracked in-app, so evidence is reported honestly as
+  // not-collected and no readiness score is synthesized. (Previously every
+  // control was hardcoded as "collected" with invented evidence counts and a
+  // fabricated readiness score.)
+  const framework: {
+    controlId: string;
+    category: string;
+    title: string;
+    description: string;
+    part11Mapping?: string;
+  }[] = [
+    { controlId: 'CC1.1', category: 'security', title: 'Control Environment — COSO Entity-Level Controls', description: 'Management demonstrates commitment to integrity and ethical values' },
+    { controlId: 'CC5.1', category: 'security', title: 'Control Activities — Logical Access', description: 'Logical access controls restrict access to information assets', part11Mapping: '§11.10(d) — Authority checks limiting system access' },
+    { controlId: 'CC6.1', category: 'security', title: 'Logical and Physical Access — Authentication', description: 'Multi-factor authentication for system access', part11Mapping: '§11.100 — Unique identification codes and passwords' },
+    { controlId: 'CC7.1', category: 'security', title: 'System Operations — Change Management', description: 'Changes to infrastructure and software follow change management process' },
+    { controlId: 'CC7.2', category: 'security', title: 'System Operations — Monitoring', description: 'System components monitored for anomalies and security events', part11Mapping: '§11.10(e) — Audit trail monitoring' },
+    { controlId: 'CC8.1', category: 'security', title: 'Change Management — Authorization', description: 'Changes authorized, designed, tested before implementation' },
+    { controlId: 'A1.1', category: 'availability', title: 'Availability — System Availability', description: 'System availability maintained per SLA commitments' },
+    { controlId: 'PI1.1', category: 'processing_integrity', title: 'Processing Integrity — Data Accuracy', description: 'Data processing is complete, valid, accurate, and timely', part11Mapping: '§11.10(a) — Validation of systems for accuracy and reliability' },
+    { controlId: 'C1.1', category: 'confidentiality', title: 'Confidentiality — Data Classification', description: 'Confidential information identified and protected' },
+    { controlId: 'P1.1', category: 'privacy', title: 'Privacy — Notice', description: 'Privacy notices provide clear information about data practices' },
   ];
 
-  const summary = {
-    totalControls: controls.length,
-    evidenceCollected: controls.filter(c => c.evidenceStatus === 'collected').length,
-    totalEvidence: controls.reduce((sum, c) => sum + c.evidenceCount, 0),
-    part11MappedControls: controls.filter(c => (c as any).part11Mapping).length,
-    readinessScore: 0.92,
-    auditPeriod: { start: '2025-09-01', end: '2026-02-28' },
-    certificationTarget: 'SOC 2 Type II',
-  };
+  const controls = framework.map((c) => ({ ...c, evidenceStatus: 'not_collected', evidenceCount: 0 }));
 
-  res.json({ success: true, data: { controls, summary } });
+  res.json({
+    success: true,
+    data: {
+      controls,
+      summary: {
+        totalControls: controls.length,
+        evidenceCollected: 0,
+        totalEvidence: 0,
+        part11MappedControls: framework.filter((c) => c.part11Mapping).length,
+        readinessScore: null,
+        certificationTarget: 'SOC 2 Type II',
+        note: 'Control framework reference. Evidence collection and readiness are determined by your organization’s GRC/audit program; the platform does not track or attest SOC 2 evidence.',
+      },
+    },
+  });
 });
 
 /**
@@ -992,111 +1102,58 @@ router.post(
  * Comprehensive 21 CFR Part 11 + SOC 2 compliance dashboard
  */
 router.get('/compliance-status', (_req: Request, res: Response) => {
+  // 21 CFR Part 11 / SOC 2 / GAMP 5 requirement framework mapped to the technical
+  // controls the platform provides. Compliance and audit readiness are
+  // organizational determinations made by your QA/validation and audit
+  // activities — the platform does not self-certify them, so section status is
+  // reported honestly as "not_assessed" and no readiness scores are synthesized.
+  // (Previously this returned every section as "compliant" with a fabricated
+  // 0.92 SOC 2 readiness score.)
+  const part11Controls: { code: string; title: string; platformControl: string }[] = [
+    { code: '§11.10(a)', title: 'System Validation', platformControl: 'Application engineered for validation; qualification (IQ/OQ/PQ) is performed and recorded by your QA organization' },
+    { code: '§11.10(b)', title: 'Legible Copies', platformControl: 'PDF export with rendered e-signatures' },
+    { code: '§11.10(c)', title: 'Record Protection', platformControl: 'Encrypted storage and backup policy' },
+    { code: '§11.10(d)', title: 'Authority Checks', platformControl: 'Role-based access control with audit logging' },
+    { code: '§11.10(e)', title: 'Audit Trail', platformControl: 'Hash-chained, tamper-evident audit trail' },
+    { code: '§11.10(f)', title: 'Operational Checks', platformControl: 'Version sequencing enforced' },
+    { code: '§11.10(g)', title: 'Authority Checks', platformControl: 'Role-based access with MFA' },
+    { code: '§11.10(h)', title: 'Device Checks', platformControl: 'Session management and IP logging' },
+    { code: '§11.10(i)', title: 'Training', platformControl: 'Training records tracked by your organization' },
+    { code: '§11.10(j)', title: 'Documentation Controls', platformControl: 'SOP distribution tracking' },
+    { code: '§11.10(k)', title: 'Controls for Open Systems', platformControl: 'TLS in transit, encryption at rest' },
+    { code: '§11.50', title: 'Signature Manifestation', platformControl: 'Name, date/time, and meaning displayed on signature' },
+    { code: '§11.70', title: 'Signature/Record Linking', platformControl: 'SHA-256 cryptographic binding of signature to record' },
+    { code: '§11.100', title: 'General Requirements for E-Signatures', platformControl: 'Unique identity plus password verification' },
+    { code: '§11.200', title: 'E-Signature Components', platformControl: 'Two distinct components (ID + password)' },
+    { code: '§11.300', title: 'Controls for ID Codes/Passwords', platformControl: 'Uniqueness, periodic revision, recall procedures' },
+  ];
+  const sections: Record<string, { title: string; status: string; platformControl: string }> = {};
+  for (const c of part11Controls) {
+    sections[c.code] = { title: c.title, status: 'not_assessed', platformControl: c.platformControl };
+  }
+
   res.json({
     success: true,
     data: {
-      part11: {
-        overallStatus: 'compliant',
-        sections: {
-          '§11.10(a)': {
-            title: 'System Validation',
-            status: 'compliant',
-            evidence: 'IQ/OQ/PQ completed',
-          },
-          '§11.10(b)': {
-            title: 'Legible Copies',
-            status: 'compliant',
-            evidence: 'PDF export with e-signatures',
-          },
-          '§11.10(c)': {
-            title: 'Record Protection',
-            status: 'compliant',
-            evidence: 'Encrypted storage, backup policy',
-          },
-          '§11.10(d)': {
-            title: 'Authority Checks',
-            status: 'compliant',
-            evidence: 'RBAC with audit logging',
-          },
-          '§11.10(e)': {
-            title: 'Audit Trail',
-            status: 'compliant',
-            evidence: 'Hash-chained immutable audit trail',
-          },
-          '§11.10(f)': {
-            title: 'Operational Checks',
-            status: 'compliant',
-            evidence: 'Version sequencing enforced',
-          },
-          '§11.10(g)': {
-            title: 'Authority Checks',
-            status: 'compliant',
-            evidence: 'Role-based access with MFA',
-          },
-          '§11.10(h)': {
-            title: 'Device Checks',
-            status: 'compliant',
-            evidence: 'Session management, IP logging',
-          },
-          '§11.10(i)': {
-            title: 'Training',
-            status: 'compliant',
-            evidence: 'Training records maintained',
-          },
-          '§11.10(j)': {
-            title: 'Documentation Controls',
-            status: 'compliant',
-            evidence: 'SOP distribution tracking',
-          },
-          '§11.10(k)': {
-            title: 'Controls for Open Systems',
-            status: 'compliant',
-            evidence: 'TLS 1.3, encryption at rest',
-          },
-          '§11.50': {
-            title: 'Signature Manifestation',
-            status: 'compliant',
-            evidence: 'Name, date/time, and meaning displayed',
-          },
-          '§11.70': {
-            title: 'Signature/Record Linking',
-            status: 'compliant',
-            evidence: 'SHA-256 cryptographic binding',
-          },
-          '§11.100': {
-            title: 'General Requirements for E-Signatures',
-            status: 'compliant',
-            evidence: 'Unique ID + password verification',
-          },
-          '§11.200': {
-            title: 'E-Signature Components',
-            status: 'compliant',
-            evidence: 'Two distinct components (ID + password)',
-          },
-          '§11.300': {
-            title: 'Controls for ID Codes/Passwords',
-            status: 'compliant',
-            evidence: 'Uniqueness, periodic revision, recall procedures',
-          },
-        },
-      },
+      disclaimer:
+        'This is the 21 CFR Part 11 / SOC 2 / GAMP 5 requirement framework mapped to the controls the platform provides. Compliance and audit readiness are determined by your organization; the platform does not self-certify them and does not synthesize readiness scores.',
+      part11: { overallStatus: 'not_assessed', sections },
       soc2: {
-        certificationLevel: 'Type II',
-        auditPeriod: '2025-09-01 to 2026-02-28',
-        readinessScore: 0.92,
+        certificationTarget: 'SOC 2 Type II',
+        readinessScore: null,
         trustServiceCategories: {
-          security: 'ready',
-          availability: 'ready',
-          processingIntegrity: 'ready',
-          confidentiality: 'ready',
-          privacy: 'in-progress',
+          security: 'not_assessed',
+          availability: 'not_assessed',
+          processingIntegrity: 'not_assessed',
+          confidentiality: 'not_assessed',
+          privacy: 'not_assessed',
         },
       },
       gamp5: {
         systemCategory: 'Category 5 — Custom Application',
-        riskAssessment: 'completed',
         validationApproach: 'Risk-based (GAMP 5)',
-        documentation: ['URS', 'FS', 'DS', 'IQ', 'OQ', 'PQ', 'RTM'],
+        riskAssessment: 'not_recorded',
+        expectedDocumentation: ['URS', 'FS', 'DS', 'IQ', 'OQ', 'PQ', 'RTM'],
       },
     },
   });
@@ -1123,6 +1180,31 @@ router.get('/health', (_req: Request, res: Response) => {
     auditChainLength: 'active',
     lastAuditHash: lastAuditHash.substring(0, 16) + '...',
   });
+});
+
+/**
+ * GET /audit-trail/seal-integrity
+ * Verify the GLOBAL audit_logs sha256 hash-chain AND its HMAC seals
+ * (21 CFR Part 11 §11.10(e), §11.70). The audit_logs chain is system-wide, so
+ * this is an admin/system integrity check (not tenant-scoped). Seal verification
+ * is skipped (not failed) when AUDIT_HMAC_KEY is unset.
+ */
+router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const roles: string[] = user?.roles || (user?.role ? [user.role] : []);
+  if (!roles.includes('admin') && !roles.includes('super_admin')) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Admin role required for system audit-integrity verification.' } });
+  }
+  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  if (!pool) {
+    return res.status(503).json({ error: { code: 'NO_DB', message: 'Audit database not available.' } });
+  }
+  try {
+    const result = await verifyAuditIntegrity(pool);
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Verification failed.' });
+  }
 });
 
 export { setAuditPool };

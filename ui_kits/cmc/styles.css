@@ -1,0 +1,49 @@
+@import url('../../colors_and_type.css');
+@import url('../biopharma/styles.css');
+@import url('../submission/styles.css');
+
+/* §3.2 build-state section grid */
+.cmc-sections { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+@media (max-width: 1100px) { .cmc-sections { grid-template-columns: repeat(2, 1fr); } }
+.cmc-sec { text-align: left; background: var(--bg-000); border: 1px solid var(--border); border-radius: 10px; padding: 12px; transition: border-color 200ms, background 200ms; }
+.cmc-sec:hover { border-color: var(--accent-main-100); }
+.cmc-sec-top { display: flex; align-items: center; gap: 8px; }
+.cmc-sec-key { font-family: var(--font-mono, monospace); font-size: 11px; font-weight: 600; color: var(--text-400); }
+.cmc-scope { margin-left: auto; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.04em; }
+.cmc-scope-ds { background: rgba(106,155,204,0.16); color: #2f5a85; }
+.cmc-scope-dp { background: rgba(120,140,93,0.16); color: #5a6e44; }
+.cmc-sec-label { font-size: 12.5px; font-weight: 500; color: var(--text-100); margin: 6px 0 8px; line-height: 1.35; }
+.cmc-sec-bar { height: 5px; border-radius: 3px; background: var(--bg-200); overflow: hidden; }
+.cmc-sec-fill { height: 100%; }
+.cmc-fill-review { background: #6a9bcc; }
+.cmc-fill-drafted { background: var(--accent-main-100); }
+.cmc-fill-todo { background: #d1cfc0; }
+.cmc-sec-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 7px; }
+.cmc-sec-status { font-size: 10.5px; font-weight: 500; }
+.cmc-st-review { color: #2f5a85; }
+.cmc-st-drafted { color: var(--text-300); }
+.cmc-st-todo { color: var(--text-400); }
+.cmc-sec-conv { font-size: 11px; font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; }
+
+/* ICH compliance chips */
+.cmc-ich { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmc-ich-chip { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; font-family: var(--font-mono, monospace); }
+.cmc-ich-ok { background: rgba(120,140,93,0.14); color: #5a6e44; }
+.cmc-ich-warn { background: rgba(217,119,6,0.16); color: #b06b14; }
+.cmc-ich-err { background: rgba(200,74,74,0.16); color: #a04040; }
+.cmc-ich-muted { background: var(--bg-100); color: var(--text-400); }
+
+/* CQA / CPP / change tables */
+.cmc-table { display: flex; flex-direction: column; }
+.cmc-tr { display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.9fr; gap: 10px; align-items: center; padding: 8px 12px; font-size: 12px; border-top: 1px solid #f2f0e8; }
+.cmc-tr-cpp { grid-template-columns: 1.4fr 1fr 1fr; }
+.cmc-tr-chg { grid-template-columns: 1.6fr 80px 1fr 1.4fr; }
+.cmc-tr:first-child { border-top: 0; }
+.cmc-tr-head { background: var(--bg-050); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); font-weight: 600; }
+.cmc-cqa { font-weight: 500; color: var(--text-100); }
+.cmc-mut { color: var(--text-300); }
+.cmc-mono { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-200); }
+.cmc-gap { color: #a04040; font-size: 11px; }
+.cmc-supac { font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 4px; text-align: center; }
+.cmc-supac-med { background: rgba(217,119,6,0.16); color: #b06b14; }
+.cmc-supac-high { background: rgba(200,74,74,0.16); color: #a04040; }

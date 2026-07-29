@@ -1,0 +1,441 @@
+/**
+ * Pyramid surface — submission work-breakdown pyramid (kit pyramid.jsx;
+ * analytics + global browser in ./PyramidAnalytics, kit pyramid-analytics.jsx).
+ *
+ * Type selector → dashboard (progress ring · phase strip · risk gauge ·
+ * next actions) → work breakdown (phase → task → detail sheet) → analytics
+ * (resources · coverage · critical path) → global browser.
+ *
+ * REAL-DATA STANDARD (regulated GA product — no fixture fallback): all three
+ * slices are wired to the deterministic SubmissionPyramidEngine via
+ *   GET /api/v1/pyramids/types        → submission types (selector)
+ *   GET /api/v1/pyramids/:type        → the picked pyramid's structure
+ *   GET /api/v1/global-pyramids       → international agency configs
+ * (server/routes/pyramid.routes.ts). Each renders the full four states —
+ * loading → honest error → honest empty → real — with no "Sample data" pill and
+ * no codebase fixture. The engine's pyramid STRUCTURE carries no progress, so
+ * every task arrives at its honest initial status 'todo'; task status is the
+ * ONE client-owned slice (a UI convenience), seeded from the real pyramid and
+ * held as local overrides. PY_ROLES/PY_STATUS/PY_RISK and the deterministic
+ * helpers (pyProgress/pyNextTasks/pyRiskProfile/pyResources/pyCoverage) are the
+ * canonical display config/compute layer — they operate over whatever pyramid
+ * object they're handed.
+ */
+import React, { useState, useMemo, useEffect } from 'react';
+import { I } from '../icons';
+import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import type { SurfaceViewProps } from '../surfaceViews';
+import {
+  PY_ROLES, PY_STATUS, PY_RISK,
+  pyProgress, pyNextTasks, pyRiskProfile,
+  type PyType, type PyTask, type PyPyramid, type PyGlobalConfig,
+} from '../fixtures/pyramid-data';
+import { PyAnalytics, PyGlobal } from './PyramidAnalytics';
+import '../styles/pyramid-v2.css';
+
+// ── Shared atoms ──────────────────────────────────────────────────────────
+
+function PyChip({ vocab, value }: { vocab: 'risk' | 'status'; value: string }) {
+  const src = vocab === 'risk' ? PY_RISK : PY_STATUS;
+  const m = src[value] || { l: value, tone: 'neutral' };
+  const ic: Record<string, keyof typeof I> = { ok: 'check', warn: 'alertTriangle', err: 'shieldAlert', ai: 'info', neutral: 'info' };
+  return <span className="py-chip" data-tone={m.tone}>{I[ic[m.tone] ?? 'info']}{m.l}</span>;
+}
+
+function PyRing({ value, size = 132, stroke = 11, sub }: { value: number; size?: number; stroke?: number; sub?: string }) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - value / 100);
+  return (
+    <div className="py-ring">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--bg-200)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--accent-100)" strokeWidth={stroke}
+          strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+        <text x="50%" y="47%" textAnchor="middle" dominantBaseline="central" style={{ fontSize: 26, fontWeight: 600, fill: 'var(--text-100)' }}>{value}%</text>
+        <text x="50%" y="63%" textAnchor="middle" dominantBaseline="central" style={{ fontSize: 9, fill: 'var(--text-400)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{sub}</text>
+      </svg>
+    </div>
+  );
+}
+
+const pyModOf = (s: string) => (s.match(/M(\d)/) || [])[1] || '—';
+
+// ── Type selector ─────────────────────────────────────────────────────────
+
+function PyTypeSelector({ types, onPick }: { types: PyType[]; onPick: (t: PyType) => void }) {
+  const groups: [string, string][] = [['pharma', 'Pharma & biotech'], ['device', 'Device & IVD'], ['cross-cutting', 'International']];
+  return (
+    <div className="py-picker">
+      <p className="py-picker-lead">Pick a submission type to load its deterministic pyramid — phases, tasks, critical path, risk, resources and document coverage.</p>
+      {groups.map(([seg, label]) => {
+        const rows = types.filter(t => t.segment === seg);
+        if (rows.length === 0) return null;
+        return (
+          <div key={seg} className="py-picker-grp">
+            <div className="py-picker-grp-l">{label}</div>
+            <div className="py-picker-grid">
+              {rows.map(t => (
+                <button key={t.id} className="py-type" onClick={() => onPick(t)}>
+                  <div className="py-type-h"><span className="py-type-id">{t.id}</span></div>
+                  <div className="py-type-l">{t.label.split('—')[1] || t.label}</div>
+                  <div className="py-type-m">{t.agency} · {t.ctd} · {t.phases} phases · {t.tasks} tasks · {t.hours}h</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────
+
+function PyDashboard({ pyr, onPhase, onTask }: { pyr: PyPyramid; onPhase: (id: string) => void; onTask: (id: string) => void }) {
+  const prog = pyProgress(pyr);
+  const next = pyNextTasks(pyr);
+  const risk = pyRiskProfile(pyr);
+  const riskPct = Math.min(100, Math.round(risk.total / 12 * 100));
+  return (
+    <div className="py-dash">
+      <div className="py-dash-top">
+        <div className="py-card py-prog">
+          <PyRing value={prog.pct} sub="complete" />
+          <div className="py-prog-stats">
+            <div className="py-stat"><b>{prog.completed}/{prog.total}</b><span>tasks done</span></div>
+            <div className="py-stat"><b>{prog.criticalPathPct}%</b><span>critical path</span></div>
+            <div className="py-stat"><b>{prog.hoursRemaining}h</b><span>remaining</span></div>
+          </div>
+        </div>
+        <div className="py-card py-risk">
+          <div className="py-card-h">Risk profile<span className="py-card-sub">getRiskProfile</span></div>
+          <div className="py-risk-gauge">
+            <div className="py-risk-score" data-hi={riskPct >= 50 ? 2 : riskPct >= 25 ? 1 : 0}>{risk.total}</div>
+            <div className="py-risk-bar"><span data-hi={riskPct >= 50 ? 2 : riskPct >= 25 ? 1 : 0} style={{ width: `${riskPct}%` }} /></div>
+            <div className="py-risk-m">{risk.high.length} high-risk tasks · {risk.gaps.length} blocked on critical path</div>
+          </div>
+          <div className="py-risk-list">
+            {risk.high.map(t => (
+              <button key={t.id} className="py-risk-row" onClick={() => onTask(t.id)}>
+                <PyChip vocab="risk" value={t.risk!.severity} />
+                <span className="t">{t.name}</span>
+                <span className="go">{I.chevRight}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="py-sec-h"><h2>Phases</h2><span className="py-sec-sub">click a phase to open its work breakdown</span></div>
+      <div className="py-strip">
+        {pyr.phases.map(ph => {
+          const p = prog.perPhase[ph.id];
+          return (
+            <button key={ph.id} className="py-phase" data-ord={ph.order} onClick={() => onPhase(ph.id)}>
+              <div className="py-phase-n">Phase {ph.order}</div>
+              <div className="py-phase-name">{ph.name}</div>
+              <div className="py-phase-bar"><span style={{ width: `${p?.pct ?? 0}%` }} /></div>
+              <div className="py-phase-m">{p?.completed ?? 0}/{p?.total ?? 0} · {p?.pct ?? 0}%{typeof ph.weeks === 'number' ? ` · ~${ph.weeks}w` : ''}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="py-sec-h"><h2>What's next</h2><span className="py-sec-sub">getNextAvailableTasks · dependencies satisfied, ready to start</span></div>
+      <div className="py-next">
+        {next.length === 0 ? <div className="py-next-empty">No unblocked tasks ready — advance in-progress work or clear a blocked dependency.</div> :
+          next.map(t => (
+            <button key={t.id} className="py-next-row" onClick={() => onTask(t.id)}>
+              {t.critical && <span className="py-crit" title="Critical path">critical</span>}
+              <span className="t">{t.name}</span>
+              <span className="m">{PY_ROLES[t.role] || t.role} · {t.hours}h</span>
+              <span className="go">{I.chevRight}</span>
+            </button>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Work breakdown ────────────────────────────────────────────────────────
+
+function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus }: {
+  pyr: PyPyramid; focusPhase: string | null; onTask: (id: string) => void;
+  tasks: PyTask[]; onStatus: (id: string, status: string) => void;
+}) {
+  const phases = focusPhase ? pyr.phases.filter(p => p.id === focusPhase) : pyr.phases;
+  return (
+    <div className="py-wbs">
+      {phases.map(ph => {
+        const ts = tasks.filter(t => t.phase === ph.id);
+        return (
+          <div key={ph.id} className="py-wbs-phase">
+            <div className="py-wbs-phase-h"><span className="n">Phase {ph.order}</span><span className="name">{ph.name}</span><span className="m">{ts.length} tasks{typeof ph.weeks === 'number' ? ` · ~${ph.weeks}w` : ''}</span></div>
+            <div className="py-wbs-rows">
+              {ts.map(t => (
+                <div key={t.id} className="py-row" data-crit={t.critical || undefined}>
+                  <button className="py-row-main" onClick={() => onTask(t.id)}>
+                    {t.critical && <span className="py-crit">critical</span>}
+                    <span className="py-row-t">{t.name}</span>
+                    <span className="py-row-role">{PY_ROLES[t.role] || t.role}</span>
+                    <span className="py-row-h">{t.hours}h</span>
+                    {t.risk && <span className="py-row-risk" data-sev={t.risk.severity} title={`Risk: ${t.risk.severity}`}>{I.alertTriangle}</span>}
+                  </button>
+                  <select className="py-row-status" data-tone={PY_STATUS[t.status]?.tone} value={t.status}
+                    onChange={e => onStatus(t.id, e.target.value)} aria-label={`Status of ${t.name}`}>
+                    {Object.entries(PY_STATUS).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Task detail sheet ─────────────────────────────────────────────────────
+
+function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
+  pyr: PyPyramid; task: PyTask | null; tasks: PyTask[];
+  onClose: () => void; onTask: (id: string) => void;
+  onStatus: (id: string, status: string) => void;
+}) {
+  if (!task) return null;
+  const ph = pyr.phases.find(p => p.id === task.phase);
+  const deps = task.deps.map(d => tasks.find(t => t.id === d)).filter(Boolean) as PyTask[];
+  const dependents = tasks.filter(t => t.deps.includes(task.id));
+  const byMod: Record<string, string[]> = {};
+  (task.ctd || []).forEach(c => { const m = pyModOf(c); (byMod[m] = byMod[m] || []).push(c); });
+  const g = task.guidance || {};
+  return (
+    <div className="py-sheet-scrim" onClick={onClose}>
+      <aside className="py-sheet" onClick={e => e.stopPropagation()} role="dialog" aria-label={task.name}>
+        <div className="py-sheet-h">
+          <div>
+            <div className="py-sheet-crumb">Phase {ph?.order} · {ph?.name}</div>
+            <h3>{task.name}</h3>
+          </div>
+          <button className="py-sheet-x" onClick={onClose} aria-label="Close">{I.close}</button>
+        </div>
+
+        <div className="py-sheet-body">
+          <div className="py-sheet-status">
+            <label>Status</label>
+            <select data-tone={PY_STATUS[task.status]?.tone} value={task.status}
+              onChange={e => onStatus(task.id, e.target.value)}>
+              {Object.entries(PY_STATUS).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}
+            </select>
+            <span className="py-sheet-meta">{PY_ROLES[task.role] || task.role} · {task.hours}h{task.critical && ' · critical path'}</span>
+          </div>
+
+          {task.risk && (
+            <div className="py-sheet-sec">
+              <div className="py-sheet-sec-l">Risk</div>
+              <div className="py-sheet-risk" data-sev={task.risk.severity}>
+                <PyChip vocab="risk" value={task.risk.severity} />
+                <span className="prob">probability {Math.round(task.risk.probability * 100)}%</span>
+                <p className="impact">{task.risk.impact}</p>
+                <ul>{task.risk.mitigations.map((m, i) => <li key={i}>{m}</li>)}</ul>
+              </div>
+            </div>
+          )}
+
+          {Object.keys(byMod).length > 0 && (
+            <div className="py-sheet-sec">
+              <div className="py-sheet-sec-l">Document bindings</div>
+              {Object.keys(byMod).sort().map(m => (
+                <div key={m} className="py-sheet-mod">
+                  <span className="mod">Module {m}</span>
+                  {byMod[m].map(c => <span key={c} className="py-ctd mono">{c}</span>)}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {(g.fda || g.ich || g.cfr || g.keyConsiderations) && (
+            <div className="py-sheet-sec">
+              <div className="py-sheet-sec-l">Regulatory guidance</div>
+              <div className="py-sheet-guide">
+                {g.fda && <span className="py-guide-ref">{I.fileText}{g.fda}</span>}
+                {g.ich && <span className="py-guide-ref">{I.fileText}{g.ich}</span>}
+                {g.cfr && <span className="py-guide-ref mono">{g.cfr}</span>}
+                {g.keyConsiderations && <ul>{g.keyConsiderations.map((k, i) => <li key={i}>{k}</li>)}</ul>}
+              </div>
+            </div>
+          )}
+
+          {(deps.length > 0 || dependents.length > 0) && (
+            <div className="py-sheet-sec">
+              <div className="py-sheet-sec-l">Dependencies</div>
+              {deps.length > 0 && <div className="py-dep-grp"><span className="k">Depends on</span>{deps.map(d => (
+                <button key={d.id} className="py-dep" data-done={d.status === 'done' || undefined} onClick={() => onTask(d.id)}>{d.status === 'done' ? I.check : I.clock}{d.name}</button>))}</div>}
+              {dependents.length > 0 && <div className="py-dep-grp"><span className="k">Feeds into</span>{dependents.map(d => (
+                <button key={d.id} className="py-dep" onClick={() => onTask(d.id)}>{I.chevRight}{d.name}</button>))}</div>}
+            </div>
+          )}
+
+          {task.deliverables && task.deliverables.length > 0 && (
+            <div className="py-sheet-sec">
+              <div className="py-sheet-sec-l">Deliverables</div>
+              <div className="py-deliv">{task.deliverables.map((d, i) => (
+                <span key={i} className="py-deliv-item" data-done={task.status === 'done' || undefined}>{task.status === 'done' ? I.check : I.fileText}{d}</span>))}</div>
+            </div>
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+// ── Small render helpers ───────────────────────────────────────────────────
+
+const PyLoading = ({ label }: { label: string }) => (
+  <div className="scaf-note" style={{ padding: '18px 10px' }}>{label}</div>
+);
+
+// ── Shell ─────────────────────────────────────────────────────────────────
+
+export function PyramidShell(_props: SurfaceViewProps) {
+  const [type, setType] = useState<string | null>(null);
+  const [tab, setTab] = useState('dashboard');
+  const [focusPhase, setFocusPhase] = useState<string | null>(null);
+  const [openTask, setOpenTask] = useState<string | null>(null);
+  // Client-owned task status (the ONE local slice) as id→status overrides over
+  // the real pyramid's seeded statuses. Reset whenever the submission type
+  // changes so one pyramid's edits never bleed into another.
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+
+  const typesState = useLiveRows<PyType>('/api/v1/pyramids/types');
+  const pyrState = useLiveData<PyPyramid>(type ? `/api/v1/pyramids/${type}` : null);
+  const globalsState = useLiveRows<PyGlobalConfig>('/api/v1/global-pyramids');
+
+  useEffect(() => { setStatusOverrides({}); }, [type]);
+
+  // Working task list: real pyramid tasks (seeded status) with local overrides
+  // applied. Pure derivation — never seeds state during render (loop-safe).
+  const tasks = useMemo<PyTask[]>(
+    () => (pyrState.data?.tasks ?? []).map(
+      t => (statusOverrides[t.id] ? { ...t, status: statusOverrides[t.id] } : t),
+    ),
+    [pyrState.data, statusOverrides],
+  );
+  const pyr: PyPyramid | null = pyrState.data ? { ...pyrState.data, tasks } : null;
+
+  const setStatus = (id: string, status: string) => setStatusOverrides(o => ({ ...o, [id]: status }));
+  const goPhase = (id: string) => { setFocusPhase(id); setTab('wbs'); };
+  const goTask = (id: string) => setOpenTask(id);
+  const openObj = openTask ? tasks.find(t => t.id === openTask) ?? null : null;
+  const activeType = typesState.rows.find(t => t.id === type);
+
+  // ── Entry: submission type selector (four states) ──
+  if (!type) {
+    return (
+      <div className="py" data-screen-label="Submission pyramid">
+        <div className="reg-h">
+          <div>
+            <div className="ph-eyebrow">Submission · planning</div>
+            <h1 className="reg-title">Submission pyramid</h1>
+            <p className="reg-sub">Deterministic work breakdown for every submission type.</p>
+          </div>
+        </div>
+        {typesState.loading ? (
+          <PyLoading label="Loading submission types…" />
+        ) : typesState.error ? (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load submission types"
+            hint="The submission-pyramid engine didn't respond. These are the deterministic pyramid definitions (IND, NDA, BLA, 510(k) and more) served read-only from the engine — sign in and retry, or check that the API is reachable."
+          />
+        ) : typesState.empty ? (
+          <EmptyState
+            icon={I.gitBranch}
+            title="No submission types available"
+            hint="The submission-pyramid engine returned no supported types. Every submission type will appear here to pick from once the engine exposes its pyramid definitions."
+          />
+        ) : (
+          <PyTypeSelector types={typesState.rows} onPick={(t) => { setType(t.id); setTab('dashboard'); setFocusPhase(null); setOpenTask(null); }} />
+        )}
+      </div>
+    );
+  }
+
+  const TABS: [string, string][] = [['dashboard', 'Dashboard'], ['wbs', 'Work breakdown'], ['analytics', 'Analytics'], ['global', 'Global submissions']];
+
+  // ── Pyramid-backed tabs (dashboard / wbs / analytics) — four states ──
+  const renderPyramidTab = () => {
+    if (pyrState.loading) return <PyLoading label={`Loading ${activeType?.id ?? type} pyramid…`} />;
+    if (pyrState.error) return (
+      <EmptyState
+        tone="error"
+        icon={I.alertTriangle}
+        title="Couldn't load this submission pyramid"
+        hint="The submission-pyramid engine didn't return this type's work breakdown (phases, tasks, critical path, risk, document coverage). It's a deterministic read — sign in and retry, or check that the API is reachable."
+      />
+    );
+    if (!pyr || pyrState.empty) return (
+      <EmptyState
+        icon={I.gitBranch}
+        title="No pyramid for this submission type"
+        hint="The engine has no work-breakdown definition for this submission type yet. Pick another type, or check back once its pyramid is defined."
+      />
+    );
+    if (tab === 'dashboard') return <PyDashboard pyr={pyr} onPhase={goPhase} onTask={goTask} />;
+    if (tab === 'wbs') return (
+      <div>
+        {focusPhase && <button className="py-back" onClick={() => setFocusPhase(null)}>{I.chevRight}All phases</button>}
+        <PyWorkBreakdown pyr={pyr} focusPhase={focusPhase} tasks={tasks} onTask={goTask} onStatus={setStatus} />
+      </div>
+    );
+    if (tab === 'analytics') return <PyAnalytics pyr={pyr} onTask={goTask} />;
+    return null;
+  };
+
+  // ── Global submissions tab — four states ──
+  const renderGlobalTab = () => {
+    if (globalsState.loading) return <PyLoading label="Loading global submissions…" />;
+    if (globalsState.error) return (
+      <EmptyState
+        tone="error"
+        icon={I.alertTriangle}
+        title="Couldn't load global submissions"
+        hint="The global-pyramid configurations didn't load. These are the read-only international agency pathways (Health Canada, PMDA, EU MDR and more) served from the engine — sign in and retry, or check that the API is reachable."
+      />
+    );
+    if (globalsState.empty) return (
+      <EmptyState
+        icon={I.gitBranch}
+        title="No global submissions available"
+        hint="The engine returned no global pyramid configurations. International agency pathways will appear here once the engine exposes them."
+      />
+    );
+    return <PyGlobal globals={globalsState.rows} />;
+  };
+
+  return (
+    <div className="py" data-screen-label={`Submission pyramid · ${tab}`}>
+      <div className="reg-h">
+        <div>
+          <div className="ph-eyebrow">Submission · planning</div>
+          <h1 className="reg-title">Submission pyramid</h1>
+          <p className="reg-sub">{activeType?.label ?? pyr?.label ?? type} · deterministic work breakdown. Every phase, task, dependency and score is engine output; task status is the only thing you own.</p>
+        </div>
+        <button className="rbm-btn" onClick={() => { setType(null); setFocusPhase(null); setOpenTask(null); }}>{I.gitBranch}Change type</button>
+      </div>
+
+      <div className="reg-tabs" role="tablist">
+        {TABS.map(([id, l]) => (
+          <button key={id} role="tab" aria-selected={tab === id} className={`reg-tab${tab === id ? ' on' : ''}`}
+            onClick={() => { setTab(id); if (id !== 'wbs') setFocusPhase(null); }}>{l}</button>
+        ))}
+      </div>
+
+      {tab === 'global' ? renderGlobalTab() : renderPyramidTab()}
+
+      {pyr && <PyTaskSheet pyr={pyr} task={openObj} tasks={tasks} onClose={() => setOpenTask(null)} onTask={goTask} onStatus={setStatus} />}
+    </div>
+  );
+}
+
+export default PyramidShell;

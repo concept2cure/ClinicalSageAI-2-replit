@@ -1,0 +1,22 @@
+{{ include "concept2cure-app.fullname" . }} deployed.
+
+1. Wait for the pod to become ready:
+   kubectl -n {{ .Values.namespaceOverride | default .Release.Namespace }} rollout status deploy/{{ include "concept2cure-app.fullname" . }}
+
+2. Reach the app:
+{{- if .Values.ingress.enabled }}
+   via your Ingress host(s): {{ range .Values.ingress.hosts }}{{ .host }} {{ end }}
+{{- else }}
+   kubectl -n {{ .Values.namespaceOverride | default .Release.Namespace }} port-forward svc/{{ include "concept2cure-app.fullname" . }} 8080:{{ .Values.service.port }}
+   # then open http://localhost:8080/api/health
+{{- end }}
+
+3. First-run admin (private install, no demo user):
+   curl -X POST http://<host>/api/setup/initialize \
+     -H 'content-type: application/json' \
+     -d '{"email":"admin@your-org.com","password":"<strong-password>","organizationName":"Your Org"}'
+   # This endpoint self-closes once the first user exists.
+
+NOTE: DATABASE_URL must point at a pgvector-capable PostgreSQL (RDS 15.2+,
+Cloud SQL, or a pgvector image). The bundled postgresql dependency is disabled
+by default — see values.yaml.

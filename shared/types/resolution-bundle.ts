@@ -111,6 +111,17 @@ export interface ResolutionBundlePlan {
 
 // ─── Bundle Execution Receipt ───────────────────────────────────────────────
 
+/**
+ * @deprecated DO NOT USE — conflict C-5 (C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md).
+ *
+ * This is the losing duplicate of `BundleExecutionReceipt`. The canonical type
+ * is in `shared/types/resolution.ts` — the one `bundle-executor.ts` actually
+ * builds and `receipt-store.ts` persists to `bundle_execution_receipts`
+ * (ADR-0009). This shape has ZERO importers and was never wired to anything.
+ * Row identity (id/org/project) lives on the persisted row, not on this type.
+ * The whole file is import-dead and is a deletion candidate under the WO-00
+ * legacy cleanup — kept only so removal is its own reviewed change.
+ */
 export interface BundleExecutionReceipt {
   id: string;
   bundleId: string;

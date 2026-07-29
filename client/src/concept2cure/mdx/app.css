@@ -166,6 +166,61 @@ svg { display: block; }
 }
 .tb-btn:hover { background: var(--bg-100); color: var(--text-100); }
 
+/* ── Notifications bell + dropdown ────────────────────────────────────
+   A real control: the badge reflects the live unread count and the
+   panel lists governed notifications. Critical severity reads red, not
+   the same grey as an informational one. */
+.tb-notif { position: relative; }
+.tb-notif .tb-btn { position: relative; }
+.tb-notif-badge {
+  position: absolute; top: -2px; right: -2px;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 600; line-height: 1;
+  color: #fff; background: var(--error, #d92d20);
+  border-radius: 8px; border: 1.5px solid var(--bg-000);
+}
+.tb-notif-panel {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  width: 340px; max-height: 460px; overflow: auto;
+  background: var(--bg-000);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  z-index: 50;
+}
+.tb-notif-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg-000);
+}
+.tb-notif-title { font-size: 13px; font-weight: 600; color: var(--text-100); }
+.tb-notif-allread {
+  font-size: 11px; color: var(--text-300);
+  transition: color var(--dur) ease-out;
+}
+.tb-notif-allread:hover { color: var(--accent-100); }
+.tb-notif-list { list-style: none; margin: 0; padding: 4px; }
+.tb-notif-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px; border-radius: var(--radius-md);
+}
+.tb-notif-row.unread { background: var(--bg-050); }
+.tb-notif-dot {
+  width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+  background: var(--text-400);
+}
+.tb-notif-dot.sev-warning { background: var(--warning, #f79009); }
+.tb-notif-dot.sev-critical { background: var(--error, #d92d20); }
+.tb-notif-body { flex: 1; min-width: 0; }
+.tb-notif-row-title { font-size: 12px; color: var(--text-100); }
+.tb-notif-row-text { font-size: 11px; color: var(--text-400); margin-top: 2px; line-height: 1.4; }
+.tb-notif-read {
+  width: 22px; height: 22px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-400); border-radius: var(--radius-sm);
+}
+.tb-notif-read:hover { background: var(--bg-200); color: var(--text-100); }
+
 /* Tab bar ──────────────────────────────────────────────────── */
 .tabbar {
   height: var(--tabbar); border-bottom: 1px solid var(--border);
@@ -544,6 +599,10 @@ svg { display: block; }
 .status-pill.review    { background: var(--warning-muted); color: var(--warning); }
 .status-pill.active    { background: var(--ai-muted); color: var(--ai); }
 .status-pill.na        { background: var(--bg-100); color: var(--text-500); }
+.status-pill.final     { background: var(--success-muted); color: var(--success); }
+/* Neutral, not accent — locked pills repeat per row, and accent orange is
+   reserved for one focal point per screen. */
+.status-pill.locked    { background: var(--bg-200); color: var(--text-200); border-color: var(--border-strong); }
 .status-pill.empty     { background: var(--bg-100); color: var(--text-500); border-color: var(--border); border-style: dashed; }
 .status-pill.included  { background: var(--success-muted); color: var(--success); }
 .status-pill.excluded  { background: var(--bg-100); color: var(--text-400); }
@@ -2043,6 +2102,35 @@ button.ctable-row { border-radius: 0; }
 /* ═════════════════════════════════════════════════════════════
    VAULT
    ═════════════════════════════════════════════════════════════ */
+
+/* Phase 5 full-surface layout (kit surfaces.css merged; kit tokens
+   --canvas-elevated/--border-100/--radius-md adapted to this sheet). */
+.vault-grid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+.vault-rail {
+  background: var(--bg-050);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  position: sticky; top: 16px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.vault-rail-lbl {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-400); font-weight: 600; padding: 4px 8px 6px;
+}
+.vault-grid .vault-main { min-width: 0; }
+.vault-grid .vault-drawer { position: sticky; top: 16px; }
+@media (max-width: 1280px) {
+  .vault-grid { grid-template-columns: 200px minmax(0, 1fr) 300px; }
+}
+
+/* Legacy workbench-tab layout (drawer/tree row styles below are shared
+   by the Phase 5 surface). */
 .vault-layout {
   display: grid; grid-template-columns: 220px 1fr 340px;
   gap: 12px; padding: 20px 32px 32px; min-height: calc(100vh - 220px);
@@ -2623,6 +2711,27 @@ button.ctable-row { border-radius: 0; }
 
 /* Governance */
 .ph-gov { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+/* Quality-system readiness rows. The "na" tone is deliberately distinct
+   from healthy: an absent QMS table renders as "not tracked here yet",
+   never as a zero that reads like an all-clear. */
+.ph-qms { list-style: none; margin: 0; padding: 0; }
+.ph-qms-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.ph-qms-row:last-child { border-bottom: 0; }
+.ph-qms-label { color: var(--text-200); }
+.ph-qms-val { color: var(--text-300); text-align: right; }
+.ph-qms-val.warn { color: var(--warning, var(--text-100)); font-weight: 500; }
+.ph-qms-val.na { color: var(--text-400); font-style: italic; }
+.ph-qms-scope {
+  margin-top: 8px; font-size: 10px; color: var(--text-400);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.ph-count[data-tone="warn"] { color: var(--warning, var(--text-100)); }
+
 .ph-gov-row {
   display: grid; grid-template-columns: 70px 1fr auto;
   gap: 8px; align-items: center;
@@ -2640,6 +2749,19 @@ button.ctable-row { border-radius: 0; }
 .ph-gov-sig.sig-signed   { background: var(--success-muted); color: var(--success); }
 .ph-gov-sig.sig-pending  { background: var(--warning-muted); color: var(--warning); }
 .ph-gov-sig.sig-reserved { background: var(--bg-200);        color: var(--text-300); }
+
+/* Program context (resolved industry context strip) */
+.ph-ctx-row { grid-template-columns: 92px 1fr; }
+/* Keep the divider under the last key/value row — the tag rows follow it. */
+.ph-ctx .ph-gov-row:last-child { border-bottom: 1px solid var(--border); }
+.ph-ctx-tags {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ph-ctx-tags:last-child { border-bottom: 0; }
+.ph-ctx-tags > .ph-gov-role { flex: 0 0 92px; }
+.ph-ctx-none { font-size: 11px; color: var(--text-400); }
 
 /* Activity */
 .ph-activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -2835,3 +2957,159 @@ button.ctable-row { border-radius: 0; }
   display: flex; justify-content: flex-end; gap: 8px;
   margin-top: 4px;
 }
+
+/* ════════════════════════════════════════════════════════════
+   DataGate — honest data states
+   Every surface panel renders exactly one of: loading, idle,
+   error, empty, or real data. Fixtures appear only in explicit
+   sample mode, always under the standing banner below.
+   ════════════════════════════════════════════════════════════ */
+.data-gate {
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-050);
+}
+.data-gate-dense { padding: 20px 16px; }
+
+.data-gate-inner {
+  display: flex; align-items: flex-start; gap: 12px;
+  max-width: 420px;
+}
+.data-gate-icon {
+  color: var(--text-400); flex-shrink: 0;
+  width: 16px; height: 16px; margin-top: 1px;
+}
+.data-gate-error .data-gate-icon { color: var(--error); }
+
+/* Motion is limited to the 200ms ease-out house rule; the loading
+   pulse is the one exception, and it respects reduced-motion. */
+.data-gate-icon-pulse { animation: data-gate-pulse 1.4s ease-in-out infinite; }
+@keyframes data-gate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) {
+  .data-gate-icon-pulse { animation: none; }
+}
+
+.data-gate-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.data-gate-title { font-size: 13px; font-weight: 500; color: var(--text-200); }
+.data-gate-error .data-gate-title { color: var(--text-100); }
+.data-gate-detail { font-size: 11px; color: var(--text-400); line-height: 1.5; }
+.data-gate-mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  word-break: break-word;
+}
+
+.data-gate-btn {
+  align-self: flex-start; margin-top: 4px;
+  padding: 5px 10px; font-size: 11px; font-weight: 500;
+  color: var(--text-200);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  background: var(--bg-000);
+  transition: background var(--dur) ease-out, color var(--dur) ease-out;
+}
+.data-gate-btn:hover { background: var(--bg-200); color: var(--text-100); }
+
+/* Standing sample-data marker. Not dismissible by design — it must
+   remain visible for exactly as long as the example content does. */
+.data-gate-sample {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; margin-bottom: 12px;
+  font-size: 11px; line-height: 1.5; color: var(--text-300);
+  background: var(--warning-muted, var(--bg-100));
+  border: 1px solid var(--warning, var(--border));
+  border-radius: var(--radius-md);
+}
+.data-gate-sample .data-gate-icon { color: var(--warning, var(--text-400)); }
+.data-gate-sample-tag { color: var(--text-100); font-weight: 600; }
+
+/* E-signature rejection — the server's own reason, shown verbatim.
+   Signing failures (wrong password, no signing authority, MFA required)
+   are materially different problems and the signer must see which. */
+.ap-sign-error {
+  display: flex; align-items: flex-start; gap: 6px;
+  margin-top: 8px; padding: 6px 8px;
+  font-size: 11px; line-height: 1.5;
+  color: var(--error);
+  background: var(--error-muted, transparent);
+  border: 1px solid var(--error); border-radius: var(--radius-md);
+}
+.ap-sign-error svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* Sample-mode toggle. Muted when off so it reads as a developer
+   affordance; unmistakable when on, because the cost of a user not
+   realising they are looking at example data is a misread submission. */
+.tb-sample {
+  display: flex; align-items: center; gap: 6px;
+  height: 26px; padding: 0 10px; margin-right: 8px;
+  font-size: 11px; font-weight: 500;
+  color: var(--text-400);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  transition: color var(--dur) ease-out, background var(--dur) ease-out,
+              border-color var(--dur) ease-out;
+}
+.tb-sample svg { width: 13px; height: 13px; }
+.tb-sample:hover { color: var(--text-200); background: var(--bg-200); }
+.tb-sample.on {
+  color: var(--warning, var(--text-100));
+  background: var(--warning-muted, var(--bg-200));
+  border-color: var(--warning, var(--border-strong));
+}
+
+/* ════════════════════════════════════════════════════════════
+   CLIENT REVIEW ROOM (MDX-CLIENT-01)
+   Read-first zone: the tasks a client is allowed to see,
+   grouped by visibility state. Internal work is excluded by
+   the endpoint's SQL whitelist, never merely hidden here.
+   ════════════════════════════════════════════════════════════ */
+.crz { margin-top: 28px; }
+.crz-groups {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.crz-group {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--bg-000);
+}
+.crz-group-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.crz-group-title { font-size: 12px; font-weight: 600; color: var(--text-200); }
+.crz-group-count {
+  font-size: 11px; font-weight: 500; color: var(--text-400);
+  padding: 1px 7px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--bg-100);
+}
+.crz-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.crz-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 4px;
+  border-radius: var(--radius-md);
+}
+.crz-row:hover { background: var(--bg-100); }
+.crz-row-icon {
+  color: var(--text-400); flex-shrink: 0;
+  width: 14px; height: 14px; margin-top: 2px;
+}
+.crz-row-icon svg { width: 14px; height: 14px; }
+.crz-row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.crz-row-title {
+  font-size: 13px; color: var(--text-100); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.crz-row-meta {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  font-size: 11px; color: var(--text-400);
+}
+.crz-row-meta > span + span::before { content: '·'; margin-right: 6px; color: var(--text-500, var(--text-400)); }
+.crz-row-due {
+  flex-shrink: 0; margin-top: 2px;
+  font-size: 11px; color: var(--text-400); white-space: nowrap;
+}
+.crz-row-due.overdue { color: var(--error); }

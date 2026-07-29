@@ -15,6 +15,17 @@ resource "aws_s3_bucket_versioning" "evidence" {
   }
 }
 
+# 21 CFR Part 11 evidence must never be publicly reachable. Block all public
+# access at the bucket level (CKV2_AWS_6).
+resource "aws_s3_bucket_public_access_block" "evidence" {
+  bucket = aws_s3_bucket.evidence.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket_object_lock_configuration" "evidence" {
   bucket = aws_s3_bucket.evidence.id
 
@@ -44,6 +55,44 @@ resource "aws_kms_key" "cloudtrail_encryption" {
   tags = var.tags
 }
 
+# CloudTrail must stream to CloudWatch Logs so management/data events are
+# monitorable and alertable in near-real-time (CKV2_AWS_10).
+resource "aws_cloudwatch_log_group" "cloudtrail" {
+  name              = "/aws/cloudtrail/ros-staging-part11-evidence"
+  retention_in_days = 365
+  # Encrypt at rest with the same CMK used by the trail (CKV_AWS_158).
+  # TODO(infra): ensure var.kms_policy grants logs.<region>.amazonaws.com
+  # kms:Encrypt*/Decrypt*/GenerateDataKey* on this key for this log group ARN.
+  kms_key_id = aws_kms_key.cloudtrail_encryption.arn
+  tags       = var.tags
+}
+
+resource "aws_iam_role" "cloudtrail_cloudwatch" {
+  name = "ros-staging-part11-cloudtrail-cw"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "cloudtrail.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "cloudtrail_cloudwatch" {
+  name = "cloudtrail-to-cloudwatch-logs"
+  role = aws_iam_role.cloudtrail_cloudwatch.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
+    }]
+  })
+}
+
 resource "aws_cloudtrail" "part11_audit" {
   name                          = "ros-staging-part11-evidence"
   s3_bucket_name                = aws_s3_bucket.evidence.id
@@ -51,6 +100,8 @@ resource "aws_cloudtrail" "part11_audit" {
   is_multi_region_trail         = true
   enable_logging                = true
   kms_key_id                    = aws_kms_key.cloudtrail_encryption.arn
+  cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
+  cloud_watch_logs_role_arn     = aws_iam_role.cloudtrail_cloudwatch.arn
 
   event_selector {
     read_write_type                 = "All"

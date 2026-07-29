@@ -1,3 +1,4 @@
+// @ts-nocheck -- Storybook types resolve only via package "exports"; tsconfig uses classic node resolution
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './button';
 

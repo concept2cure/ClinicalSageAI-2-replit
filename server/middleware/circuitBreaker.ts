@@ -52,10 +52,7 @@ export class CircuitBreaker {
   private requestQueue: Array<{ resolve: Function; reject: Function }> = [];
 
   // Creating logger with circuit name as context
-  private logger = createContextLogger({
-    module: 'circuit-breaker',
-    name: this.name,
-  });
+  private logger = createContextLogger(`circuit-breaker:${this.name}`);
 
   constructor(
     public name: string,
@@ -144,7 +141,7 @@ export class CircuitBreaker {
     return new Promise((resolve, reject) => {
       const queueSize = this.requestQueue.length;
 
-      if (queueSize >= (this.options.maxQueueSize || DEFAULT_OPTIONS.maxQueueSize)) {
+      if (queueSize >= (this.options.maxQueueSize ?? DEFAULT_OPTIONS.maxQueueSize ?? 100)) {
         reject(new Error(`Request queue full for service ${this.name}`));
         return;
       }
@@ -321,7 +318,7 @@ export function createCircuitBreakerMiddleware(
   }
 
   const breaker = circuitBreakers[name];
-  const logger = createContextLogger({ module: 'circuit-breaker-middleware', name });
+  const logger = createContextLogger(`circuit-breaker-middleware:${name}`);
 
   return function circuitBreakerMiddleware(req: Request, res: Response, next: NextFunction) {
     if (breaker.isCircuitOpen()) {
@@ -338,14 +335,17 @@ export function createCircuitBreakerMiddleware(
       return;
     }
 
-    // Track 5xx responses as circuit breaker failures
-    const originalJson = res.json.bind(res);
-    res.json = function (body?: any): Response {
+    // Track 5xx responses as circuit breaker failures. The `finish`
+    // event fires on every response path — json, send, end, sendStatus,
+    // streaming, the error pipeline — so it observes failures that an
+    // `res.json` wrapper would silently miss.
+    res.on('finish', () => {
       if (res.statusCode >= 500) {
-        breaker.recordFailure(new Error(`Server error ${res.statusCode} on ${req.method} ${req.path}`));
+        breaker.recordFailure(
+          new Error(`Server error ${res.statusCode} on ${req.method} ${req.path}`),
+        );
       }
-      return originalJson(body);
-    };
+    });
 
     next();
   };

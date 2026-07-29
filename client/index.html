@@ -6,6 +6,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <!-- Per-request CSP nonce. The server replaces __CSP_NONCE__ before
+         sending the document (server/vite.ts). Read by client/src/cspNonce.ts. -->
+    <meta name="csp-nonce" content="__CSP_NONCE__" />
     <title>Concept2Cure - AI-Powered Regulatory Intelligence Platform</title>
 
     <!-- Favicon & App Icons -->
@@ -47,11 +50,14 @@
     />
     <meta name="twitter:image" content="/src/assets/concept2cure-icon.svg" />
 
-    <!-- Typography: Poppins for headings/UI, Lora for body -->
+    <!-- Typography (DECIDED 2026-07-06, design-system/colors_and_type.css §3):
+         Lora (reading/answers, --font-serif) + system-ui (chrome, --font-sans)
+         + JetBrains Mono (code/IDs, --font-mono). Poppins removed from chrome —
+         the ui-v2 kit is hand-tuned for the native grotesque. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
   </head>

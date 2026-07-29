@@ -26,6 +26,136 @@ function getOrgId(req: Request): number {
   );
 }
 
+/**
+ * GET /rounds — the v2 HaqManager display contract: authority letters as
+ * "rounds" plus their questions grouped by round, shaped to exactly the keys
+ * the surface renders (id/disc/tone/status/q/draft/cites/commitments). The
+ * surface adopts this via liveGet and falls back to its codebase fixture when
+ * the store is empty or unreachable, so it never renders a blank workbench.
+ * Fails closed to `{ data: null }` on any store error.
+ */
+router.get('/rounds', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const letters = await store.query(orgId, 'letter');
+    if (letters.length === 0) {
+      return res.json({ data: null, meta: { count: 0 } });
+    }
+    const questions = await store.query(orgId, 'question');
+
+    const rounds = letters.map((l: any) => ({
+      id: l.letterId,
+      agency: l.agency,
+      flag: l.flag,
+      authority: l.authority,
+      submission: l.submission,
+      type: l.type,
+      received: l.received,
+      due: l.due,
+      clockDays: l.clockDays,
+      clockTotal: l.clockTotal,
+      note: l.note,
+    }));
+
+    const byRound: Record<string, any[]> = {};
+    for (const r of rounds) byRound[r.id] = [];
+    for (const q of questions) {
+      const rid = q.letterId;
+      if (!byRound[rid]) continue;
+      byRound[rid].push({
+        id: q.qid,
+        // The numeric feature-store row id — REQUIRED by the /review, /approve,
+        // /assign and /ai-draft endpoints (which key on store.getById, not the
+        // display qid). Without this the client cannot construct those URLs.
+        dbId: q.id,
+        disc: q.disc,
+        tone: q.tone,
+        status: q.status,
+        owner: q.owner,
+        q: q.q,
+        analysis: q.analysis,
+        draft: q.draft,
+        cites: Array.isArray(q.cites) ? q.cites : [],
+        commitments: Array.isArray(q.commitments) ? q.commitments : [],
+        precedentNote: q.precedentNote,
+        roundId: rid,
+      });
+    }
+
+    res.json({ data: { rounds, questions: byRound }, meta: { count: rounds.length } });
+  } catch {
+    res.json({ data: null, meta: { count: 0, pendingStore: true } });
+  }
+});
+
+/**
+ * POST /questions — WRITE-BACK for the v2 HaqManager "Log question" form.
+ *
+ * Persists a plain question row into the feature store (category 'haq_question',
+ * subcategory 'question') keyed to its round via `letterId`, so the next
+ * GET /rounds surfaces it under that round. The stored payload uses exactly the
+ * keys the GET /rounds mapper reads, and the response echoes the question mapped
+ * exactly as GET /rounds maps questions, so the client can adopt it verbatim.
+ *
+ * Honesty: this is a plain persisted create, not an audited ledger entry — the
+ * HAQ store carries no signature/reason-for-change trail, so nothing here claims
+ * governance it lacks. On any store/db error we return 500 and the client keeps
+ * its local copy rather than pretend the write happened.
+ */
+router.post('/questions', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const { roundId, qid, disc, tone, q, owner, status } = req.body || {};
+
+  if (!roundId || !q) {
+    return res
+      .status(400)
+      .json({ error: 'roundId and q are required to log a question' });
+  }
+
+  const questionId = (qid && String(qid).trim()) || `IR-${Date.now()}`;
+  const payload = {
+    qid: questionId,
+    letterId: roundId,
+    disc: disc || 'Regulatory',
+    tone: tone || 'warn',
+    status: status || 'draft',
+    owner: owner || '',
+    q,
+    analysis: '',
+    draft: '',
+    cites: [] as any[],
+    commitments: [] as any[],
+    precedentNote:
+      'Run a precedent compare to see how prior submissions answered this.',
+  };
+
+  try {
+    await store.insert(orgId, 'question', questionId, payload);
+
+    // Map exactly as GET /rounds maps questions so the client adopts it verbatim.
+    const data = {
+      id: payload.qid,
+      disc: payload.disc,
+      tone: payload.tone,
+      status: payload.status,
+      owner: payload.owner,
+      q: payload.q,
+      analysis: payload.analysis,
+      draft: payload.draft,
+      cites: Array.isArray(payload.cites) ? payload.cites : [],
+      commitments: Array.isArray(payload.commitments) ? payload.commitments : [],
+      precedentNote: payload.precedentNote,
+      roundId,
+    };
+
+    return res.status(201).json({ data, meta: { created: true } });
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json({ error: err?.message || 'Failed to log question' });
+  }
+});
+
 router.get('/letters', async (_req: Request, res: Response) => {
   try {
     const orgId = getOrgId(_req);
@@ -104,7 +234,7 @@ router.get('/letters/:id/questions', async (req: Request, res: Response) => {
 router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -128,13 +258,13 @@ router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Resp
 router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
       return res.status(404).json({ success: false, error: 'Question not found' });
 
-    const aiDraft = generateAIDraft(question);
+    const aiDraft = await generateAIDraft(question);
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...data } = question;
     const updated = {
       ...data,
@@ -154,7 +284,7 @@ router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Re
 router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -183,7 +313,7 @@ router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Resp
 router.post('/letters/:id/questions/:qid/approve', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const questionDbId = parseInt(req.params.qid, 10);
+    const questionDbId = parseInt(String(req.params.qid), 10);
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -245,34 +375,78 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
   }
 });
 
-function generateAIDraft(question: any): {
+/**
+ * Draft a Health Authority Question response using the AI gateway.
+ *
+ * History: the prior implementation was a 3-entry static lookup table of
+ * canned regulatory paragraphs keyed by module, with a Math.random()
+ * "confidence" and a synthesized source citation — fabrication dressed as
+ * an AI draft. It now routes through the AI gateway with the real question
+ * context.
+ *
+ * Honesty constraints:
+ *   - No invented confidence score. The gateway returns no calibrated
+ *     confidence, so `confidence` is null (the caller persists it as-is).
+ *     A real confidence would require a scored retrieval pipeline.
+ *   - No synthesized source citations. Sources is empty until a real
+ *     knowledge-base retrieval is wired — fabricating `SRC-xxx` doc ids
+ *     was part of the original liability.
+ *   - The draft is explicitly a starting point for human review (HAQ
+ *     responses are always reviewed + approved before submission via the
+ *     /review and /approve handlers in this router).
+ */
+async function generateAIDraft(question: any): Promise<{
   response: string;
-  confidence: number;
+  confidence: number | null;
   sources: { docId: string; section: string; excerpt: string }[];
-} {
-  const moduleResponses: Record<string, string> = {
-    'Module 3 - Quality':
-      'The requested data has been generated and is provided herein. The supplementary study results demonstrate compliance with all established specifications and support the conclusions presented in the original submission. Detailed analytical results, including method validation summaries and trending analyses, are included as attachments to this response.',
-    'Module 2 - Summaries':
-      'The requested clarification is provided below. The mechanism of action, pharmacodynamic properties, and dose-response relationship have been further elaborated based on the totality of nonclinical evidence. The NOAEL-to-human equivalent dose calculation follows FDA Guidance for Industry "Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers" (July 2005), applying appropriate allometric scaling factors.',
-    'Module 1 - Administrative':
-      "The informed consent form has been revised to address the identified deficiency. The updated ICF now includes a comprehensive description of all nonclinical safety findings, including the specific adverse effects noted by the reviewer. The revised document is provided as an attachment.",
-  };
+}> {
+  const { getGateway } = await import('../services/ai-gateway');
+  const gateway = getGateway();
 
-  const response =
-    moduleResponses[question.module] ??
-    "A detailed response to the agency's inquiry is provided herein, addressing each aspect of the question with supporting data and cross-references to the relevant sections of the submission dossier.";
-
-  return {
-    response,
-    confidence: 0.78 + Math.random() * 0.17,
-    sources: [
+  const result = await gateway.route({
+    taskType: 'regulatory_review',
+    messages: [
       {
-        docId: `SRC-${(question.section || '').replace(/\./g, '')}`,
-        section: question.section || '',
-        excerpt: `Data supporting the response to Question ${question.questionNumber || '?'}`,
+        role: 'system',
+        content:
+          'You are a regulatory affairs writer drafting a response to a Health Authority ' +
+          'Question (FDA Information Request, EMA Day-120, PMDA query). Write a precise, ' +
+          'professional draft response grounded only in what the question states and ' +
+          'standard regulatory practice. Do NOT invent study results, numeric data, or ' +
+          'citations to specific documents — where supporting data is required, indicate ' +
+          'with a clear placeholder what the submitter must attach. The draft will be ' +
+          'reviewed and edited by a human before submission. Return plain prose only.',
+      },
+      {
+        role: 'user',
+        content: `Draft a response to the following Health Authority Question.
+
+Question metadata:
+${JSON.stringify(
+  {
+    module: question.module,
+    section: question.section,
+    questionNumber: question.questionNumber,
+    questionText: question.questionText ?? question.text ?? question.question,
+    agency: question.agency,
+  },
+  null,
+  2
+)}`,
       },
     ],
+    maxTokens: 1500,
+    temperature: 0.3,
+    strategy: 'quality_optimized',
+    callerModule: 'haq-manager/ai-draft',
+  });
+
+  return {
+    response:
+      result.content?.trim() ||
+      "A detailed response addressing the agency's inquiry should be drafted here.",
+    confidence: null,
+    sources: [],
   };
 }
 

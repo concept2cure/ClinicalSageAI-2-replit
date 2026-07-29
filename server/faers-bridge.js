@@ -18,7 +18,17 @@ const fs = require('fs');
  */
 async function generateCERFromFAERS(ndcCode, productName = null) {
   return new Promise((resolve, reject) => {
-    // Create a temporary Python script that calls our functions
+    // Validate the NDC code before doing anything else. Reject anything that is
+    // not a digits/hyphen string of a sane length so it can never be abused.
+    if (typeof ndcCode !== 'string' || !/^[0-9-]{5,15}$/.test(ndcCode)) {
+      reject(new Error('Invalid NDC code'));
+      return;
+    }
+
+    // Create a temporary Python script that calls our functions.
+    // The script is a FIXED program containing NO user-controlled data: the NDC
+    // code and product name are read from argv (sys.argv) as plain data, so they
+    // can never be interpreted as Python source.
     const tempScriptPath = path.join(process.cwd(), 'temp_faers_script.py');
 
     const scriptContent = `
@@ -28,15 +38,15 @@ from faers_client import get_faers_data
 from cer_narrative import generate_cer_narrative
 
 try:
-    ndc_code = "${ndcCode}"
-    product_name = ${productName ? `"${productName}"` : 'None'}
-    
+    ndc_code = sys.argv[1]
+    product_name = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] != "" else None
+
     # Fetch FAERS data for the NDC code
     faers_data = get_faers_data(ndc_code)
-    
+
     # Generate the CER narrative
     cer_text = generate_cer_narrative(faers_data, product_name)
-    
+
     # Return results as JSON
     result = {
         "cer_report": cer_text,
@@ -54,8 +64,13 @@ except Exception as e:
     // Write the temporary script file
     fs.writeFileSync(tempScriptPath, scriptContent);
 
-    // Execute the Python script
-    const pythonProcess = spawn('python', [tempScriptPath]);
+    // Execute the Python script, passing user values as argv (data, not code).
+    // spawn with an argument array does not invoke a shell.
+    const pythonProcess = spawn('python', [
+      tempScriptPath,
+      ndcCode,
+      productName == null ? '' : String(productName),
+    ]);
 
     let outputData = '';
     let errorData = '';

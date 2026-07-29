@@ -10,15 +10,21 @@
  */
 
 import type { Request, Response, Router } from 'express';
+import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
+  resolveThinkingConfig,
+  isSubstantiveTurn,
+  resolveModelTier,
+  resolveTierModel,
+} from '../../services/ai-gateway/reasoning.js';
+import {
   orchestrate,
   type OrchestratorInput,
-  type IntentLens,
-  type UserRole,
 } from '../../services/ana-ri/orchestrator.js';
+import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { SubmissionType } from '../../services/ana-ri/deficiency-taxonomy.js';
 import { evaluateResponse } from '../../services/ana-ri/evaluation.js';
 import { inferRole } from '../../services/ana-ri/role-adapter.js';
@@ -28,7 +34,7 @@ import {
   validateResponseStructure,
 } from '../../services/ana-ri/enforcement.js';
 import { validateEvidence } from '../../services/ana-ri/evidence-validation.js';
-import { buildQueueMeta } from '../../services/ana-ri/response-contract.js';
+import { buildQueueMeta, buildTrustSummary } from '../../services/ana-ri/response-contract.js';
 import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
@@ -51,6 +57,7 @@ import { getCachedSignalReliability } from '../../services/intelligence/learning
 import { getEnabledServerTools } from '../../services/ana/AnaToolDefinitions.js';
 import { enrichContextForChat } from '../../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
+import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import {
   processCommandsInResponse,
   type CommandContext,
@@ -78,7 +85,11 @@ import {
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
+  VALID_LANGUAGES,
 } from './shared.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('ana-ri-chat');
 
 // Idempotency cache — per-request-id memoisation so a client retry within
 // IDEMPOTENCY_TTL_MS replays the prior response instead of re-generating.
@@ -102,7 +113,10 @@ setInterval(
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
 const dbPool = {
-  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+  query: <R extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: unknown[]
+  ): Promise<QueryResult<R>> => getPool().query<R>(text, values as unknown[]),
 };
 
 /** Register POST /chat on the given router. */
@@ -123,20 +137,13 @@ router.post('/chat', async (req: Request, res: Response) => {
       authoring_context,
       preferred_provider,
       useFirecrawl,
+      language,
     } = req.body;
 
     const correlationId =
       String(req.headers['x-correlation-id'] || '').trim() ||
       `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     res.setHeader('x-correlation-id', correlationId);
-
-    // Check idempotency cache — return cached response on client retry
-    if (idempotency_key && typeof idempotency_key === 'string') {
-      const cached = idempotencyCache.get(idempotency_key);
-      if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
-        return sendSuccess(res, { ...cached.response, _cached: true });
-      }
-    }
 
     if (!message || typeof message !== 'string') {
       return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
@@ -152,8 +159,25 @@ router.post('/chat', async (req: Request, res: Response) => {
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
 
+    // Validate response language if provided (defaults to English downstream)
+    const validatedLanguage = VALID_LANGUAGES.has(language) ? language : undefined;
+
     // Resolve org/user context
     const { orgId, userId } = extractRequestContext(req);
+
+    // Idempotency replay — return the prior response on a client retry, but
+    // SCOPE the key to tenant + user so a client-supplied idempotency_key can
+    // never replay another org's/user's cached response.
+    const idempotencyCacheKey =
+      idempotency_key && typeof idempotency_key === 'string'
+        ? `${orgId ?? 'noorg'}:${userId ?? 'nouser'}:${idempotency_key}`
+        : null;
+    if (idempotencyCacheKey) {
+      const cached = idempotencyCache.get(idempotencyCacheKey);
+      if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
+        return sendSuccess(res, { ...cached.response, _cached: true });
+      }
+    }
 
     // Infer role if not provided
     const effectiveRole: UserRole =
@@ -196,8 +220,22 @@ router.post('/chat', async (req: Request, res: Response) => {
         route?.decision?.reason || 'no decision rationale available',
       ];
 
-      const docs = route?.data?.scrapedDocuments;
-      if (Array.isArray(docs) && docs.length > 0) {
+      // route.data is a union across evidence routes; only the firecrawl branch
+      // carries scraped documents. Narrow it structurally at this boundary.
+      const firecrawlData = route?.data as
+        | {
+            scrapedDocuments?: Array<{
+              url: string;
+              title?: string;
+              markdown?: string;
+              html?: string;
+              metadata?: Record<string, unknown>;
+            }>;
+            quotaUnitsToCharge?: number;
+          }
+        | undefined;
+      const docs = firecrawlData?.scrapedDocuments;
+      if (route && Array.isArray(docs) && docs.length > 0) {
         const persistedIds: number[] = [];
         for (const doc of docs) {
           let id: number | null = null;
@@ -220,7 +258,7 @@ router.post('/chat', async (req: Request, res: Response) => {
               rawMarkdown: normalized.payload?.markdown,
               rawHtml: normalized.payload?.html,
               metadata: {
-                route: route.route,
+                route: route!.route,
                 source: 'ana-ri-chat',
                 taxonomy: 'external_evidence_mode',
                 domain: normalized.domain,
@@ -238,9 +276,17 @@ router.post('/chat', async (req: Request, res: Response) => {
         if (persistedIds.length > 0) {
           evidenceUsage.evidenceDocumentIds = persistedIds;
         }
-        const units = Number(route?.data?.quotaUnitsToCharge || docs.length || 0);
+        const units = Number(firecrawlData?.quotaUnitsToCharge || docs.length || 0);
         if (units > 0) {
-          await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch(() => {});
+          await recordSuccessfulFirecrawlScrape(Number(orgId), units).catch((err: any) => {
+            // Non-blocking: failing to record the scrape charge must not break the
+            // response, but un-metered usage is a billing concern — surface it.
+            console.error('[AnA RI] recordSuccessfulFirecrawlScrape failed', {
+              orgId: String(orgId),
+              units,
+              error: err?.message ?? String(err),
+            });
+          });
           const updatedQuota = await getFirecrawlQuotaStatus(Number(orgId)).catch(() => null);
           if (updatedQuota) {
             evidenceUsage.quotaConsumed = units;
@@ -260,6 +306,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       projectId: chatProjectId,
       organizationId: orgId,
       authoringContext: chatAuthoringContext,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      targetAgency:
+        typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
+      sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
     });
     const chatDecisionContext = prefetchedChatContext.decisionContext;
     const chatFeedbackContext = prefetchedChatContext.feedbackContext;
@@ -278,6 +328,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       message,
       intentLens: validatedLens,
       userRole: effectiveRole,
+      language: validatedLanguage,
       projectContext: project_context,
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
@@ -285,6 +336,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       authoringContext: orchestratorAuthoringContext,
       _feedbackContext: chatFeedbackContext,
       _projectIntelligenceProfile: chatProjectProfile,
+      _relationalOverlay: prefetchedChatContext.relationalOverlay,
+      _externalIntelBlock: prefetchedChatContext.externalIntelBlock,
+      _deadlineRadarBlock: prefetchedChatContext.deadlineRadarBlock,
+      _sessionBriefingBlock: prefetchedChatContext.sessionBriefingBlock,
     };
 
     const orchestration = orchestrate(orchestratorInput);
@@ -331,7 +386,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
-        projectId: chatProjectId || undefined,
+        projectId: chatProjectId != null ? Number(chatProjectId) : undefined,
         query: message,
         limitPerLayer: 4,
         maxChars: 3500,
@@ -344,9 +399,17 @@ router.post('/chat', async (req: Request, res: Response) => {
         projectId: chatProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
+        userRole: effectiveRole,
       }).catch(err => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
-        return { block: '', sources: [] as string[] };
+        return {
+          block: '',
+          sources: [] as string[],
+          rewrittenMessage: undefined as string | undefined,
+          enrichmentMeta: undefined as
+            | Awaited<ReturnType<typeof enrichContextForChat>>['enrichmentMeta']
+            | undefined,
+        };
       }),
     ]);
 
@@ -403,26 +466,31 @@ router.post('/chat', async (req: Request, res: Response) => {
     const fileIds = req.body.file_ids;
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
-        const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
-          [fileIds, orgId ? Number(orgId) : 0]
+        // Shared tenant-scoped lookup — checks both the organization column and
+        // the storage-path prefix. See uploaded-file-access.ts.
+        const { loadUploadedFileMetadata } = await import(
+          '../../services/ana/uploaded-file-access.js'
         );
-        if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows
-            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+        const attachedFiles = await loadUploadedFileMetadata(
+          fileIds,
+          orgId != null ? Number(orgId) : null
+        );
+        if (attachedFiles.length > 0) {
+          const fileContext = attachedFiles
+            .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)
             .join('\n');
           messages.push({
             role: 'user' as const,
             content: `[The user has attached the following files to this message:\n${fileContext}\nReference these files in your response when relevant.]`,
           });
         }
-      } catch {
-        /* non-blocking */
+      } catch (fileErr: any) {
+        console.warn('[AnA RI Chat] Attachment context failed:', fileErr?.message);
       }
     }
 
     // Add current message (use rewritten version if slash command or @app mention detected)
-    const chatEffectiveMessage = chatEnrichment.rewrittenMessage || message;
+    const chatEffectiveMessage = (chatEnrichment as any).rewrittenMessage || message;
     messages.push({ role: 'user', content: chatEffectiveMessage });
 
     // Call AI Gateway
@@ -438,10 +506,42 @@ router.post('/chat', async (req: Request, res: Response) => {
         ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
         : undefined;
 
-    const chatThinkingConfig =
-      routingPlan.riskTier === 'high'
-        ? { enabled: true, budgetTokens: 10_000 }
-        : undefined;
+    // Extended thinking — same effort-scaled policy as the stream path (see
+    // reasoning.ts). This non-streaming evidence/Firecrawl fallback has no
+    // effort picker, so it resolves at the default Balanced effort: reason on
+    // substantive or high-risk turns, stay quick on casual ones. The gateway
+    // clamps any budget below max_tokens on the legacy thinking surface.
+    const chatSubstantive = isSubstantiveTurn({
+      messageLength: typeof message === 'string' ? message.length : 0,
+      intentLens: orchestration.detectedIntent?.lens,
+    });
+    const chatThinkingResolved = resolveThinkingConfig({
+      effort: 'balanced',
+      riskTier: routingPlan.riskTier,
+      substantive: chatSubstantive,
+    });
+    const chatThinkingConfig = chatThinkingResolved.enabled ? chatThinkingResolved : undefined;
+
+    // Cost-tiered model selection — same policy and precedence as the stream
+    // path: yields to an explicit provider preference and to a governance-
+    // pinned strategy; opt-out via ANA_MODEL_TIERING=off; tier remap via
+    // ANA_TIER_*_MODEL. Keeps this fallback path off the flagship for routine
+    // turns too.
+    const chatTieredModel = (() => {
+      if (validatedProvider) return null; // user pinned a provider
+      if (executionCtx.policyHint?.preferredStrategy) return null; // governance owns the strategy
+      if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+      const tier = resolveModelTier({
+        effort: 'balanced',
+        riskTier: routingPlan.riskTier,
+        intentLens: orchestration.detectedIntent?.lens,
+        taskType: routingPlan.taskType,
+        substantive: chatSubstantive,
+      });
+      const enabledModels =
+        typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+      return resolveTierModel(tier, enabledModels, process.env);
+    })();
     // Server-side tools only on this path — web_search / web_fetch /
     // code_execution resolve inside Anthropic's infrastructure and return
     // their results as content blocks, so no agentic loop is required.
@@ -458,6 +558,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(chatThinkingConfig ? { thinking: chatThinkingConfig } : {}),
       ...(validatedProvider ? { provider: validatedProvider } : {}),
+      // Mutually exclusive with validatedProvider (the tier yields to it above).
+      ...(chatTieredModel
+        ? { provider: chatTieredModel.provider, model: chatTieredModel.model }
+        : {}),
       ...(chatServerTools.length > 0 ? { tools: chatServerTools } : {}),
     });
 
@@ -553,7 +657,12 @@ router.post('/chat', async (req: Request, res: Response) => {
         submissionType: orchestration.detectedSubmissionType,
         evidenceCompliant: evidenceCheck.compliant,
       },
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      logger.warn('Failed to persist kernel decision record (success path)', {
+        route: '/api/ana-ri/chat',
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
 
     // Guidance executor — auto-create artifacts if response contains action signals
     // (Parity with /stream — previously only ran on stream path)
@@ -691,6 +800,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         compliant: evidenceCheck.compliant,
         labels: evidenceCheck.totalLabels,
         verdict: evidenceVerdict,
+        trust_summary: buildTrustSummary(evidenceVerdict),
       },
       structure: {
         valid: structureCheck.valid,
@@ -711,7 +821,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       reliability: chatReliability,
       queueMeta,
       enrichmentSources: chatEnrichment.sources?.length > 0 ? chatEnrichment.sources : undefined,
-      enrichmentMeta: chatEnrichment.enrichmentMeta || undefined,
+      enrichmentMeta: (chatEnrichment as any).enrichmentMeta || undefined,
       _meta: {
         ...(correlationId && { correlationId }),
         ...(source_surface ? { sourceSurface: source_surface } : {}),
@@ -720,10 +830,21 @@ router.post('/chat', async (req: Request, res: Response) => {
       evidenceUsage,
     };
 
-    // Cache response for idempotency on client retry
-    if (idempotency_key && typeof idempotency_key === 'string') {
-      idempotencyCache.set(idempotency_key, { response: responsePayload, timestamp: Date.now() });
+    // Cache response for idempotency on client retry (tenant+user-scoped key)
+    if (idempotencyCacheKey) {
+      idempotencyCache.set(idempotencyCacheKey, { response: responsePayload, timestamp: Date.now() });
     }
+
+    // AnA's relational self-development: reflect on this turn and update her
+    // notes about the user + project (throttled inside; never on the
+    // request path).
+    void reflectAfterTurn({
+      organizationId: orgId ? Number(orgId) : null,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      projectId: chatProjectId != null ? Number(chatProjectId) : null,
+      userMessage: message,
+      assistantMessage: finalAssistantContent,
+    }).catch(() => {});
 
     return sendSuccess(res, responsePayload);
   } catch (error: any) {
@@ -738,7 +859,12 @@ router.post('/chat', async (req: Request, res: Response) => {
       outcome: 'failed',
       errorMessage: error?.message || 'unknown error',
       decisionRationale: 'AnA RI route failed before completion.',
-    }).catch(() => {});
+    }).catch((logErr: unknown) => {
+      logger.warn('Failed to persist kernel decision record (failure path)', {
+        route: '/api/ana-ri/chat',
+        err: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    });
     return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
   }
 });

@@ -1,0 +1,325 @@
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { I } from '../icons';
+import { useLiveRows, EmptyState } from '../dataConnect';
+import { AnswerLead } from '../AnswerLead';
+import type { SurfaceViewProps } from '../surfaceViews';
+import '../styles/project-home-v2.css';
+// composeSafetyNarrative is a deterministic ICH E3 §16 generator and SaeCase is a
+// type — both retained (real computed output / types, not fixture data). Only the
+// SAE_CASES fixture array is dropped; the worklist now loads from the real backend.
+import { composeSafetyNarrative } from '../fixtures/safety-narrative-data';
+import type { SaeCase } from '../fixtures/safety-narrative-data';
+
+/* -- Constants -- */
+
+const CRITERIA = ['death', 'life-threatening', 'hospitalization', 'disability', 'congenital anomaly', 'medically important'];
+const OUTCOMES = ['recovered', 'recovering', 'recovered with sequelae', 'not recovered', 'fatal', 'unknown'];
+const CAUSALITIES = ['related', 'probably related', 'possibly related', 'unlikely related', 'not related'];
+
+/* The GET /api/safety-narratives/cases display contract. Extends the structured
+   SaeCase with the expedited-reporting-clock fields the route computes server-side
+   per 21 CFR 312.32(c) / ICH E2A (server/services/pv/expedited-reporting-clock.ts).
+   The backend returns these on every real row (the stored due/clock columns are
+   kept alongside them); the nullable clock fields are `| null` and rendered
+   null-safe. */
+type LiveSaeCase = SaeCase & {
+  reportingCategory?: '7-day' | '15-day' | 'none';
+  reportingClockStart?: string | null;
+  reportingDueDate?: string | null;
+  reportingDaysRemaining?: number | null;
+  reportingOverdue?: boolean;
+  reportingBasis?: string;
+};
+
+/* Stable empty seed for the local editable store while the live worklist is
+   loading or on error — useLiveRows synthesizes a fresh [] every render in those
+   states, which would otherwise thrash the re-seed effect into a render loop. */
+const EMPTY_CASES: LiveSaeCase[] = [];
+
+/* ================================================================
+   SafetyNarrative -- SAE case-narrative writer (ICH E3 section 16).
+   The generated narrative IS the hero deliverable, not a dashboard.
+   Registers as SURFACE_VIEWS['safety-narrative'].
+   ================================================================ */
+
+export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
+  const ask = onAsk;
+
+  /* Real SAE case worklist. GET /api/safety-narratives/cases queries the governed
+     c2c_sae_cases table (server/routes/safety-narrative.ts, pool.query, scoped by
+     organization) and computes each row's 21 CFR 312.32(c) / ICH E2A expedited-
+     reporting clock live. useLiveRows unwraps the { data } envelope into real
+     cases, an honest empty (an unprovisioned store fails closed to []), or an
+     honest error (no org / unreachable) — never a fixture. */
+  const live = useLiveRows<LiveSaeCase>('/api/safety-narratives/cases');
+  /* Feed the editable store a STABLE empty seed while loading / on error (see
+     EMPTY_CASES) so the re-seed effect below doesn't loop. */
+  const seed = live.loading || live.error ? EMPTY_CASES : live.rows;
+
+  /* Local editable copy. Field edits (setField / toggleCrit) are in-memory
+     drafting that re-runs the deterministic ICH E3 §16 composer over the selected
+     case; there is no case-write endpoint, so edits are not persisted (and the
+     surface never claims they are). Re-seed when the live rows resolve — their
+     identity changes once the fetch settles. */
+  const [cases, setCases] = useState<LiveSaeCase[]>(seed);
+  const [selId, setSelId] = useState<string>(seed[0]?.id ?? '');
+  const seedRef = useRef(seed);
+  useEffect(() => {
+    if (seed !== seedRef.current) {
+      seedRef.current = seed;
+      setCases(seed);
+      setSelId(seed[0]?.id ?? '');
+    }
+  }, [seed]);
+
+  const [toast, setToast] = useState('');
+  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+
+  const sel = cases.find((c) => c.id === selId) || cases[0];
+  const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
+  const nMissing = result ? result.missingFields.length : 0;
+
+  /* Answer-first lead -- context-aware to the real queue and clocks */
+  const lead = useMemo(() => {
+    if (!sel || cases.length === 0) return null;
+    const serious = cases.filter((c) => (c.event.seriousnessCriteria || []).length).length;
+    const soonest = cases.slice().sort((a, b) => a.dueDays - b.dueDays)[0];
+    const urgent = soonest && soonest.dueDays <= 3;
+    return {
+      tone: (urgent ? 'urgent' : 'calm') as 'urgent' | 'calm',
+      head: urgent
+        ? `${soonest.id} is due in ${soonest.dueDays} days -- ${soonest.clock}`
+        : `${cases.length} case narratives in progress -- ${serious} serious`,
+      body: urgent
+        ? `The clock that matters right now is ${soonest.id}${sel.studyId ? ` (${sel.studyId})` : ''}. Its narrative is drafted from the case facts below -- complete any missing fields, QC it, and it's ready to file. You have time; work the most urgent one first.`
+        : 'Each SAE narrative here is written deterministically from the structured case -- the same facts, the same ICH E3 section 16 convention, every time. Nothing is invented. Pick a case, complete what\'s missing, and hand it off.',
+      next: urgent
+        ? `Finish ${soonest.id} and send it for medical review`
+        : `Complete ${sel.id} and attach it to the safety dossier`,
+    };
+  }, [cases, sel]);
+
+  const setField = (path: string, val: string | string[]) => {
+    if (!sel) return;
+    setCases((cs) =>
+      cs.map((c) => {
+        if (c.id !== sel.id) return c;
+        const nc = { ...c, event: { ...c.event } };
+        if (path.startsWith('event.')) (nc.event as Record<string, unknown>)[path.slice(6)] = val;
+        else (nc as Record<string, unknown>)[path] = val;
+        return nc;
+      }),
+    );
+  };
+
+  const toggleCrit = (crit: string) => {
+    if (!sel) return;
+    const cur = sel.event.seriousnessCriteria || [];
+    setField('event.seriousnessCriteria', cur.includes(crit) ? cur.filter((x) => x !== crit) : cur.concat([crit]));
+  };
+
+  return (
+    <div className="sn">
+      {toast && <div className="sn-toast">{I.check} {toast}</div>}
+
+      <div className="sn-head">
+        <div className="sn-eyebrow">Safety narrative / PV -- ICH E3 section 16 -- E2B</div>
+        <h1 className="sn-title">SAE case narrative writer</h1>
+      </div>
+
+      {live.loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading SAE cases…</div>
+      ) : live.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the SAE case worklist"
+          hint="The safety-narrative store didn't respond. These are the organization's individual SAE cases and their expedited-reporting clocks. Sign in and retry, or check the service is reachable."
+        />
+      ) : !sel || !result ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No SAE cases yet"
+          hint="Individual SAE cases appear here once they are in the governed safety store. Each becomes an ICH E3 section 16 narrative, drafted deterministically from the structured case facts with its 21 CFR 312.32(c) expedited-reporting clock."
+        />
+      ) : (
+        <>
+          {lead && (
+            <AnswerLead
+              tone={lead.tone}
+              headline={lead.head}
+              body={lead.body}
+              action={{ label: lead.next, onClick: () => ask(lead.next) }}
+            />
+          )}
+
+      <div className="sn-cols">
+        {/* Left -- case queue + structured fields */}
+        <div className="sn-left">
+          <div className="sn-sec">Case queue</div>
+          <div className="sn-queue">
+            {cases.map((c) => {
+              const serious = (c.event.seriousnessCriteria || []).length > 0;
+              const miss = composeSafetyNarrative(c).missingFields.length;
+              return (
+                <button key={c.id} className="sn-case" data-on={c.id === sel.id || undefined} onClick={() => setSelId(c.id)}>
+                  <div className="sn-case-top">
+                    <span className="mono sn-case-id">{c.id}</span>
+                    <span className={'sn-chip ' + (serious ? 'err' : 'idle')}>{serious ? 'Serious' : 'Non-serious'}</span>
+                  </div>
+                  <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} -- {c.event.term}</div>
+                  <div className="sn-case-meta">
+                    <span className="sn-case-drug">{c.studyDrug}</span>
+                    <span className={'sn-due ' + (c.dueDays <= 3 ? 'urgent' : '')}>{c.due}</span>
+                    {miss > 0 && <span className="sn-miss">{miss} to complete</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="sn-sec">Structured case -- {sel.id}</div>
+          <div className="sn-fields">
+            <div className="sn-f2">
+              <label className="sn-fl">
+                Severity
+                <input className="sn-fi" value={sel.event.severity || ''} placeholder="e.g. grade 3 (severe)" onChange={(e) => setField('event.severity', e.target.value)} />
+              </label>
+              <label className="sn-fl">
+                Study day
+                <input className="sn-fi" value={sel.event.dayOnStudy || ''} onChange={(e) => setField('event.dayOnStudy', e.target.value)} />
+              </label>
+            </div>
+            <label className="sn-fl">
+              Action taken with study drug
+              <input className="sn-fi" value={sel.event.actionTaken || ''} placeholder="e.g. study drug permanently discontinued" onChange={(e) => setField('event.actionTaken', e.target.value)} />
+            </label>
+            <div className="sn-f2">
+              <label className="sn-fl">
+                Causality (investigator)
+                <select className="sn-fi" value={sel.event.causality || ''} onChange={(e) => setField('event.causality', e.target.value)}>
+                  <option value="">-- not assessed --</option>
+                  {CAUSALITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+              <label className="sn-fl">
+                Outcome
+                <select className="sn-fi" value={sel.event.outcome || ''} onChange={(e) => setField('event.outcome', e.target.value)}>
+                  <option value="">-- unknown --</option>
+                  {OUTCOMES.map((o) => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="sn-fl">
+              Seriousness criteria
+              <div className="sn-crits">
+                {CRITERIA.map((c) => (
+                  <button key={c} className="sn-crit" data-on={(sel.event.seriousnessCriteria || []).includes(c) || undefined} onClick={() => toggleCrit(c)}>{c}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right -- the generated narrative (the hero deliverable) */}
+        <div className="sn-right">
+          <div className="sn-sec">Generated narrative <span className="sn-sec-x">-- ICH E3 section 16, deterministic from the case facts</span></div>
+          <div className="cm-doc">
+            <div className="cm-doc-bar">
+              <div>
+                <span className="cm-doc-kind">SAE case narrative -- {sel.id}</span>
+                <span className="cm-doc-prov">{sel.studyId} -- {result.serious ? 'Serious' : 'Non-serious'} -- {result.narrative.split(/\s+/).length} words</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="bs-da" onClick={() => ask('Review this SAE narrative for ' + sel.id + ' (' + sel.event.term + ') and flag any medical-review or consistency issues before I file it.')}>
+                  {I.sparkles} Review with AnA
+                </button>
+                {/* MOCK ACTION (flagged): no case-narrative version-write endpoint
+                    exists, so this button persists nothing. Copy softened so it does
+                    not claim a save that did not occur. */}
+                <button className="bs-da alt" onClick={() => fire('Narrative versioning isn’t wired to the safety store yet — nothing was saved')}>
+                  {I.check} Save version
+                </button>
+              </div>
+            </div>
+            <div className="cm-doc-page">
+              <div className="cm-doc-render">
+                <h1>Serious adverse event case narrative</h1>
+                <p style={{ fontFamily: 'var(--font-mono,monospace)', fontSize: 12, color: 'var(--text-400)' }}>{sel.id} -- {sel.clock}</p>
+                {/* Expedited-reporting clock — computed server-side per 21 CFR 312.32(c)
+                    / ICH E2A from awareness date + seriousness/causality/expectedness, and
+                    returned on every real case row. The static clock line above is the stored label. */}
+                {sel.reportingCategory && (
+                  <div
+                    style={{
+                      margin: '8px 0 14px', padding: '10px 12px', borderRadius: 8,
+                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--danger-500,#c0392b)' : 'var(--border-200,#e2e2e2)'),
+                      background: sel.reportingOverdue ? 'var(--danger-50,#fdecea)' : 'var(--surface-100,#f7f7f7)',
+                      fontSize: 12.5, lineHeight: 1.5,
+                    }}
+                  >
+                    {sel.reportingCategory === 'none' ? (
+                      <div><strong>No expedited reporting clock.</strong> {sel.reportingBasis}</div>
+                    ) : sel.reportingDueDate ? (
+                      <div>
+                        <strong style={{ color: sel.reportingOverdue ? 'var(--danger-600,#a5281b)' : 'inherit' }}>
+                          {sel.reportingOverdue
+                            ? `OVERDUE — ${sel.reportingCategory} report was due ${sel.reportingDueDate}`
+                            : `${sel.reportingCategory} expedited report — due ${sel.reportingDueDate}` +
+                              (typeof sel.reportingDaysRemaining === 'number'
+                                ? ` (${sel.reportingDaysRemaining === 0 ? 'due today' : sel.reportingDaysRemaining + ' calendar day' + (Math.abs(sel.reportingDaysRemaining) === 1 ? '' : 's') + ' remaining'})`
+                                : '')}
+                        </strong>
+                        <div style={{ color: 'var(--text-400)', marginTop: 3 }}>
+                          Clock start (Day 0 / sponsor awareness): {sel.reportingClockStart}. {sel.reportingBasis}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <strong>{sel.reportingCategory} expedited report</strong> — awareness (Day 0) date not recorded, so the due date cannot be anchored. {sel.reportingBasis}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p>{result.narrative}</p>
+                <hr />
+                <p>Drafted deterministically from the structured case per ICH E3 section 16 convention. No clinical detail is inferred beyond the supplied facts.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* QC -- missing fields before handoff */}
+          <div className={'sn-qc ' + (nMissing ? 'warn' : 'ok')}>
+            <span className="sn-qc-ic">{nMissing ? I.alertTriangle : (I.checkCircle || I.check)}</span>
+            {nMissing ? (
+              <div>
+                <div className="sn-qc-t">{nMissing} field{nMissing > 1 ? 's' : ''} to complete before handoff</div>
+                <div className="sn-qc-list">{result.missingFields.map((f) => <span key={f} className="sn-qc-tag">{f}</span>)}</div>
+              </div>
+            ) : (
+              <div>
+                <div className="sn-qc-t">Complete -- all E3 section 16 elements present</div>
+                <div className="sn-qc-d">This narrative is ready for medical review and E2B(R3) transmission.</div>
+              </div>
+            )}
+          </div>
+
+          <div className="sn-hand">
+            <button className="sn-hb" onClick={() => {
+              try { localStorage.setItem('c2c_open_surface', 'submission-center'); } catch (_e) { /* noop */ }
+              onNav('submission-center');
+              ask('Transmit ' + sel.id + ' as an E2B(R3) ICSR to the FDA gateway.');
+            }}>
+              {I.send || I.rocket} Transmit as E2B ICSR
+            </button>
+            <button className="sn-hb alt" onClick={() => ask('Roll ' + sel.id + ' into the aggregate safety narrative (ICH E3 section 12) for ' + sel.studyId + '.')}>
+              {I.layers || I.fileText} Add to aggregate (section 12)
+            </button>
+          </div>
+        </div>
+      </div>
+        </>
+      )}
+    </div>
+  );
+}

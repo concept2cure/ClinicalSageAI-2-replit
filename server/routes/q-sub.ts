@@ -20,6 +20,7 @@ import { z } from 'zod';
 
 import { authenticateToken } from '../middleware/auth';
 import { createScopedLogger } from '../utils/logger';
+import { pool } from '../db';
 import {
   ok,
   created,
@@ -164,6 +165,77 @@ router.get('/:id', async (req: Request, res: Response) => {
     return ok(res, detail);
   } catch (err) {
     return serverError(res, log, 'detail', err);
+  }
+});
+
+/* ─── GET /api/q-sub/:id/sections — briefing body per section ────────── */
+
+router.get('/:id/sections', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  try {
+    const qSubId = String(req.params.id);
+    /* Tenant gate via getQSubDetail (already enforces program → org). */
+    const detail = await getQSubDetail(orgId, qSubId);
+    if (!detail) return notFoundInTenant(res, 'Q-Sub');
+    const { rows } = await pool.query(
+      `SELECT section_key, content, draft_source, drafted_at, drafted_summary,
+              accepted_at, accepted_by
+         FROM q_sub_section_bodies
+        WHERE q_submission_id = $1 AND organization_id = $2`,
+      [qSubId, orgId],
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) {
+    return serverError(res, log, 'list-sections', err);
+  }
+});
+
+/* ─── PUT /api/q-sub/:id/sections/:sectionKey — upsert section body ──── */
+
+const sectionBodySchema = z.object({
+  content: z.string().min(1).max(50000),
+  draft_source: z.enum(['ana', 'human']).optional(),
+  drafted_summary: z.string().max(500).optional(),
+});
+
+router.put('/:id/sections/:sectionKey', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = sectionBodySchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  }
+  const qSubId = String(req.params.id);
+  const sectionKey = String(req.params.sectionKey);
+
+  try {
+    /* Tenant gate. */
+    const detail = await getQSubDetail(orgId, qSubId);
+    if (!detail) return notFoundInTenant(res, 'Q-Sub');
+
+    const { pool } = await import('../db');
+    const draftSource = parsed.data.draft_source ?? 'human';
+    const draftedAt = draftSource === 'ana' ? new Date() : null;
+    const { rows } = await pool.query(
+      `INSERT INTO q_sub_section_bodies (
+         q_submission_id, organization_id, section_key, content,
+         draft_source, drafted_at, drafted_summary
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
+         content         = EXCLUDED.content,
+         draft_source    = EXCLUDED.draft_source,
+         drafted_at      = COALESCE(EXCLUDED.drafted_at, q_sub_section_bodies.drafted_at),
+         drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
+         accepted_at     = NULL,
+         accepted_by     = NULL,
+         updated_at      = NOW()
+       RETURNING *`,
+      [qSubId, orgId, sectionKey, parsed.data.content, draftSource, draftedAt, parsed.data.drafted_summary ?? null],
+    );
+    return ok(res, rows[0]);
+  } catch (err) {
+    return serverError(res, log, 'upsert-section', err);
   }
 });
 

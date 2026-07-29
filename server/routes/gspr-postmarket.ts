@@ -37,6 +37,13 @@ import {
   updateDocument,
   validateDocument,
 } from '../services/gspr-postmarket/post-market.service';
+import { generatePmcfPlan } from '../services/gspr-postmarket/pmcf-plan-generator';
+import {
+  authorPostMarketDocument,
+  AUTHORABLE_DOCUMENT_TYPES,
+} from '../services/gspr-postmarket/post-market-authoring';
+import { getPostMarketDocStatus } from '../services/gspr-postmarket/post-market-readiness';
+import type { PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
 import auditService from '../services/auditService';
 
 function userIdFromReq(req: Request): string | null {
@@ -67,7 +74,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     .select({ id: regulatoryPrograms.id })
     .from(regulatoryPrograms)
     .where(
-      and(eq(regulatoryPrograms.id, req.params.programId), eq(regulatoryPrograms.organizationId, orgId))
+      and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId))
     )
     .limit(1);
   if (!row) {
@@ -100,7 +107,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req)!;
-      const rows = await listProgramMappings(orgId, req.params.programId);
+      const rows = await listProgramMappings(orgId, String(req.params.programId));
       res.json({ programId: req.params.programId, mappings: rows, count: rows.length });
     } catch (err: any) {
       res.status(500).json({ error: 'Mappings fetch failed', detail: err?.message });
@@ -176,7 +183,7 @@ router.get(
       hasPatientContact: profile.hasPatientContact === 'true',
     };
     try {
-      const report = await computeCoverage(orgId, req.params.programId, built);
+      const report = await computeCoverage(orgId, String(req.params.programId), built);
       res.json(report);
     } catch (err: any) {
       res.status(500).json({ error: 'Coverage failed', detail: err?.message });
@@ -207,7 +214,7 @@ postMarketRouter.get(
       return res.status(422).json({ error: `type must be one of: ${[...VALID_DOC_TYPES].join(', ')}` });
     }
     try {
-      const rows = await listProgramDocuments(orgId, req.params.programId, t as any);
+      const rows = await listProgramDocuments(orgId, String(req.params.programId), t as any);
       res.json({ programId: req.params.programId, documents: rows, count: rows.length });
     } catch (err: any) {
       res.status(500).json({ error: 'List failed', detail: err?.message });
@@ -266,6 +273,166 @@ postMarketRouter.post(
   }
 );
 
+// Author a DRAFT PMCF plan (MDR Annex XIV Part B §6.2) for the program, derived
+// from the supplied device context (or a related CER report). Persists through
+// the same createDocument lifecycle in `draft` status and returns the document
+// plus its conformance validation — it never approves, locks, or asserts
+// sufficiency. The sponsor must specialise and approve it.
+postMarketRouter.post(
+  '/programs/:programId/documents/pmcf-plan/generate',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const body = req.body ?? {};
+    const relatedCerReportId =
+      body.relatedCerReportId != null ? Number(body.relatedCerReportId) : undefined;
+    if (relatedCerReportId != null && !Number.isInteger(relatedCerReportId)) {
+      return res.status(422).json({ error: 'relatedCerReportId must be an integer' });
+    }
+    if (!body.deviceName && relatedCerReportId == null) {
+      return res.status(422).json({ error: 'deviceName or relatedCerReportId is required' });
+    }
+    if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
+      return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
+    }
+    const createdBy = userIdFromReq(req) ?? 'system';
+    try {
+      const result = await generatePmcfPlan({
+        organizationId: orgId,
+        programId: String(req.params.programId),
+        createdBy,
+        deviceName: typeof body.deviceName === 'string' ? body.deviceName : '',
+        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
+        regulation: body.regulation,
+        relatedCerReportId,
+        title: typeof body.title === 'string' ? body.title : undefined,
+      });
+
+      void auditService.logAction({
+        tenantId: orgId,
+        userId: createdBy,
+        action: 'post_market.pmcf_plan.generate',
+        resourceType: 'post_market_document',
+        resourceId: String(result.document.id),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          programId: req.params.programId,
+          documentId: result.document.id,
+          version: result.document.version,
+          relatedCerReportId: relatedCerReportId ?? null,
+        },
+      });
+
+      res.status(201).json(result);
+    } catch (err: any) {
+      if (err?.code === 'PMCF_NO_DEVICE') {
+        return res.status(422).json({ error: err.message });
+      }
+      res.status(500).json({ error: 'PMCF plan generation failed', detail: err?.message });
+    }
+  }
+);
+
+// Author a DRAFT post-market document of any supported type (pms_plan,
+// pms_report, pmcf_plan, pmcf_evaluation, psur, sscp) from device/CER context.
+// Persists in `draft` via the same lifecycle and returns the document plus its
+// conformance validation. Never approves, locks, or asserts sufficiency.
+postMarketRouter.post(
+  '/programs/:programId/documents/:documentType/generate',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const documentType = String(req.params.documentType).replace(/-/g, '_') as PostMarketDocumentType;
+    if (!AUTHORABLE_DOCUMENT_TYPES.includes(documentType)) {
+      return res
+        .status(422)
+        .json({ error: `documentType must be one of: ${AUTHORABLE_DOCUMENT_TYPES.join(', ')}` });
+    }
+    const body = req.body ?? {};
+    const relatedCerReportId =
+      body.relatedCerReportId != null ? Number(body.relatedCerReportId) : undefined;
+    if (relatedCerReportId != null && !Number.isInteger(relatedCerReportId)) {
+      return res.status(422).json({ error: 'relatedCerReportId must be an integer' });
+    }
+    if (!body.deviceName && relatedCerReportId == null) {
+      return res.status(422).json({ error: 'deviceName or relatedCerReportId is required' });
+    }
+    if (body.regulation && body.regulation !== 'MDR' && body.regulation !== 'IVDR') {
+      return res.status(422).json({ error: 'regulation must be MDR or IVDR' });
+    }
+    const parseDate = (v: unknown): Date | undefined => {
+      if (v == null) return undefined;
+      const d = new Date(v as string);
+      return Number.isNaN(d.getTime()) ? undefined : d;
+    };
+    const createdBy = userIdFromReq(req) ?? 'system';
+    try {
+      const result = await authorPostMarketDocument({
+        organizationId: orgId,
+        programId: String(req.params.programId),
+        createdBy,
+        documentType,
+        deviceName: typeof body.deviceName === 'string' ? body.deviceName : undefined,
+        deviceClass: typeof body.deviceClass === 'string' ? body.deviceClass : null,
+        regulation: body.regulation,
+        relatedCerReportId,
+        title: typeof body.title === 'string' ? body.title : undefined,
+        reportingPeriodStart: parseDate(body.reportingPeriodStart),
+        reportingPeriodEnd: parseDate(body.reportingPeriodEnd),
+      });
+
+      void auditService.logAction({
+        tenantId: orgId,
+        userId: createdBy,
+        action: 'post_market.document.generate',
+        resourceType: 'post_market_document',
+        resourceId: String(result.document.id),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          programId: req.params.programId,
+          documentType,
+          documentId: result.document.id,
+          version: result.document.version,
+          relatedCerReportId: relatedCerReportId ?? null,
+        },
+      });
+
+      res.status(201).json(result);
+    } catch (err: any) {
+      if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE') {
+        return res.status(422).json({ error: err.message });
+      }
+      res.status(500).json({ error: 'Post-market document generation failed', detail: err?.message });
+    }
+  }
+);
+
+// Honest post-market documentation status for a program: per-type presence,
+// lifecycle status and validation-gate result, with required-vs-optional driven
+// by device class. Not a fabricated readiness score.
+postMarketRouter.get(
+  '/programs/:programId/documentation-status',
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const deviceClass = typeof req.query.deviceClass === 'string' ? req.query.deviceClass : null;
+    const regulation = req.query.regulation === 'IVDR' ? 'IVDR' : 'MDR';
+    try {
+      const report = await getPostMarketDocStatus(
+        orgId,
+        String(req.params.programId),
+        deviceClass,
+        regulation
+      );
+      res.json(report);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Documentation status failed', detail: err?.message });
+    }
+  }
+);
+
 async function loadDocOrFail(
   req: Request,
   res: Response
@@ -275,7 +442,7 @@ async function loadDocOrFail(
     res.status(403).json({ error: 'Organization context required' });
     return null;
   }
-  const doc = await getDocument(orgId, req.params.documentId);
+  const doc = await getDocument(orgId, String(req.params.documentId));
   if (!doc) {
     res.status(404).json({ error: 'Document not found' });
     return null;
@@ -296,7 +463,7 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
     const userIdRaw = (req as any).user?.id;
     const updatedBy =
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
-    const updated = await updateDocument(ctx.orgId, req.params.documentId, {
+    const updated = await updateDocument(ctx.orgId, String(req.params.documentId), {
       ...req.body,
       updatedBy,
     });
@@ -307,7 +474,7 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
       userId: updatedBy,
       action: 'post_market.document.update',
       resourceType: 'post_market_document',
-      resourceId: req.params.documentId,
+      resourceId: String(req.params.documentId),
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'] as string | undefined,
       details: {
@@ -329,10 +496,10 @@ postMarketRouter.post('/documents/:documentId/validate', async (req: Request, re
 
   void auditService.logAction({
     tenantId: ctx.orgId,
-    userId: userIdFromReq(req),
+    userId: userIdFromReq(req) ?? undefined,
     action: 'post_market.document.validate',
     resourceType: 'post_market_document',
-    resourceId: req.params.documentId,
+    resourceId: String(req.params.documentId),
     ipAddress: req.ip,
     userAgent: req.headers['user-agent'] as string | undefined,
     details: {

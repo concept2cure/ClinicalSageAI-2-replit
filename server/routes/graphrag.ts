@@ -23,6 +23,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
+import { clampGraphRagBounds } from './graphrag-util.js';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -554,8 +555,7 @@ router.post('/query', async (req: Request, res: Response) => {
     graphTraversal: 0.4,
     keywordBM25: 0.2,
   };
-  const maxHops = body.maxHops ?? 2;
-  const topK = body.topK ?? 10;
+  const { maxHops, topK } = clampGraphRagBounds(body.maxHops, body.topK);
 
   try {
     // Step 1: Extract entities from query
@@ -763,14 +763,14 @@ router.post('/ingest', async (req: Request, res: Response) => {
  */
 router.get('/entities/:entityId/neighborhood', async (req: Request, res: Response) => {
   const pool: Pool = (req as any).pool || (req.app as any).pool;
-  const { entityId } = req.params;
+  const { entityId } = req.params as { entityId: string };
   const maxHops = parseInt(req.query.hops as string) || 1;
   const entityTypes = req.query.types
     ? ((req.query.types as string).split(',') as EntityType[])
     : undefined;
 
   try {
-    const result = await traverseGraph(pool, [entityId], maxHops, entityTypes);
+    const result = await traverseGraph(pool, [String(entityId)], maxHops, entityTypes);
     const communities = detectCommunities(result.entities, result.relationships);
 
     res.json({

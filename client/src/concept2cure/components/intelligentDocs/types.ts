@@ -104,23 +104,31 @@ export type ClaimType =
 
 export interface SourceSuggestion {
   id: string;
-  
+
   // User-friendly source info
   title: string;
   sourceType: SourceType;
   citation: string;           // Pre-formatted citation ready to use
   relevanceScore: number;     // 0-100, how well it supports the claim
-  
+
   // Quick preview - what the user cares about
   keyExcerpt: string;
   pageReference?: string;
-  
+
   // Where this came from - but hidden from user by default
   dataModule: DataModule;
-  
+
   // Is this already linked to this document?
   isLinked: boolean;
   linkConfidence?: number;
+
+  // Legacy/alternate field names used by older callers — keep alongside
+  // the canonical fields so both code paths typecheck.
+  sourceId?: string;
+  sourceTitle?: string;
+  matchConfidence?: number;
+  matchReason?: string;
+  relevantExcerpt?: string;
 }
 
 export type SourceType = 
@@ -210,11 +218,12 @@ export interface SherpaGuidance {
   rationale: string;
 }
 
-export type GuidanceActionType = 
+export type GuidanceActionType =
   | 'write-section'
   | 'review-claims'
   | 'add-sources'
   | 'update-from-module'      // Pull data from another module
+  | 'review'                  // Complete pending reviews assigned to the user
   | 'request-review'
   | 'submit-for-approval'
   | 'export-document';
@@ -235,6 +244,8 @@ export interface DocumentBlocker {
 export interface DataBridgeConnection {
   id: string;
   sourceModule: DataModule;
+  /** Legacy alias for sourceModule used by older callers */
+  moduleType?: DataModule | string;
   targetDocumentId: string;
   
   // What data is available
@@ -242,7 +253,7 @@ export interface DataBridgeConnection {
   dataLabel: string;
   
   // Status
-  status: 'connected' | 'available' | 'needs-update' | 'missing';
+  status: 'connected' | 'available' | 'needs-update' | 'missing' | 'synced';
   lastSyncedAt?: Date;
   
   // Preview of available data

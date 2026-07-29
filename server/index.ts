@@ -28,6 +28,12 @@ await initializeOpenTelemetry();
 
 import express from 'express';
 import { createServer, type Server as HttpServer } from 'http';
+import { startDriftSentinelSchedule } from './jobs/driftSentinelSweep';
+import { startAuditChainIntegritySchedule } from './jobs/auditChainIntegritySweep';
+import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
+import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
+import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
+import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -38,9 +44,11 @@ import { getPool } from './db';
 
 import { validateEnvironment, resolveStartupFlags, createDebugLogger } from './startup/env';
 import { registerShutdownHandlers } from './startup/shutdown';
+import { installConsoleBridge } from './utils/consoleBridge';
 import {
   applyTelemetryMiddleware,
   applyCoreMiddleware,
+  applyAuthBoundary,
   applyDebugRequestLogging,
 } from './startup/middleware';
 import { applyAuditTrailMiddleware } from './startup/audit-trail';
@@ -66,6 +74,17 @@ import { setupFrontendServing } from './startup/frontend';
 validateEnvironment();
 const flags = resolveStartupFlags();
 const debugLog = createDebugLogger(flags.debug);
+
+// Install the console → logger bridge before any further code logs
+// anything in production. The bridge passes object arguments through
+// the HIPAA-aware redaction walker so legacy `console.error(req.body)`
+// call sites can't leak credentials / PHI to stdout. No-op outside
+// production so dev / test traces stay readable.
+//
+// Install AFTER validateEnvironment so a missing-env hard-exit message
+// reaches stderr unbridged. installConsoleBridge is statically imported (so
+// esbuild bundles it into dist/index.js); it has no effect until called here.
+installConsoleBridge();
 
 const app = express();
 const pool = getPool();
@@ -101,6 +120,10 @@ if (flags.debug) {
 // reaches a handler. No-op unless AUDIT_TRAIL_ENABLED=true.
 applyAuditTrailMiddleware(app, pool, debugLog);
 
+// Default-deny /api auth boundary — after the audit-trail observer (401s are
+// recorded), before ANY route registration (see startup/middleware.ts).
+applyAuthBoundary(app);
+
 // Diagnostic endpoints after the security stack so they inherit CORS,
 // rate-limit, structured logging, etc.
 mountDiagnosticEndpoints(app, pool);
@@ -112,6 +135,7 @@ const routeCtx = {
   pool,
   experimentalRoutesEnabled: flags.experimentalRoutesEnabled,
   demoRoutesEnabled: flags.demoRoutesEnabled,
+  testRoutesEnabled: flags.testRoutesEnabled,
 };
 
 await registerPreStartRoutes(routeCtx, aiCircuitBreaker);
@@ -122,6 +146,49 @@ async function startServer() {
 
   await verifyDatabaseConnection(pool);
   await initializeEarlyServices();
+
+  // Security self-test — run AFTER the DB connection is verified
+  // (so the audit-chain check can query) but BEFORE any other
+  // startup work or HTTP listen. In production a critical failure
+  // here exits the process; in dev / non-blocking mode it logs
+  // and continues. See server/startup/security-self-test.ts.
+  {
+    const { runBootSecuritySelfTest } = await import('./startup/security-self-test');
+    await runBootSecuritySelfTest(pool);
+  }
+
+  // Schema/dependency invariants (revoked-tokens table, artifact columns,
+  // Redis, …). Previously only reachable via a diagnostics route, so a fresh
+  // deployment with a broken schema booted silently and crashed on first use.
+  // Logs by default; with STRICT_STARTUP_INVARIANTS=true a critical failure
+  // halts boot.
+  {
+    const { runStartupInvariants } = await import('./lib/startup-invariants');
+    const invariantReport = await runStartupInvariants();
+    if (
+      invariantReport.criticalFailures > 0 &&
+      process.env.STRICT_STARTUP_INVARIANTS === 'true'
+    ) {
+      console.error(
+        `Startup halted: ${invariantReport.criticalFailures} critical invariant failure(s) ` +
+          `(STRICT_STARTUP_INVARIANTS=true). Failed: ` +
+          invariantReport.invariants.filter(i => !i.passed).map(i => i.name).join(', ')
+      );
+      process.exit(1);
+    }
+  }
+
+  // Periodic posture monitor — re-runs the self-test panel on a
+  // fixed interval so drift (clamd down, audit chain broken, etc.)
+  // is observed without an operator manually probing the admin
+  // endpoint. Idempotent — safe across hot-reload. Disabled via
+  // SECURITY_HEALTH_DISABLE_SCHEDULER=true (used in tests).
+  {
+    const { startSecurityHealthScheduler } = await import(
+      './services/securityHealthScheduler'
+    );
+    startSecurityHealthScheduler(pool);
+  }
 
   debugLog('Initializing Python backend...');
   pythonProcess = await startPythonBackend();
@@ -141,6 +208,16 @@ async function startServer() {
 
   httpServer = createServer(app);
 
+  // Behind an ALB/ELB (or any L7 proxy), Node's default 5s keepAliveTimeout is
+  // BELOW the proxy's idle timeout (commonly 60s). That inverts who closes an
+  // idle keep-alive connection: Node closes it first, the proxy then reuses the
+  // socket it still believes is open, and the client gets a sporadic 502. Set
+  // keepAliveTimeout above the proxy idle window, and headersTimeout above that
+  // (it must exceed keepAliveTimeout or the keep-alive window is truncated).
+  // Both overridable for proxies configured with a longer idle setting.
+  httpServer.keepAliveTimeout = Number(process.env.HTTP_KEEP_ALIVE_TIMEOUT_MS || 65_000);
+  httpServer.headersTimeout = Number(process.env.HTTP_HEADERS_TIMEOUT_MS || 66_000);
+
   await setupFrontendServing(app, httpServer);
 
   await initializeParallelServices(httpServer, pool);
@@ -149,6 +226,29 @@ async function startServer() {
     console.log(`🚀 Server running on http://0.0.0.0:${flags.port}`);
     console.log(`📊 Health check: http://localhost:${flags.port}/api/health`);
     console.log(`🔐 Login: http://localhost:${flags.port}/auth`);
+    // Living Record Spine: start the Drift Sentinel periodic sweep. Self-guards
+    // to a no-op unless ENABLE_DRIFT_SENTINEL=true, so default boot is unchanged.
+    startDriftSentinelSchedule();
+    // 21 CFR Part 11 / ISO 14971: daily audit-chain tamper-evidence sweep.
+    // On by default when AUDIT_TRAIL_ENABLED=true; opt out with
+    // ENABLE_AUDIT_CHAIN_CHECK=false, force on with =true.
+    startAuditChainIntegritySchedule();
+    // RIM precedent flywheel: periodic CT.gov ingestion into the corpus.
+    // Self-guards to a no-op unless ENABLE_CORPUS_INGESTION=true.
+    startCorpusIngestionSchedule();
+    // Continuous learning: weekly regulatory/harmonisation horizon scan that
+    // keeps AnA current across global markets. Self-guards to a no-op unless
+    // ENABLE_REGULATORY_HORIZON_SCAN=true, so default boot is unchanged.
+    startRegulatoryHorizonSchedule();
+    // AnA's nightly external scan: regulatory agencies across all served
+    // markets + study-methodology sources (SCDM, PubMed, medRxiv). Default
+    // ON — disable with ENABLE_EXTERNAL_INTELLIGENCE=false.
+    startExternalIntelligenceSchedule();
+    // Project manager: AnA proactively reviews every active schedule of events,
+    // marking slips/at-risk milestones, opening recovery tasks, firing alerts,
+    // and flagging goals. Self-guards in tests; disable with
+    // SCHEDULE_OF_EVENTS_SWEEP_DISABLED=true.
+    startScheduleOfEventsSweep();
   });
 }
 

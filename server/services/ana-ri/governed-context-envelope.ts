@@ -115,8 +115,6 @@ export async function buildGovernedContextEnvelope(params: {
         currentLifecycleStatus: params.currentLifecycleStatus,
         intendedAction: 'refresh' as GovernedMutationIntent,
         actorId: params.actorId,
-        requestId: `chat-envelope-${Date.now()}`,
-        timestamp: now,
       },
       documentState: {
         hasContent: true,

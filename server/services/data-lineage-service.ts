@@ -26,6 +26,10 @@ import {
 import { createHash } from 'crypto';
 import type { EvidenceChain } from './intelligence/evidence-confidence-model';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('data-lineage-service');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -154,7 +158,7 @@ export async function recordLineage(entry: LineageEntry): Promise<DataLineageRec
 
     return record;
   } catch (err) {
-    console.error('[DataLineage] Failed to record lineage:', err);
+    logger.error('Failed to record lineage', { err: err instanceof Error ? err.message : String(err) });
     return null;
   }
 }
@@ -195,7 +199,7 @@ export async function recordLineageBatch(entries: LineageEntry[]): Promise<numbe
     const result = await db.insert(dataLineageRecords).values(values).returning();
     return result.length;
   } catch (err) {
-    console.error('[DataLineage] Failed to record batch lineage:', err);
+    logger.error('Failed to record batch lineage', { err: err instanceof Error ? err.message : String(err) });
     return 0;
   }
 }
@@ -243,7 +247,7 @@ export async function persistEvidenceChain(
 
     return record;
   } catch (err) {
-    console.error('[DataLineage] Failed to persist evidence chain:', err);
+    logger.error('Failed to persist evidence chain', { err: err instanceof Error ? err.message : String(err) });
     return null;
   }
 }

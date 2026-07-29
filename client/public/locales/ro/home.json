@@ -1,0 +1,10 @@
+{
+  "greeting": {
+    "late": "Lucrați până târziu",
+    "morning": "Bună dimineața",
+    "afternoon": "Bună ziua",
+    "evening": "Bună seara"
+  },
+  "greetingLine": "{{greeting}}, {{name}}",
+  "prompt": "La ce ați dori să lucrați? Întrebați AnA sau accesați un modul de mai jos."
+}

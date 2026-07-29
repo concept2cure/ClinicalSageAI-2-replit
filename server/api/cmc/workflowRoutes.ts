@@ -6,7 +6,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { db, getPool } from '../../db';
-import { projectWorkflows, workflowTasks } from '../../../shared/cmc-schema';
+import { projectWorkflows, workflowTasks, cmcProjects } from '../../../shared/cmc-schema';
 import { eq, desc, and } from 'drizzle-orm';
 import { getGateway } from '../../services/ai-gateway/index.js';
 
@@ -380,12 +380,17 @@ let commandCounter = 1;
 router.get('/', async (req, res) => {
   try {
     const orgId = getOrganizationId(req);
-    const rows = await db
-      .select()
-      .from(projectWorkflows)
-      .where(eq(projectWorkflows.organizationId, orgId))
-      .orderBy(desc(projectWorkflows.createdAt))
-      .limit(100);
+    // project_workflows has no organization_id; tenant scope is enforced
+    // through the parent cmc_projects row.
+    const rows = (
+      await db
+        .select()
+        .from(projectWorkflows)
+        .innerJoin(cmcProjects, eq(projectWorkflows.projectId, cmcProjects.id))
+        .where(eq(cmcProjects.organizationId, orgId))
+        .orderBy(desc(projectWorkflows.createdAt))
+        .limit(100)
+    ).map(r => r.project_workflows);
 
     // Enrich with tasks
     const enriched = await Promise.all(
@@ -490,12 +495,15 @@ router.post('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const orgId = getOrganizationId(req);
-    const [workflow] = await db
+    // Tenant scope is enforced through the parent cmc_projects row.
+    const [row] = await db
       .select()
       .from(projectWorkflows)
-      .where(and(eq(projectWorkflows.id, id), eq(projectWorkflows.organizationId, orgId)));
+      .innerJoin(cmcProjects, eq(projectWorkflows.projectId, cmcProjects.id))
+      .where(and(eq(projectWorkflows.id, id), eq(cmcProjects.organizationId, orgId)));
+    const workflow = row?.project_workflows;
 
     if (!workflow) {
       return res.status(404).json({ success: false, error: 'Workflow not found' });

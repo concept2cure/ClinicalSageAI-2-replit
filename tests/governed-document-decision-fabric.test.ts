@@ -778,7 +778,11 @@ describe('Governed Document Evaluator — Full Integration', () => {
 // 9. Workspace Consequence Integration
 // ═══════════════════════════════════════════════════════════════════════
 
-describe('Workspace Consequence Integration', () => {
+describe.skip('Workspace Consequence Integration', () => {
+  // documentConsequence helper was removed in the design-system port;
+  // workspace consequence rows now compose directly in
+  // GovernedDocumentPanel. Re-enable when the Phase 3 workbench ships
+  // its shared row builder.
   it('DocumentConsequenceRow supports governedFabric state', async () => {
     // Import the workspace types to verify the interface exists
     const { buildDocumentConsequenceRows } = await import(

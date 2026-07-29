@@ -23,10 +23,14 @@ import {
   deviceAuditTrail,
   fdaIntegrationLogs,
   cerProjects,
+  users,
 } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import auditService from './auditService';
 import crypto from 'crypto';
+
+import { createScopedLogger } from '../utils/logger';
+const logger = createScopedLogger('medical-device');
 
 class MedicalDeviceService {
   private initialized = false;
@@ -89,7 +93,7 @@ class MedicalDeviceService {
 
       return newDevice[0];
     } catch (error) {
-      console.error('Error creating medical device:', error);
+      logger.error('Error creating medical device:', { error: error });
       throw error;
     }
   }
@@ -108,7 +112,7 @@ class MedicalDeviceService {
 
       return devices;
     } catch (error) {
-      console.error('Error fetching medical devices:', error);
+      logger.error('Error fetching medical devices:', { error: error });
       throw error;
     }
   }
@@ -129,7 +133,7 @@ class MedicalDeviceService {
 
       return device[0];
     } catch (error) {
-      console.error('Error fetching medical device:', error);
+      logger.error('Error fetching medical device:', { error: error });
       throw error;
     }
   }
@@ -182,7 +186,7 @@ class MedicalDeviceService {
 
       return updatedDevice[0];
     } catch (error) {
-      console.error('Error updating medical device:', error);
+      logger.error('Error updating medical device:', { error: error });
       throw error;
     }
   }
@@ -243,7 +247,7 @@ class MedicalDeviceService {
 
       return new510k[0];
     } catch (error) {
-      console.error('Error creating 510(k) submission:', error);
+      logger.error('Error creating 510(k) submission:', { error: error });
       throw error;
     }
   }
@@ -266,7 +270,7 @@ class MedicalDeviceService {
 
       return submissions;
     } catch (error) {
-      console.error('Error fetching 510(k) submissions:', error);
+      logger.error('Error fetching 510(k) submissions:', { error: error });
       throw error;
     }
   }
@@ -305,7 +309,7 @@ class MedicalDeviceService {
 
       return submission[0];
     } catch (error) {
-      console.error('Error fetching 510(k) submission:', error);
+      logger.error('Error fetching 510(k) submission:', { error: error });
       throw error;
     }
   }
@@ -384,7 +388,7 @@ class MedicalDeviceService {
 
       return updated510k[0];
     } catch (error) {
-      console.error('Error updating 510(k) submission:', error);
+      logger.error('Error updating 510(k) submission:', { error: error });
       throw error;
     }
   }
@@ -422,35 +426,65 @@ class MedicalDeviceService {
         ? submission.submission?.electronicSignatures
         : [];
 
-      // Update submission status
+      // This endpoint performs NO transmission. It validates completeness and
+      // applies the e-signature; there is no gateway client here and never was
+      // (the comment below said "placeholder"). It used to record the package as
+      // `submitted` with an actualSubmissionDate, log the attempt as a success —
+      // which stamps httpStatusCode 200 into fda_integration_logs for a call
+      // that was never made — and return "sent to FDA successfully".
+      //
+      // Every one of those was a claim about the agency that nothing had done.
+      // The signed, validated package is real and is recorded as such; the
+      // transmission is not, and is now reported as not having happened. Real
+      // transmission lives on the gateway path (server/services/submission-
+      // gateways, surfaced as Gateway Transmittals), which obtains and stores an
+      // actual agency receipt.
+      // `submission_status` is a free-text column. The values in play are
+      // draft | in_review | ready_for_transmission | submitted | cleared |
+      // rejected. `ready_for_transmission` means validated and e-signed locally
+      // but NOT sent; only the gateway path — which obtains and stores a real
+      // agency receipt — may ever write `submitted`.
       await this.update510kSubmission(
         organizationId,
         submissionId,
         {
-          submissionStatus: 'submitted',
-          actualSubmissionDate: new Date(),
+          submissionStatus: 'ready_for_transmission',
           electronicSignatures: [...existingSignatures, signature],
         },
         userId
       );
 
-      // Log FDA integration attempt (placeholder)
       await this.logFDAIntegration(
         organizationId,
         'CDRH_Portal',
         '510k_submission',
         submissionId,
         { submissionId, deviceId: submission.device?.id ?? null },
-        { message: 'Submission queued for FDA gateway', status: 'pending' },
-        'success'
+        {
+          message:
+            'Package validated and signed locally. NOT transmitted to FDA — this endpoint has no gateway transport.',
+          transmitted: false,
+        },
+        'not_transmitted'
       );
 
-      // Update workflow
-      await this.updateWorkflowStatus(organizationId, '510k', submissionId, 'submitted', userId);
+      await this.updateWorkflowStatus(
+        organizationId,
+        '510k',
+        submissionId,
+        'ready_for_transmission',
+        userId
+      );
 
-      return { success: true, message: '510(k) submission sent to FDA successfully' };
+      return {
+        success: true,
+        transmitted: false,
+        message:
+          '510(k) package validated and signed. NOT transmitted to FDA — no submission has been made. ' +
+          'Use Gateway Transmittals to transmit and obtain an agency receipt.',
+      };
     } catch (error) {
-      console.error('Error submitting 510(k) to FDA:', error);
+      logger.error('Error submitting 510(k) to FDA:', { error: error });
 
       // Log failed integration
       await this.logFDAIntegration(
@@ -523,7 +557,7 @@ class MedicalDeviceService {
 
       return newPMA[0];
     } catch (error) {
-      console.error('Error creating PMA submission:', error);
+      logger.error('Error creating PMA submission:', { error: error });
       throw error;
     }
   }
@@ -546,7 +580,7 @@ class MedicalDeviceService {
 
       return submissions;
     } catch (error) {
-      console.error('Error fetching PMA submissions:', error);
+      logger.error('Error fetching PMA submissions:', { error: error });
       throw error;
     }
   }
@@ -608,7 +642,7 @@ class MedicalDeviceService {
 
       return newDoc[0];
     } catch (error) {
-      console.error('Error adding submission document:', error);
+      logger.error('Error adding submission document:', { error: error });
       throw error;
     }
   }
@@ -637,7 +671,7 @@ class MedicalDeviceService {
 
       return documents;
     } catch (error) {
-      console.error('Error fetching submission documents:', error);
+      logger.error('Error fetching submission documents:', { error: error });
       throw error;
     }
   }
@@ -681,7 +715,7 @@ class MedicalDeviceService {
 
       return newWorkflow[0];
     } catch (error) {
-      console.error('Error creating workflow:', error);
+      logger.error('Error creating workflow:', { error: error });
       throw error;
     }
   }
@@ -706,7 +740,7 @@ class MedicalDeviceService {
 
       return workflow[0];
     } catch (error) {
-      console.error('Error fetching workflow:', error);
+      logger.error('Error fetching workflow:', { error: error });
       throw error;
     }
   }
@@ -757,7 +791,7 @@ class MedicalDeviceService {
 
       return updatedWorkflow[0];
     } catch (error) {
-      console.error('Error updating workflow status:', error);
+      logger.error('Error updating workflow status:', { error: error });
       throw error;
     }
   }
@@ -823,6 +857,22 @@ class MedicalDeviceService {
         ? Object.keys(safeNewValues).filter(key => previousValues[key] !== safeNewValues[key])
         : Object.keys(safeNewValues);
 
+      // Resolve the real username for Part 11 attribution rather than fabricating it.
+      // The users table has no role column, so userRole is left null (honest) instead
+      // of the previously hardcoded 'regulatory_specialist' applied to every actor.
+      // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution gaps).
+      let resolvedUserName = `User ${userId}`;
+      try {
+        const userRows = await dbInstance
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        if (userRows[0]?.name) resolvedUserName = userRows[0].name;
+      } catch {
+        // Fall back to the id-based label; audit logging must not break the operation.
+      }
+
       await dbInstance.insert(deviceAuditTrail).values({
         organizationId,
         entityType,
@@ -832,15 +882,15 @@ class MedicalDeviceService {
         newValues: safeNewValues,
         changedFields,
         userId,
-        userName: `User ${userId}`, // In production, fetch actual username
-        userRole: 'regulatory_specialist', // In production, fetch actual role
+        userName: resolvedUserName,
+        userRole: null,
         electronicSignature: this.generateSignatureHash({ entityType, entityId, action }, userId),
         signatureTimestamp: new Date(),
         signatureMeaning: action === 'approved' ? 'approval' : 'authorship',
         dataIntegrityCheck: this.generateIntegrityCheck(newValues),
       });
     } catch (error) {
-      console.error('Error logging audit trail:', error);
+      logger.error('Error logging audit trail:', { error: error });
       // Don't throw - audit logging should not break the main operation
     }
   }
@@ -866,7 +916,12 @@ class MedicalDeviceService {
         httpMethod: 'POST',
         requestPayload: request,
         responsePayload: response,
-        httpStatusCode: status === 'success' ? 200 : 500,
+        // Only a status that reflects an actual HTTP exchange gets an HTTP code.
+        // This used to write 200 for anything not a failure, so a local
+        // no-transmission path stamped a successful POST to an FDA endpoint into
+        // the log an inspector reads first. A call that was never made now
+        // records no status code at all.
+        httpStatusCode: status === 'success' ? 200 : status === 'failure' ? 500 : null,
         relatedEntityType: entityType,
         relatedEntityId: entityId,
         status,
@@ -874,7 +929,7 @@ class MedicalDeviceService {
         createdAt: new Date(),
       });
     } catch (error) {
-      console.error('Error logging FDA integration:', error);
+      logger.error('Error logging FDA integration:', { error: error });
       // Don't throw - logging should not break the main operation
     }
   }
@@ -931,7 +986,7 @@ class MedicalDeviceService {
 
       return updated[0];
     } catch (error) {
-      console.error('Error linking CER to device:', error);
+      logger.error('Error linking CER to device:', { error: error });
       throw error;
     }
   }
@@ -952,7 +1007,7 @@ class MedicalDeviceService {
 
       return projects;
     } catch (error) {
-      console.error('Error fetching CER projects for device:', error);
+      logger.error('Error fetching CER projects for device:', { error: error });
       throw error;
     }
   }

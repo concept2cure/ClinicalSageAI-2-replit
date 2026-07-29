@@ -5,8 +5,16 @@ import playbookRoutes from './playbookRoutes.js';
 import { pool } from '../../db.js';
 import crypto from 'crypto';
 import { ai } from '../../lib/unified-ai-client';
+import { requireAuthedOrgId } from '../../utils/authedOrgId.js';
+import { authenticateToken } from '../../middleware/auth.js';
 
 const router = Router();
+
+// CMC workflow blueprints and playbooks are tenant-scoped regulated data.
+// Authenticate at the router root so req.user (and thus requireAuthedOrgId) is
+// always populated — reachability must never precede authentication. Mirrors
+// the sibling projectRoutes.ts contract.
+router.use(authenticateToken);
 
 // Initialize OpenAI client
 // ===== BLUEPRINT GENERATION =====
@@ -14,6 +22,9 @@ const router = Router();
 // Generate comprehensive CMC blueprint
 router.post('/generate-blueprint', async (req, res) => {
   try {
+    // Tenant scope from the verified JWT, never the request body.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const {
       drugName,
       drugType,
@@ -23,19 +34,18 @@ router.post('/generate-blueprint', async (req, res) => {
       regulatoryRegion,
       manufacturingSite,
       targetSubmissionDate,
-      organizationId,
     } = req.body;
 
     // Validate required fields
-    if (!drugName || !drugType || !dosageForm || !organizationId) {
+    if (!drugName || !drugType || !dosageForm) {
       return res.status(400).json({
-        error: 'Missing required fields: drugName, drugType, dosageForm, organizationId',
+        error: 'Missing required fields: drugName, drugType, dosageForm',
       });
     }
 
     // Create CMC project in database
     const projectData = {
-      organizationId,
+      organizationId: guard.orgId,
       name: `${drugName} CMC Project`,
       drugName,
       drugType,
@@ -96,7 +106,7 @@ router.post('/generate-blueprint', async (req, res) => {
     const workflowTemplates = await createWorkflowTemplates(
       newProject.id,
       blueprintContent,
-      organizationId
+      String(guard.orgId)
     );
 
     // Create initial compliance framework
@@ -133,15 +143,18 @@ router.post('/generate-blueprint', async (req, res) => {
 // Get blueprint templates by category
 router.get('/templates', async (req, res) => {
   try {
-    const { category, drugType, developmentStage, organizationId } = req.query;
+    // Tenant identity comes from the verified JWT, never the query string.
+    // The org filter is always applied — omitting it must not leak every
+    // tenant's templates.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { category, drugType, developmentStage } = req.query;
 
     let queryText = 'SELECT * FROM workflow_templates WHERE 1=1';
-    let params = [];
+    const params: unknown[] = [];
 
-    if (organizationId) {
-      queryText += ` AND organization_id = $${params.length + 1}`;
-      params.push(organizationId);
-    }
+    queryText += ` AND organization_id = $${params.length + 1}`;
+    params.push(guard.orgId);
 
     if (category) {
       queryText += ` AND category = $${params.length + 1}`;
@@ -179,16 +192,19 @@ router.post('/templates', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const { name, description, category, organizationId } = req.body;
+    // Write is scoped to the caller's JWT org — never a client-supplied one.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { name, description, category } = req.body;
 
-    if (!name || !organizationId) {
-      return res.status(400).json({ error: 'Name and organization ID required' });
+    if (!name) {
+      return res.status(400).json({ error: 'Name required' });
     }
 
     const templateId = crypto.randomUUID();
     const insertQuery = `
       INSERT INTO cmc_workflows (
-        id, organization_id, name, description, category, 
+        id, organization_id, name, description, category,
         estimated_time, total_tasks, priority, is_template, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
       RETURNING *
@@ -196,7 +212,7 @@ router.post('/templates', async (req, res) => {
 
     const result = await pool.query(insertQuery, [
       templateId,
-      organizationId,
+      guard.orgId,
       name,
       description || '',
       category || 'custom',
@@ -217,8 +233,30 @@ router.post('/templates', async (req, res) => {
 
 async function generateAIBlueprint(params: any) {
   try {
-    const { drugName, drugType, dosageForm, indication, developmentStage, regulatoryRegion } =
-      params;
+    const {
+      drugName, drugType, dosageForm, indication, developmentStage, regulatoryRegion,
+      organizationId: paramOrgId, projectId: paramProjectId,
+    } = params;
+
+    // If an existing project is supplied AND it has CMC source data, the
+    // QbD analyzer derives CQAs and CPPs from the actual records instead
+    // of the drug-type heuristics below. New-project blueprints still use
+    // the heuristics because no source data exists yet.
+    let qbdAnalysis: { cqas: Array<{ name: string }>; cpps: Array<{ name: string }> } | null = null;
+    if (paramOrgId && paramProjectId && typeof paramProjectId === 'string') {
+      try {
+        const { analyzeQbdFromSources } = await import(
+          '../../services/cmc/qbd-analyzer'
+        );
+        const result = await analyzeQbdFromSources(Number(paramOrgId), paramProjectId);
+        if (result.cqas.length > 0 || result.cpps.length > 0) {
+          qbdAnalysis = { cqas: result.cqas, cpps: result.cpps };
+        }
+      } catch {
+        // Analyzer failure falls through to the type-based heuristics.
+      }
+    }
+    params.__qbdAnalysis = qbdAnalysis;
 
     const prompt = `Generate a comprehensive CMC (Chemistry, Manufacturing, and Controls) blueprint for the following pharmaceutical product:
 
@@ -300,9 +338,12 @@ Structure the response as a comprehensive regulatory strategy document.`;
         },
         qualityByDesign: {
           title: 'Quality by Design',
-          cqas: extractCQAs(blueprintText, drugType),
-          cpps: extractCPPs(blueprintText, dosageForm),
-          designSpace: 'To be established during development',
+          cqas: extractCQAs(blueprintText, drugType, params.__qbdAnalysis),
+          cpps: extractCPPs(blueprintText, dosageForm, params.__qbdAnalysis),
+          designSpace: params.__qbdAnalysis
+            ? 'Derived from project source-object analysis (see /api/cmc/quality/qbd)'
+            : 'To be established during development',
+          source: params.__qbdAnalysis ? 'data_driven' : 'heuristic',
         },
         analyticalMethods: {
           title: 'Analytical Methods',
@@ -327,8 +368,9 @@ Structure the response as a comprehensive regulatory strategy document.`;
     };
   } catch (error) {
     console.error('Error generating AI blueprint:', error);
-    // Return a structured fallback blueprint
-    return generateFallbackBlueprint(params);
+    // Return a structured fallback blueprint, explicitly labelled so the
+    // client/user can tell it is not AI-generated content.
+    return { ...generateFallbackBlueprint(params), generatedFrom: 'fallback' };
   }
 }
 
@@ -512,7 +554,21 @@ function extractCriticalItems(text: string, context: string): string[] {
   ];
 }
 
-function extractCQAs(text: string, drugType: string): string[] {
+/**
+ * Extract CQAs. When the caller supplied a real projectId+orgId AND the
+ * project has CMC source objects, generateAIBlueprint will have populated
+ * `qbdAnalysis` via the deterministic analyzer; that result takes
+ * precedence over the drug-type heuristics below. The heuristics are the
+ * fallback for upfront blueprints where no source data exists yet.
+ */
+function extractCQAs(
+  _text: string,
+  drugType: string,
+  qbdAnalysis?: { cqas: Array<{ name: string }> } | null,
+): string[] {
+  if (qbdAnalysis && qbdAnalysis.cqas.length > 0) {
+    return Array.from(new Set(qbdAnalysis.cqas.map(c => c.name)));
+  }
   const baseCQAs = ['Identity', 'Purity', 'Potency', 'Stability'];
 
   if (drugType === 'Monoclonal Antibody') {
@@ -526,7 +582,14 @@ function extractCQAs(text: string, drugType: string): string[] {
   return baseCQAs;
 }
 
-function extractCPPs(text: string, dosageForm: string): string[] {
+function extractCPPs(
+  _text: string,
+  dosageForm: string,
+  qbdAnalysis?: { cpps: Array<{ name: string }> } | null,
+): string[] {
+  if (qbdAnalysis && qbdAnalysis.cpps.length > 0) {
+    return Array.from(new Set(qbdAnalysis.cpps.map(c => c.name)));
+  }
   const baseCPPs = ['Temperature', 'pH', 'Mixing time'];
 
   if (dosageForm.includes('Tablet')) {

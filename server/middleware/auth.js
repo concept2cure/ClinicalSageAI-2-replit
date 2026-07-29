@@ -16,6 +16,7 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config/environment.js';
 import { createLogger } from '../utils/monitoring.js';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 
 const logger = createLogger('auth');
 
@@ -44,7 +45,7 @@ const authenticateJWT = (req, res, next) => {
 
   try {
     // Verify the token with appropriate secret for current environment
-    const user = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] });
+    const user = verifyJwtWithRotation(token);
 
     // CRITICAL SECURITY CHECK: Ensure organizationId is in JWT payload
     if (!user.organizationId) {
@@ -249,21 +250,29 @@ const requireSameOrganization = (req, res, next) => {
 };
 
 /**
- * Check if route is public (no authentication required)
+ * Check if route is public (no authentication required).
+ *
+ * Matches the path exactly or as a strict subpath (route + '/'). Bare
+ * prefix matching with `startsWith` is intentionally avoided so a
+ * crafted path like '/auth/loginEvil' cannot inherit the
+ * '/auth/login' exemption and bypass authentication.
  */
-const isPublicRoute = path => {
-  const publicRoutes = [
-    '/api/health',
-    '/health',
-    '/auth/login',
-    '/auth/register',
-    '/auth/forgot-password',
-    '/auth/reset-password',
-    '/api/public',
-  ];
+const PUBLIC_ROUTES = [
+  '/api/health',
+  '/health',
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/api/public',
+];
 
-  // Check if path starts with any public route
-  return publicRoutes.some(route => path.startsWith(route));
+const isPublicRoute = path => {
+  for (const route of PUBLIC_ROUTES) {
+    if (path === route) return true;
+    if (path.startsWith(route + '/')) return true;
+  }
+  return false;
 };
 
 // Aliases used across codebase

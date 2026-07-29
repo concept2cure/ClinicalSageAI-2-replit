@@ -1,0 +1,129 @@
+# Default values for the concept2cure-app chart.
+# See README.md. Validate any change with `helm lint` and `helm template`
+# (and ideally a dry-run install) before using in production.
+
+nameOverride: ''
+fullnameOverride: ''
+namespaceOverride: ''
+
+replicaCount: 2
+
+image:
+  # Point this at your built image (Dockerfile.optimized). No default registry
+  # is assumed — set it for your environment.
+  repository: REPLACE_WITH_IMAGE_REPO
+  tag: '' # defaults to Chart.appVersion when empty
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ''
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop: ['ALL']
+
+# App listens on PORT (server/index.ts). The container port and probes use this.
+containerPort: 5000
+
+service:
+  type: ClusterIP
+  port: 80
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ''
+  annotations: {}
+  hosts:
+    - host: concept2cure.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: '2'
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 75
+
+# Liveness/readiness hit the app health endpoint.
+probes:
+  path: /api/health
+  initialDelaySeconds: 20
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+# Non-secret environment (rendered into a ConfigMap). Mirrors .env.example.
+env:
+  NODE_ENV: production
+  LOG_LEVEL: info
+  # Private installs: no public demo admin — create the first admin via
+  # POST /api/setup/initialize after boot (see routes/setup.ts).
+  SEED_DEMO_USER: 'false'
+  SINGLE_TENANT_MODE: 'true'
+  STRIPE_DISABLED: 'true'
+  # Extra non-secret key/value pairs merged into the ConfigMap.
+  extra: {}
+
+# Secret values. Provide them via an existing Secret (recommended — e.g. synced
+# from a real secret manager) OR let the chart create one from `secret.data`.
+# DATABASE_URL must point at a pgvector-capable PostgreSQL.
+secret:
+  # If set, the app reads env from this pre-existing Secret and the chart
+  # creates none. Leave empty to have the chart create a Secret from `data`.
+  existingSecret: ''
+  # Used only when existingSecret is empty. Do NOT commit real values here.
+  data:
+    DATABASE_URL: ''
+    JWT_SECRET: ''
+    SESSION_SECRET: ''
+    REFRESH_TOKEN_SECRET: ''
+    REDIS_URL: ''
+    ANTHROPIC_API_KEY: ''
+    OPENAI_API_KEY: ''
+
+# Optional DB migration init container. Runs before the app starts. Set the
+# command to your migration entrypoint (it receives the same env as the app).
+migrations:
+  enabled: false
+  command: ['node', 'dist/scripts/migrate.js']
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# ── Optional bundled dependencies (OPT-IN) ────────────────────────────────────
+# Recommended OFF: use an external managed Postgres (with pgvector) and Redis.
+postgresql:
+  enabled: false
+  # If you enable this, you MUST use a pgvector-capable image, e.g.:
+  # image:
+  #   registry: docker.io
+  #   repository: pgvector/pgvector
+  #   tag: pg16
+  auth:
+    username: concept2cure
+    database: concept2cure
+redis:
+  enabled: false

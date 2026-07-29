@@ -18,21 +18,28 @@
 
 import type { Request, Response, Router } from 'express';
 
+import type { QueryResult, QueryResultRow } from 'pg';
+
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
-  orchestrate,
-  type IntentLens,
-  type UserRole,
-} from '../../services/ana-ri/orchestrator.js';
+  resolveEffortLevel,
+  resolveEffortStrategy,
+  resolveStrategyWithPrecedence,
+  resolveModelOverride,
+} from '../../services/ai-gateway/effort.js';
+import {
+  resolveThinkingConfig,
+  isSubstantiveTurn,
+  resolveOutputBudget,
+  resolveModelTier,
+  resolveTierModel,
+} from '../../services/ai-gateway/reasoning.js';
+import { orchestrate } from '../../services/ana-ri/orchestrator.js';
+import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
+import type { DetectedDocumentTemplatePayload } from '../../../shared/types/ana-document-detection.js';
 import type { SubmissionType } from '../../services/ana-ri/deficiency-taxonomy.js';
 import { inferRole } from '../../services/ana-ri/role-adapter.js';
-import {
-  checkEvidenceDiscipline,
-  validateResponseStructure,
-} from '../../services/ana-ri/enforcement.js';
-import { validateEvidence } from '../../services/ana-ri/evidence-validation.js';
-import { buildQueueMeta } from '../../services/ana-ri/response-contract.js';
 import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
@@ -42,27 +49,28 @@ import {
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
-import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
-import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
-import {
-  getEnabledServerTools,
-  getAllEnabledTools,
-  ALL_ANA_TOOLS,
-} from '../../services/ana/AnaToolDefinitions.js';
+import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
+import { runAgenticToolLoop, resolveMaxRounds, resolveRoundExtension, capToolResultForModel, budgetToolResultsForModel, buildAdaptationNote, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn, type FailedToolCall } from '../../services/ana/agentic-loop.js';
+import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
+import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
+import { runStreamPostProcessing } from './post-processing.js';
+import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
+import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
+import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
+import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
+import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import {
   getIntelligencePrefix,
   buildSectionSpecificPrompt,
 } from '../../services/lumen-context-builder.js';
-import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
-import { enrichContextForChat } from '../../services/ana-ri/context-enrichment.js';
-import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import {
-  processCommandsInResponse,
-  type CommandContext,
-} from '../../services/ana-ri/command-executor.js';
+  enrichContextForChat,
+  type EnrichmentResult,
+} from '../../services/ana-ri/context-enrichment.js';
 import {
   buildAuthoringContextBlock,
   buildOrchestratorAuthoringContext,
@@ -76,12 +84,16 @@ import {
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
+  VALID_LANGUAGES,
 } from './shared.js';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
 const dbPool = {
-  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+  query: <R extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: unknown[]
+  ): Promise<QueryResult<R>> => getPool().query<R>(text, values as unknown[]),
 };
 
 /** Register POST /stream on the given router. */
@@ -99,14 +111,54 @@ router.post('/stream', async (req: Request, res: Response) => {
       conversation_history,
       authoring_context,
       project_id,
+      selected_tools,
+      language,
+      model_override,
+      effort_level,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
       return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
     }
 
+    // ── Prompt-injection inspection (coverage: EVERY user turn) ──────────
+    // Wires the existing prompt-injection defense (server/lib/prompt-injection-
+    // protection) into the streaming hot path. Detection + high-risk audit
+    // logging ALWAYS run; hard-block and content encapsulation are opt-in via
+    // PROMPT_INJECTION_ENFORCE / PROMPT_INJECTION_ENCAPSULATE (both default OFF),
+    // so with default config this is pure observation — output is unchanged.
+    // Runs before the SSE headers are written so an enforced block returns a
+    // clean 400 rather than a mid-stream error.
+    const { orgId: guardOrgId, userId: guardUserId } = extractRequestContext(req);
+    let injectionGuard;
+    try {
+      injectionGuard = await guardUserInput(message, {
+        organizationId: guardOrgId,
+        userId: guardUserId,
+        route: '/api/ana-ri/stream',
+        threadId: thread_id,
+        projectId: project_id || resolveProjectIdFromBody(req.body),
+        ipAddress:
+          (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+          req.socket?.remoteAddress ||
+          undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+      });
+    } catch (guardErr) {
+      if (guardErr instanceof PromptInjectionError) {
+        return sendError(
+          res,
+          400,
+          'Message was blocked by the input safety policy',
+          null,
+          'PROMPT_INJECTION_BLOCKED',
+        );
+      }
+      throw guardErr;
+    }
+
     const gw = ensureGateway();
-    const deterministicMode = gw?.isDeterministicMode?.() || false;
+    const deterministicMode = gw?.isDeterministic?.() || false;
     if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
@@ -160,6 +212,46 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Resolve context
     const { orgId, userId } = extractRequestContext(req);
 
+    // ── Intelligence answer fast-path ──────────────────────────────────
+    // When the client submits a structured intelligence flow answer, skip
+    // the full AI pipeline and call the tool handler directly.
+    const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
+    if (typeof message === 'string' && message.startsWith(INTELLIGENCE_ANSWER_PREFIX)) {
+      try {
+        const payload = JSON.parse(message.slice(INTELLIGENCE_ANSWER_PREFIX.length));
+        const handler = getToolHandler('answer_intelligence_question');
+        if (!handler) throw new Error('answer_intelligence_question handler not registered');
+        const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
+        const resultStr = await handler(payload, {
+          organizationId: orgId,
+          userId: userId || null,
+          projectId: streamProjectId ? Number(streamProjectId) || null : null,
+        });
+        const parsed = JSON.parse(resultStr);
+        if (parsed?.status === 'intelligence_question' && parsed.question) {
+          res.write(`data: ${JSON.stringify({ type: 'intelligence_question', question: parsed.question, flowState: parsed.flowState })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'text', content: `**${parsed.question.node.question}**\n\n${parsed.question.node.guidance || ''}` })}\n\n`);
+        } else if (parsed?.status === 'intelligence_flow_complete' && parsed.completion) {
+          res.write(`data: ${JSON.stringify({ type: 'intelligence_flow_complete', completion: parsed.completion, flowState: parsed.flowState })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'text', content: parsed.completion.summary })}\n\n`);
+        } else if (parsed?.error) {
+          res.write(`data: ${JSON.stringify({ type: 'text', content: `Error: ${parsed.error}` })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({ type: 'done', latencyMs: Date.now() - streamPhaseStart })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
+        stopKeepalive();
+        res.end();
+        return;
+      } catch (err: any) {
+        res.write(`data: ${JSON.stringify({ type: 'text', content: `Error processing intelligence answer: ${err?.message}` })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'done', latencyMs: Date.now() - streamPhaseStart })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
+        stopKeepalive();
+        res.end();
+        return;
+      }
+    }
+
     const validatedLens: IntentLens | undefined =
       intent_lens && VALID_LENSES.has(intent_lens as IntentLens)
         ? (intent_lens as IntentLens)
@@ -167,6 +259,8 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.has(user_role as UserRole) ? (user_role as UserRole) : undefined;
+
+    const validatedLanguage = VALID_LANGUAGES.has(language) ? language : undefined;
 
     const effectiveRole: UserRole =
       validatedRole ||
@@ -189,6 +283,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       projectId: streamProjectId,
       organizationId: orgId,
       authoringContext: streamAuthoringContext,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      targetAgency:
+        typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
+      sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
     });
     const streamDecisionContext = prefetchedStreamContext.decisionContext;
     const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
@@ -207,6 +305,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       message,
       intentLens: validatedLens,
       userRole: effectiveRole,
+      language: validatedLanguage,
       projectContext: project_context,
       documentContext: document_context,
       submissionType: submission_type as SubmissionType | undefined,
@@ -214,6 +313,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoringContext: streamOrchestratorAuthoringContext,
       _feedbackContext: streamFeedbackContext,
       _projectIntelligenceProfile: streamProjectProfile,
+      _relationalOverlay: prefetchedStreamContext.relationalOverlay,
+      _externalIntelBlock: prefetchedStreamContext.externalIntelBlock,
+      _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
+      _sessionBriefingBlock: prefetchedStreamContext.sessionBriefingBlock,
     });
     streamOrchestrationMs = Date.now() - streamPhaseStart;
 
@@ -267,7 +370,8 @@ router.post('/stream', async (req: Request, res: Response) => {
         projectId: streamProjectId,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-      }).catch(err => {
+        userRole: effectiveRole,
+      }).catch((err): EnrichmentResult => {
         console.warn('[AnA RI] Context enrichment failed:', err?.message);
         return { block: '', sources: [] as string[] };
       }),
@@ -277,11 +381,11 @@ router.post('/stream', async (req: Request, res: Response) => {
     const memoryBlock = memoryResult.memoryBlock;
 
     if (enrichment.sources.length > 0) {
-      console.log(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
+      console.info(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
     }
 
     // Use rewritten message if slash command or @app mention was detected
-    const effectiveMessage = enrichment.rewrittenMessage || message;
+    const effectiveMessage = (enrichment as any).rewrittenMessage || message;
 
     // Split into stable prefix (cached) + volatile suffix (per-turn) — see /chat
     // handler for rationale. The Claude gateway marks the stable block with
@@ -326,6 +430,13 @@ router.post('/stream', async (req: Request, res: Response) => {
             messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
           }
           streamHistoryLoaded = true;
+          // Tool-trace memory: carry forward a compact summary of the tools AnA
+          // already ran in earlier turns (stored on each assistant message's
+          // metadata) so she reuses prior findings instead of re-running them.
+          const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
+          if (traceNote) {
+            messages.push({ role: 'system', content: traceNote });
+          }
         }
       } catch {
         /* fall through to client history */
@@ -350,29 +461,119 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
-    // Inject file context if file_ids provided
-    const streamFileIds = req.body.file_ids;
-    if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
+    // Inject file context from freshly-attached files AND from sources the user
+    // picked in the Data Room.
+    //
+    // `source_ids` are cre_evidence_sources identities; they resolve back to the
+    // uploads their bytes live in and then take exactly the same tenant-scoped
+    // path as an attachment. One grounding mechanism, two ways of choosing — a
+    // separate reader for selected sources would be a second thing to get
+    // tenancy wrong in.
+    const streamFileIds: string[] = [];
+    if (Array.isArray(req.body.file_ids)) {
+      for (const id of req.body.file_ids) {
+        if (typeof id === 'string' && id && !streamFileIds.includes(id)) streamFileIds.push(id);
+      }
+    }
+    if (Array.isArray(req.body.source_ids) && req.body.source_ids.length > 0) {
       try {
-        const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
-          [streamFileIds, orgId ? Number(orgId) : 0]
+        const { resolveSourceUploadIds } = await import(
+          '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
         );
-        if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows
-            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+        const fromSources = await resolveSourceUploadIds(
+          Number(orgId),
+          req.body.source_ids as Array<number | string>
+        );
+        if (fromSources.length < req.body.source_ids.length) {
+          // A selected source with no readable upload must not pass silently —
+          // the user chose it expecting it to be read.
+          console.warn(
+            `[AnA RI Stream] ${req.body.source_ids.length - fromSources.length} of ${req.body.source_ids.length} selected source(s) have no readable upload`
+          );
+        }
+        for (const id of fromSources) {
+          if (!streamFileIds.includes(id)) streamFileIds.push(id);
+        }
+      } catch (srcErr: any) {
+        console.warn('[AnA RI Stream] Source selection resolution failed:', srcErr?.message);
+      }
+    }
+    if (streamFileIds.length > 0) {
+      try {
+        // Tenant scoping is enforced by the shared helper, which checks BOTH
+        // the organization column and the storage-path prefix. This route used
+        // to hand-roll `WHERE ... AND organization_id = $2` against a table
+        // whose INSERT never wrote that column, so the lookup always returned
+        // zero rows and every attachment was silently dropped.
+        const { loadUploadedFileMetadata } = await import(
+          '../../services/ana/uploaded-file-access.js'
+        );
+        const attachedFiles = await loadUploadedFileMetadata(
+          streamFileIds,
+          orgId != null ? Number(orgId) : null
+        );
+        if (attachedFiles.length < streamFileIds.length) {
+          console.warn(
+            `[AnA RI Stream] ${streamFileIds.length - attachedFiles.length} of ${streamFileIds.length} attachment(s) not resolvable for this tenant`
+          );
+        }
+        if (attachedFiles.length > 0) {
+          const fileContext = attachedFiles
+            .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)
             .join('\n');
           messages.push({
             role: 'user' as const,
             content: `[The user has attached the following files:\n${fileContext}\nReference these files in your response when relevant.]`,
           });
+
+          // PDF intake: when enabled, send the actual bytes inline as base64
+          // document blocks so ANA can READ the file, not just see its name.
+          // GA path (no beta header). Capped per file to stay within the
+          // model's document limit; oversize/unreadable files degrade to the
+          // metadata-only mention above.
+          if (isPdfIntakeEnabled()) {
+            const MAX_DOC_BYTES = 30 * 1024 * 1024; // ~30MB raw, under Anthropic's limit
+            for (const f of attachedFiles) {
+              const mime = (f.mimeType || '').toLowerCase();
+              const docMime: 'application/pdf' | 'text/plain' | null =
+                mime === 'application/pdf'
+                  ? 'application/pdf'
+                  : mime === 'text/plain' || mime === 'text/markdown'
+                    ? 'text/plain'
+                    : null;
+              if (!docMime || !f.storagePath) continue;
+              const buf = await readLocalUploadBuffer(f.storagePath);
+              if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
+              messages.push({
+                role: 'user' as const,
+                content: `Read the attached document "${f.fileName}" and use it to answer.`,
+                contentBlocks: [
+                  {
+                    type: 'document',
+                    source: { type: 'base64', media_type: docMime, data: buf.toString('base64') },
+                    title: f.fileName,
+                  },
+                  { type: 'text', text: `Attached document: ${f.fileName}` },
+                ],
+              });
+            }
+          }
         }
-      } catch {
-        /* non-blocking */
+      } catch (fileErr: any) {
+        // Non-blocking: the turn still runs without the attachment. But it must
+        // not fail silently — a swallowed error here is indistinguishable to
+        // the user from "AnA read my file and ignored it".
+        console.warn('[AnA RI Stream] Attachment context failed:', fileErr?.message);
       }
     }
 
-    messages.push({ role: 'user', content: effectiveMessage });
+    // Default path uses `effectiveMessage` unchanged. Only when
+    // PROMPT_INJECTION_ENCAPSULATE is enabled does the guard hand back the
+    // injection-resistant encapsulated form for the model to see as data.
+    messages.push({
+      role: 'user',
+      content: injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage,
+    });
 
     // Status: generating (context is built, about to stream tokens from the model)
     res.write(
@@ -393,6 +594,25 @@ router.post('/stream', async (req: Request, res: Response) => {
         orchestration: {
           detectedIntent: orchestration.detectedIntent,
           detectedSubmissionType: orchestration.detectedSubmissionType,
+          detectedDocumentTemplate: orchestration.detectedDocumentTemplate
+            ? ({
+                id: orchestration.detectedDocumentTemplate.template.id,
+                displayName: orchestration.detectedDocumentTemplate.template.displayName,
+                chipLabel: orchestration.detectedDocumentTemplate.template.chipLabel,
+                authority: orchestration.detectedDocumentTemplate.template.authority,
+                submissionFamily: orchestration.detectedDocumentTemplate.template.submissionFamily,
+                confidence: orchestration.detectedDocumentTemplate.confidence,
+                // Forward the document's section structure so the client can
+                // render the ICH/FDA outline. `guidance` is deliberately dropped
+                // — it is prompt material, not UI. See WO-3 / shared contract.
+                sections: orchestration.detectedDocumentTemplate.template.sections.map((s) => ({
+                  heading: s.heading,
+                  code: s.code,
+                  required: s.required,
+                  targetWords: s.targetWords,
+                })),
+              } satisfies DetectedDocumentTemplatePayload)
+            : null,
           appliedRole: orchestration.appliedRole,
           activeWorkstream: orchestration.activeWorkstream,
           workstreamHandoff: orchestration.workstreamHandoff,
@@ -401,14 +621,20 @@ router.post('/stream', async (req: Request, res: Response) => {
       })}\n\n`
     );
 
-    // Routing plan
+    // Effort (Fast/Balanced/Thorough) resolved early so output headroom and
+    // reasoning depth can both scale with it. An unknown/absent value resolves
+    // to 'balanced' (never a 4xx).
+    const effortUsed = resolveEffortLevel(effort_level);
+
+    // Routing plan — output budget scales with effort (Thorough drafting gets
+    // more room; the planner still clamps to its own [512, 8192] range).
     const routingPlan = planKernelExecution({
       route: '/api/ana-ri/stream',
       messageLength: message.length,
       intentLens: orchestration.detectedIntent.lens,
       intentConfidence: orchestration.detectedIntent.confidence,
       submissionType: orchestration.detectedSubmissionType,
-      requestedMaxTokens: 4096,
+      requestedMaxTokens: resolveOutputBudget(effortUsed),
     });
 
     const policyHint = await getKernelPolicyHint({
@@ -416,27 +642,129 @@ router.post('/stream', async (req: Request, res: Response) => {
       route: '/api/ana-ri/stream',
       taskType: routingPlan.taskType,
     });
-    const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
+
+    // ── Model / effort picker (flag-gated client; server is permissive) ──────
+    // Effort (resolved above) is a calm Fast/Balanced/Thorough abstraction over
+    // routing strategy.
+    const effortStrategy = resolveEffortStrategy(effortUsed);
+
+    // Governance-safe precedence: a kernel-pinned policyHint ALWAYS wins, so a
+    // user's effort choice can never override a governance-pinned strategy. When
+    // no policy hint is present, effort takes effect; else the routing plan.
+    const selectedStrategy = resolveStrategyWithPrecedence({
+      policyHintStrategy: policyHint?.preferredStrategy,
+      effortStrategy,
+      routingPlanStrategy: routingPlan.strategy,
+    });
+
+    // Optional explicit model override. Validated against THIS tenant's enabled
+    // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
+    // fall back to the (effort-derived) strategy above. The override does not
+    // bypass governance — the gateway still enforces residency/ZDR placement.
+    // In deterministic mode (or any gateway substrate without a model registry)
+    // there is nothing to override against — pass an empty set so the override
+    // resolves to none and we fall back to the effort-derived strategy.
+    const overrideCandidates =
+      typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+    const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
+
+    // Substantive-turn signal — drives BOTH the reasoning depth and the cost
+    // tier below, computed once so they agree.
+    const substantiveTurn = isSubstantiveTurn({
+      messageLength: typeof message === 'string' ? message.length : 0,
+      intentLens: orchestration.detectedIntent?.lens,
+    });
+
+    // ── Cost-tiered model selection ──────────────────────────────────────────
+    // Keep the everyday path off the expensive flagship: Economy (Haiku) for
+    // routine turns, Standard (Sonnet) for real drafting/review, Flagship (Opus)
+    // only for a high kernel risk-tier or an explicit Thorough request. So the
+    // expensive model is the exception, not the default. This yields to an
+    // explicit user model pin and to a governance-pinned strategy, only uses
+    // enabled registry models (per-deployment tier remap via ANA_TIER_*_MODEL),
+    // and is opt-out via ANA_MODEL_TIERING=off.
+    const tieredModel = (() => {
+      if (resolvedOverride) return null; // user pinned a specific model
+      if (policyHint?.preferredStrategy) return null; // governance owns the strategy
+      if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+      const tier = resolveModelTier({
+        effort: effortUsed,
+        riskTier: routingPlan.riskTier,
+        intentLens: orchestration.detectedIntent?.lens,
+        taskType: routingPlan.taskType,
+        substantive: substantiveTurn,
+      });
+      return resolveTierModel(tier, overrideCandidates, process.env);
+    })();
 
     let fullContent = '';
-    let cleanedFullContent = '';
+    // Structured record of the tools run this turn (persisted on the assistant
+    // message's metadata for cross-turn memory; see tool-trace.ts).
+    const toolTrace: ToolTraceEntry[] = [];
+    // Failure-adaptation guidance from the most recent tool round; appended to
+    // the next model turn (then cleared) so a failed round becomes a course
+    // correction instead of an identical retry the thrash guard has to kill.
+    let pendingAdaptationNote = '';
+    // Raw tool output this turn — the evidence corpus the final answer is
+    // verified against in the self-verification round (see answer-grounding.ts).
+    const toolEvidenceCorpus: string[] = [];
+    // Provenance envelopes emitted by evidence tools this turn — persisted to the
+    // durable lineage trail (data_lineage_records) by post-processing. Capped so a
+    // pathological multi-round turn can't accumulate unbounded records.
+    const collectedProvenance: ProvenanceRecord[] = [];
+    const PROVENANCE_CAP = 200;
+    // Document drafts emitted this turn — persisted to the governed artifact
+    // version history (concept2cure_artifacts / _artifact_versions) by
+    // post-processing so Document Studio version history survives the session.
+    const collectedDrafts: { title: string; content: string; documentType?: string }[] = [];
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
-    // Extended thinking opt-in: kernel router flags genuinely high-stakes turns
-    // (audit/risk lens, critical contradictions). Use Claude's thinking budget
-    // to deepen reasoning on those without imposing latency on conversational
-    // turns. Gateway will force temperature=1 when thinking is enabled.
-    const streamThinkingConfig =
-      routingPlan.riskTier === 'high'
-        ? { enabled: true, budgetTokens: 10_000 }
-        : undefined;
+    // Extended thinking — effort-scaled reasoning policy (see reasoning.ts).
+    // AnA reasons on genuinely substantive turns by default (Balanced), not only
+    // when the kernel flags high risk, and reasons harder on Thorough. Casual
+    // one-line turns stay Fast so greetings never pay reasoning latency. On the
+    // flagship reasoning-only model thinking is adaptive (self-budgeting); the
+    // budget hint only bites the legacy fallback surface, where the gateway
+    // clamps it below max_tokens. Gateway forces temperature=1 when thinking is
+    // enabled on that legacy surface. (substantiveTurn computed above.)
+    const streamThinkingResolved = resolveThinkingConfig({
+      effort: effortUsed,
+      riskTier: routingPlan.riskTier,
+      substantive: substantiveTurn,
+    });
+    const streamThinkingConfig = streamThinkingResolved.enabled
+      ? streamThinkingResolved
+      : undefined;
     // Full tool suite on the streaming path: custom JSON-schema tools
     // (PubMed search, FDA guidance lookup, predicate device analysis, etc.)
     // plus any env-enabled Anthropic server tools (web_search, web_fetch,
     // code_execution). Server tools resolve in Anthropic's infra; custom
     // tools dispatch locally via the single-round agentic block below.
-    const streamTools = getAllEnabledTools();
+    // Per-tenant tool governance: a tenant can disable individual tools
+    // (e.g. outbound FDA letters, adverse-event lookups) via
+    // organizations.settings.anaToolPolicy.deny. Honour the deny-list on
+    // the assembled toolset so disabled tools are never offered to the
+    // model. Loader is fail-open (default-allow) on any DB issue.
+    const allTools = getAllEnabledTools();
+    const toolPolicy = orgId ? await loadAnaToolPolicy(getPool(), Number(orgId)) : {};
+    // Governance first (tenant deny-list), then offer the subset relevant to this
+    // turn's intent + context. The platform command bridge is always retained, so
+    // intent selection never removes a capability — anything dropped stays
+    // reachable through execute_platform_command. User-pinned tools are honoured.
+    const asStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    const streamTools = selectToolsForTurn(filterToolsByPolicy(allTools, toolPolicy), typeof message === 'string' ? message : '', {
+      pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
+      context: {
+        projectType: asStr(submission_type),
+        documentType: asStr(document_context),
+        surface: asStr(intent_lens) ?? asStr(authoring_context),
+      },
+      // Reliability-aware: trim currently-unhealthy tools first when over the cap
+      // (the always-on core + platform bridge are unaffected). Per-tenant when an
+      // org is in context, else the global view.
+      deprioritize: new Set(getUnhealthyTools(3, orgId ?? undefined).map(t => t.tool)),
+    });
 
     const gwResponse = await gw.route({
       taskType: routingPlan.taskType,
@@ -444,6 +772,15 @@ router.post('/stream', async (req: Request, res: Response) => {
       maxTokens: routingPlan.maxTokens,
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
+      // Explicit-model path: a user pin wins; otherwise the cost tier picks the
+      // model (Economy/Standard/Flagship). Either hands the gateway an explicit
+      // provider+model so selectModel() short-circuits to it (still subject to
+      // placement/health). With neither, the effort-derived strategy selects.
+      ...(resolvedOverride
+        ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
+        : tieredModel
+          ? { provider: tieredModel.provider, model: tieredModel.model }
+          : {}),
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
       ...(streamTools.length > 0 ? { tools: streamTools } : {}),
@@ -474,124 +811,286 @@ router.post('/stream', async (req: Request, res: Response) => {
     });
     streamGatewayMs = Date.now() - streamGatewayStart;
 
-    // Single-round agentic tool execution. If Claude called custom tools,
-    // dispatch them locally, stream transparency events to the client, then
-    // make one non-streaming follow-up call with the tool results so Claude
-    // can deliver the final grounded answer. Multi-round is out of scope
-    // here — for regulatory lookups one round covers the common case, and
-    // the non-streaming send-message.ts path still handles multi-round.
+    // Multi-round agentic tool execution via the orchestrator
+    // (server/services/ana/agentic-loop.ts): the model proposes tool calls, we
+    // execute them and stream transparency, then feed the results back so it can
+    // chain another step (extract structure → search → compare versions) or
+    // produce a grounded answer. Bounded + thrash-resistant; the loop core is
+    // unit-tested independently of the gateway and this SSE transport.
     const streamToolUses = (gwResponse as AnaGatewayResponse).toolUses;
     if (streamToolUses && streamToolUses.length > 0) {
-      const toolResultEntries: Array<{ tool_use_id: string; content: string; name: string }> = [];
-      for (const toolUse of streamToolUses) {
-        // Announce the tool invocation to the client so the UI can show
-        // "Checking FDA guidance…" affordances instead of an opaque pause.
-        res.write(
-          `data: ${JSON.stringify({
-            type: 'tool_use',
-            name: toolUse.name,
-            input: toolUse.input,
-          })}\n\n`
-        );
+      const toToolCall = (c: { id: string; name: string; input?: Record<string, unknown> }): ToolCall =>
+        ({ id: c.id, name: c.name, input: (c.input ?? {}) as Record<string, unknown> });
 
-        const handler = getToolHandler(toolUse.name);
-        const toolStart = Date.now();
-        let resultStr: string;
-        let toolStatus: 'success' | 'error' | 'not_found' = 'success';
-        let toolErrorMessage: string | undefined;
-        if (handler) {
-          try {
-            resultStr = await handler(toolUse.input, {
-              organizationId: orgId,
-              userId: userId || null,
-              projectId: streamProjectId ? Number(streamProjectId) || null : null,
-            });
-          } catch (toolErr: any) {
-            resultStr = JSON.stringify({
-              error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
-              tool: toolUse.name,
-            });
-            toolStatus = 'error';
-            toolErrorMessage = toolErr?.message || 'unknown error';
-          }
-        } else {
-          // Unknown tool name — could be an Anthropic server tool that
-          // Anthropic resolved server-side (in which case the result is
-          // already in the content stream, nothing to do) or a schema drift.
-          // Either way we don't want to block the conversation.
-          resultStr = JSON.stringify({
-            note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
-          });
-          toolStatus = 'not_found';
+      // Execute one round: announce the step, stream tool_use/result events, run
+      // the handler, log telemetry, and surface any generated document draft.
+      const executeTools = async (calls: ToolCall[], round: number): Promise<ToolResultEntry[]> => {
+        res.write(
+          `data: ${JSON.stringify({ type: 'step', round, tools: calls.map(c => c.name), plan: describeToolPlan(calls) })}\n\n`
+        );
+        // Announce all tool invocations in order, then run their handlers with
+        // bounded concurrency (network-bound tools like PubMed/ClinicalTrials
+        // run in parallel), and finally emit results in the original order so
+        // the client UI stays deterministic.
+        for (const toolUse of calls) {
+          res.write(
+            `data: ${JSON.stringify({ type: 'tool_use', round, name: toolUse.name, label: describeToolPlan([toolUse])[0].label, input: toolUse.input })}\n\n`
+          );
         }
-        // Telemetry: persist the tool invocation so we can measure how
-        // often each tool fires and decide whether eager schema loading
-        // (all 18 tool schemas on every turn) is worth keeping vs
-        // moving to a deferred / tool-search pattern. Fire-and-forget;
-        // logToolRun swallows its own errors.
-        void logToolRun({
-          threadId: thread_id,
-          projectId: streamProjectId ? Number(streamProjectId) || null : null,
-          userId: userId || null,
-          organizationId: orgId,
-          toolName: toolUse.name,
-          arguments: (toolUse.input ?? {}) as Record<string, unknown>,
-          result: { resultBytes: resultStr.length },
-          status: toolStatus,
-          errorMessage: toolErrorMessage,
-          latencyMs: Date.now() - toolStart,
-        });
-        toolResultEntries.push({
-          tool_use_id: toolUse.id,
-          content: resultStr,
-          name: toolUse.name,
-        });
+        const ran = await mapWithConcurrency(calls, async (toolUse) => {
+          const handler = getToolHandler(toolUse.name);
+          const toolStart = Date.now();
+          let resultStr: string;
+          let toolStatus: 'success' | 'error' | 'not_found' = 'success';
+          let toolErrorMessage: string | undefined;
+          if (handler) {
+            try {
+              resultStr = await handler(toolUse.input, {
+                organizationId: orgId,
+                userId: userId || null,
+                projectId: streamProjectId ? Number(streamProjectId) || null : null,
+              });
+            } catch (toolErr: any) {
+              resultStr = JSON.stringify({
+                error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
+                tool: toolUse.name,
+              });
+              toolStatus = 'error';
+              toolErrorMessage = toolErr?.message || 'unknown error';
+            }
+          } else {
+            resultStr = JSON.stringify({
+              note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
+            });
+            toolStatus = 'not_found';
+          }
+          void logToolRun({
+            threadId: thread_id,
+            projectId: streamProjectId ? Number(streamProjectId) || null : null,
+            userId: userId || null,
+            organizationId: orgId,
+            toolName: toolUse.name,
+            arguments: (toolUse.input ?? {}) as Record<string, unknown>,
+            result: { resultBytes: resultStr.length },
+            status: toolStatus,
+            errorMessage: toolErrorMessage,
+            latencyMs: Date.now() - toolStart,
+          });
+          return { toolUse, resultStr, toolStatus, toolErrorMessage };
+        }, 4);
 
-        res.write(
-          `data: ${JSON.stringify({
-            type: 'tool_result',
-            name: toolUse.name,
-            result: resultStr,
-          })}\n\n`
-        );
-      }
+        const entries: ToolResultEntry[] = [];
+        const roundFailures: FailedToolCall[] = [];
+        for (const { toolUse, resultStr, toolStatus, toolErrorMessage } of ran) {
+          entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
+          const stepLabel = describeToolPlan([toolUse])[0].label;
+          // Record this call in the turn's tool-trace memory + evidence corpus.
+          toolTrace.push(
+            buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr),
+          );
+          // Failures collected for the round's adaptation note (see below).
+          if (toolStatus !== 'success') {
+            roundFailures.push({
+              name: toolUse.name,
+              label: stepLabel,
+              error: toolErrorMessage || (toolStatus === 'not_found' ? 'no handler available' : undefined),
+            });
+          }
+          // Calm, human-facing message for a non-success step so the client can
+          // render an honest state ("AnA couldn't finish X") instead of a raw
+          // error string — trust is the interface, including when something
+          // fails. The lower-cased label reads naturally mid-sentence.
+          const humanStep = stepLabel.charAt(0).toLowerCase() + stepLabel.slice(1);
+          const humanMessage =
+            toolStatus === 'error'
+              ? `AnA couldn't finish ${humanStep}. She'll continue with what she has.`
+              : toolStatus === 'not_found'
+                ? `This step (${humanStep}) isn't available here. AnA will work around it.`
+                : undefined;
+          res.write(
+            `data: ${JSON.stringify({ type: 'tool_result', round, name: toolUse.name, label: stepLabel, status: toolStatus, ...(humanMessage ? { message: humanMessage } : {}), result: resultStr })}\n\n`
+          );
+          if (toolStatus === 'success') {
+            try {
+              const parsed = JSON.parse(resultStr);
+              // Accumulate any provenance envelope this evidence tool emitted, for
+              // durable persistence to the lineage trail in post-processing.
+              if (Array.isArray(parsed?.provenance)) {
+                for (const p of parsed.provenance) {
+                  if (collectedProvenance.length >= PROVENANCE_CAP) break;
+                  if (p && typeof p === 'object') collectedProvenance.push(p as ProvenanceRecord);
+                }
+              }
+              if (parsed?.status === 'intelligence_question' && parsed.question) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'intelligence_question',
+                    question: parsed.question,
+                    flowState: parsed.flowState,
+                  })}\n\n`
+                );
+              }
+              if (parsed?.status === 'intelligence_flow_complete' && parsed.completion) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'intelligence_flow_complete',
+                    completion: parsed.completion,
+                    flowState: parsed.flowState,
+                  })}\n\n`
+                );
+              }
+              // War Game report — forward to client as a dedicated SSE event
+              if (parsed?.war_game_report) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'war_game_report',
+                    report: parsed.war_game_report,
+                  })}\n\n`
+                );
+              }
+              // Reporting Canvas — a governed report render or a best-practices
+              // suggestion set from the reporting tools. Forwarded verbatim so the
+              // client canvas renders it (report → ReportView; suggestions → chips).
+              if (parsed?.report_canvas) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'report_canvas',
+                    canvas: parsed.report_canvas,
+                    source: toolUse.name,
+                  })}\n\n`
+                );
+              }
+              if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
+                const draftTitle: string = parsed.title || 'Generated document';
+                // Record for durable version-history persistence in post-processing.
+                collectedDrafts.push({
+                  title: draftTitle,
+                  content: parsed.content,
+                  documentType: typeof parsed.documentType === 'string' ? parsed.documentType : undefined,
+                });
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'artifact_draft',
+                    title: draftTitle,
+                    content: parsed.content,
+                    documentType: parsed.documentType,
+                    source: toolUse.name,
+                  })}\n\n`
+                );
+              }
+            } catch {
+              // Non-JSON tool result — nothing to surface as a draft.
+            }
+          }
+        }
 
-      // Compose the follow-up turn: prior messages + Claude's partial text
-      // (which often narrates "let me check…") + a user message bundling
-      // the tool results. Force a text response by dropping tools on the
-      // follow-up call — we only want one round here.
-      const followupMessages: GatewayMessage[] = [
-        ...messages,
-        { role: 'assistant', content: fullContent || '' },
-        {
+        // Budget the whole round's results before they reach the model, so a
+        // many-tool round can't bloat every later round's context (deep loops
+        // carry all prior results forward). Small rounds pass through under the
+        // classic per-result caps, byte-identical to before.
+        const budgeted = budgetToolResultsForModel(entries);
+        // Ground against what the MODEL saw, not the raw results. If the
+        // grounding round verified the answer against fuller text than the model
+        // was fed, a claim sitting in the truncated-away middle would be marked
+        // "grounded" though the model never read it — a false pass in the one
+        // direction that lets a fabrication through. The corpus therefore gets
+        // exactly the budgeted strings the model gets.
+        for (const b of budgeted) toolEvidenceCorpus.push(b.content);
+        // Failure guidance for the next model turn (cleared after use).
+        pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+        return budgeted;
+      };
+
+      // Call the model with the latest tool results, streaming its narration. On
+      // the terminal round includeTools is false to force a grounded answer.
+      const loopMessages: GatewayMessage[] = [...messages];
+      const callModel = async (
+        results: ToolResultEntry[],
+        priorText: string,
+        round: number,
+        includeTools: boolean,
+      ): Promise<ModelTurn> => {
+        loopMessages.push({ role: 'assistant', content: priorText || '' });
+        // Entries arrive pre-budgeted from executeTools, so the per-result cap
+        // here is a no-op safety net. The adaptation note (when a tool failed
+        // last round) rides the same user turn so the model course-corrects
+        // instead of retrying the identical call.
+        const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
+        pendingAdaptationNote = '';
+        loopMessages.push({
           role: 'user',
-          content: toolResultEntries
-            .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${tr.content}`)
-            .join('\n\n'),
+          content:
+            results
+              .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
+              .join('\n\n') + adaptationSuffix,
+        });
+
+        // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
+        // production behavior is byte-identical until deliberately enabled and
+        // validated. When on, intermediate follow-up rounds (round >= 2 that
+        // still carry tools) run on the latency-optimized tier so routine
+        // tool-result summarization stops paying top-tier latency. It NEVER
+        // downgrades a user-pinned model (resolvedOverride) and NEVER the forced
+        // final grounded answer (includeTools === false) — that stays on the
+        // resolved strategy, so the truthfulness/quality of the answer the user
+        // reads is unchanged.
+        const roundStrategy =
+          process.env.ANA_LOOP_TIERING === 'on' && !resolvedOverride && includeTools && round >= 2
+            ? 'latency_optimized'
+            : selectedStrategy;
+
+        let roundText = '';
+        const roundResponse = await gw.route({
+          taskType: routingPlan.taskType,
+          messages: loopMessages,
+          maxTokens: routingPlan.maxTokens,
+          temperature: routingPlan.temperature,
+          strategy: roundStrategy,
+          // Keep the same explicit model (user pin or cost tier) across the
+          // agentic follow-up rounds so the whole turn stays on one tier.
+          ...(resolvedOverride
+            ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
+            : tieredModel
+              ? { provider: tieredModel.provider, model: tieredModel.model }
+              : {}),
+          promptCache: { enabled: true, type: 'ephemeral' },
+          ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
+          stream: true,
+          onStream: (chunk: string, metadata?: any) => {
+            if (metadata?.type === 'thinking') {
+              const thinkingChunk: string = metadata?.thinkingContent || '';
+              if (thinkingChunk) {
+                res.write(`data: ${JSON.stringify({ type: 'thinking', content: thinkingChunk })}\n\n`);
+              }
+              return;
+            }
+            roundText += chunk;
+            fullContent += chunk;
+            res.write(`data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`);
+          },
+          callerModule: 'ana-ri-stream-followup',
+        });
+        if (!roundText && roundResponse.content) {
+          roundText = roundResponse.content;
+          fullContent += (fullContent ? '\n\n' : '') + roundText;
+          res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
+        }
+        const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
+        return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
+      };
+
+      await runAgenticToolLoop(
+        { text: fullContent, toolCalls: streamToolUses.map(toToolCall) },
+        { executeTools, callModel },
+        // Effort-scaled agentic depth: Thorough can chase a multi-tool
+        // investigation all the way down; Balanced clears the old flat cap of 5.
+        // The ceiling is soft — a loop still discovering novel ground earns up
+        // to resolveRoundExtension() extra rounds; a circling loop never does.
+        {
+          maxRounds: resolveMaxRounds(effortUsed),
+          progressExtension: resolveRoundExtension(effortUsed),
         },
-      ];
-
-      const followupResponse = await gw.route({
-        taskType: routingPlan.taskType,
-        messages: followupMessages,
-        maxTokens: routingPlan.maxTokens,
-        temperature: routingPlan.temperature,
-        strategy: selectedStrategy,
-        promptCache: { enabled: true, type: 'ephemeral' },
-        callerModule: 'ana-ri-stream-followup',
-      });
-
-      const followupText = followupResponse.content || '';
-      if (followupText) {
-        // Emit the follow-up answer. Not true token-by-token streaming —
-        // the follow-up call was non-streaming — but the client receives
-        // it as a standard text chunk so the UI renders it the same way
-        // as normal streamed content.
-        fullContent += (fullContent ? '\n\n' : '') + followupText;
-        res.write(
-          `data: ${JSON.stringify({ type: 'text', content: followupText })}\n\n`
-        );
-      }
+      );
     }
 
     // RIM interception moved to the background post-processing block below,
@@ -647,6 +1146,14 @@ router.post('/stream', async (req: Request, res: Response) => {
         type: 'done',
         model: gwResponse.model,
         provider: gwResponse.provider,
+        // The cost tier the router selected (economy/standard/flagship), or null
+        // when tiering yielded (user pin / governance strategy / opt-out). Lets
+        // ops confirm the everyday path is staying off the flagship. Additive.
+        modelTier: tieredModel?.tier ?? null,
+        // Echo the resolved effort back so the client can confirm what ran (the
+        // effort the server actually used — which may differ from the request
+        // when a governance policyHint pinned the strategy). Additive field.
+        effortUsed,
         usage: gwResponse.usage,
         latencyMs: gwResponse.latencyMs,
         response: fullContent || undefined,
@@ -654,219 +1161,39 @@ router.post('/stream', async (req: Request, res: Response) => {
       })}\n\n`
     );
 
+    // AnA's relational self-development: reflect on this turn and update her
+    // notes about the user + project (throttled inside; background only).
+    void reflectAfterTurn({
+      organizationId: orgId ? Number(orgId) : null,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      projectId: streamProjectId != null ? Number(streamProjectId) : null,
+      userMessage: message,
+      assistantMessage: fullContent,
+    }).catch(() => {});
+
     // Background post-processing. We intentionally do NOT await this at the
     // top level — the client already has `done`. When the executors finish
     // (or fail) we emit `post_done` with cleanedResponse + executed actions/
     // commands + evidence, then close the stream.
-    (async () => {
-      let executedActions: any[] = [];
-      let contentForCommandProcessing = fullContent;
-      let executedCommands: any[] = [];
-
-      // Guidance executor — auto-create artifacts if response contains action signals
-      if (fullContent && streamProjectId && orgId) {
-        try {
-          const guidance = await processResponseActions(fullContent, {
-            projectId:
-              typeof streamProjectId === 'string'
-                ? Number.parseInt(streamProjectId, 10)
-                : streamProjectId,
-            organizationId: Number(orgId),
-            userId: typeof userId === 'number' ? userId : 0,
-            userName: 'AnA',
-            threadId: threadId || undefined,
-          });
-          executedActions = guidance.actions;
-          contentForCommandProcessing = guidance.cleanedText || fullContent;
-        } catch (e: any) {
-          console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
-        }
-      }
-
-      // Command executor — execute operational commands (create project, artifact, task, etc.)
-      if (contentForCommandProcessing && orgId) {
-        try {
-          const cmdCtx: CommandContext = {
-            userId: typeof userId === 'number' ? userId : 0,
-            organizationId: Number(orgId),
-            activeProjectId: streamProjectId
-              ? typeof streamProjectId === 'string'
-                ? Number.parseInt(streamProjectId, 10)
-                : streamProjectId
-              : undefined,
-            userName: (req as any).user?.name,
-            userRole: effectiveRole,
-          };
-          const { processCommandsInResponse } =
-            await import('../services/ana-ri/command-executor.js');
-          const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
-          executedCommands = cmdResult.executedCommands;
-          cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
-          if (executedCommands.length > 0) {
-            console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
-          }
-        } catch (e: any) {
-          console.warn('[AnA RI Stream] Command executor failed:', e?.message);
-        }
-      }
-
-      const finalAssistantContent =
-        cleanedFullContent && cleanedFullContent.trim().length > 0
-          ? cleanedFullContent
-          : executedActions.length > 0 || executedCommands.length > 0
-            ? 'Action executed successfully.'
-            : contentForCommandProcessing || fullContent;
-
-      // Run persistence concurrent with the synchronous evidence / structure
-      // checks. saveMessage is a DB roundtrip (tens to hundreds of ms); the
-      // checks are CPU-only and finish instantly. Awaiting them together
-      // collapses the tail to max(db, cpu) instead of db + cpu.
-      const persistPromise: Promise<void> =
-        orgId && threadId && fullContent
-          ? saveMessage(threadId, 'assistant', finalAssistantContent)
-              .then(() => undefined)
-              .catch((e: any) => {
-                console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
-                persistenceFailed = true;
-              })
-          : Promise.resolve();
-
-      // Evidence discipline + structure checks are synchronous — run inline.
-      const streamEvidenceCheck = finalAssistantContent
-        ? checkEvidenceDiscipline(finalAssistantContent)
-        : null;
-      const streamStructureCheck = finalAssistantContent
-        ? validateResponseStructure(finalAssistantContent)
-        : null;
-      const streamEvidenceVerdict = finalAssistantContent
-        ? validateEvidence(finalAssistantContent, 'ana-ri')
-        : null;
-
-      // RIM interception — fire sync, non-blocking, on the cleaned content.
-      // Claim metrics are grounded in the structure + evidence checks above so
-      // RIM receives an actual turn-quality signal instead of a flat 0.5.
-      if (finalAssistantContent && streamProjectId && orgId) {
-        const ratedClaimCount = Math.max(
-          streamEvidenceCheck?.totalLabels || 0,
-          streamStructureCheck && streamStructureCheck.score > 0 ? 1 : 0,
-        );
-        const qualityRate =
-          streamStructureCheck && streamStructureCheck.maxScore > 0
-            ? streamStructureCheck.score / streamStructureCheck.maxScore
-            : 0.5;
-        interceptChatResponse({
-          organizationId: Number(orgId),
-          projectId: Number(streamProjectId),
-          userId: typeof userId === 'number' ? userId : undefined,
-          sectionCode,
-          assistantMessage: finalAssistantContent,
-          claimCount: ratedClaimCount,
-          supportedClaimRate: qualityRate,
-          model: gwResponse.model || 'unknown',
-          provider: gwResponse.provider || 'unknown',
-        });
-      }
-
-      // Working-memory write-back — threshold-gated, non-blocking.
-      // Reuses the gateway message history already built for the turn and
-      // appends the cleaned assistant reply so the summarizer sees the full
-      // exchange, not just the prefix.
-      if (threadId && orgId && finalAssistantContent) {
-        const writebackMessages = messages
-          .filter(m => m.role === 'user' || m.role === 'assistant')
-          .map(m => ({ role: m.role, content: m.content }))
-          .concat({ role: 'assistant', content: finalAssistantContent });
-        void summarizeAndStoreWorkingMemoryForThread({
-          threadId,
-          organizationId: Number(orgId),
-          messages: writebackMessages,
-        });
-      }
-
-      // Wait for persistence to settle before emitting warning/post_done so
-      // `persistenceFailed` reflects the actual DB outcome.
-      await persistPromise;
-
-      // Warn client if thread persistence failed
-      if (persistenceFailed) {
-        res.write(
-          `data: ${JSON.stringify({ type: 'warning', message: 'Thread persistence failed' })}\n\n`
-        );
-      }
-
-      // Build queue metadata
-      const streamQueueMeta = buildQueueMeta({
-        threadId,
-        persistenceFailed,
-      });
-
-      // Send grounding strip (evidence verdict summary for client UI)
-      if (streamEvidenceVerdict) {
-        res.write(
-          `data: ${JSON.stringify({
-            type: 'grounding_strip',
-            evidence: streamEvidenceVerdict,
-          })}\n\n`
-        );
-      }
-
-      // Cached reliability lookup (5-min TTL) — included in post_done so
-      // client UI can render AnA's self-assessed accuracy on this project
-      // once the Phase 2 chat shell ships. Failure is silently null.
-      const streamReliability =
-        streamProjectId && orgId
-          ? await getCachedSignalReliability(Number(streamProjectId), Number(orgId)).catch(
-              () => null,
-            )
-          : null;
-
-      // Send post_done event — deferred metadata from background post-processing
-      res.write(
-        `data: ${JSON.stringify({
-          type: 'post_done',
-          cleanedResponse: finalAssistantContent || undefined,
-          executedActions: executedActions.length > 0 ? executedActions : undefined,
-          executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
-          enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
-          enrichmentMeta: enrichment.enrichmentMeta || undefined,
-          evidence: streamEvidenceVerdict || undefined,
-          evidenceDiscipline: streamEvidenceCheck
-            ? {
-                compliant: streamEvidenceCheck.compliant,
-                labels: streamEvidenceCheck.totalLabels,
-                hasOverclaims: streamEvidenceCheck.hasOverclaims,
-              }
-            : undefined,
-          structure: streamStructureCheck
-            ? {
-                valid: streamStructureCheck.valid,
-                score: streamStructureCheck.score,
-                maxScore: streamStructureCheck.maxScore,
-              }
-            : undefined,
-          reliability: streamReliability || undefined,
-          queueMeta: streamQueueMeta,
-        })}\n\n`
-      );
-
-      res.end();
-    })().catch((postErr: any) => {
-      // If the background flow itself blows up, fall back to a post_done
-      // carrying the raw content so the client turn still closes cleanly.
-      console.error('[AnA RI Stream] Post-processing failed:', postErr?.message);
-      try {
-        res.write(
-          `data: ${JSON.stringify({
-            type: 'post_done',
-            cleanedResponse: fullContent || undefined,
-            executedActions: undefined,
-            executedCommands: undefined,
-          })}\n\n`
-        );
-        res.end();
-      } catch {
-        /* connection already gone */
-      }
+    void runStreamPostProcessing({
+      res,
+      fullContent,
+      persistenceFailed,
+      streamProjectId,
+      orgId,
+      userId: typeof userId === 'number' ? userId : undefined,
+      threadId,
+      userName: (req as any).user?.name,
+      effectiveRole,
+      sectionCode,
+      toolTrace,
+      toolEvidenceCorpus,
+      collectedProvenance,
+      collectedDrafts,
+      messages,
+      model: gwResponse.model,
+      provider: gwResponse.provider,
+      enrichment,
     });
   } catch (error: any) {
     console.error('[AnA RI Stream] Error:', error.message);

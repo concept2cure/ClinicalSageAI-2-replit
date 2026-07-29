@@ -13,6 +13,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger.js';
+import { isSafePublicUrl } from '../../utils/ssrfGuard.js';
 
 const log = createScopedLogger('webhook-notifications');
 
@@ -55,11 +56,35 @@ export interface WebhookDelivery {
   readonly durationMs: number;
 }
 
+// ─── SSRF guard ─────────────────────────────────────────────────────────────
+
+/**
+ * Allow webhook delivery only to public https endpoints.
+ *
+ * SECURITY: the delivery path does `fetch(channel.url)`. Without this guard an
+ * operator — or any future API that lets a tenant register a channel — could
+ * point a webhook at an internal service or the cloud metadata endpoint
+ * (169.254.169.254) and turn outbound delivery into SSRF (credential theft,
+ * internal port scanning). Private, loopback, link-local and unique-local
+ * destinations are rejected by hostname inspection; non-https is rejected.
+ *
+ * Delegates to the shared {@link isSafePublicUrl} guard so the allow/deny logic
+ * lives in one audited place (also used by tenant connector URLs). Re-exported
+ * under the original name for backwards compatibility with existing callers.
+ */
+export const isSafeWebhookUrl = isSafePublicUrl;
+
 // ─── Channel Registry (in-memory, loaded from DB at startup) ────────────────
 
 const channels = new Map<string, WebhookChannel>();
 
 export function registerChannel(channel: WebhookChannel): void {
+  if (!isSafeWebhookUrl(channel.url)) {
+    log.warn(
+      `Refusing to register webhook channel ${channel.name}: URL is not a public https endpoint`
+    );
+    return;
+  }
   channels.set(channel.id, channel);
   log.info(`Registered webhook channel: ${channel.name} (${channel.platform})`);
 }
@@ -185,6 +210,19 @@ const DELIVERY_TIMEOUT_MS = 10_000;
 
 async function deliverToChannel(channel: WebhookChannel, event: WebhookEvent): Promise<WebhookDelivery> {
   const start = Date.now();
+
+  // SECURITY: re-validate at the delivery sink (defense in depth — a channel
+  // could have been mutated after registration). Never fetch a non-public URL.
+  if (!isSafeWebhookUrl(channel.url)) {
+    return {
+      channelId: channel.id,
+      event,
+      status: 'failed',
+      error: 'Refused: webhook URL is not a public https endpoint',
+      deliveredAt: new Date().toISOString(),
+      durationMs: Date.now() - start,
+    };
+  }
 
   let payload: Record<string, unknown>;
   switch (channel.platform) {

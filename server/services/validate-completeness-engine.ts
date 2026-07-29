@@ -11,6 +11,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { resolveToRegistryEntry, resolveToDeficiencyType, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
 const log = createScopedLogger('validate-completeness');
 
@@ -80,7 +81,11 @@ export class ValidateCompletenessEngine {
     log.info(`VALIDATE-COMPLETENESS: ${input.submissionType}, ${input.presentSections.length} sections`);
 
     const targetAgency = input.targetAgency || 'FDA';
-    const requirements = this.getRequirements(input.submissionType, targetAgency);
+    // Resolve international types to nearest compatible type for requirements lookup
+    const registryCtx = getSubmissionTypeContext(input.submissionType);
+    const resolvedType = this.normalizeForRequirements(input.submissionType);
+    const resolvedAgency = registryCtx?.agency ?? targetAgency;
+    const requirements = this.getRequirements(resolvedType, targetAgency);
     const checklist = this.buildChecklist(requirements, input);
     const rtfRisk = this.assessRTFRisk(checklist, input);
     const goNoGo = this.buildGoNoGo(checklist, rtfRisk, input);
@@ -164,6 +169,28 @@ export class ValidateCompletenessEngine {
         { module: '5', section: '5.2', description: 'Sterilization Validation (if applicable)', required: false, criticality: 'important' as const },
         { module: '5', section: '5.3', description: 'Shelf Life / Packaging Validation', required: true, criticality: 'important' as const },
         { module: '6', section: '6.1', description: 'Manufacturing Information', required: true, criticality: 'blocking' as const },
+      ];
+    }
+
+    // IVD / IVDR technical file (EU IVDR 2017/746, Annexes I–III/XIII/XIV) and
+    // FDA IVD 510(k)/PMA. Previously IVD was folded into the device branch with
+    // no dedicated requirement set; this makes IVD a first-class citizen with the
+    // performance-evaluation + GSPR structure that distinguishes it from devices.
+    if (['IVDR', 'IVDR-TF', 'IVD-510(k)', 'IVD-PMA', 'IVD'].includes(submissionType)) {
+      return [
+        { module: 'A', section: 'Annex I', description: 'General Safety and Performance Requirements (GSPR) checklist', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.1', description: 'Device Description and Specification (intended purpose, analytes)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.2', description: 'Information supplied by the manufacturer (labelling, IFU)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.3', description: 'Design and Manufacturing Information', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.4', description: 'GSPR mapping to standards / common specifications', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.5', description: 'Benefit–Risk Analysis and Risk Management (ISO 14971)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.6.1', description: 'Analytical Performance (sensitivity, specificity, LoD/LoQ)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.6.2', description: 'Clinical Performance (diagnostic sensitivity/specificity, PPV/NPV)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex XIII', description: 'Performance Evaluation Report (PER) — scientific validity + analytical + clinical', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex I.9', description: 'Software / cybersecurity documentation (if applicable)', required: false, criticality: 'important' as const },
+        { module: 'A', section: 'Annex XIV', description: 'Post-Market Performance Follow-up (PMPF) plan', required: true, criticality: 'important' as const },
+        { module: 'A', section: 'Annex III', description: 'Post-Market Surveillance (PMS) plan / PSUR', required: true, criticality: 'important' as const },
+        { module: 'A', section: 'Stability', description: 'Stability (shelf-life, in-use, transport)', required: true, criticality: 'important' as const },
       ];
     }
 
@@ -294,6 +321,19 @@ export class ValidateCompletenessEngine {
     }
 
     return { decision, readinessScore, rationale, conditions, blockers, risks };
+  }
+
+  private normalizeForRequirements(submissionType: string): string {
+    // Map registry entries to the requirement set they match
+    const entry = resolveToRegistryEntry(submissionType);
+    if (!entry) return submissionType;
+    // Use the applicationType from the registry as the requirements key
+    const appType = entry.applicationType.toUpperCase();
+    const TYPE_MAP: Record<string, string> = {
+      IND: 'IND', NDA: 'NDA', BLA: 'BLA', ANDA: 'ANDA', PMA: 'PMA',
+      '510K': '510(k)', 'DE_NOVO': 'De Novo', MAA: 'NDA', CTA: 'IND',
+    };
+    return TYPE_MAP[appType] ?? submissionType;
   }
 }
 

@@ -33,10 +33,16 @@ function buildSyntheticPdf({
 
 describe('makeDeterministic', () => {
   it('produces byte-identical output for two PDFs that differ only in metadata', () => {
+    // Producer / Creator strings without nested parens — the PDF spec
+    // requires nested parens to be backslash-escaped, so the regex in
+    // makeDeterministic (which uses [^)]* lazy non-paren chars) is
+    // designed for the escaped, real-world form. Synthetic inputs with
+    // raw nested parens would leak trailing `)` characters into the
+    // canonical output and break the byte-equality assertion.
     const a = buildSyntheticPdf({
       creation: '20260101120000Z',
       mod: '20260101120000Z',
-      producer: 'LibreOffice 7.5.1.2 (Linux build-1234)',
+      producer: 'LibreOffice 7.5.1.2 Linux build-1234',
       creator: 'Writer',
       id1: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       id2: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
@@ -44,8 +50,8 @@ describe('makeDeterministic', () => {
     const b = buildSyntheticPdf({
       creation: '20260507093000Z',
       mod: '20260507093000Z',
-      producer: 'LibreOffice 7.6.4.0 (Linux build-9999)',
-      creator: 'Writer (different build)',
+      producer: 'LibreOffice 7.6.4.0 Linux build-9999',
+      creator: 'Writer different build',
       id1: '11111111111111111111111111111111',
       id2: '22222222222222222222222222222222',
     });

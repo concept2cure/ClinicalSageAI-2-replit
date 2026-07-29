@@ -4,8 +4,33 @@
  * This service provides statistical simulation capabilities for the Study Architect module.
  * It runs Monte Carlo simulations to estimate power, sample size, and other statistical
  * properties for clinical trial designs.
+ *
+ * Reproducibility: every random variate is drawn from a seeded engine
+ * (`server/services/stats/rng.ts`). Each simulation reseeds deterministically at
+ * entry — from an explicit `seed` when supplied, otherwise from a stable hash of
+ * the inputs — so the same request reproduces the same empirical power, type I
+ * error, and confidence interval, and the result carries a provenance record.
  */
+import { Rng, createRng, seedFromObject } from './stats/rng';
+import { buildProvenance, type StatsProvenance } from './stats/computation-provenance';
+
 export class MonteCarloService {
+  /** Seeded generator for all Monte Carlo draws. Reseeded per simulation. */
+  private rng: Rng = createRng();
+
+  /**
+   * Reseed the engine for a run. An explicit finite seed is used verbatim;
+   * otherwise a seed is derived deterministically from the inputs so identical
+   * requests reproduce identical results. Returns the seed actually used.
+   */
+  private seedRun(inputs: unknown, explicitSeed?: number): number {
+    const seed =
+      explicitSeed !== undefined && Number.isFinite(explicitSeed)
+        ? Math.trunc(explicitSeed)
+        : seedFromObject(inputs);
+    this.rng = createRng(seed);
+    return seed;
+  }
   /**
    * Run a Monte Carlo simulation
    *
@@ -28,6 +53,7 @@ export class MonteCarloService {
         dropout_rate,
         allocation_ratio,
         include_sensitivity,
+        seed,
       } = params;
 
       // Validate parameters
@@ -55,7 +81,8 @@ export class MonteCarloService {
         sample_size,
         n_simulations || 1000,
         dropout_rate || 0.2,
-        allocation_ratio || [1.0, 1.0]
+        allocation_ratio || [1.0, 1.0],
+        seed
       );
 
       // Run sensitivity analysis if requested
@@ -95,6 +122,25 @@ export class MonteCarloService {
         effective_sample_size: Math.floor(sample_size * (1 - (dropout_rate || 0.2))),
         computational_time: simulationResult.computationalTime,
         sensitivity_analysis: sensitivityResults,
+        seed: simulationResult.seed,
+        provenance: buildProvenance({
+          method: 'monte-carlo:runSimulation',
+          seed: simulationResult.seed,
+          inputs: {
+            design_type,
+            test_type,
+            endpoint_type,
+            alpha,
+            effect_size,
+            variability: variability || 1.0,
+            margin: margin || 0.0,
+            sample_size,
+            n_simulations: n_simulations || 1000,
+            dropout_rate: dropout_rate || 0.2,
+            allocation_ratio: allocation_ratio || [1.0, 1.0],
+          },
+          note: 'Empirical power, type I error, and CI are reproducible given this seed and these inputs.',
+        }),
       };
     } catch (error: any) {
       console.error('Error in runSimulation:', error);
@@ -275,8 +321,28 @@ export class MonteCarloService {
     sampleSize: number,
     nSimulations: number,
     dropoutRate: number,
-    allocationRatio: number[]
+    allocationRatio: number[],
+    seed?: number
   ) {
+    // Reseed deterministically so this simulation is reproducible. Sweeps
+    // (power curve / sample-size search) reseed per point from their own inputs.
+    const usedSeed = this.seedRun(
+      {
+        designType,
+        testType,
+        endpointType,
+        alpha,
+        effectSize,
+        variability,
+        margin,
+        sampleSize,
+        nSimulations,
+        dropoutRate,
+        allocationRatio,
+      },
+      seed
+    );
+
     // Record start time for computational time measurement
     const startTime = Date.now();
 
@@ -347,6 +413,7 @@ export class MonteCarloService {
       typeIError,
       confidenceInterval: [Math.max(0, power - marginOfError), Math.min(1, power + marginOfError)],
       computationalTime,
+      seed: usedSeed,
     };
   }
 
@@ -395,7 +462,7 @@ export class MonteCarloService {
           const rate = armIndex === 0 ? controlRate : treatmentRate;
 
           for (let i = 0; i < armSize; i++) {
-            data.push(Math.random() < rate ? 1 : 0);
+            data.push(this.rng.bernoulli(rate) ? 1 : 0);
           }
           break;
 
@@ -407,8 +474,8 @@ export class MonteCarloService {
 
           for (let i = 0; i < armSize; i++) {
             // Generate exponential survival time
-            const survivalTime = -Math.log(Math.random()) / lambda;
-            const censored = Math.random() > 0.7; // 30% censoring
+            const survivalTime = this.rng.exponential(lambda);
+            const censored = this.rng.uniform() > 0.7; // 30% censoring
             data.push({ time: survivalTime, event: !censored });
           }
           break;
@@ -724,29 +791,14 @@ export class MonteCarloService {
    * Generate a random number from a normal distribution
    */
   private generateNormalRandom(mean: number, stdDev: number) {
-    let u = 0,
-      v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-
-    const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-    return mean + z * stdDev;
+    return this.rng.normal(mean, stdDev);
   }
 
   /**
    * Generate a random number from a Poisson distribution
    */
   private generatePoissonRandom(lambda: number) {
-    let L = Math.exp(-lambda);
-    let p = 1.0;
-    let k = 0;
-
-    do {
-      k++;
-      p *= Math.random();
-    } while (p > L);
-
-    return k - 1;
+    return this.rng.poisson(lambda);
   }
 
   /**

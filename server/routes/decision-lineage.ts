@@ -20,6 +20,13 @@ import { Router, Request, Response } from 'express';
 import { decisionLineageService, type ExportFormat } from '../services/workflow/DecisionLineageService';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
+import { authedOrgId, requireAuthedOrgId } from '../utils/authedOrgId';
+
+// SECURITY: decision lineage exposes the regulatory decision graph
+// (who decided what, when, with what evidence). Pre-fix the
+// orgId filter was sourced from req.query.organizationId — a
+// query-param IDOR. The JWT-bound org now overrides whatever the
+// query says.
 
 const logger = createScopedLogger('decision-lineage-api');
 const router = Router();
@@ -28,9 +35,9 @@ const router = Router();
 // Returns the full lineage graph for a document, workflow, or program.
 router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
   try {
-    const { entityType, entityId } = req.params;
-    const orgId = req.query.organizationId ? Number(req.query.organizationId) : undefined;
-    const id = parseInt(entityId, 10);
+    const entityType = String(req.params.entityType);
+    const orgId = authedOrgId(req) ?? undefined;
+    const id = parseInt(String(req.params.entityId), 10);
 
     if (isNaN(id) || id <= 0) {
       return res.status(400).json({ error: 'Invalid entityId — must be a positive integer' });
@@ -48,10 +55,14 @@ router.get('/:entityType/:entityId', async (req: Request, res: Response) => {
 // Exports the lineage data in JSON, CSV, or eCTD-compatible XML.
 router.get('/:entityType/:entityId/export', async (req: Request, res: Response) => {
   try {
-    const { entityType, entityId } = req.params;
+    const entityType = String(req.params.entityType);
     const format = (req.query.format as ExportFormat) || 'json';
-    const orgId = req.query.organizationId ? Number(req.query.organizationId) : undefined;
-    const id = parseInt(entityId, 10);
+    // Export must be tenant-scoped — never export lineage with an undefined
+    // org (which let exportLineage run unscoped across tenants).
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
+    const id = parseInt(String(req.params.entityId), 10);
 
     if (isNaN(id) || id <= 0) {
       return res.status(400).json({ error: 'Invalid entityId' });
@@ -65,7 +76,7 @@ router.get('/:entityType/:entityId/export', async (req: Request, res: Response) 
 
     // Log the export as an auditable action
     await auditService.logAction({
-      tenantId: orgId || 0,
+      tenantId: orgId,
       action: 'lineage_export',
       resourceType: entityType,
       resourceId: id,
@@ -88,7 +99,7 @@ router.get('/query', async (req: Request, res: Response) => {
     const filters = {
       entityType: req.query.entityType as string | undefined,
       entityId: req.query.entityId ? Number(req.query.entityId) : undefined,
-      organizationId: req.query.organizationId ? Number(req.query.organizationId) : undefined,
+      organizationId: authedOrgId(req) ?? undefined,
       userId: req.query.userId as string | undefined,
       fromDate: req.query.fromDate ? new Date(req.query.fromDate as string) : undefined,
       toDate: req.query.toDate ? new Date(req.query.toDate as string) : undefined,
@@ -111,8 +122,11 @@ router.get('/query', async (req: Request, res: Response) => {
 // Record a new decision event into the lineage chain.
 router.post('/record', async (req: Request, res: Response) => {
   try {
+    // GxP decision lineage is tamper-evident regulated data — the tenant that
+    // owns the record is the authenticated caller's org, never a body field.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const {
-      organizationId,
       entityType,
       entityId,
       action,
@@ -131,7 +145,7 @@ router.post('/record', async (req: Request, res: Response) => {
     }
 
     const decisionId = await decisionLineageService.recordDecision({
-      organizationId: Number(organizationId) || 0,
+      organizationId: guard.orgId,
       entityType,
       entityId: Number(entityId),
       action,
@@ -177,7 +191,7 @@ router.get('/verify-chain', async (_req: Request, res: Response) => {
 // Generate a compliance summary across all decision lineage data.
 router.get('/compliance-report', async (req: Request, res: Response) => {
   try {
-    const orgId = req.query.organizationId ? Number(req.query.organizationId) : undefined;
+    const orgId = authedOrgId(req) ?? undefined;
     const fromDate = req.query.fromDate ? new Date(req.query.fromDate as string) : undefined;
     const toDate = req.query.toDate ? new Date(req.query.toDate as string) : undefined;
 

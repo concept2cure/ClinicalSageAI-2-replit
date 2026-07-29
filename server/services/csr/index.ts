@@ -73,13 +73,32 @@ export class UnifiedCSRService {
   async search(params: CSRSearchParams): Promise<CSRSearchResult[]> {
     const { CSRSearchService } = await import('../csr-search-service');
     const service = new CSRSearchService();
-    return service.search(params);
+    const { csrs } = await service.searchCSRs({
+      query_text: params.query,
+      indication: params.filters?.indication,
+      phase: params.filters?.phase,
+      limit: params.limit,
+    });
+
+    return csrs.map(csr => ({
+      id: csr.csr_id,
+      title: csr.title,
+      sponsor: csr.sponsor ?? '',
+      indication: csr.indication,
+      phase: csr.phase,
+      completionDate: csr.date ? new Date(csr.date) : new Date(0),
+      matchScore: typeof csr.matchScore === 'number' ? csr.matchScore : 0,
+      highlights: Array.isArray(csr.highlights) ? csr.highlights : [],
+    }));
   }
 
-  async extract(documentId: string): Promise<CSRExtractionResult> {
-    const { CSRExtractorService } = await import('../csr-extractor-service');
-    const service = new CSRExtractorService();
-    return service.extract(documentId);
+  async extract(_documentId: string): Promise<CSRExtractionResult> {
+    // The underlying csr-extractor-service operates on extracted text
+    // (extractTextFromPDF / extractStructuredInfo), not on a document id.
+    // A document-id-based extraction pipeline has not been wired up here.
+    throw new Error(
+      'UnifiedCSRService.extract is not implemented: csr-extractor-service requires document text, not a document id'
+    );
   }
 
   async getKnowledge(csrId: string): Promise<Record<string, unknown>> {

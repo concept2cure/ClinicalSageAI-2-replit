@@ -68,23 +68,23 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
           <div className="flex items-center gap-2">
             <span className="text-lg">{getSourceIcon(suggestion.sourceType)}</span>
             <span className="text-sm font-medium text-stone-900 line-clamp-1">
-              {suggestion.sourceTitle}
+              {suggestion.title}
             </span>
           </div>
-          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.matchConfidence)}`}>
-            {suggestion.matchConfidence}%
+          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.relevanceScore)}`}>
+            {suggestion.relevanceScore}%
           </span>
         </div>
-        
+
         <p className="text-sm text-stone-600 line-clamp-2 mb-2">
-          {suggestion.relevantExcerpt}
+          {suggestion.keyExcerpt}
         </p>
-        
+
         <div className="flex items-center justify-between">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="text-xs text-blue-600 hover:underline"
-            data-testid={`button-toggle-source-${suggestion.sourceId}`}
+            data-testid={`button-toggle-source-${suggestion.id}`}
           >
             {isExpanded ? 'Show less' : 'Show more'}
           </button>
@@ -93,7 +93,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
             onClick={onLink}
             disabled={isLinking}
             className="px-3 py-1 text-sm font-medium bg-stone-800 text-white rounded-lg hover:bg-stone-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
-            data-testid={`button-link-source-${suggestion.sourceId}`}
+            data-testid={`button-link-source-${suggestion.id}`}
           >
             {isLinking ? 'Linking...' : 'Link Source'}
           </button>
@@ -109,16 +109,16 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Match Reason:</span>
+                <span>Citation:</span>
                 <span className="font-medium text-stone-700">
-                  {suggestion.matchReason}
+                  {suggestion.citation}
                 </span>
               </div>
             </div>
-            
+
             <div className="mt-2 p-2 bg-stone-50 rounded text-xs text-stone-600">
               <p className="font-medium mb-1">Full Excerpt:</p>
-              <p>{suggestion.relevantExcerpt}</p>
+              <p>{suggestion.keyExcerpt}</p>
             </div>
           </div>
         )}
@@ -205,7 +205,7 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
   }, [suggestions]);
   
   // Get connected data bridges
-  const connectedBridges = dataBridges.filter(b => b.status === 'connected' || b.status === 'synced');
+  const connectedBridges = dataBridges.filter(b => b.status === 'connected');
   
   const handleLink = async (sourceId: string) => {
     if (!claim) return;
@@ -293,13 +293,13 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
         ) : filteredSuggestions.length > 0 ? (
           <div className="space-y-3">
             {filteredSuggestions
-              .sort((a, b) => b.matchConfidence - a.matchConfidence)
+              .sort((a, b) => b.relevanceScore - a.relevanceScore)
               .map(suggestion => (
                 <SourceCard
-                  key={suggestion.sourceId}
+                  key={suggestion.id}
                   suggestion={suggestion}
-                  onLink={() => handleLink(suggestion.sourceId)}
-                  isLinking={linkingId === suggestion.sourceId}
+                  onLink={() => handleLink(suggestion.id)}
+                  isLinking={linkingId === suggestion.id}
                 />
               ))}
           </div>
@@ -324,9 +324,9 @@ export const SourceSuggestionPanel: React.FC<SourceSuggestionPanelProps> = ({
           <div className="flex items-center gap-1">
             {connectedBridges.slice(0, 4).map(bridge => (
               <span
-                key={bridge.moduleType}
+                key={bridge.id}
                 className="w-2 h-2 rounded-full bg-green-500"
-                title={bridge.moduleType}
+                title={bridge.sourceModule}
               />
             ))}
             {connectedBridges.length > 4 && (
@@ -360,32 +360,32 @@ export const InlineSuggestionTooltip: React.FC<{
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-2">
         <span className="text-lg">{getSourceIcon(suggestion.sourceType)}</span>
-        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.matchConfidence)}`}>
-          {suggestion.matchConfidence}% match
+        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getConfidenceColor(suggestion.relevanceScore)}`}>
+          {suggestion.relevanceScore}% match
         </span>
       </div>
       <button
         onClick={onDismiss}
         className="p-1 text-stone-400 hover:text-stone-600"
-        data-testid={`button-dismiss-inline-suggestion-${suggestion.sourceId}`}
+        data-testid={`button-dismiss-inline-suggestion-${suggestion.id}`}
         aria-label="Dismiss suggestion"
       >
         ×
       </button>
     </div>
-    
+
     <p className="text-sm font-medium text-stone-900 mb-1 line-clamp-1">
-      {suggestion.sourceTitle}
+      {suggestion.title}
     </p>
-    
+
     <p className="text-xs text-stone-600 mb-3 line-clamp-2">
-      {suggestion.relevantExcerpt}
+      {suggestion.keyExcerpt}
     </p>
-    
+
     <button
       onClick={onLink}
       className="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
-      data-testid={`button-link-inline-source-${suggestion.sourceId}`}
+      data-testid={`button-link-inline-source-${suggestion.id}`}
     >
       Link This Source
     </button>

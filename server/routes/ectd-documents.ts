@@ -6,10 +6,25 @@
  */
 import { Router, Request, Response } from 'express';
 import { eq, desc, and, like, sql } from 'drizzle-orm';
-import { db } from '../db';
+import { z } from 'zod';
+import { db, transaction } from '../db';
 import { coauthorDocuments } from '../../shared/schema';
+import { requireRole } from '../middleware/auth';
+import { createRateLimiter } from '../middleware/rateLimiter';
+import {
+  classifyDocument,
+  extractStructure,
+  IngestionError,
+} from '../services/ingestion/ingestion-service';
+
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ectd-documents');
 
 const router = Router();
+
+// Rate limiter for the AI-backed ingestion endpoints.
+const ingestionRateLimiter = createRateLimiter();
 
 /**
  * Resolve organization from headers or query params.
@@ -26,9 +41,10 @@ const resolveOrganizationId = (req: any): number | null => {
 
 // ── List ────────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireRole('regulatory-author'), async (req: Request, res: Response) => {
   try {
     const organizationId = resolveOrganizationId(req);
+    if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
     const { module, status, region } = req.query;
     const limit = Math.min(Number(req.query.limit) || 50, 200);
@@ -83,14 +99,14 @@ router.get('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] List error:', error);
-    res.status(500).json({ error: 'Failed to fetch eCTD documents', message: error.message });
+    logger.error('List error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to fetch eCTD documents', code: 'INTERNAL' });
   }
 });
 
 // ── Get by ID ───────────────────────────────────────────────────────────────
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', requireRole('regulatory-author'), async (req: Request, res: Response) => {
   try {
     const docId = Number(req.params.id);
     if (!Number.isFinite(docId)) {
@@ -98,6 +114,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 
     const organizationId = resolveOrganizationId(req);
+    if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
     const conditions: any[] = [eq(coauthorDocuments.id, docId)];
     if (organizationId) {
@@ -137,14 +154,14 @@ router.get('/:id', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Get error:', error);
-    res.status(500).json({ error: 'Failed to fetch eCTD document', message: error.message });
+    logger.error('Get error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to fetch eCTD document', code: 'INTERNAL' });
   }
 });
 
 // ── Create ──────────────────────────────────────────────────────────────────
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireRole('regulatory-author'), async (req: Request, res: Response) => {
   try {
     const { title, module: ectdModule, section, content, region } = req.body || {};
 
@@ -153,6 +170,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const organizationId = resolveOrganizationId(req);
+    if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID required (x-organization-id header)' });
     }
@@ -196,14 +214,14 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Create error:', error);
-    res.status(500).json({ error: 'Failed to create eCTD document', message: error.message });
+    logger.error('Create error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to create eCTD document', code: 'INTERNAL' });
   }
 });
 
 // ── Update ──────────────────────────────────────────────────────────────────
 
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', requireRole('regulatory-author'), async (req: Request, res: Response) => {
   try {
     const docId = Number(req.params.id);
     if (!Number.isFinite(docId)) {
@@ -211,6 +229,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     }
 
     const organizationId = resolveOrganizationId(req);
+    if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
     const conditions: any[] = [eq(coauthorDocuments.id, docId)];
     if (organizationId) {
@@ -282,14 +301,14 @@ router.put('/:id', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Update error:', error);
-    res.status(500).json({ error: 'Failed to update eCTD document', message: error.message });
+    logger.error('Update error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to update eCTD document', code: 'INTERNAL' });
   }
 });
 
 // ── Delete ──────────────────────────────────────────────────────────────────
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireRole('regulatory-author'), async (req: Request, res: Response) => {
   try {
     const docId = Number(req.params.id);
     if (!Number.isFinite(docId)) {
@@ -297,25 +316,58 @@ router.delete('/:id', async (req: Request, res: Response) => {
     }
 
     const organizationId = resolveOrganizationId(req);
+    if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    const conditions: any[] = [eq(coauthorDocuments.id, docId)];
-    if (organizationId) {
-      conditions.push(eq(coauthorDocuments.organizationId, organizationId));
-    }
+    const u = (req as any).user || {};
+    const auditUserId = Number(u.id ?? u.userId) || null;
 
-    const [deleted] = await db
-      .delete(coauthorDocuments)
-      .where(and(...conditions))
-      .returning();
+    // 21 CFR Part 11 §11.10(e): delete the regulated eCTD document and record
+    // the deletion in the hash-chained, append-only audit_events table IN THE
+    // SAME TRANSACTION — atomic and fail-closed (an audit failure rolls the
+    // delete back, so a regulated document is never removed unaudited).
+    const deletedRow = await transaction(async (client: any) => {
+      const delParams: unknown[] = [docId];
+      let delSql = 'DELETE FROM coauthor_documents WHERE id = $1';
+      if (organizationId) {
+        delParams.push(organizationId);
+        delSql += ` AND organization_id = $${delParams.length}`;
+      }
+      delSql += ' RETURNING id, organization_id';
 
-    if (!deleted) {
+      const del = await client.query(delSql, delParams);
+      if (!del.rows.length) return null;
+      const row = del.rows[0];
+
+      await client.query(
+        `INSERT INTO audit_events
+           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+            user_role, ip_address, timestamp, reason, metadata,
+            regulatory_significant, gxp_relevant, created_at)
+         VALUES ($1, 'coauthor_document.deleted', 'coauthor_document', $2, $3, $4, $5, $6,
+                 NOW(), $7, $8, true, true, NOW())`,
+        [
+          row.organization_id,
+          row.id,
+          auditUserId,
+          u.name ?? u.email ?? 'System',
+          u.role ?? 'user',
+          req.ip ?? '',
+          'eCTD coauthor document deleted',
+          JSON.stringify({}),
+        ],
+      );
+
+      return row;
+    });
+
+    if (!deletedRow) {
       return res.status(404).json({ error: 'eCTD document not found' });
     }
 
-    res.json({ success: true, deletedId: deleted.id });
+    res.json({ success: true, deletedId: deletedRow.id });
   } catch (error: any) {
-    console.error('[eCTD-Documents] Delete error:', error);
-    res.status(500).json({ error: 'Failed to delete eCTD document', message: error.message });
+    logger.error('Delete error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to delete eCTD document', code: 'INTERNAL' });
   }
 });
 
@@ -332,5 +384,130 @@ router.get('/meta/structure', (_req: Request, res: Response) => {
     ],
   });
 });
+
+// ── Ingestion: classify + extract (Phase 1, WO-1.4) ──────────────────────────
+//
+// RECONCILE (RECONCILE.md §3): the work order specced these under
+// /api/documents/:id/* but there is no /api/documents router. coauthor_documents
+// — the canonical eCTD document table — is served by THIS router, mounted at
+// /api/ectd-documents, so the endpoints live here:
+//   POST /api/ectd-documents/:id/classify
+//   POST /api/ectd-documents/:id/extract
+// Both require the regulatory-author role, are rate-limited and Zod-validated,
+// and resolve organizationId from the authenticated session only.
+
+const classifyBodySchema = z.object({
+  // Optional target sequence — when supplied (and owned), a draft leaf is placed.
+  sequenceId: z.coerce.number().int().positive().optional(),
+});
+
+const extractBodySchema = z.object({
+  sectionCode: z.string().min(1).max(64),
+  // Provenance links require a submission context.
+  submissionId: z.coerce.number().int().positive(),
+});
+
+interface UserContext {
+  userId: number;
+  organizationId: number;
+}
+
+/** Resolve user + org strictly from the authenticated session (never body/params). */
+function resolveUserContext(req: Request): UserContext | null {
+  const user = (req as any).user;
+  const userId = Number(user?.id);
+  const organizationId = Number(user?.organizationId);
+  if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) return null;
+  return { userId, organizationId };
+}
+
+const INGESTION_ERROR_STATUS: Record<IngestionError['code'], number> = {
+  NOT_FOUND: 404,
+  FORBIDDEN: 403,
+  INVALID_AI_RESPONSE: 502,
+  RATE_LIMITED: 429,
+  PROVIDER_UNAVAILABLE: 503,
+  TOKEN_LIMIT_EXCEEDED: 413,
+};
+
+function sendIngestionError(res: Response, err: unknown): void {
+  if (err instanceof IngestionError) {
+    res
+      .status(INGESTION_ERROR_STATUS[err.code] ?? 500)
+      .json({ error: { code: err.code, message: err.message } });
+    return;
+  }
+  logger.error('Ingestion failure', {
+    err: err instanceof Error ? err.message : String(err),
+  });
+  res.status(500).json({ error: { code: 'INTERNAL', message: 'Ingestion request failed.' } });
+}
+
+router.post(
+  '/:id/classify',
+  requireRole('regulatory-author'),
+  ingestionRateLimiter,
+  async (req: Request, res: Response) => {
+    const documentId = Number(req.params.id);
+    if (!Number.isFinite(documentId)) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid document id.' } });
+    }
+    const ctx = resolveUserContext(req);
+    if (!ctx) {
+      return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    }
+    const parsed = classifyBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: { code: 'VALIDATION', message: 'Invalid request body.', details: parsed.error.flatten() } });
+    }
+    try {
+      const result = await classifyDocument({
+        documentId,
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        sequenceId: parsed.data.sequenceId,
+      });
+      res.json(result);
+    } catch (err) {
+      sendIngestionError(res, err);
+    }
+  }
+);
+
+router.post(
+  '/:id/extract',
+  requireRole('regulatory-author'),
+  ingestionRateLimiter,
+  async (req: Request, res: Response) => {
+    const documentId = Number(req.params.id);
+    if (!Number.isFinite(documentId)) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid document id.' } });
+    }
+    const ctx = resolveUserContext(req);
+    if (!ctx) {
+      return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    }
+    const parsed = extractBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: { code: 'VALIDATION', message: 'Invalid request body.', details: parsed.error.flatten() } });
+    }
+    try {
+      const result = await extractStructure({
+        documentId,
+        sectionCode: parsed.data.sectionCode,
+        submissionId: parsed.data.submissionId,
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+      });
+      res.json(result);
+    } catch (err) {
+      sendIngestionError(res, err);
+    }
+  }
+);
 
 export default router;

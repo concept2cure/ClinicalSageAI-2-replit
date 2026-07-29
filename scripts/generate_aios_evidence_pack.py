@@ -75,6 +75,11 @@ def build_markdown(metrics: Dict[str, Any], gates: List[Tuple[str, str, float]])
         for cid, status in statuses.items()
     )
 
+    # Backslash escapes can't appear inside f-string expressions on
+    # Python < 3.12, so pre-join the multi-row tables outside the
+    # f-string and interpolate the result instead.
+    gate_rows_block = "\n".join(gate_rows)
+
     markdown = f"""# AIOS Evidence Pack (Generated)
 
 Generated: {now}
@@ -99,7 +104,7 @@ Environment: {metrics.get('environment', 'staging')}
 
 | Gate Metric | Threshold | Observed | Pass/Fail |
 | --- | --- | --- | --- |
-{'\n'.join(gate_rows)}
+{gate_rows_block}
 
 ## Decision
 

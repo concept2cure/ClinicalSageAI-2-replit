@@ -7,6 +7,17 @@
 
 import { Extension } from '@tiptap/core';
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    indent: {
+      /** Increase the indent level of the selected block(s). */
+      indent: () => ReturnType;
+      /** Decrease the indent level of the selected block(s). */
+      outdent: () => ReturnType;
+    };
+  }
+}
+
 const MAX_INDENT = 10;
 const INDENT_REM_STEP = 2;
 const INDENT_PX_STEP = 32;
@@ -117,7 +128,7 @@ export const Indent = Extension.create({
           if (changed && dispatch) dispatch(tr);
           return changed;
         },
-    };
+    } as any;
   },
 
   addKeyboardShortcuts() {

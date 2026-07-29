@@ -28,7 +28,8 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
+import { runRWEStudy, RWESourceNotConfiguredError } from '../services/rwe-study-service';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -484,24 +485,6 @@ async function queryClinicalTrials(condition: string, intervention?: string): Pr
 }
 
 // ---------------------------------------------------------------------------
-// PROPENSITY SCORE ANALYSIS (simplified)
-// ---------------------------------------------------------------------------
-
-function computePropensityScoreAnalysis(
-  treatmentN: number,
-  controlN: number,
-  covariateCount: number
-): RWEResult['propensityScore'] {
-  // Simplified simulation — in production, uses R/Python statistical packages
-  return {
-    method: 'inverse_probability_weighting',
-    covariatesBalanced: covariateCount,
-    standardizedMeanDifference: 0.05 + Math.random() * 0.1, // Target < 0.1
-    cStatistic: 0.72 + Math.random() * 0.15, // 0.72-0.87
-  };
-}
-
-// ---------------------------------------------------------------------------
 // EXPRESS ROUTES
 // ---------------------------------------------------------------------------
 
@@ -533,82 +516,61 @@ router.get('/sources/:sourceId/status', (req: Request, res: Response) => {
 
 /**
  * POST /query
- * Execute a real-world evidence study query
+ * Execute a real-world evidence study query.
+ *
+ * Builds real exposure/comparator cohorts and outcome counts from the connected
+ * FHIR data source and computes comparative statistics (risk ratio, risk
+ * difference, 95% CI, two-proportion z-test) analytically from the real counts.
+ * Nothing is fabricated: when no data source is connected it returns 501, and
+ * when cohorts are too small it returns status 'insufficient_data' with null
+ * statistics. Licensed vendor sources (aetion/flatiron/trinetx) are recognized
+ * but return 501 until credentials are wired.
+ *
+ * The prior implementation fabricated the entire result with Math.random();
+ * this replaces it with a real analysis engine (see rwe-study-service).
  */
+const rweStudySchema = z.object({
+  dataSource: z.enum(['fhir', 'aetion', 'flatiron', 'trinetx']).optional(),
+  exposureCode: z.string().min(1).max(200),
+  comparatorCode: z.string().min(1).max(200).optional(),
+  outcomeCode: z.string().min(1).max(200),
+  demographics: z
+    .object({
+      gender: z.string().max(20).optional(),
+      ageMin: z.number().int().min(0).max(120).optional(),
+      ageMax: z.number().int().min(0).max(120).optional(),
+    })
+    .optional(),
+  minCohortSize: z.number().int().min(1).max(100000).optional(),
+});
+
 router.post('/query', async (req: Request, res: Response) => {
-  const body: RWEQuery = req.body;
-  if (!body.drugOfInterest || !body.indication || !body.studyType) {
-    return res.status(400).json({ error: 'drugOfInterest, indication, and studyType required' });
+  const parsed = rweStudySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'invalid_request', message: 'Invalid study definition', details: parsed.error.flatten() },
+    });
   }
 
   try {
-    const queryId = uuidv4();
-
-    // Simulate cohort construction based on study type
-    const treatmentN = 500 + Math.floor(Math.random() * 2000);
-    const controlN = body.comparator ? 500 + Math.floor(Math.random() * 2000) : 0;
-
-    const endpoints: EndpointResult[] = body.outcomes.map(outcome => {
-      const hr = 0.5 + Math.random() * 0.8;
-      const pValue = Math.random() * 0.1;
-      return {
-        name: outcome,
-        type: 'efficacy' as const,
-        value: hr,
-        confidence_interval: [hr * 0.75, hr * 1.25] as [number, number],
-        p_value: pValue,
-        hazard_ratio: hr,
-        statistical_significance: pValue < 0.05,
-      };
-    });
-
-    const propensityScore =
-      body.analysisPlan?.propensityScoreMethod !== 'none'
-        ? computePropensityScoreAnalysis(
-            treatmentN,
-            controlN,
-            body.analysisPlan?.covariates?.length || 5
-          )
-        : undefined;
-
-    const result: RWEResult = {
-      id: uuidv4(),
-      queryId,
-      studyType: body.studyType,
-      cohort: {
-        totalPatients: treatmentN + controlN,
-        treatmentGroup: treatmentN,
-        controlGroup: controlN,
-        demographics: {
-          meanAge: 55 + Math.floor(Math.random() * 15),
-          genderDistribution: { male: 0.52, female: 0.48 },
-        },
-      },
-      endpoints,
-      safetySignals: [],
-      propensityScore,
-      provenance: {
-        dataSources: body.dataSources || [],
-        queryTimestamp: new Date(),
-        deidentificationMethod: 'Safe Harbor (HIPAA)',
-        dataLag: '3-6 months',
-      },
-      regulatoryRelevance: {
-        applicableSubmissionTypes: ['sNDA', 'BLA Supplement', 'Post-Market Commitment'],
-        levelOfEvidence: body.studyType === 'retrospective_cohort' ? 'Level III' : 'Level IV',
-        limitations: [
-          'Retrospective design — subject to selection bias',
-          'Claims data may not capture clinical nuance',
-          'Unmeasured confounders possible despite propensity score adjustment',
-        ],
-        fda_rwe_framework_alignment: true,
-      },
-    };
-
+    const result = await runRWEStudy(parsed.data);
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error('[RWE] Query failed:', err);
-    res.status(500).json({ success: false, error: String(err) });
+    if (err instanceof RWESourceNotConfiguredError) {
+      return res.status(501).json({
+        success: false,
+        error: { code: 'source_not_configured', message: err.message, dataSource: err.dataSource },
+      });
+    }
+    console.error('[RWE] study execution failed:', err);
+    res.status(502).json({
+      success: false,
+      error: {
+        code: 'execution_failed',
+        message: `Study execution failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      },
+    });
   }
 });
 

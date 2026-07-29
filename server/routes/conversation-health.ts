@@ -19,7 +19,7 @@ const router = Router();
  */
 router.get('/:conversationId', async (req: Request, res: Response) => {
   try {
-    const conversationId = parseInt(req.params.conversationId, 10);
+    const conversationId = parseInt(String(req.params.conversationId), 10);
     const organizationId =
       (req as any).tenantId ||
       (req as any).tenantContext?.organizationId ||

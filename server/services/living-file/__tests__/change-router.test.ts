@@ -8,28 +8,28 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 
 // Capture all downstream propagator calls via mocks
-const propagateClaimChangeMock = vi.fn(async () => ({
+const propagateClaimChangeMock = vi.fn(async (..._a: any[]) => ({
   affectedPacketIds: ['pkt-1'],
   markedStaleCount: 1,
   alreadyStaleCount: 0,
   notRenderedCount: 0,
   reason: 'claim_changed',
 }));
-const propagateEvidenceChangeMock = vi.fn(async () => ({
+const propagateEvidenceChangeMock = vi.fn(async (..._a: any[]) => ({
   affectedPacketIds: [],
   markedStaleCount: 0,
   alreadyStaleCount: 0,
   notRenderedCount: 0,
   reason: 'evidence_changed',
 }));
-const propagatePredicateChangeMock = vi.fn(async () => ({
+const propagatePredicateChangeMock = vi.fn(async (..._a: any[]) => ({
   affectedPacketIds: [],
   markedStaleCount: 2,
   alreadyStaleCount: 0,
   notRenderedCount: 0,
   reason: 'predicate_changed',
 }));
-const propagateRiskVocabChangeMock = vi.fn(async () => ({
+const propagateRiskVocabChangeMock = vi.fn(async (..._a: any[]) => ({
   affectedPacketIds: [],
   markedStaleCount: 0,
   alreadyStaleCount: 0,
@@ -44,7 +44,7 @@ vi.mock('../../regulatory-graph/defense-packet-staleness.service', () => ({
   propagateRiskVocabChange: (...a: unknown[]) => propagateRiskVocabChangeMock(...(a as [any])),
 }));
 
-const reactivePropagateMock = vi.fn(async () => ({
+const reactivePropagateMock = vi.fn(async (..._a: any[]) => ({
   triggerType: 'assumption_updated',
   triggerObjectId: 'src-1',
   downstreamImpacted: 3,
@@ -57,12 +57,24 @@ vi.mock('../../reactive-dependency-service', () => ({
 }));
 
 const updateReturnMock = vi.fn(async () => [{ id: 'std-app-1' }]);
+// resolveLegacyProgram (program-link) selects the legacy id for a uuid program.
+// Default: no link → reactiveTrigger falls back to the caller-supplied
+// legacyProgramId. Tests that pass legacyProgramId explicitly never depend on
+// this; the "without legacyProgramId" test relies on it returning [].
+const programLinkSelectMock = vi.fn(async () => [] as Array<{ legacyProgramId: number }>);
 vi.mock('../../../db', () => ({
   db: {
     update: () => ({
       set: () => ({
         where: () => ({
           returning: () => updateReturnMock(),
+        }),
+      }),
+    }),
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: () => programLinkSelectMock(),
         }),
       }),
     }),
@@ -81,6 +93,8 @@ beforeEach(() => {
   propagateRiskVocabChangeMock.mockClear();
   reactivePropagateMock.mockClear();
   updateReturnMock.mockClear();
+  programLinkSelectMock.mockClear();
+  programLinkSelectMock.mockResolvedValue([]);
 });
 
 describe('propagateRegulatoryChange — claim events', () => {
@@ -219,7 +233,7 @@ describe('propagateRegulatoryChange — broad events', () => {
     expect(propagateRiskVocabChangeMock).not.toHaveBeenCalled();
   });
 
-  test('event without legacyProgramId skips reactive service', async () => {
+  test('event without legacyProgramId skips reactive service when no program link exists', async () => {
     await propagateRegulatoryChange({
       organizationId: ORG,
       programId: PROGRAM,
@@ -227,6 +241,18 @@ describe('propagateRegulatoryChange — broad events', () => {
       sourceId: 'K1',
     });
     expect(reactivePropagateMock).not.toHaveBeenCalled();
+  });
+
+  test('event without legacyProgramId still cascades when a program link resolves', async () => {
+    programLinkSelectMock.mockResolvedValueOnce([{ legacyProgramId: 77 }]);
+    await propagateRegulatoryChange({
+      organizationId: ORG,
+      programId: PROGRAM,
+      event: 'intended_use_changed',
+      sourceId: PROGRAM,
+    });
+    expect(reactivePropagateMock).toHaveBeenCalledTimes(1);
+    expect(reactivePropagateMock.mock.calls[0][0].projectId).toBe(77);
   });
 });
 

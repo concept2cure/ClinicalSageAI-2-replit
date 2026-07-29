@@ -90,6 +90,18 @@ describe('510(k) eSTAR governed export', () => {
 
     expect(mockRender510k).toHaveBeenCalledTimes(1);
     expect(mockGovernedConsequence).toHaveBeenCalledTimes(1);
+
+    // Truthfulness invariant (B0): the loose section-PDF ZIP must NOT be
+    // labelled as a submittable official eSTAR. The route records
+    // officialEstarPdf:false and a draft placement so no downstream surface
+    // presents it as the official FDA eSTAR PDF that CDRH ingests.
+    expect(mockGovernedConsequence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
+        metadata: expect.objectContaining({ officialEstarPdf: false }),
+      })
+    );
+
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: '0 6 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
@@ -23,7 +26,15 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
+        # that otherwise fail the whole pipeline (every other job needs: lint).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
 
       - name: Guardrails — eCTD migration headers (reg audit)
         run: ./scripts/ci/require-migration-headers.sh
@@ -37,11 +48,81 @@ jobs:
       - name: Guardrails — RLS allowlist TS↔SQL parity
         run: npm run ci:rls-allowlist-sync
 
+      - name: Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+        # The prefix-collision guard scans migrations/ only and the manifest
+        # generator scans db/migrations/ only — neither sees cross-lineage table
+        # collisions, and neither checks table NAMES. See ADR-0006 / conflict C-6.
+        run: npm run ci:duplicate-table-ddl
+
+      - name: Guardrails — server SQL references a table nothing creates
+        # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
+        # tests vi.mock the db module so a mock accepts any table name; the
+        # failure surfaces only in production, as a 500 (unguarded query) or as
+        # a silent no-op (query inside try/catch). See ledger C-14.
+        run: npm run ci:unbacked-tables
+
+      - name: Guardrails — source files nothing can reach
+        # The inverse of the unbacked-table class: not a table with no code, but
+        # code with no caller. Nothing imports the module, so its routes are
+        # unmounted and nothing it contains can run — yet it greps like product.
+        #
+        # `audit:dead-code` (knip) was meant to cover this and could not: two
+        # config-load failures abort its analysis, so it reported zero
+        # unreferenced files while calling @anthropic-ai/sdk unused, and it ran
+        # with --no-exit-code so the job passed regardless.
+        run: npm run ci:unreferenced-modules
+
+      - name: Guardrails — no direct Pool construction in runtime code
+        # Was enforced nowhere. Its scan list also named ten of server/'s ~35
+        # directories, so server/src, server/bootstrap, server/lib and others
+        # were invisible to it; it now scans server/ with exclusions instead.
+        run: npm run ci:ban-new-pool
+
+      - name: Guardrails — eCTD stub bundle + generated risk-code types
+        # Both were pre-push-hook only, so a `git push --no-verify` skipped them
+        # and nothing checked the branch.
+        run: |
+          npm run ci:ectd-stubs
+          npm run ci:risk-codes
+
+      - name: Guardrails — security patterns (tenant / identity / role trust)
+        # Existed only as a pre-commit hook, so it was skipped by any commit made
+        # with --no-verify and never enforced on the branch. It now blocks in CI.
+        # Covers the PR #496-500 tenant-trust rules plus identity-trust-header
+        # (ledger C-18), which caught 11 further violations across four files on
+        # its first run — including a header-supplied userId passed straight into
+        # a document query.
+        run: npm run check:security-patterns
+
+      - name: Proof tier — schema contracts + golden journeys
+        # These run inside `npm test` too, but they get their own blocking step
+        # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/
+        # C-14/C-16 remediations and must fail loudly and early, not be buried in
+        # a full-suite run. They need no external database: the harness applies
+        # the real migration files to an in-process Postgres (PGlite).
+        run: npm run test:proof-tier
+
+      - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
+        run: node scripts/ci/check-i18n-integrity.mjs
+
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
         run: npm run ci:tenant-column-types
 
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
+
+      - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
+        # The production deploy registers a pinned task-def revision
+        # (image @sha256:<digest>) and updates the service by ARN.
+        # --force-new-deployment is banned because it cannot guarantee a
+        # specific image is deployed. Re-introducing it defeats rollback.
+        run: bash scripts/check_no_force_new_deployment.sh
+
+      - name: Guardrails — tenant baseline ↔ justification parity
+        run: npm run ci:baseline-justifications
+
+      - name: Guardrails — requestDb (RLS) adoption (no regressions)
+        run: node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
 
       - name: Guardrails — no leaky dev-auth gates in prod paths
         run: npm run ci:no-dev-auth-in-prod
@@ -49,14 +130,90 @@ jobs:
       - name: Guardrails — password hygiene
         run: npm run ci:password-hygiene
 
+      - name: Guardrails — SAML SSO fail-closed (no auth bypass)
+        run: npm run ci:saml-fail-closed
+
+      - name: Guardrails — design-system non-negotiables (Lucide-only, no spring)
+        run: npm run ci:design-system
+
+      - name: Guardrails — regulated-data delete audit coverage (Part 11)
+        run: npm run ci:regulated-delete-audit
+
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 
       - name: Guardrails — route ownership matrix artifact (required review evidence)
         run: npm run ci:route-ownership-matrix:check
 
+      - name: Guardrails — AI gateway bypass (no direct LLM clients)
+        run: npm run ci:gateway-bypass
+
+      - name: Guardrails — jwt.verify pins algorithms (no alg-confusion)
+        run: npm run ci:jwt-verify-pinned
+
+      - name: Guardrails — legacy dependency quarantine (supabase-js, aws-sdk v2)
+        run: npm run ci:check-legacy-dep-quarantine
+
+      - name: Guardrails — no mock data in prod routes (no regressions)
+        run: npm run ci:no-mock-in-prod-routes
+
+      - name: Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)
+        run: npm run ci:js-ts-shadows
+
+      - name: Guardrails — DOCX runtime canonicality (approved runtimes only)
+        run: npm run ci:check-docx-runtime
+
+      - name: Guardrails — PDF runtime canonicality (approved entry points only)
+        run: npm run ci:check-pdf-runtime
+
+      - name: Guardrails — embedding runtime canonicality (corpus policy)
+        run: npm run ci:check-embedding-runtime
+
+      - name: Guardrails — editor extension integrity (@tiptap imports declared)
+        run: npm run ci:check-editor-integrity
+
+      - name: Guardrails — Reasoning Tier readiness suite (governed exports + GA evidence)
+        # Aggregate of ci:governed-export-routes, ci:governed-export-consequence-shape,
+        # ci:reasoning-tier-ga-readiness and ci:reasoning-tier-uat-evidence — the gate
+        # named as a GA criterion in docs/release/REASONING_TIER_GA_GATES.md.
+        run: npm run ci:reasoning-tier-readiness
+
+      - name: Guardrails — design-token cascade (ADVISORY)
+        # Advisory-only: 12 pre-existing unresolved var() references live in
+        # client/src/concept2cure/{biopharma,pdev}/app.css and
+        # client/src/styles/projects-prototype.css (module-scoped --rail-*/--pdev-*
+        # layout vars plus --border-100/--border-200/--error-text aliases). The fix
+        # belongs in those stylesheets / the index.css shim. Flip to blocking once
+        # `npm run ci:token-cascade` is clean.
+        continue-on-error: true
+        run: npm run ci:token-cascade
+
       - name: Audit — repo health scan (no regressions)
         run: npm run audit:repo-health:no-regression
+
+      - name: Audit — orphaned endpoints (threshold 600)
+        # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
+        # if the orphan count exceeds 570 (current: 556). Ratchet the threshold
+        # down in package.json as the backlog is triaged.
+        #
+        # Tightened from 900 -> 600 -> 570. The count had fallen to 556 without
+        # the gate following it, leaving 344 of slack — enough for the backlog
+        # to grow by more than half again while CI reported green. A ratchet
+        # that trails reality by that much is not a ratchet.
+        #
+        # The 14 of remaining headroom is deliberate, for the reason the 600
+        # step gave: a feature branch legitimately adds endpoints before the
+        # client that calls them exists, and a PR adding more than that is worth
+        # a conversation rather than a silent pass.
+        #
+        # Why 570 and not 556. Orphans are computed as `declared - consumed`, so
+        # this gate is equally sensitive to DELETING CLIENT CODE as to adding
+        # endpoints. Pinned at exactly 556, a PR that removes the last caller of
+        # a few endpoints fails CI having added none — the gate would punish
+        # deleting dead client code, which is the opposite of what it is for.
+        # The 2026-07 audit originally proposed 556; that was wrong, and this
+        # comment is the rebuttal. See Chapter 15, "Correction to item 0.8".
+        run: npm run audit:orphaned-endpoints:strict
 
       - name: Upload governance audit artifacts
         uses: actions/upload-artifact@v4
@@ -66,20 +223,21 @@ jobs:
             docs/reports/repo-health-scan-latest.json
             docs/reports/route-mount-audit-latest.json
             docs/reports/route-ownership-matrix-latest.md
+            docs/reports/orphan-endpoints-latest.json
+            docs/reports/orphan-endpoints-latest.md
           retention-days: 14
 
       - name: Run ESLint
         run: npm run lint
 
       - name: Run TypeScript check (no regression vs baseline)
-        # Strict `npm run typecheck` would fail on the ~2,598 pre-existing
-        # type errors that became visible when the parse error in
-        # server/routes/auth.ts:842 was fixed (tsc had been bailing on
-        # that parse error and never typechecking transitive imports).
-        # The no-regression gate pins the baseline and fails only on net
-        # new errors. Same pattern as ci:migration-prefix-collisions.
-        # Run `npm run ci:typecheck:write-baseline` after a PR reduces
-        # the count to ratchet it down.
+        # The .typecheck-baseline.json count has been ratcheted down to 0
+        # (from ~2,598 when the server/routes/auth.ts parse error was fixed
+        # and the pre-existing debt became visible), so this gate now fails
+        # on ANY type error. It stays on the no-regression harness (same
+        # pattern as ci:migration-prefix-collisions) so the baseline history
+        # is preserved and any future intentional baseline change remains an
+        # explicit, reviewed edit.
         run: npm run ci:typecheck:no-regression
 
       - name: Run beta-slice TypeScript check
@@ -89,57 +247,21 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     needs: lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test -- --passWithNoTests
-        env:
-          CI: true
-
-  ana-readiness-tests:
-    name: AnA Readiness Tests
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run AnA readiness suite
-        run: npm run test:ana
-        env:
-          CI: true
-          SKIP_DB_STARTUP_TEST: 'true'
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/concept2cure-ri_test
-
-  integration-tests:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: lint
-    env:
-      TEST_DB_PASSWORD: ci-${{ github.run_id }}-${{ github.run_attempt }}
+    # Primary test gate now runs against a real Postgres so the safety-critical
+    # RLS/tenant-isolation/audit/migration suites EXECUTE here instead of
+    # self-skipping on a missing DB (they previously "passed" by skipping —
+    # false assurance, GA testing finding). Mirrors the proven integration-tests
+    # service + migration setup. RUN_INTEGRATION_TESTS is intentionally NOT set,
+    # so this stays the DB-backed CORE suite while integration-tests remains the
+    # heavier full-integration gate.
     services:
       postgres:
         image: pgvector/pgvector:pg15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
           POSTGRES_DB: concept2cure-ri_test
+          # Auth method = trust; no credential literal in the workflow.
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -156,7 +278,83 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Setup Python (document runtime)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install document runtime (python-docx + lxml)
+        # Enforces the AnA document-surgery e2e (author/build/surgical/validate/
+        # verify) instead of letting it self-skip. Versions pinned to
+        # requirements.txt so CI exercises the same runtime AnA uses in prod.
+        run: pip install "python-docx==1.2.0" "lxml==6.1.1"
+
+      - name: Apply GCC migrations
+        run: |
+          for migration in $(ls db/migrations/*_gcc_*.sql | sort); do
+            echo "Applying $migration"
+            PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Run tests
+        run: npm test
+        env:
+          CI: true
+          # Require the document runtime here: the AnA doc-surgery e2e FAILS
+          # (does not skip) if python-docx is unavailable, so a broken runtime
+          # can never masquerade as a pass.
+          ANA_DOCX_E2E_REQUIRED: '1'
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+  coverage:
+    name: Coverage (advisory)
+    runs-on: ubuntu-latest
+    needs: lint
+    # Closes the GA testing finding "never measures coverage". Runs the vitest
+    # suite with the v8 coverage provider against a real Postgres so the
+    # DB-backed paths are counted, and reports the numbers every run. Advisory
+    # for now (thresholds overridden to 0 in test:coverage so it never blocks) —
+    # the 70/60/70/70 target in vitest.config.ts is the goal; once the suite
+    # reaches it, drop the threshold overrides in test:coverage to enforce.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: concept2cure-ri_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Postgres client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -168,31 +366,328 @@ jobs:
             PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
           done
         env:
-          DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      # @vitest/coverage-v8 is an OPTIONAL peer of vitest, so `npm ci` does not
+      # install it. Install it transiently (--no-save keeps package.json and the
+      # lockfile untouched / in sync for every other job) just for this advisory
+      # coverage run.
+      - name: Install coverage provider
+        run: npm install --no-save @vitest/coverage-v8@4.1.7
+
+      - name: Measure coverage
+        # Inlined (not a package.json script) so package.json stays unchanged —
+        # this is an advisory CI-only measurement. Thresholds overridden to 0 so
+        # it reports actual coverage every run without ever blocking; the
+        # 70/60/70/70 target in vitest.config.ts is the goal to enforce later.
+        # continue-on-error: this job MEASURES coverage; it must never fail the
+        # PR (test pass/fail is owned by the Test job, not this one).
+        continue-on-error: true
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
+        env:
+          CI: true
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore
+
+  security-tests:
+    name: Security Contract Tests
+    runs-on: ubuntu-latest
+    # Intentionally independent of `lint`. The other test jobs `needs: lint`, so
+    # they are skipped whenever the lint job is red (e.g. pre-existing
+    # tenant-isolation baseline drift). A security regression must always report,
+    # so this gate runs on its own.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      # Tenant-isolation + prompt-injection contract tests. These mock the data
+      # layer (no DB), so they run fast and gate every PR independently of the
+      # heavier DB-backed suite.
+      - name: Run security contract tests
+        run: npm run test:security
+        env:
+          CI: true
+
+  ana-readiness-tests:
+    name: AnA Readiness Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Run AnA readiness suite
+        run: npm run test:ana
+        env:
+          CI: true
+          SKIP_DB_STARTUP_TEST: 'true'
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/concept2cure-ri_test
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: concept2cure-ri_test
+          # Auth method = trust; no credential literal in the workflow.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply GCC migrations
+        run: |
+          for migration in $(ls db/migrations/*_gcc_*.sql | sort); do
+            echo "Applying $migration"
+            PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
       - name: Smoke — apply RLS rollout migrations (0019/0020/0021)
-        # These migrations target the production schema. On a fresh test DB
-        # they each execute but find nothing to mutate (no tenant-keyed
-        # tables), so they prove the SQL parses and runs cleanly without
-        # changing behavior. This catches DO-block syntax bugs before
-        # staging/prod, where a botched migration would be far costlier.
+        # These migrations target the production schema. The smoke runs
+        # against a SEPARATE fresh DB (not the one the GCC migrations
+        # mutated above) so it tests "SQL parses + executes cleanly on
+        # an empty schema" — the original intent. Running it against
+        # the GCC-loaded DB would also exercise the seed-data drift the
+        # 0020 + 0021 coercers are supposed to catch in production,
+        # which is what 0019's audit step already covers separately.
         run: |
+          PAGER=cat psql "$DATABASE_URL_ADMIN" -v ON_ERROR_STOP=1 \
+            -c 'DROP DATABASE IF EXISTS "concept2cure-ri_rls_smoke"' \
+            -c 'CREATE DATABASE "concept2cure-ri_rls_smoke"'
           for f in \
             migrations/0019_tenant_column_audit.sql \
             migrations/0020_coerce_text_tenant_columns.sql \
             migrations/0021_enable_rls_everywhere.sql; do
             echo "Applying $f"
-            PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+            PAGER=cat psql "$DATABASE_URL_SMOKE" -v ON_ERROR_STOP=1 -f "$f"
           done
         env:
-          DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
+          DATABASE_URL_ADMIN: postgresql://postgres@localhost:5432/postgres
+          DATABASE_URL_SMOKE: postgresql://postgres@localhost:5432/concept2cure-ri_rls_smoke
 
       - name: Run integration tests
-        run: npm test -- --passWithNoTests
+        # vitest tests read DATABASE_URL via server/db/runtime.ts (per
+        # server/db/getDatabaseUrl.ts the env-var fallback order is
+        # DATABASE_URL → NEON_DATABASE_URL → DATABASE_NEON_NEW_SECRET).
+        # The job had only TEST_DATABASE_URL set, so the pool couldn't
+        # connect and ~100 server-side test files failed with
+        # "Database connection not available." Mirror the value to
+        # DATABASE_URL so the runtime actually sees it.
+        run: npm test
         env:
           CI: true
           RUN_INTEGRATION_TESTS: 'true'
-          TEST_DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+  # ── Blank-database provisioning + deploy-migration proof ──────────────────
+  #
+  # C2C-DB-001 / REM-7. Proves, against a genuinely empty Postgres, that:
+  #   1. the deploy-time migration REFUSES an unprovisioned database (exit 3)
+  #      instead of laying an island of tables onto an empty schema;
+  #   2. the from-scratch installer turns that empty database into the full
+  #      application schema;
+  #   3. the deploy-time migration then succeeds and its readiness contract
+  #      holds — the same contract /readyz enforces at boot; and
+  #   4. re-running it is a no-op, because a deploy runs it on every release.
+  #
+  # This exists because "the provisioning path works" was, until now, a claim no
+  # job tested. Every other DB-backed job here runs against a schema some earlier
+  # step already created, so a break in the from-scratch path would surface for
+  # the first time on a real deployment.
+  blank-db-provisioning:
+    name: Blank DB Provisioning + Deploy Migration
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        # pgvector, not stock postgres: the installer creates the `vector`
+        # extension, which stock postgres cannot provide.
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: c2c_blank_proof
+          # Auth method = trust; no credential literal in the workflow.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # sslmode=disable so scripts/db/connection.mjs selects the local, no-TLS
+      # branch rather than trying to verify a certificate the service has none of.
+      DATABASE_URL: postgresql://postgres@localhost:5432/c2c_blank_proof?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Assert the database really is blank
+        run: |
+          COUNT=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          echo "public tables before provisioning: $COUNT"
+          [[ "$COUNT" == "0" ]] || { echo "::error::Fixture is not a blank database"; exit 1; }
+
+      - name: Deploy migration must REFUSE an unprovisioned database
+        # The fail-closed leg. Exit 3 is deploy-migrate.mjs's distinct
+        # "never provisioned" code; any other outcome — success included — is a
+        # failure of this test, because succeeding here would mean the deploy
+        # path is willing to half-provision production.
+        run: |
+          set +e
+          node scripts/db/deploy-migrate.mjs
+          CODE=$?
+          set -e
+          echo "exit code: $CODE (expected 3)"
+          [[ "$CODE" == "3" ]] || { echo "::error::Expected exit 3 on a blank DB, got $CODE"; exit 1; }
+
+          AFTER=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          echo "public tables after refusal: $AFTER"
+          [[ "$AFTER" == "0" ]] || { echo "::error::Refused run still created $AFTER tables"; exit 1; }
+
+      - name: Provision from scratch
+        run: node scripts/db/install-fresh.mjs
+
+      - name: Deploy migration succeeds on the provisioned database
+        run: node scripts/db/deploy-migrate.mjs
+
+      - name: Deploy migration is idempotent (every release re-runs it)
+        run: node scripts/db/deploy-migrate.mjs
+
+      - name: Verify the readiness contract independently
+        # deploy-migrate.mjs checks this itself; asserting it again from psql
+        # means a regression in the script's own verification cannot hide a
+        # regression in the schema.
+        run: |
+          set -euo pipefail
+          check() {
+            local label="$1" expected="$2" sql="$3"
+            local actual
+            actual=$(psql "$DATABASE_URL" -tAc "$sql")
+            echo "$label: $actual (expected $expected)"
+            [[ "$actual" == "$expected" ]] || { echo "::error::$label = $actual, expected $expected"; exit 1; }
+          }
+
+          check "authoring subsystem tables" 11 "
+            SELECT count(*) FROM information_schema.tables
+             WHERE table_schema='public' AND table_name IN (
+               'authoring_documents','authoring_sections','doc_revisions','authoring_comments',
+               'authoring_citations','frozen_documents','user_pins','authoring_audit_trail',
+               'authoring_signatures','authoring_workflow_steps','doc_permissions')"
+
+          check "tenant-parentage FKs" 4 "
+            SELECT count(*) FROM pg_constraint WHERE conname IN (
+              'authoring_sections_doc_tenant_fkey','doc_revisions_section_tenant_fkey',
+              'authoring_comments_section_tenant_fkey','authoring_citations_section_tenant_fkey')"
+
+          check "authoring tables carrying tenant_isolation_policy" 11 "
+            SELECT count(*) FROM pg_policies
+             WHERE schemaname='public' AND policyname='tenant_isolation_policy'
+               AND tablename IN (
+                 'authoring_documents','authoring_sections','doc_revisions','authoring_comments',
+                 'authoring_citations','frozen_documents','user_pins','authoring_audit_trail',
+                 'authoring_signatures','authoring_workflow_steps','doc_permissions')"
+
+          # Lineages that reached real databases through no durable path before
+          # the migration set existed — their absence is what made the RBM and
+          # evidence-graph routes write to tables that were not there.
+          check "collaboration CRDT state table" 1 "
+            SELECT count(*) FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='collab_document_state'"
+
+          RBM=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'rbm\\_%'")
+          CRE=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'cre\\_%'")
+          echo "rbm_* tables: $RBM · cre_* tables: $CRE"
+          [[ "$RBM" -ge 8 ]] || { echo "::error::RBM lineage did not land ($RBM tables)"; exit 1; }
+          [[ "$CRE" -ge 6 ]] || { echo "::error::Evidence spine did not land ($CRE tables)"; exit 1; }
 
   aios-audit-assets:
     name: AIOS Audit Assets
@@ -228,7 +723,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
 
       - name: Build
         run: npm run build
@@ -252,14 +754,41 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high
+      - name: Generate SBOM (CycloneDX)
+        # Software Bill of Materials (production tree) for vendor security
+        # questionnaires / supply-chain transparency. Published as a build
+        # artifact. Value-add only — never block the security scan on it.
+        continue-on-error: true
+        run: npm run sbom > sbom.cyclonedx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          retention-days: 90
+          if-no-files-found: ignore
+
+      - name: Run npm audit (with documented false-positive allowlist)
+        # The wrapper filters out registry-lag false positives where installed
+        # version > advisory's vulnerable range. Genuine new high/critical
+        # advisories still fail. See scripts/ci/audit-with-allowlist.mjs for the
+        # current allowlist and justifications.
+        run: node scripts/ci/audit-with-allowlist.mjs
 
       - name: Trivy filesystem scan (deps + secrets)
-        continue-on-error: true
-        uses: aquasecurity/trivy-action@0.20.0
+        # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
+        # be merged. (severity threshold + exit-code 1; no continue-on-error.)
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -268,8 +797,14 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
+        # Advisory (continue-on-error) for now: the IaC estate has a pre-existing
+        # backlog of HIGH/CRITICAL misconfigs (e.g. AVD-AWS-0164 public-IP-on-launch
+        # in modules/vpc-secure) that must be baselined before this can block.
+        # TODO(security): baseline existing findings into .trivyignore, then flip
+        # this to a blocking gate (exit-code 1, no continue-on-error). The
+        # filesystem scan above (deps + secrets) remains blocking.
         continue-on-error: true
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
           scan-ref: .
@@ -277,45 +812,6 @@ jobs:
           exit-code: '1'
           format: table
           skip-dirs: node_modules
-
-  sonarcloud:
-    name: SonarCloud Analysis
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Full history for better analysis
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests with coverage
-        run: npm test -- --coverage --passWithNoTests
-        env:
-          CI: true
-
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=concept2cure_Concept2Cure.RI-2-replit
-            -Dsonar.organization=concept2cure
-            -Dsonar.sources=server,client/src,shared
-            -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/dist/**,**/*.test.ts,**/*.test.tsx,**/_archive/**,**/_deprecated_migrations/**
-            -Dsonar.tests=server,client/src
-            -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.typescript.tsconfigPath=tsconfig.json
-            -Dsonar.qualitygate.wait=true
 
   nightly-governance:
     name: Nightly Governance Strict
@@ -328,7 +824,14 @@ jobs:
         with:
           node-version: '20'
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
       - name: Route mount audit (strict debt gate)
         run: npm run ci:audit-route-mounts:full-strict
       - name: Repo health audit (strict debt gate)

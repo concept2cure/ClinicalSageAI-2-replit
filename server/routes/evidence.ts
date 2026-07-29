@@ -15,6 +15,10 @@ import { eq, and, desc, asc, sql, count, or, ilike } from 'drizzle-orm';
 import { evidenceObjects, evidenceLinks } from '../../shared/schema/programs';
 import { getSecureOrgId } from '../utils/tenantContext';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('evidence');
+
 const router = Router();
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -175,7 +179,9 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       search,
       sortBy,
       sortOrder,
-    } = req.query as z.infer<typeof queryParamsSchema>;
+      // validateQuery(queryParamsSchema) has already parsed/validated req.query
+      // against this schema; cast through unknown across the ParsedQs boundary.
+    } = req.query as unknown as z.infer<typeof queryParamsSchema>;
 
     const orgId = getSecureOrgId(req);
     if (!orgId) {
@@ -230,7 +236,7 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       },
     });
   } catch (error) {
-    console.error('[evidence] GET / error:', error);
+    logger.error('GET / error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch evidence' },
@@ -313,7 +319,7 @@ router.get('/search', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('[evidence] GET /search error:', error);
+    logger.error('GET /search error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Search failed' },
@@ -400,7 +406,7 @@ router.get('/stats', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('[evidence] GET /stats error:', error);
+    logger.error('GET /stats error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch stats' },
@@ -441,7 +447,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: { ...evidence, links } });
   } catch (error) {
-    console.error('[evidence] GET /:id error:', error);
+    logger.error('GET /:id error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch evidence' },
@@ -518,7 +524,7 @@ router.post('/', validateBody(createEvidenceSchema), async (req: Request, res: R
 
     res.status(201).json({ success: true, data: evidence });
   } catch (error) {
-    console.error('[evidence] POST / error:', error);
+    logger.error('POST / error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create evidence' },
@@ -595,7 +601,7 @@ router.patch('/:id', validateBody(updateEvidenceSchema), async (req: Request, re
 
     res.json({ success: true, data: evidence });
   } catch (error) {
-    console.error('[evidence] PATCH /:id error:', error);
+    logger.error('PATCH /:id error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to update evidence' },
@@ -639,7 +645,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     res.json({ success: true, message: 'Evidence deleted successfully' });
   } catch (error) {
-    console.error('[evidence] DELETE /:id error:', error);
+    logger.error('DELETE /:id error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete evidence' },
@@ -699,7 +705,7 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: evidence });
   } catch (error) {
-    console.error('[evidence] POST /:id/verify error:', error);
+    logger.error('POST /:id/verify error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to verify evidence' },
@@ -731,7 +737,7 @@ router.get('/:id/links', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: links });
   } catch (error) {
-    console.error('[evidence] GET /:id/links error:', error);
+    logger.error('GET /:id/links error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch links' },
@@ -784,7 +790,7 @@ router.post('/links', validateBody(createLinkSchema), async (req: Request, res: 
 
     res.status(201).json({ success: true, data: link });
   } catch (error) {
-    console.error('[evidence] POST /links error:', error);
+    logger.error('POST /links error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create link' },
@@ -824,7 +830,7 @@ router.delete('/links/:linkId', async (req: Request, res: Response) => {
 
     res.json({ success: true, message: 'Link deleted successfully' });
   } catch (error) {
-    console.error('[evidence] DELETE /links/:linkId error:', error);
+    logger.error('DELETE /links/:linkId error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete link' },

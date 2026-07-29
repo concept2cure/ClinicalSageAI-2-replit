@@ -21,19 +21,28 @@ import {
 } from './index.js';
 import { prefetchProjectIntelligence, preloadRIMContext } from './orchestrator.js';
 import type { SubmissionType } from './deficiency-taxonomy.js';
+import {
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 import { inferRole } from './role-adapter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../lumen-context-builder.js';
 import { enrichContextForChat } from './context-enrichment.js';
+import type { EnrichmentResult } from './context-enrichment.js';
 import { getThreadMessages } from '../chat-thread-helpers.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import { decisionLifecycleService } from '../decision-lifecycle-service.js';
 import { buildMdxContextBlock } from './mdx-context-resolver.js';
+import { loadRelationalOverlay } from './relational-profile-service.js';
+import { buildExternalIntelBlock } from '../external-intelligence/index.js';
+import { getDeadlineRadar, buildDeadlineRadarBlock } from '../ana/deadline-radar.js';
+import { getSessionBriefing } from '../ana/session-briefing.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
-const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
+const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'biostatistician', 'pharmacovigilance', 'quality', 'investor', 'general'];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -55,6 +64,14 @@ export interface PrefetchedRouteIntelligenceContext {
   rimContext: string;
   decisionContext: Array<{ decision: unknown; receipt?: unknown }>;
   orchestratorAuthoringContext?: OrchestratorInput['authoringContext'];
+  /** AnA's self-developed RELATIONAL CONTEXT block ('' when nothing learned yet). */
+  relationalOverlay: string;
+  /** Fresh nightly-sweep findings block ('' when nothing fresh). */
+  externalIntelBlock: string;
+  /** Proactive OVERDUE/DUE-SOON regulatory-deadline block ('' when nothing pressing). */
+  deadlineRadarBlock: string;
+  /** Session-start situational briefing block ('' except on the first turn). */
+  sessionBriefingBlock: string;
 }
 
 // ─── Authoring context builder ───────────────────────────────────────────────
@@ -86,7 +103,14 @@ export function buildRouteContextBlock(context: any): string {
       .join(' ');
     parts.push(`  <project ${attrs}/>`);
   }
-  if (productType) parts.push(`  <submission_type>${productType}</submission_type>`);
+  if (productType) {
+    const bridgeCtx = getSubmissionTypeContext(productType);
+    if (bridgeCtx) {
+      parts.push(`  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`);
+    } else {
+      parts.push(`  <submission_type>${productType}</submission_type>`);
+    }
+  }
   if (userRole) parts.push(`  <user_role>${userRole}</user_role>`);
   if (sectionCode) parts.push(`  <section_code>${sectionCode}</section_code>`);
 
@@ -106,7 +130,14 @@ export function buildAuthoringContextBlock(authoring_context: any): string {
   if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
   if (ac.artifactVersionId) parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
   if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
-  if (ac.submissionType) parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+  if (ac.submissionType) {
+    const bridgeCtx = getSubmissionTypeContext(ac.submissionType);
+    if (bridgeCtx) {
+      parts.push(`  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`);
+    } else {
+      parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+    }
+  }
   if (ac.readiness) {
     parts.push(`  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${ac.readiness.blocked ?? false}">`);
     if (ac.readiness.blockers?.length) {
@@ -131,18 +162,82 @@ export function resolveProjectIdFromBody(body: any): string | number | undefined
   return body?.project_id || body?.context?.projectId || body?.project_context?.projectId;
 }
 
+/**
+ * Race a promise against a timeout, resolving to `fallback` if it doesn't settle
+ * in time. Used to bound OPTIONAL context enrichment so a slow DB can never stall
+ * AnA's time-to-first-token — the worst case is a turn without that one block.
+ */
+export function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<T>(resolve => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  return Promise.race([p.finally(() => clearTimeout(timer)), timeout]);
+}
+
+/** Max wait for the optional proactive block (deadline radar / session briefing). */
+const PROACTIVE_PREFETCH_TIMEOUT_MS = 1500;
+
+type ProactiveBlock = { kind: 'briefing' | 'deadline' | 'none'; block: string };
+
 export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
   organizationId?: number | null;
   authoringContext?: Record<string, unknown>;
+  /** Numeric user id — enables AnA's per-user relational personality overlay. */
+  userId?: number | null;
+  /** Target agency of the active program — scopes the external intel block. */
+  targetAgency?: string | null;
+  /** First turn of a session — surface the full situational briefing instead of just deadlines. */
+  sessionStart?: boolean;
 }): Promise<PrefetchedRouteIntelligenceContext> {
-  const { projectId, organizationId, authoringContext } = params;
+  const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } = params;
   const projectIdNumber = projectId != null ? Number(projectId) : null;
 
   let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
   let projectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
   let rimContext = '';
   let decisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
+
+  // Independent of the project gate below: the relational overlay needs only
+  // org + user, and the external-intel block is global (and process-cached).
+  const [relationalResult, externalIntelResult, deadlineResult] = await Promise.allSettled([
+    loadRelationalOverlay({
+      organizationId: organizationId ?? null,
+      userId: userId ?? null,
+      projectId: projectIdNumber,
+    }),
+    buildExternalIntelBlock(targetAgency ?? null),
+    // Proactive risk surfacing — org-scoped, fail-soft. On the FIRST turn of a
+    // session, surface the full situational briefing (deadlines + recent
+    // decisions); on later turns, just the deadline block (overdue + due-soon).
+    // Only one is non-empty per turn, so deadlines are never duplicated.
+    organizationId && Number.isFinite(organizationId)
+      ? withTimeout<ProactiveBlock>(
+          sessionStart
+            ? getSessionBriefing({ organizationId, projectId: projectIdNumber }).then(r => ({
+                kind: 'briefing' as const,
+                block: r.block,
+              }))
+            : getDeadlineRadar({ organizationId }).then(r => ({
+                kind: 'deadline' as const,
+                block: buildDeadlineRadarBlock(r),
+              })),
+          PROACTIVE_PREFETCH_TIMEOUT_MS,
+          { kind: 'none' as const, block: '' }
+        )
+      : Promise.resolve({ kind: 'none' as const, block: '' }),
+  ]);
+  const relationalOverlay =
+    relationalResult.status === 'fulfilled' ? relationalResult.value : '';
+  const externalIntelBlock =
+    externalIntelResult.status === 'fulfilled' ? externalIntelResult.value : '';
+  const proactive =
+    deadlineResult.status === 'fulfilled'
+      ? deadlineResult.value
+      : { kind: 'none' as const, block: '' };
+  const deadlineRadarBlock = proactive.kind === 'deadline' ? proactive.block : '';
+  const sessionBriefingBlock = proactive.kind === 'briefing' ? proactive.block : '';
 
   if (
     projectIdNumber &&
@@ -211,6 +306,10 @@ export async function prefetchRouteIntelligenceContext(params: {
     rimContext,
     decisionContext,
     orchestratorAuthoringContext,
+    relationalOverlay,
+    externalIntelBlock,
+    deadlineRadarBlock,
+    sessionBriefingBlock,
   };
 }
 
@@ -288,6 +387,10 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     projectId,
     organizationId: numericOrgId,
     authoringContext: normalizedAuthoringContext,
+    userId: typeof userId === 'number' ? userId : Number(userId) || null,
+    targetAgency:
+      typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
+    sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
   });
 
   // Orchestrate
@@ -297,11 +400,17 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     userRole: effectiveRole,
     projectContext: project_context,
     documentContext: document_context,
-    submissionType: submission_type as SubmissionType | undefined,
+    submissionType: submission_type
+      ? resolveToDeficiencyType(submission_type) as SubmissionType
+      : undefined,
     conversationHistory: conversation_history,
     authoringContext: prefetchedContext.orchestratorAuthoringContext,
     _feedbackContext: prefetchedContext.feedbackContext,
     _projectIntelligenceProfile: prefetchedContext.projectProfile,
+    _relationalOverlay: prefetchedContext.relationalOverlay,
+    _externalIntelBlock: prefetchedContext.externalIntelBlock,
+    _deadlineRadarBlock: prefetchedContext.deadlineRadarBlock,
+    _sessionBriefingBlock: prefetchedContext.sessionBriefingBlock,
   };
   const orchestration = orchestrate(orchestratorInput);
 
@@ -325,7 +434,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     buildMemoryContextForChat({
       threadId: thread_id || undefined,
       organizationId: numericOrgId ?? undefined,
-      projectId: projectId || undefined,
+      projectId: projectId != null ? Number(projectId) : undefined,
       query: message,
       limitPerLayer: 4,
       maxChars: 3500,
@@ -335,10 +444,12 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
       projectId,
       organizationId: numericOrgId ?? undefined,
       submissionType: orchestration.detectedSubmissionType || undefined,
-    }).catch(() => ({ block: '', sources: [] as string[] })),
+      userRole: effectiveRole,
+    }).catch((): EnrichmentResult => ({ block: '', sources: [] })),
   ]);
 
-  const effectiveMessage = enrichment.rewrittenMessage || message;
+  const effectiveMessage =
+    ('rewrittenMessage' in enrichment && enrichment.rewrittenMessage) || message;
 
   // === Governed context enrichment (fabric state) ===
   let governedContextBlock = '';
@@ -441,20 +552,27 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   const fileIds = req.body.file_ids;
   if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
     try {
-      const fileResult = await pool.query(
-        `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
-        [fileIds]
+      // SECURITY: this lookup previously had NO tenant filter at all — any
+      // caller who supplied (or guessed) an upload id received that file's
+      // name and MIME type regardless of which organization owned it. The
+      // shared helper enforces both the organization column and the
+      // storage-path prefix. See uploaded-file-access.ts.
+      const { loadUploadedFileMetadata } = await import(
+        '../ana/uploaded-file-access.js'
       );
-      if (fileResult.rows.length > 0) {
-        const fileContext = fileResult.rows.map((f: any) =>
-          `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`
+      const attachedFiles = await loadUploadedFileMetadata(fileIds, numericOrgId);
+      if (attachedFiles.length > 0) {
+        const fileContext = attachedFiles.map(f =>
+          `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`
         ).join('\n');
         messages.push({
           role: 'user' as const,
           content: `[The user has attached the following files:\n${fileContext}\nReference these files when relevant.]`,
         });
       }
-    } catch { /* Non-blocking */ }
+    } catch (fileErr: any) {
+      console.warn('[AnA chat-context] Attachment context failed:', fileErr?.message);
+    }
   }
 
   // Add the actual user message

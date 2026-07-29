@@ -19,8 +19,10 @@ import {
   date,
   boolean,
   decimal,
+  jsonb,
   customType,
   unique,
+  index,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -178,3 +180,61 @@ export const vaultEvidenceCitations = vault.table('evidence_citations', {
   verifiedAt: timestamp('verified_at', { withTimezone: true }),
   verifiedBy: uuid('verified_by'),
 });
+
+/**
+ * Retention policies — named rules that drive the document retention job.
+ *
+ * `vaultDocuments.retentionPolicy` (text) references `policyName` here, and
+ * `vaultDocuments.retentionUntil` is the computed expiry. The job
+ * (server/jobs/retentionCron.ts) resolves each expired document's policy to
+ * decide whether to archive a snapshot first and whether to hard-delete the row
+ * (default: soft-delete by stamping `deletedAt`). When a document references no
+ * known policy, the job falls back to archive + soft-delete (never silently
+ * hard-deletes).
+ */
+export const vaultRetentionPolicies = vault.table('retention_policies', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  policyName: text('policy_name').notNull().unique(),
+  description: text('description'),
+  /** Retention duration in days from a document's createdAt (informational; the
+   *  authoritative expiry is the per-document retentionUntil date). */
+  retentionDays: integer('retention_days').notNull(),
+  /** Snapshot the document into document_archives before deletion. */
+  archiveBeforeDelete: boolean('archive_before_delete').notNull().default(true),
+  /** Physically DELETE the row after archiving (vs. soft-delete via deletedAt). */
+  hardDelete: boolean('hard_delete').notNull().default(false),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * Document archives — an immutable snapshot of a document taken by the retention
+ * job immediately before it is deleted, so a deleted document's metadata (and
+ * the reason/time/actor of deletion) survives for audit and legal hold.
+ *
+ * Honest scope: this preserves the DOCUMENT RECORD (a JSON snapshot of the
+ * vault.documents row), not the S3 object bytes — object lifecycle/purge is a
+ * separate storage concern the job does not perform.
+ */
+export const vaultDocumentArchives = vault.table(
+  'document_archives',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    originalDocumentId: uuid('original_document_id').notNull(),
+    programId: uuid('program_id').notNull(),
+    documentCode: text('document_code'),
+    documentTitle: text('document_title'),
+    documentType: text('document_type'),
+    retentionPolicy: text('retention_policy'),
+    /** Full snapshot of the vault.documents row at archive time. */
+    snapshot: jsonb('snapshot').notNull(),
+    archiveReason: text('archive_reason').notNull().default('retention_policy'),
+    archivedBy: text('archived_by').notNull().default('system:retention-job'),
+    archivedAt: timestamp('archived_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    byOriginal: index('vault_document_archives_original_idx').on(table.originalDocumentId),
+    byProgram: index('vault_document_archives_program_idx').on(table.programId),
+  })
+);

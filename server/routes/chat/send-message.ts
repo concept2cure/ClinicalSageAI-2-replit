@@ -28,14 +28,30 @@ import {
 } from '../../services/kernel-adaptive-policy.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
+import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
+import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
+import {
+  isSubstantiveTurn,
+  resolveModelTier,
+  resolveTierModel,
+} from '../../services/ai-gateway/reasoning.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../../services/working-memory.js';
+import { getProjectInstructionsBlock } from '../../services/projects/project-instructions.js';
+import {
+  getProjectRetrievalMode,
+  assembleProjectKnowledgeCorpus,
+} from '../../services/projects/retrieval-mode.js';
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
+import {
+  handleSubmissionChat,
+  isPostSectionGenerationTurn,
+} from '../../services/ana/submission-chat-handler.js';
 import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
@@ -44,6 +60,13 @@ import { verifyClaim, type VerifierFlag } from './verifier.js';
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
 const RETRIEVAL_THRESHOLD = parseFloat(process.env.ANA_RETRIEVAL_THRESHOLD ?? '0.7');
 const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? '4096', 10);
+// Projects spec A2: dark-launch flag for in-context full-corpus injection. Off
+// by default — the retrieval mode is still computed and surfaced via the
+// knowledge endpoint; this flag only controls whether the chat path injects the
+// full project corpus into the prompt (pending cost/cache validation in a live
+// environment). When off, this path does zero extra work.
+const INCONTEXT_INJECTION_ENABLED =
+  process.env.PROJECT_INCONTEXT_INJECTION_ENABLED === 'true';
 
 /**
  * POST /api/chat/send-message  (and POST /api/chat via root alias)
@@ -52,7 +75,7 @@ const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? 
 export const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider, selected_tools, tool_context } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -109,6 +132,78 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     }
 
     const previousMessages = await getThreadMessages(threadId);
+
+    // ── STEP 2b: SUBMISSION-CHAT AUTO-FLIP ──────────────────────────────
+    // If the user supplied an artifactId in context AND the previous assistant
+    // turn was a section generation, route this message through the
+    // submission-chat handler so retrieval scope expands to the entire
+    // dossier instead of just the active document.
+    const clientCtxEarly = (req.body.context ?? {}) as Record<string, any>;
+    const submissionChatArtifactId =
+      clientCtxEarly.artifactId || req.body.artifact_id;
+    const submissionChatExplicit = req.body.mode === 'submission-chat';
+    const shouldRunSubmissionChat =
+      typeof submissionChatArtifactId === 'string' &&
+      submissionChatArtifactId.length > 0 &&
+      (submissionChatExplicit ||
+        isPostSectionGenerationTurn(previousMessages));
+
+    if (shouldRunSubmissionChat) {
+      try {
+        const orgUuid =
+          (req as any).tenantContext?.organizationUuid ||
+          (req.headers['x-org-uuid'] as string | undefined);
+        const sub = await handleSubmissionChat({
+          threadId,
+          artifactId: submissionChatArtifactId,
+          question: message,
+          organizationId: numericOrgId ?? null,
+          organizationUuid: orgUuid ?? null,
+          userId: numericUserId || null,
+        });
+
+        // Persist user + assistant turn to legacy chat_messages so the thread
+        // remains continuous when the next message flips back to normal mode.
+        await saveMessage(threadId, 'user', message, sub.model);
+        await saveMessage(
+          threadId,
+          'assistant',
+          sub.answer,
+          sub.model,
+          sub.usage.totalTokens
+        );
+
+        return res.json({
+          answer: sub.answer,
+          response: sub.answer,
+          thread_id: threadId,
+          model: sub.model,
+          provider: sub.provider,
+          usage: {
+            prompt_tokens: sub.usage.promptTokens,
+            completion_tokens: sub.usage.completionTokens,
+            total_tokens: sub.usage.totalTokens,
+          },
+          mode: 'submission-chat',
+          citations: sub.citations,
+          submissionChat: {
+            artifactId: sub.artifactId,
+            projectId: sub.projectId,
+            intent: sub.intent,
+            rewrite: sub.rewrite,
+            retrieval: sub.retrieval,
+            conversation: sub.conversation,
+          },
+        });
+      } catch (err: any) {
+        // Fall through to the normal chat path on failure — the user still
+        // gets an answer, just without the cross-dossier scope.
+        console.warn(
+          '[AnA] submission-chat auto-flip failed, falling back to normal chat:',
+          err?.message
+        );
+      }
+    }
 
     // ── STEP 3: PERSIST USER MESSAGE (provenance chain) ─────────────────
     if (numericOrgId) {
@@ -398,6 +493,40 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       memoryBlockChars = memoryBlock.length;
       memoryDiagnostics = diagnostics;
 
+      // Session bootstrap — so a conversation never starts cold. At session
+      // start (no prior messages in this thread) rehydrate query-independently:
+      // the latest working summary, the most important project/client atoms,
+      // and AnA's own past lessons (which the query-driven memory assembler
+      // never loads). Gated to session start to avoid re-injecting every turn,
+      // fault-tolerant, and disableable via ANA_SESSION_BOOTSTRAP_AUTO=false.
+      let sessionBootstrapBlock = '';
+      try {
+        const { shouldAutoBootstrap, buildSessionBootstrapContext } = await import(
+          '../../services/ana-session-bootstrap.js'
+        );
+        if (
+          shouldAutoBootstrap({
+            priorMessageCount: previousMessages.length,
+            organizationId: numericOrgId ?? null,
+            disabled: process.env.ANA_SESSION_BOOTSTRAP_AUTO === 'false',
+          })
+        ) {
+          const pid =
+            typeof project_id === 'string'
+              ? parseInt(project_id.replace(/^proj_/, ''), 10)
+              : project_id;
+          const block = await buildSessionBootstrapContext({
+            organizationId: numericOrgId as number,
+            projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
+            threadId,
+            atomLimit: 6,
+          });
+          if (block) sessionBootstrapBlock = `\n\n${block}\n`;
+        }
+      } catch (err) {
+        console.warn('[AnA] session bootstrap failed (continuing without):', (err as any)?.message);
+      }
+
       // ── IND Context Injection ──────────────────────────────────────────────────
       // When the project is an IND submission, inject the complete CTD structure
       // so AnA knows every section needed and can guide the user through it.
@@ -444,6 +573,40 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
 
+      // Project instructions injection (spec A1.1) — read the project's
+      // authored instructions + knowledge context and prepend to the system
+      // context. Shared helper so this and submission-chat cannot drift; it is
+      // tenant-scoped and graceful (empty string when absent or on error).
+      const projectInstructionsBlock = await getProjectInstructionsBlock(
+        project_id,
+        numericOrgId
+      );
+
+      // A2 in-context mode (dark-launched behind INCONTEXT_INJECTION_ENABLED):
+      // when the project runs in_context, inject the full project knowledge
+      // corpus. Off by default → zero extra work and no behaviour change. The
+      // mode itself is surfaced separately by GET /projects/:id/knowledge.
+      let projectKnowledgeCorpusBlock = '';
+      if (INCONTEXT_INJECTION_ENABLED && project_id && numericOrgId) {
+        const pidNum =
+          typeof project_id === 'string'
+            ? parseInt(project_id.replace(/^proj_/, ''), 10)
+            : project_id;
+        if (Number.isFinite(pidNum) && pidNum > 0) {
+          try {
+            const modeState = await getProjectRetrievalMode(pidNum, numericOrgId);
+            if (modeState.mode === 'in_context') {
+              projectKnowledgeCorpusBlock = await assembleProjectKnowledgeCorpus(
+                pidNum,
+                numericOrgId
+              );
+            }
+          } catch {
+            /* non-fatal — fall back to retrieval-only */
+          }
+        }
+      }
+
       // AnA fix F2: always prepend a CONTEXT SNAPSHOT block so AnA can see
       // exactly what context is loaded right now — including explicit
       // "NOT LOADED" / "NONE" markers when something is missing. The Context
@@ -474,9 +637,12 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const systemPrompt =
         contextSnapshot +
         intelligencePrefix +
+        projectInstructionsBlock +
         basePrompt +
         indContextBlock +
         deviceContextBlock +
+        projectKnowledgeCorpusBlock +
+        sessionBootstrapBlock +
         memoryBlock +
         evidenceBlock;
 
@@ -515,6 +681,31 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
           : undefined;
 
+      // Cost-tiered model selection — same policy and precedence as the
+      // ana-ri paths: yields to an explicit provider preference and to a
+      // governance-pinned strategy; opt-out via ANA_MODEL_TIERING=off; tier
+      // remap via ANA_TIER_*_MODEL. No effort picker on this path, so it
+      // resolves at the default Balanced effort. The pinned model rides the
+      // whole agentic loop (the request carries it into every round).
+      const chatTieredModel = (() => {
+        if (validatedChatProvider) return null; // user pinned a provider
+        if (policyHint?.preferredStrategy) return null; // governance owns the strategy
+        if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+        const tier = resolveModelTier({
+          effort: 'balanced',
+          riskTier: routingPlan.riskTier,
+          intentLens: orchestratorResult.detectedIntent?.lens,
+          taskType: routingPlan.taskType,
+          substantive: isSubstantiveTurn({
+            messageLength: typeof message === 'string' ? message.length : 0,
+            intentLens: orchestratorResult.detectedIntent?.lens,
+          }),
+        });
+        const enabledModels =
+          typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+        return resolveTierModel(tier, enabledModels, process.env);
+      })();
+
       // ── Agentic tool-use loop: AnA can search, check compliance, generate docs ──
       const baseRequest = {
         taskType: routingPlan.taskType,
@@ -525,19 +716,42 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
         strategy: selectedStrategy,
-        tools: getAllEnabledTools(),
+        // Offer the tools relevant to this turn's intent + context (the platform
+        // command bridge is always included, so nothing is ever truly out of
+        // reach), honouring any tools the user pinned in the tool picker.
+        tools: selectToolsForTurn(getAllEnabledTools(), typeof message === 'string' ? message : '', {
+          pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
+          context: tool_context && typeof tool_context === 'object' ? tool_context : undefined,
+        }),
         toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
+        // Mutually exclusive with validatedChatProvider (the tier yields to it).
+        ...(chatTieredModel
+          ? { provider: chatTieredModel.provider, model: chatTieredModel.model }
+          : {}),
+        // A2: cache the (large, stable) in-context corpus prefix when injected.
+        ...(projectKnowledgeCorpusBlock
+          ? { promptCache: { enabled: true, type: 'ephemeral' as const } }
+          : {}),
       };
 
-      // Use agentic loop for multi-turn tool execution (max 5 rounds)
+      // Use agentic loop for multi-turn tool execution. This generic path has no
+      // effort picker, so it runs at the default (Balanced) round ceiling — up
+      // from the old flat 5 so a deeper investigation can run to completion.
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
-        maxRounds: 5,
+        maxRounds: resolveMaxRounds('balanced'),
         toolContext: {
           organizationId: numericOrgId,
           userId: numericUserId || null,
           projectId:
             typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+          // Tenant UUID so the project_knowledge_search tool can scope retrieval.
+          organizationUuid: orgUuid ?? null,
+          // Situational context (surface/project/document type) — same signal the
+          // tool selector uses; threaded to handlers for telemetry + tailoring.
+          surface: tool_context && typeof tool_context === 'object' ? ((tool_context as any).surface ?? null) : null,
+          projectType: tool_context && typeof tool_context === 'object' ? ((tool_context as any).projectType ?? null) : null,
+          documentType: tool_context && typeof tool_context === 'object' ? ((tool_context as any).documentType ?? null) : null,
         },
         onToolExecution: (toolName, input, result) => {
           // Persist the invocation for usage analytics. Latency is 0 here

@@ -1,5 +1,5 @@
 /**
- * eCTD Export Service — ICH M8 v4.0 Submission Package Generator
+ * eCTD Export Service — ICH eCTD v3.2.2 Submission Package Generator
  *
  * Generates a structurally valid eCTD submission package as a ZIP archive
  * containing:
@@ -9,13 +9,16 @@
  *   - m3/ Module 3: Quality (CMC)
  *   - m4/ Module 4: Nonclinical Study Reports
  *   - m5/ Module 5: Clinical Study Reports
+ *   - util/dtd/ vendored ICH/regional DTDs (when present) for self-containment
  *
  * Uses database-backed eCTD modules/granules from the shared schema.
  *
  * @module server/services/ectdExportService
- * @compliance ICH M8 v4.0, ICH M4 CTD
+ * @compliance ICH eCTD v3.2.2, ICH M4 CTD
  */
 
+import fs from 'fs';
+import path from 'path';
 import JSZip from 'jszip';
 import { db, pool } from '../db';
 import {
@@ -25,6 +28,18 @@ import {
 } from '../../shared/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import crypto from 'crypto';
+import { renderLeafPdf } from './ectd/leaf-pdf-renderer';
+import {
+  computeEctdCompleteness,
+  assertEctdSubmissionComplete,
+  EctdCompletenessError,
+  type CompletenessReport,
+  type IncompleteLeaf,
+} from './ectd/completeness';
+
+// Re-exported so existing importers of the export service keep working.
+export { EctdCompletenessError };
+export type { CompletenessReport };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,6 +77,7 @@ interface EctdPackageResult {
     totalGranules: number;
     totalFiles: number;
     generatedAt: string;
+    completeness: CompletenessReport;
   };
 }
 
@@ -198,18 +214,17 @@ function generateIndexXml(opts: {
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
+<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <!--
-  eCTD Submission Backbone (ICH M8 v4.0)
+  eCTD Submission Backbone (ICH eCTD v3.2.2)
   Application: ${escapeXml(opts.applicationNumber)}
   Sequence: ${opts.sequenceNumber}
   Generated: ${opts.generatedAt}
   Generator: Concept2Cure.RI eCTD Export Service
-  Generator: Concept2Cure eCTD Export Service
 -->
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"
-           dtd-version="4.0"
+           dtd-version="3.2"
            xml:lang="en">
   <ectd:submission>
     <ectd:application-number>${escapeXml(opts.applicationNumber)}</ectd:application-number>
@@ -224,13 +239,31 @@ ${moduleElements}
 </ectd:ectd>`;
 }
 
+// Regions this generator can produce a correct regional backbone for.
+// Adding a region requires a verified regional XML structure + DTD — do NOT
+// silently fall back to another region's backbone (that previously shipped a
+// PMDA/jp file for Health Canada and any other non-FDA/EMA input).
+// See HI_8_ECTD_SCOPING_BRIEF.md (regions in scope: FDA, EMA, PMDA, HC).
+const ECTD_REGIONS: Record<string, { code: string; agency: string }> = {
+  FDA: { code: 'us', agency: 'U.S. Food and Drug Administration' },
+  EMA: { code: 'eu', agency: 'European Medicines Agency' },
+  PMDA: { code: 'jp', agency: 'Pharmaceuticals and Medical Devices Agency' },
+};
+
+function resolveEctdRegion(region: string): { code: string; agency: string } {
+  const resolved = ECTD_REGIONS[region];
+  if (!resolved) {
+    // Fail closed rather than mislabel a regulatory submission. Health Canada
+    // (ca-regional) is a documented pending region — see the scoping brief.
+    throw new Error(
+      `eCTD export does not support region "${region}" yet. Supported: ${Object.keys(ECTD_REGIONS).join(', ')}.`
+    );
+  }
+  return resolved;
+}
+
 function generateRegionalXml(region: string, applicationNumber: string): string {
-  const regionCode = region === 'FDA' ? 'us' : region === 'EMA' ? 'eu' : 'jp';
-  const agencyName = region === 'FDA'
-    ? 'U.S. Food and Drug Administration'
-    : region === 'EMA'
-      ? 'European Medicines Agency'
-      : 'Pharmaceuticals and Medical Devices Agency';
+  const { code: regionCode, agency: agencyName } = resolveEctdRegion(region);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <${regionCode}-regional xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -243,6 +276,28 @@ function generateRegionalXml(region: string, applicationNumber: string): string 
     <submission-type>initial</submission-type>
   </admin>
 </${regionCode}-regional>`;
+}
+
+/**
+ * Bundle vendored eCTD DTD files (when present) into util/dtd/ so the package is
+ * self-contained and DTD-validatable. DTDs are licensed agency artifacts and are
+ * NOT committed to this repo — drop them into assets/ectd-dtd/ (or set
+ * ECTD_DTD_DIR) and they are bundled automatically; absence is surfaced as a
+ * "not submission-ready" warning by validateEctdPackage.
+ * See assets/ectd-dtd/README.md and HI_8_ECTD_SCOPING_BRIEF.md G1.
+ */
+function bundleVendoredDtds(zip: JSZip): number {
+  try {
+    const dir = process.env.ECTD_DTD_DIR || path.resolve(process.cwd(), 'assets/ectd-dtd');
+    if (!fs.existsSync(dir)) return 0;
+    const dtdFiles = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.dtd'));
+    for (const file of dtdFiles) {
+      zip.file(`util/dtd/${file}`, fs.readFileSync(path.join(dir, file)));
+    }
+    return dtdFiles.length;
+  } catch {
+    return 0; // non-fatal — absence is reported by validateEctdPackage
+  }
 }
 
 function generateModulePlaceholderXml(moduleNumber: string, moduleName: string, granules: GranuleRecord[]): string {
@@ -338,6 +393,14 @@ export async function generateEctdPackage(
     submissionType?: string;
     sequenceNumber?: string;
     applicationNumber?: string;
+    /**
+     * Submission-grade gate. When true, the export throws EctdCompletenessError
+     * instead of assembling a package that contains placeholder ("PENDING")
+     * leaves or no content — so a substantively-empty dossier can never be
+     * produced for an actual filing. Defaults to false (draft exports still
+     * build, with the completeness report attached to stats).
+     */
+    requireComplete?: boolean;
   } = {}
 ): Promise<EctdPackageResult> {
   const region = options.region || 'FDA';
@@ -441,6 +504,11 @@ export async function generateEctdPackage(
 
   // Populate from database granules
   let totalFiles = 0;
+  let placeholderLeaves = 0;
+  let unfinalizedLeaves = 0;
+  const incompleteSections: IncompleteLeaf[] = [];
+  /** Artifact statuses that count as finalized (submission-ready) content. */
+  const FINALIZED_STATUSES = new Set(['locked', 'approved', 'final', 'effective', 'signed']);
   for (const granule of granules) {
     const moduleNum = granule.granuleId.split('.')[0];
     const entry = moduleGranuleMap.get(moduleNum);
@@ -451,16 +519,20 @@ export async function generateEctdPackage(
 
     // Attempt to retrieve actual document content from the database
     let documentContent: string | null = null;
+    // Editorial status of the artifact the content is sourced from, when known.
+    // Vault document_versions / metadata content have no draft/review concept and
+    // are treated as finalized; a concept2cure_artifacts source carries its status.
+    let contentStatus: string | null = null;
     if (granule.documentPath) {
       try {
         const docResult = await pool.query(
           `SELECT dv.content, dv.file_content, d.title, d.description
            FROM document_versions dv
            JOIN documents d ON d.id = dv.document_id
-           WHERE d.id = $1 OR dv.id = $1
+           WHERE (d.id = $1 OR dv.id = $1) AND d.organization_id = $2
            ORDER BY dv.created_at DESC
            LIMIT 1`,
-          [granule.id]
+          [granule.id, organizationId]
         );
         if (docResult.rows.length > 0 && (docResult.rows[0].content || docResult.rows[0].file_content)) {
           documentContent = docResult.rows[0].content || docResult.rows[0].file_content;
@@ -474,7 +546,7 @@ export async function generateEctdPackage(
     if (!documentContent) {
       try {
         const artifactResult = await pool.query(
-          `SELECT content, title FROM concept2cure_artifacts
+          `SELECT content, title, status FROM concept2cure_artifacts
            WHERE organization_id = $1
              AND (ctd_section = $2 OR ctd_section = $3 OR ctd_section = $4)
              AND status IN ('approved', 'locked', 'review', 'draft')
@@ -486,6 +558,7 @@ export async function generateEctdPackage(
         );
         if (artifactResult.rows.length > 0 && artifactResult.rows[0].content) {
           documentContent = artifactResult.rows[0].content;
+          contentStatus = artifactResult.rows[0].status ?? null;
         }
       } catch (artErr: any) {
         console.warn(`[eCTD Export] Artifact lookup failed for ${granule.granuleId}: ${artErr.message}`);
@@ -497,7 +570,9 @@ export async function generateEctdPackage(
       documentContent = granule.metadata.content;
     }
 
-    // Use .txt extension for placeholder content (not .pdf) to avoid FDA ESG rejection
+    // Leaves are rendered to real PDF below (renderLeafPdf); when no authored
+    // content exists, a structured placeholder document is rendered instead —
+    // tracked here so the completeness gate can see unfinished leaves.
     const isPlaceholder = !documentContent;
     const fileContent = documentContent || generateStructuredDocument({
       sectionCode: granule.granuleId,
@@ -509,16 +584,45 @@ export async function generateEctdPackage(
       generatedAt,
     });
 
-    zip.file(filePath, fileContent);
+    // Render to a real PDF when the leaf is a .pdf (the eCTD norm); otherwise
+    // write the raw bytes. Checksums are computed on the bytes actually written.
+    const leafBytes: string | Buffer = filePath.toLowerCase().endsWith('.pdf')
+      ? await renderLeafPdf(fileContent, {
+          title: granule.granuleName,
+          sectionCode: granule.granuleId,
+        })
+      : fileContent;
+    zip.file(filePath, leafBytes);
     totalFiles++;
 
     entry.granules.push({
       granuleId: granule.granuleId,
       granuleName: granule.granuleName,
       filePath,
-      checksum: md5(fileContent),
+      checksum: md5(leafBytes),
       operation: 'new',
     });
+
+    // A leaf backed only by a draft/review artifact carries real text but is not
+    // finalized — not submission-ready even though it isn't an empty placeholder.
+    const isUnfinalized =
+      !isPlaceholder && contentStatus != null && !FINALIZED_STATUSES.has(contentStatus.toLowerCase());
+
+    if (isPlaceholder) {
+      placeholderLeaves++;
+      incompleteSections.push({
+        granuleId: granule.granuleId,
+        granuleName: granule.granuleName,
+        status: granule.status,
+      });
+    } else if (isUnfinalized) {
+      unfinalizedLeaves++;
+      incompleteSections.push({
+        granuleId: granule.granuleId,
+        granuleName: granule.granuleName,
+        status: contentStatus ?? granule.status,
+      });
+    }
   }
 
   // Also add project_sections as documents if they have content
@@ -561,17 +665,29 @@ export async function generateEctdPackage(
     const folder = MODULE_DEFS[moduleNum].folder;
     const filePath = `${folder}/${section.section_code?.replace(/\./g, '/')}/${sectionSlug}.pdf`;
 
-    zip.file(filePath, docContent);
+    const sectionPdf = await renderLeafPdf(docContent, {
+      title: section.title || section.section_code,
+      sectionCode: section.section_code,
+    });
+    zip.file(filePath, sectionPdf);
     totalFiles++;
 
     entry.granules.push({
       granuleId: section.section_code,
       granuleName: section.title || section.section_code,
       filePath,
-      checksum: md5(docContent),
+      checksum: md5(sectionPdf),
       operation: 'new',
     });
   }
+
+  // 3c. Submission-completeness gate. A submission-grade export must never ship
+  // placeholder ("Content Status: PENDING") leaves or an empty dossier — that is
+  // a Refuse-to-File / eCTD technical-rejection risk (FDA eCTD Technical
+  // Conformance Guide; ICH M8). Measured always; enforced (throws) only when the
+  // caller requests a submission-grade build via { requireComplete: true }.
+  const completeness = computeEctdCompleteness(totalFiles, placeholderLeaves, incompleteSections, unfinalizedLeaves);
+  if (options.requireComplete) assertEctdSubmissionComplete(completeness);
 
   // 4. Generate index.xml (the root eCTD backbone)
   const indexXml = generateIndexXml({
@@ -586,7 +702,7 @@ export async function generateEctdPackage(
 
   // 5. Generate regional XML (Module 1 regional info)
   const regionalXml = generateRegionalXml(region, applicationNumber);
-  const regionCode = region === 'FDA' ? 'us' : region === 'EMA' ? 'eu' : 'jp';
+  const regionCode = resolveEctdRegion(region).code;
   zip.file(`m1/${regionCode}-regional.xml`, regionalXml);
 
   // 6. Generate per-module manifest XMLs
@@ -619,6 +735,11 @@ export async function generateEctdPackage(
   </submission>
 </submission-tracking>`;
   zip.file('util/stf.xml', stfXml);
+
+  // 7b. Bundle vendored ICH/regional DTDs into util/dtd/ when available, so the
+  // package is self-contained. No-op (with a validator warning) until the team
+  // vendors the licensed DTD files. See HI_8_ECTD_SCOPING_BRIEF.md G1.
+  bundleVendoredDtds(zip);
 
   // 8. Record the compilation in the database
   try {
@@ -659,6 +780,7 @@ export async function generateEctdPackage(
       totalGranules: granules.length + projectSections.filter(s => s.content?.trim().length > 0).length,
       totalFiles,
       generatedAt,
+      completeness,
     },
   };
 }
@@ -747,6 +869,28 @@ export async function validateEctdPackage(
   // 7. Check STF (Submission Tracking File)
   if (!fileNames.includes('util/stf.xml')) {
     warnings.push('Missing util/stf.xml (Submission Tracking File)');
+  }
+
+  // 8. DTD self-containment: index.xml declares a DTD via DOCTYPE, but a
+  // submission-ready package must bundle that DTD under util/dtd/. Surface this
+  // explicitly instead of silently shipping a backbone with a dangling DTD
+  // reference. See HI_8_ECTD_SCOPING_BRIEF.md G1.
+  try {
+    const idxFile = zip.file('index.xml');
+    const idxContent = idxFile ? await idxFile.async('string') : '';
+    const referencesDtd = /<!DOCTYPE[^>]*\.dtd"/i.test(idxContent);
+    const hasBundledDtd = fileNames.some(
+      f => f.startsWith('util/dtd/') && f.endsWith('.dtd')
+    );
+    if (referencesDtd && !hasBundledDtd) {
+      warnings.push(
+        'index.xml references a DTD via DOCTYPE but no DTD is bundled under util/dtd/ — ' +
+          'the package is not self-contained and is not submission-ready until the ICH/regional ' +
+          'DTDs are vendored into util/dtd/.'
+      );
+    }
+  } catch {
+    /* non-fatal — DTD bundling check is advisory */
   }
 
   return {

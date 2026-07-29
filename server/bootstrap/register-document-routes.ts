@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
+import { authenticateToken } from '../middleware/auth.js';
 
 export interface DocumentBootstrapContext {
   app: express.Express;
@@ -29,21 +30,45 @@ export async function registerDocumentRoutes({
   }
 
   // ── Document Authoring (21 CFR Part 11 compliant) ──
+  //
+  // SECURITY: Document authoring routes are tenant-scoped and many
+  // expose document IDs in the URL. The router's internal
+  // checkDocumentPermission already filters by JWT org, but
+  // authenticateToken at the mount is the backstop so reachability
+  // never precedes authentication.
   try {
     const documentAuthoringModule = await import('../routes/documentAuthoring.routes.js');
-    app.use('/api/document-authoring', documentAuthoringModule.default);
-    console.log('✅ Document Authoring API routes mounted (21 CFR Part 11 compliant)');
+    app.use('/api/document-authoring', authenticateToken, documentAuthoringModule.default);
+    console.log('✅ Document Authoring API routes mounted (21 CFR Part 11 compliant, auth-gated)');
   } catch (error) {
     console.error('❌ Failed to mount Document Authoring routes:', error);
   }
 
+  // ── Document Authoring Workspace (read-model for the ui-v2 document-authoring surface) ──
+  // Coexists with the router above on /api/document-authoring; serves /workspace only.
+  try {
+    const documentAuthoringWorkspaceModule = await import('../routes/document-authoring-workspace.routes.js');
+    app.use('/api/document-authoring/workspace', authenticateToken, documentAuthoringWorkspaceModule.default());
+    console.log('✅ Document Authoring Workspace read-model routes mounted (auth-gated): /api/document-authoring/workspace');
+  } catch (error) {
+    console.error('❌ Failed to mount Document Authoring Workspace routes:', error);
+  }
+
   // ── eCTD Routes (parallelized) ──
+  //
+  // SECURITY: eCTD payloads ARE regulatory submissions — IP, study data,
+  // CMC. Pre-fix every endpoint in this family (coauthor, documents,
+  // compile, export, submission-agent) was reachable unauthenticated.
+  // Mounted with authenticateToken so the JWT is required before any
+  // handler runs; per-handler tenant scoping is a separate audit.
   {
     const ectdConfig = [
       { path: '/api/coauthor', mod: '../routes/coauthor', name: 'eCTD Co-Author' },
       { path: '/api/ectd-documents', mod: '../routes/ectd-documents', name: 'eCTD Documents' },
       { path: '/api/ectd-compile', mod: '../routes/ectd-compile', name: 'eCTD Compile' },
       { path: '/api/ectd/export', mod: '../routes/ectd-export', name: 'eCTD Export' },
+      { path: '/api/csr/jobs', mod: '../routes/csr-jobs', name: 'CSR Jobs' },
+      { path: '/api/charters', mod: '../routes/charters', name: 'Project Charters' },
       {
         path: '/api/ectd-submissions',
         mod: '../routes/ectd-submission-agent.routes',
@@ -53,12 +78,28 @@ export async function registerDocumentRoutes({
     const ectdResults = await Promise.allSettled(ectdConfig.map(c => import(c.mod)));
     ectdResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
-        app.use(ectdConfig[i].path, r.value.default);
-        console.log(`✅ ${ectdConfig[i].name} routes mounted successfully`);
+        app.use(ectdConfig[i].path, authenticateToken, r.value.default);
+        console.log(`✅ ${ectdConfig[i].name} routes mounted (auth-gated)`);
       } else {
         console.error(`❌ Failed to mount ${ectdConfig[i].name} routes:`, r.reason);
       }
     });
+
+    // Second mount from the ectd-export module: the leaf-level preflight
+    // validator lives in the same file but needs the URL prefix `/api/ectd`
+    // (not `/api/ectd/export`) so the public path resolves to
+    // `/api/ectd/validate/preflight`. Pulled as a named export so the two
+    // routers can stay co-located while exposing distinct mount points.
+    try {
+      const ectdExportModule = await import('../routes/ectd-export');
+      const preflightRouter = (ectdExportModule as any).preflightRouter;
+      if (preflightRouter) {
+        app.use('/api/ectd', authenticateToken, preflightRouter);
+        console.log('✅ eCTD Leaf Preflight route mounted (auth-gated): /api/ectd/validate/preflight');
+      }
+    } catch (error) {
+      console.error('❌ Failed to mount eCTD Leaf Preflight route:', error);
+    }
   }
 
   // ── Biotech Document Artifacts (eCTD, PV, Clinical Ops document generation) ──
@@ -71,23 +112,50 @@ export async function registerDocumentRoutes({
   }
 
   // ── Submission-Package Orchestrator (M2/M3 composition, CSR tabulation, hardened validation) ──
+  //
+  // SECURITY: every handler calls requireTenant(req, res) which reads
+  // (req as any).user / (req as any).tenantContext — those are populated
+  // EXCLUSIVELY by authenticateToken (server/auth.ts populates req.user +
+  // req.tenantContext). Without this mount-level middleware, requireTenant
+  // would always see undefined and 401 every request, making the route
+  // functionally dead. Mirrors the auth-gating pattern used by
+  // /api/document-authoring (line 41) and the eCTD family above.
   try {
     const orchestratorModule = await import('../routes/submission-orchestrator');
-    app.use('/api/submission-orchestrator', orchestratorModule.default);
-    console.log('✅ Submission-Package Orchestrator routes mounted (M2/M3/CSR/hardened-validation)');
+    app.use('/api/submission-orchestrator', authenticateToken, orchestratorModule.default);
+    console.log('✅ Submission-Package Orchestrator routes mounted (M2/M3/CSR/hardened-validation, auth-gated)');
   } catch (error) {
     console.error('❌ Failed to mount Submission-Package Orchestrator routes:', error);
   }
 
+  // ── Submission Release Signing (Path-to-GA §C.11 — e-sig gate) ──
+  //
+  // SECURITY: same auth contract as the orchestrator routes — requireTenant
+  // inside the handler reads JWT-bound req.user; this mount-level
+  // authenticateToken backstops reachability. The signing route receives a
+  // password in the body and re-verifies it via bcrypt before persisting
+  // any electronic_signatures row.
+  try {
+    const signReleaseModule = await import('../routes/submission-sign-release');
+    app.use('/api/submissions', authenticateToken, signReleaseModule.default);
+    console.log('✅ Submission Release Signing route mounted (Path-to-GA §C.11, auth-gated)');
+  } catch (error) {
+    console.error('❌ Failed to mount Submission Release Signing routes:', error);
+  }
+
   // ── HAQ Response Manager (FDA IR, EMA D120, PMDA, HC question tracking) ──
+  //
+  // Mounted unconditionally: every endpoint reads/writes org-scoped persisted
+  // data through the projectMemoryEntries feature store (createFeatureStore
+  // 'haq_question') — there is no static/mock business data here. The former
+  // ENABLE_HAQ_MANAGER_STATIC_DATA guard was mis-applied (it 503'd a governed
+  // persisted feature); per docs/ga-static-data-route-hardening.md the flag is
+  // removed once a route is backed by a governed persisted data source, which
+  // this is. Auth + tenant-scope live inside the router.
   try {
     const haqModule = await import('../routes/haq-manager');
-    if (isStaticDataEnabled('ENABLE_HAQ_MANAGER_STATIC_DATA')) {
-      app.use('/api/haq-manager', haqModule.default);
-      console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
-    } else {
-      mountStaticBusinessDataGuard('/api/haq-manager', 'HAQ Response Manager routes', 'ENABLE_HAQ_MANAGER_STATIC_DATA');
-    }
+    app.use('/api/haq-manager', haqModule.default);
+    console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
   } catch (error) {
     console.error('❌ Failed to mount HAQ Manager routes:', error);
   }
@@ -148,7 +216,10 @@ export async function registerDocumentRoutes({
       { path: '/api/evidence-search', mod: '../routes/evidence-search.js', name: 'Evidence Search' },
       { path: '/api/content-plan', mod: '../routes/content-plan.js', name: 'Content Plan' },
       { path: '/api/smart-blocks', mod: '../routes/smart-blocks.js', name: 'Smart Blocks' },
-      { path: '/api/cognitive', mod: '../routes/cognitive-ecosystem.js', name: 'Cognitive Ecosystem' },
+      // Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every
+      // endpoint returned hardcoded mock data and its services were never
+      // implemented (no client/server dependents). Unregistered to shrink the AI
+      // route surface; the real AI spine is `/api/ana-ri`. See docs/AI_CONSOLIDATION_PLAN.md.
       {
         path: '/api/evidence-management',
         mod: '../routes/evidence-management.routes.js',
@@ -170,6 +241,11 @@ export async function registerDocumentRoutes({
         path: '/api/regulatory-graph',
         mod: '../routes/regulatory-graph.js',
         name: 'Regulatory Graph',
+      },
+      {
+        path: '/api/change-propagation',
+        mod: '../routes/change-propagation.js',
+        name: 'Change Propagation (governed fact change)',
       },
       {
         path: '/api/standards',
@@ -205,6 +281,31 @@ export async function registerDocumentRoutes({
         path: '/api/capa-mdr',
         mod: '../routes/capa-mdr.js',
         name: 'CAPA + complaint + MDR / vigilance triage',
+      },
+      {
+        path: '/api/design-risk',
+        mod: '../routes/design-risk.js',
+        name: 'Design controls (DHF) + Risk Management File (ISO 14971)',
+      },
+      {
+        path: '/api/qms',
+        mod: '../routes/qms.js',
+        name: 'Quality Management System (document control, training, suppliers, audits)',
+      },
+      {
+        path: '/api/ivd-lifecycle',
+        mod: '../routes/ivd-lifecycle.js',
+        name: 'IVD lifecycle calculators (analytical, software, change, registration)',
+      },
+      {
+        path: '/api/ivd-knowledge',
+        mod: '../routes/ivd-knowledge.js',
+        name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)',
+      },
+      {
+        path: '/api/ivd-assessments',
+        mod: '../routes/ivd-assessments.js',
+        name: 'IVD assessment persistence (saved calculator results + generated documents)',
       },
       {
         path: '/api/_ops/predicate-intelligence',
@@ -306,6 +407,15 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Biostatistics Platform routes:', error);
   }
 
+  // ── AnA Biostats — Governed Statistical Documents (list read-model for ui-v2) ──
+  try {
+    const anaBiostatsGovDocsModule = await import('../routes/ana-biostats-governed-documents');
+    app.use('/api/ana-biostats/governed-documents', authenticateToken, anaBiostatsGovDocsModule.default());
+    console.log('✅ AnA Biostats Governed Documents route mounted (/api/ana-biostats/governed-documents)');
+  } catch (error) {
+    console.error('❌ Failed to mount AnA Biostats Governed Documents routes:', error);
+  }
+
   // ── AnA Biostats Operating Function ──
   try {
     const anaBiostatsModule = await import('../routes/ana-biostats');
@@ -313,6 +423,15 @@ export async function registerDocumentRoutes({
     console.log('✅ AnA Biostats Operating Function routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount AnA Biostats routes:', error);
+  }
+
+  // ── Trial Corpus (ingest → extract → benchmark) ──
+  try {
+    const corpusModule = await import('../routes/corpus-routes');
+    app.use('/api/corpus', corpusModule.default);
+    console.log('✅ Trial Corpus routes mounted (benchmark, extract, ingest)');
+  } catch (error) {
+    console.error('❌ Failed to mount Trial Corpus routes:', error);
   }
 
   // ── Content Atoms ──

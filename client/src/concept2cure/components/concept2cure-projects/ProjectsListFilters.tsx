@@ -26,6 +26,10 @@ export function ProjectsListFilters({
   filters, onChange, savedView, onSavedView, query, onQuery,
   customViews = [], onSaveView,
 }: Props) {
+  const saveViewRef = useRef<HTMLInputElement>(null);
+  const [savingView, setSavingView] = useState(false);
+  const [saveViewName, setSaveViewName] = useState('');
+
   const set = (k: FilterKey, v: string[]) => onChange({ ...filters, [k]: v });
   const toggle = (k: FilterKey, val: string) => {
     const arr = filters[k] || [];
@@ -49,20 +53,40 @@ export function ProjectsListFilters({
               {v.label}
             </button>
           ))}
-          <button
-            type="button"
-            className="plf-view-add"
-            title="Save current filters as a view"
-            onClick={() => {
-              if (!onSaveView) return;
-              const name = window.prompt('Save current filters as view — name:');
-              if (!name || !name.trim()) return;
-              onSaveView(name.trim(), filters);
-            }}
-            disabled={!onSaveView}
-          >
-            {I.plus} Save view
-          </button>
+          {savingView ? (
+            <form
+              className="plf-save-view-form"
+              onSubmit={e => {
+                e.preventDefault();
+                if (!saveViewName.trim() || !onSaveView) return;
+                onSaveView(saveViewName.trim(), filters);
+                setSavingView(false);
+                setSaveViewName('');
+              }}
+            >
+              <input
+                ref={saveViewRef}
+                className="plf-save-view-input"
+                value={saveViewName}
+                onChange={e => setSaveViewName(e.target.value)}
+                placeholder="View name"
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Escape') { setSavingView(false); setSaveViewName(''); } }}
+              />
+              <button type="submit" className="plf-view-add" disabled={!saveViewName.trim()}>{I.check}</button>
+              <button type="button" className="plf-view-add" onClick={() => { setSavingView(false); setSaveViewName(''); }}>{I.close}</button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="plf-view-add"
+              title="Save current filters as a view"
+              onClick={() => { if (onSaveView) setSavingView(true); }}
+              disabled={!onSaveView}
+            >
+              {I.plus} Save view
+            </button>
+          )}
         </div>
       </div>
 

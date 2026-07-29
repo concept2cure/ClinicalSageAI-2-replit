@@ -13,7 +13,10 @@ beforeAll(async () => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
   process.env.DATABASE_URL =
     process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
-  process.env.JWT_SECRET = process.env.JWT_SECRET || 'stage3-test-secret';
+  // JWT_SECRET must be at least JWT_SECRET_MIN_LENGTH (32) chars or
+  // server/config/environment.ts:104 throws at module load.
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 
   // Ensure modules are evaluated with test env vars above.

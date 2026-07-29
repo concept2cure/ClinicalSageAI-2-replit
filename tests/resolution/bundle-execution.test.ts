@@ -164,8 +164,25 @@ vi.mock('../../server/db', () => {
         return createChainedMock();
       }),
       execute: vi.fn().mockImplementation((query: any) => {
-        // Return different results based on query content
-        const queryStr = String(query?.queryChunks?.[0] || query?.sql || '');
+        // A drizzle StringChunk stringifies to "[object Object]" — its text lives
+        // in .value as a string[]. The previous String(queryChunks[0]) therefore
+        // matched nothing and every branch below fell through to { rows: [] }.
+        const chunks: any[] = query?.queryChunks ?? [];
+        const queryStr = chunks.length
+          ? chunks
+              .map(c => (Array.isArray(c?.value) ? c.value.join('') : typeof c === 'string' ? c : ''))
+              .join(' ')
+          : String(query?.sql ?? '');
+
+        // ADR-0009 receipt persistence: INSERT … RETURNING id, and the executor
+        // treats a receipt it cannot persist as a FAILED execution. That is
+        // deliberate and is not relaxed for tests — the mock has to model the
+        // table instead.
+        if (queryStr.includes('bundle_execution_receipts')) {
+          return queryStr.includes('INSERT')
+            ? Promise.resolve({ rows: [{ id: 'mock-receipt-bundle-exec' }] })
+            : Promise.resolve({ rows: [] });
+        }
         if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
           return Promise.resolve({ rows: [{ status: 'draft' }] });
         }

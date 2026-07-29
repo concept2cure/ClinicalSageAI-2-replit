@@ -15,10 +15,11 @@
 
 import { db } from '../db';
 import { deviceAuditTrail, electronicSignatures, users, organizations } from '../../shared/schema';
-import { documentVersions } from '../../shared/schema';
+import { documentVersions, documents, submissions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
+import { buildVersionBindingDigest } from './part11/version-binding';
 
 interface AuditTrailInput {
   organizationId: number;
@@ -102,13 +103,32 @@ class Part11ComplianceService {
 
       const signature = this.generateCryptographicSignature(signatureData, userId);
 
+      // §11.70 content binding: resolve the latest version AND its content, and
+      // bind the signature to a deterministic digest of that content (stored in
+      // bound_payload_digest). Fail CLOSED if there is no version content — a
+      // signature must not be applied to content that isn't there.
       const versionRows = await dbInstance
-        .select({ id: documentVersions.id })
+        .select({
+          id: documentVersions.id,
+          versionNumber: documentVersions.versionNumber,
+          content: documentVersions.content,
+        })
         .from(documentVersions)
         .where(eq(documentVersions.documentId, documentId))
         .orderBy(desc(documentVersions.createdAt))
         .limit(1);
-      const versionId = versionRows[0]?.id ?? documentId;
+      if (versionRows.length === 0) {
+        throw new Error(
+          `Part 11 §11.70: document ${documentId} has no stored version — cannot bind a signature.`,
+        );
+      }
+      const versionId = versionRows[0].id;
+      const boundPayloadDigest = buildVersionBindingDigest({
+        documentId,
+        versionId,
+        versionNumber: versionRows[0].versionNumber,
+        content: versionRows[0].content,
+      });
 
       const [electronicSig] = await dbInstance
         .insert(electronicSignatures)
@@ -127,7 +147,8 @@ class Part11ComplianceService {
           secondFactorVerified: false,
           signatureHash: signature.hash,
           signatureMeaning,
-          signatureManifest: signatureData,
+          signatureManifest: { ...signatureData, boundPayloadDigest },
+          boundPayloadDigest,
           signedAt: timestamp,
           complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
           verificationStatus: 'valid',
@@ -590,7 +611,11 @@ class Part11ComplianceService {
   /**
    * Generate cryptographic signature
    */
-  generateCryptographicSignature(data: Record<string, any>, userId: number) {
+  generateCryptographicSignature(
+    data: Record<string, any>,
+    userId: number,
+    ipAddress?: string | null
+  ) {
     const dataString = JSON.stringify(data);
     const hash = crypto.createHash(this.hashAlgorithm).update(dataString).digest('hex');
 
@@ -605,7 +630,10 @@ class Part11ComplianceService {
       hash,
       data: dataString,
       verificationCode,
-      ipAddress: '127.0.0.1', // In production, get actual IP
+      // Honest attribution: record the real client IP when the caller threads it
+      // (route handlers have req.ip), or null when unknown — never a fabricated
+      // 127.0.0.1. See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution).
+      ipAddress: ipAddress ?? null,
     };
   }
 
@@ -693,26 +721,110 @@ class Part11ComplianceService {
   }
 
   /**
-   * Get submission data for integrity check
+   * Produce a deterministic, order-independent serialization of the
+   * integrity-relevant fields of a record. Keys are sorted and Date values
+   * are normalized to ISO strings so the hash is stable across reads and
+   * driver representations, while still detecting any substantive change.
    */
-  async getSubmissionData(submissionId: number) {
-    // Implementation would fetch actual submission data
+  private canonicalize(fields: Record<string, unknown>): string {
+    const normalize = (v: unknown): unknown => {
+      if (v instanceof Date) return v.toISOString();
+      return v ?? null;
+    };
+    const ordered: Record<string, unknown> = {};
+    for (const key of Object.keys(fields).sort()) {
+      ordered[key] = normalize(fields[key]);
+    }
+    return JSON.stringify(ordered);
+  }
+
+  /**
+   * Get submission data for integrity check.
+   *
+   * Fails closed: if the submission does not exist we throw, so
+   * verifyDataIntegrity reports `valid: false` rather than computing a hash
+   * over fabricated (and falsely reassuring) data. The hashed payload covers
+   * the substantive fields only — volatile bookkeeping (updatedAt/deletedAt)
+   * is excluded so a meaningful tamper check is not defeated by routine touches.
+   */
+  async getSubmissionData(
+    submissionId: number
+  ): Promise<{ id: number; organizationId: number; data: string }> {
+    const [row] = await this.getDb()
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .limit(1);
+
+    if (!row) {
+      throw new Error(`Part 11 integrity check: submission ${submissionId} not found`);
+    }
+
     return {
-      id: submissionId,
-      organizationId: 1,
-      data: 'submission_data',
+      id: row.id,
+      organizationId: row.organizationId,
+      data: this.canonicalize({
+        id: row.id,
+        organizationId: row.organizationId,
+        title: row.title,
+        productName: row.productName,
+        applicationType: row.applicationType,
+        clientType: row.clientType,
+        primaryRegion: row.primaryRegion,
+        status: row.status,
+        lifecycleStage: row.lifecycleStage,
+        createdBy: row.createdBy,
+        createdAt: row.createdAt,
+      }),
     };
   }
 
   /**
-   * Get document data for integrity check
+   * Get document data for integrity check.
+   *
+   * Hashes the content of the document's latest version (the integrity
+   * target). Fails closed if the document does not exist or has no stored
+   * version content, for the same reason as getSubmissionData above.
    */
-  async getDocumentData(documentId: number) {
-    // Implementation would fetch actual document data
+  async getDocumentData(
+    documentId: number
+  ): Promise<{ id: number; organizationId: number; data: string }> {
+    const [doc] = await this.getDb()
+      .select({ id: documents.id, organizationId: documents.organizationId })
+      .from(documents)
+      .where(eq(documents.id, documentId))
+      .limit(1);
+
+    if (!doc) {
+      throw new Error(`Part 11 integrity check: document ${documentId} not found`);
+    }
+
+    const [version] = await this.getDb()
+      .select({
+        id: documentVersions.id,
+        versionNumber: documentVersions.versionNumber,
+        content: documentVersions.content,
+      })
+      .from(documentVersions)
+      .where(eq(documentVersions.documentId, documentId))
+      .orderBy(desc(documentVersions.createdAt))
+      .limit(1);
+
+    if (!version) {
+      throw new Error(
+        `Part 11 integrity check: document ${documentId} has no stored version content`
+      );
+    }
+
     return {
-      id: documentId,
-      organizationId: 1,
-      data: 'document_data',
+      id: doc.id,
+      organizationId: doc.organizationId,
+      data: this.canonicalize({
+        documentId: doc.id,
+        versionId: version.id,
+        versionNumber: version.versionNumber,
+        content: version.content,
+      }),
     };
   }
 }

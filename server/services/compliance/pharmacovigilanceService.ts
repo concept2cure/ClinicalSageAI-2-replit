@@ -24,6 +24,12 @@
  */
 
 import { pool } from '../../db';
+import { randomUUID } from 'crypto';
+
+import { createScopedLogger } from '../../utils/logger.js';
+import { computeAuditChainSealed, hashPayload } from '../audit/chain.js';
+
+const logger = createScopedLogger('pharmacovigilanceService');
 
 // ---------------------------------------------------------------------------
 // Type Definitions
@@ -105,6 +111,26 @@ export interface AdverseEvent {
   reportedToAuthorities: boolean;
   /** Whether the event meets criteria for expedited (clock-start) reporting */
   expeditedReportRequired: boolean;
+  // ── E2B(R3) intake detail (optional) ──────────────────────────────────────
+  /** MedDRA reaction Preferred Term + code (and System Organ Class). */
+  reactionPt?: string | null;
+  reactionPtCode?: string | null;
+  reactionSoc?: string | null;
+  reactionSocCode?: string | null;
+  /** Suspect product details. */
+  suspectProduct?: string | null;
+  suspectProductStrength?: string | null;
+  suspectProductRoute?: string | null;
+  suspectProductDose?: string | null;
+  /** Expectedness vs the Reference Safety Information. */
+  expectedness?: string | null;
+  rsiReference?: string | null;
+  /** Reporter / source. */
+  reporterName?: string | null;
+  reporterContact?: string | null;
+  reporterOrganization?: string | null;
+  /** Free-text case narrative. */
+  narrative?: string | null;
   createdAt: Date;
 }
 
@@ -363,7 +389,7 @@ export async function reportAdverseEvent(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return adverseEvent;
     }
 
@@ -373,8 +399,12 @@ export async function reportAdverseEvent(
         event_description, onset_date, report_date, seriousness_criteria,
         causality, outcome, reporter_type, country_of_occurrence,
         regulatory_reporting_deadline, reported_to_authorities,
-        expedited_report_required, created_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+        expedited_report_required, created_at,
+        reaction_pt, reaction_pt_code, reaction_soc, reaction_soc_code,
+        suspect_product, suspect_product_strength, suspect_product_route, suspect_product_dose,
+        expectedness, rsi_reference, reporter_name, reporter_contact, reporter_organization, narrative
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
+                $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)`,
       [
         adverseEvent.id,
         adverseEvent.organizationId,
@@ -393,6 +423,20 @@ export async function reportAdverseEvent(
         adverseEvent.reportedToAuthorities,
         adverseEvent.expeditedReportRequired,
         adverseEvent.createdAt,
+        adverseEvent.reactionPt ?? null,
+        adverseEvent.reactionPtCode ?? null,
+        adverseEvent.reactionSoc ?? null,
+        adverseEvent.reactionSocCode ?? null,
+        adverseEvent.suspectProduct ?? null,
+        adverseEvent.suspectProductStrength ?? null,
+        adverseEvent.suspectProductRoute ?? null,
+        adverseEvent.suspectProductDose ?? null,
+        adverseEvent.expectedness ?? null,
+        adverseEvent.rsiReference ?? null,
+        adverseEvent.reporterName ?? null,
+        adverseEvent.reporterContact ?? null,
+        adverseEvent.reporterOrganization ?? null,
+        adverseEvent.narrative ?? null,
       ],
     );
 
@@ -400,7 +444,7 @@ export async function reportAdverseEvent(
   } catch (error: any) {
     // Graceful handling when the table does not yet exist
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] adverse_events table does not exist — returning in-memory record');
+      logger.warn('adverse_events table does not exist — returning in-memory record');
       return adverseEvent;
     }
     throw error;
@@ -420,7 +464,7 @@ export async function getAdverseEvents(
 ): Promise<AdverseEvent[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -462,7 +506,7 @@ export async function getAdverseEvents(
     return result.rows.map(mapRowToAdverseEvent);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] adverse_events table does not exist');
+      logger.warn('adverse_events table does not exist');
       return [];
     }
     throw error;
@@ -479,7 +523,7 @@ export async function getAdverseEvents(
 export async function getOverdueReports(organizationId: string): Promise<AdverseEvent[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -495,7 +539,7 @@ export async function getOverdueReports(organizationId: string): Promise<Adverse
     return result.rows.map(mapRowToAdverseEvent);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] adverse_events table does not exist');
+      logger.warn('adverse_events table does not exist');
       return [];
     }
     throw error;
@@ -534,7 +578,7 @@ export async function generateICSR(adverseEventId: string): Promise<ICSR> {
     if (error?.code !== '42P01') {
       throw error;
     }
-    console.warn('[pharmacovigilance] adverse_events table does not exist — generating ICSR from minimal data');
+    logger.warn('adverse_events table does not exist — generating ICSR from minimal data');
   }
 
   const icsr: ICSR = {
@@ -576,7 +620,7 @@ export async function generateICSR(adverseEventId: string): Promise<ICSR> {
     }
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] icsrs table does not exist — returning in-memory record');
+      logger.warn('icsrs table does not exist — returning in-memory record');
     } else {
       throw error;
     }
@@ -613,7 +657,7 @@ export async function createPeriodicReport(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return periodicReport;
     }
 
@@ -639,7 +683,7 @@ export async function createPeriodicReport(
     return periodicReport;
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] periodic_safety_reports table does not exist — returning in-memory record');
+      logger.warn('periodic_safety_reports table does not exist — returning in-memory record');
       return periodicReport;
     }
     throw error;
@@ -656,7 +700,7 @@ export async function createPeriodicReport(
 export async function getUpcomingReports(organizationId: string): Promise<PeriodicSafetyReport[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -675,7 +719,7 @@ export async function getUpcomingReports(organizationId: string): Promise<Period
     return result.rows.map(mapRowToPeriodicReport);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] periodic_safety_reports table does not exist');
+      logger.warn('periodic_safety_reports table does not exist');
       return [];
     }
     throw error;
@@ -709,7 +753,7 @@ export async function reportSignal(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return safetySignal;
     }
 
@@ -734,7 +778,7 @@ export async function reportSignal(
     return safetySignal;
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] safety_signals table does not exist — returning in-memory record');
+      logger.warn('safety_signals table does not exist — returning in-memory record');
       return safetySignal;
     }
     throw error;
@@ -752,7 +796,7 @@ export async function reportSignal(
 export async function getPendingSignals(organizationId: string): Promise<SafetySignal[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -767,7 +811,7 @@ export async function getPendingSignals(organizationId: string): Promise<SafetyS
     return result.rows.map(mapRowToSafetySignal);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] safety_signals table does not exist');
+      logger.warn('safety_signals table does not exist');
       return [];
     }
     throw error;
@@ -799,7 +843,7 @@ export async function createRMP(
 
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available — returning in-memory record');
+      logger.warn('Database pool not available — returning in-memory record');
       return plan;
     }
 
@@ -827,7 +871,7 @@ export async function createRMP(
     return plan;
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] risk_management_plans table does not exist — returning in-memory record');
+      logger.warn('risk_management_plans table does not exist — returning in-memory record');
       return plan;
     }
     throw error;
@@ -843,7 +887,7 @@ export async function createRMP(
 export async function getRMPsForProject(projectId: string): Promise<RiskManagementPlan[]> {
   try {
     if (!pool) {
-      console.warn('[pharmacovigilance] Database pool not available');
+      logger.warn('Database pool not available');
       return [];
     }
 
@@ -857,7 +901,7 @@ export async function getRMPsForProject(projectId: string): Promise<RiskManageme
     return result.rows.map(mapRowToRMP);
   } catch (error: any) {
     if (error?.code === '42P01') {
-      console.warn('[pharmacovigilance] risk_management_plans table does not exist');
+      logger.warn('risk_management_plans table does not exist');
       return [];
     }
     throw error;
@@ -951,6 +995,20 @@ function mapRowToAdverseEvent(row: any): AdverseEvent {
     regulatoryReportingDeadline: new Date(row.regulatory_reporting_deadline),
     reportedToAuthorities: row.reported_to_authorities,
     expeditedReportRequired: row.expedited_report_required,
+    reactionPt: row.reaction_pt ?? null,
+    reactionPtCode: row.reaction_pt_code ?? null,
+    reactionSoc: row.reaction_soc ?? null,
+    reactionSocCode: row.reaction_soc_code ?? null,
+    suspectProduct: row.suspect_product ?? null,
+    suspectProductStrength: row.suspect_product_strength ?? null,
+    suspectProductRoute: row.suspect_product_route ?? null,
+    suspectProductDose: row.suspect_product_dose ?? null,
+    expectedness: row.expectedness ?? null,
+    rsiReference: row.rsi_reference ?? null,
+    reporterName: row.reporter_name ?? null,
+    reporterContact: row.reporter_contact ?? null,
+    reporterOrganization: row.reporter_organization ?? null,
+    narrative: row.narrative ?? null,
     createdAt: new Date(row.created_at),
   };
 }
@@ -1012,4 +1070,209 @@ function mapRowToRMP(row: any): RiskManagementPlan {
     status: row.status,
     region: row.region,
   };
+}
+
+// ---------------------------------------------------------------------------
+// 7. Reporting clock (expedited 15-day window)
+// ---------------------------------------------------------------------------
+
+export interface ReportingClock {
+  deadline: string | null;
+  daysRemaining: number | null;
+  /** True when the expedited window is in its urgent tail (e.g. day 6+ of 15) and not yet breached. */
+  day6Flag: boolean;
+  breached: boolean;
+  status: 'none' | 'on_track' | 'due_soon' | 'day6' | 'breached';
+}
+
+/**
+ * Compute the expedited-reporting clock for a case from its deadline. Pure (no
+ * DB) so it is unit-testable and reusable by the case line-listing + overview.
+ * "Day 6 of 15" = the urgent tail of the window: <= (windowDays - 6) days left.
+ */
+export function computeReportingClock(
+  deadline: Date | string | null | undefined,
+  now: Date = new Date(),
+  windowDays = 15,
+): ReportingClock {
+  if (!deadline) {
+    return { deadline: null, daysRemaining: null, day6Flag: false, breached: false, status: 'none' };
+  }
+  const due = deadline instanceof Date ? deadline : new Date(deadline);
+  if (Number.isNaN(due.getTime())) {
+    return { deadline: null, daysRemaining: null, day6Flag: false, breached: false, status: 'none' };
+  }
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysRemaining = Math.ceil((due.getTime() - now.getTime()) / msPerDay);
+  const breached = daysRemaining < 0;
+  const day6Flag = !breached && daysRemaining <= windowDays - 6;
+  let status: ReportingClock['status'];
+  if (breached) status = 'breached';
+  else if (day6Flag) status = 'day6';
+  else if (daysRemaining <= windowDays - 3) status = 'due_soon';
+  else status = 'on_track';
+  return { deadline: due.toISOString(), daysRemaining, day6Flag, breached, status };
+}
+
+// ---------------------------------------------------------------------------
+// 8. MedDRA term lookup (drives the PT picker)
+// ---------------------------------------------------------------------------
+
+export interface MeddraTerm {
+  ptCode: string;
+  ptName: string;
+  socCode: string | null;
+  socName: string | null;
+  lltCode: string | null;
+  lltName: string | null;
+}
+
+/**
+ * Search the MedDRA dictionary (meddra_term_reference) for the case-intake PT
+ * picker. Org-scoped (the dictionary is loaded per org). Returns [] when the
+ * dictionary table/column is absent or no data is loaded — the licensed MedDRA
+ * dictionary must be ingested per org before this returns terms.
+ */
+export async function searchMeddraTerms(
+  organizationId: string,
+  query: string,
+  limit = 20,
+): Promise<MeddraTerm[]> {
+  const orgId = Number(organizationId);
+  if (!pool || !query || query.trim().length < 2 || !Number.isFinite(orgId)) return [];
+  try {
+    const result = await pool.query(
+      `SELECT pt_code, pt_name, soc_code, soc_name, llt_code, llt_name
+         FROM meddra_term_reference
+        WHERE organization_id = $1
+          AND (pt_name ILIKE $2 OR llt_name ILIKE $2 OR pt_code = $3)
+        ORDER BY pt_name ASC
+        LIMIT $4`,
+      [orgId, `%${query.trim()}%`, query.trim(), Math.min(limit, 100)],
+    );
+    return result.rows.map((r: any) => ({
+      ptCode: r.pt_code,
+      ptName: r.pt_name,
+      socCode: r.soc_code ?? null,
+      socName: r.soc_name ?? null,
+      lltCode: r.llt_code ?? null,
+      lltName: r.llt_name ?? null,
+    }));
+  } catch (error: any) {
+    if (error?.code === '42P01' || error?.code === '42703') return [];
+    throw error;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 9. Submit case to triage (assigns clock + writes a 21 CFR Part 11 audit)
+// ---------------------------------------------------------------------------
+
+export interface CaseTriageResult {
+  id: string;
+  caseStatus: string;
+  submittedAt: string;
+  reportingClock: ReportingClock;
+  auditWritten: boolean;
+}
+
+/**
+ * Transition a drafted case to triage: set status, stamp submitter/time, and
+ * write a Part 11 audit entry (best-effort, hash-chained). The reporting clock
+ * was assigned at case creation (regulatory_reporting_deadline); this returns
+ * it for the UI. Throws CASE_NOT_FOUND if no matching case for the org.
+ */
+export async function submitCaseToTriage(
+  organizationId: string,
+  userId: string,
+  caseId: string,
+  reason: string,
+): Promise<CaseTriageResult> {
+  if (!pool) throw new Error('PV_DB_UNAVAILABLE');
+  const submittedAt = new Date();
+  let updated: any;
+  try {
+    const res = await pool.query(
+      `UPDATE adverse_events
+          SET case_status = 'submitted_to_triage', submitted_by = $1, submitted_at = $2
+        WHERE id = $3 AND organization_id = $4
+        RETURNING id, case_status, submitted_at, regulatory_reporting_deadline`,
+      [userId, submittedAt, caseId, organizationId],
+    );
+    if (res.rows.length === 0) throw new Error('CASE_NOT_FOUND');
+    updated = res.rows[0];
+  } catch (error: any) {
+    if (error?.code === '42P01') throw new Error('PV_TABLE_MISSING');
+    throw error;
+  }
+
+  const auditWritten = await writePvAudit({
+    organizationId,
+    userId,
+    action: 'pv.case.submit_to_triage',
+    recordId: caseId,
+    reason,
+    payload: { caseId, caseStatus: 'submitted_to_triage', submittedAt: submittedAt.toISOString() },
+  }).catch(() => false);
+
+  return {
+    id: updated.id,
+    caseStatus: updated.case_status,
+    submittedAt: new Date(updated.submitted_at).toISOString(),
+    reportingClock: computeReportingClock(updated.regulatory_reporting_deadline),
+    auditWritten,
+  };
+}
+
+/**
+ * Best-effort 21 CFR Part 11 audit write into the hash-chained audit_logs
+ * ledger. Never throws (returns false on any failure) so it cannot break the
+ * operational action. For strict atomic Part 11 capture, route through
+ * /api/c2c/actions (recordGovernedAction); this is the PV-service path.
+ */
+async function writePvAudit(entry: {
+  organizationId: string;
+  userId: string;
+  action: string;
+  recordId: string;
+  reason: string;
+  payload: Record<string, unknown>;
+}): Promise<boolean> {
+  if (!pool) return false;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const occurredAt = new Date().toISOString();
+    const payloadHash = hashPayload(entry.payload);
+    const actorId = Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
+    const tenantId = Number.isFinite(Number(entry.organizationId)) ? Number(entry.organizationId) : null;
+    const target = `case:${entry.recordId}`;
+    const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+      action: entry.action,
+      actor_id: actorId,
+      target,
+      payload_hash: payloadHash,
+      occurred_at: occurredAt,
+    });
+    await client.query(
+      `INSERT INTO audit_logs
+         (id, tenant_id, user_id, action, table_name, record_id,
+          actor_id, target, target_type, target_id, reason, payload_hash,
+          ana_action_id, sha256_chain, occurred_at, hmac_seal)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+      [
+        randomUUID(), tenantId, actorId, entry.action, 'adverse_events', entry.recordId,
+        actorId, target, 'case', entry.recordId, entry.reason, payloadHash,
+        null, sha256Chain, occurredAt, hmacSeal,
+      ],
+    );
+    await client.query('COMMIT');
+    return true;
+  } catch (error: any) {
+    try { await client.query('ROLLBACK'); } catch { /* ignore */ }
+    logger.warn(`PV audit write failed (best-effort): ${error?.message}`);
+    return false;
+  } finally {
+    client.release();
+  }
 }

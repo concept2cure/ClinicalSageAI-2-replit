@@ -147,15 +147,15 @@ export class ProjectRollupService {
     // Pre-fetch task and module counts in bulk to avoid N+1 queries
     const allNodeIds = Array.from(nodeMap.keys());
     const [taskCountsMap, moduleCountsMap] = await Promise.all([
-      this.batchFetchTaskCounts(allNodeIds),
-      this.batchFetchModuleCounts(allNodeIds),
+      this.batchFetchTaskCounts(allNodeIds, organizationId),
+      this.batchFetchModuleCounts(allNodeIds, organizationId),
     ]);
 
     const rootNode = nodeMap.get(projectId)!;
     this.computeRollupFromCache(rootNode, taskCountsMap, moduleCountsMap);
 
     // Persist rollups for all nodes
-    await this.persistRollups(nodeMap);
+    await this.persistRollups(nodeMap, organizationId);
 
     return rootNode;
   }
@@ -164,7 +164,8 @@ export class ProjectRollupService {
    * Fetch task counts for all project IDs in a single query.
    */
   private async batchFetchTaskCounts(
-    projectIds: number[]
+    projectIds: number[],
+    organizationId: number
   ): Promise<Map<number, { total: number; completed: number; blocked: number; overdue: number }>> {
     const map = new Map<
       number,
@@ -180,9 +181,9 @@ export class ProjectRollupService {
          COUNT(*) FILTER (WHERE status = 'blocked')::int as blocked,
          COUNT(*) FILTER (WHERE status != 'done' AND due_date < NOW())::int as overdue
        FROM unified_tasks
-       WHERE project_id = ANY($1)
+       WHERE project_id = ANY($1) AND organization_id = $2
        GROUP BY project_id`,
-      [projectIds]
+      [projectIds, organizationId]
     );
 
     for (const row of result.rows) {
@@ -199,16 +200,19 @@ export class ProjectRollupService {
   /**
    * Fetch module counts for all project IDs in a single query.
    */
-  private async batchFetchModuleCounts(projectIds: number[]): Promise<Map<number, number>> {
+  private async batchFetchModuleCounts(
+    projectIds: number[],
+    organizationId: number
+  ): Promise<Map<number, number>> {
     const map = new Map<number, number>();
     if (projectIds.length === 0) return map;
 
     const result = await this.pool.query(
       `SELECT project_id, COUNT(*)::int as count
        FROM project_modules
-       WHERE project_id = ANY($1)
+       WHERE project_id = ANY($1) AND organization_id = $2
        GROUP BY project_id`,
-      [projectIds]
+      [projectIds, organizationId]
     );
 
     for (const row of result.rows) {
@@ -322,7 +326,10 @@ export class ProjectRollupService {
   /**
    * Persist rollup metadata for all nodes in a single batched update.
    */
-  private async persistRollups(nodeMap: Map<number, ProjectTreeNode>): Promise<void> {
+  private async persistRollups(
+    nodeMap: Map<number, ProjectTreeNode>,
+    organizationId: number
+  ): Promise<void> {
     const updates: Array<{ id: number; rollup: RollupMetrics }> = [];
     for (const [id, node] of nodeMap) {
       if (node.rollup) {
@@ -345,8 +352,9 @@ export class ProjectRollupService {
        SET metadata = COALESCE(p.metadata::jsonb, '{}'::jsonb) || jsonb_build_object('rollup', v.rollup_data),
            updated_at = NOW()
        FROM (VALUES ${idParams.join(', ')}) AS v(project_id, rollup_data)
-       WHERE p.id = v.project_id`,
-      values
+       WHERE p.id = v.project_id
+         AND p.organization_id = $${values.length + 1}`,
+      [...values, organizationId]
     );
   }
 
@@ -378,11 +386,14 @@ export class ProjectRollupService {
    * Recompute the materialized path for a project and all its descendants.
    * Called after insert or move operations.
    */
-  async recomputePaths(projectId: number): Promise<void> {
-    // Get the parent's path
+  async recomputePaths(projectId: number, organizationId: number): Promise<void> {
+    // Get the parent's path. All lookups are tenant-scoped: the caller has
+    // already verified projectId belongs to organizationId, and parents /
+    // children of an in-org project are in-org by construction, so the org
+    // filter can't drop legitimate rows — it only blocks cross-org ids.
     const projResult = await this.pool.query(
-      `SELECT id, parent_project_id FROM projects WHERE id = $1`,
-      [projectId]
+      `SELECT id, parent_project_id FROM projects WHERE id = $1 AND organization_id = $2`,
+      [projectId, organizationId]
     );
     if (projResult.rows.length === 0) return;
 
@@ -392,22 +403,28 @@ export class ProjectRollupService {
     if (!proj.parent_project_id) {
       newPath = String(proj.id);
     } else {
-      const parentResult = await this.pool.query(`SELECT path FROM projects WHERE id = $1`, [
-        proj.parent_project_id,
-      ]);
+      const parentResult = await this.pool.query(
+        `SELECT path FROM projects WHERE id = $1 AND organization_id = $2`,
+        [proj.parent_project_id, organizationId]
+      );
       const parentPath = parentResult.rows[0]?.path || String(proj.parent_project_id);
       newPath = `${parentPath}/${proj.id}`;
     }
 
     // Update self
-    await this.pool.query(`UPDATE projects SET path = $1 WHERE id = $2`, [newPath, projectId]);
+    await this.pool.query(`UPDATE projects SET path = $1 WHERE id = $2 AND organization_id = $3`, [
+      newPath,
+      projectId,
+      organizationId,
+    ]);
 
     // Recursively update children
-    const children = await this.pool.query(`SELECT id FROM projects WHERE parent_project_id = $1`, [
-      projectId,
-    ]);
+    const children = await this.pool.query(
+      `SELECT id FROM projects WHERE parent_project_id = $1 AND organization_id = $2`,
+      [projectId, organizationId]
+    );
     for (const child of children.rows) {
-      await this.recomputePaths(child.id);
+      await this.recomputePaths(child.id, organizationId);
     }
   }
 
@@ -417,19 +434,26 @@ export class ProjectRollupService {
   async validateMove(
     projectId: number,
     newParentId: number | null,
-    maxDepth: number = 3
+    maxDepth: number = 3,
+    organizationId: number
   ): Promise<{ valid: boolean; reason?: string }> {
     if (newParentId === null) return { valid: true }; // Moving to root is always valid
     if (projectId === newParentId)
       return { valid: false, reason: 'Cannot make a project its own parent' };
 
-    // Check that newParentId is not a descendant of projectId (circular reference)
-    const proj = await this.pool.query(`SELECT path FROM projects WHERE id = $1`, [projectId]);
+    // Check that newParentId is not a descendant of projectId (circular reference).
+    // Tenant-scoped: a cross-org parent id reads as "does not exist" instead of
+    // leaking another org's hierarchy data.
+    const proj = await this.pool.query(
+      `SELECT path FROM projects WHERE id = $1 AND organization_id = $2`,
+      [projectId, organizationId]
+    );
     const projPath = proj.rows[0]?.path;
 
-    const newParent = await this.pool.query(`SELECT path, depth FROM projects WHERE id = $1`, [
-      newParentId,
-    ]);
+    const newParent = await this.pool.query(
+      `SELECT path, depth FROM projects WHERE id = $1 AND organization_id = $2`,
+      [newParentId, organizationId]
+    );
     if (newParent.rows.length === 0)
       return { valid: false, reason: 'Target parent does not exist' };
 
@@ -445,8 +469,8 @@ export class ProjectRollupService {
     const parentDepth = newParent.rows[0].depth;
     // Get max depth of projectId subtree
     const subtreeResult = await this.pool.query(
-      `SELECT MAX(depth) - $1 as relative_depth FROM projects WHERE path LIKE $2 || '/%'`,
-      [parentDepth, projPath || String(projectId)]
+      `SELECT MAX(depth) - $1 as relative_depth FROM projects WHERE organization_id = $3 AND path LIKE $2 || '/%'`,
+      [parentDepth, projPath || String(projectId), organizationId]
     );
     const subtreeRelativeDepth = subtreeResult.rows[0]?.relative_depth || 0;
     const newMaxDepth = parentDepth + 1 + subtreeRelativeDepth;

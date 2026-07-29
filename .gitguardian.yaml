@@ -1,0 +1,12 @@
+# GitGuardian secret-scanning configuration.
+#
+# UI translation bundles under client/public/locales/** contain only
+# human-language display strings (button labels, field placeholders, error
+# messages). They never hold credentials, but localized password-field
+# placeholder text (e.g. a non-English "create a strong password") can trip the
+# generic-password heuristic. Exclude these display-only files from secret
+# scanning to prevent that class of false positive across all languages.
+version: 2
+secret:
+  ignored-paths:
+    - 'client/public/locales/**'

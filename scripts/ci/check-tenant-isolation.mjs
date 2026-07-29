@@ -47,7 +47,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { extractStringLiterals } from './lib/extract-string-literals.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -98,6 +100,15 @@ const TENANT_SCOPED_TABLES = new Set([
   'account_canon_items',
   'document_chunks',
   'document_vectors',
+  // Translation platform (migration 20260629) — tenant-scoped localization
+  // of submission content. Any raw SQL in server/ touching these must carry
+  // an org/tenant filter; all current access is via the Drizzle query
+  // builder (out of scope), so adding them here tightens the gate with no
+  // new findings.
+  'translation_projects',
+  'translation_segments',
+  'glossary_terms',
+  'translation_memory_entries',
 ]);
 
 // ─── Tenant-filter signals ──────────────────────────────────────────────────
@@ -133,12 +144,47 @@ const ALLOWLIST_FILES = new Set([
   // tenant key, so it can't be filtered by org before login.
   'server/routes/auth.ts',
   'server/routes/authEnterprise.ts',
+  // SCIM 2.0 provisioning — bearer-token auth into a fixed deployment org
+  // (SCIM_ORG_ID); user-by-email lookup is inherent to provisioning/dedupe,
+  // and all membership/list/get queries ARE org-scoped (organization_id).
+  'server/routes/scim.ts',
   'server/auth.ts',
   'server/middleware/auth.ts',
+  // Re-auth gate ONLY: the single un-org-filtered query in this file is the
+  // users.password_hash self-lookup by the authenticated user's own id (same
+  // semantics as auth.ts — the user can only re-auth as themselves, and the
+  // auth middleware already resolved/validated userId). All governed-target
+  // lookups in resolveTarget() ARE org-scoped (organization_id / org_id), and
+  // the audit_logs insert carries tenant_id — so those pass the gate on their
+  // own merits, not via this allowlist.
+  'server/routes/c2c/actions.ts',
   // System / admin tools that legitimately operate cross-tenant.
   'server/routes/admin.ts',
+  // Master Administration — the platform-owner + support console. EVERY query
+  // here is cross-tenant by design (estate-wide monitoring of all clients /
+  // users / audit). The whole router is gated by authMiddleware →
+  // requirePlatformAdmin (strict platform-role check, no org-admin bypass), so
+  // org-scoping these reads would defeat the module's entire purpose. The two
+  // mutations carry their own row-id targeting and are written through the
+  // Part-11 audit chain. See server/routes/admin/master-admin.ts.
+  'server/routes/admin/master-admin.ts',
+  // Business Center — owner/finance tier. Cross-tenant by design (cost
+  // accounting + the access roster span every client), gated by
+  // requireBusinessAdmin. Same rationale as master-admin.ts above.
+  'server/routes/admin/business-center.ts',
+  // Access management — platform-admin tooling to grant/revoke platform role
+  // grants. Looks users up by email (pre-grant, cross-tenant) and reads/writes
+  // platform_role_grants. Same cross-tenant-by-design rationale as the other
+  // admin routers above.
+  'server/routes/admin/access-management.ts',
   'server/services/audit/audit-archive.service.ts',
   'server/services/audit/chainIntegrityMonitor.ts',
+  // The audit_logs SHA-256 hash chain is a single append-only chain ACROSS
+  // all tenants — each row links to the prior row regardless of org. Both
+  // the writer (computeAuditChain) and verifier (verifyAuditChain) must scan
+  // audit_logs unfiltered; a tenant predicate would fork/break the chain and
+  // make verification meaningless. Same rationale as chainIntegrityMonitor.
+  'server/services/audit/chain.ts',
   // Diagnostics / health.
   'server/diagnostics.js',
   'server/services/diagnostics.ts',
@@ -154,6 +200,12 @@ const ALLOWLIST_PATH_PREFIXES = [
   'server/db/_deprecated_migrations/',
   'server/__tests__/',
   'server/services/__tests__/',
+  // Background processors that operate on system-owned / queue data by id,
+  // after tenancy was resolved at enqueue time (ingestion + vectorization
+  // workers, retention/cron jobs). Matches the "system jobs / ingestion
+  // workers" allowlist intent above. Reviewed 2026-05-26.
+  'server/workers/',
+  'server/jobs/',
 ];
 
 function isAllowlistedFile(rel) {
@@ -196,9 +248,25 @@ function buildTablePattern(tables) {
 
 const TABLE_PATTERN = buildTablePattern(TENANT_SCOPED_TABLES);
 
-// Match a SQL string literal (template, single, or double quoted) likely
-// to be a query — must contain SELECT/INSERT/UPDATE/DELETE somewhere.
-const SQL_STRING = /[`'"](?:\\.|[^\\`'"])*?(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)[\s\S]*?[`'"]/gi;
+/**
+ * Normalize a SQL string for hashing: lowercase, collapse whitespace, strip
+ * quotes and trailing punctuation. Two queries that differ only in
+ * formatting (linebreaks, whitespace, the surrounding quote style) hash to
+ * the same value, so cosmetic edits don't reshuffle the baseline.
+ */
+function normalizeSqlForHash(sql) {
+  return sql
+    .replace(/^[`'"]|[`'"]$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+// A string literal is SQL-shaped when it contains a DML keyword.
+const SQL_KEYWORD_RE = /\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b/i;
+
+// String-literal extraction lives in ./lib/extract-string-literals.mjs so it
+// can be unit-tested without executing this script's scan-and-exit flow.
 
 const findings = [];
 
@@ -209,10 +277,9 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
   const text = fs.readFileSync(file, 'utf8');
 
   // Iterate every SQL-shaped string literal in the file.
-  SQL_STRING.lastIndex = 0;
-  let sqlMatch;
-  while ((sqlMatch = SQL_STRING.exec(text)) !== null) {
-    const sql = sqlMatch[0];
+  for (const literal of extractStringLiterals(text)) {
+    const sql = literal.value;
+    if (!SQL_KEYWORD_RE.test(sql)) continue;
     TABLE_PATTERN.lastIndex = 0;
     const tableHits = new Set();
     let tm;
@@ -224,12 +291,22 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
     // If the SQL itself includes a tenant filter, accept.
     if (TENANT_FILTER_RE.test(sql)) continue;
 
-    // Otherwise: report.
-    const lineNumber = text.slice(0, sqlMatch.index).split('\n').length;
+    // Otherwise: report. We attach a content hash of the normalized SQL so
+    // the baseline fingerprint survives line-number drift caused by edits in
+    // the same file. (Previously the fingerprint was `file:line:tables`,
+    // which made every unrelated edit in a flagged file look like a new
+    // finding + a resolved finding on the old line — pure noise.)
+    const lineNumber = text.slice(0, literal.start).split('\n').length;
     const lineText = text.split('\n')[lineNumber - 1]?.trim().slice(0, 160) ?? '';
+    const sqlHash = crypto
+      .createHash('sha1')
+      .update(normalizeSqlForHash(sql))
+      .digest('hex')
+      .slice(0, 12);
     findings.push({
       file: rel,
       line: lineNumber,
+      sqlHash,
       tables: Array.from(tableHits),
       preview: lineText,
     });
@@ -286,8 +363,38 @@ if (stdoutJson) {
 
 // ─── Baseline + no-regression mode ─────────────────────────────────────────
 
+/**
+ * Build the stable fingerprint for a finding. Content-hashed so the
+ * fingerprint is invariant under line-number drift — the historical
+ * `file:line:tables` form produced phantom regressions whenever an edit
+ * earlier in the file pushed an existing query down. Now we key on the
+ * normalized SQL itself, scoped by file (so two files coincidentally
+ * holding the same query don't collapse to one fingerprint).
+ */
 function fingerprintFinding(f) {
-  return `${f.file}:${f.line}:${f.tables.sort().join(',')}`;
+  return `${f.file}#${f.sqlHash}:${f.tables.sort().join(',')}`;
+}
+
+/**
+ * Legacy detector — true when a baseline string came from the pre-content-
+ * hash format (file:line:tables, where line is purely digits). Lets
+ * --strict-no-regression migrate an older baseline transparently in CI by
+ * treating its contents as "any current fingerprint touching the same file
+ * + tables matches", instead of failing the whole gate over format drift.
+ */
+function isLegacyFingerprint(fp) {
+  return /^[^#]+:\d+:[a-z_,]+$/.test(fp);
+}
+
+/** Decompose a legacy fingerprint into its file + tables (loses line). */
+function legacyParts(fp) {
+  // Greedy split: last two colons separate line and tables.
+  const lastColon = fp.lastIndexOf(':');
+  const secondLastColon = fp.lastIndexOf(':', lastColon - 1);
+  return {
+    file: fp.slice(0, secondLastColon),
+    tables: fp.slice(lastColon + 1).split(',').sort().join(','),
+  };
 }
 
 if (writeBaseline) {
@@ -315,8 +422,45 @@ if (strictNoRegression) {
   const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
   const baselineSet = new Set(baseline.fingerprints);
   const currentSet = new Set(findings.map(fingerprintFinding));
-  const newFindings = [...currentSet].filter(fp => !baselineSet.has(fp));
-  const fixedFindings = [...baselineSet].filter(fp => !currentSet.has(fp));
+
+  // Legacy migration: if the baseline still uses the old line-keyed format,
+  // accept any current finding whose (file, tables) tuple appears anywhere
+  // in the legacy baseline. Prevents the format change from making every
+  // existing finding look like a regression on the first run after upgrade.
+  const legacyFileTablesIndex = new Set();
+  for (const fp of baselineSet) {
+    if (!isLegacyFingerprint(fp)) continue;
+    const { file, tables } = legacyParts(fp);
+    legacyFileTablesIndex.add(`${file}::${tables}`);
+  }
+  const isCoveredByLegacy = (fp) => {
+    // fp here is the new format: `file#hash:tables`
+    const hashIdx = fp.indexOf('#');
+    const tablesIdx = fp.indexOf(':', hashIdx);
+    if (hashIdx < 0 || tablesIdx < 0) return false;
+    const file = fp.slice(0, hashIdx);
+    const tables = fp.slice(tablesIdx + 1).split(',').sort().join(',');
+    return legacyFileTablesIndex.has(`${file}::${tables}`);
+  };
+
+  const newFindings = [...currentSet].filter(fp => !baselineSet.has(fp) && !isCoveredByLegacy(fp));
+  const fixedFindings = [...baselineSet].filter(fp => {
+    if (currentSet.has(fp)) return false;
+    if (!isLegacyFingerprint(fp)) return true;
+    // For legacy rows, "resolved" requires the (file, tables) tuple to be
+    // entirely absent from the current findings — otherwise we'd misreport
+    // every legacy row as resolved.
+    const { file, tables } = legacyParts(fp);
+    const stillPresent = [...currentSet].some(c => {
+      const hashIdx = c.indexOf('#');
+      const tablesIdx = c.indexOf(':', hashIdx);
+      if (hashIdx < 0 || tablesIdx < 0) return false;
+      const cFile = c.slice(0, hashIdx);
+      const cTables = c.slice(tablesIdx + 1).split(',').sort().join(',');
+      return cFile === file && cTables === tables;
+    });
+    return !stillPresent;
+  });
 
   if (fixedFindings.length > 0) {
     console.log(

@@ -1,7 +1,22 @@
 import { academicKnowledgeTracker } from './academic-knowledge-tracker';
-import { AcademicDocument } from 'shared/schema';
 import * as fs from 'fs';
 import * as path from 'path';
+
+/**
+ * Input shape for an academic document to be ingested. This is a service-layer
+ * DTO (not a database row) — it is normalised into an InsertAcademicResource
+ * by processAcademicDocument before persistence.
+ */
+export interface AcademicDocument {
+  title: string;
+  authors?: string | null;
+  resourceType: string;
+  source?: string | null;
+  url?: string | null;
+  category?: string | null;
+  summary?: string | null;
+  publishedDate?: string | Date | null;
+}
 
 /**
  * Academic Knowledge Service
@@ -71,7 +86,7 @@ export class AcademicKnowledgeService {
             url: filePath,
             category: 'clinical_trials',
             summary: `Imported from ${fileName}`,
-            publishedDate: null, // Would be extracted in a full implementation
+            publishedDate: undefined,
           });
 
           result.processed++;
@@ -110,7 +125,7 @@ export class AcademicKnowledgeService {
         url: document.url || null,
         category: document.category,
         summary: document.summary || null,
-        publishedDate: document.publishedDate ? new Date(document.publishedDate) : null,
+        publishedDate: document.publishedDate ? new Date(document.publishedDate) : undefined,
       });
 
       // 2. In a full implementation, we would:

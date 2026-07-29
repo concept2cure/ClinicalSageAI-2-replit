@@ -21,6 +21,7 @@ import type {
   GovernedDecisionOutcome,
   GovernedMutationIntent,
 } from '../../shared/types/governed-document-fabric';
+import type { RecommendationType, ActionState, DecisionRecord } from './decision-record-service.js';
 
 const log = createScopedLogger('governed-decision-repository');
 
@@ -168,15 +169,28 @@ export async function recordGovernedDecision(
     timestamp,
   };
 
+  const orgIdNumeric = Number(evaluation.context.organizationId);
+  if (!Number.isFinite(orgIdNumeric) || orgIdNumeric <= 0) {
+    throw new Error(
+      `recordGovernedDecision: invalid organizationId ${JSON.stringify(
+        evaluation.context.organizationId,
+      )}. Refusing to write a governance record without a valid tenant — ` +
+        `defaulting to a hardcoded org id is the bug class that PRs #496-#499 fixed.`,
+    );
+  }
+
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
     await decisionRecordService.create({
-      organizationId: Number(evaluation.context.organizationId) || 1,
+      organizationId: orgIdNumeric,
       projectId: Number(evaluation.context.projectId) || 0,
       decisionCode: `governed-fabric:${decisionId}`,
       title: `Governed ${evaluation.context.intendedAction}: ${evaluation.decision.outcome}`.slice(0, 200),
       domainTrack: 'governance',
-      recommendationType: 'governed_fabric_decision',
+      // Governed-fabric decisions are tagged with a repository-specific
+      // discriminator that is intentionally outside the base RecommendationType
+      // enum; the column is free text and create/search use the same literal.
+      recommendationType: 'governed_fabric_decision' as RecommendationType,
       recommendationSummary: evaluation.decision.rationale.slice(0, 500),
       recommendationRationale: evaluation.decision.rationale,
       confidenceLevel: evaluation.readiness.score >= 75 ? 'high' : evaluation.readiness.score >= 40 ? 'moderate' : 'low',
@@ -294,13 +308,16 @@ export async function getRecentGovernedDecisions(options: {
     const { decisionRecordService } = await import('./decision-record-service.js');
     const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
     const records = await decisionRecordService.search({
-      organizationId: options.organizationId ? Number(options.organizationId) : undefined,
+      // Repository supports org-less queries; search's column filter treats an
+      // absent organizationId as no filter. Pass the value through unchanged.
+      organizationId: (options.organizationId ? Number(options.organizationId) : undefined) as number,
       projectId: options.projectId ? Number(options.projectId) : undefined,
-      recommendationType: 'governed_fabric_decision',
+      // See note above: governed-fabric discriminator is outside the base enum.
+      recommendationType: 'governed_fabric_decision' as RecommendationType,
       limit,
     });
     governanceMetrics.recordQueryExecuted();
-    return records.map((r: Record<string, unknown>) => mapRow(r));
+    return records.map((r: DecisionRecord) => mapRow(r as unknown as Record<string, unknown>));
   } catch (err) {
     governanceMetrics.recordQueryFailure('getRecentGovernedDecisions', err);
     return [];
@@ -385,7 +402,10 @@ export async function transitionGovernedDecision(
 
     const transitioned = await decisionRecordService.transition(input.decisionId, {
       organizationId: input.organizationId,
-      actionState: input.targetState as string,
+      // targetState is a GovernedLifecycleState; every state reachable as a
+      // transition target is also a valid ActionState (only the start state
+      // 'recommended_only' is lifecycle-only and never a target).
+      actionState: input.targetState as ActionState,
       performedBy: input.performedBy,
       reason: input.reason,
       escalatedTo: input.escalatedTo,

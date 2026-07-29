@@ -72,10 +72,16 @@ test('report writers generate markdown and json artifacts', () => {
 });
 
 test('strict mode fails closed when checks are skipped', () => {
+  // The script skips its plan steps when preflight detects a missing
+  // node_modules. Spawn in a tmp cwd (which has no node_modules) so the
+  // skip path triggers deterministically, then assert strict mode
+  // surfaces the skips as exit 1.
+  const tmpDir = mkdtempSync(path.join(tmpdir(), 'audit-strict-'));
+  const scriptPath = path.resolve('scripts/audits/execute-last-pr-audit-build-plan.mjs');
   const run = spawnSync(
     'node',
-    ['scripts/audits/execute-last-pr-audit-build-plan.mjs', '--limit', '1', '--date', '2026-03-29', '--strict'],
-    { encoding: 'utf8' },
+    [scriptPath, '--limit', '1', '--date', '2026-03-29', '--strict'],
+    { encoding: 'utf8', cwd: tmpDir },
   );
 
   assert.equal(run.status, 1);

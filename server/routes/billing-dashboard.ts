@@ -24,9 +24,32 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { pool } from '../db.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 import { getSecureOrgId } from '../utils/tenantContext.js';
+import {
+  WEEKLY_METRICS,
+  type WeeklyMetric,
+  listLimits,
+  setWeeklyLimit,
+  getWeeklyMonitor,
+  getOverageLedger,
+} from '../services/weekly-usage-limits.js';
+import { checkSeatAvailability, setSeatsPurchased, isSeatEnforcementOn } from '../services/seat-licensing.js';
+import { getUsageLimitsSnapshot, getWeeklyUsageByModel } from '../services/usage-windows.js';
+import {
+  getCreditBalance,
+  getCreditLedger,
+  getAutoReload,
+  setAutoReload,
+  addCreditEntry,
+} from '../services/credit-ledger.js';
+import { resolveCapabilities } from '../services/entitlements/resolver.js';
+import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import Stripe from 'stripe';
+
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('billing-dashboard');
 
 const router = Router();
 
@@ -125,7 +148,7 @@ router.get('/usage', authenticateToken, async (req: Request, res: Response) => {
       endDate: end,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Usage error:', error);
+    logger.error('Usage error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch usage data';
     res.status(500).json({ error: message });
   }
@@ -203,7 +226,7 @@ router.get('/usage/summary', authenticateToken, async (req: Request, res: Respon
       periodStart,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Usage summary error:', error);
+    logger.error('Usage summary error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch usage summary';
     res.status(500).json({ error: message });
   }
@@ -269,7 +292,7 @@ router.get('/invoices', authenticateToken, async (req: Request, res: Response) =
       total: stripeInvoices.data.length,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Invoices error:', error);
+    logger.error('Invoices error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch invoices';
     res.status(500).json({ error: message });
   }
@@ -332,7 +355,7 @@ router.get('/budgets', authenticateToken, async (req: Request, res: Response) =>
         : null,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Budgets error:', error);
+    logger.error('Budgets error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch budget settings';
     res.status(500).json({ error: message });
   }
@@ -400,7 +423,7 @@ router.post('/budgets', authenticateToken, async (req: Request, res: Response) =
       alerts: row.alert_thresholds || [],
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Update budget error:', error);
+    logger.error('Update budget error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to update budget settings';
     res.status(500).json({ error: message });
   }
@@ -451,7 +474,7 @@ router.get('/alerts/history', authenticateToken, async (req: Request, res: Respo
       hasMore: offset + limit < total,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Alerts history error:', error);
+    logger.error('Alerts history error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch alert history';
     res.status(500).json({ error: message });
   }
@@ -467,7 +490,7 @@ router.post('/alerts/:id/acknowledge', authenticateToken, async (req: Request, r
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const alertId = parseInt(req.params.id, 10);
+    const alertId = parseInt(String(req.params.id), 10);
     if (isNaN(alertId)) {
       return res.status(400).json({ error: 'Invalid alert ID' });
     }
@@ -495,7 +518,7 @@ router.post('/alerts/:id/acknowledge', authenticateToken, async (req: Request, r
       acknowledgedAt: r.acknowledged_at,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Acknowledge alert error:', error);
+    logger.error('Acknowledge alert error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to acknowledge alert';
     res.status(500).json({ error: message });
   }
@@ -584,7 +607,7 @@ router.get('/rate-limits', authenticateToken, async (req: Request, res: Response
       limits,
     });
   } catch (error) {
-    console.error('[Billing Dashboard] Rate limits error:', error);
+    logger.error('Rate limits error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch rate limits';
     res.status(500).json({ error: message });
   }
@@ -612,21 +635,25 @@ router.get('/activity', authenticateToken, async (req: Request, res: Response) =
     // Fetch recent Stripe events for this org
     let stripeEvents: any[] = [];
     if (stripeCustomerId) {
+      // Tenant-scoped by organization_id (the real tenant key on stripe_events).
+      // The previous query filtered `WHERE customer_id = $1` and selected `data`,
+      // neither of which exist on stripe_events — it was both unscoped and a
+      // latent runtime bug. The actual columns are organization_id + payload.
       const eventsResult = await pool.query(
-        `SELECT id, event_type, data, created_at
+        `SELECT id, event_type, payload, created_at
          FROM stripe_events
-         WHERE customer_id = $1
+         WHERE organization_id = $1
          ORDER BY created_at DESC
          LIMIT $2`,
-        [stripeCustomerId, limit],
+        [orgId, limit],
       );
       stripeEvents = eventsResult.rows.map((r: any) => ({
         id: `stripe_${r.id}`,
         type: r.event_type,
         source: 'stripe',
-        message: formatStripeEventMessage(r.event_type, r.data),
+        message: formatStripeEventMessage(r.event_type, r.payload),
         timestamp: r.created_at,
-        data: r.data,
+        data: r.payload,
       }));
     }
 
@@ -655,7 +682,7 @@ router.get('/activity', authenticateToken, async (req: Request, res: Response) =
 
     res.json({ activity });
   } catch (error) {
-    console.error('[Billing Dashboard] Activity error:', error);
+    logger.error('Activity error', { err: error instanceof Error ? error.message : String(error) });
     const message = error instanceof Error ? error.message : 'Failed to fetch billing activity';
     res.status(500).json({ error: message });
   }
@@ -683,5 +710,271 @@ function formatStripeEventMessage(eventType: string, _data?: any): string {
 
   return messages[eventType] || `Billing event: ${eventType.replace(/\./g, ' ')}`;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Weekly usage limits & overage caps (Anthropic-style usage controls)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getUserId(req: Request): number | null {
+  const raw = (req as any).userId ?? req.user?.id;
+  if (raw == null) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+// GET /weekly-limits — configured weekly limits + a live monitoring snapshot.
+router.get('/weekly-limits', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const [limits, monitor] = await Promise.all([listLimits(orgId), getWeeklyMonitor(orgId)]);
+    res.json({ metrics: WEEKLY_METRICS, limits, monitor });
+  } catch (error) {
+    logger.error('Get weekly limits error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load weekly usage limits' });
+  }
+});
+
+// GET /weekly-usage — live monitoring snapshot only (used vs limit/cap per metric).
+router.get('/weekly-usage', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json({ monitor: await getWeeklyMonitor(orgId) });
+  } catch (error) {
+    logger.error('Get weekly usage error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load weekly usage' });
+  }
+});
+
+// GET /seats — seat-license utilization (purchased vs active members + pending).
+router.get('/seats', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const seats = await checkSeatAvailability(orgId, 0);
+    res.json({ seats, enforcement: isSeatEnforcementOn() ? 'enforce' : 'report-only' });
+  } catch (error) {
+    logger.error('Get seats error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load seat usage' });
+  }
+});
+
+// PUT /seats — set purchased seats. GOVERNED: admin/owner only, reason required, audited.
+router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'User context required' });
+
+    const { seats, reason } = req.body ?? {};
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      return res.status(400).json({ error: 'A reason-for-change is required to change purchased seats' });
+    }
+    const decision = await setSeatsPurchased(orgId, Number(seats), { userId }, reason);
+    res.json({ seats: decision });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
+    if ((error as any)?.conflict) return res.status(409).json({ error: (error as Error).message });
+    logger.error('Set seats error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to set purchased seats' });
+  }
+});
+
+// GET /weekly-overage — accrued billable overage for the current weekly window.
+router.get('/weekly-overage', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json({ overage: await getOverageLedger(orgId) });
+  } catch (error) {
+    logger.error('Get weekly overage error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load weekly overage' });
+  }
+});
+
+// PUT /weekly-limits/:metric — set/raise a weekly limit + overage cap.
+// GOVERNED: org admins only, reason-for-change required, audited (21 CFR Part 11).
+router.put('/weekly-limits/:metric', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'User context required' });
+
+    const metric = req.params.metric as WeeklyMetric;
+    if (!WEEKLY_METRICS.includes(metric)) {
+      return res.status(400).json({ error: `metric must be one of: ${WEEKLY_METRICS.join(', ')}` });
+    }
+
+    const { weeklyLimit, overageCapPct, overageHardCap, warnThresholdPct, weekStartDow, enabled, reason } = req.body ?? {};
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      return res.status(400).json({ error: 'A reason-for-change is required to set a weekly usage limit' });
+    }
+
+    const saved = await setWeeklyLimit(
+      orgId,
+      {
+        metric,
+        weeklyLimit: Number(weeklyLimit),
+        overageCapPct: overageCapPct == null ? 0 : Number(overageCapPct),
+        overageHardCap: overageHardCap == null ? null : Number(overageHardCap),
+        warnThresholdPct: warnThresholdPct == null ? 80 : Number(warnThresholdPct),
+        weekStartDow: weekStartDow == null ? 1 : Number(weekStartDow),
+        enabled: enabled == null ? true : Boolean(enabled),
+      },
+      { userId },
+      reason,
+    );
+    res.json({ limit: saved });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) {
+      return res.status(400).json({ error: (error as Error).message, validation });
+    }
+    logger.error('Set weekly limit error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to set weekly usage limit' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan usage windows (Anthropic-style session + weekly per-model buckets)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /usage/limits — the "Plan usage limits" snapshot: current session window
+// (% used, resets at) + weekly "All models" and premium buckets.
+router.get('/usage/limits', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json(await getUsageLimitsSnapshot(orgId));
+  } catch (error) {
+    logger.error('Get usage limits error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load plan usage limits' });
+  }
+});
+
+// GET /usage/by-model — weekly per-model drill-down beneath the bucket bars.
+router.get('/usage/by-model', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json({ models: await getWeeklyUsageByModel(orgId) });
+  } catch (error) {
+    logger.error('Get usage by model error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load per-model usage' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Credit balance + auto-reload (Anthropic-style billing page)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /credits — current balance, recent ledger, auto-reload settings.
+router.get('/credits', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const [balanceCents, ledger, autoReload] = await Promise.all([
+      getCreditBalance(orgId),
+      getCreditLedger(orgId, 50),
+      getAutoReload(orgId),
+    ]);
+    res.json({ balanceCents, ledger, autoReload });
+  } catch (error) {
+    logger.error('Get credits error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load credit balance' });
+  }
+});
+
+// PUT /credits/auto-reload — set the "top off to $X when balance is $Y" rule.
+// GOVERNED: org admins only, reason-for-change required, audited (Part 11).
+router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'User context required' });
+
+    const { enabled, thresholdCents, topupCents, reason } = req.body ?? {};
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      return res.status(400).json({ error: 'A reason-for-change is required to change auto-reload settings' });
+    }
+    // Partial update: omitted fields keep their current values, so a plain
+    // { enabled: false, reason } toggle works without re-supplying amounts.
+    const current = await getAutoReload(orgId);
+    const saved = await setAutoReload(
+      orgId,
+      {
+        enabled: enabled == null ? current.enabled : Boolean(enabled),
+        thresholdCents: thresholdCents == null ? current.thresholdCents : Number(thresholdCents),
+        topupCents: topupCents == null ? current.topupCents : Number(topupCents),
+      },
+      { userId },
+      reason,
+    );
+    res.json({ autoReload: saved });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
+    logger.error('Set auto-reload error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to set auto-reload' });
+  }
+});
+
+// POST /credits/adjust — grant / adjust an org's credit balance. PLATFORM
+// ADMIN ONLY: ledger credits move money-equivalent value, so tenants cannot
+// self-issue them; payment-backed purchases wire through Stripe checkout
+// separately. Audited via the ledger row (created_by) + description.
+router.post('/credits/adjust', authenticateToken, requirePlatformAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    // Platform-admin credit grant: organizationId is the TARGET org receiving
+    // the adjustment, not the caller's tenant identity. Route is
+    // authenticateToken + requirePlatformAdmin; audited via the ledger row.
+    // security-allow: admin acts on a target org, not self-tenant scoping.
+    const { organizationId, entryType, amountCents, description, reference } = req.body ?? {};
+    const targetOrg = Number(organizationId);
+    if (!Number.isInteger(targetOrg) || targetOrg <= 0) {
+      return res.status(400).json({ error: 'organizationId must be a positive integer' });
+    }
+    if (entryType !== 'grant' && entryType !== 'adjustment') {
+      return res.status(400).json({ error: "entryType must be 'grant' or 'adjustment'" });
+    }
+    if (!description || typeof description !== 'string' || !description.trim()) {
+      return res.status(400).json({ error: 'A description (reason) is required for a credit adjustment' });
+    }
+    const entry = await addCreditEntry(
+      targetOrg,
+      { entryType, amountCents: Number(amountCents), description, reference, allowNegative: entryType === 'adjustment' },
+      { userId },
+    );
+    res.json({ entry });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
+    logger.error('Credit adjust error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to adjust credits' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Capabilities (unified entitlement view)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /capabilities — effective capabilities: tier matrix ⊕ toggle grants,
+// module subscriptions, and the org-relevant flags (the settings page shape).
+router.get('/capabilities', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json(await resolveCapabilities(orgId));
+  } catch (error) {
+    logger.error('Get capabilities error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to resolve capabilities' });
+  }
+});
 
 export default router;

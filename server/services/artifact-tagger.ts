@@ -14,12 +14,8 @@
  * @compliance FDA 21 CFR Part 11 — immutable audit trail
  */
 
-import { getPool } from '../db.ts';
+import { getPool } from '../db/runtime.js';
 import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
-
-const pool = {
-  connect: (...args: Parameters<ReturnType<typeof getPool>['connect']>) => getPool().connect(...args),
-};
 
 export interface TagArtifactParams {
   projectId: number;
@@ -64,7 +60,7 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
     metadata = {},
   } = params;
 
-  const client = await pool.connect();
+  const client = await getPool().connect();
   let isNew = false;
   let resultArtifactId: number;
   let versionId: number | undefined;
@@ -352,7 +348,7 @@ export async function getArtifactSectionCode(
   organizationId: number
 ): Promise<string | null> {
   try {
-    const result = await pool.query(
+    const result = await getPool().query(
       `SELECT ctd_section FROM concept2cure_artifacts
        WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
       [artifactId, projectId, organizationId]

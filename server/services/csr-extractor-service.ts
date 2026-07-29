@@ -1,9 +1,20 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
+import * as openaiServiceModule from './openai-service';
 import { eq } from 'drizzle-orm';
+import { getOpenAIClient } from './openai-client';
+
+import { createScopedLogger } from '../utils/logger';
+const logger = createScopedLogger('csr-extractor');
+
+// ESM has no module-scope __dirname; recreate it from import.meta.url.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const openaiService: any = openaiServiceModule;
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');
@@ -151,7 +162,7 @@ class CSRExtractorService {
         this.mappingTemplate.csr_id = '';
       }
     } catch (error) {
-      console.error('Error loading CSR mapping template:', error);
+      logger.error('Error loading CSR mapping template:', { error: error });
       throw new Error('Failed to initialize CSR mapping template');
     }
   }
@@ -317,7 +328,7 @@ if __name__ == "__main__":
         sections: extractionResult.sections || {},
       };
     } catch (error) {
-      console.error('Error extracting text from PDF:', error);
+      logger.error('Error extracting text from PDF:', { error: error });
       // Return empty result on error
       return {
         fullText: '',
@@ -359,7 +370,7 @@ TEXT:
 ${text.slice(0, 8000)}
 `;
 
-        const response = await openaiService.createChatCompletion({
+        const response = await getOpenAIClient().chat.completions.create({
           model: 'gpt-4-turbo-preview',
           messages: [
             {
@@ -376,10 +387,10 @@ ${text.slice(0, 8000)}
         if (response.choices && response.choices.length > 0) {
           summaries[section] = response.choices[0].message.content || '';
         } else {
-          console.warn(`No summary generated for section: ${section}`);
+          logger.warn(`No summary generated for section: ${section}`);
         }
       } catch (error) {
-        console.error(`Error generating summary for section ${section}:`, error);
+        logger.error(`Error generating summary for section ${section}:`, { error: error });
         summaries[section] = 'Error generating summary';
       }
     });
@@ -471,7 +482,7 @@ CSR TEXT:
 ${context}
 `;
 
-      const response = await openaiService.createChatCompletion({
+      const response = await getOpenAIClient().chat.completions.create({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
@@ -487,7 +498,7 @@ ${context}
       });
 
       if (response.choices && response.choices.length > 0) {
-        const extractedInfo = JSON.parse(response.choices[0].message.content);
+        const extractedInfo = JSON.parse(response.choices[0].message.content || '{}');
         return {
           semantic: extractedInfo.semantic || {},
           pharmacology: extractedInfo.pharmacology || {},
@@ -498,7 +509,7 @@ ${context}
         throw new Error('No extraction results received from OpenAI');
       }
     } catch (error) {
-      console.error('Error extracting structured information:', error);
+      logger.error('Error extracting structured information:', { error: error });
       return {
         semantic: {},
         pharmacology: {},
@@ -511,7 +522,7 @@ ${context}
   async processCSR(reportId: number): Promise<CSRMappingTemplate> {
     try {
       // Get the CSR report data from the database
-      const [report] = await db.execute<{
+      const reportResult = await db.execute<{
         id: number;
         title: string;
         nctrial_id?: string;
@@ -522,18 +533,19 @@ ${context}
         uploadDate?: Date;
         file_path?: string;
       }>(sql`
-        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path 
-        FROM csr_reports 
-        WHERE id = ${reportId} 
+        SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path
+        FROM csr_reports
+        WHERE id = ${reportId}
         LIMIT 1
       `);
+      const report = reportResult.rows[0];
 
       if (!report) {
         throw new Error(`CSR Report with ID ${reportId} not found`);
       }
 
       // Get the associated details
-      const [details] = await db.execute<{
+      const detailsResult = await db.execute<{
         id: number;
         reportId: number;
         studyDesign?: string;
@@ -571,10 +583,11 @@ ${context}
         };
         processed?: boolean;
       }>(sql`
-        SELECT * FROM csr_details 
-        WHERE report_id = ${reportId} 
+        SELECT * FROM csr_details
+        WHERE report_id = ${reportId}
         LIMIT 1
       `);
+      const details = detailsResult.rows[0];
 
       // Create a new mapping object based on the template
       const mappedData: CSRMappingTemplate = JSON.parse(JSON.stringify(this.mappingTemplate));
@@ -594,7 +607,7 @@ ${context}
 
       // Check if we have the PDF file path to extract more detailed information
       if (report.file_path && fs.existsSync(report.file_path)) {
-        console.log(`Processing PDF file: ${report.file_path}`);
+        logger.info(`Processing PDF file: ${report.file_path}`);
 
         try {
           // Extract text with section identification from the PDF
@@ -683,7 +696,7 @@ ${context}
             stats_traceability: 0.87,
           };
         } catch (error) {
-          console.error(`Error in enhanced CSR extraction for ${reportId}:`, error);
+          logger.error(`Error in enhanced CSR extraction for ${reportId}:`, { error: error });
           // Continue with basic extraction if enhanced fails
         }
       }
@@ -731,7 +744,7 @@ ${context}
               mappedData.population.inclusion_criteria = details.inclusionCriteria;
             }
           } catch (err) {
-            console.error('Error processing inclusion criteria:', err);
+            logger.error('Error processing inclusion criteria:', { error: err });
           }
         }
 
@@ -747,7 +760,7 @@ ${context}
               mappedData.population.exclusion_criteria = details.exclusionCriteria;
             }
           } catch (err) {
-            console.error('Error processing exclusion criteria:', err);
+            logger.error('Error processing exclusion criteria:', { error: err });
           }
         }
 
@@ -783,7 +796,7 @@ ${context}
               }
             }
           } catch (err) {
-            console.error('Error processing endpoints:', err);
+            logger.error('Error processing endpoints:', { error: err });
           }
         }
 
@@ -797,7 +810,7 @@ ${context}
               mappedData.design.arms = Object.keys(details.treatmentArms).length;
             }
           } catch (err) {
-            console.error('Error processing treatment arms:', err);
+            logger.error('Error processing treatment arms:', { error: err });
           }
         }
 
@@ -818,7 +831,7 @@ ${context}
               mappedData.results.secondary = results.secondary.join('; ');
             }
           } catch (err) {
-            console.error('Error processing results:', err);
+            logger.error('Error processing results:', { error: err });
           }
         }
 
@@ -875,7 +888,7 @@ ${context}
               mappedData.safety.discontinuations = discontinuations;
             }
           } catch (err) {
-            console.error('Error processing safety data:', err);
+            logger.error('Error processing safety data:', { error: err });
           }
         }
       }
@@ -915,12 +928,12 @@ ${context}
 
       // Get embeddings if HuggingFace service is available
       try {
-        const embedding = await huggingFaceService.getEmbedding(combinedText);
+        const embedding = await huggingFaceService.generateEmbeddings(combinedText);
         if (embedding && embedding.length > 0) {
           mappedData.vector_embedding = embedding;
         }
       } catch (error) {
-        console.error('Error generating embedding for CSR:', error);
+        logger.error('Error generating embedding for CSR:', { error: error });
         mappedData.vector_embedding = [];
       }
 
@@ -938,7 +951,7 @@ ${context}
 
       return mappedData;
     } catch (error) {
-      console.error(`Error processing CSR with ID ${reportId}:`, error);
+      logger.error(`Error processing CSR with ID ${reportId}:`, { error: error });
       throw error;
     }
   }
@@ -951,14 +964,15 @@ ${context}
   async processUnprocessedCSRs(limit: number = 50): Promise<number> {
     try {
       // Find unprocessed CSRs with details
-      const unprocessedCSRs = await db.execute<{ report_id: number }>(sql`
-        SELECT report_id 
-        FROM csr_details 
+      const unprocessedResult = await db.execute<{ report_id: number }>(sql`
+        SELECT report_id
+        FROM csr_details
         WHERE processed = false OR processed IS NULL
         LIMIT ${limit}
       `);
+      const unprocessedCSRs = unprocessedResult.rows;
 
-      console.log(`Found ${unprocessedCSRs.length} unprocessed CSRs to process`);
+      logger.info(`Found ${unprocessedCSRs.length} unprocessed CSRs to process`);
 
       // Process each CSR
       let processedCount = 0;
@@ -967,13 +981,13 @@ ${context}
           await this.processCSR(csr.report_id);
           processedCount++;
         } catch (error) {
-          console.error(`Error processing CSR with ID ${csr.report_id}:`, error);
+          logger.error(`Error processing CSR with ID ${csr.report_id}:`, { error: error });
         }
       }
 
       return processedCount;
     } catch (error) {
-      console.error('Error processing unprocessed CSRs:', error);
+      logger.error('Error processing unprocessed CSRs:', { error: error });
       throw error;
     }
   }
@@ -983,22 +997,22 @@ ${context}
    */
   async getProcessingStats(): Promise<{ total: number; processed: number; unprocessed: number }> {
     try {
-      const [totalResult] = await db.execute<{ count: number }>(sql`
+      const totalResult = await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_reports
       `);
 
-      const [processedResult] = await db.execute<{ count: number }>(sql`
+      const processedResult = await db.execute<{ count: number }>(sql`
         SELECT COUNT(*) as count FROM csr_details
         WHERE processed = true
       `);
 
-      const total = totalResult?.count || 0;
-      const processed = processedResult?.count || 0;
+      const total = totalResult.rows[0]?.count || 0;
+      const processed = processedResult.rows[0]?.count || 0;
       const unprocessed = total - processed;
 
       return { total, processed, unprocessed };
     } catch (error) {
-      console.error('Error getting CSR processing stats:', error);
+      logger.error('Error getting CSR processing stats:', { error: error });
       throw error;
     }
   }
@@ -1011,7 +1025,7 @@ ${context}
       const files = fs.readdirSync(PROCESSED_CSR_DIR);
       return files.filter(file => file.endsWith('.json')).length;
     } catch (error) {
-      console.error('Error counting processed CSR files:', error);
+      logger.error('Error counting processed CSR files:', { error: error });
       return 0;
     }
   }
@@ -1035,7 +1049,7 @@ ${context}
     try {
       processed = await this.processUnprocessedCSRs(batchSize);
     } catch (error) {
-      console.error('Error in batch processing:', error);
+      logger.error('Error in batch processing:', { error: error });
       status = 'error';
     }
 

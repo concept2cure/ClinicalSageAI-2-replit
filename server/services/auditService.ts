@@ -20,6 +20,8 @@ import {
 import { createScopedLogger } from '../utils/logger';
 import { auditLogs } from '../../shared/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { computeAuditChainSealed, hashPayload } from './audit/chain.js';
+import { randomUUID } from 'crypto';
 
 const logger = createScopedLogger('audit-service');
 
@@ -31,13 +33,36 @@ interface AuditLogEntry {
   tenantId?: string | number;
   userId?: string | number;
   action: string;
-  resourceType: string;
+  /**
+   * What was audited. Optional because `tableName` is an accepted alias for it
+   * (see below) — logAction resolves whichever was supplied and falls back to
+   * 'unknown' only when neither is.
+   */
+  resourceType?: string;
   resourceId?: string | number;
   details?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
   /** Alias accepted by callers that use "organizationId" instead of tenantId */
   organizationId?: string | number;
+  /**
+   * Aliases for callers that name the audited object by its table and row.
+   *
+   * Sixteen call sites across the routes pass `tableName` / `recordId` rather
+   * than `resourceType` / `resourceId`. They were not accepted here and were
+   * not read by logAction, so on every one of those calls the audit row
+   * recorded resourceType 'unknown' and resourceId 'unknown' — the WHAT of a
+   * Part 11 record, silently dropped, while the call itself looked correct at
+   * the call site and compiled everywhere the object was widened to `any`.
+   * (`server/routes/onboarding-proposals.ts` is where it finally surfaced as a
+   * type error, which is how it was found.)
+   *
+   * Accepted and mapped rather than removed: the call sites read naturally and
+   * changing sixteen of them across several in-flight branches would conflict
+   * for no behavioural gain. `resourceType` still wins when both are given.
+   */
+  tableName?: string;
+  recordId?: string | number;
   /** Optional metadata blob — stored in newValues column */
   metadata?: Record<string, any>;
 }
@@ -180,10 +205,19 @@ class AuditService {
 
     // Resolve tenantId from either field name
     const resolvedTenantId = entry.tenantId ?? entry.organizationId;
+    // ...and the audited object from either naming. Without the tableName /
+    // recordId fallbacks these resolved to 'unknown' on every call that used
+    // them, which is most of the data_modify audit trail.
+    const resolvedResourceType = entry.resourceType || entry.tableName || 'unknown';
     const resolvedResourceId =
       entry.resourceId?.toString() ||
+      entry.recordId?.toString() ||
       entry.details?.resourceId?.toString() ||
       'unknown';
+    // Normalised in place so every persistence path below sees the resolved
+    // values rather than each having to repeat the fallback.
+    entry.resourceType = resolvedResourceType;
+    entry.resourceId = resolvedResourceId;
 
     // Always log to structured console for observability
     logger.info(`[AUDIT] ${entry.action} ${entry.resourceType}`, {
@@ -193,26 +227,75 @@ class AuditService {
     });
 
     // -----------------------------------------------------------------------
-    // 1. Persist to Drizzle audit_logs table
+    // 1. Persist to the canonical audit_logs table — sha256-CHAINED + HMAC-SEALED
+    //    (21 CFR Part 11 §11.10(e)/§11.70). Every audit row is committed into the
+    //    append-only chain in one transaction holding the SELECT FOR UPDATE on
+    //    the prior row (computeAuditChainSealed), so the queryable mirror is
+    //    tamper-evident — not just the C2C governed subset. The chain columns
+    //    already exist (migrations 20260527 + 20260609). A persistence failure is
+    //    logged, never propagated: an audit-trail outage must not break the user
+    //    action it records.
     // -----------------------------------------------------------------------
     try {
-      const db = await getDrizzle();
-      if (db) {
-        await db.insert(auditLogs).values({
-          tenantId: Number(resolvedTenantId) || 0,
-          userId: entry.userId != null ? Number(entry.userId) : null,
-          action: entry.action,
-          tableName: entry.resourceType || 'unknown',
-          recordId: resolvedResourceId,
-          oldValues: null,
-          newValues: entry.details ?? entry.metadata ?? null,
-          ipAddress: entry.ipAddress ?? null,
-          userAgent: entry.userAgent ?? null,
-        });
+      const { pool } = await import('../db');
+      if (pool) {
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          const occurredAt = new Date().toISOString();
+          const actorId =
+            entry.userId != null && Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
+          const tenantId = Number.isFinite(Number(resolvedTenantId)) ? Number(resolvedTenantId) : 0;
+          const newValues = entry.details ?? entry.metadata ?? null;
+          const target = `${entry.resourceType ?? 'unknown'}:${resolvedResourceId}`;
+          const payloadHash = hashPayload(newValues ?? { action: entry.action, target });
+          const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+            action: entry.action,
+            actor_id: actorId,
+            target,
+            payload_hash: payloadHash,
+            occurred_at: occurredAt,
+          });
+          await client.query(
+            `INSERT INTO audit_logs
+               (id, tenant_id, user_id, action, table_name, record_id,
+                actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,
+                old_values, new_values, ip_address, user_agent)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)`,
+            [
+              randomUUID(),
+              tenantId,
+              actorId,
+              entry.action,
+              entry.resourceType || 'unknown',
+              resolvedResourceId,
+              actorId,
+              target,
+              payloadHash,
+              sha256Chain,
+              occurredAt,
+              hmacSeal,
+              null,
+              newValues == null ? null : JSON.stringify(newValues),
+              entry.ipAddress ?? null,
+              entry.userAgent ?? null,
+            ],
+          );
+          await client.query('COMMIT');
+        } catch (txErr) {
+          try {
+            await client.query('ROLLBACK');
+          } catch {
+            /* ignore rollback failure */
+          }
+          throw txErr;
+        } finally {
+          client.release();
+        }
       }
     } catch (error) {
       // Non-fatal: audit write failure should not crash the request
-      logger.error('Failed to write audit_logs row', error);
+      logger.error('Failed to write chained audit_logs row', error);
     }
 
     // -----------------------------------------------------------------------

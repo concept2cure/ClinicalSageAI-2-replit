@@ -1,3 +1,5 @@
+import { reportSecurityAlert } from '../services/security-alerts';
+
 type TenantContext =
   | { organizationId: number; clientWorkspaceId: number | null }
   | { error: string };
@@ -14,13 +16,18 @@ export const getTenantContext = (req: any): TenantContext => {
     (req.tenantId != null ? String(req.tenantId) : undefined) ||
     (req.tenantContext?.organizationId != null ? String(req.tenantContext.organizationId) : undefined);
 
-  // Log impersonation attempts
+  // Log impersonation attempts. The header/query values are observed
+  // for telemetry only — they are never used as the org-id authority.
+  // security-allow: impersonation-detection
   const headerOrgId = req.headers['x-organization-id'] || req.query.organizationId || req.query.organization_id;
   if (headerOrgId && jwtOrgId && String(headerOrgId) !== jwtOrgId) {
-    console.warn(
-      `[SECURITY] getTenantContext: header/query org ID (${headerOrgId}) differs from ` +
-      `JWT org ID (${jwtOrgId}). Using JWT value. userId=${req.user?.id || 'unknown'}`
-    );
+    reportSecurityAlert({
+      kind: 'tenant_header_mismatch',
+      message:
+        `getTenantContext: header/query org ID (${headerOrgId}) differs from ` +
+        `JWT org ID (${jwtOrgId}). Using JWT value.`,
+      detail: { headerOrgId: String(headerOrgId), jwtOrgId, userId: req.user?.id || 'unknown' },
+    });
   }
 
   const organizationIdParam = jwtOrgId;

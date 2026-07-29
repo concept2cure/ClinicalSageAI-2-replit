@@ -15,11 +15,16 @@ import { db } from '../db';
 import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 
+import { createScopedLogger } from '../utils/logger.js';
+import { governanceFor } from './ai-governance/risk-tiers';
+
+const logger = createScopedLogger('ana-capability-registry');
+
 // ============================================================
 // SEED DATA — 33 Core Capabilities
 // ============================================================
 
-interface SeedCapability {
+export interface SeedCapability {
   capabilityKey: string;
   category: string;
   name: string;
@@ -30,7 +35,7 @@ interface SeedCapability {
   documentTypesApplicable: string[];
 }
 
-const SEED_CAPABILITIES: SeedCapability[] = [
+export const SEED_CAPABILITIES: SeedCapability[] = [
   // ── Drafting (8) ──────────────────────────────────────────
   {
     capabilityKey: 'draft-csr',
@@ -81,6 +86,28 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     regulatoryBodiesApplicable: ['FDA'],
     projectTypesApplicable: ['NDA', 'BLA'],
     documentTypesApplicable: ['nda-section', 'ctd-module'],
+  },
+  {
+    capabilityKey: 'draft-jnda-section',
+    category: 'drafting',
+    name: 'Draft JNDA Section',
+    description:
+      'Generate J-NDA (PMDA) submission sections with the Japanese eCTD Module 1 structure, similar-drug selection rationale, and J-RMP, in line with PMDA expectations.',
+    slashCommand: '/draft-jnda-section',
+    regulatoryBodiesApplicable: ['PMDA'],
+    projectTypesApplicable: ['JNDA', 'IND'],
+    documentTypesApplicable: ['jnda-section', 'ctd-module'],
+  },
+  {
+    capabilityKey: 'draft-bridging-strategy',
+    category: 'drafting',
+    name: 'Draft Bridging / Ethnic-Sensitivity Strategy',
+    description:
+      'Draft a Japan bridging-study strategy and ethnic-sensitivity assessment (ICH E5) to justify the extrapolation of foreign clinical data for a JNDA, including SAKIGAKE eligibility where applicable.',
+    slashCommand: '/draft-bridging-strategy',
+    regulatoryBodiesApplicable: ['PMDA'],
+    projectTypesApplicable: ['JNDA', 'IND'],
+    documentTypesApplicable: ['jnda-section', 'ctd-module'],
   },
   {
     capabilityKey: 'draft-510k',
@@ -141,7 +168,7 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     description: 'Scan document against PMDA-specific requirements, J-NDA formatting, and Japanese regulatory expectations.',
     slashCommand: '/compliance-scan',
     regulatoryBodiesApplicable: ['PMDA'],
-    projectTypesApplicable: ['J-NDA', 'IND'],
+    projectTypesApplicable: ['JNDA', 'IND'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'ctd-module'],
   },
   {
@@ -207,7 +234,51 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['510k', 'predicate-comparison'],
   },
 
+  {
+    capabilityKey: 'render-signature-manifestation',
+    category: 'compliance',
+    name: 'Render Signature Manifestation (§11.50)',
+    description:
+      'Produce the human-readable 21 CFR Part 11 §11.50 signature manifestation block — printed name, date/time of signing (UTC), and meaning — plus supporting authentication and signature-id/hash controls, to embed in any rendered (PDF/Word) form of a signed record for inspection readiness.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
   // ── Intelligence (4) ──────────────────────────────────────
+  {
+    capabilityKey: 'assess-output-confidence',
+    category: 'intelligence',
+    name: 'Honest Confidence Envelope',
+    description:
+      "Attach honest confidence to any quantitative output — a confidence level + label ('confidence: medium (n=28, freshness: 6 days ago)') from the evidence basis, downgraded when stale and always 'low (insufficient data)' at n=0 — and gate 'final-ready' on missing/stale dependencies with explicit blockers. The platform's 'confidence with its denominator attached' moat as a reusable primitive.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
+    capabilityKey: 'check-grounding',
+    category: 'analysis',
+    name: 'Grounding Guarantee Check',
+    description:
+      "Detect quantitative claims (percentages, p-values, sample sizes, CIs, doses, durations) in drafted text that lack a citation/source marker, with a grounding score — so every number is traced to a source or hedged before it reaches a regulatory reader. Deterministic, no LLM; makes the 'never state a number without a cited source' rule structural.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'scan-regulatory-deficiencies',
+    category: 'intelligence',
+    name: 'Deterministic Deficiency Scan',
+    description:
+      "Scan regulatory text against the codified pattern registry (95+ FDA/EMA deficiency and reviewer-trigger patterns) with NO language-model call — pure heuristic matching. Returns each match with severity, the reviewer question it provokes, the regulatory basis, and a concrete remediation. AnA's fast, reproducible reasoning-without-the-LLM surface.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
   {
     capabilityKey: 'rim-pattern-detection',
     category: 'intelligence',
@@ -271,6 +342,50 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'remember-document-in-project',
+    category: 'knowledge',
+    name: 'Remember Document in Project',
+    description:
+      "Promote a document AnA has read into the project's durable memory (embedded project_memory_entries) so it is automatically recalled in future sessions via the memory assembler and session bootstrap — reusing the real project-ingestion pipeline.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'search-large-document',
+    category: 'knowledge',
+    name: 'Search Within a Large Document',
+    description:
+      "Extract a single uploaded document's full text server-side and return only the query-relevant windows (with offsets) plus a heading outline — so AnA can work with documents far larger than the per-turn context cap without dumping the whole file.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'project-knowledge-search-multi',
+    category: 'knowledge',
+    name: 'Multi-Query Project Knowledge Search',
+    description:
+      'Run several knowledge-base searches against the active project corpus simultaneously, then merge and de-duplicate into one relevance-ranked passage list — decompose a complex question into sub-queries and gather all the evidence at once instead of searching one angle at a time.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'recall-session-context',
+    category: 'knowledge',
+    name: 'Recall Session Context',
+    description:
+      "Rehydrate prior context at the start of a conversation so a session never starts cold — load where we left off (latest thread summary), the most important project and client knowledge atoms (query-independent), and recent lessons from AnA's own past work on this org/project.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
     capabilityKey: 'cortex-thread-management',
     category: 'knowledge',
     name: 'CORTEX Thread Management',
@@ -282,6 +397,17 @@ const SEED_CAPABILITIES: SeedCapability[] = [
   },
 
   // ── Prediction (3) ────────────────────────────────────────
+  {
+    capabilityKey: 'run-submission-premortem',
+    category: 'prediction',
+    name: 'Submission Pre-Mortem (RTF/CRL)',
+    description:
+      'Predict what a reviewer is likely to flag BEFORE filing — composing deterministic deficiency/reviewer-trigger detection with the precedent engine into a ranked, remediated, citation-backed readiness verdict. Honest by construction: the risk read always carries its confidence and denominator and degrades to an explicit pattern-only / insufficient-data note rather than a fabricated probability. Helps clients avoid a refuse-to-file or complete-response cycle.',
+    slashCommand: '/premortem',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
   {
     capabilityKey: 'foresight-timeline',
     category: 'prediction',
@@ -376,6 +502,133 @@ const SEED_CAPABILITIES: SeedCapability[] = [
     projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
+  // ── Document formatting (3) ───────────────────────────────
+  {
+    capabilityKey: 'extract-template',
+    category: 'formatting',
+    name: 'Recreate a Template from an Upload',
+    description:
+      'Read an uploaded Word or PDF document and recreate its formatting as a reusable client template — page size, margins, fonts, brand colours, logo, and running header/footer. Reports an extraction confidence and asks you to confirm before saving.',
+    slashCommand: '/extract-template',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'build-template',
+    category: 'formatting',
+    name: 'Build or Adjust a Client Template',
+    description:
+      'Create or edit a client formatting template conversationally — set margins, fonts, sizes, colours, header and footer text, and the logo — without touching a settings panel.',
+    slashCommand: '/template',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'render-with-template',
+    category: 'formatting',
+    name: 'Produce Word and PDF in the Client Template',
+    description:
+      'Render a document as a Microsoft Word (.docx) file and a PDF that match a saved client template exactly — same fonts, margins, logo, header and footer.',
+    slashCommand: '/produce',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+
+  // ── Compute (2) ───────────────────────────────────────────
+  {
+    capabilityKey: 'run-python-script',
+    category: 'compute',
+    name: 'Run Python Script (Sandboxed)',
+    description:
+      'Write and run Python 3 in an isolated sandbox (no network, bounded CPU/memory, wall-clock timeout) to do something precisely — data transforms, parsing, numerical/biostat checks, generating intermediate artifacts, or bespoke manipulation no structured tool covers. Returns stdout, stderr, and any files the script produced.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
+    capabilityKey: 'insert-document-content',
+    category: 'compute',
+    name: 'Targeted Document Insertion',
+    description:
+      'Make precise, surgical insertions into an existing Word (.docx) document at exact anchors — heading text, placeholder token, paragraph index, or document start/end — inserting before/after or replacing. The governed equivalent of scripting exact edits; preserves the source and returns a per-insertion outcome report.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+
+  {
+    capabilityKey: 'surgical-docx-xml-edit',
+    category: 'compute',
+    name: 'Surgical OOXML Document Edit',
+    description:
+      'Edit an existing Word (.docx) at the raw OOXML/XML level — unpack the archive, locate text anchors in word/document.xml, insert new paragraph blocks inheriting the anchor formatting (fonts, bold/italic, spacing, justification) or replace placeholders preserving run formatting, then repack and validate. The deepest, formatting-faithful document-surgery path.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'insert-clause-template',
+    category: 'compute',
+    name: 'Insert Regulatory Clause Template',
+    description:
+      'Insert a named, field-validated regulatory building block into an existing Word (.docx) — signature/approval block, cover-letter header, section heading, or sponsor placeholder swap ({{SPONSOR}}-style tokens). A curated content layer over the governed docx-insert worker: supply the clause key and fields and it renders the block (required-field checks included) and inserts it at the chosen anchor. The productized equivalent of hand-scripting per-document clause helpers.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'run-in-container',
+    category: 'compute',
+    name: 'Run in Hardened Container',
+    description:
+      'Run a bash script inside a real, hardened Linux container (bash + Python + file tools) — dropped capabilities, no privilege escalation, read-only root fs, resource limits, non-root user, wall-clock timeout, and network off unless explicitly enabled. The native computer-use path for multi-step shell/file workflows. Gated by deployment configuration.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
+    capabilityKey: 'validate-docx',
+    category: 'compute',
+    name: 'Validate Document Integrity',
+    description:
+      'Validate a Word (.docx) OOXML/ZIP integrity without modifying it — required parts present, every XML part well-formed, relationship targets resolve, python-docx round-trip — to catch silent corruption before a document ships.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+
+  // ── Commitments (2) ───────────────────────────────────────
+  {
+    capabilityKey: 'extract-commitments',
+    category: 'commitments',
+    name: 'Extract Regulatory Commitments',
+    description:
+      'Find every binding commitment in a document — inbound (PMR, PMC, REMS, EU Annex II / specific obligations / PASS / PAES, PMA conditions, 522 studies) and outbound (the applicant’s own promises) — source-anchored to the exact span, with direction, type, owner, and deadline.',
+    slashCommand: '/extract-commitments',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['approval-letter', 'meeting-minutes', 'correspondence', 'submission'],
+  },
+  {
+    capabilityKey: 'track-commitments',
+    category: 'commitments',
+    name: 'Track Regulatory Commitments',
+    description:
+      'Track inbound and outbound commitments to closure across the post-approval lifecycle: deadlines, owners, status, and evidence, with governed status changes and an audit trail.',
+    slashCommand: '/commitments',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['approval-letter', 'submission'],
+  },
 ];
 
 // ============================================================
@@ -391,6 +644,10 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
   let seeded = 0;
 
   for (const cap of SEED_CAPABILITIES) {
+    const gov = governanceFor(cap.capabilityKey, cap.category, {
+      name: cap.name,
+      description: cap.description,
+    });
     const result = await db
       .insert(anaCapabilityRegistry)
       .values({
@@ -402,6 +659,11 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
         regulatoryBodiesApplicable: cap.regulatoryBodiesApplicable,
         projectTypesApplicable: cap.projectTypesApplicable,
         documentTypesApplicable: cap.documentTypesApplicable,
+        intendedUse: gov.intendedUse,
+        riskTier: gov.riskTier,
+        humanOversight: gov.humanOversight,
+        groundednessThreshold: gov.groundednessThreshold,
+        gxpApplicable: gov.gxpApplicable,
       })
       .onConflictDoNothing({ target: anaCapabilityRegistry.capabilityKey })
       .returning({ id: anaCapabilityRegistry.id });
@@ -411,11 +673,57 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
     }
   }
 
+  // Existing rows are skipped by onConflictDoNothing above, so refresh their
+  // governance contract from the code source of truth (governanceFor) too.
+  const { updated } = await backfillCapabilityGovernance();
+  if (updated > 0) {
+    logger.info(`Refreshed AI governance contract on ${updated} capabilities`);
+  }
+
   const [countResult] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(anaCapabilityRegistry);
 
   return { seeded, total: countResult?.count ?? 0 };
+}
+
+/**
+ * Refresh the per-capability governance contract (intended use, risk tier,
+ * human oversight, groundedness threshold, GxP applicability) on every row of
+ * the registry from the single code source of truth (`governanceFor`). Safe to
+ * run repeatedly; brings existing installs up to date when the policy changes.
+ */
+export async function backfillCapabilityGovernance(): Promise<{ updated: number }> {
+  const rows = await db
+    .select({
+      id: anaCapabilityRegistry.id,
+      capabilityKey: anaCapabilityRegistry.capabilityKey,
+      category: anaCapabilityRegistry.category,
+      name: anaCapabilityRegistry.name,
+      description: anaCapabilityRegistry.description,
+    })
+    .from(anaCapabilityRegistry);
+
+  let updated = 0;
+  for (const row of rows) {
+    const gov = governanceFor(row.capabilityKey, row.category, {
+      name: row.name,
+      description: row.description,
+    });
+    await db
+      .update(anaCapabilityRegistry)
+      .set({
+        intendedUse: gov.intendedUse,
+        riskTier: gov.riskTier,
+        humanOversight: gov.humanOversight,
+        groundednessThreshold: gov.groundednessThreshold,
+        gxpApplicable: gov.gxpApplicable,
+        updatedAt: new Date(),
+      })
+      .where(eq(anaCapabilityRegistry.id, row.id));
+    updated++;
+  }
+  return { updated };
 }
 
 /**
@@ -474,6 +782,7 @@ export async function buildAnaCapabilityContext(
   const categoryOrder = [
     'drafting', 'compliance', 'analysis', 'intelligence',
     'knowledge', 'prediction', 'submission', 'workflow',
+    'formatting', 'compute', 'commitments',
   ];
 
   for (const cat of categoryOrder) {
@@ -588,7 +897,7 @@ export async function logOutcome(params: {
     }
   } catch (error) {
     // Non-blocking: log but never throw
-    console.error('[AnA Capability Registry] Failed to log outcome:', error);
+    logger.error('Failed to log outcome', { err: error instanceof Error ? error.message : String(error) });
   }
 }
 

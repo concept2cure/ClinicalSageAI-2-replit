@@ -14,6 +14,7 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { assertSafePublicUrl } from '../../utils/ssrfGuard.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -217,6 +218,8 @@ export class FHIRR4Connector implements DataConnector {
       throw new Error('FHIR server base URL is required');
     }
 
+    // SSRF guard: reject a private/metadata base URL before any outbound call.
+    assertSafePublicUrl(credentials.baseUrl, 'FHIR base URL');
     this.baseUrl = credentials.baseUrl.replace(/\/$/, '');
 
     // Bearer token authentication (simplest path)
@@ -312,6 +315,9 @@ export class FHIRR4Connector implements DataConnector {
       scope: 'system/*.read',
     });
 
+    // SSRF guard: the token endpoint may be operator-supplied or auto-discovered
+    // from the FHIR server's SMART/Capability metadata — re-validate before use.
+    assertSafePublicUrl(this.tokenEndpoint, 'FHIR token endpoint');
     const res = await this.fetchWithTimeout(this.tokenEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -564,6 +570,11 @@ export class FHIRR4Connector implements DataConnector {
     url: string,
     init?: RequestInit
   ): Promise<Response> {
+    // SSRF guard at the single outbound sink — covers base URL, the discovered
+    // token endpoint (which may come from untrusted SMART/Capability discovery),
+    // and per-resource fetches. Defends against DNS rebinding too: re-checked at
+    // every call, not just at authenticate time.
+    assertSafePublicUrl(url, 'FHIR request');
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),

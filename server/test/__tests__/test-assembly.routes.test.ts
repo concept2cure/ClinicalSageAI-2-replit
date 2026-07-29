@@ -44,7 +44,11 @@ describe('test-assembly routes', () => {
     delete process.env.OPENAI_API_KEY;
     vi.resetModules();
     vi.clearAllMocks();
-    try { vi.unmock('../../services/ai-gateway/index.js'); } catch (e) {}
+    vi.doMock('../../services/ai-gateway/index.js', () => ({
+      getGateway: () => {
+        throw new Error('gateway disabled for fallback test');
+      },
+    }));
 
     const app = express();
     app.use(express.json());
@@ -73,10 +77,12 @@ describe('test-assembly routes', () => {
     expect(polishResp.body.success).toBe(true);
     expect(polishResp.body.data.content).toContain('AI added: Polish tone and shorten');
 
-    // AI path: mock the AI gateway
-    vi.mock('../../services/ai-gateway/index.js', () => ({
+    // AI path: replace the gateway with a working chat mock.
+    // AssemblyLine.polish reads result.content from gateway.chat(), so the
+    // mock must resolve a { content } envelope, not a raw string.
+    vi.doMock('../../services/ai-gateway/index.js', () => ({
       getGateway: vi.fn().mockReturnValue({
-        chat: vi.fn().mockResolvedValue('AI-polish-response'),
+        chat: vi.fn().mockResolvedValue({ content: 'AI-polish-response' }),
       }),
     }));
 

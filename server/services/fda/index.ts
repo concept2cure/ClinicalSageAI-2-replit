@@ -28,10 +28,10 @@ export interface FDASubmissionConfig {
 }
 
 export interface FDAComplianceStatus {
-  compliant: boolean;
-  score: number;
-  checklist: FDAChecklistItem[];
-  lastChecked: Date;
+  steps: { total: number; completed: number; percentage: number };
+  validationRules: { total: number; implemented: number; percentage: number };
+  overallPercentage: number;
+  lastUpdated: Date;
 }
 
 export interface FDAChecklistItem {
@@ -43,10 +43,12 @@ export interface FDAChecklistItem {
 }
 
 export interface FDAFormData {
-  formNumber: string;
-  fields: Record<string, unknown>;
-  generatedAt: Date;
-  validUntil?: Date;
+  name: string;
+  formData: Record<string, unknown>;
+  htmlContent: string;
+  completeness: number;
+  formId: string;
+  version: string;
 }
 
 /**
@@ -57,21 +59,20 @@ export class UnifiedFDAService {
   constructor(private config: FDASubmissionConfig) {}
 
   async checkCompliance(): Promise<FDAComplianceStatus> {
-    const { FDAComplianceTracker } = await import('../FDAComplianceTracker');
+    const { default: FDAComplianceTracker } = await import('../FDAComplianceTracker');
     const tracker = new FDAComplianceTracker();
-    return tracker.check(this.config);
+    return tracker.getProgressSummary();
   }
 
   async generateForm(formNumber: string): Promise<FDAFormData> {
-    const { FDAFormGenerator } = await import('../FDAFormGenerator');
+    const { default: FDAFormGenerator } = await import('../FDAFormGenerator');
     const generator = new FDAFormGenerator();
-    return generator.generate(formNumber, this.config);
+    return generator.generateSmartForm(formNumber, this.config);
   }
 
-  async searchDatabase(query: string): Promise<unknown[]> {
-    const { FDAIntegrationService } = await import('../fdaIntegrationService');
-    const service = new FDAIntegrationService();
-    return service.search(query);
+  async searchDatabase(query: string): Promise<unknown> {
+    const fdaIntegrationService = (await import('../fdaIntegrationService')).default;
+    return fdaIntegrationService.searchDevice(query);
   }
 }
 

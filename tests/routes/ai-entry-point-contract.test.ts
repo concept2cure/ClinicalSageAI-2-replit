@@ -240,14 +240,25 @@ describe('Stage 12 — AI Entry Point Classification', () => {
 
   describe('Legacy paths (exist but not in beta shell — monitor only)', () => {
     const legacyFiles = [
-      'client/src/components/ai/AnAAssistant.jsx',
+      // 'client/src/components/ai/AnAAssistant.jsx' — deleted in the AnA
+      // capabilities-audit cleanup (never-opened legacy overlay, superseded
+      // by the bundle ana_ri shell). Removed from this list since the file
+      // no longer exists.
       // 'client/src/components/coauthor/LumenChatPane.jsx' — deleted in 7a144fd
       // ("chore: delete all non-Claude-Design UI under client/src/") per the
       // CLAUDE.md design-system mandate. Removed from this list since the
       // file no longer exists; the legacy-path tracker still serves the
       // remaining files.
-      'client/src/services/openaiService.js',
+      // 'client/src/services/openaiService.js' — removed in the legacy-UI
+      // cleanup; the migration away from the direct OpenAI client is complete,
+      // so it is no longer tracked here.
     ];
+
+    if (legacyFiles.length === 0) {
+      it('all previously-tracked legacy AI surfaces have been removed', () => {
+        expect(legacyFiles).toEqual([]);
+      });
+    }
 
     for (const file of legacyFiles) {
       it(`Legacy AI surface ${file} exists (not in beta path)`, () => {

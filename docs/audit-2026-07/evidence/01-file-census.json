@@ -1,0 +1,1208 @@
+{
+  "totalFiles": 7881,
+  "totalCodeLines": 1489325,
+  "byLayer": {
+    ".github": {
+      "files": 62,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "AGENTS.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ANA_CAPABILITY_ENHANCEMENT_RECOMMENDATIONS_2026-06-21.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ANA_DOCUMENT_STUDIO_SPEC_2026-06-20.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ANA_DOCUMENT_STUDIO_UI_SPEC_2026-06-22.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ANA_INTELLIGENCE_EXPANSION_MASTER_PLAN_2026-06-29.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ANA_SCREENSHOT_CAPABILITY_PARITY_2026-06-21.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ARCHITECTURE-AI-ACTIONS.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "CHANGELOG.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "CLAUDE_CODE_SETUP.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "CODE_OF_CONDUCT.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "DEVICE_IVD_SUBMISSION_ASSEMBLY_SPEC_2026-06-15.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "Dockerfile.optimized": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "EVALIDATOR_INTEGRATION_SPEC.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "FEATURE_INVENTORY.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "FORENSIC_CODE_AUDIT_2026-05-29.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "GA_GAP_AUDIT_2026-06-10.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "GLOBAL_LANGUAGE_STRATEGY_2026-06-29.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "GLOBAL_UI_READINESS_ADVISORY_2026-06-17.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "GOVERNANCE_BINDING_CONTRACT.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_ana_document_studio.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_clinical_regulatory_evidence.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_device_ivd_diagnostics.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_document_authoring.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_global_ri.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_master_admin_business_center.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_quality_assurance.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_segmentation_and_taxonomy.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HANDOFF_TO_DESIGN_translation_workspace.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HI_8_ECTD_SCOPING_BRIEF.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "HUMAN_FACTORS_AND_USABILITY_SPEC_2026-06-15.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "IMPLEMENTATION_TASK_CHECKLISTS_2026-06-15.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "INSIGHTS_BUILD_LOG.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "LICENSE": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS_2026-06-15.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "Makefile": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "PDEV_IND_DESIGN_BRIEF.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "PDEV_IND_WORKFLOW_AUDIT.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "PHASE_10_2_INSTALL.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "PHASE_11_INSTALL.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "PRODUCT_READINESS_ASSESSMENT.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "QUALITY_ASSURANCE_MODULE_GA.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "README.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "READ_ME_FIRST.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "RECONCILE.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "REPORTING_INTELLIGENCE_AUDIT_AND_SPEC_2026-06-15.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "SECURITY.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "SKILL.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "SUBMISSION_CENTER.http": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "SUBMISSION_CENTER.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "SUBMISSION_CENTER_API.md": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "_sync": {
+      "files": 6,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "app.yaml": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "assets": {
+      "files": 6,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "charts": {
+      "files": 33,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "client": {
+      "files": 1109,
+      "lines": 202310,
+      "codeFiles": 926,
+      "codeLines": 202310,
+      "testFiles": 114
+    },
+    "colors_and_type.css": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "csrs": {
+      "files": 4,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "dangerfile.js": {
+      "files": 1,
+      "lines": 526,
+      "codeFiles": 1,
+      "codeLines": 526,
+      "testFiles": 0
+    },
+    "data": {
+      "files": 33,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "database": {
+      "files": 25,
+      "lines": 820,
+      "codeFiles": 24,
+      "codeLines": 820,
+      "testFiles": 0
+    },
+    "db": {
+      "files": 323,
+      "lines": 651,
+      "codeFiles": 5,
+      "codeLines": 651,
+      "testFiles": 0
+    },
+    "design-system": {
+      "files": 181,
+      "lines": 28295,
+      "codeFiles": 113,
+      "codeLines": 28295,
+      "testFiles": 0
+    },
+    "design-system-bundle.tgz.bin": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "dev_ops": {
+      "files": 11,
+      "lines": 122,
+      "codeFiles": 1,
+      "codeLines": 122,
+      "testFiles": 0
+    },
+    "docker-compose.beta.yml": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "docker-compose.e2e.yml": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "docker-compose.staging.yml": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "docker-compose.yml": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "docs": {
+      "files": 961,
+      "lines": 768,
+      "codeFiles": 3,
+      "codeLines": 768,
+      "testFiles": 0
+    },
+    "drizzle.config.ts": {
+      "files": 1,
+      "lines": 31,
+      "codeFiles": 1,
+      "codeLines": 31,
+      "testFiles": 0
+    },
+    "ectd": {
+      "files": 20,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ectd-stubs": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "eslint.config.js": {
+      "files": 1,
+      "lines": 347,
+      "codeFiles": 1,
+      "codeLines": 347,
+      "testFiles": 0
+    },
+    "fonts": {
+      "files": 3,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "global-ri.openapi.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "helm": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "infra": {
+      "files": 5,
+      "lines": 64,
+      "codeFiles": 1,
+      "codeLines": 64,
+      "testFiles": 0
+    },
+    "ingestion": {
+      "files": 3,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "init-scripts": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "init-sql": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ivd-platform.openapi.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "knip.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "lighthouse-ci.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "migrations": {
+      "files": 174,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "package-lock.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "package.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "playwright.config.ts": {
+      "files": 1,
+      "lines": 31,
+      "codeFiles": 1,
+      "codeLines": 31,
+      "testFiles": 0
+    },
+    "policy": {
+      "files": 3,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "postcss.config.js": {
+      "files": 1,
+      "lines": 7,
+      "codeFiles": 1,
+      "codeLines": 7,
+      "testFiles": 0
+    },
+    "regulatory_data": {
+      "files": 2,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "replit.nix": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "reports": {
+      "files": 22,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "requirements.txt": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "schemas": {
+      "files": 4,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "scripts": {
+      "files": 287,
+      "lines": 42617,
+      "codeFiles": 214,
+      "codeLines": 42617,
+      "testFiles": 0
+    },
+    "server": {
+      "files": 3630,
+      "lines": 1024904,
+      "codeFiles": 3491,
+      "codeLines": 1024904,
+      "testFiles": 984
+    },
+    "services": {
+      "files": 65,
+      "lines": 19194,
+      "codeFiles": 48,
+      "codeLines": 19194,
+      "testFiles": 0
+    },
+    "shadow_service": {
+      "files": 2,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "shared": {
+      "files": 204,
+      "lines": 65387,
+      "codeFiles": 201,
+      "codeLines": 65387,
+      "testFiles": 8
+    },
+    "sql": {
+      "files": 18,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "start-platform.sh": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "start.sh": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "storage": {
+      "files": 3,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "submission-center.openapi.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "tailwind.config.ts": {
+      "files": 1,
+      "lines": 303,
+      "codeFiles": 1,
+      "codeLines": 303,
+      "testFiles": 0
+    },
+    "templates": {
+      "files": 9,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "terraform": {
+      "files": 31,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "tests": {
+      "files": 385,
+      "lines": 84426,
+      "codeFiles": 367,
+      "codeLines": 84426,
+      "testFiles": 367
+    },
+    "theme.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "tsconfig.beta-slice.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "tsconfig.json": {
+      "files": 1,
+      "lines": 0,
+      "codeFiles": 0,
+      "codeLines": 0,
+      "testFiles": 0
+    },
+    "ui_kits": {
+      "files": 164,
+      "lines": 18201,
+      "codeFiles": 111,
+      "codeLines": 18201,
+      "testFiles": 0
+    },
+    "vite.config.ts": {
+      "files": 1,
+      "lines": 147,
+      "codeFiles": 1,
+      "codeLines": 147,
+      "testFiles": 0
+    },
+    "vitest.config.ts": {
+      "files": 1,
+      "lines": 66,
+      "codeFiles": 1,
+      "codeLines": 66,
+      "testFiles": 0
+    },
+    "vitest.workspace.ts": {
+      "files": 1,
+      "lines": 59,
+      "codeFiles": 1,
+      "codeLines": 59,
+      "testFiles": 0
+    },
+    "workers": {
+      "files": 6,
+      "lines": 49,
+      "codeFiles": 1,
+      "codeLines": 49,
+      "testFiles": 0
+    }
+  },
+  "byExt": {
+    ".md": 1117,
+    "": 8,
+    ".yml": 30,
+    ".py": 45,
+    ".optimized": 1,
+    ".http": 1,
+    ".txt": 26,
+    ".yaml": 34,
+    ".svg": 34,
+    ".xml": 12,
+    ".tpl": 2,
+    ".json": 242,
+    ".html": 45,
+    ".js": 226,
+    ".css": 101,
+    ".jsx": 206,
+    ".webmanifest": 1,
+    ".ts": 4375,
+    ".pdf": 9,
+    ".tsx": 535,
+    ".csv": 4,
+    ".sql": 527,
+    ".bin": 1,
+    ".docx": 17,
+    ".sh": 53,
+    ".prisma": 3,
+    ".mjs": 154,
+    ".MD": 1,
+    ".png": 3,
+    ".md5": 2,
+    ".ttf": 3,
+    ".nix": 1,
+    ".cjs": 19,
+    ".gz": 1,
+    ".rego": 1,
+    ".R": 1,
+    ".Dockerfile": 2,
+    ".zip": 3,
+    ".j2": 4,
+    ".tf": 28,
+    ".example": 2,
+    ".go": 1
+  },
+  "oversized": [
+    {
+      "file": "shared/schema.ts",
+      "lines": 19827
+    },
+    {
+      "file": "server/routes/concept2cure.ts",
+      "lines": 18318
+    },
+    {
+      "file": "server/services/ana/AnaToolExecutor.ts",
+      "lines": 18305
+    },
+    {
+      "file": "server/statistics-service.ts",
+      "lines": 6893
+    },
+    {
+      "file": "server/routes/authoring.router.ts",
+      "lines": 5991
+    },
+    {
+      "file": "server/routes/ana-features.ts",
+      "lines": 5431
+    },
+    {
+      "file": "server/services/ana-ri/command-executor.ts",
+      "lines": 4778
+    },
+    {
+      "file": "server/storage.ts",
+      "lines": 4415
+    },
+    {
+      "file": "server/services/intelligent-report-engine.ts",
+      "lines": 3555
+    },
+    {
+      "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+      "lines": 3472
+    },
+    {
+      "file": "server/routes/authoring-actions.ts",
+      "lines": 3246
+    },
+    {
+      "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+      "lines": 3067
+    },
+    {
+      "file": "server/src/routes/stability.router.ts",
+      "lines": 2774
+    },
+    {
+      "file": "server/services/__tests__/ana-ri.test.ts",
+      "lines": 2759
+    },
+    {
+      "file": "server/services/submission-package-orchestrator.ts",
+      "lines": 2673
+    },
+    {
+      "file": "server/services/ana/AnaToolDefinitions.ts",
+      "lines": 2633
+    },
+    {
+      "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+      "lines": 2609
+    },
+    {
+      "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
+      "lines": 2559
+    },
+    {
+      "file": "server/routes/knowledge-base.ts",
+      "lines": 2557
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+      "lines": 2504
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "lines": 2488
+    },
+    {
+      "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+      "lines": 2419
+    },
+    {
+      "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+      "lines": 2340
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+      "lines": 2327
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+      "lines": 2278
+    },
+    {
+      "file": "services/regulatory/ind-ectd-sections.ts",
+      "lines": 2254
+    },
+    {
+      "file": "server/services/ai-gateway/gateway.ts",
+      "lines": 2246
+    },
+    {
+      "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+      "lines": 2177
+    },
+    {
+      "file": "server/services/medical-device/medical-device-knowledge.ts",
+      "lines": 2166
+    },
+    {
+      "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+      "lines": 2155
+    },
+    {
+      "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+      "lines": 2151
+    },
+    {
+      "file": "server/services/biomarkers/biomarker-knowledge.ts",
+      "lines": 2093
+    },
+    {
+      "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
+      "lines": 2068
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
+      "lines": 2059
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+      "lines": 2020
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+      "lines": 2003
+    },
+    {
+      "file": "server/routes/submission-ops.ts",
+      "lines": 2002
+    },
+    {
+      "file": "server/services/advanced-therapy/atmp-knowledge.ts",
+      "lines": 2002
+    },
+    {
+      "file": "server/routes/auth.ts",
+      "lines": 2000
+    },
+    {
+      "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
+      "lines": 1981
+    },
+    {
+      "file": "server/routes/report-os.ts",
+      "lines": 1962
+    },
+    {
+      "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
+      "lines": 1927
+    },
+    {
+      "file": "server/services/ana-ri/orchestrator.ts",
+      "lines": 1900
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+      "lines": 1888
+    },
+    {
+      "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+      "lines": 1881
+    },
+    {
+      "file": "server/services/ana/evidence-literature-tool-defs.ts",
+      "lines": 1876
+    },
+    {
+      "file": "server/services/post-approval/post-approval-knowledge.ts",
+      "lines": 1869
+    },
+    {
+      "file": "server/services/rare-disease/rare-disease-knowledge.ts",
+      "lines": 1866
+    },
+    {
+      "file": "server/services/digital-health/digital-health-knowledge.ts",
+      "lines": 1864
+    },
+    {
+      "file": "server/routes/regulatory-digital-twin.ts",
+      "lines": 1843
+    },
+    {
+      "file": "server/services/vaccine/vaccine-knowledge.ts",
+      "lines": 1836
+    },
+    {
+      "file": "server/services/dataHarvester.js",
+      "lines": 1832
+    },
+    {
+      "file": "server/services/ana/citation-engine.ts",
+      "lines": 1828
+    },
+    {
+      "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
+      "lines": 1828
+    },
+    {
+      "file": "server/services/compliance/globalComplianceEngine.ts",
+      "lines": 1824
+    },
+    {
+      "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
+      "lines": 1815
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+      "lines": 1813
+    },
+    {
+      "file": "server/services/precedent-engine.ts",
+      "lines": 1798
+    },
+    {
+      "file": "design-system/ui_kits/home/Projects.jsx",
+      "lines": 1796
+    },
+    {
+      "file": "server/services/rwe/rwe-methodology-knowledge.ts",
+      "lines": 1794
+    },
+    {
+      "file": "server/routes/ana-cortex-ft.ts",
+      "lines": 1785
+    },
+    {
+      "file": "server/services/ana-ri/context-enrichment.ts",
+      "lines": 1761
+    },
+    {
+      "file": "server/services/combination-products/combination-products-knowledge.ts",
+      "lines": 1726
+    },
+    {
+      "file": "server/services/client-intelligence-memory.ts",
+      "lines": 1699
+    },
+    {
+      "file": "server/routes/fda510k-routes.ts",
+      "lines": 1691
+    },
+    {
+      "file": "server/services/ana/submission-chat-handler.ts",
+      "lines": 1687
+    },
+    {
+      "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+      "lines": 1678
+    },
+    {
+      "file": "server/services/unifiedDocumentIngestion.js",
+      "lines": 1658
+    },
+    {
+      "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+      "lines": 1650
+    },
+    {
+      "file": "services/regulatory/globalPyramids.ts",
+      "lines": 1623
+    },
+    {
+      "file": "server/routes/ivdr-routes.ts",
+      "lines": 1611
+    },
+    {
+      "file": "server/services/pediatric/pediatric-knowledge.ts",
+      "lines": 1606
+    },
+    {
+      "file": "server/services/toxicology/toxicology-knowledge.ts",
+      "lines": 1602
+    },
+    {
+      "file": "server/services/contradiction-engine-service.ts",
+      "lines": 1601
+    },
+    {
+      "file": "shared/schema/csr-knowledge-db.ts",
+      "lines": 1600
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+      "lines": 1582
+    },
+    {
+      "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
+      "lines": 1549
+    },
+    {
+      "file": "server/services/submission-twin-service.ts",
+      "lines": 1534
+    },
+    {
+      "file": "server/routes/cortex-unified.ts",
+      "lines": 1531
+    }
+  ]
+}

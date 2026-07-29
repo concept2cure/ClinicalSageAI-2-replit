@@ -7,6 +7,20 @@
  * @module tests/setup
  */
 
+// Set env vars before any imports so server/db/runtime.ts initializes a pool
+// (mocked via pg below). Without DATABASE_URL set at module-load time, db.js
+// throws "Database connection not available" cascading into every transitive
+// import.
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+process.env.DATABASE_URL =
+  process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+process.env.SKIP_DB_STARTUP_TEST = process.env.SKIP_DB_STARTUP_TEST || 'true';
+process.env.JWT_SECRET =
+  process.env.JWT_SECRET || 'test-jwt-secret-for-unit-tests-min-32-chars-long';
+process.env.JWT_SECRET_DEV =
+  process.env.JWT_SECRET_DEV || 'test-jwt-secret-for-unit-tests-min-32-chars-long';
+process.env.DATABASE_URL_DEV = process.env.DATABASE_URL_DEV || process.env.DATABASE_URL;
+
 import { vi, beforeAll, afterAll, afterEach } from 'vitest';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -31,7 +45,12 @@ export const mockPool = {
 };
 
 vi.mock('pg', () => ({
-  Pool: vi.fn(() => mockPool),
+  // Regular function (not arrow) so `new Pool()` in db/runtime.ts works as a
+  // constructor. An arrow function throws "is not a constructor", leaving the
+  // pool null and polluting other tests in the shared singleFork process.
+  Pool: vi.fn(function () {
+    return mockPool;
+  }),
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════════

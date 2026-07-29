@@ -36,3 +36,18 @@ export function classifyTherapeuticArea(indicationText: string): string {
 
   return 'Other';
 }
+
+/**
+ * Returns an object with the classified area and a confidence score (0..1).
+ * Accepts optional secondary text (e.g. protocol abstract) to refine the
+ * classification.
+ */
+export function getTherapeuticArea(
+  indicationText: string,
+  secondaryText?: string
+): { area: string; confidence: number } {
+  const combined = `${indicationText ?? ''} ${secondaryText ?? ''}`.trim();
+  const area = classifyTherapeuticArea(combined || indicationText || '');
+  const confidence = area === 'Other' ? 0.3 : 0.75;
+  return { area, confidence };
+}

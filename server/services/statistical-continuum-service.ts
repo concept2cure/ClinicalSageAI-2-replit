@@ -11,6 +11,10 @@ import { eq, and, desc } from 'drizzle-orm';
 import { SapGeneratorService, type SapRequestData } from './sap-generator-service';
 import { ai } from '../lib/unified-ai-client';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('statistical-continuum-service');
+
 // --- Types ---
 
 interface ProtocolData {
@@ -259,10 +263,7 @@ ${sapContent.substring(0, 3000)}`,
 
       datasetsPayload = JSON.parse(aiResponse.content || '{"datasets":[]}');
     } catch (aiError) {
-      console.error(
-        '[StatisticalContinuum] AI analysis spec generation failed, using fallback:',
-        aiError
-      );
+      logger.error('AI analysis spec generation failed, using fallback', { err: aiError instanceof Error ? aiError.message : String(aiError) });
       datasetsPayload = { datasets: [] };
     }
 

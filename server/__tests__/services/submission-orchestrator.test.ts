@@ -331,7 +331,7 @@ describe('ectd-regional-rules', () => {
       submissionType: 'IND',
     };
     const findings = validateRegionalPackage(ctx, []);
-    expect(findings.some(f => f.code === 'SEQ_FIRST_NOT_0000' || f.message.includes('not a 4-digit'))).toBe(true);
+    expect(findings.some(f => f.ruleId === 'FDA-ESG-001' || f.message.includes('not a 4-digit'))).toBe(true);
   });
 
   it('flags package size over FDA 4 GB gateway limit', () => {
@@ -471,6 +471,10 @@ describe('ectd-validator-hardening', () => {
 
 describe('submission-package-orchestrator', () => {
   const baseInputs: OrchestratorInputs = {
+    // organizationId is required by the Move 1 tenant-scope gate
+    // (runOrchestrator throws on missing/non-positive). Fixture orgId 1 is
+    // a placeholder.
+    organizationId: 1,
     submissionId: 'sub-001',
     applicationNumber: 'IND123456',
     region: 'US',
@@ -489,11 +493,14 @@ describe('submission-package-orchestrator', () => {
     const { run, outputs } = await runOrchestrator(baseInputs);
     expect(run.runId).toBeDefined();
     expect(run.status).toMatch(/complete|partial/);
-    expect(run.steps.length).toBe(10);
+    // ORDERED_STEPS count: 11 original + m3.refine (Move 5) + csr.draft-narrative (Move 6)
+    // + one additional pipeline step added since = 14.
+    expect(run.steps.length).toBe(14);
     expect(outputs.module3Sections.length).toBeGreaterThan(0);
     expect(outputs.csrTables.length).toBe(1);
     expect(outputs.m23).toBeDefined();
     expect(outputs.m24).toBeDefined();
+    expect(outputs.m25).toBeDefined();
     expect(outputs.m27).toBeDefined();
   });
 

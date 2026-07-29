@@ -15,9 +15,10 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Project, Conversation, SubmissionType } from '../types';
+import { Project, Conversation, SubmissionType, ProjectOwnership } from '../types';
 import { queryKeys } from './queryKeys';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 /** Storage key for localStorage fallback */
 const STORAGE_KEY = 'concept2cure_projects';
@@ -51,7 +52,7 @@ export interface ProjectTeamMember {
   role?: string | null;
 }
 
-function withRequiredOwnership(project: Project): Project {
+function withRequiredOwnership(project: Project): Project & { ownership: ProjectOwnership } {
   return {
     ...project,
     targetAgency: project.targetAgency ?? undefined,
@@ -137,7 +138,7 @@ function normalizeProjectResponse(project: Project): Project {
   return {
     ...project,
     pinned: project.pinned ?? false,
-    targetAgency: project.targetAgency ?? null,
+    targetAgency: project.targetAgency ?? undefined,
   };
 }
 
@@ -168,7 +169,7 @@ async function fetchProjectsFromAPI(): Promise<Project[]> {
  * @private
  */
 async function createProjectAPI(
-  project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
+  project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> & Record<string, unknown>
 ): Promise<Project> {
   const response = await apiRequest('POST', '/api/concept2cure/projects', project);
   const payload = await response.json().catch(() => ({}));
@@ -323,6 +324,7 @@ async function fetchProjectTeamMembersAPI(projectId: string): Promise<ProjectTea
  */
 export function useProjects() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   /**
    * Fetches all projects with API-first approach
@@ -366,9 +368,17 @@ export function useProjects() {
       dossierStandard?: string;
       [key: string]: unknown;
     }) => {
+      const normalizedSubmissionType = String(data.submissionType).toUpperCase() as SubmissionType;
+
       if (USE_API) {
         try {
-          const result = await createProjectAPI(data);
+          // `data` carries a widened `submissionType` and extra agency-specific
+          // fields the server consumes; normalize the type and forward the rest.
+          const result = await createProjectAPI({
+            ...data,
+            submissionType: normalizedSubmissionType,
+            conversations: [],
+          });
           return result;
         } catch (e) {
           if (!ENABLE_LOCAL_PROJECT_FALLBACK) throw e;
@@ -377,7 +387,6 @@ export function useProjects() {
       }
 
       // Fallback to localStorage
-      const normalizedSubmissionType = String(data.submissionType).toUpperCase() as SubmissionType;
       const newProject: Project = withRequiredOwnership({
         id: `proj_${Date.now()}`,
         name: data.name,
@@ -392,7 +401,16 @@ export function useProjects() {
       saveStoredProjects(projects);
       return newProject;
     },
-    onSuccess: () => {
+    onError: error => {
+      toast({
+        title: 'Failed to create project',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => {
+      // Invalidate on settle (not just success) so a failed API write that
+      // partially landed server-side is reconciled on the next fetch.
       queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
     },
   });
@@ -477,7 +495,7 @@ export function useProjects() {
         ...project,
         customInstructions: preferences.projectInstructions ?? project.customInstructions,
         ownership: {
-          ...project.ownership,
+          ...(project.ownership as ProjectOwnership),
           projectInstructions:
             preferences.projectInstructions ?? project.ownership?.projectInstructions ?? '',
           reusableSnippetsKnowledge:
@@ -488,7 +506,7 @@ export function useProjects() {
             preferences.currentWorkbenchContext ??
             project.ownership?.currentWorkbenchContext ??
             'project-home',
-        },
+        } as any,
       });
       projects[index] = merged;
       saveStoredProjects(projects);

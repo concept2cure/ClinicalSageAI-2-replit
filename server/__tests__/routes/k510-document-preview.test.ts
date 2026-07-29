@@ -32,6 +32,8 @@ vi.mock('../../db', () => ({
   db: {
     select: () => ({
       from: () => ({
+        // Project lookup: select(...).from(table).where(...).limit(1)
+        // Section lookup: select(...).from(table).where(...).orderBy(...)
         where: () => ({
           limit: async () => {
             if (dbState.project === null) return [];
@@ -44,10 +46,8 @@ vi.mock('../../db', () => ({
               },
             ];
           },
-          orderBy: () => async () => dbState.sections,
+          orderBy: async () => dbState.sections,
         }),
-        // For the SECTIONS query
-        orderBy: () => Promise.resolve(dbState.sections),
       }),
     }),
   },
@@ -66,6 +66,11 @@ beforeEach(async () => {
   app.use('/api/510k/projects', mod.default);
 });
 
+// Note on the db mock above: the route's only path not covered by the
+// select().from().where().{limit,orderBy} chain is the c2c_documents
+// redirect probe (db.execute), which fires for NUMERIC idents only.
+// These tests use the program-code ident 'OR-801', so the redirect
+// probe is never reached and the chain mock fully covers the route.
 describe('GET /api/510k/projects/:projectIdent/document-preview', () => {
   it('returns 403 when no organization context', async () => {
     authState.user = null;

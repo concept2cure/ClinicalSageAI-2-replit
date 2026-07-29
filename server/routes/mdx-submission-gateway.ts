@@ -1,0 +1,728 @@
+/**
+ * Submission gateway routes — single surface over FDA ESG, EMA CESP /
+ * EUDAMED, and PMDA Gateway. Backs the kit's submission-transmittal
+ * surface (UI brief at the bottom of this commit's response).
+ *
+ *   GET    /api/mdx/gateways                              list + per-org config status
+ *   GET    /api/mdx/gateways/transmittals                 list transmittals
+ *   GET    /api/mdx/gateways/transmittals/:id             single transmittal + findings
+ *   POST   /api/mdx/gateways/:region/:gateway/transmit    transmit a package
+ *   GET    /api/mdx/gateways/transmittals/:id/status      poll latest status
+ *   GET    /api/mdx/gateways/transmittals/:id/ack         download ack as text/plain
+ *   POST   /api/mdx/gateways/transmittals/:id/findings    record validator finding
+ *   PATCH  /api/mdx/gateways/findings/:findingId/resolve  resolve a finding
+ *
+ * All responses use the canonical { data, meta? } envelope.
+ */
+
+import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+
+import { createScopedLogger } from '../utils/logger';
+import {
+  ok, created, clientError, orgRequired, notFoundInTenant, serverError,
+} from '../lib/api-response';
+import { pool } from '../db';
+import {
+  getGateway, listGateways, gatewayConfigurationStatus,
+  CredentialError, GatewayError, TransportError, ValidationError,
+  acknowledgementFilename,
+  type Region, type GatewayName,
+} from '../services/submission-gateways';
+import {
+  findActiveTransmittal,
+  rollbackTransmittal,
+  RollbackNotPermittedError,
+} from '../services/submission-gateways/fda-esg';
+import { recordGovernedAction, verifyReauth } from './c2c/actions';
+import { getBundle } from '../services/submission-bundle-storage';
+import {
+  bundleTrustEnforced,
+  hasUnsafePathSyntax,
+  isBundleStorageKey,
+  isPathWithinBundleRoot,
+} from '../services/submission-gateways/bundle-namespace';
+import { promises as fsp } from 'fs';
+import { dirname } from 'path';
+
+const router = Router();
+const log = createScopedLogger('mdx-submission-gateway');
+
+function getOrgId(req: Request): number | null {
+  const raw = (req as any).user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
+  return Number.isFinite(n) ? n : null;
+}
+function getUserId(req: Request): number | null {
+  const raw = (req as any).user?.id;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Rematerialize a bundle's local file from durable storage if it is missing.
+ *
+ * Bundles are local-first, but ephemeral containers can recycle between assemble
+ * and transmit. If the local file at bundle.path is gone AND the descriptor
+ * records a durable S3 copy, download it back to bundle.path before the gateway
+ * reads it. No-op when the local file is present, when there is no storage
+ * descriptor, or when provider is 'local'. A genuinely-missing local file with
+ * no durable copy is left for the gateway's integrity gate to refuse (422).
+ */
+async function ensureBundleLocal(bundle: {
+  path: string;
+  storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
+}): Promise<void> {
+  try {
+    await fsp.access(bundle.path);
+    return; // local file present — nothing to do
+  } catch {
+    // local file missing — fall through to durable rematerialization
+  }
+  if (bundle.storage?.provider !== 's3') return; // no durable copy to restore
+  const buf = await getBundle(bundle.storage.key);
+  await fsp.mkdir(dirname(bundle.path), { recursive: true });
+  await fsp.writeFile(bundle.path, buf);
+}
+
+const REGION_SET   = ['fda', 'ema', 'pmda', 'ca'] as const;
+const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] as const;
+const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SHA256_RE    = /^[0-9a-f]{64}$/i;
+
+/** Transmit formats a bundle descriptor may declare. */
+const BUNDLE_FORMAT_SET = ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] as const;
+type BundleFormat = typeof BUNDLE_FORMAT_SET[number];
+
+/* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
+
+router.get('/gateways', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const environment = req.query.environment === 'staging' ? 'staging' : 'production';
+  try {
+    const config = await gatewayConfigurationStatus(orgId, environment);
+    const all = listGateways();
+    return ok(res, all.map((g) => ({
+      ...g,
+      configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
+      environment,
+    })));
+  } catch (err) {
+    return serverError(res, log, 'list-gateways', err);
+  }
+});
+
+/* ─── GET /api/mdx/gateways/transmittals ─────────────────────────── */
+
+const listQuery = z.object({
+  program_id: z.string().regex(UUID_RE).optional(),
+  region:     z.enum(REGION_SET).optional(),
+  status:     z.string().optional(),
+  limit:      z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(500)).optional(),
+});
+
+router.get('/gateways/transmittals', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = listQuery.safeParse(req.query);
+  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
+  const { program_id: pid, region, status, limit = 100 } = parsed.data;
+
+  const filters: string[] = [`organization_id = $1`];
+  const args: unknown[] = [orgId];
+  if (pid)    { args.push(pid);    filters.push(`program_id = $${args.length}`); }
+  if (region) { args.push(region); filters.push(`region = $${args.length}`); }
+  if (status) { args.push(status); filters.push(`status = $${args.length}`); }
+  args.push(limit);
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, organization_id, program_id, package_id, region, gateway, format,
+              submission_type, transport, transmission_id, status, http_status,
+              error_class, error_message, bundle_size_bytes, submitted_by, submitted_at,
+              ack_received_at, completed_at, metadata
+         FROM submission_transmittals
+        WHERE ${filters.join(' AND ')}
+        ORDER BY submitted_at DESC
+        LIMIT $${args.length}`,
+      args,
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) {
+    return serverError(res, log, 'list-trans', err);
+  }
+});
+
+/* ─── GET /api/mdx/gateways/transmittals/:id ─────────────────────── */
+
+router.get('/gateways/transmittals/:id', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+      [id, orgId],
+    );
+    if (rows.length === 0) return notFoundInTenant(res, 'Transmittal');
+    const findings = await pool.query(
+      `SELECT * FROM submission_validation_findings
+        WHERE transmittal_id = $1 AND organization_id = $2
+        ORDER BY (severity = 'error') DESC, (severity = 'warning') DESC, id`,
+      [id, orgId],
+    );
+    return ok(res, { ...rows[0], findings: findings.rows });
+  } catch (err) {
+    return serverError(res, log, 'get-trans', err);
+  }
+});
+
+/* ─── POST /api/mdx/gateways/:region/:gateway/transmit ───────────── */
+
+const transmitBody = z.object({
+  programId:      z.string().regex(UUID_RE).optional().nullable(),
+  packageId:      z.number().int().positive().optional().nullable(),
+  environment:    z.enum(['staging', 'production']).default('production'),
+  submissionType: z.string().max(60).optional(),
+  /**
+   * DEPRECATED / DEV-ONLY (C2C-SUB-003). A caller-supplied descriptor names a
+   * server filesystem path plus its own expected digest, so it is attacker-
+   * controlled input upstream of every control. It is REFUSED whenever
+   * `bundleTrustEnforced()` is true (i.e. anywhere but a declared local
+   * development/test environment). Production callers must pass `packageId`
+   * and let the tenant-scoped lookup below produce the descriptor.
+   */
+  bundle: z.object({
+    path:        z.string().min(1),
+    sha256:      z.string().regex(/^[0-9a-f]{64}$/i),
+    sizeBytes:   z.number().int().nonnegative(),
+    format:      z.enum(['ectd', 'estar', 'eudamed_register', 'pmda_ectd']),
+    displayName: z.string().optional(),
+  }).optional(),
+  metadata: z.record(z.unknown()).optional(),
+  reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
+  reauth: z
+    .object({
+      password: z.string().optional(),
+      totp: z.string().optional(),
+    })
+    .optional(),
+});
+
+router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  const region = req.params.region as Region;
+  const gateway = req.params.gateway as GatewayName;
+  if (!REGION_SET.includes(region as typeof REGION_SET[number])) {
+    return clientError(res, 422, `region must be one of: ${REGION_SET.join(', ')}`);
+  }
+  if (!GATEWAY_SET.includes(gateway as typeof GATEWAY_SET[number])) {
+    return clientError(res, 422, `gateway must be one of: ${GATEWAY_SET.join(', ')}`);
+  }
+  const parsed = transmitBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  }
+  const p = parsed.data;
+
+  // Re-auth gate FIRST (high-risk sign).
+  if (userId === null) return orgRequired(res);
+  const reauthResult = await verifyReauth(userId, p.reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+  // Captured here, at the moment the human actually re-authenticated, and
+  // handed to the gateway as this transmission's authorization. The gateway
+  // layer now refuses any transmit that cannot name a human gate — see
+  // TransmitAuthorization in server/services/submission-gateways/types.ts.
+  const reauthVerifiedAt = new Date();
+
+  // ─── C2C-SUB-003: the bundle descriptor is a trust boundary ──────────
+  //
+  // A descriptor names the bytes that get shipped to a real regulator. When it
+  // comes from the request body the client picks BOTH the server-side path and
+  // the digest it will be checked against, so every downstream control
+  // (package ownership, structural validation, hash/size verification) is
+  // satisfied by construction while reading an arbitrary server-readable file.
+  //
+  // Outside a declared local development/test environment the ONLY admissible
+  // source is the server-generated descriptor the tenant-scoped assemble route
+  // persisted on c2c_submission_packages.metadata.bundle. Fail closed: an
+  // unset, blank or unknown NODE_ENV refuses the client descriptor.
+  if (p.bundle && bundleTrustEnforced()) {
+    return clientError(
+      res,
+      422,
+      'Client-supplied bundle descriptors are not accepted in this environment; ' +
+      'transmit a tenant-owned packageId (POST /api/submission-ops/packages/:packageId/assemble first).',
+    );
+  }
+
+  // Resolve the bundle. In dev/test an explicit `bundle` in the body still wins
+  // (back-compat for local flows); the guard above makes that branch
+  // unreachable everywhere else. Otherwise, if a `packageId` is provided, load
+  // the stored bundle descriptor that the assemble endpoint persisted on
+  // c2c_submission_packages.metadata.bundle under the caller's org.
+  let bundle: {
+    path: string;
+    sha256: string;
+    sizeBytes: number;
+    format: BundleFormat;
+    displayName?: string;
+    storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
+    validation?: { errorCount: number; warningCount?: number; infoCount?: number; findings?: unknown[] };
+  } | null = p.bundle ?? null;
+
+  if (!bundle && p.packageId != null) {
+    try {
+      const { rows } = await pool.query<{ metadata: any }>(
+        `SELECT metadata FROM c2c_submission_packages
+          WHERE id = $1 AND org_id = $2`,
+        [p.packageId, orgId],
+      );
+      const stored = rows[0]?.metadata?.bundle;
+      // Shape-check the stored descriptor rather than trusting the JSONB blob:
+      // sha256 must be a real 64-hex digest, sizeBytes a non-negative integer,
+      // and format one of the known transmit formats. A malformed descriptor is
+      // treated as "no bundle" (422 below), never coerced.
+      if (
+        stored &&
+        typeof stored.path === 'string' &&
+        typeof stored.sha256 === 'string' &&
+        SHA256_RE.test(stored.sha256) &&
+        typeof stored.sizeBytes === 'number' &&
+        Number.isInteger(stored.sizeBytes) &&
+        stored.sizeBytes >= 0 &&
+        BUNDLE_FORMAT_SET.includes(stored.format)
+      ) {
+        bundle = {
+          path:        stored.path,
+          sha256:      stored.sha256,
+          sizeBytes:   stored.sizeBytes,
+          format:      stored.format as BundleFormat,
+          displayName: typeof stored.displayName === 'string' ? stored.displayName : undefined,
+          // Carry the durable-storage descriptor (if any) so ensureBundleLocal can
+          // rematerialize the local file after a container recycle. Not passed to
+          // the gateway — the gateway contract stays path/sha256/sizeBytes/format.
+          storage:     stored.storage && typeof stored.storage === 'object' ? stored.storage : undefined,
+          // Carry internal eCTD structural validation findings (if any) so the
+          // transmit hard-gate can block on error-severity findings.
+          validation:  stored.validation && typeof stored.validation === 'object' ? stored.validation : undefined,
+        };
+      }
+    } catch (err) {
+      return serverError(res, log, 'transmit-load-bundle', err);
+    }
+  }
+
+  if (!bundle) {
+    return clientError(
+      res,
+      422,
+      'No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.',
+    );
+  }
+
+  // Path-syntax guard — unconditional, every environment. A `..` component or
+  // an embedded NUL is never a legitimate assembled-bundle location, whatever
+  // produced the descriptor.
+  if (hasUnsafePathSyntax(bundle.path)) {
+    return clientError(
+      res,
+      422,
+      'Bundle path is not a well-formed bundle location; re-assemble the package before transmitting.',
+    );
+  }
+
+  // ─── C2C-SUB-003: trusted-descriptor gate ────────────────────────────
+  // Runs AFTER the re-auth gate (governance order unchanged) and BEFORE
+  // ensureBundleLocal — which writes to bundle.path — so neither the read nor
+  // the write can escape the namespace.
+  if (bundleTrustEnforced()) {
+    // (a) Structural-validation evidence. MISSING evidence is UNKNOWN, and
+    //     UNKNOWN is blocking — it is NOT "zero errors". Only the assemble
+    //     route writes this block, so requiring it also proves the descriptor
+    //     is server-generated rather than reconstructed.
+    if (!bundle.validation || typeof bundle.validation.errorCount !== 'number') {
+      return clientError(
+        res,
+        422,
+        'Bundle carries no internal structural-validation evidence, so its structural state is UNKNOWN; ' +
+        're-assemble the package before transmitting.',
+      );
+    }
+    // (b) Namespace confinement. Defence in depth even for a stored descriptor:
+    //     if metadata.bundle were ever tampered with, the path still cannot
+    //     leave the directory the assemble route writes to.
+    //     NOTE: lexical confinement — a symlink planted inside the root is not
+    //     detected. Out of scope for the request-body vector; realpath()
+    //     hardening is a separate, filesystem-level change.
+    if (!isPathWithinBundleRoot(bundle.path)) {
+      return clientError(
+        res,
+        422,
+        'Bundle path is outside the permitted submission-bundle storage namespace; ' +
+        're-assemble the package before transmitting.',
+      );
+    }
+    // (c) Durable-copy key confinement — ensureBundleLocal fetches this key and
+    //     writes the bytes to disk, so it must stay inside the bundle prefix.
+    if (bundle.storage?.provider === 's3' && !isBundleStorageKey(bundle.storage.key)) {
+      return clientError(
+        res,
+        422,
+        'Bundle durable-storage key is outside the permitted submission-bundle namespace.',
+      );
+    }
+  }
+
+  // Internal eCTD structural-validation hard-gate. If the stored descriptor
+  // recorded error-severity findings at assemble-time, refuse the transmit and
+  // return the findings so the caller can re-assemble after fixing. Warnings do
+  // NOT block. The `?? 0` fallback is reachable ONLY in a declared local
+  // development/test environment — gate (a) above guarantees the field is
+  // present everywhere else. Note: this is INTERNAL structural validation only,
+  // not an agency validator.
+  const errorCount = bundle.validation?.errorCount ?? 0;
+  if (errorCount > 0) {
+    return clientError(
+      res,
+      422,
+      `Bundle failed eCTD structural validation (${errorCount} error${errorCount === 1 ? '' : 's'}); re-assemble after fixing.`,
+      { findings: bundle.validation?.findings ?? [] },
+    );
+  }
+
+  // Rematerialize the local bundle file from durable storage if a container
+  // recycle lost it since assembly. No-op for local-only descriptors.
+  try {
+    await ensureBundleLocal(bundle);
+  } catch (err) {
+    return serverError(res, log, 'transmit-rematerialize-bundle', err);
+  }
+
+  // Per-package transmit lock (FIX 7). Refuse a second transmit against the
+  // same (org, package_id, bundle_sha256) while a prior attempt is still
+  // active (pending|in_transit|received). Terminal states (rejected,
+  // rolled_back, completed) are excluded by findActiveTransmittal so a
+  // rolled-back package CAN be intentionally re-transmitted. The DB-level
+  // partial unique index (sub_trans_active_lock_idx) is the backstop for
+  // races between this check and the gateway's INSERT. Cross-tenant double-
+  // transmit is allowed by design (CMO scenario).
+  try {
+    const active = await findActiveTransmittal({
+      organizationId: orgId,
+      packageId:      p.packageId ?? null,
+      bundleSha256:   bundle.sha256,
+    });
+    if (active) {
+      return clientError(
+        res,
+        409,
+        `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
+        `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
+        { transmittalId: active.id, status: active.status },
+      );
+    }
+  } catch (err) {
+    return serverError(res, log, 'transmit-active-lock-check', err);
+  }
+
+  try {
+    const gw = getGateway(region, gateway);
+    const result = await gw.transmit({
+      organizationId: orgId,
+      userId,
+      programId:      p.programId ?? null,
+      packageId:      p.packageId ?? null,
+      bundle: {
+        path:        bundle.path,
+        sha256:      bundle.sha256,
+        sizeBytes:   bundle.sizeBytes,
+        format:      bundle.format,
+        displayName: bundle.displayName,
+      },
+      environment:    p.environment,
+      submissionType: p.submissionType,
+      metadata:       { ...(p.metadata ?? {}), environment: p.environment },
+      authorization: {
+        kind: 'governed-http',
+        actorUserId: userId,
+        reason: p.reason,
+        reauthVerifiedAt,
+      },
+    });
+
+    // Record the governed sign AFTER the external transmit succeeds. The
+    // external transmit is irreversible, so if the ledger write fails we log
+    // it and still return the transmit result (the gateway already accepted
+    // the package). The transmittal row written by gw.transmit() remains the
+    // authoritative external record in that edge case.
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await recordGovernedAction(client, {
+          orgId,
+          userId,
+          command: 'sign',
+          target: `submission:${p.packageId ?? p.programId ?? 'pkg'}`,
+          reason: p.reason,
+          payload: {
+            meaning: 'submission',
+            region,
+            gateway,
+            bundleSha256: bundle.sha256,
+            transactionId: (result as any)?.transactionId ?? null,
+          },
+          domain: 'mdx',
+          surface: 'submission-gateway',
+        });
+        await client.query('COMMIT');
+      } catch (ledgerErr) {
+        try { await client.query('ROLLBACK'); } catch { /* noop */ }
+        throw ledgerErr;
+      } finally {
+        client.release();
+      }
+    } catch (ledgerErr: any) {
+      log.error('transmit-ledger-write-failed-after-successful-transmit', {
+        message: ledgerErr?.message,
+        region,
+        gateway,
+      });
+    }
+
+    return created(res, result);
+  } catch (err: unknown) {
+    if (err instanceof CredentialError) {
+      return clientError(res, 412, err.message);
+    }
+    if (err instanceof ValidationError) {
+      return clientError(res, 422, err.message, { findings: err.findings });
+    }
+    if (err instanceof TransportError) {
+      return clientError(res, 502, err.message);
+    }
+    if (err instanceof GatewayError) {
+      return clientError(res, 502, err.message, { httpStatus: err.httpStatus, code: err.gatewayCode });
+    }
+    return serverError(res, log, 'transmit', err);
+  }
+});
+
+/* ─── GET /api/mdx/gateways/transmittals/:id/status ──────────────── */
+
+router.get('/gateways/transmittals/:id/status', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  try {
+    const own = await pool.query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals
+        WHERE id = $1 AND organization_id = $2`,
+      [id, orgId],
+    );
+    if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
+    const gw = getGateway(own.rows[0].region as Region, own.rows[0].gateway as GatewayName);
+    const result = await gw.checkStatus(id);
+    return ok(res, result);
+  } catch (err: unknown) {
+    if (err instanceof CredentialError) return clientError(res, 412, err.message);
+    if (err instanceof TransportError)  return clientError(res, 502, err.message);
+    if (err instanceof GatewayError)    return clientError(res, 502, err.message);
+    return serverError(res, log, 'status', err);
+  }
+});
+
+/* ─── GET /api/mdx/gateways/transmittals/:id/ack ─────────────────── */
+
+router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  try {
+    const own = await pool.query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals
+        WHERE id = $1 AND organization_id = $2`,
+      [id, orgId],
+    );
+    if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
+    const gw = getGateway(own.rows[0].region as Region, own.rows[0].gateway as GatewayName);
+    const ack = await gw.downloadAcknowledgment(id);
+    res.setHeader('Content-Type', ack.contentType);
+    // The filename carries the provenance, because a downloaded file outlives
+    // the page that served it — and the previous name, `ack-<id>.txt`, said
+    // "acknowledgement" for a document this platform wrote about itself.
+    res.setHeader('Content-Disposition', `attachment; filename="${acknowledgementFilename(ack)}"`);
+    // Machine-readable for the surface, which decides what to tell the user.
+    res.setHeader('X-Ack-Provenance', ack.provenance);
+    return res.send(ack.buffer);
+  } catch (err: unknown) {
+    if (err instanceof GatewayError) return clientError(res, 502, err.message);
+    return serverError(res, log, 'ack', err);
+  }
+});
+
+/* ─── POST /api/mdx/gateways/transmittals/:id/rollback ───────────── */
+
+const rollbackBody = z.object({
+  reason: z.string().min(8, 'A rollback reason of at least 8 characters is required.'),
+  reauth: z
+    .object({
+      password: z.string().optional(),
+      totp: z.string().optional(),
+    })
+    .optional(),
+});
+
+router.post('/gateways/transmittals/:id/rollback', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  if (userId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const parsed = rollbackBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  }
+  const { reason, reauth } = parsed.data;
+
+  // Re-auth gate — rollback is a high-risk governed action (`transmittal_rollback`
+  // is in HIGH_RISK_COMMANDS). Mirrors the transmit handler's gate.
+  const reauthResult = await verifyReauth(userId, reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+
+  // Tenant gate. Also identifies the region/gateway so non-FDA transmittals
+  // (which don't currently have a rollback implementation) get a clean 422
+  // rather than a misleading 404 from the FDA-specific helper.
+  try {
+    const own = await pool.query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals
+        WHERE id = $1 AND organization_id = $2`,
+      [id, orgId],
+    );
+    if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
+    if (own.rows[0].region !== 'fda' || own.rows[0].gateway !== 'esg') {
+      return clientError(
+        res, 422,
+        `Rollback is currently implemented for FDA ESG only; transmittal ${id} is ${own.rows[0].region}/${own.rows[0].gateway}.`,
+      );
+    }
+
+    const result = await rollbackTransmittal({
+      transmittalId:  id,
+      organizationId: orgId,
+      actorUserId:    userId,
+      reason,
+      recordGovernedAction,
+    });
+    return ok(res, result);
+  } catch (err: unknown) {
+    if (err instanceof RollbackNotPermittedError) {
+      return clientError(res, 409, err.message, {
+        transmittalId: err.transmittalId,
+        status: err.currentStatus,
+      });
+    }
+    if (err instanceof GatewayError) {
+      // GatewayError from rollbackTransmittal is the row-not-found case
+      // (404). Other GatewayError shapes shouldn't surface here, so map to 502.
+      return clientError(res, err.httpStatus === 404 ? 404 : 502, err.message);
+    }
+    return serverError(res, log, 'transmit-rollback', err);
+  }
+});
+
+/* ─── POST /api/mdx/gateways/transmittals/:id/findings ───────────── */
+
+const findingBody = z.object({
+  validator:   z.enum(['fda_evalidator', 'ema_validator', 'pmda_precheck', 'lorenz', 'globalsubmit', 'internal']),
+  severity:    z.enum(['error', 'warning', 'info']),
+  ruleId:      z.string().max(60).optional().nullable(),
+  ruleTitle:   z.string().max(200).optional().nullable(),
+  message:     z.string().min(1).max(2000),
+  filePath:    z.string().max(500).optional().nullable(),
+  lineNumber:  z.number().int().nonnegative().optional().nullable(),
+});
+
+router.post('/gateways/transmittals/:id/findings', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const parsed = findingBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+
+  /* Tenant gate. */
+  const own = await pool.query(
+    `SELECT 1 FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+    [id, orgId],
+  );
+  if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
+
+  const p = parsed.data;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO submission_validation_findings (
+         transmittal_id, organization_id, validator, severity, rule_id,
+         rule_title, message, file_path, line_number
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [
+        id, orgId, p.validator, p.severity, p.ruleId ?? null,
+        p.ruleTitle ?? null, p.message, p.filePath ?? null, p.lineNumber ?? null,
+      ],
+    );
+    return created(res, rows[0]);
+  } catch (err) {
+    return serverError(res, log, 'add-finding', err);
+  }
+});
+
+/* ─── PATCH /api/mdx/gateways/findings/:findingId/resolve ────────── */
+
+const resolveBody = z.object({
+  resolutionNote: z.string().max(2000).optional(),
+});
+
+router.patch('/gateways/findings/:findingId/resolve', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.findingId);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'findingId must be numeric');
+  const parsed = resolveBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+
+  try {
+    const { rows } = await pool.query(
+      `UPDATE submission_validation_findings
+          SET resolved        = true,
+              resolved_at     = NOW(),
+              resolved_by     = $3,
+              resolution_note = $4
+        WHERE id = $1 AND organization_id = $2
+        RETURNING *`,
+      [id, orgId, getUserId(req), parsed.data.resolutionNote ?? null],
+    );
+    if (rows.length === 0) return notFoundInTenant(res, 'Finding');
+    return ok(res, rows[0]);
+  } catch (err) {
+    return serverError(res, log, 'resolve-finding', err);
+  }
+});
+
+export default router;

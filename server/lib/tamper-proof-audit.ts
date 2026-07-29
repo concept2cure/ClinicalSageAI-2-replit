@@ -116,15 +116,28 @@ export class TamperProofAuditLog {
   constructor(pool: Pool) {
     this.pool = pool;
 
-    // Get HMAC secret from environment or generate warning
-    this.hmacSecret = process.env.AUDIT_HMAC_SECRET || '';
-    if (!this.hmacSecret) {
+    // HMAC secret signs the tamper-evident hash chain. A predictable secret
+    // would let anyone with the source forge or recompute the chain, defeating
+    // the 21 CFR Part 11 integrity guarantee. Fail closed in production: a
+    // missing secret is a fatal misconfiguration, not a warning to ignore.
+    const secret = process.env.AUDIT_HMAC_SECRET || '';
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          '[FATAL] AUDIT_HMAC_SECRET is required in production. ' +
+            'The tamper-proof audit chain cannot sign records without a ' +
+            'cryptographically random secret. Refusing to start.'
+        );
+      }
       console.warn(
-        '[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using fallback. ' +
-          'Set this in production for cryptographic integrity!'
+        '[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production ' +
+          'development fallback — audit-chain integrity is NOT guaranteed. ' +
+          'Set AUDIT_HMAC_SECRET before deploying.'
       );
-      // Use a deterministic fallback for development only
+      // Development-only fallback. Never reached in production (throws above).
       this.hmacSecret = 'INSECURE_DEV_SECRET_CHANGE_IN_PRODUCTION';
+    } else {
+      this.hmacSecret = secret;
     }
   }
 
@@ -229,14 +242,24 @@ export class TamperProofAuditLog {
       // Create content hash (hash of the audit data)
       const entryId = uuidv4();
       const timestamp = new Date();
-      const contentData = {
-        eventType,
-        action,
-        details,
-        timestamp: timestamp.toISOString(),
-        ...context,
-      };
-      const contentHash = this.computeHash(JSON.stringify(contentData));
+      const contentHash = this.computeHash(
+        JSON.stringify(
+          TamperProofAuditLog.buildContentData({
+            eventType,
+            action,
+            details,
+            timestamp,
+            userId: context?.userId,
+            userName: context?.userName,
+            sessionId: context?.sessionId,
+            correlationId: context?.correlationId,
+            resourceType: context?.resourceType,
+            resourceId: context?.resourceId,
+            ipAddress: context?.ipAddress,
+            userAgent: context?.userAgent,
+          }),
+        ),
+      );
 
       // Create chain hash (content hash + previous hash)
       const chainHash = this.computeChainHash(contentHash, previousHash);
@@ -339,20 +362,29 @@ export class TamperProofAuditLog {
         };
       }
 
-      // Recompute content hash
-      const contentData = {
-        eventType: row.event_type,
-        action: row.action,
-        details: row.details,
-        timestamp: row.event_timestamp.toISOString(),
-        userId: row.user_id,
-        userName: row.user_name,
-        sessionId: row.session_id,
-        correlationId: row.correlation_id,
-        resourceType: row.resource_type,
-        resourceId: row.resource_id,
-      };
-      const expectedContentHash = this.computeHash(JSON.stringify(contentData));
+      // Recompute content hash. MUST mirror the write path byte-for-byte —
+      // including ip_address / user_agent — or an untampered entry written with
+      // client context would falsely fail (and, conversely, those fields would
+      // not actually be covered by the integrity check). Shared via
+      // buildContentData so the writer and verifier can never drift.
+      const expectedContentHash = this.computeHash(
+        JSON.stringify(
+          TamperProofAuditLog.buildContentData({
+            eventType: row.event_type,
+            action: row.action,
+            details: row.details,
+            timestamp: row.event_timestamp,
+            userId: row.user_id,
+            userName: row.user_name,
+            sessionId: row.session_id,
+            correlationId: row.correlation_id,
+            resourceType: row.resource_type,
+            resourceId: row.resource_id,
+            ipAddress: row.ip_address,
+            userAgent: row.user_agent,
+          }),
+        ),
+      );
 
       if (row.content_hash !== expectedContentHash) {
         return {
@@ -486,6 +518,62 @@ export class TamperProofAuditLog {
   // ==========================================================================
   // Private Helpers
   // ==========================================================================
+
+  /**
+   * Canonical, deterministic content object that the content hash is computed
+   * over. The writer ({@link log}) and the verifier ({@link verifyChain}) BOTH
+   * build it through this method so they cannot drift on which fields are
+   * covered or in what key order — a prerequisite for 21 CFR Part 11 §11.10(e)
+   * tamper-evidence.
+   *
+   * Two invariants matter:
+   *   1. EVERY persisted field that defines the event is included (notably
+   *      ip_address / user_agent, which the verifier previously omitted — so
+   *      they were both (a) able to break verification of an untampered row and
+   *      (b) NOT actually protected by the hash, i.e. silently tamperable).
+   *   2. A nullish field is OMITTED (not serialized as null). This makes a value
+   *      absent at write time (`undefined` in `context`) and the same value read
+   *      back from Postgres as `null` produce byte-identical JSON, so the
+   *      recomputed hash matches the stored one.
+   */
+  static buildContentData(input: {
+    eventType: unknown;
+    action: unknown;
+    details: unknown;
+    timestamp: Date | string;
+    userId?: unknown;
+    userName?: unknown;
+    sessionId?: unknown;
+    correlationId?: unknown;
+    resourceType?: unknown;
+    resourceId?: unknown;
+    ipAddress?: unknown;
+    userAgent?: unknown;
+  }): Record<string, unknown> {
+    const out: Record<string, unknown> = {
+      eventType: input.eventType,
+      action: input.action,
+      details: input.details,
+      timestamp:
+        input.timestamp instanceof Date ? input.timestamp.toISOString() : input.timestamp,
+    };
+    // Fixed key order; nullish fields are dropped so write (undefined) and
+    // read-back (null) serialize identically.
+    const optional: Array<[string, unknown]> = [
+      ['userId', input.userId],
+      ['userName', input.userName],
+      ['sessionId', input.sessionId],
+      ['correlationId', input.correlationId],
+      ['resourceType', input.resourceType],
+      ['resourceId', input.resourceId],
+      ['ipAddress', input.ipAddress],
+      ['userAgent', input.userAgent],
+    ];
+    for (const [k, v] of optional) {
+      if (v !== undefined && v !== null) out[k] = v;
+    }
+    return out;
+  }
 
   private computeHash(data: string): string {
     return createHash('sha256').update(data).digest('hex');

@@ -47,8 +47,6 @@ while IFS= read -r f; do
     client/src/concept2cure/mdx/**/*.ts|client/src/concept2cure/mdx/**/*.tsx) ;;
     *) continue ;;
   esac
-  # Skip the type barrel (it's a contract surface; importers live in data files).
-  [ "$f" = "client/src/concept2cure/mdx/types.ts" ] && continue
   # Files with `@kit-registry-no-consumer-yet` in the first 30 lines are
   # explicitly exempt: closed-enum registries / type registries waiting on
   # a kit pane. The marker MUST be removed when the consumer ships.
@@ -90,8 +88,9 @@ while IFS= read -r f; do
   if [ ! -f "$REGISTRAR" ]; then
     continue
   fi
-  if ! grep -qE "from\s+['\"][^'\"]*${base_no_ext}['\"]" "$REGISTRAR" \
-       && ! grep -RIlE "from\s+['\"][^'\"]*${base_no_ext}['\"]" server/bootstrap server/index.ts server/app.ts server/server.ts 2>/dev/null | head -1 | grep -q .; then
+  # Match both static (from '...') and dynamic (import('...')) imports.
+  if ! grep -qE "(from|import)\s*\(?\s*['\"][^'\"]*${base_no_ext}['\"]" "$REGISTRAR" \
+       && ! grep -RIlE "(from|import)\s*\(?\s*['\"][^'\"]*${base_no_ext}['\"]" server/bootstrap server/index.ts server/app.ts server/server.ts 2>/dev/null | head -1 | grep -q .; then
     echo "UNMOUNTED ROUTE: $f exports a Router but no registrar imports it."
     violations=$((violations + 1))
   fi

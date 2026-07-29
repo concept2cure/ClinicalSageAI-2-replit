@@ -66,12 +66,17 @@ interface UseCortexChatOptions {
   onArtifact?: (artifact: CortexArtifact) => void;
 }
 
+/** Error optionally annotated with the message content that failed to send. */
+export interface CortexError extends Error {
+  failedMessage?: string;
+}
+
 interface UseCortexChatReturn {
   messages: CortexMessage[];
   threadId: string | null;
   isLoading: boolean;
   isStreaming: boolean;
-  error: Error | null;
+  error: CortexError | null;
   sendMessage: (content: string) => Promise<void>;
   streamMessage: (content: string) => void;
   cancelStream: () => void;
@@ -99,12 +104,17 @@ function useProjectContext(projectId?: string) {
       return;
     }
 
-    fetch(`/api/concept2cure/projects/${projectId}/context`, { headers: getAuthHeaders() })
+    const abort = new AbortController();
+    fetch(`/api/concept2cure/projects/${encodeURIComponent(projectId)}/context`, {
+      headers: getAuthHeaders(),
+      signal: abort.signal,
+    })
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
-        if (data) setContext(data);
+        if (data && !abort.signal.aborted) setContext(data);
       })
       .catch(() => {});
+    return () => abort.abort();
   }, [projectId]);
 
   return context;
@@ -117,7 +127,7 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
   const [messages, setMessages] = useState<CortexMessage[]>([]);
   const [threadId, setThreadId] = useState<string | null>(options.threadId ?? null);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<CortexError | null>(null);
   const streamingMessageRef = useRef<string>('');
   const queryClient = useQueryClient();
   const projectContext = useProjectContext(options.projectId);
@@ -256,13 +266,16 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         },
         onError: err => {
           setIsStreaming(false);
-          setError({ ...err, failedMessage: content });
+          const cortexErr: CortexError =
+            err instanceof Error ? err : new Error('Failed to stream message');
+          cortexErr.failedMessage = content;
+          setError(cortexErr);
           // Remove the empty assistant placeholder but keep the user message
           setMessages(prev => prev.slice(0, -1));
         },
       });
     },
-    [threadId, options, queryClient, messages.length]
+    [threadId, options, queryClient, messages.length, projectContext, isStreaming]
   );
 
   const cancelStream = useCallback(() => {

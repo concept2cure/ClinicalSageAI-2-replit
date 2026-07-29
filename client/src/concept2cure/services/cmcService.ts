@@ -339,6 +339,148 @@ export interface BatchRecord {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TYPES - WORKSTREAM SHELL (Phase 10 CMC · Module 3)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** One row per submission from GET /api/cmc/blueprint/portfolio/overview. */
+export interface CmcPortfolioRow {
+  sub_id: string;
+  product_id: string;
+  region: string | null;
+  app_type: string | null;
+  /** Null when the server could not compute a score (never fabricated). */
+  rpi: number | null;
+  components: Record<string, unknown>;
+  ir_open: number;
+  ir_overdue: number;
+  obligations_open: number;
+  obligations_overdue: number;
+  /** Null when not yet computed/implemented server-side (never fabricated). */
+  stability_cov_m: number | null;
+  m3_missing: number | null;
+  preflight_critical: number | null;
+  qc_alerts: number | null;
+  playbook_open: number | null;
+}
+
+/** GET /api/cmc/module3-os/readiness/:projectId → data. */
+export interface CmcModule3Readiness {
+  totalSections: number;
+  approvedSections: number;
+  staleSections: number;
+  openCriticalContradictions: number;
+  exportReady: boolean;
+  canonicalGovernedState?: Record<string, unknown> | null;
+}
+
+/** Project-scoped specification row (quality_specifications table). */
+export interface CmcSpecRow {
+  id: string;
+  project_id: string | null;
+  [key: string]: unknown;
+}
+
+/** Project-scoped stability study row. */
+export interface CmcStabilityRow {
+  id: string;
+  project_id: string | null;
+  [key: string]: unknown;
+}
+
+/** Project-scoped batch record row. */
+export interface CmcBatchRow {
+  id: string;
+  project_id: string | null;
+  [key: string]: unknown;
+}
+
+/** POST /api/cmc/ich-compliance → data (deterministic Q-series rollup). */
+export interface CmcIchCheckResult {
+  overallStatus?: string;
+  score?: number;
+  guidelines?: Array<{
+    guideline: string;
+    status: string;
+    findings?: Array<{ description: string; reference?: string }>;
+  }>;
+  [key: string]: unknown;
+}
+
+/** GET /api/cmc/quality/qbd/:projectId → data. */
+export interface CmcQbdResult {
+  cqas?: Array<Record<string, unknown>>;
+  cpps?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+// ─── Authoring input shapes — match the live server zod schemas exactly ───────
+// These are the bodies the create/update handlers actually read; the legacy
+// domain types (Specification, StabilityProtocol, BatchRecord) describe a
+// different model and are kept only for the older product-scoped reads.
+
+/** Body for POST /api/cmc/specifications (createSpecSchema). */
+export interface SpecificationInput {
+  projectId?: string;
+  materialType: string;
+  materialName: string;
+  testParameters?: string | null;
+  acceptanceCriteria?: string | null;
+  testMethods?: string | null;
+  justification?: string | null;
+  regulatoryBasis?: string | null;
+  approvalStatus?: string;
+}
+
+/** Body for PUT /api/cmc/specifications/:id (updateSpecSchema). */
+export type SpecificationPatch = Partial<Omit<SpecificationInput, 'projectId'>>;
+
+/** Body for POST /api/cmc/stability (createStudySchema). */
+export interface StabilityStudyInput {
+  projectId?: string;
+  studyName: string;
+  studyType?: string;
+  storageCondition?: string;
+  duration?: string;
+  timePoints?: string;
+  containerClosure?: string;
+  testParameters?: string;
+  status?: string;
+  startedDate?: string;
+  completedDate?: string;
+  results?: unknown;
+}
+
+/** One time-point result appended to a stability study's `results` array. */
+export interface StabilityResultEntry {
+  timePoint: string;
+  parameter: string;
+  value: string;
+  recordedAt: string;
+}
+
+/** Body for POST /api/cmc/batch-records (createBatchSchema). */
+export interface BatchRecordInput {
+  projectId?: string;
+  batchNumber: string;
+  productName: string;
+  batchSize?: string;
+  manufacturingDate?: string;
+  expiryDate?: string;
+  manufacturingSite?: string;
+  status?: string;
+}
+
+/** A Module 3 section row from GET /api/cmc/module3-os/sections/:projectId. */
+export interface CmcModule3Section {
+  sectionKey: string;
+  sectionPath: string | null;
+  stale: boolean;
+  staleReason: string | null;
+  approvalState: string;
+  updatedAt: string | null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE CLASS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -362,16 +504,13 @@ class CMCService {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /**
-   * Create specification
+   * Create specification — POST /api/cmc/specifications.
+   * The handler returns the inserted row as `data`, which `request()` already
+   * unwraps, so we return that object directly.
    */
-  async createSpecification(data: Partial<Specification>): Promise<Specification> {
+  async createSpecification(data: SpecificationInput): Promise<CmcSpecRow> {
     try {
-      const response = await this.request<{ specification: Specification }>(
-        'POST',
-        `${this.baseUrl}/specifications`,
-        data
-      );
-      return response.specification;
+      return await this.request<CmcSpecRow>('POST', `${this.baseUrl}/specifications`, data);
     } catch (error) {
       console.error('[CMC] Create specification failed:', error);
       throw error;
@@ -395,18 +534,37 @@ class CMCService {
   }
 
   /**
-   * Update specification
+   * Update specification — PUT /api/cmc/specifications/:id (server uses PUT,
+   * not PATCH). Returns the updated row. Approval cannot happen here; use
+   * approveSpecification, which routes through the governed ledger.
    */
-  async updateSpecification(id: string, data: Partial<Specification>): Promise<Specification> {
+  async updateSpecification(id: string, data: SpecificationPatch): Promise<CmcSpecRow> {
     try {
-      const response = await this.request<{ specification: Specification }>(
-        'PATCH',
-        `${this.baseUrl}/specifications/${id}`,
-        data
-      );
-      return response.specification;
+      return await this.request<CmcSpecRow>('PUT', `${this.baseUrl}/specifications/${id}`, data);
     } catch (error) {
       console.error('[CMC] Update specification failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Approve a specification — POST /api/cmc/specifications/:id/approve.
+   * High-risk governed sign: the server re-verifies the signer (`reauth`) and
+   * writes the audit_logs + c2c_ana_actions ledger pair in one transaction.
+   * The only path to approval; the ungoverned PUT no longer accepts it.
+   */
+  async approveSpecification(
+    id: string,
+    payload: { reason: string; reauth: { password: string; totp?: string } },
+  ): Promise<CmcSpecRow> {
+    try {
+      return await this.request<CmcSpecRow>(
+        'POST',
+        `${this.baseUrl}/specifications/${id}/approve`,
+        payload,
+      );
+    } catch (error) {
+      console.error('[CMC] Approve specification failed:', error);
       throw error;
     }
   }
@@ -580,18 +738,14 @@ class CMCService {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /**
-   * Create stability protocol
+   * Create stability study — POST /api/cmc/stability (createStudySchema).
+   * The server route is `/stability`, not `/stability/protocols`.
    */
-  async createStabilityProtocol(data: Partial<StabilityProtocol>): Promise<StabilityProtocol> {
+  async createStabilityProtocol(data: StabilityStudyInput): Promise<CmcStabilityRow> {
     try {
-      const response = await this.request<{ protocol: StabilityProtocol }>(
-        'POST',
-        `${this.baseUrl}/stability/protocols`,
-        data
-      );
-      return response.protocol;
+      return await this.request<CmcStabilityRow>('POST', `${this.baseUrl}/stability`, data);
     } catch (error) {
-      console.error('[CMC] Create stability protocol failed:', error);
+      console.error('[CMC] Create stability study failed:', error);
       throw error;
     }
   }
@@ -629,16 +783,18 @@ class CMCService {
   }
 
   /**
-   * Add stability result
+   * Append a time-point result to a stability study. The server stores results
+   * as a JSON field on the study row (there is no per-result route), so this
+   * PUTs the merged results array to /api/cmc/stability/:id.
    */
-  async addStabilityResult(batchId: string, result: Partial<StabilityResult>): Promise<StabilityResult> {
+  async addStabilityResult(
+    studyId: string,
+    nextResults: StabilityResultEntry[],
+  ): Promise<CmcStabilityRow> {
     try {
-      const response = await this.request<{ result: StabilityResult }>(
-        'POST',
-        `${this.baseUrl}/stability/batches/${batchId}/results`,
-        result
-      );
-      return response.result;
+      return await this.request<CmcStabilityRow>('PUT', `${this.baseUrl}/stability/${studyId}`, {
+        results: nextResults,
+      });
     } catch (error) {
       console.error('[CMC] Add stability result failed:', error);
       throw error;
@@ -743,6 +899,163 @@ class CMCService {
       console.error('[CMC] Get batch trends failed:', error);
       return [];
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // WORKSTREAM SHELL (Phase 10 CMC · Module 3) — live, project-scoped reads
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /** Portfolio overview — one RPI row per submission. */
+  async getPortfolioOverview(): Promise<CmcPortfolioRow[]> {
+    const rows = await this.request<CmcPortfolioRow[] | { data?: CmcPortfolioRow[] }>(
+      'GET',
+      `${this.baseUrl}/blueprint/portfolio/overview`,
+    );
+    return Array.isArray(rows) ? rows : rows?.data ?? [];
+  }
+
+  /** Module 3 build-state readiness for a project. */
+  async getModule3Readiness(projectId: string): Promise<CmcModule3Readiness | null> {
+    const res = await this.request<{ data?: CmcModule3Readiness }>(
+      'GET',
+      `${this.baseUrl}/module3-os/readiness/${encodeURIComponent(projectId)}`,
+    );
+    return (res as any)?.data ?? (res as unknown as CmcModule3Readiness) ?? null;
+  }
+
+  /** Specifications for a project (quality_specifications). */
+  async getSpecificationsByProject(projectId: string): Promise<CmcSpecRow[]> {
+    const res = await this.request<{ data?: CmcSpecRow[] } | CmcSpecRow[]>(
+      'GET',
+      `${this.baseUrl}/specifications/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(res) ? res : res?.data ?? [];
+  }
+
+  /** Stability studies for a project. */
+  async getStabilityByProject(projectId: string): Promise<CmcStabilityRow[]> {
+    const res = await this.request<{ data?: CmcStabilityRow[] } | CmcStabilityRow[]>(
+      'GET',
+      `${this.baseUrl}/stability/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(res) ? res : res?.data ?? [];
+  }
+
+  /** Batch records for a project. */
+  async getBatchRecordsByProject(projectId: string): Promise<CmcBatchRow[]> {
+    const res = await this.request<{ data?: CmcBatchRow[] } | CmcBatchRow[]>(
+      'GET',
+      `${this.baseUrl}/batch-records/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(res) ? res : res?.data ?? [];
+  }
+
+  /** Create a batch record — POST /api/cmc/batch-records (createBatchSchema). */
+  async createBatchRecord(data: BatchRecordInput): Promise<CmcBatchRow> {
+    return this.request<CmcBatchRow>('POST', `${this.baseUrl}/batch-records`, data);
+  }
+
+  /** Module 3 sections for a project — GET /api/cmc/module3-os/sections/:projectId. */
+  async getModule3Sections(projectId: string): Promise<CmcModule3Section[]> {
+    const res = await this.request<{ data?: CmcModule3Section[] } | CmcModule3Section[]>(
+      'GET',
+      `${this.baseUrl}/module3-os/sections/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(res) ? res : res?.data ?? [];
+  }
+
+  /**
+   * Approve a Module 3 section — POST
+   * /api/cmc/module3-os/sections/:projectId/:sectionKey/approve.
+   * The handler is path-driven and reads no body; the e-signature reason is
+   * captured client-side via EsignModal and persisted in the signature ledger.
+   */
+  async approveModule3Section(
+    projectId: string,
+    sectionKey: string,
+  ): Promise<{ sectionKey: string; versionNumber: number; approvedVersionId: string }> {
+    return this.request(
+      'POST',
+      `${this.baseUrl}/module3-os/sections/${encodeURIComponent(projectId)}/${encodeURIComponent(sectionKey)}/approve`,
+    );
+  }
+
+  /** Release a batch record — POST /api/cmc/batch-records/:id/release.
+   *  High-risk governed sign: the server re-verifies the signer (`reauth`) and
+   *  writes the audit_logs + c2c_ana_actions ledger pair in one transaction.
+   *  `decision` is required by the server schema; `reason` is the
+   *  reason-for-change recorded verbatim in the ledger. */
+  async releaseBatch(
+    id: string,
+    payload: {
+      releaseTesting: unknown;
+      releasedBy: string;
+      decision: 'approved' | 'rejected' | 'conditional';
+      comments?: string;
+      reason: string;
+      reauth: { password: string; totp?: string };
+    },
+  ): Promise<unknown> {
+    return this.request('POST', `${this.baseUrl}/batch-records/${encodeURIComponent(id)}/release`, payload);
+  }
+
+  /** Deterministic ICH compliance check for a project. */
+  async runICHComplianceCheck(projectId: string): Promise<CmcIchCheckResult | null> {
+    const res = await this.request<{ data?: CmcIchCheckResult } | CmcIchCheckResult>(
+      'POST',
+      `${this.baseUrl}/ich-compliance`,
+      { projectId },
+    );
+    return (res as any)?.data ?? (res as CmcIchCheckResult) ?? null;
+  }
+
+  /** Change-impact simulation. Returns the filing path / impact analysis. */
+  async simulateChangeImpact(payload: Record<string, unknown>): Promise<unknown> {
+    const res = await this.request<{ data?: unknown }>(
+      'POST',
+      `${this.baseUrl}/change-impact-simulator/simulate`,
+      payload,
+    );
+    return (res as any)?.data ?? res;
+  }
+
+  /** QbD analysis (CQAs / CPPs) for a project. */
+  async analyzeQbd(projectId: string): Promise<CmcQbdResult | null> {
+    const res = await this.request<{ data?: CmcQbdResult } | CmcQbdResult>(
+      'GET',
+      `${this.baseUrl}/quality/qbd/${encodeURIComponent(projectId)}`,
+    );
+    return (res as any)?.data ?? (res as CmcQbdResult) ?? null;
+  }
+
+  /** Generate a §3.2 blueprint. */
+  async generateBlueprint(payload: Record<string, unknown>): Promise<unknown> {
+    const res = await this.request<{ data?: unknown }>(
+      'POST',
+      `${this.baseUrl}/blueprint/generate-blueprint`,
+      payload,
+    );
+    return (res as any)?.data ?? res;
+  }
+
+  /** Global (per-market) compliance transform. */
+  async checkGlobalCompliance(payload: Record<string, unknown>): Promise<unknown> {
+    const res = await this.request<{ data?: unknown }>(
+      'POST',
+      `${this.baseUrl}/global-compliance/transform`,
+      payload,
+    );
+    return (res as any)?.data ?? res;
+  }
+
+  /** CMC copilot chat turn. */
+  async cmcCopilotChat(query: string, context?: Record<string, unknown>): Promise<{ response?: string; [key: string]: unknown }> {
+    const res = await this.request<{ data?: any } | any>(
+      'POST',
+      `${this.baseUrl}/cmc-copilot/query`,
+      { query, context },
+    );
+    return (res as any)?.data ?? res ?? {};
   }
 }
 

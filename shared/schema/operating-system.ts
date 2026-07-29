@@ -31,6 +31,31 @@ import { organizations, users, projects, concept2cureArtifacts, concept2cureArti
 // ENUMS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ⚠️  ORPHANED DEFINITIONS — DO NOT USE (conflicts C-1, C-2, C-7, C-9)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Everything from here to the GOVERNANCE BOUNDARY section describes a table
+// shape that exists in NO deployed environment. Its DDL lives only in
+// migrations/0010_operating_system_foundation.sql, which has no execution path
+// (not journaled; this module is not exported from shared/schema.ts, so
+// drizzle-kit push never creates these tables; apply-c2c-migrations.mjs does
+// not include it). See C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md §C-9.
+//
+// The DEPLOYED shape is db/migrations/20260323_assumption_decision_contradiction.sql,
+// served by the raw-SQL services (assumption-registry-service.ts,
+// decision-record-service.ts) whose vocabularies are CANONICAL per the revised
+// ADR-0007. Typed gate access goes through
+// shared/constants/operating-system-vocab.ts. These definitions have ZERO
+// importers (verified 2026-07-25) and are retained solely so their removal is
+// its own reviewed change under the ADR-0006 legacy retirement.
+//
+// Adding an importer of assumptionRecords / assumptionHistory / decisionRecords /
+// contradictionLinks or these enums is a defect: queries generated from them
+// THROW against production columns. The governance tables further down are NOT
+// orphaned — they are canonical, with DDL in
+// db/migrations/20260725_governance_boundary_tables.sql.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export const assumptionCategoryEnum = pgEnum('assumption_category', [
   'effect_size',
   'variance',
@@ -388,6 +413,12 @@ export const decisionRecords = pgTable(
  *
  * These rules are project-scoped and enforceable — not just metadata.
  */
+// ═══════════════════════════════════════════════════════════════════════════════
+// ✅ CANONICAL FROM HERE DOWN — governance boundary tables
+// DDL: db/migrations/20260725_governance_boundary_tables.sql (C-8 fix).
+// Live consumer: server/services/governance-boundary-service.ts.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export const governanceBoundaryRules = pgTable(
   'governance_boundary_rules',
   {

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import deviceProfileSchema from '../../client/src/components/cer/schemas/deviceProfile.json';
+import deviceProfileSchema from '../../client/src/schemas/deviceProfile.json';
 
 /**
  * Simple validation for device profile

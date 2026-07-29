@@ -123,7 +123,7 @@ router.get('/canon', authMiddleware, async (req: Request, res: Response) => {
  */
 router.post('/canon/:id/validate', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) return res.status(400).json({ success: false, error: { message: 'Invalid canon item ID' } });
     const actorId = getUserId(req);
     if (!actorId) return res.status(401).json({ success: false, error: { message: 'User required' } });
@@ -142,7 +142,7 @@ router.post('/canon/:id/validate', authMiddleware, async (req: Request, res: Res
  */
 router.post('/canon/:id/lock', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) return res.status(400).json({ success: false, error: { message: 'Invalid canon item ID' } });
     const actorId = getUserId(req);
     if (!actorId) return res.status(401).json({ success: false, error: { message: 'User required' } });
@@ -161,7 +161,7 @@ router.post('/canon/:id/lock', authMiddleware, async (req: Request, res: Respons
  */
 router.post('/canon/:id/supersede', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const oldId = parseInt(req.params.id, 10);
+    const oldId = parseInt(String(req.params.id), 10);
     if (isNaN(oldId)) return res.status(400).json({ success: false, error: { message: 'Invalid canon item ID' } });
     const schema = z.object({
       category: z.string().min(1),
@@ -379,7 +379,7 @@ router.get('/bundles', authMiddleware, async (req: Request, res: Response) => {
  */
 router.patch('/bundles/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) return res.status(400).json({ success: false, error: { message: 'Invalid bundle ID' } });
 
     const updateSchema = z.object({

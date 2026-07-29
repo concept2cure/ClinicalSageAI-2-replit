@@ -15,14 +15,17 @@
  *    verbatim; outside a canvas iframe, append ?tweaks=1 to the URL to activate.
  */
 import { Fragment, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HomeIcon } from './icons';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import {
-  NAV_ITEMS, NAV_SUB, DASH, MODULES, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
+  NAV_ITEMS, NAV_SUB, DASH, RECENTS, SUGGESTIONS, SCOPE_OPTIONS,
+  visibleNavItems, visibleModules,
   type Scope, type NavItem, type ModuleCard, type BriefingItem,
 } from './data';
 import { AnaCard } from './AnaCard';
 import { CommandPalette, type PaletteItem } from './CommandPalette';
-import { useHomeData, type HomeProject } from './useHomeData';
+import { useHomeData, type HomeMetrics, type HomeProject } from './useHomeData';
 import { useHomeBriefing } from './useHomeBriefing';
 import { ProjectsScreen } from '../concept2cure-projects';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
@@ -51,6 +54,8 @@ export interface Concept2CureHomeProps {
   onLaunchChat?: (draft: string) => void;
   /** Open a specific project's workspace from the rail subdrawer / Recents. */
   onSelectProject?: (projectId: string) => void;
+  /** Open a PDEV surface for an IND program — deep-link from the Projects detail. */
+  onOpenPdev?: (programId: string, nav: string) => void;
   /** Open the workspace switcher — pill in the top bar. */
   onWorkspaceSwitch?: () => void;
   /** Open notifications surface — bell icon in the top bar. */
@@ -98,18 +103,40 @@ const DEFAULTS: Tweaks = /*EDITMODE-BEGIN*/{
   userRole: 'Enterprise · Reg Affairs',
 }/*EDITMODE-END*/;
 
+// localStorage keys for persisted rail state.
+// The task spec calls for key `c2c.rail.collapsed`; activeNav uses the
+// same namespace so the two states travel together.
+const LS_COLLAPSED = 'c2c.rail.collapsed';
+const LS_ACTIVE_NAV = 'c2c.rail.activeNav';
+
+function readPersistedTweaks(): Pick<Tweaks, 'collapsed' | 'activeNav'> {
+  try {
+    const collapsed = window.localStorage.getItem(LS_COLLAPSED);
+    const activeNav = window.localStorage.getItem(LS_ACTIVE_NAV);
+    return {
+      collapsed: collapsed === 'true',
+      activeNav: activeNav ?? DEFAULTS.activeNav,
+    };
+  } catch {
+    return { collapsed: DEFAULTS.collapsed, activeNav: DEFAULTS.activeNav };
+  }
+}
+
 const DEFAULT_USER: User = {
   name: DEFAULTS.userName,
   initials: DEFAULTS.userInitials,
   role: DEFAULTS.userRole,
 };
 
-function timeOfDay(): string {
+// Returns a translation key suffix, not a literal — word order and honorifics
+// (e.g. Japanese さん) differ by language, so the phrase is assembled in the
+// `home` namespace, never concatenated in code.
+function timeOfDayKey(): 'late' | 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
-  if (h < 5) return 'Working late';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 5) return 'late';
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'evening';
 }
 
 /* ─── Rail ─── */
@@ -159,7 +186,7 @@ function Rail({
 
       <div className={styles.railSection}>Modules</div>
       <div className={styles.railNav}>
-        {NAV_ITEMS.map((item: NavItem) => {
+        {visibleNavItems().map((item: NavItem) => {
           const isActive = activeNav === item.id;
           const isProjects = item.id === 'projects';
           const showLiveProjects = isProjects && projects.length > 0;
@@ -262,6 +289,7 @@ function TopBar({
   onOpenNotifications?: () => void;
   onOpenHelp?: () => void;
 }) {
+  const { t: tc } = useTranslation('common');
   return (
     <header className={styles.topbar}>
       <div className={styles.crumbs}>
@@ -283,13 +311,15 @@ function TopBar({
       </button>
       <div className={styles.tbDivider} />
       <div className={styles.tbActions}>
-        <button type="button" className={styles.tbBtn} title="Search (⌘K)" onClick={onOpenPalette}>
+        <LanguageSwitcher variant="topbar" />
+        <button type="button" className={styles.tbBtn} title={`${tc('actions.search')} (⌘K)`} aria-label={tc('actions.search')} onClick={onOpenPalette}>
           <HomeIcon name="search" size={16} />
         </button>
         <button
           type="button"
           className={styles.tbBtn}
-          title="Notifications"
+          title={tc('topbar.notifications')}
+          aria-label={tc('topbar.notifications')}
           onClick={onOpenNotifications}
         >
           <HomeIcon name="bell" size={16} />
@@ -298,7 +328,8 @@ function TopBar({
         <button
           type="button"
           className={styles.tbBtn}
-          title="Help"
+          title={tc('topbar.help')}
+          aria-label={tc('topbar.help')}
           onClick={onOpenHelp}
         >
           <HomeIcon name="help" size={16} />
@@ -322,6 +353,7 @@ function GreetAndCompose({
   onTools?: () => void;
   onModelPicker?: () => void;
 }) {
+  const { t } = useTranslation('home');
   const [draft, setDraft] = useState('');
   const send = () => {
     const text = draft.trim();
@@ -331,14 +363,14 @@ function GreetAndCompose({
     }
     setDraft('');
   };
-  const tod = timeOfDay();
+  const greeting = t(`greeting.${timeOfDayKey()}`);
 
   return (
     <div className={styles.greetBlock}>
       <span className={styles.greetStar} aria-hidden="true">✻</span>
-      <h1 className={styles.greetH1}>{tod}, {userName}</h1>
+      <h1 className={styles.greetH1}>{t('greetingLine', { greeting, name: userName })}</h1>
       <div className={styles.greetSub}>
-        What would you like to work on? Ask AnA, or jump into a module below.
+        {t('prompt')}
       </div>
 
       <div className={styles.composer}>
@@ -410,21 +442,64 @@ function dashKey(label: string): string {
 }
 
 function Dashboard({
-  projectCount,
-  artifactTotal,
+  metrics,
   onTileClick,
 }: {
-  projectCount: number | null;
-  artifactTotal: number | null;
+  metrics: HomeMetrics;
   onTileClick?: (key: string) => void;
 }) {
-  // Overlay real counts on top of the static demo metrics where we have them.
+  // Overlay real counts on top of the static demo metrics where a genuine
+  // org-scoped source exists. Each tile carries its own honesty pill: a tile
+  // only drops the "Sample data" pill when its live fetch actually succeeded.
+  // A failed fetch keeps the labeled sample fallback — honest null/empty
+  // beats fake numbers, and a fetch error must never render as a real zero.
+  //
+  // Live sources:
+  //  - Active projects → GET /api/concept2cure/projects (org-scoped list)
+  //  - Tasks due       → GET /api/concept2cure/reviews/my-queue (open review
+  //                      tasks assigned to the current user, overdue/due-soon)
+  //  - Alerts          → same my-queue payload (unread notification count)
+  //  - Submission readiness has NO workspace-level aggregate yet (only the
+  //    per-project readiness-summary exists), so it stays sample — its pill
+  //    renders unconditionally until a real org-level aggregate ships.
   const cards = DASH.map(d => {
-    if (d.label === 'Active projects' && projectCount !== null) {
-      return { ...d, metric: String(projectCount), meta: `${projectCount} project${projectCount !== 1 ? 's' : ''} in this workspace` };
+    if (d.label === 'Active projects' && metrics.projectCount !== null) {
+      const n = metrics.projectCount;
+      return {
+        ...d,
+        live: true,
+        metric: String(n),
+        meta: `${n} project${n !== 1 ? 's' : ''} in this workspace`,
+      };
     }
-    return d;
+    if (d.label === 'Tasks due' && metrics.tasksOpen !== null) {
+      const open = metrics.tasksOpen;
+      const overdue = metrics.tasksOverdue ?? 0;
+      const dueSoon = metrics.tasksDueSoon ?? 0;
+      return {
+        ...d,
+        live: true,
+        metric: String(open),
+        meta: open === 0
+          ? 'No open review tasks assigned to you'
+          : `Assigned to you · ${overdue} overdue · ${dueSoon} due in 24h`,
+      };
+    }
+    if (d.label === 'Alerts' && metrics.alertsUnread !== null) {
+      const n = metrics.alertsUnread;
+      return {
+        ...d,
+        live: true,
+        metric: String(n),
+        meta: n === 0 ? 'No unread notifications' : `${n} unread notification${n !== 1 ? 's' : ''}`,
+      };
+    }
+    return { ...d, live: false };
   });
+  const pillTitle = (label: string): string =>
+    label === 'Submission readiness'
+      ? 'Prototype sample metric — no workspace-level readiness aggregate exists yet.'
+      : 'Prototype sample metric — the live API request failed or returned no data.';
   return (
     <>
       <div className={styles.secHdr}>
@@ -445,7 +520,17 @@ function Dashboard({
             className={styles.dashCard}
             onClick={() => onTileClick?.(dashKey(d.label))}
           >
-            <div className={styles.dashLabel}>{d.label}</div>
+            <div className={styles.dashLabel}>
+              {d.label}
+              {!d.live && (
+                <span
+                  className={`ptl-pill ${styles.dashSamplePill}`}
+                  title={pillTitle(d.label)}
+                >
+                  Sample data
+                </span>
+              )}
+            </div>
             <div className={styles.dashMetric}>
               {d.metric}{d.unit && <span className={styles.unit}>{d.unit}</span>}
             </div>
@@ -482,7 +567,7 @@ function Launcher({
         </button>
       </div>
       <div className={styles.modules}>
-        {MODULES.map((m: ModuleCard, i) => {
+        {visibleModules().map((m: ModuleCard, i) => {
           const nav = NAV_ITEMS.find(n => n.id === m.navId);
           const isPinned = nav?.group === 'domain';
           const isActive = activeNav === m.navId;
@@ -542,7 +627,20 @@ function Recents({
   return (
     <>
       <div className={styles.secHdr}>
-        <div className={styles.secTitle}>Recent activity</div>
+        <div className={styles.secTitle}>
+          Recent activity
+          {/* Honesty pill (same treatment as ProjectsList): when the chat
+              threads API returns no rows or errors, the rows below are the
+              RECENTS demo constants from data.tsx, not tenant activity. */}
+          {!showReal && (
+            <span
+              className="ptl-pill prj-list-seed"
+              title="Showing prototype sample activity — the chat threads API returned no rows or errored."
+            >
+              Sample data
+            </span>
+          )}
+        </div>
         <button type="button" className={styles.secMore} onClick={onViewAll}>
           View all <HomeIcon name="right" size={12} />
         </button>
@@ -657,6 +755,7 @@ export function Concept2CureHome({
   onNavigate,
   onLaunchChat,
   onSelectProject,
+  onOpenPdev,
   onWorkspaceSwitch,
   onOpenNotifications,
   onOpenHelp,
@@ -678,7 +777,12 @@ export function Concept2CureHome({
 
   // Bundle state — tweaks, tweaksOpen, editModeActive, scope, paletteOpen.
   // Logic below is ported verbatim from bundle App.jsx (the App function).
-  const [tweaks, setTweaks] = useState<Tweaks>(DEFAULTS);
+  // `collapsed` and `activeNav` are seeded from localStorage so the user's
+  // last-used rail state is restored on every visit.
+  const [tweaks, setTweaks] = useState<Tweaks>(() => ({
+    ...DEFAULTS,
+    ...readPersistedTweaks(),
+  }));
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [editModeActive, setEditModeActive] = useState(false);
   const [scope, setScope] = useState<Scope>('all');
@@ -688,7 +792,8 @@ export function Concept2CureHome({
   const { items: briefingItems } = useHomeBriefing();
 
   // Bundle App.jsx setTweak — mirrors the tweak into the parent canvas host
-  // so the designer surface stays in sync.
+  // so the designer surface stays in sync. Also persists `collapsed` and
+  // `activeNav` to localStorage so rail state survives page reloads.
   const setTweak = <K extends keyof Tweaks>(key: K, val: Tweaks[K]) => {
     setTweaks(t => {
       const next = { ...t, [key]: val };
@@ -699,6 +804,16 @@ export function Concept2CureHome({
         );
       } catch {
         /* no parent (standalone production tab) — ignore */
+      }
+      // Persist rail-specific keys to localStorage.
+      try {
+        if (key === 'collapsed') {
+          window.localStorage.setItem(LS_COLLAPSED, String(val));
+        } else if (key === 'activeNav') {
+          window.localStorage.setItem(LS_ACTIVE_NAV, String(val));
+        }
+      } catch {
+        /* storage unavailable — ignore */
       }
       return next;
     });
@@ -806,7 +921,7 @@ export function Concept2CureHome({
             // Lives at design-system/ui_kits/home/Projects.jsx +
             // ProjectsExtras.jsx; ported in
             // client/src/concept2cure/components/concept2cure-projects/.
-            <ProjectsScreen />
+            <ProjectsScreen onOpenPdev={onOpenPdev} />
           ) : (
             <div className={styles.pageInner}>
               <GreetAndCompose
@@ -817,7 +932,6 @@ export function Concept2CureHome({
                 onModelPicker={onComposerModelPicker}
               />
               <AnaCard
-                scope={scope}
                 onOpenPalette={() => setPaletteOpen(true)}
                 items={briefingItems ?? undefined}
                 lastSyncLabel={briefingItems ? 'just now' : undefined}
@@ -825,8 +939,7 @@ export function Concept2CureHome({
                 onStartFirst={onStartFirstBriefing}
               />
               <Dashboard
-                projectCount={metrics.projectCount}
-                artifactTotal={metrics.artifactTotal}
+                metrics={metrics}
                 onTileClick={onDashboardTileClick}
               />
               <div style={{ height: 24 }} />

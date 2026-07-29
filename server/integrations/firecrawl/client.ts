@@ -61,7 +61,10 @@ export class FirecrawlClient {
   static verifyWebhookSignature(payload: string, signature: string | undefined, secret: string) {
     if (!signature) return false;
     const digest = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
+    const digestBuf = Buffer.from(digest);
+    const sigBuf = Buffer.from(signature);
+    if (digestBuf.length !== sigBuf.length) return false;
+    return crypto.timingSafeEqual(digestBuf, sigBuf);
   }
 }
 

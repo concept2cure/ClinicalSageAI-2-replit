@@ -11,6 +11,7 @@ import { createScopedLogger } from './utils/logger';
 import { db } from './db';
 import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
+import { verifyJwtWithRotation } from './utils/jwtVerify';
 
 const logger = createScopedLogger('auth');
 
@@ -83,11 +84,28 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   const authenticate = async () => {
     try {
-      const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+      const decoded = verifyJwtWithRotation<{
         userId?: string;
         email?: string;
         organizationId?: string;
-      };
+        type?: string;
+        role?: string;
+        mfaPending?: boolean;
+      }>(token);
+
+      // SECURITY: reject non-access tokens (refresh / MFA challenge / MFA
+      // partial) on the access path so a half-authenticated session cannot
+      // bypass MFA by presenting its short-lived token as a Bearer credential.
+      const tokenType = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
+      if (
+        decoded.mfaPending === true ||
+        decoded.role === 'pending_mfa' ||
+        tokenType === 'refresh' ||
+        tokenType === 'mfa_challenge' ||
+        tokenType === 'mfa_partial'
+      ) {
+        return res.status(401).json({ error: 'Token is not valid for this operation' });
+      }
 
       if (!decoded.userId || !decoded.organizationId) {
         return res.status(401).json({ error: 'Invalid token payload' });

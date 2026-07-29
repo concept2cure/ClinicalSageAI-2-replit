@@ -8,6 +8,14 @@ import { createScopedLogger } from './utils/logger';
 import { pool, query, transaction, db } from './db';
 import { eq, desc, and, or, like, isNull, not, gte } from 'drizzle-orm';
 import * as schema from '../shared/schema';
+import {
+  qcSpecifications,
+  qcOosInvestigations,
+  qcBatchReleases,
+  qcDeviations,
+  qcMicrobiologicalTests,
+  qcReferenceStandards,
+} from '../shared/schema/qc-schemas';
 import * as qcSchema from '../shared/schema/qc-schemas';
 import { generateUUID } from './utils/id-generator';
 
@@ -64,10 +72,28 @@ export interface IStorage {
   updateTrial(id: number, trialData: any): Promise<any | undefined>;
   deleteTrial(id: number): Promise<boolean>;
 
-  // Document methods
-  getDocument(id: string): Promise<schema.Document | undefined>;
-  getDocumentByName(name: string): Promise<schema.Document | undefined>;
-  getDocuments(options?: {
+  // Document methods.
+  //
+  // SECURITY: getDocument requires an organizationId. Pre-fix this
+  // method took only the id, and the DB implementation queried
+  // `WHERE id = ?` without a tenant filter — meaning any caller that
+  // forgot to verify org membership separately could leak a document
+  // across tenants. Making the parameter mandatory forces every
+  // caller to source the org id from the JWT (req.user.organizationId)
+  // rather than letting it default away silently.
+  getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined>;
+  // SECURITY: every document accessor is tenant-scoped. getDocumentByName,
+  // getDocuments, updateDocument and deleteDocument now REQUIRE an
+  // organizationId and apply it in the WHERE clause. A missing/non-finite
+  // org id fails closed (empty result / undefined / false) — mirroring
+  // getDocument — so a forgotten scope can never silently widen a query
+  // across tenants.
+  getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined>;
+  getDocuments(options: {
+    organizationId: number | string;
     limit?: number;
     offset?: number;
     folderId?: string;
@@ -78,12 +104,21 @@ export interface IStorage {
   createDocument(document: schema.InsertDocument): Promise<schema.Document>;
   updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined>;
-  deleteDocument(id: string): Promise<boolean>;
+  deleteDocument(id: string, organizationId: number | string): Promise<boolean>;
 
   // Document folder methods
-  getFolder(id: string): Promise<schema.DocumentFolder | undefined>;
+  // Document folder methods.
+  //
+  // SECURITY: getFolder requires organizationId. Same shape as
+  // getDocument's hardening — pre-fix the DB impl queried by id alone
+  // and would silently leak folder metadata cross-tenant if any caller
+  // forgot to verify scope. No live callers exist today (verified via
+  // grep), but making this mandatory means a future code path can't
+  // silently regress.
+  getFolder(id: string, organizationId: number | string): Promise<schema.DocumentFolder | undefined>;
   getFolders(options?: { parentId?: string | null }): Promise<schema.DocumentFolder[]>;
   createFolder(folder: schema.InsertDocumentFolder): Promise<schema.DocumentFolder>;
   updateFolder(
@@ -93,7 +128,12 @@ export interface IStorage {
   deleteFolder(id: string): Promise<boolean>;
 
   // CER Report methods
-  getCerReport(id: string): Promise<schema.CerReport | undefined>;
+  // SECURITY: CER reports are regulated tenant-scoped content (Clinical
+  // Evaluation Reports under MDR / IVDR). getCerReport requires
+  // organizationId for the same reason as getDocument — silent cross-
+  // tenant leakage of a CER is a contract-breaking event for paying
+  // pharma clients.
+  getCerReport(id: string, organizationId: number | string): Promise<schema.CerReport | undefined>;
   getCerReports(options?: {
     limit?: number;
     offset?: number;
@@ -170,7 +210,12 @@ export interface IStorage {
   createCerExport(export_: schema.InsertCerExport): Promise<schema.CerExport>;
 
   // Project Management methods
-  getProject(id: number): Promise<schema.Project | undefined>;
+  // SECURITY: getProject requires organizationId. The interface
+  // method has no implementation and no callers today, but routes
+  // accessing projects (which contain regulatory submissions, CMC
+  // data, study designs) are tenant-scoped. Documenting the contract
+  // ensures any future implementer can't expose the bug.
+  getProject(id: number, organizationId: number | string): Promise<schema.Project | undefined>;
   getProjects(options?: {
     limit?: number;
     offset?: number;
@@ -289,7 +334,13 @@ export interface IStorage {
     organizationId: number;
     clientWorkspaceId: number;
   }): Promise<any[]>;
-  getQcSpecification(id: number): Promise<any | undefined>;
+  // SECURITY: every QC getter requires organizationId — the QC family
+  // is tenant-scoped regulated content (specs, OOS investigations,
+  // batch releases, deviations, micro tests, reference standards).
+  // Today's implementations are stubs (return undefined), but the
+  // interface contract is set so a future real implementation can't
+  // forget the tenant filter.
+  getQcSpecification(id: number, organizationId: number | string): Promise<any | undefined>;
   createQcSpecification(spec: any): Promise<any>;
   updateQcSpecification(id: number, spec: any): Promise<any>;
   createSpecificationVersion(
@@ -297,7 +348,7 @@ export interface IStorage {
     changeReason: string,
     changeDescription: string
   ): Promise<any>;
-  getSpecificationVersions(id: number): Promise<any[]>;
+  getSpecificationVersions(id: number, organizationId: number | string): Promise<any[]>;
 
   // OOS Investigation methods
   getOosInvestigations(params: {
@@ -306,12 +357,12 @@ export interface IStorage {
     status?: string;
     priority?: string;
   }): Promise<any[]>;
-  getOosInvestigation(id: number): Promise<any | undefined>;
+  getOosInvestigation(id: number, organizationId: number | string): Promise<any | undefined>;
   createOosInvestigation(investigation: any): Promise<any>;
-  updateOosInvestigation(id: number, investigation: any): Promise<any>;
-  addOosTimelineEvent(id: number, event: any): Promise<any>;
-  performRootCauseAnalysis(id: number, analysis: any): Promise<any>;
-  linkCapaToOos(id: number, capa: any): Promise<any>;
+  updateOosInvestigation(id: number, organizationId: number | string, investigation: any): Promise<any>;
+  addOosTimelineEvent(id: number, organizationId: number | string, event: any): Promise<any>;
+  performRootCauseAnalysis(id: number, organizationId: number | string, analysis: any): Promise<any>;
+  linkCapaToOos(id: number, organizationId: number | string, capa: any): Promise<any>;
 
   // Batch Release methods
   getBatchReleases(params: {
@@ -319,14 +370,14 @@ export interface IStorage {
     clientWorkspaceId: number;
     releaseStatus?: string;
   }): Promise<any[]>;
-  getBatchRelease(id: number): Promise<any | undefined>;
+  getBatchRelease(id: number, organizationId: number | string): Promise<any | undefined>;
   createBatchRelease(release: any): Promise<any>;
-  updateBatchRelease(id: number, release: any): Promise<any>;
-  reviewBatchRecord(id: number, review: any): Promise<any>;
+  updateBatchRelease(id: number, organizationId: number | string, release: any): Promise<any>;
+  reviewBatchRecord(id: number, organizationId: number | string, review: any): Promise<any>;
   generateCertificateOfAnalysis(id: number): Promise<any>;
-  getBatchGenealogy(id: number): Promise<any>;
+  getBatchGenealogy(id: number, organizationId: number | string): Promise<any>;
   validateReleaseCriteria(id: number): Promise<any>;
-  releaseBatch(id: number, params: any): Promise<any>;
+  releaseBatch(id: number, organizationId: number | string, params: any): Promise<any>;
 
   // QC Deviation methods
   getQcDeviations(params: {
@@ -335,11 +386,11 @@ export interface IStorage {
     deviationType?: string;
     severity?: string;
   }): Promise<any[]>;
-  getQcDeviation(id: number): Promise<any | undefined>;
+  getQcDeviation(id: number, organizationId: number | string): Promise<any | undefined>;
   createQcDeviation(deviation: any): Promise<any>;
-  updateQcDeviation(id: number, deviation: any): Promise<any>;
-  performImpactAssessment(id: number, assessment: any): Promise<any>;
-  linkCapaToDeviation(id: number, capa: any): Promise<any>;
+  updateQcDeviation(id: number, organizationId: number | string, deviation: any): Promise<any>;
+  performImpactAssessment(id: number, organizationId: number | string, assessment: any): Promise<any>;
+  linkCapaToDeviation(id: number, organizationId: number | string, capa: any): Promise<any>;
   getDeviationTrending(params: any): Promise<any>;
 
   // Microbiological Test methods
@@ -349,12 +400,12 @@ export interface IStorage {
     testType?: string;
     sampleType?: string;
   }): Promise<any[]>;
-  getMicrobiologicalTest(id: number): Promise<any | undefined>;
+  getMicrobiologicalTest(id: number, organizationId: number | string): Promise<any | undefined>;
   createMicrobiologicalTest(test: any): Promise<any>;
-  updateMicrobiologicalTest(id: number, test: any): Promise<any>;
+  updateMicrobiologicalTest(id: number, organizationId: number | string, test: any): Promise<any>;
   getEnvironmentalMonitoringSchedule(params: any): Promise<any>;
   createEnvironmentalMonitoringSchedule(schedule: any): Promise<any>;
-  recordMicrobiologicalResults(id: number, results: any): Promise<any>;
+  recordMicrobiologicalResults(id: number, organizationId: number | string, results: any): Promise<any>;
 
   // Reference Standard methods
   getReferenceStandards(params: {
@@ -363,17 +414,24 @@ export interface IStorage {
     standardType?: string;
     status?: string;
   }): Promise<any[]>;
-  getReferenceStandard(id: number): Promise<any | undefined>;
+  getReferenceStandard(id: number, organizationId: number | string): Promise<any | undefined>;
   createReferenceStandard(standard: any): Promise<any>;
-  updateReferenceStandard(id: number, standard: any): Promise<any>;
-  recordStandardUsage(id: number, usage: any): Promise<any>;
+  updateReferenceStandard(id: number, organizationId: number | string, standard: any): Promise<any>;
+  recordStandardUsage(id: number, organizationId: number | string, usage: any): Promise<any>;
   getExpiringStandards(params: any): Promise<any[]>;
   qualifyReferenceStandard(id: number, qualification: any): Promise<any>;
   disposeReferenceStandard(id: number, disposal: any): Promise<any>;
-  getStandardUsageLogs(id: number): Promise<any[]>;
+  getStandardUsageLogs(id: number, organizationId: number | string): Promise<any[]>;
 
   // Section Graph methods
-  getSection(id: number): Promise<schema.Section | undefined>;
+  // SECURITY: getSection / getSectionLeaf require organizationId. The
+  // section graph is the hierarchical structure of regulatory content
+  // for a tenant; leaking a single section's metadata across tenants
+  // can expose another customer's regulatory roadmap.
+  getSection(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.Section | undefined>;
   getSections(options?: {
     organizationId?: number;
     clientWorkspaceId?: number;
@@ -400,7 +458,10 @@ export interface IStorage {
   reorderDocumentSections(documentId: number, sectionIds: number[]): Promise<boolean>;
 
   // Section Leaf methods
-  getSectionLeaf(id: number): Promise<schema.SectionLeaf | undefined>;
+  getSectionLeaf(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.SectionLeaf | undefined>;
   getSectionLeaves(options?: {
     organizationId?: number;
     clientWorkspaceId?: number;
@@ -565,54 +626,9 @@ export interface IStorage {
   ): Promise<schema.CdiscPrmStudy | undefined>;
   deleteCdiscPrmStudy(studyId: string): Promise<boolean>;
 
-  // CDISC CDASH (Clinical Data Acquisition Standards Harmonization) methods
-  getCdiscCdashForm(formId: string): Promise<schema.CdiscCdashForm | undefined>;
-  getCdiscCdashForms(options?: {
-    tenantId: number;
-    domain?: string;
-    formType?: string;
-    isStandard?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<schema.CdiscCdashForm[]>;
-  createCdiscCdashForm(form: schema.InsertCdiscCdashForm): Promise<schema.CdiscCdashForm>;
-  updateCdiscCdashForm(
-    formId: string,
-    formData: Partial<schema.InsertCdiscCdashForm>
-  ): Promise<schema.CdiscCdashForm | undefined>;
-  deleteCdiscCdashForm(formId: string): Promise<boolean>;
-
-  // CDISC CSR (Clinical Study Report) methods
-  getCdiscCsrTemplate(templateId: string): Promise<schema.CdiscCsrTemplate | undefined>;
-  getCdiscCsrTemplates(options?: {
-    tenantId: number;
-    templateType?: string;
-    isActive?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<schema.CdiscCsrTemplate[]>;
-  createCdiscCsrTemplate(template: schema.InsertCdiscCsrTemplate): Promise<schema.CdiscCsrTemplate>;
-  updateCdiscCsrTemplate(
-    templateId: string,
-    templateData: Partial<schema.InsertCdiscCsrTemplate>
-  ): Promise<schema.CdiscCsrTemplate | undefined>;
-  deleteCdiscCsrTemplate(templateId: string): Promise<boolean>;
-
-  // CDISC ADaM (Analysis Data Model) methods
-  getCdiscAdamSpec(datasetName: string, studyId: string): Promise<schema.CdiscAdamSpec | undefined>;
-  getCdiscAdamSpecs(options?: {
-    tenantId: number;
-    studyId?: string;
-    datasetClass?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<schema.CdiscAdamSpec[]>;
-  createCdiscAdamSpec(spec: schema.InsertCdiscAdamSpec): Promise<schema.CdiscAdamSpec>;
-  updateCdiscAdamSpec(
-    id: number,
-    specData: Partial<schema.InsertCdiscAdamSpec>
-  ): Promise<schema.CdiscAdamSpec | undefined>;
-  deleteCdiscAdamSpec(id: number): Promise<boolean>;
+  // NOTE: CDISC CDASH / CSR / ADaM storage methods were removed alongside the
+  // unused cdisc_* reference tables (GitHub issue #846). They were declared on
+  // this interface but never implemented or called.
 
   // ============================================================================
   // 510(k) Workflow Methods
@@ -755,28 +771,46 @@ export class MemStorage {
   }
 
   // Document methods
-  async getDocument(id: string): Promise<schema.Document | undefined> {
-    return this.documents.find(d => d.id === id) as schema.Document | undefined;
+  async getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined> {
+    const orgId = Number(organizationId);
+    return this.documents.find(
+      d => d.id === id && Number((d as any).organizationId) === orgId,
+    ) as schema.Document | undefined;
   }
 
-  async getDocumentByName(name: string): Promise<schema.Document | undefined> {
-    return this.documents.find(d => d.title === name) as schema.Document | undefined;
+  async getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return undefined;
+    return this.documents.find(
+      d => d.title === name && Number((d as any).organizationId) === orgId,
+    ) as schema.Document | undefined;
   }
 
   async getDocuments(
     options: {
+      organizationId: number | string;
       limit?: number;
       offset?: number;
       folderId?: string;
       status?: string;
       type?: string;
       search?: string;
-    } = {}
+    }
   ): Promise<schema.Document[]> {
-    const { limit = 20, offset = 0, folderId, status, type, search } = options;
+    const { organizationId, limit = 20, offset = 0, folderId, status, type, search } = options;
 
-    // Filter documents based on provided criteria
-    let result = this.documents as schema.Document[];
+    const orgId = Number(organizationId);
+    // Tenant filter is mandatory and fails closed: a missing/non-finite
+    // org id yields no rows rather than the whole table.
+    if (!Number.isFinite(orgId)) return [];
+
+    // Filter documents based on provided criteria, tenant-scoped first.
+    let result = (this.documents as schema.Document[]).filter(
+      d => Number((d as any).organizationId) === orgId,
+    );
 
     if (folderId) {
       // Note: Document schema doesn't have folderId, filtering by metadata if available
@@ -829,9 +863,14 @@ export class MemStorage {
 
   async updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined> {
-    const index = this.documents.findIndex(d => d.id === id);
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return undefined;
+    const index = this.documents.findIndex(
+      d => d.id === id && Number((d as any).organizationId) === orgId,
+    );
     if (index === -1) return undefined;
 
     // Update modified timestamp
@@ -845,15 +884,25 @@ export class MemStorage {
     return this.documents[index] as schema.Document;
   }
 
-  async deleteDocument(id: string): Promise<boolean> {
+  async deleteDocument(id: string, organizationId: number | string): Promise<boolean> {
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return false;
     const initialLength = this.documents.length;
-    this.documents = this.documents.filter(d => d.id !== id);
+    this.documents = this.documents.filter(
+      d => !(d.id === id && Number((d as any).organizationId) === orgId),
+    );
     return initialLength > this.documents.length;
   }
 
   // Document folder methods
-  async getFolder(id: string): Promise<schema.DocumentFolder | undefined> {
-    return this.folders.find(f => f.id === id);
+  async getFolder(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.DocumentFolder | undefined> {
+    const orgId = Number(organizationId);
+    return this.folders.find(
+      f => f.id === id && Number((f as any).organizationId) === orgId,
+    );
   }
 
   async getFolders(options: { parentId?: string | null } = {}): Promise<schema.DocumentFolder[]> {
@@ -914,9 +963,15 @@ export class MemStorage {
   }
 
   // CER Report methods
-  async getCerReport(id: string): Promise<schema.CerReport | undefined> {
+  async getCerReport(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.CerReport | undefined> {
     // CerReport has numeric id, but reportId is string
-    return this.cerReports.find(r => r.reportId === id);
+    const orgId = Number(organizationId);
+    return this.cerReports.find(
+      r => r.reportId === id && Number((r as any).organizationId) === orgId,
+    );
   }
 
   async getCerReports(
@@ -1332,27 +1387,33 @@ export class MemStorage {
     return [];
   }
 
-  async getQcSpecification(id: number): Promise<any | undefined> {
+  async getQcSpecification(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
-  async createQcSpecification(spec: any): Promise<any> {
-    return spec;
+  async createQcSpecification(_spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were created and
+    // persisted (the route would otherwise return 201 Created). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcSpecification');
   }
 
-  async updateQcSpecification(id: number, spec: any): Promise<any> {
-    return spec;
+  async updateQcSpecification(_id: number, _spec: any): Promise<any> {
+    // Not implemented — must not echo the spec back as if it were persisted
+    // (a 21 CFR Part 11 change-control fabrication). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: updateQcSpecification');
   }
 
   async createSpecificationVersion(
-    id: number,
-    changeReason: string,
-    changeDescription: string
+    _id: number,
+    _changeReason: string,
+    _changeDescription: string
   ): Promise<any> {
-    return {};
+    // Not implemented — must not report a versioned change-control record as
+    // created when nothing was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createSpecificationVersion');
   }
 
-  async getSpecificationVersions(id: number): Promise<any[]> {
+  async getSpecificationVersions(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
@@ -1366,28 +1427,30 @@ export class MemStorage {
     return [];
   }
 
-  async getOosInvestigation(id: number): Promise<any | undefined> {
+  async getOosInvestigation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
-  async createOosInvestigation(investigation: any): Promise<any> {
-    return investigation;
+  async createOosInvestigation(_investigation: any): Promise<any> {
+    // Not implemented — an Out-of-Specification investigation is a regulated GMP
+    // record; must not echo the input back as if it were persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createOosInvestigation');
   }
 
-  async updateOosInvestigation(id: number, investigation: any): Promise<any> {
-    return investigation;
+  async updateOosInvestigation(_id: number, _investigation: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateOosInvestigation');
   }
 
-  async addOosTimelineEvent(id: number, event: any): Promise<any> {
-    return event;
+  async addOosTimelineEvent(_id: number, _event: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: addOosTimelineEvent');
   }
 
-  async performRootCauseAnalysis(id: number, analysis: any): Promise<any> {
-    return analysis;
+  async performRootCauseAnalysis(_id: number, _analysis: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: performRootCauseAnalysis');
   }
 
-  async linkCapaToOos(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToOos(_id: number, _capa: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: linkCapaToOos');
   }
 
   // Batch Release methods
@@ -1399,36 +1462,46 @@ export class MemStorage {
     return [];
   }
 
-  async getBatchRelease(id: number): Promise<any | undefined> {
+  async getBatchRelease(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
-  async createBatchRelease(release: any): Promise<any> {
-    return release;
+  async createBatchRelease(_release: any): Promise<any> {
+    // Not implemented — must not echo a GMP batch-release record back as if
+    // persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createBatchRelease');
   }
 
-  async updateBatchRelease(id: number, release: any): Promise<any> {
-    return release;
+  async updateBatchRelease(_id: number, _release: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateBatchRelease');
   }
 
-  async reviewBatchRecord(id: number, review: any): Promise<any> {
-    return review;
+  async reviewBatchRecord(_id: number, _review: any): Promise<any> {
+    // Not implemented — must not fabricate that a GMP batch-record review was
+    // recorded (the prior stub echoed the request back). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: reviewBatchRecord');
   }
 
-  async generateCertificateOfAnalysis(id: number): Promise<any> {
+  async generateCertificateOfAnalysis(_id: number): Promise<any> {
+    // Not implemented — a Certificate of Analysis is a released GMP quality
+    // document and must never be fabricated (the prior stub returned {}).
+    throw new Error('NOT_IMPLEMENTED: generateCertificateOfAnalysis');
+  }
+
+  async getBatchGenealogy(id: number, _organizationId: number | string): Promise<any> {
     return {};
   }
 
-  async getBatchGenealogy(id: number): Promise<any> {
-    return {};
+  async validateReleaseCriteria(_id: number): Promise<any> {
+    // Not implemented — must not return { valid: true } and falsely certify a
+    // batch meets release criteria (21 CFR Part 211 integrity). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: validateReleaseCriteria');
   }
 
-  async validateReleaseCriteria(id: number): Promise<any> {
-    return { valid: true };
-  }
-
-  async releaseBatch(id: number, params: any): Promise<any> {
-    return { released: true };
+  async releaseBatch(_id: number, _params: any): Promise<any> {
+    // Not implemented — must not report a GMP batch as released without a real
+    // disposition action (the prior stub returned { released: true }).
+    throw new Error('NOT_IMPLEMENTED: releaseBatch');
   }
 
   // QC Deviation methods
@@ -1441,24 +1514,26 @@ export class MemStorage {
     return [];
   }
 
-  async getQcDeviation(id: number): Promise<any | undefined> {
+  async getQcDeviation(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
-  async createQcDeviation(deviation: any): Promise<any> {
-    return deviation;
+  async createQcDeviation(_deviation: any): Promise<any> {
+    // Not implemented — a QC deviation is a regulated GMP record; must not echo
+    // the input back as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createQcDeviation');
   }
 
-  async updateQcDeviation(id: number, deviation: any): Promise<any> {
-    return deviation;
+  async updateQcDeviation(_id: number, _deviation: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateQcDeviation');
   }
 
-  async performImpactAssessment(id: number, assessment: any): Promise<any> {
-    return assessment;
+  async performImpactAssessment(_id: number, _assessment: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: performImpactAssessment');
   }
 
-  async linkCapaToDeviation(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToDeviation(_id: number, _capa: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: linkCapaToDeviation');
   }
 
   async getDeviationTrending(params: any): Promise<any> {
@@ -1475,28 +1550,34 @@ export class MemStorage {
     return [];
   }
 
-  async getMicrobiologicalTest(id: number): Promise<any | undefined> {
+  async getMicrobiologicalTest(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
-  async createMicrobiologicalTest(test: any): Promise<any> {
-    return test;
+  async createMicrobiologicalTest(_test: any): Promise<any> {
+    // Not implemented — must not echo a microbiological test record back as if
+    // persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createMicrobiologicalTest');
   }
 
-  async updateMicrobiologicalTest(id: number, test: any): Promise<any> {
-    return test;
+  async updateMicrobiologicalTest(_id: number, _test: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateMicrobiologicalTest');
   }
 
   async getEnvironmentalMonitoringSchedule(params: any): Promise<any> {
     return { schedule: [] };
   }
 
-  async createEnvironmentalMonitoringSchedule(schedule: any): Promise<any> {
-    return schedule;
+  async createEnvironmentalMonitoringSchedule(_schedule: any): Promise<any> {
+    // Not implemented — must not echo an environmental-monitoring schedule back
+    // as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createEnvironmentalMonitoringSchedule');
   }
 
-  async recordMicrobiologicalResults(id: number, results: any): Promise<any> {
-    return results;
+  async recordMicrobiologicalResults(_id: number, _results: any): Promise<any> {
+    // Not implemented — must not report micro results as recorded when nothing
+    // was persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: recordMicrobiologicalResults');
   }
 
   // Reference Standard methods
@@ -1509,41 +1590,49 @@ export class MemStorage {
     return [];
   }
 
-  async getReferenceStandard(id: number): Promise<any | undefined> {
+  async getReferenceStandard(id: number, _organizationId: number | string): Promise<any | undefined> {
     return undefined;
   }
 
-  async createReferenceStandard(standard: any): Promise<any> {
-    return standard;
+  async createReferenceStandard(_standard: any): Promise<any> {
+    // Not implemented — a reference standard is a regulated GMP record; must not
+    // echo the input back as if persisted. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: createReferenceStandard');
   }
 
-  async updateReferenceStandard(id: number, standard: any): Promise<any> {
-    return standard;
+  async updateReferenceStandard(_id: number, _standard: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: updateReferenceStandard');
   }
 
-  async recordStandardUsage(id: number, usage: any): Promise<any> {
-    return usage;
+  async recordStandardUsage(_id: number, _usage: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: recordStandardUsage');
   }
 
   async getExpiringStandards(params: any): Promise<any[]> {
     return [];
   }
 
-  async qualifyReferenceStandard(id: number, qualification: any): Promise<any> {
-    return qualification;
+  async qualifyReferenceStandard(_id: number, _qualification: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: qualifyReferenceStandard');
   }
 
-  async disposeReferenceStandard(id: number, disposal: any): Promise<any> {
-    return disposal;
+  async disposeReferenceStandard(_id: number, _disposal: any): Promise<any> {
+    throw new Error('NOT_IMPLEMENTED: disposeReferenceStandard');
   }
 
-  async getStandardUsageLogs(id: number): Promise<any[]> {
+  async getStandardUsageLogs(id: number, _organizationId: number | string): Promise<any[]> {
     return [];
   }
 
   // Section Graph methods - in-memory implementation
-  async getSection(id: number): Promise<schema.Section | undefined> {
-    return this.sections.find(s => s.id === id);
+  async getSection(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.Section | undefined> {
+    const orgId = Number(organizationId);
+    return this.sections.find(
+      s => s.id === id && Number((s as any).organizationId) === orgId,
+    );
   }
 
   async getSections(
@@ -1672,8 +1761,14 @@ export class MemStorage {
   }
 
   // Section Leaf methods
-  async getSectionLeaf(id: number): Promise<schema.SectionLeaf | undefined> {
-    return this.sectionLeaves.find(sl => sl.id === id);
+  async getSectionLeaf(
+    id: number,
+    organizationId: number | string,
+  ): Promise<schema.SectionLeaf | undefined> {
+    const orgId = Number(organizationId);
+    return this.sectionLeaves.find(
+      sl => sl.id === id && Number((sl as any).organizationId) === orgId,
+    );
   }
 
   async getSectionLeaves(
@@ -2265,15 +2360,29 @@ export class DatabaseStorage {
   }
 
   // Document methods
-  async getDocument(id: string): Promise<schema.Document | undefined> {
+  async getDocument(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped lookup. The org filter is mandatory — a missing
+      // or non-finite orgId returns no rows, which is the safe default
+      // (better to surface "not found" than to silently widen the
+      // query).
+      if (!Number.isFinite(orgId)) return undefined;
       const documents = await db
         .select()
         .from(schema.documents)
-        .where(eq(schema.documents.id, numericId));
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        );
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document', { id, error });
@@ -2281,14 +2390,25 @@ export class DatabaseStorage {
     }
   }
 
-  async getDocumentByName(name: string): Promise<schema.Document | undefined> {
+  async getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
+      const orgId = Number(organizationId);
+      // Mandatory tenant filter — fail closed on a missing/non-finite org id.
+      if (!Number.isFinite(orgId)) return undefined;
       const documents = await db
         .select()
         .from(schema.documents)
-        .where(eq(schema.documents.title, name));
+        .where(
+          and(
+            eq(schema.documents.title, name),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        );
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document by name', { name, error });
@@ -2298,20 +2418,29 @@ export class DatabaseStorage {
 
   async getDocuments(
     options: {
+      organizationId: number | string;
       limit?: number;
       offset?: number;
       folderId?: string;
       status?: string;
       type?: string;
       search?: string;
-    } = {}
+    }
   ): Promise<schema.Document[]> {
     if (!db) return [];
 
-    const { limit = 20, offset = 0, status, type, search } = options;
+    const { organizationId, limit = 20, offset = 0, status, type, search } = options;
 
     try {
-      const conditions = [] as any[];
+      const orgId = Number(organizationId);
+      // Tenant scope is mandatory and fails closed: without a finite org
+      // id this returns no rows rather than enumerating every tenant's
+      // documents (the cross-tenant list IDOR this fix closes).
+      if (!Number.isFinite(orgId)) return [];
+
+      const conditions = [
+        eq(schema.documents.organizationId, orgId),
+      ] as any[];
 
       if (status) {
         conditions.push(eq(schema.documents.status, status));
@@ -2375,18 +2504,28 @@ export class DatabaseStorage {
 
   async updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped update — a non-finite org id matches no rows, so a
+      // cross-tenant id can never be mutated.
+      if (!Number.isFinite(orgId)) return undefined;
       const data = { ...(documentData as any), updatedAt: new Date() } as any;
 
       const results = await db
         .update(schema.documents)
         .set(data)
-        .where(eq(schema.documents.id, numericId))
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        )
         .returning();
 
       return results[0];
@@ -2396,14 +2535,22 @@ export class DatabaseStorage {
     }
   }
 
-  async deleteDocument(id: string): Promise<boolean> {
+  async deleteDocument(id: string, organizationId: number | string): Promise<boolean> {
     if (!db) return false;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped delete — fail closed on a missing/non-finite org id.
+      if (!Number.isFinite(orgId)) return false;
       const results = await db
         .delete(schema.documents)
-        .where(eq(schema.documents.id, numericId))
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        )
         .returning({ id: schema.documents.id });
 
       return results.length > 0;
@@ -2437,15 +2584,25 @@ export class DatabaseStorage {
     }
   }
 
-  async getFolder(id: string): Promise<schema.DocumentFolder | undefined> {
+  async getFolder(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.DocumentFolder | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      if (!Number.isFinite(orgId)) return undefined;
       const folders = await db
         .select()
         .from(schema.documentFolders)
-        .where(eq(schema.documentFolders.id, numericId));
+        .where(
+          and(
+            eq(schema.documentFolders.id, numericId),
+            eq(schema.documentFolders.organizationId, orgId),
+          ),
+        );
 
       return folders[0];
     } catch (error) {
@@ -2525,15 +2682,25 @@ export class DatabaseStorage {
   }
 
   // CER Report methods
-  async getCerReport(id: string): Promise<schema.CerReport | undefined> {
+  async getCerReport(
+    id: string,
+    organizationId: number | string,
+  ): Promise<schema.CerReport | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      if (!Number.isFinite(orgId)) return undefined;
       const reports = await db
         .select()
         .from(schema.cerReports)
-        .where(eq(schema.cerReports.id, numericId));
+        .where(
+          and(
+            eq(schema.cerReports.id, numericId),
+            eq(schema.cerReports.organizationId, orgId),
+          ),
+        );
       return reports[0];
     } catch (error) {
       logger.error('Failed to get CER report', { id, error });
@@ -3438,24 +3605,50 @@ export class DatabaseStorage {
     }
   }
 
-  // QC Specification methods
+  // ── QC Specification methods ──
   async getQcSpecifications(params: {
     organizationId: number;
     clientWorkspaceId: number;
   }): Promise<any[]> {
-    return [];
+    return await db
+      .select()
+      .from(qcSpecifications)
+      .where(
+        and(
+          eq(qcSpecifications.organizationId, params.organizationId),
+          eq(qcSpecifications.clientWorkspaceId, params.clientWorkspaceId)
+        )
+      )
+      .orderBy(desc(qcSpecifications.createdAt));
   }
 
-  async getQcSpecification(id: number): Promise<any | undefined> {
-    return undefined;
+  async getQcSpecification(id: number, organizationId: number | string): Promise<any | undefined> {
+    const [row] = await db
+      .select()
+      .from(qcSpecifications)
+      .where(
+        and(
+          eq(qcSpecifications.id, id),
+          eq(qcSpecifications.organizationId, Number(organizationId))
+        )
+      )
+      .limit(1);
+    return row;
   }
 
   async createQcSpecification(spec: any): Promise<any> {
-    return spec;
+    const [row] = await db.insert(qcSpecifications).values(spec).returning();
+    return row;
   }
 
   async updateQcSpecification(id: number, spec: any): Promise<any> {
-    return spec;
+    const [row] = await db
+      .update(qcSpecifications)
+      .set({ ...spec, updatedAt: new Date() })
+      .where(eq(qcSpecifications.id, id))
+      .returning();
+    if (!row) throw new Error(`QC specification ${id} not found`);
+    return row;
   }
 
   async createSpecificationVersion(
@@ -3463,196 +3656,567 @@ export class DatabaseStorage {
     changeReason: string,
     changeDescription: string
   ): Promise<any> {
-    return {};
+    // Change-control: clone the current spec as a new draft version, link it to
+    // its predecessor, and supersede the prior version. Fails closed if absent.
+    const [current] = await db
+      .select()
+      .from(qcSpecifications)
+      .where(eq(qcSpecifications.id, id))
+      .limit(1);
+    if (!current) throw new Error(`QC specification ${id} not found`);
+    const { id: _omit, createdAt: _c, updatedAt: _u, version, ...rest } = current as any;
+    const nextVersion = (() => {
+      const n = parseFloat(String(version ?? '1.0'));
+      return Number.isFinite(n) ? (n + 0.1).toFixed(1) : '1.0';
+    })();
+    const [row] = await db
+      .insert(qcSpecifications)
+      .values({
+        ...rest,
+        version: nextVersion,
+        versionStatus: 'draft',
+        status: 'draft',
+        previousVersionId: id,
+        changeReason,
+        changeDescription,
+      })
+      .returning();
+    await db
+      .update(qcSpecifications)
+      .set({ versionStatus: 'superseded', updatedAt: new Date() })
+      .where(eq(qcSpecifications.id, id));
+    return row;
   }
 
-  async getSpecificationVersions(id: number): Promise<any[]> {
-    return [];
+  async getSpecificationVersions(id: number, organizationId: number | string): Promise<any[]> {
+    const [spec] = await db
+      .select()
+      .from(qcSpecifications)
+      .where(eq(qcSpecifications.id, id))
+      .limit(1);
+    if (!spec) return [];
+    return await db
+      .select()
+      .from(qcSpecifications)
+      .where(
+        and(
+          eq(qcSpecifications.specNumber, (spec as any).specNumber),
+          eq(qcSpecifications.organizationId, Number(organizationId))
+        )
+      )
+      .orderBy(desc(qcSpecifications.createdAt));
   }
 
-  // OOS Investigation methods
+  // ── OOS Investigation methods ──
   async getOosInvestigations(params: {
     organizationId: number;
     clientWorkspaceId: number;
     status?: string;
     priority?: string;
   }): Promise<any[]> {
-    return [];
+    return await db
+      .select()
+      .from(qcOosInvestigations)
+      .where(
+        and(
+          eq(qcOosInvestigations.organizationId, params.organizationId),
+          eq(qcOosInvestigations.clientWorkspaceId, params.clientWorkspaceId),
+          params.status ? eq(qcOosInvestigations.investigationStatus, params.status) : undefined,
+          params.priority ? eq(qcOosInvestigations.priority, params.priority) : undefined
+        )
+      )
+      .orderBy(desc(qcOosInvestigations.createdAt));
   }
 
-  async getOosInvestigation(id: number): Promise<any | undefined> {
-    return undefined;
+  async getOosInvestigation(id: number, organizationId: number | string): Promise<any | undefined> {
+    const [row] = await db
+      .select()
+      .from(qcOosInvestigations)
+      .where(
+        and(
+          eq(qcOosInvestigations.id, id),
+          eq(qcOosInvestigations.organizationId, Number(organizationId))
+        )
+      )
+      .limit(1);
+    return row;
   }
 
   async createOosInvestigation(investigation: any): Promise<any> {
-    return investigation;
+    const [row] = await db.insert(qcOosInvestigations).values(investigation).returning();
+    return row;
   }
 
-  async updateOosInvestigation(id: number, investigation: any): Promise<any> {
-    return investigation;
+  async updateOosInvestigation(id: number, organizationId: number | string, investigation: any): Promise<any> {
+    const [row] = await db
+      .update(qcOosInvestigations)
+      .set({ ...investigation, updatedAt: new Date() })
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`OOS investigation ${id} not found`);
+    return row;
   }
 
-  async addOosTimelineEvent(id: number, event: any): Promise<any> {
-    return event;
+  async addOosTimelineEvent(id: number, organizationId: number | string, event: any): Promise<any> {
+    const [current] = await db
+      .select()
+      .from(qcOosInvestigations)
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
+      .limit(1);
+    if (!current) throw new Error(`OOS investigation ${id} not found`);
+    const timeline = Array.isArray((current as any).timeline) ? (current as any).timeline : [];
+    timeline.push(event);
+    const [row] = await db
+      .update(qcOosInvestigations)
+      .set({ timeline, updatedAt: new Date() })
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
+      .returning();
+    return row;
   }
 
-  async performRootCauseAnalysis(id: number, analysis: any): Promise<any> {
-    return analysis;
+  async performRootCauseAnalysis(id: number, organizationId: number | string, analysis: any): Promise<any> {
+    const [row] = await db
+      .update(qcOosInvestigations)
+      .set({
+        rootCauseIdentified: true,
+        rootCauseAnalysisMethod: analysis?.method,
+        rootCauseCategory: analysis?.category,
+        rootCauseDescription: analysis?.description,
+        rootCauseDetails: analysis?.details,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`OOS investigation ${id} not found`);
+    return row;
   }
 
-  async linkCapaToOos(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToOos(id: number, organizationId: number | string, capa: any): Promise<any> {
+    const [row] = await db
+      .update(qcOosInvestigations)
+      .set({
+        capaRequired: true,
+        capaNumber: capa?.capaNumber,
+        correctiveActions: capa?.correctiveActions,
+        preventiveActions: capa?.preventiveActions,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`OOS investigation ${id} not found`);
+    return row;
   }
 
-  // Batch Release methods
+  // ── Batch Release methods ──
   async getBatchReleases(params: {
     organizationId: number;
     clientWorkspaceId: number;
     releaseStatus?: string;
   }): Promise<any[]> {
-    return [];
+    return await db
+      .select()
+      .from(qcBatchReleases)
+      .where(
+        and(
+          eq(qcBatchReleases.organizationId, params.organizationId),
+          eq(qcBatchReleases.clientWorkspaceId, params.clientWorkspaceId),
+          params.releaseStatus ? eq(qcBatchReleases.releaseStatus, params.releaseStatus) : undefined
+        )
+      )
+      .orderBy(desc(qcBatchReleases.createdAt));
   }
 
-  async getBatchRelease(id: number): Promise<any | undefined> {
-    return undefined;
+  async getBatchRelease(id: number, organizationId: number | string): Promise<any | undefined> {
+    const [row] = await db
+      .select()
+      .from(qcBatchReleases)
+      .where(
+        and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId)))
+      )
+      .limit(1);
+    return row;
   }
 
   async createBatchRelease(release: any): Promise<any> {
-    return release;
+    const [row] = await db.insert(qcBatchReleases).values(release).returning();
+    return row;
   }
 
-  async updateBatchRelease(id: number, release: any): Promise<any> {
-    return release;
+  async updateBatchRelease(id: number, organizationId: number | string, release: any): Promise<any> {
+    const [row] = await db
+      .update(qcBatchReleases)
+      .set({ ...release, updatedAt: new Date() })
+      .where(and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`Batch release ${id} not found`);
+    return row;
   }
 
-  async reviewBatchRecord(id: number, review: any): Promise<any> {
-    return review;
+  async reviewBatchRecord(id: number, organizationId: number | string, review: any): Promise<any> {
+    const [row] = await db
+      .update(qcBatchReleases)
+      .set({ batchRecordReview: review, batchRecordStatus: 'reviewed', updatedAt: new Date() })
+      .where(and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`Batch release ${id} not found`);
+    return row;
   }
 
-  async generateCertificateOfAnalysis(id: number): Promise<any> {
-    return {};
+  async generateCertificateOfAnalysis(_id: number): Promise<any> {
+    // Not implemented — a Certificate of Analysis is a released GMP quality
+    // document aggregating real test results; must never be fabricated. Fail closed.
+    throw new Error('NOT_IMPLEMENTED: generateCertificateOfAnalysis');
   }
 
-  async getBatchGenealogy(id: number): Promise<any> {
-    return {};
+  async getBatchGenealogy(id: number, organizationId: number | string): Promise<any> {
+    const [row] = await db
+      .select({ genealogyData: qcBatchReleases.genealogyData })
+      .from(qcBatchReleases)
+      .where(
+        and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId)))
+      )
+      .limit(1);
+    return row?.genealogyData ?? {};
   }
 
-  async validateReleaseCriteria(id: number): Promise<any> {
-    return { valid: true };
+  async validateReleaseCriteria(_id: number): Promise<any> {
+    // Not implemented — must not certify a batch meets release criteria without
+    // a real evaluation (21 CFR Part 211 integrity). Fail closed.
+    throw new Error('NOT_IMPLEMENTED: validateReleaseCriteria');
   }
 
-  async releaseBatch(id: number, params: any): Promise<any> {
-    return { released: true };
+  async releaseBatch(id: number, organizationId: number | string, params: any): Promise<any> {
+    const [row] = await db
+      .update(qcBatchReleases)
+      .set({
+        releaseStatus: 'released',
+        releaseDecision: params?.releaseDecision ?? 'release',
+        releaseConditions: params?.releaseConditions,
+        releasedBy: params?.releasedBy,
+        releasedDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`Batch release ${id} not found`);
+    return row;
   }
 
-  // QC Deviation methods
+  // ── QC Deviation methods ──
   async getQcDeviations(params: {
     organizationId: number;
     clientWorkspaceId: number;
     deviationType?: string;
     severity?: string;
   }): Promise<any[]> {
-    return [];
+    return await db
+      .select()
+      .from(qcDeviations)
+      .where(
+        and(
+          eq(qcDeviations.organizationId, params.organizationId),
+          eq(qcDeviations.clientWorkspaceId, params.clientWorkspaceId),
+          params.deviationType ? eq(qcDeviations.deviationType, params.deviationType) : undefined,
+          params.severity ? eq(qcDeviations.classification, params.severity) : undefined
+        )
+      )
+      .orderBy(desc(qcDeviations.createdAt));
   }
 
-  async getQcDeviation(id: number): Promise<any | undefined> {
-    return undefined;
+  async getQcDeviation(id: number, organizationId: number | string): Promise<any | undefined> {
+    const [row] = await db
+      .select()
+      .from(qcDeviations)
+      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
+      .limit(1);
+    return row;
   }
 
   async createQcDeviation(deviation: any): Promise<any> {
-    return deviation;
+    const [row] = await db.insert(qcDeviations).values(deviation).returning();
+    return row;
   }
 
-  async updateQcDeviation(id: number, deviation: any): Promise<any> {
-    return deviation;
+  async updateQcDeviation(id: number, organizationId: number | string, deviation: any): Promise<any> {
+    const [row] = await db
+      .update(qcDeviations)
+      .set({ ...deviation, updatedAt: new Date() })
+      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`QC deviation ${id} not found`);
+    return row;
   }
 
-  async performImpactAssessment(id: number, assessment: any): Promise<any> {
-    return assessment;
+  async performImpactAssessment(id: number, organizationId: number | string, assessment: any): Promise<any> {
+    const [row] = await db
+      .update(qcDeviations)
+      .set({
+        impactAssessment: assessment,
+        impactLevel: assessment?.impactLevel ?? assessment?.riskLevel,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`QC deviation ${id} not found`);
+    return row;
   }
 
-  async linkCapaToDeviation(id: number, capa: any): Promise<any> {
-    return capa;
+  async linkCapaToDeviation(id: number, organizationId: number | string, capa: any): Promise<any> {
+    const [row] = await db
+      .update(qcDeviations)
+      .set({
+        capaRequired: true,
+        capaNumber: capa?.capaNumber,
+        correctiveActions: capa?.correctiveActions,
+        preventiveActions: capa?.preventiveActions,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`QC deviation ${id} not found`);
+    return row;
   }
 
   async getDeviationTrending(params: any): Promise<any> {
-    return { trends: [] };
+    const rows = await db
+      .select()
+      .from(qcDeviations)
+      .where(eq(qcDeviations.organizationId, Number(params?.organizationId)))
+      .orderBy(desc(qcDeviations.createdAt));
+    const byCategory: Record<string, number> = {};
+    const byClassification: Record<string, number> = {};
+    for (const r of rows as any[]) {
+      if (params?.category && r.category !== params.category) continue;
+      if (r.category) byCategory[r.category] = (byCategory[r.category] || 0) + 1;
+      if (r.classification)
+        byClassification[r.classification] = (byClassification[r.classification] || 0) + 1;
+    }
+    const trends = Object.entries(byCategory).map(([category, count]) => ({ category, count }));
+    return { total: rows.length, trends, byClassification };
   }
 
-  // Microbiological Test methods
+  // ── Microbiological Test methods ──
   async getMicrobiologicalTests(params: {
     organizationId: number;
     clientWorkspaceId: number;
     testType?: string;
     sampleType?: string;
   }): Promise<any[]> {
-    return [];
+    return await db
+      .select()
+      .from(qcMicrobiologicalTests)
+      .where(
+        and(
+          eq(qcMicrobiologicalTests.organizationId, params.organizationId),
+          eq(qcMicrobiologicalTests.clientWorkspaceId, params.clientWorkspaceId),
+          params.testType ? eq(qcMicrobiologicalTests.testType, params.testType) : undefined,
+          params.sampleType ? eq(qcMicrobiologicalTests.sampleType, params.sampleType) : undefined
+        )
+      )
+      .orderBy(desc(qcMicrobiologicalTests.createdAt));
   }
 
-  async getMicrobiologicalTest(id: number): Promise<any | undefined> {
-    return undefined;
+  async getMicrobiologicalTest(id: number, organizationId: number | string): Promise<any | undefined> {
+    const [row] = await db
+      .select()
+      .from(qcMicrobiologicalTests)
+      .where(
+        and(
+          eq(qcMicrobiologicalTests.id, id),
+          eq(qcMicrobiologicalTests.organizationId, Number(organizationId))
+        )
+      )
+      .limit(1);
+    return row;
   }
 
   async createMicrobiologicalTest(test: any): Promise<any> {
-    return test;
+    const [row] = await db.insert(qcMicrobiologicalTests).values(test).returning();
+    return row;
   }
 
-  async updateMicrobiologicalTest(id: number, test: any): Promise<any> {
-    return test;
+  async updateMicrobiologicalTest(id: number, organizationId: number | string, test: any): Promise<any> {
+    const [row] = await db
+      .update(qcMicrobiologicalTests)
+      .set({ ...test, updatedAt: new Date() })
+      .where(and(eq(qcMicrobiologicalTests.id, id), eq(qcMicrobiologicalTests.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`Microbiological test ${id} not found`);
+    return row;
   }
 
   async getEnvironmentalMonitoringSchedule(params: any): Promise<any> {
-    return { schedule: [] };
+    const rows = await db
+      .select()
+      .from(qcMicrobiologicalTests)
+      .where(
+        and(
+          eq(qcMicrobiologicalTests.organizationId, Number(params?.organizationId)),
+          eq(qcMicrobiologicalTests.scheduledTest, true)
+        )
+      )
+      .orderBy(qcMicrobiologicalTests.nextScheduledDate);
+    return { schedule: rows };
   }
 
-  async createEnvironmentalMonitoringSchedule(schedule: any): Promise<any> {
-    return schedule;
+  async createEnvironmentalMonitoringSchedule(_schedule: any): Promise<any> {
+    // Not implemented — there is no dedicated EM-schedule table; schedules are
+    // expressed via scheduledTest/scheduleFrequency on individual micro tests.
+    // Fail closed rather than fabricate a persisted schedule object.
+    throw new Error('NOT_IMPLEMENTED: createEnvironmentalMonitoringSchedule');
   }
 
-  async recordMicrobiologicalResults(id: number, results: any): Promise<any> {
-    return results;
+  async recordMicrobiologicalResults(id: number, organizationId: number | string, results: any): Promise<any> {
+    const [row] = await db
+      .update(qcMicrobiologicalTests)
+      .set({
+        rawData: results?.rawData ?? results,
+        calculatedResults: results?.calculatedResults,
+        result: results?.result,
+        testStatus: 'completed',
+        testEndDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(qcMicrobiologicalTests.id, id), eq(qcMicrobiologicalTests.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`Microbiological test ${id} not found`);
+    return row;
   }
 
-  // Reference Standard methods
+  // ── Reference Standard methods ──
   async getReferenceStandards(params: {
     organizationId: number;
     clientWorkspaceId: number;
     standardType?: string;
     status?: string;
   }): Promise<any[]> {
-    return [];
+    return await db
+      .select()
+      .from(qcReferenceStandards)
+      .where(
+        and(
+          eq(qcReferenceStandards.organizationId, params.organizationId),
+          eq(qcReferenceStandards.clientWorkspaceId, params.clientWorkspaceId),
+          params.standardType ? eq(qcReferenceStandards.standardType, params.standardType) : undefined,
+          params.status ? eq(qcReferenceStandards.status, params.status) : undefined
+        )
+      )
+      .orderBy(desc(qcReferenceStandards.createdAt));
   }
 
-  async getReferenceStandard(id: number): Promise<any | undefined> {
-    return undefined;
+  async getReferenceStandard(id: number, organizationId: number | string): Promise<any | undefined> {
+    const [row] = await db
+      .select()
+      .from(qcReferenceStandards)
+      .where(
+        and(
+          eq(qcReferenceStandards.id, id),
+          eq(qcReferenceStandards.organizationId, Number(organizationId))
+        )
+      )
+      .limit(1);
+    return row;
   }
 
   async createReferenceStandard(standard: any): Promise<any> {
-    return standard;
+    const [row] = await db.insert(qcReferenceStandards).values(standard).returning();
+    return row;
   }
 
-  async updateReferenceStandard(id: number, standard: any): Promise<any> {
-    return standard;
+  async updateReferenceStandard(id: number, organizationId: number | string, standard: any): Promise<any> {
+    const [row] = await db
+      .update(qcReferenceStandards)
+      .set({ ...standard, updatedAt: new Date() })
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
+      .returning();
+    if (!row) throw new Error(`Reference standard ${id} not found`);
+    return row;
   }
 
-  async recordStandardUsage(id: number, usage: any): Promise<any> {
-    return usage;
+  async recordStandardUsage(id: number, organizationId: number | string, usage: any): Promise<any> {
+    const [current] = await db
+      .select()
+      .from(qcReferenceStandards)
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
+      .limit(1);
+    if (!current) throw new Error(`Reference standard ${id} not found`);
+    const cur = current as any;
+    const logs = Array.isArray(cur.usageLogs) ? cur.usageLogs : [];
+    logs.push({ ...usage, date: usage?.date ?? new Date() });
+    const usedQty = Number(usage?.quantity ?? 0);
+    const remaining =
+      cur.currentQuantity != null ? Number(cur.currentQuantity) - usedQty : null;
+    const [row] = await db
+      .update(qcReferenceStandards)
+      .set({
+        usageLogs: logs,
+        usageCount: (cur.usageCount ?? 0) + 1,
+        lastUsedDate: new Date(),
+        currentQuantity: remaining != null ? String(remaining) : cur.currentQuantity,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
+      .returning();
+    return row;
   }
 
   async getExpiringStandards(params: any): Promise<any[]> {
-    return [];
+    const rows = await db
+      .select()
+      .from(qcReferenceStandards)
+      .where(eq(qcReferenceStandards.organizationId, Number(params?.organizationId)))
+      .orderBy(qcReferenceStandards.expiryDate);
+    const horizonDays = Number(params?.days ?? 90);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + horizonDays);
+    return (rows as any[]).filter(r => r.expiryDate && new Date(r.expiryDate) <= cutoff);
   }
 
   async qualifyReferenceStandard(id: number, qualification: any): Promise<any> {
-    return qualification;
+    const [row] = await db
+      .update(qcReferenceStandards)
+      .set({
+        qualificationStatus: 'qualified',
+        qualificationDate: qualification?.qualificationDate ?? new Date().toISOString().slice(0, 10),
+        qualificationData: qualification,
+        updatedAt: new Date(),
+      })
+      .where(eq(qcReferenceStandards.id, id))
+      .returning();
+    if (!row) throw new Error(`Reference standard ${id} not found`);
+    return row;
   }
 
   async disposeReferenceStandard(id: number, disposal: any): Promise<any> {
-    return disposal;
+    const [row] = await db
+      .update(qcReferenceStandards)
+      .set({
+        status: 'disposed',
+        disposalRequired: true,
+        disposalDate: disposal?.disposalDate ?? new Date().toISOString().slice(0, 10),
+        disposalMethod: disposal?.disposalMethod,
+        disposedBy: disposal?.disposedBy,
+        disposalReason: disposal?.disposalReason,
+        updatedAt: new Date(),
+      })
+      .where(eq(qcReferenceStandards.id, id))
+      .returning();
+    if (!row) throw new Error(`Reference standard ${id} not found`);
+    return row;
   }
 
-  async getStandardUsageLogs(id: number): Promise<any[]> {
-    return [];
+  async getStandardUsageLogs(id: number, organizationId: number | string): Promise<any[]> {
+    const [row] = await db
+      .select({ usageLogs: qcReferenceStandards.usageLogs })
+      .from(qcReferenceStandards)
+      .where(
+        and(
+          eq(qcReferenceStandards.id, id),
+          eq(qcReferenceStandards.organizationId, Number(organizationId))
+        )
+      )
+      .limit(1);
+    return Array.isArray(row?.usageLogs) ? (row!.usageLogs as any[]) : [];
   }
 
   // Health check

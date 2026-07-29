@@ -13,6 +13,47 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { assertSafePublicUrl } from '../../utils/ssrfGuard.js';
+
+/**
+ * Escape a value for safe interpolation into a VQL single-quoted string
+ * literal. VQL (like SQL) escapes a single quote by doubling it. Without this,
+ * a value containing an apostrophe — a real indication/drug name like
+ * "Crohn's", or hostile input — produces malformed VQL or an injection.
+ */
+export function escapeVqlLiteral(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+/**
+ * Build the document-search VQL for a connector query. Pure and exported so the
+ * escaping + clause-assembly contract is unit-testable. Every user-supplied
+ * value is escaped; the limit is coerced to a positive integer (default 20).
+ */
+export function buildDocumentVql(query: ConnectorQuery): string {
+  const conditions: string[] = [];
+  if (query.indication) {
+    conditions.push(`product__v CONTAINS '${escapeVqlLiteral(query.indication)}'`);
+  }
+  if (query.therapeuticArea) {
+    conditions.push(`therapeutic_area__c CONTAINS '${escapeVqlLiteral(query.therapeuticArea)}'`);
+  }
+  const keywords = (query.keywords ?? []).map(k => k.trim()).filter(Boolean);
+  if (keywords.length) {
+    const ors = keywords.map(k => `name__v CONTAINS '${escapeVqlLiteral(k)}'`).join(' OR ');
+    conditions.push(`(${ors})`);
+  }
+
+  const fromClause =
+    conditions.length > 0 ? `FROM documents WHERE ${conditions.join(' AND ')}` : 'FROM documents';
+  const limit =
+    Number.isFinite(query.limit) && (query.limit as number) > 0 ? Math.floor(query.limit as number) : 20;
+
+  return (
+    `SELECT id, name__v, type__v, subtype__v, status__v, product__v, version_created_date__v ` +
+    `${fromClause} ORDER BY version_created_date__v DESC LIMIT ${limit}`
+  );
+}
 
 export class VeevaVaultConnector implements DataConnector {
   id = 'veeva_vault';
@@ -24,13 +65,29 @@ export class VeevaVaultConnector implements DataConnector {
   private baseUrl = '';
   private sessionId = '';
 
+  /**
+   * SSRF guard at the outbound sink. baseUrl is tenant-supplied and reused for
+   * every request — re-validate the effective URL before each fetch so a
+   * private/loopback/metadata host (incl. one reached via DNS rebinding after
+   * storage) can never be hit. Throws if unsafe.
+   */
+  private safeFetch(url: string, init?: RequestInit): Promise<Response> {
+    assertSafePublicUrl(url, 'Veeva Vault request');
+    // Bound every outbound call so a hung Vault tenant can't pin the worker
+    // indefinitely. Uploads (multipart) are heavier, so use a generous 30s
+    // default (override via VEEVA_TIMEOUT_MS). Respect a caller-supplied signal.
+    const timeoutMs = Number(process.env.VEEVA_TIMEOUT_MS || 30000);
+    const signal = init?.signal ?? AbortSignal.timeout(timeoutMs);
+    return fetch(url, { ...init, signal });
+  }
+
   async status(): Promise<ConnectorHealth> {
     if (!this.baseUrl || !this.sessionId) {
       return { status: 'unavailable', lastChecked: new Date(), message: 'Not configured — provide Vault credentials' };
     }
     try {
       const start = Date.now();
-      const res = await fetch(`${this.baseUrl}/api/v24.0/metadata/objects`, {
+      const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/metadata/objects`, {
         headers: { Authorization: this.sessionId },
       });
       return { status: res.ok ? 'healthy' : 'degraded', latencyMs: Date.now() - start, lastChecked: new Date() };
@@ -42,18 +99,11 @@ export class VeevaVaultConnector implements DataConnector {
   async search(query: ConnectorQuery): Promise<ConnectorResult[]> {
     if (!this.baseUrl || !this.sessionId) return [];
 
-    // Veeva VQL query for documents
-    const conditions: string[] = [];
-    if (query.indication) conditions.push(`product__v CONTAINS '${query.indication}'`);
-    if (query.therapeuticArea) conditions.push(`therapeutic_area__c CONTAINS '${query.therapeuticArea}'`);
-    if (query.keywords?.length) {
-      conditions.push(`(name__v CONTAINS '${query.keywords.join("' OR name__v CONTAINS '")}')`);
-    }
+    // Veeva VQL query for documents. Built via buildDocumentVql so every
+    // user-supplied value is escaped (apostrophes break/inject the VQL).
+    const vql = buildDocumentVql(query);
 
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const vql = `SELECT id, name__v, type__v, subtype__v, status__v, product__v, version_created_date__v FROM documents ${where} ORDER BY version_created_date__v DESC LIMIT ${query.limit || 20}`;
-
-    const res = await fetch(`${this.baseUrl}/api/v24.0/query?q=${encodeURIComponent(vql)}`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/query?q=${encodeURIComponent(vql)}`, {
       headers: { Authorization: this.sessionId },
     });
 
@@ -65,7 +115,9 @@ export class VeevaVaultConnector implements DataConnector {
       sourceConnector: this.id,
       title: doc.name__v || 'Untitled',
       summary: `${doc.type__v || ''} / ${doc.subtype__v || ''} | Status: ${doc.status__v || ''} | Product: ${doc.product__v || ''}`,
-      relevanceScore: 1 - i * 0.05,
+      // Rank descending by position, floored at 0 so large result sets never
+      // emit a negative relevance.
+      relevanceScore: Math.max(0, 1 - i * 0.05),
       metadata: doc,
       url: `${this.baseUrl}/ui/#doc/${doc.id}`,
     }));
@@ -74,7 +126,7 @@ export class VeevaVaultConnector implements DataConnector {
   async fetch(resourceId: string): Promise<ConnectorDocument> {
     const vaultId = resourceId.replace('veeva:', '');
 
-    const res = await fetch(`${this.baseUrl}/api/v24.0/objects/documents/${vaultId}`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/objects/documents/${vaultId}`, {
       headers: { Authorization: this.sessionId },
     });
     if (!res.ok) throw new Error(`Veeva Vault document ${vaultId} not found`);
@@ -94,11 +146,13 @@ export class VeevaVaultConnector implements DataConnector {
 
   async authenticate(credentials: ConnectorCredentials): Promise<void> {
     if (!credentials.baseUrl) throw new Error('Veeva Vault base URL required');
+    // SSRF guard: reject a private/metadata base URL before any outbound call.
+    assertSafePublicUrl(credentials.baseUrl, 'Veeva Vault base URL');
     this.baseUrl = credentials.baseUrl.replace(/\/$/, '');
 
     if (credentials.username && credentials.password) {
       // Username/password auth
-      const res = await fetch(`${this.baseUrl}/api/v24.0/auth`, {
+      const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `username=${encodeURIComponent(credentials.username)}&password=${encodeURIComponent(credentials.password)}`,
@@ -152,7 +206,7 @@ export class VeevaVaultConnector implements DataConnector {
       Buffer.from(`\r\n--${boundary}--`),
     ]);
 
-    const res = await fetch(`${this.baseUrl}/api/v24.0/objects/documents`, {
+    const res = await this.safeFetch(`${this.baseUrl}/api/v24.0/objects/documents`, {
       method: 'POST',
       headers: {
         Authorization: this.sessionId,

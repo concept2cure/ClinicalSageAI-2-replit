@@ -1,6 +1,7 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
-import { dynamicContentAssembly } from '../services/DynamicContentAssembly.js';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { dynamicContentAssembly, type AssemblyIdentity } from '../services/DynamicContentAssembly.js';
+import { authedOrgId } from '../utils/authedOrgId.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('content-assembly');
@@ -18,19 +19,25 @@ function authenticateSse(req: express.Request, res: express.Response): boolean {
     res.status(401).json({ success: false, error: 'Bearer token required' });
     return false;
   }
-  const jwtSecret = process.env.JWT_SECRET || process.env.AUTH_JWT_SECRET;
-  if (!jwtSecret) {
-    res.status(500).json({ success: false, error: 'Server misconfiguration: missing JWT secret' });
-    return false;
-  }
   try {
-    const jwtAlgorithm = process.env.JWT_ALGORITHM || 'HS256';
-    jwt.verify(auth.slice(7), jwtSecret, { algorithms: [jwtAlgorithm] });
+    verifyJwtWithRotation(auth.slice(7));
     return true;
   } catch {
     res.status(401).json({ success: false, error: 'Invalid authentication token' });
     return false;
   }
+}
+
+/**
+ * Resolve the authenticated user/org identity from the request (populated by
+ * the global /api auth gate). Returns undefined when either is missing —
+ * the assembly service then skips DB persistence rather than fabricating ids.
+ */
+function resolveAssemblyIdentity(req: express.Request): AssemblyIdentity | undefined {
+  const organizationId = authedOrgId(req);
+  const userId = Number((req as any).user?.id ?? (req as any).userId);
+  if (organizationId == null || !Number.isFinite(userId)) return undefined;
+  return { userId, organizationId };
 }
 
 function resolveSseOrigin(req: express.Request): string | null {
@@ -57,7 +64,7 @@ router.post('/assemble/:projectId', async (req, res) => {
     const assembly = await dynamicContentAssembly.assembleDocument(
       parseInt(projectId),
       documentType,
-      options
+      { ...options, identity: resolveAssemblyIdentity(req) }
     );
     
     res.json({
@@ -109,9 +116,10 @@ router.get('/preview/:projectId/:documentType', async (req, res) => {
     const preview = await dynamicContentAssembly.generatePreview(
       parseInt(projectId),
       documentType,
-      format
+      format,
+      resolveAssemblyIdentity(req)
     );
-    
+
     // Set appropriate content type
     let contentType = 'text/html';
     if (format === 'markdown') contentType = 'text/markdown';
@@ -200,7 +208,8 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
     const preview = await dynamicContentAssembly.generatePreview(
       parseInt(projectId),
       documentType,
-      'html'
+      'html',
+      resolveAssemblyIdentity(req)
     );
     
     res.write(`data: ${JSON.stringify({
@@ -218,7 +227,8 @@ router.get('/live-preview/:projectId/:documentType', async (req, res) => {
       const preview = await dynamicContentAssembly.generatePreview(
         parseInt(projectId),
         documentType,
-        'html'
+        'html',
+        resolveAssemblyIdentity(req)
       );
       
       const report = await dynamicContentAssembly.getCompletenessReport(

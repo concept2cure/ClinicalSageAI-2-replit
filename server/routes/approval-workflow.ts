@@ -14,12 +14,15 @@
  */
 
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config/environment';
 import { approvalOrchestrator } from '../services/workflow/ApprovalOrchestrator';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
 import { workflowTemplates, workflowSteps } from '../../shared/schema/unified_workflow';
+
+import { createScopedLogger } from '../utils/logger.js';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+
+const logger = createScopedLogger('approval-workflow');
 
 const router = Router();
 
@@ -38,13 +41,14 @@ function getUser(req: Request): { userId: string; organizationId: string } | nul
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       organizationId?: string;
     };
+    if (decoded.organizationId === undefined) return null;
     return {
       userId: decoded.userId,
-      organizationId: decoded.organizationId,
+      organizationId: decoded.organizationId ?? '',
     };
   } catch {
     return null;
@@ -93,7 +97,7 @@ router.post('/start', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Start error:', message);
+    logger.error('Start error', { err: message });
     return res.status(400).json({ error: message });
   }
 });
@@ -107,7 +111,7 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const approvalId = parseInt(req.params.id);
+    const approvalId = parseInt(String(req.params.id), 10);
     const { comments } = req.body;
 
     const result = await approvalOrchestrator.processApproval({
@@ -128,7 +132,7 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Approve error:', message);
+    logger.error('Approve error', { err: message });
     return res.status(400).json({ error: message });
   }
 });
@@ -142,7 +146,7 @@ router.post('/:id/reject', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const approvalId = parseInt(req.params.id);
+    const approvalId = parseInt(String(req.params.id), 10);
     const { comments } = req.body;
 
     if (!comments) {
@@ -165,7 +169,7 @@ router.post('/:id/reject', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Reject error:', message);
+    logger.error('Reject error', { err: message });
     return res.status(400).json({ error: message });
   }
 });
@@ -179,7 +183,7 @@ router.post('/:id/delegate', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const approvalId = parseInt(req.params.id);
+    const approvalId = parseInt(String(req.params.id), 10);
     const { delegateTo, reason } = req.body;
 
     if (!delegateTo) {
@@ -201,7 +205,7 @@ router.post('/:id/delegate', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Delegate error:', message);
+    logger.error('Delegate error', { err: message });
     return res.status(400).json({ error: message });
   }
 });
@@ -227,7 +231,7 @@ router.get('/pending', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Pending error:', message);
+    logger.error('Pending error', { err: message });
     return res.status(500).json({ error: 'Failed to fetch pending approvals' });
   }
 });
@@ -241,7 +245,7 @@ router.get('/:workflowId/status', async (req: Request, res: Response) => {
   if (!user) return;
 
   try {
-    const workflowId = parseInt(req.params.workflowId);
+    const workflowId = parseInt(String(req.params.workflowId), 10);
     const status = await approvalOrchestrator.getWorkflowStatus(workflowId);
 
     if (!status) {
@@ -251,7 +255,7 @@ router.get('/:workflowId/status', async (req: Request, res: Response) => {
     return res.json({ success: true, workflow: status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Status error:', message);
+    logger.error('Status error', { err: message });
     return res.status(500).json({ error: 'Failed to fetch workflow status' });
   }
 });
@@ -266,6 +270,7 @@ router.get('/templates', async (req: Request, res: Response) => {
 
   try {
     const { moduleType } = req.query;
+    const orgId = Number(user.organizationId);
 
     let templates;
     if (moduleType) {
@@ -274,7 +279,7 @@ router.get('/templates', async (req: Request, res: Response) => {
         .from(workflowTemplates)
         .where(
           and(
-            eq(workflowTemplates.organizationId, user.organizationId),
+            eq(workflowTemplates.organizationId, orgId),
             eq(workflowTemplates.isActive, true),
             eq(workflowTemplates.moduleType, moduleType as any),
           ),
@@ -285,7 +290,7 @@ router.get('/templates', async (req: Request, res: Response) => {
         .from(workflowTemplates)
         .where(
           and(
-            eq(workflowTemplates.organizationId, user.organizationId),
+            eq(workflowTemplates.organizationId, orgId),
             eq(workflowTemplates.isActive, true),
           ),
         );
@@ -318,7 +323,7 @@ router.get('/templates', async (req: Request, res: Response) => {
     return res.json({ success: true, templates: enriched });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Templates error:', message);
+    logger.error('Templates error', { err: message });
     return res.status(500).json({ error: 'Failed to fetch templates' });
   }
 });
@@ -341,13 +346,12 @@ router.post('/templates', async (req: Request, res: Response) => {
     }
 
     // Create template
-    const [template] = await db
-      .insert(workflowTemplates)
+    const [template] = await (db.insert(workflowTemplates) as any)
       .values({
         name,
         description: description || '',
         moduleType,
-        organizationId: user.organizationId,
+        organizationId: Number(user.organizationId),
         createdBy: user.userId,
         documentTypes: documentTypes || [],
       })
@@ -374,7 +378,7 @@ router.post('/templates', async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[approval-workflow] Create template error:', message);
+    logger.error('Create template error', { err: message });
     return res.status(400).json({ error: message });
   }
 });

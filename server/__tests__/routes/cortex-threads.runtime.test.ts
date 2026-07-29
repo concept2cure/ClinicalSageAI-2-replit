@@ -2,23 +2,31 @@ import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const queryMock = vi.fn();
+const { queryMock } = vi.hoisted(() => ({ queryMock: vi.fn() }));
 
-vi.mock('../../db.js', () => ({
-  pool: {
+vi.mock('../../db.js', () => {
+  const pool = {
     query: (...args: unknown[]) => queryMock(...args),
-  },
-}));
+  };
+  return {
+    pool,
+    getPool: () => pool,
+    db: {},
+    getDb: () => ({}),
+  };
+});
 
 vi.mock('../../middleware/auth.js', () => ({
   requireAuth: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-vi.mock('jsonwebtoken', () => ({
-  default: {
-    verify: vi.fn(),
-  },
-}));
+vi.mock('jsonwebtoken', () => {
+  const verify = vi.fn();
+  return {
+    default: { verify },
+    verify,
+  };
+});
 
 describe('cortex threads runtime contract', () => {
   beforeEach(() => {
@@ -38,10 +46,13 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('GET /threads/:threadId returns 403 when caller does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 7 });
 
-    queryMock.mockResolvedValueOnce({
+    queryMock.mockResolvedValue({
       rows: [
         {
           id: 't-1',
@@ -67,7 +78,10 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('GET /threads returns 500 fail-closed when storage throws', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 99 });
 
     queryMock.mockRejectedValueOnce(new Error('db unavailable'));
@@ -117,9 +131,12 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('PATCH /threads/:threadId returns 403 when user does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
-    queryMock.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;
     const app = express();
@@ -136,9 +153,12 @@ describe('cortex threads runtime contract', () => {
   });
 
   it('DELETE /threads/:threadId returns 403 when user does not own thread', async () => {
-    const jwt = (await import('jsonwebtoken')).default as { verify: ReturnType<typeof vi.fn> };
+    // verifyJwtWithRotation() (used by the route) calls jsonwebtoken.verify
+    // internally, so mocking jwt.verify here drives the route's auth at runtime.
+    // The cast bridges the mock shape to the real jwt typing for TS.
+    const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
     jwt.verify.mockReturnValue({ userId: 17 });
-    queryMock.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;
     const app = express();

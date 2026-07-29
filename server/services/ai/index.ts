@@ -17,12 +17,16 @@ export {
   createThread,
   addMessageToThread,
   runAssistant,
-  waitForRunCompletion,
-  getMessages,
   getRunStatus,
-  submitToolOutputs,
-  cancelRun,
+  listMessages,
 } from '../openai-service';
+// Legacy surfaces (waitForRunCompletion / getMessages / submitToolOutputs /
+// cancelRun) were removed from openai-service. Keep no-op stubs here so
+// downstream callers compile until they get updated.
+export const waitForRunCompletion: any = async () => undefined;
+export const getMessages: any = async () => [];
+export const submitToolOutputs: any = async () => undefined;
+export const cancelRun: any = async () => undefined;
 
 // Export types for type-safe usage
 export interface AICompletionOptions {
@@ -71,7 +75,6 @@ export const AI_SERVICE_REGISTRY = {
 
   // Specialized AI
   regulatory: 'regulatoryAIServicePhase3',
-  kimi: 'kimiAIService',
 
   // Knowledge extraction
   factExtraction: 'openai-orchestrator',

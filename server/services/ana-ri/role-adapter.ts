@@ -9,7 +9,11 @@
  */
 
 import type { UserRole } from './persona.js';
-import type { SubmissionType } from './deficiency-taxonomy.js';
+import {
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+  type DeficiencySubmissionType,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Role-Specific Response Templates
@@ -148,6 +152,63 @@ export const ROLE_TEMPLATES: Record<UserRole, RoleResponseTemplate> = {
     specialSections: ['Regulatory Probability', 'Risk Profile', 'Timeline Reality Check', 'Competitive Intelligence'],
   },
 
+  biostatistician: {
+    role: 'biostatistician',
+    priorities: ['estimand strategy', 'power/sample-size defensibility', 'multiplicity control', 'SAP/CSR consistency'],
+    leadWith: 'Statistical defensibility assessment',
+    emphasize: [
+      'Estimand and intercurrent-event strategy (ICH E9(R1))',
+      'Endpoint–method fit and assumption fragility',
+      'Power, sample size, and missing-data handling',
+      'Multiplicity control and Type-I error protection',
+      'Protocol/SAP/CSR statistical consistency',
+    ],
+    deemphasize: [
+      'Business strategy',
+      'Document prose style (focus on statistical substance)',
+    ],
+    tone: 'Quantitatively precise, peer-to-peer. Never hand-estimate a figure — compute it and report it verbatim, naming engine-default assumptions.',
+    specialSections: ['Statistical Defensibility', 'Estimand Assessment', 'Power/Sample-Size Rationale', 'Multiplicity Strategy'],
+  },
+
+  pharmacovigilance: {
+    role: 'pharmacovigilance',
+    priorities: ['signal assessment', 'reporting-clock compliance', 'aggregate reports', 'benefit-risk'],
+    leadWith: 'Safety signal and reporting-obligation assessment',
+    emphasize: [
+      'Signal detection and causality assessment',
+      'ICSR/E2B(R3) quality and expedited-reporting clocks (what starts them)',
+      'Aggregate reporting (DSUR/PSUR/PBRER) timeliness',
+      'Benefit-risk characterization',
+      'RMP/REMS and labeling-safety alignment',
+    ],
+    deemphasize: [
+      'Business strategy',
+      'CMC detail unless safety-relevant',
+    ],
+    tone: 'Exact and clock-aware. Flag any late/missed-report risk plainly; never soften a reporting deadline.',
+    specialSections: ['Signal Assessment', 'Reporting Clock Status', 'Aggregate Report Readiness', 'Benefit-Risk Summary'],
+  },
+
+  quality: {
+    role: 'quality',
+    priorities: ['deviation/CAPA rigor', 'batch-release readiness', 'change control', 'inspection-readiness'],
+    leadWith: 'GMP quality and inspection-readiness assessment',
+    emphasize: [
+      'Deviation and CAPA discipline; OOS investigation rigor',
+      'Batch-release criteria and disposition readiness',
+      'Change control, comparability, and specification justification',
+      'Inspection-readiness and audit exposure',
+      '21 CFR 210/211 and ICH Q linkage for every gap',
+    ],
+    deemphasize: [
+      'Business strategy',
+      'Clinical narrative detail',
+    ],
+    tone: 'Rigorous, evidence-first. Tie every gap to its regulation and the inspection finding it would invite.',
+    specialSections: ['Quality Risk Summary', 'CAPA/Deviation Status', 'Batch-Release Readiness', 'Inspection Exposure'],
+  },
+
   general: {
     role: 'general',
     priorities: ['comprehensive coverage', 'accessibility', 'actionable guidance'],
@@ -172,9 +233,17 @@ export const ROLE_TEMPLATES: Record<UserRole, RoleResponseTemplate> = {
  */
 export function buildRoleAdaptiveContext(
   role: UserRole,
-  submissionType: SubmissionType | null
+  submissionType: DeficiencySubmissionType | string | null
 ): string {
   const template = ROLE_TEMPLATES[role];
+
+  // Resolve submission type through the canonical bridge
+  const resolvedDeficiencyType: DeficiencySubmissionType | null = submissionType
+    ? resolveToDeficiencyType(submissionType)
+    : null;
+  const submissionContext = submissionType
+    ? getSubmissionTypeContext(submissionType)
+    : null;
 
   const lines: string[] = [
     `## ROLE-ADAPTIVE OUTPUT GUIDANCE`,
@@ -183,10 +252,26 @@ export function buildRoleAdaptiveContext(
     `**Lead with:** ${template.leadWith}`,
     `**Tone:** ${template.tone}`,
     '',
+  ];
+
+  // Inject submission-type context when available
+  if (submissionContext) {
+    lines.push(`**Submission Type:** ${submissionContext.displayName} (${submissionContext.registryId})`);
+    lines.push(`**Agency:** ${submissionContext.agency} — ${submissionContext.region}`);
+    if (submissionContext.segment) {
+      lines.push(`**Segment:** ${submissionContext.segment}`);
+    }
+    lines.push('');
+  } else if (resolvedDeficiencyType) {
+    lines.push(`**Submission Type:** ${resolvedDeficiencyType.toUpperCase()}`);
+    lines.push('');
+  }
+
+  lines.push(
     '**Emphasize:**',
     ...template.emphasize.map(e => `- ${e}`),
     '',
-  ];
+  );
 
   if (template.deemphasize.length > 0) {
     lines.push('**De-emphasize:**');
@@ -243,6 +328,24 @@ export function buildRoleAdaptiveContext(
       lines.push('- Include competitive regulatory landscape context');
       lines.push('- End with "Due Diligence Red Flags" and "De-Risking Milestones"');
       break;
+    case 'biostatistician':
+      lines.push('- Lead with the statistical defensibility verdict and the estimand');
+      lines.push('- Report every figure from the deterministic engine verbatim; name default assumptions');
+      lines.push('- Include a "Multiplicity & Missing-Data" note where relevant');
+      lines.push('- Flag protocol/SAP/CSR statistical inconsistencies explicitly');
+      break;
+    case 'pharmacovigilance':
+      lines.push('- Lead with the signal/causality read and any reporting-clock status');
+      lines.push('- State expedited-reporting deadlines and exactly what starts the clock');
+      lines.push('- Flag any late- or missed-report risk as Critical');
+      lines.push('- Tie findings to ICSR/aggregate-report and benefit-risk consequence');
+      break;
+    case 'quality':
+      lines.push('- Lead with the GMP/inspection-readiness verdict');
+      lines.push('- Map each gap to its 21 CFR 210/211 or ICH Q reference');
+      lines.push('- Include CAPA/deviation and batch-release readiness status');
+      lines.push('- Name the inspection finding each gap would invite');
+      break;
     default:
       lines.push('- Use balanced structure with both strategic overview and actionable detail');
       break;
@@ -272,8 +375,11 @@ export function inferRole(signals: {
   // Screen-based inference
   if (screenName) {
     const s = screenName.toLowerCase();
+    if (s.includes('biostat') || s.includes('statistic')) return 'biostatistician';
+    if (s.includes('pharmacovig') || s.includes('vigilance') || s.includes('signal')) return 'pharmacovigilance';
+    if (/\bquality\b/.test(s) || s.includes('qms') || s.includes('capa') || s.includes('deviation')) return 'quality';
     if (s.includes('cmc')) return 'cmc_lead';
-    if (s.includes('clinical') || s.includes('biostat')) return 'clinical_lead';
+    if (s.includes('clinical')) return 'clinical_lead';
     if (s.includes('author') || s.includes('document-builder')) return 'medical_writer';
     if (s.includes('command-center')) return 'ceo';
   }
@@ -282,19 +388,25 @@ export function inferRole(signals: {
   if (title) {
     const t = title.toLowerCase();
     if (t.includes('ceo') || t.includes('chief') || t.includes('president') || t.includes('founder')) return 'ceo';
+    if (t.includes('biostat') || t.includes('statistician')) return 'biostatistician';
+    if (t.includes('pharmacovig') || t.includes('drug safety')) return 'pharmacovigilance';
+    if (/\bquality\b/.test(t) || /\bqa\b/.test(t) || t.includes('gmp')) return 'quality';
     if (t.includes('regulatory') || t.includes('ra ')) return 'ra_lead';
     if (t.includes('writer') || t.includes('writing')) return 'medical_writer';
     if (t.includes('clinical')) return 'clinical_lead';
-    if (t.includes('cmc') || t.includes('quality') || t.includes('manufacturing')) return 'cmc_lead';
+    if (t.includes('cmc') || t.includes('manufacturing')) return 'cmc_lead';
     if (t.includes('invest') || t.includes('analyst') || t.includes('diligence')) return 'investor';
   }
 
   // Department-based inference
   if (department) {
     const d = department.toLowerCase();
+    if (d.includes('biostat') || d.includes('statistics')) return 'biostatistician';
+    if (d.includes('pharmacovig') || d.includes('drug safety') || d.includes('vigilance')) return 'pharmacovigilance';
+    if (/\bquality\b/.test(d)) return 'quality';
     if (d.includes('regulatory')) return 'ra_lead';
     if (d.includes('clinical')) return 'clinical_lead';
-    if (d.includes('cmc') || d.includes('quality')) return 'cmc_lead';
+    if (d.includes('cmc') || d.includes('manufacturing')) return 'cmc_lead';
     if (d.includes('medical writing')) return 'medical_writer';
   }
 

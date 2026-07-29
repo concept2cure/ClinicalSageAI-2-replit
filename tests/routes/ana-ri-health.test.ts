@@ -46,7 +46,7 @@ function mockCommonDeps(options: {
         options.providerHealthReport ?? [
           { provider: 'anthropic', healthy: options.providerHealthy ?? true },
         ],
-      isDeterministicMode: () => options.deterministicMode ?? false,
+      isDeterministic: () => options.deterministicMode ?? false,
       route: vi.fn(
         async ({
           onStream,
@@ -308,7 +308,12 @@ async function callSseRoute(
   });
 }
 
-describe('AnA RI health/commands endpoints', () => {
+// Every case here does `vi.resetModules()` and then re-imports the whole
+// ana-ri route module, so each one pays a fresh transform + import of a large
+// graph. In isolation the file runs in ~11s for 7 cases; under a loaded run it
+// crosses vitest's 10s default and fails on the clock rather than on behaviour.
+// The timeout is explicit so a red here means the endpoint is wrong.
+describe('AnA RI health/commands endpoints', { timeout: 60_000 }, () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();

@@ -5,7 +5,13 @@ import csvParser from 'csv-parser';
 import { pool, query } from './db';
 import { sql } from 'drizzle-orm';
 import { csrReports, csrDetails } from '../shared/schema';
-import { db } from './drizzle';
+import { db as _db } from './drizzle';
+
+// The importer cannot run without a database connection. `db` from
+// ./drizzle is `Drizzle | null` (null only when no DATABASE_URL is set);
+// assert non-null here so the import logic isn't littered with guards —
+// a null db would crash the same way at the first .select()/.insert().
+const db = _db!;
 
 // Define types for CSR data
 export type InsertCsrReport = typeof csrReports.$inferInsert;
@@ -211,21 +217,25 @@ export async function importTrialsFromCsv(
                 indication: row.indication || 'Unknown',
                 phase: row.phase || 'Unknown',
                 status: row.status || 'Completed',
-                date: row.date || row.completion_date || null,
-                fileName:
-                  row.fileName ||
-                  row.file_name ||
-                  `${row.nctrialId || row.nctrial_id || 'unknown'}.pdf`,
-                fileSize: row.fileSize
-                  ? parseInt(row.fileSize)
-                  : row.file_size
-                    ? parseInt(row.file_size)
-                    : 0,
-                filePath: row.filePath || row.file_path || null,
-                nctrialId: row.nctrialId || row.nctrial_id || null,
+                reportDate: row.date || row.completion_date || null,
                 studyId: row.studyId || row.study_id || row.nctrialId || row.nctrial_id || null,
-                drugName: row.drugName || null,
-                region: row.region || null,
+                // file/drug/region attributes are not first-class columns on
+                // csr_reports; preserve them in metadata.
+                metadata: {
+                  fileName:
+                    row.fileName ||
+                    row.file_name ||
+                    `${row.nctrialId || row.nctrial_id || 'unknown'}.pdf`,
+                  fileSize: row.fileSize
+                    ? parseInt(row.fileSize)
+                    : row.file_size
+                      ? parseInt(row.file_size)
+                      : 0,
+                  filePath: row.filePath || row.file_path || null,
+                  nctrialId: row.nctrialId || row.nctrial_id || null,
+                  drugName: row.drugName || null,
+                  region: row.region || null,
+                },
               };
 
               // Skip records that don't have basic required fields
@@ -235,11 +245,11 @@ export async function importTrialsFromCsv(
               }
 
               // Check if this trial is already in the database (by NCT ID)
-              const existingReport = reportData.nctrialId
+              const existingReport = reportData.studyId
                 ? await db
                     .select()
                     .from(csrReports)
-                    .where(sql => sql`${csrReports.nctrialId} = ${reportData.nctrialId}`)
+                    .where(sql`${csrReports.studyId} = ${reportData.studyId}`)
                     .limit(1)
                 : [];
 
@@ -251,7 +261,7 @@ export async function importTrialsFromCsv(
                 await db
                   .update(csrReports)
                   .set(reportData)
-                  .where((sql: any) => sql`${csrReports.id} = ${reportId}`);
+                  .where(sql`${csrReports.id} = ${reportId}`);
 
                 log.debug(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
               } else {
@@ -273,7 +283,7 @@ export async function importTrialsFromCsv(
                   const existingDetails = await db
                     .select()
                     .from(csrDetails)
-                    .where(sql => sql`${csrDetails.reportId} = ${reportId}`)
+                    .where(sql`${csrDetails.reportId} = ${reportId}`)
                     .limit(1);
 
                   if (existingDetails.length === 0) {
@@ -309,7 +319,6 @@ export async function importTrialsFromCsv(
                         row.primary_objective ||
                         analysisResults.primaryObjective ||
                         null,
-                      studyDescription: summary || null,
                       inclusionCriteria:
                         row.inclusionCriteria || row.inclusion_criteria
                           ? typeof (row.inclusionCriteria || row.inclusion_criteria) === 'string'
@@ -322,33 +331,37 @@ export async function importTrialsFromCsv(
                             ? row.exclusionCriteria || row.exclusion_criteria
                             : JSON.stringify(row.exclusionCriteria || row.exclusion_criteria)
                           : analysisResults.exclusionCriteria || null,
-                      treatmentArms:
-                        treatmentArms.length > 0
-                          ? treatmentArms
-                          : analysisResults.treatmentArms || [],
-                      studyDuration:
-                        row.studyDuration ||
-                        row.study_duration ||
-                        analysisResults.studyDuration ||
-                        null,
                       endpoints: endpoints.length > 0 ? endpoints : analysisResults.endpoints || [],
                       results: analysisResults.results || {},
-                      safety: analysisResults.safety || {},
-                      processed: true,
-                      processingStatus: 'completed',
                       sampleSize: row.sampleSize
                         ? parseInt(row.sampleSize)
                         : row.sample_size
                           ? parseInt(row.sample_size)
                           : analysisResults.sampleSize || null,
-                      ageRange: row.ageRange || row.age_range || analysisResults.ageRange || null,
-                      gender: analysisResults.gender || {},
-                      statisticalMethods: analysisResults.statisticalMethods || [],
-                      adverseEvents: analysisResults.adverseEvents || [],
-                      efficacyResults: analysisResults.efficacyResults || {},
-                      saeCount: analysisResults.saeCount || null,
-                      teaeCount: analysisResults.teaeCount || null,
-                      completionRate: analysisResults.completionRate || null,
+                      // text columns — leave null rather than objects/arrays
+                      statisticalMethods: null,
+                      adverseEvents: null,
+                      efficacyResults: null,
+                      // attributes without a first-class csr_details column → metadata
+                      metadata: {
+                        treatmentArms:
+                          treatmentArms.length > 0
+                            ? treatmentArms
+                            : analysisResults.treatmentArms || [],
+                        studyDuration:
+                          row.studyDuration ||
+                          row.study_duration ||
+                          analysisResults.studyDuration ||
+                          null,
+                        safety: analysisResults.safety || {},
+                        processed: true,
+                        processingStatus: 'completed',
+                        ageRange: row.ageRange || row.age_range || analysisResults.ageRange || null,
+                        gender: analysisResults.gender || {},
+                        saeCount: analysisResults.saeCount || null,
+                        teaeCount: analysisResults.teaeCount || null,
+                        completionRate: analysisResults.completionRate || null,
+                      },
                     };
 
                     // Insert the details
@@ -412,21 +425,23 @@ export async function importTrialsFromJson(
           indication: item.indication || 'Unknown',
           phase: item.phase || 'Unknown',
           status: item.status || 'Completed',
-          date: item.date || item.completion_date || null,
-          fileName:
-            item.fileName ||
-            item.file_name ||
-            `${item.nctrialId || item.nctrial_id || 'unknown'}.pdf`,
-          fileSize: item.fileSize
-            ? parseInt(item.fileSize)
-            : item.file_size
-              ? parseInt(item.file_size)
-              : 0,
-          filePath: item.filePath || item.file_path || null,
-          nctrialId: item.nctrialId || item.nctrial_id || null,
+          reportDate: item.date || item.completion_date || null,
           studyId: item.studyId || item.study_id || item.nctrialId || item.nctrial_id || null,
-          drugName: item.drugName || null,
-          region: item.region || null,
+          metadata: {
+            fileName:
+              item.fileName ||
+              item.file_name ||
+              `${item.nctrialId || item.nctrial_id || 'unknown'}.pdf`,
+            fileSize: item.fileSize
+              ? parseInt(item.fileSize)
+              : item.file_size
+                ? parseInt(item.file_size)
+                : 0,
+            filePath: item.filePath || item.file_path || null,
+            nctrialId: item.nctrialId || item.nctrial_id || null,
+            drugName: item.drugName || null,
+            region: item.region || null,
+          },
         };
 
         // Skip records that don't have basic required fields
@@ -436,11 +451,11 @@ export async function importTrialsFromJson(
         }
 
         // Check if this trial is already in the database (by NCT ID)
-        const existingReport = reportData.nctrialId
+        const existingReport = reportData.studyId
           ? await db
               .select()
               .from(csrReports)
-              .where(sql => sql`${csrReports.nctrialId} = ${reportData.nctrialId}`)
+              .where(sql`${csrReports.studyId} = ${reportData.studyId}`)
               .limit(1)
           : [];
 
@@ -452,7 +467,7 @@ export async function importTrialsFromJson(
           await db
             .update(csrReports)
             .set(reportData)
-            .where((sql: any) => sql`${csrReports.id} = ${reportId}`);
+            .where(sql`${csrReports.id} = ${reportId}`);
 
           log.debug(`Updated existing report: ${reportData.title} (ID: ${reportId})`);
         } else {
@@ -482,7 +497,7 @@ export async function importTrialsFromJson(
             const existingDetails = await db
               .select()
               .from(csrDetails)
-              .where(sql => sql`${csrDetails.reportId} = ${reportId}`)
+              .where(sql`${csrDetails.reportId} = ${reportId}`)
               .limit(1);
 
             if (existingDetails.length === 0) {
@@ -491,7 +506,6 @@ export async function importTrialsFromJson(
                 reportId,
                 studyDesign: item.studyDesign || item.study_design || null,
                 primaryObjective: item.primaryObjective || item.primary_objective || null,
-                studyDescription: null,
                 inclusionCriteria:
                   item.inclusionCriteria || item.inclusion_criteria
                     ? typeof (item.inclusionCriteria || item.inclusion_criteria) === 'string'
@@ -504,23 +518,27 @@ export async function importTrialsFromJson(
                       ? item.exclusionCriteria || item.exclusion_criteria
                       : JSON.stringify(item.exclusionCriteria || item.exclusion_criteria)
                     : null,
-                treatmentArms: item.treatmentArms || item.treatment_arms || [],
-                studyDuration: item.studyDuration || item.study_duration || null,
                 endpoints: item.endpoints || [],
                 results: {},
-                safety: {},
-                processed: false,
-                processingStatus: 'pending',
                 sampleSize: item.sampleSize
                   ? parseInt(item.sampleSize)
                   : item.sample_size
                     ? parseInt(item.sample_size)
                     : null,
-                ageRange: item.ageRange || item.age_range || null,
-                gender: {},
-                statisticalMethods: [],
-                adverseEvents: [],
-                efficacyResults: {},
+                // text columns — leave null rather than assigning objects/arrays
+                statisticalMethods: null,
+                adverseEvents: null,
+                efficacyResults: null,
+                // attributes without a first-class csr_details column live in metadata
+                metadata: {
+                  treatmentArms: item.treatmentArms || item.treatment_arms || [],
+                  studyDuration: item.studyDuration || item.study_duration || null,
+                  safety: {},
+                  processed: false,
+                  processingStatus: 'pending',
+                  ageRange: item.ageRange || item.age_range || null,
+                  gender: {},
+                },
               };
 
               // Insert the details
@@ -592,8 +610,12 @@ export async function importTrialsFromApiV2(
 
     let importCount = 0;
 
-    // Process each study
-    for (const { report, details } of studies) {
+    // Process each study. processApiV2Data returns loosely-typed items;
+    // annotate so report/details carry the insert shapes.
+    for (const { report, details } of studies as Array<{
+      report: Partial<InsertCsrReport>;
+      details: Partial<InsertCsrDetails>;
+    }>) {
       try {
         // Skip records that don't have basic required fields
         if (!report.title || !report.sponsor || !report.indication) {
@@ -602,11 +624,11 @@ export async function importTrialsFromApiV2(
         }
 
         // Check if this trial is already in the database (by NCT ID)
-        const existingReport = report.nctrialId
+        const existingReport = report.studyId
           ? await db
               .select()
               .from(csrReports)
-              .where(sql => sql`${csrReports.nctrialId} = ${report.nctrialId}`)
+              .where(sql`${csrReports.studyId} = ${report.studyId}`)
               .limit(1)
           : [];
 
@@ -618,7 +640,7 @@ export async function importTrialsFromApiV2(
           await db
             .update(csrReports)
             .set(report)
-            .where((sql: any) => sql`${csrReports.id} = ${reportId}`);
+            .where(sql`${csrReports.id} = ${reportId}`);
 
           log.debug(`Updated existing report: ${report.title} (ID: ${reportId})`);
         } else {
@@ -639,7 +661,7 @@ export async function importTrialsFromApiV2(
           const existingDetails = await db
             .select()
             .from(csrDetails)
-            .where(sql => sql`${csrDetails.reportId} = ${reportId}`)
+            .where(sql`${csrDetails.reportId} = ${reportId}`)
             .limit(1);
 
           if (existingDetails.length === 0) {

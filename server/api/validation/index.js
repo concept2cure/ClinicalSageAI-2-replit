@@ -132,7 +132,7 @@ router.get('/status/:validationId', (req, res) => {
     }
 
     // Read validation result
-    let result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
+    const result = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
 
     // If status is still "validating", simulate completion after a short time
     if (result.status === 'validating') {

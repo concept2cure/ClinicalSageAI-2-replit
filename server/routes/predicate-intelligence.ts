@@ -300,7 +300,7 @@ router.patch(
       logProxyMutation(req, result, {
         action: 'predicate.candidate.status',
         resourceType: 'predicate_candidate',
-        resourceId: req.params.id,
+        resourceId: String(req.params.id),
         details: { status: req.body?.status ?? null },
       });
       sendProxyResponse(res, result);
@@ -389,7 +389,7 @@ router.patch('/se-matrix/:id', requireConfigured, requireProgramAccess, async (r
     logProxyMutation(req, result, {
       action: 'se_matrix.patch',
       resourceType: 'se_matrix_row',
-      resourceId: req.params.id,
+      resourceId: String(req.params.id),
       details: { fieldsChanged: Object.keys(req.body ?? {}) },
     });
     sendProxyResponse(res, result);
@@ -498,11 +498,11 @@ router.post('/render-se-docx', requireConfigured, requireProgramAccess, async (r
     const result = await proxyToShadow('/predicate/render-se-docx', {
       method: 'POST',
       body: req.body,
-      responseType: 'stream',
+      binary: true,
     });
     // Forward the binary stream directly
-    if (result.headers) {
-      const cd = result.headers['content-disposition'];
+    if (result.rawHeaders) {
+      const cd = result.rawHeaders['content-disposition'];
       if (cd) res.set('Content-Disposition', cd);
     }
     res.set(
@@ -528,10 +528,10 @@ router.post(
       const result = await proxyToShadow('/predicate/download-defense-packet', {
         method: 'POST',
         body: req.body,
-        responseType: 'stream',
+        binary: true,
       });
-      if (result.headers) {
-        const cd = result.headers['content-disposition'];
+      if (result.rawHeaders) {
+        const cd = result.rawHeaders['content-disposition'];
         if (cd) res.set('Content-Disposition', cd);
       }
       res.set('Content-Type', 'application/zip');
@@ -656,5 +656,61 @@ router.post('/render-se-docx-v2', requireConfigured, requireProgramAccess, async
     res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
   }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// E6 — 510(k) Substantial Equivalence narrative + comparison table authoring.
+//
+// Generates a defensible SE discussion + side-by-side comparison table from the
+// ANALYZED SE matrix, then auto-verifies the authored .docx against the matrix's
+// own predicate facts + equivalence verdicts so the Document Studio trust-panel
+// proves the document reproduced every matrix fact and altered no verdict.
+//
+// Flag-gated by ENABLE_ANA_DOCUMENT_STUDIO (dark by default).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post(
+  '/se-discussion/author',
+  requireConfigured,
+  requireProgramAccess,
+  async (req: Request, res: Response) => {
+    const { authorSEDiscussion, isSeDiscussionAuthoringEnabled } = await import(
+      '../services/ana/se-discussion/se-discussion-author.js'
+    );
+
+    if (!isSeDiscussionAuthoringEnabled()) {
+      return res.status(404).json({ error: 'SE discussion authoring is not enabled.' });
+    }
+
+    // INTEGRATION: fetch the live analyzed SE matrix for this program from the
+    // Shadow service (GET /predicate/se-matrix → SEMatrixPayload) and pass it as
+    // `matrix` with provenance 'analyzed'. Until that join lands, the caller may
+    // POST a well-typed matrix body for preview; any matrix arriving this way is
+    // treated as non-analyzed (sample) and is therefore NOT sealable/exportable.
+    const matrix = req.body?.matrix;
+    if (!matrix || !Array.isArray(matrix.comparison_rows)) {
+      return res.status(422).json({
+        error: 'A `matrix` with comparison_rows is required (analyzed SE matrix payload).',
+      });
+    }
+    const provenance = matrix.__provenance === 'analyzed' ? 'analyzed' : 'sample';
+
+    const ctx = {
+      organizationId: (req as any).user?.organizationId ?? null,
+      userId: (req as any).user?.id ?? null,
+      projectType: '510k' as const,
+      documentType: 'substantial_equivalence' as const,
+    };
+
+    try {
+      const result = await authorSEDiscussion(
+        { matrix, subjectDeviceName: req.body?.subject_device_name, provenance },
+        ctx,
+      );
+      return res.status(200).json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: 'SE discussion authoring failed', detail: err.message });
+    }
+  },
+);
 
 export default router;

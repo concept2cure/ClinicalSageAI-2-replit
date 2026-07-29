@@ -4,6 +4,43 @@ import fs from 'fs';
 import path from 'path';
 import { pool } from '../db';
 import { getGateway } from '../services/ai-gateway';
+import auditService from '../services/auditService';
+import { createScopedLogger } from '../utils/logger.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { UnifiedCERService, cerGenerationService } from '../services/cer';
+
+const cerLog = createScopedLogger('cer-routes');
+
+// Schema for structured EU MDR/IVDR CER generation from a device profile.
+const mdrCerGenerateSchema = z.object({
+  deviceId: z.number().int().positive(),
+  regulatoryFramework: z.enum(['MDR_2017_745', 'IVDR_2017_746', 'UK_MDR_2002', 'Swiss_MedDO']),
+  templateId: z.string().max(128).optional(),
+  notifiedBodyId: z.string().max(128).optional(),
+});
+
+// Schema for attaching a clinical evidence source to a CER report (MDR Annex
+// XIV Part A — clinical data underpinning the evaluation).
+const cerClinicalEvidenceSchema = z.object({
+  type: z.enum(['clinical_investigation', 'literature', 'post_market', 'registry', 'real_world']),
+  title: z.string().min(1).max(500),
+  authors: z.string().max(500).optional(),
+  year: z.number().int().min(1900).max(2100).optional(),
+  patients: z.number().int().min(0).optional(),
+  findings: z.string().min(1),
+  relevance: z.number().min(0).max(1),
+  quality: z.number().min(0).max(1),
+});
+
+/**
+ * Strictly validate a CER report id used to build a filesystem path.
+ * Rejects anything that isn't a UUID-like / alphanumeric token so a
+ * caller can't supply `../../etc/passwd` or `../other-tenant/abc` and
+ * traverse outside the per-tenant report directory.
+ */
+function isSafeReportId(id: unknown): id is string {
+  return typeof id === 'string' && /^[A-Za-z0-9_.-]{1,128}$/.test(id) && !id.includes('..');
+}
 
 const router = express.Router();
 
@@ -238,7 +275,7 @@ async function generateCERNarrative(faersData: any, productName?: string) {
     // Route through AI Gateway — centralised audit, policy & rate limiting
     const gateway = getGateway();
     const gatewayResponse = await gateway.route({
-      taskType: 'cer_narrative',
+      taskType: 'document_drafting',
       messages: [
         {
           role: 'system',
@@ -308,7 +345,11 @@ router.post('/faers/save-report', async (req, res) => {
 
     // In production, you would save this to your database
     // For now, we'll create a simplified in-memory storage solution
-    const report = {
+    const report: typeof reportData & {
+      id: string;
+      created_at: string;
+      db_id?: unknown;
+    } = {
       id: Date.now().toString(),
       ...reportData,
       created_at: new Date().toISOString(),
@@ -341,7 +382,7 @@ router.post('/faers/save-report', async (req, res) => {
         ]
       );
 
-      report.db_id = result.rows[0].id;
+      (report as any).db_id = result.rows[0].id;
     } catch (dbError) {
       console.error('Note: Database insert failed, but continuing with file storage:', dbError);
       // We'll still consider this a success since we saved to file
@@ -387,10 +428,10 @@ router.get('/reports', async (req, res) => {
           return null;
         }
       })
-      .filter(Boolean);
+      .filter((report): report is NonNullable<typeof report> => report !== null);
 
     // Sort by creation date, newest first
-    reports.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    reports.sort((a, b) => new Date((b as any)?.created_at ?? 0).getTime() - new Date((a as any)?.created_at ?? 0).getTime());
 
     res.json({ reports });
   } catch (error) {
@@ -399,21 +440,200 @@ router.get('/reports', async (req, res) => {
   }
 });
 
-// Get a specific CER report by ID
+// Get a specific CER report by ID.
+//
+// SECURITY: pre-fix this route had two distinct vulnerabilities.
+//
+//   1. PATH TRAVERSAL — the report id flowed from req.params straight
+//      into path.join(cwd, 'data/cer_reports', `${id}.json`). path.join
+//      normalises `..` segments, so an id of `../../etc/passwd` would
+//      resolve out of the cer_reports directory entirely. The id is
+//      now validated against a strict allowlist regex before any
+//      filesystem lookup.
+//
+//   2. NO TENANT ISOLATION — every report was stored in a flat
+//      `data/cer_reports/` directory readable by any authenticated
+//      user. Reports are now anchored under a per-tenant subdirectory
+//      `data/cer_reports/org-{orgId}/{id}.json` so a caller probing
+//      another tenant's id sees "not found".
+//
+// Every successful read writes a `cer_report_view` audit event —
+// 21 CFR Part 11 §11.10(e) requirement, same shape as the
+// document_view event landed in 51a9ade.
 router.get('/reports/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const { id } = req.params;
-    const reportPath = path.join(process.cwd(), 'data', 'cer_reports', `${id}.json`);
+    if (!isSafeReportId(id)) {
+      // Don't echo the input value — log it for triage and return a
+      // generic 400 so probing can't fingerprint the validator.
+      // The type guard narrows `id` to `never` here; coerce to
+      // string for the truncated sample.
+      const rawId = String(id ?? '');
+      cerLog.warn('CER report request rejected by id validator', {
+        // Truncate so a long payload doesn't bloat the log line.
+        idSample: rawId.slice(0, 64),
+        orgId: guard.orgId,
+      });
+      return res.status(400).json({ error: 'Invalid report id' });
+    }
+
+    // Resolve under the tenant's directory. `path.resolve` returns an
+    // absolute path; verify it still lives under the tenant root after
+    // normalisation as a belt-and-suspenders check (the regex above
+    // already rules out the traversal vector, but defence-in-depth).
+    const tenantRoot = path.resolve(
+      process.cwd(),
+      'data',
+      'cer_reports',
+      `org-${guard.orgId}`,
+    );
+    const reportPath = path.resolve(tenantRoot, `${id}.json`);
+    if (!reportPath.startsWith(tenantRoot + path.sep) && reportPath !== tenantRoot) {
+      cerLog.warn('CER report path escaped tenant root', { idSample: id, orgId: guard.orgId });
+      return res.status(400).json({ error: 'Invalid report id' });
+    }
 
     if (!fs.existsSync(reportPath)) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
     const reportData = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+
+    // Audit BEFORE serving content. Even if the response stream
+    // later fails, the user-requested access is the §11.10(e) event.
+    try {
+      const user = (req as any).user;
+      await auditService.logAction({
+        tenantId: guard.orgId,
+        userId: user?.id ?? user?.userId,
+        action: 'cer_report_view',
+        resourceType: 'cer_report',
+        resourceId: id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { route: req.path },
+      });
+    } catch {
+      /* audit failure is non-fatal */
+    }
+
     res.json(reportData);
   } catch (error) {
-    console.error('Error fetching CER report:', error);
+    cerLog.error('Error fetching CER report', {
+      err: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).json({ error: 'Failed to fetch CER report' });
+  }
+});
+
+// Generate a structured EU MDR/IVDR Clinical Evaluation Report from a device
+// profile using the deterministic template engine (DB-backed, audit-logged).
+// Tenant org id comes from the verified JWT; the authenticated user is recorded
+// as the author. Fails closed (422 with reason) rather than returning a
+// fabricated or empty report when generation cannot complete.
+router.post('/mdr/generate', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const user = (req as any).user;
+    const userId = Number(user?.id ?? user?.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: 'Authenticated user context required' });
+    }
+
+    const body = mdrCerGenerateSchema.parse(req.body);
+
+    const service = new UnifiedCERService({
+      organizationId: guard.orgId,
+      deviceId: body.deviceId,
+      userId,
+      regulatoryFramework: body.regulatoryFramework,
+      templateId: body.templateId,
+      notifiedBodyId: body.notifiedBodyId,
+    });
+
+    const result = await service.generateReport();
+    if (result.status === 'failed') {
+      return res.status(422).json({ error: 'CER generation failed', warnings: result.warnings });
+    }
+    return res.status(201).json(result);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+    }
+    cerLog.error('MDR CER generation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to generate CER' });
+  }
+});
+
+// Attach a clinical evidence source to an existing CER report. The underlying
+// service verifies the report belongs to the caller's organization before
+// inserting (tenant-scoped); returns 404 when it does not.
+router.post('/reports/:cerId/evidence', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const user = (req as any).user;
+    const userId = Number(user?.id ?? user?.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: 'Authenticated user context required' });
+    }
+
+    const cerId = Number(req.params.cerId);
+    if (!Number.isInteger(cerId) || cerId <= 0) {
+      return res.status(400).json({ error: 'Invalid CER report id' });
+    }
+
+    const evidence = cerClinicalEvidenceSchema.parse(req.body);
+    const saved = await cerGenerationService.addClinicalEvidence(cerId, evidence, userId, guard.orgId);
+    return res.status(201).json(saved);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+    }
+    if (error instanceof Error && /not found or access denied/i.test(error.message)) {
+      return res.status(404).json({ error: 'CER report not found' });
+    }
+    cerLog.error('CER add clinical evidence error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to add clinical evidence' });
+  }
+});
+
+// Validate a stored CER report against the deterministic MEDDEV 2.7/1 rev 4 /
+// Annex I GSPR / Annex XIV conformance checklist (completeness of mandatory CER
+// elements). Returns the structured result; 404 when the report does not exist
+// for the tenant. Never returns an auto-"valid" — a missing mandatory element
+// fails the report.
+router.get('/mdr/:reportId/validate', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const { reportId } = req.params;
+    if (!isSafeReportId(reportId)) {
+      return res.status(400).json({ error: 'Invalid report id' });
+    }
+
+    const service = new UnifiedCERService({ organizationId: guard.orgId });
+    const result = await service.validateReportDetailed(reportId);
+    if ('notFound' in result) {
+      return res.status(404).json({ error: 'CER report not found' });
+    }
+    return res.json(result);
+  } catch (error) {
+    cerLog.error('CER conformance validation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to validate CER' });
   }
 });
 

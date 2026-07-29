@@ -1,100 +1,122 @@
 version: '3.9'
+
+# Canonical self-host / local install stack.
+#
+# Usage:
+#   docker compose up --build                 # app + db + redis (the install SKU)
+#   docker compose --profile ingestion up     # + Tika / GROBID / OpenSearch
+#   docker compose --profile workflow up      # + Temporal
+#   docker compose --profile llm up           # + LiteLLM gateway / OPA
+#
+# Required .env: DB_PASSWORD, JWT_SECRET, and at least one of ANTHROPIC_API_KEY / OPENAI_API_KEY.
+# This stack is single-tenant by default (SEED_DEMO_USER=false): it seeds one
+# organization and no publicly-known demo admin. Create your admin user via the
+# app's first-run flow or the db:seed:admin script.
+
 services:
-  vault-api:
-    build: .
-    environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SENTRY_DSN=${SENTRY_DSN}
-      - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
-    ports:
-      - '4000:4000'
+  # ---------- Database ----------
+  db:
+    # pgvector image, not stock postgres: the schema's CSR knowledge tables
+    # need `CREATE EXTENSION vector` (migrations/0005), which stock postgres lacks.
+    image: pgvector/pgvector:pg15
     restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-concept2cure}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - c2c
+
+  # ---------- Redis (queues + caching) ----------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - c2c
+
+  # ---------- Application ----------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '${APP_PORT:-5000}:5000'
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      # sslmode=prefer: encrypt when the server offers TLS, otherwise plaintext.
+      # The stock image does not ship TLS-on by default; bind-mount certs and a
+      # postgres `command:` to enable ssl=on, then upgrade this to `require`.
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-concept2cure}?sslmode=prefer
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Single-tenant install: do not seed the publicly-known demo admin.
+      SEED_DEMO_USER: ${SEED_DEMO_USER:-false}
     logging:
       driver: 'json-file'
       options:
-        max-size: '100m'
+        max-size: '50m'
         max-file: '5'
     deploy:
       resources:
         limits:
           cpus: '2'
-          memory: 2G
+          memory: 4G
         reservations:
           cpus: '0.5'
-          memory: 512M
-
-  # Lumen Cortex Batch Review Worker
-  # Processes queued async review batches
-  batch-worker:
-    build: .
-    command: python scripts/worker/run_batch_worker.py
-    environment:
-      - BATCH_WORKER_PROGRAM_ID=${BATCH_WORKER_PROGRAM_ID}
-      - BATCH_WORKER_ID=${BATCH_WORKER_ID:-batch-worker-1}
-      - BATCH_WORKER_POLL_INTERVAL=${BATCH_WORKER_POLL_INTERVAL:-5}
-      - BATCH_WORKER_LOG_LEVEL=${BATCH_WORKER_LOG_LEVEL:-INFO}
-      - BATCH_WORKER_HEALTH_PORT=8081
-      - DATABASE_URL=${DATABASE_URL}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    ports:
-      - '8081:8081' # Health endpoint
-    restart: unless-stopped
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '50m'
-        max-file: '3'
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'python',
-          '-c',
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/health').read()",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
           memory: 1G
+    networks:
+      - c2c
 
-# Optional: Apache Tika for broad document text + metadata extraction
+  # ---------- Optional: document ingestion (profile: ingestion) ----------
   tika:
     image: apache/tika:2.9.2.1
     ports:
       - '9998:9998'
     restart: unless-stopped
-    profiles: ['ingestion-spine']
-
-  # Optional: GROBID for scholarly PDF extraction
-  grobid:
-    image: lfoppiano/grobid:0.8.0
-    ports:
-      - '8071:8070'
-    restart: unless-stopped
-    profiles: ['ingestion-spine']
-
-  # Optional: OpenSearch for hybrid lexical + semantic retrieval
-tika:
-    image: apache/tika:latest
-    ports:
-      - '9998:9998'
-    profiles: ['session-b']
-    restart: unless-stopped
+    profiles: ['ingestion']
+    networks:
+      - c2c
 
   grobid:
     image: lfoppiano/grobid:0.8.0
     ports:
       - '8070:8070'
-    profiles: ['session-b']
     restart: unless-stopped
+    profiles: ['ingestion']
+    networks:
+      - c2c
+
   opensearch:
     image: opensearchproject/opensearch:2.19.0
     environment:
@@ -103,10 +125,12 @@ tika:
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - '9200:9200'
-restart: unless-stopped
-    profiles: ['search-spine']
+    restart: unless-stopped
+    profiles: ['ingestion']
+    networks:
+      - c2c
 
-  # Optional: Temporal persistence DB (isolated from app DB)
+  # ---------- Optional: long-running workflows (profile: workflow) ----------
   temporal-postgres:
     image: postgres:15
     environment:
@@ -115,9 +139,10 @@ restart: unless-stopped
     ports:
       - '5434:5432'
     restart: unless-stopped
-    profiles: ['workflow-spine']
+    profiles: ['workflow']
+    networks:
+      - c2c
 
-  # Optional: Temporal workflow server for governed long-running workflows
   temporal:
     image: temporalio/auto-setup:1.28.1
     environment:
@@ -132,28 +157,23 @@ restart: unless-stopped
     depends_on:
       - temporal-postgres
     restart: unless-stopped
-    profiles: ['workflow-spine']
-profiles: ['session-b']
-    restart: unless-stopped
+    profiles: ['workflow']
+    networks:
+      - c2c
 
-  temporal:
-    image: temporalio/auto-setup:1.25.2
-    environment:
-      - DB=sqlite
-    ports:
-      - '7233:7233'
-    profiles: ['session-b']
-    restart: unless-stopped
-litellm:
+  # ---------- Optional: LLM gateway + policy engine (profile: llm) ----------
+  litellm:
     image: ghcr.io/berriai/litellm:main-latest
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - LITELLM_MASTER_KEY=${LITELLM_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - LITELLM_MASTER_KEY=${LITELLM_API_KEY:-}
     ports:
       - '4000:4000'
-    command: [\"--port\", \"4000\", \"--host\", \"0.0.0.0\"]
-    profiles: ['session-a']
+    command: ['--port', '4000', '--host', '0.0.0.0']
+    profiles: ['llm']
+    networks:
+      - c2c
 
   opa:
     image: openpolicyagent/opa:latest
@@ -168,4 +188,17 @@ litellm:
       - ./server/policies:/policies:ro
     ports:
       - '8181:8181'
-    profiles: ['session-a']
+    restart: unless-stopped
+    profiles: ['llm']
+    networks:
+      - c2c
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+networks:
+  c2c:
+    driver: bridge

@@ -1,15 +1,21 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import request from 'supertest';
 import express from 'express';
 
-jest.mock('../../services/pdf-compression-service.js', () => ({
+vi.mock('../../services/pdf-compression-service.js', () => ({
   COMPRESSION_PROFILES: [
     { quality: 'ebook', label: 'eBook', expectedUseCase: 'balanced' },
     { quality: 'screen', label: 'Screen', expectedUseCase: 'smallest size' },
   ],
-  isGhostscriptAvailable: jest.fn(),
-  compressPdfWithGhostscript: jest.fn(),
-  recommendCompressionQuality: jest.fn(),
-  compressPdfBatch: jest.fn(),
+  isGhostscriptAvailable: vi.fn(),
+  compressPdfWithGhostscript: vi.fn(),
+  recommendCompressionQuality: vi.fn(),
+  compressPdfBatch: vi.fn(),
+}));
+
+vi.mock('../../services/documentExportService.js', () => ({
+  renderMarkdownDraftToPDF: vi.fn(async () => Buffer.from('%PDF-1.4\n%mock-pdf\n')),
 }));
 
 import pdfTaskRoutes from '../pdf-task-routes';
@@ -26,7 +32,7 @@ describe('pdf-task-routes /compress', () => {
   app.use('/api/pdf-tasks', pdfTaskRoutes);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('returns 400 for invalid quality', async () => {
@@ -41,7 +47,7 @@ describe('pdf-task-routes /compress', () => {
   });
 
   it('returns 503 when ghostscript is unavailable', async () => {
-    (isGhostscriptAvailable as jest.Mock).mockResolvedValue(false);
+    (isGhostscriptAvailable as any).mockResolvedValue(false);
     const res = await request(app).post('/api/pdf-tasks/compress').send({
       inputPath: '/tmp/test.pdf',
     });
@@ -51,8 +57,8 @@ describe('pdf-task-routes /compress', () => {
   });
 
   it('returns compression result when successful', async () => {
-    (isGhostscriptAvailable as jest.Mock).mockResolvedValue(true);
-    (compressPdfWithGhostscript as jest.Mock).mockResolvedValue({
+    (isGhostscriptAvailable as any).mockResolvedValue(true);
+    (compressPdfWithGhostscript as any).mockResolvedValue({
       outputPath: '/tmp/test.compressed.pdf',
       originalSizeBytes: 1000,
       compressedSizeBytes: 500,
@@ -77,7 +83,7 @@ describe('pdf-task-routes /compress', () => {
   });
 
   it('returns recommendation for valid file input', async () => {
-    (recommendCompressionQuality as jest.Mock).mockResolvedValue({
+    (recommendCompressionQuality as any).mockResolvedValue({
       inputPath: '/tmp/test.pdf',
       originalSizeBytes: 1024,
       recommendedQuality: 'ebook',
@@ -94,8 +100,13 @@ describe('pdf-task-routes /compress', () => {
   });
 
   it('returns batch summary for mixed outcomes', async () => {
-    (isGhostscriptAvailable as jest.Mock).mockResolvedValue(true);
-    (compressPdfBatch as jest.Mock).mockResolvedValue({
+    (isGhostscriptAvailable as any).mockResolvedValue(true);
+    // The route returns `{ ok, summary: result.summary, result }` —
+    // the mock previously returned only `{ results: [...] }` so
+    // res.body.summary was undefined. Include a summary shape that
+    // mirrors the service contract.
+    (compressPdfBatch as any).mockResolvedValue({
+      summary: { total: 2, success: 1, failed: 1 },
       results: [
         { ok: true, inputPath: '/tmp/a.pdf', result: { outputPath: '/tmp/a.c.pdf' } },
         { ok: false, inputPath: '/tmp/b.pdf', error: 'failed' },
@@ -120,5 +131,42 @@ describe('pdf-task-routes /compress', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('Invalid request body');
+  });
+});
+
+describe('pdf-task-routes /render-markdown-pdf', () => {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/pdf-tasks', pdfTaskRoutes);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 400 when markdown is missing', async () => {
+    const res = await request(app)
+      .post('/api/pdf-tasks/render-markdown-pdf')
+      .send({ title: 'X' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('markdown');
+  });
+
+  it('returns a PDF when no compression is requested', async () => {
+    const res = await request(app)
+      .post('/api/pdf-tasks/render-markdown-pdf')
+      .send({ title: 'Clinical Overview', markdown: '# Title\n\nBody paragraph.' });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['x-compression-skipped']).toBeUndefined();
+  });
+
+  it('returns the PDF with X-Compression-Skipped when Ghostscript is unavailable', async () => {
+    (isGhostscriptAvailable as any).mockResolvedValue(false);
+    const res = await request(app)
+      .post('/api/pdf-tasks/render-markdown-pdf')
+      .send({ title: 'Doc', markdown: '# T', compress: true, quality: 'ebook' });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['x-compression-skipped']).toBe('ghostscript_unavailable');
   });
 });

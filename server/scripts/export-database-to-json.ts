@@ -13,7 +13,7 @@
 import path from 'path';
 import fs from 'fs/promises';
 import { db } from '../db';
-import { csrReports, csrDetails } from '../sage-plus-service';
+import { csrReports, csrDetails } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 // File to store the last export statistics
@@ -111,7 +111,7 @@ export async function exportDatabaseToJson() {
   }
 
   // Get all CSR reports from database
-  const reports = await db.select().from(csrReports);
+  const reports = (await db.select().from(csrReports as any)) as any[];
   console.log(`Found ${reports.length} CSR reports in database`);
 
   // Check how many JSON files already exist
@@ -147,10 +147,10 @@ export async function exportDatabaseToJson() {
 
     try {
       // Get details for this report
-      const [details] = await db
+      const [details] = (await db
         .select()
-        .from(csrDetails)
-        .where(eq(csrDetails.reportId, report.id));
+        .from(csrDetails as any)
+        .where(eq((csrDetails as any).reportId, report.id))) as any[];
 
       // Format the data for export
       const exportData = await formatCsrForExport(report, details);

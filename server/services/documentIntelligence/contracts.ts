@@ -1,4 +1,4 @@
-export type DocumentParserProvider = 'docling' | 'unstructured' | 'tika';
+export type DocumentParserProvider = 'docling' | 'unstructured' | 'tika' | 'tesseract.js';
 
 export interface IntakeFileDescriptor {
   filename: string;

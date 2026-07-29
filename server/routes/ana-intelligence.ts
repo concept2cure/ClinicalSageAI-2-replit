@@ -14,14 +14,60 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createHash } from 'crypto';
 import {
   getAnaDraftingService,
   type DocumentDraftRequest,
   type RegulatoryFramework,
 } from '../services/ana/AnaDocumentDraftingService';
 import { getGateway } from '../services/ai-gateway/gateway';
+import {
+  projectModelsForPicker,
+  EFFORT_LEVELS,
+  DEFAULT_EFFORT,
+} from '../services/ai-gateway/effort';
 
 const router = Router();
+
+/**
+ * Model-governance provenance (decision register #727 item 8): every
+ * generation on a regulated-drafting surface writes an append-only audit
+ * row recording WHICH pinned model produced WHAT content (sha256 of the
+ * output), so any document later saved from this content can be traced
+ * back to its model version by hashing it. Fire-and-forget — provenance
+ * recording must never fail the drafting request; the dynamic import
+ * keeps audit/DB code off this router's load path.
+ */
+function recordModelProvenance(params: {
+  req: Request;
+  surface: string;
+  model: string | undefined;
+  content: string | undefined;
+  usage?: { inputTokens?: number; outputTokens?: number };
+}): void {
+  void (async () => {
+    try {
+      const { default: auditService } = await import('../services/auditService');
+      await auditService.logAction({
+        tenantId: (params.req as any).organizationId,
+        userId: (params.req as any).userId,
+        action: 'ai_generation',
+        resourceType: 'ai_drafting_surface',
+        resourceId: params.surface,
+        details: {
+          model: params.model || 'unknown',
+          contentSha256: params.content
+            ? createHash('sha256').update(params.content).digest('hex')
+            : null,
+          inputTokens: params.usage?.inputTokens ?? null,
+          outputTokens: params.usage?.outputTokens ?? null,
+        },
+      });
+    } catch (err: any) {
+      console.warn('[Claude Intelligence] model provenance record failed:', err?.message);
+    }
+  })();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Drafting
@@ -35,6 +81,7 @@ router.post('/draft', async (req: Request, res: Response) => {
   try {
     const {
       framework,
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -44,15 +91,17 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableTools,
     } = req.body;
 
-    if (!framework || !sectionType || !instructions) {
+    // Either a hardcoded framework OR a registry submission type unlocks authoring.
+    if ((!framework && !submissionType) || !sectionType || !instructions) {
       return res.status(400).json({
-        error: 'Missing required fields: framework, sectionType, instructions',
+        error: 'Missing required fields: (framework or submissionType), sectionType, instructions',
       });
     }
 
     const service = getAnaDraftingService();
     const result = await service.draftDocument({
-      framework,
+      framework: framework ?? 'general_regulatory',
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -62,6 +111,14 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableTools: enableTools ?? true,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
+    });
+
+    recordModelProvenance({
+      req,
+      surface: 'draft',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
     });
 
     res.json({
@@ -85,6 +142,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
   try {
     const {
       framework,
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -94,9 +152,9 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       enableTools,
     } = req.body;
 
-    if (!framework || !sectionType || !instructions) {
+    if ((!framework && !submissionType) || !sectionType || !instructions) {
       return res.status(400).json({
-        error: 'Missing required fields: framework, sectionType, instructions',
+        error: 'Missing required fields: (framework or submissionType), sectionType, instructions',
       });
     }
 
@@ -111,7 +169,8 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     const service = getAnaDraftingService();
 
     const result = await service.draftDocument({
-      framework,
+      framework: framework ?? 'general_regulatory',
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -132,6 +191,13 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     });
 
     // Send final event with full response metadata
+    recordModelProvenance({
+      req,
+      surface: 'draft/stream',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
+    });
     res.write(`data: ${JSON.stringify({
       type: 'done',
       model: result.model,
@@ -164,19 +230,27 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
  */
 router.post('/review', async (req: Request, res: Response) => {
   try {
-    const { content, framework, enableThinking } = req.body;
+    const { content, framework, submissionType, enableThinking } = req.body;
 
-    if (!content || !framework) {
+    if (!content || (!framework && !submissionType)) {
       return res.status(400).json({
-        error: 'Missing required fields: content, framework',
+        error: 'Missing required fields: content, (framework or submissionType)',
       });
     }
 
     const service = getAnaDraftingService();
-    const result = await service.reviewCompliance(content, framework, {
+    const result = await service.reviewCompliance(content, submissionType ?? framework, {
       enableThinking: enableThinking ?? true,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
+    });
+
+    recordModelProvenance({
+      req,
+      surface: 'review',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
     });
 
     res.json({ success: true, data: result });
@@ -196,18 +270,18 @@ router.post('/review', async (req: Request, res: Response) => {
  */
 router.post('/gap-analysis', async (req: Request, res: Response) => {
   try {
-    const { documentContent, framework, targetSections, enableThinking } = req.body;
+    const { documentContent, framework, submissionType, targetSections, enableThinking } = req.body;
 
-    if (!documentContent || !framework || !targetSections) {
+    if (!documentContent || (!framework && !submissionType) || !targetSections) {
       return res.status(400).json({
-        error: 'Missing required fields: documentContent, framework, targetSections',
+        error: 'Missing required fields: documentContent, (framework or submissionType), targetSections',
       });
     }
 
     const service = getAnaDraftingService();
     const result = await service.analyzeGaps(
       documentContent,
-      framework,
+      submissionType ?? framework,
       targetSections,
       {
         enableThinking: enableThinking ?? true,
@@ -215,6 +289,14 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
         userId: (req as any).userId,
       }
     );
+
+    recordModelProvenance({
+      req,
+      surface: 'gap-analysis',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
+    });
 
     res.json({ success: true, data: result });
   } catch (error: any) {
@@ -250,6 +332,14 @@ router.post('/vision', async (req: Request, res: Response) => {
       enableThinking,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
+    });
+
+    recordModelProvenance({
+      req,
+      surface: 'vision',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
     });
 
     res.json({ success: true, data: result });
@@ -310,6 +400,15 @@ router.post('/batch', async (req: Request, res: Response) => {
         },
       },
     });
+    for (const r of results) {
+      recordModelProvenance({
+        req,
+        surface: 'batch',
+        model: r.model,
+        content: r.content,
+        usage: r.usage,
+      });
+    }
   } catch (error: any) {
     console.error('[Claude Intelligence] Batch error:', error.message);
     res.status(500).json({ error: error.message });
@@ -338,6 +437,15 @@ router.post('/quick', async (req: Request, res: Response) => {
       maxTokens,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
+    });
+
+    recordModelProvenance({
+      req,
+      surface: 'quick',
+      // quickComplete returns content only; mirror its pinned model
+      // (AnaDocumentDraftingService.quickComplete).
+      model: 'claude-sonnet-4-6',
+      content: result,
     });
 
     res.json({ success: true, data: { content: result } });
@@ -372,7 +480,7 @@ router.post('/agent', async (req: Request, res: Response) => {
     );
 
     // Build system prompt
-    let system = systemPrompt || 'You are a regulatory affairs expert with access to clinical trial databases, FDA guidance, and literature search tools. Use the available tools to research and provide evidence-based answers.';
+    const system = systemPrompt || 'You are a regulatory affairs expert with access to clinical trial databases, FDA guidance, and literature search tools. Use the available tools to research and provide evidence-based answers.';
     /* Framework context is embedded directly in the system prompt below;
        the dynamic AnaDocumentDraftingService import was unused dead code
        and was removed. */
@@ -402,6 +510,14 @@ router.post('/agent', async (req: Request, res: Response) => {
         },
       }
     );
+
+    recordModelProvenance({
+      req,
+      surface: 'agent',
+      model: result.model,
+      content: result.content,
+      usage: result.usage,
+    });
 
     res.json({
       success: true,
@@ -458,44 +574,23 @@ router.get('/health', (_req: Request, res: Response) => {
 
 /**
  * GET /api/claude/models
- * Available Claude models.
+ * Available models for the AnA Composer's model/effort picker.
+ *
+ * Projected live from the gateway's model registry (gated on API-key presence)
+ * rather than a static list, so the picker only ever offers models the gateway
+ * can actually route to. Each option carries a derived `label` and
+ * `recommendedEffort` (neither exists on the raw ModelConfig). The effort
+ * controls (`effortLevels` + `defaultEffort`) and the legacy `frameworks` array
+ * are preserved alongside the `{ success, data }` envelope.
  */
 router.get('/models', (_req: Request, res: Response) => {
+  const models = projectModelsForPicker(getGateway().getModels());
   res.json({
     success: true,
     data: {
-      models: [
-        {
-          id: 'claude-opus-4',
-          model: 'claude-opus-4-7',
-          description: 'Most capable model — regulatory document drafting, complex analysis, extended thinking',
-          contextWindow: 200000,
-          maxOutput: 32768,
-          pricing: { input: '$15/MTok', output: '$75/MTok' },
-          features: ['extended_thinking', 'tool_use', 'vision', 'prompt_caching', 'streaming'],
-          bestFor: ['document_drafting', 'regulatory_review', 'gap_analysis', 'complex_reasoning'],
-        },
-        {
-          id: 'claude-sonnet-4',
-          model: 'claude-sonnet-4-6',
-          description: 'Best balance of speed and capability — chat, analysis, vision, code',
-          contextWindow: 200000,
-          maxOutput: 16384,
-          pricing: { input: '$3/MTok', output: '$15/MTok' },
-          features: ['extended_thinking', 'tool_use', 'vision', 'prompt_caching', 'streaming'],
-          bestFor: ['chat', 'document_analysis', 'structured_output', 'vision'],
-        },
-        {
-          id: 'claude-haiku-4',
-          model: 'claude-haiku-4-5-20251001',
-          description: 'Fastest and most affordable — summaries, simple queries, structured extraction',
-          contextWindow: 200000,
-          maxOutput: 8192,
-          pricing: { input: '$0.80/MTok', output: '$4/MTok' },
-          features: ['tool_use', 'vision', 'streaming'],
-          bestFor: ['chat', 'summarization', 'structured_output'],
-        },
-      ],
+      models,
+      effortLevels: EFFORT_LEVELS,
+      defaultEffort: DEFAULT_EFFORT,
       frameworks: [
         'fda_510k',
         'fda_pma',

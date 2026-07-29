@@ -10,7 +10,7 @@ const calculateComplianceScore = (content: string, templateType: string): number
   const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
 
   let score = 0;
-  let maxScore = 100;
+  const maxScore = 100;
 
   // Content length adequacy (15 points)
   if (words.length >= 500) score += 15;
@@ -469,10 +469,10 @@ This documentation has been prepared in accordance with ICH guidelines and regul
 // Regulatory guidance lookup endpoint
 router.get('/regulatory-guidance/:section', async (req: Request, res: Response) => {
   try {
-    const { section } = req.params;
+    const section = String(req.params.section);
     const organizationId = (req as any).user?.organizationId || (req as any).tenantId;
 
-    const guidance = regulatoryKnowledgeBase[section];
+    const guidance = regulatoryKnowledgeBase[String(section)];
 
     if (!guidance) {
       return res.status(404).json({
@@ -530,7 +530,7 @@ Keep responses practical and regulatory-focused.
     `;
 
     // Simulate AI response for now (you can integrate with OpenAI later)
-    let guidance = generateContextualGuidance(query, drugInfo, completedSteps);
+    const guidance = generateContextualGuidance(query, drugInfo, completedSteps);
 
     // Generate follow-up suggestions based on the query and context
     const followUpSuggestions = generateFollowUpSuggestions(query, drugInfo, completedSteps);

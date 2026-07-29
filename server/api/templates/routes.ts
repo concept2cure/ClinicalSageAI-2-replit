@@ -1,12 +1,17 @@
+import { authedUserId } from '../../utils/authedActor';
 import { Request, Response, Router } from 'express';
 import { templateService } from '../../services/templateService';
 // Document templates now use ectdTemplates table
 import multer from 'multer';
 import path from 'path';
+import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
-import { eq, and, or, like, sql } from 'drizzle-orm';
+import { eq, and, or, like, sql, type SQL } from 'drizzle-orm';
+import { SOP_TEMPLATES } from '../../services/qms/sopTemplates';
+import { resolveUserId } from '../../types/auth-request';
 
 const router = Router();
 
@@ -39,6 +44,23 @@ const upload = multer({
 });
 
 /**
+ * Claimed-type → canonical MIME for post-upload magic-byte verification.
+ * Keys mirror the multer fileFilter allowlist above; the extension is the
+ * only "declared type" that gate actually checks, so the content check is
+ * keyed off it too (pdf = '%PDF', docx = ZIP 'PK\x03\x04', legacy doc = OLE
+ * compound D0CF11E0, txt/rtf = text-shaped). An extension missing from this
+ * map falls through to a MIME verifyFileSignature cannot vouch for, which
+ * rejects — fail-closed if the allowlist ever widens without updating this.
+ */
+const CLAIMED_EXTENSION_MIME: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.doc': 'application/msword',
+  '.txt': 'text/plain',
+  '.rtf': 'text/rtf',
+};
+
+/**
  * GET /api/templates
  * Get all templates with optional filtering
  */
@@ -58,9 +80,29 @@ router.get('/', async (req: Request, res: Response) => {
 
     const result = await templateService.getAllTemplates(organizationId, filters);
 
+    // Fold in the server-curated Quality system family (SOPs, work
+    // instructions, policies, forms, validation protocols, training
+    // curricula) so the cross-program Templates library lists them alongside
+    // the regulatory templates. Static catalog — see services/qms/sopTemplates.
+    const qmsCards = SOP_TEMPLATES.map((t) => ({
+      id: `qms-${t.key}`,
+      name: t.label,
+      title: t.label,
+      description: t.description,
+      category: 'Quality system',
+      type: t.docType,
+      source: 'qms',
+      tags: ['quality', 'sop', t.docType],
+      usageCount: 0,
+      downloadCount: 0,
+      updatedAt: new Date().toISOString(),
+      status: 'active',
+    }));
+
     res.json({
       success: true,
       ...result,
+      templates: [...result.templates, ...qmsCards],
     });
   } catch (error) {
     console.error('Error fetching templates:', error);
@@ -77,17 +119,22 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/catalog', async (req: Request, res: Response) => {
   try {
-    const { 
-      category, 
-      region, 
-      module, 
-      search, 
+    // Tenant scope from the authenticated context, never the query string —
+    // matches the GET / handler above. Prevents reading another org's catalog.
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const {
+      category,
+      region,
+      module,
+      search,
       tags,
-      organizationId = '6' 
     } = req.query;
-    
-    let conditions = [
-      eq(ectdTemplates.organizationId, parseInt(organizationId as string)),
+
+    const conditions: (SQL<unknown> | undefined)[] = [
+      eq(ectdTemplates.organizationId, organizationId),
       eq(ectdTemplates.isActive, true)
     ];
     
@@ -219,10 +266,10 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const { id } = req.params;
-    
+    const id = String(req.params.id);
+
     let template = null;
-    
+
     // Try numeric ID first
     const numericId = parseInt(id);
     if (!isNaN(numericId)) {
@@ -265,25 +312,31 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
+    // `template` is a union of differently-shaped sources (raw DB row, the
+    // transformed getTemplateById result, and the in-memory catalog entry).
+    // Normalize to a permissive record so the response can pull optional
+    // fallback fields from any variant without losing runtime behavior.
+    const t = template as Record<string, any>;
+
     // Return template in expected format
     res.json({
       success: true,
       template: {
-        id: template.id || template.templateId,
-        templateName: template.templateName || template.name,
-        description: template.description || '',
-        content: template.content || template.structure || '',
-        sections: template.sections || [],
-        category: template.category || 'General',
-        tags: template.tags || [],
-        agency: template.agency || '',
-        format: template.format || 'html',
-        moduleNumber: template.moduleNumber,
-        version: template.version || '1.0.0',
+        id: t.id || t.templateId,
+        templateName: t.templateName || t.name,
+        description: t.description || '',
+        content: t.content || t.structure || '',
+        sections: t.sections || [],
+        category: t.category || 'General',
+        tags: t.tags || [],
+        agency: t.agency || '',
+        format: t.format || 'html',
+        moduleNumber: t.moduleNumber,
+        version: t.version || '1.0.0',
         metadata: {
-          createdAt: template.createdAt || template.created_at || new Date().toISOString(),
-          updatedAt: template.updatedAt || template.updated_at || new Date().toISOString(),
-          status: template.status || template.isActive ? 'active' : 'inactive'
+          createdAt: t.createdAt || t.created_at || new Date().toISOString(),
+          updatedAt: t.updatedAt || t.updated_at || new Date().toISOString(),
+          status: t.status || t.isActive ? 'active' : 'inactive'
         }
       },
     });
@@ -317,6 +370,14 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
+    // Part 11 attribution: record the authenticated creator, never a hardcoded
+    // user. The global /api auth gate populates req.user; fail closed if the
+    // identity is absent rather than fabricating one (previously createdBy: 1).
+    const createdBy = resolveUserId(req);
+    if (!createdBy) {
+      return res.status(401).json({ error: 'Authenticated user required' });
+    }
+
     const templateData = {
       name,
       category,
@@ -327,7 +388,7 @@ router.post('/', async (req: Request, res: Response) => {
       ichGuidance,
       tags: tags ? tags.split(',').map((tag: any) => tag.trim()) : [],
       organizationId,
-      createdBy: 1, // TODO: Get from authentication
+      createdBy,
     };
 
     const newTemplate = await templateService.createTemplate(templateData);
@@ -344,6 +405,15 @@ router.post('/', async (req: Request, res: Response) => {
     });
   }
 });
+
+/** Best-effort removal of a multer-persisted upload; never throws. */
+async function unlinkUploadedFile(filePath: string): Promise<void> {
+  try {
+    await fs.promises.unlink(filePath);
+  } catch {
+    /* best-effort cleanup */
+  }
+}
 
 /**
  * POST /api/templates/upload
@@ -363,7 +433,34 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       });
     }
 
+    // SECURITY: magic-byte signature verification + AV scan (fail-closed in
+    // production) on the persisted bytes. The multer fileFilter above only
+    // checks the attacker-controlled extension; this confirms the stored
+    // content actually matches the claimed type. On rejection the temp file
+    // is unlinked so a spoofed upload doesn't linger under uploads/templates.
+    const claimedExt = path.extname(req.file.originalname).toLowerCase();
+    const declaredMime = CLAIMED_EXTENSION_MIME[claimedExt] ?? 'application/octet-stream';
+    try {
+      await assertUploadSafe(req.file.path, declaredMime, req.file.originalname);
+    } catch (safetyErr) {
+      await unlinkUploadedFile(req.file.path);
+      if (safetyErr instanceof UploadSafetyError) {
+        return res.status(safetyErr.status).json(safetyErr.body);
+      }
+      throw safetyErr;
+    }
+
     const { name, category, module, description } = req.body;
+
+    // Part 11 attribution: the authenticated uploader, never a hardcoded user.
+    // Fail closed if the identity is absent; the file already passed the safety
+    // scan and is on disk, so remove it rather than leave an un-owned upload
+    // lingering under uploads/templates with no template row.
+    const createdBy = resolveUserId(req);
+    if (!createdBy) {
+      await unlinkUploadedFile(req.file.path);
+      return res.status(401).json({ error: 'Authenticated user required' });
+    }
 
     const templateData = {
       organizationId,
@@ -377,7 +474,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       fileType: path.extname(req.file.originalname).substring(1),
       version: '1.0.0',
       tags: [category, 'uploaded'],
-      createdBy: 1,
+      createdBy,
     };
 
     const newTemplate = await templateService.createTemplate(templateData);
@@ -405,7 +502,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
 
     const updatedTemplate = await templateService.updateTemplate(
       templateId,
@@ -443,7 +540,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
+    const templateId = parseInt(String(req.params.id));
 
     const deletedTemplate = await templateService.deleteTemplate(templateId, organizationId);
 
@@ -477,21 +574,18 @@ router.post('/:id/use', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const templateId = parseInt(req.params.id);
-    const userId = parseInt(req.headers['x-user-id'] as string);
+    const templateId = parseInt(String(req.params.id));
+    // Verified subject, not the x-user-id header. GET /recent/documents passed
+    // this straight into getRecentDocuments(userId, orgId), so a caller could
+    // read another user's documents by naming them. See ledger C-18.
+    const userId = authedUserId(req);
     if (!userId) {
-      return res.status(401).json({ error: 'User context required (x-user-id header)' });
+      return res.status(401).json({ error: 'User context required' });
     }
 
-    const usageData = {
-      organizationId,
-      templateId,
-      userId,
-      usageType: req.body.usageType || 'create_new',
-      documentTitle: req.body.documentTitle,
-    };
+    const usageType = req.body.usageType || 'create_new';
 
-    const usage = await templateService.trackTemplateUsage(usageData);
+    const usage = await templateService.trackTemplateUsage(templateId, usageType);
 
     res.json({
       success: true,
@@ -516,9 +610,12 @@ router.get('/recent/documents', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const userId = parseInt(req.headers['x-user-id'] as string);
+    // Verified subject, not the x-user-id header. GET /recent/documents passed
+    // this straight into getRecentDocuments(userId, orgId), so a caller could
+    // read another user's documents by naming them. See ledger C-18.
+    const userId = authedUserId(req);
     if (!userId) {
-      return res.status(401).json({ error: 'User context required (x-user-id header)' });
+      return res.status(401).json({ error: 'User context required' });
     }
 
     const recentDocs = await templateService.getRecentDocuments(userId, organizationId);

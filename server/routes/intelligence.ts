@@ -15,6 +15,10 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('intelligence');
+
 import {
   generateRecommendations,
   computeReadinessScore,
@@ -37,9 +41,16 @@ const router = Router();
 // MIDDLEWARE HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function getOrgId(req: Request): number {
+function getOrgId(req: Request, res: Response): number | null {
   const user = (req as unknown as Record<string, Record<string, unknown>>).user;
-  return Number(user?.organizationId ?? user?.orgId ?? 0);
+  const orgId = Number(user?.organizationId ?? user?.orgId ?? 0);
+  // No fail-open to org 0: a request without authenticated org context is
+  // rejected rather than silently scoped to organization 0.
+  if (!Number.isFinite(orgId) || orgId <= 0) {
+    res.status(403).json({ error: 'Tenant context required' });
+    return null;
+  }
+  return orgId;
 }
 
 function getUserId(req: Request): number {
@@ -59,7 +70,8 @@ function getUserId(req: Request): number {
 router.get('/projects/:projectId/recommendations', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -75,7 +87,7 @@ router.get('/projects/:projectId/recommendations', async (req: Request, res: Res
 
     return res.json(result);
   } catch (error) {
-    console.error('[intelligence] Recommendation generation failed:', error);
+    logger.error('Recommendation generation failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to generate recommendations' });
   }
 });
@@ -92,7 +104,8 @@ router.get('/projects/:projectId/recommendations', async (req: Request, res: Res
 router.get('/projects/:projectId/readiness', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -108,7 +121,7 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
 
     return res.json(result);
   } catch (error) {
-    console.error('[intelligence] Readiness scoring failed:', error);
+    logger.error('Readiness scoring failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to compute readiness score' });
   }
 });
@@ -125,7 +138,8 @@ router.get('/projects/:projectId/readiness', async (req: Request, res: Response)
 router.get('/projects/:projectId/profile', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -139,7 +153,7 @@ router.get('/projects/:projectId/profile', async (req: Request, res: Response) =
 
     return res.json(profile);
   } catch (error) {
-    console.error('[intelligence] Profile fetch failed:', error);
+    logger.error('Profile fetch failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch project intelligence' });
   }
 });
@@ -152,7 +166,8 @@ router.get('/projects/:projectId/profile', async (req: Request, res: Response) =
 router.post('/projects/:projectId/profile/enrich', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
     const userId = getUserId(req);
 
     if (!projectId || !organizationId) {
@@ -198,7 +213,7 @@ router.post('/projects/:projectId/profile/enrich', async (req: Request, res: Res
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     }
-    console.error('[intelligence] Profile enrichment failed:', error);
+    logger.error('Profile enrichment failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to enrich project intelligence' });
   }
 });
@@ -211,7 +226,8 @@ router.post('/projects/:projectId/profile/enrich', async (req: Request, res: Res
 router.get('/projects/:projectId/memory', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -224,7 +240,7 @@ router.get('/projects/:projectId/memory', async (req: Request, res: Response) =>
 
     return res.json({ entries: memory, total: memory.length });
   } catch (error) {
-    console.error('[intelligence] Memory fetch failed:', error);
+    logger.error('Memory fetch failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to fetch project memory' });
   }
 });
@@ -241,7 +257,8 @@ router.get('/projects/:projectId/memory', async (req: Request, res: Response) =>
 router.get('/projects/:projectId/next-actions', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -260,7 +277,7 @@ router.get('/projects/:projectId/next-actions', async (req: Request, res: Respon
 
     return res.json(result);
   } catch (error) {
-    console.error('[intelligence] Next actions generation failed:', error);
+    logger.error('Next actions generation failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to generate next actions' });
   }
 });
@@ -277,7 +294,8 @@ router.get('/projects/:projectId/next-actions', async (req: Request, res: Respon
 router.post('/projects/:projectId/feedback', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
     const userId = getUserId(req);
 
     if (!projectId || !organizationId) {
@@ -307,7 +325,7 @@ router.post('/projects/:projectId/feedback', async (req: Request, res: Response)
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     }
-    console.error('[intelligence] Feedback recording failed:', error);
+    logger.error('Feedback recording failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to record feedback' });
   }
 });
@@ -320,7 +338,8 @@ router.post('/projects/:projectId/feedback', async (req: Request, res: Response)
 router.get('/projects/:projectId/feedback/summary', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -329,7 +348,7 @@ router.get('/projects/:projectId/feedback/summary', async (req: Request, res: Re
     const summary = await getFeedbackSummary(projectId, organizationId);
     return res.json(summary);
   } catch (error) {
-    console.error('[intelligence] Feedback summary failed:', error);
+    logger.error('Feedback summary failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to get feedback summary' });
   }
 });
@@ -346,7 +365,8 @@ router.get('/projects/:projectId/feedback/summary', async (req: Request, res: Re
 router.get('/projects/:projectId/cross-module', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -359,7 +379,7 @@ router.get('/projects/:projectId/cross-module', async (req: Request, res: Respon
 
     return res.json(report);
   } catch (error) {
-    console.error('[intelligence] Cross-module analysis failed:', error);
+    logger.error('Cross-module analysis failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to analyze cross-module relationships' });
   }
 });
@@ -377,7 +397,8 @@ router.get('/projects/:projectId/cross-module', async (req: Request, res: Respon
 router.get('/projects/:projectId/dashboard', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -410,7 +431,7 @@ router.get('/projects/:projectId/dashboard', async (req: Request, res: Response)
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('[intelligence] Dashboard generation failed:', error);
+    logger.error('Dashboard generation failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to generate intelligence dashboard' });
   }
 });
@@ -428,7 +449,8 @@ router.get('/projects/:projectId/dashboard', async (req: Request, res: Response)
 router.post('/projects/:projectId/rim/assess', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -450,7 +472,7 @@ router.post('/projects/:projectId/rim/assess', async (req: Request, res: Respons
 
     return res.json(assessment);
   } catch (error) {
-    console.error('[intelligence] RIM assessment failed:', error);
+    logger.error('RIM assessment failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to run RIM assessment' });
   }
 });
@@ -463,7 +485,8 @@ router.post('/projects/:projectId/rim/assess', async (req: Request, res: Respons
 router.get('/projects/:projectId/rim/signals', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -472,7 +495,7 @@ router.get('/projects/:projectId/rim/signals', async (req: Request, res: Respons
     const summary = await getProjectSignals(organizationId, projectId);
     return res.json(summary);
   } catch (error) {
-    console.error('[intelligence] Signal summary failed:', error);
+    logger.error('Signal summary failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to get signal summary' });
   }
 });
@@ -485,7 +508,8 @@ router.get('/projects/:projectId/rim/signals', async (req: Request, res: Respons
 router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
 
     if (!projectId || !organizationId) {
       return res.status(400).json({ error: 'Missing projectId or organization context' });
@@ -494,7 +518,7 @@ router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: 
     const report = await analyzeCrossArtifactIntelligence(organizationId, projectId);
     return res.json(report);
   } catch (error) {
-    console.error('[intelligence] Cross-artifact analysis failed:', error);
+    logger.error('Cross-artifact analysis failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to analyze cross-artifact intelligence' });
   }
 });
@@ -507,17 +531,18 @@ router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: 
 router.get('/projects/:projectId/rim/section/:sectionCode', async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.projectId);
-    const organizationId = getOrgId(req);
+    const organizationId = getOrgId(req, res);
+    if (organizationId == null) return;
     const sectionCode = req.params.sectionCode;
 
     if (!projectId || !organizationId || !sectionCode) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    const enrichment = await enrichChangeImpact(organizationId, projectId, sectionCode);
+    const enrichment = await enrichChangeImpact(organizationId, projectId, String(sectionCode));
     return res.json(enrichment);
   } catch (error) {
-    console.error('[intelligence] Section enrichment failed:', error);
+    logger.error('Section enrichment failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to get section intelligence' });
   }
 });

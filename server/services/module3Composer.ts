@@ -25,6 +25,16 @@ export interface CanonicalSource {
   sourceType: CmcSourceType;
   sourcePayload: Record<string, any>;
   sourceHash?: string;
+  /**
+   * Optional tenant tag. When populated, callers that span a trust boundary
+   * (e.g. `buildModule3WithNarrative`, which sends source payloads to an LLM)
+   * should assert that all sources share the same `organizationId` /
+   * `projectId` as the request context to prevent cross-tenant leakage.
+   * Left optional so the deterministic composer remains usable by existing
+   * tenant-agnostic callers (autoDraftModule3, e2e tests).
+   */
+  organizationId?: number | string;
+  projectId?: number | string;
 }
 
 export interface ComposedSection {
@@ -68,6 +78,12 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
   { sectionKey: '3.2.P.8', requiredSourceTypes: ['stability', 'comparability'], requiredFields: ['shelfLifeClaim', 'comparabilityStatus'] },
+  // NOTE: Appendices (3.2.A.*) and Regional Information (3.2.R.*) are intentionally
+  // NOT composed here. They are owned by module3-extensions.ts, which performs the
+  // region-specific dispatch (US/EU/JP/CA). composeFullModule3() concatenates this
+  // core composer (S/P + structural) with the extensions; defining A/R rules here as
+  // well produced duplicate appendix leaves and region leakage in assembled eCTD
+  // packages. Keep this composer scoped to S/P + 3.1/3.3 (single source of truth).
   // --- Structural support sections ---
   { sectionKey: '3.1', requiredSourceTypes: ['drug_substance', 'drug_product'], requiredFields: ['name', 'dosageFormDescription'] },
   { sectionKey: '3.3', requiredSourceTypes: ['drug_substance', 'drug_product', 'reference_standard'], requiredFields: ['name', 'dosageFormDescription'] },
@@ -234,7 +250,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (status ? `Analytical methods are ${status}. ` : '') +
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
         (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` :
-          impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized` + (qualBasis ? ` (${qualBasis})` : '') + `. ` : ''),
+          impurities.length > 0 ? `${impurities.length} specified impurity/ies characterized. ` : '') +
+        (qualBasis ? `Qualification basis per ICH Q3A: ${qualBasis}. ` : ''),
       tables,
     };
   },
@@ -412,6 +429,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         ...(disposition ? [['Disposition', disposition]] : []),
         ...(validationStatus ? [['Process Validation Status', validationStatus]] : []),
         ...(pvProtocol ? [['Validation Protocol', pvProtocol]] : []),
+        ...(pvCriteria ? [['Validation Acceptance Criteria', pvCriteria]] : []),
       ],
     });
     // Manufacturing process flow if steps are provided
@@ -647,6 +665,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           ['3.2.P.6', 'Reference Standards (Drug Product)'],
           ['3.2.P.7', 'Container Closure System (Drug Product)'],
           ['3.2.P.8', 'Stability (Drug Product)'],
+          // Appendices (3.2.A.*) and Regional (3.2.R.*) are listed by the
+          // module3-extensions composer, which owns those sections with
+          // region-specific dispatch. See the MODULE3_SECTION_RULES note above.
         ],
       }],
     };
@@ -699,9 +720,18 @@ export function composeModule3FromCanonicalSources(sourceObjects: CanonicalSourc
       sourceObjects: matched.map((m) => ({ type: m.sourceType, payload: m.sourcePayload })),
     };
 
-    const availableFields = new Set(
-      matched.flatMap((m) => Object.keys(m.sourcePayload || {}))
-    );
+    // A field is "available" only when at least one matched source carries a
+    // non-empty value for it. Otherwise the section can report 100% complete
+    // while the rendered narrative shows "[name not provided]" placeholders.
+    // (Falsely-green dashboards are worse than missing-data dashboards.)
+    const isPresent = (v: unknown) => v !== undefined && v !== null && v !== '';
+    const availableFields = new Set<string>();
+    for (const m of matched) {
+      const payload = m.sourcePayload || {};
+      for (const [k, v] of Object.entries(payload)) {
+        if (isPresent(v)) availableFields.add(k);
+      }
+    }
     const missingInputs = rule.requiredFields.filter((field) => !availableFields.has(field));
     const completeness = rule.requiredFields.length === 0
       ? 100

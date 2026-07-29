@@ -310,7 +310,7 @@ export async function classifyAndMapArtifactToSource(
       `INSERT INTO cmc_source_objects
          (organization_id, project_id, source_type, source_key, source_payload, source_hash, version)
        VALUES ($1, $2, $3, $4, $5::jsonb, $6, 1)
-       ON CONFLICT (project_id, source_type, source_key, version)
+       ON CONFLICT (organization_id, project_id, source_type, source_key, version)
        DO UPDATE SET source_payload = excluded.source_payload,
                      source_hash   = excluded.source_hash,
                      updated_at    = NOW()

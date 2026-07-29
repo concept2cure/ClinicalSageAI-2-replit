@@ -218,8 +218,13 @@ export function makeDeterministic(pdf: Buffer): Buffer {
     `/CreationDate (${PDF_NORMALIZED_DATE})`
   );
   text = text.replace(/\/ModDate\s*\(D:[^)]+\)/g, `/ModDate (${PDF_NORMALIZED_DATE})`);
-  text = text.replace(/\/Producer\s*\([^)]*\)/g, PDF_NORMALIZED_PRODUCER);
-  text = text.replace(/\/Creator\s*\([^)]*\)/g, PDF_NORMALIZED_CREATOR);
+  // PDF Producer/Creator strings often contain nested parens (e.g.
+  // "LibreOffice 7.5 (Linux build-1234)"). [^)]* would stop at the first
+  // inner ')' and leave trailing garbage. Match one level of balanced
+  // parens, which covers every real-world producer string we've seen.
+  const fieldValuePattern = /\(([^()]*(?:\([^()]*\)[^()]*)*)\)/;
+  text = text.replace(new RegExp(`/Producer\\s*${fieldValuePattern.source}`, 'g'), PDF_NORMALIZED_PRODUCER);
+  text = text.replace(new RegExp(`/Creator\\s*${fieldValuePattern.source}`, 'g'), PDF_NORMALIZED_CREATOR);
   // Trailer /ID — replace whatever pair is present with two zero-hash ids.
   text = text.replace(
     /\/ID\s*\[\s*<[0-9a-fA-F]+>\s*<[0-9a-fA-F]+>\s*\]/g,

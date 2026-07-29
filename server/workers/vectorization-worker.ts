@@ -13,7 +13,7 @@
  */
 
 import { getOpenAIClient } from '../services/openai-client';
-import pdfParse from 'pdf-parse';
+import pdfParse from '../utils/pdfParse';
 import { pool } from '../db';
 import * as crypto from 'crypto';
 import { createScopedLogger } from '../utils/logger.js';
@@ -246,7 +246,7 @@ async function processDocument(job: ProcessingJob): Promise<void> {
       [job.document_id]
     );
 
-    let text = docResult.rows[0]?.content_text || '';
+    const text = docResult.rows[0]?.content_text || '';
 
     if (!text) {
       log.debug(`No text content for document ${job.document_id}, skipping`);
@@ -307,12 +307,13 @@ async function processDocument(job: ProcessingJob): Promise<void> {
       job.document_id,
     ]);
 
-    // Insert new chunks
+    // Insert new chunks. Column is chunk_text (the canonical vault schema and
+    // the column the read path in advancedRAGPipeline selects) — not "content".
     for (const chunk of chunks) {
       await client.query(
         `
         INSERT INTO vault.document_chunks (
-          document_id, chunk_index, content, embedding, token_count
+          document_id, chunk_index, chunk_text, embedding, token_count
         ) VALUES ($1, $2, $3, $4::vector(1536), $5)
       `,
         [

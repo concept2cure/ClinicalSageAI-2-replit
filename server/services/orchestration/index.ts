@@ -1,3 +1,7 @@
+
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('index');
 /**
  * Orchestration System — Phase 3 Entry Point
  *
@@ -52,4 +56,4 @@ export type {
   ProjectContinuitySnapshot,
 } from '../../../shared/types/orchestration';
 
-console.log('[Orchestration] Phase 3 orchestration system loaded');
+logger.info('Phase 3 orchestration system loaded');

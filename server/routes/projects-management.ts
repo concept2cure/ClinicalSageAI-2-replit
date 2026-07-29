@@ -49,12 +49,11 @@ router.get('/', async (req, res) => {
     }
     const { organizationId, clientWorkspaceId } = tenantContext;
 
-    log.debug(
-      '🔍 GET projects request - organizationId:',
+    log.debug('🔍 GET projects request', {
       organizationId,
-      'from:',
-      req.headers['x-organization-id'] ? 'header' : 'query'
-    );
+      // security-allow: source-telemetry
+      from: req.headers['x-organization-id'] ? 'header' : 'query',
+    });
 
     const license = await getActiveLicenseForOrganization(organizationId);
     if (!license) {
@@ -78,7 +77,10 @@ router.get('/', async (req, res) => {
       ? orgProjects.filter(project => project.clientWorkspaceId === clientWorkspaceId)
       : orgProjects;
 
-    log.debug('🔍 Retrieved projects for org', organizationId, ':', orgProjects.length);
+    log.debug('🔍 Retrieved projects for org', {
+      organizationId,
+      count: orgProjects.length,
+    });
     log.debug('🔍 Projects data:', orgProjects);
     res.json(filteredProjects);
   } catch (error) {
@@ -160,7 +162,7 @@ router.post('/', async (req, res) => {
     }
 
     // Find an available client workspace for the organization first
-    let availableClients = await db
+    const availableClients = await db
       .select()
       .from(clientWorkspaces)
       .where(eq(clientWorkspaces.organizationId, organizationId))
@@ -197,11 +199,9 @@ router.post('/', async (req, res) => {
           description: 'Default client workspace created automatically for project management',
           status: 'active',
           industry: organization.industryMode || 'pharmaceutical',
-          tier: organization.tier || 'standard',
-          quotaUsers: organization.maxUsers || 5,
           quotaProjects: organization.maxProjects || 10,
           quotaStorage: organization.maxStorage || 5,
-        })
+        } as any)
         .returning();
 
       clientWorkspaceId = newClientWorkspace.id;
@@ -215,8 +215,24 @@ router.post('/', async (req, res) => {
       );
     }
 
-    // Use atomic project creation with quota enforcement
-    const atomicQuotaService = await import('../services/atomicQuotaService.js');
+    // Use atomic project creation with quota enforcement.
+    // atomicQuotaService is an untyped JS module; the global '*.js' shim only
+    // surfaces a default export, so read the named function off the namespace.
+    const atomicQuotaService = (await import(
+      '../services/atomicQuotaService.js'
+    )) as unknown as {
+      atomicCreateProject: (
+        organizationId: number,
+        projectData: Record<string, unknown>,
+      ) => Promise<{
+        success: boolean;
+        error?: string;
+        message?: string;
+        details?: unknown;
+        data?: any;
+        quotaInfo?: unknown;
+      }>;
+    };
     const result = await atomicQuotaService.atomicCreateProject(organizationId, {
       name: validatedData.name,
       description: validatedData.description || null,

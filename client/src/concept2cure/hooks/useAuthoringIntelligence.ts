@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { getAuthHeaders as getCanonicalAuthHeaders } from '@/utils/authToken';
 import type { ReadinessSnapshot, ContradictionEntry } from '../../../../shared/types/authoring-context';
 
 interface AuthoringIntelligence {
@@ -18,13 +19,14 @@ interface AuthoringIntelligence {
   refetch: () => void;
 }
 
+// Delegates to the canonical builder so both the bearer and the
+// x-organization-id tenant header are sent — the previous version omitted the
+// tenant header entirely on /api/authoring-actions.
 function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
+  return {
+    'Content-Type': 'application/json',
+    ...getCanonicalAuthHeaders(),
+  };
 }
 
 export function useAuthoringIntelligence(

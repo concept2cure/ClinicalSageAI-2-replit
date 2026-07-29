@@ -5,7 +5,8 @@ import {
   fda510kDataMappings,
   fda510kTemplates,
   fda510kStageProgress,
-  documentAuditTrail
+  documentAuditTrail,
+  users
 } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
@@ -89,7 +90,7 @@ class DocumentOrchestrationService {
       // 2a. Create intelligent cross-reference mapping
       const crossRefRules = await this.crossReferenceMapper.createMappingRules(
         projectIdNum,
-        project.templateId || 'default',
+        'default',
         orgIdNum
       );
       
@@ -520,210 +521,6 @@ class DocumentOrchestrationService {
   }
 
   /**
-   * Generate FDA Form 3601 - User Fee Cover Sheet
-   */
-  private async generateForm3601(
-    project: any,
-    workflowData: WorkflowData,
-    userId: number,
-    organizationId: number
-  ): Promise<any> {
-    const formData = {
-      applicantName: workflowData.deviceInfo?.companyName || '',
-      applicantAddress: workflowData.deviceInfo?.companyAddress || '',
-      applicantCity: workflowData.deviceInfo?.companyCity || '',
-      applicantState: workflowData.deviceInfo?.companyState || '',
-      applicantZip: workflowData.deviceInfo?.companyZip || '',
-      applicantPhone: workflowData.deviceInfo?.companyPhone || '',
-      applicantEmail: workflowData.deviceInfo?.companyEmail || '',
-      deviceTradeName: workflowData.deviceInfo?.deviceName || '',
-      deviceClassification: workflowData.regulatoryInfo?.deviceClass || 'Class II',
-      productCode: workflowData.regulatoryInfo?.productCode || '',
-      regulationNumber: workflowData.regulatoryInfo?.regulationNumber || '',
-      feeType: '510(k) Premarket Notification',
-      paymentMethod: workflowData.regulatoryInfo?.paymentMethod || 'To be determined',
-      smallBusiness: workflowData.regulatoryInfo?.smallBusiness || false
-    };
-
-    const documentId = this.generateDocumentId();
-    
-    const [document] = await db!.insert(fda510kDocuments).values({
-      documentId: documentId,
-      projectId: project.id,
-      templateId: 2, // Reference to form-3601 template
-      documentType: 'fda-form',
-      title: 'FDA Form 3601 - User Fee Cover Sheet',
-      content: JSON.stringify(formData),
-      version: 1,
-      status: 'draft',
-      metadata: {
-        formType: '3601',
-        formVersion: '2024',
-        generatedAt: new Date().toISOString()
-      },
-      createdBy: userId,
-      updatedBy: userId,
-      organizationId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
-
-    return document;
-  }
-
-  /**
-   * Generate FDA Form 3514 - CDRH Premarket Review Submission Cover Sheet
-   */
-  private async generateForm3514(
-    project: any,
-    workflowData: WorkflowData,
-    userId: number,
-    organizationId: number
-  ): Promise<any> {
-    const formData = {
-      submissionType: '510(k)',
-      deviceName: workflowData.deviceInfo?.deviceName || '',
-      commonName: workflowData.deviceInfo?.commonName || '',
-      classificationName: workflowData.regulatoryInfo?.classificationName || '',
-      productCode: workflowData.regulatoryInfo?.productCode || '',
-      regulationNumber: workflowData.regulatoryInfo?.regulationNumber || '',
-      panel: workflowData.regulatoryInfo?.panel || '',
-      applicantInfo: {
-        name: workflowData.deviceInfo?.companyName || '',
-        address: workflowData.deviceInfo?.companyAddress || '',
-        contact: workflowData.deviceInfo?.contactName || '',
-        phone: workflowData.deviceInfo?.companyPhone || '',
-        email: workflowData.deviceInfo?.companyEmail || ''
-      },
-      correspondenceInfo: {
-        sameAsApplicant: true
-      },
-      consultantInfo: workflowData.regulatoryInfo?.consultant || null
-    };
-
-    const documentId = this.generateDocumentId();
-    
-    const [document] = await db!.insert(fda510kDocuments).values({
-      documentId: documentId,
-      projectId: project.id,
-      templateId: 3, // Reference to form-3514 template
-      documentType: 'fda-form',
-      title: 'FDA Form 3514 - CDRH Premarket Review Submission Cover Sheet',
-      content: JSON.stringify(formData),
-      version: 1,
-      status: 'draft',
-      metadata: {
-        formType: '3514',
-        formVersion: '2024',
-        generatedAt: new Date().toISOString()
-      },
-      createdBy: userId,
-      updatedBy: userId,
-      organizationId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
-
-    return document;
-  }
-
-  /**
-   * Generate FDA Form 3881 - Indications for Use
-   */
-  private async generateForm3881(
-    project: any,
-    workflowData: WorkflowData,
-    userId: number,
-    organizationId: number
-  ): Promise<any> {
-    const formData = {
-      kNumber: 'K' + new Date().getFullYear() + Math.random().toString().slice(2, 8),
-      deviceName: workflowData.deviceInfo?.deviceName || '',
-      indicationsForUse: workflowData.deviceInfo?.indicationsForUse || '',
-      prescriptionUse: workflowData.regulatoryInfo?.prescriptionDevice !== false,
-      overTheCounterUse: workflowData.regulatoryInfo?.prescriptionDevice === false,
-      enclosures: workflowData.regulatoryInfo?.enclosures || []
-    };
-
-    const documentId = this.generateDocumentId();
-    
-    const [document] = await db!.insert(fda510kDocuments).values({
-      documentId: documentId,
-      projectId: project.id,
-      templateId: 4, // Reference to form-3881 template
-      documentType: 'fda-form',
-      title: 'FDA Form 3881 - Indications for Use',
-      content: JSON.stringify(formData),
-      version: 1,
-      status: 'draft',
-      metadata: {
-        formType: '3881',
-        formVersion: '2024',
-        generatedAt: new Date().toISOString()
-      },
-      createdBy: userId,
-      updatedBy: userId,
-      organizationId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
-
-    return document;
-  }
-
-  /**
-   * Generate FDA Form 3654 - Certification
-   */
-  private async generateForm3654(
-    project: any,
-    workflowData: WorkflowData,
-    userId: number,
-    organizationId: number
-  ): Promise<any> {
-    const formData = {
-      applicantName: workflowData.deviceInfo?.manufacturerName || '',
-      deviceName: workflowData.deviceInfo?.deviceName || '',
-      submissionNumber: 'K' + new Date().getFullYear() + Math.random().toString().slice(2, 8),
-      certificationStatements: {
-        truthfulAndAccurate: true,
-        allRequiredInfo: true,
-        noMaterialOmissions: true,
-        clinicalInvestigations: workflowData.clinicalData?.hasStudies || false,
-        financialDisclosure: true,
-        goodManufacturingPractices: true
-      },
-      signatoryName: workflowData.deviceInfo?.contactPerson || '',
-      signatoryTitle: workflowData.deviceInfo?.contactTitle || 'Regulatory Affairs Director',
-      signatureDate: new Date().toISOString().split('T')[0]
-    };
-
-    const documentId = this.generateDocumentId();
-    
-    const [document] = await db!.insert(fda510kDocuments).values({
-      documentId: documentId,
-      projectId: project.id,
-      templateId: 5, // Reference to form-3654 template
-      documentType: 'fda-form',
-      title: 'FDA Form 3654 - Certification',
-      content: JSON.stringify(formData),
-      version: 1,
-      status: 'draft',
-      metadata: {
-        formType: '3654',
-        formVersion: '2024',
-        generatedAt: new Date().toISOString()
-      },
-      createdBy: userId,
-      updatedBy: userId,
-      organizationId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
-
-    return document;
-  }
-
-  /**
    * Lock a document for regulatory compliance
    */
   async lockDocument(
@@ -735,14 +532,34 @@ class DocumentOrchestrationService {
     if (!userId) {
       throw new Error('User context required');
     }
+    // SECURITY (cross-tenant write): both statements below matched on
+    // documentId alone. `organizationId` was accepted as a parameter and used
+    // only to stamp the audit row, never to scope the read or the update — so a
+    // caller in org A could lock org B's 510(k) document by naming its id, and
+    // the audit trail would record the action under org A. Every READ path in
+    // documentOrchestrationRoutes.ts already filters on organizationId with an
+    // explicit security comment; the mutations did not.
+    if (!organizationId) {
+      throw new Error('Organization context required');
+    }
     const userIdStr = userId;
     const userIdNum = parseInt(userIdStr);
+    const orgIdNum = parseInt(organizationId);
+    if (!Number.isFinite(orgIdNum)) {
+      throw new Error('Organization context required');
+    }
 
-    // Get current document
+    // Get current document — scoped, so a foreign-tenant id is indistinguishable
+    // from a nonexistent one.
     const [currentDoc] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId))
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, orgIdNum)
+        )
+      )
       .limit(1);
 
     if (!currentDoc) {
@@ -766,10 +583,17 @@ class DocumentOrchestrationService {
         status: 'locked',
         lockedBy: userIdNum,
         lockedAt: new Date(),
-        finalHash: contentHash,
         updatedAt: new Date()
       })
-      .where(eq(fda510kDocuments.documentId, documentId))
+      // Org predicate repeated on the write, not just the read: the SELECT above
+      // and this UPDATE are separate statements, so scoping only the read is a
+      // check-then-act. Cheap to make the write independently correct.
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, orgIdNum)
+        )
+      )
       .returning();
 
     // Create audit log
@@ -808,11 +632,20 @@ class DocumentOrchestrationService {
     const userIdNum = parseInt(userIdStr);
     const orgIdNum = parseInt(orgIdStr);
 
-    // Get current document
+    // SECURITY (cross-tenant write): this read matched on documentId alone,
+    // despite the organizationId check three lines above. The INSERT below then
+    // copies `organizationId: currentDoc.organizationId` — so a caller in org A
+    // could name org B's documentId and create a brand-new row INSIDE org B,
+    // carrying org B's content forward under org A's user id.
     const [currentDoc] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId))
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, orgIdNum)
+        )
+      )
       .limit(1);
 
     if (!currentDoc) {
@@ -821,19 +654,19 @@ class DocumentOrchestrationService {
 
     // Create new version
     const newDocumentId = this.generateDocumentId();
-    const newVersion = currentDoc.version + 1;
+    const newVersion = (currentDoc.version ?? 1) + 1;
 
     const [newDoc] = await db!.insert(fda510kDocuments).values({
       documentId: newDocumentId,
       projectId: currentDoc.projectId,
       templateId: currentDoc.templateId,
       documentType: currentDoc.documentType,
-      title: currentDoc.title,
+      documentName: currentDoc.documentName,
       content: currentDoc.content,
       version: newVersion,
       status: 'draft',
       previousVersionId: currentDoc.id,
-      metadata: currentDoc.metadata,
+      formData: currentDoc.formData,
       createdBy: userIdNum,
       updatedBy: userIdNum,
       organizationId: currentDoc.organizationId,
@@ -916,18 +749,26 @@ class DocumentOrchestrationService {
     action: string,
     metadata: any
   ): Promise<void> {
-    // Use the new document_audit_trail table for 21 CFR Part 11 compliance
+    // Use the new document_audit_trail table for 21 CFR Part 11 compliance.
+    // userName/userEmail are denormalized on the audit row for compliance, so
+    // resolve them from the acting user record.
+    const [actingUser] = await db!
+      .select({ name: users.name, email: users.email })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
     await db!.insert(documentAuditTrail).values({
       organizationId,
-      projectId,
       userId,
-      action,
-      entityType: '510k-document',
-      entityId: String(projectId),
-      metadata,
+      userName: actingUser?.name ?? `user-${userId}`,
+      userEmail: actingUser?.email ?? '',
+      actionType: action,
+      actionCategory: 'document',
+      actionDescription: `${action} for project ${projectId}`,
+      actionResult: 'success',
+      newValue: metadata,
       timestamp: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
     });
     
     console.log(`Audit Trail: ${action} for project ${projectId} by user ${userId}`);

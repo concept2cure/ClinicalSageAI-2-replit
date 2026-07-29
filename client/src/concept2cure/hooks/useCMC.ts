@@ -18,10 +18,22 @@ import cmcService, {
   type Impurity,
   type StabilityProtocol,
   type StabilityBatch,
-  type StabilityResult,
   type BatchRecord,
   type ICHComplianceResult,
   type ICHGuideline,
+  type CmcPortfolioRow,
+  type CmcModule3Readiness,
+  type CmcSpecRow,
+  type CmcStabilityRow,
+  type CmcBatchRow,
+  type CmcIchCheckResult,
+  type CmcQbdResult,
+  type SpecificationInput,
+  type SpecificationPatch,
+  type StabilityStudyInput,
+  type StabilityResultEntry,
+  type BatchRecordInput,
+  type CmcModule3Section,
 } from '../services/cmcService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -43,7 +55,170 @@ export const cmcQueryKeys = {
   batchList: (params: Record<string, unknown>) => [...cmcQueryKeys.batches(), 'list', params] as const,
   batchDetail: (batchNumber: string) => [...cmcQueryKeys.batches(), batchNumber] as const,
   batchTrends: (params: Record<string, unknown>) => [...cmcQueryKeys.batches(), 'trends', params] as const,
+  // Workstream shell (Phase 10)
+  portfolioOverview: () => [...cmcQueryKeys.all, 'portfolio', 'overview'] as const,
+  module3Readiness: (projectId: string) => [...cmcQueryKeys.all, 'module3', 'readiness', projectId] as const,
+  module3Sections: (projectId: string) => [...cmcQueryKeys.all, 'module3', 'sections', projectId] as const,
+  projectSpecs: (projectId: string) => [...cmcQueryKeys.specifications(), 'project', projectId] as const,
+  projectStability: (projectId: string) => [...cmcQueryKeys.stability(), 'project', projectId] as const,
+  projectBatches: (projectId: string) => [...cmcQueryKeys.batches(), 'project', projectId] as const,
+  ichCheck: (projectId: string) => [...cmcQueryKeys.all, 'ich-check', projectId] as const,
+  qbd: (projectId: string) => [...cmcQueryKeys.all, 'qbd', projectId] as const,
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WORKSTREAM SHELL HOOKS (Phase 10 CMC · Module 3) — live data only
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function usePortfolioOverview() {
+  return useQuery<CmcPortfolioRow[]>({
+    queryKey: cmcQueryKeys.portfolioOverview(),
+    queryFn: () => cmcService.getPortfolioOverview(),
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useModule3Readiness(projectId: string | null) {
+  return useQuery<CmcModule3Readiness | null>({
+    queryKey: cmcQueryKeys.module3Readiness(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getModule3Readiness(projectId) : null),
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useProjectSpecifications(projectId: string | null) {
+  return useQuery<CmcSpecRow[]>({
+    queryKey: cmcQueryKeys.projectSpecs(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getSpecificationsByProject(projectId) : []),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useProjectStability(projectId: string | null) {
+  return useQuery<CmcStabilityRow[]>({
+    queryKey: cmcQueryKeys.projectStability(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getStabilityByProject(projectId) : []),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useProjectBatchRecords(projectId: string | null) {
+  return useQuery<CmcBatchRow[]>({
+    queryKey: cmcQueryKeys.projectBatches(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getBatchRecordsByProject(projectId) : []),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useBatchRelease() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    unknown,
+    Error,
+    {
+      id: string;
+      releaseTesting: unknown;
+      releasedBy: string;
+      decision: 'approved' | 'rejected' | 'conditional';
+      comments?: string;
+      reason: string;
+      reauth: { password: string; totp?: string };
+    }
+  >({
+    mutationFn: ({ id, releaseTesting, releasedBy, decision, comments, reason, reauth }) =>
+      cmcService.releaseBatch(id, { releaseTesting, releasedBy, decision, comments, reason, reauth }),
+    onSuccess: () => {
+      // Reflect the new disposition: project batch list + any batch caches.
+      queryClient.invalidateQueries({ queryKey: cmcQueryKeys.batches() });
+    },
+  });
+}
+
+export function useCreateBatchRecord() {
+  const queryClient = useQueryClient();
+  return useMutation<CmcBatchRow, Error, BatchRecordInput>({
+    mutationFn: (data) => cmcService.createBatchRecord(data),
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: cmcQueryKeys.batches() });
+      if (created?.project_id) {
+        queryClient.invalidateQueries({ queryKey: cmcQueryKeys.projectBatches(created.project_id) });
+      }
+    },
+  });
+}
+
+/** Module 3 section map for a project — drives the governed approval action. */
+export function useModule3Sections(projectId: string | null) {
+  return useQuery<CmcModule3Section[]>({
+    queryKey: cmcQueryKeys.module3Sections(projectId || ''),
+    queryFn: () => (projectId ? cmcService.getModule3Sections(projectId) : []),
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  });
+}
+
+/**
+ * Governed Module 3 section approval. The signed e-signature is captured by
+ * EsignModal before this fires; on success we invalidate the section map and
+ * the build-state readiness so the approved count reflects immediately.
+ */
+export function useApproveModule3Section() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    { sectionKey: string; versionNumber: number; approvedVersionId: string },
+    Error,
+    { projectId: string; sectionKey: string }
+  >({
+    mutationFn: ({ projectId, sectionKey }) => cmcService.approveModule3Section(projectId, sectionKey),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: cmcQueryKeys.module3Sections(variables.projectId) });
+      queryClient.invalidateQueries({ queryKey: cmcQueryKeys.module3Readiness(variables.projectId) });
+    },
+  });
+}
+
+export function useICHComplianceCheck() {
+  return useMutation<CmcIchCheckResult | null, Error, string>({
+    mutationFn: (projectId) => cmcService.runICHComplianceCheck(projectId),
+  });
+}
+
+export function useChangeImpactSimulation() {
+  return useMutation<unknown, Error, Record<string, unknown>>({
+    mutationFn: (payload) => cmcService.simulateChangeImpact(payload),
+  });
+}
+
+export function useQbdAnalysis(projectId: string | null) {
+  return useQuery<CmcQbdResult | null>({
+    queryKey: cmcQueryKeys.qbd(projectId || ''),
+    queryFn: () => (projectId ? cmcService.analyzeQbd(projectId) : null),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useGenerateBlueprint() {
+  return useMutation<unknown, Error, Record<string, unknown>>({
+    mutationFn: (payload) => cmcService.generateBlueprint(payload),
+  });
+}
+
+export function useGlobalCompliance() {
+  return useMutation<unknown, Error, Record<string, unknown>>({
+    mutationFn: (payload) => cmcService.checkGlobalCompliance(payload),
+  });
+}
+
+export function useCmcCopilot() {
+  return useMutation<{ response?: string; [key: string]: unknown }, Error, { query: string; context?: Record<string, unknown> }>({
+    mutationFn: ({ query, context }) => cmcService.cmcCopilotChat(query, context),
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPECIFICATION HOOKS
@@ -73,10 +248,13 @@ export function useSpecification(id: string | null) {
 export function useCreateSpecification() {
   const queryClient = useQueryClient();
 
-  return useMutation<Specification, Error, Partial<Specification>>({
+  return useMutation<CmcSpecRow, Error, SpecificationInput>({
     mutationFn: (data) => cmcService.createSpecification(data),
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.specifications() });
+      if (created?.project_id) {
+        queryClient.invalidateQueries({ queryKey: cmcQueryKeys.projectSpecs(created.project_id) });
+      }
     },
   });
 }
@@ -85,16 +263,43 @@ export function useUpdateSpecification() {
   const queryClient = useQueryClient();
 
   return useMutation<
-    Specification,
+    CmcSpecRow,
     Error,
-    { id: string; data: Partial<Specification> }
+    { id: string; data: SpecificationPatch; projectId?: string }
   >({
     mutationFn: ({ id, data }) => cmcService.updateSpecification(id, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (updated, variables) => {
       queryClient.invalidateQueries({
         queryKey: cmcQueryKeys.specificationDetail(variables.id),
       });
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.specifications() });
+      const projectId = variables.projectId ?? updated?.project_id ?? undefined;
+      if (projectId) {
+        queryClient.invalidateQueries({ queryKey: cmcQueryKeys.projectSpecs(projectId) });
+      }
+    },
+  });
+}
+
+export function useApproveSpecification() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    CmcSpecRow,
+    Error,
+    { id: string; reason: string; reauth: { password: string; totp?: string }; projectId?: string }
+  >({
+    mutationFn: ({ id, reason, reauth }) =>
+      cmcService.approveSpecification(id, { reason, reauth }),
+    onSuccess: (updated, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: cmcQueryKeys.specificationDetail(variables.id),
+      });
+      queryClient.invalidateQueries({ queryKey: cmcQueryKeys.specifications() });
+      const projectId = variables.projectId ?? updated?.project_id ?? undefined;
+      if (projectId) {
+        queryClient.invalidateQueries({ queryKey: cmcQueryKeys.projectSpecs(projectId) });
+      }
     },
   });
 }
@@ -198,10 +403,13 @@ export function useStabilityProtocol(id: string | null) {
 export function useCreateStabilityProtocol() {
   const queryClient = useQueryClient();
 
-  return useMutation<StabilityProtocol, Error, Partial<StabilityProtocol>>({
+  return useMutation<CmcStabilityRow, Error, StabilityStudyInput>({
     mutationFn: (data) => cmcService.createStabilityProtocol(data),
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.stability() });
+      if (created?.project_id) {
+        queryClient.invalidateQueries({ queryKey: cmcQueryKeys.projectStability(created.project_id) });
+      }
     },
   });
 }
@@ -210,13 +418,17 @@ export function useAddStabilityResult() {
   const queryClient = useQueryClient();
 
   return useMutation<
-    StabilityResult,
+    CmcStabilityRow,
     Error,
-    { batchId: string; result: Partial<StabilityResult> }
+    { studyId: string; nextResults: StabilityResultEntry[]; projectId?: string }
   >({
-    mutationFn: ({ batchId, result }) => cmcService.addStabilityResult(batchId, result),
-    onSuccess: () => {
+    mutationFn: ({ studyId, nextResults }) => cmcService.addStabilityResult(studyId, nextResults),
+    onSuccess: (updated, variables) => {
       queryClient.invalidateQueries({ queryKey: cmcQueryKeys.stability() });
+      const projectId = variables.projectId ?? updated?.project_id ?? undefined;
+      if (projectId) {
+        queryClient.invalidateQueries({ queryKey: cmcQueryKeys.projectStability(projectId) });
+      }
     },
   });
 }

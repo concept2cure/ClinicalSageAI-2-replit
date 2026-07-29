@@ -109,13 +109,12 @@ export async function documentPreview(
     return {
       success: true,
       action,
-      data: body,
+      data: { ...body, openModal: 'document-preview' },
       message:
         `Live document for ${body.documentTitle ?? projectIdent}: ` +
         `${body.approvedCount}/${body.totalSections} sections approved · ` +
         `overall ${body.completionPercentage}% complete. ` +
         `Use the openModal hint if you want to surface the full canvas to the user.`,
-      openModal: 'document-preview',
     };
   } catch (err) {
     return {

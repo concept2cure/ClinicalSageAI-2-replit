@@ -22,6 +22,10 @@ import { domainAdapter } from '../services/ana-biostats/domain-adapter';
 import { regulatoryCustomizer } from '../services/ana-biostats/regulatory-customizer';
 import { documentGenerator } from '../services/ana-biostats/document-generator';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('ana-biostats');
+
 const router = Router();
 
 function resolveOrganizationId(req: Request): number {
@@ -74,7 +78,7 @@ router.post('/workflow', authenticateToken, async (req: Request, res: Response) 
 
     return res.json(result);
   } catch (error: any) {
-    console.error('[AnA Biostats] Workflow error:', error);
+    logger.error('Workflow error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Workflow execution failed' });
   }
 });
@@ -94,7 +98,7 @@ router.post('/compute', authenticateToken, async (req: Request, res: Response) =
     const result = anaBiostatsOrchestrator.quickCompute(req.body);
     return res.json(result);
   } catch (error: any) {
-    console.error('[AnA Biostats] Compute error:', error);
+    logger.error('Compute error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Computation failed' });
   }
 });
@@ -127,7 +131,7 @@ router.post('/compare', authenticateToken, async (req: Request, res: Response) =
 
     return res.json(result);
   } catch (error: any) {
-    console.error('[AnA Biostats] Compare error:', error);
+    logger.error('Compare error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Scenario comparison failed' });
   }
 });
@@ -146,7 +150,7 @@ router.post('/validate', authenticateToken, async (req: Request, res: Response) 
     const result = inputNormalizer.normalize(req.body);
     return res.json(result);
   } catch (error: any) {
-    console.error('[AnA Biostats] Validation error:', error);
+    logger.error('Validation error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Validation failed' });
   }
 });
@@ -185,7 +189,7 @@ router.post('/document', authenticateToken, async (req: Request, res: Response) 
 
     return res.json(document);
   } catch (error: any) {
-    console.error('[AnA Biostats] Document generation error:', error);
+    logger.error('Document generation error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Document generation failed' });
   }
 });
@@ -215,7 +219,7 @@ router.post('/judge', authenticateToken, async (req: Request, res: Response) => 
 
     return res.json({ judgment, domainAdaptation: domain, regulatoryCustomization: regulatory });
   } catch (error: any) {
-    console.error('[AnA Biostats] Judgment error:', error);
+    logger.error('Judgment error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Judgment failed' });
   }
 });
@@ -243,7 +247,7 @@ router.post('/compute-enhanced', authenticateToken, async (req: Request, res: Re
     const result = computationEngine.computeEnhanced(validation.normalizedInput);
     return res.json({ validation, computation: result });
   } catch (error: any) {
-    console.error('[AnA Biostats] Enhanced compute error:', error);
+    logger.error('Enhanced compute error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Enhanced computation failed' });
   }
 });
@@ -262,7 +266,7 @@ router.post('/multiplicity', authenticateToken, async (req: Request, res: Respon
     const result = computationEngine.computeMultiplicity(validation.normalizedInput);
     return res.json(result);
   } catch (error: any) {
-    console.error('[AnA Biostats] Multiplicity error:', error);
+    logger.error('Multiplicity error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Multiplicity computation failed' });
   }
 });
@@ -287,7 +291,7 @@ router.post('/missing-data-impact', authenticateToken, async (req: Request, res:
     const impact = computationEngine.computeMissingDataImpact(validation.normalizedInput, base);
     return res.json(impact);
   } catch (error: any) {
-    console.error('[AnA Biostats] Missing data impact error:', error);
+    logger.error('Missing data impact error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Missing data impact computation failed' });
   }
 });
@@ -323,7 +327,7 @@ router.post('/sme-route', authenticateToken, async (req: Request, res: Response)
 
     return res.json(routing);
   } catch (error: any) {
-    console.error('[AnA Biostats] SME routing error:', error);
+    logger.error('SME routing error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'SME routing failed' });
   }
 });
@@ -348,7 +352,7 @@ router.get('/sme-agents', authenticateToken, async (req: Request, res: Response)
 
     return res.json({ agents });
   } catch (error: any) {
-    console.error('[AnA Biostats] SME agents list error:', error);
+    logger.error('SME agents list error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: error.message || 'Failed to list SME agents' });
   }
 });

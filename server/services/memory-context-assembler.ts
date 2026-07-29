@@ -1,9 +1,18 @@
-import { getLatestWorkingMemoryByThread } from './working-memory.js';
+import {
+  getLatestWorkingMemoryByThread,
+  isSemanticWorkingMemoryEnabled,
+  searchWorkingMemorySemantic,
+} from './working-memory.js';
 import {
   searchMemoryEntriesSemantic,
   searchProjectMemoryEntriesSemantic,
   type SemanticMemoryHit,
 } from './client-intelligence-memory.js';
+import {
+  orchestrateAtoms,
+  DEFAULT_MEMORY_POLICY,
+  SEMANTIC_WORKING_MEMORY_POLICY,
+} from './memory-orchestrator.js';
 import type { ClientMemoryEntry, ProjectMemoryEntry } from 'shared/schema';
 
 /**
@@ -180,55 +189,6 @@ function mapProjectEntryToAtom(entry: SemanticMemoryHit<ProjectMemoryEntry>): Re
   };
 }
 
-function isFreshOrImportant(atom: RetrievedMemoryAtom, maxAgeDays: number): boolean {
-  if (atom.layer === 'working_memory') return true;
-
-  const createdAt = atom.metadata?.createdAt;
-  if (!createdAt) return true;
-
-  const ageMs = Date.now() - new Date(createdAt).getTime();
-  if (Number.isNaN(ageMs)) return true;
-  const ageDays = ageMs / (1000 * 60 * 60 * 24);
-
-  const importance = (atom.metadata?.importance || '').toLowerCase();
-  const isCritical = importance === 'critical' || importance === 'high';
-  const isVerified = Boolean(atom.metadata?.isVerified);
-
-  // Structured forgetting policy:
-  // - Keep recent entries.
-  // - Keep older entries if verified/high-importance.
-  return ageDays <= maxAgeDays || isCritical || isVerified;
-}
-
-function atomSortScore(atom: RetrievedMemoryAtom): number {
-  if (atom.layer === 'working_memory') return 2;
-
-  const similarity = atom.similarity ?? 0;
-  const confidence = atom.metadata?.confidence ?? 0;
-  const verifiedBoost = atom.metadata?.isVerified ? 0.05 : 0;
-  return similarity * 0.75 + confidence * 0.2 + verifiedBoost;
-}
-
-function dedupeAtoms(atoms: RetrievedMemoryAtom[]): {
-  deduped: RetrievedMemoryAtom[];
-  dropped: number;
-} {
-  const deduped = new Map<string, RetrievedMemoryAtom>();
-
-  for (const atom of atoms) {
-    const key = `${atom.layer}:${atom.title.trim().toLowerCase()}:${atom.content
-      .slice(0, 120)
-      .trim()
-      .toLowerCase()}`;
-    const existing = deduped.get(key);
-    if (!existing || atomSortScore(atom) > atomSortScore(existing)) {
-      deduped.set(key, atom);
-    }
-  }
-
-  const dedupedList = Array.from(deduped.values());
-  return { deduped: dedupedList, dropped: Math.max(0, atoms.length - dedupedList.length) };
-}
 
 export async function buildMemoryContextForChat(
   input: MemoryContextAssemblerInput
@@ -249,20 +209,59 @@ export async function buildMemoryContextForChat(
     projectMemory: 'skipped',
   };
 
-  const workingSummary = await getLatestWorkingMemoryByThread(input.threadId).catch(() => null);
-  if (workingSummary) {
-    atoms.push({
-      id: 0,
-      layer: 'working_memory',
-      title: 'Latest Working Memory Summary',
-      content: workingSummary,
-      metadata: {
-        extractedBy: 'system',
-      },
-    });
-    layerOutcomes.workingMemory = 'ok';
-  } else {
-    layerOutcomes.workingMemory = 'empty';
+  // Working memory: when semantic recall is enabled and we have a query, recall
+  // the summary most relevant to it (with similarity, ranked by the semantic
+  // policy). Otherwise — and whenever semantic recall clears nothing — fall back
+  // to the recency-only latest summary under the default policy, exactly as
+  // before. The flag defaults off, so the recency path is the unchanged default.
+  let useSemanticWorkingMemory = false;
+
+  if (isSemanticWorkingMemoryEnabled() && input.organizationId && input.query?.trim()) {
+    const hits = await withTimeout(
+      searchWorkingMemorySemantic(input.threadId, input.organizationId, input.query, {
+        limit: 1,
+        minSimilarity,
+      }).catch(() => [] as Awaited<ReturnType<typeof searchWorkingMemorySemantic>>),
+      MEMORY_LAYER_TIMEOUT_MS,
+      [] as Awaited<ReturnType<typeof searchWorkingMemorySemantic>>
+    );
+    if (hits.length > 0) {
+      for (const hit of hits) {
+        atoms.push({
+          id: hit.id,
+          layer: 'working_memory',
+          title: 'Working memory summary',
+          content: hit.summary,
+          similarity: hit.similarity,
+          metadata: {
+            extractedBy: 'system',
+            createdAt: toIso(hit.generatedAt),
+          },
+        });
+      }
+      layerOutcomes.workingMemory = 'ok';
+      useSemanticWorkingMemory = true;
+    }
+  }
+
+  if (!useSemanticWorkingMemory) {
+    const workingSummary = input.organizationId
+      ? await getLatestWorkingMemoryByThread(input.threadId, input.organizationId).catch(() => null)
+      : null;
+    if (workingSummary) {
+      atoms.push({
+        id: 0,
+        layer: 'working_memory',
+        title: 'Latest Working Memory Summary',
+        content: workingSummary,
+        metadata: {
+          extractedBy: 'system',
+        },
+      });
+      layerOutcomes.workingMemory = 'ok';
+    } else {
+      layerOutcomes.workingMemory = 'empty';
+    }
   }
 
   // Client + project semantic searches run in parallel — no reason to serialize
@@ -327,12 +326,17 @@ export async function buildMemoryContextForChat(
     semanticSearchMs = Date.now() - semanticStart;
   }
 
-  const rememberedAtoms = atoms.filter(atom => isFreshOrImportant(atom, maxAgeDays));
-  const droppedByForgetting = atoms.length - rememberedAtoms.length;
-
-  const { deduped, dropped: droppedByDeduplication } = dedupeAtoms(rememberedAtoms);
-
-  const sorted = deduped.sort((a, b) => atomSortScore(b) - atomSortScore(a));
+  // Forget stale atoms, collapse duplicates, and rank across layers under the
+  // single reviewed policy (memory-orchestrator). This module only assembles
+  // and formats; the coordination policy lives there.
+  const memoryPolicy = useSemanticWorkingMemory
+    ? SEMANTIC_WORKING_MEMORY_POLICY
+    : DEFAULT_MEMORY_POLICY;
+  const {
+    ranked: sorted,
+    droppedByForgetting,
+    droppedByDeduplication,
+  } = orchestrateAtoms(atoms, maxAgeDays, memoryPolicy);
 
   const sections: string[] = [];
 

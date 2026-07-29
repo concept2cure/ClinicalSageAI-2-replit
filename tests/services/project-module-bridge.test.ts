@@ -116,6 +116,17 @@ vi.mock('../../server/db', () => ({
 
 import { ProjectModuleBridge } from '../../server/services/project-module-bridge';
 
+// Current contract (verified against server/services/project-module-bridge.ts):
+// - unlinkModule(projectId, moduleType, moduleInstanceId, organizationId, clientWorkspaceId?)
+// - updateModuleStatus(projectId, moduleType, moduleInstanceId, status, organizationId, clientWorkspaceId?)
+// - findProjectsForModule(moduleType, moduleInstanceId, organizationId, clientWorkspaceId?)
+// - linkModule({ projectId, organizationId, clientWorkspaceId, moduleType, moduleInstanceId, ... })
+// - updateModuleLink(projectId, organizationId, moduleType, moduleInstanceId, updates)
+//   (org-scoped only — no workspace predicate; the `(projectId, organizationId,
+//   moduleType, moduleInstanceId)` shape referenced by an earlier skip note
+//   belongs to this method, not unlinkModule).
+// Workspace scoping is optional (trailing param) on unlink/status/find and the
+// route layer passes `tenant.clientWorkspaceId ?? undefined`.
 describe('ProjectModuleBridge tenant/workspace scoping', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -139,6 +150,9 @@ describe('ProjectModuleBridge tenant/workspace scoping', () => {
         moduleInstanceId: 44,
       })
     ).rejects.toThrow('Project 12 is not accessible in client workspace 9');
+
+    // The project lookup itself must be org-scoped.
+    expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projects.organizationId, 3);
   });
 
   it('uses scoped project workspace when inserting link', async () => {
@@ -168,7 +182,6 @@ describe('ProjectModuleBridge tenant/workspace scoping', () => {
 
   it('applies org and workspace filters in unlinkModule', async () => {
     const bridge = new ProjectModuleBridge();
-    mockState.selectLimitResults.push([{ id: 12, clientWorkspaceId: 9 }]);
     mockState.deleteReturningResults.push([{ id: 1 }]);
 
     const removed = await bridge.unlinkModule(12, 'cer', 44, 3, 9);
@@ -184,13 +197,40 @@ describe('ProjectModuleBridge tenant/workspace scoping', () => {
 
     await bridge.findProjectsForModule('cer', 44, 3, 9);
 
+    expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projectModules.organizationId, 3);
     expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projectModules.clientWorkspaceId, 9);
     expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projects.clientWorkspaceId, 9);
   });
 
+  it('still applies org scoping in unlinkModule when workspace is omitted', async () => {
+    const bridge = new ProjectModuleBridge();
+    mockState.deleteReturningResults.push([{ id: 1 }]);
+
+    const removed = await bridge.unlinkModule(12, 'cer', 44, 3);
+
+    expect(removed).toBe(true);
+    expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projectModules.organizationId, 3);
+    expect(mockState.eq).not.toHaveBeenCalledWith(
+      schemaMock.projectModules.clientWorkspaceId,
+      expect.anything()
+    );
+  });
+
+  it('applies org scoping in updateModuleLink', async () => {
+    const bridge = new ProjectModuleBridge();
+    mockState.updateReturningResults.push([{ id: 5, status: 'inactive' }]);
+
+    const updated = await bridge.updateModuleLink(12, 3, 'cer', 44, { status: 'inactive' });
+
+    expect(updated).toEqual({ id: 5, status: 'inactive' });
+    expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projectModules.projectId, 12);
+    expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projectModules.organizationId, 3);
+    expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projectModules.moduleType, 'cer');
+    expect(mockState.eq).toHaveBeenCalledWith(schemaMock.projectModules.moduleInstanceId, 44);
+  });
+
   it('returns null when scoped status update finds no row', async () => {
     const bridge = new ProjectModuleBridge();
-    mockState.selectLimitResults.push([{ id: 12, clientWorkspaceId: 9 }]);
     mockState.updateReturningResults.push([]);
 
     const updated = await bridge.updateModuleStatus(12, 'cer', 44, 'completed', 3, 9);

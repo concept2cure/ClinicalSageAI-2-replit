@@ -1,5 +1,3 @@
-// @ts-nocheck — PDFKit runtime methods (fillColor, save, restore, moveTo) are
-// not fully represented in @types/pdfkit. Code is correct at runtime.
 /**
  * Universal Packaging Service
  *
@@ -489,6 +487,7 @@ async function generatePdf(request: PackageRequest): Promise<Buffer> {
       if (meta.watermarkText) {
         const addWatermark = () => {
           doc.save();
+          // @ts-expect-error fillOpacity is a real PDFKit runtime method missing from @types/pdfkit
           doc.fontSize(48).font('Helvetica-Bold').fillColor('#000000').fillOpacity(0.06);
           doc.rotate(-45, { origin: [doc.page.width / 2, doc.page.height / 2] });
           doc.text(meta.watermarkText!, 0, doc.page.height / 2 - 30, { align: 'center', width: doc.page.width * 1.5 });
@@ -517,6 +516,7 @@ async function generatePdf(request: PackageRequest): Promise<Buffer> {
       // Title
       doc.fontSize(18).font('Helvetica-Bold').fillColor('#000000').text(request.title);
       doc.moveDown(0.5);
+      // @ts-expect-error moveTo and doc.y are real PDFKit runtime APIs missing from @types/pdfkit
       doc.moveTo(72, doc.y).lineTo(doc.page.width - 72, doc.y).strokeColor('#DDDDDD').stroke();
       doc.moveDown(0.5);
 

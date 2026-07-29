@@ -15,6 +15,8 @@
 
 import Queue from 'bull';
 import { createScopedLogger } from '../../utils/logger.js';
+import { runProactiveDigest } from '../digest/proactive-digest.js';
+import { parseDigestPreferences } from '../digest/digest-preferences.js';
 
 const log = createScopedLogger('scheduled-jobs');
 
@@ -26,6 +28,7 @@ export type ScheduledJobType =
   | 'dependency_staleness_audit'
   | 'external_data_refresh'
   | 'automation_digest'
+  | 'proactive_digest'
   | 'platform_maintenance';
 
 export interface ScheduledJobConfig {
@@ -76,7 +79,7 @@ async function handleDataFreshnessCheck(config: ScheduledJobConfig): Promise<Sch
   // Check how old each source document is relative to its dependent artifacts
   const maxAgeDays = Number(config.parameters.maxAgeDays) || 30;
   let processed = 0;
-  let flagged = 0;
+  const flagged = 0;
 
   // In production, this would query:
   //   SELECT * FROM concept2cure_artifacts WHERE type = 'source_document'
@@ -187,10 +190,49 @@ async function handlePlatformMaintenance(config: ScheduledJobConfig): Promise<Sc
   }
 }
 
+/**
+ * Proactive digest: materialize the org's overdue/due-soon regulatory deadlines
+ * and open risks into a single in-app notification (see services/digest). Lets
+ * the platform reach users with time-critical regulatory state without them
+ * having to open AnA. Fails soft — a digest miss never breaks the job runner.
+ */
+async function handleProactiveDigest(config: ScheduledJobConfig): Promise<ScheduledJobRun> {
+  const startedAt = new Date().toISOString();
+  const start = Date.now();
+  try {
+    const preferences = parseDigestPreferences(config.parameters);
+    const result = await runProactiveDigest(config.organizationId, preferences);
+    const created = result.created ? 1 : 0;
+    return {
+      jobType: config.type,
+      organizationId: config.organizationId,
+      status: 'completed',
+      itemsProcessed: created,
+      itemsFlagged: created,
+      durationMs: Date.now() - start,
+      startedAt,
+      completedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      jobType: config.type,
+      organizationId: config.organizationId,
+      status: 'failed',
+      itemsProcessed: 0,
+      itemsFlagged: 0,
+      durationMs: Date.now() - start,
+      startedAt,
+      completedAt: new Date().toISOString(),
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 // Register built-in handlers
 handlers.set('data_freshness_check', handleDataFreshnessCheck);
 handlers.set('dependency_staleness_audit', handleDependencyStalenessAudit);
 handlers.set('automation_digest', handleAutomationDigest);
+handlers.set('proactive_digest', handleProactiveDigest);
 handlers.set('platform_maintenance', handlePlatformMaintenance);
 
 // ─── Queue Setup ────────────────────────────────────────────────────────────
@@ -354,6 +396,19 @@ export async function registerDefaultSchedules(organizationId: number): Promise<
       parameters: {},
     },
     {
+      type: 'proactive_digest',
+      name: 'Daily Regulatory Digest',
+      description: 'In-app digest of overdue/due-soon regulatory deadlines and open risks',
+      cron: '0 7 * * 1-5',  // 7 AM weekdays — start the day with what needs attention
+      enabled: true,
+      organizationId,
+      // Tunable via digest preferences (parseDigestPreferences):
+      //   minSeverity: 'info' | 'warning' | 'critical'  (only fire at/above floor)
+      //   mutedSignals: csv of 'deadlines','risks','contradictions'
+      //   quietHoursStart / quietHoursEnd: 0–23 (suppress delivery in-window)
+      parameters: {},
+    },
+    {
       type: 'platform_maintenance',
       name: 'Platform Maintenance',
       description: 'Token revocation cleanup, bridge integrity check, and artifact-document backfill',
@@ -367,6 +422,51 @@ export async function registerDefaultSchedules(organizationId: number): Promise<
   for (const config of defaults) {
     await scheduleJob(config);
   }
+}
+
+/**
+ * Register the default schedules (incl. the 7 AM proactive regulatory digest)
+ * for EVERY active organization. Called once at startup so the digest cron
+ * actually fires — `registerDefaultSchedules` is per-org and otherwise has no
+ * caller. Idempotent: Bull keys repeatable jobs by `${orgId}:${type}`, so
+ * re-registering on each boot updates in place rather than duplicating.
+ *
+ * No-op (with a log) when the scheduler queue is not initialized (no Redis),
+ * so we don't spam per-org/per-job warnings in dev.
+ */
+export async function registerDefaultSchedulesForActiveOrgs(): Promise<number> {
+  if (!schedulerQueue) {
+    log.info('Scheduler queue not initialized (no Redis) — skipping default schedule registration');
+    return 0;
+  }
+  // Lazy import to avoid pulling the DB runtime into this module's load graph.
+  const { pool } = await import('../../db/runtime.js');
+  let orgIds: number[] = [];
+  try {
+    const { rows } = await pool.query<{ id: number }>(
+      `SELECT id FROM organizations WHERE status = 'active'`,
+    );
+    orgIds = rows.map((r) => r.id);
+  } catch (err) {
+    log.warn(
+      `Could not enumerate active organizations for default schedules: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return 0;
+  }
+
+  let registered = 0;
+  for (const orgId of orgIds) {
+    try {
+      await registerDefaultSchedules(orgId);
+      registered += 1;
+    } catch (err) {
+      log.warn(
+        `Failed to register default schedules for org ${orgId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+  log.info(`Registered default schedules for ${registered}/${orgIds.length} active organizations`);
+  return registered;
 }
 
 // ─── Graceful Shutdown ──────────────────────────────────────────────────────

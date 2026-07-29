@@ -9,7 +9,31 @@
 // Provider & Routing Enums
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ProviderName = 'openai' | 'anthropic' | 'moonshot';
+export type ProviderName =
+  | 'openai'
+  | 'anthropic'
+  | 'moonshot'
+  | 'bedrock' // Claude on AWS Bedrock — private-cloud (BAA / zero-retention)
+  | 'vertex' // Claude / Gemini on Google Vertex AI — private-cloud (regional residency)
+  | 'azure' // OpenAI on Azure — private-cloud (enterprise / Microsoft estate)
+  | 'local'; // Self-hosted open-weight models via vLLM/LiteLLM — air-gappable
+
+/**
+ * Where a provider physically runs inference. This is what determines which
+ * compliance guarantees (BAA, zero data retention, data residency) a request
+ * can be served under. See server/services/ai-gateway/providers/placement.ts
+ * for the per-provider placement registry.
+ */
+export type SubstrateClass =
+  | 'frontier_shared' // Multi-tenant frontier API (OpenAI / Anthropic / Moonshot direct)
+  | 'frontier_private' // Frontier model inside your own cloud account (Bedrock / Vertex / Azure)
+  | 'self_hosted'; // Open-weight model on infrastructure you control (on-prem / air-gapped)
+
+/** Data-residency requirement a tenant can impose on a request. */
+export type DataResidency = 'any' | 'us' | 'eu' | 'apac' | 'on_prem';
+
+/** Retention posture honored for a request's payload at the provider. */
+export type RetentionPolicy = 'standard' | 'zero_retention';
 
 export type TaskType =
   | 'chat'
@@ -29,6 +53,29 @@ export type RoutingStrategy =
   | 'quality_optimized' // Highest quality model for the task
   | 'round_robin'     // Distribute evenly across healthy providers
   | 'explicit';       // Use the explicitly specified provider/model
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Effort Levels (Model/Effort Picker — Composer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * User-facing "effort" the AnA Composer offers as a Fast/Balanced/Thorough
+ * segmented control. Effort is a calm, jargon-free abstraction over the
+ * gateway's {@link RoutingStrategy} — it never names a model and never exposes
+ * routing internals to the user.
+ */
+export type EffortLevel = 'fast' | 'balanced' | 'thorough';
+
+/**
+ * Effort → routing strategy. `fast` prefers the cheapest capable model,
+ * `thorough` the highest-quality, and `balanced` defers to task-based routing.
+ * The mapped strategies are all members of {@link RoutingStrategy}.
+ */
+export const EFFORT_TO_STRATEGY = {
+  fast: 'cost_optimized',
+  balanced: 'task_based',
+  thorough: 'quality_optimized',
+} as const satisfies Record<EffortLevel, RoutingStrategy>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Request & Response Types
@@ -54,8 +101,24 @@ export interface TextBlock {
   text: string;
 }
 
-/** Multi-modal content (text + images) */
-export type ContentBlock = TextBlock | ImageBlock;
+/**
+ * Document content block — lets the model read an attached PDF/text file.
+ * `base64` source is GA on current Claude models (no beta header). `file`
+ * source references Anthropic's Files API and additionally requires the
+ * files-api beta header (set by the provider when a file source is present).
+ */
+export interface DocumentBlock {
+  type: 'document';
+  source:
+    | { type: 'base64'; media_type: 'application/pdf' | 'text/plain'; data: string }
+    | { type: 'file'; file_id: string };
+  title?: string;
+  context?: string;
+  citations?: { enabled: boolean };
+}
+
+/** Multi-modal content (text + images + documents) */
+export type ContentBlock = TextBlock | ImageBlock | DocumentBlock;
 
 /** Claude tool definition for agentic workflows */
 export interface AnaTool {
@@ -142,6 +205,20 @@ export interface AnaGatewayResponse extends GatewayResponse {
 export interface GatewayMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
+  /**
+   * Provenance of this message's content, used by the policy engine's
+   * indirect-prompt-injection scan (see policy.ts):
+   *   - 'app'      — authored verbatim by our own code (a shipped system
+   *                  prompt). System messages marked 'app' are exempt from
+   *                  injection scanning so legitimate directives are never
+   *                  false-positived.
+   *   - 'external' — assembled from ingested/untrusted sources (uploaded
+   *                  documents, RAG chunks, tool outputs). Scanned strictly.
+   * Unset means unknown provenance: the message is scanned (fail-closed).
+   * Never mark a message 'app' if any part of its content was interpolated
+   * from user uploads or retrieval results.
+   */
+  origin?: 'app' | 'external';
   /** Multi-modal content blocks (images + text) — Claude only */
   contentBlocks?: ContentBlock[];
   /**
@@ -168,6 +245,19 @@ export interface GatewayRequest {
   /** Temperature (0-2). Lower = more deterministic */
   temperature?: number;
 
+  /**
+   * Sampling seed for reproducible output. Passed through to providers that
+   * support it (OpenAI/Moonshot) and recorded in the audit trail regardless,
+   * so a generation can be tied to its sampling parameters.
+   */
+  seed?: number;
+
+  /**
+   * Version/identifier of the prompt template used (e.g. a git tag or content
+   * hash of the system prompt). Recorded in the audit trail for reproducibility.
+   */
+  promptVersion?: string;
+
   /** Request JSON-mode output */
   jsonMode?: boolean;
 
@@ -185,6 +275,24 @@ export interface GatewayRequest {
 
   /** Routing strategy override */
   strategy?: RoutingStrategy;
+
+  // ── Placement / Compliance Requirements ──────────────────────────────────
+
+  /**
+   * Data-residency requirement for this request. When set to anything other
+   * than 'any', the gateway only routes to providers whose placement satisfies
+   * it (see providers/placement.ts). Honors EU/APAC residency and on-prem-only
+   * tenants. Defaults to 'any' (no residency constraint).
+   */
+  dataResidency?: DataResidency;
+
+  /**
+   * When true, the request may only be served by a provider that contractually
+   * does not retain payloads — a private-cloud deployment with a zero-retention
+   * agreement (Bedrock/Vertex/Azure) or a self-hosted model. Shared frontier
+   * APIs without a ZDR agreement are excluded.
+   */
+  zeroDataRetention?: boolean;
 
   // ── Traceability Context ────────────────────────────────────────────────
 
@@ -306,8 +414,23 @@ export interface PolicyConfig {
   /** Required content filters */
   contentFilters: boolean;
 
-  /** PII detection and redaction */
+  /**
+   * PII/PHI detection on outbound message content (see policy.ts,
+   * evaluatePiiPolicy). When true, every message is classified with the
+   * governed ai-governance content classifier before provider dispatch:
+   * structured PHI blocks fail-closed, email/SSN spans are redacted from the
+   * provider payload, and lower-confidence identifiers are flagged into the
+   * gateway audit trail.
+   */
   piiDetection: boolean;
+
+  /**
+   * Scan non-user roles (system/assistant/tool) for indirect prompt
+   * injection — hostile directives smuggled in via RAG chunks, tool outputs
+   * or ingested documents. Optional; when unset, the AI_GATEWAY_SCAN_ALL_ROLES
+   * env var decides (default ON). Explicit config wins over the env var.
+   */
+  scanAllRoles?: boolean;
 }
 
 export interface GatewayConfig {
@@ -353,7 +476,12 @@ export interface AuditLogEntry {
   id?: string;
   requestId: string;
   timestamp: Date;
-  provider: ProviderName;
+  /**
+   * Provider that served the request. 'none' records a request the policy
+   * layer refused before any provider was selected (content-policy block) —
+   * refusals are compliance events and must leave an audit trace too.
+   */
+  provider: ProviderName | 'none';
   model: string;
   taskType: TaskType;
   strategy: RoutingStrategy;
@@ -370,5 +498,23 @@ export interface AuditLogEntry {
   error?: string;
   cached: boolean;
   deterministic: boolean;
+  // ── Reproducibility (which params + prompt produced this output) ──────────
+  /** Sampling temperature used for the request. */
+  temperature?: number;
+  /** Sampling seed, when supplied. */
+  seed?: number;
+  /** SHA-256 of the canonicalized prompt messages (role:content joined). */
+  promptHash?: string;
+  /** Caller-supplied prompt template version/identifier. */
+  promptVersion?: string;
+  /** Model ids attempted before the one that served this response (fallback chain). */
+  triedModels?: string[];
+  // ── Placement / Residency (which substrate + region served this) ──────────
+  /** Inference substrate that served this request (shared / private / self-hosted). */
+  substrate?: SubstrateClass;
+  /** Best-effort region the serving provider ran in (e.g. 'us', 'eu', 'on_prem'). */
+  region?: string;
+  /** Retention posture honored for this request. */
+  retentionPolicy?: RetentionPolicy;
   metadata?: Record<string, unknown>;
 }

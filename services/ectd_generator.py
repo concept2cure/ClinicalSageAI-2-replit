@@ -231,20 +231,19 @@ def generate_clinical_summary(output_path: str = OUTPUT_FILENAME, data: Dict[str
             for t in tables:
                 add_table_from_spec(doc, t)
         else:
-            LOG.info("No tables found in input data; rendering default example table")
-            # fallback example
-            rows = [
-                ("Primary endpoint: Mean systolic BP change (mmHg)", "−5.2 ± 1.1", "−3.8 ± 1.2"),
-                ("Secondary endpoint: Proportion achieving target BP (%)", "62%", "49%"),
-            ]
-            add_table_primary_endpoints(doc, rows)
+            # Data integrity (21 CFR Part 11): never fabricate clinical efficacy
+            # values. If no source tables are provided, fail loudly rather than
+            # emit invented numbers into a submittable artifact.
+            raise ValueError(
+                "Clinical efficacy source data is required: input contains no "
+                "'tables'. Refusing to generate a clinical summary without "
+                "verified source data."
+            )
     else:
-        # No data provided: keep the example content
-        rows = [
-            ("Primary endpoint: Mean systolic BP change (mmHg)", "−5.2 ± 1.1", "−3.8 ± 1.2"),
-            ("Secondary endpoint: Proportion achieving target BP (%)", "62%", "49%"),
-        ]
-        add_table_primary_endpoints(doc, rows)
+        raise ValueError(
+            "Clinical efficacy source data is required: no input data provided. "
+            "Refusing to generate a clinical summary without verified source data."
+        )
 
     # Add short methods section
     doc.add_heading("Methods", level=2)
@@ -398,19 +397,19 @@ def generate_clinical_summary(output_path: str = OUTPUT_FILENAME, data: Dict[str
                     continue
                 add_table_from_spec(doc, t)
         else:
-            LOG.info("No tables found in input data; rendering default example table")
-            rows = [
-                ("Primary endpoint: Mean systolic BP change (mmHg)", "−5.2 ± 1.1", "−3.8 ± 1.2"),
-                ("Secondary endpoint: Proportion achieving target BP (%)", "62%", "49%"),
-            ]
-            add_table_primary_endpoints(doc, rows)
+            # Data integrity (21 CFR Part 11): never fabricate clinical efficacy
+            # values. If no source tables are provided, fail loudly rather than
+            # emit invented numbers into a submittable artifact.
+            raise ValueError(
+                "Clinical efficacy source data is required: input contains no "
+                "'tables'. Refusing to generate a clinical summary without "
+                "verified source data."
+            )
     else:
-        # No data provided: keep the example content
-        rows = [
-            ("Primary endpoint: Mean systolic BP change (mmHg)", "−5.2 ± 1.1", "−3.8 ± 1.2"),
-            ("Secondary endpoint: Proportion achieving target BP (%)", "62%", "49%"),
-        ]
-        add_table_primary_endpoints(doc, rows)
+        raise ValueError(
+            "Clinical efficacy source data is required: no input data provided. "
+            "Refusing to generate a clinical summary without verified source data."
+        )
 
     # Add short methods section if not present in template
     if not template_path:

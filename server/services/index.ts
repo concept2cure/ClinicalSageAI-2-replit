@@ -18,29 +18,19 @@ export * as cortex from './cortex';
 export * as fda from './fda';
 export * as cer from './cer';
 export * as csr from './csr';
-export * as foresight from './foresight';
-export * as literature from './literature';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
 // openai-service exports OpenAI Assistants API functions (threads, runs, etc.)
-// kimiAIService.js has export default
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * as openaiService from './openai-service';
-// @ts-expect-error — kimiAIService is a plain .js file without type declarations
-export { default as kimiAIService } from './kimiAIService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORTEX PRIME SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { default as cortexPrimeService } from './cortexPrimeService';
-export {
-  ForesightKnowledgeGraph,
-  knowledgeGraph as foresightKnowledgeGraph,
-} from './foresight-knowledge-graph';
-export { MemoryService, memoryService } from './memory-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FDA / REGULATORY SERVICES
@@ -57,14 +47,12 @@ export { RegulatoryIntelligenceService } from './regulatory-intelligence-service
 
 export { csrSearchService } from './csr-search-service';
 export { csrKnowledgeExtractor } from './csr-knowledge-extractor';
-export { default as csrForesightOrchestrator } from './csr-foresight-orchestrator';
 export { clinicalIntelligenceService } from './clinical-intelligence-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STUDY DESIGN SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { studyDesignAgentService, StudyDesignAgentService } from './study-design-agent-service';
 export {
   EndpointRecommenderService,
   getEndpointRecommenderService,
@@ -101,10 +89,6 @@ export { TemplateService } from './templateService';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { MultiAgentCouncilService } from './multi-agent-council';
-export {
-  ForesightFeedbackOrchestrator,
-  feedbackOrchestrator,
-} from './foresight-feedback-orchestrator';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PHASE 6 SERVICES - eCTD Co-Author + Document Drafting
@@ -138,7 +122,6 @@ export const SERVICE_REGISTRY = {
   'ai.completion': 'ai/openai-orchestrator',
   'ai.assistant': 'openai-service',
   // 'ai.regulatory': removed — was a stub
-  'ai.kimi': 'kimiAIService',
 
   // Documents
   'documents.crud': 'documentService',
@@ -147,8 +130,7 @@ export const SERVICE_REGISTRY = {
 
   // Cortex
   'cortex.prime': 'cortexPrimeService',
-  'cortex.knowledge': 'foresight-knowledge-graph',
-  'cortex.memory': 'memory-service',
+  'cortex.memory': 'memory-orchestrator',
 
   // FDA
   'fda.service': 'fdaService',
@@ -159,7 +141,6 @@ export const SERVICE_REGISTRY = {
   // Clinical
   'clinical.csr': 'csr-search-service',
   'clinical.intelligence': 'clinical-intelligence-service',
-  'clinical.study-design': 'study-design-agent-service',
 
   // Infrastructure
   'infra.storage': 's3-storage',

@@ -14,18 +14,21 @@ ALLOWLIST_FILES=(
   "server/utils/database.js"
 )
 
-# Search runtime-hot code only. (Avoid scripts, migrations, archives.)
-SEARCH_DIRS=(
-  "server/routes"
-  "server/services"
-  "server/workers"
-  "server/api"
-  "server/middleware"
-  "server/repositories"
-  "server/utils"
-  "server/database"
-  "server/db"
-)
+# Scan ALL of server/ and exclude what is not runtime, rather than listing the
+# directories to include.
+#
+# The previous version named ten directories. `server/` has ~35, so
+# server/src (which holds live routers such as stability.router.ts),
+# server/bootstrap, server/startup, server/lib, server/controllers, server/jobs,
+# server/pipelines, server/events and server/integrations were all outside the
+# guard — a `new Pool(` in any of them passed. It also listed
+# `server/repositories`, which does not exist, so every run printed an rg error
+# to stderr while still reporting success; guard output that is routinely noisy
+# is guard output nobody reads.
+#
+# An include-list silently fails to cover new directories. A deny-list covers
+# them by default and has to be widened deliberately.
+SEARCH_DIRS=("server")
 
 PATTERN="new[[:space:]]+([a-zA-Z0-9_]*\.)?Pool[[:space:]]*\("
 
@@ -35,6 +38,19 @@ HITS="$(rg -n --hidden --no-ignore-vcs \
   --glob '!**/dist/**' \
   --glob '!**/build/**' \
   --glob '!**/.git/**' \
+  --glob '!**/__tests__/**' \
+  --glob '!**/*.test.ts' \
+  --glob '!**/*.test.js' \
+  --glob '!**/*.spec.ts' \
+  --glob '!**/*.spec.js' \
+  --glob '!server/tests/**' \
+  --glob '!server/test/**' \
+  --glob '!**/_archive/**' \
+  --glob '!**/_deprecated/**' \
+  --glob '!**/*.d.ts' \
+  `# One-off CLI utilities (import/export, run-sql). They are invoked by hand,` \
+  `# never on a request path, and legitimately open their own connection.` \
+  --glob '!server/scripts/**' \
   "$PATTERN" "${SEARCH_DIRS[@]}" || true)"
 
 if [[ -z "${HITS}" ]]; then

@@ -163,7 +163,7 @@ router.patch('/projects/:projectId', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
 
-  const projectId = parseInt(req.params.projectId, 10);
+  const projectId = parseInt(String(req.params.projectId), 10);
   if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
 
   const result = await anaPlatformController.updateProject(orgId, projectId, req.body);

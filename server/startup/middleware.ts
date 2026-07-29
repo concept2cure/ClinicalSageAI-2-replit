@@ -16,18 +16,25 @@
  *  10. cookie parser
  *  11. immutability policy middleware (21 CFR Part 11)
  *  12. request debug logging (dev-only)
+ *
+ * applyAuthBoundary (exported separately) mounts the default-deny /api
+ * authentication boundary. It is called from server/index.ts AFTER the
+ * audit-trail observer (so boundary 401s are still recorded as
+ * UNAUTHORIZED_ACCESS events) and BEFORE any route registration.
  */
 
 import type { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { betaFlowTelemetryMiddleware } from '../middleware/betaFlowTelemetry';
-import { applySecurityMiddleware } from '../middleware/enterprise-security.js';
+import { applySecurityMiddleware, sanitizeInput } from '../middleware/enterprise-security.js';
 import { applyPerformanceMiddleware } from '../middleware/enterprise-performance.js';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { httpLogger } from '../src/mw/observability.js';
 import { createBetaRouteFence, isBetaRouteFenceEnabled } from '../middleware/betaRouteFence';
+import { createAuthBoundary, resolveAuthBoundaryMode } from '../middleware/authBoundary';
 import firecrawlWebhooksRoutes from '../routes/firecrawl-webhooks';
+import { createScopedLogger } from '../utils/logger';
 import type { DebugLogger } from './types';
 
 /**
@@ -67,6 +74,13 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
   app.use('/api', express.json({ limit: '2mb' }));
   app.use('/api', express.urlencoded({ extended: true, limit: '2mb' }));
 
+  // 6b. Prototype-pollution scrub. MUST run after the body parsers —
+  //     Express does not populate req.body until express.json /
+  //     express.urlencoded execute, so mounting this any earlier (as
+  //     applySecurityMiddleware used to) made the body-side scrub a
+  //     silent no-op.
+  app.use('/api', sanitizeInput);
+
   // 7. Beta route fence (mock/scaffold families blocked by default).
   app.use('/api', createBetaRouteFence());
   if (isBetaRouteFenceEnabled()) {
@@ -105,6 +119,12 @@ export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): v
   });
 }
 
+// Append-only trails protected by the 21 CFR Part 11 immutability policy. A
+// destructive mutation (DELETE / bulk-delete) on any of these is refused, so an
+// audit or e-signature record can never be modified or removed over HTTP. None
+// of these prefixes registers a destructive handler today; the guard keeps it
+// that way and blocks any future regression. (Previously only /api/audit/events
+// and /api/audit/bulk-delete were covered — both still match the first pattern.)
 const IMMUTABLE_ROUTE_PATTERNS = [
   /^\/api\/audit\/events(?:\/|$)/, // Audit trail events — append-only
   /^\/api\/audit\/bulk-delete(?:\/|$)/, // Explicit bulk-delete block

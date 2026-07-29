@@ -8,18 +8,11 @@
  * Integrates with: ComplianceRulesEngine, ECTDScaffoldingService
  */
 
-import { logger } from '../../lib/logger';
-import { AuditLogger } from '../audit/AuditLogger';
+import { logger } from '../../utils/logger';
+import { AuditLogger } from '../audit/auditLogger';
+import type { LegacyUpperType } from '../../../shared/regulatory/submission-type-bridge.js';
 
-export type SubmissionType = 
-  | '510K' 
-  | 'IND' 
-  | 'NDA' 
-  | 'BLA' 
-  | 'PMA' 
-  | 'MAA' 
-  | 'DE_NOVO' 
-  | 'EUA';
+export type SubmissionType = LegacyUpperType;
 
 export type DocumentType =
   | 'CLINICAL_OVERVIEW'
@@ -73,10 +66,10 @@ export interface ArtifactSkeleton {
  * Creates structured templates for regulatory documents
  */
 export class ArtifactSkeletonGenerator {
-  private auditLogger: AuditLogger;
+  private auditLogger: any;
 
   constructor() {
-    this.auditLogger = new AuditLogger();
+    this.auditLogger = AuditLogger;
   }
 
   /**

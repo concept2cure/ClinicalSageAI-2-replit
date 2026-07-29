@@ -7,7 +7,7 @@
  */
 import { db } from '../db';
 import { featureToggles } from '../../shared/schema';
-import { eq, and, or, array, contains } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 
 export class FeatureToggleService {
   /**
@@ -23,11 +23,18 @@ export class FeatureToggleService {
     organizationId?: number,
     clientWorkspaceId?: number
   ): Promise<boolean> {
-    const toggles = await db
-      .select()
-      .from(featureToggles)
-      .where(eq(featureToggles.featureKey, featureKey))
-      .limit(1);
+    let toggles: Array<typeof featureToggles.$inferSelect>;
+    try {
+      toggles = await db
+        .select()
+        .from(featureToggles)
+        .where(eq(featureToggles.featureKey, featureKey))
+        .limit(1);
+    } catch {
+      // Fail-safe: if the toggle store is unreachable, treat the feature
+      // as disabled. Never enable a feature we cannot confirm is on.
+      return false;
+    }
 
     if (toggles.length === 0) {
       return false;

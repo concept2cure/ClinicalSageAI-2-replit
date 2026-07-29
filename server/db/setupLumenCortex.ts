@@ -34,5 +34,4 @@ export async function initializeLumenCortexDatabase() {
   }
 }
 
-export { pool };
 export default { initializeLumenCortexDatabase };

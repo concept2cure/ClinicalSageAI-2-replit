@@ -15,14 +15,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Mock getPool before import ────────────────────────────────────────────────
 
-const mockClient = {
-  query: vi.fn(),
-  release: vi.fn(),
-};
-
-const mockPool = {
-  connect: vi.fn().mockResolvedValue(mockClient),
-};
+const { mockClient, mockPool } = vi.hoisted(() => {
+  const client = {
+    query: vi.fn(),
+    release: vi.fn(),
+  };
+  return {
+    mockClient: client,
+    mockPool: {
+      connect: vi.fn().mockResolvedValue(client),
+      on: vi.fn(),
+      query: vi.fn(),
+    },
+  };
+});
 
 vi.mock('../server/db.ts', () => ({
   getPool: () => mockPool,
@@ -229,15 +235,16 @@ describe('registerGovernedExport — behavioral', () => {
 
   // ── Test 8: Rollback on failure — returns null, does not throw ───────────
 
-  it('returns null on DB failure (degraded mode) without throwing', async () => {
+  it('throws on DB failure and issues ROLLBACK', async () => {
     mockClient.query.mockImplementation((sql: string) => {
       if (sql === 'BEGIN') return Promise.resolve({ rows: [] });
       if (sql === 'ROLLBACK') return Promise.resolve({ rows: [] });
       return Promise.reject(new Error('DB connection lost'));
     });
 
-    const result = await registerGovernedExport(makeExportInput());
-    expect(result).toBeNull();
+    await expect(registerGovernedExport(makeExportInput())).rejects.toThrow(
+      /governed export registration failed/i
+    );
 
     // Verify ROLLBACK was issued
     const rollbackCall = mockClient.query.mock.calls.find(c => c[0] === 'ROLLBACK');
@@ -374,11 +381,10 @@ describe('510(k) eSTAR build route — governed wiring', () => {
   });
 });
 
-describe('UI consequence loop — export artifacts visible in project context', () => {
-  const shellSrc = fs.readFileSync(
-    path.join(ROOT, 'client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx'),
-    'utf-8'
-  );
+// ProjectWorkspaceShell.tsx was removed in the design-system port (CLAUDE.md).
+// These UI-shell assertions move to the Phase 3 workbench when it ships.
+describe.skip('UI consequence loop — export artifacts visible in project context', () => {
+  const shellSrc = '';
 
   it('displays "Export" source labels for export-type artifacts', () => {
     // Upstream uses specific source types: export_pdf, export_docx, export_zip, export_estar_zip
@@ -414,11 +420,12 @@ describe('UI consequence loop — export artifacts visible in project context', 
   });
 });
 
-describe('useDeliverable — governed export consequence loop', () => {
-  const src = fs.readFileSync(
-    path.join(ROOT, 'client/src/concept2cure/hooks/useDeliverable.ts'),
-    'utf-8'
-  );
+// useDeliverable.ts was removed with the disconnected legacy island in the
+// design-system port (CLAUDE.md) — it was unreachable from ZenApp. The
+// client-side governed-export consequence loop moves to the Phase 3 workbench
+// when it ships. Server-side governed wiring stays covered above.
+describe.skip('useDeliverable — governed export consequence loop', () => {
+  const src = '';
 
   it('reads X-Concept2Cure-Artifact-Id from response headers', () => {
     expect(src).toContain("response.headers.get('X-Concept2Cure-Artifact-Id')");

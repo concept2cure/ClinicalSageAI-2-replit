@@ -17,6 +17,10 @@ import part11ComplianceService from './part11ComplianceService';
 import { TemplateMapper } from './documentTemplateMapper';
 import crypto from 'crypto';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('510kComplianceTracker');
+
 interface ComplianceIssue {
   severity: 'critical' | 'major' | 'minor' | 'suggestion';
   section: string;
@@ -94,7 +98,7 @@ export class FDA510kComplianceTracker {
         completeness: this.calculateCompleteness(data)
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error tracking workflow action:', error);
+      logger.error('Error tracking workflow action', { err: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -174,30 +178,38 @@ export class FDA510kComplianceTracker {
         .limit(1);
       
       const previousVersion = previousVersions[0];
-      const versionNumber = previousVersion ? (previousVersion.versionNumber || 1) + 1 : 1;
-      
-      // Create version entry in database
+      const previousVersionNumber = previousVersion
+        ? parseInt(previousVersion.versionNumber, 10) || 0
+        : 0;
+      const versionNumber = previousVersionNumber + 1;
+
+      const changes = previousVersion
+        ? JSON.stringify(
+            this.calculateChanges(JSON.parse(previousVersion.content || '{}'), content)
+          )
+        : '[]';
+
+      // Create version entry in database. `versionNumber` is stored as a string
+      // (varchar) in the schema; `changes` is persisted inside the metadata JSON
+      // since there is no dedicated column for it.
       const versionEntry = {
         documentId: parseInt(documentId) || 0,
-        versionNumber,
+        versionNumber: String(versionNumber),
         content: JSON.stringify(content),
-        changes: previousVersion ? 
-          JSON.stringify(this.calculateChanges(
-            JSON.parse(previousVersion.content || '{}'), 
-            content
-          )) : '[]',
-        createdBy: userId,
-        organizationId,
+        changeDescription,
+        createdById: userId,
         metadata: {
           projectId,
+          organizationId,
           changeDescription,
+          changes,
           hash: this.calculateContentHash(content),
           ...metadata
         }
       };
-      
+
       const [savedVersion] = await db.insert(schema.documentVersions)
-        .values(versionEntry)
+        .values(versionEntry as any)
         .returning();
       
       // Create audit trail for version
@@ -225,10 +237,10 @@ export class FDA510kComplianceTracker {
         versionNumber,
         versionId: savedVersion.id,
         hash: this.calculateContentHash(content),
-        changes: JSON.parse(versionEntry.changes)
+        changes: JSON.parse(changes)
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error creating document version:', error);
+      logger.error('Error creating document version', { err: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }
@@ -425,7 +437,7 @@ export class FDA510kComplianceTracker {
         }))
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error getting audit trail:', error);
+      logger.error('Error getting audit trail', { err: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         count: 0,
@@ -467,7 +479,7 @@ export class FDA510kComplianceTracker {
         }))
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error getting data lineage:', error);
+      logger.error('Error getting data lineage', { err: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         totalMappings: 0,
@@ -492,20 +504,32 @@ export class FDA510kComplianceTracker {
       return {
         success: true,
         currentVersion: versions.length,
-        versions: versions.map(v => {
+        versions: versions.map((v: any) => {
           const metadata = v.metadata as any || {};
+          // `changes` is persisted inside metadata as a JSON string.
+          let changes: unknown[] = [];
+          if (typeof metadata.changes === 'string') {
+            try {
+              const parsed = JSON.parse(metadata.changes);
+              if (Array.isArray(parsed)) changes = parsed;
+            } catch {
+              changes = [];
+            }
+          } else if (Array.isArray(metadata.changes)) {
+            changes = metadata.changes;
+          }
           return {
             versionNumber: v.versionNumber || 1,
-            changeDescription: metadata.changeDescription || 'Version update',
-            changesCount: Array.isArray(v.changes) ? v.changes.length : 0,
-            createdBy: v.createdBy,
+            changeDescription: v.changeDescription || metadata.changeDescription || 'Version update',
+            changesCount: changes.length,
+            createdBy: v.createdById,
             createdAt: v.createdAt,
             hash: metadata.hash || this.calculateContentHash(v.content || '')
           };
         })
       };
     } catch (error) {
-      console.error('[510kComplianceTracker] Error getting version history:', error);
+      logger.error('Error getting version history', { err: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         currentVersion: 0,

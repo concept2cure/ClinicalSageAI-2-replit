@@ -1,0 +1,176 @@
+/**
+ * Admin and Access — scoped styles for the ui-v2 product admin surface
+ * (surfaces/AdminAccess.tsx). Ported from Claude Design's admin kit
+ * (mdx/app.css admin section) but EVERY rule is scoped under `.adm-access`
+ * so it cannot collide with other ui-v2 CSS (which also defines .btn,
+ * .ctable, .section, etc.). Uses the shared design tokens from
+ * design-system/colors_and_type.css, so it themes with the rest of ui-v2.
+ */
+
+.adm-access { display: flex; flex-direction: column; min-width: 0; }
+.adm-access svg { width: 15px; height: 15px; flex-shrink: 0; }
+.adm-access .mono { font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-size: 11px; }
+.adm-access .mono.tiny, .adm-access .tiny { font-size: 10px; }
+.adm-access .small { font-size: 12px; }
+.adm-access .adm-sub { color: var(--text-400); font-size: 12px; }
+.adm-access .adm-muted { color: var(--text-400); }
+.adm-access .adm-ok { color: var(--success); display: inline-flex; }
+.adm-access .adm-warn { color: var(--warning); display: inline-flex; }
+.adm-access .adm-overdue { color: var(--error-text, var(--error)); font-weight: 600; }
+
+/* Page header */
+.adm-access .page-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; padding: 28px 32px 20px; border-bottom: 1px solid var(--border);
+}
+.adm-access .page-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-400); margin-bottom: 4px; }
+.adm-access .page-title { font-family: var(--font-serif); font-size: 26px; font-weight: 500; color: var(--text-100); letter-spacing: -0.01em; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+.adm-access .page-sub { font-size: 13px; color: var(--text-300); max-width: 640px; line-height: 1.5; }
+.adm-access .page-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+/* Buttons (scoped — do not touch ui-v2's global .btn) */
+.adm-access .btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 8px 14px; border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100);
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  transition: border-color var(--dur, .15s) var(--ease, ease), background var(--dur, .15s) var(--ease, ease);
+}
+.adm-access .btn.small { padding: 6px 11px; font-size: 12px; }
+.adm-access .btn:hover { border-color: var(--border-strong); }
+.adm-access .btn.primary { background: var(--accent-100, var(--text-100)); border-color: transparent; color: var(--bg-000); }
+.adm-access .btn.primary:hover { filter: brightness(1.05); }
+.adm-access .btn.ghost { background: transparent; }
+
+/* Metrics */
+.adm-access .metrics-row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 20px 32px 4px; }
+.adm-access .metric-card { padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); }
+.adm-access .metric-card[data-tone="ok"] { background: var(--success-muted); border-color: color-mix(in oklab, var(--success) 20%, transparent); }
+.adm-access .metric-card[data-tone="warn"] { background: var(--warning-muted); border-color: color-mix(in oklab, var(--warning) 20%, transparent); }
+.adm-access .metric-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-400); margin-bottom: 8px; }
+.adm-access .metric-val { font-family: var(--font-serif); font-size: 26px; font-weight: 500; color: var(--text-100); font-variant-numeric: tabular-nums; line-height: 1; }
+.adm-access .metric-val .unit { font-size: 13px; color: var(--text-400); margin-left: 4px; font-family: var(--font-sans); font-weight: 400; }
+.adm-access .metric-meta { font-size: 11px; color: var(--text-300); margin-top: 8px; line-height: 1.4; }
+
+/* Tabs */
+.adm-access .adm-tabs { display: flex; gap: 4px; padding: 20px 32px 0; border-bottom: 1px solid var(--border); }
+.adm-access .adm-tab {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  padding: 9px 14px; border: none; background: transparent; color: var(--text-400);
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.adm-access .adm-tab .ico { display: inline-flex; }
+.adm-access .adm-tab:hover { color: var(--text-200); }
+.adm-access .adm-tab[aria-current] { color: var(--text-100); border-bottom-color: var(--accent-200, var(--text-100)); }
+
+/* Sections */
+.adm-access .section { padding: 24px 32px 4px; }
+.adm-access .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.adm-access .section-head h2 { font-family: var(--font-serif); font-size: 17px; font-weight: 500; color: var(--text-100); margin: 0; }
+.adm-access .section-sub { font-size: 11px; color: var(--text-400); }
+.adm-access .section-head .seg { margin-left: auto; }
+.adm-access .adm-empty { margin: 0 32px 20px; padding: 20px; border: 1px dashed var(--border); border-radius: var(--radius-md); color: var(--text-400); font-size: 13px; }
+
+/* Segmented control */
+.adm-access .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--bg-050); border-radius: var(--radius-sm, 8px); }
+.adm-access .seg-btn { border: none; background: transparent; cursor: pointer; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: var(--text-400); font-family: inherit; }
+.adm-access .seg-btn[data-on] { background: var(--bg-000); color: var(--text-100); box-shadow: 0 1px 2px color-mix(in oklab, var(--black, #000) 6%, transparent); }
+
+/* Compact table */
+.adm-access .ctable { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); overflow: hidden; margin: 0 32px 20px; }
+.adm-access .ctable-head, .adm-access .ctable-row { display: grid; gap: 12px; padding: 10px 14px; align-items: center; font-size: 12px; }
+.adm-access .ctable-head { background: var(--bg-050); color: var(--text-400); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.adm-access button.ctable-row { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; color: var(--text-200); text-align: left; background: transparent; cursor: pointer; width: 100%; font-family: inherit; transition: background var(--dur, .15s) var(--ease, ease); }
+.adm-access .ctable-row:last-child { border-bottom: none; }
+.adm-access .ctable-row:hover { background: var(--bg-050); }
+.adm-access .ctable-row[data-on] { background: var(--accent-000); }
+.adm-access .ctable-strong { color: var(--text-100); font-weight: 500; }
+
+/* Member bits */
+.adm-access .adm-avatar, .adm-access .adm-drawer-avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 99px; background: var(--accent-100, var(--bg-100)); color: var(--text-100); font-family: var(--font-mono, monospace); font-weight: 600; }
+.adm-access .adm-avatar { width: 28px; height: 28px; font-size: 10px; }
+.adm-access .adm-groups { display: flex; gap: 4px; flex-wrap: wrap; }
+.adm-access .adm-group { padding: 1px 5px; border-radius: 4px; background: var(--bg-100); color: var(--text-300); }
+.adm-access .adm-sso { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
+.adm-access .adm-sso-ok { color: var(--success); }
+.adm-access .adm-sso-local { color: var(--text-400); }
+
+/* Role pills */
+.adm-access .adm-role-pill { display: inline-flex; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; background: var(--bg-100); color: var(--text-200); white-space: nowrap; }
+.adm-access .adm-role-admin { background: color-mix(in oklab, var(--ai, #6b5bd6) 16%, transparent); color: var(--ai, #6b5bd6); }
+.adm-access .adm-role-editor { background: color-mix(in oklab, var(--success) 14%, transparent); color: var(--success); }
+.adm-access .adm-role-reviewer { background: color-mix(in oklab, var(--warning) 14%, transparent); color: var(--warning); }
+.adm-access .adm-role-external { background: color-mix(in oklab, var(--error) 12%, transparent); color: var(--error-text, var(--error)); }
+
+/* Members layout + drawer */
+.adm-access .adm-members-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 0; align-items: start; }
+.adm-access .adm-members-layout .section { padding-right: 20px; }
+@media (max-width: 1100px) { .adm-access .adm-members-layout { grid-template-columns: 1fr; } }
+.adm-access .adm-drawer { margin: 24px 32px 4px 0; padding: 18px; background: var(--bg-050); border: 1px solid var(--border); border-radius: var(--radius-md); position: sticky; top: 16px; }
+.adm-access .adm-drawer-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.adm-access .adm-drawer-avatar { width: 40px; height: 40px; font-size: 13px; }
+.adm-access .adm-drawer-name { font-weight: 600; color: var(--text-100); }
+.adm-access .adm-drawer-email { font-size: 12px; color: var(--text-400); }
+.adm-access .drawer-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 12px; background: var(--bg-000); border-radius: var(--radius-sm, 8px); margin-bottom: 14px; }
+.adm-access .drawer-meta .k { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); margin-bottom: 2px; }
+.adm-access .drawer-meta .v { font-size: 12px; color: var(--text-100); }
+.adm-access .drawer-section-lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); margin: 6px 0 8px; }
+.adm-access .adm-scopes, .adm-access .adm-role-scopes { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.adm-access .adm-scope { padding: 2px 6px; border-radius: 4px; background: var(--bg-100); color: var(--text-300); }
+.adm-access .adm-grant { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--border); }
+.adm-access .adm-grant-scope { padding: 1px 6px; border-radius: 4px; background: var(--accent-000); color: var(--accent-200, var(--text-200)); font-size: 11px; }
+.adm-access .adm-grant-when { margin-left: auto; color: var(--text-400); font-size: 11px; }
+.adm-access .drawer-actions { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+
+/* Roles */
+.adm-access .adm-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin: 0 32px 20px; }
+.adm-access .adm-role-card { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); }
+.adm-access .adm-role-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.adm-access .adm-role-n { color: var(--text-400); font-size: 11px; }
+.adm-access .adm-role-desc { font-size: 12px; color: var(--text-300); line-height: 1.5; margin-bottom: 12px; }
+.adm-access .adm-role-foot { margin-top: 12px; }
+
+/* SSO */
+.adm-access .adm-sso-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding: 24px 32px 4px; }
+.adm-access .adm-conn { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); }
+.adm-access .adm-conn-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.adm-access .adm-conn-kind { color: var(--text-400); }
+.adm-access .adm-conn-name { font-weight: 600; color: var(--text-100); flex: 1; }
+.adm-access .adm-conn-meta { display: grid; gap: 8px; }
+.adm-access .adm-conn-meta > div { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.adm-access .adm-conn-meta .k { color: var(--text-400); }
+.adm-access .adm-conn-meta .v { color: var(--text-100); }
+.adm-access .adm-scim { border-style: dashed; }
+
+/* Status pills */
+.adm-access .status-pill { display: inline-flex; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: capitalize; }
+.adm-access .status-pill.active { background: var(--success-muted); color: var(--success); }
+.adm-access .status-pill.review { background: var(--warning-muted); color: var(--warning); }
+.adm-access .status-pill.draft { background: var(--bg-100); color: var(--text-300); }
+.adm-access .status-pill.idle { background: var(--bg-100); color: var(--text-400); }
+
+/* Settings */
+.adm-access .adm-settings { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin: 0 32px 20px; }
+.adm-access .adm-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 0; border-bottom: 1px solid var(--border); background: var(--bg-000); cursor: pointer; text-align: left; font-family: inherit; width: 100%; }
+.adm-access .adm-setting:last-child { border-bottom: none; }
+.adm-access .adm-setting:hover { background: var(--bg-050); }
+.adm-access .adm-setting-label { font-size: 13px; font-weight: 500; color: var(--text-100); }
+.adm-access .adm-setting-desc { font-size: 11px; color: var(--text-400); margin-top: 2px; }
+.adm-access .adm-setting-val { display: inline-flex; align-items: center; gap: 8px; color: var(--text-200); font-size: 13px; }
+.adm-access .adm-setting-chev { color: var(--text-400); display: inline-flex; }
+
+/* Audit band */
+.adm-access .adm-audit { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); overflow: hidden; margin: 0 32px 24px; }
+.adm-access .adm-audit-row { display: grid; grid-template-columns: 100px 80px 90px 130px 1fr 90px; gap: 12px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.adm-access .adm-audit-row:last-child { border-bottom: none; }
+.adm-access .adm-audit-id { color: var(--text-300); }
+.adm-access .adm-audit-when { color: var(--text-400); font-size: 11px; }
+.adm-access .adm-audit-actor { color: var(--text-200); }
+.adm-access .adm-audit-action { color: var(--accent-200, var(--text-200)); }
+.adm-access .adm-audit-target { color: var(--text-200); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-access .adm-audit-sha { color: var(--text-400); text-align: right; }
+@media (max-width: 900px) {
+  .adm-access .adm-audit-row { grid-template-columns: 1fr 1fr; }
+  .adm-access .adm-audit-target { white-space: normal; }
+}

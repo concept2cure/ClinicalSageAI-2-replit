@@ -19,6 +19,12 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
+import { createScopedLogger } from '../utils/logger.js';
+import { runSignalScreen } from '../services/compliance/pv-signal-screen';
+import { upcomingDeadlines } from '../services/compliance/pv-periodic-scheduler';
+
+const logger = createScopedLogger('pharmacovigilance-routes');
+
 // Service imports — the service uses the shared pool internally
 import {
   reportAdverseEvent,
@@ -32,6 +38,8 @@ import {
   createRMP,
   getRMPsForProject,
   calculateReportingDeadline,
+  searchMeddraTerms,
+  submitCaseToTriage,
   type EventType,
   type SeriousnessCriteria,
   type Causality,
@@ -64,6 +72,21 @@ const adverseEventSchema = z.object({
   reporterType: z.enum(['investigator', 'sponsor', 'patient', 'healthcare_provider']),
   countryOfOccurrence: z.string().length(2),
   reportedToAuthorities: z.boolean().default(false),
+  // ── E2B(R3) intake detail (optional) ──────────────────────────────────────
+  reactionPt: z.string().optional(),
+  reactionPtCode: z.string().optional(),
+  reactionSoc: z.string().optional(),
+  reactionSocCode: z.string().optional(),
+  suspectProduct: z.string().optional(),
+  suspectProductStrength: z.string().optional(),
+  suspectProductRoute: z.string().optional(),
+  suspectProductDose: z.string().optional(),
+  expectedness: z.enum(['expected', 'unexpected', 'unknown']).optional(),
+  rsiReference: z.string().optional(),
+  reporterName: z.string().optional(),
+  reporterContact: z.string().optional(),
+  reporterOrganization: z.string().optional(),
+  narrative: z.string().max(50000).optional(),
 });
 
 const periodicReportSchema = z.object({
@@ -181,7 +204,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         },
       });
     } catch (error) {
-      console.error('[Pharmacovigilance] overview error:', error);
+      logger.error('overview error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to generate PV overview' });
     }
   });
@@ -236,7 +259,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         total: events.length,
       });
     } catch (error) {
-      console.error('[Pharmacovigilance] get adverse events error:', error);
+      logger.error('get adverse events error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve adverse events' });
     }
   });
@@ -272,11 +295,25 @@ export default function createPharmacovigilanceRoutes(): Router {
         reporterType: data.reporterType as ReporterType,
         countryOfOccurrence: data.countryOfOccurrence,
         reportedToAuthorities: data.reportedToAuthorities,
+        reactionPt: data.reactionPt ?? null,
+        reactionPtCode: data.reactionPtCode ?? null,
+        reactionSoc: data.reactionSoc ?? null,
+        reactionSocCode: data.reactionSocCode ?? null,
+        suspectProduct: data.suspectProduct ?? null,
+        suspectProductStrength: data.suspectProductStrength ?? null,
+        suspectProductRoute: data.suspectProductRoute ?? null,
+        suspectProductDose: data.suspectProductDose ?? null,
+        expectedness: data.expectedness ?? null,
+        rsiReference: data.rsiReference ?? null,
+        reporterName: data.reporterName ?? null,
+        reporterContact: data.reporterContact ?? null,
+        reporterOrganization: data.reporterOrganization ?? null,
+        narrative: data.narrative ?? null,
       });
 
       return res.status(201).json({ success: true, data: event });
     } catch (error) {
-      console.error('[Pharmacovigilance] report adverse event error:', error);
+      logger.error('report adverse event error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to report adverse event' });
     }
   });
@@ -291,7 +328,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const overdue = await getOverdueReports(orgId);
       return res.json({ success: true, data: overdue, total: overdue.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] overdue reports error:', error);
+      logger.error('overdue reports error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve overdue reports' });
     }
   });
@@ -320,7 +357,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       if (error?.message?.includes('not found')) {
         return res.status(404).json({ success: false, error: 'Adverse event not found' });
       }
-      console.error('[Pharmacovigilance] ICSR generation error:', error);
+      logger.error('ICSR generation error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to generate ICSR' });
     }
   });
@@ -339,7 +376,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const reports = await getUpcomingReports(orgId);
       return res.json({ success: true, data: reports, total: reports.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] periodic reports error:', error);
+      logger.error('periodic reports error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve periodic reports' });
     }
   });
@@ -366,16 +403,42 @@ export default function createPharmacovigilanceRoutes(): Router {
         reportType: data.reportType as any,
         periodStart: new Date(data.periodStart),
         periodEnd: new Date(data.periodEnd),
-        status: 'draft',
         submittedTo: data.submittedTo,
         dueDate: new Date(data.dueDate),
-        submittedAt: null,
       });
 
       res.status(201).json({ success: true, data: report });
     } catch (error) {
-      console.error('[Pharmacovigilance] create periodic report error:', error);
+      logger.error('create periodic report error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to create periodic report' });
+    }
+  });
+
+  /**
+   * POST /api/pharmacovigilance/periodic-reports/schedule
+   * Compute upcoming periodic-report (DSUR/PSUR/PBRER/PADER) deadlines from
+   * data-lock points + per-type offsets. Pure.
+   * Body: { reports: [{ id?, reportType, dataLockPoint, frequencyMonths? }], withinDays?, now? }.
+   */
+  router.post('/periodic-reports/schedule', async (req: Request, res: Response) => {
+    try {
+      const body = req.body ?? {};
+      if (!Array.isArray(body.reports)) {
+        return res.status(400).json({ success: false, error: 'reports[] (each { reportType, dataLockPoint }) is required' });
+      }
+      const reports = body.reports.map((r: any) => ({
+        id: r.id,
+        reportType: r.reportType,
+        dataLockPoint: new Date(r.dataLockPoint),
+        frequencyMonths: r.frequencyMonths,
+      }));
+      const withinDays = Number.isFinite(Number(body.withinDays)) ? Number(body.withinDays) : 180;
+      const now = body.now ? new Date(body.now) : new Date();
+      const deadlines = upcomingDeadlines(reports, withinDays, now);
+      return res.json({ success: true, data: { deadlines, total: deadlines.length } });
+    } catch (error) {
+      logger.error('periodic-report schedule error', { err: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Failed to compute periodic-report schedule' });
     }
   });
 
@@ -393,7 +456,7 @@ export default function createPharmacovigilanceRoutes(): Router {
       const signals = await getPendingSignals(orgId);
       return res.json({ success: true, data: signals, total: signals.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] get signals error:', error);
+      logger.error('get signals error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve safety signals' });
     }
   });
@@ -419,16 +482,35 @@ export default function createPharmacovigilanceRoutes(): Router {
         projectId: data.projectId,
         signalSource: data.signalSource as any,
         description: data.description,
-        detectedAt: new Date(),
         evaluationStatus: 'new',
         action: 'none',
         riskBenefitAssessment: data.riskBenefitAssessment,
-      });
+      } as any);
 
       res.status(201).json({ success: true, data: signal });
     } catch (error) {
-      console.error('[Pharmacovigilance] report signal error:', error);
+      logger.error('report signal error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to report safety signal' });
+    }
+  });
+
+  /**
+   * POST /api/pharmacovigilance/signals/screen
+   * Run the disproportionality signal screen over a batch of drug-event 2x2
+   * contingency counts (PRR / ROR / chi-squared / EBGM / EB05), ranked. Pure.
+   * Body: { pairs: [{ drug, event, counts: { a, b, c, d } }] }.
+   */
+  router.post('/signals/screen', async (req: Request, res: Response) => {
+    try {
+      const pairs = (req.body && Array.isArray(req.body.pairs)) ? req.body.pairs : null;
+      if (!pairs) {
+        return res.status(400).json({ success: false, error: 'pairs[] (each { drug, event, counts:{a,b,c,d} }) is required' });
+      }
+      const screen = runSignalScreen(pairs);
+      return res.json({ success: true, data: screen });
+    } catch (error) {
+      logger.error('signal screen error', { err: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Failed to run signal screen' });
     }
   });
 
@@ -442,15 +524,15 @@ export default function createPharmacovigilanceRoutes(): Router {
    */
   router.get('/rmp/:projectId', async (req: Request, res: Response) => {
     try {
-      const { projectId } = req.params;
+      const { projectId } = req.params as { projectId: string };
       if (!projectId) {
         return res.status(400).json({ success: false, error: 'projectId is required' });
       }
 
-      const plans = await getRMPsForProject(projectId);
+      const plans = await getRMPsForProject(String(projectId));
       return res.json({ success: true, data: plans, total: plans.length });
     } catch (error) {
-      console.error('[Pharmacovigilance] get RMPs error:', error);
+      logger.error('get RMPs error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to retrieve RMPs' });
     }
   });
@@ -486,7 +568,7 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       res.status(201).json({ success: true, data: rmp });
     } catch (error) {
-      console.error('[Pharmacovigilance] create RMP error:', error);
+      logger.error('create RMP error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to create RMP' });
     }
   });
@@ -533,7 +615,7 @@ export default function createPharmacovigilanceRoutes(): Router {
         },
       });
     } catch (error) {
-      console.error('[Pharmacovigilance] calculate deadline error:', error);
+      logger.error('calculate deadline error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to calculate deadline' });
     }
   });
@@ -574,8 +656,60 @@ export default function createPharmacovigilanceRoutes(): Router {
 
       return res.json({ success: true, data: matrix });
     } catch (error) {
-      console.error('[Pharmacovigilance] compliance matrix error:', error);
+      logger.error('compliance matrix error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to generate compliance matrix' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MEDDRA LOOKUP (drives the case-intake PT picker)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * GET /api/pharmacovigilance/meddra/search?q=nausea&limit=20
+   * Returns matching MedDRA terms (PT + SOC). Empty until the licensed MedDRA
+   * dictionary is ingested for the org.
+   */
+  router.get('/meddra/search', async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req);
+      const q = String(req.query.q ?? '');
+      const limit = Number(req.query.limit) || 20;
+      const terms = await searchMeddraTerms(orgId, q, limit);
+      return res.json({ success: true, data: terms });
+    } catch (error) {
+      logger.error('meddra search error', { err: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'MedDRA search failed' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CASE TRIAGE (Submit-to-triage: assigns clock + writes Part 11 audit)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * POST /api/pharmacovigilance/adverse-events/:id/submit-to-triage
+   * Body: { reason } (>= 8 chars). Transitions a drafted case to triage.
+   */
+  router.post('/adverse-events/:id/submit-to-triage', async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req);
+      const userId = String((req as any).user?.id ?? (req as any).userId ?? '');
+      const reason = String(req.body?.reason ?? '');
+      if (reason.trim().length < 8) {
+        return res.status(400).json({ success: false, error: 'REASON_REQUIRED', detail: 'Minimum 8 characters.' });
+      }
+      const result = await submitCaseToTriage(orgId, userId, String(req.params.id), reason);
+      return res.json({ success: true, data: result });
+    } catch (error: any) {
+      if (error?.message === 'CASE_NOT_FOUND') {
+        return res.status(404).json({ success: false, error: 'CASE_NOT_FOUND' });
+      }
+      if (error?.message === 'PV_TABLE_MISSING') {
+        return res.status(503).json({ success: false, error: 'PV_TABLE_MISSING' });
+      }
+      logger.error('submit-to-triage error', { err: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ success: false, error: 'Submit to triage failed' });
     }
   });
 

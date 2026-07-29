@@ -240,7 +240,7 @@ export class LayoutAwareIngestionWorker {
     ];
 
     // Check for table indicators
-    let hasTableIndicators = tablePatterns.some(pattern => pattern.test(pageText));
+    const hasTableIndicators = tablePatterns.some(pattern => pattern.test(pageText));
 
     // Detect figure references
     const figurePattern = /Figure\s+\d+[.:]/gi;

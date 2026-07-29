@@ -16,11 +16,26 @@ import {
   getGenerationStats,
 } from '../../services/ana-ri/enforcement.js';
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
+import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
+import { getAgentActivity } from '../../services/ana/agent-activity.js';
+import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
+import {
+  requiresPart11Signoff,
+  requiresEsignature,
+  MIN_REASON_FOR_CHANGE_LEN,
+} from '../../services/ana-ri/part11-governance.js';
+import {
+  verifySignerCredentials,
+  defaultSignoffDeps,
+} from '../../services/ana-ri/governed-action-signoff.js';
+import { handleSealVerifiedVersion } from './seal-verified.js';
+import auditService from '../../services/auditService.js';
 import {
   sendSuccess,
   sendError,
   ensureGateway,
   isDatabaseAvailable,
+  extractRequestContext,
 } from './shared.js';
 
 /** Register utility endpoints on the given router. */
@@ -32,7 +47,7 @@ export function mountUtilityRoutes(router: Router): void {
     const gw = ensureGateway();
     const enabledProviders = gw?.getEnabledProviders() || [];
     const providerHealth = gw?.getProviderHealth?.() || [];
-    const deterministicMode = gw?.isDeterministicMode?.() || false;
+    const deterministicMode = gw?.isDeterministic?.() || false;
     const databaseAvailable = await isDatabaseAvailable();
 
     const hasHealthyProvider = providerHealth.some((provider: any) => provider.healthy);
@@ -168,4 +183,142 @@ export function mountUtilityRoutes(router: Router): void {
       );
     }
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/ana-ri/since-last-visit?since=<ISO> — "what changed while you were
+  // away": newly-overdue deadlines + newly-opened blockers / contradictions,
+  // computed against the client-supplied last-visit timestamp. Org-scoped.
+  // ─────────────────────────────────────────────────────────────────────────
+  router.get('/since-last-visit', async (req: Request, res: Response) => {
+    const { numericOrgId } = extractRequestContext(req);
+    if (!numericOrgId) {
+      return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
+    }
+    const since = req.query.since;
+    if (typeof since !== 'string' || since.trim() === '') {
+      return sendError(res, 400, 'since (ISO timestamp) query parameter is required', null, 'MISSING_SINCE');
+    }
+    try {
+      const result = await getSinceLastVisit({ organizationId: numericOrgId, since });
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      return sendError(
+        res,
+        500,
+        error?.message || 'Failed to compute since-last-visit delta',
+        null,
+        'SINCE_LAST_VISIT_FAILED'
+      );
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/ana-ri/agent-activity — the live agent surface: the tenant's
+  // active / stalled / recently-finished background deep investigations, for a
+  // live dashboard panel to poll. Org-scoped; fail-soft (empty summary, not an
+  // error, when nothing is running or the table is absent).
+  // ─────────────────────────────────────────────────────────────────────────
+  router.get('/agent-activity', async (req: Request, res: Response) => {
+    const { numericOrgId } = extractRequestContext(req);
+    if (!numericOrgId) {
+      return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
+    }
+    try {
+      const summary = await getAgentActivity(numericOrgId);
+      return sendSuccess(res, summary);
+    } catch (error: any) {
+      return sendError(res, 500, error?.message || 'Failed to load agent activity', null, 'AGENT_ACTIVITY_FAILED');
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // POST /api/ana-ri/governed-action — execute a Part 11 governed AnA command
+  // WITH a verified sign-off. The client routes here after a chat command is
+  // blocked with PART11_SIGNATURE_REQUIRED: it collects the reason-for-change +
+  // re-authentication (password, and MFA when enabled) and posts them with the
+  // original command/params. We verify the signer server-side (§11.200), record
+  // the sign-off to the audit trail (§11.10(e)), then run the command through
+  // the gated dispatch with a verified signoff stamped on the context.
+  // Body: { command, params, reasonForChange, password, mfaToken? }
+  // ─────────────────────────────────────────────────────────────────────────
+  router.post('/governed-action', async (req: Request, res: Response) => {
+    const { numericOrgId, userId } = extractRequestContext(req);
+    if (!numericOrgId || !userId) {
+      return sendError(res, 401, 'Authentication and organization context required', null, 'AUTH_REQUIRED');
+    }
+    const body = req.body ?? {};
+    const command = typeof body.command === 'string' ? body.command : '';
+    const params = body.params && typeof body.params === 'object' ? body.params : {};
+    const reasonForChange = typeof body.reasonForChange === 'string' ? body.reasonForChange.trim() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
+
+    // This route is ONLY for governed commands — reads/drafting go through chat.
+    if (!command || !requiresPart11Signoff(command)) {
+      return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
+    }
+    if (reasonForChange.length < MIN_REASON_FOR_CHANGE_LEN) {
+      return sendError(
+        res,
+        400,
+        `A reason for change of at least ${MIN_REASON_FOR_CHANGE_LEN} characters is required`,
+        null,
+        'REASON_REQUIRED'
+      );
+    }
+
+    // Tiered policy: high-impact actions additionally require a manifested
+    // e-signature; the rest require only the reason-for-change. §11.200:
+    // re-verify the signer server-side for the e-sign tier (never a client flag).
+    const eSignRequired = requiresEsignature(command);
+    let secondFactorVerified = false;
+    if (eSignRequired) {
+      const verification = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
+      if (!verification.verified) {
+        return sendError(res, 401, verification.error || 'Signature verification failed', { code: verification.code }, 'SIGNATURE_REJECTED');
+      }
+      secondFactorVerified = verification.secondFactorVerified;
+    }
+
+    // §11.10(e): record the sign-off to the audit trail before executing.
+    try {
+      await auditService.logAction({
+        tenantId: numericOrgId,
+        userId,
+        action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
+        resourceType: 'ana_command',
+        resourceId: command,
+        ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { command, reasonForChange, eSignRequired, secondFactorVerified },
+      });
+    } catch (auditErr: any) {
+      // No governed mutation without a durable audit record.
+      return sendError(res, 500, 'Could not record the sign-off in the audit trail; action aborted', null, 'SIGNOFF_AUDIT_FAILED');
+    }
+
+    const ctx: CommandContext = {
+      userId,
+      organizationId: numericOrgId,
+      part11Enforce: true,
+      signoff: {
+        reasonForChange,
+        // For the reason-only tier there is no e-signature; the gate does not
+        // require one for these commands (validateSignoff requireSignature=false).
+        signatureVerified: eSignRequired,
+        signaturePurpose: 'approval',
+      },
+    };
+    try {
+      const [result] = await executeCommands([{ command, params } as any], ctx);
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      return sendError(res, 500, error?.message || 'Governed action failed', null, 'GOVERNED_ACTION_FAILED');
+    }
+  });
+
+  // POST /api/ana-ri/seal-verified-version — E1: Part 11 verified-and-sealed
+  // export (handler in ./seal-verified.ts). Gated behind
+  // ENABLE_ANA_DOCUMENT_STUDIO (off by default).
+  router.post('/seal-verified-version', handleSealVerifiedVersion);
 }

@@ -1,0 +1,15 @@
+/**
+ * Gap tokens — referenced by app.css but not in colors_and_type.css.
+ *
+ * When Claude Code mirrors this kit into client/src/concept2cure/mdx/ these
+ * shims should move INTO colors_and_type.css proper, since they describe the
+ * canonical Claude scale and belong with the rest of the raw scales.
+ */
+:root {
+  /* Border scale — matches the bg-* scale's lightness band. */
+  --border-100: #e8e6dc;   /* default frame (= bg-200) */
+  --border-200: #d1cfc0;   /* divider-strong         (= bg-300) */
+
+  /* Error text — slightly deeper than --error for body copy on cream. */
+  --error-text: #8a2929;
+}

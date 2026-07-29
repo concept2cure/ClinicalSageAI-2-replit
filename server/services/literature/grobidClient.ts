@@ -42,7 +42,15 @@ export async function extractWithGrobid(file: {
   body.append('consolidateCitations', '1');
   body.append('includeRawCitations', '1');
 
-  const resp = await fetch(`${baseUrl}/api/processFulltextDocument`, { method: 'POST', body });
+  // Bound the outbound call so a hung/slow GROBID server can't pin the request
+  // handler indefinitely. Full-text PDF parsing is heavy, so allow a generous
+  // window (override via GROBID_TIMEOUT_MS, default 30s).
+  const timeoutMs = Number(process.env.GROBID_TIMEOUT_MS || 30000);
+  const resp = await fetch(`${baseUrl}/api/processFulltextDocument`, {
+    method: 'POST',
+    body,
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   if (!resp.ok) {
     throw new Error(`GROBID processFulltextDocument failed (${resp.status})`);
   }

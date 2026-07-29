@@ -93,19 +93,29 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   // GET /api/vault/statistics — real DB query on documents table
   router.get('/vault/statistics', async (req: Request, res: Response) => {
     try {
-      const statsResult = await pool.query(`
+      const organizationId = getSecureOrgId(req);
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Organization context required' });
+      }
+      const statsResult = await pool.query(
+        `
         SELECT
           COUNT(*)::int AS total_documents,
           0::bigint AS total_size,
           COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int AS recent_uploads
         FROM documents
-      `);
+        WHERE organization_id = $1
+      `,
+        [organizationId]
+      );
       const stats = statsResult.rows[0] || {};
       res.json({
         totalDocuments: stats.total_documents || 0,
         totalSize: parseInt(stats.total_size) || 0,
         recentUploads: stats.recent_uploads || 0,
-        complianceScore: 95,
+        // Removed `complianceScore: 95` — a fabricated constant with no
+        // computation. Vault document counts do not yield a compliance
+        // score; a real one would come from the compliance subsystem.
         storageUsed: parseInt(stats.total_size) || 0,
         storageLimit: 1000000000,
       });
@@ -118,17 +128,24 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   // GET /api/vault/list — paginated documents query
   router.get('/vault/list', async (req: Request, res: Response) => {
     try {
+      const organizationId = getSecureOrgId(req);
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Organization context required' });
+      }
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const pageSize = Math.max(1, Math.min(100, parseInt(String(req.query.pageSize || '50'), 10)));
       const offset = (page - 1) * pageSize;
 
-      const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM documents');
+      const countResult = await pool.query(
+        'SELECT COUNT(*)::int AS total FROM documents WHERE organization_id = $1',
+        [organizationId]
+      );
       const total = countResult.rows[0]?.total || 0;
 
       const docsResult = await pool.query(
         `SELECT id, title, document_type, category, status, document_code, description, created_at, updated_at
-         FROM documents ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
-        [pageSize, offset]
+         FROM documents WHERE organization_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+        [organizationId, pageSize, offset]
       );
 
       res.json({
@@ -153,29 +170,29 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
     authMiddleware as any,
     async (req: Request, res: Response) => {
       try {
+        // No regulatory-intelligence data source is wired for this feed.
+        // The prior handler fabricated a complianceScore (95), a documents
+        // successRate (94), and a full per-agency "Compliant" matrix with
+        // invented scores (FDA 94, EMA 87, …) — none backed by any data.
+        // Emit honest nulls / empty rather than fake regulatory compliance
+        // statuses. Real values land when the source is connected.
         res.json({
           success: true,
           advisorySummary: {
             totalAdvisories: 0,
             criticalAlerts: 0,
             recentUpdates: 0,
-            complianceScore: 95,
+            complianceScore: null,
           },
           documents: {
             totalAnalyzed: 0,
-            successRate: 94,
-            averageProcessingTime: 2.3,
-            templatesAvailable: 13,
+            successRate: null,
+            averageProcessingTime: null,
+            templatesAvailable: null,
           },
           compliance: {
-            globalStatus: 'Compliant',
-            regions: [
-              { name: 'FDA', status: 'Compliant', score: 94 },
-              { name: 'EMA', status: 'Compliant', score: 87 },
-              { name: 'PMDA', status: 'Under Review', score: 92 },
-              { name: 'Health Canada', status: 'Compliant', score: 89 },
-              { name: 'TGA', status: 'Compliant', score: 91 },
-            ],
+            globalStatus: 'unknown',
+            regions: [],
           },
           updates: [],
         });
@@ -186,145 +203,11 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
     }
   );
 
-  // POST /api/ana/regulatory-analysis (authMiddleware)
-  router.post(
-    '/ana/regulatory-analysis',
-    authMiddleware as any,
-    async (req: Request, res: Response) => {
-      console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
-      try {
-        res.set({
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
-        });
-
-        const { query, context } = req.body;
-        console.log('📋 Request data:', { query, context });
-
-        const { getGateway } = await import('../services/ai-gateway');
-        const gateway = getGateway();
-        const response = await gateway.route({
-          taskType: 'regulatory_review',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are AnA RI. Return strict JSON only. No markdown. Provide concrete compliance analysis.',
-            },
-            {
-              role: 'user',
-              content: `Generate a regulatory analysis for the payload below.
-
-Query: ${query || ''}
-Context: ${JSON.stringify(context || {}, null, 2)}
-
-Return JSON shape:
-{
-  "comprehensive_analysis": {
-    "regulatory_readiness_score": number,
-    "overall_risk_assessment": "Low|Medium|High|Critical",
-    "timeline_analysis": { "projected_delay_days": number },
-    "cost_analysis": { "total_financial_impact": number },
-    "regulatory_gaps": [{ "regulation_section": string, "risk_level": string, "compliance_status": string, "requirement_area": string }],
-    "ich_e6r3_assessment": { "compliance_score": number, "risk_factors": string[], "recommendations": string[] }
-  },
-  "ana_1_0_ri_intelligence_summary": {
-    "confidence_score": number,
-    "analysis_timestamp": string,
-    "data_sources": string[]
-  }
-}`,
-            },
-          ],
-          maxTokens: 3000,
-          temperature: 0.2,
-          strategy: 'quality_optimized',
-          callerModule: 'ana/regulatory-analysis',
-        });
-
-        try {
-          res.json(JSON.parse(response.content));
-        } catch {
-          return res.status(502).json({
-            error: 'AI analysis returned invalid JSON payload',
-            code: 'AI_INVALID_RESPONSE_FORMAT',
-          });
-        }
-      } catch (error) {
-        console.error('Error in regulatory analysis:', error);
-        res.status(500).json({ error: 'Failed to perform regulatory analysis' });
-      }
-    }
-  );
-
-  // POST /api/ana/ich-e6r3-guidance (authMiddleware)
-  router.post(
-    '/ana/ich-e6r3-guidance',
-    authMiddleware as any,
-    async (req: Request, res: Response) => {
-      console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
-      try {
-        res.set({
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
-        });
-
-        const { query } = req.body;
-
-        const { getGateway } = await import('../services/ai-gateway');
-        const gateway = getGateway();
-        const response = await gateway.route({
-          taskType: 'regulatory_review',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are AnA RI specialized in ICH E6(R3). Return strict JSON only and focus on actionable, evidence-aware guidance.',
-            },
-            {
-              role: 'user',
-              content: `Question: ${query || ''}
-
-Return JSON:
-{
-  "guidance_response": {
-    "answer": string,
-    "regulatory_framework": "ICH_E6_R3",
-    "confidence_score": number,
-    "supporting_sections": [{ "section": string, "relevance": string, "summary": string }],
-    "implementation_guidance": string[],
-    "references": string[]
-  },
-  "query_metadata": {
-    "query_timestamp": string,
-    "processing_time_ms": number,
-    "guidance_version": string
-  }
-}`,
-            },
-          ],
-          maxTokens: 2200,
-          temperature: 0.2,
-          strategy: 'quality_optimized',
-          callerModule: 'ana/ich-e6r3-guidance',
-        });
-
-        try {
-          res.json(JSON.parse(response.content));
-        } catch {
-          return res.status(502).json({
-            error: 'AI guidance returned invalid JSON payload',
-            code: 'AI_INVALID_RESPONSE_FORMAT',
-          });
-        }
-      } catch (error) {
-        console.error('Error in ICH E6(R3) guidance:', error);
-        res.status(500).json({ error: 'Failed to provide ICH E6(R3) guidance' });
-      }
-    }
-  );
+  // NOTE: /api/ana/regulatory-analysis and /api/ana/ich-e6r3-guidance were
+  // removed from this grab-bag router. They were unconsumed duplicates of the
+  // canonical handlers in server/routes/ana-cortex.ts (mounted at
+  // /api/ana-cortex/*, which is what the client actually calls). Single source
+  // now lives there.
 
   // GET /api/advisor/check-readiness
   router.get('/advisor/check-readiness', async (req: Request, res: Response) => {
@@ -338,52 +221,34 @@ Return JSON:
         Expires: '0',
       });
 
+      // The numeric readiness assessment (score, delay days, submission
+      // date, per-gap estimatedDays / financialImpact) was fabricated — fixed
+      // constants returned regardless of any project's real state. There is
+      // no project/program context on this endpoint, so a real readiness
+      // score cannot be computed here. The real, program-scoped readiness
+      // engine lives in server/services/orchestration/readiness-engine.ts and
+      // server/services/pdev/pdev-readiness-service.ts; wiring it requires
+      // threading a programId from the client (tracked follow-on). Until then
+      // we return null for every computed metric and expose the playbook's
+      // required-section checklist (template reference, not a fabricated
+      // assessment).
       res.json({
         success: true,
         playbook: playbook,
-        readinessScore: 78,
-        overallScore: 78,
-        riskLevel: 'Medium',
-        readinessLevel: 'Medium',
-        estimatedDelayDays: 45,
-        estimatedSubmissionDate: 'September 15, 2025',
+        readinessScore: null,
+        overallScore: null,
+        riskLevel: null,
+        readinessLevel: null,
+        estimatedDelayDays: null,
+        estimatedSubmissionDate: null,
         playbookUsed: playbook,
+        readinessComputed: false,
         gaps: [
-          {
-            section: 'CMC Stability Study',
-            status: 'missing',
-            priority: 'high',
-            estimatedDays: 30,
-            financialImpact: 750000,
-          },
-          {
-            section: 'Clinical Study Reports (CSR)',
-            status: 'incomplete',
-            priority: 'high',
-            estimatedDays: 45,
-            financialImpact: 1000000,
-          },
-          {
-            section: 'Toxicology Reports',
-            status: 'missing',
-            priority: 'medium',
-            estimatedDays: 14,
-            financialImpact: 300000,
-          },
-          {
-            section: 'Drug Substance Specs',
-            status: 'incomplete',
-            priority: 'medium',
-            estimatedDays: 21,
-            financialImpact: 400000,
-          },
-          {
-            section: 'Quality Overall Summary',
-            status: 'missing',
-            priority: 'medium',
-            estimatedDays: 10,
-            financialImpact: 200000,
-          },
+          { section: 'CMC Stability Study', status: 'unknown', priority: 'high', estimatedDays: null, financialImpact: null },
+          { section: 'Clinical Study Reports (CSR)', status: 'unknown', priority: 'high', estimatedDays: null, financialImpact: null },
+          { section: 'Toxicology Reports', status: 'unknown', priority: 'medium', estimatedDays: null, financialImpact: null },
+          { section: 'Drug Substance Specs', status: 'unknown', priority: 'medium', estimatedDays: null, financialImpact: null },
+          { section: 'Quality Overall Summary', status: 'unknown', priority: 'medium', estimatedDays: null, financialImpact: null },
         ],
         missingSections: [
           'CMC Stability Study',
@@ -398,7 +263,7 @@ Return JSON:
           'Review toxicology data requirements',
         ],
         timeline: {
-          estimatedCompletionDays: 45,
+          estimatedCompletionDays: null,
           criticalPathItems: ['CMC Stability Study', 'Clinical Study Reports (CSR)'],
         },
       });
@@ -578,7 +443,7 @@ Return JSON:
   // GET /api/v1/drafting/task_status/:task_id — DB-backed with in-memory fallback
   router.get('/v1/drafting/task_status/:task_id', async (req: Request, res: Response) => {
     try {
-      const { task_id } = req.params;
+      const task_id = String(req.params.task_id);
 
       try {
         const [task] = await db.select().from(draftingTasks).where(eq(draftingTasks.taskId, task_id));
@@ -599,7 +464,7 @@ Return JSON:
         // DB query failed — fall through to in-memory
       }
 
-      const memTask = (global as any).draftingTasks?.[task_id];
+      const memTask = (global as any).draftingTasks?.[task_id as any];
       if (!memTask) {
         return res.status(404).json({ error: 'Task not found' });
       }

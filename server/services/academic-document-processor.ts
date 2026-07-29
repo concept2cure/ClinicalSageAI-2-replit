@@ -48,7 +48,7 @@ export class AcademicDocumentProcessor {
   private models = getHuggingfaceModels();
 
   constructor() {
-    this.huggingFaceService = new HuggingFaceService();
+    this.huggingFaceService = new HuggingFaceService(process.env.HF_API_KEY || '');
     this.academicKnowledgeBase = new Map();
     this.documentEmbeddings = new Map();
     this.documentMetadata = new Map();
@@ -116,18 +116,15 @@ export class AcademicDocumentProcessor {
         throw new Error(`File not found: ${filePath}`);
       }
 
-      // Read PDF file as base64
+      // Read PDF file
       const fileBuffer = fs.readFileSync(filePath);
-      const base64Data = fileBuffer.toString('base64');
 
       // Extract text from PDF using Hugging Face
-      const extractTextResponse = await this.huggingFaceService.extractTextFromPdf(base64Data);
+      const text = await this.huggingFaceService.extractTextFromPdf(fileBuffer);
 
-      if (!extractTextResponse || !extractTextResponse.text) {
+      if (!text) {
         throw new Error('Failed to extract text from PDF');
       }
-
-      const text = extractTextResponse.text;
 
       // Extract document metadata using Hugging Face
       const documentInfo = await this.huggingFaceService.extractDocumentMetadata(text);
@@ -149,12 +146,10 @@ export class AcademicDocumentProcessor {
       }
 
       // Extract key insights
-      const insightsResponse = await this.huggingFaceService.extractKeyInsights(text);
-      const keyInsights = insightsResponse?.insights || [];
+      const keyInsights = (await this.huggingFaceService.extractKeyInsights(text)) || [];
 
       // Generate tags
-      const tagsResponse = await this.huggingFaceService.generateTags(text);
-      const tags = tagsResponse?.tags || [];
+      const tags = (await this.huggingFaceService.generateTags(text)) || [];
 
       // Generate embeddings for the document
       const embedding = await this.huggingFaceService.generateEmbeddings(text);
@@ -178,7 +173,7 @@ export class AcademicDocumentProcessor {
 
       // Save document data
       this.academicKnowledgeBase.set(documentId, documentData);
-      this.documentEmbeddings.set(documentId, embedding);
+      this.documentEmbeddings.set(documentId, new Float32Array(embedding || []));
       this.documentMetadata.set(documentId, {
         title,
         type,
@@ -220,11 +215,13 @@ export class AcademicDocumentProcessor {
         throw new Error('Failed to generate embedding for query');
       }
 
+      const queryVector = new Float32Array(queryEmbedding);
+
       // Calculate similarity scores for all documents
       const similarityScores: { id: string; score: number }[] = [];
 
       for (const [documentId, embedding] of this.documentEmbeddings.entries()) {
-        const similarity = this.calculateCosineSimilarity(queryEmbedding, embedding);
+        const similarity = this.calculateCosineSimilarity(queryVector, embedding);
         similarityScores.push({ id: documentId, score: similarity });
       }
 

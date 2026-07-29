@@ -442,48 +442,50 @@ export class AutoTraceabilityService {
    */
   private async storeLink(link: AutoTraceLink): Promise<AutoTraceLink> {
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(`
-      INSERT INTO innovation.auto_trace_links (
-        program_id, session_id, source_document_id, source_atom_id,
-        source_section_path, source_text, source_text_hash,
-        target_document_id, target_atom_id, target_section_path, target_text,
-        target_type, link_type, confidence_score, detection_method, detection_model,
-        is_validated
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, FALSE)
-      RETURNING *
-    `, [
-      link.programId,
-      link.sessionId,
-      link.sourceDocumentId,
-      link.sourceAtomId,
-      link.sourceSectionPath,
-      link.sourceText,
-      link.sourceTextHash,
-      link.targetDocumentId,
-      link.targetAtomId,
-      link.targetSectionPath,
-      link.targetText,
-      link.targetType,
-      link.linkType,
-      link.confidenceScore,
-      link.detectionMethod,
-      link.detectionModel
-    ]);
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      const result = await client.query(`
+        INSERT INTO innovation.auto_trace_links (
+          program_id, session_id, source_document_id, source_atom_id,
+          source_section_path, source_text, source_text_hash,
+          target_document_id, target_atom_id, target_section_path, target_text,
+          target_type, link_type, confidence_score, detection_method, detection_model,
+          is_validated
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, FALSE)
+        RETURNING *
+      `, [
+        link.programId,
+        link.sessionId,
+        link.sourceDocumentId,
+        link.sourceAtomId,
+        link.sourceSectionPath,
+        link.sourceText,
+        link.sourceTextHash,
+        link.targetDocumentId,
+        link.targetAtomId,
+        link.targetSectionPath,
+        link.targetText,
+        link.targetType,
+        link.linkType,
+        link.confidenceScore,
+        link.detectionMethod,
+        link.detectionModel
+      ]);
 
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback = { ...link, id: crypto.randomUUID(), createdAt: new Date() };
-      AutoTraceabilityService.linkCache.push(fallback);
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback = { ...link, id: crypto.randomUUID(), createdAt: new Date() };
+        AutoTraceabilityService.linkCache.push(fallback);
+        return fallback;
+      }
+
+      const mapped = this.mapLink(row);
+      AutoTraceabilityService.linkCache.push(mapped);
+      return mapped;
+    } finally {
       client.release();
-      return fallback;
     }
-
-    const mapped = this.mapLink(row);
-    AutoTraceabilityService.linkCache.push(mapped);
-    client.release();
-    return mapped;
   }
 
   /**

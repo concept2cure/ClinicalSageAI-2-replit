@@ -16,8 +16,8 @@ on:
         required: false
         default: '30'
 
-# Protection rules ensure this only runs with approval when secrets are involved
-environment: ${{ github.event.inputs.environment }}
+permissions:
+  contents: read
 
 jobs:
   compliance-checks:

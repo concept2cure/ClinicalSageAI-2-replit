@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import express from 'express';
 import { verifyFirecrawlWebhook } from '../integrations/firecrawl/webhook';
-import { getPool } from '../db.ts';
+import { getPool } from '../db';
 import { firecrawlError } from '../integrations/firecrawl/errors';
 
 const router = Router();

@@ -1,9 +1,12 @@
 /**
  * useHomeData — fetches real dashboard metrics and recent activity for
- * Concept2CureHome. Runs three parallel requests on mount:
+ * Concept2CureHome. Runs four parallel requests on mount:
  *  - GET /api/concept2cure/projects        → active project count
  *  - GET /api/concept2cure/projects/all/artifacts-summary → artifact counts
  *  - GET /api/chat/threads?limit=5         → recent AnA conversations
+ *  - GET /api/concept2cure/reviews/my-queue → open review tasks assigned to
+ *    the current user (with overdue / due-soon counts) and the unread
+ *    notification count — backs the "Tasks due" and "Alerts" tiles.
  *
  * All requests are fire-and-forget — failures degrade gracefully to null,
  * leaving the home page's static fallback data visible.
@@ -22,6 +25,14 @@ export interface HomeMetrics {
   artifactTotal: number | null;
   /** Artifacts in draft state */
   artifactDraft: number | null;
+  /** Open review tasks assigned to the current user (null = fetch failed) */
+  tasksOpen: number | null;
+  /** Of those, past their due date */
+  tasksOverdue: number | null;
+  /** Of those, due within the next 24h */
+  tasksDueSoon: number | null;
+  /** Unread notifications for the current user (null = fetch failed) */
+  alertsUnread: number | null;
 }
 
 export interface RecentThread {
@@ -62,6 +73,10 @@ export function useHomeData(): HomeData {
     projectCount: null,
     artifactTotal: null,
     artifactDraft: null,
+    tasksOpen: null,
+    tasksOverdue: null,
+    tasksDueSoon: null,
+    alertsUnread: null,
   });
   const [recentThreads, setRecentThreads] = useState<RecentThread[]>([]);
   const [projects, setProjects] = useState<HomeProject[]>([]);
@@ -71,10 +86,18 @@ export function useHomeData(): HomeData {
     let cancelled = false;
 
     const load = async () => {
-      const [projectsRes, artifactsRes, threadsRes] = await Promise.allSettled([
+      const [projectsRes, artifactsRes, threadsRes, queueRes] = await Promise.allSettled([
         apiFetch<{ data?: any[] }>('/api/concept2cure/projects'),
         apiFetch<{ data?: { total?: number; draft?: number } }>('/api/concept2cure/projects/all/artifacts-summary'),
         apiFetch<{ threads?: Array<{ id: string; title?: string; updatedAt?: string; lastMessage?: string }> }>('/api/chat/threads?limit=5'),
+        apiFetch<{
+          data?: {
+            totalTasks?: number;
+            overdueTasks?: number;
+            dueSoonTasks?: number;
+            unreadNotifications?: number;
+          };
+        }>('/api/concept2cure/reviews/my-queue'),
       ]);
 
       if (cancelled) return;
@@ -120,7 +143,34 @@ export function useHomeData(): HomeData {
         }
       }
 
-      setMetrics({ projectCount, artifactTotal, artifactDraft });
+      // Review queue (tasks assigned to me + unread notification count).
+      // Stays null on failure so the tiles keep their labeled sample fallback —
+      // a failed fetch must never masquerade as a real zero.
+      let tasksOpen: number | null = null;
+      let tasksOverdue: number | null = null;
+      let tasksDueSoon: number | null = null;
+      let alertsUnread: number | null = null;
+      if (queueRes.status === 'fulfilled' && queueRes.value) {
+        const q = (queueRes.value as any)?.data || queueRes.value;
+        if (typeof q?.totalTasks === 'number') {
+          tasksOpen = q.totalTasks;
+          tasksOverdue = typeof q.overdueTasks === 'number' ? q.overdueTasks : 0;
+          tasksDueSoon = typeof q.dueSoonTasks === 'number' ? q.dueSoonTasks : 0;
+        }
+        if (typeof q?.unreadNotifications === 'number') {
+          alertsUnread = q.unreadNotifications;
+        }
+      }
+
+      setMetrics({
+        projectCount,
+        artifactTotal,
+        artifactDraft,
+        tasksOpen,
+        tasksOverdue,
+        tasksDueSoon,
+        alertsUnread,
+      });
       setRecentThreads(threads);
       setProjects(projectList);
       setLoading(false);

@@ -4,6 +4,18 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Stub the db facade so transitive command-executor / ana-ri service
+// imports don't hit a real Postgres pool init at load time. Without
+// DATABASE_URL these imports throw 'Database connection not available'
+// before any test runs.
+vi.mock('../../../db', () => ({
+  db: {},
+  pool: { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) },
+  getPool: () => ({ query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) }),
+  getDb: () => ({}),
+}));
+
+
 const { signalsMock, milestoneMock } = vi.hoisted(() => ({
   signalsMock: vi.fn(),
   milestoneMock: vi.fn(),

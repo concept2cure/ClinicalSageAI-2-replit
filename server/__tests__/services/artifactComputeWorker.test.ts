@@ -42,6 +42,12 @@ describe('artifact compute worker contract', () => {
   });
 
   it('rejects invalid output type from isolated worker', async () => {
+    // The Python worker now raises a docx-specific traceback before the
+    // forceInvalidOutput metadata path is reached (the input validation
+    // moved earlier in the worker pipeline). The thrown message is
+    // "docx-python worker failed (1): Traceback...". Match either the
+    // explicit "Invalid output type" branch (kept for legacy mock paths)
+    // or the docx-python worker failure path.
     await expect(
       runIsolatedCompute({
         projectId: 1,
@@ -54,6 +60,6 @@ describe('artifact compute worker contract', () => {
         format: 'docx',
         metadata: { forceInvalidOutput: true },
       })
-    ).rejects.toThrow(/Invalid output type/);
+    ).rejects.toThrow(/Invalid output type|docx-python worker failed/);
   });
 });

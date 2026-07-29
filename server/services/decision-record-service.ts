@@ -111,6 +111,34 @@ export class DecisionRecordService {
     return DecisionRecordService.instance;
   }
 
+  /**
+   * Pure gate that says whether a decision is allowed to execute given its
+   * governance boundary, confidence level, and approval state. Used by
+   * orchestration layers before performing any side-effect off a decision.
+   */
+  validateGovernanceBoundary(decision: {
+    governanceBoundary?: string;
+    confidence?: string;
+    approvalState?: string;
+  }): { canExecute: boolean; reason?: string } {
+    const { governanceBoundary, confidence, approvalState } = decision;
+
+    if (approvalState === 'rejected') {
+      return { canExecute: false, reason: 'Decision was rejected' };
+    }
+
+    if (approvalState === 'pending_review') {
+      return { canExecute: false, reason: 'Decision pending review' };
+    }
+
+    if (governanceBoundary === 'advisory'
+        && (confidence === 'uncertain' || confidence === 'provisional')) {
+      return { canExecute: false, reason: 'Advisory decision is provisional/uncertain' };
+    }
+
+    return { canExecute: true };
+  }
+
   async createDecision(input: Record<string, unknown>): Promise<DecisionRecord> {
     return this.create({
       organizationId: Number(input.organizationId),
@@ -316,6 +344,140 @@ export class DecisionRecordService {
     } catch {
       // Silently skip if tables don't exist yet
     }
+  }
+
+  async queryDecisions(input: {
+    organizationId: number;
+    projectId?: number;
+    contextType?: string;
+    actionState?: ActionState;
+    approvalState?: string;
+    confidence?: string;
+    governanceBoundary?: string;
+    regulatorBody?: string;
+    relatedArtifactId?: number;
+    includeSuperseded?: boolean;
+    limit?: number;
+  }): Promise<DecisionRecord[]> {
+    const records = await this.search({
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+      actionState: input.actionState,
+      limit: input.limit,
+    });
+    return records.filter(r => {
+      if (!input.includeSuperseded && r.actionState === 'superseded') return false;
+      if (input.confidence && r.confidenceLevel !== input.confidence) return false;
+      if (input.relatedArtifactId && r.executedArtifactId !== input.relatedArtifactId) return false;
+      return true;
+    });
+  }
+
+  async getDecision(id: string, organizationId: number): Promise<DecisionRecord | null> {
+    return this.getById(id, organizationId);
+  }
+
+  async updateDecision(
+    id: string,
+    organizationId: number,
+    input: Record<string, unknown>
+  ): Promise<DecisionRecord | null> {
+    const editable: Record<string, string> = {
+      title: 'title',
+      recommendationSummary: 'recommendation_summary',
+      recommendationRationale: 'recommendation_rationale',
+      confidenceLevel: 'confidence_level',
+      notes: 'notes',
+    };
+    const sets: string[] = [];
+    const params: (string | number | null)[] = [];
+    let idx = 1;
+    for (const [key, column] of Object.entries(editable)) {
+      if (input[key] !== undefined) {
+        sets.push(`${column} = $${idx++}`);
+        params.push(input[key] as string);
+      }
+    }
+    if (sets.length === 0) return this.getById(id, organizationId);
+    sets.push('updated_at = NOW()');
+    params.push(id, organizationId);
+    const result = await pool!.query(
+      `UPDATE decision_records SET ${sets.join(', ')} WHERE id = $${idx++} AND organization_id = $${idx} RETURNING *`,
+      params
+    );
+    return result.rows.length ? this.map(result.rows[0]) : null;
+  }
+
+  async supersedeDecision(
+    id: string,
+    organizationId: number,
+    replacement: Record<string, unknown>,
+    reason: string
+  ): Promise<DecisionRecord | null> {
+    await this.createDecision({ ...replacement, organizationId });
+    return this.transition(id, {
+      organizationId,
+      actionState: 'superseded',
+      performedBy: String(replacement.createdById ?? 'system'),
+      reason,
+    });
+  }
+
+  async executeDecision(
+    id: string,
+    organizationId: number,
+    executedArtifactId: number,
+    executedArtifactVersion?: number,
+    userId?: number,
+    _actionDescription?: string
+  ): Promise<DecisionRecord | null> {
+    return this.transition(id, {
+      organizationId,
+      actionState: 'executed',
+      performedBy: String(userId ?? 'system'),
+      executedArtifactId,
+      executedArtifactVersion,
+    });
+  }
+
+  async approveDecision(
+    id: string,
+    organizationId: number,
+    userId: number
+  ): Promise<DecisionRecord | null> {
+    return this.transition(id, {
+      organizationId,
+      actionState: 'approved',
+      performedBy: String(userId),
+    });
+  }
+
+  async rejectDecision(
+    id: string,
+    organizationId: number,
+    userId: number,
+    reason: string
+  ): Promise<DecisionRecord | null> {
+    return this.transition(id, {
+      organizationId,
+      actionState: 'rejected',
+      performedBy: String(userId),
+      reason,
+    });
+  }
+
+  async escalateDecision(
+    id: string,
+    organizationId: number,
+    reason: string,
+    userId?: number
+  ): Promise<DecisionRecord | null> {
+    return this.transition(id, {
+      organizationId,
+      actionState: 'escalated',
+      performedBy: String(userId ?? 'system'),
+      reason,
+    });
   }
 
   private map(row: Record<string, unknown>): DecisionRecord {

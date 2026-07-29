@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { HomeIcon, type IconName } from './icons';
-import { NAV_ITEMS } from './data';
+import { visibleNavItems } from './data';
 import styles from './styles.module.css';
 
 export interface PaletteItem {
@@ -38,7 +38,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const pool = useMemo<PaletteItem[]>(() => {
-    const nav: PaletteItem[] = NAV_ITEMS.map(n => ({
+    const nav: PaletteItem[] = visibleNavItems().map(n => ({
       kind: 'Module', id: n.id, label: n.label, icon: n.icon,
     }));
     return [...nav, ...ASK_ANA, ...RECENT_ITEMS];

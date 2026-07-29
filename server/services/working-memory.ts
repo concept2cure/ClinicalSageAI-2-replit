@@ -18,11 +18,84 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { getEmbeddingService } from './enhancedEmbeddingService.js';
 
 const logger = createScopedLogger('working-memory');
 
 /** Message count threshold before generating/refreshing working memory summary */
 const WORKING_MEMORY_THRESHOLD = parseInt(process.env.WORKING_MEMORY_THRESHOLD || '20', 10);
+
+/** Embedding model used for working-memory semantic recall (matches client/project). */
+const WORKING_MEMORY_EMBEDDING_MODEL = 'text-embedding-3-small';
+
+/**
+ * Opt-in flag for semantic working-memory recall. When off (default), working
+ * memory is written without an embedding and read by recency only — exactly the
+ * prior behaviour. When on, summaries are embedded on write and retrieved by
+ * query similarity. Gated because it adds an embedding call to the write path
+ * and requires the 20260602 migration (embedding column) to be applied.
+ */
+export function isSemanticWorkingMemoryEnabled(): boolean {
+  return process.env.ENABLE_SEMANTIC_WORKING_MEMORY === 'true';
+}
+
+/**
+ * Pure: should a written working-memory row carry an embedding? Only when the
+ * feature is enabled AND the embedding column has actually been provisioned.
+ * Gating on both is what makes flipping the flag on SAFE ahead of the migration:
+ * without the column, appending `embedding` to the INSERT would throw and the
+ * (best-effort) working-memory write would be lost. Kept pure so the decision is
+ * unit-testable without a database.
+ */
+export function shouldEmbedWorkingMemory(flagOn: boolean, embeddingColumnPresent: boolean): boolean {
+  return flagOn && embeddingColumnPresent;
+}
+
+/**
+ * One-time probe: has the 20260602 migration added
+ * conversation_working_memory.embedding? Cached `true` permanently once seen
+ * (columns are never dropped), and re-probed while absent so enabling the
+ * feature on a running server picks up a freshly-applied migration without a
+ * restart. Runs only on the (infrequent) working-memory write path.
+ */
+let embeddingColumnConfirmed = false;
+async function embeddingColumnExists(): Promise<boolean> {
+  if (embeddingColumnConfirmed) return true;
+  try {
+    const { rows } = await pool.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'conversation_working_memory' AND column_name = 'embedding' LIMIT 1`
+    );
+    embeddingColumnConfirmed = rows.length > 0;
+    return embeddingColumnConfirmed;
+  } catch {
+    return false;
+  }
+}
+
+let warnedMissingEmbeddingColumn = false;
+
+/**
+ * Embed a working-memory summary to a pgvector literal, best-effort. Returns
+ * null on any failure so the row is still stored (without an embedding) rather
+ * than lost — the semantic read path filters `embedding IS NOT NULL`.
+ */
+async function embedSummaryToLiteral(summary: string): Promise<string | null> {
+  try {
+    const { embedding } = await getEmbeddingService(pool).embed(
+      summary,
+      WORKING_MEMORY_EMBEDDING_MODEL
+    );
+    return `[${embedding.join(',')}]`;
+  } catch (error) {
+    logger.warn(
+      `working-memory embedding failed; storing without embedding: ${
+        error instanceof Error ? error.message : 'unknown error'
+      }`
+    );
+    return null;
+  }
+}
 
 export interface WorkingMemory {
   id?: number;
@@ -76,24 +149,79 @@ Respond with ONLY a JSON object in this exact format:
 }
 
 /**
+ * Insert one working-memory row. Single seam for both write variants so the
+ * optional embedding column is added consistently: when semantic recall is off
+ * the SQL is identical to the prior recency-only insert (no embedding column);
+ * when it is on, the summary is embedded and appended.
+ */
+async function insertWorkingMemoryRow(params: {
+  conversationId: number | null;
+  threadId: string | null;
+  organizationId: number;
+  summary: string;
+  structured: WorkingMemory['structured'];
+  messageCountAtGeneration: number;
+}): Promise<void> {
+  const cols = [
+    'conversation_id',
+    'thread_id',
+    'organization_id',
+    'summary',
+    'structured_data',
+    'message_count_at_generation',
+  ];
+  const values: unknown[] = [
+    params.conversationId,
+    params.threadId,
+    params.organizationId,
+    params.summary,
+    JSON.stringify(params.structured),
+    params.messageCountAtGeneration,
+  ];
+
+  // Semantic recall requires BOTH the flag and the embedding column (20260602
+  // migration). When the flag is on but the column is absent, insert WITHOUT
+  // the embedding rather than let the INSERT throw and lose the write — the
+  // semantic read filters `embedding IS NOT NULL`, so recall simply falls back
+  // to recency until the migration is applied. One-time warn so the misconfig
+  // is visible without flooding the log.
+  if (isSemanticWorkingMemoryEnabled()) {
+    if (shouldEmbedWorkingMemory(true, await embeddingColumnExists())) {
+      cols.push('embedding');
+      values.push(await embedSummaryToLiteral(params.summary));
+    } else if (!warnedMissingEmbeddingColumn) {
+      warnedMissingEmbeddingColumn = true;
+      logger.warn(
+        'ENABLE_SEMANTIC_WORKING_MEMORY is on but conversation_working_memory.embedding is missing — ' +
+          'apply the 20260602_working_memory_embeddings migration. Writing working memory without ' +
+          'embeddings for now; semantic recall falls back to recency until the column exists.'
+      );
+    }
+  }
+
+  cols.push('generated_at');
+  const placeholders = values.map((_, i) => `$${i + 1}`).concat('NOW()').join(', ');
+
+  await pool.query(
+    `INSERT INTO conversation_working_memory (${cols.join(', ')}) VALUES (${placeholders})`,
+    values
+  );
+}
+
+/**
  * Store a working memory record.
  */
 export async function storeWorkingMemory(
   memory: Omit<WorkingMemory, 'id' | 'generatedAt'>
 ): Promise<void> {
-  await pool.query(
-    `INSERT INTO conversation_working_memory
-     (conversation_id, thread_id, organization_id, summary, structured_data, message_count_at_generation, generated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
-    [
-      memory.conversationId,
-      memory.threadId || null,
-      memory.organizationId,
-      memory.summary,
-      JSON.stringify(memory.structured),
-      memory.messageCountAtGeneration,
-    ]
-  );
+  await insertWorkingMemoryRow({
+    conversationId: memory.conversationId,
+    threadId: memory.threadId || null,
+    organizationId: memory.organizationId,
+    summary: memory.summary,
+    structured: memory.structured,
+    messageCountAtGeneration: memory.messageCountAtGeneration,
+  });
 }
 
 /**
@@ -135,20 +263,96 @@ export async function getLatestWorkingMemory(
 
 /**
  * Get the latest working memory for a thread (used by cortex-unified).
+ * Org-scoped to prevent any cross-tenant leak if a thread_id ever collides.
  */
 export async function getLatestWorkingMemoryByThread(
-  threadId: string
+  threadId: string,
+  organizationId: number
 ): Promise<string | null> {
+  if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) {
+    return null;
+  }
   try {
     const result = await pool.query(
       `SELECT summary FROM conversation_working_memory
-       WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
-      [threadId]
+       WHERE thread_id = $1 AND organization_id = $2
+       ORDER BY generated_at DESC LIMIT 1`,
+      [threadId, organizationId]
     );
     return result.rows.length > 0 ? result.rows[0].summary : null;
   } catch (error) {
     logger.debug(`Working memory by thread query failed: ${error instanceof Error ? error.message : 'table may not exist'}`);
     return null;
+  }
+}
+
+/** A working-memory summary recalled by query similarity. */
+export interface WorkingMemorySemanticHit {
+  id: number;
+  summary: string;
+  /** Cosine similarity to the query in [0, 1]. */
+  similarity: number;
+  generatedAt: Date | string | null;
+}
+
+/**
+ * Retrieve the working-memory summaries for a thread most relevant to `query`,
+ * ranked by embedding similarity — the semantic counterpart to
+ * getLatestWorkingMemoryByThread's recency lookup. Mirrors the client/project
+ * pattern in searchMemoryEntriesSemantic: embed the query, cosine-rank with the
+ * `<=>` operator, threshold, and tenant-scope by organization_id.
+ *
+ * Returns [] (rather than throwing) when the flag is off, inputs are invalid, or
+ * the embedding column/migration is absent, so the assembler falls back to the
+ * recency path without error.
+ */
+export async function searchWorkingMemorySemantic(
+  threadId: string,
+  organizationId: number,
+  query: string,
+  options?: { limit?: number; minSimilarity?: number }
+): Promise<WorkingMemorySemanticHit[]> {
+  if (!isSemanticWorkingMemoryEnabled()) return [];
+  if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0 || !query?.trim()) {
+    return [];
+  }
+
+  const limit = Math.max(1, Math.min(options?.limit ?? 3, 20));
+  const minSimilarity = options?.minSimilarity ?? 0.5;
+
+  try {
+    const { embedding } = await getEmbeddingService(pool).embed(
+      query,
+      WORKING_MEMORY_EMBEDDING_MODEL
+    );
+    const vectorLiteral = `[${embedding.join(',')}]`;
+
+    const result = await pool.query(
+      `SELECT id, summary, generated_at,
+              1 - (embedding <=> $1::vector) AS similarity
+         FROM conversation_working_memory
+        WHERE thread_id = $2
+          AND organization_id = $3
+          AND embedding IS NOT NULL
+          AND 1 - (embedding <=> $1::vector) >= $4
+        ORDER BY embedding <=> $1::vector
+        LIMIT $5`,
+      [vectorLiteral, threadId, organizationId, minSimilarity, limit]
+    );
+
+    return result.rows.map(row => ({
+      id: row.id,
+      summary: row.summary,
+      similarity: row.similarity,
+      generatedAt: row.generated_at,
+    }));
+  } catch (error) {
+    logger.debug(
+      `searchWorkingMemorySemantic failed: ${
+        error instanceof Error ? error.message : 'embedding column/migration may be absent'
+      }`
+    );
+    return [];
   }
 }
 
@@ -209,14 +413,16 @@ export async function needsWorkingMemoryRefresh(
  */
 export async function needsWorkingMemoryRefreshByThread(
   threadId: string,
+  organizationId: number,
   currentMessageCount: number
 ): Promise<boolean> {
-  if (!threadId) return false;
+  if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return false;
   try {
     const result = await pool.query(
       `SELECT message_count_at_generation FROM conversation_working_memory
-       WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
-      [threadId]
+       WHERE thread_id = $1 AND organization_id = $2
+       ORDER BY generated_at DESC LIMIT 1`,
+      [threadId, organizationId]
     );
     if (result.rows.length === 0) {
       return currentMessageCount >= WORKING_MEMORY_THRESHOLD;
@@ -225,7 +431,6 @@ export async function needsWorkingMemoryRefreshByThread(
       currentMessageCount - (result.rows[0].message_count_at_generation || 0);
     return messagesSinceSummary >= WORKING_MEMORY_THRESHOLD;
   } catch {
-    // Table may be missing in sparse envs — skip refresh instead of crashing.
     return false;
   }
 }
@@ -244,12 +449,14 @@ export async function storeWorkingMemoryForThread(
 ): Promise<void> {
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return;
   try {
-    await pool.query(
-      `INSERT INTO conversation_working_memory
-       (conversation_id, thread_id, organization_id, summary, structured_data, message_count_at_generation, generated_at)
-       VALUES (NULL, $1, $2, $3, $4, $5, NOW())`,
-      [threadId, organizationId, summary, JSON.stringify(structured), messageCountAtGeneration]
-    );
+    await insertWorkingMemoryRow({
+      conversationId: null,
+      threadId,
+      organizationId,
+      summary,
+      structured,
+      messageCountAtGeneration,
+    });
   } catch (error) {
     logger.warn(
       `storeWorkingMemoryForThread failed for thread ${threadId}: ${
@@ -278,12 +485,10 @@ export async function summarizeAndStoreWorkingMemoryForThread(params: {
   if (!Array.isArray(messages) || messages.length === 0) return;
 
   try {
-    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, messages.length);
+    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, organizationId, messages.length);
     if (!shouldRefresh) return;
 
-    // Pull the previous summary for incremental refresh (keeps the model
-    // focused on the delta instead of re-deriving everything each time).
-    const previousSummary = (await getLatestWorkingMemoryByThread(threadId)) || undefined;
+    const previousSummary = (await getLatestWorkingMemoryByThread(threadId, organizationId)) || undefined;
     const prompt = buildWorkingMemoryPrompt(messages, previousSummary);
 
     const { getGateway } = await import('./ai-gateway/gateway.js');

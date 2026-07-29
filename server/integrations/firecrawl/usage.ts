@@ -1,4 +1,4 @@
-import { getPool } from '../../db.ts';
+import { getPool } from '../../db';
 
 export interface QuotaStatus {
   allowed: boolean;

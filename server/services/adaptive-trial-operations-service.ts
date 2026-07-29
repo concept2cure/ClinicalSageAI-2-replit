@@ -22,6 +22,8 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import * as math from 'mathjs';
+import { Rng, createRng, seedFromObject } from './stats/rng';
+import { buildProvenance } from './stats/computation-provenance';
 
 // ─── Utility: Standard Normal CDF (Phi) ───────────────────────────────────────
 
@@ -117,15 +119,11 @@ function normalPDF(x: number): number {
 }
 
 /**
- * Generate a standard normal random variate using Box-Muller transform.
+ * Generate a standard normal random variate from a seeded engine, so the Monte
+ * Carlo operating characteristics are reproducible.
  */
-function randomNormal(): number {
-  let u1: number, u2: number;
-  do {
-    u1 = Math.random();
-  } while (u1 === 0);
-  u2 = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+function randomNormal(rng: Rng): number {
+  return rng.normal();
 }
 
 // ─── Alpha Spending Functions ──────────────────────────────────────────────────
@@ -1163,8 +1161,24 @@ export class AdaptiveTrialOperationsService {
       maxSampleSize: number;
       spendingFunction: string;
     },
-    nSim: number
+    nSim: number,
+    seed?: number
   ): any {
+    // Reseed a local engine deterministically so the operating characteristics
+    // reproduce given the same design and simulation count.
+    const usedSeed =
+      seed !== undefined && Number.isFinite(seed)
+        ? Math.trunc(seed)
+        : seedFromObject({
+            designType: config.designType,
+            interimLooks: config.interimLooks,
+            stoppingRules: config.stoppingRules,
+            maxSampleSize: config.maxSampleSize,
+            spendingFunction: config.spendingFunction,
+            nSim,
+          });
+    const rng = createRng(usedSeed);
+
     const effectSizes = [0, 0.1, 0.2, 0.3, 0.5];
     const alpha = config.stoppingRules.find((r: any) => r.type === 'efficacy')?.alpha ?? 0.025;
     const spendingFn = (config.spendingFunction === 'pocock' ? 'pocock' : 'obrien-fleming') as
@@ -1200,7 +1214,7 @@ export class AdaptiveTrialOperationsService {
 
           // Generate test statistic: Z_k ~ N(delta * sqrt(n_k / 2), 1)
           const drift = delta * Math.sqrt(nK / 2);
-          const Zk = drift + randomNormal();
+          const Zk = drift + randomNormal(rng);
 
           if (Math.abs(Zk) >= boundaries.criticalValues[k]) {
             rejectCount++;
@@ -1268,7 +1282,22 @@ export class AdaptiveTrialOperationsService {
         alpha,
         spendingFunction: config.spendingFunction,
         maxSampleSize: config.maxSampleSize,
+        seed: usedSeed,
       },
+      seed: usedSeed,
+      provenance: buildProvenance({
+        method: 'adaptive-trial:runMonteCarloOC',
+        seed: usedSeed,
+        inputs: {
+          designType: config.designType,
+          interimLooks: config.interimLooks,
+          stoppingRules: config.stoppingRules,
+          maxSampleSize: config.maxSampleSize,
+          spendingFunction: config.spendingFunction,
+          nSim,
+        },
+        note: 'Type I error, power, and expected sample size reproduce given this seed and design.',
+      }),
     };
   }
 }

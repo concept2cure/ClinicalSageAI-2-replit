@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "save": "Αποθήκευση",
+    "cancel": "Άκυρο",
+    "close": "Κλείσιμο",
+    "next": "Επόμενο",
+    "previous": "Προηγούμενο",
+    "delete": "Διαγραφή",
+    "continue": "Συνέχεια",
+    "back": "Πίσω",
+    "search": "Αναζήτηση"
+  },
+  "density": {
+    "label": "Πυκνότητα",
+    "compact": "Συμπαγής",
+    "comfortable": "Άνετη",
+    "spacious": "Ευρύχωρη"
+  },
+  "topbar": {
+    "notifications": "Ειδοποιήσεις",
+    "help": "Βοήθεια",
+    "askAna": "Ρωτήστε την AnA ή μεταβείτε…",
+    "command": "Εντολή",
+    "activeProject": "Ενεργό έργο",
+    "noProjects": "Δεν υπάρχουν έργα",
+    "selectProject": "Επιλέξτε ένα έργο",
+    "filter": "Φιλτράρισμα",
+    "clientType": "Τύπος πελάτη",
+    "pharma": "Φαρμακευτική",
+    "biotech": "Βιοτεχνολογία",
+    "switchProgram": "Αλλαγή προγράμματος"
+  },
+  "language": {
+    "label": "Γλώσσα",
+    "select": "Επιλέξτε γλώσσα"
+  }
+}

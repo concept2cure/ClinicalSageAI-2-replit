@@ -1,6 +1,9 @@
 /**
  * ProjectMoreMenu — ⋯ dropdown on the project-detail header.
  * Mirror of design-system/ui_kits/home/Projects.jsx (lines 454–477).
+ *
+ * Per HANDOFF section 14: "Claim" action fires useClaim with
+ * target: 'program:<projectId>' — prop injected from ProjectDetail.
  */
 import { useEffect, useRef, useState } from 'react';
 import { I } from './icons';
@@ -10,9 +13,11 @@ interface Props {
   onDelete: () => void;
   onDuplicate: () => void;
   onExport: () => void;
+  /** Fires the useClaim governed action. Absent when project already claimed. */
+  onClaim?: () => void;
 }
 
-export function ProjectMoreMenu({ onArchive, onDelete, onDuplicate, onExport }: Props) {
+export function ProjectMoreMenu({ onArchive, onDelete, onDuplicate, onExport, onClaim }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,6 +42,12 @@ export function ProjectMoreMenu({ onArchive, onDelete, onDuplicate, onExport }: 
       </button>
       {open && (
         <div className="pmm-menu" role="menu">
+          {onClaim && (
+            <button type="button" className="pmm-row" onClick={() => { setOpen(false); onClaim(); }}>
+              {I.check} <span>Claim project</span>
+            </button>
+          )}
+          {onClaim && <div className="pmm-sep" />}
           <button type="button" className="pmm-row" onClick={() => { setOpen(false); onDuplicate(); }}>
             {I.copy} <span>Duplicate as template</span>
           </button>

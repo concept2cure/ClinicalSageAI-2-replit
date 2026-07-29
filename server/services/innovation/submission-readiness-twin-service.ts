@@ -17,6 +17,11 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import { ai } from '../../lib/unified-ai-client';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+  type SubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // Types
 export interface ReadinessCriterion {
@@ -464,52 +469,59 @@ export class SubmissionReadinessTwinService {
       .replace(/[^a-z0-9]+/g, '_')
       .slice(0, 40);
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(
-      `
-      INSERT INTO innovation.readiness_criteria (
-        submission_type, agency, module_path, criterion_code,
-        criterion_name, description, requirement_type, weight,
-        is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
-      RETURNING *
-    `,
-      [
-        'NDA',
-        'FDA',
-        input.category,
-        criterionCode,
-        input.name,
-        input.description,
-        'mandatory',
-        input.weight,
-      ]
-    );
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      // Resolve submission type through the canonical bridge
+      const subTypeCtx = getSubmissionTypeContext('NDA');
+      const resolvedSubType = subTypeCtx?.registryId ?? 'US_NDA';
+      const resolvedAgency = subTypeCtx?.agency ?? 'FDA';
 
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback: ReadinessCriterion = {
-        id: crypto.randomUUID(),
-        submissionType: 'NDA',
-        agency: 'FDA',
-        modulePath: input.category,
-        criterionCode,
-        criterionName: input.name,
-        description: input.description,
-        requirementType: 'mandatory',
-        weight: input.weight,
-        isActive: true,
-      } as ReadinessCriterion;
-      SubmissionReadinessTwinService.criteriaCache.push(fallback);
+      const result = await client.query(
+        `
+        INSERT INTO innovation.readiness_criteria (
+          submission_type, agency, module_path, criterion_code,
+          criterion_name, description, requirement_type, weight,
+          is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+        RETURNING *
+      `,
+        [
+          resolvedSubType,
+          resolvedAgency,
+          input.category,
+          criterionCode,
+          input.name,
+          input.description,
+          'mandatory',
+          input.weight,
+        ]
+      );
+
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback: ReadinessCriterion = {
+          id: crypto.randomUUID(),
+          submissionType: resolvedSubType,
+          agency: resolvedAgency,
+          modulePath: input.category,
+          criterionCode,
+          criterionName: input.name,
+          description: input.description,
+          requirementType: 'mandatory',
+          weight: input.weight,
+          isActive: true,
+        } as ReadinessCriterion;
+        SubmissionReadinessTwinService.criteriaCache.push(fallback);
+        return fallback;
+      }
+
+      const mapped = this.mapCriterion(row);
+      SubmissionReadinessTwinService.criteriaCache.push(mapped);
+      return mapped;
+    } finally {
       client.release();
-      return fallback;
     }
-
-    const mapped = this.mapCriterion(row);
-    SubmissionReadinessTwinService.criteriaCache.push(mapped);
-    client.release();
-    return mapped;
   }
 
   /**
@@ -520,6 +532,10 @@ export class SubmissionReadinessTwinService {
     agency?: string
   ): Promise<ReadinessCriterion[]> {
     if (agency) {
+      // Resolve submission type through the canonical bridge
+      const entry = resolveToRegistryEntry(submissionTypeOrProgramId);
+      const resolvedSubType = entry?.id ?? submissionTypeOrProgramId;
+
       const result = await this.pool.query(
         `
         SELECT * FROM innovation.readiness_criteria
@@ -529,7 +545,7 @@ export class SubmissionReadinessTwinService {
           AND (effective_date IS NULL OR effective_date <= CURRENT_DATE)
         ORDER BY module_path, criterion_code
       `,
-        [submissionTypeOrProgramId, agency]
+        [resolvedSubType, agency]
       );
 
       return result.rows.map(this.mapCriterion);
@@ -600,6 +616,14 @@ export class SubmissionReadinessTwinService {
     targetAgency: string,
     documentData?: Map<string, any>
   ): Promise<ReadinessTwinAssessment> {
+    // Resolve submission type through the canonical bridge
+    const entry = resolveToRegistryEntry(submissionType);
+    const resolvedSubType = entry?.id ?? submissionType;
+    if (entry && !targetAgency) {
+      const ctx = getSubmissionTypeContext(resolvedSubType);
+      if (ctx) targetAgency = ctx.agency;
+    }
+
     const client = await this.pool.connect();
 
     try {
@@ -608,7 +632,7 @@ export class SubmissionReadinessTwinService {
       await client.query('BEGIN');
 
       // Get applicable criteria
-      const criteria = await this.getCriteria(submissionType, targetAgency);
+      const criteria = await this.getCriteria(resolvedSubType, targetAgency);
 
       // Evaluate each criterion
       const evaluations: CriterionEvaluation[] = [];
@@ -773,26 +797,21 @@ export class SubmissionReadinessTwinService {
       documentData?.has(criterion.modulePath || '') || documentData?.has(criterion.criterionCode);
 
     if (hasContent) {
-      // Simulate content analysis
-      const random = Math.random();
-      if (random > 0.7) {
-        status = 'met';
-        score = 100;
-      } else if (random > 0.4) {
-        status = 'partially_met';
-        score = 60;
-        gaps.push(
-          `Criterion "${criterion.criterionName}" is partially addressed but needs enhancement`
-        );
-        recommendations.push(`Review and enhance content for: ${criterion.description}`);
-        effortHours = 4;
-      } else {
-        status = 'not_met';
-        score = 20;
-        gaps.push(`Criterion "${criterion.criterionName}" is not adequately addressed`);
-        recommendations.push(`Add content addressing: ${criterion.description}`);
-        effortHours = 8;
-      }
+      // Content for this criterion is present, but automated content analysis
+      // is not implemented (see note above). This previously drew a
+      // Math.random() value and declared the criterion met/partially-met/not-met
+      // with a 100/60/20 score — a fabricated readiness verdict that changed on
+      // every run and could falsely report a criterion as fully satisfied.
+      // Until real document analysis exists, report the conservative, honest
+      // state: content is present but unverified, so treat it as partially met
+      // and explicitly flag it for manual review rather than claim it satisfied.
+      status = 'partially_met';
+      score = 50;
+      gaps.push(
+        `Criterion "${criterion.criterionName}" has content present, but automated content analysis is not yet implemented; it requires manual review to confirm adequacy.`
+      );
+      recommendations.push(`Manually review content for: ${criterion.description}`);
+      effortHours = 4;
     } else {
       // No content for this criterion
       if (criterion.requirementType === 'mandatory') {
@@ -893,15 +912,20 @@ export class SubmissionReadinessTwinService {
     approvalProbability -= criticalGaps * 0.05;
     approvalProbability = Math.max(0.1, Math.min(0.95, approvalProbability));
 
-    // Review time increases with complexity and gaps
+    // Review time increases with complexity and gaps.
+    // Keyed by both legacy and registry IDs so any resolved form matches.
     const baseReviewDays: Record<string, number> = {
-      IND: 30,
-      NDA: 300,
-      BLA: 300,
-      '510k': 90,
-      PMA: 180,
+      IND: 30,   US_IND: 30,
+      NDA: 300,  US_NDA: 300,
+      BLA: 300,  US_BLA: 300,
+      '510k': 90, US_510K: 90,
+      PMA: 180,  US_PMA: 180,
     };
-    let reviewTimeDays = baseReviewDays[submissionType] || 180;
+    // Try resolved type first, then original string
+    const entryForReview = resolveToRegistryEntry(submissionType);
+    let reviewTimeDays = baseReviewDays[entryForReview?.id ?? submissionType]
+      ?? baseReviewDays[submissionType]
+      ?? 180;
     reviewTimeDays += criticalGaps * 30; // Each gap adds ~30 days
 
     // Deficiency count based on gaps
@@ -1055,6 +1079,10 @@ export class SubmissionReadinessTwinService {
     submissionType: string,
     agency: string
   ): Promise<ReadinessDashboard> {
+    // Resolve submission type through the canonical bridge
+    const entry = resolveToRegistryEntry(submissionType);
+    const resolvedSubType = entry?.id ?? submissionType;
+
     // Get latest assessment
     const assessmentResult = await this.pool.query(
       `
@@ -1063,7 +1091,7 @@ export class SubmissionReadinessTwinService {
       ORDER BY assessed_at DESC
       LIMIT 1
     `,
-      [programId, submissionType, agency]
+      [programId, resolvedSubType, agency]
     );
 
     if (assessmentResult.rows.length === 0) {

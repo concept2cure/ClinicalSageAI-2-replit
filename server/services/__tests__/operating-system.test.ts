@@ -250,7 +250,7 @@ describe('Operating System Foundation', () => {
     });
 
     test('governance boundary validates correctly', () => {
-      const service = DecisionRecordService.getInstance();
+      const service = DecisionRecordService.getInstance() as any;
 
       // Advisory + uncertain → cannot execute
       const advisoryUncertain = {
@@ -476,7 +476,7 @@ describe('Operating System Foundation', () => {
     });
 
     test('rejects decision creation without recommendation summary', async () => {
-      const service = DecisionRecordService.getInstance();
+      const service = DecisionRecordService.getInstance() as any;
 
       await expect(
         service.createDecision({
@@ -490,7 +490,7 @@ describe('Operating System Foundation', () => {
     });
 
     test('advisory uncertain decision correctly blocks execution', () => {
-      const service = DecisionRecordService.getInstance();
+      const service = DecisionRecordService.getInstance() as any;
 
       const decision = {
         governanceBoundary: 'advisory' as any,
@@ -504,7 +504,7 @@ describe('Operating System Foundation', () => {
     });
 
     test('pending_review approval state blocks execution', () => {
-      const service = DecisionRecordService.getInstance();
+      const service = DecisionRecordService.getInstance() as any;
 
       const decision = {
         governanceBoundary: 'governed_draft' as any,

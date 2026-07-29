@@ -56,11 +56,15 @@ describe('getDatabaseUrl', () => {
   });
 
   it('strips psql wrapper with channel_binding param', async () => {
+    // The wrapper-strip pass also drops `channel_binding=...` because
+    // node-pg's libpq doesn't accept it and Neon's pooler refuses
+    // connections that supply it. The test now matches the documented
+    // behavior of cleanDatabaseUrl (see getDatabaseUrl.ts:32-33).
     process.env.DATABASE_URL =
       "psql 'postgresql://neondb_owner:pw@ep-wild-forest-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'";
     const { getDatabaseUrl } = await loadModule();
     expect(getDatabaseUrl()).toBe(
-      'postgresql://neondb_owner:pw@ep-wild-forest-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
+      'postgresql://neondb_owner:pw@ep-wild-forest-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require',
     );
   });
 

@@ -25,9 +25,10 @@ import {
   type ProjectIntelligenceProfile,
   type ProjectMemoryEntry,
   type ProjectIngestedDocument,
-} from 'shared/schema';
+} from '../../shared/schema';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
+import { ragRetrieve } from './ragRouter.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -219,14 +220,14 @@ export async function upsertClientProfile(
     return updated;
   }
 
-  const [created] = await db
-    .insert(clientIntelligenceProfiles)
+  const [created] = (await db
+    .insert(clientIntelligenceProfiles as any)
     .values({
       ...profileData,
       createdBy: userId,
       profileStatus: 'active',
     })
-    .returning();
+    .returning()) as any[];
   return created;
 }
 
@@ -511,14 +512,14 @@ function extractMemoryEntriesFromText(
  * Ingest a document into client intelligence memory.
  */
 export async function ingestDocument(
-  profileId: number | null,
+  profileId: number,
   organizationId: number,
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
   userId: number
 ): Promise<DocumentIngestionResult> {
   // 1. Create the ingested document record
-  const [docRecord] = await db
-    .insert(clientIngestedDocuments)
+  const [docRecord] = (await db
+    .insert(clientIngestedDocuments as any)
     .values({
       profileId,
       organizationId,
@@ -529,7 +530,7 @@ export async function ingestDocument(
       processingStatus: 'processing',
       uploadedBy: userId,
     })
-    .returning();
+    .returning()) as any[];
 
   try {
     // 2. Extract text
@@ -541,11 +542,13 @@ export async function ingestDocument(
     const tokenCount = estimateTokens(text);
 
     // 3. Get the profile for context
-    const profile = await db
-      .select()
-      .from(clientIntelligenceProfiles)
-      .where(eq(clientIntelligenceProfiles.id, profileId))
-      .limit(1);
+    const profile = profileId == null
+      ? []
+      : await db
+          .select()
+          .from(clientIntelligenceProfiles)
+          .where(eq(clientIntelligenceProfiles.id, profileId))
+          .limit(1);
 
     const profileName = profile[0]?.companyName || 'Unknown Client';
 
@@ -554,7 +557,7 @@ export async function ingestDocument(
 
     // 5. Persist memory entries
     if (extractedEntries.length > 0) {
-      await db.insert(clientMemoryEntries).values(
+      await db.insert(clientMemoryEntries as any).values(
         extractedEntries.map(entry => ({
           profileId,
           organizationId,
@@ -585,15 +588,17 @@ export async function ingestDocument(
       .where(eq(clientIngestedDocuments.id, docRecord.id));
 
     // 7. Update profile counters
-    await db
-      .update(clientIntelligenceProfiles)
-      .set({
-        totalDocumentsIngested: sql`${clientIntelligenceProfiles.totalDocumentsIngested} + 1`,
-        totalTokensProcessed: sql`${clientIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
-        lastDocumentIngestedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(clientIntelligenceProfiles.id, profileId));
+    if (profileId != null) {
+      await db
+        .update(clientIntelligenceProfiles)
+        .set({
+          totalDocumentsIngested: sql`${clientIntelligenceProfiles.totalDocumentsIngested} + 1`,
+          totalTokensProcessed: sql`${clientIntelligenceProfiles.totalTokensProcessed} + ${tokenCount}`,
+          lastDocumentIngestedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(clientIntelligenceProfiles.id, profileId));
+    }
 
     return {
       documentId: docRecord.id,
@@ -633,11 +638,18 @@ export async function ingestDocument(
  * Get all memory entries for a client profile, optionally filtered by category.
  */
 export async function getMemoryEntries(
-  profileId?: number,
+  profileId: number,
+  organizationId: number,
   options?: { category?: string; limit?: number; offset?: number }
 ): Promise<MemorySearchResult> {
+  // SECURITY: tenant isolation — organizationId is required and always applied
+  // so a client-supplied profileId can never read another tenant's memory.
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    throw new Error('getMemoryEntries: valid organizationId is required');
+  }
   const conditions = [
-    eq(clientMemoryEntries.profileId, profileId),
+    eq(clientMemoryEntries.profileId, profileId as number),
+    eq(clientMemoryEntries.organizationId, organizationId),
     eq(clientMemoryEntries.status, 'active'),
   ];
 
@@ -669,12 +681,23 @@ export async function getMemoryEntries(
  * Get all ingested documents for a profile.
  */
 export async function getIngestedDocuments(
-  profileId: number
+  profileId: number,
+  organizationId: number
 ): Promise<ClientIngestedDocument[]> {
+  // SECURITY: tenant isolation — organizationId is required and always applied
+  // so a client-supplied profileId can never read another tenant's documents.
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    throw new Error('getIngestedDocuments: valid organizationId is required');
+  }
   return db
     .select()
     .from(clientIngestedDocuments)
-    .where(eq(clientIngestedDocuments.profileId, profileId))
+    .where(
+      and(
+        eq(clientIngestedDocuments.profileId, profileId),
+        eq(clientIngestedDocuments.organizationId, organizationId),
+      ),
+    )
     .orderBy(desc(clientIngestedDocuments.uploadedAt));
 }
 
@@ -682,9 +705,10 @@ export async function getIngestedDocuments(
  * Get the document checklist with upload status for a profile.
  */
 export async function getDocumentChecklist(
-  profileId: number
+  profileId: number,
+  organizationId: number
 ): Promise<DocumentChecklist[]> {
-  const docs = await getIngestedDocuments(profileId);
+  const docs = await getIngestedDocuments(profileId, organizationId);
   const uploadedNames = new Set(docs.map(d => d.fileName.toLowerCase()));
 
   return DOCUMENT_CHECKLIST.map(cat => ({
@@ -715,7 +739,7 @@ export async function buildClientIntelligenceContext(
   const profile = await getClientProfile(organizationId, clientWorkspaceId);
   if (!profile || profile.profileStatus !== 'active') return null;
 
-  const { entries } = await getMemoryEntries(profile.id, { limit: 50 });
+  const { entries } = await getMemoryEntries(profile.id, organizationId, { limit: 50 });
 
   // Group entries by category
   const grouped: Record<string, ClientMemoryEntry[]> = {};
@@ -899,10 +923,10 @@ export async function upsertProjectIntelligence(
     return updated;
   }
 
-  const [created] = await db
-    .insert(projectIntelligenceProfiles)
+  const [created] = (await db
+    .insert(projectIntelligenceProfiles as any)
     .values({ ...profileData, createdBy: userId, profileStatus: 'active' })
-    .returning();
+    .returning()) as any[];
   return created;
 }
 
@@ -924,14 +948,14 @@ export async function getProjectIntelligence(
  * Ingest a document into project-level intelligence.
  */
 export async function ingestProjectDocument(
-  projectProfileId: number | null,
+  projectProfileId: number,
   projectId: number,
   organizationId: number,
   file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
   userId: number
 ): Promise<DocumentIngestionResult> {
-  const [docRecord] = await db
-    .insert(projectIngestedDocuments)
+  const [docRecord] = (await db
+    .insert(projectIngestedDocuments as any)
     .values({
       projectProfileId,
       projectId,
@@ -943,7 +967,7 @@ export async function ingestProjectDocument(
       processingStatus: 'processing',
       uploadedBy: userId,
     })
-    .returning();
+    .returning()) as any[];
 
   try {
     const { text, pageCount } = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);
@@ -957,7 +981,7 @@ export async function ingestProjectDocument(
     const extractedEntries = extractProjectMemoryEntries(text, file.originalname, projectName);
 
     if (extractedEntries.length > 0) {
-      await db.insert(projectMemoryEntries).values(
+      await db.insert(projectMemoryEntries as any).values(
         extractedEntries.map(entry => ({
           projectProfileId,
           projectId,
@@ -995,7 +1019,7 @@ export async function ingestProjectDocument(
         lastDocumentIngestedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(projectIntelligenceProfiles.id, projectProfileId));
+      .where(eq(projectIntelligenceProfiles.id, projectProfileId as number));
 
     return {
       documentId: docRecord.id,
@@ -1161,11 +1185,11 @@ function extractProjectMemoryEntries(
  * Get project memory entries.
  */
 export async function getProjectMemoryEntries(
-  projectProfileId?: number,
+  projectProfileId: number,
   options?: { category?: string; limit?: number }
 ): Promise<{ entries: ProjectMemoryEntry[]; totalCount: number }> {
   const conditions = [
-    eq(projectMemoryEntries.projectProfileId, projectProfileId),
+    eq(projectMemoryEntries.projectProfileId, projectProfileId as number),
     eq(projectMemoryEntries.status, 'active'),
   ];
   if (options?.category) {
@@ -1477,27 +1501,85 @@ export async function getSharedMemoryPool(
 }
 
 /**
+ * Whether memory semantic search routes through the single ragRouter (default)
+ * or the legacy direct pgvector query. The router path is behaviour-identical —
+ * it runs the same SQL via advancedRAGPipeline with strategy 'basic' and
+ * reranking/MMR/compression off. The kill-switch `MEMORY_RAG_ROUTER=legacy`
+ * reverts instantly if the converged path misbehaves in production, since the
+ * live pgvector path cannot be exercised in CI.
+ */
+function memoryViaRagRouter(): boolean {
+  return process.env.MEMORY_RAG_ROUTER !== 'legacy';
+}
+
+/**
  * Semantic search over client memory entries using pgvector similarity.
+ *
+ * Routes through the single ragRouter (corpus 'client_memory') so memory shares
+ * one retrieval path with the rest of RAG. The rich entry rows are rebuilt from
+ * the router's `sourceRow` passthrough, so callers see the same shape as before
+ * (including the per-atom confidence/importance/verification columns the memory
+ * context assembler ranks on). Legacy direct query kept behind the kill-switch.
  */
 export async function searchMemoryEntriesSemantic(
   profileId: number | null,
   organizationId: number,
   query: string,
   options?: { limit?: number; category?: string; minSimilarity?: number }
- ): Promise<SemanticMemorySearchResult<ClientMemoryEntry>> {
+): Promise<SemanticMemorySearchResult<ClientMemoryEntry>> {
   const limit = Math.max(1, Math.min(options?.limit || 10, 50));
   const minSimilarity = options?.minSimilarity ?? 0.65;
 
+  if (!memoryViaRagRouter()) {
+    return searchMemoryEntriesSemanticDirect(
+      profileId,
+      organizationId,
+      query,
+      limit,
+      minSimilarity,
+      options?.category
+    );
+  }
+
+  const ctx = await ragRetrieve({
+    query,
+    corpus: 'client_memory',
+    organizationId,
+    limit,
+    threshold: minSimilarity,
+    strategy: 'basic',
+    useReranking: false,
+    useMmr: false,
+    useCompression: false,
+    memoryScope: { profileId, category: options?.category },
+  });
+
+  const entries = ctx.documents.map(
+    doc =>
+      ({ ...(doc.sourceRow as object), similarity: doc.finalScore }) as SemanticMemoryHit<ClientMemoryEntry>
+  );
+  return { entries, totalCount: entries.length, query };
+}
+
+/** Legacy direct pgvector query for client memory (kill-switch fallback). */
+async function searchMemoryEntriesSemanticDirect(
+  profileId: number | null,
+  organizationId: number,
+  query: string,
+  limit: number,
+  minSimilarity: number,
+  category?: string
+): Promise<SemanticMemorySearchResult<ClientMemoryEntry>> {
   const embeddingService = getEmbeddingService(pool);
   const embedded = await embeddingService.embed(query, 'text-embedding-3-small');
   const vectorLiteral = `[${embedded.embedding.join(',')}]`;
 
   const profileClause = profileId ? 'AND profile_id = $3' : '';
-  const categoryClause = options?.category ? `AND category = $${profileId ? 5 : 4}` : '';
+  const categoryClause = category ? `AND category = $${profileId ? 5 : 4}` : '';
   const params: any[] = profileId
     ? [vectorLiteral, organizationId, profileId, minSimilarity]
     : [vectorLiteral, organizationId, minSimilarity];
-  if (options?.category) params.push(options.category);
+  if (category) params.push(category);
   params.push(limit);
 
   const rows = await pool.query(
@@ -1525,6 +1607,7 @@ export async function searchMemoryEntriesSemantic(
 
 /**
  * Semantic search over project memory entries using pgvector similarity.
+ * Router shim (corpus 'project_memory'); see searchMemoryEntriesSemantic.
  */
 export async function searchProjectMemoryEntriesSemantic(
   projectProfileId: number | null,
@@ -1536,16 +1619,58 @@ export async function searchProjectMemoryEntriesSemantic(
   const limit = Math.max(1, Math.min(options?.limit || 10, 50));
   const minSimilarity = options?.minSimilarity ?? 0.65;
 
+  if (!memoryViaRagRouter()) {
+    return searchProjectMemoryEntriesSemanticDirect(
+      projectProfileId,
+      projectId,
+      organizationId,
+      query,
+      limit,
+      minSimilarity,
+      options?.category
+    );
+  }
+
+  const ctx = await ragRetrieve({
+    query,
+    corpus: 'project_memory',
+    organizationId,
+    limit,
+    threshold: minSimilarity,
+    strategy: 'basic',
+    useReranking: false,
+    useMmr: false,
+    useCompression: false,
+    memoryScope: { projectId, projectProfileId, category: options?.category },
+  });
+
+  const entries = ctx.documents.map(
+    doc =>
+      ({ ...(doc.sourceRow as object), similarity: doc.finalScore }) as SemanticMemoryHit<ProjectMemoryEntry>
+  );
+  return { entries, totalCount: entries.length, query };
+}
+
+/** Legacy direct pgvector query for project memory (kill-switch fallback). */
+async function searchProjectMemoryEntriesSemanticDirect(
+  projectProfileId: number | null,
+  projectId: number,
+  organizationId: number,
+  query: string,
+  limit: number,
+  minSimilarity: number,
+  category?: string
+): Promise<SemanticMemorySearchResult<ProjectMemoryEntry>> {
   const embeddingService = getEmbeddingService(pool);
   const embedded = await embeddingService.embed(query, 'text-embedding-3-small');
   const vectorLiteral = `[${embedded.embedding.join(',')}]`;
 
   const profileClause = projectProfileId ? 'AND project_profile_id = $4' : '';
-  const categoryClause = options?.category ? `AND category = $${projectProfileId ? 6 : 5}` : '';
+  const categoryClause = category ? `AND category = $${projectProfileId ? 6 : 5}` : '';
   const params: any[] = projectProfileId
     ? [vectorLiteral, organizationId, projectId, projectProfileId, minSimilarity]
     : [vectorLiteral, organizationId, projectId, minSimilarity];
-  if (options?.category) params.push(options.category);
+  if (category) params.push(category);
   params.push(limit);
 
   const rows = await pool.query(

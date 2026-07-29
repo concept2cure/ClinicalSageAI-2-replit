@@ -27,6 +27,7 @@ import {
   getTamperProofAuditLog,
   type AuditEventType,
 } from '../lib/tamper-proof-audit';
+import { assertAuditTrailForProduction } from './audit-enforcement';
 import type { DebugLogger } from './types';
 
 const SKIP_PATH_PATTERNS: RegExp[] = [
@@ -91,6 +92,11 @@ export function applyAuditTrailMiddleware(
   pool: Pool,
   debugLog: DebugLogger
 ): void {
+  // Surface the audit posture at boot: a loud warning when production is running
+  // with the trail off (or a hard fail-closed when AUDIT_REQUIRE_ENFORCE=true).
+  // Mirrors assertRlsEnforcementForProduction; does not change the gating flag.
+  assertAuditTrailForProduction();
+
   if (!isAuditTrailEnabled()) {
     debugLog(
       'Audit trail middleware skipped (AUDIT_TRAIL_ENABLED is not "true"). ' +

@@ -1,0 +1,269 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ *                              RAG ROUTER
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Single entry point for retrieval-augmented generation.
+ *
+ * WHY THIS EXISTS
+ * The codebase grew several parallel RAG implementations (advancedRAGPipeline,
+ * biotechRagService, regulatory-guidance-retrieval, a separate Python ICH
+ * ingest) with no shared router, so corpus selection, retrieval strategy, and
+ * tenant scoping were duplicated and drifted apart. The in-memory
+ * semantic-search-service (local hash embeddings) has since been removed in
+ * favour of this path. See DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md.
+ *
+ * This module is the convergence point. It owns pool acquisition and maps a
+ * caller "intent" to a reviewed default retrieval policy, then delegates to
+ * AdvancedRAGPipeline. Callers that need to deviate from the intent defaults
+ * (a specific threshold, a basic-strategy sweep, MMR off) pass explicit
+ * overrides rather than constructing pipeline options inline. Centralising the
+ * policy here is what lets us later swap the underlying engine or embedding
+ * space without touching every call site.
+ *
+ * Two surfaces:
+ *   - ragQuery    — retrieve + generate a grounded answer.
+ *   - ragRetrieve — retrieve only (the caller does its own generation/streaming).
+ */
+
+import { getPool } from '../db';
+import {
+  getRAGPipeline,
+  type RetrievalOptions,
+  type RAGContext,
+  type RetrievedDocument,
+  type MemoryScope,
+} from './advancedRAGPipeline.js';
+import {
+  recordRagRetrieval,
+  type RagCorpusLabel,
+  type RagOutcome,
+} from './rag-runtime-metrics.js';
+
+/**
+ * Caller intent. Each maps to a vetted default retrieval configuration so
+ * individual call sites do not hand-tune strategy/reranking/MMR independently.
+ */
+export type RagIntent = 'regulatory_qa' | 'foresight' | 'project_scoped';
+
+/**
+ * Retrieval parameters. `intent` selects the default policy; any explicitly
+ * provided field overrides that default for this call only.
+ */
+export interface RagRetrievalParams {
+  query: string;
+  intent?: RagIntent;
+  /** Tenant scope for org-level corpora (vault). */
+  organizationUuid?: string;
+  /** Project scope — routes retrieval through project-scoped atoms. */
+  artifactScope?: { projectId: number | string; organizationUuid: string };
+  /**
+   * Corpus to read from. Defaults to the vault. Set 'rag_chunks' to target the
+   * rag_chunks corpus (scoped by the integer `organizationId`), which is how
+   * callers reach that store through the single router instead of a separate
+   * retrieval engine.
+   */
+  corpus?: 'vault' | 'rag_chunks' | 'client_memory' | 'project_memory';
+  /** Integer org id for `corpus: 'rag_chunks'` and the memory corpora tenant scoping. */
+  organizationId?: number;
+  /**
+   * Scope for `corpus: 'client_memory' | 'project_memory'`. Invoke memory
+   * corpora with `strategy: 'basic'` and reranking/MMR/compression off so they
+   * stay pure-similarity (the document reranker is meaningless for memory atoms).
+   */
+  memoryScope?: MemoryScope;
+  /** Result count (default 5). */
+  limit?: number;
+  /** Similarity floor; when omitted the pipeline default applies. */
+  threshold?: number;
+  /** Persist evidence citations to the audit ledger (requires organizationUuid). */
+  persistCitations?: boolean;
+
+  // ── Explicit overrides of the intent defaults ──────────────────────────────
+  strategy?: RetrievalOptions['strategy'];
+  useReranking?: boolean;
+  useMmr?: boolean;
+  mmrLambda?: number;
+  /** Override the intent's hybrid (dense+full-text RRF) default for vault/rag_chunks. */
+  useHybrid?: boolean;
+  /** Expand each vault/rag_chunks result to a ±contextWindow neighbour window for generation. */
+  useContextExpansion?: boolean;
+  contextWindow?: number;
+  /** Extract metadata filters (document type / source / date) from the query and pre-filter retrieval. */
+  useSelfQuery?: boolean;
+  /** Enable the agentic corrective loop (grade + rewrite/re-retrieve + groundedness guard) for ragQuery. */
+  useCorrectiveLoop?: boolean;
+  useCompression?: boolean;
+  filters?: RetrievalOptions['filters'];
+}
+
+export interface RagRouterResult {
+  answer: string;
+  sources: RetrievedDocument[];
+  context: RAGContext;
+  /** Faithfulness verdict from the corrective loop; present only when useCorrectiveLoop is set. */
+  grounded?: boolean;
+}
+
+/** Per-intent default policy. Centralised so the trade-offs are reviewed in one place. */
+function intentDefaults(intent: RagIntent | undefined): Partial<RetrievalOptions> {
+  switch (intent) {
+    case 'project_scoped':
+      // Project interrogation: stay inside the dossier, favour precision.
+      // (useHybrid is a no-op here — project atoms already retrieve via their
+      // own dense+BM25 hybrid — and context expansion is a no-op too, since
+      // project atoms carry no chunk index to window over.)
+      return { strategy: 'advanced', useReranking: true, useMmr: true, mmrLambda: 0.8, useHybrid: true };
+    case 'foresight':
+      // Forward-looking synthesis: a touch more diversity across sources, plus
+      // small-to-big expansion so each cited chunk carries its surrounding context.
+      return {
+        strategy: 'advanced',
+        useReranking: true,
+        useMmr: true,
+        mmrLambda: 0.6,
+        useHybrid: true,
+        useContextExpansion: true,
+      };
+    case 'regulatory_qa':
+    default:
+      // Document Q&A: hybrid recall + small-to-big context (a ±1 neighbour
+      // window) so answers see the surrounding clause, not just the matched
+      // sentence. The corrective loop stays opt-in (callers pass useCorrectiveLoop).
+      return {
+        strategy: 'advanced',
+        useReranking: true,
+        useMmr: true,
+        mmrLambda: 0.7,
+        useHybrid: true,
+        useContextExpansion: true,
+      };
+  }
+}
+
+/**
+ * Build pipeline options from intent defaults, with explicit params taking
+ * precedence. Exported for unit testing the policy/override merge.
+ */
+export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
+  const defaults = intentDefaults(params.intent);
+  const pick = <T>(override: T | undefined, fallback: T | undefined): T | undefined =>
+    override !== undefined ? override : fallback;
+
+  return {
+    strategy: pick(params.strategy, defaults.strategy) ?? 'advanced',
+    limit: params.limit ?? 5,
+    threshold: params.threshold,
+    useReranking: pick(params.useReranking, defaults.useReranking),
+    useMmr: pick(params.useMmr, defaults.useMmr),
+    mmrLambda: pick(params.mmrLambda, defaults.mmrLambda),
+    useHybrid: pick(params.useHybrid, defaults.useHybrid),
+    useContextExpansion: pick(params.useContextExpansion, defaults.useContextExpansion),
+    contextWindow: params.contextWindow,
+    useSelfQuery: pick(params.useSelfQuery, defaults.useSelfQuery),
+    useCorrectiveLoop: params.useCorrectiveLoop,
+    useCompression: params.useCompression,
+    organizationUuid: params.organizationUuid,
+    artifactScope: params.artifactScope,
+    corpus: params.corpus,
+    organizationId: params.organizationId,
+    memoryScope: params.memoryScope,
+    persistCitations: params.persistCitations,
+    filters: params.filters,
+  };
+}
+
+/**
+ * Retrieve relevant context only (no generation). Returns the full RAGContext
+ * so callers can run their own generation/streaming over the documents.
+ */
+/** The corpus a retrieval actually read from, for the observability label. */
+function corpusLabel(params: RagRetrievalParams): RagCorpusLabel {
+  if (params.artifactScope) return 'project_atoms';
+  switch (params.corpus) {
+    case 'rag_chunks':
+      return 'rag_chunks';
+    case 'client_memory':
+      return 'client_memory';
+    case 'project_memory':
+      return 'project_memory';
+    default:
+      return 'vault';
+  }
+}
+
+/**
+ * Record one retrieval against the in-memory metrics surfaced on /api/metrics.
+ * On success, latency is the pipeline's own retrieval time (comparable across
+ * retrieve/query); on error it's measured wall clock. Best-effort — a metrics
+ * failure must never break a retrieval.
+ */
+function recordRetrieval(
+  params: RagRetrievalParams,
+  options: RetrievalOptions,
+  wallStart: number,
+  ctx: RAGContext | undefined
+): void {
+  try {
+    const corpus = corpusLabel(params);
+    const intent = params.intent ?? 'regulatory_qa';
+    const strategy = options.strategy ?? 'advanced';
+    if (!ctx) {
+      recordRagRetrieval({ corpus, intent, strategy, outcome: 'error', latencyMs: Date.now() - wallStart });
+      return;
+    }
+    const returned = ctx.documents.length;
+    const outcome: RagOutcome = returned > 0 ? 'ok' : 'empty';
+    recordRagRetrieval({
+      corpus,
+      intent,
+      strategy,
+      outcome,
+      latencyMs: ctx.processingTimeMs,
+      candidates: ctx.totalCandidates,
+      returned,
+      topScore: returned > 0 ? ctx.documents[0].finalScore : undefined,
+      tokensUsed: ctx.tokensUsed,
+    });
+  } catch {
+    /* metrics are best-effort; never surface a recording failure to the caller */
+  }
+}
+
+export async function ragRetrieve(params: RagRetrievalParams): Promise<RAGContext> {
+  const pipeline = getRAGPipeline(getPool());
+  const options = optionsForIntent(params);
+  const wallStart = Date.now();
+  try {
+    const ctx = await pipeline.retrieve(params.query, options);
+    recordRetrieval(params, options, wallStart, ctx);
+    return ctx;
+  } catch (err) {
+    recordRetrieval(params, options, wallStart, undefined);
+    throw err;
+  }
+}
+
+/**
+ * Run a full RAG query (retrieve + generate) through the single router.
+ */
+export async function ragQuery(params: RagRetrievalParams): Promise<RagRouterResult> {
+  const pipeline = getRAGPipeline(getPool());
+  const options = optionsForIntent(params);
+  const wallStart = Date.now();
+  try {
+    const result = await pipeline.queryWithGeneration(params.query, options);
+    recordRetrieval(params, options, wallStart, result.context);
+    return {
+      answer: result.answer,
+      sources: result.sources,
+      context: result.context,
+      ...(result.grounded === undefined ? {} : { grounded: result.grounded }),
+    };
+  } catch (err) {
+    recordRetrieval(params, options, wallStart, undefined);
+    throw err;
+  }
+}
+
+export const ragRouter = { query: ragQuery, retrieve: ragRetrieve };

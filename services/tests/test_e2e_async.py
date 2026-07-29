@@ -12,17 +12,39 @@ pytestmark = pytest.mark.skipif(not (CI or DOCKER_SOCK), reason="E2E requires Do
 BASE = os.getenv("E2E_API_URL", "http://localhost:8000")
 
 
+def _auth_headers():
+    # The generation service requires a shared-secret bearer token (the service
+    # fails closed without it). Tests must present the same INTERNAL_SERVICE_TOKEN
+    # the service is configured with.
+    token = os.getenv("INTERNAL_SERVICE_TOKEN", "")
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
 def test_e2e_async_flow():
-    # Enqueue job
-    body = {"data": {"title": "E2E Test"}, "template_path": None}
-    r = requests.post(f"{BASE}/api/ectd/generate", json=body, timeout=5)
+    # Enqueue job. Provide real source tables: the generator now refuses to
+    # fabricate clinical efficacy data when none is supplied (21 CFR Part 11),
+    # so the request body must carry verified source data.
+    body = {
+        "data": {
+            "title": "E2E Test",
+            "tables": [
+                {
+                    "name": "primary_endpoints",
+                    "headers": ["Endpoint", "Treatment", "Control"],
+                    "rows": [["E2E synthetic endpoint", "1.0", "2.0"]],
+                }
+            ],
+        },
+        "template_path": None,
+    }
+    r = requests.post(f"{BASE}/api/ectd/generate", json=body, headers=_auth_headers(), timeout=5)
     assert r.status_code == 202
     job_id = r.json()["job_id"]
 
     # Poll for completion (60s timeout to tolerate CI cold starts)
     status = None
     for _ in range(60):
-        r = requests.get(f"{BASE}/api/ectd/status/{job_id}", timeout=5)
+        r = requests.get(f"{BASE}/api/ectd/status/{job_id}", headers=_auth_headers(), timeout=5)
         assert r.status_code == 200
         status = r.json()
         if status.get("status") == "COMPLETED":
@@ -32,7 +54,7 @@ def test_e2e_async_flow():
     assert status is not None and status.get("status") == "COMPLETED", f"Job not completed: {status}"
 
     # Download file
-    dl = requests.get(f"{BASE}/api/ectd/download/{job_id}", timeout=10)
+    dl = requests.get(f"{BASE}/api/ectd/download/{job_id}", headers=_auth_headers(), timeout=10)
     assert dl.status_code == 200
     content = dl.content
     # DOCX is a ZIP file -> starts with PK
@@ -46,19 +68,15 @@ def test_e2e_async_flow():
 
 
 def test_smoke_task_writes_shared_file():
-    # Ensure the shared directory exists locally for the test runner
-    shared = Path("test_shared")
-    shared.mkdir(parents=True, exist_ok=True)
-
     body = {"content": "smoke-check"}
-    r = requests.post(f"{BASE}/api/ectd/smoke", json=body, timeout=5)
+    r = requests.post(f"{BASE}/api/ectd/smoke", json=body, headers=_auth_headers(), timeout=5)
     assert r.status_code == 202
     job_id = r.json()["job_id"]
 
     # Poll for completion (30s timeout should be sufficient)
     status = None
     for _ in range(30):
-        r = requests.get(f"{BASE}/api/ectd/status/{job_id}", timeout=5)
+        r = requests.get(f"{BASE}/api/ectd/status/{job_id}", headers=_auth_headers(), timeout=5)
         assert r.status_code == 200
         status = r.json()
         if status.get("status") == "COMPLETED":
@@ -67,11 +85,20 @@ def test_smoke_task_writes_shared_file():
 
     assert status is not None and status.get("status") == "COMPLETED", f"Smoke job not completed: {status}"
 
-    # Check the file exists on the host-shared path (worker writes to /shared_data)
+    # The worker writes to OUTPUT_DIR_BASE/smoke_<job_id>.txt and records that
+    # absolute path in `output`. docker-compose.e2e.yml mounts the SAME absolute
+    # path inside the container and on the host (/shared_data:/shared_data), so
+    # the worker-recorded path is directly visible to this host-side runner.
+    # Resolve by checking the recorded path first, then OUTPUT_DIR_BASE/<name>,
+    # then the legacy ./test_shared/<name> location, for robustness across
+    # harness variants.
     output = status.get("output")
     assert output, "No output path recorded by smoke task"
-    p = Path(output)
-    assert p.exists(), f"Smoke file not found at {p}"
+    name = Path(output).name
+    base = os.getenv("OUTPUT_DIR_BASE", "/shared_data")
+    candidates = [Path(output), Path(base) / name, Path("test_shared") / name]
+    p = next((c for c in candidates if c.exists()), None)
+    assert p is not None, f"Smoke file not found in any of {candidates} (worker recorded {output})"
 
     # Save for artifact upload
     (Path("services/test_outputs") / f"smoke_{job_id}.txt").write_text(p.read_text(), encoding="utf-8")

@@ -7,6 +7,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
+import { LEGACY_RATE_LIMITS, RATE_LIMIT_STORE } from '../config/platform-limits';
 
 interface RateLimitRule {
   windowMs: number; // Time window in milliseconds
@@ -19,39 +20,20 @@ interface RateLimitTracker {
   resetTime: number; // Time when the window resets
 }
 
-// Default rate limit rules for different API categories
+// Default rate limit rules for different API categories.
+// Values are centralized in server/config/platform-limits.ts (LEGACY_RATE_LIMITS).
 const DEFAULT_RULES: Record<string, RateLimitRule> = {
-  // Authentication APIs
-  auth: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 30, // 30 requests per 15 minutes
-    message: 'Too many authentication attempts, please try again later.',
-  },
-
-  // General API endpoints
-  api: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 60, // 60 requests per minute (1 per second)
-    message: 'Too many requests, please slow down.',
-  },
-
-  // High-intensity validation endpoints
-  validation: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10, // 10 requests per minute
-    message: 'Too many validation requests, please slow down.',
-  },
-
-  // AI/ML endpoints that might be resource-intensive
-  ai: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 20, // 20 requests per minute
-    message: 'Too many AI requests, please slow down.',
-  },
+  auth: { ...LEGACY_RATE_LIMITS.auth },
+  api: { ...LEGACY_RATE_LIMITS.api },
+  validation: { ...LEGACY_RATE_LIMITS.validation },
+  ai: { ...LEGACY_RATE_LIMITS.ai },
 };
 
 // In-memory store for rate limit tracking
-// In a production environment, consider using Redis for distributed rate limiting
+// In a production environment, consider using Redis for distributed rate limiting.
+// A hard cap on the number of tracked IPs prevents unbounded memory growth
+// from a flood of unique source IPs (intentional or accidental).
+const IP_LIMITER_MAX_KEYS = RATE_LIMIT_STORE.maxTrackedKeys;
 const ipLimiters: Record<string, Record<string, RateLimitTracker>> = {};
 
 /**
@@ -91,8 +73,13 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
       return next();
     }
 
-    // Get client IP, fallback to a default if not available
-    const clientIp = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+    // Get client IP. Trust req.ip first (Express resolves trust-proxy
+    // config), then take only the LEFTMOST X-Forwarded-For entry — the
+    // rightmost ones are attacker-controllable for any client that can
+    // set the header.
+    const forwardedHeader = req.headers['x-forwarded-for'];
+    const forwarded = Array.isArray(forwardedHeader) ? forwardedHeader[0] : forwardedHeader;
+    const clientIp = req.ip || forwarded?.split(',')[0]?.trim() || 'unknown';
 
     // Determine appropriate rate limit category based on request path
     const category = getRateLimitCategory(req.path);
@@ -105,8 +92,19 @@ export function createRateLimiter(customRules?: Record<string, RateLimitRule>) {
 
     const now = Date.now();
 
-    // Initialize rate limit tracking for this IP if it doesn't exist
+    // Initialize rate limit tracking for this IP if it doesn't exist.
+    // Apply a hard cap on the number of tracked IPs to prevent
+    // unbounded growth under flood conditions; force a cleanup pass
+    // when at the cap and skip the tracking allocation if cleanup
+    // can't make room (rate limiting becomes best-effort once the
+    // table is saturated — better than OOM).
     if (!ipLimiters[clientIp]) {
+      if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
+        cleanupOldEntries();
+        if (Object.keys(ipLimiters).length >= IP_LIMITER_MAX_KEYS) {
+          return next();
+        }
+      }
       ipLimiters[clientIp] = {};
     }
 

@@ -1,0 +1,36 @@
+apiVersion: v2
+name: concept2cure-app
+description: >-
+  Helm chart for the Concept2Cure.RI application (Express + Vite server) for
+  private / single-tenant Kubernetes installs. Defaults to an external,
+  pgvector-capable PostgreSQL (RDS / Cloud SQL / a pgvector image) and external
+  Redis; optional bundled dependencies are available behind flags.
+type: application
+version: 0.1.0
+appVersion: '1.0.0'
+keywords:
+  - regulatory
+  - clinical
+  - multi-tenant
+  - single-tenant
+annotations:
+  category: Regulatory Technology
+  support: https://concept2cure.com/support
+# Bundled Postgres/Redis are OPT-IN. NOTE: the app stores embeddings in
+# pgvector; the Bitnami postgresql image does not ship the vector extension, so
+# if you enable the bundled DB you must point postgresql.image at a
+# pgvector-enabled image. The recommended setup is an external managed DB
+# (postgresql.enabled=false) with DATABASE_URL supplied via the app secret.
+dependencies:
+  - name: postgresql
+    version: '~13.2.0'
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+  - name: redis
+    version: '~18.1.0'
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache

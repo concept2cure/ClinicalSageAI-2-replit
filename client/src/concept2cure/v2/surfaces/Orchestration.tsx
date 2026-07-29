@@ -1,0 +1,655 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { I } from '../icons';
+import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '../dataConnect';
+import type { SurfaceViewProps } from '../surfaceViews';
+import '../styles/project-home-v2.css';
+
+/* ── Display-contract types (mapped from the real orchestration backends) ── */
+
+interface OrchFinding {
+  rule: string;
+  type: string;
+  sev: string;
+  status: string;
+  detail: string;
+}
+
+interface OrchReadiness {
+  overallScore: number;
+  blockerCount: number;
+  isReady: boolean;
+  evaluatedAt: string;
+  findings: {
+    rules: OrchFinding[];
+    validation: OrchFinding[];
+    ai: OrchFinding[];
+  };
+}
+
+interface OrchStep {
+  s: string;
+  st: string;
+}
+
+interface OrchRun {
+  id: string;
+  title: string;
+  status: string;
+  started: string;
+  by: string;
+  pct: number;
+  steps: OrchStep[];
+  touched: string[];
+  outputs: string[];
+  blockers: string[];
+  recs: string[];
+  gate?: string;
+}
+
+interface OrchApprover {
+  who: string;
+  role: string;
+  decision: string;
+  when?: string;
+}
+
+interface OrchCheckpoint {
+  id: string;
+  label: string;
+  gateType: string;
+  run: string | null;
+  required: string;
+  approvers: OrchApprover[];
+  /** Persisted gate status from the store (proposed / awaiting_review /
+   *  approved / executed / failed / skipped). Optional for render-safety. */
+  status?: string;
+}
+
+/* ── Canonical display config (status / gate / severity → tone / label) ── */
+
+const ORCH_TONE: Record<string, string> = {
+  running: 'ai', awaiting_approval: 'warn', paused: 'warn', pending: 'idle',
+  completed: 'ok', failed: 'err', cancelled: 'idle', blocked: 'err', approved: 'ok',
+};
+
+const ORCH_SLABEL: Record<string, string> = {
+  running: 'Running', awaiting_approval: 'Awaiting approval', paused: 'Paused',
+  pending: 'Pending', completed: 'Completed', failed: 'Failed',
+  cancelled: 'Cancelled', blocked: 'Blocked', approved: 'Approved',
+};
+
+const GATE_LABEL: Record<string, string> = {
+  manual: 'Manual', role_based: 'Role-based', quorum: 'Quorum', auto_on_pass: 'Auto on pass',
+};
+
+const SEV_TONE: Record<string, string> = {
+  blocker: 'err', warning: 'warn', advisory: 'idle',
+};
+
+/* ── Live adoption — fixture-free (real → honest empty → honest error) ──────
+ *
+ * Every DATA slice on this surface is re-anchored to a REAL orchestration
+ * backend; there is no fixture fallback and no "Sample data" pill. Each panel
+ * renders real persisted/computed data, an honest empty state, or an honest
+ * error state.
+ *
+ * Program — GET /api/report-os/portfolio/org (DB-backed OrgPortfolioSummary)
+ * yields attentionRanked[0].projectId, the integer projects.id the other
+ * endpoints operate on. No program identified ⇒ pid stays null and every panel
+ * shows its honest empty state.
+ *
+ * Readiness — GET /api/orchestration/projects/:pid/readiness returns the
+ * computed ReadinessAssessment (shared/types/orchestration.ts, produced by
+ * server/services/orchestration/readiness-engine.ts): { overallScore, status,
+ * blockers[{ severity critical|major|minor, category, message,
+ * suggestedResolution }], assessedAt, … }. Honest field mapping:
+ *   overallScore → overallScore        (same 0-100 readiness semantic)
+ *   isReady      → status === 'ready'  (deriveStatus: 90+ score, no criticals)
+ *   blockerCount → count of severity==='critical' — the exact class that
+ *                  blocks readiness server-side (majors/minors do not), shown
+ *                  in the rows below as warning/advisory so nothing is hidden
+ *   evaluatedAt  → assessedAt (formatted for display)
+ *   findings.rules      → blockers with category !== 'validation_failure'
+ *   findings.validation → blockers with category === 'validation_failure'
+ *   findings.ai         → [] — BACKEND GAP: the readiness engine computes NO
+ *                         ai-inferred class, so this group is rendered as an
+ *                         honest "not yet available" panel, never a fixture.
+ *
+ * Runs — GET /api/orchestration/project/:pid returns { workflows:
+ * WorkflowExecution[] } from the in-process execution engine (rows exist once
+ * workflows have been executed via POST /api/orchestration/execute); empty ⇒
+ * honest "no runs yet" empty state.
+ *
+ * Checkpoints — GET /api/orchestration/checkpoints reads the persisted
+ * approval_checkpoints × workflow_runs store (written by real approval chains,
+ * e.g. the PDEV workflow bridge); empty ⇒ honest "no gates yet" empty state.
+ */
+
+function fmtWhen(iso?: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+interface LiveBlocker {
+  severity?: string;
+  category?: string;
+  message?: string;
+  targetTitle?: string;
+  suggestedResolution?: string;
+}
+
+export function mapReadiness(payload: unknown): OrchReadiness | null {
+  const d = payload as {
+    overallScore?: unknown; status?: unknown; blockers?: unknown; assessedAt?: unknown;
+  } | null;
+  if (
+    !d || typeof d.overallScore !== 'number' || typeof d.status !== 'string' ||
+    !Array.isArray(d.blockers) || typeof d.assessedAt !== 'string'
+  ) return null;
+  const blockers = d.blockers as LiveBlocker[];
+  const toFinding = (b: LiveBlocker): OrchFinding => ({
+    rule: String(b.message ?? ''),
+    type: String(b.category ?? 'finding'),
+    sev: b.severity === 'critical' ? 'blocker' : b.severity === 'major' ? 'warning' : 'advisory',
+    status: b.severity === 'critical' ? 'fail' : 'warn',
+    detail: String(b.suggestedResolution ?? b.targetTitle ?? ''),
+  });
+  return {
+    overallScore: d.overallScore,
+    blockerCount: blockers.filter((b) => b.severity === 'critical').length,
+    isReady: d.status === 'ready',
+    evaluatedAt: fmtWhen(d.assessedAt),
+    findings: {
+      rules: blockers.filter((b) => b.category !== 'validation_failure').map(toFinding),
+      validation: blockers.filter((b) => b.category === 'validation_failure').map(toFinding),
+      // BACKEND GAP: the readiness engine computes no ai-inferred class, so this
+      // is honestly empty — the view renders a "not yet available" panel here,
+      // never a fabricated finding.
+      ai: [],
+    },
+  };
+}
+
+export function mapRuns(payload: unknown, tplNames: Record<string, string>): OrchRun[] | null {
+  const w = (payload as { workflows?: unknown } | null)?.workflows;
+  if (!Array.isArray(w) || w.length === 0) return null;
+  const ok = w.every((x) => {
+    const e = x as { executionId?: unknown; status?: unknown; steps?: unknown } | null;
+    return e && typeof e.executionId === 'string' && typeof e.status === 'string' && Array.isArray(e.steps);
+  });
+  if (!ok) return null;
+  type LiveExec = {
+    executionId: string; templateId?: string; status: string; startedAt?: string;
+    progressPercent?: number; requestedBy?: { userName?: string };
+    steps: Array<{ stepId?: string; name?: string; status?: string }>;
+    result?: {
+      blockers?: Array<{ message?: string }>;
+      recommendations?: Array<{ suggestedAction?: string; reason?: string }>;
+      createdObjects?: Array<{ type?: string; id?: string | number; title?: string }>;
+      updatedObjects?: Array<{ type?: string; id?: string | number; title?: string }>;
+    };
+  };
+  const objLabel = (o: { type?: string; id?: string | number; title?: string }) =>
+    String(o.title || [o.type, o.id].filter(Boolean).join(' ') || 'object');
+  return [...(w as LiveExec[])]
+    .sort((a, b) => String(b.startedAt ?? '').localeCompare(String(a.startedAt ?? '')))
+    .map((x): OrchRun => ({
+      id: x.executionId,
+      title: tplNames[String(x.templateId)] || String(x.templateId || 'workflow').replace(/_/g, ' '),
+      status: x.status,
+      started: fmtWhen(x.startedAt),
+      by: String(x.requestedBy?.userName ?? '—'),
+      pct: typeof x.progressPercent === 'number' ? x.progressPercent : 0,
+      steps: x.steps.map((s) => ({
+        s: String(s.name ?? s.stepId ?? 'step'),
+        st: s.status === 'completed' ? 'done' : String(s.status ?? 'pending'),
+      })),
+      touched: (x.result?.updatedObjects ?? []).map(objLabel),
+      outputs: (x.result?.createdObjects ?? []).map(objLabel),
+      blockers: (x.result?.blockers ?? []).map((b) => String(b.message ?? '')),
+      recs: (x.result?.recommendations ?? []).map((c) => String(c.suggestedAction || c.reason || '')),
+    }));
+}
+
+export function mapCps(payload: unknown): OrchCheckpoint[] | null {
+  const list = unwrapList(payload);
+  if (!Array.isArray(list) || list.length === 0) return null;
+  const ok = list.every((x) => {
+    const c = x as { id?: unknown; stepName?: unknown; gateType?: unknown; status?: unknown } | null;
+    return c && typeof c.id === 'string' && typeof c.stepName === 'string' &&
+      typeof c.gateType === 'string' && typeof c.status === 'string';
+  });
+  if (!ok) return null;
+  type LiveCp = {
+    id: string; stepName: string; gateType: string; status: string;
+    runName?: string | null; requiredApproverRoles?: unknown; requiredApproverCount?: unknown;
+    approvals?: Array<{ approverId?: string; approverName?: string; approverRole?: string; decision?: string; decidedAt?: string }> | null;
+  };
+  return (list as LiveCp[]).map((c): OrchCheckpoint => {
+    const roles = Array.isArray(c.requiredApproverRoles) ? c.requiredApproverRoles.map(String) : [];
+    const count = typeof c.requiredApproverCount === 'number' ? c.requiredApproverCount : 1;
+    return {
+      id: c.id,
+      label: c.stepName,
+      gateType: c.gateType,
+      run: c.runName ? String(c.runName) : null,
+      required: roles.length
+        ? `${count} × ${roles.join(' / ')}`
+        : `${count} approver${count === 1 ? '' : 's'}`,
+      status: c.status,
+      approvers: (Array.isArray(c.approvals) ? c.approvals : []).map((a): OrchApprover => ({
+        who: String(a.approverName || a.approverId || '—'),
+        role: String(a.approverRole || '—'),
+        decision: String(a.decision || 'pending'),
+        when: a.decidedAt ? fmtWhen(a.decidedAt) : undefined,
+      })),
+    };
+  });
+}
+
+/** Discover the org's lead program the same way AnaCommand.tsx does —
+ *  GET /api/report-os/portfolio/org → attentionRanked[0].projectId is the
+ *  integer projects.id the orchestration endpoints operate on. Fails closed
+ *  to null (pid stays null and every panel shows its honest empty state). */
+function useOrchProgram(): { pid: number; label: string } | null {
+  const [prog, setProg] = useState<{ pid: number; label: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!connected()) return undefined;
+    liveGetOrNull<any>('/api/report-os/portfolio/org').then((res) => {
+      if (cancelled || res.error || !res.data) return;
+      const data = res.data as any;
+      const rows = (data.attentionRanked || (data.data && data.data.attentionRanked)) || [];
+      const first = Array.isArray(rows) ? rows[0] : null;
+      if (first && typeof first.projectId === 'number') {
+        setProg({
+          pid: first.projectId,
+          label: String(first.code || first.name || 'Project ' + first.projectId),
+        });
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+  return prog;
+}
+
+/* ── Helpers ── */
+
+type CtrlTuple = [string, string, () => void, boolean];
+
+/* ════ Orchestration -- workflow runs & readiness ════ */
+
+export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
+  const [view, setView] = useState('runs');
+  const [runs, setRuns] = useState<OrchRun[]>([]);
+  const [cps, setCps] = useState<OrchCheckpoint[]>([]);
+  const [selId, setSel] = useState<string | null>(null);
+
+  /* ── Live adoption — every panel fixture-free (real → empty → error) ── */
+  const prog = useOrchProgram();
+  const pid = prog ? prog.pid : null;
+  const progLabel = prog ? prog.label : null;
+
+  // Template names give live runs their registered display titles (real
+  // registry read, used only to title the runs below).
+  const tplState = useLiveData<unknown>(pid == null ? null : '/api/orchestration/templates', [pid]);
+  const tplNames = useMemo(() => {
+    const t = (tplState.data as { templates?: Array<{ templateId?: string; name?: string }> } | null)?.templates;
+    const m: Record<string, string> = {};
+    if (Array.isArray(t)) for (const x of t) if (x?.templateId && x?.name) m[x.templateId] = x.name;
+    return m;
+  }, [tplState.data]);
+
+  // Readiness — the computed ReadinessAssessment (real object / honest empty /
+  // honest error). Null while loading, on error, when no program is identified,
+  // or when the payload shape is rejected by mapReadiness.
+  const rdState = useLiveData<unknown>(
+    pid == null ? null : `/api/orchestration/projects/${pid}/readiness`,
+    [pid],
+  );
+  const r = useMemo(
+    () => (!rdState.loading && !rdState.error ? mapReadiness(rdState.data) : null),
+    [rdState.loading, rdState.error, rdState.data],
+  );
+
+  // Runs — the project's real workflow executions. Held in local state so the
+  // run controls can update optimistically (FLAGGED mock actions, see below);
+  // seeded from the mapped live rows and re-seeded only when their identity
+  // changes, so the seed effect can't loop on useLiveData's fresh null/[].
+  const runsState = useLiveData<unknown>(pid == null ? null : `/api/orchestration/project/${pid}`, [pid]);
+  const runsMapped = useMemo(
+    () => (!runsState.loading && !runsState.error ? mapRuns(runsState.data, tplNames) : null),
+    [runsState.loading, runsState.error, runsState.data, tplNames],
+  );
+  const runsSeedRef = useRef<OrchRun[] | null>(null);
+  useEffect(() => {
+    if (runsMapped && runsMapped !== runsSeedRef.current) {
+      runsSeedRef.current = runsMapped;
+      setRuns(runsMapped);
+      setSel((prev) => (prev && runsMapped.some((m) => m.id === prev) ? prev : runsMapped[0].id));
+    }
+  }, [runsMapped]);
+
+  // Approval gates — persisted approval_checkpoints. Local state so approve /
+  // reject can update optimistically (FLAGGED mock actions); seeded from live.
+  const cpsState = useLiveData<unknown>(connected() ? '/api/orchestration/checkpoints' : null, []);
+  const cpsMapped = useMemo(
+    () => (!cpsState.loading && !cpsState.error ? mapCps(cpsState.data) : null),
+    [cpsState.loading, cpsState.error, cpsState.data],
+  );
+  const cpsSeedRef = useRef<OrchCheckpoint[] | null>(null);
+  useEffect(() => {
+    if (cpsMapped && cpsMapped !== cpsSeedRef.current) {
+      cpsSeedRef.current = cpsMapped;
+      setCps(cpsMapped);
+    }
+  }, [cpsMapped]);
+
+  const sel = runs.find((x) => x.id === selId) || runs[0];
+
+  // FLAGGED MOCK ACTION — optimistic local-only run control. Real endpoints
+  // exist (POST /api/orchestration/cancel/:id; pause/resume/retry via the
+  // execution engine) but are not wired here yet; the status change is not
+  // persisted. Left for the actions pass, not half-wired.
+  const setRunStatus = (id: string, st: string) =>
+    setRuns((rs) => rs.map((x) => (x.id === id ? { ...x, status: st } : x)));
+
+  // FLAGGED MOCK ACTION — optimistic local-only approval decision. The
+  // approval_checkpoints store is real, but no write endpoint is wired here;
+  // the decision is not persisted. Left for the actions pass.
+  const decide = (cpId: string, who: string, decision: string) =>
+    setCps((cs) => cs.map((c) =>
+      c.id !== cpId ? c : { ...c, approvers: c.approvers.map((a) => (a.who === who ? { ...a, decision, when: 'just now' } : a)) },
+    ));
+
+  const pendingGates = cps.filter((c) => {
+    // Live rows carry the persisted gate status; older rows without one infer
+    // from the approver decisions.
+    if (c.status) return c.status === 'awaiting_review' || c.status === 'proposed';
+    const dec = c.approvers.map((a) => a.decision);
+    return dec.indexOf('pending') > -1 || dec.indexOf('blocked') > -1;
+  });
+
+  const ctrlsFor = (x: OrchRun): CtrlTuple[] => {
+    if (x.status === 'running') return [['Pause', 'pause', () => setRunStatus(x.id, 'paused'), false], ['Cancel', 'close', () => setRunStatus(x.id, 'cancelled'), false]];
+    if (x.status === 'paused') return [['Resume', 'play', () => setRunStatus(x.id, 'running'), true], ['Cancel', 'close', () => setRunStatus(x.id, 'cancelled'), false]];
+    if (x.status === 'failed') return [['Retry', 'rotateCw', () => setRunStatus(x.id, 'running'), true]];
+    if (x.status === 'awaiting_approval') return [['Open gate', 'shieldCheck', () => setView('approvals'), true]];
+    if (x.status === 'completed') return [['Replay', 'rotateCw', () => setRunStatus(x.id, 'running'), false]];
+    if (x.status === 'cancelled') return [['Retry', 'rotateCw', () => setRunStatus(x.id, 'running'), true]];
+    return [];
+  };
+
+  const stepIc = (st: string): React.ReactElement | null =>
+    st === 'done' ? I.check : st === 'failed' ? I.close : st === 'awaiting' ? I.clock : st === 'paused' ? I.pause : null;
+
+  const findGroup = (label: string, sub: string, list: OrchFinding[]) => (
+    <div style={{ marginBottom: 18 }}>
+      <div className="orch-sec-l">{label} <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} {sub}</span></div>
+      {list.length === 0 ? (
+        <div className="orch-run-m" style={{ marginBottom: 6 }}>No findings in this class.</div>
+      ) : null}
+      {list.map((f, i) => (
+        <div key={i} className="orch-find">
+          <span className={'orch-find-dot ' + (SEV_TONE[f.sev] || 'idle')} />
+          <div className="orch-find-b">
+            <div className="orch-find-r">{f.rule}</div>
+            <div className="orch-find-d">{f.detail}</div>
+          </div>
+          <div className="orch-find-meta">
+            <span className="rd-chip tone-idle">{f.type.replace(/_/g, ' ')}</span>
+            <span className={'rd-chip tone-' + (ORCH_TONE[f.status === 'fail' ? 'failed' : f.status === 'warn' ? 'paused' : 'completed'] || 'idle')}>
+              {f.status === 'fail' ? 'Fail' : f.status === 'warn' ? 'Warn' : 'Pass'}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="page-inner orch">
+      <div className="ph">
+        <div>
+          <div className="ph-eyebrow">Orchestration{progLabel ? <> {I.dot} {progLabel}</> : null}</div>
+          <h1 className="ph-title">Workflow runs &amp; readiness</h1>
+          <div className="ph-sub">The persisted execution engine -- <code>workflowRuns</code> (versioned, pausable, replayable), human-in-the-loop <code>approvalCheckpoints</code>, and deterministic <code>readinessEvaluations</code>. Every step, object touched and output is recorded for Part-11 traceability.</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this program'))}>{I.sparkles} Ask AnA</button>
+          <button className="btn primary">{I.workflow} New run</button>
+        </div>
+      </div>
+
+      <div className="metrics">
+        <div className="metric">
+          <div className="metric-l">Active runs</div>
+          <div className="metric-n">{runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>of {runs.length} total</div>
+        </div>
+        <div className="metric" data-tone="warn">
+          <div className="metric-l">Awaiting approval</div>
+          <div className="metric-n">{pendingGates.length}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>HITL gates</div>
+        </div>
+        <div className="metric" data-tone={r ? (r.isReady ? '' : 'err') : ''}>
+          <div className="metric-l">Readiness score</div>
+          <div className="metric-n">{r ? r.overallScore + '%' : '—'}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>{r ? r.blockerCount + ' blockers' : 'not evaluated'}</div>
+        </div>
+        <div className="metric" data-tone={r ? (r.isReady ? 'ok' : 'err') : ''}>
+          <div className="metric-l">Dispatch</div>
+          <div className="metric-n">{r ? (r.isReady ? 'Ready' : 'Blocked') : '—'}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>readinessEvaluations</div>
+        </div>
+      </div>
+
+      <div className="seg orch-views" style={{ marginBottom: 16 }}>
+        {([['runs', 'Runs'], ['approvals', 'Approvals'], ['readiness', 'Readiness']] as [string, string][]).map(([k, l]) => (
+          <button key={k} className={'seg-b' + (view === k ? ' on' : '')} onClick={() => setView(k)}>
+            {l}
+            {k === 'approvals' && pendingGates.length ? <span className="seg-badge">{pendingGates.length}</span> : null}
+          </button>
+        ))}
+      </div>
+
+      {view === 'runs' && (
+        runsState.loading && runs.length === 0 ? (
+          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflow runs…</div>
+        ) : runsState.error && runs.length === 0 ? (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load workflow runs"
+            hint="The orchestration execution engine didn't respond. These are the project's real workflow runs — sign in and retry, or check the service is reachable."
+          />
+        ) : runs.length === 0 ? (
+          <EmptyState
+            icon={I.workflow}
+            title="No workflow runs yet"
+            hint={pid == null
+              ? 'No lead program is identified for this organization yet. Once a program is in scope, its executed workflow runs appear here.'
+              : 'Runs appear here once a workflow is executed for this program (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.'}
+          />
+        ) : (
+        <div className="orch-split">
+          <div className="orch-runs">
+            {runs.map((x) => (
+              <button key={x.id} className="orch-run" data-on={x.id === selId || undefined} onClick={() => setSel(x.id)}>
+                <div className="orch-run-top">
+                  <span className={'rd-chip tone-' + (ORCH_TONE[x.status] || 'idle')}>{ORCH_SLABEL[x.status]}</span>
+                  <span style={{ flex: 1 }} />
+                  <span className="orch-run-m">{x.id}</span>
+                </div>
+                <div className="orch-run-t">{x.title}</div>
+                <div className="orch-run-m">{x.by} {I.dot} {x.started}</div>
+                <div className="orch-bar"><span style={{ width: x.pct + '%' }} /></div>
+              </button>
+            ))}
+          </div>
+          <div className="orch-detail">
+            <div className="orch-detail-h">
+              <div>
+                <div className="orch-detail-t">{sel.title}</div>
+                <div className="orch-detail-m">{sel.id} {I.dot} {ORCH_SLABEL[sel.status]} {I.dot} started {sel.started} {I.dot} by {sel.by}</div>
+              </div>
+              <div className="orch-ctrls">
+                {ctrlsFor(sel).map(([lbl, ic, fn, pri], i) => (
+                  <button key={i} className={'orch-ctrl' + (pri ? ' pri' : '')} onClick={fn}>{I[ic]}{lbl}</button>
+                ))}
+              </div>
+            </div>
+            <div className="orch-sec-l">Steps</div>
+            <div className="orch-steps">
+              {sel.steps.map((s, i) => (
+                <div key={i} className="orch-step" data-st={s.st}>
+                  <span className="orch-step-dot">{stepIc(s.st)}</span>
+                  <span className="orch-step-l">{s.s}</span>
+                  <span style={{ flex: 1 }} />
+                  <span className="orch-run-m">{s.st}</span>
+                </div>
+              ))}
+            </div>
+            <div className="orch-sec-l">Objects touched</div>
+            <div className="orch-chips">
+              {sel.touched.map((t, i) => (
+                <span key={i} className="orch-chip" onClick={() => onNav && onNav('document-authoring')} style={{ cursor: 'pointer' }}>{t}</span>
+              ))}
+            </div>
+            <div className="orch-sec-l">Outputs created</div>
+            <div className="orch-chips">
+              {sel.outputs.length
+                ? sel.outputs.map((t, i) => <span key={i} className="orch-chip">{I.fileCheck} {t}</span>)
+                : <span className="orch-run-m">None yet</span>}
+            </div>
+            {sel.blockers.length > 0 && (
+              <>
+                <div className="orch-sec-l">Blockers</div>
+                {sel.blockers.map((b, i) => (
+                  <div key={i} className="orch-note" style={{ color: 'var(--error)' }}>{I.alertTriangle}<span>{b}</span></div>
+                ))}
+              </>
+            )}
+            {sel.recs.length > 0 && (
+              <>
+                <div className="orch-sec-l">Recommendations</div>
+                {sel.recs.map((b, i) => (
+                  <div key={i} className="orch-note">{I.sparkles}<span>{b}</span></div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+        )
+      )}
+
+      {view === 'approvals' && (
+        cpsState.loading && cps.length === 0 ? (
+          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading approval gates…</div>
+        ) : cpsState.error && cps.length === 0 ? (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load approval gates"
+            hint="The approval-checkpoint store didn't respond. These are the organization's real human-in-the-loop approval gates — sign in and retry, or check the service is reachable."
+          />
+        ) : cps.length === 0 ? (
+          <EmptyState
+            icon={I.shieldCheck}
+            title="No approval gates yet"
+            hint="Human-in-the-loop approval gates appear here once a workflow proposes one — for example a reviewer sign-off before a protected action. None are pending for this organization."
+          />
+        ) : (
+        <div>
+          {cps.map((c) => {
+            const approved = c.approvers.filter((a) => a.decision === 'approved').length;
+            const need = c.gateType === 'quorum' ? Math.ceil(c.approvers.length * 2 / 3) : c.approvers.length;
+            return (
+              <div key={c.id} className="orch-cp">
+                <div className="orch-cp-top">
+                  <span className="rd-chip tone-ai">{I.shieldCheck} {GATE_LABEL[c.gateType]}</span>
+                  <span className="orch-cp-t">{c.label}</span>
+                  <span className="orch-cp-req">
+                    {c.required}{c.gateType === 'quorum' ? ' · ' + approved + '/' + need + ' met' : ''}{c.run ? ' · ' + c.run : ''}
+                  </span>
+                </div>
+                {c.gateType === 'auto_on_pass' ? (
+                  <div className="orch-note">{I.zap}<span>Gate fires automatically when its run reports zero validation errors.{c.run ? <> Linked run: <b>{c.run}</b>.</> : null}</span></div>
+                ) : c.approvers.length === 0 ? (
+                  <div className="orch-note">{I.clock}<span>No decisions recorded yet{c.status ? <> -- gate is <b>{c.status.replace(/_/g, ' ')}</b></> : null}.</span></div>
+                ) : c.approvers.map((a, i) => (
+                  <div key={i} className="orch-appr">
+                    <span className="orch-appr-av">{a.who.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>
+                    <div className="orch-appr-b">
+                      <div className="orch-appr-n">{a.who}</div>
+                      <div className="orch-appr-r">{a.role}{a.when ? ' · ' + a.when : ''}</div>
+                    </div>
+                    {a.decision === 'approved' ? (
+                      <span className="orch-mini ok">{I.check} Approved</span>
+                    ) : a.decision === 'rejected' ? (
+                      <span className="orch-mini no">{I.close} Rejected</span>
+                    ) : (
+                      <div className="orch-appr-acts">
+                        <button className="orch-mini ok" onClick={() => decide(c.id, a.who, 'approved')}>Approve</button>
+                        <button className="orch-mini no" onClick={() => decide(c.id, a.who, 'rejected')}>Reject</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+        )
+      )}
+
+      {view === 'readiness' && (
+        rdState.loading ? (
+          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading readiness…</div>
+        ) : rdState.error ? (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load the readiness evaluation"
+            hint="The readiness engine didn't respond. The score is computed on demand from this program's governed objects — sign in and retry, or check the service is reachable."
+          />
+        ) : !r ? (
+          <EmptyState
+            icon={I.fileText}
+            title="No readiness evaluation yet"
+            hint={pid == null
+              ? 'No lead program is identified for this organization yet. Once a program is in scope, its readiness is computed here.'
+              : 'The readiness engine has nothing to score for this program yet. Add governed documents / CMC objects, then re-evaluate.'}
+          />
+        ) : (
+        <div>
+          <div className="orch-score">
+            <div>
+              <div className="orch-score-n" style={{ color: r.isReady ? 'var(--success)' : 'var(--error)' }}>{r.overallScore}%</div>
+              <div className="orch-run-m">evaluated {r.evaluatedAt}</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                <span className={'rd-chip tone-' + (r.isReady ? 'ok' : 'err')}>{r.isReady ? 'Ready to dispatch' : 'Not ready'}</span>
+                <span className="rd-chip tone-err">{r.blockerCount} blockers</span>
+              </div>
+              <div className="ph-sub" style={{ margin: 0 }}>
+                Deterministic gate computed by the readiness engine: ready requires a 90+ score with zero critical blockers.
+              </div>
+            </div>
+            <button className="btn ghost" onClick={() => onAsk && onAsk('Re-run the readiness evaluation and explain the open blockers')}>{I.rotateCw} Re-evaluate</button>
+          </div>
+          {findGroup('Rules-based findings', 'readinessRules · required_item / quality_gate', r.findings.rules)}
+          {findGroup('Validation findings', 'eCTD · CDISC · hyperlink integrity', r.findings.validation)}
+          <div style={{ marginBottom: 18 }}>
+            <div className="orch-sec-l">AI-inferred findings <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} cross-reference · claim-evidence</span></div>
+            <div className="orch-run-m" style={{ marginBottom: 6 }}>Not yet available — the readiness engine does not compute an AI-inferred findings class. Cross-document consistency and claim-evidence findings will appear here once that capability ships.</div>
+          </div>
+        </div>
+        )
+      )}
+    </div>
+  );
+}

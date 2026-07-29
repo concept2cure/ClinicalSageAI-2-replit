@@ -161,7 +161,8 @@ class CerGenerationService {
       // Get or create template
       const template = await this.getOrCreateTemplate(
         options.templateId || 'default_cer_template',
-        options.organizationId
+        options.organizationId,
+        options.userId
       );
 
       // Generate CER number
@@ -175,8 +176,9 @@ class CerGenerationService {
         .insert(cerReports)
         .values({
           organizationId: options.organizationId,
+          reportId: cerNumber,
           deviceId: options.deviceId,
-          deviceName: device.deviceName,
+          deviceName: device.deviceName ?? '',
           deviceClass: device.classification,
           cerNumber,
           cerVersion: '1.0',
@@ -202,7 +204,7 @@ class CerGenerationService {
             author: options.userId,
             changes: 'Initial CER creation'
           }]
-        } as NewCerReport)
+        })
         .returning();
 
       // Log audit trail
@@ -210,7 +212,7 @@ class CerGenerationService {
         organizationId: options.organizationId,
         userId: options.userId,
         action: 'CREATE',
-        resource: 'CER_REPORT',
+        resourceType: 'CER_REPORT',
         resourceId: newCer.id.toString(),
         details: {
           cerNumber,
@@ -255,16 +257,15 @@ class CerGenerationService {
         .values({
           cerReportId,
           evidenceType: evidence.type,
-          sourceTitle: evidence.title,
-          sourceAuthors: evidence.authors,
-          publicationYear: evidence.year,
-          numberOfPatients: evidence.patients,
-          keyFindings: evidence.findings,
-          relevanceScore: evidence.relevance,
-          qualityScore: evidence.quality,
-          includeInReport: true,
-          addedBy: userId
-        } as NewCerClinicalEvidence)
+          title: evidence.title,
+          authors: evidence.authors,
+          year: evidence.year,
+          patients: evidence.patients,
+          findings: evidence.findings,
+          relevance: evidence.relevance,
+          quality: evidence.quality,
+          metadata: { includeInReport: true, addedBy: userId },
+        })
         .returning();
 
       // Update CER report statistics
@@ -303,17 +304,20 @@ class CerGenerationService {
       }
 
       // Create version history entry
-      const newVersion = this.incrementVersion(currentCer.cerVersion);
-      
+      const currentVersion = currentCer.cerVersion ?? '1.0';
+      const newVersion = this.incrementVersion(currentVersion);
+
       await db.insert(cerVersionHistory).values({
         cerReportId,
-        versionNumber: currentCer.cerVersion,
-        versionType: this.getVersionType(currentCer.cerVersion, newVersion),
-        changeSummary,
-        changedSections: Object.keys(changes),
-        reportSnapshot: currentCer,
-        reviewStatus: 'pending',
-        authorId: userId
+        version: currentVersion,
+        changeLog: {
+          versionType: this.getVersionType(currentVersion, newVersion),
+          changeSummary,
+          changedSections: Object.keys(changes),
+          reportSnapshot: currentCer,
+          reviewStatus: 'pending',
+        },
+        createdBy: userId,
       });
 
       // Update CER with new version
@@ -344,7 +348,7 @@ class CerGenerationService {
         organizationId: updatedCer.organizationId,
         userId,
         action: 'UPDATE',
-        resource: 'CER_REPORT',
+        resourceType: 'CER_REPORT',
         resourceId: cerReportId.toString(),
         details: {
           version: newVersion,
@@ -409,9 +413,13 @@ class CerGenerationService {
       await db
         .update(cerReports)
         .set({
-          lastExportedAt: new Date(),
-          exportFormat: format,
-          exportChecksum
+          metadata: sql`COALESCE(metadata, '{}'::jsonb) || ${sql.raw(
+            `'${JSON.stringify({
+              lastExportedAt: new Date().toISOString(),
+              exportFormat: format,
+              exportChecksum,
+            })}'::jsonb`
+          )}`,
         })
         .where(eq(cerReports.id, cerReportId));
 
@@ -420,7 +428,7 @@ class CerGenerationService {
         organizationId: cer.organizationId,
         userId,
         action: 'EXPORT',
-        resource: 'CER_REPORT',
+        resourceType: 'CER_REPORT',
         resourceId: cerReportId.toString(),
         details: {
           format,
@@ -449,7 +457,7 @@ class CerGenerationService {
       .limit(1);
 
     let sequence = 1;
-    if (lastCer && lastCer.cerNumber.startsWith(`CER-${year}`)) {
+    if (lastCer?.cerNumber && lastCer.cerNumber.startsWith(`CER-${year}`)) {
       const parts = lastCer.cerNumber.split('-');
       sequence = parseInt(parts[2]) + 1;
     }
@@ -459,7 +467,8 @@ class CerGenerationService {
 
   private async getOrCreateTemplate(
     templateId: string,
-    organizationId: number
+    organizationId: number,
+    createdBy: number
   ): Promise<CerTemplate> {
     const [existing] = await db
       .select()
@@ -480,16 +489,18 @@ class CerGenerationService {
       .values({
         organizationId,
         templateId,
-        templateName: 'Default CER Template',
-        templateType: 'full_cer',
+        name: 'Default CER Template',
         version: '1.0',
-        status: 'active',
-        templateStructure: this.getDefaultTemplateStructure(),
-        requiredFields: this.getRequiredFields(),
-        deviceClasses: ['I', 'IIa', 'IIb', 'III'],
-        regulatoryFrameworks: ['MDR_2017_745', 'IVDR_2017_746'],
-        createdBy: 1, // System user
-        templateChecksum: this.calculateChecksum(this.getDefaultTemplateStructure())
+        content: this.getDefaultTemplateStructure(),
+        metadata: {
+          templateType: 'full_cer',
+          status: 'active',
+          requiredFields: this.getRequiredFields(),
+          deviceClasses: ['I', 'IIa', 'IIb', 'III'],
+          regulatoryFrameworks: ['MDR_2017_745', 'IVDR_2017_746'],
+          createdBy,
+          templateChecksum: this.calculateChecksum(this.getDefaultTemplateStructure()),
+        }
       })
       .returning();
 
@@ -605,10 +616,18 @@ class CerGenerationService {
   private calculateBenefitRiskRatio(data: any): string {
     const benefits = data.benefits?.length || 0;
     const risks = data.risks?.length || 0;
-    
+
+    // An empty benefit-risk analysis is INDETERMINATE, not favorable. Under MDR
+    // Annex I §1/§8 and MEDDEV 2.7/1 rev 4 the benefit-risk conclusion must be
+    // supported by documented clinical benefits; with no benefits AND no risks
+    // recorded there is no evidentiary basis for any favorable verdict, so this
+    // must fail closed to review rather than auto-certify "Highly favorable".
+    if (benefits === 0) return 'Needs review';
+
+    // Documented benefits with no documented risks is genuinely the best case.
     if (risks === 0) return 'Highly favorable';
     const ratio = benefits / risks;
-    
+
     if (ratio > 2) return 'Highly favorable';
     if (ratio > 1) return 'Favorable';
     if (ratio === 1) return 'Balanced';
@@ -634,8 +653,12 @@ class CerGenerationService {
     await db
       .update(cerReports)
       .set({
-        totalStudiesReviewed: Number(evidenceCount[0].count) || 0,
-        totalPatientsIncluded: Number(patientSum[0].total) || 0
+        metadata: sql`COALESCE(metadata, '{}'::jsonb) || ${sql.raw(
+          `'${JSON.stringify({
+            totalStudiesReviewed: Number(evidenceCount[0].count) || 0,
+            totalPatientsIncluded: Number(patientSum[0].total) || 0,
+          })}'::jsonb`
+        )}`,
       })
       .where(eq(cerReports.id, cerReportId));
   }
@@ -756,7 +779,7 @@ class CerGenerationService {
         doc.addPage();
 
         // Add actual content from cer.content (JSON)
-        const content = cer.content || {};
+        const content = ((cer.content as Record<string, any>) || {}) as Record<string, any>;
         
         // Executive Summary
         doc.fontSize(16).font('Helvetica-Bold')
@@ -798,7 +821,8 @@ class CerGenerationService {
         }
 
         // Metadata and approval information
-        if (cer.metadata) {
+        const metadata = (cer.metadata as Record<string, any>) || null;
+        if (metadata) {
           doc.addPage();
           doc.fontSize(16).font('Helvetica-Bold')
              .text('DOCUMENT INFORMATION');
@@ -806,8 +830,8 @@ class CerGenerationService {
           doc.moveDown();
           doc.text(`Created: ${new Date(cer.createdAt).toLocaleDateString()}`);
           doc.text(`Last Updated: ${new Date(cer.updatedAt).toLocaleDateString()}`);
-          if (cer.metadata.approvalDate) {
-            doc.text(`Approval Date: ${new Date(cer.metadata.approvalDate).toLocaleDateString()}`);
+          if (metadata.approvalDate) {
+            doc.text(`Approval Date: ${new Date(metadata.approvalDate).toLocaleDateString()}`);
           }
         }
 
@@ -821,7 +845,7 @@ class CerGenerationService {
 
   private async generateDocx(cer: CerReport): Promise<Buffer> {
     try {
-      const content = cer.content || {};
+      const content = ((cer.content as Record<string, any>) || {}) as Record<string, any>;
       
       // Create sections for the document
       const docSections = [];
@@ -1010,7 +1034,8 @@ class CerGenerationService {
       }
 
       // Document Information
-      if (cer.metadata) {
+      const docxMetadata = (cer.metadata as Record<string, any>) || null;
+      if (docxMetadata) {
         docSections.push(
           new Paragraph({
             text: 'DOCUMENT INFORMATION',
@@ -1032,12 +1057,12 @@ class CerGenerationService {
           })
         );
 
-        if (cer.metadata.approvalDate) {
+        if (docxMetadata.approvalDate) {
           docSections.push(
             new Paragraph({
               children: [
                 new TextRun({ text: 'Approval Date: ', bold: true }),
-                new TextRun({ text: new Date(cer.metadata.approvalDate).toLocaleDateString() })
+                new TextRun({ text: new Date(docxMetadata.approvalDate).toLocaleDateString() })
               ]
             })
           );
@@ -1076,7 +1101,7 @@ class CerGenerationService {
 
   private async generateXml(cer: CerReport): Promise<string> {
     // Generate structured XML for regulatory submission (eCTD compliant)
-    const content = cer.content || {};
+    const content = ((cer.content as Record<string, any>) || {}) as Record<string, any>;
     
     // Escape XML special characters
     const escapeXml = (str: any): string => {
@@ -1123,8 +1148,8 @@ class CerGenerationService {
       <DeviceType>${escapeXml(cer.deviceType || 'N/A')}</DeviceType>
     </DeviceInformation>
     <RegulatoryInformation>
-      <RegulatoryFramework>${escapeXml(cer.metadata?.regulatoryFramework || 'MDR_2017_745')}</RegulatoryFramework>
-      <NotifiedBodyId>${escapeXml(cer.metadata?.notifiedBodyId || 'N/A')}</NotifiedBodyId>
+      <RegulatoryFramework>${escapeXml((cer.metadata as any)?.regulatoryFramework || 'MDR_2017_745')}</RegulatoryFramework>
+      <NotifiedBodyId>${escapeXml((cer.metadata as any)?.notifiedBodyId || 'N/A')}</NotifiedBodyId>
     </RegulatoryInformation>
     <DocumentMetadata>
       <CreatedDate>${new Date(cer.createdAt).toISOString()}</CreatedDate>
@@ -1144,14 +1169,14 @@ ${formatSection(content.conclusions, 'Conclusions')}
   </Body>
   <Signatures>
     <AuthorSignature>
-      <Name>${escapeXml(cer.metadata?.authorName || 'N/A')}</Name>
-      <Title>${escapeXml(cer.metadata?.authorTitle || 'Clinical Evaluator')}</Title>
+      <Name>${escapeXml((cer.metadata as any)?.authorName || 'N/A')}</Name>
+      <Title>${escapeXml((cer.metadata as any)?.authorTitle || 'Clinical Evaluator')}</Title>
       <Date>${new Date().toISOString()}</Date>
     </AuthorSignature>
     <ReviewerSignature>
-      <Name>${escapeXml(cer.metadata?.reviewerName || 'N/A')}</Name>
-      <Title>${escapeXml(cer.metadata?.reviewerTitle || 'Quality Manager')}</Title>
-      <Date>${escapeXml(cer.metadata?.reviewDate || 'N/A')}</Date>
+      <Name>${escapeXml((cer.metadata as any)?.reviewerName || 'N/A')}</Name>
+      <Title>${escapeXml((cer.metadata as any)?.reviewerTitle || 'Quality Manager')}</Title>
+      <Date>${escapeXml((cer.metadata as any)?.reviewDate || 'N/A')}</Date>
     </ReviewerSignature>
   </Signatures>
 </ClinicalEvaluationReport>`;

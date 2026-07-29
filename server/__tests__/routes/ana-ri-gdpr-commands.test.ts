@@ -1,4 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Stub the db facade so transitive command-executor / ana-ri service
+// imports don't hit a real Postgres pool init at load time. Without
+// DATABASE_URL these imports throw 'Database connection not available'
+// before any test runs.
+vi.mock('../../db', () => ({
+  db: {},
+  pool: { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) },
+  getPool: () => ({ query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) }),
+  getDb: () => ({}),
+}));
+
 import fs from 'fs';
 import path from 'path';
 import {
@@ -30,10 +42,17 @@ describe('AnA RI GDPR command wiring', () => {
   });
 
   it('uses dynamic executeCommands routing in /api/ana-ri/execute handler', () => {
+    // The execute route was moved out of server/routes/ana-ri.ts into the
+    // ./ana-ri/generate-execute.ts submodule (the main file now just
+    // imports `mountGenerateExecuteRoutes`). Assert against the new
+    // submodule location.
     const repoRoot = path.resolve(__dirname, '../../..');
-    const routeSource = fs.readFileSync(path.join(repoRoot, 'server/routes/ana-ri.ts'), 'utf8');
-    expect(routeSource).toContain('executor.executeCommands');
-    expect(routeSource).toContain('Unknown command: ${command}');
+    const executeSource = fs.readFileSync(
+      path.join(repoRoot, 'server/routes/ana-ri/generate-execute.ts'),
+      'utf8',
+    );
+    expect(executeSource).toContain('executor.executeCommands');
+    expect(executeSource).toContain('Unknown command: ${command}');
   });
 
   it('forbids cross-subject GDPR commands without admin/privacy role', async () => {

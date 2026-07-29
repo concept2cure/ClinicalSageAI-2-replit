@@ -15,8 +15,13 @@ router.post('/upload',
   async (req, res) => {
     try {
       const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-      const userId = req.headers['x-user-id'] as string || 'user';
-      
+      // SECURITY (21 CFR Part 11): the document author/actor must come from the
+      // verified JWT, never from a client-supplied x-user-id header.
+      const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
       if (!req.file) {
         return res.status(400).json({ error: 'No file provided' });
       }
@@ -96,7 +101,12 @@ router.patch('/files/:id/tags', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
     const documentId = parseInt(req.params.id);
-    const userId = req.headers['x-user-id'] as string || 'user';
+    // SECURITY (21 CFR Part 11): the actor recorded against this tag mutation
+    // must come from the verified JWT, never from a client-supplied header.
+    const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     const result = await documentDataCenterService.updateDocumentTags(
       organizationId,
@@ -168,8 +178,10 @@ router.get('/categories', async (req, res) => {
       { id: 11, categoryCode: 'manufacturing', categoryName: 'Manufacturing' },
       { id: 12, categoryCode: 'risk_analysis', categoryName: 'Risk Analysis' },
     ];
-    
-    res.json({ categories });
+
+    // `source: 'reference'` marks this as invariant controlled-vocabulary
+    // reference data (FDA 510(k) category taxonomy), not tenant-specific data.
+    res.json({ categories, source: 'reference' });
   } catch (error) {
     console.error('Error getting categories:', error);
     res.status(500).json({ error: 'Failed to retrieve categories' });
@@ -194,8 +206,10 @@ router.get('/standards', async (req, res) => {
       { id: 11, standardCode: 'FDA 21 CFR 820', standardName: 'Quality System Regulation' },
       { id: 12, standardCode: 'AAMI TIR', standardName: 'Technical Information Reports' },
     ];
-    
-    res.json({ standards });
+
+    // `source: 'reference'` marks this as invariant reference data (published
+    // ISO/IEC/ASTM/AAMI/FDA standard names and numbers), not tenant-specific data.
+    res.json({ standards, source: 'reference' });
   } catch (error) {
     console.error('Error getting standards:', error);
     res.status(500).json({ error: 'Failed to retrieve standards' });
@@ -219,8 +233,10 @@ router.get('/components', async (req, res) => {
       { id: 10, componentCode: 'packaging', componentName: 'Primary Packaging', componentType: 'materials' },
       { id: 11, componentCode: 'system', componentName: 'Complete System', componentType: 'system' },
     ];
-    
-    res.json({ components });
+
+    // `source: 'reference'` marks this as invariant device-component taxonomy
+    // reference data, not tenant-specific data.
+    res.json({ components, source: 'reference' });
   } catch (error) {
     console.error('Error getting components:', error);
     res.status(500).json({ error: 'Failed to retrieve components' });
@@ -232,8 +248,25 @@ router.delete('/file/:id', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
     const documentId = parseInt(req.params.id);
-    
-    // For now, return success (would implement actual delete)
+    // SECURITY (21 CFR Part 11): the actor recorded against this deletion must
+    // come from the verified JWT, never from a client-supplied header.
+    const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const result = await documentDataCenterService.deleteDocument(
+      organizationId,
+      documentId,
+      userId
+    );
+
+    // Honest not-found: deleteDocument only reports success when a row that
+    // belongs to this org actually existed and was removed.
+    if (!result.success) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
     res.json({ success: true, message: 'Document deleted successfully' });
   } catch (error) {
     console.error('Error deleting document:', error);

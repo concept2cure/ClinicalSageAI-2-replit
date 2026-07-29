@@ -34,6 +34,8 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { buildPrecedentOrgIsolation } from './precedent-isolation.js';
+import { resolveToRegistryEntry, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
 const log = createScopedLogger('precedent-engine');
 
@@ -181,6 +183,16 @@ export class PrecedentEngine {
 
   async search(input: PrecedentSearchInput, organizationId?: number): Promise<PrecedentRecord[]> {
     const limit = Math.min(input.limit || 10, 50);
+
+    // Resolve international / aliased submission types (e.g. 'EU_MAA', 'CA_NDS') to
+    // their canonical applicationType string. Falls through unchanged when unrecognized.
+    const bridgeEntry = resolveToRegistryEntry(input.submissionType);
+    if (bridgeEntry) {
+      const ctx = getSubmissionTypeContext(input.submissionType);
+      log.info(`Resolved submission type "${input.submissionType}" → "${bridgeEntry.applicationType}" (region: ${ctx?.region ?? 'unknown'}, agency: ${ctx?.agency ?? 'unknown'})`);
+      input = { ...input, submissionType: bridgeEntry.applicationType };
+    }
+
     log.info(`Searching precedents: ${input.submissionType}, query="${input.query || ''}"`, {
       submissionType: input.submissionType,
       indication: input.indication,
@@ -189,8 +201,10 @@ export class PrecedentEngine {
 
     const precedents: PrecedentRecord[] = [];
 
-    // Strategy 1: Search unified precedent table with filters
-    const unifiedResults = await this.searchUnifiedPrecedents(input, limit);
+    // Strategy 1: Search unified precedent table with filters. Tenant-scoped:
+    // returns public precedents (organization_id IS NULL) plus this org's own
+    // private precedents, never another tenant's.
+    const unifiedResults = await this.searchUnifiedPrecedents(input, limit, organizationId);
     precedents.push(...unifiedResults);
 
     // Strategy 2: Search 510(k) clearance universe (for device submissions)
@@ -222,11 +236,22 @@ export class PrecedentEngine {
 
   private async searchUnifiedPrecedents(
     input: PrecedentSearchInput,
-    limit: number
+    limit: number,
+    organizationId?: number
   ): Promise<PrecedentRecord[]> {
     const conditions: string[] = [];
     const params: any[] = [];
     let paramIdx = 1;
+
+    // Tenant isolation by construction: a caller sees public precedents
+    // (organization_id IS NULL) plus its own org's private precedents, and
+    // never another tenant's. With no org in context, only public precedents
+    // are returned. Existing rows are all NULL (public), so this is a no-op for
+    // today's corpus and a hard boundary the moment private precedents exist.
+    const isolation = buildPrecedentOrgIsolation(organizationId, paramIdx);
+    conditions.push(isolation.condition);
+    params.push(...isolation.params);
+    paramIdx = isolation.nextParamIdx;
 
     // Always filter by submission type
     conditions.push(`submission_type = $${paramIdx++}`);
@@ -427,6 +452,9 @@ export class PrecedentEngine {
     },
     precedentId: string
   ): Promise<PrecedentComparison> {
+    const bridgeEntry = resolveToRegistryEntry(userContext.submissionType);
+    if (bridgeEntry) userContext = { ...userContext, submissionType: bridgeEntry.applicationType };
+
     log.info(`Comparing submission against precedent ${precedentId}`);
 
     // Load the precedent record
@@ -574,6 +602,9 @@ export class PrecedentEngine {
   // ── 3. RISK ANALYSIS: Regulatory risk from historical objections ───────
 
   async analyzeRisk(input: PrecedentSearchInput): Promise<RiskAnalysisResult> {
+    const bridgeEntry = resolveToRegistryEntry(input.submissionType);
+    if (bridgeEntry) input = { ...input, submissionType: bridgeEntry.applicationType };
+
     log.info(`Analyzing regulatory risk for ${input.submissionType}`);
 
     const factors: RiskFactor[] = [];
@@ -665,6 +696,9 @@ export class PrecedentEngine {
   // ── 4. STRATEGY: Recommend submission strategy from precedents ─────────
 
   async recommendStrategy(input: PrecedentSearchInput): Promise<StrategyRecommendation> {
+    const bridgeEntry = resolveToRegistryEntry(input.submissionType);
+    if (bridgeEntry) input = { ...input, submissionType: bridgeEntry.applicationType };
+
     log.info(`Recommending strategy for ${input.submissionType}`);
 
     // Get successful precedents
@@ -757,6 +791,9 @@ export class PrecedentEngine {
     claim: string,
     context: { submissionType: string; therapeuticArea?: string; indication?: string }
   ): Promise<ClaimCheckResult> {
+    const bridgeEntry = resolveToRegistryEntry(context.submissionType);
+    if (bridgeEntry) context = { ...context, submissionType: bridgeEntry.applicationType };
+
     log.info(`Checking claim: "${claim.substring(0, 80)}..."`);
 
     const warnings: ClaimWarning[] = [];
@@ -1087,6 +1124,9 @@ export class PrecedentEngine {
   // ── 7. CRL TRIGGER PATTERNS ─────────────────────────────────────────────
 
   async analyzeCRLTriggers(input: PrecedentSearchInput): Promise<CRLTriggerResult> {
+    const bridgeEntry = resolveToRegistryEntry(input.submissionType);
+    if (bridgeEntry) input = { ...input, submissionType: bridgeEntry.applicationType };
+
     log.info(`Analyzing CRL trigger patterns for ${input.submissionType}`);
 
     const triggers: CRLTrigger[] = [];
@@ -1242,6 +1282,9 @@ export class PrecedentEngine {
   // ── 8. RTF (REFUSE TO FILE) TRIGGER PATTERNS ─────────────────────────
 
   async analyzeRTFTriggers(input: PrecedentSearchInput): Promise<RTFTriggerResult> {
+    const bridgeEntry = resolveToRegistryEntry(input.submissionType);
+    if (bridgeEntry) input = { ...input, submissionType: bridgeEntry.applicationType };
+
     log.info(`Analyzing RTF trigger patterns for ${input.submissionType}`);
 
     const rtfChecklist: RTFCheckItem[] = [
@@ -1420,6 +1463,9 @@ export class PrecedentEngine {
   // ── 9. EMA DAY 120/180 QUESTION PATTERNS ─────────────────────────────
 
   async analyzeEMAPatterns(input: PrecedentSearchInput): Promise<EMAPatternResult> {
+    const bridgeEntry = resolveToRegistryEntry(input.submissionType);
+    if (bridgeEntry) input = { ...input, submissionType: bridgeEntry.applicationType };
+
     log.info(`Analyzing EMA Day 120/180 question patterns for ${input.submissionType}`);
 
     // EMA Major Objection patterns by therapeutic area
@@ -1551,6 +1597,9 @@ export class PrecedentEngine {
   async analyzeAdvisoryCommitteeRisk(
     input: PrecedentSearchInput
   ): Promise<AdvisoryCommitteeResult> {
+    const bridgeEntry = resolveToRegistryEntry(input.submissionType);
+    if (bridgeEntry) input = { ...input, submissionType: bridgeEntry.applicationType };
+
     log.info(`Analyzing Advisory Committee risk for ${input.submissionType}`);
 
     // Advisory Committee triggers — submissions likely to get AdCom

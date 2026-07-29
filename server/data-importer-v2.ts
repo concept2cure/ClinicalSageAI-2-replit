@@ -5,7 +5,15 @@
  * the ClinicalTrials.gov API v2 format to our system format
  */
 
-import { InsertCsrReport, InsertCsrDetails } from 'shared/schema';
+import { InsertCsrReport } from 'shared/schema';
+
+// shared/schema does not export a named insert type for csr_details. This v2
+// transformer emits a loosely-shaped, normalised CSR-details DTO (including a
+// few legacy/derived fields that are not columns on the current csr_details
+// table). Persistence — and the strict `typeof csrDetails.$inferInsert` typing
+// plus `as InsertCsrDetails` cast — happens downstream in data-importer.ts.
+// Here the intermediate transform shape is intentionally open.
+type InsertCsrDetails = Record<string, unknown>;
 
 /**
  * Convert a study from the ClinicalTrials.gov API v2 format to our CSR Report format
@@ -142,26 +150,27 @@ export function convertV2StudyToCsrDetails(
     };
 
     // Prepare details data
-    const detailsData: Partial<InsertCsrDetails> = {
+    const detailsData: Record<string, any> = {
       reportId,
       studyDesign,
       primaryObjective,
-      studyDescription: description?.detailedDescription || null,
       inclusionCriteria,
       exclusionCriteria,
-      treatmentArms,
       studyDuration: design?.studyDesign || null,
       endpoints,
       results: {},
       safety: {},
-      processed: true,
-      processingStatus: 'imported_from_api_v2',
       sampleSize,
       ageRange,
       gender,
-      statisticalMethods: [],
-      adverseEvents: [],
-      efficacyResults: {},
+      statisticalMethods: null,
+      adverseEvents: null,
+      efficacyResults: null,
+      metadata: {
+        treatmentArms,
+        studyDescription: description?.detailedDescription || null,
+        processingStatus: 'imported_from_api_v2',
+      },
     };
 
     return detailsData;
@@ -169,8 +178,7 @@ export function convertV2StudyToCsrDetails(
     console.error('Error converting study to CSR details format:', error);
     return {
       reportId,
-      processed: false,
-      processingStatus: 'error_during_import',
+      metadata: { processingStatus: 'error_during_import' },
     };
   }
 }

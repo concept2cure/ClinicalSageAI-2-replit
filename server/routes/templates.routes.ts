@@ -298,16 +298,19 @@ router.post('/', async (req, res) => {
 
     const organizationId = requireOrganizationId(req, res);
     if (organizationId == null) return;
-    const userId = req.user?.id;
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
+    if (userId == null) {
+      return res.status(401).json({ error: 'Authenticated user required' });
+    }
     const { name, description, category, type, content, sections, metadata } = req.body;
-    
+
     const templateId = generateTemplateId(category);
     
     let createdTemplate: any;
     
     if (category === 'ectd' || type === 'eCTD') {
       // Create eCTD template
-      const [template] = await db
+      const [template] = await (db as any)
         .insert(schema.ectdTemplates)
         .values({
           organizationId: organizationId,
@@ -320,11 +323,9 @@ router.post('/', async (req, res) => {
           placeholders: sections || null, // Use placeholders not sections
           tags: null,
           isActive: true,
-          isLocked: false,
-          sourceSystem: 'api',
           version: '1.0',
           createdBy: userId
-        })
+        } as any)
         .returning();
       
       createdTemplate = {
@@ -350,7 +351,7 @@ router.post('/', async (req, res) => {
           isPublic: false,
           createdById: userId,
           updatedById: userId
-        })
+        } as any)
         .returning();
       
       createdTemplate = template;
@@ -368,7 +369,7 @@ router.post('/', async (req, res) => {
           metadata,
           status: 'active',
           createdById: userId
-        })
+        } as any)
         .returning();
       
       createdTemplate = {
@@ -482,7 +483,7 @@ router.post('/:templateId/use', async (req, res) => {
     }
 
     const { templateId } = req.params;
-    const userId = req.user?.id;
+    const userId = req.user?.id != null ? Number(req.user.id) : undefined;
     const organizationId = requireOrganizationId(req, res);
     if (organizationId == null) return;
     
@@ -515,7 +516,7 @@ router.post('/:templateId/use', async (req, res) => {
           timeSpent: 0,
           changesCount: 0,
           completionScore: 0
-        });
+        } as any);
     }
     
     res.json({ success: true });

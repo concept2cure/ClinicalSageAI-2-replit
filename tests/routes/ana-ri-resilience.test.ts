@@ -1,5 +1,30 @@
 import { describe, it, expect, vi } from 'vitest';
+
+// vi.hoisted ensures env vars are set BEFORE any ESM imports (including
+// transitive ones) are evaluated. Loading the auth/db/config chain at
+// module init requires these to be present, or the chain throws.
+vi.hoisted(() => {
+  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+});
+
 import express from 'express';
+
+// The /chat route calls getPool() directly. Without a mock, the real pool
+// is initialized against the dummy DATABASE_URL set above — node-pg then
+// tries to actually connect to localhost:5432 and hangs until the 10s
+// vitest timeout. Mock the db facade with an inert pool that returns
+// empty rows.
+vi.mock('../../server/db.js', () => ({
+  db: {},
+  pool: { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) },
+  getPool: () => ({ query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) }),
+  getDb: () => ({}),
+}));
 
 vi.mock('../../server/services/ai-gateway/index.js', () => ({
   getGateway: () => {
@@ -23,11 +48,21 @@ vi.mock('../../server/services/ana-ri/deficiency-taxonomy.js', () => ({
   getDeficienciesBySubmissionType: () => [],
   getCriticalDeficiencies: () => [],
   getDeficiencyCategories: () => [],
+  // orchestrate (orchestrator.ts) calls buildDeficiencyContext(...) on
+  // each request. Without this stub the mock factory errors out on the
+  // module-resolve step and the route hangs.
+  buildDeficiencyContext: () => ({
+    submissionType: 'IND',
+    deficiencies: [],
+    criticalDeficiencies: [],
+    categories: [],
+  }),
 }));
 
 vi.mock('../../server/services/ana-ri/document-actions.js', () => ({
   getAllActions: () => [],
   getActionsForLens: () => [],
+  buildDocumentActionContext: () => '',
 }));
 
 vi.mock('../../server/services/ana-ri/evaluation.js', () => ({
@@ -37,6 +72,7 @@ vi.mock('../../server/services/ana-ri/evaluation.js', () => ({
 
 vi.mock('../../server/services/ana-ri/role-adapter.js', () => ({
   inferRole: () => 'ra_lead',
+  buildRoleAdaptiveContext: () => '',
 }));
 
 vi.mock('../../server/services/ana-ri/enforcement.js', () => ({
@@ -136,6 +172,7 @@ vi.mock('../../server/services/ana-guidance-executor.js', () => ({
 vi.mock('../../server/services/ana-ri/command-executor.js', () => ({
   COMMAND_REGISTRY: [],
   processCommandsInResponse: vi.fn(async () => ({ executedCommands: [] })),
+  buildCommandContextForPrompt: () => '',
 }));
 
 import router from '../../server/routes/ana-ri';
@@ -178,6 +215,10 @@ async function request(method: 'GET' | 'POST', path: string, body?: any) {
   });
 }
 
+// Re-enabled 2026-06-11: the orchestrator's helper-mock surface that used to
+// produce "No 'X' export is defined" errors and 10s hangs no longer bites —
+// the degraded-mode contract (503 + GATEWAY_UNAVAILABLE) now passes as a
+// unit test against the current route wiring.
 describe('AnA RI resilience', () => {
   it('returns degraded mode response when gateway is unavailable', async () => {
     const res = await request('POST', '/api/ana-ri/chat', { message: 'Help with IND strategy' });

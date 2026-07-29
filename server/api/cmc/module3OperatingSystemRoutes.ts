@@ -11,6 +11,7 @@ import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } fro
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
+import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
 
 const router = express.Router();
 
@@ -48,10 +49,17 @@ function getOrgId(req: express.Request): number {
   return orgId;
 }
 
+function resolveActorUserId(req: express.Request): number {
+  const r = req as any;
+  const raw = r.userId ?? r.user?.id ?? 0;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
 router.post('/source-objects/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const data = upsertSourceObjectSchema.parse(req.body);
     const pool = getPool();
     const sourceHash = createSourceHash(data.sourcePayload as Record<string, any>);
@@ -60,7 +68,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
     const inserted = await pool.query(
       `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, source_hash, version)
        VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7)
-       ON CONFLICT (project_id, source_type, source_key, version)
+       ON CONFLICT (organization_id, project_id, source_type, source_key, version)
        DO UPDATE SET source_payload = excluded.source_payload, source_hash = excluded.source_hash, updated_at = NOW()
        RETURNING id, source_type as "sourceType", source_key as "sourceKey", source_hash as "sourceHash", version`,
       [orgId, projectId, data.sourceType, data.sourceKey, JSON.stringify(data.sourcePayload), sourceHash, version]
@@ -83,7 +91,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'Invalid source object payload', details: error.errors });
     }
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to upsert source object' });
@@ -93,7 +101,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
 router.get('/sections/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT section_key as "sectionKey", section_path as "sectionPath", stale, stale_reason as "staleReason",
@@ -105,7 +113,7 @@ router.get('/sections/:projectId', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch section map' });
@@ -117,7 +125,7 @@ router.post('/compile/:projectId', async (req, res) => {
   const client = await pool.connect();
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     await client.query('BEGIN');
     const { rows } = await client.query(
       `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
@@ -127,12 +135,35 @@ router.post('/compile/:projectId', async (req, res) => {
       [orgId, projectId]
     );
 
+    // Refuse to compile from nothing.
+    //
+    // composeModule3FromCanonicalSources is MODULE3_SECTION_RULES.map(...) — it
+    // emits all 17 sections unconditionally, so zero sources still yields 17
+    // bodies reading "has no source data available", with completeness 0 and no
+    // lineage. The upsert below then writes `stale = false, stale_reason = NULL`
+    // and does not touch approval_state, so those empty bodies land marked
+    // not-stale over whatever approval state was already there — which is
+    // exactly what canFinalizeExport reads before releasing a Module 3.
+    //
+    // Compiling a project that has no canonical sources is never a legitimate
+    // request; it is either a mistake or a probe. 409 says so, instead of
+    // manufacturing seventeen empty-but-clean sections. The AnA command handler
+    // already guards this way (server/services/ana-ri/module3-command-handlers.ts).
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: 'No canonical source objects for this project — nothing to compile.',
+        hint: 'Upsert source objects via POST /api/cmc/module3-os/source-objects/:projectId first.',
+      });
+    }
+
     const compiled = composeModule3FromCanonicalSources(rows as any);
     for (const section of compiled) {
       const upsert = await client.query(
         `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
          VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,'draft')
-         ON CONFLICT (project_id, section_key)
+         ON CONFLICT (organization_id, project_id, section_key)
          DO UPDATE SET deterministic_json = excluded.deterministic_json,
                        compiled_hash = excluded.compiled_hash,
                        stale = excluded.stale,
@@ -159,7 +190,14 @@ router.post('/compile/:projectId', async (req, res) => {
       const sectionId = upsert.rows[0]?.id;
       if (!sectionId) continue;
 
-      await client.query(`DELETE FROM cmc_section_lineage WHERE section_id = $1`, [sectionId]);
+      // Scoped by org as well as section id. `sectionId` comes from the upsert's
+      // RETURNING, so before the arbiter carried organization_id this deleted the
+      // VICTIM's provenance rows — the traceability tying each Module 3 section
+      // back to the source objects it was compiled from.
+      await client.query(
+        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
+        [sectionId, orgId]
+      );
       for (const lin of section.lineage) {
         await client.query(
           `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
@@ -208,7 +246,7 @@ router.post('/compile/:projectId', async (req, res) => {
     res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts });
   } catch (error) {
     await client.query('ROLLBACK');
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Compilation failed' });
@@ -220,7 +258,7 @@ router.post('/compile/:projectId', async (req, res) => {
 router.post('/source-changed/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const { changedSourceType, reason } = req.body;
     const pool = getPool();
     const sectionsRes = await pool.query(
@@ -242,7 +280,7 @@ router.post('/source-changed/:projectId', async (req, res) => {
     }
     res.json({ success: true, staleSections: stale.filter((s) => s.stale).map((s) => s.sectionKey) });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Stale update failed' });
@@ -252,7 +290,7 @@ router.post('/source-changed/:projectId', async (req, res) => {
 router.post('/contradictions/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const [specs, methods, stability, batch, comparability] = await Promise.all([
       pool.query(
@@ -309,7 +347,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
 
     res.json({ success: true, contradictions, impactTasks: deriveImpactTasks(contradictions) });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Contradiction detection failed' });
@@ -319,7 +357,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
 router.get('/contradictions/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT id, severity, contradiction_type as "contradictionType", details,
@@ -332,7 +370,7 @@ router.get('/contradictions/:projectId', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch contradictions' });
@@ -342,7 +380,7 @@ router.get('/contradictions/:projectId', async (req, res) => {
 router.patch('/contradictions/:id/resolve', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { id } = req.params;
+    const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const parsed = resolveContradictionSchema.parse(req.body || {});
     const pool = getPool();
     const updated = await pool.query(
@@ -372,7 +410,7 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'Invalid resolution payload', details: error.errors });
     }
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to resolve contradiction' });
@@ -382,7 +420,7 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
 router.get('/readiness/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const [sections, contradictions] = await Promise.all([
       pool.query(
@@ -450,7 +488,7 @@ router.get('/readiness/:projectId', async (req, res) => {
       },
     });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to compute readiness' });
@@ -480,7 +518,7 @@ router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to fetch provenance' });
@@ -491,6 +529,21 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const { projectId, sectionKey } = req.params;
+
+    // §11.10(g) / §11.200 re-authentication. Approving a Module 3 section is a
+    // signature event, so the signer's credentials are verified BEFORE any
+    // write — fail closed, consistent with the specification-approve and
+    // batch-release endpoints. The client sends `reauth: { password, totp }`.
+    const actorId = resolveActorUserId(req);
+    if (!actorId) {
+      return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    }
+    const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
+    if (!reauthResult.ok) {
+      res.setHeader('WWW-Authenticate', 'ReAuth required');
+      return res.status(401).json({ success: false, error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+    }
+
     const pool = getPool();
 
     const blocking = await pool.query(
@@ -534,62 +587,102 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
     }
 
-    const sectionRes = await pool.query(
-      `SELECT id, deterministic_json, approval_state
-       FROM cmc_module3_sections
-       WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
-      [orgId, projectId, sectionKey]
-    );
-    const section = sectionRes.rows[0];
-    if (!section) return res.status(404).json({ success: false, error: 'Section not found' });
+    // The version snapshot + section flip + provenance event + the hash-chained
+    // governed-action record are one atomic transaction: approval either lands
+    // as a complete §11 signature (audit chain included) or not at all —
+    // consistent with the specification-approve / batch-release endpoints.
+    const client = await pool.connect();
+    let responsePayload: Record<string, unknown>;
+    try {
+      await client.query('BEGIN');
 
-    const verRes = await pool.query(
-      `SELECT COALESCE(MAX(version_number), 0) as max_version
-       FROM cmc_module3_section_versions
-       WHERE section_id = $1`,
-      [section.id]
-    );
-    const versionNumber = Number(verRes.rows[0]?.max_version || 0) + 1;
-    const insertedVersion = await pool.query(
-      `INSERT INTO cmc_module3_section_versions (organization_id, section_id, project_id, version_number, snapshot_json, diff_summary, state, created_by)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,'approved',$7)
-       RETURNING id`,
-      [
+      const sectionRes = await client.query(
+        `SELECT id, deterministic_json, approval_state
+         FROM cmc_module3_sections
+         WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
+        [orgId, projectId, sectionKey]
+      );
+      const section = sectionRes.rows[0];
+      if (!section) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: 'Section not found' });
+      }
+
+      const verRes = await client.query(
+        `SELECT COALESCE(MAX(version_number), 0) as max_version
+         FROM cmc_module3_section_versions
+         WHERE section_id = $1`,
+        [section.id]
+      );
+      const versionNumber = Number(verRes.rows[0]?.max_version || 0) + 1;
+      const insertedVersion = await client.query(
+        `INSERT INTO cmc_module3_section_versions (organization_id, section_id, project_id, version_number, snapshot_json, diff_summary, state, created_by)
+         VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,'approved',$7)
+         RETURNING id`,
+        [
+          orgId,
+          section.id,
+          projectId,
+          versionNumber,
+          JSON.stringify(section.deterministic_json),
+          JSON.stringify({ approvedFromState: section.approval_state }),
+          String(actorId),
+        ]
+      );
+      const approvedVersionId = insertedVersion.rows[0].id;
+      await client.query(
+        `UPDATE cmc_module3_sections
+         SET approval_state = 'approved', approved_version_id = $1, stale = false, stale_reason = null, updated_at = NOW()
+         WHERE id = $2`,
+        [approvedVersionId, section.id]
+      );
+      await client.query(
+        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
+         VALUES ($1,$2,'section',$3,'approved',$4::jsonb,$5)`,
+        [
+          orgId,
+          projectId,
+          section.id,
+          JSON.stringify({ sectionKey, versionNumber }),
+          String(actorId),
+        ]
+      );
+
+      // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
+      // the same ledger the specification-approve and batch-release endpoints write.
+      const governance = await recordGovernedAction(client, {
         orgId,
-        section.id,
-        projectId,
+        userId: actorId,
+        command: 'sign',
+        target: `cmc_module3_section:${projectId}/${sectionKey}`,
+        reason:
+          typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
+            ? (req.body as any).reason.trim()
+            : `Approved Module 3 section ${sectionKey}`,
+        payload: { meaning: 'approval', versionNumber, approvedVersionId },
+        domain: 'cmc',
+        surface: 'cmc-module3-section-approve',
+        idempotencyKey: (req.body ?? {}).idempotencyKey ?? null,
+      });
+
+      await client.query('COMMIT');
+      responsePayload = {
+        success: true,
+        sectionKey,
         versionNumber,
-        JSON.stringify(section.deterministic_json),
-        JSON.stringify({ approvedFromState: section.approval_state }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-    await pool.query(
-      `UPDATE cmc_module3_sections
-       SET approval_state = 'approved', approved_version_id = $1, stale = false, stale_reason = null, updated_at = NOW()
-       WHERE id = $2`,
-      [insertedVersion.rows[0].id, section.id]
-    );
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'section',$3,'approved',$4::jsonb,$5)`,
-      [
-        orgId,
-        projectId,
-        section.id,
-        JSON.stringify({ sectionKey, versionNumber }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-    res.json({
-      success: true,
-      sectionKey,
-      versionNumber,
-      approvedVersionId: insertedVersion.rows[0].id,
-      canonicalGovernedState,
-    });
+        approvedVersionId,
+        canonicalGovernedState,
+        governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
+      };
+    } catch (txErr) {
+      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
+      throw txErr;
+    } finally {
+      client.release();
+    }
+    res.json(responsePayload);
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Approval failed' });
@@ -630,7 +723,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     );
     res.json({ success: true, sectionKey, state: 'draft', diffSummary });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Refresh failed' });
@@ -640,7 +733,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
 router.post('/guard/final-export/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { projectId } = req.params;
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const [sectionsRes, contradictionsRes] = await Promise.all([
       pool.query(
@@ -730,7 +823,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
 
     return res.json({ success: true, message: 'Final export gate passed', canonicalGovernedState });
   } catch (error) {
-    if (String(error?.message || '').includes('Organization context required')) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed final export guard check' });

@@ -330,6 +330,7 @@ export class AISentinel {
        FROM projects p1
        JOIN projects p2 ON p1.parent_project_id = p2.parent_project_id
          AND p1.id < p2.id
+         AND p2.organization_id = $1
        WHERE p1.organization_id = $1
          AND p1.parent_project_id IS NOT NULL
          AND p1.target_end_date IS NOT NULL
@@ -388,8 +389,8 @@ export class AISentinel {
     // Check if there are regulatory submission projects missing key modules
     const regResult = await this.pool.query(
       `SELECT p.id, p.name, p.type, p.status,
-              (SELECT COUNT(*)::int FROM project_modules pm WHERE pm.project_id = p.id) as module_count,
-              (SELECT COUNT(*)::int FROM project_modules pm WHERE pm.project_id = p.id AND pm.status = 'completed') as completed_modules
+              (SELECT COUNT(*)::int FROM project_modules pm WHERE pm.project_id = p.id AND pm.organization_id = $1) as module_count,
+              (SELECT COUNT(*)::int FROM project_modules pm WHERE pm.project_id = p.id AND pm.organization_id = $1 AND pm.status = 'completed') as completed_modules
        FROM projects p
        WHERE p.organization_id = $1
          AND p.type = 'regulatory_submission'

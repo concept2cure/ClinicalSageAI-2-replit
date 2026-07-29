@@ -1,0 +1,130 @@
+{
+  ".typecheck-baseline.json": {
+    "present": true,
+    "shape": {
+      "$schema": "./scripts/ci/typecheck-baseline.schema.json",
+      "_comment": "Counted error baseline for `tsc --noEmit -p tsconfig.json`. Mirrors the migration-prefix-collisions baseline pattern. The CI gate (scripts/ci/typecheck-no-regression.mjs) fails if a PR raises the count above this baseline. PRs that REDUCE the count should run `npm run ci:typecheck:write-baseline` so the new lower number lands and ratchets the bar tighter for the next PR. Goal over time: 0.",
+      "_history": 7,
+      "errorCount": 0
+    },
+    "suppressedCount": 7
+  },
+  "scripts/ci/unbacked-tables-baseline.json": {
+    "present": true,
+    "shape": {
+      "$comment": "Tables referenced by server SQL that NOTHING in the repo creates — no migration, no drizzle pgTable, no runtime DDL. Pinned to the exact referencing file set, so an entry cannot silently acquire new call sites. Every entry is a feature that either returns 500 (unguarded query) or silently no-ops (query inside try/catch). Each is a defect awaiting a code-derived migration or a retirement, NOT an approved pattern. Shrink this file; never grow it. See ledger C-11/C-14 for the remediation pattern: derive the shape from the queries, add one canonical migration, prove it with a golden journey.",
+      "generatedAt": "2026-07-28T03:16:35.391Z",
+      "total": 89,
+      "entries": 89
+    },
+    "suppressedCount": 89
+  },
+  "scripts/ci/duplicate-table-ddl-baseline.json": {
+    "present": true,
+    "shape": {
+      "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
+      "generatedAt": "2026-07-25T19:50:50.838Z",
+      "total": 63,
+      "entries": 63
+    },
+    "suppressedCount": 63
+  },
+  "scripts/ci/unreferenced-modules-baseline.json": {
+    "present": true,
+    "shape": {
+      "$comment": "Modules under server/ or client/src/ that nothing in the repository references. This list may only shrink: delete the module, or wire it up, then regenerate with npm run ci:unreferenced-modules:write-baseline. Adding an entry by hand is a regression, not a fix.",
+      "generatedBy": "scripts/ci/check-unreferenced-modules.mjs --write-baseline",
+      "count": 190,
+      "modules": 190
+    },
+    "suppressedCount": 190
+  },
+  "scripts/ci/gateway-bypass-baseline.json": {
+    "present": true,
+    "shape": {
+      "description": "Files allowed to instantiate an LLM client directly outside the governed AI gateway. This is the gateway-bypass burndown list. Do NOT add to it — route new AI calls through server/services/ai-gateway (getGateway) or the shared client. Removing entries (by routing them through the gateway) is encouraged. Enforced by scripts/ci/check-gateway-bypass.mjs.",
+      "allowed": 3
+    },
+    "suppressedCount": 3
+  },
+  "migrations/.prefix-collisions-baseline.json": {
+    "present": true,
+    "shape": {
+      "0007": 5,
+      "0008": 3,
+      "0010": 3,
+      "0011": 2
+    },
+    "suppressedCount": 5
+  },
+  "docs/reports/tenant-isolation-baseline.json": {
+    "present": true,
+    "shape": {
+      "generatedAt": "2026-06-20T23:09:48.512Z",
+      "fingerprints": 25
+    },
+    "suppressedCount": 25
+  },
+  "docs/reports/route-mount-audit-baseline.json": {
+    "present": true,
+    "shape": {
+      "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
+      "generatedAt": "2026-07-20T05:57:29.084Z",
+      "mounts": 323,
+      "errors": 8,
+      "warnings": 7,
+      "issues": 2,
+      "ownership": 12
+    },
+    "suppressedCount": 12
+  },
+  "docs/reports/requestdb-coverage-baseline.json": {
+    "present": true,
+    "shape": {
+      "generatedAt": "2026-07-19T21:37:27.234Z",
+      "onSharedPool": 81
+    },
+    "suppressedCount": 81
+  },
+  "docs/reports/no-mock-in-prod-routes-baseline.json": {
+    "present": true,
+    "shape": {
+      "generatedAt": "2026-07-18T19:08:59.497Z",
+      "findings": 11
+    },
+    "suppressedCount": 11
+  },
+  "docs/reports/env-var-docs-baseline.json": {
+    "present": true,
+    "shape": {
+      "description": "Accepted set of env vars read by server/ + shared/ but not yet documented in .env.example. New undocumented vars fail CI; document them in .env.example (preferred) or, if intentional, re-run npm run ci:env-var-docs:write-baseline. Ratchet this list down over time.",
+      "count": 244,
+      "vars": 244,
+      "_history": 3
+    },
+    "suppressedCount": 244
+  },
+  "docs/reports/orphan-endpoints-latest.json": {
+    "present": true,
+    "shape": {
+      "summary": 6,
+      "orphans": 556
+    },
+    "suppressedCount": 556
+  },
+  "docs/reports/repo-health-scan-latest.json": {
+    "present": true,
+    "shape": {
+      "generatedAt": "2026-07-28T04:18:21.453Z",
+      "git": 2,
+      "thresholds": 2,
+      "summary": 3,
+      "findings": 3,
+      "comparison": null,
+      "ownerSummary": 6,
+      "owners": 5
+    },
+    "suppressedCount": 6
+  },
+  "_totalSuppressedItems": 1292
+}

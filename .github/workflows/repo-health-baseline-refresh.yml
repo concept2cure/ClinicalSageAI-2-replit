@@ -1,0 +1,65 @@
+name: Repo Health Baseline Refresh
+
+# Keeps docs/reports/repo-health-scan-latest.json in sync with the tree on
+# concept2cure-v2. The `Audit — repo health scan (no regressions)` step in the
+# CI Lint job compares each PR's duplicate-basename count against this committed
+# baseline; because the CI test/build jobs `needs: lint`, a stale baseline (one
+# that drifts when files are merged to base without refreshing it) fails Lint
+# and cascade-skips Test/Build/Integration on every open PR.
+#
+# Rather than require each PR to hand-bump the baseline, this regenerates it on
+# every merge to concept2cure-v2 and commits the result back. PRs branched after
+# a merge therefore always see delta 0 — the gate stays strict and self-healing.
+#
+# The auto-commit carries [skip ci] so it does not re-trigger CI (or this
+# workflow); the `github.actor` guard is belt-and-suspenders against loops.
+
+on:
+  push:
+    branches: [concept2cure-v2]
+  workflow_dispatch:
+
+concurrency:
+  group: repo-health-baseline-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout concept2cure-v2
+        uses: actions/checkout@v4
+        with:
+          ref: concept2cure-v2
+          # Need real history so the commit lands on the branch tip.
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # The scan uses only Node builtins (node:fs / node:path / node:child_process),
+      # so no dependency install is required — keep this fast and resilient.
+      - name: Regenerate repo-health baseline
+        run: >-
+          node scripts/audits/repo-health-scan.mjs
+          --owners docs/reports/repo-health-owners.json
+          --write-markdown docs/reports/repo-health-scan-latest.md
+
+      - name: Commit refreshed baseline (only if it changed)
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/reports/repo-health-scan-latest.json docs/reports/repo-health-scan-latest.md; then
+            echo "::notice::Baseline already current — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/reports/repo-health-scan-latest.json docs/reports/repo-health-scan-latest.md
+          git commit -m "chore(repo-health): auto-refresh baseline after merge [skip ci]"
+          git push origin HEAD:concept2cure-v2

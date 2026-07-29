@@ -15,6 +15,19 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// vi.hoisted ensures env vars are set BEFORE any ESM imports (including
+// transitive ones) are evaluated. Loading the auth/db/config chain at
+// module init requires these to be present, or the chain throws.
+vi.hoisted(() => {
+  process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
+  process.env.SKIP_DB_STARTUP_TEST = 'true';
+});
+
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
@@ -25,11 +38,15 @@ const ORG_B = 22;
 // UUID-shaped fixture ids — the route now validates programId format
 // and rejects non-uuid input as 422 before the service can refuse the
 // cross-tenant write as 403.
-const PROGRAM_ORG_B = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
-const QSUB_ORG_B = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
-const COMMITMENT_ORG_B = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
-
-const { svc, authState } = vi.hoisted(() => {
+//
+// These need to be inside vi.hoisted's closure because vi.hoisted is
+// hoisted to the top of the file (above all top-level statements). The
+// later assignments below mirror them for in-test use.
+const { svc, authState, PROGRAM_ORG_B, QSUB_ORG_B, COMMITMENT_ORG_B } = vi.hoisted(() => {
+  const PROGRAM_ORG_B = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+  const QSUB_ORG_B = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+  const COMMITMENT_ORG_B = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+  const ORG_B_LOCAL = 22;
   // The mocked service mirrors the contract of ../../services/q-sub/q-sub.service:
   // every read/write demands `organizationId`. We simulate the JOIN gate by
   // returning empty / TenantAccessError when org doesn't match the
@@ -41,19 +58,22 @@ const { svc, authState } = vi.hoisted(() => {
     }
   }
   return {
+    PROGRAM_ORG_B,
+    QSUB_ORG_B,
+    COMMITMENT_ORG_B,
     svc: {
       // Resource ownership map — keyed by resource id, value is the org that
       // owns it. The mock service refuses access when caller's org doesn't
       // match.
       ownership: new Map<string, number>([
-        [PROGRAM_ORG_B, ORG_B],
-        [QSUB_ORG_B, ORG_B],
-        [COMMITMENT_ORG_B, ORG_B],
+        [PROGRAM_ORG_B, ORG_B_LOCAL],
+        [QSUB_ORG_B, ORG_B_LOCAL],
+        [COMMITMENT_ORG_B, ORG_B_LOCAL],
       ]),
       TenantAccessError,
     },
     authState: {
-      user: { id: 'u-A', organizationId: String(ORG_A) } as Record<string, any> | null,
+      user: { id: 'u-A', organizationId: '11' } as Record<string, any> | null,
     },
   };
 });
@@ -111,7 +131,8 @@ describe('Tenant isolation — Q-Sub list', () => {
     svc.ownership.set('q-org-b-extra', ORG_B);
     const res = await request(app).get('/api/q-sub');
     expect(res.status).toBe(200);
-    expect(res.body.rows.every((r: { id: string }) => svc.ownership.get(r.id) === ORG_A)).toBe(
+    // Route wraps in canonical { data: { rows, count } } envelope via ok().
+    expect(res.body.data?.rows?.every((r: { id: string }) => svc.ownership.get(r.id) === ORG_A)).toBe(
       true,
     );
     // Cleanup

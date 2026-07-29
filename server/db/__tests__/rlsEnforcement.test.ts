@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'events';
-import { installRlsEnforcement, readEnforcementMode } from '../rlsEnforcement';
+import {
+  installRlsEnforcement,
+  isExplicitEnforcementDecision,
+  readEnforcementMode,
+  assertRlsEnforcementForProduction,
+} from '../rlsEnforcement';
 
 class FakePool extends EventEmitter {
   query = vi.fn(() => Promise.resolve({ rows: [], rowCount: 0 }));
@@ -28,6 +33,114 @@ describe('readEnforcementMode', () => {
 
   it('treats unknown values as off', () => {
     expect(readEnforcementMode({ RLS_ENFORCE: 'maybe' })).toBe('off');
+  });
+});
+
+describe('isExplicitEnforcementDecision', () => {
+  it('recognizes every accepted on/shadow/off token', () => {
+    for (const v of ['on', 'enforce', 'true', '1', 'shadow', 'off', 'false', '0', 'OFF', ' on ']) {
+      expect(isExplicitEnforcementDecision({ RLS_ENFORCE: v })).toBe(true);
+    }
+  });
+
+  it('rejects unset, blank, and unrecognized values', () => {
+    expect(isExplicitEnforcementDecision({})).toBe(false);
+    expect(isExplicitEnforcementDecision({ RLS_ENFORCE: '' })).toBe(false);
+    expect(isExplicitEnforcementDecision({ RLS_ENFORCE: '  ' })).toBe(false);
+    expect(isExplicitEnforcementDecision({ RLS_ENFORCE: 'maybe' })).toBe(false);
+    expect(isExplicitEnforcementDecision({ RLS_ENFORCE: 'onn' })).toBe(false);
+  });
+});
+
+describe('assertRlsEnforcementForProduction', () => {
+  it('is a no-op (returns mode) outside production, even when unset', () => {
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'development' })).toBe('off');
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'test', RLS_ENFORCE: 'shadow' })).toBe(
+      'shadow'
+    );
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'staging' })).toBe('off');
+    expect(assertRlsEnforcementForProduction({})).toBe('off');
+  });
+
+  it('returns "on" without warning when enforced in production', () => {
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'on' })).toBe(
+      'on'
+    );
+  });
+
+  it('refuses to boot in production when RLS_ENFORCE is unset (no silent default)', () => {
+    expect(() => assertRlsEnforcementForProduction({ NODE_ENV: 'production' })).toThrow(
+      /REFUSING TO BOOT.*RLS_ENFORCE is not set/s
+    );
+    expect(() =>
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: '' })
+    ).toThrow(/REFUSING TO BOOT/);
+  });
+
+  it('refuses to boot in production on an unrecognized value (typo is not a decision)', () => {
+    expect(() =>
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'onn' })
+    ).toThrow(/unrecognized value "onn"/);
+  });
+
+  it('boot-failure message names all accepted operator decisions', () => {
+    try {
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production' });
+      throw new Error('expected throw');
+    } catch (e: unknown) {
+      const msg = (e as Error).message;
+      expect(msg).toContain('RLS_ENFORCE=on');
+      expect(msg).toContain('RLS_ENFORCE=shadow');
+      expect(msg).toContain('RLS_ENFORCE=off');
+    }
+  });
+
+  it('warns but does not throw when RLS is EXPLICITLY off in production', () => {
+    expect(() =>
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'off' })
+    ).not.toThrow();
+    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'off' })).toBe(
+      'off'
+    );
+  });
+
+  it('warns but does not throw when RLS is EXPLICITLY shadow in production', () => {
+    expect(
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'shadow' })
+    ).toBe('shadow');
+  });
+
+  it('hard-fails in production when RLS_REQUIRE_ENFORCE=true and RLS is not on', () => {
+    // Unset keeps the FAIL-CLOSED message under the opt-in flag.
+    expect(() =>
+      assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_REQUIRE_ENFORCE: 'true' })
+    ).toThrow(/FAIL-CLOSED/);
+    // Explicit off is still "not on" → blocked under the opt-in flag.
+    expect(() =>
+      assertRlsEnforcementForProduction({
+        NODE_ENV: 'production',
+        RLS_ENFORCE: 'off',
+        RLS_REQUIRE_ENFORCE: 'true',
+      })
+    ).toThrow(/FAIL-CLOSED/);
+    // shadow is still "not on" → also blocked under the opt-in flag.
+    expect(() =>
+      assertRlsEnforcementForProduction({
+        NODE_ENV: 'production',
+        RLS_ENFORCE: 'shadow',
+        RLS_REQUIRE_ENFORCE: 'true',
+      })
+    ).toThrow(/FAIL-CLOSED/);
+  });
+
+  it('RLS_REQUIRE_ENFORCE=true passes when RLS is on', () => {
+    expect(
+      assertRlsEnforcementForProduction({
+        NODE_ENV: 'production',
+        RLS_ENFORCE: 'on',
+        RLS_REQUIRE_ENFORCE: 'true',
+      })
+    ).toBe('on');
   });
 });
 

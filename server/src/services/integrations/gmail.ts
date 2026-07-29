@@ -114,7 +114,7 @@ export async function gmailIngestToReg(): Promise<{
     const looksIR = /information request|deficiency|additional information|clarify/i.test(
       m.subject + ' ' + m.body
     );
-    let extracted: {
+    const extracted: {
       questions: Array<{ raw: string }>;
       obligations: any[];
       region?: any;

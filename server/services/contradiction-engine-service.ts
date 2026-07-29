@@ -1246,7 +1246,7 @@ class ContradictionEngineService {
           objectBId: artB ? String(artB.id) : issue.sectionB || 'none',
           objectBLabel: artB
             ? `${artB.title || issue.sectionB} (${issue.sectionB})`
-            : issue.sectionB || null,
+            : issue.sectionB || undefined,
           contradictionType,
           severity: issue.severity === 'critical' ? 'critical' : 'high',
           truthHierarchyLevel: 5,

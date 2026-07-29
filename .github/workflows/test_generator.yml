@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   test-generator:
     runs-on: ubuntu-latest
+    env:
+      # The generation API fails closed (503) without a service token. Provide
+      # the same throwaway value to docker-compose (api container) and to the
+      # host-side pytest steps so the E2E client and server agree on the secret.
+      INTERNAL_SERVICE_TOKEN: e2e-internal-service-token
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +41,26 @@ jobs:
           TEST_OUTPUT_DIR: services/test_outputs
         run: |
           pytest -q services/tests/test_generator.py -q
+
+      - name: Prepare shared data volume (host path aligned with container mount)
+        run: |
+          # The compose file binds /shared_data:/shared_data so the worker's
+          # sibling generator containers resolve mount paths correctly on the
+          # host daemon. Create it world-writable: the api, worker, and generator
+          # all run as distinct non-root uids and must write here.
+          sudo mkdir -p /shared_data
+          sudo chmod 777 /shared_data
+          # The worker runs as the non-root `app` user and drives the host Docker
+          # daemon through the mounted socket; its in-container docker group GID
+          # won't match the host's, so widen the socket to allow access.
+          sudo chmod 666 /var/run/docker.sock
+
+      - name: Build sandboxed generator image
+        run: |
+          # secure_runner runs `docker run concept2cure/ectd-generator:latest`
+          # against the host daemon (via the mounted socket) but never builds it,
+          # so pre-build it here into the host image store.
+          docker build -t concept2cure/ectd-generator:latest -f services/Dockerfile services
 
       - name: Start E2E docker-compose
         run: |
@@ -73,7 +101,7 @@ jobs:
             exit 1
           fi
 
-      - name: Debug: query Celery worker state
+      - name: "Debug: query Celery worker state"
         if: always()
         run: |
           set -e

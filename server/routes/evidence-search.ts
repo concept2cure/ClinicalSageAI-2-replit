@@ -5,6 +5,7 @@
  */
 import { Router, Request, Response } from 'express';
 import { searchGovernedDocuments } from '../services/search/opensearchClient';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 const router = Router();
 
@@ -38,7 +39,9 @@ router.get('/search', async (req: Request, res: Response) => {
     }> = [];
 
 
-    const orgId = Number((req as any).organizationId || (req as any).tenantId || 0);
+    const orgGuard = requireAuthedOrgId(req, res);
+    if (!orgGuard.ok) return;
+    const orgId = orgGuard.orgId;
 
     try {
       const osResp = await searchGovernedDocuments({
@@ -61,27 +64,7 @@ router.get('/search', async (req: Request, res: Response) => {
       // OpenSearch unavailable, continue to current paths.
     }
 
-    if (results.length === 0) {
-      try {
-        // Use the semantic search service if available
-        const { semanticSearchService } = await import('../services/semantic-search-service');
-        if (semanticSearchService) {
-          const searchResults = await semanticSearchService.search(query, limit);
-          results = (searchResults || []).map((r: any) => ({
-            id: r.document?.id || r.id,
-            title: r.document?.title || r.title || 'Untitled',
-            type: r.document?.type || type || 'document',
-            source: 'semantic_search',
-            content: r.document?.content?.substring(0, 200) || '',
-            relevanceScore: r.score || 0,
-          }));
-        }
-      } catch {
-        // Semantic search unavailable, will fall back to basic search
-      }
-    }
-
-    // If semantic search returned nothing, try basic text search on vault documents
+    // If OpenSearch returned nothing, fall back to basic text search on vault documents
     if (results.length === 0) {
       try {
         const { db } = await import('../db');
@@ -144,7 +127,7 @@ router.get('/search', async (req: Request, res: Response) => {
  */
 router.get('/gather/:productId', async (req: Request, res: Response) => {
   try {
-    const { productId } = req.params;
+    const productId = String(req.params.productId);
     const sectionCode = req.query.section as string | undefined;
 
     let evidence: any[] = [];

@@ -11,14 +11,26 @@
  *     icon and title. No new visual element.
  *   - Textarea auto-grows with content up to 8 lines, then scrolls — the
  *     same Anthropic UX of a comfortable multi-line composer.
+ *   - Attach (paperclip) is wired: click-to-browse + drag/drop upload to
+ *     /api/chat/upload, which OCRs the file and writes its text to project
+ *     memory so AnA can retrieve it. Attachment chips show upload state.
  *
  * Ported from docs/design/concept2cure-design-system/project/ui_kits/
  * ana_ri/App.jsx (lines 71–91).
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
+import { isFeatureEnabled } from '@/flags/featureFlags';
 import { I } from './icons';
 import styles from './styles.module.css';
+import { ToolPicker } from './ToolPicker';
+import { ModelEffortPicker, type EffortLevel } from './ModelEffortPicker';
+import { SafetyNarrativeAffordance, type SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
+import {
+  useChatUpload,
+  attachmentReadLabel as readLabel,
+  CHAT_UPLOAD_ACCEPT,
+} from '../../hooks/useChatUpload';
 
 export interface ComposerProps {
   value: string;
@@ -27,6 +39,44 @@ export interface ComposerProps {
   onStop?: () => void;
   isStreaming?: boolean;
   placeholder?: string;
+  /** Scopes uploads to a project so extracted text lands in that project's memory. */
+  projectId?: string;
+  /**
+   * Called with the ready attachments at the moment of send, just before
+   * `onSend`. Lets the host attach them to the outgoing message so the thread
+   * can render them. The composer clears its attachment chips afterwards.
+   */
+  onAttachmentsSend?: (attachments: ComposerReadyAttachment[]) => void;
+  /** Tools the user has pinned for the next turn (additive focus, not a hard limit). */
+  selectedTools?: string[];
+  /** Replace the pinned tool set. When omitted, the Tools control is read-only auto. */
+  onSelectedToolsChange?: (tools: string[]) => void;
+  /**
+   * Current response effort (Fast/Balanced/Thorough). When `onEffortChange` is
+   * provided AND the ENABLE_MODEL_EFFORT_PICKER flag is on, the composer renders
+   * the effort segmented control + model dropdown.
+   */
+  effort?: EffortLevel;
+  onEffortChange?: (effort: EffortLevel) => void;
+  /** Current model override (registry id) or null for Auto. */
+  modelOverride?: string | null;
+  onModelOverrideChange?: (modelId: string | null) => void;
+  /**
+   * Fired when the guided Safety Narrative affordance is submitted (E5). When
+   * provided AND the ENABLE_ANA_DOCUMENT_STUDIO flag is on, the composer renders
+   * the "Safety narrative" chip that opens the guided draft→author→verify form.
+   * The host pins the returned tools and sends the composed message.
+   */
+  onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
+}
+
+/** A successfully-uploaded attachment, handed to the host on send. */
+export interface ComposerReadyAttachment {
+  id: string;
+  name: string;
+  fileId?: string;
+  extractionMethod?: string | null;
+  extractionWords?: number;
 }
 
 export function Composer({
@@ -36,13 +86,33 @@ export function Composer({
   onStop,
   isStreaming = false,
   placeholder = 'How can AnA help you today?',
+  projectId,
+  onAttachmentsSend,
+  selectedTools,
+  onSelectedToolsChange,
+  effort = 'balanced',
+  onEffortChange,
+  modelOverride,
+  onModelOverrideChange,
+  onSafetyNarrative,
 }: ComposerProps) {
+  // The effort/model picker is flag-gated AND requires the host to wire the
+  // effort handler. When either is absent the composer renders unchanged.
+  const showEffortPicker =
+    Boolean(onEffortChange) && isFeatureEnabled('ENABLE_MODEL_EFFORT_PICKER');
+  // E5 — the guided Safety Narrative affordance is gated behind the Document
+  // Studio flag and only appears when the host wires the submit handler.
+  const safetyNarrativeEnabled =
+    Boolean(onSafetyNarrative) && isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO');
   const AttachIco = I.attach;
-  const ToolsIco = I.tools;
   const DownIco = I.down;
   const ArrowUpIco = I.arrowUp;
   const StopIco = I.stop;
+  const CloseIco = I.close;
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { attachments, addFiles, removeAttachment, clear, statusMessage } = useChatUpload({ projectId });
+  const [dragging, setDragging] = useState(false);
 
   // Auto-grow: reset to single-line height, then expand to scrollHeight,
   // capped at ~8 lines. After the cap the browser shows a scrollbar.
@@ -57,19 +127,98 @@ export function Composer({
     ta.style.overflowY = ta.scrollHeight > max ? 'auto' : 'hidden';
   }, [value]);
 
+  // Surface ready attachments to the host (so the sent message can render them),
+  // clear the composer's chips, then fire the parent's send.
+  const handleSend = useCallback(() => {
+    const ready = attachments.filter((a) => a.status === 'ready');
+    if (ready.length > 0) {
+      onAttachmentsSend?.(
+        ready.map((a) => ({
+          id: a.id,
+          name: a.name,
+          fileId: a.fileId,
+          extractionMethod: a.extractionMethod,
+          extractionWords: a.extractionWords,
+        })),
+      );
+      clear();
+    }
+    onSend();
+  }, [attachments, onAttachmentsSend, onSend, clear]);
+
   const sendDisabled = !value.trim() && !isStreaming;
 
   return (
-    <div className={styles.composer}>
+    <div
+      className={styles.composer}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        setDragging(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragging(false);
+        addFiles(e.dataTransfer.files);
+      }}
+      data-dragging={dragging || undefined}
+    >
+      <div className={styles.srOnly} aria-live="polite" role="status">
+        {statusMessage}
+      </div>
+      {attachments.length > 0 && (
+        <div className={styles.composerAttachments}>
+          {attachments.map((a) => (
+            <span
+              key={a.id}
+              title={a.error || a.name}
+              className={[
+                styles.composerAttachment,
+                a.status === 'uploading' ? styles.composerAttachmentUploading : '',
+                a.status === 'error' ? styles.composerAttachmentError : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <span className={styles.attachmentText}>
+                <span className={styles.label}>
+                  {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+                </span>
+                {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords) && (
+                  <span className={styles.attachmentMeta}>
+                    {readLabel(a.extractionMethod, a.extractionWords)}
+                  </span>
+                )}
+                {a.status === 'error' && a.error && (
+                  <span className={styles.attachmentMeta}>{a.error}</span>
+                )}
+              </span>
+              <button
+                type="button"
+                className={styles.composerAttachmentRemove}
+                onClick={() => removeAttachment(a.id)}
+                aria-label={`Remove ${a.name}`}
+              >
+                <CloseIco size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      {safetyNarrativeEnabled && onSafetyNarrative && (
+        <SafetyNarrativeAffordance onSubmit={onSafetyNarrative} disabled={isStreaming} />
+      )}
       <textarea
         ref={taRef}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label="Message AnA"
         onKeyDown={e => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            if (!isStreaming) onSend();
+            if (!isStreaming) handleSend();
           } else if (e.key === 'Escape' && isStreaming && onStop) {
             // Escape during streaming = stop generation (Anthropic shortcut)
             e.preventDefault();
@@ -80,16 +229,48 @@ export function Composer({
       />
       <div className={styles.composerActions}>
         <div className={styles.left}>
-          <button className={styles.composerIcon} title="Attach" type="button">
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept={CHAT_UPLOAD_ACCEPT}
+            style={{ display: 'none' }}
+            onChange={e => {
+              addFiles(e.target.files);
+              e.target.value = '';
+            }}
+          />
+          <button
+            className={styles.composerIcon}
+            title="Attach files"
+            aria-label="Attach files"
+            type="button"
+            onClick={() => fileRef.current?.click()}
+          >
             <AttachIco size={16} />
           </button>
-          <button className={styles.composerIcon} title="Tools" type="button">
-            <ToolsIco size={16} />
-          </button>
+          {onSelectedToolsChange ? (
+            <ToolPicker
+              selectedTools={selectedTools ?? []}
+              onChange={onSelectedToolsChange}
+            />
+          ) : (
+            <button className={styles.composerIcon} title="Tools" aria-label="Tools" type="button" disabled>
+              <I.tools size={16} />
+            </button>
+          )}
           <button className={styles.composerChip} type="button">
             AnA 1.0 RI
             <DownIco size={12} />
           </button>
+          {showEffortPicker && onEffortChange && (
+            <ModelEffortPicker
+              effort={effort}
+              onEffortChange={onEffortChange}
+              modelOverride={modelOverride}
+              onModelOverrideChange={onModelOverrideChange ?? (() => {})}
+            />
+          )}
         </div>
         <button
           className={styles.composerSend}
@@ -97,7 +278,7 @@ export function Composer({
             if (isStreaming) {
               onStop?.();
             } else {
-              onSend();
+              handleSend();
             }
           }}
           disabled={sendDisabled}

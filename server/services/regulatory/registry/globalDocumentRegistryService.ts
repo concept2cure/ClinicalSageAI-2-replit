@@ -31,12 +31,20 @@ import {
   getSectionBlueprintForEntry,
   getTaskBlueprintForEntry,
 } from '../../../../shared/regulatory/project-bootstrap.js';
+import {
+  getTaxonomyTree,
+  getCountBySegment,
+  getSegmentsSorted,
+  type TaxonomySegmentNode,
+} from '../../../../shared/regulatory/filing-taxonomy.js';
 import type {
   RegulatoryApplicationType,
   Region,
   Agency,
   ApplicationFamily,
   ProductClass,
+  Segment,
+  FilingCategory,
   DossierStandard,
   RegionProfile,
   SectionBlueprint,
@@ -98,6 +106,8 @@ export function getApplicationTypes(filters?: {
   agency?: Agency;
   family?: ApplicationFamily;
   productClass?: ProductClass;
+  segment?: Segment;
+  category?: FilingCategory;
   query?: string;
 }): RegulatoryApplicationType[] {
   if (!filters) return GLOBAL_REGISTRY.filter(e => e.active);
@@ -115,6 +125,12 @@ export function getApplicationTypes(filters?: {
   }
   if (filters.productClass) {
     results = results.filter(e => e.productClass.includes(filters.productClass!));
+  }
+  if (filters.segment) {
+    results = results.filter(e => e.segment === filters.segment);
+  }
+  if (filters.category) {
+    results = results.filter(e => e.category === filters.category);
   }
   if (filters.query) {
     const q = filters.query.toLowerCase();
@@ -187,6 +203,27 @@ export function getBootstrapPreview(registryId: string): BootstrapPreview | null
     dossierStandard: bootstrap.dossierStandard as DossierStandard,
     validationProfile: bootstrap.validationProfile,
   };
+}
+
+/**
+ * Get the full segment → category → filings taxonomy tree (axis 2), in
+ * document order, scoped to active classified entries.
+ */
+export function getTaxonomy(): TaxonomySegmentNode[] {
+  return getTaxonomyTree(GLOBAL_REGISTRY.filter(e => e.active));
+}
+
+/**
+ * Get the segment list with their classified filing counts.
+ */
+export function getSegmentsWithCounts(): { id: Segment; title: string; subtitle: string; count: number }[] {
+  const counts = getCountBySegment(GLOBAL_REGISTRY.filter(e => e.active));
+  return getSegmentsSorted().map(s => ({
+    id: s.id,
+    title: s.title,
+    subtitle: s.subtitle,
+    count: counts[s.id] || 0,
+  }));
 }
 
 /**

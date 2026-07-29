@@ -7,14 +7,16 @@ import * as React from 'react';
 import { I } from '../icons';
 import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
 import type { Program } from '../data/programs';
-import { useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
+import { useEstarReadiness, useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
+import { PathwayPanes } from './pathway/PathwayPanes';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface K510SurfaceProps {
   program: Program | null;
   onAskAna: (text: string) => void;
-  onOpenEditor?: (sectionId: number) => void;
+  onOpenEditor?: (id: string | number) => void;
 }
 
 export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProps) {
@@ -31,9 +33,17 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const predicates = useK510Predicates(programId);
   const seMatrix  = useK510SeMatrix(programId);
 
-  const sourcePredicates = predicates.rows ?? K510_PREDICATES;
-  const sourceSeRows     = seMatrix.rows  ?? K510_SE_ROWS;
-  const sourceEstar      = estar.rows     ?? K510_ESTAR;
+  /* Can the OFFICIAL FDA eSTAR PDF be produced yet? Read-only probe — drives the
+     "Generate official eSTAR" button's disabled-with-reason state so the gate is
+     visible rather than hidden. `ready` flips true only once the official
+     template is vendored and its field map is populated (no code change). */
+  const estarReadiness = useEstarReadiness('510k', 'device');
+  const officialReady = estarReadiness.readiness?.ready ?? false;
+  const officialBlockers = estarReadiness.readiness?.blockers ?? [];
+
+  const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
+  const sourceSeRows     = useSampleRows(seMatrix.rows, K510_SE_ROWS);
+  const sourceEstar      = useSampleRows(estar.rows, K510_ESTAR);
   const estarBlockerCount = estar.rows ? estar.blockerCount : K510_ESTAR.filter(s => s.blocker).length;
   const estarTotal = sourceEstar.length;
 
@@ -65,7 +75,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const multi = selectedList.length > 1;
   const subjectName = program ? program.title : 'BX-204 CGM';
 
-  return (
+  const workspace = (
     <>
       <div className="section-hdr">
         <div>
@@ -85,12 +95,36 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
           style={{ marginLeft: 8 }}
           onClick={() =>
             onAskAna(
-              `Export the eSTAR package for ${program?.code ?? 'this project'} ready for FDA filing — ` +
-                `Module 6 PDF + Form FDA 3514, packaged as a ZIP with the required attachments.`,
+              `Assemble the 510(k) content package for ${program?.code ?? 'this project'} as a draft ZIP — ` +
+                `Module 6 PDF + Form FDA 3514 + required attachments. Note: this is a content package, ` +
+                `not the official FDA eSTAR PDF that CDRH ingests.`,
             )
           }
         >
-          Export eSTAR {I.download}
+          Export 510(k) package {I.download}
+        </button>
+        <button
+          className="section-more"
+          style={{ marginLeft: 8 }}
+          disabled={!officialReady || estarReadiness.loading}
+          title={
+            estarReadiness.loading
+              ? 'Checking official eSTAR availability…'
+              : officialReady
+                ? 'Generate the official FDA eSTAR interactive PDF — the submittable artifact CDRH ingests'
+                : `Official eSTAR not yet available — ${
+                    officialBlockers.join(' · ') || 'template not vendored / field map not populated'
+                  }`
+          }
+          onClick={() =>
+            onAskAna(
+              `Generate the OFFICIAL FDA eSTAR interactive PDF for ${program?.code ?? 'this project'} ` +
+                `via the governed export plane (POST /api/510k/estar/official) — the submittable artifact ` +
+                `CDRH ingests, not the draft content ZIP.`,
+            )
+          }
+        >
+          Generate official eSTAR (PDF) {I.download}
         </button>
       </div>
 
@@ -370,6 +404,17 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </button>
               </div>
             </div>
+            {!estarReadiness.loading && !officialReady ? (
+              <div role="status" style={{ padding: '8px 12px', fontSize: 12, lineHeight: 1.5 }}>
+                <span className="status-pill review">Official eSTAR PDF — not yet available</span>{' '}
+                <span style={{ opacity: 0.75 }}>
+                  {(officialBlockers.length
+                    ? officialBlockers
+                    : ['official FDA template not vendored', 'field map not populated']
+                  ).join(' · ')}
+                </span>
+              </div>
+            ) : null}
             <div className="estar">
               {sourceEstar.map(s => (
                 <React.Fragment key={s.id}>
@@ -401,5 +446,15 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         </div>
       </div>
     </>
+  );
+
+  return (
+    <PathwayPanes
+      pathway="k510"
+      workspace={workspace}
+      onAskAna={onAskAna}
+      onOpenEditor={onOpenEditor}
+      programId={program?.id ?? null}
+    />
   );
 }

@@ -1,12 +1,58 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
+import { eq } from 'drizzle-orm';
 import { storage } from '../storage';
 import { z } from 'zod';
-import { insertDocumentSchema, insertDocumentFolderSchema } from '@shared/schema';
+import {
+  insertDocumentSchema,
+  insertDocumentFolderSchema,
+  documentVersions,
+} from '@shared/schema';
+import { requestDb } from '../db/requestDb';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 // documentPreview stub removed — was a placeholder with no functionality
 import { randomUUID } from 'crypto';
+import { requireAuthedOrgId } from '../utils/authedOrgId';
+import auditService from '../services/auditService';
+import { createScopedLogger } from '../utils/logger.js';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
+import { FILE_LIMITS } from '../config/platform-limits';
+
+const logger = createScopedLogger('document-routes');
+
+/**
+ * Fire-and-forget document-access audit. 21 CFR Part 11 §11.10(e)
+ * requires every view of regulated content to be logged. Treat audit-
+ * write failures as non-fatal so a transient pipeline issue never
+ * blocks a legitimate download.
+ */
+async function auditDocumentAccess(
+  req: Request,
+  orgId: number,
+  documentId: string,
+  action: 'document_download' | 'document_view',
+): Promise<void> {
+  try {
+    const user = (req as any).user;
+    await auditService.logAction({
+      tenantId: orgId,
+      userId: user?.id ?? user?.userId,
+      action,
+      resourceType: 'document',
+      resourceId: documentId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { route: req.path },
+    });
+  } catch (err) {
+    logger.warn('Document-access audit write failed (non-fatal)', {
+      err: err instanceof Error ? err.message : String(err),
+      action,
+      documentId,
+    });
+  }
+}
 // Use cryptographically secure UUID for regulatory document identifiers
 const uuidv4 = () => randomUUID();
 
@@ -20,31 +66,65 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+/**
+ * Extension for a stored upload, derived from the VALIDATED mime type.
+ *
+ * The stored filename used to end in `path.extname(file.originalname)` — an
+ * attacker-supplied string reaching a filesystem path. In practice it was
+ * contained (path.extname operates on the basename, so a traversal sequence
+ * cannot survive it, and the stem is Date.now() + a uuid), but "contained by a
+ * subtlety of path.extname" is not a property worth depending on, and it is
+ * exactly the shape a taint analyser flags.
+ *
+ * The mime type is a better source and costs nothing: multer runs fileFilter
+ * BEFORE the storage engine's filename callback, and that filter rejects
+ * anything outside ALLOWED_MIME_TYPES. So by the time this map is consulted the
+ * value is one of ten known constants, and no request-controlled byte reaches
+ * the path at all. Unknown types cannot occur, but fall back to '' rather than
+ * guessing.
+ *
+ * The original filename is NOT lost — it is stored as `fileName` on the
+ * document row, which is where it belongs: data, not a path.
+ */
+const EXT_BY_MIME: Readonly<Record<string, string>> = {
+  'application/pdf': '.pdf',
+  'application/xml': '.xml',
+  'text/xml': '.xml',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+  'text/plain': '.txt',
+  'text/csv': '.csv',
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/tiff': '.tiff',
+};
+
 const multerStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueFilename = `${Date.now()}-${uuidv4()}${path.extname(file.originalname)}`;
+    // Unique, and built entirely from values this server controls.
+    const uniqueFilename = `${Date.now()}-${uuidv4()}${EXT_BY_MIME[file.mimetype] ?? ''}`;
     cb(null, uniqueFilename);
   },
 });
 
-// SECURITY: Restrict file types and enforce size limits for regulatory submissions
-const ALLOWED_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/xml', 'text/xml',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-  'text/plain', 'text/csv',
-  'image/png', 'image/jpeg', 'image/tiff',
-]);
+// SECURITY: Restrict file types and enforce size limits for regulatory
+// submissions.
+//
+// Derived from EXT_BY_MIME rather than written out a second time. The two lists
+// have to agree — the filter decides what may be stored, the map decides what it
+// is stored as — and two hand-maintained copies of the same list are a drift
+// waiting to happen: add a type to one and the other silently stores it with no
+// extension, or (worse) allow a type the map does not know. One source, no
+// possible disagreement.
+const ALLOWED_MIME_TYPES = new Set(Object.keys(EXT_BY_MIME));
 
 const upload = multer({
   storage: multerStorage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max per FDA ESG guidelines
+  limits: { fileSize: FILE_LIMITS.maxUploadBytes }, // 100MB max per FDA ESG guidelines
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
       cb(null, true);
@@ -54,12 +134,20 @@ const upload = multer({
   },
 });
 
-// Get all documents with optional filtering
+// Get all documents with optional filtering.
+//
+// SECURITY: this list endpoint was the exploitable cross-tenant
+// enumeration — it called storage.getDocuments() with no org id and
+// returned every tenant's documents. It is now gated by the JWT-bound
+// org id (403 if no tenant context) and that org id is the mandatory
+// scope passed into storage.getDocuments().
 router.get('/', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { type, status, search, folderId, limit, offset } = req.query;
 
-    const options: any = {};
+    const options: any = { organizationId: guard.orgId };
     if (limit) options.limit = Number(limit);
     if (offset) options.offset = Number(offset);
     if (type) options.type = String(type);
@@ -76,15 +164,27 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get a single document by ID
+// Get a single document by ID.
+//
+// SECURITY: storage.getDocument now requires an organizationId — the
+// helper sources it from the JWT (req.user) and refuses with 403 if
+// no tenant context is present. Foreign-tenant documents come back
+// as `undefined` from storage and surface here as 404 (existence
+// not enumerable).
 router.get('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
-    const document = await storage.getDocument(id);
+    const document = await storage.getDocument(id, guard.orgId);
 
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Audit document view — 21 CFR Part 11 §11.10(e) requires every
+    // read of regulated content to be logged.
+    await auditDocumentAccess(req, guard.orgId, id, 'document_view');
 
     res.json(document);
   } catch (error) {
@@ -94,10 +194,33 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new document
+//
+// SECURITY (cross-tenant write): this handler validated req.body with
+// insertDocumentSchema and passed the result straight to storage.createDocument.
+// That schema omits only id/createdAt/updatedAt, so `organizationId` — a notNull
+// FK on `documents` — was caller-supplied, and storage.createDocument spreads
+// the input verbatim into the insert. Any authenticated user could therefore
+// create a document inside ANY organization, unaudited, by naming its id in the
+// body. The five read/update/delete handlers in this same file already guard
+// with requireAuthedOrgId (lines 112, 142, 255, 277, 299); the two write paths
+// were the exception, and the tenant-isolation contract test covers
+// GET/PATCH/DELETE but not POST.
+//
+// server/utils/authedOrgId.ts names this precise pattern in its docstring:
+// "`req.body.organizationId` ... were each cross-tenant IDORs".
+//
+// The authed org id is applied AFTER the spread so a body value cannot win.
 router.post('/', async (req, res) => {
   try {
-    // Validate request body using Zod schema
-    const documentData = insertDocumentSchema.parse(req.body);
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    // Validate request body using Zod schema, with the tenant forced from the
+    // verified JWT rather than taken from user-controlled input.
+    const documentData = insertDocumentSchema.parse({
+      ...(req.body ?? {}),
+      organizationId: guard.orgId,
+    });
 
     // Create document in storage
     const document = await storage.createDocument(documentData);
@@ -116,9 +239,32 @@ router.post('/', async (req, res) => {
 // Upload a document file
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const file = req.file;
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // SECURITY: magic-byte signature verification + AV scan on the
+    // persisted bytes. multer's fileFilter only checks the declared
+    // MIME/extension (attacker-controlled); this confirms the bytes
+    // match and screens for malware. Fail-closed in production when no
+    // scanner is reachable. On rejection, unlink the temp file so a
+    // rejected upload doesn't linger on disk.
+    try {
+      await assertUploadSafe(file.path, file.mimetype, file.originalname);
+    } catch (safetyErr) {
+      try {
+        await fs.promises.unlink(file.path);
+      } catch {
+        /* best-effort cleanup */
+      }
+      if (safetyErr instanceof UploadSafetyError) {
+        return res.status(safetyErr.status).json(safetyErr.body);
+      }
+      throw safetyErr;
     }
 
     // Get document data from request
@@ -134,13 +280,19 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'Invalid document data format' });
     }
 
-    // Add file information to document data
+    // Add file information to document data.
+    //
+    // SECURITY: same cross-tenant write as POST / above — `documentData` is
+    // JSON.parse'd from a multipart field, so organizationId was entirely
+    // caller-controlled. Forced from the verified JWT, applied last so nothing
+    // in the uploaded payload can override it.
     const enhancedDocumentData = {
       ...documentData,
       fileName: file.originalname,
       fileType: file.mimetype,
       fileSize: file.size,
       filePath: file.path,
+      organizationId: guard.orgId,
     };
 
     // Validate document data
@@ -160,19 +312,23 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// Update a document
+// Update a document. Tenant gate first: the existence check uses the
+// JWT-bound getDocument so a foreign-tenant id is indistinguishable
+// from "not found", and the update PK lookup in storage is then on a
+// known-in-scope id.
 router.patch('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get existing document to ensure it exists
-    const existingDocument = await storage.getDocument(id);
+    const existingDocument = await storage.getDocument(id, guard.orgId);
     if (!existingDocument) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
     // Update document in storage
-    const updatedDocument = await storage.updateDocument(id, req.body);
+    const updatedDocument = await storage.updateDocument(id, guard.orgId, req.body);
 
     res.json(updatedDocument);
   } catch (error) {
@@ -181,19 +337,20 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// Delete a document
+// Delete a document — same tenant gate as PATCH.
 router.delete('/:id', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get existing document to ensure it exists
-    const existingDocument = await storage.getDocument(id);
+    const existingDocument = await storage.getDocument(id, guard.orgId);
     if (!existingDocument) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
     // Delete document from storage
-    const result = await storage.deleteDocument(id);
+    const result = await storage.deleteDocument(id, guard.orgId);
 
     res.json({ success: result });
   } catch (error) {
@@ -205,28 +362,56 @@ router.delete('/:id', async (req, res) => {
 // Download a document
 router.get('/:id/download', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { id } = req.params;
 
-    // Get document to ensure it exists
-    const document = await storage.getDocument(id);
+    // Tenant-scoped fetch — a foreign-tenant document is "not found".
+    // Without this, a download URL with a guessed id could serve
+    // another tenant's file content (the worst class of leak here).
+    const document = await storage.getDocument(id, guard.orgId);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // If the document has a filePath, send the file
-    if (document.filePath && fs.existsSync(document.filePath)) {
-      return res.download(document.filePath, document.fileName || `document-${id}.pdf`);
+    // Audit BEFORE serving the bytes. 21 CFR Part 11 requires the
+    // download to be recorded even if the response stream later
+    // fails — the user requested it, that's the event.
+    await auditDocumentAccess(req, guard.orgId, id, 'document_download');
+
+    // File bytes / content live on the current document version, not on the
+    // document row. Load the current version to source filePath and content.
+    const currentVersion = document.currentVersionId
+      ? (
+          await requestDb(req)
+            .select()
+            .from(documentVersions)
+            .where(eq(documentVersions.id, document.currentVersionId))
+            .limit(1)
+        )[0]
+      : undefined;
+
+    // Derive a download filename from the document title and version mime type.
+    const extFromMime = currentVersion?.mimeType?.split('/')[1];
+    const fileName = `${document.title || `document-${id}`}${extFromMime ? `.${extFromMime}` : '.pdf'}`;
+
+    // If the current version has a filePath, send the file
+    if (currentVersion?.filePath && fs.existsSync(currentVersion.filePath)) {
+      return res.download(currentVersion.filePath, fileName);
     }
 
-    // For documents with content but no file, generate a PDF or HTML file
-    if (document.content) {
+    // For versions with content but no file, generate an HTML file
+    if (currentVersion?.content) {
       // This is a simplified example - in a real app, you'd use a PDF generation library
-      const htmlContent = generateHtmlFromDocument(document);
+      const htmlContent = generateHtmlFromDocument({
+        ...document,
+        content: currentVersion.content,
+      });
 
       res.setHeader('Content-Type', 'text/html');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${document.name || 'document'}.html"`
+        `attachment; filename="${document.title || 'document'}.html"`
       );
       return res.send(htmlContent);
     }
@@ -240,6 +425,22 @@ router.get('/:id/download', async (req, res) => {
 });
 
 // Get all folders
+// TENANCY GAP — NOT fixable with a guard, recorded rather than papered over.
+//
+// `document_folders` has no organizationId column (shared/schema.ts), and
+// storage.getFolders/createFolder accept no org scope. So every tenant sees and
+// writes the same folder tree, and neither handler below can be tenant-scoped
+// without a schema change plus a backfill.
+//
+// Adding requireAuthedOrgId here would return 403 without a tenant context and
+// then ignore the org entirely — the appearance of isolation with none of the
+// substance, which is worse than the honest absence. The documents themselves
+// ARE scoped (documents.organizationId is notNull and every document handler in
+// this file guards on it); only the folder taxonomy is global.
+//
+// This route currently has no client caller, so the exposure is limited to
+// direct API access. It is a deletion candidate; if it is kept instead, the
+// folder table needs a tenant column first.
 router.get('/folders', async (req, res) => {
   try {
     const { parentId } = req.query;

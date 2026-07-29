@@ -10,6 +10,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'client/src'),
       '@shared': path.resolve(__dirname, 'shared'),
+      // Bare `shared/...` imports (used by 14+ server modules) resolve via
+      // tsconfig `baseUrl` for tsc; mirror that here so vitest can import them.
+      shared: path.resolve(__dirname, 'shared'),
     },
   },
   test: {
@@ -24,6 +27,8 @@ export default defineConfig({
       'server/**/__tests__/**/*.test.ts',
       'server/**/__tests__/**/*.spec.ts',
       'client/**/__tests__/**/*.test.ts',
+      'client/**/__tests__/**/*.test.tsx',
+      'shared/**/__tests__/**/*.test.ts',
     ],
     exclude: ['node_modules', 'dist', '_archive', '_deprecated', 'tests/e2e/**'],
     coverage: {

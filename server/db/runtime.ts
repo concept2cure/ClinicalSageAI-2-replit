@@ -30,7 +30,7 @@ import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
-import { installRlsEnforcement } from './rlsEnforcement';
+import { installRlsEnforcement, assertRlsEnforcementForProduction } from './rlsEnforcement';
 
 const logger = createScopedLogger('database');
 
@@ -47,13 +47,13 @@ try {
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
-      max: isProduction ? 40 : 20, // Scale pool for production concurrency
-      idleTimeoutMillis: 30000, // Release idle connections after 30s (balanced for bursty traffic)
+      max: isProduction ? 40 : 20,
+      idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
-      statement_timeout: 30000, // Kill queries running longer than 30s
-      idle_in_transaction_session_timeout: 60000, // Kill idle-in-transaction after 60s
-      allowExitOnIdle: !isProduction, // Dev: let process exit; Prod: keep pool alive
-    });
+      statement_timeout: 30000,
+      idle_in_transaction_session_timeout: 60000,
+      allowExitOnIdle: !isProduction,
+    } as ConstructorParameters<typeof Pool>[0]);
 
     // Observability hook for the RLS rollout (PR A): every pool.query /
     // pool.connect emits a counter labelled by tenant-scope presence and
@@ -65,6 +65,13 @@ try {
     // `current_setting('app.rls_enforce') IS DISTINCT FROM 'on'` clause,
     // so unless RLS_ENFORCE=on is explicitly set, every row passes.
     installRlsEnforcement(pool);
+
+    // Boot-time visibility for the RLS rollout (issue #843). Loudly warns when
+    // production is running with RLS off (defense-in-depth disabled), and
+    // hard-fails the boot when the operator opts into fail-closed via
+    // RLS_REQUIRE_ENFORCE=true. Default behaviour is unchanged (warn only).
+    const rlsMode = assertRlsEnforcementForProduction();
+    logger.info('RLS enforcement mode resolved', { mode: rlsMode });
 
     const testConnection = (retries = 3, delay = 3000) => {
       pool!.query('SELECT NOW()', (err, res) => {
@@ -187,16 +194,40 @@ export async function transaction<T>(callback: (client: any) => Promise<T>): Pro
   }
 
   const client = await pool.connect();
+  // Tracks whether the connection is likely poisoned (e.g. a failed ROLLBACK
+  // on a broken socket). A poisoned client must be EVICTED from the pool, not
+  // returned to it, or subsequent borrowers inherit a wedged connection.
+  let rollbackFailed: Error | null = null;
   try {
     await client.query('BEGIN');
     const result = await callback(client);
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    // Roll back in its own try/catch so a failed ROLLBACK does NOT mask the
+    // ORIGINAL error. If the rollback throws, the connection is presumed
+    // broken; log it and flag the client for eviction below.
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError: any) {
+      rollbackFailed = rollbackError;
+      logger.error('Transaction ROLLBACK failed; evicting connection from pool', {
+        rollbackError: rollbackError?.message || String(rollbackError),
+        originalError: (error as any)?.message || String(error),
+      });
+    }
+    // Always propagate the ORIGINAL error, never the rollback failure.
     throw error;
   } finally {
-    client.release();
+    // node-pg: calling release() with a truthy argument (an Error or `true`)
+    // destroys the underlying connection instead of returning it to the pool.
+    // Use that path only when the rollback failed (connection likely broken);
+    // otherwise return the healthy connection normally.
+    if (rollbackFailed) {
+      client.release(rollbackFailed);
+    } else {
+      client.release();
+    }
   }
 }
 
@@ -230,7 +261,11 @@ export async function runMigrations(): Promise<void> {
 
   try {
     logger.info('Running database migrations...');
-    const migrationsFolder = path.resolve(__dirname, '../../migrations');
+    // cwd-anchored, not __dirname: this file ships inside the esbuild bundle
+    // (dist/index.js), where __dirname is undefined under ESM. Both dev (cwd =
+    // repo root) and prod (WORKDIR /app, migrations/ copied into the image)
+    // put the migrations at <cwd>/migrations.
+    const migrationsFolder = path.resolve(process.cwd(), 'migrations');
     await migrate(db, { migrationsFolder });
     logger.info('Database migrations completed successfully');
   } catch (error: any) {

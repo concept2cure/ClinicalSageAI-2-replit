@@ -20,9 +20,11 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import type { IncomingMessage, ServerResponse } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { createHash, randomBytes } from 'crypto';
+import { reportSecurityAlert } from '../services/security-alerts';
 
 // ============================================================================
 // CONFIGURATION
@@ -33,30 +35,45 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV === 'development',
 
-  // CORS — production origins always included; localhost only in dev
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
-    .split(',')
-    .filter(Boolean)
-    .concat([
-      'https://trialsage.com',
-      'https://www.trialsage.com',
-      'https://app.trialsage.com',
-      'https://concept2cure-ri.ai',
-      'https://app.concept2cure-ri.ai',
-      'https://clinicalsage.ai',
-      'https://app.clinicalsage.ai',
-    ])
-    .concat(
-      process.env.NODE_ENV !== 'production'
-        ? ['http://localhost:5000', 'http://localhost:3000']
-        : []
+  // CORS — production origins always included; localhost only in dev.
+  // Env-supplied origins are trimmed and validated (malformed entries dropped),
+  // and the final list is de-duplicated so an operator typo cannot widen or
+  // corrupt the allowlist.
+  allowedOrigins: Array.from(
+    new Set(
+      (process.env.ALLOWED_ORIGINS || '')
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean)
+        .concat([
+          'https://trialsage.com',
+          'https://www.trialsage.com',
+          'https://app.trialsage.com',
+          'https://concept2cure-ri.ai',
+          'https://app.concept2cure-ri.ai',
+          'https://clinicalsage.ai',
+          'https://app.clinicalsage.ai',
+        ])
+        .concat(
+          process.env.NODE_ENV !== 'production'
+            ? ['http://localhost:5000', 'http://localhost:3000']
+            : []
+        )
+        .concat(
+          // Allow GitHub Codespaces forwarded origins
+          process.env.CODESPACES === 'true' || process.env.CODESPACE_NAME
+            ? [`https://${process.env.CODESPACE_NAME}-5000.app.github.dev`]
+            : []
+        )
     )
-    .concat(
-      // Allow GitHub Codespaces forwarded origins
-      process.env.CODESPACES === 'true' || process.env.CODESPACE_NAME
-        ? [`https://${process.env.CODESPACE_NAME}-5000.app.github.dev`]
-        : []
-    ),
+  ).filter(origin => {
+    try {
+      const u = new URL(origin);
+      return u.protocol === 'https:' || u.protocol === 'http:';
+    } catch {
+      return false;
+    }
+  }),
 
   // Rate Limits — environment-aware (single canonical definition)
   rateLimits: (() => {
@@ -89,19 +106,85 @@ const config = {
 // SECURITY HEADERS (Helmet Configuration)
 // ============================================================================
 
-// In development, use a permissive (but present) security policy.
-// CSP is set to report-only so issues are visible without breaking HMR/iframes.
+/**
+ * Per-request CSP nonce middleware. Stashes a 128-bit base64 nonce on
+ * `res.locals.cspNonce` so:
+ *   - the helmet CSP directive below can emit `'nonce-<value>'` in
+ *     `script-src`, allowing the SPA's bundled module loader to run
+ *     without needing `'unsafe-inline'`;
+ *   - the HTML serving layer (server/vite.ts) can inject the same nonce
+ *     into every `<script>` tag in index.html.
+ *
+ * Strict-dynamic propagates trust from the nonced loader to scripts it
+ * imports, so we don't need to enumerate every chunk URL.
+ */
+export function cspNonce(req: Request, res: Response, next: NextFunction) {
+  res.locals.cspNonce = randomBytes(16).toString('base64');
+  next();
+}
+
+// Helmet types the directive function as (IncomingMessage, ServerResponse) so
+// we have to match that exactly — Express's narrower types would fail TS's
+// contravariant parameter check. The `as` cast at call time recovers locals.
+const scriptSrcDirective = (_req: IncomingMessage, res: ServerResponse) => {
+  const locals = (res as ServerResponse & { locals?: { cspNonce?: string } }).locals;
+  return `'nonce-${locals?.cspNonce ?? ''}'`;
+};
+
+// In development, keep CSP report-only so HMR/Vite injections don't break
+// the dev loop — violations still surface in the browser console where we
+// can act on them. Production enforces.
+/**
+ * CSP violation report endpoint path. Browsers POST to this URL when a
+ * directive is violated; the handler in server/routes/csp-report.ts logs
+ * the report. Defined as a constant so the middleware directive and the
+ * handler mount path stay in sync.
+ */
+export const CSP_REPORT_URI = '/api/csp-report';
+
+/**
+ * Reporting Endpoints group name. Referenced by the `report-to` CSP
+ * directive and by the `Reporting-Endpoints` response header in
+ * `permissionsPolicy`. Two layers because:
+ *   - `report-uri` (legacy) — Firefox, Safari today.
+ *   - `report-to` + `Reporting-Endpoints` (modern API) — Chrome/Edge.
+ * Keeping both means reports land regardless of browser.
+ */
+export const CSP_REPORT_TO_GROUP = 'csp-endpoint';
+
 export const securityHeaders = config.isDevelopment
   ? helmet({
       contentSecurityPolicy: {
-        reportOnly: true, // Don't block, but log violations in browser console
+        reportOnly: true,
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          // Even in dev we drop 'unsafe-inline' from script-src so the
+          // report-only signal is meaningful. Vite's dev HMR injects its
+          // own scripts through its middleware — those get the nonce via
+          // setupVite's transformIndexHtml hook.
+          scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'", "'unsafe-eval'"],
+          // Split style-src into elem (for <style> and <link>) and attr
+          // (for inline style="..."). React style={{...}} props are the
+          // pervasive case and stay allowed via style-src-attr; runtime
+          // <style> injection from Tiptap/Radix is nonced by the boot-time
+          // patch in client/src/cspNonce.ts.
+          styleSrcElem: ["'self'", scriptSrcDirective, "'unsafe-inline'"],
+          styleSrcAttr: ["'unsafe-inline'"],
           connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           frameSrc: ["'self'"],
+          // Hardening directives (defense-in-depth, report-only in dev):
+          //   base-uri locks <base href> so an injected element can't
+          //     re-root every relative URL on the page.
+          //   form-action restricts where forms can POST/GET, blocking
+          //     phishing pages that inject a form into our DOM.
+          //   frame-ancestors stops other origins from iframing the
+          //     app — defense against clickjacking. Mirrors frameguard.
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
+          reportUri: [CSP_REPORT_URI],
+          reportTo: [CSP_REPORT_TO_GROUP],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -109,20 +192,65 @@ export const securityHeaders = config.isDevelopment
       crossOriginResourcePolicy: false,
       hsts: false, // No HSTS in dev (no TLS locally)
       frameguard: false, // Allow iframes (VS Code Simple Browser)
-      xssFilter: true, // Keep XSS filter active even in dev
+      xssFilter: true,
     })
   : helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          // Hardened: per-request nonce + strict-dynamic. Drops both
+          // 'unsafe-inline' and 'unsafe-eval' for scripts. The nonce is
+          // injected into <script> tags by the HTML serving layer
+          // (server/vite.ts), and strict-dynamic propagates trust to
+          // imported chunks so we don't have to whitelist them.
+          scriptSrc: ["'self'", scriptSrcDirective, "'strict-dynamic'"],
+          // style-src split: elem requires a nonce (no 'unsafe-inline'),
+          // attr keeps 'unsafe-inline' so React style={{...}} props work.
+          // Runtime <style> injection from Tiptap/Radix is auto-nonced by
+          // the boot-time createElement patch in client/src/cspNonce.ts.
+          // Google Fonts stylesheet is loaded via <link> from index.html.
+          styleSrcElem: [
+            "'self'",
+            scriptSrcDirective,
+            'https://fonts.googleapis.com',
+          ],
+          styleSrcAttr: ["'unsafe-inline'"],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          // imgSrc deliberately allows any https: origin. The app renders
+          // user/tenant-supplied imagery (uploaded logos, document thumbnails,
+          // remote-fetched preview images, external avatar URLs) whose hosts
+          // are not known ahead of time. Narrowing this to an explicit
+          // allowlist would require enumerating every CDN/storage/proxy host
+          // those assets can come from; until that inventory exists, tightening
+          // here would silently break image rendering. 'data:'/'blob:' cover
+          // inline + client-generated images (e.g. canvas/PDF previews).
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
-          connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:', 'ws:'],
+          // connectSrc: 'self' + a few known API hosts, plus a broad wss:.
+          // Only wss:// (never ws://) — ws:// would let a MITM observer see
+          // socket traffic from a downgraded page; production has TLS.
+          // wss: is left broad because outbound fetch/websocket targets span
+          // many external APIs (AI providers, data connectors, integrations)
+          // that are configured per-tenant at runtime. A tighter policy would
+          // need a complete, centrally-maintained registry of every outbound
+          // host the platform may call; absent that, restricting this risks
+          // breaking live integrations. Revisit once the connector registry
+          // can emit the canonical host list.
+          connectSrc: ["'self'", 'https://api.openai.com', 'https://*.neon.tech', 'wss:'],
           frameSrc: ["'self'"],
           objectSrc: ["'none'"],
+          // Hardening directives (enforced in prod):
+          //   base-uri 'self' blocks <base href> injection from rewriting
+          //     every relative URL on the page.
+          //   form-action 'self' confines form posts to our origin,
+          //     killing phishing forms that an XSS could inject.
+          //   frame-ancestors 'self' is the CSP-spec replacement for
+          //     X-Frame-Options; defense against clickjacking.
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
           upgradeInsecureRequests: [],
+          reportUri: [CSP_REPORT_URI],
+          reportTo: [CSP_REPORT_TO_GROUP],
         },
       },
       crossOriginEmbedderPolicy: false, // Disable for PDF rendering
@@ -140,6 +268,58 @@ export const securityHeaders = config.isDevelopment
       frameguard: { action: 'sameorigin' },
       permittedCrossDomainPolicies: { permittedPolicies: 'none' },
     });
+
+/**
+ * Permissions-Policy (formerly Feature-Policy) — opt out of browser
+ * features we don't use. Reduces the blast radius of a successful XSS
+ * by denying access to powerful APIs even after script execution.
+ *
+ * Defaults are restrictive; we explicitly allow clipboard-write on
+ * self because the editor's "copy as markdown" / "copy citation"
+ * actions need it. Everything else is `()` (disabled for all origins).
+ */
+export function permissionsPolicy(_req: Request, res: Response, next: NextFunction) {
+  // Reporting-Endpoints — the modern Reporting API binding. CSP's
+  // `report-to <group>` directive resolves to this URL. Browsers that
+  // understand this header use it; older ones fall back to `report-uri`.
+  // Single quoted-string form per spec.
+  res.setHeader(
+    'Reporting-Endpoints',
+    `${CSP_REPORT_TO_GROUP}="${CSP_REPORT_URI}"`,
+  );
+
+  res.setHeader(
+    'Permissions-Policy',
+    [
+      'accelerometer=()',
+      'autoplay=()',
+      'camera=()',
+      'clipboard-read=()',
+      'clipboard-write=(self)',
+      'cross-origin-isolated=()',
+      'display-capture=()',
+      'encrypted-media=()',
+      'fullscreen=(self)',
+      'geolocation=()',
+      'gyroscope=()',
+      'hid=()',
+      'idle-detection=()',
+      'magnetometer=()',
+      'microphone=()',
+      'midi=()',
+      'payment=()',
+      'picture-in-picture=()',
+      'publickey-credentials-get=()',
+      'screen-wake-lock=()',
+      'serial=()',
+      'sync-xhr=()',
+      'usb=()',
+      'web-share=()',
+      'xr-spatial-tracking=()',
+    ].join(', '),
+  );
+  next();
+}
 
 // ============================================================================
 // CORS CONFIGURATION
@@ -239,29 +419,19 @@ export const rateLimiters = {
 // INPUT SANITIZATION
 // ============================================================================
 
-// Sanitize string to prevent XSS
-function sanitizeString(value: string): string {
-  if (typeof value !== 'string') return value;
-
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;')
-    .replace(/`/g, '&#96;');
-  // NOTE: SQL keyword stripping removed — Drizzle ORM uses parameterized queries,
-  // making regex-based SQL keyword removal unnecessary and harmful to legitimate content.
-}
-
-// Deep sanitize object
+// Deep sanitize object.
+//
+// HTML-encoding at the input boundary used to live here. It's a well-
+// documented anti-pattern: it corrupts stored data, double-encodes on
+// render, breaks JSON API consumers (an attacker payload would be
+// stored as `&lt;script&gt;` and shipped as that string to any consumer
+// that doesn't HTML-decode), and gives a false sense of XSS protection.
+// The correct defense is encoding at the output boundary, which the SPA
+// and server-rendered templates already do. SQL injection is prevented
+// by Drizzle's parameterized queries, not by regex. This walker keeps
+// only the prototype-pollution scrub.
 function sanitizeObject(obj: any, depth = 0): any {
   if (depth > 10) return obj; // Prevent infinite recursion
-
-  if (typeof obj === 'string') {
-    return sanitizeString(obj);
-  }
 
   if (Array.isArray(obj)) {
     return obj.map(item => sanitizeObject(item, depth + 1));
@@ -270,7 +440,7 @@ function sanitizeObject(obj: any, depth = 0): any {
   if (obj && typeof obj === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      // Skip prototype pollution attempts
+      // Block prototype-pollution keys.
       if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
         console.warn(`[SECURITY] Blocked prototype pollution attempt: ${key}`);
         continue;
@@ -283,21 +453,46 @@ function sanitizeObject(obj: any, depth = 0): any {
   return obj;
 }
 
+// In-place variant of sanitizeObject for objects that cannot be reassigned.
+// Express 5 exposes req.query (and req.params on the prototype) via getters,
+// so `req.query = sanitizeObject(req.query)` throws — which previously hit
+// the fail-open catch below and silently skipped the scrub on every request.
+function scrubObjectInPlace(obj: any, depth = 0): void {
+  if (depth > 10 || !obj || typeof obj !== 'object') return;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) scrubObjectInPlace(item, depth + 1);
+    return;
+  }
+
+  for (const key of Object.keys(obj)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      console.warn(`[SECURITY] Blocked prototype pollution attempt: ${key}`);
+      delete obj[key];
+      continue;
+    }
+    scrubObjectInPlace(obj[key], depth + 1);
+  }
+}
+
 export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
   try {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body);
     }
+    // req.query / req.params are getter-backed in Express 5 — scrub in place.
     if (req.query && typeof req.query === 'object') {
-      req.query = sanitizeObject(req.query);
+      scrubObjectInPlace(req.query);
     }
     if (req.params && typeof req.params === 'object') {
-      req.params = sanitizeObject(req.params);
+      scrubObjectInPlace(req.params);
     }
     next();
   } catch (error) {
+    // Fail closed: a request the scrubber cannot process is rejected rather
+    // than passed through unsanitized.
     console.error('[SECURITY] Input sanitization error:', error);
-    next(); // Continue even on error to not break request flow
+    res.status(400).json({ error: 'Malformed request payload' });
   }
 }
 
@@ -314,6 +509,7 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
     '/api/auth/login',
     '/api/auth/register',
     '/api/auth/signup',
+    '/api/csp-report',
   ];
   if (publicPaths.some(p => req.path.startsWith(p))) {
     return next();
@@ -327,13 +523,47 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
   const headerOrgId = req.headers['x-organization-id'] as string | undefined;
 
   if (user?.organizationId) {
-    // Detect and block header-based impersonation attempts
+    // Detect and block header-based impersonation attempts.
+    // Audit AND log: this is a security-significant event — a valid
+    // JWT user actively trying to access another tenant's data. The
+    // audit pipeline gives regulators an authoritative record;
+    // logger.warn gives ops live visibility.
     if (headerOrgId && String(headerOrgId) !== String(user.organizationId)) {
-      console.warn(
-        `[SECURITY] Tenant impersonation attempt blocked: ` +
-          `JWT org=${user.organizationId}, Header org=${headerOrgId}, ` +
-          `userId=${user.id || user.userId || 'unknown'}, path=${req.path}`
-      );
+      const impersonationDetail = {
+        jwtOrg: user.organizationId,
+        headerOrg: headerOrgId,
+        userId: user.id || user.userId || 'unknown',
+        path: req.path,
+        method: req.method,
+        ipAddress: req.ip,
+      };
+      // Fire-and-forget audit. Dynamic import keeps this middleware
+      // free of a top-level audit-service dependency (which itself
+      // imports DB code and would slow boot).
+      (async () => {
+        try {
+          const { default: auditService } = await import('../services/auditService');
+          await auditService.logAction({
+            tenantId: user.organizationId,
+            userId: user.id || user.userId,
+            action: 'tenant_impersonation_attempt',
+            resourceType: 'security_event',
+            resourceId: String(headerOrgId),
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            details: impersonationDetail,
+          });
+        } catch {
+          /* audit failure is non-fatal */
+        }
+      })();
+      // Keep the structured-log line as well for ops dashboards; also
+      // forward to the monitoring webhook when one is configured.
+      reportSecurityAlert({
+        kind: 'tenant_impersonation_blocked',
+        message: 'Tenant impersonation attempt blocked',
+        detail: impersonationDetail as unknown as Record<string, unknown>,
+      });
       return res.status(403).json({
         error: 'Organization mismatch',
         code: 'TENANT_MISMATCH',
@@ -401,7 +631,17 @@ export function auditLog(req: Request, res: Response, next: NextFunction) {
   if (!config.enableAuditLog) return next();
 
   const startTime = Date.now();
-  const requestId = (req.headers['x-request-id'] as string) || randomBytes(8).toString('hex');
+  // Prefer the validated id set by the requestId middleware. Only fall
+  // back to a fresh value if this middleware ran without it (unusual
+  // ordering). Never trust the raw header — see isValidClientRequestId.
+  const existingId = (req as any).requestId;
+  const supplied = req.headers['x-request-id'];
+  const requestId: string =
+    typeof existingId === 'string' && existingId.length > 0
+      ? existingId
+      : isValidClientRequestId(supplied)
+        ? supplied
+        : randomBytes(16).toString('hex');
 
   // Add request ID to response headers
   res.setHeader('X-Request-Id', requestId);
@@ -476,22 +716,92 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
     (req as any).tenantId = result.organizationId;
     (req as any).apiScopes = result.scopes;
     (req as any).apiRateLimit = result.rateLimit;
-  } catch {
-    // If api_keys table doesn't exist yet, fall through gracefully
-    const keyHash = createHash('sha256').update(apiKey).digest('hex');
-    (req as any).authMethod = 'api_key';
-    (req as any).apiKeyHash = keyHash;
+  } catch (error) {
+    // Fail closed: the client presented an API key but the key store could
+    // not validate it (service error / table missing). Falling through here
+    // used to mark the request authMethod='api_key' without any validation.
+    console.error('[SECURITY] API key validation unavailable:', (error as Error)?.message);
+    return res.status(503).json({
+      error: 'API key validation unavailable',
+      code: 'API_KEY_SERVICE_UNAVAILABLE',
+    });
   }
 
   next();
 }
 
 // ============================================================================
+// API KEY SCOPE ENFORCEMENT
+// ============================================================================
+
+/**
+ * Enforce API-key scopes on a route.
+ *
+ * validateApiKey (above) authenticates an X-API-Key header and stashes the
+ * key's granted scopes on `req.apiScopes` plus `req.authMethod = 'api_key'`,
+ * but until now nothing CHECKED those scopes — a key minted for `csr:read`
+ * could call any /api/v1 endpoint. This guard closes that gap.
+ *
+ * Semantics:
+ *   - If the request was NOT authenticated via an API key
+ *     (`req.authMethod !== 'api_key'`), this guard PASSES THROUGH. Normal
+ *     JWT/session requests are governed by session RBAC, not by API-key
+ *     scopes; applying scope checks to them would block every browser user.
+ *   - If the request WAS authenticated via an API key, the key must carry
+ *     ALL of the required scopes (logical AND). A key missing any one of
+ *     them gets 403. ALL (not ANY) is the conservative choice: a route that
+ *     declares `requireScope('a','b')` is asserting it needs both
+ *     capabilities, so partial grants must not slip through.
+ *
+ * A 403 lists the missing scopes (not the full granted set) so callers can
+ * see what to add without us echoing the key's entire authorization surface.
+ */
+export function requireScope(...scopes: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Non-API-key callers (browser sessions, JWT) are out of scope here —
+    // session RBAC owns them. Pass through.
+    if ((req as any).authMethod !== 'api_key') {
+      return next();
+    }
+
+    const granted = Array.isArray((req as any).apiScopes)
+      ? ((req as any).apiScopes as string[])
+      : [];
+
+    // ALL required scopes must be present.
+    const missing = scopes.filter(s => !granted.includes(s));
+    if (missing.length > 0) {
+      return res.status(403).json({
+        error: 'Insufficient API key scope',
+        code: 'INSUFFICIENT_SCOPE',
+        required: scopes,
+        missing,
+      });
+    }
+
+    next();
+  };
+}
+
+// ============================================================================
 // REQUEST ID MIDDLEWARE
 // ============================================================================
 
+// Accept a client-provided request id only if it matches a conservative,
+// log-safe shape (alphanumeric, dashes, underscores, dots, bounded
+// length). Otherwise the value is replaced with a server-generated id.
+// Without this guard callers can supply arbitrary strings — spoofing
+// correlation ids, polluting log search, or injecting odd characters
+// that the downstream log pipeline may not handle cleanly.
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
+
+export function isValidClientRequestId(value: unknown): value is string {
+  return typeof value === 'string' && REQUEST_ID_PATTERN.test(value);
+}
+
 export function requestId(req: Request, res: Response, next: NextFunction) {
-  const id = (req.headers['x-request-id'] as string) || randomBytes(16).toString('hex');
+  const supplied = req.headers['x-request-id'];
+  const id = isValidClientRequestId(supplied) ? supplied : randomBytes(16).toString('hex');
   (req as any).requestId = id;
   res.setHeader('X-Request-Id', id);
   next();
@@ -523,6 +833,36 @@ export function requireJwtSecret(): void {
  * adds defense-in-depth by validating Origin/Referer on state-changing
  * requests in production.
  */
+/**
+ * Fire-and-forget audit-event writer for security middleware. Dynamic
+ * import of auditService keeps boot fast and avoids a cycle between
+ * security middleware and the service that depends on the DB pool.
+ */
+function auditSecurityEvent(
+  req: Request,
+  action: string,
+  details: Record<string, unknown>,
+): void {
+  (async () => {
+    try {
+      const { default: auditService } = await import('../services/auditService');
+      const user = (req as any).user;
+      await auditService.logAction({
+        tenantId: user?.organizationId,
+        userId: user?.id ?? user?.userId,
+        action,
+        resourceType: 'security_event',
+        resourceId: req.path,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details,
+      });
+    } catch {
+      /* audit failure is non-fatal for security middleware */
+    }
+  })();
+}
+
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
   // Only check state-changing methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
@@ -550,6 +890,14 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     if (req.headers.authorization?.startsWith('Bearer ')) {
       return next();
     }
+    // Audit + log. Repeated CSRF failures from a single IP suggest
+    // active attack; recording them gives SOC visibility and gives
+    // regulators a queryable surface for the failure rate.
+    auditSecurityEvent(req, 'csrf_validation_failed', {
+      reason: 'no_origin_no_referer_no_bearer',
+      method: req.method,
+    });
+     
     console.warn(
       `[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`
     );
@@ -560,6 +908,12 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     !config.allowedOrigins.includes(source) &&
     !(source.endsWith('.app.github.dev') && !config.isProduction)
   ) {
+    auditSecurityEvent(req, 'csrf_validation_failed', {
+      reason: 'origin_mismatch',
+      method: req.method,
+      origin: source,
+    });
+     
     console.warn(
       `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
     );
@@ -588,8 +942,16 @@ export function applySecurityMiddleware(app: any) {
   // HTTPS enforcement (must be before everything else)
   app.use(enforceHttps);
 
+  // CSP nonce — must run before securityHeaders so the directive function
+  // can read res.locals.cspNonce.
+  app.use(cspNonce);
+
   // Security headers (must be first after HTTPS)
   app.use(securityHeaders);
+
+  // Permissions-Policy — runs after CSP so it can't shadow any of the
+  // helmet-emitted headers. Deny most browser features by default.
+  app.use(permissionsPolicy);
 
   // Request ID for correlation
   app.use(requestId);
@@ -601,8 +963,11 @@ export function applySecurityMiddleware(app: any) {
   // category-based limits with persistence across restarts. Keeping per-path limiters below
   // for defense-in-depth on sensitive endpoints.
 
-  // Input sanitization
-  app.use(sanitizeInput);
+  // Input sanitization is mounted by server/startup/middleware.ts AFTER
+  // the body parsers — Express does not populate req.body until
+  // express.json/urlencoded execute, so mounting sanitizeInput here
+  // would make the body-side scrub a silent no-op (the bug shape that
+  // motivated this fix).
 
   // CSRF protection (origin/referer validation for state-changing requests)
   app.use(csrfProtection);
@@ -629,12 +994,15 @@ export function applySecurityMiddleware(app: any) {
 
 export default {
   securityHeaders,
+  cspNonce,
+  permissionsPolicy,
   corsMiddleware,
   rateLimiters,
   sanitizeInput,
   validateTenantContext,
   auditLog,
   validateApiKey,
+  requireScope,
   requestId,
   requireJwtSecret,
   applySecurityMiddleware,

@@ -6,7 +6,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import ragService from '../services/biotechRagService.js';
-import { db } from '../db';
+import { db } from '../db.js';
 import crypto from 'crypto';
 import {
   ragDocuments,
@@ -128,7 +128,15 @@ router.post('/ingest', upload.single('document'), async (req, res) => {
     const params = DocumentIngestionSchema.parse(req.body);
     
     // Default to organization 7 if not provided
-    const organizationId = params.organizationId || 7;
+    // SECURITY: JWT-bound. Pre-fix this fell back to org 7 silently
+    // when the body didn't supply one — meaning any caller (and any
+    // unauth path that bypassed the body-supplied id) wrote into
+    // org 7's RAG index.
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     const result = await ragService.ingestDocument({
       organizationId,
@@ -175,7 +183,11 @@ router.post('/ingest/batch', upload.array('documents', 10), async (req, res) => 
       return res.status(400).json({ error: 'No documents provided' });
     }
 
-    const organizationId = req.body.organizationId || 7;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const results = [];
 
     for (const file of req.files) {
@@ -227,7 +239,15 @@ router.post('/ingest/batch', upload.array('documents', 10), async (req, res) => 
 router.post('/search', async (req, res) => {
   try {
     const params = SearchQuerySchema.parse(req.body);
-    const organizationId = params.organizationId || 7;
+    // SECURITY: JWT-bound. Pre-fix this fell back to org 7 silently
+    // when the body didn't supply one — meaning any caller (and any
+    // unauth path that bypassed the body-supplied id) wrote into
+    // org 7's RAG index.
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     const searchResults = await ragService.search(params.query, {
       organizationId,
@@ -258,7 +278,12 @@ router.post('/search', async (req, res) => {
  */
 router.post('/ask', async (req, res) => {
   try {
-    const { query, organizationId = 7, maxTokens = 1000 } = req.body;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const { query, maxTokens = 1000 } = req.body;
 
     if (!query) {
       return res.status(400).json({ error: 'Query is required' });
@@ -311,7 +336,15 @@ router.post('/ask', async (req, res) => {
 router.post('/synthesize', async (req, res) => {
   try {
     const params = MultiDocumentSynthesisSchema.parse(req.body);
-    const organizationId = params.organizationId || 7;
+    // SECURITY: JWT-bound. Pre-fix this fell back to org 7 silently
+    // when the body didn't supply one — meaning any caller (and any
+    // unauth path that bypassed the body-supplied id) wrote into
+    // org 7's RAG index.
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     const synthesis = await ragService.synthesizeDocuments(
       params.query,
@@ -339,7 +372,15 @@ router.post('/synthesize', async (req, res) => {
 router.post('/analyze/protocol', async (req, res) => {
   try {
     const params = ProtocolAnalysisSchema.parse(req.body);
-    const organizationId = params.organizationId || 7;
+    // SECURITY: JWT-bound. Pre-fix this fell back to org 7 silently
+    // when the body didn't supply one — meaning any caller (and any
+    // unauth path that bypassed the body-supplied id) wrote into
+    // org 7's RAG index.
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     // Get document chunks
     const chunks = await db.select()
@@ -399,7 +440,12 @@ router.post('/analyze/protocol', async (req, res) => {
  */
 router.post('/regulatory/qa', async (req, res) => {
   try {
-    const { question, documentType = 'regulatory', organizationId = 7 } = req.body;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const { question, documentType = 'regulatory' } = req.body;
 
     if (!question) {
       return res.status(400).json({ error: 'Question is required' });
@@ -449,7 +495,12 @@ router.post('/regulatory/qa', async (req, res) => {
  */
 router.post('/interactions/check', async (req, res) => {
   try {
-    const { drugs, organizationId = 7 } = req.body;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const { drugs } = req.body;
 
     if (!drugs || drugs.length < 2) {
       return res.status(400).json({ 
@@ -506,7 +557,15 @@ router.post('/interactions/check', async (req, res) => {
 router.post('/biomarkers/correlate', async (req, res) => {
   try {
     const params = BiomarkerCorrelationSchema.parse(req.body);
-    const organizationId = params.organizationId || 7;
+    // SECURITY: JWT-bound. Pre-fix this fell back to org 7 silently
+    // when the body didn't supply one — meaning any caller (and any
+    // unauth path that bypassed the body-supplied id) wrote into
+    // org 7's RAG index.
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     // Search for biomarker relationships
     const correlations = [];
@@ -565,7 +624,12 @@ router.post('/biomarkers/correlate', async (req, res) => {
  */
 router.post('/literature/review', async (req, res) => {
   try {
-    const { topic, maxPapers = 20, organizationId = 7 } = req.body;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const { topic, maxPapers = 20 } = req.body;
 
     if (!topic) {
       return res.status(400).json({ error: 'Topic is required' });
@@ -629,7 +693,12 @@ router.post('/literature/review', async (req, res) => {
  */
 router.post('/patents/landscape', async (req, res) => {
   try {
-    const { compound, indication, organizationId = 7 } = req.body;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const { compound, indication } = req.body;
 
     if (!compound && !indication) {
       return res.status(400).json({ 
@@ -690,7 +759,11 @@ router.post('/patents/landscape', async (req, res) => {
 router.get('/documents/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const organizationId = parseInt(req.query.organizationId) || 7;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     const [document] = await db.select()
       .from(ragDocuments)
@@ -734,7 +807,11 @@ router.get('/documents/:documentId', async (req, res) => {
  */
 router.get('/documents', async (req, res) => {
   try {
-    const organizationId = parseInt(req.query.organizationId) || 7;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const limit = parseInt(req.query.limit) || 50;
     const offset = parseInt(req.query.offset) || 0;
 
@@ -774,7 +851,11 @@ router.get('/documents', async (req, res) => {
  */
 router.get('/analytics/queries', async (req, res) => {
   try {
-    const organizationId = parseInt(req.query.organizationId) || 7;
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const days = parseInt(req.query.days) || 30;
 
     const startDate = new Date();
@@ -833,11 +914,15 @@ router.get('/analytics/queries', async (req, res) => {
  */
 router.post('/ingest/regulatory-sources', async (req, res) => {
   try {
-    const { 
-      sources = ['FDA', 'EMA'], 
+    const organizationId =
+      req.user?.organizationId ?? req.tenantContext?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const {
+      sources = ['FDA', 'EMA'],
       documentTypes = ['guidances', 'warning_letters', 'epar'],
       limit = 10,
-      organizationId = 7
     } = req.body;
 
     // Import regulatory crawler service
@@ -851,7 +936,7 @@ router.post('/ingest/regulatory-sources', async (req, res) => {
 
     // Process each source
     for (const source of sources) {
-      let sourceResult = { source, documentsQueued: 0, error: null };
+      const sourceResult = { source, documentsQueued: 0, error: null };
       
       try {
         switch(source.toUpperCase()) {

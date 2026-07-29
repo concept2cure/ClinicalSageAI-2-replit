@@ -14,11 +14,25 @@
  * @module server/services/ana-ri/command-executor
  */
 
-import { getPool } from '../../db.ts';
+import { getPool } from '../../db';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 
-const pool = getPool();
+// Lazy pool access. Acquiring the pool at module load (`getPool()` at
+// top level) throws "Database connection not available" when this module
+// is imported in a context without a DB — which breaks any test whose
+// import graph reaches command-executor (e.g. cortex-unified route smoke
+// tests) before a request is ever made. This proxy defers getPool() to
+// first property access, so import is side-effect-free and the pool is
+// resolved on first real use. Runtime behavior is identical (same pool
+// singleton); only the acquisition timing changes.
+const pool = new Proxy({} as ReturnType<typeof getPool>, {
+  get(_target, prop) {
+    const real = getPool() as unknown as Record<string | symbol, unknown>;
+    const value = real[prop];
+    return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(real) : value;
+  },
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend service imports — wiring AnA to the full platform
@@ -37,6 +51,7 @@ import {
   module3BuildAll, module3BuildSection, module3MissingInputs,
   module3StaleSections, module3RefreshStale, module3Readiness,
   module3Contradictions, module3Lineage, module3ClassifySource,
+  cmcStatus, ichCompliance, controlStrategy, variationsClassify,
 } from './module3-command-handlers.js';
 import { MDX_COMMAND_HANDLERS, MDX_COMMAND_METADATA } from './mdx-command-handlers';
 import {
@@ -47,7 +62,20 @@ import {
   MDX_COMMAND_HANDLERS_PHASE3,
   MDX_COMMAND_METADATA_PHASE3,
 } from './mdx-command-handlers-phase3';
-import { loadAnaToolPolicy } from './mdx-tool-policy';
+import {
+  PDEV_COMMAND_HANDLERS,
+  PDEV_COMMAND_METADATA,
+} from './pdev-command-handlers';
+import { loadAnaToolPolicyStrict } from './mdx-tool-policy';
+import {
+  requiresPart11Signoff,
+  requiresEsignature,
+  validateSignoff,
+  buildSignatureRequiredResult,
+  loadPart11EnforceStrict,
+  type Part11Signoff,
+} from './part11-governance';
+import { authorizeCommand, isPrivacyAdmin } from './command-rbac';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -92,6 +120,30 @@ export interface CommandContext {
     allow?: string[];
     deny?: string[];
   };
+  /**
+   * Whether Part 11 sign-off is enforced for this tenant. Stamped once per
+   * dispatch from organizations.settings.anaPart11Enforce. When true, governed
+   * record-altering commands fail closed unless `signoff` is present + valid.
+   */
+  part11Enforce?: boolean;
+  /**
+   * The verified Part 11 sign-off for THIS dispatch (reason-for-change +
+   * server-verified electronic signature). Stamped by the route after it
+   * verifies the user's re-authentication via the e-signature service.
+   */
+  signoff?: Part11Signoff;
+  /**
+   * Set true by `executeCommands` when the tenant's governance configuration
+   * could not be RESOLVED for this dispatch — the tool-policy read or the
+   * Part 11 flag read failed (DB error / no pool). It is NOT set when a read
+   * succeeds and simply finds no restriction configured.
+   *
+   * Every mutation-capable command fails CLOSED while it is set
+   * (command-rbac.ts `authorizeCommand`, and again in
+   * `requireGovernedToolGate`). Read-only commands deliberately continue to
+   * work: AnA degrades to read-only rather than to un-governed.
+   */
+  governanceUnavailable?: boolean;
 }
 
 export interface CommandResult {
@@ -100,6 +152,8 @@ export interface CommandResult {
   data?: Record<string, unknown>;
   message: string;
   error?: string;
+  /** Optional UI hint: identifier of a modal/canvas the client may surface. */
+  openModal?: string;
 }
 
 async function persistGovernedCommandArtifact(
@@ -177,18 +231,11 @@ async function persistGovernedCommandArtifact(
   return execution.artifactMutation;
 }
 
-function hasPrivacyAdminRole(role?: string): boolean {
-  const normalized = String(role || '').toLowerCase();
-  return [
-    'admin',
-    'manager',
-    'owner',
-    'super_admin',
-    'platform_admin',
-    'dpo',
-    'privacy_officer',
-  ].includes(normalized);
-}
+// Privacy-admin authorization for the GDPR data-subject commands lives in
+// command-rbac.ts (`isPrivacyAdmin`). It reads organization_users.role through
+// the canonical RBAC service instead of the self-asserted `ctx.userRole`, which
+// the chat bridge never populates — so the previous check evaluated `undefined`
+// for every AnA-initiated cross-subject export/erase.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. PROJECT OPERATIONS
@@ -309,8 +356,9 @@ export async function updateProject(
     }
 
     setClauses.push('updated_at = NOW()');
+    const setSql = setClauses.join(', ');
     await pool.query(
-      `UPDATE projects SET ${setClauses.join(', ')} WHERE id = $1 AND organization_id = $2`,
+      `UPDATE projects SET ${setSql} WHERE id = $1 AND organization_id = $2`,
       values
     );
     const fieldList = Object.keys(updates).join(', ');
@@ -657,12 +705,21 @@ export async function placeInDossier(
   }
 ): Promise<CommandResult> {
   try {
-    await pool.query(
+    const placeResult = await pool.query(
       `UPDATE concept2cure_artifacts
        SET ctd_section = $4, updated_at = NOW()
        WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
       [params.artifactId, params.projectId, ctx.organizationId, params.ctdSection]
     );
+    // Fail closed: don't report a placement that didn't happen (artifact not in
+    // this project/org). AnA must never confirm work it didn't perform.
+    if (!placeResult.rowCount) {
+      return {
+        success: false,
+        action: 'place_in_dossier',
+        message: `Artifact ${params.artifactId} was not found in this project, so nothing was placed.`,
+      };
+    }
     // Fetch title for human-readable message
     const artInfo = await pool
       .query(
@@ -829,8 +886,9 @@ export async function updateTask(
     }
 
     setClauses.push('updated_at = NOW()');
+    const setSql = setClauses.join(', ');
     await pool.query(
-      `UPDATE project_tasks SET ${setClauses.join(', ')}
+      `UPDATE project_tasks SET ${setSql}
        WHERE id = $1 AND project_id = $2 AND organization_id = $3`,
       values
     );
@@ -1078,7 +1136,9 @@ export async function exportPersonalData(
 ): Promise<CommandResult> {
   try {
     const dataSubjectId = params?.dataSubjectId || ctx.userId;
-    if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+    // Self-service is always permitted (GDPR Art. 15/20). Acting on ANOTHER
+    // subject requires a DB-sourced privacy-admin grant — fail-closed.
+    if (dataSubjectId !== ctx.userId && !(await isPrivacyAdmin(ctx))) {
       return {
         success: false,
         action: 'export_personal_data',
@@ -1097,8 +1157,11 @@ export async function exportPersonalData(
 
     const [profile, conversations, artifacts, comments] = await Promise.all([
       safeQuery(
-        `SELECT id, email, name, title, department, created_at, updated_at
-         FROM users WHERE organization_id = $1 AND id = $2`,
+        `SELECT u.id, u.email, u.name, u.title, u.department, u.created_at, u.updated_at
+         FROM users u
+         WHERE u.id = $2
+           AND EXISTS (SELECT 1 FROM organization_users ou
+                        WHERE ou.user_id = u.id AND ou.organization_id = $1)`,
         [ctx.organizationId, dataSubjectId]
       ),
       safeQuery(
@@ -1158,7 +1221,9 @@ export async function erasePersonalData(
   params: { dataSubjectId?: number; reason?: string }
 ): Promise<CommandResult> {
   const dataSubjectId = params?.dataSubjectId || ctx.userId;
-  if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+  // Self-service is always permitted (GDPR Art. 17). Acting on ANOTHER subject
+  // requires a DB-sourced privacy-admin grant — fail-closed.
+  if (dataSubjectId !== ctx.userId && !(await isPrivacyAdmin(ctx))) {
     return {
       success: false,
       action: 'erase_personal_data',
@@ -1179,7 +1244,9 @@ export async function erasePersonalData(
            department = NULL,
            preferences = '{}'::jsonb,
            updated_at = NOW()
-       WHERE organization_id = $1 AND id = $2
+       WHERE id = $2
+         AND EXISTS (SELECT 1 FROM organization_users ou
+                      WHERE ou.user_id = users.id AND ou.organization_id = $1)
        RETURNING id`,
       [ctx.organizationId, dataSubjectId]
     );
@@ -1533,10 +1600,11 @@ export async function listArtifactVersions(
       `SELECT v.id, v.version, v.change_description, v.created_by_id, v.created_at,
               u.name as created_by_name
        FROM concept2cure_artifact_versions v
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $2
        LEFT JOIN users u ON u.id = v.created_by_id
        WHERE v.artifact_id = $1
        ORDER BY v.version DESC`,
-      [params.artifactId]
+      [params.artifactId, ctx.organizationId]
     );
     return {
       success: true,
@@ -1807,10 +1875,11 @@ export async function compareVersions(
       `SELECT v.version, v.content, v.change_description, v.created_at,
               u.name as author
        FROM concept2cure_artifact_versions v
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
        LEFT JOIN users u ON u.id = v.created_by_id
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
-      [params.artifactId, params.versionA, params.versionB]
+      [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
     );
 
     if (versions.rows.length < 2) {
@@ -1913,10 +1982,11 @@ export async function reviewVersionImpact(
       `SELECT v.version, v.content, v.change_description, v.created_at,
               u.name as author
        FROM concept2cure_artifact_versions v
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
        LEFT JOIN users u ON u.id = v.created_by_id
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
-      [params.artifactId, params.versionA, params.versionB]
+      [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
     );
 
     if (versions.rows.length < 2) {
@@ -2037,15 +2107,11 @@ If the change introduces NEW risks:
 ### Recommended Actions
 What should be done BEFORE this version is submitted? Be specific.`;
 
-    const response = await gw.chat({
-      taskType: 'regulatory_review',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: analysisPrompt },
-      ],
+    const response = await gw.chat(systemPrompt, analysisPrompt, {
+      taskType: 'regulatory_review' as any,
       maxTokens: 4096,
       temperature: 0.2,
-      routingStrategy: 'quality_optimized',
+      strategy: 'quality_optimized' as any,
     });
 
     if (!response.content) {
@@ -2226,10 +2292,18 @@ export async function updateMilestone(
     }
 
     setClauses.push('updated_at = NOW()');
-    await pool.query(
+    const milestoneResult = await pool.query(
       `UPDATE c2c_milestones SET ${setClauses.join(', ')} WHERE id = $1 AND org_id = $2`,
       values
     );
+    // Fail closed: don't claim an update that matched no row (bad/foreign id).
+    if (!milestoneResult.rowCount) {
+      return {
+        success: false,
+        action: 'update_milestone',
+        message: `Milestone ${params.milestoneId} was not found, so nothing was updated.`,
+      };
+    }
     return {
       success: true,
       action: 'update_milestone',
@@ -2304,7 +2378,7 @@ export async function revertToVersion(
   try {
     // Verify artifact exists and is not locked
     const artifactResult = await pool.query(
-      `SELECT id, artifact_id, version, status FROM concept2cure_artifacts
+      `SELECT id, artifact_id, version, status, ctd_section, title FROM concept2cure_artifacts
        WHERE artifact_id = $1 AND organization_id = $2`,
       [params.artifactId, ctx.organizationId]
     );
@@ -2434,10 +2508,10 @@ export async function generateSAP(
         projectId: Number(params.projectId || ctx.activeProjectId),
         clientTrack: normalizedClientTrack,
         regulatoryBody:
-          typeof params.regulatoryBody === 'string' ? params.regulatoryBody : undefined,
-        studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
-        objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
-        endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+          typeof params.regulatoryBody === 'string' ? (params.regulatoryBody as any) : undefined,
+        studyType: (typeof params.studyType === 'string' ? params.studyType : 'superiority') as any,
+        objectiveType: (typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy') as any,
+        endpointType: (typeof params.endpointType === 'string' ? params.endpointType : 'continuous') as any,
         alpha: Number(params.alpha || 0.05),
         powerTarget: Number(params.power || params.powerTarget || 0.8),
         effectSize: Number(params.effectSize || 0.5),
@@ -2508,9 +2582,9 @@ export async function computeSampleSize(
     const validation = inputNormalizer.normalize({
       projectId: Number(params.projectId || ctx.activeProjectId),
       clientTrack: normalizedClientTrack,
-      studyType: typeof params.studyType === 'string' ? params.studyType : 'superiority',
-      objectiveType: typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy',
-      endpointType: typeof params.endpointType === 'string' ? params.endpointType : 'continuous',
+      studyType: (typeof params.studyType === 'string' ? params.studyType : 'superiority') as any,
+      objectiveType: (typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy') as any,
+      endpointType: (typeof params.endpointType === 'string' ? params.endpointType : 'continuous') as any,
       alpha: Number(params.alpha || 0.05),
       powerTarget: Number(params.power || params.powerTarget || 0.8),
       effectSize: Number(params.effectSize || 0.5),
@@ -2563,40 +2637,28 @@ export async function computeSampleSize(
   }
 }
 
-/** Compute dose escalation design */
+/**
+ * Dose escalation — retired (Phase 8). The Foresight engine that formerly answered
+ * this attached a FABRICATED confidence interval (a flat ±20 %/±25 % of the computed
+ * dose, not a real statistical interval), so it no longer backs this command. A next
+ * dose is never emitted as a value here: selecting one requires a governing
+ * exposure–response / MTD calculation with stated assumptions and clinical-pharmacology
+ * review — it cannot be inferred from precedent (§14). The honest dose-strategy
+ * evidence surface is clinical-regulatory-evidence/study-design-evidence.assessDoseStrategy.
+ */
 export async function computeDoseEscalation(
-  ctx: CommandContext,
-  params: Record<string, unknown>
+  _ctx: CommandContext,
+  _params: Record<string, unknown>
 ): Promise<CommandResult> {
-  try {
-    const { ForesightAIEngine } = await import('../foresight-ai-engine.js').catch(() => ({
-      ForesightAIEngine: null,
-    }));
-    if (!ForesightAIEngine) {
-      return {
-        success: false,
-        action: 'compute_dose_escalation',
-        message: 'Foresight engine not available.',
-      };
-    }
-    const engine = new ForesightAIEngine();
-    const result = await engine.calculateOptimalDoseEscalation(params.studyId || 'design-mode');
-    return {
-      success: true,
-      action: 'compute_dose_escalation',
-      data: result,
-      message: `Dose escalation designed. Method: ${result?.method || params.method || '3+3'}. ${
-        result?.recommendation || 'See results for details.'
-      }`,
-    };
-  } catch (err: unknown) {
-    return {
-      success: false,
-      action: 'compute_dose_escalation',
-      message: 'Dose escalation computation failed.',
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return {
+    success: true,
+    action: 'compute_dose_escalation',
+    message:
+      'A dose-escalation value is not emitted here. Selecting a next dose requires a governing ' +
+      'exposure–response / MTD calculation with stated assumptions and clinical-pharmacology review; ' +
+      'it cannot be inferred from precedent. Ask for the FDA dose-selection evidence on record to ' +
+      'inform that calculation.',
+  };
 }
 
 /** Assess statistical defensibility */
@@ -2611,7 +2673,7 @@ export async function assessDefensibility(
 
     // Use the statistical defensibility service
     const mod = await import('../statistical-defensibility-service.js').catch(() => null);
-    if (!mod || !mod.assessDefensibility) {
+    if (!mod || !mod.statisticalDefensibilityService) {
       return {
         success: false,
         action: 'assess_defensibility',
@@ -2619,11 +2681,11 @@ export async function assessDefensibility(
       };
     }
 
-    const result = await mod.assessDefensibility({
+    const result: any = await mod.statisticalDefensibilityService.assessDefensibility({
       projectId: Number(projectId),
       organizationId: ctx.organizationId,
-      artifactId: params.artifactId,
-    });
+      artifactId: params.artifactId as number | undefined,
+    } as any);
 
     return {
       success: true,
@@ -2812,16 +2874,20 @@ export async function exportDocument(
 ): Promise<CommandResult> {
   try {
     const docId = params.docId || params.documentId;
-    const format = params.format || 'docx';
+    const format = String(params.format || 'docx');
     if (!docId) return { success: false, action: 'export_document', message: 'docId required.' };
-    // Log export event
+    // Log export event to authoring_export_history — the table the authoring
+    // router's export path writes and its diff-since-export reader reads.
+    // This previously wrote `doc_exports`, which nothing in this repo creates,
+    // so every ANA-initiated export went unrecorded. See ledger C-14.
     try {
       await pool.query(
-        `INSERT INTO doc_exports (doc_id, format, exported_by, created_at) VALUES ($1, $2, $3, NOW())`,
+        `INSERT INTO authoring_export_history (document_id, export_type, exported_by, exported_at)
+         VALUES ($1, $2, $3, NOW())`,
         [docId, format, ctx.userId]
       );
     } catch {
-      /* table might not exist */
+      /* the authoring router provisions this table lazily; skip if absent */
     }
     return {
       success: true,
@@ -2909,11 +2975,11 @@ export async function searchPrecedents(
   try {
     const results = await precedentEngine.search(
       {
-        submissionType: params.submissionType,
-        indication: params.indication,
-        therapeuticArea: params.therapeuticArea,
-        query: params.query,
-        limit: params.limit || 10,
+        submissionType: String(params.submissionType ?? ''),
+        indication: params.indication as string | undefined,
+        therapeuticArea: params.therapeuticArea as string | undefined,
+        query: params.query as string | undefined,
+        limit: (params.limit as number) || 10,
       },
       ctx.organizationId
     );
@@ -2940,10 +3006,10 @@ export async function analyzeCRLTriggers(
 ): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeCRLTriggers({
-      submissionType: params.submissionType || 'NDA',
-      indication: params.indication,
-      therapeuticArea: params.therapeuticArea,
-      query: params.query,
+      submissionType: String(params.submissionType || 'NDA'),
+      indication: params.indication as string | undefined,
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      query: params.query as string | undefined,
     });
     return {
       success: true,
@@ -2968,10 +3034,10 @@ export async function analyzeRTFTriggers(
 ): Promise<CommandResult> {
   try {
     const result = await precedentEngine.analyzeRTFTriggers({
-      submissionType: params.submissionType || 'NDA',
-      indication: params.indication,
-      therapeuticArea: params.therapeuticArea,
-      query: params.query,
+      submissionType: String(params.submissionType || 'NDA'),
+      indication: params.indication as string | undefined,
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      query: params.query as string | undefined,
     });
     return {
       success: true,
@@ -2996,10 +3062,10 @@ export async function recommendStrategy(
 ): Promise<CommandResult> {
   try {
     const result = await precedentEngine.recommendStrategy({
-      submissionType: params.submissionType,
-      indication: params.indication,
-      therapeuticArea: params.therapeuticArea,
-      query: params.query,
+      submissionType: String(params.submissionType ?? ''),
+      indication: params.indication as string | undefined,
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      query: params.query as string | undefined,
     });
     return {
       success: true,
@@ -3025,10 +3091,10 @@ export async function checkClaim(
   try {
     if (!params.claim)
       return { success: false, action: 'check_claim', message: 'claim text is required.' };
-    const result = await precedentEngine.checkClaim(params.claim, {
-      submissionType: params.submissionType,
-      therapeuticArea: params.therapeuticArea,
-      indication: params.indication,
+    const result = await precedentEngine.checkClaim(String(params.claim), {
+      submissionType: String(params.submissionType ?? ''),
+      therapeuticArea: params.therapeuticArea as string | undefined,
+      indication: params.indication as string | undefined,
     });
     return {
       success: true,
@@ -3056,7 +3122,7 @@ export async function runSubmissionAssessment(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return {
         success: false,
@@ -3094,8 +3160,8 @@ export async function simulateChallenges(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
-    const assessmentId = params.assessmentId;
+    const packageId = Number(params.packageId);
+    const assessmentId = Number(params.assessmentId);
     if (!packageId)
       return { success: false, action: 'simulate_challenges', message: 'packageId is required.' };
     if (!assessmentId)
@@ -3104,7 +3170,7 @@ export async function simulateChallenges(
         action: 'simulate_challenges',
         message: 'assessmentId is required. Run run_submission_assessment first.',
       };
-    const lenses = params.lenses || ['clinical', 'statistical', 'cmc', 'safety'];
+    const lenses = (params.lenses as string[]) || ['clinical', 'statistical', 'cmc', 'safety'];
     const challenges = await submissionTwinService.simulateChallenges(
       packageId,
       ctx.organizationId,
@@ -3135,7 +3201,7 @@ export async function detectDrift(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return { success: false, action: 'detect_drift', message: 'packageId is required.' };
     const drifts = await submissionTwinService.detectDrift(packageId, ctx.organizationId);
@@ -3164,7 +3230,7 @@ export async function predictNextArtifact(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return { success: false, action: 'predict_next_artifact', message: 'packageId is required.' };
     const prediction = await submissionTwinService.predictNextBestArtifact(
@@ -3193,7 +3259,7 @@ export async function computeReadiness(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const packageId = params.packageId;
+    const packageId = Number(params.packageId);
     if (!packageId)
       return { success: false, action: 'compute_readiness', message: 'packageId is required.' };
     const result = await submissionTwinService.computeReadinessAndFragility(
@@ -3230,7 +3296,7 @@ export async function scanContradictions(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const projectId = params.projectId || ctx.activeProjectId;
+    const projectId = Number(params.projectId || ctx.activeProjectId);
     if (!projectId)
       return { success: false, action: 'scan_contradictions', message: 'projectId is required.' };
     const result = await contradictionEngineService.scanProject(ctx.organizationId, projectId);
@@ -3260,14 +3326,14 @@ export async function checkPromotionBlockers(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const artifactId = params.artifactId;
+    const artifactId = Number(params.artifactId);
     if (!artifactId)
       return {
         success: false,
         action: 'check_promotion_blockers',
         message: 'artifactId is required.',
       };
-    const projectId = params.projectId || ctx.activeProjectId || 0;
+    const projectId = Number(params.projectId || ctx.activeProjectId || 0);
     const result = await contradictionEngineService.checkPromotionBlocked(
       ctx.organizationId,
       projectId,
@@ -3302,12 +3368,12 @@ export async function analyzeJurisdictions(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const targetAgencies = params.targetAgencies || params.agencies || ['FDA', 'EMA'];
+    const targetAgencies = (params.targetAgencies || params.agencies || ['FDA', 'EMA']) as string[];
     const result = await crossJurisdictionalEngine.analyze({
-      submissionType: params.submissionType || 'NDA',
-      therapeuticArea: params.therapeuticArea,
+      submissionType: String(params.submissionType || 'NDA'),
+      therapeuticArea: params.therapeuticArea as string | undefined,
       targetAgencies,
-      productType: params.productType,
+      productType: params.productType as string | undefined,
     });
     return {
       success: true,
@@ -3349,10 +3415,10 @@ export async function recommendEndpoints(
       return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
     const recommendations = await service.getComprehensiveEndpointRecommendations(
-      params.indication,
-      params.phase,
-      params.count || 10,
-      params.therapeuticArea
+      String(params.indication),
+      params.phase as string | undefined,
+      (params.count as number) || 10,
+      params.therapeuticArea as string | undefined
     );
     return {
       success: true,
@@ -3387,15 +3453,18 @@ export async function evaluateEndpoint(
     }
     const service = getEndpointRecommenderService();
     const evaluation = await service.evaluateEndpoint(
-      params.endpoint,
-      params.indication,
-      params.phase
+      String(params.endpoint),
+      String(params.indication),
+      params.phase as string | undefined
     );
     return {
       success: true,
       action: 'evaluate_endpoint',
       data: { evaluation },
-      message: `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`,
+      message:
+        evaluation.score != null
+          ? `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`
+          : `Endpoint "${params.endpoint}" could not be scored automatically for ${params.indication}. ${evaluation.feedback}`,
     };
   } catch (err: unknown) {
     return {
@@ -3417,19 +3486,19 @@ export async function runRIMScan(
   params: Record<string, unknown>
 ): Promise<CommandResult> {
   try {
-    const projectId = params.projectId || ctx.activeProjectId;
+    const projectId = Number(params.projectId || ctx.activeProjectId);
     if (!projectId)
       return { success: false, action: 'run_rim_scan', message: 'projectId is required.' };
     const rimCtx: RIMContext = {
       organizationId: ctx.organizationId,
       projectId,
       userId: ctx.userId,
-      sectionCode: params.sectionCode,
-      submissionType: params.submissionType,
-      targetAgency: params.targetAgency,
-      textToScan: params.text || params.content,
-      artifactId: params.artifactId,
-      artifactVersionId: params.versionId,
+      sectionCode: params.sectionCode as string | undefined,
+      submissionType: params.submissionType as string | undefined,
+      targetAgency: params.targetAgency as string | undefined,
+      textToScan: (params.text || params.content) as string | undefined,
+      artifactId: params.artifactId as string | undefined,
+      artifactVersionId: params.versionId as string | undefined,
     };
     const assessment = await runRIMAssessment(rimCtx);
     return {
@@ -3524,8 +3593,8 @@ export async function generateClinicalInsights(
         message: 'indication is required.',
       };
     const insights = await clinicalIntelligenceService.generateClinicalTrialInsights(
-      params.indication,
-      params.phase || 'Phase 2'
+      String(params.indication),
+      String(params.phase || 'Phase 2')
     );
     return {
       success: true,
@@ -3560,8 +3629,8 @@ export async function analyzeCrossDocument(
       };
     }
     const result = await clinicalIntelligenceService.performCrossDocumentAnalysis(
-      documentIds,
-      params.documentType || 'CSR'
+      documentIds as string[],
+      (Array.isArray(params.documentType) ? params.documentType : [params.documentType || 'CSR']) as ('CSR' | 'CER')[]
     );
     return {
       success: true,
@@ -3592,19 +3661,20 @@ interface MemoryEntryRow {
 }
 
 async function loadProjectMemoryEntries(
+  organizationId: number,
   projectId: number,
   categories: string[],
   limit = 20
 ): Promise<MemoryEntryRow[]> {
   if (categories.length === 0) return [];
-  const placeholders = categories.map((_, i) => `$${i + 2}`).join(', ');
+  const placeholders = categories.map((_, i) => `$${i + 3}`).join(', ');
   const result = await pool.query(
     `SELECT title, content, category, confidence, importance
      FROM project_memory_entries
-     WHERE project_id = $1 AND category IN (${placeholders})
+     WHERE project_id = $1 AND organization_id = $2 AND category IN (${placeholders})
      ORDER BY importance DESC, created_at DESC
-     LIMIT $${categories.length + 2}`,
-    [projectId, ...categories, limit]
+     LIMIT $${categories.length + 3}`,
+    [projectId, organizationId, ...categories, limit]
   );
   return result.rows as MemoryEntryRow[];
 }
@@ -3631,7 +3701,7 @@ export async function analyzeCMSStrategy(
       'payer_evidence',
       'health_economics',
     ];
-    const entries = await loadProjectMemoryEntries(projectId, categories, 18);
+    const entries = await loadProjectMemoryEntries(ctx.organizationId, projectId, categories, 18);
 
     const riskKeywords = /\b(missing|insufficient|unclear|gap|uncertain|weak)\b/i;
     const riskSignals = entries
@@ -3712,7 +3782,7 @@ export async function assessDiagnosticsValidation(
       'clinical_performance',
       'companion_diagnostic',
     ];
-    const entries = await loadProjectMemoryEntries(projectId, categories, 20);
+    const entries = await loadProjectMemoryEntries(ctx.organizationId, projectId, categories, 20);
     const corpus = entries.map(entry => `${entry.title || ''} ${entry.content || ''}`).join(' ');
 
     const componentChecks = [
@@ -3843,10 +3913,26 @@ export type CommandName =
   | 'analyze_cross_document'
   // CMS + Diagnostics
   | 'analyze_cms_strategy'
-  | 'assess_diagnostic_validation';
+  | 'assess_diagnostic_validation'
+  // Module 3 Workflow Convergence (Phase 7)
+  | 'module3_build_all'
+  | 'module3_build_section'
+  | 'module3_missing_inputs'
+  | 'module3_status'
+  | 'module3_stale_sections'
+  | 'module3_refresh_stale'
+  | 'module3_readiness'
+  | 'module3_contradictions'
+  | 'module3_lineage'
+  | 'module3_classify_source'
+  // CMC status + quality
+  | 'cmc_status'
+  | 'ich_compliance'
+  | 'control_strategy'
+  | 'variations_classify';
 
 export interface CommandDefinition {
-  name: CommandName;
+  name: CommandName | string;
   description: string;
   parameters: string;
   example: string;
@@ -4050,9 +4136,10 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'compute_dose_escalation',
-    description: 'Design dose escalation with MTD estimation',
-    parameters: 'method (3plus3/boin/crm/fibonacci), startingDose, doseLevels, targetDLTRate?',
-    example: '"Design a BOIN dose escalation starting at 10mg with 5 dose levels"',
+    description:
+      'Explain dose-escalation requirements and guardrails. Does NOT emit a dose value — a next dose requires a governing exposure–response/MTD calculation and clinical-pharmacology review.',
+    parameters: 'indication?, phase?',
+    example: '"What does dose selection require for my Phase 1 program?"',
   },
   {
     name: 'assess_defensibility',
@@ -4192,6 +4279,36 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     example: '"Can I promote artifact 12 or are there blockers?"',
   },
 
+  // ── CMC Status (top-level dispatch for `/cmc` with no args) ───────────────
+  {
+    name: 'cmc_status',
+    description:
+      'Return Module 3 status for the active project: CMC source-object inventory by type, section approval state, stale section count, open contradictions by severity, and an export-ready verdict.',
+    parameters: 'projectId?',
+    example: '"What is the CMC status of this project?" or "/cmc"',
+  },
+  {
+    name: 'ich_compliance',
+    description:
+      'Run deterministic ICH compliance check (Q1A, Q2, Q3A/B, Q3D, Q6A/B, Q8, Q9, Q10) against the project\'s stored CMC data. Each finding cites the controlling guideline and underlying SQL evidence.',
+    parameters: 'projectId?',
+    example: '"Run an ICH compliance check on this project"',
+  },
+  {
+    name: 'control_strategy',
+    description:
+      'Generate a deterministic ICH Q8/Q9/Q10/Q11-grade control strategy from the project\'s CMC source data: release tests linked to validated methods, in-process controls per CPP, stability monitoring, raw material controls — with risk-based justification per element.',
+    parameters: 'projectId?, scope? (drug_substance | drug_product | both)',
+    example: '"Draft a control strategy for this project"',
+  },
+  {
+    name: 'variations_classify',
+    description:
+      'Classify a proposed CMC change against FDA SUPAC + 21 CFR 314.70 + EMA Commission Reg 1234/2008. Returns reporting category (annual_report / CBE-0 / CBE-30 / PAS), SUPAC tier, EMA variation, BE requirement, impacted CTD sections, cross-module impact, and citations.',
+    parameters: 'dosageFormFamily, changeCategory, scaleChangeFactor?, excipientLevelChange?, siteChangeKind?, processChangeKind?, touchesCriticalStep?, affects?',
+    example: '"Classify a scale-up from 100kg to 1500kg for our IR tablet"',
+  },
+
   // ── Cross-Jurisdictional Intelligence ─────────────────────────────────────
   {
     name: 'analyze_jurisdictions',
@@ -4329,6 +4446,13 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   ...MDX_COMMAND_METADATA_PHASE2,
   // ─── MDX governed mutations — phase 3 (predicate proxy) ────────────
   ...MDX_COMMAND_METADATA_PHASE3,
+  // ─── PDEV → IND workflow (read + governed) ─────────────────────────
+  // 16 commands: registry list / program get / readiness / workstream /
+  // ind-assembly / fda-interactions / contradictions / evidence-list, plus
+  // governed mutations: activity set-state / ai-draft / evidence-attach /
+  // evidence-detach / fda-feedback apply / ind-assembly compile / readiness
+  // snapshot. Audit prefix agent.ana.pdev.*. See PDEV_IND_WORKFLOW_AUDIT.md.
+  ...PDEV_COMMAND_METADATA,
   // ─── Auditor capability ────────────────────────────────────────────
   EXPLAIN_AUDIT_ROW_METADATA,
   // ─── Live 510(k) document preview (read-only from chat) ────────────
@@ -4399,6 +4523,134 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
 }
 
 /**
+ * Single source of truth for dispatchable platform commands.
+ *
+ * Lifted to module scope (it used to live inside executeCommands) so the
+ * registry↔handler parity guard can assert, on every build, that every
+ * COMMAND_REGISTRY entry is dispatchable and every dispatchable command is
+ * advertised. Without that guard a command added to the registry with no
+ * handler silently dead-ends (executeCommands skips it, execute_platform_command
+ * then returns {status:'failed', result:undefined} with no message), and a
+ * handler added without a registry entry is undiscoverable AND rejected by the
+ * execute_platform_command catalog gate — both are broken pathways for AnA's
+ * platform control surface.
+ */
+export const COMMAND_HANDLERS: Record<string, any> = {
+  create_project: createProject,
+  list_projects: listProjects,
+  // updateProject's declared signature is (ctx, projectId, updates); dispatch
+  // calls every handler as (ctx, params). Cast through the map signature to
+  // preserve the existing dispatch behaviour without altering the call site.
+  update_project: updateProject as unknown as (ctx: CommandContext, params: any) => Promise<CommandResult>,
+  create_artifact: createArtifact,
+  update_artifact: updateArtifact,
+  update_artifact_status: updateArtifactStatus,
+  list_artifacts: listArtifacts,
+  place_in_dossier: placeInDossier,
+  create_task: createTask,
+  update_task: updateTask,
+  list_tasks: listTasks,
+  check_dossier_readiness: checkDossierReadiness,
+  load_user_context: loadUserContext,
+  load_conversation_history: loadConversationHistory,
+  export_personal_data: exportPersonalData,
+  erase_personal_data: erasePersonalData,
+  create_submission_package: createSubmissionPackage,
+  create_review_thread: createReviewThread,
+  add_review_comment: addReviewComment,
+  search_artifacts: searchArtifacts,
+  list_team_members: listTeamMembers,
+  list_artifact_versions: listArtifactVersions,
+  run_compliance_scan: runComplianceScan,
+  export_artifact: exportArtifact,
+  compare_versions: compareVersions,
+  review_version_impact: reviewVersionImpact,
+  create_milestone: createMilestone,
+  update_milestone: updateMilestone,
+  list_milestones: listMilestones,
+  revert_to_version: revertToVersion,
+  generate_sap: generateSAP,
+  compute_sample_size: computeSampleSize,
+  compute_dose_escalation: computeDoseEscalation,
+  assess_defensibility: assessDefensibility,
+  design_trial: designTrial,
+  draft_section: draftSection,
+  scan_deficiencies: scanDeficiencies,
+  freeze_document: freezeDocument,
+  sign_document: signDocument,
+  export_document: exportDocument,
+  generate_checklist: generateChecklist,
+  submit_document: submitDocument,
+  // Precedent Engine
+  search_precedents: searchPrecedents,
+  analyze_crl_triggers: analyzeCRLTriggers,
+  analyze_rtf_triggers: analyzeRTFTriggers,
+  recommend_strategy: recommendStrategy,
+  check_claim: checkClaim,
+  // Submission Twin
+  run_submission_assessment: runSubmissionAssessment,
+  simulate_challenges: simulateChallenges,
+  detect_drift: detectDrift,
+  predict_next_artifact: predictNextArtifact,
+  compute_readiness: computeReadiness,
+  // Contradiction Engine
+  scan_contradictions: scanContradictions,
+  check_promotion_blockers: checkPromotionBlockers,
+  // Cross-Jurisdictional
+  analyze_jurisdictions: analyzeJurisdictions,
+  // Endpoint Recommender
+  recommend_endpoints: recommendEndpoints,
+  evaluate_endpoint: evaluateEndpoint,
+  // RIM Intelligence
+  run_rim_scan: runRIMScan,
+  // Report Engine
+  generate_report: generateReport,
+  // Clinical Intelligence
+  generate_clinical_insights: generateClinicalInsights,
+  analyze_cross_document: analyzeCrossDocument,
+  // CMS + Diagnostics
+  analyze_cms_strategy: analyzeCMSStrategy,
+  assess_diagnostic_validation: assessDiagnosticsValidation,
+  // Module 3 Workflow Convergence (Phase 7)
+  module3_build_all: module3BuildAll as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_build_section: module3BuildSection as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_missing_inputs: module3MissingInputs as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_stale_sections: module3StaleSections as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_refresh_stale: module3RefreshStale as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_readiness: module3Readiness as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_contradictions: module3Contradictions as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_lineage: module3Lineage as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_classify_source: module3ClassifySource as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  // Top-level CMC status — what `/cmc` dispatches with no args. The
+  // underlying handler lives in module3-command-handlers, which defines
+  // CommandContext / CommandResult locally; cast through to match the
+  // same pattern used by the other module3_* entries above.
+  cmc_status: cmcStatus as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  ich_compliance: ichCompliance as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  control_strategy: controlStrategy as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  variations_classify: variationsClassify as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
+  ...MDX_COMMAND_HANDLERS,
+  // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
+  // reviewer-simulation). Same governance contract as phase 1.
+  ...MDX_COMMAND_HANDLERS_PHASE2,
+  // MDX governed mutations — phase 3 (predicate.candidate.set_status,
+  // se_matrix.patch). Proxy through BFF to the Python shadow service.
+  ...MDX_COMMAND_HANDLERS_PHASE3,
+  // PDEV → IND workflow handlers (16 commands). Same governance contract:
+  // mutations require confirm + reason; reads are open. Audit prefix
+  // agent.ana.pdev.*. See server/services/ana-ri/pdev-command-handlers.ts.
+  ...PDEV_COMMAND_HANDLERS,
+  // Audit-row explainer — read-only auditor capability.
+  'audit.explain': explainAuditRow,
+  // Live 510(k) document preview — read-only canvas access from chat.
+  'k510_workflow.document_preview': documentPreview,
+};
+
+/** Names of every dispatchable platform command (the parity guard's source of truth). */
+export const COMMAND_HANDLER_NAMES: string[] = Object.keys(COMMAND_HANDLERS);
+
+/**
  * Execute parsed commands and return results.
  */
 export async function executeCommands(
@@ -4411,124 +4663,81 @@ export async function executeCommands(
   // Stamps ctx.anaToolPolicy from organizations.settings.anaToolPolicy.
   // The policy gate in mdx-tool-policy.ts reads from this cached value;
   // populating it here means handlers don't need to know about the load.
-  // Loader is fail-soft: any DB error → default-allow.
+  //
+  // FAIL-CLOSED: this used to swallow read errors into {} (allow-all), so a
+  // transient DB fault silently removed the tenant's deny/allow lists from
+  // every governed mutation. The strict loader propagates the error and we
+  // record the indeterminate state instead of inventing a permissive default.
   if (
     ctx.anaToolPolicy === undefined &&
     ctx.organizationId !== undefined &&
     Number.isFinite(ctx.organizationId)
   ) {
     try {
-      if (pool) {
-        ctx.anaToolPolicy = await loadAnaToolPolicy(pool, ctx.organizationId);
-      }
+      if (!pool) throw new Error('no db pool available for AnA governance load');
+      ctx.anaToolPolicy = await loadAnaToolPolicyStrict(pool, ctx.organizationId);
     } catch {
-      ctx.anaToolPolicy = {};
+      ctx.governanceUnavailable = true;
     }
   }
 
-  const commandMap: Record<
-    string,
-    (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>
-  > = {
-    create_project: createProject,
-    list_projects: listProjects,
-    update_project: updateProject,
-    create_artifact: createArtifact,
-    update_artifact: updateArtifact,
-    update_artifact_status: updateArtifactStatus,
-    list_artifacts: listArtifacts,
-    place_in_dossier: placeInDossier,
-    create_task: createTask,
-    update_task: updateTask,
-    list_tasks: listTasks,
-    check_dossier_readiness: checkDossierReadiness,
-    load_user_context: loadUserContext,
-    load_conversation_history: loadConversationHistory,
-    export_personal_data: exportPersonalData,
-    erase_personal_data: erasePersonalData,
-    create_submission_package: createSubmissionPackage,
-    create_review_thread: createReviewThread,
-    add_review_comment: addReviewComment,
-    search_artifacts: searchArtifacts,
-    list_team_members: listTeamMembers,
-    list_artifact_versions: listArtifactVersions,
-    run_compliance_scan: runComplianceScan,
-    export_artifact: exportArtifact,
-    compare_versions: compareVersions,
-    review_version_impact: reviewVersionImpact,
-    create_milestone: createMilestone,
-    update_milestone: updateMilestone,
-    list_milestones: listMilestones,
-    revert_to_version: revertToVersion,
-    generate_sap: generateSAP,
-    compute_sample_size: computeSampleSize,
-    compute_dose_escalation: computeDoseEscalation,
-    assess_defensibility: assessDefensibility,
-    design_trial: designTrial,
-    draft_section: draftSection,
-    scan_deficiencies: scanDeficiencies,
-    freeze_document: freezeDocument,
-    sign_document: signDocument,
-    export_document: exportDocument,
-    generate_checklist: generateChecklist,
-    submit_document: submitDocument,
-    // Precedent Engine
-    search_precedents: searchPrecedents,
-    analyze_crl_triggers: analyzeCRLTriggers,
-    analyze_rtf_triggers: analyzeRTFTriggers,
-    recommend_strategy: recommendStrategy,
-    check_claim: checkClaim,
-    // Submission Twin
-    run_submission_assessment: runSubmissionAssessment,
-    simulate_challenges: simulateChallenges,
-    detect_drift: detectDrift,
-    predict_next_artifact: predictNextArtifact,
-    compute_readiness: computeReadiness,
-    // Contradiction Engine
-    scan_contradictions: scanContradictions,
-    check_promotion_blockers: checkPromotionBlockers,
-    // Cross-Jurisdictional
-    analyze_jurisdictions: analyzeJurisdictions,
-    // Endpoint Recommender
-    recommend_endpoints: recommendEndpoints,
-    evaluate_endpoint: evaluateEndpoint,
-    // RIM Intelligence
-    run_rim_scan: runRIMScan,
-    // Report Engine
-    generate_report: generateReport,
-    // Clinical Intelligence
-    generate_clinical_insights: generateClinicalInsights,
-    analyze_cross_document: analyzeCrossDocument,
-    // CMS + Diagnostics
-    analyze_cms_strategy: analyzeCMSStrategy,
-    assess_diagnostic_validation: assessDiagnosticsValidation,
-    // Module 3 Workflow Convergence (Phase 7)
-    module3_build_all: module3BuildAll,
-    module3_build_section: module3BuildSection,
-    module3_missing_inputs: module3MissingInputs,
-    module3_stale_sections: module3StaleSections,
-    module3_refresh_stale: module3RefreshStale,
-    module3_readiness: module3Readiness,
-    module3_contradictions: module3Contradictions,
-    module3_lineage: module3Lineage,
-    module3_classify_source: module3ClassifySource,
-    // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
-    ...MDX_COMMAND_HANDLERS,
-    // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
-    // reviewer-simulation). Same governance contract as phase 1.
-    ...MDX_COMMAND_HANDLERS_PHASE2,
-    // MDX governed mutations — phase 3 (predicate.candidate.set_status,
-    // se_matrix.patch). Proxy through BFF to the Python shadow service.
-    ...MDX_COMMAND_HANDLERS_PHASE3,
-    // Audit-row explainer — read-only auditor capability.
-    'audit.explain': explainAuditRow,
-    // Live 510(k) document preview — read-only canvas access from chat.
-    'k510_workflow.document_preview': documentPreview,
-  };
+  // ── Load per-tenant Part 11 enforcement flag once per dispatch ──
+  // Stamps ctx.part11Enforce from organizations.settings.anaPart11Enforce.
+  //
+  // FAIL-CLOSED: this used to swallow read errors into `false` (not enforced),
+  // which meant a settings-DB outage removed the 21 CFR Part 11 sign-off gate
+  // from record-altering commands at exactly the moment the system was least
+  // trustworthy. A determinate "tenant has not opted in" still yields false.
+  if (
+    ctx.part11Enforce === undefined &&
+    ctx.organizationId !== undefined &&
+    Number.isFinite(ctx.organizationId)
+  ) {
+    try {
+      if (!pool) throw new Error('no db pool available for Part 11 governance load');
+      ctx.part11Enforce = await loadPart11EnforceStrict(pool, ctx.organizationId);
+    } catch {
+      ctx.governanceUnavailable = true;
+    }
+  }
+
+  const commandMap: Record<string, any> = COMMAND_HANDLERS;
 
   for (const cmd of commands) {
     const handler = commandMap[cmd.command];
     if (handler) {
+      // ── Part 11 gate: governed record-altering commands fail closed unless
+      // this dispatch carries a valid sign-off. Tiered — reason-for-change
+      // always; high-impact actions additionally require an e-signature. ──
+      if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
+        const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
+        if (!v.ok) {
+          const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
+          results.push(blocked);
+          console.log(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
+          continue;
+        }
+      }
+
+      // ── Central authorization gate ────────────────────────────────────
+      // The single place every AnA-dispatched command is authorized, for all
+      // four entry points (chat bridge tool, POST /execute, POST
+      // /governed-action, chat action blocks). Fail-closed by construction:
+      // a command with no entry in COMMAND_AUTHORIZATION is denied, so a new
+      // handler cannot ship ungated. Mutations additionally require the
+      // caller's canonical organization_users role (via rbacService) and a
+      // RESOLVED governance configuration. See command-rbac.ts.
+      //
+      // Deliberately AFTER the Part 11 gate: both are fail-closed pre-handler
+      // gates, and this ordering keeps the Part 11 signature demand as the
+      // first thing a signer is told when enforcement is on.
+      const authz = await authorizeCommand(cmd.command, ctx);
+      if (!authz.ok) {
+        results.push(authz.result);
+        console.warn(`[AnA Command] Blocked ${cmd.command}: ${authz.result.error}`);
+        continue;
+      }
+
       try {
         const result = await handler(ctx, cmd.params);
         results.push(result);

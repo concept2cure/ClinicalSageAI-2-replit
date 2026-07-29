@@ -140,60 +140,62 @@ export class EvidenceConfidenceHeatmapService {
     };
 
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
 
-    const result = await client.query(
-      `
-      INSERT INTO innovation.evidence_scoring_configs (
-        org_id, name, description,
-        weight_citation_density, weight_citation_quality, weight_data_recency,
-        weight_source_authority, weight_consistency,
-        critical_threshold, warning_threshold,
-        is_default, is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE, TRUE)
-      RETURNING *
-    `,
-      [
-        config.organizationId,
-        config.name,
-        'Custom scoring configuration',
-        weights.citationDensity,
-        weights.citationQuality,
-        weights.dataRecency,
-        weights.sourceAuthority,
-        weights.consistency,
-        0.3,
-        0.6,
-      ]
-    );
+      const result = await client.query(
+        `
+        INSERT INTO innovation.evidence_scoring_configs (
+          org_id, name, description,
+          weight_citation_density, weight_citation_quality, weight_data_recency,
+          weight_source_authority, weight_consistency,
+          critical_threshold, warning_threshold,
+          is_default, is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE, TRUE)
+        RETURNING *
+      `,
+        [
+          config.organizationId,
+          config.name,
+          'Custom scoring configuration',
+          weights.citationDensity,
+          weights.citationQuality,
+          weights.dataRecency,
+          weights.sourceAuthority,
+          weights.consistency,
+          0.3,
+          0.6,
+        ]
+      );
 
-    const row = result?.rows?.[0];
-    if (!row) {
-      const fallback: EvidenceScoringConfig = {
-        id: crypto.randomUUID(),
-        orgId: config.organizationId,
-        name: config.name,
-        description: 'Custom scoring configuration',
-        weightCitationDensity: weights.citationDensity,
-        weightCitationQuality: weights.citationQuality,
-        weightDataRecency: weights.dataRecency,
-        weightSourceAuthority: weights.sourceAuthority,
-        weightConsistency: weights.consistency,
-        criticalThreshold: 0.3,
-        warningThreshold: 0.6,
-        isDefault: false,
-        isActive: true,
-      };
-      EvidenceConfidenceHeatmapService.scoringConfigs.push(fallback);
+      const row = result?.rows?.[0];
+      if (!row) {
+        const fallback: EvidenceScoringConfig = {
+          id: crypto.randomUUID(),
+          orgId: config.organizationId,
+          name: config.name,
+          description: 'Custom scoring configuration',
+          weightCitationDensity: weights.citationDensity,
+          weightCitationQuality: weights.citationQuality,
+          weightDataRecency: weights.dataRecency,
+          weightSourceAuthority: weights.sourceAuthority,
+          weightConsistency: weights.consistency,
+          criticalThreshold: 0.3,
+          warningThreshold: 0.6,
+          isDefault: false,
+          isActive: true,
+        };
+        EvidenceConfidenceHeatmapService.scoringConfigs.push(fallback);
+        return fallback;
+      }
+
+      const mapped = this.mapConfig(row);
+      EvidenceConfidenceHeatmapService.scoringConfigs.push(mapped);
+      return mapped;
+    } finally {
       client.release();
-      return fallback;
     }
-
-    const mapped = this.mapConfig(row);
-    EvidenceConfidenceHeatmapService.scoringConfigs.push(mapped);
-    client.release();
-    return mapped;
   }
 
   /**
@@ -201,20 +203,23 @@ export class EvidenceConfidenceHeatmapService {
    */
   async getScoringConfigs(orgId: string): Promise<EvidenceScoringConfig[]> {
     const client = await this.pool.connect();
-    await client.query("SET app.bypass_rls = 'true'");
-    await client.query("SET app.is_admin = 'true'");
-    const result = await client.query(
-      `SELECT * FROM innovation.evidence_scoring_configs WHERE org_id = $1 AND is_active = TRUE ORDER BY created_at DESC`,
-      [orgId]
-    );
-    const configs = result?.rows ? result.rows.map(this.mapConfig) : [];
-    client.release();
+    try {
+      await client.query("SET app.bypass_rls = 'true'");
+      await client.query("SET app.is_admin = 'true'");
+      const result = await client.query(
+        `SELECT * FROM innovation.evidence_scoring_configs WHERE org_id = $1 AND is_active = TRUE ORDER BY created_at DESC`,
+        [orgId]
+      );
+      const configs = result?.rows ? result.rows.map(this.mapConfig) : [];
 
-    if (configs.length === 0) {
-      return EvidenceConfidenceHeatmapService.scoringConfigs.filter(c => c.orgId === orgId);
+      if (configs.length === 0) {
+        return EvidenceConfidenceHeatmapService.scoringConfigs.filter(c => c.orgId === orgId);
+      }
+
+      return configs;
+    } finally {
+      client.release();
     }
-
-    return configs;
   }
 
   /**

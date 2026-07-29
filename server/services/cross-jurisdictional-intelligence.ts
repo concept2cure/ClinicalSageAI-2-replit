@@ -9,6 +9,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
 const log = createScopedLogger('cross-jurisdictional');
 
@@ -87,9 +88,15 @@ export class CrossJurisdictionalEngine {
   async analyze(input: JurisdictionInput): Promise<CrossJurisdictionalResult> {
     log.info(`Cross-jurisdictional analysis: ${input.submissionType}, agencies: ${input.targetAgencies?.join(', ') || 'all'}`);
 
-    const agencies = input.targetAgencies?.length
+    // Resolve submission type through canonical bridge for international type support
+    const registryCtx = getSubmissionTypeContext(input.submissionType);
+    const resolvedAgencies = input.targetAgencies?.length
       ? input.targetAgencies
-      : ['FDA', 'EMA', 'PMDA', 'NMPA'];
+      : registryCtx
+        ? [registryCtx.agency, ...['FDA', 'EMA', 'PMDA', 'NMPA'].filter(a => a !== registryCtx.agency)]
+        : ['FDA', 'EMA', 'PMDA', 'NMPA'];
+
+    const agencies = resolvedAgencies;
 
     const divergences = this.analyzeDivergences(input, agencies);
     const reliancePathways = this.findReliancePathways(input, agencies);

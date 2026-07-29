@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 // jsonwebtoken lacks strong typings in this repo setup for tests.
 // Use require-style import to keep this smoke test lightweight.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const jwt = require('jsonwebtoken');
 
 let authMiddleware: any;
@@ -12,7 +12,9 @@ beforeAll(async () => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
   process.env.DATABASE_URL =
     process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/test';
-  process.env.JWT_SECRET = process.env.JWT_SECRET || 'stage3-test-secret';
+  // JWT_SECRET must be ≥32 chars (server/config/environment.ts:104).
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'stage3-test-secret-padded-to-32-chars-or-more-okay';
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 
   vi.resetModules();

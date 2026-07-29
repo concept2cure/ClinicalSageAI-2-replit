@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { randomUUID } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { anaMicrokernel, type KernelEvaluation } from '../control-plane/kernel';
+import { createScopedLogger } from '../../utils/logger';
 
 interface RequestContext {
   requestId: string;
@@ -13,11 +14,18 @@ const requestContextStorage = new AsyncLocalStorage<RequestContext>();
 
 type LogFn = (obj: Record<string, unknown>, msg?: string) => void;
 
+// Route all request/error logging through the project's redacting Pino logger
+// (server/utils/logger) instead of raw console.*. That logger scrubs sensitive
+// keys (auth/token/cookie/PHI/PII) at arbitrary nesting depth before anything
+// reaches stdout. The (obj, msg) call shape used throughout this file is
+// preserved by adapting it to the logger's (message, context) signature.
+const scopedLogger = createScopedLogger('http');
+
 export const logger: Record<'info' | 'error' | 'warn' | 'debug', LogFn> = {
-  info: (obj, msg) => console.log(msg || 'info', obj),
-  error: (obj, msg) => console.error(msg || 'error', obj),
-  warn: (obj, msg) => console.warn(msg || 'warn', obj),
-  debug: (obj, msg) => console.debug(msg || 'debug', obj),
+  info: (obj, msg) => scopedLogger.info(msg || 'info', obj),
+  error: (obj, msg) => scopedLogger.error(msg || 'error', obj),
+  warn: (obj, msg) => scopedLogger.warn(msg || 'warn', obj),
+  debug: (obj, msg) => scopedLogger.debug(msg || 'debug', obj),
 };
 
 function extractActor(req: Request): string {
@@ -153,9 +161,15 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
   const kernel = (req as any).anaKernelDecision as KernelEvaluation | undefined;
 
   if (statusCode >= 500) {
+    // Log a safe subset of the error (message + name + stack), never the raw
+    // error object — error objects can carry request bodies, DB params, config
+    // fragments on enumerable properties that would bypass key-based redaction.
     logger.error(
       {
-        err,
+        errorName: err?.name,
+        errorMessage: err?.message,
+        stack: err?.stack,
+        statusCode,
         path: req.path,
         method: req.method,
         requestId: res.getHeader('x-request-id'),

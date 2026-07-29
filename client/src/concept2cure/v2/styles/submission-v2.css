@@ -1,0 +1,22 @@
+/* ui-v2 Submission Center — only the port-helper classes this surface adds on
+   top of the shared surface framework (journey-v2.css + coverage-v2.css, both
+   loaded globally by V2App). The kit expressed these as inline style
+   attributes; classes keep the TSX clean and CSP-lean. */
+.c2c-v2 .sc-page { max-width: 1140px; }
+.c2c-v2 .sc-mt { margin-top: 12px; }
+.c2c-v2 .sc-mb { margin-bottom: 10px; }
+.c2c-v2 .sc-mono { font-family: var(--font-mono); }
+.c2c-v2 .sc-cap { text-transform: capitalize; }
+.c2c-v2 .sc-spec { max-width: 520px; }
+.c2c-v2 .sc-btn { padding: 8px 14px; }
+.c2c-v2 .sc-disp-actions .sc-btn { padding: 9px 16px; }
+.c2c-v2 .sc-btn-neutral { background: var(--bg-200); color: var(--text-100); }
+.c2c-v2 .sc-subrow { cursor: pointer; }
+.c2c-v2 .pj-card-b-flush { padding: 0; }
+.c2c-v2 .ub-r { text-align: right; }
+.c2c-v2 .sc-toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);
+  z-index: 60; background: var(--text-100); color: var(--bg-000);
+  font-size: 12.5px; font-weight: 500; padding: 9px 16px; border-radius: 8px;
+  box-shadow: var(--v2-shadow-lg); max-width: min(560px, 92vw);
+}

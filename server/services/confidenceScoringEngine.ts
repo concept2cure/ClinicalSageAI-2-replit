@@ -57,6 +57,10 @@ export interface VerificationResult {
 }
 import { ai } from '../lib/unified-ai-client';
 
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('confidenceScoringEngine');
+
 export interface VerificationCheck {
   checkId: string;
   checkName: string;
@@ -229,7 +233,7 @@ export async function computeEvidenceConfidence(
 
     return confidenceScore;
   } catch (error) {
-    console.error('[ConfidenceScoring] Failed to compute evidence confidence:', error);
+    logger.error('Failed to compute evidence confidence', { err: error instanceof Error ? error.message : String(error) });
     return buildScore(factors, 'heuristic');
   }
 }
@@ -265,7 +269,7 @@ export async function batchComputeConfidence(
       averageScore: computed > 0 ? Math.round((totalScore / computed) * 100) / 100 : 0,
     };
   } catch (error) {
-    console.error('[ConfidenceScoring] Batch computation failed:', error);
+    logger.error('Batch computation failed', { err: error instanceof Error ? error.message : String(error) });
     return { computed: 0, averageScore: 0 };
   }
 }

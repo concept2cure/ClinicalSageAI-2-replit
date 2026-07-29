@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, getPool } from '../db';
+import { authedOrgId } from '../utils/authedOrgId';
 import {
   reportProgramGroups,
   reportProgramGroupProjects,
@@ -16,8 +17,29 @@ import { projectIntelligenceProfiles, projectMemoryEntries, projects } from '@sh
 import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
+import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
+import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report-types';
 import { resolveScope } from '../services/report-os/scope-model';
+import {
+  deriveOrgSegments,
+  filterTypesForSegment,
+  type SegmentFilterableType,
+} from '../services/report-os/segment';
+import {
+  requireReportEntitlement,
+  decideReportEntitlement,
+} from '../services/report-os/entitlement-map';
+import { fetchPortfolioReport, fetchOrgPortfolioSummary } from '../services/report-os/portfolio/fetch';
+import { resolveCapabilities } from '../services/entitlements/resolver';
+import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
+import { renderReport, type RenderInput } from '../services/report-os/render/render';
+import { buildSealedRecord } from '../services/report-os/sealing/seal';
+import {
+  evaluateTruthfulness,
+  type TruthfulnessRules,
+  type ReportRunStatus,
+} from '../services/report-os/truthfulness';
 import { evaluateReadiness } from '../services/regulatory/readinessEvaluator.js';
 import { buildPackageManifest } from '../services/regulatory/submissionPackageBuilder.js';
 import { resolveRegistryId } from '../services/regulatory/registry/legacySubmissionTypeMapper.js';
@@ -714,7 +736,11 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
     }
   }
   try {
-    for (const row of REPORT_TYPE_SEED) {
+    // The base seed plus the global-markets seed (FDA/EMA/PMDA/HC/MHRA/TGA/NMPA/
+    // MFDS/Swissmedic/ANVISA + EU MDR/IVDR + PV) register together so every market
+    // is available; typeIds are unique across both sets.
+    const allSeed = [...REPORT_TYPE_SEED, ...GLOBAL_REPORT_TYPE_SEED, ...PREDICTION_REPORT_TYPES];
+    for (const row of allSeed) {
       await db
         .insert(reportTypeRegistry)
         .values(row)
@@ -737,19 +763,110 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
           },
         });
     }
-    return res.json({ success: true, seeded: REPORT_TYPE_SEED.length });
+    return res.json({ success: true, seeded: allSeed.length });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-router.get('/taxonomy', async (_req: Request, res: Response) => {
+router.get('/taxonomy', async (req: Request, res: Response) => {
   try {
     const rows = await db
       .select()
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.enabled, true));
-    return res.json({ data: rows });
+
+    // Anchor the catalog to what this client segment actually needs: filter
+    // to report types whose `allowedClientSegments` intersects the org's
+    // derived segment(s). Universal types (empty allowedClientSegments) are
+    // always shown. Optional ?persona= intersects on allowedPersonas.
+    // When there's no tenant context we return the full enabled set (the
+    // route is auth-gated at the mount, so this is the defensive path only).
+    const organizationId = authedOrgId(req);
+    const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
+    if (organizationId == null || !Number.isFinite(organizationId)) {
+      return res.json({ data: rows });
+    }
+    const segments = await deriveOrgSegments(organizationId);
+    const filtered = filterTypesForSegment(rows as SegmentFilterableType[], segments, persona);
+
+    // Annotate each row with its entitlement verdict for the org's tier so the
+    // client can render an honest Locked state without a second round trip.
+    let tier: Tier = 'standard';
+    try {
+      tier = (await resolveCapabilities(organizationId)).tier;
+    } catch { /* default standard — never unlocks paid features */ }
+    const annotated = filtered.map((row) => {
+      const r = row as SegmentFilterableType & { typeId: string; family?: string };
+      const d = decideReportEntitlement(r.typeId, r.family, tier);
+      return { ...row, entitled: d.entitled, requiredTier: d.requiredTier };
+    });
+    return res.json({ data: annotated, meta: { segments, tier } });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /portfolio/org — the enterprise rollup over ALL top-level programs in the
+// org (not a single program group). Returns the RAW flat OrgPortfolioSummary
+// (program list + aggregates), not a rendered board pack, so the Command Center
+// can bind the program array directly. Same entitlement gate + same orchestrator
+// as /portfolio; every metric traces to computeInitialRun.
+router.get('/portfolio/org', async (req: Request, res: Response) => {
+  try {
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+    const summary = await fetchOrgPortfolioSummary(organizationId);
+    if (!summary) {
+      return res.status(404).json({ error: 'No programs found for this organization' });
+    }
+    return res.json({ data: summary });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /portfolio?programGroupId= — the enterprise board-pack rollup over a
+// program group. Gated on portfolio_rollup (enterprise); every metric traces
+// to the same orchestrator the /runs path uses.
+router.get('/portfolio', async (req: Request, res: Response) => {
+  try {
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+    const programGroupId = Number(req.query.programGroupId);
+    if (!Number.isFinite(programGroupId) || programGroupId <= 0) {
+      return res.status(400).json({ error: 'programGroupId query parameter is required' });
+    }
+    const report = await fetchPortfolioReport(organizationId, programGroupId, {
+      reportTypeId: 'portfolio.board_pack',
+      reportTypeLabel: 'Portfolio board pack',
+    });
+    if (!report) {
+      return res.status(404).json({ error: 'Program group not found or has no members in this organization' });
+    }
+    return res.json({ data: report });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -757,7 +874,12 @@ router.get('/taxonomy', async (_req: Request, res: Response) => {
 
 router.get('/program-groups', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -903,7 +1025,12 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
 router.get('/program-groups/:id/snapshots', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1002,6 +1129,20 @@ router.post('/runs', async (req: Request, res: Response) => {
       });
     }
 
+    // Entitlement gate: refuse to generate a report above the org's tier.
+    // Gated on the authed org (never the body) so a downgraded tier cannot
+    // be bypassed by a crafted organizationId.
+    const gateOrgId = authedOrgId(req) ?? orgId;
+    const gate = await requireReportEntitlement(gateOrgId, type[0].typeId, type[0].family);
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `This report requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+
     const scope = resolveScope({ scopeType, scopeId, organizationId: orgId });
     let programProjectIds: number[] | undefined;
     if (scopeType === 'program') {
@@ -1027,6 +1168,20 @@ router.post('/runs', async (req: Request, res: Response) => {
       explicitSubmissionType: submissionType,
     });
 
+    // Research-compliance / sponsored-programs domain providers: compute the real
+    // report summary from the domain tables and merge it into the run.
+    try {
+      const { computeDomainReport } = await import('../services/report-os/research-compliance-report-providers.js');
+      const domain = await computeDomainReport(reportTypeId, orgId);
+      if (domain) {
+        Object.assign(computed.summary, { domain: domain.summary });
+        computed.providers.push(domain.provider);
+        if (domain.provider.status === 'missing' && domain.provider.blocker) computed.blockers.push(domain.provider.blocker);
+      }
+    } catch {
+      // Domain provider is best-effort; the generic report run stands on its own.
+    }
+
     const [run] = await db
       .insert(reportRuns)
       .values({
@@ -1041,6 +1196,7 @@ router.post('/runs', async (req: Request, res: Response) => {
           providers: computed.providers,
           scopeLineage: scope.lineage,
           summary: computed.summary,
+          criticalBlockers: computed.criticalBlockers,
         },
         blockers: computed.blockers,
         confidence: computed.confidence,
@@ -1104,7 +1260,12 @@ router.post('/runs', async (req: Request, res: Response) => {
 router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
   try {
     const runId = Number(req.params.id);
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1128,7 +1289,12 @@ router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
 router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
   try {
     const runId = Number(req.params.id);
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(runId) || runId <= 0) return res.status(400).json({ error: 'Invalid run id' });
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
@@ -1141,10 +1307,24 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
       .limit(1);
     if (!run) return res.status(404).json({ error: 'Run not found' });
     const [reportType] = await db
-      .select({ label: reportTypeRegistry.label })
+      .select({ label: reportTypeRegistry.label, family: reportTypeRegistry.family })
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
+
+    // Entitlement gate: exporting is a paid action too — a downgraded org
+    // cannot export a report family above its tier.
+    const exportGate = await requireReportEntitlement(
+      organizationId, run.reportTypeId, reportType?.family,
+    );
+    if (!exportGate.entitled) {
+      return res.status(403).json({
+        error: `Exporting this report requires the ${exportGate.requiredTier} plan.`,
+        feature: exportGate.feature,
+        requiredTier: exportGate.requiredTier,
+        tier: exportGate.tier,
+      });
+    }
     const providers = await db
       .select({
         provider: reportRunDependencies.provider,
@@ -1165,6 +1345,181 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="report-run-${runId}.pdf"`);
     return res.send(buffer);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Build the rendered report document + truthfulness evaluation for a stored run.
+ * Pure given the run + report-type rows (shared by the rendered and finalize
+ * endpoints so they never disagree). `forceRequestStatus` lets the finalize path
+ * test eligibility for `final` regardless of the stored run status. Critical
+ * blockers are read from the severity-tagged value persisted at run creation,
+ * falling back (for older runs) to treating every blocker as critical when the
+ * type forbids final on missing critical evidence.
+ */
+function buildRenderedFromRun(
+  run: typeof reportRuns.$inferSelect,
+  reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
+  forceRequestStatus?: ReportRunStatus
+): {
+  rendered: ReturnType<typeof renderReport>;
+  truthfulness: ReturnType<typeof evaluateTruthfulness>;
+} {
+  const dependencySummary = (run.dependencySummary ?? {}) as Record<string, unknown>;
+  const providers = Array.isArray(dependencySummary.providers)
+    ? (dependencySummary.providers as RenderInput['providers'])
+    : [];
+  const summary = (dependencySummary.summary ?? {}) as Record<string, unknown>;
+  const blockers = toBlockerArray(run.blockers);
+  const rules = (reportType?.truthfulnessRules ?? {}) as TruthfulnessRules;
+  const storedCritical = Array.isArray(dependencySummary.criticalBlockers)
+    ? (dependencySummary.criticalBlockers as string[])
+    : null;
+  const criticalBlockers =
+    storedCritical ?? (rules.forbidFinalIfMissingCritical ? blockers : []);
+  const requestedStatus: ReportRunStatus =
+    forceRequestStatus ?? (run.status === 'completed' ? 'final' : 'partial');
+  const truthfulness = evaluateTruthfulness(
+    {
+      requestedStatus,
+      confidence: run.confidence ?? 0,
+      blockers,
+      criticalBlockers,
+      gapsSection: true,
+    },
+    rules
+  );
+  const rendered = renderReport({
+    reportTypeId: run.reportTypeId,
+    reportTypeLabel: reportType?.label || run.reportTypeId,
+    scopeType: run.scopeType,
+    scopeId: run.scopeId,
+    providers,
+    confidence: run.confidence ?? 0,
+    blockers,
+    summary,
+    status: truthfulness.allowedStatus,
+    truthfulness,
+  });
+  return { rendered, truthfulness };
+}
+
+/**
+ * GET /runs/:id/rendered
+ *
+ * Render a stored run into the provenance-linked report document model and apply
+ * the truthfulness gate. Read-only and org-scoped (JWT-bound; cross-tenant ids
+ * 404). The gate is evaluated so the UI can show whether the report is eligible
+ * to be finalized/sealed and, if not, why.
+ */
+router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
+  try {
+    const runId = Number(req.params.id);
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    if (!Number.isFinite(runId) || runId <= 0) {
+      return res.status(400).json({ error: 'Invalid run id' });
+    }
+
+    const [run] = await db
+      .select()
+      .from(reportRuns)
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)))
+      .limit(1);
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+
+    const [reportType] = await db
+      .select({ label: reportTypeRegistry.label, truthfulnessRules: reportTypeRegistry.truthfulnessRules })
+      .from(reportTypeRegistry)
+      .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
+      .limit(1);
+
+    const { rendered } = buildRenderedFromRun(run, reportType);
+    return res.json({ data: rendered });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /runs/:id/finalize
+ *
+ * Finalize and seal a run. Org-scoped (JWT-bound; cross-tenant ids 404). The
+ * truthfulness gate is evaluated against a `final` request: if the type's rules
+ * do not allow final (e.g. an unmet critical blocker), the endpoint refuses with
+ * 409 and the reasons — a final report can never be issued over blocking gaps.
+ * On success the rendered report is sealed (sha256 content hash + provenance
+ * atoms), the run is marked final, and the seal is persisted onto the latest
+ * snapshot's metadata.
+ */
+router.post('/runs/:id/finalize', async (req: Request, res: Response) => {
+  try {
+    const runId = Number(req.params.id);
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    if (!Number.isFinite(runId) || runId <= 0) {
+      return res.status(400).json({ error: 'Invalid run id' });
+    }
+
+    const [run] = await db
+      .select()
+      .from(reportRuns)
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)))
+      .limit(1);
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+
+    const [reportType] = await db
+      .select({ label: reportTypeRegistry.label, truthfulnessRules: reportTypeRegistry.truthfulnessRules })
+      .from(reportTypeRegistry)
+      .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
+      .limit(1);
+
+    const { rendered, truthfulness } = buildRenderedFromRun(run, reportType, 'final');
+    if (truthfulness.allowedStatus !== 'final') {
+      return res.status(409).json({
+        error: 'Report is not eligible to be finalized',
+        downgradedTo: truthfulness.allowedStatus,
+        reasons: truthfulness.reasons,
+      });
+    }
+
+    const seal = buildSealedRecord(rendered);
+
+    await db
+      .update(reportRuns)
+      .set({ status: 'final', completedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)));
+
+    const [snapshot] = await db
+      .select()
+      .from(reportSnapshots)
+      .where(
+        and(
+          eq(reportSnapshots.runId, runId),
+          eq(reportSnapshots.organizationId, organizationId),
+          eq(reportSnapshots.isLatest, true)
+        )
+      )
+      .limit(1);
+    if (snapshot) {
+      const mergedMetadata = {
+        ...((snapshot.snapshotMetadata ?? {}) as Record<string, unknown>),
+        seal,
+        finalizedAt: new Date().toISOString(),
+      };
+      await db
+        .update(reportSnapshots)
+        .set({ snapshotMetadata: mergedMetadata })
+        .where(eq(reportSnapshots.id, snapshot.id));
+    }
+
+    return res.json({ data: { runId, status: 'final', seal } });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -1266,6 +1621,21 @@ router.post('/bundles', async (req: Request, res: Response) => {
     const parsed = createBundleSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const { organizationId, name, description, runIds, createdBy } = parsed.data;
+
+    // Bundling is a paid packaging action — gate on the base report_families
+    // capability (standard+). The member runs were already gated at generation.
+    const bundleGate = await requireReportEntitlement(
+      authedOrgId(req) ?? organizationId, 'readiness.executive_digest',
+    );
+    if (!bundleGate.entitled) {
+      return res.status(403).json({
+        error: `Bundling reports requires the ${bundleGate.requiredTier} plan.`,
+        feature: bundleGate.feature,
+        requiredTier: bundleGate.requiredTier,
+        tier: bundleGate.tier,
+      });
+    }
+
     const uniqueRunIds = [...new Set(runIds)];
     const runs = await db
       .select()
@@ -1308,7 +1678,12 @@ router.post('/bundles', async (req: Request, res: Response) => {
 
 router.get('/bundles', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1321,7 +1696,12 @@ router.get('/bundles', async (req: Request, res: Response) => {
 
 router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }
@@ -1345,7 +1725,12 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
 
 router.get('/deliveries', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.query.organizationId);
+    // SECURITY: JWT-bound; the legacy ?organizationId= query param is
+    // ignored to prevent cross-tenant report enumeration.
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ error: 'organizationId query parameter is required' });
     }

@@ -1,0 +1,45 @@
+# eCTD DTD checksum manifest (SHA-256)
+#
+# Format (one entry per line, two-space separator, matches `sha256sum` output):
+#
+#   <64-hex-char-sha256>  <filename>
+#
+# Example (DO NOT use — illustrative only):
+#
+#   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ich-ectd-3-2.dtd
+#
+# Required entries once vendored (one line each):
+#
+#   <sha256>  ich-ectd-3-2.dtd
+#   <sha256>  us-regional-v2-01.dtd
+#   <sha256>  eu-regional.dtd
+#   <sha256>  jp-regional.dtd
+#   <sha256>  ca-regional.dtd
+#
+# Lines beginning with '#' and blank lines are ignored by the manifest
+# verifier.  All other lines must match the format above.  The verifier
+# (added when validateDtdConformance flips to strict mode — out of scope
+# for this scaffolding) refuses to start an export if any vendored DTD's
+# hash does not match its entry, or if a required DTD is missing from
+# this manifest.
+#
+# Updating procedure (see docs/runbooks/ectd-dtd-vendoring.md):
+#   1. After dropping the DTD files into assets/ectd-dtd/ (or $ECTD_DTD_DIR),
+#      run:  cd assets/ectd-dtd && sha256sum *.dtd
+#   2. Replace every '<sha256>' placeholder below with the real digest from
+#      that command's output, preserving the two-space separator.
+#   3. Commit this file (the .dtd files themselves are NOT committed).
+#   4. Re-run the integration test suite to confirm the manifest verifier
+#      accepts the new manifest.
+#
+# When a regulator publishes a new DTD version, treat it as a fresh
+# acquisition cycle: re-run the runbook from step 1 (legal review), don't
+# just hot-swap the file and update its checksum line.
+
+# --- Manifest entries below this line (placeholders until DTDs are vendored) ---
+
+# <sha256>  ich-ectd-3-2.dtd
+# <sha256>  us-regional-v2-01.dtd
+# <sha256>  eu-regional.dtd
+# <sha256>  jp-regional.dtd
+# <sha256>  ca-regional.dtd

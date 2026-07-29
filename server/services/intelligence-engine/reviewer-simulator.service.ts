@@ -171,7 +171,7 @@ export async function runReviewerSimulation(
       const { loadPreclinicalIntel } = await import(
         '../preclinical/preclinical-intel-loader'
       );
-      const nc = await loadPreclinicalIntel(req.ctdProgramId, {
+      const nc = await loadPreclinicalIntel(req.ctdProgramId, req.organizationId, {
         mrhdMgPerKgPerDay: req.program.mrhdMgPerKgPerDay ?? null,
       });
       if (nc) {

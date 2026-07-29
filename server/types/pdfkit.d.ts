@@ -14,6 +14,11 @@ declare module 'pdfkit' {
     text(text: string, x?: number, y?: number, options?: TextOptions): this;
     moveDown(lines?: number): this;
     moveUp(lines?: number): this;
+    save(): this;
+    restore(): this;
+    rotate(angle: number, options?: { origin?: [number, number] }): this;
+    fillColor(color: string, opacity?: number): this;
+    opacity(opacity: number): this;
     end(): void;
     page: {
       margins: {
@@ -39,8 +44,11 @@ declare module 'pdfkit' {
       Author?: string;
       Subject?: string;
       Keywords?: string;
+      Creator?: string;
+      Producer?: string;
       CreationDate?: Date;
     };
+    bufferPages?: boolean;
     layout?: 'portrait' | 'landscape';
     size?: string | [number, number];
   }

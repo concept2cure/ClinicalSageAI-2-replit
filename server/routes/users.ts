@@ -11,10 +11,19 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
-import { users, organizations, notificationPreferences } from '../../shared/schema';
+import { and, eq } from 'drizzle-orm';
+import { users, organizations, organizationUsers, notificationPreferences } from '../../shared/schema';
+import {
+  REPORT_PERSONAS,
+  isReportPersona,
+} from '../../shared/constants/domain/report-personas';
 
 import { config } from '../config/environment';
+import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('users-routes');
 
 /** Login: 10 attempts per 15 minutes per IP */
 const loginLimiter = rateLimit({
@@ -47,9 +56,14 @@ const registerLimiter = rateLimit({
 
 const router = Router();
 
-// Dev mode requires explicit opt-in via NODE_ENV=development (not just "not production")
-// SECURITY: Dev user fallback is only active when NODE_ENV=development
-const isDev = process.env.NODE_ENV === 'development';
+// SECURITY: the dev-user fallback (synthetic user / faked mutation responses
+// below) is only active when the canonical dev-auth gate allows it — i.e.
+// BOTH NODE_ENV==='development' AND ALLOW_DEV_AUTH==='1'. Gating on NODE_ENV
+// alone was unsafe: any environment an operator accidentally flipped to
+// "development" (staging, beta, e2e) would have served the fallback. Routed
+// through isDevAuthAllowed() so this file is covered by the same policy and
+// CI guard (check-no-dev-auth-in-prod.mjs) as the rest of the auth surface.
+const isDev = isDevAuthAllowed();
 
 // Dev user response — uses 'user' role (not admin) to match least-privilege principle
 const devUserResponse = {
@@ -87,7 +101,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string; email: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string; email: string };
     const user = await db
       .select()
       .from(users)
@@ -99,14 +113,15 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     const userData = user[0];
+    const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
+    const lastName = lastNameParts.join(' ');
     res.json({
       id: userData.id,
       username: userData.email?.split('@')[0] || 'user',
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      firstName,
+      lastName,
+      displayName: `${firstName} ${lastName}`.trim() || userData.email,
       role: 'user',
       roles: ['user'],
       organizationId: '2',
@@ -131,7 +146,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -150,9 +165,13 @@ router.get('/me', async (req: Request, res: Response) => {
     }
 
     const userData = user[0];
+    const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
+    const lastName = lastNameParts.join(' ');
 
-    // Get organization name
+    // Get organization name + client type (Phase 10.2 — tenant IA for the
+    // biopharma shell; medtech | biotech | pharma).
     let orgName = 'Concept2Cure Demo';
+    let orgClientType = 'pharma';
     if (decoded.organizationId) {
       const org = await db
         .select()
@@ -161,16 +180,16 @@ router.get('/me', async (req: Request, res: Response) => {
         .limit(1);
       if (org.length) {
         orgName = org[0].name;
+        orgClientType = org[0].clientType ?? 'pharma';
       }
     }
 
     res.json({
       id: userData.id.toString(),
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      firstName,
+      lastName,
+      displayName: `${firstName} ${lastName}`.trim() || userData.email,
       title: userData.title || '',
       department: userData.department || '',
       bio: userData.bio || '',
@@ -180,6 +199,7 @@ router.get('/me', async (req: Request, res: Response) => {
       permissions: [],
       organizationId: decoded.organizationId,
       organizationName: orgName,
+      organizationClientType: orgClientType,
       mfaEnabled: userData.mfaEnabled || false,
       mfaMethods: [],
       mustChangePassword: userData.mustChangePassword || false,
@@ -218,7 +238,7 @@ router.patch('/me', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const { name, title, department, bio, avatar, preferences } = req.body;
@@ -262,6 +282,297 @@ router.patch('/me', async (req: Request, res: Response) => {
   }
 });
 
+// ───────────────────────────────────────────────────────────────────────────
+// Phase 10.2 — per-user UI preferences (PHASE_10_2_INSTALL.md §4).
+// Display preferences only; merge-patched into users.preferences (jsonb).
+// Allowed keys are validated explicitly — unknown keys are rejected so the
+// column never accumulates unaudited state.
+// ───────────────────────────────────────────────────────────────────────────
+
+const PREFERENCE_KEYS = [
+  'density',
+  'railGroups',
+  'dockOpen',
+  // Translation-workspace per-user prefs (ui-v2 OnboardingWizard / editor
+  // Trans dock). Org-wide policy lives on organizations.settings.translation.
+  'txwEnabled',
+  'txwLangs',
+  'txwRole',
+  'txwAutoOpenSegments',
+  // First-run onboarding wizard: set true when the user finishes (or skips)
+  // the wizard so it never re-appears on another device/browser.
+  'onboardingComplete',
+] as const;
+const DENSITY_VALUES = ['compact', 'comfortable', 'spacious'] as const;
+const TXW_ROLE_VALUES = ['post_editor', 'reviewer', 'observer'] as const;
+
+/**
+ * Validate a preferences merge-patch body. Returns an error string when the
+ * patch is invalid, otherwise null. A key set to `null` removes it (RFC 7396
+ * merge-patch semantics at the top level).
+ */
+function validatePreferencesPatch(patch: unknown): string | null {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+    return 'Body must be a JSON object of preference keys';
+  }
+  const entries = Object.entries(patch as Record<string, unknown>);
+  if (entries.length === 0) return 'Empty preferences patch';
+  for (const [key, value] of entries) {
+    if (!(PREFERENCE_KEYS as readonly string[]).includes(key)) {
+      return `Unknown preference key: ${key}`;
+    }
+    if (value === null) continue; // null deletes the key
+    if (key === 'density') {
+      if (typeof value !== 'string' || !(DENSITY_VALUES as readonly string[]).includes(value)) {
+        return `density must be one of ${DENSITY_VALUES.join(' | ')}`;
+      }
+    }
+    if (key === 'dockOpen' && typeof value !== 'boolean') {
+      return 'dockOpen must be a boolean';
+    }
+    if (key === 'railGroups') {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return 'railGroups must be an object of group id -> open boolean';
+      }
+      const groups = Object.entries(value as Record<string, unknown>);
+      if (groups.length > 32) return 'railGroups has too many entries';
+      for (const [gid, open] of groups) {
+        if (gid.length > 64) return 'railGroups key too long';
+        if (typeof open !== 'boolean') return 'railGroups values must be booleans';
+      }
+    }
+    if (
+      (key === 'txwEnabled' || key === 'txwAutoOpenSegments' || key === 'onboardingComplete') &&
+      typeof value !== 'boolean'
+    ) {
+      return `${key} must be a boolean`;
+    }
+    if (key === 'txwLangs') {
+      if (!Array.isArray(value) || value.length > 24 ||
+          value.some(v => typeof v !== 'string' || v.length === 0 || v.length > 16)) {
+        return 'txwLangs must be an array of up to 24 short language tags';
+      }
+    }
+    if (key === 'txwRole') {
+      if (typeof value !== 'string' || !(TXW_ROLE_VALUES as readonly string[]).includes(value)) {
+        return `txwRole must be one of ${TXW_ROLE_VALUES.join(' | ')}`;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * GET /api/users/me/preferences
+ * Read the session user's UI preferences (density, railGroups, dockOpen).
+ * Self-only — the user id comes from the verified JWT.
+ */
+router.get('/me/preferences', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const userId = parseInt(decoded.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const rows = await db
+      .select({ preferences: users.preferences })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    return res.json({ preferences: rows[0].preferences ?? {} });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Get preferences error:', error);
+    return res
+      .status(500)
+      .json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to get preferences' } });
+  }
+});
+
+/**
+ * PUT /api/users/me/preferences
+ * Merge-patch the session user's UI preferences. Self-only — the user id
+ * comes from the verified JWT; no other user's row is reachable from here.
+ * Allowed keys: density | railGroups | dockOpen. Unknown keys are rejected.
+ */
+router.put('/me/preferences', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const userId = parseInt(decoded.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const patch = req.body as Record<string, unknown>;
+    const validationError = validatePreferencesPatch(patch);
+    if (validationError) {
+      return res
+        .status(400)
+        .json({ error: { code: 'VALIDATION_ERROR', message: validationError } });
+    }
+
+    // Read-merge-write via Drizzle (no raw SQL — tenant-isolation gate scans
+    // raw SQL strings). Display preferences are low-contention; last write
+    // wins is acceptable here.
+    const rows = await db
+      .select({ preferences: users.preferences })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    const current =
+      rows[0].preferences && typeof rows[0].preferences === 'object' && !Array.isArray(rows[0].preferences)
+        ? (rows[0].preferences as Record<string, unknown>)
+        : {};
+
+    const next: Record<string, unknown> = { ...current };
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === null) delete next[key];
+      else next[key] = value;
+    }
+
+    const [updated] = await db
+      .update(users)
+      .set({ preferences: next, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning({ preferences: users.preferences });
+
+    if (!updated) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    return res.json({ success: true, preferences: updated.preferences ?? {} });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Update preferences error:', error);
+    return res
+      .status(500)
+      .json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update preferences' } });
+  }
+});
+
+/**
+ * GET /api/users/me/persona
+ * The session user's job persona for their current org (from
+ * organization_users.persona), plus their access role and the canonical
+ * vocabulary the client can offer. Self + org-scoped from the verified JWT.
+ */
+router.get('/me/persona', async (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+    const decoded = verifyJwtWithRotation(token) as { userId: string; organizationId?: string };
+    const userId = parseInt(decoded.userId);
+    const organizationId = parseInt(String(decoded.organizationId ?? ''));
+    if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const rows = await db
+      .select({ persona: organizationUsers.persona, role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+      .limit(1);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'No membership in this organization' } });
+    }
+
+    return res.json({
+      persona: rows[0].persona ?? null,
+      role: rows[0].role,
+      availablePersonas: REPORT_PERSONAS,
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Get persona error:', error);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to get persona' } });
+  }
+});
+
+/**
+ * PUT /api/users/me/persona
+ * Set (or clear, with null) the session user's persona for their current org.
+ * Self + org-scoped from the verified JWT — no other user/org row is reachable.
+ * `persona` must be one of REPORT_PERSONAS, or null to unset. Persona is NOT an
+ * authorization boundary; it only personalizes surfaces.
+ */
+router.put('/me/persona', async (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+    const decoded = verifyJwtWithRotation(token) as { userId: string; organizationId?: string };
+    const userId = parseInt(decoded.userId);
+    const organizationId = parseInt(String(decoded.organizationId ?? ''));
+    if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const { persona } = (req.body ?? {}) as { persona?: unknown };
+    if (persona !== null && !isReportPersona(persona)) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'persona must be one of the canonical personas, or null to clear',
+          availablePersonas: REPORT_PERSONAS,
+        },
+      });
+    }
+
+    const [updated] = await db
+      .update(organizationUsers)
+      .set({ persona: (persona as string | null), updatedAt: new Date() })
+      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+      .returning({ persona: organizationUsers.persona, role: organizationUsers.role });
+
+    if (!updated) {
+      return res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'No membership in this organization' } });
+    }
+
+    return res.json({ success: true, persona: updated.persona ?? null, role: updated.role });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Update persona error:', error);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update persona' } });
+  }
+});
+
 /**
  * GET /api/users/me/notifications
  * Get notification preferences for current user
@@ -286,7 +597,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const prefs = await db
@@ -341,7 +652,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as { userId: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const updates = req.body;
@@ -394,17 +705,18 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret, { algorithms: ["HS256"] }) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       organizationId?: string;
     };
 
-    const { id } = req.params;
+    const idRaw = req.params.id;
+    const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? '');
 
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(id)))
+      .where(eq(users.id, parseInt(String(id))))
       .limit(1);
 
     if (!user.length) {
@@ -414,10 +726,12 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 
     const userData = user[0];
+    const [firstName = '', ...lastNameParts] = (userData.name || '').split(' ');
+    const lastName = lastNameParts.join(' ');
 
     // Tenant isolation: only return user if they belong to the same org
     const requestorOrgId = decoded.organizationId;
-    const targetOrgId = userData.organizationId?.toString();
+    const targetOrgId = userData.defaultOrganizationId?.toString();
     if (requestorOrgId !== targetOrgId) {
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },
@@ -427,10 +741,9 @@ router.get('/:id', async (req: Request, res: Response) => {
     res.json({
       id: userData.id.toString(),
       email: userData.email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      displayName:
-        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      firstName,
+      lastName,
+      displayName: `${firstName} ${lastName}`.trim() || userData.email,
       roles: ['user'],
       organizationId: targetOrgId,
     });
@@ -498,7 +811,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       {
         userId: String(userData.id),
         email: userData.email,
-        organizationId: userData.organizationId ? String(userData.organizationId) : '2',
+        organizationId: userData.defaultOrganizationId ? String(userData.defaultOrganizationId) : '2',
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -508,7 +821,13 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     db.update(users)
       .set({ lastLogin: new Date() })
       .where(eq(users.id, userData.id))
-      .catch(() => {});
+      .catch((err: unknown) => {
+        // Non-blocking: login still succeeds, but surface the failure.
+        log.error('Failed to update lastLogin after successful login', {
+          userId: String(userData.id),
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
 
     res.json({
       id: userData.id,

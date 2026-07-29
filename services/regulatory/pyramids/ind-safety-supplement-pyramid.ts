@@ -1,0 +1,267 @@
+import type { BaseTask, SubmissionPyramid } from './types.js';
+import { buildPhase } from './types.js';
+
+export function buildIndSafetySupplementPyramid(): SubmissionPyramid {
+  const phases: SubmissionPyramid['phases'] = [];
+
+  // ─── Phase 1 — Signal Detection & Triage ──────────────────────────────────
+  const phase1 = buildPhase('phase1', 'Signal Detection & Triage', 1, [
+    {
+      id: 'receive_signal',
+      name: 'Receive safety signal (SAE report, SUSAR, literature report)',
+      estimatedHours: 2,
+      role: 'pharmacovigilance',
+      critical: true,
+      description: 'Intake and initial documentation of the safety signal from any source: investigator SAE report, spontaneous report, literature, or foreign regulatory authority notification.',
+      risk: { severity: 'critical', probability: 0.4, impact: 'Missed or delayed signal intake directly triggers regulatory non-compliance and potential patient harm', mitigations: ['Implement 24/7 safety signal intake process', 'Maintain redundant intake channels (phone, fax, email, EDC)', 'Timestamp all incoming reports immediately'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)', ichGuideline: 'ICH E2A', keyConsiderations: ['Sponsor must promptly review all safety information', 'Clock starts at initial receipt of minimum information', 'Day 0 = date sponsor first becomes aware of reportable event'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 7 },
+      deliverables: ['Initial safety signal intake record', 'Day 0 timestamp documentation'],
+    },
+    {
+      id: 'triage_classification',
+      name: 'Triage: classify as serious/non-serious, expected/unexpected',
+      estimatedHours: 2,
+      role: 'pharmacovigilance',
+      critical: true,
+      description: 'Evaluate the event against seriousness criteria (death, life-threatening, hospitalization, disability, congenital anomaly, or other medically important event) and expectedness per the Investigator\'s Brochure.',
+      risk: { severity: 'critical', probability: 0.3, impact: 'Incorrect classification leads to wrong reporting timeline — missed 7-day or 15-day deadline constitutes regulatory violation', mitigations: ['Use standardized triage decision tree', 'Cross-reference against current IB reference safety information', 'Two-person independent classification for fatal/life-threatening cases'] },
+      guidance: { cfrReference: '21 CFR 312.32(a)', ichGuideline: 'ICH E2A Section III', keyConsiderations: ['Serious: results in death, is life-threatening, requires hospitalization, results in disability, or is a congenital anomaly', 'Unexpected: not listed in current IB in terms of nature, severity, or specificity', 'Both serious AND unexpected = reportable SUSAR'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 7 },
+      deliverables: ['Seriousness assessment form', 'Expectedness assessment against IB'],
+    },
+    {
+      id: 'determine_timeline',
+      name: 'Determine reporting timeline (7-day alert vs 15-day written)',
+      estimatedHours: 2,
+      role: 'pharmacovigilance',
+      critical: true,
+      description: 'Based on triage classification, determine whether a 7-day telephone/fax alert report (fatal or life-threatening SUSAR) or 15-day written IND safety report is required per 21 CFR 312.32.',
+      risk: { severity: 'critical', probability: 0.2, impact: 'Selecting the wrong reporting timeline results in either unnecessary expedited reporting or missed regulatory deadline', mitigations: ['Apply regulatory decision matrix for timeline determination', 'Escalate ambiguous cases to medical officer within 24 hours', 'Document rationale for timeline selection'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)-(2)', ichGuideline: 'ICH E2A', keyConsiderations: ['7 calendar days: unexpected fatal or life-threatening suspected adverse reaction', '15 calendar days: all other serious and unexpected suspected adverse reactions', 'Follow-up to 7-day report due within 15 days of initial report'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 7 },
+      deliverables: ['Reporting timeline determination record', 'Regulatory deadline calendar entry'],
+    },
+    {
+      id: 'assess_causality',
+      name: 'Assess causality (relationship to investigational product)',
+      estimatedHours: 3,
+      role: 'medical_monitor',
+      critical: true,
+      description: 'Perform causality assessment to determine reasonable possibility that the event is related to the investigational product, considering temporal relationship, biological plausibility, dechallenge/rechallenge, and alternative etiologies.',
+      risk: { severity: 'high', probability: 0.35, impact: 'Incorrect causality assessment may lead to under-reporting (regulatory risk) or over-reporting (unnecessary alarm to investigators/IRBs)', mitigations: ['Use structured causality assessment algorithm (e.g., WHO-UMC or Naranjo)', 'Include sponsor medical officer in assessment', 'Document investigator\'s causality opinion separately from sponsor assessment'] },
+      guidance: { cfrReference: '21 CFR 312.32(a)', ichGuideline: 'ICH E2A Section IV', keyConsiderations: ['Reasonable possibility = cannot rule out relationship to investigational product', 'Sponsor must assess causality independent of investigator opinion', 'Lack of sufficient information should not automatically exclude reporting'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Causality assessment form', 'Medical officer causality opinion'],
+    },
+    {
+      id: 'notify_safety_team',
+      name: 'Notify sponsor safety team and medical monitor',
+      estimatedHours: 1,
+      role: 'pharmacovigilance',
+      critical: true,
+      description: 'Immediately alert the sponsor\'s safety team, medical monitor, and designated responsible personnel to initiate the safety reporting process.',
+      risk: { severity: 'high', probability: 0.15, impact: 'Delayed internal notification compresses already tight reporting timelines', mitigations: ['Automated alert system for all incoming safety signals', 'Maintain current contact list with backup personnel', '24/7 on-call rotation for safety team'] },
+      guidance: { cfrReference: '21 CFR 312.32(b)', ichGuideline: 'ICH E2A', keyConsiderations: ['Sponsor has overall responsibility for safety reporting', 'Medical monitor must be notified for clinical assessment', 'Document notification timestamps for audit trail'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 7 },
+      deliverables: ['Internal notification log with timestamps', 'Acknowledgment from medical monitor'],
+    },
+  ]);
+  phases.push(phase1.phase);
+
+  // ─── Phase 2 — Report Preparation ─────────────────────────────────────────
+  const phase2 = buildPhase('phase2', 'Report Preparation', 2, [
+    {
+      id: 'medwatch_3500a',
+      name: 'Complete MedWatch Form 3500A (for 15-day reports)',
+      estimatedHours: 3,
+      role: 'pharmacovigilance',
+      critical: true,
+      description: 'Complete FDA MedWatch Form 3500A (mandatory reporting form for IND safety reports) with all required patient, event, product, and reporter information.',
+      risk: { severity: 'high', probability: 0.25, impact: 'Incomplete or inaccurate MedWatch form results in FDA request for additional information and potential compliance finding', mitigations: ['Use validated electronic form completion system', 'Apply QC checklist for all required fields', 'Cross-reference patient source data against form entries'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)', fdaGuidanceRef: 'FDA MedWatch Form 3500A Instructions', keyConsiderations: ['All required fields must be completed or marked as unknown', 'Must include IND number and protocol number', 'Reporter information must match investigator records'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Completed FDA MedWatch Form 3500A'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'FDA MedWatch Form 3500A', ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }],
+    },
+    {
+      id: 'draft_narrative',
+      name: 'Draft IND safety report narrative',
+      estimatedHours: 4,
+      role: 'medical_writer',
+      critical: true,
+      description: 'Author a clear, accurate narrative describing the event, patient history, temporal sequence, treatment, outcome, and causality assessment in clinical context.',
+      risk: { severity: 'high', probability: 0.3, impact: 'Poorly written narrative delays FDA review and may obscure safety signal importance', mitigations: ['Follow standardized narrative template', 'Include all key clinical details: onset, duration, treatment, outcome, rechallenge', 'Medical writer with pharmacovigilance expertise'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)(i)', ichGuideline: 'ICH E2B(R3)', keyConsiderations: ['Narrative should present facts chronologically', 'Include relevant medical history and concomitant medications', 'State causality assessment with supporting rationale', 'Note if event resolved, is ongoing, or resulted in death'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['IND safety report narrative'],
+    },
+    {
+      id: 'compile_medical_records',
+      name: 'Compile supporting medical records/case details',
+      estimatedHours: 3,
+      role: 'clinical_research_associate',
+      description: 'Gather and organize all supporting documentation including hospital records, lab results, diagnostic reports, autopsy reports (if applicable), and concomitant medication records.',
+      risk: { severity: 'medium', probability: 0.4, impact: 'Incomplete supporting documentation weakens the safety report and may require follow-up submissions', mitigations: ['Request records from investigator site immediately upon signal receipt', 'Use standardized data collection form', 'Track outstanding documents with escalation timelines'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)(i)', ichGuideline: 'ICH E2B(R3)', keyConsiderations: ['Include relevant lab values with reference ranges', 'Redact patient identifiers per HIPAA', 'Autopsy report critical for fatal cases'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Compiled medical records package', 'Source document tracking log'],
+    },
+    {
+      id: 'cioms_form',
+      name: 'Prepare CIOMS I form (for international reporting)',
+      estimatedHours: 2,
+      role: 'pharmacovigilance',
+      description: 'Complete CIOMS I (Council for International Organizations of Medical Sciences) form for reporting to non-US regulatory authorities where the IND product is also under investigation.',
+      risk: { severity: 'medium', probability: 0.2, impact: 'Non-compliance with international reporting obligations in countries where study is conducted', mitigations: ['Maintain current list of international reporting obligations per country', 'Align CIOMS I content with MedWatch 3500A for consistency', 'Confirm local reporting timelines per national requirements'] },
+      guidance: { ichGuideline: 'ICH E2A, ICH E2B(R3)', keyConsiderations: ['CIOMS I form is the international standard for expedited reporting', 'Ensure consistency between CIOMS I and MedWatch 3500A', 'Country-specific reporting requirements may vary'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Completed CIOMS I form'],
+    },
+    {
+      id: 'meddra_coding',
+      name: 'Code events using MedDRA terminology',
+      estimatedHours: 2,
+      role: 'pharmacovigilance',
+      description: 'Code the adverse event(s) using the Medical Dictionary for Regulatory Activities (MedDRA) at the Lowest Level Term, Preferred Term, and System Organ Class levels.',
+      risk: { severity: 'medium', probability: 0.2, impact: 'Incorrect MedDRA coding leads to inaccurate signal detection and aggregation in safety databases', mitigations: ['Use current MedDRA version with auto-suggest', 'Apply MedDRA Points to Consider for term selection', 'Independent second coder review for complex cases'] },
+      guidance: { ichGuideline: 'ICH E2B(R3)', keyConsiderations: ['Code at Lowest Level Term for maximum specificity', 'Include both primary and secondary events', 'Consistent with ICH MedDRA standardized queries where applicable'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['MedDRA-coded event terms with LLT/PT/SOC mapping'],
+    },
+    {
+      id: 'cross_reference_ib',
+      name: 'Cross-reference against IB known risks',
+      estimatedHours: 2,
+      role: 'medical_monitor',
+      description: 'Compare the reported event against the current Investigator\'s Brochure Reference Safety Information to confirm expectedness determination and identify whether IB update is warranted.',
+      risk: { severity: 'high', probability: 0.25, impact: 'Failure to cross-reference may result in incorrect expectedness classification or missed IB update trigger', mitigations: ['Use current approved IB version with documented reference safety information', 'Compare event nature, severity, and specificity — not just event name', 'Document IB section and version used for comparison'] },
+      guidance: { cfrReference: '21 CFR 312.32(a)', ichGuideline: 'ICH E2A, ICH E2F', keyConsiderations: ['Expectedness is determined against the IB, not the protocol', 'Consider whether event is expected in nature but unexpected in severity', 'IB update may change future expectedness classifications'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['IB cross-reference assessment', 'IB update recommendation (if applicable)'],
+    },
+  ], phase1.completeId);
+  phases.push(phase2.phase);
+
+  // ─── Phase 3 — Medical & Regulatory Review ────────────────────────────────
+  const phase3 = buildPhase('phase3', 'Medical & Regulatory Review', 3, [
+    {
+      id: 'medical_officer_review',
+      name: 'Medical officer review and causality assessment',
+      estimatedHours: 3,
+      role: 'medical_officer',
+      critical: true,
+      description: 'Senior medical officer reviews the complete safety report package, confirms or revises causality assessment, and provides clinical opinion on the significance of the event.',
+      risk: { severity: 'critical', probability: 0.2, impact: 'Insufficient medical review may result in inaccurate causality determination and inappropriate regulatory action', mitigations: ['Designated medical officer with relevant therapeutic expertise', 'Structured review checklist covering all clinical elements', 'Escalation to safety committee for ambiguous or severe cases'] },
+      guidance: { cfrReference: '21 CFR 312.32(b)', ichGuideline: 'ICH E2A Section IV', keyConsiderations: ['Sponsor must make causality assessment independent of investigator opinion', 'Consider aggregate safety data in individual case assessment', 'Medical officer signature required on final report'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Medical officer review memo', 'Final causality assessment'],
+    },
+    {
+      id: 'regulatory_review',
+      name: 'Regulatory review of report completeness',
+      estimatedHours: 2,
+      role: 'ra_lead',
+      critical: true,
+      description: 'Regulatory affairs review to verify all required report elements are present, correctly formatted, and compliant with 21 CFR 312.32 requirements before submission to FDA.',
+      risk: { severity: 'high', probability: 0.2, impact: 'Incomplete submission triggers FDA request for information and potential compliance action', mitigations: ['Use regulatory completeness checklist specific to IND safety reports', 'Verify IND number, protocol, and investigator information accuracy', 'Confirm correct submission pathway (ESG vs. other)'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)', fdaGuidanceRef: 'FDA Safety Reporting Requirements for INDs and BA/BE Studies', keyConsiderations: ['Verify all required MedWatch 3500A fields completed', 'Confirm report type (initial, follow-up) is correct', 'Ensure IND number and study information are accurate'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Regulatory completeness review checklist', 'Approval to submit'],
+    },
+    {
+      id: 'determine_ib_update',
+      name: 'Determine need for IB update or protocol amendment',
+      estimatedHours: 2,
+      role: 'medical_monitor',
+      description: 'Assess whether the safety event warrants an update to the Investigator\'s Brochure Reference Safety Information or requires a protocol amendment (e.g., new exclusion criterion, additional monitoring, dose modification).',
+      risk: { severity: 'high', probability: 0.3, impact: 'Failure to update IB or protocol when warranted may affect future expectedness classifications and investigator/subject safety', mitigations: ['Evaluate event against cumulative safety profile', 'Convene safety review committee for significant findings', 'Track IB update history and amendment triggers'] },
+      guidance: { cfrReference: '21 CFR 312.32(d)', ichGuideline: 'ICH E2F, ICH E6(R2)', keyConsiderations: ['IB must be updated at least annually, but safety signals may require interim updates', 'Protocol amendment required if safety finding changes benefit-risk', 'IB update changes the expectedness baseline for future events'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['IB update assessment', 'Protocol amendment recommendation (if applicable)'],
+    },
+    {
+      id: 'determine_irb_notification',
+      name: 'Determine need to notify IRBs and investigators',
+      estimatedHours: 2,
+      role: 'ra_lead',
+      description: 'Determine whether the safety event requires notification to all participating Institutional Review Boards and investigators per 21 CFR 312.32(c)(1)(iii), and prepare distribution plan.',
+      risk: { severity: 'high', probability: 0.2, impact: 'Failure to notify IRBs and investigators of significant safety findings is a regulatory violation and jeopardizes subject safety', mitigations: ['Maintain current list of all participating IRBs and investigators', 'Standardized notification letter template', 'Track distribution and acknowledgment receipts'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)(iii)', ichGuideline: 'ICH E2A', keyConsiderations: ['Sponsor must notify all participating investigators of IND safety reports', 'IRBs at all participating sites must be notified', 'Notification must be provided promptly'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['IRB/investigator notification decision memo', 'Distribution list'],
+    },
+  ], phase2.completeId);
+  phases.push(phase3.phase);
+
+  // ─── Phase 4 — Submission & Follow-up ─────────────────────────────────────
+  const phase4 = buildPhase('phase4', 'Submission & Follow-up', 4, [
+    {
+      id: 'submit_7day_alert',
+      name: 'Submit 7-day telephone/fax alert (if fatal/life-threatening)',
+      estimatedHours: 2,
+      role: 'pharmacovigilance',
+      critical: true,
+      description: 'For unexpected fatal or life-threatening suspected adverse reactions: submit initial alert report to FDA by telephone or fax within 7 calendar days of sponsor awareness.',
+      risk: { severity: 'critical', probability: 0.15, impact: 'Missed 7-day deadline for fatal/life-threatening events is a serious regulatory violation subject to enforcement action', mitigations: ['Pre-programmed FDA contact numbers and fax lines', 'Backup submission channels documented', 'Confirmation of FDA receipt documented immediately'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(2)', ichGuideline: 'ICH E2A', keyConsiderations: ['7 calendar days from Day 0 (sponsor first awareness)', 'Telephone or fax required — electronic submission not sufficient for initial alert', 'Follow-up written report must be submitted within 15 days of initial report', 'Must include IND number and brief description of event'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 7 },
+      deliverables: ['7-day alert report', 'FDA receipt confirmation', 'Transmission log'],
+    },
+    {
+      id: 'submit_15day_report',
+      name: 'Submit 15-day written IND safety report',
+      estimatedHours: 2,
+      role: 'ra_lead',
+      critical: true,
+      description: 'Submit the complete written IND safety report to FDA within 15 calendar days of sponsor awareness. For 7-day alert reports, this serves as the follow-up with complete information.',
+      risk: { severity: 'critical', probability: 0.15, impact: 'Missed 15-day deadline is a regulatory violation; repeated failures may trigger FDA enforcement action or clinical hold', mitigations: ['Track all open safety reports with deadline dashboard', 'Submit via FDA ESG for electronic confirmation', 'Maintain backup submission pathway'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)', fdaGuidanceRef: 'Safety Reporting Requirements for INDs and BA/BE Studies', keyConsiderations: ['15 calendar days from Day 0', 'Submit complete MedWatch 3500A with narrative', 'Must include IND number, protocol number, and study identification', 'Electronic submission via FDA ESG preferred'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['15-day written IND safety report', 'FDA ESG submission acknowledgment'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'IND Safety Report', ectdLifecycleOp: 'new', artifactTypes: ['safety_report', 'fda_form'] }],
+    },
+    {
+      id: 'distribute_to_investigators',
+      name: 'Distribute to all participating investigators',
+      estimatedHours: 2,
+      role: 'clinical_operations',
+      critical: true,
+      description: 'Distribute the IND safety report to all participating investigators and their IRBs per 21 CFR 312.32(c)(1)(iii). Track receipt and acknowledgment.',
+      risk: { severity: 'high', probability: 0.2, impact: 'Failure to promptly notify investigators compromises ongoing subject safety and constitutes regulatory non-compliance', mitigations: ['Maintain current investigator and IRB contact database', 'Use tracked delivery (email with read receipt, certified mail)', 'Automated distribution system with acknowledgment tracking'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)(iii)', ichGuideline: 'ICH E2A', keyConsiderations: ['Must notify all investigators participating in all studies under the IND', 'Include IND safety report and any relevant recommendations', 'Investigators must report to their IRBs per 21 CFR 312.66'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Distribution cover letter', 'Distribution tracking log', 'Investigator acknowledgment records'],
+    },
+    {
+      id: 'update_safety_database',
+      name: 'Update aggregate safety database',
+      estimatedHours: 2,
+      role: 'pharmacovigilance',
+      description: 'Enter the finalized safety report data into the sponsor\'s aggregate safety database for ongoing signal detection, periodic reporting (DSUR/IND Annual Report), and cumulative analysis.',
+      risk: { severity: 'medium', probability: 0.15, impact: 'Incomplete safety database compromises aggregate signal detection and periodic safety reporting accuracy', mitigations: ['Validated safety database with audit trail', 'Data entry QC with independent verification', 'Reconcile database entries against submitted reports'] },
+      guidance: { ichGuideline: 'ICH E2B(R3), ICH E2F', keyConsiderations: ['Database must be E2B(R3) compliant for electronic reporting', 'Data should support future DSUR and annual report preparation', 'Maintain case-level and aggregate-level data integrity'] },
+      timeline: { typicalStartWeek: 1, typicalDurationWeeks: 1, regulatoryDeadlineDays: 15 },
+      deliverables: ['Updated safety database record', 'Data entry verification log'],
+    },
+    {
+      id: 'follow_up_report',
+      name: 'File follow-up report (if additional information becomes available)',
+      estimatedHours: 3,
+      role: 'pharmacovigilance',
+      description: 'Submit follow-up IND safety report to FDA when new or additional information becomes available (e.g., additional lab results, autopsy findings, outcome changes, causality reassessment).',
+      risk: { severity: 'high', probability: 0.35, impact: 'Failure to submit follow-up with material new information is a reporting obligation violation', mitigations: ['Track all open cases with pending follow-up information', 'Set follow-up request timelines for investigator sites', 'Case closure criteria defined and documented'] },
+      guidance: { cfrReference: '21 CFR 312.32(c)(1)', ichGuideline: 'ICH E2A', keyConsiderations: ['Follow-up reports must reference the original report', 'New information that changes seriousness, causality, or expectedness requires expedited follow-up', 'Clearly identify what information is new versus previously reported'] },
+      timeline: { typicalStartWeek: 2, typicalDurationWeeks: 2, regulatoryDeadlineDays: 15 },
+      deliverables: ['Follow-up IND safety report', 'Updated MedWatch 3500A', 'FDA submission acknowledgment'],
+      documentBindings: [{ ctdSection: '1.2', sectionTitle: 'IND Safety Report Follow-up', ectdLifecycleOp: 'append', artifactTypes: ['safety_report', 'fda_form'] }],
+    },
+  ], phase3.completeId);
+  phases.push(phase4.phase);
+
+  const tasks = phases.flatMap(phase => phase.tasks);
+  const totalEstimatedHours = tasks.reduce((sum, t) => sum + t.estimatedHours, 0);
+  const criticalPathIds = tasks.filter(t => t.critical).map(t => t.id);
+
+  return { type: 'IND_SAFETY_SUPPLEMENT', phases, tasks, totalEstimatedHours, criticalPathIds };
+}

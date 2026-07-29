@@ -1,4 +1,4 @@
-import { getPool } from '../../db.ts';
+import { getPool } from '../../db';
 import { allowConversationOsMemoryFallback } from './conversationKernel';
 import type { ArtifactProposal, PlanTrace, RetrievalChunk, ScoutFinding, ToolEvent, ToolManifest } from './types';
 
@@ -304,11 +304,13 @@ export class ConversationOsPersistence {
   async updateProposalStatus(ctx: Ctx, proposalId: string, status: 'accepted' | 'rejected') {
     try {
       const pool = getPool();
-      await pool.query(
+      const result = await pool.query(
         `UPDATE conversation_os_artifact_proposals SET status = $1, updated_at = NOW() WHERE project_id = $2 AND conversation_id = $3 AND id = $4`,
         [status, ctx.projectId, ctx.conversationId, proposalId]
       );
-      return true;
+      // Report whether a proposal was actually transitioned. Returning true on a
+      // 0-row update hid double-accept / missing-proposal cases from callers.
+      return (result.rowCount ?? 0) >= 1;
     } catch (error) {
       if (canFallback(error)) return false;
       throw error;

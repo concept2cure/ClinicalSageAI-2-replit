@@ -10,6 +10,7 @@ import { authMiddleware } from '../auth';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import auditService from '../services/auditService';
+import { writeMutation } from './c2c/actions.js';
 
 const SECTION_APPROVAL_STATES: ReadonlySet<string> = new Set(['validated', 'approved']);
 
@@ -168,6 +169,28 @@ router.get('/:sectionId', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Invalid section id' });
   }
 
+  // 301 redirect: if this section has been migrated to c2c_document_sections,
+  // point clients to the canonical new URL. Fall through if not yet migrated.
+  try {
+    const { rows } = await db.execute(sql`
+      SELECT
+        'doc_fda510k_' || fd.project_id::text AS document_id,
+        s.section_key
+      FROM cerv2_510k_sections s
+      JOIN fda_510k_documents fd ON fd.id = s.document_id
+      WHERE s.id = ${sectionId} AND s.document_id IS NOT NULL
+      LIMIT 1
+    `);
+    if (rows.length > 0) {
+      const { document_id, section_key } = rows[0] as any;
+      res.set('Deprecation', 'true');
+      res.set('Sunset', '2026-08-01');
+      return res.redirect(301, `/api/c2c/documents/${document_id}/sections/${section_key}`);
+    }
+  } catch {
+    // fda_510k_documents may not exist in this schema state — fall through.
+  }
+
   try {
     const [section] = await db
       .select()
@@ -249,14 +272,14 @@ router.post('/', authMiddleware, async (req, res) => {
       newValues: { ...payload, field_data },
       changedBy: userId ?? undefined,
       changedByEmail: req.userEmail ?? null,
-      changedByName: req.user?.name ?? null,
+      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
       ipAddress: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     });
 
     void auditService.logAction({
       tenantId: organizationId,
-      userId: userId ?? null,
+      userId: userId ?? undefined,
       action: 'section.create',
       resourceType: 'cerv2_510k_section',
       resourceId: String(inserted.id),
@@ -379,7 +402,7 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
       newValues: { ...parsed.data },
       changedBy: userId ?? undefined,
       changedByEmail: req.userEmail ?? null,
-      changedByName: req.user?.name ?? null,
+      changedByName: (req.user as { name?: string } | undefined)?.name ?? null,
       ipAddress: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     });
@@ -391,7 +414,7 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
     // separately so reviewers can find sign-offs directly.
     void auditService.logAction({
       tenantId: organizationId,
-      userId: userId ?? null,
+      userId: userId ?? undefined,
       action: 'section.edit',
       resourceType: 'cerv2_510k_section',
       resourceId: String(sectionId),
@@ -407,7 +430,7 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
     if (statusBecameApproved(existing.status, updated.status)) {
       void auditService.logAction({
         tenantId: organizationId,
-        userId: userId ?? null,
+        userId: userId ?? undefined,
         action: 'section.approve',
         resourceType: 'cerv2_510k_section',
         resourceId: String(sectionId),
@@ -457,7 +480,7 @@ router.delete('/:sectionId', authMiddleware, async (req, res) => {
 
     void auditService.logAction({
       tenantId: organizationId,
-      userId: resolveUserId(req) ?? null,
+      userId: resolveUserId(req) ?? undefined,
       action: 'section.delete',
       resourceType: 'cerv2_510k_section',
       resourceId: String(sectionId),
@@ -522,6 +545,12 @@ const acceptAnaDraftSchema = z.object({
 });
 
 router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => {
+  // Canonical endpoint is now POST /api/c2c/actions/accept-ai-suggestion.
+  // We keep this handler alive for one release cycle (Sunset: 2026-08-01).
+  res.set('Deprecation', 'true');
+  res.set('Sunset', '2026-08-01');
+  res.set('Link', '</api/c2c/actions/accept-ai-suggestion>; rel="canonical"');
+
   const organizationId = resolveOrganizationId(req);
   if (!organizationId) {
     return res.status(400).json({ error: 'Organization context required' });
@@ -628,6 +657,21 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
         refined:       Boolean(parsed.data.refined_content),
         status:        updated.status,
       },
+    });
+
+    // Also write to the universal mutation ledger so the audit chain starts.
+    // Fire-and-forget: legacy path must not break if the new table is absent.
+    void writeMutation(
+      'accept-ai-suggestion',
+      {
+        target: `section:cerv2:${sectionId}`,
+        reason: `Accepted AnA draft for section ${sectionId}`,
+        payload: { status: nextStatus, refined: Boolean(parsed.data.refined_content) },
+      },
+      userId ?? 0,
+      organizationId,
+    ).catch((err: unknown) => {
+      logger.warn('c2c_ana_actions write failed (non-blocking)', { err });
     });
 
     return res.json({ section: serializeSection(updated) });

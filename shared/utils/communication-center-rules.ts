@@ -5,8 +5,14 @@ import {
   type SubmissionCenterItemState,
 } from '../types/communication-center';
 
-export function parseProjectParam(projectParam: string): number {
-  const numericId = Number.parseInt(projectParam.replace('proj_', ''), 10);
+export function parseProjectParam(
+  projectParam: string | string[] | undefined
+): number {
+  const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
+  if (typeof raw !== 'string') {
+    throw new Error('Invalid project ID');
+  }
+  const numericId = Number.parseInt(raw.replace('proj_', ''), 10);
   if (!Number.isFinite(numericId) || numericId <= 0) {
     throw new Error('Invalid project ID');
   }

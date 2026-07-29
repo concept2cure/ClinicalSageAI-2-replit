@@ -32,6 +32,9 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'k510',         label: '510(k) Submissions',    icon: 'file',         group: 'workstream' },
   { id: 'pma',          label: 'PMA Submissions',       icon: 'shieldCheck',  group: 'workstream' },
   { id: 'cer',          label: 'CER Generator',         icon: 'microscope',   group: 'workstream' },
+  { id: 'device-diagnostics-workbench', label: 'IVD Diagnostics', icon: 'flask', group: 'workstream' },
+  { id: 'clinical-studies', label: 'Clinical Studies',   icon: 'stethoscope',  group: 'workstream' },
+  { id: 'software',     label: 'Software Lifecycle',     icon: 'code',         group: 'workstream' },
   { id: 'predicate',    label: 'Precedent Intelligence',icon: 'scale',        group: 'workstream' },
 
   // Workbench — cross-program work surfaces.
@@ -45,8 +48,11 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'analytics',    label: 'Analytics',             icon: 'barChart3',    group: 'intelligence' },
   { id: 'memory',       label: 'Claude Memory',         icon: 'database',     group: 'intelligence' },
 
-  // System — admin + the only link that exits the workstream.
-  { id: 'admin',        label: 'Admin and Access',      icon: 'userCheck',    group: 'system' },
+  // System — deliberately empty. Admin is a PRODUCT-level surface, not a
+  // per-workstream one: the device/diagnostics workstream embeds this module
+  // inside the ui-v2 product shell, whose single AdminConsole serves every
+  // client type. Keeping a separate "Admin and Access" here produced two
+  // admins (one per client type); it was removed so there is one product admin.
 ];
 
 export interface StubInfo {
@@ -56,44 +62,11 @@ export interface StubInfo {
   phase: string;
 }
 
-export const MDX_STUBS: Record<string, StubInfo> = {
-  engineering: {
-    title: 'Device engineering',
-    icon: 'wrench',
-    desc: 'Risk management (ISO 14971), biocompatibility, cybersecurity premarket submissions, and design controls traceability.',
-    phase: 'Phase 4',
-  },
-  udi: {
-    title: 'UDI and labeling',
-    icon: 'tag',
-    desc: 'UDI issuance, GUDID submission, labeling harmonization across regions, MRI-conditional statements.',
-    phase: 'Phase 4',
-  },
-  postmarket: {
-    title: 'Post-market vigilance',
-    icon: 'alertCircle',
-    desc: 'MDR tracking, trending adverse events, PMS plan execution, and notified-body reporting.',
-    phase: 'Phase 4',
-  },
-  analytics: {
-    title: 'Analytics',
-    icon: 'barChart3',
-    desc: 'Portfolio-wide metrics — cycle times, readiness trends, reviewer velocity, blocker root causes. Read-only.',
-    phase: 'Phase 4',
-  },
-  memory: {
-    title: 'Claude memory',
-    icon: 'database',
-    desc: "Your organization's shared Claude context — style guides, approved language, past review learnings. Pinned to every conversation.",
-    phase: 'Phase 4',
-  },
-  admin: {
-    title: 'Admin and access',
-    icon: 'userCheck',
-    desc: 'Org members, roles, program-level access grants, SSO, audit log. Required for any production rollout.',
-    phase: 'Phase 4',
-  },
-};
+// Phase 4 shipped: engineering, udi, postmarket, analytics, memory, and admin
+// now route to their real surfaces in App.tsx. No MDX nav id falls through to
+// the "in design" placeholder. Kept as an empty map so future pre-design
+// surfaces can register a stub here without reintroducing the import.
+export const MDX_STUBS: Record<string, StubInfo> = {};
 
 export interface AnaMode {
   id: 'standard' | 'deep-research' | 'nano-banana';
@@ -135,6 +108,9 @@ export const MDX_SUGGESTIONS: Record<string, string[]> = {
   k510:       ['Find more CGM predicates', 'Draft SE discussion', 'Check eSTAR validation'],
   pma:        ['Summarize enrollment gap', 'Draft DSMB charter', 'Pull pivotal precedents'],
   cer:        ['Run FAERS signal scan', 'Adjudicate lead dislodgement', 'Draft Article 61 section'],
+  'device-diagnostics-workbench': ['Classify under Annex VIII', 'Summarize analytical performance', 'Close open GSPR requirements'],
+  'clinical-studies': ['Summarize enrollment gaps', 'List open major deviations', 'Assess BIMO readiness'],
+  software:   ['Check IEC 62304 completeness', 'Which deliverables are unapproved?', 'Draft the SBOM'],
   predicate:  ['Compare K221847 vs subject', 'Find predicates for CGM', 'Cluster by product code'],
   engineering:['ISO 14971 risk review', 'Cybersecurity premarket', 'Biocompatibility for 14-day'],
   udi:        ['Generate UDI for BX-204', 'Labeling MRI statements', 'Multi-language harmonization'],

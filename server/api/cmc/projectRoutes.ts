@@ -20,19 +20,20 @@ const router = Router();
 router.use(authenticateToken);
 
 /** Extract organizationId from the authenticated user, return null if missing */
-function getOrgId(req: any): string | null {
+function getOrgId(req: any): number | null {
   const orgId = req.user?.organizationId;
   if (orgId == null) return null;
-  return String(orgId);
+  const numericOrgId = Number(orgId);
+  return Number.isFinite(numericOrgId) ? numericOrgId : null;
 }
 
 /** Verify a project belongs to the user's organization */
-async function verifyProjectOwnership(projectId: string, orgId: string) {
+async function verifyProjectOwnership(projectId: string, orgId: number) {
   if (!db) return null;
   const [project] = await db
     .select()
     .from(cmcProjects)
-    .where(and(eq(cmcProjects.id, projectId), eq(cmcProjects.organizationId, orgId)));
+    .where(and(eq(cmcProjects.id, projectId), eq(cmcProjects.organizationId, Number(orgId))));
   return project || null;
 }
 
@@ -96,7 +97,7 @@ router.get('/projects', async (req, res) => {
     const projects = await db
       .select()
       .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, orgId))
+      .where(eq(cmcProjects.organizationId, Number(orgId)))
       .orderBy(desc(cmcProjects.createdAt));
 
     res.json({ success: true, data: projects });
@@ -190,7 +191,7 @@ router.put('/projects/:id', async (req, res) => {
         organizationId: orgId, // Prevent org reassignment
         updatedAt: new Date(),
       })
-      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, orgId)))
+      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, Number(orgId))))
       .returning();
 
     res.json({ success: true, data: updatedProject });
@@ -222,7 +223,7 @@ router.delete('/projects/:id', async (req, res) => {
 
     await db
       .delete(cmcProjects)
-      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, orgId)));
+      .where(and(eq(cmcProjects.id, id), eq(cmcProjects.organizationId, Number(orgId))));
 
     res.json({ success: true, message: 'Project deleted successfully' });
   } catch (error) {
@@ -514,9 +515,16 @@ router.post('/projects/:projectId/documents', async (req, res) => {
       .insert(regulatoryDocuments)
       .values({
         ...validatedDocumentData,
+        // Re-assert NOT NULL columns the partial insert schema marks optional;
+        // these are always supplied above via .parse().
+        projectId,
+        organizationId,
+        documentType: validatedDocumentData.documentType,
+        title: validatedDocumentData.title,
+        status: validatedDocumentData.status ?? 'draft',
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
+      } as any)
       .returning();
 
     res.json({ success: true, data: newDocument });
@@ -728,7 +736,7 @@ router.get('/drug-substances', async (req, res) => {
     const orgProjects = await db
       .select({ id: cmcProjects.id })
       .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, orgId));
+      .where(eq(cmcProjects.organizationId, Number(orgId)));
     const projectIds = orgProjects.map(p => p.id);
     const substances =
       projectIds.length > 0
@@ -755,7 +763,7 @@ router.get('/drug-products', async (req, res) => {
     const orgProjects = await db
       .select({ id: cmcProjects.id })
       .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, orgId));
+      .where(eq(cmcProjects.organizationId, Number(orgId)));
     const projectIds = orgProjects.map(p => p.id);
     const products =
       projectIds.length > 0
