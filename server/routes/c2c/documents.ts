@@ -626,24 +626,31 @@ router.delete('/:id/sections/:key/evidence/:evId', async (req: Request, res: Res
 
     if (check.rows.length === 0) return send404(res);
 
-    // 21 CFR Part 11 §11.10(e): record the audit BEFORE removing the evidence,
-    // and AWAIT it. Previously the audit ran fire-and-forget AFTER the delete
-    // with a swallowed error — a crash in between, or an audit failure, left a
-    // deletion of regulated evidence with no audit trail. Auditing first and
-    // awaiting makes it fail-closed: if the governed-action write fails, the
-    // delete does not happen.
-    await writeMutation(
-      'resolve',
-      { target: `section:${id}:${key}`, reason: 'evidence unlinked', payload: { evidenceId: evId } },
-      userId,
-      orgId,
-      'api',
-      'documents',
-    );
-
-    await pool.query(`DELETE FROM c2c_document_section_evidence WHERE id = $1`, [evId]);
-
-    return res.status(204).send();
+    // 21 CFR Part 11 §11.10(e): audit the unlink and perform the DELETE in ONE
+    // transaction, so they are atomic — a failure of either rolls back both. The
+    // ledger never records a deletion of regulated evidence that didn't happen,
+    // and evidence is never deleted without its audit.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await writeMutation(
+        'resolve',
+        { target: `section:${id}:${key}`, reason: 'evidence unlinked', payload: { evidenceId: evId } },
+        userId,
+        orgId,
+        'api',
+        'documents',
+        client,
+      );
+      await client.query(`DELETE FROM c2c_document_section_evidence WHERE id = $1`, [evId]);
+      await client.query('COMMIT');
+      return res.status(204).send();
+    } catch (txnErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txnErr;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
     console.error('[c2c/documents] DELETE /:id/sections/:key/evidence/:evId', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -672,22 +679,33 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'ALREADY_LOCKED' });
     }
 
-    const result = await writeMutation(
-      'lock',
-      { target: `document:${req.params.id}`, reason: reason.trim(), reauth } as any,
-      userId,
-      orgId,
-      'api',
-      'documents',
-    );
-
-    await pool.query(
-      `UPDATE c2c_documents SET status = 'locked', locked_at = now(), updated_at = now()
-       WHERE id = $1`,
-      [req.params.id],
-    );
-
-    return res.json({ ...result, status: 'locked' });
+    // Atomic: the governed-action audit and the lock UPDATE commit or roll back
+    // together, so the ledger can never record a lock the document didn't take.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await writeMutation(
+        'lock',
+        { target: `document:${req.params.id}`, reason: reason.trim(), reauth } as any,
+        userId,
+        orgId,
+        'api',
+        'documents',
+        client,
+      );
+      await client.query(
+        `UPDATE c2c_documents SET status = 'locked', locked_at = now(), updated_at = now()
+         WHERE id = $1`,
+        [req.params.id],
+      );
+      await client.query('COMMIT');
+      return res.json({ ...result, status: 'locked' });
+    } catch (txnErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txnErr;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'INTERNAL_ERROR';
     if (msg === 'REAUTH_PASSWORD_REQUIRED' || msg.startsWith('REAUTH_')) {
@@ -725,23 +743,34 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'ALREADY_SUBMITTED' });
     }
 
-    const result = await writeMutation(
-      'transition',
-      { target: `document:${req.params.id}`, reason: reason.trim() },
-      userId,
-      orgId,
-      'api',
-      'documents',
-    );
-
-    await pool.query(
-      `UPDATE c2c_documents
-       SET status = 'submitted', submitted_at = now(), updated_at = now()
-       WHERE id = $1`,
-      [req.params.id],
-    );
-
-    return res.json({ ...result, status: 'submitted' });
+    // Atomic: the governed-action audit and the submit UPDATE commit or roll back
+    // together, so the ledger can never record a submission that didn't take.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await writeMutation(
+        'transition',
+        { target: `document:${req.params.id}`, reason: reason.trim() },
+        userId,
+        orgId,
+        'api',
+        'documents',
+        client,
+      );
+      await client.query(
+        `UPDATE c2c_documents
+         SET status = 'submitted', submitted_at = now(), updated_at = now()
+         WHERE id = $1`,
+        [req.params.id],
+      );
+      await client.query('COMMIT');
+      return res.json({ ...result, status: 'submitted' });
+    } catch (txnErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txnErr;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
     console.error('[c2c/documents] POST /:id/submit', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
