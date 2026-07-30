@@ -127,6 +127,17 @@ export interface SubmissionBundle {
     missing: string[];
     selfContained: boolean;
   };
+  /**
+   * Optional Study Tagging File (STF) roll-up: how many per-study stf.xml files
+   * were generated + cross-linked into M4/M5, and how many study leaves were
+   * untagged (missing a studyId). Set by the packager when study leaves are
+   * present; absent otherwise.
+   */
+  stf?: {
+    studies: number;
+    leaves: number;
+    untagged: number;
+  };
 }
 
 /**

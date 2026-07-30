@@ -57,6 +57,7 @@ import {
   resolveContactTypeCode,
   usRegionalSectionElement,
 } from '../ectd/controlled-vocab';
+import { generateStfFiles, type StfLeaf, type StfStudyMeta } from '../ectd/stf-generator';
 
 /**
  * Finalize a leaf's bytes to submission grade before they are written + hashed.
@@ -103,6 +104,18 @@ export interface EctdLeaf {
    * Addendum 1), e.g. `../../../../nda456789/0001/m1/us/us-regional.xml#id2`.
    */
   modifiedFile?: string;
+  /**
+   * Controlling study identifier for an M4/M5 study-report leaf. When set (with
+   * `stfFileTag`), the leaf is tagged into its study's Study Tagging File
+   * (`stf.xml`), which the packager generates + cross-links (FDA STF v2.6.1).
+   */
+  studyId?: string;
+  /**
+   * STF file-tag classifying the leaf within its study (e.g.
+   * 'study-report-body', 'protocol-or-amendment', 'sample-crf'). Required when
+   * `studyId` is set.
+   */
+  stfFileTag?: string;
 }
 
 /** One applicant contact rendered into the FDA us-regional admin block. */
@@ -170,6 +183,8 @@ export interface PackagerInput {
   environment?: 'staging' | 'production';
   /** FDA us-regional admin metadata (only used when region === 'fda'). */
   fda?: FdaRegionalAdmin;
+  /** Per-study metadata for the Study Tagging Files generated from study leaves. */
+  studyMeta?: StfStudyMeta[];
 }
 
 /** Compute MD5 of a file on disk. */
@@ -204,6 +219,25 @@ function leafElement(leaf: EctdLeaf, id: string, ref: LeafRef): string {
   return `<leaf operation="${leaf.operation}"${modified} checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="${escapeXml(id)}">
   <title>${escapeXml(leaf.title)}</title>
 </leaf>`;
+}
+
+/** A folder-safe slug for a study id (lowercase, non-alnum → '-'). */
+export function studyFolderSlug(studyId: string): string {
+  return studyId.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'study';
+}
+
+/** Longest common directory prefix of package-relative POSIX paths (no filename). */
+export function commonDir(paths: string[]): string {
+  if (paths.length === 0) return '';
+  const split = paths.map((p) => p.split('/').slice(0, -1)); // drop the filename
+  const first = split[0];
+  let n = first.length;
+  for (const seg of split) {
+    let i = 0;
+    while (i < n && i < seg.length && seg[i] === first[i]) i += 1;
+    n = i;
+  }
+  return first.slice(0, n).join('/');
 }
 
 /** A valid XML ID fragment from a filename: drop extension, non-alnum → '-'. */
@@ -566,7 +600,10 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       href = `${sectionDashed}/${leaf.fileName}`;
     } else {
       // Module 2–5 → shared folders; href relative to index.xml at the root.
-      relPath = `m${leaf.ctdSection.charAt(0)}/${sectionDashed}/${leaf.fileName}`;
+      // Study-report leaves (studyId set) go under a per-study subfolder so each
+      // study owns its folder + its own stf.xml (FDA STF convention).
+      const studySub = leaf.studyId ? `/${studyFolderSlug(leaf.studyId)}` : '';
+      relPath = `m${leaf.ctdSection.charAt(0)}/${sectionDashed}${studySub}/${leaf.fileName}`;
       href = relPath;
     }
     const ref: LeafRef = { href, md5 };
@@ -575,6 +612,60 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
   const resolve = (l: EctdLeaf): LeafRef =>
     refByLeaf.get(l) ?? { href: l.fileName, md5: l.md5 ?? '' };
+
+  /* PASS 1.5 — Study Tagging Files (FDA STF v2.6.1, audit gap G5). For each
+     M4/M5 study (leaves carrying studyId + stfFileTag) generate a per-study
+     stf.xml that tags the study's leaves, place it in the study's folder,
+     reference it in index.xml, and checksum it. Graceful no-op when there are
+     no study leaves. */
+  const stfSyntheticLeaves: EctdLeaf[] = [];
+  let stfSummary: { studies: number; leaves: number; untagged: number } | undefined;
+  {
+    const studyPrepared = prepared.filter(
+      (p) => p.leaf.studyId && p.leaf.stfFileTag && !p.leaf.ctdSection.startsWith('1'),
+    );
+    if (studyPrepared.length > 0) {
+      const byStudy = new Map<string, typeof studyPrepared>();
+      for (const p of studyPrepared) {
+        const list = byStudy.get(p.leaf.studyId!) ?? [];
+        list.push(p);
+        byStudy.set(p.leaf.studyId!, list);
+      }
+      const studyFolder = new Map<string, string>();
+      const stfLeaves: StfLeaf[] = [];
+      for (const [studyId, entries] of byStudy) {
+        const folder = commonDir(entries.map((e) => e.relPath));
+        studyFolder.set(studyId, folder);
+        for (const e of entries) {
+          stfLeaves.push({
+            studyId,
+            fileTag: e.leaf.stfFileTag!,
+            ctdSection: e.leaf.ctdSection,
+            href: e.relPath.slice(folder.length + 1), // relative to the study folder
+            title: e.leaf.title,
+            operation: e.leaf.operation,
+          });
+        }
+      }
+      const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? []);
+      stfSummary = stfResult.summary;
+      for (const file of stfResult.files) {
+        const folder = studyFolder.get(file.studyId)!;
+        const relPath = `${folder}/stf.xml`;
+        const bytes = Buffer.from(file.xml, 'utf8');
+        const md5 = createHash('md5').update(bytes).digest('hex');
+        const section = byStudy.get(file.studyId)![0].leaf.ctdSection;
+        const synthetic: EctdLeaf = {
+          ctdSection: section, operation: 'new', sourcePath: '',
+          fileName: 'stf.xml', title: `Study Tagging File — ${file.studyId}`,
+        };
+        const ref: LeafRef = { href: relPath, md5 };
+        refByLeaf.set(synthetic, ref);
+        prepared.push({ leaf: synthetic, relPath, ref, bytes });
+        stfSyntheticLeaves.push(synthetic);
+      }
+    }
+  }
 
   const backboneByRegion: Record<Region, () => string> = {
     fda:  () => buildFdaBackbone(normalizedInput, resolve),
@@ -607,7 +698,12 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     zip.file(p.relPath, p.bytes);
     checksums.push({ relPath: p.relPath, md5: p.ref.md5 });
   }
-  const m2to5 = input.leaves.filter((l) => !l.ctdSection.startsWith('1'));
+  // Module 2–5 leaves for index.xml, including the generated STF files so each
+  // stf.xml is a referenced leaf in the backbone (not an orphan file).
+  const m2to5 = [
+    ...input.leaves.filter((l) => !l.ctdSection.startsWith('1')),
+    ...stfSyntheticLeaves,
+  ];
 
   /* PDF/A submission-grade gate (audit gap P0-2): when ECTD_REQUIRE_PDFA=true
      and this is a production package, refuse to ship any PDF leaf that the
@@ -700,5 +796,6 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       missing: dtdGate.missing,
       selfContained: dtdGate.selfContained,
     },
+    ...(stfSummary ? { stf: stfSummary } : {}),
   };
 }
