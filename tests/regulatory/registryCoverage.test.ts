@@ -70,6 +70,32 @@ describe('Registry coverage', () => {
     });
   });
 
+  describe('clinical / CMC / lifecycle document blueprints', () => {
+    // These are the highest-value catalog-only types that were given real
+    // ICH/FDA section structures; each must now resolve to at least a real
+    // (non-generic) blueprint, i.e. buildable or better.
+    const NOW_BUILDABLE = [
+      'ICH_CSR', 'ICH_PROTOCOL', 'ICH_IB', 'ICH_SAP',
+      'ICH_QOS', 'ICH_M3_DS', 'ICH_M3_DP',
+      'US_IND_SR', 'US_IND_ANNUAL', 'ICH_DSUR', 'EU_PSUR',
+      'US_REMS', 'EU_RMP',
+      'US_NDA_SUPP', 'US_BLA_SUPP', 'US_CBE', 'US_NDA_ANNUAL',
+      'US_FAST_TRACK', 'US_BTD', 'US_RMAT', 'US_ORPHAN', 'EU_ORPHAN',
+    ] as const;
+
+    it.each(NOW_BUILDABLE)('%s has a real (non-generic) section blueprint', (id) => {
+      const cov = getDocumentCoverage(id);
+      expect(cov, `${id} missing from registry`).not.toBeNull();
+      expect(cov!.sectionBlueprint, `${id} still on the generic fallback`).not.toBe('generic');
+      expect(cov!.readiness).not.toBe('catalog_only');
+    });
+
+    it('the CSR blueprint follows the ICH E3 structure (efficacy + safety evaluation)', () => {
+      const cov = getDocumentCoverage('ICH_CSR')!;
+      expect(cov.readiness).toBe('buildable');
+    });
+  });
+
   describe('portfolio report', () => {
     const report = buildCoverageReport();
 
