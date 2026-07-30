@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { FDAFormsRegistryClass, reconcileFdaCatalogSnapshot } from '../FDAFormsRegistry';
+import {
+  FDAFormsRegistryClass,
+  reconcileFdaCatalogSnapshot,
+  getFormsForProgram,
+  getApplicableForms,
+  applicabilityOf,
+  FDAFormsRegistry,
+} from '../FDAFormsRegistry';
 
 const priority = ['FDA_1571', 'FDA_1572', 'FDA_1574', 'FDA_3454', 'FDA_3455', 'FDA_356H', 'FDA_3674'];
 
@@ -27,6 +34,45 @@ describe('governed FDA forms registry', () => {
       title: expect.stringContaining('42 U.S.C.'),
     }));
     expect(registry.getForm('FDA_3455')?.fields.map((field) => field.id)).toContain('disclosure_details');
+  });
+});
+
+describe('form applicability (center / domain / program)', () => {
+  it('serves the drug-IND forms for an IND program and excludes device 510(k) forms', () => {
+    const ids = getFormsForProgram('IND').map((f) => f.formId);
+    expect(ids).toEqual(expect.arrayContaining(['FDA_1571', 'FDA_1572', 'FDA_3674', 'FDA_3454', 'FDA_3455']));
+    expect(ids).not.toContain('FDA_3514'); // device 510(k) cover sheet
+  });
+
+  it('serves the device forms for a 510(k) program and excludes drug-only forms', () => {
+    const ids = getFormsForProgram('510k').map((f) => f.formId);
+    expect(ids).toEqual(expect.arrayContaining(['FDA_3514', 'FDA_3601', 'FDA_3881', 'FDA_3654']));
+    expect(ids).not.toContain('FDA_1571'); // IND application
+  });
+
+  it('serves NDA/BLA marketing forms for an NDA program', () => {
+    const ids = getFormsForProgram('NDA').map((f) => f.formId);
+    expect(ids).toEqual(expect.arrayContaining(['FDA_356H', 'FDA_3674', 'FDA_3454', 'FDA_3455']));
+  });
+
+  it('filters by center AND domain AND program together', () => {
+    const ids = getApplicableForms({ center: 'CDRH', domain: 'device', program: '510k' }).map((f) => f.formId);
+    expect(ids).toContain('FDA_3514');
+    expect(ids).not.toContain('FDA_1571'); // drug IND
+    expect(ids).not.toContain('FDA_356H'); // drug marketing
+  });
+
+  it('derives applicability from category when no explicit override exists', () => {
+    expect(applicabilityOf(FDAFormsRegistry.FDA_3514)).toEqual({ center: 'CDRH', domains: ['device'], programs: ['510k'] });
+    expect(applicabilityOf(FDAFormsRegistry.FDA_1571)).toEqual({ center: 'CDER', domains: ['drug', 'biologic'], programs: ['IND'] });
+  });
+
+  it('exposes applicability on every governed registry entry', () => {
+    const registry = new FDAFormsRegistryClass().getFullRegistry();
+    for (const form of Object.values(registry)) {
+      expect(form.applicability).toBeDefined();
+      expect(Array.isArray(form.applicability!.programs)).toBe(true);
+    }
   });
 });
 

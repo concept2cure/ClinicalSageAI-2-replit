@@ -10,7 +10,13 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService';
 import FDAFormGenerator from '../services/FDAFormGenerator';
-import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
+import {
+  FDAFormsRegistryClass,
+  FDA_FORMS_RELEASE_READINESS,
+  type FdaCenter,
+  type ProductDomain,
+  type SubmissionProgram,
+} from '../config/FDAFormsRegistry';
 
 const router = Router();
 
@@ -57,6 +63,31 @@ router.get('/registry', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[FDA Forms] Error fetching registry:', error);
     res.status(500).json({ error: 'Failed to fetch forms registry' });
+  }
+});
+
+// Get the forms APPLICABLE to a client's program / domain / center — the
+// program-scoped form list the device-centric category alone couldn't provide.
+// Query: ?program=IND|NDA|510k|… &domain=drug|biologic|device &center=CDER|CDRH|…
+// Unknown/absent criteria simply don't constrain (unknown program → no matches).
+router.get('/applicable', async (req: Request, res: Response) => {
+  try {
+    const asStr = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
+    const criteria = {
+      program: asStr(req.query.program) as SubmissionProgram | undefined,
+      domain: asStr(req.query.domain) as ProductDomain | undefined,
+      center: asStr(req.query.center) as FdaCenter | undefined,
+    };
+    const forms = formsRegistry.getApplicableForms(criteria);
+    res.json({
+      criteria,
+      forms,
+      totalForms: forms.length,
+      releaseReadiness: FDA_FORMS_RELEASE_READINESS,
+    });
+  } catch (error: any) {
+    console.error('[FDA Forms] Error fetching applicable forms:', error);
+    res.status(500).json({ error: 'Failed to fetch applicable forms' });
   }
 });
 
