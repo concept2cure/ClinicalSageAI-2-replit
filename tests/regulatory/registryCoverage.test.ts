@@ -130,6 +130,15 @@ describe('Registry coverage', () => {
       expect(report.summary.byReadiness.production_ready).toBeGreaterThanOrEqual(8);
     });
 
+    it('every active document type resolves to a real (non-generic) authoring structure', () => {
+      // The whole registry is now backed — drug AND device/IVD — so nothing
+      // falls through to the generic CTD fallback. A new registry entry added
+      // without a matching SECTION_BLUEPRINTS entry (project-bootstrap.ts) will
+      // trip this; add the blueprint rather than relaxing the assertion.
+      const catalogOnly = report.entries.filter((e) => e.readiness === 'catalog_only');
+      expect(catalogOnly.map((e) => e.id)).toEqual([]);
+    });
+
     it('every region on the report reconciles its readiness buckets to its total', () => {
       for (const r of report.byRegion) {
         expect(r.productionReady + r.buildable + r.catalogOnly).toBe(r.total);

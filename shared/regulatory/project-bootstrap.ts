@@ -431,6 +431,93 @@ const SIGNAL_SECTIONS: SectionDefinition[] = [
   { code: 'SIG.6', title: 'Documentation and Tracking', module: 5, required: true, contentType: 'table' },
 ];
 
+// ─── Device / IVD section structures ──────────────────────────────────────────
+
+/** FDA pre-submission / Q-Sub / classification request (Requests for Feedback guidance). */
+const DEVICE_PRESUB_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Cover Letter and Meeting Request', module: 1, required: true, contentType: 'narrative' },
+  { code: '2', title: 'Device Description and Intended Use', module: 1, required: true, contentType: 'mixed' },
+  { code: '3', title: 'Proposed Regulatory Pathway and History', module: 1, required: true, contentType: 'narrative' },
+  { code: '4', title: 'Specific Questions for the Agency', module: 1, required: true, contentType: 'list' },
+  { code: '5', title: 'Supporting Data and Testing Strategy', module: 1, required: false, contentType: 'mixed' },
+];
+
+/** EU MDR 2017/745 Annex II/III technical documentation. */
+const DEVICE_TECHDOC_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Device Description and Specification', module: 1, required: true, contentType: 'mixed', guidance: 'MDR Annex II §1' },
+  { code: '2', title: 'Labelling and Instructions for Use', module: 1, required: true, contentType: 'narrative', guidance: 'MDR Annex II §2' },
+  { code: '3', title: 'Design and Manufacturing Information', module: 1, required: true, contentType: 'mixed', guidance: 'MDR Annex II §3' },
+  { code: '4', title: 'General Safety and Performance Requirements (GSPR)', module: 1, required: true, contentType: 'table', guidance: 'MDR Annex I' },
+  { code: '5', title: 'Benefit-Risk Analysis and Risk Management', module: 1, required: true, contentType: 'mixed', guidance: 'MDR Annex I §1–8; ISO 14971' },
+  { code: '6', title: 'Product Verification and Validation', module: 1, required: true, contentType: 'data', guidance: 'incl. preclinical + clinical evaluation' },
+  { code: '7', title: 'Post-Market Surveillance Plan', module: 1, required: true, contentType: 'narrative', guidance: 'MDR Annex III' },
+];
+
+/** IVD analytical + clinical performance evaluation (EU IVDR Annex XIII; FDA analytical/clinical). */
+const IVD_PERFORMANCE_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Intended Use and Indications', module: 1, required: true, contentType: 'narrative' },
+  { code: '2', title: 'Scientific Validity', module: 1, required: true, contentType: 'narrative', guidance: 'IVDR Annex XIII Part A §1.2' },
+  { code: '3', title: 'Analytical Performance', module: 1, required: true, contentType: 'data', guidance: 'sensitivity, specificity, precision, LoD/LoQ, interference' },
+  { code: '4', title: 'Clinical Performance', module: 1, required: true, contentType: 'data', guidance: 'diagnostic sensitivity/specificity, predictive values' },
+  { code: '5', title: 'Stability and Specimen Handling', module: 1, required: false, contentType: 'mixed' },
+  { code: '6', title: 'Performance Evaluation Report', module: 1, required: true, contentType: 'narrative', guidance: 'IVDR Article 56' },
+];
+
+/** Device / IVD clinical investigation or performance study (ISO 14155; MDR Annex XV). */
+const DEVICE_CLINICAL_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Clinical Investigation Plan / Synopsis', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 14155' },
+  { code: '2', title: 'Device Description and Intended Purpose', module: 1, required: true, contentType: 'mixed' },
+  { code: '3', title: 'Risk Analysis and Justification', module: 1, required: true, contentType: 'narrative' },
+  { code: '4', title: 'Investigator Brochure', module: 1, required: true, contentType: 'narrative' },
+  { code: '5', title: 'Informed Consent and Ethics', module: 1, required: true, contentType: 'narrative' },
+  { code: '6', title: 'Monitoring and Data Management', module: 1, required: true, contentType: 'mixed' },
+  { code: '7', title: 'Statistical Analysis Plan', module: 1, required: true, contentType: 'narrative' },
+];
+
+/** ISO 14971:2019 risk management file. */
+const RISK_MANAGEMENT_FILE_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Risk Management Plan', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 14971 §4' },
+  { code: '2', title: 'Intended Use and Characteristics Related to Safety', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 14971 §5.2–5.3' },
+  { code: '3', title: 'Hazard and Hazardous-Situation Analysis', module: 1, required: true, contentType: 'table', guidance: 'ISO 14971 §5.4–5.5' },
+  { code: '4', title: 'Risk Evaluation', module: 1, required: true, contentType: 'table', guidance: 'ISO 14971 §6' },
+  { code: '5', title: 'Risk Control Measures and Verification', module: 1, required: true, contentType: 'mixed', guidance: 'ISO 14971 §7' },
+  { code: '6', title: 'Residual Risk and Overall Benefit-Risk', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 14971 §8' },
+  { code: '7', title: 'Risk Management Report', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 14971 §9' },
+  { code: '8', title: 'Production and Post-Production Information', module: 1, required: true, contentType: 'mixed', guidance: 'ISO 14971 §10' },
+];
+
+/** Medical-device software lifecycle (IEC 62304) with FDA cybersecurity + PCCP. */
+const DEVICE_SOFTWARE_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Software Development Plan', module: 1, required: true, contentType: 'narrative', guidance: 'IEC 62304 §5.1' },
+  { code: '2', title: 'Software Requirements Specification', module: 1, required: true, contentType: 'mixed', guidance: 'IEC 62304 §5.2' },
+  { code: '3', title: 'Software Architecture and Detailed Design', module: 1, required: true, contentType: 'mixed', guidance: 'IEC 62304 §5.3–5.4' },
+  { code: '4', title: 'Verification and Testing (Unit / Integration / System)', module: 1, required: true, contentType: 'data', guidance: 'IEC 62304 §5.5–5.7' },
+  { code: '5', title: 'Software Risk Management', module: 1, required: true, contentType: 'mixed', guidance: 'IEC 62304 §7; ISO 14971' },
+  { code: '6', title: 'Cybersecurity: Threat Model, SBOM, Vulnerability Assessment', module: 1, required: true, contentType: 'mixed', guidance: 'FDA premarket cybersecurity guidance' },
+  { code: '7', title: 'Change Control and Predetermined Change Control Plan (PCCP)', module: 1, required: false, contentType: 'narrative', guidance: 'AI/ML modification protocol' },
+];
+
+/** Quality management system documentation (ISO 13485; 21 CFR 820). */
+const QMS_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Quality Policy and Objectives', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 13485 §5' },
+  { code: '2', title: 'Organization, Roles and Responsibilities', module: 1, required: true, contentType: 'mixed' },
+  { code: '3', title: 'Document and Record Control', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 13485 §4.2; 21 CFR 820.40' },
+  { code: '4', title: 'Design and Development Controls', module: 1, required: true, contentType: 'mixed', guidance: '21 CFR 820.30; ISO 13485 §7.3' },
+  { code: '5', title: 'Production and Process Controls', module: 1, required: true, contentType: 'mixed', guidance: '21 CFR 820.70' },
+  { code: '6', title: 'Corrective and Preventive Action (CAPA)', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 820.100' },
+  { code: '7', title: 'Management Review and Internal Audit', module: 1, required: true, contentType: 'narrative', guidance: 'ISO 13485 §5.6, §8.2.4' },
+];
+
+/** Device post-market surveillance and vigilance (MDR Art. 83–92; 21 CFR 803/806). */
+const DEVICE_POSTMARKET_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Post-Market Surveillance Plan', module: 1, required: true, contentType: 'narrative', guidance: 'MDR Article 84' },
+  { code: '2', title: 'Complaint Handling', module: 1, required: true, contentType: 'mixed', guidance: '21 CFR 820.198' },
+  { code: '3', title: 'Adverse Event / Vigilance Reporting', module: 1, required: true, contentType: 'mixed', guidance: '21 CFR 803; MDR Article 87' },
+  { code: '4', title: 'Trend Analysis', module: 1, required: true, contentType: 'data', guidance: '21 CFR 803.65; MDR Article 88' },
+  { code: '5', title: 'Field Safety Corrective Action', module: 1, required: false, contentType: 'narrative', guidance: '21 CFR 806; MDR Article 89' },
+  { code: '6', title: 'Periodic Safety Update / Annual Report', module: 1, required: true, contentType: 'narrative', guidance: 'MDR Article 86; 21 CFR 814.84' },
+];
+
 const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // US Pre-submission
   us_pre_ind_sections: { id: 'us_pre_ind_sections', name: 'Pre-IND Meeting Briefing Package', sections: PRE_IND_SECTIONS },
@@ -578,6 +665,73 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   ich_ctd_m3_sections: { id: 'ich_ctd_m3_sections', name: 'CTD Module 3 — Quality (CMC)', sections: CTD_SECTIONS.filter(s => s.module === 3) },
   ich_ctd_m4_sections: { id: 'ich_ctd_m4_sections', name: 'CTD Module 4 — Nonclinical', sections: CTD_SECTIONS.filter(s => s.module === 4) },
   ich_ctd_m5_sections: { id: 'ich_ctd_m5_sections', name: 'CTD Module 5 — Clinical', sections: CTD_SECTIONS.filter(s => s.module === 5) },
+
+  // ── Medical devices & IVDs ──────────────────────────────────────────────────
+  // Device market submissions (510(k)/PMA/De Novo family + national licences)
+  us_hde_sections: { id: 'us_hde_sections', name: 'Humanitarian Device Exemption (HDE)', sections: DEVICE_SECTIONS },
+  us_510k_mod_sections: { id: 'us_510k_mod_sections', name: '510(k) for Device Modification', sections: DEVICE_SECTIONS },
+  us_pma_supp_sections: { id: 'us_pma_supp_sections', name: 'PMA Supplement', sections: DEVICE_SECTIONS },
+  us_cdx_pma_sections: { id: 'us_cdx_pma_sections', name: 'Companion Diagnostic PMA', sections: DEVICE_SECTIONS },
+  us_cdx_510k_sections: { id: 'us_cdx_510k_sections', name: 'Companion Diagnostic 510(k) Expansion', sections: DEVICE_SECTIONS },
+  ca_mdl_sections: { id: 'ca_mdl_sections', name: 'Canada Medical Device Licence (SOR/98-282)', sections: DEVICE_SECTIONS },
+  jp_shonin_sections: { id: 'jp_shonin_sections', name: 'Japan Device Approval (Shonin, Class III/IV)', sections: DEVICE_SECTIONS },
+  uk_device_reg_sections: { id: 'uk_device_reg_sections', name: 'UK Device Registration (MHRA / UKCA)', sections: DEVICE_SECTIONS },
+
+  // Pre-submissions, feedback and classification requests (FDA Q-Sub family)
+  us_513g_sections: { id: 'us_513g_sections', name: '513(g) Request for Classification Information', sections: DEVICE_PRESUB_SECTIONS },
+  us_qsub_sections: { id: 'us_qsub_sections', name: 'Q-Submission (Pre-Sub)', sections: DEVICE_PRESUB_SECTIONS },
+  us_rfd_sections: { id: 'us_rfd_sections', name: 'Request for Designation (combination products)', sections: DEVICE_PRESUB_SECTIONS },
+  us_samd_presub_sections: { id: 'us_samd_presub_sections', name: 'SaMD Pre-Submission', sections: DEVICE_PRESUB_SECTIONS },
+  us_ivd_qsub_sections: { id: 'us_ivd_qsub_sections', name: 'IVD Q-Submission', sections: DEVICE_PRESUB_SECTIONS },
+  us_cdx_codev_sections: { id: 'us_cdx_codev_sections', name: 'Companion Diagnostic Co-Development Plan', sections: DEVICE_PRESUB_SECTIONS },
+  us_breakthrough_device_sections: { id: 'us_breakthrough_device_sections', name: 'Breakthrough Device Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
+
+  // EU MDR/IVDR technical documentation + conformity
+  eu_mdr_techdoc_sections: { id: 'eu_mdr_techdoc_sections', name: 'EU MDR Technical Documentation (Annex II/III)', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_ivdr_sections: { id: 'eu_ivdr_sections', name: 'EU IVDR Technical Documentation (Annex II/III)', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_doc_sections: { id: 'eu_doc_sections', name: 'EU Declaration of Conformity', sections: DEVICE_TECHDOC_SECTIONS },
+  eu_sscp_sections: { id: 'eu_sscp_sections', name: 'Summary of Safety & Clinical Performance (MDR Art. 32)', sections: CER_SECTIONS },
+
+  // IVD performance evaluation family (analytical + clinical performance)
+  eu_ivdr_classification_sections: { id: 'eu_ivdr_classification_sections', name: 'EU IVDR Classification (Rules 1–7)', sections: IVD_PERFORMANCE_SECTIONS },
+  eu_per_sections: { id: 'eu_per_sections', name: 'IVD Performance Evaluation Report (IVDR Art. 56)', sections: IVD_PERFORMANCE_SECTIONS },
+  eu_ref_lab_sections: { id: 'eu_ref_lab_sections', name: 'EU Reference Laboratory Batch Verification (Class D)', sections: IVD_PERFORMANCE_SECTIONS },
+  eu_sscp_ivd_sections: { id: 'eu_sscp_ivd_sections', name: 'Summary of Safety & Performance (Class C/D IVD)', sections: IVD_PERFORMANCE_SECTIONS },
+  eu_ivd_reeval_sections: { id: 'eu_ivd_reeval_sections', name: 'IVD Periodic Performance Re-evaluation', sections: IVD_PERFORMANCE_SECTIONS },
+  us_clia_waiver_sections: { id: 'us_clia_waiver_sections', name: 'CLIA Waiver Application', sections: IVD_PERFORMANCE_SECTIONS },
+  us_510k_ivd_sections: { id: 'us_510k_ivd_sections', name: '510(k) for Class II IVD', sections: IVD_PERFORMANCE_SECTIONS },
+  us_pma_ivd_sections: { id: 'us_pma_ivd_sections', name: 'PMA for Class III IVD', sections: IVD_PERFORMANCE_SECTIONS },
+  us_de_novo_ivd_sections: { id: 'us_de_novo_ivd_sections', name: 'De Novo for Novel IVD', sections: IVD_PERFORMANCE_SECTIONS },
+  us_eua_ivd_sections: { id: 'us_eua_ivd_sections', name: 'IVD Emergency Use Authorization', sections: IVD_PERFORMANCE_SECTIONS },
+  us_ldt_sections: { id: 'us_ldt_sections', name: 'Laboratory Developed Test (LDT)', sections: IVD_PERFORMANCE_SECTIONS },
+  us_complementary_dx_sections: { id: 'us_complementary_dx_sections', name: 'Complementary Diagnostic', sections: IVD_PERFORMANCE_SECTIONS },
+
+  // Device / IVD clinical investigations and performance studies
+  us_ide_sections: { id: 'us_ide_sections', name: 'Investigational Device Exemption (IDE)', sections: DEVICE_CLINICAL_SECTIONS },
+  eu_perf_study_sections: { id: 'eu_perf_study_sections', name: 'IVD Performance Study Application (IVDR Art. 58)', sections: DEVICE_CLINICAL_SECTIONS },
+  eu_pmcf_sections: { id: 'eu_pmcf_sections', name: 'Post-Market Clinical Follow-up (MDR Annex XIV)', sections: DEVICE_CLINICAL_SECTIONS },
+  eu_pmpf_sections: { id: 'eu_pmpf_sections', name: 'Post-Market Performance Follow-up (IVDR Annex XIII)', sections: DEVICE_CLINICAL_SECTIONS },
+
+  // Risk management, software, and quality systems
+  iso_rmf_sections: { id: 'iso_rmf_sections', name: 'Risk Management File (ISO 14971)', sections: RISK_MANAGEMENT_FILE_SECTIONS },
+  iec_62304_sections: { id: 'iec_62304_sections', name: 'Software Lifecycle File (IEC 62304)', sections: DEVICE_SOFTWARE_SECTIONS },
+  us_cybersecurity_sections: { id: 'us_cybersecurity_sections', name: 'Premarket Cybersecurity Documentation', sections: DEVICE_SOFTWARE_SECTIONS },
+  us_pccp_sections: { id: 'us_pccp_sections', name: 'Predetermined Change Control Plan (AI/ML)', sections: DEVICE_SOFTWARE_SECTIONS },
+  qms_quality_manual_sections: { id: 'qms_quality_manual_sections', name: 'Quality Manual (ISO 13485)', sections: QMS_SECTIONS },
+  qms_design_controls_sections: { id: 'qms_design_controls_sections', name: 'Design Controls (21 CFR 820.30)', sections: QMS_SECTIONS },
+  qms_dmr_sections: { id: 'qms_dmr_sections', name: 'Device Master Record (DMR)', sections: QMS_SECTIONS },
+  qms_dhr_sections: { id: 'qms_dhr_sections', name: 'Device History Record (DHR)', sections: QMS_SECTIONS },
+  qms_mdsap_sections: { id: 'qms_mdsap_sections', name: 'MDSAP Audit File', sections: QMS_SECTIONS },
+  us_dhf_sections: { id: 'us_dhf_sections', name: 'Design History File (DHF)', sections: QMS_SECTIONS },
+
+  // Device post-market surveillance and vigilance
+  us_pma_annual_sections: { id: 'us_pma_annual_sections', name: 'PMA Annual Report (21 CFR 814.84)', sections: DEVICE_POSTMARKET_SECTIONS },
+  us_mdr_report_sections: { id: 'us_mdr_report_sections', name: 'Medical Device Report (MDR, 21 CFR 803)', sections: DEVICE_POSTMARKET_SECTIONS },
+  us_recall_sections: { id: 'us_recall_sections', name: 'Corrections & Removals Report (21 CFR 806)', sections: DEVICE_POSTMARKET_SECTIONS },
+  us_trend_report_sections: { id: 'us_trend_report_sections', name: 'Trend Report (21 CFR 803.65)', sections: DEVICE_POSTMARKET_SECTIONS },
+  us_device_reg_sections: { id: 'us_device_reg_sections', name: 'Establishment Registration & Device Listing', sections: DEVICE_POSTMARKET_SECTIONS },
+  eu_psur_device_sections: { id: 'eu_psur_device_sections', name: 'Device PSUR (MDR Article 86)', sections: DEVICE_POSTMARKET_SECTIONS },
+  eu_fsca_sections: { id: 'eu_fsca_sections', name: 'Field Safety Corrective Action (MDR Article 89)', sections: DEVICE_POSTMARKET_SECTIONS },
 
   // Default fallback
   default_sections: { id: 'default_sections', name: 'Standard CTD Sections', sections: CTD_SECTIONS },
