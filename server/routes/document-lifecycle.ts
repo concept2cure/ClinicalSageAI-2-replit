@@ -64,8 +64,23 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     return db;
   };
 
+  // Async handlers must not throw into Express unguarded (Express 4 does not
+  // catch async rejections — the request would hang). Every handler is wrapped
+  // so a failure returns a clean 500 with the reason.
+  const wrap =
+    (fn: (req: Request, res: Response) => Promise<Response | void>) =>
+    async (req: Request, res: Response): Promise<Response | void> => {
+      try {
+        return await fn(req, res);
+      } catch (err) {
+        return res
+          .status(500)
+          .json({ ok: false, error: 'internal_error', detail: err instanceof Error ? err.message : String(err) });
+      }
+    };
+
   /** Create a canonical document (starts at `authoring`). */
-  router.post('/', async (req: Request, res: Response) => {
+  router.post('/', wrap(async (req: Request, res: Response) => {
     const organizationId = resolveOrgId(req);
     if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
 
@@ -86,10 +101,10 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     // Report how many blueprint sections were instantiated as the outline.
     const outline = await readOutline(getDb(), canonicalId, organizationId);
     return res.status(201).json({ ok: true, canonicalId, sectionCount: outline.length });
-  });
+  }));
 
   /** Record a review or approval sign-off (Part 11) on the document. */
-  router.post('/:id/sign', async (req: Request, res: Response) => {
+  router.post('/:id/sign', wrap(async (req: Request, res: Response) => {
     const organizationId = resolveOrgId(req);
     if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
 
@@ -109,10 +124,10 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     };
     await recordSignature(getDb(), String(req.params.id), organizationId, meaning, signature);
     return res.json({ ok: true, signature });
-  });
+  }));
 
   /** Advance the document one gated stage. */
-  router.post('/:id/advance', async (req: Request, res: Response) => {
+  router.post('/:id/advance', wrap(async (req: Request, res: Response) => {
     const organizationId = resolveOrgId(req);
     if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
 
@@ -172,10 +187,10 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       stage: result.state.stage,
       auditEvent: result.auditEvent,
     });
-  });
+  }));
 
   /** Read the projection + verify the audit chain. */
-  router.get('/:id', async (req: Request, res: Response) => {
+  router.get('/:id', wrap(async (req: Request, res: Response) => {
     const organizationId = resolveOrgId(req);
     if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
 
@@ -197,7 +212,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       audit: input.audit,
       chainValid: chain.valid,
     });
-  });
+  }));
 
   return router;
 }

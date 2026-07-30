@@ -55,9 +55,16 @@ export interface CreateCanonicalDocumentInput {
  * not resolve to a registry entry.
  */
 export function resolveOutlineForType(documentType: string): SectionDefinition[] {
-  const entry = resolveToRegistryEntry(documentType);
-  if (!entry) return [];
-  return getSectionBlueprintForEntry(entry).sections;
+  try {
+    const entry = resolveToRegistryEntry(documentType);
+    if (!entry) return [];
+    return getSectionBlueprintForEntry(entry).sections ?? [];
+  } catch {
+    // The outline is an enhancement, never a precondition for creating a
+    // governed document. If registry resolution is unavailable, create the
+    // document with an empty outline rather than failing the write.
+    return [];
+  }
 }
 
 /** Insert a new canonical document at the `authoring` stage; returns its UUID. */
