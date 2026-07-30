@@ -1,0 +1,11 @@
+# Licensed ICH RPS message schema — never committed (see README.md).
+rps-message.xsd
+
+# genericode.xsd (OASIS open standard) MAY be committed after legal-review sign-off;
+# until then treat all vendored schemas as drop-in and keep them out of git.
+*.xsd
+
+# Everything else here IS committed.
+!.gitignore
+!README.md
+!checksums.txt
