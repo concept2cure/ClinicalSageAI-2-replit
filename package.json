@@ -66,6 +66,7 @@
     "ci:unreferenced-modules:write-baseline": "node scripts/ci/check-unreferenced-modules.mjs --write-baseline",
     "test:schema-contract": "vitest run --config vitest.config.ts tests/schema-contract",
     "test:golden-journeys": "vitest run --config vitest.config.ts tests/golden-journeys",
+    "test:export-proof": "vitest run --config vitest.config.ts tests/golden-journeys/submission-export-validation.journey.test.ts",
     "test:proof-tier": "vitest run --config vitest.config.ts tests/schema-contract tests/golden-journeys",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",

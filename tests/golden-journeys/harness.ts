@@ -150,9 +150,17 @@ export class JourneyRecorder {
   readonly limitations: string[] = [];
   readonly observations: string[] = [];
 
+  /**
+   * @param schemaSources What schema the journey's database was built from —
+   *   canonical migration files by default, but a journey that provisions its
+   *   DB from DDL constants (e.g. the IND PGlite harness) MUST pass its real
+   *   sources so the manifest does not misstate its own provenance. Honesty of
+   *   the proof record is the point (docs/architecture/PROOF_HIERARCHY.md).
+   */
   constructor(
     readonly journey: string,
     readonly description: string,
+    readonly schemaSources: readonly string[] = CANONICAL_JOURNEY_MIGRATIONS,
   ) {}
 
   /** Run a step; its returned object is the recorded evidence. Throws on failure. */
@@ -211,7 +219,7 @@ export class JourneyRecorder {
       journey: this.journey,
       description: this.description,
       harness: 'wo-01 service-level journey harness',
-      migrations: CANONICAL_JOURNEY_MIGRATIONS,
+      migrations: this.schemaSources,
       steps: this.steps,
       limitations: this.limitations,
       observations: this.observations,
