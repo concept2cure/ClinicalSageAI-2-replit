@@ -18,6 +18,7 @@
 import * as React from 'react';
 import { PdevIcon } from '../icons';
 import { PDEV_SUGGESTIONS } from '../data/enums';
+import type { PdevCommand } from '../data/commands';
 import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel, SR_ONLY_STYLE } from '../../hooks/useChatUpload';
 import type { PdevProgramView, PdevActivityView } from '../data/types';
 
@@ -59,6 +60,11 @@ interface AnaDockProps {
    *  program id is not a project id; without this the file still uploads,
    *  just unscoped to a project. */
   projectId?: string;
+  /** Global PDEV capability registry (`PDEV_COMMANDS`). When present and the
+   *  transcript is empty, the dock renders the first few examples as
+   *  clickable prompts under the surface-specific suggestions — a bridge
+   *  to the ⌘K palette that has not yet landed. */
+  commands?: ReadonlyArray<PdevCommand>;
 }
 
 export function PdevAnaDock({
@@ -73,6 +79,7 @@ export function PdevAnaDock({
   isStreaming = false,
   messages = [],
   projectId,
+  commands,
 }: AnaDockProps) {
   const [draft, setDraft] = React.useState('');
   const suggestions = PDEV_SUGGESTIONS[activeNav] ?? PDEV_SUGGESTIONS.overview;
@@ -189,6 +196,25 @@ export function PdevAnaDock({
               <span>{s}</span>
             </button>
           ))}
+          {commands && commands.length > 0 && (
+            <>
+              <div className="pdev-ana-section-label">Or try a PDEV command</div>
+              {commands.slice(0, 4).map((c) => (
+                <button
+                  key={c.id}
+                  className="pdev-ana-suggestion"
+                  onClick={() => setDraft(c.example)}
+                  type="button"
+                  title={c.id}
+                >
+                  <span className="ico">
+                    <PdevIcon name="zap" />
+                  </span>
+                  <span>{c.example}</span>
+                </button>
+              ))}
+            </>
+          )}
         </>
       )}
 

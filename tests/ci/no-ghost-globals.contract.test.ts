@@ -15,8 +15,11 @@
  *                         `authoring?.streamDraft` reads window.C2C_AUTHORING,
  *                         also never assigned. Porting C2C_API fixes one blocker,
  *                         not the path — see FENCED below.
- *   PdevInd.tsx:176       `typeof api.post === 'function'` never true → returned
- *                         the PDEV_DRAFT fixture without asking the server
+ *   PdevInd.tsx           (retired) originally read `typeof api.post === 'function'`
+ *                         which was never true → returned the PDEV_DRAFT fixture
+ *                         without asking the server. Superseded by the Phase 7
+ *                         PDEV kit at client/src/concept2cure/pdev/ which fetches
+ *                         through useFetchJson (never touched the ghost).
  *   ReportEngine.tsx:272  always fell through to the local analyzer
  *   EctdCoauthor.tsx:203  returned null before issuing a request, and the panel
  *                         reported "unavailable" for a reason unrelated to the server
@@ -107,8 +110,11 @@ describe('the client walker sees the real tree', () => {
   });
 
   it('includes the surfaces that carried the defect', () => {
+    // PdevInd.tsx was retired alongside the Phase 7 PDEV kit landing at
+    // client/src/concept2cure/pdev/. That kit uses useFetchJson and never
+    // touched the ghost, so the guarantee holds by construction.
     for (const name of [
-      'LicensingSurface.tsx', 'PdevInd.tsx', 'ReportEngine.tsx',
+      'LicensingSurface.tsx', 'ReportEngine.tsx',
       'EctdCoauthor.tsx', 'AnaMemory.tsx', 'AnaVerbs.tsx',
     ]) {
       expect(FILES.some(f => f.endsWith(name)), `${name} not walked`).toBe(true);
@@ -161,7 +167,8 @@ describe('fenced ghosts cannot spread', () => {
 describe('the ported surfaces use the sanctioned convention', () => {
   const ported: ReadonlyArray<[file: string, needle: RegExp]> = [
     ['client/src/concept2cure/v2/surfaces/LicensingSurface.tsx', /liveMutateOrNull</],
-    ['client/src/concept2cure/v2/surfaces/PdevInd.tsx', /liveMutateOrNull</],
+    // PdevInd.tsx retired — Phase 7 PDEV kit at client/src/concept2cure/pdev/
+    // is the source of truth and uses useFetchJson; no shim required.
     ['client/src/concept2cure/v2/surfaces/ReportEngine.tsx', /liveMutateOrNull</],
     ['client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx', /liveMutateOrNull</],
     ['client/src/concept2cure/v2/surfaces/AnaMemory.tsx', /liveMutateOrNull\(/],

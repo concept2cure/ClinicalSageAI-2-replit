@@ -52,6 +52,7 @@ import {
   PdevConfirmDialog,
   type ConfirmConfig,
 } from './components/ConfirmDialog';
+import { PDEV_COMMANDS } from './data/commands';
 
 const HERE_LABEL: Record<string, string> = {
   overview: 'Program dashboard',
@@ -426,6 +427,7 @@ export function PdevApp({
         isStreaming={!onAskAna && anaChat.isStreaming}
         messages={dockMessages}
         projectId={projectIdForProgram != null ? String(projectIdForProgram) : undefined}
+        commands={PDEV_COMMANDS}
       />
 
       {activeActivity && programId && (
