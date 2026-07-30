@@ -11,6 +11,7 @@ import { useEstarReadiness, useK510EstarSections, useK510Predicates, useK510SeMa
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { EstarFilingPanel } from './EstarFilingPanel';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface K510SurfaceProps {
@@ -445,6 +446,10 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
           </div>
         </div>
       </div>
+
+      {/* eSTAR filing journey — register → assess → produce-gate → track,
+          org-scoped from the session. eSTAR covers 510(k)/De Novo too. */}
+      <EstarFilingPanel />
     </>
   );
 

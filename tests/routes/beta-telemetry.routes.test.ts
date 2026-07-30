@@ -119,10 +119,10 @@ describe('beta telemetry routes', () => {
 
     mountBetaSafeRoutes({ use } as any, authenticate);
 
-    // The telemetry mount is the only route mountBetaSafeRoutes installs (the
-    // former '/api/510k-project' mount was removed — its router module never
-    // existed). `authenticate` must still be wired BEFORE the telemetry router
-    // in the same use() call so the tester telemetry endpoint stays gated.
+    // The telemetry mount is the manifest's ONLY mount since the deprecated
+    // /api/510k-project router was sunset (deleted 2026-06-30, ledger C-22) —
+    // it used to be the 2nd app.use call, after that router's.
+    expect(use).toHaveBeenCalledTimes(1);
     expect(use).toHaveBeenNthCalledWith(
       1,
       '/api/telemetry/beta-workspace',

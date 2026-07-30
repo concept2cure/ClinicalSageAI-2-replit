@@ -13,7 +13,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { useLive, useLiveList } from '../dataConnect';
+import { useLive, useLiveList, useLiveRows } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -582,12 +582,6 @@ const LCM_SUPP: LcmSupp[] = [
   { agency: 'PMDA', product: 'BX-099', subject: 'Partial change (Japan) -- Manufacturer change', id: 'JP-VAR-2024-3', filed: '2026-01-15', due: 'PMDA day 60', status: 'review' },
 ];
 
-const LCM_CMC: LcmCmc[] = [
-  { risk: 'high', title: 'Bioreactor scale-up 2,000L -> 5,000L', area: 'Drug substance', programs: 'BX-099, BX-204', status: 'evaluating' },
-  { risk: 'medium', title: 'Stopper supplier switch', area: 'Drug product', programs: 'BX-099', status: 'planned' },
-  { risk: 'low', title: 'Tighten aggregate spec', area: 'Specifications', programs: 'BX-099', status: 'implemented' },
-];
-
 const LCM_REN: LcmRen[] = [
   { authority: 'FDA', product: 'BX-099', next: 'PADER', interval: 'Annual', due: '2026-09-30' },
   { authority: 'EMA', product: 'BX-099', next: 'Renewal', interval: '5-year', due: '2030-02-14' },
@@ -604,12 +598,14 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
      Falls back to the fixture with a Sample pill when offline/unprovisioned. */
   const liveRen = useLiveList<LcmRen>('/api/lifecycle/renewals', LCM_REN);
   const ren = liveRen.data;
-  /* live ?? fixture — the "CMC change control" card projects the governed
-     proposed-change store (/api/cmc-changes) through the deterministic
-     SUPAC/variations classifier (FDA reporting category → risk band). Falls back
-     to the fixture with a Sample pill when offline/unprovisioned. */
-  const liveCmc = useLiveList<LcmCmc>('/api/cmc-changes', LCM_CMC);
-  const cmc = liveCmc.data;
+  /* Fixture-free (real-data standard): the "CMC change control" card reads the org's
+     REAL proposed-change store (cmc_change_controls, written via POST /api/cmc-changes)
+     projected on read through the deterministic SUPAC/variations classifier (FDA
+     reporting category → risk band). Real rows, an honest empty, or an honest error —
+     never a fixture. `rows` is a fresh [] while loading/on error, so the derivations
+     below are null-safe. */
+  const liveCmc = useLiveRows<LcmCmc>('/api/cmc-changes');
+  const cmc = liveCmc.rows;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -700,9 +696,15 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="CMC change control" sample={liveCmc.sample} meta={cmc.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
+        <SpCard title="CMC change control" meta={cmc.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
           <div className="sp-list">
-            {cmc.map((c, i) => (
+            {liveCmc.loading ? (
+              <div className="sp-row"><span className="sp-row-s">Loading CMC changes…</span></div>
+            ) : liveCmc.error ? (
+              <div className="sp-row"><span className="sp-row-s">Couldn’t load CMC changes — sign in and retry, or check the service.</span></div>
+            ) : cmc.length === 0 ? (
+              <div className="sp-row"><span className="sp-row-s">No CMC changes tracked yet. Propose one to classify its FDA reporting category (SUPAC / ICH Q12).</span></div>
+            ) : cmc.map((c, i) => (
               <div key={i} className="sp-row">
                 <span className="sp-sev" data-s={c.risk === 'high' ? 'high' : c.risk === 'low' ? 'low' : 'med'}>{c.risk}</span>
                 <span className="sp-row-b">

@@ -1,3 +1,12 @@
+-- DEPRECATED (2026-07): the v2 IndLifecycle surface no longer reads this blob.
+-- GET /api/ind-checklist is now assembled ENTIRELY from the real, org-scoped eCTD
+-- submission core (submissions + ectd_sequences + submission_leaves +
+-- coauthor_documents) — see server/services/ind-lifecycle/
+-- ind-checklist-view-assembler.ts and docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This table is retained (non-destructive)
+-- but is no longer written by the demo seed nor read by any route. A later
+-- migration may DROP it once no environment references it.
+--
 -- IND lifecycle checklist store — the per-org IND instance backing the v2
 -- IndLifecycle surface's GET read. Each row is one Investigational New Drug
 -- application (21 CFR 312) with its Module 1 forms checklist (1571 / 1572 /

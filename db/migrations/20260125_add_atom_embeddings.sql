@@ -1,4 +1,18 @@
 -- ═══════════════════════════════════════════════════════════════════════════
+-- ⚠️  SUPERSEDED — DO NOT APPLY. DO NOT ADD TO scripts/db/migration-set.mjs.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- This file declares lumen_data_atoms.embedding and the search_atoms_* functions
+-- at vector(3072) / text-embedding-3-large. That dimension is WRONG for this
+-- product (everything embeds at 1536 / text-embedding-3-small), it makes the
+-- 1536-d write fail the column typmod (embeddings land NULL), and pgvector cannot
+-- even build an HNSW index above 2000 dims. This migration was never in the
+-- durable applied set, so no real database ran it.
+--
+-- The correct, durable replacement is:
+--   db/migrations/20260730_fix_atom_embedding_dimension.sql
+-- which creates/reconciles the column + functions at 1536 and IS registered in
+-- scripts/db/migration-set.mjs. Kept here only for history; do not resurrect.
+-- ═══════════════════════════════════════════════════════════════════════════
 -- MIGRATION: Add Embedding Support to lumen_data_atoms
 -- ═══════════════════════════════════════════════════════════════════════════
 --

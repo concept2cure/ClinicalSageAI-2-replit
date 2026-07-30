@@ -18,7 +18,10 @@
  */
 
 import { generateAtomsForOrg } from '../../server/services/clinical-regulatory-evidence/retrieval-atoms.service';
-import { atomizeCsrReport } from '../../server/services/clinical-regulatory-evidence/csr-adapter.service';
+import {
+  atomizeCsrReport,
+  projectOrgCsrReports,
+} from '../../server/services/clinical-regulatory-evidence/csr-adapter.service';
 import { listSources } from '../../server/services/clinical-regulatory-evidence/evidence-spine.service';
 import { createScopedLogger } from '../../server/utils/logger';
 
@@ -47,6 +50,16 @@ async function main(): Promise<void> {
   logger.info(
     `CRE-native: ${native.total} atoms (${native.embedded} embedded, ${native.skippedUnsupported} skipped) ` +
       JSON.stringify(native.byType),
+  );
+
+  // Project the org's CSR reports into the spine FIRST. atomizeCsrReport reads
+  // from cre 'csr' sources, which only exist once adaptCsrReport has run — on a
+  // fresh tenant listSources('csr') is empty, so without this the loop below is a
+  // silent no-op (audit P0b). Idempotent: already-projected CSRs are skipped.
+  const projection = await projectOrgCsrReports(org, { limit });
+  logger.info(
+    `CSR projection: ${projection.projected} newly projected, ${projection.alreadyPresent} already present, ` +
+      `${projection.failed} failed (of ${projection.total} scanned).`,
   );
 
   const csrSources = await listSources(org, { sourceType: 'csr', limit });

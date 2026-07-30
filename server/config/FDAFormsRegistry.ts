@@ -225,10 +225,7 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
       { id: 'authorized_rep_name', label: 'Authorized Representative', type: 'text', required: true },
       { id: 'authorized_rep_title', label: 'Representative Title', type: 'text', required: false },
     ], autoGenerationTrigger: { stage: 5 }, implementationStatus: 'full',
-    // NOTE: the per-investigator "require disclosure_details when any covered
-    // investigator has a disclosable interest" rule is enforced in the dedicated
-    // buildForm3455 builder (which can traverse investigators[]), NOT as a typed
-    // single-field conditionalLogic entry — see FDA_FORMS_IMPLEMENTATION_AUDIT F-04.
+    conditionalLogic: [{ when: { fieldId: 'investigators[].financial.hasDisclosableInterest', operator: 'equals', value: true }, effect: 'required', fieldIds: ['disclosure_details'] }]
   },
 
   // ============ PMA Forms ============

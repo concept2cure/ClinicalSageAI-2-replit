@@ -63,6 +63,10 @@ export class MissingRequestDbContextError extends Error {
 }
 
 export function requestDb(req: Request): RequestDb {
+  // A bad merge left two copies of this function body here, so `client` was
+  // declared twice (TS2451) and the file did not compile. The canonical shape is
+  // cache-first, then a single guarded lookup that throws the typed
+  // MissingRequestDbContextError (not a bare Error). Ledger C-22.
   const cached = (req as RequestWithCachedDb).__requestDb;
   if (cached) return cached;
 

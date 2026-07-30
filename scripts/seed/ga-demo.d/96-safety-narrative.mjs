@@ -1,87 +1,87 @@
 /**
- * Wave-3 domain seed — safety-narrative SAE case worklist.
+ * Wave-3 domain seed — safety-narrative SAE case worklist into the REAL store.
  *
- * Three individual SAE cases on the BX-099 / BX-204 oncology programs, in
- * mixed expedited-reporting clocks (FDA 15-day IND safety report, EMA 7-day
- * fatal/life-threatening SUSAR). Read by GET /api/safety-narratives/cases; the
- * v2 SafetyNarrative surface renders the worklist and runs the deterministic
- * ICH E3 §16 composer over the selected case. Grounded in the app's PV signals
- * — no fabricated patient identity beyond study-subject codes. to_regclass
- * guarded, org-scoped, idempotent (ON CONFLICT DO NOTHING).
+ * Three individual SAE cases on the BX-099 / BX-204 oncology programs, in mixed
+ * expedited-reporting clocks (FDA 15-day IND safety report; EMA 7-day fatal/life-
+ * threatening SUSAR; one expected → no expedited clock), seeded into the REAL,
+ * org-scoped pharmacovigilance store (`adverse_events`, migrations/
+ * 20260603_pv_operational.sql) — the exact table pharmacovigilanceService writes,
+ * and that GET /api/safety-narratives/cases now reads (see server/services/pv/
+ * sae-cases-view-assembler.ts). No blob, no fixture.
+ *
+ * The surface computes each case's 312.32(c)/E2A clock live from the stored facts
+ * (report_date = Day-0 awareness + seriousness_criteria + causality + expectedness
+ * + outcome), so those are the fields that matter and they are all real columns.
+ * Trial demographics the PV intake store does not model (age/sex/arm/first-dose,
+ * medical history, con-meds) are intentionally omitted — the surface shows them
+ * null-safe. Idempotent, org-scoped, to_regclass-guarded.
  */
 const CASES = [
   {
-    id: 'ICSR-8841', due: 'Day 15', clock: 'FDA 15-day (IND safety report)', dueDays: 6,
-    // Serious + unexpected + suspected, not fatal/life-threatening ⇒ live 15-day clock.
+    id: 'ICSR-8841', studyId: 'BX204-301', subjectId: '2041-0087',
+    studyDrug: 'BX-099', dose: '200 mg IV every 3 weeks',
     awarenessDate: '2026-07-06', expectedness: 'unexpected',
-    subjectId: '2041-0087', age: 67, sex: 'Female', studyId: 'BX204-301', treatmentArm: 'BX-099 200 mg Q3W',
-    studyDrug: 'BX-099', dose: '200 mg IV every 3 weeks', firstDoseDate: '12 Mar 2026',
-    medicalHistory: ['stage IIIB non-small-cell lung cancer', 'former smoker (28 pack-years)', 'hypertension'],
-    concomitantMeds: ['amlodipine 5 mg daily', 'as-needed acetaminophen'],
-    event: {
-      term: 'immune-mediated pneumonitis', dayOnStudy: 64, severity: 'grade 3 (severe)',
-      seriousnessCriteria: ['hospitalization', 'medically important'], causality: 'possibly related',
-      actionTaken: 'study drug permanently discontinued', treatment: 'high-dose IV methylprednisolone 2 mg/kg/day with taper',
-      dechallenge: 'positive', outcome: 'recovering',
-      notes: 'CT chest showed bilateral ground-glass opacities; infectious work-up was negative.',
-    },
+    term: 'immune-mediated pneumonitis',
+    description: 'Grade 3 immune-mediated pneumonitis; CT chest showed bilateral ground-glass opacities, infectious work-up negative. Study drug permanently discontinued; treated with high-dose IV methylprednisolone.',
+    seriousnessCriteria: ['hospitalization', 'medically important'], causality: 'possibly related', outcome: 'recovering',
   },
   {
-    id: 'ICSR-8839', due: 'Day 7', clock: 'EMA 7-day (fatal/life-threatening SUSAR)', dueDays: 2,
-    // Serious + unexpected + suspected + life-threatening ⇒ live 7-day clock (urgent).
+    id: 'ICSR-8839', studyId: 'BX204-301', subjectId: '2041-0112',
+    studyDrug: 'BX-099', dose: '200 mg IV every 3 weeks',
     awarenessDate: '2026-07-13', expectedness: 'unexpected',
-    subjectId: '2041-0112', age: 58, sex: 'Male', studyId: 'BX204-301', treatmentArm: 'BX-099 200 mg Q3W',
-    studyDrug: 'BX-099', dose: '200 mg IV every 3 weeks', firstDoseDate: '02 Apr 2026',
-    medicalHistory: ['metastatic urothelial carcinoma', 'type 2 diabetes mellitus'],
-    concomitantMeds: ['metformin 1000 mg twice daily'],
-    event: {
-      term: 'grade 3 infusion-related reaction', dayOnStudy: 1, severity: 'grade 3 (severe)',
-      seriousnessCriteria: ['life-threatening', 'hospitalization'], causality: 'related',
-      actionTaken: 'infusion interrupted; study drug withheld', treatment: 'IV diphenhydramine, corticosteroids, and fluid resuscitation',
-      dechallenge: 'positive', rechallenge: 'not done', outcome: 'recovered',
-    },
+    term: 'grade 3 infusion-related reaction',
+    description: 'Life-threatening grade 3 infusion-related reaction on first dose; infusion interrupted and study drug withheld; treated with IV diphenhydramine, corticosteroids, and fluid resuscitation.',
+    seriousnessCriteria: ['life-threatening', 'hospitalization'], causality: 'related', outcome: 'recovered',
   },
   {
-    id: 'ICSR-8832', due: 'Day 15', clock: 'FDA 15-day (IND safety report)', dueDays: 11,
-    // Serious + suspected but EXPECTED (listed in the IB) ⇒ no expedited clock ('none').
+    id: 'ICSR-8832', studyId: 'BX204-204', subjectId: '2288-0043',
+    studyDrug: 'BX-204', dose: '400 mg orally once daily',
     awarenessDate: '2026-07-10', expectedness: 'expected',
-    subjectId: '2288-0043', age: 61, sex: 'Male', studyId: 'BX204-204', treatmentArm: 'BX-204 rezatinib 400 mg QD',
-    studyDrug: 'BX-204', dose: '400 mg orally once daily', firstDoseDate: '18 Feb 2026',
-    medicalHistory: ['EGFR-mutant NSCLC'],
-    concomitantMeds: [],
-    event: {
-      term: 'hepatic enzyme elevation (ALT >5x ULN)', dayOnStudy: 42, severity: 'grade 3',
-      seriousnessCriteria: ['medically important'], causality: 'probably related',
-      actionTaken: 'dose interrupted', outcome: 'recovering',
-      notes: 'No bilirubin elevation; Hy\'s Law criteria not met.',
-    },
+    term: 'hepatic enzyme elevation (ALT >5x ULN)',
+    description: 'Grade 3 hepatic enzyme elevation (ALT >5x ULN); no bilirubin elevation, Hy\'s Law criteria not met. Dose interrupted. Listed in the IB (expected).',
+    seriousnessCriteria: ['medically important'], causality: 'probably related', outcome: 'recovering',
   },
 ];
 
-export default async function seed(client, { org }) {
-  const t = await client.query(`SELECT to_regclass('public.c2c_sae_cases') AS c`);
-  if (!t.rows[0]?.c) {
-    console.log('   ⚠ c2c_sae_cases not found — run migrations first, skipping');
+async function has(client, table) {
+  const r = await client.query(`SELECT to_regclass($1) AS c`, [`public.${table}`]);
+  return !!r.rows[0]?.c;
+}
+
+export default async function seed(client, { org, admin }) {
+  if (!(await has(client, 'adverse_events'))) {
+    console.log('   ⚠ adverse_events not found — run migrations first, skipping safety-narrative seed');
     return;
   }
+  const u = await client.query(
+    `SELECT user_id FROM organization_users WHERE organization_id = $1 ORDER BY user_id LIMIT 1`,
+    [org.id],
+  );
+  const userId = u.rows[0]?.user_id ?? admin?.id;
+
+  const orgText = String(org.id);
   let inserted = 0;
   for (const c of CASES) {
-    const r = await client.query(
-      `INSERT INTO c2c_sae_cases (
-         id, organization_id, due, clock, due_days, subject_id, age, sex,
-         study_id, treatment_arm, study_drug, dose, first_dose_date,
-         medical_history, concomitant_meds, event, awareness_date, expectedness
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-         $14::jsonb, $15::jsonb, $16::jsonb, $17, $18)
-       ON CONFLICT (organization_id, id) DO NOTHING`,
+    const exists = await client.query(
+      `SELECT id FROM adverse_events WHERE organization_id = $1 AND id = $2 LIMIT 1`,
+      [orgText, c.id],
+    );
+    if (exists.rows.length > 0) continue;
+    const susar = c.expectedness === 'unexpected' && ['related', 'probably related', 'possibly related'].includes(c.causality);
+    await client.query(
+      `INSERT INTO adverse_events (
+         id, organization_id, project_id, event_type, patient_id, event_description,
+         report_date, seriousness_criteria, causality, outcome, reporter_type,
+         expectedness, reaction_pt, suspect_product, suspect_product_dose,
+         expedited_report_required, case_status, created_by
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'investigator',$11,$12,$13,$14,$15,'draft',$16)`,
       [
-        c.id, org.id, c.due, c.clock, c.dueDays, c.subjectId, c.age, c.sex,
-        c.studyId, c.treatmentArm, c.studyDrug, c.dose, c.firstDoseDate,
-        JSON.stringify(c.medicalHistory), JSON.stringify(c.concomitantMeds), JSON.stringify(c.event),
-        c.awarenessDate ?? null, c.expectedness ?? null,
+        c.id, orgText, c.studyId, susar ? 'SUSAR' : 'SAE', c.subjectId, c.description,
+        c.awarenessDate, JSON.stringify(c.seriousnessCriteria), c.causality, c.outcome,
+        c.expectedness, c.term, c.studyDrug, c.dose, susar, userId != null ? String(userId) : null,
       ],
     );
-    inserted += r.rowCount ?? 0;
+    inserted += 1;
   }
-  console.log(`   ✓ safety narrative: ${inserted} SAE cases seeded`);
+  console.log(`   ✓ safety narrative: ${inserted} SAE case(s) seeded into adverse_events`);
 }

@@ -5,13 +5,14 @@
  *
  */
 import { Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { organizationUsers, users } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
 import { db } from './db';
 import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
+import { requireAccessTokenReason } from './middleware/tokenType';
 
 const logger = createScopedLogger('auth');
 
@@ -19,7 +20,16 @@ const logger = createScopedLogger('auth');
 const parseFiniteInt = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
   if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number.parseInt(value, 10);
+    // Only a string that is ENTIRELY an integer may parse. Number.parseInt is a
+    // prefix parser — parseInt('3f1c2a10-0000-…', 10) === 3 — so a UUID JWT
+    // subject silently became a valid-looking integer user id (here, user 3, a
+    // DIFFERENT real user). enforceOrgMembership then re-checked membership for
+    // the wrong user, and on the authoring surface (UUID subjects) 503'd every
+    // request when the integer-keyed organization_users had no such row. A
+    // non-integer subject must yield null so the caller treats it as "no numeric
+    // identity", never as a truncated one. See ledger C-21.
+    if (!/^[+-]?\d+$/.test(value.trim())) return null;
+    const parsed = Number.parseInt(value.trim(), 10);
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
@@ -33,6 +43,31 @@ const extractBearerToken = (authorizationHeader?: string): string | null => {
   return token.trim();
 };
 
+
+/**
+ * Canonical, fully-resolved identity for an authenticated request.
+ *
+ * The legacy request fields (`req.userId`, `req.user`, `req.tenantContext`)
+ * are typed `number | string` because several middlewares share the same
+ * global augmentation, and they historically mixed parsed numbers with raw
+ * token strings — the ambiguity behind the C-21 UUID-truncation defect.
+ * `req.identity` is the unambiguous shape: every field has exactly one type,
+ * the raw token subject is preserved as provenance, and the resolved legacy
+ * integer id is separate from it. New code should read identity from here.
+ */
+export interface AuthenticatedIdentity {
+  /** The raw, untranslated subject claim from the verified token. */
+  externalSubject: string;
+  /** Which authentication surface issued the token (e.g. 'local-jwt', 'saml'). */
+  provider: string;
+  /** Resolved integer user id in the platform's membership model. */
+  legacyUserId: number;
+  /** Organization the request is scoped to (verified membership). */
+  organizationId: number;
+  /** Role from the organization membership row — never from the token. */
+  role: string;
+  email: string | null;
+}
 
 // Augment Express Request type to include user information
 declare global {
@@ -61,7 +96,7 @@ declare global {
       tenantId?: number | string;
       userRole?: string;
       userEmail?: string;
-      db?: any;
+      identity?: AuthenticatedIdentity;
     }
   }
 }
@@ -72,9 +107,6 @@ declare global {
  * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
  */
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Attach database to request for consistent access
-  req.db = db;
-
   const authHeader = req.headers.authorization;
   const token = extractBearerToken(authHeader);
 
@@ -90,20 +122,15 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         organizationId?: string;
         type?: string;
         role?: string;
+        provider?: string;
         mfaPending?: boolean;
       }>(token);
 
-      // SECURITY: reject non-access tokens (refresh / MFA challenge / MFA
-      // partial) on the access path so a half-authenticated session cannot
-      // bypass MFA by presenting its short-lived token as a Bearer credential.
-      const tokenType = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
-      if (
-        decoded.mfaPending === true ||
-        decoded.role === 'pending_mfa' ||
-        tokenType === 'refresh' ||
-        tokenType === 'mfa_challenge' ||
-        tokenType === 'mfa_partial'
-      ) {
+      // SECURITY: the access path requires an explicit `type: 'access'` claim.
+      // Refresh / MFA-challenge / MFA-partial tokens are rejected as before,
+      // but so is every unknown or absent token class — the expected class is
+      // positively asserted, not inferred from the absence of known-bad ones.
+      if (requireAccessTokenReason(decoded)) {
         return res.status(401).json({ error: 'Token is not valid for this operation' });
       }
 
@@ -113,7 +140,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
       const parsedUserId = parseFiniteInt(decoded.userId);
       const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
-      const userId = parsedUserId ?? decoded.userId;
       const membership =
         parsedUserId !== null && parsedOrganizationId !== null
           ? await db
@@ -127,25 +153,38 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
               )
               .limit(1)
           : [];
-      if (membership.length === 0) {
+      if (membership.length === 0 || parsedUserId === null || parsedOrganizationId === null) {
         return res.status(401).json({ error: 'Invalid tenant membership' });
       }
       const resolvedRole = membership[0].role;
 
-      req.userId = userId;
+      // Past the membership gate both ids are verified integers, so every
+      // legacy field gets ONE consistent representation (numbers, not a mix of
+      // parsed numbers and raw token strings). The raw subject survives on
+      // req.identity.externalSubject as provenance.
+      req.identity = {
+        externalSubject: String(decoded.userId),
+        provider: typeof decoded.provider === 'string' ? decoded.provider : 'local-jwt',
+        legacyUserId: parsedUserId,
+        organizationId: parsedOrganizationId,
+        role: resolvedRole,
+        email: decoded.email ?? null,
+      };
+
+      req.userId = parsedUserId;
       req.userRole = resolvedRole;
       req.userEmail = decoded.email;
-      req.tenantId = parsedOrganizationId ?? 0;
+      req.tenantId = parsedOrganizationId;
       req.user = {
-        id: req.userId,
-        userId: req.userId,
+        id: parsedUserId,
+        userId: parsedUserId,
         email: decoded.email,
         role: resolvedRole,
-        organizationId: decoded.organizationId,
+        organizationId: parsedOrganizationId,
       };
       req.tenantContext = {
-        organizationId: parsedOrganizationId ?? null,
-        userId: req.userId,
+        organizationId: parsedOrganizationId,
+        userId: parsedUserId,
         role: resolvedRole,
       };
       return next();
@@ -209,25 +248,36 @@ export async function login(email: string, password: string) {
       throw new Error('Invalid password');
     }
 
-    const membership = await db
+    // Load ALL memberships in a deterministic order. Selection is explicit:
+    // the user's defaultOrganizationId wins when a membership for it exists;
+    // otherwise the lowest organizationId. Previously an unordered `.limit(1)`
+    // let the database pick whichever row it returned first, so a
+    // multi-organization user could land in a different tenant per login.
+    const memberships = await db
       .select({
         organizationId: organizationUsers.organizationId,
         role: organizationUsers.role,
       })
       .from(organizationUsers)
       .where(eq(organizationUsers.userId, user[0].id))
-      .limit(1);
+      .orderBy(asc(organizationUsers.organizationId));
 
-    if (membership.length === 0) {
+    if (memberships.length === 0) {
       throw new Error('User has no organization membership');
     }
+
+    const membership =
+      (user[0].defaultOrganizationId != null
+        ? memberships.find(m => m.organizationId === user[0].defaultOrganizationId)
+        : undefined) ?? memberships[0];
 
     const token = jwt.sign(
       {
         userId: String(user[0].id),
         email: user[0].email,
-        organizationId: String(membership[0].organizationId),
-        role: membership[0].role,
+        organizationId: String(membership.organizationId),
+        role: membership.role,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: config.jwt.expiresIn }
@@ -239,8 +289,15 @@ export async function login(email: string, password: string) {
         id: user[0].id,
         name: user[0].name || '',
         email: user[0].email,
-        role: membership[0].role,
+        role: membership.role,
       },
+      organizationId: membership.organizationId,
+      // Surfaced so callers can offer an explicit organization switch instead
+      // of silently accepting the default selection.
+      availableOrganizations: memberships.map(m => ({
+        organizationId: m.organizationId,
+        role: m.role,
+      })),
     };
   } catch (error) {
     logger.error('Login error', error);

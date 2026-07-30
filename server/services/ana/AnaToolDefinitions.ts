@@ -19,6 +19,14 @@ import {
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
 } from './agentic-workflow-tools.js';
+// Biotech program orchestrator — the biologics/advanced-therapy development
+// spine (discovery → IND → Phase 1/2/3 → BLA → post-approval). Handler is
+// registered from biotech-program.ts via the inject-and-sibling pattern.
+import { GET_BIOTECH_PROGRAM_STATUS } from './biotech-program.js';
+// Canonical document revision spine — the ONE atomic flow (version → AI action →
+// audit → review → placement → provenance → readiness) over concept2cure_artifacts.
+// Handler registered from document-spine.ts via the inject-and-sibling pattern.
+import { COMMIT_DOCUMENT_REVISION } from './document-spine.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -383,6 +391,7 @@ import {
   EXPLAIN_DESIGN_RISK,
   STRESS_TEST_PROTOCOL,
   TRACE_DESIGN_RECOMMENDATION,
+  PROJECT_CSR_EVIDENCE,
   CREATE_LABELING_DOCUMENT,
   ADD_LABELING_TRANSLATION,
   ADD_LABELING_SYMBOL,
@@ -1447,13 +1456,17 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
   description:
     'Submit an answer to the current intelligence question in an active flow. ' +
     'The engine validates the answer, runs issue checks, and advances to the next question ' +
-    'or completes the flow with a structured output.',
+    'or completes the flow with a structured output. The engine is stateless: pass back the ' +
+    'entire `flow_state` object returned by the previous start_intelligence_flow / ' +
+    'answer_intelligence_question call (not just an id) so it can resume.',
   input_schema: {
     type: 'object',
     properties: {
-      flow_id: {
-        type: 'string',
-        description: 'The flow ID returned by start_intelligence_flow.',
+      flow_state: {
+        type: 'object',
+        description:
+          'The full flow state object returned by the previous call (start_intelligence_flow or the ' +
+          'prior answer_intelligence_question). Round-trip it verbatim — the engine holds no state of its own.',
       },
       node_id: {
         type: 'string',
@@ -1466,7 +1479,7 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
           'values are the user\'s answers (strings, numbers, booleans, or arrays for multi-select).',
       },
     },
-    required: ['flow_id', 'node_id', 'answers'],
+    required: ['flow_state', 'node_id', 'answers'],
   },
 };
 
@@ -2066,6 +2079,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   EXPLAIN_DESIGN_RISK,
   STRESS_TEST_PROTOCOL,
   TRACE_DESIGN_RECOMMENDATION,
+  PROJECT_CSR_EVIDENCE,
   CREATE_LABELING_DOCUMENT,
   ADD_LABELING_TRANSLATION,
   ADD_LABELING_SYMBOL,
@@ -2079,6 +2093,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   BATCH_DRAFT_SECTIONS,
   CONVENE_DRAFTING_COUNCIL,
   GET_CLIENT_JOURNEY,
+  GET_BIOTECH_PROGRAM_STATUS,
+  COMMIT_DOCUMENT_REVISION,
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
   DRAFT_FDA_IR_RESPONSE,

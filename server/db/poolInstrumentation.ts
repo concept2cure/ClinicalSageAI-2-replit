@@ -41,33 +41,15 @@ const INFRASTRUCTURE_QUERIES = new Set<string>([
   "SELECT set_config('app.current_org_id', '', false)",
 ]);
 
-// The ENFORCEMENT exemption — deliberately narrow. Only these exact statements
-// may run unscoped under RLS_ENFORCE=on: a liveness ping, a clock read, and the
-// exact empty-value session-reset set_config forms enumerated above. Everything
-// else — including BEGIN/COMMIT and a set_config that WRITES a tenant value —
-// must present an active scope, so a caller cannot pin the session GUC to a
-// tenant of its choosing outside a governed micro-transaction. Keep this in
-// lockstep with poolInstrumentation-tenant-scope.test.ts.
+// DELIBERATELY EXACT-MATCH ONLY. BEGIN/COMMIT/ROLLBACK and any set_config
+// that carries a REAL value are NOT exempt: an unscoped transaction open or
+// an unscoped tenant-var write is precisely the activity this instrumentation
+// exists to surface (fix: reject unscoped pool access, 2026-07-29, and its
+// contract test poolInstrumentation-tenant-scope.test.ts). Only inert probes
+// and the empty-value CLEAR variants are noise.
 function isInfrastructureQuery(text: string | undefined): boolean {
   if (!text) return false;
-  return INFRASTRUCTURE_QUERIES.has(text);
-}
-
-// Transaction-control statements and the app.current_* GUC bootstrap carry no
-// tenant rows, so they are noise in the missing/present scope METRICS — but they
-// are NOT enforcement-exempt (see isInfrastructureQuery: an unscoped BEGIN or a
-// value-writing set_config is still refused under RLS_ENFORCE=on). This broader
-// predicate is used only to decide what NOT to count, never what to allow.
-const TRANSACTION_CONTROL_RE =
-  /^\s*(?:BEGIN|START\s+TRANSACTION|COMMIT|END|ROLLBACK|ABORT|SAVEPOINT|RELEASE)\b/i;
-const TENANT_GUC_BOOTSTRAP_RE =
-  /^\s*SELECT\s+set_config\(\s*'app\.current_(?:tenant_id|org_id|user_role)'/i;
-
-function isUncountedInScopeMetrics(text: string | undefined): boolean {
-  if (!text) return false;
-  if (isInfrastructureQuery(text)) return true;
-  if (TRANSACTION_CONTROL_RE.test(text)) return true;
-  if (TENANT_GUC_BOOTSTRAP_RE.test(text)) return true;
+  if (INFRASTRUCTURE_QUERIES.has(text)) return true;
   return false;
 }
 
@@ -85,7 +67,7 @@ function shortenQueryForLog(text: string): string {
 }
 
 function recordCheck(op: 'pool.query' | 'pool.connect', queryText: string | undefined): void {
-  if (isUncountedInScopeMetrics(queryText)) return;
+  if (isInfrastructureQuery(queryText)) return;
 
   const scope = getTenantScope();
   if (scope) {

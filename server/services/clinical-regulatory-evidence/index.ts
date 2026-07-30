@@ -45,14 +45,18 @@ import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { buildCoverage, emptyCoverage } from './coverage-service';
 import {
-  getFindingById, getSource, listFindings, listOutcomes,
+  getFindingById, getSource, listFindings, listOutcomes, listRelationshipsFor,
 } from './evidence-spine.service';
+import { simulateDesignWithRegulatoryStress } from './study-design-evidence.service';
+import type { EntityType } from './types';
 import type {
   Assumption,
   DesignEvidencePanel,
   Discipline,
   EvidenceScope,
   EvidenceTrace,
+  EvidenceVisibility,
+  FindingDomain,
   FindingQuery,
   FindingSearchResult,
   FindingSeverity,
@@ -236,6 +240,73 @@ function toVerificationState(status: string): VerificationState {
   return status === 'verified' ? 'source_verified' : 'extracted_unreviewed';
 }
 
+const DISCIPLINE_SET = new Set<Discipline>([
+  'clinical', 'statistical', 'safety', 'clinical_pharmacology', 'cmc',
+  'microbiology', 'device', 'labeling', 'facility', 'administrative',
+]);
+
+/** Common CRL review-discipline phrasings → the canonical Discipline enum. */
+const DISCIPLINE_SYNONYMS: Record<string, Discipline> = {
+  biostatistics: 'statistical', statistics: 'statistical', biometrics: 'statistical',
+  pharmacovigilance: 'safety', pv: 'safety', clinical_safety: 'safety',
+  clinpharm: 'clinical_pharmacology', pharmacology: 'clinical_pharmacology',
+  clinical_pharmacology_and_biopharmaceutics: 'clinical_pharmacology',
+  chemistry: 'cmc', chemistry_manufacturing_and_controls: 'cmc', product_quality: 'cmc', quality: 'cmc',
+  labelling: 'labeling',
+  facilities: 'facility', inspection: 'facility', bimo: 'facility',
+  regulatory_project_management: 'administrative', rpm: 'administrative', project_management: 'administrative',
+};
+
+/** finding_domain is a normalized enum; map the ones with a clean discipline. */
+const FINDING_DOMAIN_TO_DISCIPLINE: Record<FindingDomain, Discipline> = {
+  clinical: 'clinical',
+  biostatistics: 'statistical',
+  clinical_pharmacology: 'clinical_pharmacology',
+  cmc: 'cmc',
+  safety: 'safety',
+  labeling: 'labeling',
+  facility: 'facility',
+  nonclinical: 'administrative', // no nonclinical Discipline member — bucket as unclassified
+  other: 'administrative',
+};
+
+/**
+ * Resolve a finding's review discipline HONESTLY. The stored fdaReviewDiscipline
+ * is free text; it was previously cast straight to Discipline (so an unrecognized
+ * value became an invalid enum) and, when null, defaulted to 'clinical' — a
+ * fabricated attribution. This validates the raw value, then falls back to a
+ * mapping from the normalized finding_domain, then to 'administrative' as the
+ * explicit "not stated / not derivable" bucket. It never invents 'clinical'.
+ */
+function normalizeDiscipline(raw: string | null, domain: FindingDomain | null): Discipline {
+  if (raw) {
+    const key = raw.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (DISCIPLINE_SET.has(key as Discipline)) return key as Discipline;
+    if (DISCIPLINE_SYNONYMS[key]) return DISCIPLINE_SYNONYMS[key];
+  }
+  if (domain && FINDING_DOMAIN_TO_DISCIPLINE[domain]) return FINDING_DOMAIN_TO_DISCIPLINE[domain];
+  return 'administrative';
+}
+
+/**
+ * Map a source's storage visibility to the DTO's EvidenceVisibility WITHOUT
+ * collapsing project_private into tenant_private (the previous behavior widened
+ * how private a project-scoped source appeared). Global-public sources carry a
+ * NULL org, so they resolve to 'public' regardless of class.
+ */
+function toVisibility(src: EvidenceSource | null): EvidenceVisibility {
+  if (src == null || src.organizationId == null) return 'public';
+  switch (src.visibilityClass) {
+    case 'project_private':
+      return 'project_private';
+    case 'global_public':
+      return 'public';
+    case 'tenant_private':
+    default:
+      return 'tenant_private';
+  }
+}
+
 function toSourceRef(src: EvidenceSource | null, finding: RegulatoryFinding): SourceRef {
   const version = src?.version != null ? Number.parseInt(String(src.version), 10) : NaN;
   return {
@@ -251,7 +322,7 @@ function toSourceRef(src: EvidenceSource | null, finding: RegulatoryFinding): So
     officialUrl: src?.officialUrl ?? null,
     checksum: src?.checksum ?? null,
     version: Number.isFinite(version) ? version : null,
-    visibility: src == null || src.organizationId == null ? 'public' : 'tenant_private',
+    visibility: toVisibility(src),
   };
 }
 
@@ -268,7 +339,7 @@ function toResolvedFinding(f: RegulatoryFinding, src: EvidenceSource | null): Re
   return {
     findingId: String(f.id),
     severity: normalizeSeverity(f.severity),
-    discipline: (f.fdaReviewDiscipline ?? 'clinical') as Discipline,
+    discipline: normalizeDiscipline(f.fdaReviewDiscipline, f.findingDomain),
     category: f.findingCategory ?? f.findingDomain ?? 'uncategorized',
     finding: f.normalizedSummary ?? f.findingText ?? '',
     requestedAction: f.requestedAction,
@@ -358,7 +429,11 @@ export async function searchFindings(
 
   const matched = rows.filter(f => {
     const src = sources.get(f.sourceId) ?? null;
-    if (query.discipline && lc(f.fdaReviewDiscipline) !== lc(query.discipline)) return false;
+    // Filter on the SAME normalized discipline the DTO exposes, so a discipline
+    // filter matches what the row actually displays as (not the raw free text).
+    if (query.discipline && normalizeDiscipline(f.fdaReviewDiscipline, f.findingDomain) !== query.discipline) {
+      return false;
+    }
     if (query.category && lc(f.findingCategory) !== lc(query.category)) return false;
     if (query.ctdSection && !(f.affectedCtdSection ?? '').startsWith(query.ctdSection)) return false;
     if (query.ichE3Section && !(f.affectedIchE3Section ?? '').startsWith(query.ichE3Section)) return false;
@@ -454,13 +529,95 @@ export async function getOutcome(
   };
 }
 
-// ─── Design evidence, traces, stress tests (unbuilt phases — honest stubs) ───
+// ─── Design evidence, traces, stress tests ───────────────────────────────────
+
+/** Human labels for the regulatory-stress scenarios the evidence layer selects. */
+const STRESS_LABELS: Record<string, string> = {
+  reduced_treatment_effect: 'Reduced treatment effect',
+  higher_dropout: 'Higher dropout',
+  missing_not_at_random: 'Missing not at random',
+  subgroup_heterogeneity: 'Subgroup heterogeneity',
+  site_variability: 'Site / regional variability',
+  endpoint_misclassification: 'Endpoint misclassification',
+  safety_event_increase: 'Increased safety events',
+  multiplicity_penalty: 'Multiplicity penalty',
+  protocol_deviation_impact: 'Protocol-deviation impact',
+};
+
+/**
+ * Map a selected regulatory-stress scenario to the panel DTO. The evidence layer
+ * only SELECTS which scenarios are defensible (driven by the FDA findings on
+ * record); the parameter values are the caller's and are executed on the existing
+ * simulator — so `result` is null and `parameterSource` is 'none' here. Selection,
+ * never a minted number (§8/§9.1).
+ */
+function toStressScenarioDto(s: { key: string; rationale: string; drivenBy: number[] }): StressScenario {
+  return {
+    scenarioId: s.key,
+    label: STRESS_LABELS[s.key] ?? s.key,
+    selectedBy: null,
+    parameterSource: 'none',
+    parameterNote: s.rationale,
+    result: null,
+    resultTone: 'neutral',
+  };
+}
+
+/**
+ * Resolve a design node's PRIMARY ENDPOINT from the protocol-authoring store. The
+ * endpoint is the one clinical attribute a design node reliably carries as
+ * structured data (`c2c_protocol_dev.objectives`); indication and phase live only
+ * in free-text title/prose, so they are deliberately NOT parsed here. Org-scoped
+ * and best-effort — any miss (no row, no table, malformed JSON) returns null and
+ * the caller falls back to honest-empty rather than scoping evidence on a guess.
+ */
+async function resolveDesignEndpoint(scope: EvidenceScope, designNodeId: string): Promise<string | null> {
+  const id = designNodeId.trim();
+  // The design node is a real protocol_documents id (integer). Resolve its primary
+  // endpoint from the normalized protocol store — the same store the converged
+  // /api/protocol-dev read serves. Non-numeric ids never match a protocol document,
+  // so they resolve to null (honest-empty) rather than a guess.
+  if (!/^\d+$/.test(id)) return null;
+  try {
+    const { rows } = await pool.query(
+      `SELECT endpoint FROM protocol_objectives
+        WHERE protocol_document_id = $1::int AND organization_id = $2
+          AND endpoint IS NOT NULL AND btrim(endpoint) <> ''
+        ORDER BY (objective_type = 'primary') DESC, order_index, id
+        LIMIT 1`,
+      [id, scope.organizationId],
+    );
+    const ep = rows.length > 0 ? (rows[0] as { endpoint?: unknown }).endpoint : null;
+    return typeof ep === 'string' && ep.trim() ? ep.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+const TRACE_ENTITIES: readonly EntityType[] = [
+  'source', 'study', 'finding', 'outcome', 'design_feature', 'result_observation', 'design_lesson', 'atom',
+];
+
+/** Parse a trace ref: "<entityType>:<id>" or a bare numeric finding id. */
+function parseTraceRef(traceId: string): { entityType: EntityType; entityId: string } | null {
+  const raw = (traceId ?? '').trim();
+  if (!raw) return null;
+  const m = raw.match(/^([a-z_]+):(.+)$/i);
+  if (m && (TRACE_ENTITIES as readonly string[]).includes(m[1].toLowerCase())) {
+    return { entityType: m[1].toLowerCase() as EntityType, entityId: m[2].trim() };
+  }
+  if (/^\d+$/.test(raw)) return { entityType: 'finding', entityId: raw };
+  return null;
+}
 
 /**
  * The single payload behind the Study Design evidence panel. Coverage is real
- * (counted from the spine); the panel's evidence arrays remain honestly empty
- * until their phases land — returning real zeros with real coverage, never
- * sample content.
+ * (counted from the spine). `findings` is the design node's ENDPOINT-scoped FDA
+ * precedent — the reliable structured signal a node carries — and `stressScenarios`
+ * are the defensible regulatory-stress tests the findings on record select. The
+ * indication-scoped arrays (comparableStudies / observations / pooled) stay
+ * honest-empty because the design-node store carries no clean indication to scope
+ * them by; the coverage exclusion note explains the zero rather than guessing.
  */
 export async function getDesignEvidence(
   scope: EvidenceScope,
@@ -468,28 +625,79 @@ export async function getDesignEvidence(
   designNodeType = 'unknown',
 ): Promise<DesignEvidencePanel> {
   assertScoped(scope, 'getDesignEvidence');
+  const coverage = await getCoverage(scope, { designNodeId });
+  const endpoint = await resolveDesignEndpoint(scope, designNodeId);
+
+  const findings = endpoint
+    ? (await searchFindings(scope, { text: endpoint, limit: 50 })).findings
+    : [];
+
+  let stressScenarios: StressScenario[] = [];
+  try {
+    const plan = await simulateDesignWithRegulatoryStress(scope.organizationId, { indication: '' });
+    stressScenarios = plan.scenarios.map(toStressScenarioDto);
+  } catch {
+    /* honest-empty on a scenario-selection failure */
+  }
+
   return {
     designNodeId,
     designNodeType,
     comparableStudies: [],
     observations: [],
     pooled: null,
-    findings: [],
-    stressScenarios: [],
+    findings,
+    stressScenarios,
     assumptions: [],
     contradictions: [],
-    coverage: await getCoverage(scope, { designNodeId }),
+    coverage,
     trace: null,
   };
 }
 
-/** The evidence chain behind a recommendation. Null when the trace id is unknown. */
+/**
+ * The evidence chain behind a recommendation. `traceId` is a spine entity ref
+ * ("finding:123", "source:45", or a bare finding id); the chain is the relationship
+ * edges around that entity, each inspectable with its source and flagged when
+ * inferred. Null when the ref is unparseable or has no edges — never a fabricated
+ * chain.
+ */
 export async function getTrace(
   scope: EvidenceScope,
-  _traceId: string,
+  traceId: string,
 ): Promise<EvidenceTrace | null> {
   assertScoped(scope, 'getTrace');
-  return null;
+  const ref = parseTraceRef(traceId);
+  if (!ref) return null;
+
+  let rels;
+  try {
+    rels = await listRelationshipsFor(scope.organizationId, ref.entityType, ref.entityId);
+  } catch (e) {
+    if ((e as { code?: string })?.code === '42P01') return null;
+    throw e;
+  }
+  if (rels.length === 0) return null;
+
+  const coverage = await getCoverage(scope);
+  const byType = new Map<string, number>();
+  for (const r of rels) byType.set(r.relationshipType, (byType.get(r.relationshipType) ?? 0) + 1);
+  const chain: { step: string; count: number | null }[] = [
+    { step: `${ref.entityType} ${ref.entityId}`, count: null },
+    ...[...byType.entries()].map(([step, count]) => ({ step, count })),
+  ];
+
+  return {
+    traceId,
+    corpusSnapshot: coverage.freshness ?? 'current',
+    chain,
+    calculations: [],
+    assumptions: [],
+    contradictions: [],
+    coverage,
+    reviewState: rels.some(r => r.isInferred) ? 'extracted' : 'human_reviewed',
+    recalculateRequired: false,
+  };
 }
 
 export interface StressTestInput {
@@ -498,18 +706,25 @@ export interface StressTestInput {
 }
 
 /**
- * Run regulatory stress scenarios through the EXISTING simulator (§9.1). A
- * letter may justify WHY a scenario matters, but it may not supply a NUMBER.
- * Scenario selection from CRL patterns is phase 6; until then this returns
- * empty rather than inventing scenarios.
+ * Select the defensible regulatory-stress scenarios for a design — driven by the
+ * FDA findings on record (§8: CRLs inform WHICH tests matter, never the parameter
+ * values). The values remain the caller's and are executed on the existing
+ * simulator, so scenarios return selected-not-run. Honest-empty when no letters are
+ * on record.
  */
 export async function runStressTest(
   scope: EvidenceScope,
-  _input: StressTestInput,
+  input: StressTestInput,
 ): Promise<{ scenarios: StressScenario[]; assumptions: Assumption[] }> {
   assertScoped(scope, 'runStressTest');
-  if (!(await findingsAvailable(scope))) return { scenarios: [], assumptions: [] };
-  return { scenarios: [], assumptions: [] };
+  const assumptions = Array.isArray(input.assumptions) ? input.assumptions : [];
+  if (!(await findingsAvailable(scope))) return { scenarios: [], assumptions };
+  try {
+    const plan = await simulateDesignWithRegulatoryStress(scope.organizationId, { indication: '' });
+    return { scenarios: plan.scenarios.map(toStressScenarioDto), assumptions };
+  } catch {
+    return { scenarios: [], assumptions };
+  }
 }
 
 export * from './types';

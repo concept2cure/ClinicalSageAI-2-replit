@@ -39,6 +39,41 @@ export const JOURNEY_PREREQUISITES = `
   INSERT INTO projects (id, organization_id, name) VALUES (1, 1, 'journey-project'), (2, 2, 'other-project');
 `;
 
+/**
+ * Extract named `CREATE TABLE` blocks verbatim from a real migration file.
+ *
+ * Some journeys need a handful of tables out of a very large file — the drizzle
+ * baseline (migrations/0000_sweet_joseph.sql) is thousands of lines and defines
+ * hundreds of tables, most irrelevant and some using constructs an in-process
+ * Postgres will not accept. The alternative is hand-mirroring the columns into
+ * the test, which is exactly the drift this harness exists to avoid (see the
+ * header note about server/db/pglite-harness.ts).
+ *
+ * FK constraints in that baseline are applied by separate `ALTER TABLE … ADD
+ * CONSTRAINT` statements at the end of the file, which are deliberately NOT
+ * extracted: a journey seeds only the subset of tables it needs, so enforcing
+ * every FK would require dragging in the whole graph.
+ *
+ * Throws when a requested table is absent — a silent miss would surface later as
+ * a confusing "relation does not exist" from inside a service.
+ */
+export function extractTableDdl(file: string, tables: readonly string[]): string {
+  const sql = fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
+  const out: string[] = [];
+  for (const table of tables) {
+    // Accepts an optional schema qualifier (`public.submissions`) and optional
+    // quoting on either part, which the two lineages use inconsistently.
+    const re = new RegExp(
+      `CREATE TABLE (?:IF NOT EXISTS )?(?:"?public"?\\.)?"?${table}"?\\s*\\(([\\s\\S]*?)\\n\\);`,
+      'i',
+    );
+    const m = sql.match(re);
+    if (!m) throw new Error(`extractTableDdl: ${table} not found in ${file}`);
+    out.push(`CREATE TABLE IF NOT EXISTS "${table}" (${m[1]}\n);`);
+  }
+  return out.join('\n');
+}
+
 export interface JourneyDb {
   pglite: import('@electric-sql/pglite').PGlite;
   db: unknown;
@@ -115,9 +150,17 @@ export class JourneyRecorder {
   readonly limitations: string[] = [];
   readonly observations: string[] = [];
 
+  /**
+   * @param schemaSources What schema the journey's database was built from —
+   *   canonical migration files by default, but a journey that provisions its
+   *   DB from DDL constants (e.g. the IND PGlite harness) MUST pass its real
+   *   sources so the manifest does not misstate its own provenance. Honesty of
+   *   the proof record is the point (docs/architecture/PROOF_HIERARCHY.md).
+   */
   constructor(
     readonly journey: string,
     readonly description: string,
+    readonly schemaSources: readonly string[] = CANONICAL_JOURNEY_MIGRATIONS,
   ) {}
 
   /** Run a step; its returned object is the recorded evidence. Throws on failure. */
@@ -176,7 +219,7 @@ export class JourneyRecorder {
       journey: this.journey,
       description: this.description,
       harness: 'wo-01 service-level journey harness',
-      migrations: CANONICAL_JOURNEY_MIGRATIONS,
+      migrations: this.schemaSources,
       steps: this.steps,
       limitations: this.limitations,
       observations: this.observations,
@@ -189,9 +232,15 @@ export class JourneyRecorder {
     };
   }
 
-  /** Write manifest JSON + a markdown rendering OF the JSON (JSON is truth). */
-  write(slug: string): { jsonPath: string; mdPath: string } {
-    const dir = path.join(REPO_ROOT, 'tests', 'golden-journeys', '__reports__');
+  /**
+   * Write manifest JSON + a markdown rendering OF the JSON (JSON is truth).
+   *
+   * @param outDir Repo-relative directory for the proof packet. Defaults to the
+   *   golden-journeys reports dir; export-format proofs (not DB journeys) pass
+   *   their own so the two proof families stay in separate homes.
+   */
+  write(slug: string, outDir = 'tests/golden-journeys/__reports__'): { jsonPath: string; mdPath: string } {
+    const dir = path.join(REPO_ROOT, outDir);
     fs.mkdirSync(dir, { recursive: true });
     const m = this.manifest();
     const jsonPath = path.join(dir, `${slug}.manifest.json`);

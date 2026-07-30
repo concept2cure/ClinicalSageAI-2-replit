@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-29T22:35:28.748Z",
+  "generatedAt": "2026-07-30T12:34:11.100Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 229,
+  "totalMigrations": 248,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -553,6 +553,7 @@
     "20260725_authoring_audit_trail.sql",
     "20260725_ectd_compilations_project_level.sql",
     "20260725_project_sections_content_columns.sql",
+    "20260725_submission_orchestrator_store_port.sql",
     "20260725_esig_gate_columns_port.sql",
     "20260725_authoring_signatures_and_workflow.sql",
     "20260725_authoring_signature_freeze_binding.sql",
@@ -564,7 +565,25 @@
     "20260727_prm_program_link.sql",
     "20260727_collab_document_state.sql",
     "20260728_artifacts_table.sql",
-    "20260728_schedule_of_events_org_scoped_uniqueness.sql"
+    "20260728_schedule_of_events_org_scoped_uniqueness.sql",
+    "20260730_fix_atom_embedding_dimension.sql",
+    "20260725_users_signing_lockout_columns.sql",
+    "20260730_authoring_subsystem_schema.sql",
+    "20260730_esign_audit_db_level_immutability.sql",
+    "20260730_authoring_runtime_ddl.sql",
+    "20260730_orchestrator_run_ledger_hardening.sql",
+    "20260730_cmc_projects_reconstruction.sql",
+    "20260730_fk_delete_policies_port.sql",
+    "20260730_manufacturing_processes_reconstruction.sql",
+    "20260730_project_milestones_reconciliation.sql",
+    "20260730_c2c_ana_actions_command_vocab.sql",
+    "20260730_release_signature_uniqueness.sql",
+    "20260730_cmc_evidence_tables.sql",
+    "20260730_graphrag_knowledge_tables.sql",
+    "20260730_licensing_ip_tables.sql",
+    "20260730_submission_center_tables.sql",
+    "20260730_authoring_comments_router_columns.sql",
+    "20260730_cmc_change_control_store.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

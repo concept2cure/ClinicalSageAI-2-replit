@@ -22,7 +22,7 @@ import {
   type ProcessChangeKind,
 } from './supac-classifier';
 
-/** A governed proposed-change row (the c2c_cmc_changes column shape). */
+/** A governed proposed-change row (the cmc_change_controls column shape). */
 export interface CmcChangeRow {
   title: string;
   area: string | null;

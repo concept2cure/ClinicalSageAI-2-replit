@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-29T23:04:10.347Z",
+  "generatedAt": "2026-07-30T08:22:54.460Z",
   "git": {
-    "sha": "d39752cb8457619174f4c9be32048f3692845374",
+    "sha": "d8389974e9200a331f43791a7a76db4b5969bac9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 249,
+    "duplicateBasenames": 250,
     "largeFilesByBytes": 30,
     "largeFilesByLines": 84
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 102,
+        "count": 105,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -70,7 +70,10 @@
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
+          "server/services/ectd/controlled-vocab/index.ts",
+          "server/services/ectd/ectd4/index.ts",
           "server/services/ectd/external-validator/index.ts",
+          "server/services/ectd/qualification/index.ts",
           "server/services/entitlements/index.ts",
           "server/services/external-intelligence/index.ts",
           "server/services/fda/index.ts",
@@ -125,7 +128,7 @@
       },
       {
         "basename": "types",
-        "count": 48,
+        "count": 49,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -149,6 +152,7 @@
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
+          "server/services/ectd/ectd4/types.ts",
           "server/services/ectd/external-validator/types.ts",
           "server/services/entitlements/types.ts",
           "server/services/global-markets/types.ts",
@@ -1627,6 +1631,14 @@
         ]
       },
       {
+        "basename": "estar-registration",
+        "count": 2,
+        "paths": [
+          "server/services/pathway-engines/estar/estar-registration.ts",
+          "shared/schema/estar-registration.ts"
+        ]
+      },
+      {
         "basename": "estareditor",
         "count": 2,
         "paths": [
@@ -2470,7 +2482,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 942008
+        "bytes": 945535
       },
       {
         "file": "shared/schema.ts",
@@ -2486,11 +2498,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 217004
+        "bytes": 215364
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 182939
+        "bytes": 186584
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2534,7 +2546,11 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 119523
+        "bytes": 120635
+      },
+      {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 119906
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2543,10 +2559,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 115960
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2595,12 +2607,12 @@
         "lines": 19835
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 18351
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "lines": 18378
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18318
+        "file": "server/routes/concept2cure.ts",
+        "lines": 18351
       },
       {
         "file": "server/statistics-service.ts",
@@ -2608,7 +2620,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6129
+        "lines": 6047
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2616,7 +2628,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4806
+        "lines": 4878
       },
       {
         "file": "server/storage.ts",
@@ -2652,11 +2664,11 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 2673
+        "lines": 2744
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2660
+        "lines": 2676
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2743,6 +2755,10 @@
         "lines": 2020
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 2005
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2003
       },
@@ -2753,10 +2769,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2000
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2932,7 +2944,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 398,
+      "duplicateGroups": 403,
       "largeByBytes": 27,
       "largeByLines": 73
     },
@@ -2950,7 +2962,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 67,
+      "duplicateGroups": 68,
       "largeByBytes": 1,
       "largeByLines": 2
     },

@@ -125,6 +125,68 @@ describe('C-17: the e-sig gate columns are only in the push surface', () => {
     expect(manifest.executionOrder).toContain('20260725_esig_gate_columns_port.sql');
   });
 
+  it('the orchestrator store is ported BEFORE the e-sig port that ALTERs it (C-19)', () => {
+    // The C-17 port widens submission_orchestrator_runs' status CHECK, which
+    // presumes the table exists. On the migration path it did NOT: the table is
+    // created only by migrations/0018_submission_orchestrator.sql, another
+    // root-lineage file in no application path. Ordering is the fix, so the
+    // ordering is pinned.
+    const manifest = JSON.parse(read('db/migrations/migrations_manifest.json'));
+    const order: string[] = manifest.executionOrder;
+    const base = order.indexOf('20260725_submission_orchestrator_store_port.sql');
+    const esig = order.indexOf('20260725_esig_gate_columns_port.sql');
+    expect(base, 'orchestrator store port missing from executionOrder').toBeGreaterThanOrEqual(0);
+    expect(esig).toBeGreaterThanOrEqual(0);
+    expect(base).toBeLessThan(esig);
+  });
+
+  it('applying the two ports in manifest order builds a working run store', async () => {
+    const pg2 = new PGlite();
+    try {
+      // FK prerequisites the ported files reference.
+      await pg2.exec(`
+        CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+        CREATE TABLE submissions (id SERIAL PRIMARY KEY, organization_id INTEGER);
+        CREATE TABLE users (id SERIAL PRIMARY KEY);
+        CREATE TABLE documents (id SERIAL PRIMARY KEY);
+        CREATE TABLE document_versions (id SERIAL PRIMARY KEY);
+        CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, created_at TIMESTAMP DEFAULT NOW());
+        INSERT INTO organizations (id, name) VALUES (1, 'org-a');
+      `);
+      await pg2.exec(read('db/migrations/20260725_submission_orchestrator_store_port.sql'));
+      await pg2.exec(read(PORT_MIGRATION));
+
+      const cols = await pg2.query<{ column_name: string }>(
+        `SELECT column_name FROM information_schema.columns
+          WHERE table_name = 'submission_orchestrator_runs'`,
+      );
+      const names = cols.rows.map(c => c.column_name);
+      // getRun() SELECTs every one of these; a missing column makes it throw and
+      // return null, which every caller reports as "run not found".
+      for (const c of [
+        'run_id', 'organization_id', 'submission_id', 'submission_id_fk',
+        'application_number', 'region', 'submission_type', 'started_at',
+        'completed_at', 'status', 'steps',
+      ]) {
+        expect(names, `submission_orchestrator_runs is missing ${c}`).toContain(c);
+      }
+
+      // The widened CHECK from the e-sig port must be in force on the ported table.
+      await pg2.query(
+        `INSERT INTO submission_orchestrator_runs
+           (run_id, organization_id, submission_id, application_number, region,
+            submission_type, started_at, status, steps)
+         VALUES ('11111111-1111-4111-8111-111111111111', 1, 's1', 'NDA1', 'US', 'original', NOW(), 'awaiting-signature', '[]'::jsonb)`,
+      );
+      const r = await pg2.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM submission_orchestrator_runs WHERE status = 'awaiting-signature'`,
+      );
+      expect(r.rows[0].n).toBe(1);
+    } finally {
+      await pg2.close();
+    }
+  }, 120_000);
+
   it('the port carries the original statements verbatim', () => {
     const original = read(ROOT_ORIGINAL);
     const port = read(PORT_MIGRATION);

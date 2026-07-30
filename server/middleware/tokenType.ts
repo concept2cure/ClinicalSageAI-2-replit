@@ -29,13 +29,41 @@ export interface TokenClassClaims {
  * Returns a reason string when the token must be rejected on the access path
  * (i.e. it is a refresh / MFA-challenge / MFA-partial token), or null when it
  * is an acceptable access token.
+ *
+ * ALLOW-LIST, not deny-list: any token that carries an explicit `type` claim
+ * other than `access` is rejected — including type values this code has never
+ * heard of (`password_reset`, `invite`, …). A token class must be positively
+ * recognized as an access token to pass; previously only the three known
+ * non-access classes were rejected, so an unknown explicit type authenticated.
+ *
+ * A token with NO `type` claim is still tolerated here for surfaces whose
+ * token population may predate typed issuance (collab/socket/authoring).
+ * HTTP API middlewares must use `requireAccessTokenReason` below, which also
+ * rejects the absent-type case.
  */
 export function nonAccessTokenReason(decoded: TokenClassClaims): string | null {
   if (decoded.mfaPending === true) return 'mfa_partial_token';
   if (decoded.role === 'pending_mfa') return 'mfa_pending_role';
   const type = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
-  if (type === 'refresh' || type === 'mfa_challenge' || type === 'mfa_partial') {
+  if (type !== null && type !== 'access') {
     return type;
   }
+  return null;
+}
+
+/**
+ * Strict access-token requirement for the normal API authentication path:
+ * the token must carry an explicit `type: 'access'` claim. "Reject known bad
+ * token classes" is not a fail-closed identity rule — the expected class must
+ * be positively asserted. All first-party issuers stamp `type: 'access'` on
+ * access tokens; a token without the claim is treated as unclassified and
+ * refused. Returns a reason string when the token must be rejected, or null
+ * when it is an acceptable access token.
+ */
+export function requireAccessTokenReason(decoded: TokenClassClaims): string | null {
+  const nonAccess = nonAccessTokenReason(decoded);
+  if (nonAccess) return nonAccess;
+  const type = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
+  if (type !== 'access') return 'missing_token_type';
   return null;
 }

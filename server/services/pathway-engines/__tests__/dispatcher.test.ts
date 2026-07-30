@@ -40,7 +40,35 @@ describe('assessPathwayReadiness — dispatcher', () => {
     expect(assessPathwayReadiness({ pathway: 'estar_de_novo', leaves: [] }).missingRequired).toContain('classification-request');
   });
 
+  it('routes pma to the PMA mapper and threads the submission type', () => {
+    const r = assessPathwayReadiness({ pathway: 'pma', leaves: [], pmaSubmissionType: 'panel_track_supplement' });
+    expect(r.pathway).toBe('pma');
+    expect(r.ready).toBe(false);
+    expect(r.missingRequired).toContain('clinical');
+    expect((r.detail as { submissionType: string }).submissionType).toBe('panel_track_supplement');
+  });
+
+  it('routes prestar q_sub / ide / 513g to the PreSTAR mapper', () => {
+    const qSub = assessPathwayReadiness({ pathway: 'prestar_q_sub', leaves: [], qSubType: 'submission_issue_request' });
+    expect(qSub.missingRequired).toContain('deficiency-reference');
+    expect((qSub.detail as { qSubType: string }).qSubType).toBe('submission_issue_request');
+
+    expect(assessPathwayReadiness({ pathway: 'prestar_ide', leaves: [] }).missingRequired).toContain('investigational-plan');
+    expect(assessPathwayReadiness({ pathway: 'prestar_513g', leaves: [] }).missingRequired).toContain('classification-questions');
+  });
+
   it('exposes the full set of pathways', () => {
-    expect(PATHWAYS).toEqual(['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin']);
+    expect(PATHWAYS).toEqual([
+      'ctis',
+      'mdr',
+      'ivdr',
+      'estar_510k',
+      'estar_de_novo',
+      'pmda_shonin',
+      'pma',
+      'prestar_q_sub',
+      'prestar_ide',
+      'prestar_513g',
+    ]);
   });
 });

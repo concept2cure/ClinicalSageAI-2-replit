@@ -158,7 +158,9 @@ export function adaptEvidence(e: ServerEvidence): IvdClinicalEvidence | null {
   return {
     id: String(e.id ?? Math.random().toString(36).slice(2)),
     study: e.study_name ?? e.studyName ?? e.study ?? 'Clinical study',
-    // The guard above returns null unless all four are non-null integers.
+    // Non-null by the guard two lines up (any null → early return null); TS does
+    // not propagate that narrowing through the array .some(), so assert as the
+    // calculateClinical2x2 call already does.
     tp: tp!, fp: fp!, tn: tn!, fn: fn!,
     // Prefer server-computed metrics; derive from the 2×2 when absent.
     sensitivity: metrics.sensitivity,

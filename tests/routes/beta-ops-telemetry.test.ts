@@ -5,8 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // The beta-ops telemetry surface was redesigned during the route rename
 // (beta-ops-telemetry.ts -> beta-telemetry.routes.ts): the old
 // GET /beta-telemetry endpoint (env-flag gated, admin-only reset) was replaced
-// by an unauthenticated beta-feedback intake surface mounted at
-// /api/telemetry/beta-workspace (see server/betaRouteManifest.ts):
+// by a beta-feedback intake surface mounted at /api/telemetry/beta-workspace
+// behind authMiddleware, with a router-level organization gate (403 without
+// org context) so telemetry is tenant-scoped (see server/betaRouteManifest.ts
+// and beta-telemetry.routes.test.ts for the gate's own tests):
 //
 //   POST /event  — zod-validated telemetry event, 202 on accept, 400 on bad payload
 //   POST /issue  — zod-validated beta issue report, 202 on accept, 400 on bad payload
@@ -31,17 +33,14 @@ import betaTelemetryRouter from '../../server/routes/beta-telemetry.routes';
 const buildApp = () => {
   const app = express();
   app.use(express.json());
-  // The router requires a resolved tenant context (organization_context_required
-  // 403 otherwise — see server/routes/beta-telemetry.routes.ts). In production
-  // mountBetaSafeRoutes runs the auth/tenant middleware ahead of this router;
-  // here we stand in a fixed org so the event/issue/feed logic is exercised.
+  // Mirrors mountBetaSafeRoutes in server/betaRouteManifest.ts: the router sits
+  // behind authMiddleware, which attaches the verified org context the router's
+  // organization gate requires. Stubbed here — the gate itself (403 without org
+  // context) is tested in beta-telemetry.routes.test.ts.
   app.use((req, _res, next) => {
-    (req as express.Request & { tenantContext?: { organizationId: number } }).tenantContext = {
-      organizationId: 1,
-    };
+    req.tenantContext = { organizationId: 1 };
     next();
   });
-  // Mirrors mountBetaSafeRoutes in server/betaRouteManifest.ts.
   app.use('/api/telemetry/beta-workspace', betaTelemetryRouter);
   return app;
 };

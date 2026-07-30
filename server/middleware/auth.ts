@@ -9,7 +9,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
-import { nonAccessTokenReason } from './tokenType';
+import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
@@ -123,9 +123,12 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   try {
     const decoded = verifyJwtWithRotation(token) as JWTPayload;
 
-    // SECURITY: a non-access token (refresh / MFA challenge / MFA partial) must
-    // never authenticate a normal request, otherwise MFA can be bypassed.
-    const nonAccess = nonAccessTokenReason(decoded);
+    // SECURITY: the normal API path requires an explicit `type: 'access'`
+    // claim. Refresh / MFA-challenge / MFA-partial tokens are rejected as
+    // before, and so is any unknown or absent token class — the expected
+    // class is positively asserted, not inferred from the absence of known-bad
+    // ones. All first-party issuers stamp access tokens with type: 'access'.
+    const nonAccess = requireAccessTokenReason(decoded);
     if (nonAccess) {
       return res.status(401).json({
         error: { code: 'AUTH_008', message: 'Token is not valid for this operation' },

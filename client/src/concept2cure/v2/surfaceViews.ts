@@ -49,6 +49,7 @@ import { Dossier } from './surfaces/Dossier';
 import { DossierMap } from './surfaces/DossierMap';
 import { EctdCoauthor } from './surfaces/EctdCoauthor';
 import { EctdCompile } from './surfaces/EctdCompile';
+import { PublishingCenter } from './surfaces/PublishingCenter';
 import { Etmf } from './surfaces/Etmf';
 import { Evidence } from './surfaces/Evidence';
 import { FilingsCatalog } from './surfaces/FilingsCatalog';
@@ -162,6 +163,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'dossier-map': { component: DossierMap },
   'ectd-coauthor': { component: EctdCoauthor, full: true, hideAna: true },
   'ectd-compile': { component: EctdCompile },
+  'ectd-publishing': { component: PublishingCenter },
   etmf: { component: Etmf },
   'evidence-search': { component: Evidence },
   'filings-catalog': { component: FilingsCatalog },

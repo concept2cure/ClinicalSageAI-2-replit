@@ -24,13 +24,14 @@ import {
   listVendoredTemplates,
   estarTemplateRequiredFromEnv,
   type EstarTemplateVariant,
+  type EstarTemplateType,
 } from './estar-template-registry';
 import { getEstarFieldMap, isFieldMapPopulated } from './estar-field-map';
 import { fillOfficialPdf, type OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
-import type { EstarType } from './estar-mapper';
 
 export interface FillEstarInput {
-  type: EstarType;
+  /** Any eSTAR program submission type (510(k)/De Novo/PMA, or Q-Sub/IDE/513(g)). */
+  type: EstarTemplateType;
   variant: EstarTemplateVariant;
   /** Canonical field values to write into the official eSTAR AcroForm. */
   data: Record<string, unknown>;
@@ -70,8 +71,9 @@ async function resolveTemplateBytes(
 }
 
 /**
- * Fill the official FDA eSTAR PDF for a 510(k)/De Novo (device or IVD) submission.
- * Honest fail-closed: returns `filled: false` with blockers when the template or a
+ * Fill the official FDA eSTAR PDF for any eSTAR program submission — 510(k), De
+ * Novo, PMA (device or IVD), or a PreSTAR request (Q-Sub / IDE / 513(g)). Honest
+ * fail-closed: returns `filled: false` with blockers when the template or a
  * verified field map is missing — never a fabricated artifact.
  */
 export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEstarResult> {

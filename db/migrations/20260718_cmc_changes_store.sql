@@ -1,3 +1,11 @@
+-- DEPRECATED (2026-07): superseded by the REAL cmc_change_controls store
+-- (20260730_cmc_change_control_store.sql), which has a live write path
+-- (cmc-change-control-service.ts via POST /api/cmc-changes). GET /api/cmc-changes now
+-- reads that real, org-scoped store — see docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This blob is retained (non-destructive) but is
+-- no longer written by the demo seed nor read by any route. A later migration may DROP it
+-- once no environment references it.
+--
 -- Post-approval CMC change-control store — the proposed manufacturing/quality
 -- changes the Lifecycle surface "CMC change control" card tracks. Each row holds
 -- the STRUCTURED attributes of a proposed change (dosage-form family, change

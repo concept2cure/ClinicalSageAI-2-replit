@@ -1,19 +1,18 @@
 /**
- * Protocol-development authoring hub — protocol document read.
+ * Protocol-development authoring hub — protocol document read for the v2 surface.
  *
- * GET /api/protocol-dev → the org's in-development clinical protocol(s), each
- * shaped to exactly the keys the v2 ProtocolDev surface renders (the PdevDoc
- * shape: { id, title, shortTitle, kind, version, status, sponsor, pi, updated,
- * completeness, openSection, sections[], content{}, objectives[], eligibility{},
- * soa{}, risks[], milestones[], budget{}, amendments[], deviations[], reviews[],
- * consent[], completenessFindings[] }). Header scalars come straight from
- * columns (short_title → shortTitle, open_section → openSection,
- * completeness_findings → completenessFindings); every nested structure
- * rehydrates straight from JSONB. Org scoped; 403 without org context; fails
- * closed to an empty list on 42P01 so an unprovisioned store never 500s.
+ * GET /api/protocol-dev → the org's in-development protocol(s), each shaped to the
+ * PdevDoc contract the v2 ProtocolDev surface renders, assembled ENTIRELY from the
+ * real normalized store (protocol_documents + every protocol_* child table) — the
+ * same tables the /api/protocol-development CRUD routes and the AnA protocol tools
+ * write. There is no legacy/seed fallback: an org with no protocols returns an empty
+ * list and the surface renders its own honest empty state. See pdev-view-assembler.
+ *
+ * Org scoped; 403 without org context; fails to an empty list on 42P01 so an
+ * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { assembleOrgPdevDocs } from '../services/protocol-development/pdev-view-assembler.js';
 
 const router = Router();
 
@@ -37,43 +36,8 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT id, title, short_title, kind, version, status, sponsor, pi, updated,
-              completeness, open_section, sections, content, objectives, eligibility,
-              soa, risks, milestones, budget, amendments, deviations, reviews, consent,
-              completeness_findings
-         FROM c2c_protocol_dev
-        WHERE organization_id = $1
-        ORDER BY seq, id`,
-      [orgId],
-    );
-    const data = rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      shortTitle: r.short_title,
-      kind: r.kind,
-      version: r.version,
-      status: r.status,
-      sponsor: r.sponsor,
-      pi: r.pi,
-      updated: r.updated,
-      completeness: r.completeness,
-      openSection: r.open_section,
-      sections: r.sections ?? [],
-      content: r.content ?? {},
-      objectives: r.objectives ?? [],
-      eligibility: r.eligibility ?? { inclusion: [], exclusion: [] },
-      soa: r.soa ?? { visits: [], assessments: [], cells: {}, issues: [] },
-      risks: r.risks ?? [],
-      milestones: r.milestones ?? [],
-      budget: r.budget ?? { params: {}, items: [] },
-      amendments: r.amendments ?? [],
-      deviations: r.deviations ?? [],
-      reviews: r.reviews ?? [],
-      consent: r.consent ?? [],
-      completenessFindings: r.completeness_findings ?? [],
-    }));
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgPdevDocs(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'protocol_documents' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });

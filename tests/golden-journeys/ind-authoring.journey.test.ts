@@ -139,6 +139,9 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+      // The router's own tables (templates/tokens/export_history/…), moved out of
+      // retired runtime DDL into this migration by the canonical-spine refactor.
+      'db/migrations/20260730_authoring_runtime_ddl.sql',
     ],
   });
   h.db = jdb.db;

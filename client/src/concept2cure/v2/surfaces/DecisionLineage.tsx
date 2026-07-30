@@ -37,12 +37,14 @@ function dlActionLabel(a: string): string {
 export function DecisionLineage({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   /* Real-data standard: the org's governed decision trails are read live from
-     GET /api/decision-lineage (server/routes/decision-lineage.routes.ts →
-     c2c_decision_lineage, org-scoped), which returns exactly the LineageGraph
-     display shape ({ rootEntityType, rootEntityId, artifactLabel, nodes, edges,
-     metadata }). Real rows, an honest empty, or an honest error — never a
-     fixture. `rows` is a fresh [] while loading and on error, so all derived
-     values below are null-safe and only the real branch renders content. */
+     GET /api/decision-lineage (server/routes/decision-lineage.routes.ts), which
+     enumerates the org's real governed artifacts and assembles each trail through
+     decisionLineageService.getLineageGraph (the real workflow + hash-chained audit
+     store — the same service behind the per-artifact / export / verify-chain
+     endpoints), returning exactly the LineageGraph display shape ({ rootEntityType,
+     rootEntityId, artifactLabel, nodes, edges, metadata }). Real rows, an honest
+     empty, or an honest error — never a fixture. `rows` is a fresh [] while loading
+     and on error, so all derived values below are null-safe. */
   const { rows: graphs, loading, error, empty } = useLiveRows<LineageGraph>(
     '/api/decision-lineage',
   );

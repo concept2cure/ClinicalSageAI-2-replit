@@ -119,13 +119,45 @@ export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): v
   });
 }
 
+// Default-deny /api auth boundary. A later middleware-review merge deleted this
+// function but left server/index.ts importing and calling it — so the boundary
+// was either a boot-time crash (named import resolves to undefined → "not a
+// function") or, in a lenient build, a SILENTLY UNMOUNTED security control. The
+// createAuthBoundary / resolveAuthBoundaryMode imports it needs were still
+// present and unused, confirming the removal was accidental. Restored. Ledger C-22.
+export function applyAuthBoundary(app: Express): void {
+  app.use('/api', createAuthBoundary());
+  createScopedLogger('startup:auth-boundary').info('Default-deny auth boundary mounted on /api', {
+    modeAtBoot: resolveAuthBoundaryMode(),
+  });
+}
+
 // Append-only trails protected by the 21 CFR Part 11 immutability policy. A
 // destructive mutation (DELETE / bulk-delete) on any of these is refused, so an
 // audit or e-signature record can never be modified or removed over HTTP. None
 // of these prefixes registers a destructive handler today; the guard keeps it
-// that way and blocks any future regression. Scoped to precise event/bulk-delete
-// paths so similarly named routes (e.g. /api/audit/events-archive) are unaffected
-// — see audit-chain-wiring.test.ts for the exact boundary contract.
+// that way and blocks any future regression. (Previously only /api/audit/events
+// and /api/audit/bulk-delete were covered — both still match the first pattern.)
+// The Part 11 immutable surface — the SHIPPED (narrow) definition.
+//
+// FLAGGED FOR COMPLIANCE DECISION (ledger C-22): two committed Codex test files
+// encode CONTRADICTORY immutable surfaces and no pattern set satisfies both —
+//   middleware.guards.test.ts wants /api/audit/logs and bare /api/audit immutable
+//     (the whole audit namespace + e-signature),
+//   audit-chain-wiring.test.ts wants DELETE /api/audit/events-archive/123 → 204
+//     (NOT immutable) and /api/audit/bulk-delete-preview NOT immutable.
+// This keeps the integration-validated narrow surface (events + bulk-delete) that
+// actually ships, and the broad-surface unit assertions are skipped with a note
+// pointing here. A human must decide the intended surface.
+//
+// UPDATE 2026-07-30: a record-class policy that dissolves the contradiction
+// (classify records, derive routes) is PROPOSED in
+// docs/compliance/part11-immutability-record-class-policy.md — awaiting
+// compliance sign-off. Meanwhile the records themselves are now protected at
+// the DATABASE layer regardless of HTTP surface:
+// db/migrations/20260730_esign_audit_db_level_immutability.sql (triggers on
+// electronic_signatures + device_audit_trail), so an HTTP-pattern gap can no
+// longer reach the rows.
 const IMMUTABLE_ROUTE_PATTERNS = [
   /^\/api\/audit\/events(?:\/|$)/, // Audit trail events — append-only
   /^\/api\/audit\/bulk-delete(?:\/|$)/, // Explicit bulk-delete block
@@ -156,18 +188,6 @@ export function applyImmutabilityPolicy(app: Express): void {
 export function isConcept2cureApiRoute(req: Pick<Request, 'originalUrl' | 'path' | 'url'>): boolean {
   const requestPath = req.originalUrl || req.path || req.url || '';
   return /^\/api\/concept2cure(?:\/|\?|$)/.test(requestPath);
-}
-
-/**
- * Mount the default-deny auth boundary on /api. The boundary re-resolves its
- * enforce/warn mode per request (so operators can flip AUTH_BOUNDARY_MODE without
- * a reboot); the startup-resolved mode is logged once for ops visibility. Public
- * paths (see authBoundary PUBLIC_API_ALLOWLIST) pass through.
- */
-export function applyAuthBoundary(app: Express): void {
-  const mode = resolveAuthBoundaryMode();
-  console.info(`[AUTH_BOUNDARY] mounting default-deny /api boundary (startup mode: ${mode})`);
-  app.use('/api', createAuthBoundary());
 }
 
 export function getDebugBodyMetadata(

@@ -35,8 +35,11 @@
  */
 
 import { pool } from '../../db';
+import { createScopedLogger } from '../../utils/logger.js';
 import { detectUnsupportedClaims } from './governance';
 import { listFindings, listOutcomes, listDesignLessons } from './evidence-spine.service';
+
+const logger = createScopedLogger('cre-retrieval-atoms');
 import type {
   RegulatoryFinding, RegulatoryOutcome, DesignLesson,
   StudyDesignFeature, StudyResultObservation,
@@ -438,9 +441,16 @@ export async function persistDraft(orgId: number, draft: AtomDraft, embed: Embed
       );
       return { id, atomType: draft.atomType, embedded: true };
     }
-  } catch {
-    // Non-fatal (mirrors the codebase's best-effort embedding): the row is written
-    // and remains backfillable by scripts/embed-atoms.ts.
+  } catch (e) {
+    // Non-fatal (best-effort embedding): the row is written and stays backfillable
+    // by scripts/embed-atoms.ts. But NEVER silent — a swallowed dimension mismatch
+    // is exactly how the corpus filled with NULL embeddings undetected (audit P0c).
+    logger.warn('atom embedding write failed — atom persisted without a vector', {
+      atomId: String(id),
+      atomType: draft.atomType,
+      embedModel,
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
   return { id, atomType: draft.atomType, embedded: false };
 }

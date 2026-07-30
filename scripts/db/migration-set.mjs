@@ -222,6 +222,137 @@ export const C2C_MIGRATION_FILES = [
   // inventing a regulatory class for a past record would be worse than leaving
   // it unbound.
   'migrations/20260728_authoring_document_governed_binding.sql',
+  // Reconcile lumen_data_atoms embeddings onto 1536 dimensions (audit P0c). The
+  // superseded db/migrations/20260125_add_atom_embeddings.sql declared the column
+  // and the search_atoms_* functions at vector(3072) and was never in this set, so
+  // on real databases the column/functions are absent and the 1536 write + hybrid
+  // search silently failed. Self-guarding: creates-or-reconciles, and only needs
+  // lumen_data_atoms (present via the drizzle baseline the preflight verifies).
+  'db/migrations/20260730_fix_atom_embedding_dimension.sql',
+
+  // ── The 21 CFR Part 11 e-signature path (ledger C-17/C-19/C-20) ────────────
+  //
+  // These reconcile the drizzle push surface with the incremental-deploy lineage
+  // for the entire signing path. They were authored into db/migrations and the
+  // manifest, but the manifest APPLIES NOTHING — only this set (and drizzle-kit
+  // push at one-time fresh install) is durable — so on an existing customer DB
+  // that deploys incrementally they never landed. Adding them here is what makes
+  // the release-signature gate actually work on such an environment. ORDER
+  // MATTERS: the orchestrator store must exist before the e-sig port widens its
+  // status CHECK; the users/auth columns are independent. All additive and
+  // guarded (CREATE/ALTER ... IF NOT EXISTS), so idempotent where push already
+  // provisioned them.
+  'db/migrations/20260725_submission_orchestrator_store_port.sql',
+  'db/migrations/20260725_esig_gate_columns_port.sql',
+  'db/migrations/20260725_users_signing_lockout_columns.sql',
+
+  // ── Golden-journey-proven, deploy-dead migrations (ledger C-1/C-8/C-10/C-16) ─
+  //
+  // Each file below creates tables that the product's own golden-journey tests
+  // exercise end-to-end, yet NONE was on a durable apply path: none carries the
+  // `_gcc_` infix (CI psql loop skips them), all live in db/migrations (the
+  // install-fresh root overlay never sees them), none is in the drizzle journaled
+  // baseline, and — decisively — NOT ONE of their primary tables is defined in
+  // shared/schema.ts, so drizzle-kit push does not create them on a fresh install
+  // either. They existed on NO real database, fresh or incremental. The only
+  // record that "declared" them was db/migrations/migrations_manifest.json, which
+  // applies nothing. This is the same code-derived-only gap the C-11 authoring
+  // loop tables had; the fix is the same — put them on this list, the one durable
+  // path a real deploy runs.
+  //
+  // ORDER MATTERS:
+  //   ind_section_tracking creates project_sections (+ the section-tracking
+  //     tables); the content_columns ALTER below widens it, so it must land first.
+  //   assumption/decision/contradiction is the operating-system core — self-
+  //     contained, only FKs itself + organizations/projects.
+  //   governance_boundary FKs concept2cure_artifacts (a base table push
+  //     provisions and deploy-migrate asserts is present before this loop).
+  //   resolution_orchestration creates the resolution_* / supersession tables and
+  //     their enum types (each guarded by DO $$ … EXCEPTION WHEN duplicate_object,
+  //     so re-runnable).
+  //   bundle_execution_receipts (ADR-0009) carries bundle_id as a plain UUID —
+  //     no FK — but is conceptually downstream of the bundles above; listed after.
+  //   project_sections_content_columns ALTERs project_sections and self-guards on
+  //     ALTER TABLE IF EXISTS, so it no-ops if ind_section_tracking is absent.
+  //
+  // All six are idempotent (CREATE TABLE/INDEX IF NOT EXISTS, ALTER … IF EXISTS /
+  // ADD COLUMN IF NOT EXISTS, DO-block-guarded types), open no transaction of
+  // their own, and contain no DROP/TRUNCATE — safe under the repeated-run
+  // contract. A new CI lineage-reachability guard asserts every golden-journey-
+  // declared migration is present on a durable applier, so this class of gap
+  // fails the build instead of shipping silently.
+  // Reconciliation MUST precede the ind-section-tracking entry below: that
+  // file's CREATE TABLE IF NOT EXISTS no-ops against the baseline
+  // project_milestones shape and its CREATE INDEX ON (target_date) then
+  // halts the whole run (blank-DB provisioning audit 2026-07-30). This lands
+  // the additive union of both rival shapes first — which is also what the
+  // one live consumer (project-sections.ts) actually needs, since its INSERT
+  // straddles the two.
+  'db/migrations/20260730_project_milestones_reconciliation.sql',
+  'db/migrations/20260220_ind_section_tracking.sql',
+  'db/migrations/20260323_assumption_decision_contradiction.sql',
+  'db/migrations/20260725_governance_boundary_tables.sql',
+  'db/migrations/20260725_resolution_orchestration_tables.sql',
+  'db/migrations/20260725_bundle_execution_receipts.sql',
+  'db/migrations/20260725_project_sections_content_columns.sql',
+
+  // eCTD project-level compilation unblock (ledger C-16). shared/schema.ts was
+  // corrected to make ectd_compilations.module_id and .compiled_by nullable — a
+  // PROJECT-level compilation spans every module and has no interactive user, so
+  // the NOT NULLs made POST /api/ectd-compile/:projectId/compile impossible. But
+  // a schema.ts edit only reaches FRESH installs (via drizzle-kit push); every
+  // EXISTING customer database still carries the original NOT NULLs and rejects
+  // the insert. This ALTER is the existing-database half of that fix and was
+  // itself deploy-dead (db/migrations, no `_gcc_`, not in the journal). Both
+  // statements are ALTER … IF EXISTS … DROP NOT NULL — a no-op once dropped, so
+  // idempotent and safe where push already provisioned the nullable shape.
+  'db/migrations/20260725_ectd_compilations_project_level.sql',
+  // ── Part 11 DB-level immutability (added 2026-07-30, auth/e-sig audit) ────
+  // electronic_signatures: DELETE always refused; UPDATE refused except the
+  // write-once supersession transition (superseded_by NULL → id).
+  // device_audit_trail: strictly append-only (no UPDATE, no DELETE).
+  // MUST follow the e-sig gate port above — the trigger reads superseded_by,
+  // which that port adds. Idempotent (CREATE OR REPLACE FUNCTION + conditional
+  // CREATE TRIGGER, to_regclass guarded). Proven by
+  // tests/schema-contract/esig-audit-immutability.contract.test.ts; policy in
+  // docs/compliance/part11-immutability-record-class-policy.md.
+  'db/migrations/20260730_esign_audit_db_level_immutability.sql',
+  // Orchestrator run-ledger hardening (same audit's P1 follow-ups): run rows
+  // gain write-once workflow_version + dependency_graph_digest provenance
+  // columns (the service now SELECTs and INSERTs them — schema-shape errors
+  // are deliberately fatal there, so this entry must ship with that code);
+  // the step-events FK drops ON DELETE CASCADE for RESTRICT (deleting a run
+  // can no longer erase its history); and a trigger makes step events
+  // append-only at the database. MUST follow the orchestrator store port.
+  // Idempotent (ADD COLUMN IF NOT EXISTS; FK swap only rewrites a CASCADE;
+  // conditional trigger). Proven by
+  // tests/schema-contract/orchestrator-ledger-hardening.contract.test.ts.
+  'db/migrations/20260730_orchestrator_run_ledger_hardening.sql',
+  // Release-gate OQ-3 backstop: UNIQUE partial index on the active release
+  // signature per (org, payload-digest), scoped to signature_type =
+  // 'submission-release' so document multi-signing is unaffected. MUST follow
+  // the e-sig gate port (adds bound_payload_digest/superseded_by) and the
+  // immutability migration (its dedup pre-step uses the permitted superseded_by
+  // transition). Idempotent (guarded dedup + CREATE UNIQUE INDEX IF NOT EXISTS).
+  'db/migrations/20260730_release_signature_uniqueness.sql',
+  // ── Blank-DB provisioning audit (added 2026-07-30) ────────────────────────
+  // Three creators the fresh-install overlay needed and existing databases
+  // may equally lack (merged ≠ applied, again):
+  //   ai_trace_chain — the ONLY creator of ai_threads + the provenance chain
+  //     (8 live server files query them); was in db/migrations on no durable
+  //     path, so root file 0011 could never ALTER ai_threads on fresh DBs.
+  //   cmc_projects reconstruction — code-derived (C-11 pattern) creator for a
+  //     table with NO DDL anywhere, yet INSERTed by the CMC blueprint route
+  //     and FK-referenced by migrations/0006_regulatory_atoms.sql.
+  //   fk_delete_policies port — guarded port of root 0008, whose first pair
+  //     targets retired user_sessions and aborted the file's 16 live FK
+  //     delete-policies on every fresh install.
+  // All idempotent (IF NOT EXISTS / DROP CONSTRAINT IF EXISTS + re-ADD /
+  // to_regclass guards).
+  'db/migrations/20260224_ai_trace_chain.sql',
+  'db/migrations/20260730_cmc_projects_reconstruction.sql',
+  'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
+  'db/migrations/20260730_fk_delete_policies_port.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

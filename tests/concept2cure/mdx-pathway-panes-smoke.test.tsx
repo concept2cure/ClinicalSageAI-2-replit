@@ -15,7 +15,7 @@
  * CORRESP_DETAIL); fetch is mocked to 404 only as a safety net.
  */
 
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { describe, expect, it, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { render, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
@@ -56,10 +56,6 @@ let origWarn: typeof console.warn;
 
 beforeEach(() => {
   cleanup();
-  // Production default: sample mode OFF (real workspaces begin empty). Tests
-  // that need fixtures turn it on explicitly, and this reset stops that opt-in
-  // from leaking into the live-data tests below.
-  setSampleMode(false);
   askAna.mockClear();
   openEditor.mockClear();
   onClose.mockClear();
@@ -131,19 +127,24 @@ describe('MDX pathway panes smoke', () => {
   });
 
   it('FilesTreePane preview opens a body section in the drawer', () => {
-    // The store starts empty by design (permission-state remediation — real
-    // customer workspaces do not auto-seed; see dossierStore's "no module-load
-    // seed" note). Turn on sample mode — the real, user-facing opt-in — so
-    // useDossierHydration reaches status 'sample' and mounts the Files tree.
-    // (Seeding the store directly is not enough: the hydration hook clears the
-    // pathway on mount whenever sample mode is off.)
+    // Data honesty redesign: the Files tab renders the tree ONLY on live
+    // backend data or explicit sample mode — with the fetch mocked to 404 and
+    // sample off it correctly shows "unavailable" and mounts nothing. This
+    // smoke test exercises the pane WITH content, so it crosses the demo
+    // boundary the same way a user does: the explicit sample-mode signal plus
+    // the store's opt-in fixtures.
     setSampleMode(true);
-    const { getAllByRole, container } = renderWithClient(
-      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    fireEvent.click(getAllByRole('tab')[4]); // Files
-    expect(container.querySelector('.ftp-pane')).toBeTruthy();
-    assertNoReactErrors();
+    DossierStore.enableSampleFixtures();
+    try {
+      const { getAllByRole, container } = renderWithClient(
+        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+      );
+      fireEvent.click(getAllByRole('tab')[4]); // Files
+      expect(container.querySelector('.ftp-pane')).toBeTruthy();
+      assertNoReactErrors();
+    } finally {
+      setSampleMode(false);
+    }
   });
 
   it('AnaDrafter renders a drafted response (rta-3)', () => {
@@ -192,10 +193,11 @@ describe('MDX pathway panes smoke', () => {
 
 // Acceptance #4: edits round-trip through the in-memory store into the audit trail.
 describe('dossierStore round-trip', () => {
-  // The store no longer auto-seeds at module load (permission-state remediation
-  // — real workspaces begin empty). These round-trip assertions exercise the
-  // sample fixtures, so opt into them explicitly before each case.
-  beforeEach(() => {
+  // Seeding is opt-in since the no-mock-data-in-prod remediation: the store
+  // starts EMPTY and sample content exists only behind the explicit demo
+  // boundary. These round-trip tests exercise store mechanics over that
+  // sample content, so they enable it deliberately.
+  beforeAll(() => {
     DossierStore.enableSampleFixtures();
   });
 

@@ -100,6 +100,18 @@ export async function registerDocumentRoutes({
     } catch (error) {
       console.error('❌ Failed to mount eCTD Leaf Preflight route:', error);
     }
+
+    // eCTD v4.0 (HL7 RPS) + controlled-vocabulary + qualification read/validate
+    // API. Mounted at /api/ectd so paths resolve to /api/ectd/controlled-vocab,
+    // /api/ectd/v4/validate, /api/ectd/v4/forward-compat, and
+    // /api/ectd/qualification/spec-versions. Auth-gated; per-handler tenant gate.
+    try {
+      const ectdV4Module = await import('../routes/ectd-v4');
+      app.use('/api/ectd', authenticateToken, ectdV4Module.createEctdV4Router());
+      console.log('✅ eCTD v4.0 + controlled-vocabulary API mounted (auth-gated): /api/ectd/v4/*, /api/ectd/controlled-vocab');
+    } catch (error) {
+      console.error('❌ Failed to mount eCTD v4.0 + controlled-vocabulary routes:', error);
+    }
   }
 
   // ── Biotech Document Artifacts (eCTD, PV, Clinical Ops document generation) ──

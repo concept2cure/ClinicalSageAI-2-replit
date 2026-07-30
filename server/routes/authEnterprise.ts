@@ -476,6 +476,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         email: decoded.email,
         organizationId: decoded.organizationId,
         role: mfaActualRole,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -777,7 +778,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // Issue new JWT scoped to the selected organization with actual role
     const jwtEmail = Array.isArray(email) ? email[0] : email;
     const token = jwt.sign(
-      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole },
+      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole, type: 'access' },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
@@ -837,6 +838,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
         email: decoded.email,
         organizationId: decoded.organizationId,
         role: refreshRole,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: '24h' }

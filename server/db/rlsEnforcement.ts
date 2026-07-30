@@ -68,9 +68,6 @@ export function isExplicitEnforcementDecision(env: NodeJS.ProcessEnv = process.e
  *
  * Production boot matrix (non-production is always a no-op):
  *   - RLS_ENFORCE=on                    → boots, RLS filters rows.
- *   - a non-canonical on-alias          → refuses to boot. enforce/true/1 count
- *     as `on` for dev/test convenience, but production demands the exact token
- *     so the flip is unambiguous and greppable across deploy tooling.
  *   - any other value, including unset  → refuses to boot.
  *
  * @returns the resolved enforcement mode.
@@ -82,18 +79,19 @@ export function assertRlsEnforcementForProduction(
   const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
   if (!isProduction) return mode;
 
-  // Production accepts ONLY the exact canonical token `on`. readEnforcementMode
-  // resolves enforce/true/1 to `on` for dev/test ergonomics, but boarding a
-  // real tenant on RLS spelled a way the deploy tooling doesn't canonically
-  // emit is a fail-open trap — refuse it and name the one accepted spelling.
   const raw = (env.RLS_ENFORCE ?? '').trim();
   if (raw.toLowerCase() === 'on') return 'on';
 
   if (mode === 'on') {
+    // A truthy alias (enforce/true/1) resolves to `on` for developer
+    // convenience OUTSIDE production, but the production kill-switch demands
+    // the canonical literal so an audit of the deployed environment is
+    // unambiguous — `grep RLS_ENFORCE=on` must be the whole check. (The
+    // authorities-consolidation refactor briefly accepted aliases here,
+    // silently weakening the boot contract this module's tests pin.)
     throw new Error(
-      `[rls-enforcement] FAIL-CLOSED: REFUSING TO BOOT because RLS_ENFORCE is set to "${raw}" ` +
-        'in production — a non-canonical on-alias. Set RLS_ENFORCE=on (the exact token); ' +
-        'off and shadow modes are restricted to non-production environments.'
+      `[rls-enforcement] REFUSING TO BOOT: RLS_ENFORCE is set to "${raw}" in production. ` +
+        'Aliases are not accepted for the production kill-switch. Set RLS_ENFORCE=on (canonical form).'
     );
   }
 

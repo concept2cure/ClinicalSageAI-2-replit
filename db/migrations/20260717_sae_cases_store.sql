@@ -1,3 +1,12 @@
+-- DEPRECATED (2026-07): the v2 SafetyNarrative surface no longer reads this blob.
+-- GET /api/safety-narratives/cases is now assembled ENTIRELY from the real,
+-- org-scoped pharmacovigilance store (adverse_events, migrations/
+-- 20260603_pv_operational.sql — the table pharmacovigilanceService writes) with the
+-- 312.32(c)/E2A expedited-reporting clock computed live; see server/services/pv/
+-- sae-cases-view-assembler.ts and docs/architecture/C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md.
+-- This table is retained (non-destructive) but is no longer written by the demo seed
+-- nor read by any route. A later migration may DROP it once no environment references it.
+--
 -- Safety-narrative SAE case store — the ICH E3 §16 individual-case worklist
 -- (expedited-reporting clock + subject/event facts) backing the v2
 -- SafetyNarrative surface's GET read. The narrative composer stays a pure,

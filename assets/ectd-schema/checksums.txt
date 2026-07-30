@@ -1,0 +1,19 @@
+# eCTD XML-schema (XSD) checksum manifest (SHA-256)
+#
+# Format (one entry per line, two-space separator, matches `sha256sum` output):
+#   <64-hex-char-sha256>  <filename>
+#
+# Verified by server/services/ectd/checksum-manifest.ts: a vendored schema whose
+# bytes do not match its recorded hash is refused. Comment (#) and blank lines
+# are ignored.
+#
+# Updating procedure (see README.md):
+#   1. Drop the XSD files into assets/ectd-schema/ (or $ECTD_SCHEMA_DIR).
+#   2. Run:  cd assets/ectd-schema && sha256sum *.xsd
+#   3. Replace each '<sha256>' placeholder below with the real digest.
+#   4. Commit this file (the .xsd files themselves are NOT committed).
+#
+# --- Manifest entries below this line (placeholders until XSDs are vendored) ---
+
+# <sha256>  rps-message.xsd
+# <sha256>  genericode.xsd
