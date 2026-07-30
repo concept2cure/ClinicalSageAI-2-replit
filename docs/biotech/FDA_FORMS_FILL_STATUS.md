@@ -73,7 +73,7 @@ faithful **reconstruction** is the honest ceiling.
 | Form | Builder | Official fill mechanism | Status |
 |---|---|---|---|
 | 1572 | ✅ `buildForm1572` (aligned to official form) | AcroForm fill — reviewed field map + onboarding wired | `IMPLEMENTED_UNVERIFIED` — unit-tested against real `db_*` names (`ind-form-1572-official.test.ts`); needs decrypted asset installed + granular address split |
-| 356h | ✅ `buildForm356h` | AcroForm fill | `PARTIAL` — same as 1572 |
+| 356h | ✅ `buildForm356h` (aligned to official form) | AcroForm fill — reviewed map + application-type checkboxes | `IMPLEMENTED_UNVERIFIED` — unit-tested against real `db_*` names incl. the NDA/ANDA/BLA type checkboxes (`ind-form-356h-official.test.ts`); needs decrypted asset installed |
 | 3454 | ✅ `buildForm3454` | static-XFA overlay | `STUB` — overlay engine + coordinate map not built |
 | 3455 | ✅ `buildForm3455` | static-XFA overlay | `STUB` |
 | 1571 | ✅ `buildForm1571` | reconstructed layout | `STUB` — deterministic labeled draft renders today; official layout not built |
@@ -104,15 +104,18 @@ Ordered; each is a bounded, tested PR feeding the **one governed document spine*
 (authoring → approval → dossier → package → audit; 21 CFR Part 312), not a
 throwaway download.
 
-1. **Decrypt-at-onboarding + AcroForm field maps (1572 ✅, 356h next).**
+1. **Decrypt-at-onboarding + AcroForm field maps (1572 ✅, 356h ✅).**
    `scripts/ind-forms/onboard-fda-form.ts` decrypts the AES asset (pikepdf) and
    emits `<formId>.pdf` + a governance-gated manifest (`sha256`, fda.gov
    `sourceUrl`, `reviewedBy`, `reviewedAt`, `version`, `fieldMap` from the
-   reviewed `official-field-maps.ts`). **1572 done** (builder aligned to the
-   official form; official fill unit-tested). **Remaining:** author the 356h map
-   + onboard it; enrich the builder/assembler to emit **granular** address
-   fields (site/lab/IRB name + street/city/state/zip) so composite strings stop
-   collapsing into one AcroForm field (1572 v1 maps the composite into `*_name`).
+   reviewed `official-field-maps.ts`). **1572 and 356h done** (builders aligned to
+   the official forms; official fill unit-tested — 356h maps application type onto
+   the real NDA/ANDA/BLA checkboxes via derived booleans). **Remaining:** onboard
+   the decrypted assets in the deploy env; enrich the builder/assembler to emit
+   **granular** address fields (site/lab/IRB name + street/city/state/zip) so
+   composite strings stop collapsing into one AcroForm field — the real 1572/356h
+   have db_*_address1/city/state/zip; the master data currently holds a single
+   address string, so v1 maps name → `*_name` and the composite → address line 1.
 2. **Static-XFA overlay engine (3454, 3455).** Decrypt → draw values at a
    reviewed per-form coordinate map on the official page → flatten. Deterministic,
    viewer-independent.
@@ -191,5 +194,6 @@ unique). Verification refuted the ones already fixed mid-run.
 **All 8 unique audit-confirmed defects are now fixed** (the 9th verdict was a
 duplicate of the critical 3454 finding). Remaining items are enhancements, not
 defects: per-investigator 1572 artifact persistence, IND-submission association,
-356h official fill + granular address split, and the registry category extension
-(biotech/pharma/center/program) from the original reconciliation.
+granular address split (site/lab/IRB city/state/zip), the static-XFA overlay for
+3454/3455, and the registry category extension (biotech/pharma/center/program)
+from the original reconciliation. (1572 and 356h official AcroForm fill: done.)

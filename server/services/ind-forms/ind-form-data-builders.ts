@@ -505,12 +505,21 @@ export function buildForm356h(meta: IndProjectMetadata): BuiltForm {
     { id: 'applicant_name', value: sponsorName, required: true },
     { id: 'applicant_address', value: s(meta.sponsor?.address), required: true },
     { id: 'application_type', value: applicationType, required: true, allowedValues: ['NDA', 'ANDA', 'BLA', 'Supplement'] },
+    // Derived selectors for the official form's application-type checkboxes
+    // (db_appl_type_1/2/3, verified export values NDA/ANDA/BLA). application_type
+    // above is the required datum; these mirror it onto the checkboxes so the
+    // official fill checks the right box. Non-required (Supplement selects none).
+    { id: 'appl_type_nda', value: applicationType === 'NDA', required: false },
+    { id: 'appl_type_anda', value: applicationType === 'ANDA', required: false },
+    { id: 'appl_type_bla', value: applicationType === 'BLA', required: false },
     { id: 'application_number', value: s(meta.applicationNumber), required: applicationType === 'Supplement' },
     { id: 'proprietary_established_name', value: s(meta.drugName), required: true },
     { id: 'dosage_form', value: s(meta.dosageForm), required: true },
     { id: 'route_of_administration', value: s(meta.routeOfAdministration), required: true },
     { id: 'indication', value: s(meta.indication), required: true },
-    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },
+    // The 356h signatory is a signature (btn_sign), not an inline text field, so
+    // the authorized-rep NAME is not an inline-required field on the official form.
+    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: false },
     { id: 'authorized_rep_title', value: s(meta.sponsor?.authorizedRepTitle), required: false },
   ]);
 }
@@ -519,6 +528,9 @@ export function labels356h(): Record<string, string> {
   return {
     applicant_name: 'Applicant Name', applicant_address: 'Applicant Address',
     application_type: 'Application Type', application_number: 'Application Number',
+    appl_type_nda: 'Type: New Drug Application (NDA)',
+    appl_type_anda: 'Type: Abbreviated New Drug Application (ANDA)',
+    appl_type_bla: 'Type: Biologics License Application (BLA)',
     proprietary_established_name: 'Proprietary / Established Name', dosage_form: 'Dosage Form',
     route_of_administration: 'Route of Administration', indication: 'Indication(s)',
     authorized_rep_name: 'Authorized Representative', authorized_rep_title: 'Representative Title',
