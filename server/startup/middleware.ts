@@ -123,8 +123,9 @@ export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): v
 // destructive mutation (DELETE / bulk-delete) on any of these is refused, so an
 // audit or e-signature record can never be modified or removed over HTTP. None
 // of these prefixes registers a destructive handler today; the guard keeps it
-// that way and blocks any future regression. (Previously only /api/audit/events
-// and /api/audit/bulk-delete were covered — both still match the first pattern.)
+// that way and blocks any future regression. Scoped to precise event/bulk-delete
+// paths so similarly named routes (e.g. /api/audit/events-archive) are unaffected
+// — see audit-chain-wiring.test.ts for the exact boundary contract.
 const IMMUTABLE_ROUTE_PATTERNS = [
   /^\/api\/audit\/events(?:\/|$)/, // Audit trail events — append-only
   /^\/api\/audit\/bulk-delete(?:\/|$)/, // Explicit bulk-delete block
@@ -155,6 +156,18 @@ export function applyImmutabilityPolicy(app: Express): void {
 export function isConcept2cureApiRoute(req: Pick<Request, 'originalUrl' | 'path' | 'url'>): boolean {
   const requestPath = req.originalUrl || req.path || req.url || '';
   return /^\/api\/concept2cure(?:\/|\?|$)/.test(requestPath);
+}
+
+/**
+ * Mount the default-deny auth boundary on /api. The boundary re-resolves its
+ * enforce/warn mode per request (so operators can flip AUTH_BOUNDARY_MODE without
+ * a reboot); the startup-resolved mode is logged once for ops visibility. Public
+ * paths (see authBoundary PUBLIC_API_ALLOWLIST) pass through.
+ */
+export function applyAuthBoundary(app: Express): void {
+  const mode = resolveAuthBoundaryMode();
+  console.info(`[AUTH_BOUNDARY] mounting default-deny /api boundary (startup mode: ${mode})`);
+  app.use('/api', createAuthBoundary());
 }
 
 export function getDebugBodyMetadata(

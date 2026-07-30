@@ -7,7 +7,7 @@
  * structure, a real task plan, and the required agency forms — and which are
  * still catalog metadata resolving to a generic CTD outline?
  *
- * It is pure and synchronous (it reads the static blueprint/​form catalogs, it
+ * It is pure and synchronous (it reads the static blueprint/form catalogs, it
  * does not instantiate documents), so it can back both a CI readiness gate and
  * an operator-facing coverage report.
  *
