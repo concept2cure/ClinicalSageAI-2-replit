@@ -798,11 +798,11 @@ export default class FDAFormGenerator {
       <p><strong>If clinical studies were conducted:</strong></p>
       <div class="checkbox-group">
         <input type="checkbox" class="checkbox" ${!data.financialInterests ? 'checked' : ''}>
-        <label>No financial interests to disclose (Form FDA 3455 attached)</label>
+        <label>No financial interests to disclose (Form FDA 3454 attached)</label>
       </div>
       <div class="checkbox-group">
         <input type="checkbox" class="checkbox" ${data.financialInterests ? 'checked' : ''}>
-        <label>Financial interests disclosed (Form FDA 3454 attached)</label>
+        <label>Financial interests disclosed (Form FDA 3455 attached)</label>
       </div>
     </div>
     ` : ''}

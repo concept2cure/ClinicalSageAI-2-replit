@@ -342,12 +342,16 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
     category: 'Clinical', version: 'unverified', lastUpdated: 'unknown',
     fields: [
       { id: 'investigator_name', label: 'Name of Investigator', type: 'text', required: true },
-      { id: 'investigator_qualifications', label: 'Education, Training, and Experience', type: 'textarea', required: true },
+      // Box 2 qualifications are satisfied by an attachment (CV), not an inline
+      // required field on the official 1572 — mirrors buildForm1572.
+      { id: 'investigator_qualifications', label: 'Education, Training, and Experience', type: 'textarea', required: false },
       { id: 'facility_name', label: 'Facility Name and Address', type: 'textarea', required: true },
       { id: 'clinical_lab_name_address', label: 'Clinical Laboratory Name and Address', type: 'textarea', required: false },
       { id: 'irb_name_address', label: 'IRB Name and Address', type: 'textarea', required: true },
       { id: 'sub_investigators', label: 'Sub-Investigators', type: 'textarea', required: false },
-      { id: 'study_title', label: 'Study Title', type: 'text', required: true },
+      // The official Statement of Investigator has no study-title field; the
+      // study is identified by protocol number(s). Not inline-required.
+      { id: 'study_title', label: 'Study Title', type: 'text', required: false },
       { id: 'protocol_numbers', label: 'Protocol Number(s)', type: 'text', required: false },
     ], dependencies: ['FDA_1571'], autoGenerationTrigger: { stage: 2 }, implementationStatus: 'full'
   },

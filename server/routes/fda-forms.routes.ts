@@ -444,14 +444,19 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
             updatedAt: new Date()
           };
 
-          // Check if form already exists and update or insert
+          // Check if form already exists and update or insert.
+          // SECURITY: scope by organizationId on both the read and the write,
+          // matching the /generate and /generate-smart siblings. fetchProjectData
+          // already org-gates the project, but the doc-level org predicate is the
+          // required backstop against check-then-act cross-tenant overwrite.
           const existingForm = await db
             .select()
             .from(fda510kDocuments)
             .where(
               and(
                 eq(fda510kDocuments.projectId, parseInt(projectId)),
-                eq(fda510kDocuments.documentType, formId)
+                eq(fda510kDocuments.documentType, formId),
+                eq(fda510kDocuments.organizationId, organizationId)
               )
             )
             .limit(1);
@@ -468,7 +473,12 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
                 updatedBy: documentRecord.updatedBy,
                 updatedAt: new Date()
               })
-              .where(eq(fda510kDocuments.id, existingForm[0].id));
+              .where(
+                and(
+                  eq(fda510kDocuments.id, existingForm[0].id),
+                  eq(fda510kDocuments.organizationId, organizationId)
+                )
+              );
             
             documentRecord.version = (existingForm[0].version ?? 1) + 1;
           } else {
