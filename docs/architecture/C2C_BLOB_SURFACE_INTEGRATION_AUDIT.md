@@ -73,14 +73,16 @@ still merit a data-flow check.)
   data with a real writer; the `biostat_*` writers that exist feed a knowledge-graph /
   signal engine, not this surface's contract. This is effectively Class-B — a write path /
   store must be chosen or built.
-- **CMC changes** → **Class-B (no real store).** Traced: the surface's SUPAC/variations
-  classifier needs specific change attributes (dosage_form_family, scale_change_factor,
-  excipient_level_change, site/process_change_kind, touches_critical_step,
-  has_comparability_data) that exist ONLY in the blob's own migration
-  (`20260718_cmc_changes_store.sql`) — no other table carries them and nothing writes them.
-  The rich `cmc_*` store (cmc_documents/processes/control_strategy/comparability_assessments)
-  is CMC *authoring* data, a different contract. A real post-approval change-control write
-  path must be built, or the surface labeled preview. (Also remove its "sample fallback".)
+- **CMC changes** → **`cmc_change_controls` (built).** Was Class-B — the SUPAC attributes
+  existed only in the blob's own migration with no writer. Built the real store
+  (`20260730_cmc_change_control_store.sql`, org-scoped, soft-delete) with a live write path
+  (`cmc-change-control-service.ts`: createCmcChange, validated; POST /api/cmc-changes,
+  audited). GET /api/cmc-changes now reads the real store, projected on read through the
+  existing deterministic SUPAC classifier (`projectCmcChanges` — unchanged; the verdict is
+  computed, never stored). The Lifecycle card was migrated OFF the `useLiveList` fixture
+  onto fixture-free `useLiveRows` (honest empty/error, no "sample" pill). **[BUILT]** —
+  migration + service + read-convergence + POST write path + client fixture-free migration
+  + reseed into the real store + pglite + route tests landed; blob deprecated.
 - **Decision lineage** → the REAL workflow + audit store via
   **`decisionLineageService.getLineageGraph`** (document_workflows / workflow_approvals /
   workflow_history / document_audit_logs + hash-chained `audit_logs`). NOTE: the
@@ -121,14 +123,14 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
 
 ## Prioritized roadmap
 
-1. **Class A converges — DONE (4 of 6).** ~~IND~~ (→ eCTD submission core),
-   ~~Shadow-review~~ (→ shadow_review_runs/findings), ~~SAE~~ (→ adverse_events), and
-   ~~Decision-lineage~~ (→ decisionLineageService over the real workflow/audit store) are
-   landed: assembler + real-store-only route + reseed + pglite test each. The remaining two
-   genuinely lack a real store/writer for their contract and are **Class-B (build a backend
-   or label preview)**: **Biostat** (no TLF/sample-size/SAP/interim store) and **CMC changes**
-   (SUPAC attributes live only in the blob's own migration; also remove its sample fallback).
-   Net: the audit's original 6-target "Class A" was 4 real convergences + 2 Class-B builds.
+1. **Class A — DONE (5 of 6).** ~~IND~~ (→ eCTD submission core), ~~Shadow-review~~
+   (→ shadow_review_runs/findings), ~~SAE~~ (→ adverse_events), and ~~Decision-lineage~~
+   (→ decisionLineageService over the real workflow/audit store) converged onto existing
+   real stores; ~~CMC changes~~ was a greenfield **build** (new cmc_change_controls store +
+   write path + fixture-free client). The one remaining is **Biostat** — genuine Class-B
+   (no TLF/sample-size/SAP/interim store; needs a store + write path built). Net: the
+   audit's original 6-target "Class A" was 4 convergences + 1 greenfield build done, 1
+   Biostat build remaining.
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so

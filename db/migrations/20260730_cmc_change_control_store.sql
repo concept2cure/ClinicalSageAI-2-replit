@@ -1,23 +1,20 @@
--- DEPRECATED (2026-07): superseded by the REAL cmc_change_controls store
--- (20260730_cmc_change_control_store.sql), which has a live write path
--- (cmc-change-control-service.ts via POST /api/cmc-changes). GET /api/cmc-changes now
--- reads that real, org-scoped store — see docs/architecture/
--- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This blob is retained (non-destructive) but is
--- no longer written by the demo seed nor read by any route. A later migration may DROP it
--- once no environment references it.
+-- Post-approval CMC change-control store (REAL, org-scoped, with a write path).
 --
--- Post-approval CMC change-control store — the proposed manufacturing/quality
--- changes the Lifecycle surface "CMC change control" card tracks. Each row holds
--- the STRUCTURED attributes of a proposed change (dosage-form family, change
--- category, scale/excipient/site/process specifics, critical-step + comparability
--- flags); readiness is COMPUTED on read by feeding those attributes into the
--- deterministic SUPAC/variations classifier (classifyVariation) — FDA reporting
--- category (AR/CBE-0/CBE-30/PAS), EMA variation type, SUPAC tier, citation — so
--- the card never stores a fabricated verdict. Read by GET /api/cmc-changes.
--- Org-scoped, FK-free, schema-only, idempotent — demo rows are seeded by
--- scripts/seed/ga-demo.d/121-cmc-changes.mjs. Follows the FK-free c2c_* convention.
+-- The proposed manufacturing/quality changes the Lifecycle "CMC change control" card
+-- tracks. Each row holds the STRUCTURED attributes of a proposed change (dosage-form
+-- family, change category, scale/excipient/site/process specifics, critical-step +
+-- comparability flags); the filing readiness is COMPUTED on read by feeding those
+-- attributes into the deterministic SUPAC/variations classifier (classifyVariation) —
+-- FDA reporting category (AR/CBE-0/CBE-30/PAS), EMA variation type, SUPAC tier, citation
+-- — so the row never stores a fabricated verdict.
+--
+-- This replaces the seed-only c2c_cmc_changes blob (20260718_cmc_changes_store.sql):
+-- unlike that blob, this table has a real writer — cmc-change-control-service.ts
+-- (createCmcChange, via POST /api/cmc-changes) — so a live tenant populates it by
+-- proposing changes, not only the demo seed. Read by GET /api/cmc-changes. Org-scoped,
+-- soft-delete aware, audited at the route layer. FK-free (repo migration convention).
 
-CREATE TABLE IF NOT EXISTS c2c_cmc_changes (
+CREATE TABLE IF NOT EXISTS cmc_change_controls (
   id                     UUID        NOT NULL DEFAULT gen_random_uuid(),
   organization_id        INTEGER     NOT NULL,
   title                  TEXT        NOT NULL,
@@ -34,9 +31,13 @@ CREATE TABLE IF NOT EXISTS c2c_cmc_changes (
   has_comparability_data BOOLEAN     NOT NULL DEFAULT false,
   status                 TEXT        NOT NULL DEFAULT 'evaluating',  -- evaluating | planned | implemented
   description            TEXT,
+  created_by             INTEGER,
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at             TIMESTAMPTZ,
   PRIMARY KEY (id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_c2c_cmc_changes_org ON c2c_cmc_changes (organization_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cmc_change_controls_org
+  ON cmc_change_controls (organization_id, created_at DESC)
+  WHERE deleted_at IS NULL;
