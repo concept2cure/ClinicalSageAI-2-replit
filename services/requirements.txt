@@ -8,5 +8,5 @@ redis==7.4.0
 
 # API/Dev
 fastapi==0.136.3
-uvicorn==0.51.0
+uvicorn==0.52.0
 requests==2.34.2
