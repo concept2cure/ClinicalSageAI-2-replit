@@ -103,8 +103,10 @@ function toText(value: unknown): string {
 
 /**
  * Coerce a value to a boolean for checkbox handling. Accepts real booleans and
- * common truthy/falsy string spellings ('true'/'false', 'yes'/'no', 'on'/'off',
- * '1'/'0', 'checked'). Anything else falls back to JS truthiness.
+ * common truthy/falsy string spellings. An UNRECOGNIZED value must NOT check an
+ * official-form box: JS truthiness would turn negative-meaning strings like
+ * 'None' / 'N/A' into a checked box, silently asserting something on ambiguous
+ * data. So only explicit affirmatives check; everything else stays unchecked.
  */
 function toBoolean(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
@@ -112,9 +114,10 @@ function toBoolean(value: unknown): boolean {
   if (typeof value === 'string') {
     const v = value.trim().toLowerCase();
     if (['true', 'yes', 'on', '1', 'checked', 'x'].includes(v)) return true;
-    if (['false', 'no', 'off', '0', 'unchecked', ''].includes(v)) return false;
+    if (['false', 'no', 'off', '0', 'unchecked', 'n', 'none', 'n/a', 'na', ''].includes(v)) return false;
   }
-  return Boolean(value);
+  // Unrecognized / non-primitive value: never check an official-form box on it.
+  return false;
 }
 
 // ---------------------------------------------------------------------------
