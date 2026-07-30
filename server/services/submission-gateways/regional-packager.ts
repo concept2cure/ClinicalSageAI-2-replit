@@ -80,6 +80,7 @@ import type {
 import { leafIdSlug, createLeafIdAssigner } from './ectd-packager/leaf-id';
 import { buildMd5Index } from './ectd-packager/md5-index';
 import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
+import { buildIchModuleTree, type RenderedLeaf } from './ectd-packager/ich-headings';
 
 // Re-export the public packager surface (barrel).
 export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
@@ -375,17 +376,15 @@ ${m1Leaves}
 function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
-  const grouped: Record<string, EctdLeaf[]> = { m2: [], m3: [], m4: [], m5: [] };
-  for (const leaf of m2to5) {
-    const mod = `m${leaf.ctdSection.charAt(0)}`;
-    if (grouped[mod]) grouped[mod].push(leaf);
-  }
-  const moduleBlocks = (['m2', 'm3', 'm4', 'm5'] as const).map((m) => {
-    const leaves = grouped[m]
-      .map((l) => leafElement(l, assignId(l), resolve(l)))
-      .join('\n');
-    return `  <${m}>\n${leaves}\n  </${m}>`;
-  }).join('\n');
+  // Render each leaf, then nest it under its authoritative ICH v3.2.2 heading.
+  // Flat <m2>..<m5> is NOT a valid ectd:ectd child — the DTD requires the named
+  // heading tree (m3-quality > m3-2-body-of-data > m3-2-s-drug-substance > leaf).
+  // See ectd-packager/ich-headings.
+  const rendered: RenderedLeaf[] = m2to5.map((l) => ({
+    leaf: l,
+    xml: leafElement(l, assignId(l), resolve(l)),
+  }));
+  const moduleBlocks = buildIchModuleTree(rendered, 2);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
@@ -597,7 +596,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
 
   /* Bundle vendored DTDs into util/dtd/ so the package is DTD self-contained
      (the backbones' DOCTYPEs reference util/dtd/*.dtd). The licensed DTD files
-     are not committed — they come from assets/ectd-dtd/ or $ECTD_DTD_DIR — so
+     are vendored per assets/ectd-dtd/README.md (or come from $ECTD_DTD_DIR), so
      this is a no-op when absent. DTDs are package files, so they are checksummed
      into index-md5.txt alongside the leaves. */
   const vendoredDtds = await listVendoredDtds();

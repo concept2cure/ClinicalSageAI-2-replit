@@ -51,12 +51,16 @@ describe('HI-8 · DTD bundling mechanism + documented drop-point', () => {
     expect(src).toContain('util/dtd/');
   });
 
-  it('ships a documented DTD drop-point with required-file list', () => {
+  it('ships a documented DTD vendoring point with required-file list + policy', () => {
     const readme = fs.readFileSync(
       path.resolve(__dirname, '../assets/ectd-dtd/README.md'),
       'utf8'
     );
     expect(readme).toContain('ich-ectd-3-2.dtd');
-    expect(readme).toContain('not committed');
+    // The vendoring policy: DTDs are committed once acquired, pinned by the
+    // checksum manifest, with the agency license header preserved.
+    expect(readme).toContain('Vendoring policy');
+    expect(readme).toContain('checksums.txt');
+    expect(readme).toContain('license/notice header');
   });
 });

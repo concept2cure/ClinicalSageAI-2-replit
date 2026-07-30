@@ -8,7 +8,16 @@
  * @module server/services/submission-gateways/ectd-packager/leaf-id
  */
 
-import type { EctdLeaf } from './types';
+/**
+ * The minimal shape the assigner reads. Structurally satisfied by EctdLeaf and
+ * by any generator's granule record — callers never need a cast.
+ */
+export interface LeafIdInput {
+  /** CTD section code, e.g. '3.2.S.1'. */
+  ctdSection: string;
+  /** Leaf filename inside the package, e.g. 'drug-substance.pdf'. */
+  fileName: string;
+}
 
 /** A valid XML ID fragment from a filename: drop extension, non-alnum → '-'. */
 export function leafIdSlug(fileName: string): string {
@@ -32,9 +41,9 @@ export function leafIdSlug(fileName: string): string {
  * (rare) remaining collision. One assigner per document, so IDs are unique
  * within — but may repeat across — separate backbones.
  */
-export function createLeafIdAssigner(): (leaf: EctdLeaf) => string {
+export function createLeafIdAssigner(): (leaf: LeafIdInput) => string {
   const used = new Set<string>();
-  return (leaf: EctdLeaf): string => {
+  return (leaf: LeafIdInput): string => {
     const base = `leaf-${leaf.ctdSection.replace(/\./g, '-')}-${leafIdSlug(leaf.fileName)}`;
     let id = base;
     let n = 2;
