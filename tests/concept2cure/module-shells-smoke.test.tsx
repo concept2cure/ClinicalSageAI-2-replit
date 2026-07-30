@@ -3,11 +3,11 @@
  *
  * Smoke tests for every top-level Claude Design module shell — the
  * default-export Route components that ZenApp.tsx lazy-loads. The MDX
- * surfaces are covered by sibling suites; this one guards the OTHER ten
+ * surfaces are covered by sibling suites; this one guards the OTHER nine
  * route shells that have no smoke coverage today:
  *
  *   PDEV · CMC · Risk · Biopharma · Authoring · Labeling · Tasking ·
- *   Submission · Intelligence · ProjectDetail
+ *   Submission · ProjectDetail
  *
  * Each must mount without throwing and produce DOM. ProjectDetail asserts
  * its graceful loading state (it needs a real backend to render data) so
@@ -27,7 +27,6 @@ import AuthoringRoute    from '../../client/src/concept2cure/authoring/Authoring
 import LabelingRoute     from '../../client/src/concept2cure/labeling/LabelingRoute';
 import TaskingRoute      from '../../client/src/concept2cure/tasking/TaskingRoute';
 import SubmissionRoute   from '../../client/src/concept2cure/submission/SubmissionRoute';
-import IntelligenceRoute from '../../client/src/concept2cure/intelligence/IntelligenceRoute';
 import ProjectDetailRoute from '../../client/src/concept2cure/projects/ProjectDetailRoute';
 
 beforeEach(() => {
@@ -60,7 +59,6 @@ describe('Claude Design module shells — mount smoke', () => {
   it('Labeling route mounts and paints',      () => expectAlive(wrap(<LabelingRoute />).container));
   it('Tasking route mounts and paints',       () => expectAlive(wrap(<TaskingRoute />).container));
   it('Submission route mounts and paints',    () => expectAlive(wrap(<SubmissionRoute />).container));
-  it('Intelligence route mounts and paints',  () => expectAlive(wrap(<IntelligenceRoute />).container));
 
   it('ProjectDetail route renders its graceful loading state', () => {
     const { container } = wrap(<ProjectDetailRoute projectId="demo" onBack={() => {}} />);
