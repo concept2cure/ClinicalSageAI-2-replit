@@ -81,6 +81,12 @@ describe('Registry coverage', () => {
       'US_REMS', 'EU_RMP',
       'US_NDA_SUPP', 'US_BLA_SUPP', 'US_CBE', 'US_NDA_ANNUAL',
       'US_FAST_TRACK', 'US_BTD', 'US_RMAT', 'US_ORPHAN', 'EU_ORPHAN',
+      // Master files, variations, pediatric, biosimilar, regional marketing, safety components.
+      'US_DMF', 'EU_ASMF', 'CA_MF', 'JP_MF',
+      'EU_VARIATION_IA', 'EU_VARIATION_IB', 'EU_VARIATION_II', 'JP_PARTIAL_CHANGE', 'CN_SUPPLEMENT', 'CA_SNDS',
+      'EU_PIP', 'US_PSP', 'US_351K', 'US_ACCEL_APPROVAL', 'EU_CMA',
+      'UK_MA', 'CH_MA', 'KR_MA_NEW', 'SG_NDA', 'CN_MAA', 'BR_MA', 'AU_CAT1',
+      'ICH_ICF', 'ICH_ICSR', 'ICH_BENEFIT_RISK',
     ] as const;
 
     it.each(NOW_BUILDABLE)('%s has a real (non-generic) section blueprint', (id) => {

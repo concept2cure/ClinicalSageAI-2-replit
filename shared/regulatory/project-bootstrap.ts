@@ -279,9 +279,127 @@ const ORPHAN_SECTIONS: SectionDefinition[] = [
   { code: '6', title: 'Scientific Literature and References', module: 1, required: true, contentType: 'list' },
 ];
 
+// ─── Master File, Variation, Pediatric, Safety-component Blueprints ───────────
+
+/** Drug/Active Substance Master File (US DMF Type II / EU ASMF) — 3.2.S content. */
+const MASTER_FILE_SECTIONS: SectionDefinition[] = [
+  { code: '1.1', title: 'Cover Letter / Administrative Information', module: 1, required: true, contentType: 'form' },
+  { code: '1.2', title: 'Letter of Authorization (LOA)', module: 1, required: true, contentType: 'narrative' },
+  { code: '3.2.S.1', title: 'General Information (Nomenclature, Structure, Properties)', module: 3, required: true, contentType: 'mixed', guidance: 'ICH M4Q(R1)' },
+  { code: '3.2.S.2', title: 'Manufacture (Process, Controls, Validation)', module: 3, required: true, contentType: 'mixed' },
+  { code: '3.2.S.3', title: 'Characterisation (Structure, Impurities)', module: 3, required: true, contentType: 'mixed' },
+  { code: '3.2.S.4', title: 'Control of the Substance (Specification, Methods)', module: 3, required: true, contentType: 'mixed' },
+  { code: '3.2.S.5', title: 'Reference Standards or Materials', module: 3, required: false, contentType: 'data' },
+  { code: '3.2.S.6', title: 'Container Closure System', module: 3, required: true, contentType: 'narrative' },
+  { code: '3.2.S.7', title: 'Stability', module: 3, required: true, contentType: 'mixed', guidance: 'ICH Q1A(R2)' },
+  { code: '3.2.R', title: 'Regional Information', module: 3, required: false, contentType: 'mixed' },
+];
+
+/** Post-approval variation / supplement / change (EU variation, JP change, supplements). */
+const VARIATION_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
+  { code: '2', title: 'Application / Variation Form', module: 1, required: true, contentType: 'form' },
+  { code: '3', title: 'Description and Classification of the Change', module: 1, required: true, contentType: 'narrative' },
+  { code: '4', title: 'Present and Proposed (Comparison)', module: 1, required: true, contentType: 'table' },
+  { code: '5', title: 'Justification and Supporting Data (Affected Module)', module: 3, required: true, contentType: 'mixed' },
+  { code: '6', title: 'Risk Assessment', module: 1, required: false, contentType: 'narrative' },
+  { code: '7', title: 'Revised Product Information / Labeling', module: 1, required: false, contentType: 'narrative' },
+];
+
+/** Pediatric development plan (EU PIP / US PSP). */
+const PEDIATRIC_PLAN_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Administrative Information and Product Overview', module: 1, required: true, contentType: 'form' },
+  { code: '2', title: 'Development Strategy and Rationale', module: 1, required: true, contentType: 'narrative' },
+  { code: '3', title: 'Nonclinical (Juvenile Animal) Studies', module: 1, required: false, contentType: 'mixed' },
+  { code: '4', title: 'Clinical Studies in the Pediatric Population', module: 1, required: true, contentType: 'mixed' },
+  { code: '5', title: 'Age-Appropriate Formulation', module: 1, required: false, contentType: 'narrative' },
+  { code: '6', title: 'Modeling & Simulation / Extrapolation Plan', module: 1, required: false, contentType: 'mixed' },
+  { code: '7', title: 'Requested Deferrals and Waivers', module: 1, required: true, contentType: 'narrative' },
+  { code: '8', title: 'Proposed Timelines', module: 1, required: true, contentType: 'narrative' },
+];
+
+/** Informed Consent Form (ICH E6 / 21 CFR 50). */
+const ICF_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Study Purpose and Background', module: 5, required: true, contentType: 'narrative', guidance: '21 CFR 50.25' },
+  { code: '2', title: 'Study Procedures and Duration', module: 5, required: true, contentType: 'narrative' },
+  { code: '3', title: 'Reasonably Foreseeable Risks and Discomforts', module: 5, required: true, contentType: 'narrative' },
+  { code: '4', title: 'Expected Benefits', module: 5, required: true, contentType: 'narrative' },
+  { code: '5', title: 'Alternatives to Participation', module: 5, required: true, contentType: 'narrative' },
+  { code: '6', title: 'Confidentiality of Records', module: 5, required: true, contentType: 'narrative' },
+  { code: '7', title: 'Compensation and Treatment for Injury', module: 5, required: true, contentType: 'narrative' },
+  { code: '8', title: 'Voluntary Participation and Right to Withdraw', module: 5, required: true, contentType: 'narrative' },
+  { code: '9', title: 'Contacts for Questions', module: 5, required: true, contentType: 'narrative' },
+  { code: '10', title: 'Signatures (Subject / Legal Representative / Investigator)', module: 5, required: true, contentType: 'form' },
+];
+
+/** Individual Case Safety Report — ICH E2B(R3). */
+const ICSR_SECTIONS: SectionDefinition[] = [
+  { code: 'C.1', title: 'Case Administrative Information (Safety Report ID, Dates)', module: 5, required: true, contentType: 'form', guidance: 'ICH E2B(R3)' },
+  { code: 'D', title: 'Patient Characteristics', module: 5, required: true, contentType: 'form' },
+  { code: 'G', title: 'Suspect / Concomitant Drug Information', module: 5, required: true, contentType: 'form' },
+  { code: 'E', title: 'Reaction / Event (MedDRA Coded)', module: 5, required: true, contentType: 'form' },
+  { code: 'E.i.3', title: 'Seriousness and Outcome', module: 5, required: true, contentType: 'form' },
+  { code: 'H.1', title: 'Case Narrative', module: 5, required: true, contentType: 'narrative' },
+  { code: 'H.5', title: 'Causality (Reporter / Company Assessment)', module: 5, required: true, contentType: 'narrative' },
+  { code: 'C.2', title: 'Primary Source / Reporter Information', module: 5, required: true, contentType: 'form' },
+];
+
+/** Structured benefit-risk assessment (CTD 2.5.6 / FDA BRF / EMA PrOACT-URL). */
+const BENEFIT_RISK_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Therapeutic Context (Condition, Current Treatment Options)', module: 2, required: true, contentType: 'narrative' },
+  { code: '2', title: 'Benefit Assessment (Key Evidence)', module: 2, required: true, contentType: 'mixed' },
+  { code: '3', title: 'Risk Assessment (Key Safety Concerns)', module: 2, required: true, contentType: 'mixed' },
+  { code: '4', title: 'Benefit-Risk Balance', module: 2, required: true, contentType: 'narrative' },
+  { code: '5', title: 'Uncertainties and Assumptions', module: 2, required: false, contentType: 'narrative' },
+  { code: '6', title: 'Conclusions', module: 2, required: true, contentType: 'narrative' },
+];
+
+/** Full CTD with every section required (for marketing/registration applications). */
+const CTD_ALL_REQUIRED: SectionDefinition[] = CTD_SECTIONS.map(sec => ({ ...sec, required: true }));
+
 const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // US Pre-submission
   us_pre_ind_sections: { id: 'us_pre_ind_sections', name: 'Pre-IND Meeting Briefing Package', sections: PRE_IND_SECTIONS },
+
+  // Master files (drug/active substance)
+  us_dmf_sections: { id: 'us_dmf_sections', name: 'Drug Master File (US DMF)', sections: MASTER_FILE_SECTIONS },
+  eu_asmf_sections: { id: 'eu_asmf_sections', name: 'Active Substance Master File (EU ASMF)', sections: MASTER_FILE_SECTIONS },
+  ca_mf_sections: { id: 'ca_mf_sections', name: 'Master File (Canada)', sections: MASTER_FILE_SECTIONS },
+  jp_mf_sections: { id: 'jp_mf_sections', name: 'Master File (Japan)', sections: MASTER_FILE_SECTIONS },
+
+  // Post-approval variations / supplements / changes
+  eu_variation_ia_sections: { id: 'eu_variation_ia_sections', name: 'EU Type IA Variation', sections: VARIATION_SECTIONS },
+  eu_variation_ib_sections: { id: 'eu_variation_ib_sections', name: 'EU Type IB Variation', sections: VARIATION_SECTIONS },
+  eu_variation_ii_sections: { id: 'eu_variation_ii_sections', name: 'EU Type II Variation', sections: VARIATION_SECTIONS },
+  jp_partial_change_sections: { id: 'jp_partial_change_sections', name: 'Japan Partial Change Application', sections: VARIATION_SECTIONS },
+  jp_minor_change_sections: { id: 'jp_minor_change_sections', name: 'Japan Minor Change Notification', sections: VARIATION_SECTIONS },
+  cn_supplement_sections: { id: 'cn_supplement_sections', name: 'China Supplementary Application', sections: VARIATION_SECTIONS },
+  ca_snds_sections: { id: 'ca_snds_sections', name: 'Canada Supplemental NDS', sections: VARIATION_SECTIONS },
+  ca_sands_sections: { id: 'ca_sands_sections', name: 'Canada Supplemental ANDS', sections: VARIATION_SECTIONS },
+
+  // Pediatric plans
+  eu_pip_sections: { id: 'eu_pip_sections', name: 'Paediatric Investigation Plan (EU PIP)', sections: PEDIATRIC_PLAN_SECTIONS },
+  us_psp_sections: { id: 'us_psp_sections', name: 'Pediatric Study Plan (US PSP)', sections: PEDIATRIC_PLAN_SECTIONS },
+
+  // Biosimilar + expedited marketing pathways (full CTD)
+  us_351k_sections: { id: 'us_351k_sections', name: 'Biosimilar Application (351(k))', sections: CTD_ALL_REQUIRED },
+  us_accel_approval_sections: { id: 'us_accel_approval_sections', name: 'Accelerated Approval Application', sections: CTD_ALL_REQUIRED },
+  us_rolling_sections: { id: 'us_rolling_sections', name: 'Rolling Submission / Review', sections: CTD_ALL_REQUIRED },
+  eu_cma_sections: { id: 'eu_cma_sections', name: 'Conditional Marketing Authorisation (EU)', sections: CTD_ALL_REQUIRED },
+
+  // Regional marketing authorizations (full CTD)
+  uk_ma_sections: { id: 'uk_ma_sections', name: 'UK Marketing Authorisation', sections: CTD_ALL_REQUIRED },
+  ch_ma_sections: { id: 'ch_ma_sections', name: 'Swiss Marketing Authorisation', sections: CTD_ALL_REQUIRED },
+  kr_ma_new_sections: { id: 'kr_ma_new_sections', name: 'Korea New Drug Marketing Application', sections: CTD_ALL_REQUIRED },
+  sg_nda_sections: { id: 'sg_nda_sections', name: 'Singapore New Drug Application', sections: CTD_ALL_REQUIRED },
+  cn_maa_sections: { id: 'cn_maa_sections', name: 'China Marketing Authorization Application', sections: CTD_ALL_REQUIRED },
+  br_ma_sections: { id: 'br_ma_sections', name: 'Brazil Marketing Authorization', sections: CTD_ALL_REQUIRED },
+  au_cat1_sections: { id: 'au_cat1_sections', name: 'Australia Category 1 Registration', sections: CTD_ALL_REQUIRED },
+
+  // Safety / clinical components
+  ich_icf_sections: { id: 'ich_icf_sections', name: 'Informed Consent Form (ICH E6 / 21 CFR 50)', sections: ICF_SECTIONS },
+  ich_icsr_sections: { id: 'ich_icsr_sections', name: 'Individual Case Safety Report (ICH E2B)', sections: ICSR_SECTIONS },
+  ich_benefit_risk_sections: { id: 'ich_benefit_risk_sections', name: 'Benefit-Risk Assessment (CTD 2.5.6)', sections: BENEFIT_RISK_SECTIONS },
 
   // Clinical document components (ICH-harmonised)
   ich_csr_sections: { id: 'ich_csr_sections', name: 'Clinical Study Report (ICH E3)', sections: CSR_SECTIONS },
