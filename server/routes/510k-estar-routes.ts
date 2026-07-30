@@ -28,6 +28,7 @@ import {
   assessEstarFilingReadiness,
   type FilingLeaf,
 } from '../services/pathway-engines/estar/estar-filing-readiness';
+import { loadDeviceContentLeaves } from '../services/pathway-engines/estar/estar-content-leaves';
 import {
   getEstarRegistration,
   upsertEstarRegistration,
@@ -738,6 +739,11 @@ const filingReadinessSchema = z.object({
     })
     .optional(),
   leaves: z.array(filingLeafSchema).default([]),
+  // When true, the org's authored device content (cerv2_510k_sections) is loaded
+  // as leaves and assessed — so readiness reflects real content, not a hand-fed
+  // list. `documentId` narrows to one document's sections; omit for org-wide.
+  useProjectContent: z.boolean().optional(),
+  documentId: z.coerce.number().int().positive().optional(),
   qSubType: z
     .enum([
       'pre_submission',
@@ -765,7 +771,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
-  const { catalogKey, variant, leaves, qSubType } = validation.data;
+  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId } = validation.data;
 
   const entry = getCatalogEntry(catalogKey as EstarCatalogKey);
   if (!entry) {
@@ -773,14 +779,27 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
   }
 
   try {
+    // Org is needed to read the persisted registration and/or the org's authored
+    // content; resolve it once when either path requires it.
+    const needsOrg = !validation.data.registration || useProjectContent;
+    const organizationId = needsOrg ? resolveOrgId(req) : null;
+    if (needsOrg && !organizationId) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
+
     // Registration: an explicit what-if payload if supplied, else the org's
     // persisted registration record (the "clients must register" source of truth).
-    let registration = validation.data.registration;
-    if (!registration) {
-      const organizationId = resolveOrgId(req);
-      if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
-      registration = await resolveClientRegistration({ organizationId });
-    }
+    const registration =
+      validation.data.registration ?? (await resolveClientRegistration({ organizationId: organizationId! }));
+
+    // Content: explicit body leaves, plus the org's REAL authored device content
+    // when requested — so readiness reflects what's actually written, not a
+    // hand-fed list. Content-bearing sections only (a gap is never invented).
+    const contentLeaves =
+      useProjectContent && organizationId
+        ? await loadDeviceContentLeaves(organizationId, documentId !== undefined ? { documentId } : {})
+        : [];
+    const effectiveLeaves = [...(leaves as FilingLeaf[]), ...contentLeaves];
 
     // Resolve official-template producibility from the single source of truth. The
     // PreSTAR family shares one template across variants; marketing pathways use
@@ -794,7 +813,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       catalogKey: catalogKey as EstarCatalogKey,
       variant,
       registration,
-      leaves: leaves as FilingLeaf[],
+      leaves: effectiveLeaves,
       qSubType,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
