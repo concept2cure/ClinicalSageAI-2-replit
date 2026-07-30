@@ -5,17 +5,17 @@
 > `scripts/ci/check-proof-tier.mjs` refuses to let shrink. See
 > `docs/architecture/PROOF_HIERARCHY.md` for what each tier means.
 
-**65 proof files** across 5 inventoried categories.
+**66 proof files** across 5 inventoried categories.
 
 | Category | Tier(s) | Count |
 |---|---|--:|
-| `schema-contract` | tier 2 (schema contract) | 20 |
+| `schema-contract` | tier 2 (schema contract) | 21 |
 | `tenant-contract` | tiers 2-4 (contract / tenant isolation) | 11 |
 | `golden-journeys` | tiers 3-7 (DB → export reopen → external qualification) | 5 |
 | `export-contract` | tiers 6-7 (export reopen → external qualification) | 2 |
 | `e2e-browser` | tier 5 (browser workflow) | 27 |
 
-## `schema-contract` — tier 2 (schema contract) (20)
+## `schema-contract` — tier 2 (schema contract) (21)
 
 - `tests/schema-contract/artifacts-relkind.contract.test.ts`
 - `tests/schema-contract/authoring-auth-parity.contract.test.ts`
@@ -34,6 +34,7 @@
 - `tests/schema-contract/governance-boundary-failopen.contract.test.ts`
 - `tests/schema-contract/governance-boundary-gates.contract.test.ts`
 - `tests/schema-contract/governed-document-binding.contract.test.ts`
+- `tests/schema-contract/module-integration-document-exists.contract.test.ts`
 - `tests/schema-contract/operating-system-collision.contract.test.ts`
 - `tests/schema-contract/resolution-receipts.contract.test.ts`
 - `tests/schema-contract/schedule-of-events-tenant-arbiter.contract.test.ts`
