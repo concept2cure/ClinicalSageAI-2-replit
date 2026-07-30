@@ -1,15 +1,21 @@
 /**
- * Document-journey read — the per-document lifecycle worklist.
+ * Document-journey read — one document's lifecycle, ideation → submission.
  *
- * GET /api/doc-journey → the org's §2.5 Clinical Overview journey (BX-204 BLA)
- * as an ordered list of stage rows, shaped to exactly the keys the v2 DocJourney
- * surface renders: the DjStage rail fields ({ id, label, ic, when, who, ver,
- * done, active, sub, kind }) plus the per-stage content `snap` (JSONB rehydrated
- * into the surface's DjSnap shape). Org scoped; 403 without org context; fails
- * closed to an empty list on 42P01 so an unprovisioned store never 500s.
+ * GET /api/doc-journey → the org's current authoring document as an ordered list of
+ * stage rows, shaped to exactly the keys the v2 DocJourney surface renders (the DjStage
+ * rail fields { id, label, ic, when, who, ver, done, active, sub, kind } plus the
+ * per-stage content snapshot `snap`). Assembled ENTIRELY from the real, org-scoped
+ * authoring document loop (authoring_documents + authoring_sections + doc_revisions +
+ * authoring_comments + frozen_documents) — the same tables server/routes/authoring.router.ts
+ * writes. There is no seed blob (c2c_doc_journeys is deprecated) and no fallback: an org
+ * that has authored nothing returns an empty list and the surface renders its own honest
+ * empty state. See doc-journey-view-assembler.
+ *
+ * Org scoped; 403 without org context; fails to an empty list on 42P01 so an
+ * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { assembleOrgDocJourney } from '../services/authoring/doc-journey-view-assembler.js';
 
 const router = Router();
 
@@ -33,27 +39,8 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT id, label, ic, when_label, who, ver, done, active, sub, kind, snap
-         FROM c2c_doc_journeys
-        WHERE organization_id = $1
-        ORDER BY ord`,
-      [orgId],
-    );
-    const data = rows.map((r) => ({
-      id: r.id,
-      label: r.label,
-      ic: r.ic,
-      when: r.when_label,
-      who: r.who,
-      ver: r.ver,
-      done: Boolean(r.done),
-      active: Boolean(r.active),
-      sub: r.sub,
-      kind: r.kind,
-      snap: r.snap ?? null,
-    }));
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgDocJourney(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'authoring_documents' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });
