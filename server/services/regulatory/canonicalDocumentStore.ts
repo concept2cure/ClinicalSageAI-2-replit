@@ -18,6 +18,9 @@ import { randomUUID, createHash } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { canonicalDocuments } from '../../../shared/schema/canonical_documents';
+import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
+import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
+import type { SectionDefinition } from '../../../shared/regulatory/document-taxonomy';
 import {
   canonicalAuditPayload,
   type DocumentAuditEvent,
@@ -45,6 +48,18 @@ export interface CreateCanonicalDocumentInput {
   sources?: ProjectionInput['sources'];
 }
 
+/**
+ * Resolve the authoring outline for a document type from the registry section
+ * blueprint. "Create a document of type US_IND" then carries the CTD sections;
+ * a device 510(k) carries its device sections. Empty array when the type does
+ * not resolve to a registry entry.
+ */
+export function resolveOutlineForType(documentType: string): SectionDefinition[] {
+  const entry = resolveToRegistryEntry(documentType);
+  if (!entry) return [];
+  return getSectionBlueprintForEntry(entry).sections;
+}
+
 /** Insert a new canonical document at the `authoring` stage; returns its UUID. */
 export async function createCanonicalDocument(
   db: CanonicalStoreDb,
@@ -63,11 +78,32 @@ export async function createCanonicalDocument(
     hasContent: input.hasContent ?? false,
     contentHash: input.contentHash ?? '',
     sourceRefs: input.sources ?? {},
+    // Instantiate the type's blueprint outline at creation.
+    outline: resolveOutlineForType(input.documentType),
     audit: [],
     createdAt: now,
     updatedAt: now,
   });
   return canonicalId;
+}
+
+/** Read a canonical document's authoring outline (org-scoped). */
+export async function readOutline(
+  db: CanonicalStoreDb,
+  canonicalId: string,
+  organizationId: number,
+): Promise<SectionDefinition[]> {
+  const [row] = await db
+    .select({ outline: canonicalDocuments.outline })
+    .from(canonicalDocuments)
+    .where(
+      and(
+        eq(canonicalDocuments.canonicalId, canonicalId),
+        eq(canonicalDocuments.organizationId, organizationId),
+      ),
+    )
+    .limit(1);
+  return (row?.outline ?? []) as SectionDefinition[];
 }
 
 /** Load one canonical document as a ProjectionInput (org-scoped), or null. */

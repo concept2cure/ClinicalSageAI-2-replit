@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS canonical_documents (
   packaging_validated BOOLEAN NOT NULL DEFAULT false,
   export_facet        JSONB,
   source_refs         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  outline             JSONB NOT NULL DEFAULT '[]'::jsonb,
   audit               JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()

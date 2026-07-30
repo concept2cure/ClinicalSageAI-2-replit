@@ -135,4 +135,25 @@ describe('governed document pipeline (HTTP → PGlite)', () => {
 
     expect((await request(otherOrgApp).get(`/api/regulatory/documents/${id}`)).status).toBe(404);
   });
+
+  it('instantiates the type\'s blueprint outline at creation (blueprints reach the document)', async () => {
+    // A drug IND carries the CTD outline...
+    const ind = await request(app)
+      .post('/api/regulatory/documents')
+      .send({ title: 'IND outline', documentType: 'US_IND' });
+    expect(ind.body.sectionCount).toBeGreaterThan(0);
+    const indView = await request(app).get(`/api/regulatory/documents/${ind.body.canonicalId}`);
+    const indCodes = indView.body.outline.map((s: { code: string }) => s.code);
+    expect(indCodes).toContain('2.5'); // Clinical Overview
+    expect(indCodes).toContain('3.2.S'); // Drug Substance
+
+    // ...and a device 510(k) carries its device outline, not the CTD.
+    const dev = await request(app)
+      .post('/api/regulatory/documents')
+      .send({ title: '510(k) outline', documentType: 'US_510K' });
+    const devView = await request(app).get(`/api/regulatory/documents/${dev.body.canonicalId}`);
+    const devTitles = devView.body.outline.map((s: { title: string }) => s.title);
+    expect(devTitles).toContain('Substantial Equivalence');
+    expect(devTitles).not.toContain('Drug Substance');
+  });
 });

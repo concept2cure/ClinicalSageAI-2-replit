@@ -39,6 +39,12 @@ export const canonicalDocuments = pgTable('canonical_documents', {
   exportFacet: jsonb('export_facet'),
   /** Typed DocumentSourceRef map keyed by source system (the identity bridge). */
   sourceRefs: jsonb('source_refs').notNull().default({}),
+  /**
+   * The document's authoring outline — the SectionDefinition[] from this type's
+   * registry section blueprint, instantiated at creation so "create a document
+   * of type X" actually carries X's sections rather than an empty shell.
+   */
+  outline: jsonb('outline').notNull().default([]),
   /** Append-only, hash-chained DocumentAuditEvent[] — the single per-doc trail. */
   audit: jsonb('audit').notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -24,6 +24,7 @@ import {
   createCanonicalDocument,
   loadProjectionInput,
   persistState,
+  readOutline,
   recordSignature,
   type CanonicalStoreDb,
 } from '../services/regulatory/canonicalDocumentStore';
@@ -82,7 +83,9 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       contentHash: typeof contentHash === 'string' ? contentHash : undefined,
       sources,
     });
-    return res.status(201).json({ ok: true, canonicalId });
+    // Report how many blueprint sections were instantiated as the outline.
+    const outline = await readOutline(getDb(), canonicalId, organizationId);
+    return res.status(201).json({ ok: true, canonicalId, sectionCount: outline.length });
   });
 
   /** Record a review or approval sign-off (Part 11) on the document. */
@@ -176,10 +179,12 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     const organizationId = resolveOrgId(req);
     if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
 
-    const input = await loadProjectionInput(getDb(), String(req.params.id), organizationId);
+    const db = getDb();
+    const input = await loadProjectionInput(db, String(req.params.id), organizationId);
     if (!input) return res.status(404).json({ ok: false, error: 'not_found' });
 
     const chain = verifyAuditChain(input.audit);
+    const outline = await readOutline(db, String(req.params.id), organizationId);
     return res.json({
       ok: true,
       canonicalId: input.canonicalId,
@@ -187,6 +192,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       version: input.version,
       hasContent: input.hasContent,
       placement: input.placement,
+      outline,
+      sectionCount: outline.length,
       audit: input.audit,
       chainValid: chain.valid,
     });
