@@ -127,10 +127,13 @@ describe('RPS validator', () => {
     expect(validateRpsMessage(m).findings.some((x) => x.code === 'RPS-COU-DOCREF')).toBe(true);
   });
 
-  it('flags a dangling relatedContextOfUse (lifecycle) reference', () => {
+  it('flags a dangling relatedContextOfUse against the cumulative CoU set', () => {
     const m = sampleMessage();
     m.contextsOfUse[0].relatedContextOfUseId = contextOfUseId(appNo, 'us_1.2', 'ghost|0000');
-    expect(validateRpsMessage(m).findings.some((x) => x.code === 'RPS-COU-RELATED')).toBe(true);
+    // With a cumulative set that does not contain the referenced CoU, it is dangling.
+    expect(validateRpsMessage(m, undefined, new Set()).findings.some((x) => x.code === 'RPS-COU-RELATED')).toBe(true);
+    // Without the cumulative set, a valid-UUID cross-sequence ref is accepted.
+    expect(validateRpsMessage(m).valid).toBe(true);
   });
 
   it('rejects a submissionUnit title over 128 characters', () => {

@@ -61,10 +61,17 @@ const CRIT = 'FDA Specifications for eCTD v4.0 Validation Criteria v1.5';
  * @param input the canonical RPS message
  * @param expectedSequenceNumber the folder name the message ships under (NNNN);
  *        when provided, the sequenceNumber must match it.
+ * @param knownContextIds the set of Context-of-Use ids that exist in the
+ *        CUMULATIVE application (i.e. across all prior submission units). A
+ *        `relatedContextOfUse` reference for a lifecycle operation normally
+ *        points at a CoU from a PRIOR sequence, not the current message — so
+ *        membership is only enforced when this cumulative set is supplied.
+ *        Without it, a related reference is only checked for UUID validity.
  */
 export function validateRpsMessage(
   input: RpsMessageInput,
   expectedSequenceNumber?: string,
+  knownContextIds?: Set<string>,
 ): RpsValidationResult {
   const f: RpsFinding[] = [];
   const err = (code: string, message: string, path?: string) =>
@@ -150,10 +157,16 @@ export function validateRpsMessage(
     }
   });
 
-  // relatedContextOfUse must reference a CoU present in the message (lifecycle).
+  // relatedContextOfUse (lifecycle): the referenced CoU normally lives in a
+  // PRIOR sequence, so require UUID validity always, but only require it to
+  // resolve when the cumulative application CoU set is supplied.
   contextsOfUse.forEach((cou, i) => {
-    if (cou.relatedContextOfUseId && !couIds.has(cou.relatedContextOfUseId)) {
-      err('RPS-COU-RELATED', `contextOfUse[${i}].relatedContextOfUse.id@root "${cou.relatedContextOfUseId}" does not reference a context of use in the message.`, `contextOfUse[${i}].relatedContextOfUse`);
+    if (!cou.relatedContextOfUseId) return;
+    const p = `contextOfUse[${i}].relatedContextOfUse`;
+    if (!isUuid(cou.relatedContextOfUseId)) {
+      err('RPS-COU-RELATED-UUID', `${p}.id@root "${cou.relatedContextOfUseId}" is not a valid UUID.`, p);
+    } else if (knownContextIds && !knownContextIds.has(cou.relatedContextOfUseId) && !couIds.has(cou.relatedContextOfUseId)) {
+      err('RPS-COU-RELATED', `${p}.id@root "${cou.relatedContextOfUseId}" does not reference a known context of use in the application.`, p);
     }
   });
 

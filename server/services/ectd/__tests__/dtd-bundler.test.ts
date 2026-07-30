@@ -17,7 +17,7 @@ import {
 
 describe('requiredDtdsForRegion', () => {
   it('always includes the ICH backbone plus the regional DTD', () => {
-    expect(requiredDtdsForRegion('fda')).toEqual([ICH_BACKBONE_DTD, 'us-regional-v2-01.dtd']);
+    expect(requiredDtdsForRegion('fda')).toEqual([ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd']);
     expect(requiredDtdsForRegion('ema')).toEqual([ICH_BACKBONE_DTD, 'eu-regional.dtd']);
     expect(requiredDtdsForRegion('pmda')).toEqual([ICH_BACKBONE_DTD, 'jp-regional.dtd']);
   });
@@ -34,7 +34,7 @@ describe('listVendoredDtds', () => {
     beforeAll(async () => {
       dir = await fs.mkdtemp(path.join(os.tmpdir(), 'dtd-test-'));
       await fs.writeFile(path.join(dir, 'ich-ectd-3-2.dtd'), '<!-- ich -->');
-      await fs.writeFile(path.join(dir, 'us-regional-v2-01.dtd'), '<!-- us -->');
+      await fs.writeFile(path.join(dir, 'us-regional-v3-3.dtd'), '<!-- us -->');
       await fs.writeFile(path.join(dir, 'README.md'), 'not a dtd'); // must be ignored
     });
     afterAll(async () => {
@@ -43,7 +43,7 @@ describe('listVendoredDtds', () => {
 
     it('lists only *.dtd files, sorted', async () => {
       const out = await listVendoredDtds(dir);
-      expect(out.map((d) => d.fileName)).toEqual(['ich-ectd-3-2.dtd', 'us-regional-v2-01.dtd']);
+      expect(out.map((d) => d.fileName)).toEqual(['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd']);
       expect(out[0].bytes.toString()).toContain('ich');
     });
   });
@@ -58,9 +58,9 @@ describe('assessDtdReadiness', () => {
       requireDtd: true,
     });
     expect(r.selfContained).toBe(false);
-    expect(r.missing).toEqual(['us-regional-v2-01.dtd']);
+    expect(r.missing).toEqual(['us-regional-v3-3.dtd']);
     expect(r.cleared).toBe(false);
-    expect(r.blockers[0]).toContain('us-regional-v2-01.dtd');
+    expect(r.blockers[0]).toContain('us-regional-v3-3.dtd');
   });
 
   it('clears when every required DTD is present', () => {
@@ -90,7 +90,7 @@ describe('assessDtdReadiness', () => {
   it('matches DTD names case-insensitively', () => {
     const r = assessDtdReadiness({
       region: 'fda',
-      present: ['ICH-ECTD-3-2.DTD', 'US-REGIONAL-V2-01.DTD'],
+      present: ['ICH-ECTD-3-2.DTD', 'US-REGIONAL-V3-3.DTD'],
       environment: 'production',
       requireDtd: true,
     });

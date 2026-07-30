@@ -33,6 +33,10 @@ import {
 
 export * from './cv-v4-data';
 export * from './cv-v3-data';
+export {
+  usRegionalSectionElement,
+  isKnownUsRegionalSection,
+} from './fda-regional-sections';
 
 /** Semantic id of a v4.0 genericode list. */
 export type V4ListId = keyof typeof V4_CODE_LISTS;
@@ -115,6 +119,43 @@ export function v3CodeToV4(id: V3ListId, v3Code: string): string | null {
  *  submissions (Module 1 Backbone Spec Addendum 1). */
 export function fdaApplicationPrefix(applicationTypeCode: string): string | null {
   return FDA_APPLICATION_PREFIX[applicationTypeCode] ?? null;
+}
+
+/* ─── v3.2.2 attribute-code resolvers (accept a code OR a canonical label) ─ */
+
+/** Resolve a value to a v3.2.2 attribute code for the given list: if it is
+ *  already a valid `fdaXX` code it passes through; otherwise it is matched
+ *  case-insensitively against the list's descriptions/canonical labels.
+ *  Returns null when nothing matches. */
+function resolveV3(id: V3ListId, value: string): string | null {
+  if (!value) return null;
+  const list = V3_CODE_LISTS[id];
+  const raw = value.trim();
+  if (list.some((c) => c.code === raw)) return raw;
+  const norm = raw.toLowerCase().replace(/[\s_-]+/g, ' ').trim();
+  const hit = list.find((c) => c.description.toLowerCase().includes(norm) || norm.includes(c.description.toLowerCase().split(' (')[0]));
+  return hit?.code ?? null;
+}
+
+/** Resolve an application-type value to its us-regional `fdaatN` code. */
+export function resolveApplicationTypeCode(value: string): string | null {
+  return applicationTypeToFdaCode(value) ?? resolveV3('applicationType', value);
+}
+/** Resolve a submission-type value to its us-regional `fdastN` code. */
+export function resolveSubmissionTypeCode(value: string): string | null {
+  return resolveV3('submissionType', value);
+}
+/** Resolve a submission-sub-type value to its us-regional `fdasstN` code. */
+export function resolveSubmissionSubTypeCode(value: string): string | null {
+  return resolveV3('submissionSubType', value);
+}
+/** Resolve a form-type value to its us-regional `fdaftN` code. */
+export function resolveFormTypeCode(value: string): string | null {
+  return resolveV3('formType', value);
+}
+/** Resolve an applicant-contact-type value to its us-regional `fdaactN` code. */
+export function resolveContactTypeCode(value: string): string | null {
+  return resolveV3('applicantContactType', value);
 }
 
 /* ─── re-exported constants for convenience ───────────────────────── */

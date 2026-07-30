@@ -44,6 +44,14 @@ import {
   dtdRequiredFromEnv,
   type DtdRegion,
 } from '../ectd/dtd-bundler';
+import {
+  resolveApplicationTypeCode,
+  resolveSubmissionTypeCode,
+  resolveSubmissionSubTypeCode,
+  resolveFormTypeCode,
+  resolveContactTypeCode,
+  usRegionalSectionElement,
+} from '../ectd/controlled-vocab';
 
 /**
  * Finalize a leaf's bytes to submission grade before they are written + hashed.
@@ -82,6 +90,52 @@ export interface EctdLeaf {
   title: string;
   /** Optional pre-computed checksum; computed if absent. */
   md5?: string;
+  /**
+   * For a lifecycle operation (replace/delete/append), the package-relative
+   * path (+ optional `#leafId` fragment) of the prior leaf this one modifies.
+   * Emitted as the `modified-file` attribute. For grouped submissions the path
+   * must carry the application prefix + number (Module 1 Backbone Spec
+   * Addendum 1), e.g. `../../../../nda456789/0001/m1/us/us-regional.xml#id2`.
+   */
+  modifiedFile?: string;
+}
+
+/** One applicant contact rendered into the FDA us-regional admin block. */
+export interface FdaApplicantContact {
+  /** Contact role — resolved to `fdaactN` (regulatory/technical/us-agent). */
+  type: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
+/** One transmittal form rendered under `<submission-information>/<form>`. */
+export interface FdaFormLeaf {
+  /** Form type — resolved to `fdaftN` (e.g. '356h', '1571', '3674'). */
+  formType: string;
+  leaf: EctdLeaf;
+}
+
+/**
+ * FDA us-regional admin metadata. When present, the FDA backbone emits the
+ * spec-conformant `<admin>` block (applicant-contacts + application-set with
+ * application-type / submission-type / submission-sub-type coded attributes +
+ * transmittal form). When absent, sensible values are derived from the
+ * top-level PackagerInput so existing callers keep working.
+ */
+export interface FdaRegionalAdmin {
+  /** Application-type: `fdaatN` code or canonical string ('nda','ind',…). */
+  applicationType?: string;
+  /** Submission-type: `fdastN` code or canonical ('original application',…). */
+  submissionType?: string;
+  /** Submission-sub-type: `fdasstN` code or canonical ('original','amendment'). */
+  submissionSubType?: string;
+  /** submission-id value (defaults to the sequence number). */
+  submissionId?: string;
+  /** Applicant contacts (regulatory/technical/US agent). */
+  contacts?: FdaApplicantContact[];
+  /** Transmittal forms (356h/1571/…) nested under `<form>`. */
+  forms?: FdaFormLeaf[];
 }
 
 export interface PackagerInput {
@@ -109,6 +163,8 @@ export interface PackagerInput {
   /** Submission environment for the PDF/A gate. 'production' (the default)
    *  enforces PDF/A when ECTD_REQUIRE_PDFA=true; 'staging' never blocks. */
   environment?: 'staging' | 'production';
+  /** FDA us-regional admin metadata (only used when region === 'fda'). */
+  fda?: FdaRegionalAdmin;
 }
 
 /** Compute MD5 of a file on disk. */
@@ -124,9 +180,23 @@ function escapeXml(s: string): string {
           .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
-/** Build leaf elements common to all regions. */
-function leafElement(leaf: EctdLeaf, sectionHref: string, id: string): string {
-  return `<leaf operation="${leaf.operation}" xlink:href="${escapeXml(sectionHref)}/${escapeXml(leaf.fileName)}" ID="${escapeXml(id)}">
+/** A leaf's finalized reference data: backbone-relative href + shipped-bytes MD5. */
+interface LeafRef {
+  /** href RELATIVE to the backbone that references it (regional backbone or index.xml). */
+  href: string;
+  /** MD5 of the bytes actually written for this leaf. */
+  md5: string;
+}
+
+/**
+ * Build one `<leaf>` element with the full ICH attribute set: operation,
+ * inline `checksum`/`checksum-type="md5"` (matching the shipped bytes), the
+ * backbone-relative `xlink:href`, and — for a lifecycle operation — the
+ * `modified-file` pointer at the superseded leaf.
+ */
+function leafElement(leaf: EctdLeaf, id: string, ref: LeafRef): string {
+  const modified = leaf.modifiedFile ? ` modified-file="${escapeXml(leaf.modifiedFile)}"` : '';
+  return `<leaf operation="${leaf.operation}"${modified} checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="${escapeXml(id)}">
   <title>${escapeXml(leaf.title)}</title>
 </leaf>`;
 }
@@ -165,56 +235,112 @@ export function createLeafIdAssigner(): (leaf: EctdLeaf) => string {
   };
 }
 
-/**
- * FDA us-regional.xml backbone. Per FDA eCTD Technical Conformance
- * Guide (current as of 2024). Module 1 sits under m1/us/.
- */
-function buildFdaBackbone(input: PackagerInput): string {
+/** Render the FDA applicant-contacts block from the admin metadata. */
+function fdaContactsBlock(contacts: FdaApplicantContact[]): string {
+  if (!contacts.length) return '      <applicant-info/>';
+  const rows = contacts
+    .map((c) => {
+      const code = resolveContactTypeCode(c.type) ?? 'fdaact1';
+      const telecom = [
+        c.email ? `          <email>${escapeXml(c.email)}</email>` : '',
+        c.phone ? `          <telephone>${escapeXml(c.phone)}</telephone>` : '',
+      ].filter(Boolean).join('\n');
+      return `        <applicant-contact>
+          <applicant-contact-name applicant-contact-type="${code}">${escapeXml(c.name)}</applicant-contact-name>${telecom ? '\n' + telecom : ''}
+        </applicant-contact>`;
+    })
+    .join('\n');
+  return `      <applicant-info>
+        <applicant-contacts>
+${rows}
+        </applicant-contacts>
+      </applicant-info>`;
+}
+
+/** Render the `<form>` elements nested under submission-information. */
+function fdaFormsBlock(forms: FdaFormLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
-  const m1Leaves = input.leaves
-    .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/us/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+  return forms
+    .map((f) => {
+      const code = resolveFormTypeCode(f.formType) ?? 'fdaft2';
+      return `          <form form-type="${code}">
+${leafElement(f.leaf, assignId(f.leaf), resolve(f.leaf)).split('\n').map((l) => '            ' + l).join('\n')}
+          </form>`;
+    })
+    .join('\n');
+}
+
+/**
+ * FDA us-regional.xml backbone — conformant with the FDA eCTD Backbone Files
+ * Specification for Module 1 (DTD version 3.3). Module 1 sits under m1/us/;
+ * the backbone declares `xmlns:fda-regional="http://www.ich.org/fda"`, carries
+ * the coded admin block (application-type / submission-type / submission-sub-
+ * type / form-type as `fdaXX` attributes), and nests content leaves under
+ * FDA-published section heading elements (e.g. `<m1-2-cover-letters>`).
+ */
+function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
+  const fda = input.fda ?? {};
+  const appTypeCode =
+    resolveApplicationTypeCode(fda.applicationType ?? '') ??
+    resolveApplicationTypeCode(input.submissionType) ??
+    'fdaat1';
+  const subTypeCode =
+    resolveSubmissionTypeCode(fda.submissionType ?? input.submissionType) ?? 'fdast1';
+  const subSubTypeCode =
+    resolveSubmissionSubTypeCode(fda.submissionSubType ?? 'original') ?? 'fdasst1';
+  const submissionId = fda.submissionId ?? input.sequence;
+
+  const contacts = fdaContactsBlock(fda.contacts ?? []);
+  const forms = fda.forms?.length ? '\n' + fdaFormsBlock(fda.forms, resolve) : '';
+
+  // Group Module 1 content leaves under FDA section heading elements.
+  const assignId = createLeafIdAssigner();
+  const bySection = new Map<string, string[]>();
+  for (const l of input.leaves.filter((x) => x.ctdSection.startsWith('1'))) {
+    const el = usRegionalSectionElement(l.ctdSection);
+    const list = bySection.get(el) ?? [];
+    list.push(leafElement(l, assignId(l), resolve(l)));
+    bySection.set(el, list);
+  }
+  const m1Regional = [...bySection.entries()]
+    .map(([el, leaves]) => `    <${el}>\n${leaves.map((x) => x.split('\n').map((y) => '      ' + y).join('\n')).join('\n')}\n    </${el}>`)
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE us-regional SYSTEM "../util/dtd/us-regional-v2-01.dtd">
-<us-regional xmlns:xlink="http://www.w3.org/1999/xlink"
-             dtd-version="2.01"
-             xmlns="urn:hl7-org:v3">
+<!DOCTYPE fda-regional:fda-regional SYSTEM "../util/dtd/us-regional-v3-3.dtd">
+<?xml-stylesheet type="text/xsl" href="../util/style/us-regional.xsl"?>
+<fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
+    xmlns:fda-regional="http://www.ich.org/fda"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
   <admin>
+${contacts}
     <application-set>
       <application>
         <application-information>
-          <application-number>${escapeXml(input.applicationId)}</application-number>
-          <application-type>${escapeXml(input.submissionType)}</application-type>
+          <application-number application-type="${appTypeCode}">${escapeXml(input.applicationId)}</application-number>
         </application-information>
+        <submission-information>
+          <submission-id submission-type="${subTypeCode}">${escapeXml(submissionId)}</submission-id>
+          <sequence-number submission-sub-type="${subSubTypeCode}">${escapeXml(input.sequence)}</sequence-number>${forms}
+        </submission-information>
       </application>
     </application-set>
-    <applicant-info>
-      <id>${escapeXml(input.sponsorId)}</id>
-      <name>${escapeXml(input.sponsorName)}</name>
-    </applicant-info>
-    <submission>
-      <submission-id>${escapeXml(input.sequence)}</submission-id>
-      <submission-type>${escapeXml(input.submissionType)}</submission-type>
-      <submission-description>${escapeXml(input.productName)} — ${escapeXml(input.submissionType)} sequence ${escapeXml(input.sequence)}</submission-description>
-    </submission>
   </admin>
-  <m1-us>
-${m1Leaves}
-  </m1-us>
-</us-regional>`;
+  <m1-regional>
+${m1Regional}
+  </m1-regional>
+</fda-regional:fda-regional>`;
 }
 
 /**
  * EMA eu-regional.xml backbone. Per EMA EU eCTD Specification v3.0.
  * Module 1 sits under m1/eu/ with eu-regional.xml at the m1/eu/ root.
  */
-function buildEmaBackbone(input: PackagerInput): string {
+function buildEmaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/eu/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+    .map((l) => leafElement(l, assignId(l), resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -247,11 +373,11 @@ ${m1Leaves}
  * Common Technical Document" (initial 2016, updated 2021). Module 1
  * sits under m1/jp/ with multi-byte titles permitted.
  */
-function buildPmdaBackbone(input: PackagerInput): string {
+function buildPmdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/jp/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+    .map((l) => leafElement(l, assignId(l), resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -286,11 +412,11 @@ ${m1Leaves}
  * backbone at m1/ca/ca-regional.xml. Transmission is via the Common
  * Electronic Submissions Gateway (CESG).
  */
-function buildHcBackbone(input: PackagerInput): string {
+function buildHcBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/ca/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+    .map((l) => leafElement(l, assignId(l), resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -320,7 +446,7 @@ ${m1Leaves}
 
 /* ─── M2-M5 common backbone (ICH M8) ──────────────────────────────── */
 
-function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
+function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
   const grouped: Record<string, EctdLeaf[]> = { m2: [], m3: [], m4: [], m5: [] };
@@ -330,7 +456,7 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
   }
   const moduleBlocks = (['m2', 'm3', 'm4', 'm5'] as const).map((m) => {
     const leaves = grouped[m]
-      .map((l) => leafElement(l, `${m}/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+      .map((l) => leafElement(l, assignId(l), resolve(l)))
       .join('\n');
     return `  <${m}>\n${leaves}\n  </${m}>`;
   }).join('\n');
@@ -379,22 +505,6 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   };
 
   const region = input.region;
-  const backboneByRegion: Record<Region, () => string> = {
-    fda:  () => buildFdaBackbone(normalizedInput),
-    ema:  () => buildEmaBackbone(normalizedInput),
-    pmda: () => buildPmdaBackbone(normalizedInput),
-    ca:   () => buildHcBackbone(normalizedInput),
-    // ICH-aligned / EU-structure regions use EMA backbone as the closest standard
-    uk:   () => buildEmaBackbone(normalizedInput),
-    ch:   () => buildEmaBackbone(normalizedInput),
-    au:   () => buildEmaBackbone(normalizedInput),
-    // CTD/eCTD regions without a distinct backbone builder — EMA ICH M4 fallback
-    cn:   () => buildEmaBackbone(normalizedInput),
-    br:   () => buildEmaBackbone(normalizedInput),
-    in:   () => buildEmaBackbone(normalizedInput),
-    kr:   () => buildEmaBackbone(normalizedInput),
-    sg:   () => buildEmaBackbone(normalizedInput),
-  };
   const m1FolderByRegion: Record<Region, string> = {
     fda:  'm1/us',
     ema:  'm1/eu',
@@ -428,7 +538,57 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const checksums: ChecksumEntry[] = [];
   const grades: LeafGradeRecord[] = [];
 
-  /* Write regional Module 1 backbone. */
+  /* PASS 1 — finalize every leaf's bytes FIRST, so the backbone can carry each
+     leaf's real (post-PDF/A) MD5 as an inline `checksum` and a backbone-relative
+     `xlink:href`. eCTD requires the checksum in the backbone to match the bytes
+     shipped; finalization can change the bytes, so it must happen before the
+     backbone is built. */
+  interface PreparedLeaf { leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer; }
+  const prepared: PreparedLeaf[] = [];
+  const refByLeaf = new Map<EctdLeaf, LeafRef>();
+  for (const leaf of input.leaves) {
+    const sectionDashed = leaf.ctdSection.replace(/\./g, '-');
+    const raw = await fs.readFile(leaf.sourcePath);
+    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
+    grades.push({ fileName: leaf.fileName, isPdf, converted });
+    const md5 = md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex');
+
+    let relPath: string;
+    let href: string;
+    if (leaf.ctdSection.startsWith('1')) {
+      // Module 1 → under the regional folder; href relative to the regional backbone.
+      relPath = `${m1FolderByRegion[region]}/${sectionDashed}/${leaf.fileName}`;
+      href = `${sectionDashed}/${leaf.fileName}`;
+    } else {
+      // Module 2–5 → shared folders; href relative to index.xml at the root.
+      relPath = `m${leaf.ctdSection.charAt(0)}/${sectionDashed}/${leaf.fileName}`;
+      href = relPath;
+    }
+    const ref: LeafRef = { href, md5 };
+    refByLeaf.set(leaf, ref);
+    prepared.push({ leaf, relPath, ref, bytes });
+  }
+  const resolve = (l: EctdLeaf): LeafRef =>
+    refByLeaf.get(l) ?? { href: l.fileName, md5: l.md5 ?? '' };
+
+  const backboneByRegion: Record<Region, () => string> = {
+    fda:  () => buildFdaBackbone(normalizedInput, resolve),
+    ema:  () => buildEmaBackbone(normalizedInput, resolve),
+    pmda: () => buildPmdaBackbone(normalizedInput, resolve),
+    ca:   () => buildHcBackbone(normalizedInput, resolve),
+    // ICH-aligned / EU-structure regions use EMA backbone as the closest standard
+    uk:   () => buildEmaBackbone(normalizedInput, resolve),
+    ch:   () => buildEmaBackbone(normalizedInput, resolve),
+    au:   () => buildEmaBackbone(normalizedInput, resolve),
+    // CTD/eCTD regions without a distinct backbone builder — EMA ICH M4 fallback
+    cn:   () => buildEmaBackbone(normalizedInput, resolve),
+    br:   () => buildEmaBackbone(normalizedInput, resolve),
+    in:   () => buildEmaBackbone(normalizedInput, resolve),
+    kr:   () => buildEmaBackbone(normalizedInput, resolve),
+    sg:   () => buildEmaBackbone(normalizedInput, resolve),
+  };
+
+  /* PASS 2 — write the regional Module 1 backbone (now that hrefs+md5s exist). */
   const regionalXml = backboneByRegion[region]();
   const regionalPath = backboneFileByRegion[region];
   zip.file(regionalPath, regionalXml);
@@ -437,34 +597,12 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     md5: createHash('md5').update(regionalXml).digest('hex'),
   });
 
-  /* Write Module 1 leaves under the region-specific folder. */
-  const m1Leaves = input.leaves.filter((l) => l.ctdSection.startsWith('1'));
-  for (const leaf of m1Leaves) {
-    const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
-    grades.push({ fileName: leaf.fileName, isPdf, converted });
-    const targetPath = `${m1FolderByRegion[region]}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
-    zip.file(targetPath, bytes);
-    checksums.push({
-      relPath: targetPath,
-      md5: md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex'),
-    });
+  /* Write all finalized leaf bytes. */
+  for (const p of prepared) {
+    zip.file(p.relPath, p.bytes);
+    checksums.push({ relPath: p.relPath, md5: p.ref.md5 });
   }
-
-  /* Write Module 2–5 leaves under shared folders. */
   const m2to5 = input.leaves.filter((l) => !l.ctdSection.startsWith('1'));
-  for (const leaf of m2to5) {
-    const mod = `m${leaf.ctdSection.charAt(0)}`;
-    const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
-    grades.push({ fileName: leaf.fileName, isPdf, converted });
-    const targetPath = `${mod}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
-    zip.file(targetPath, bytes);
-    checksums.push({
-      relPath: targetPath,
-      md5: md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex'),
-    });
-  }
 
   /* PDF/A submission-grade gate (audit gap P0-2): when ECTD_REQUIRE_PDFA=true
      and this is a production package, refuse to ship any PDF leaf that the
@@ -512,7 +650,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
 
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
-  const indexXml = buildIndexXml(input, m2to5);
+  const indexXml = buildIndexXml(input, m2to5, resolve);
   zip.file('index.xml', indexXml);
   checksums.push({ relPath: 'index.xml', md5: createHash('md5').update(indexXml).digest('hex') });
 

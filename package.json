@@ -43,6 +43,7 @@
     "lint:fix": "eslint . --fix",
     "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts",
     "test:submission": "vitest run --config vitest.config.ts server/services/ectd server/services/submission-service server/services/region-profiles server/services/ana/__tests__/submission-center-tools.test.ts",
+    "qualify:ectd": "tsx scripts/ectd/qualify-ectd.ts",
     "test:security": "vitest run --config vitest.config.ts server/__tests__/security server/services/ai-gateway/__tests__/promptInjection.test.ts server/services/__tests__/saml-provider.test.ts",
     "manifest:ana": "tsx scripts/generate-ana-capability-manifest.ts",
     "verify:submission": "node scripts/verify-submission-center.mjs",
