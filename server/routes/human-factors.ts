@@ -11,23 +11,49 @@ import {
   assessHfeCompleteness,
   analyzeUseRelatedRisk,
 } from '../services/regulatory/human-factors';
+import {
+  createHfFile,
+  listHfFiles,
+  HfFileValidationError,
+} from '../services/human-factors/hf-files-service';
+import auditService from '../services/auditService';
 
 const logger = createScopedLogger('human-factors');
 const router = Router();
 const author = requireRole('regulatory-author');
 
 function getOrgId(req: Request): number | null {
-  const raw = (req as { user?: { organizationId?: unknown } }).user?.organizationId;
+  const r = req as {
+    tenantId?: unknown;
+    organizationId?: unknown;
+    tenantContext?: { organizationId?: unknown };
+    user?: { organizationId?: unknown };
+  };
+  const raw =
+    r.tenantId ?? r.organizationId ?? r.tenantContext?.organizationId ?? r.user?.organizationId;
   if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : (raw as number);
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function getUserId(req: Request): number | null {
+  const r = req as { userId?: unknown; user?: { id?: unknown } };
+  const raw = r.userId ?? r.user?.id;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
 
 /**
  * GET / — the org's HFE/UE file (device + element presence map) with its
- * hazard-related use scenarios. The v2 HumanFactors surface adopts this via
- * useLive and computes completeness/risk deterministically from it. Fails
- * closed to an empty envelope when the store isn't provisioned (42P01).
+ * hazard-related use scenarios. The file is read from the REAL, org-scoped store
+ * `hf_engineering_files` (hf-files-service.ts — a live write path, not the
+ * seed-only c2c_hf_files blob); its use scenarios come from c2c_hf_scenarios (the
+ * existing wired scenario store, referenced by the file's id). The v2
+ * HumanFactors surface adopts this and computes completeness/use-related risk
+ * deterministically from it. Org scoped; 403 without org. Fails CLOSED to an
+ * honest empty envelope (never fabricated) when the store isn't provisioned
+ * (42P01).
  */
 router.get('/', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -35,25 +61,21 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const file = await pool.query(
-      `SELECT id, device, framework, present FROM c2c_hf_files
-        WHERE organization_id = $1 ORDER BY id LIMIT 1`,
-      [orgId],
-    );
-    if (file.rows.length === 0) {
-      return res.json({ data: null, meta: { count: 0 } });
+    const files = await listHfFiles(orgId);
+    const file = files[0];
+    if (!file) {
+      return res.json({ data: null, meta: { count: 0, source: 'hf_engineering_files' } });
     }
-    const f = file.rows[0];
     const scenarios = await pool.query(
       `SELECT task, use_error AS "useError",
               potential_harm_severity AS "potentialHarmSeverity", mitigated
          FROM c2c_hf_scenarios
         WHERE organization_id = $1 AND file_id = $2 ORDER BY id`,
-      [orgId, f.id],
+      [orgId, file.id],
     );
     return res.json({
-      data: { device: f.device, framework: f.framework, present: f.present, scenarios: scenarios.rows },
-      meta: { count: scenarios.rows.length },
+      data: { device: file.device, framework: file.framework, present: file.present, scenarios: scenarios.rows },
+      meta: { count: scenarios.rows.length, source: 'hf_engineering_files' },
     });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
@@ -61,6 +83,47 @@ router.get('/', async (req: Request, res: Response) => {
     }
     logger.error('hf-file read failed', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read the HFE/UE file.' } });
+  }
+});
+
+/**
+ * POST / — record the org's HFE/UE file (the real write path). A live tenant (or
+ * the demo seed) creates its IEC 62366-1 file here; GET / then reads it from the
+ * real store. Org scoped; 403 without org; 400 on a missing device / malformed
+ * element map; 201 with the created file's display shape. Audited HF_FILE_RECORDED.
+ */
+router.post('/', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+  const userId = getUserId(req);
+  const b = (req.body ?? {}) as Record<string, unknown>;
+  try {
+    const file = await createHfFile(orgId, {
+      device: String(b.device ?? ''),
+      framework: b.framework != null ? String(b.framework) : null,
+      present: b.present,
+      createdBy: userId,
+    });
+    await auditService.logAction({
+      organizationId: orgId,
+      userId: userId ?? undefined,
+      action: 'HF_FILE_RECORDED',
+      resourceType: 'hf_engineering_file',
+      resourceId: file.id,
+      details: { device: file.device, framework: file.framework },
+    });
+    return res.status(201).json({
+      data: { device: file.device, framework: file.framework, present: file.present, scenarios: [] },
+      id: file.id,
+    });
+  } catch (err) {
+    if (err instanceof HfFileValidationError) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });
+    }
+    logger.error('hf-file create failed', { err: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to record the HFE/UE file.' } });
   }
 });
 
@@ -124,12 +187,14 @@ router.post(
 
 /**
  * POST /scenarios — persist a new hazard-related use scenario onto the org's
- * HFE/UE file. The v2 HumanFactors surface's "Add use scenario" form POSTs here
- * once its read has adopted the store (LIVE); the adopted row re-drives the
- * client-side completeness/use-related-risk compute. Plain org-scoped persisted
- * create — attaches to the org's single HFE/UE file. Org scoped; 403 without
- * org; 409 NO_FILE when the org has no file to attach to; 400 on a missing
- * task; 503 PENDING_STORE on 42P01 so the client falls back to local-only.
+ * HFE/UE file. The v2 HumanFactors surface's "Add use scenario" form POSTs here;
+ * the persisted row re-drives the client-side use-related-risk compute. Plain
+ * org-scoped persisted create — attaches to the org's HFE/UE file, resolved from
+ * the REAL hf_engineering_files store (the file store this route now reads).
+ * Org scoped; 403 without org; 409 NO_FILE when the org has no file to attach to;
+ * 400 on a missing task; 503 PENDING_STORE on 42P01 so the client degrades
+ * gracefully. (The scenario rows themselves live in the existing c2c_hf_scenarios
+ * store, which keeps its own writer — this contract is unchanged.)
  */
 const HF_SEVERITIES = ['negligible', 'minor', 'serious', 'critical'] as const;
 
@@ -153,7 +218,8 @@ router.post('/scenarios', async (req: Request, res: Response) => {
 
   try {
     const file = await pool.query(
-      `SELECT id FROM c2c_hf_files WHERE organization_id = $1 ORDER BY id LIMIT 1`,
+      `SELECT id FROM hf_engineering_files
+        WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY created_at LIMIT 1`,
       [orgId],
     );
     if (file.rows.length === 0) {
