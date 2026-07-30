@@ -553,6 +553,7 @@
     "20260725_authoring_audit_trail.sql",
     "20260725_ectd_compilations_project_level.sql",
     "20260725_project_sections_content_columns.sql",
+    "20260725_submission_orchestrator_store_port.sql",
     "20260725_esig_gate_columns_port.sql",
     "20260725_authoring_signatures_and_workflow.sql",
     "20260725_authoring_signature_freeze_binding.sql",
@@ -566,7 +567,6 @@
     "20260728_artifacts_table.sql",
     "20260728_schedule_of_events_org_scoped_uniqueness.sql",
     "20260730_fix_atom_embedding_dimension.sql",
-    "20260725_submission_orchestrator_store_port.sql",
     "20260725_users_signing_lockout_columns.sql",
     "20260730_authoring_subsystem_schema.sql"
   ],
