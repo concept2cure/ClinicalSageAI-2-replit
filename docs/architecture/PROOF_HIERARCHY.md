@@ -75,17 +75,32 @@ Point new work at these when you need a worked example of a rung:
   `ON CONFLICT`).
 - **Tier 4** — `tests/schema-contract/cmc-module3-tenant-arbiter.contract.test.ts`
   (one tenant cannot rewrite another's canonical CMC input).
-- **Tiers 3 → 6 → 7 fused** —
+- **Tiers 3 → 4 → 6 → 7 fused (eCTD)** —
   `tests/golden-journeys/submission-export-validation.journey.test.ts`.
   It assembles a **real** eCTD package from the canonical core over PGlite,
-  reopens the emitted tree from disk (parses the backbone XML, re-verifies every
-  `util/index-md5.txt` entry against the actual bytes, checks each PDF leaf's
-  `%PDF` magic), then **externally qualifies** it with the license-free
-  FDA-criteria eValidator subset — and proves the gate is non-vacuous by showing
-  a 0-byte leaf and a deleted regional backbone are both caught. This is the
-  journey that converts "handcrafted XML, checked only by our own eyes" into a
-  reopened, externally-qualified artifact. Its proof packet is written to
-  `tests/golden-journeys/__reports__/submission-export-validation.{manifest.json,report.md}`.
+  denies a cross-tenant leaf at the DB boundary, reopens the emitted tree from
+  disk (parses the backbone XML, re-verifies every `util/index-md5.txt` entry
+  against the actual bytes, checks each PDF leaf's `%PDF` magic), then
+  **externally qualifies** it with the license-free FDA-criteria eValidator
+  subset — and proves the gate is non-vacuous by showing a 0-byte leaf and a
+  deleted regional backbone are both caught. This is the journey that converts
+  "handcrafted XML, checked only by our own eyes" into a reopened,
+  externally-qualified artifact.
+- **Tiers 6 → 7 (PDF)** — `tests/export-contract/pdf-export.proof.test.ts`.
+  Renders a real PDF, reopens it with `pdf-parse` (pdf.js — an engine
+  **independent** of the pdf-lib writer), then qualifies it with the eCTD PDF/A
+  acceptability classifier; a non-PDF, an encrypted PDF, and a corrupted PDF are
+  each caught. Honest scope: `classifyPdfA` is detection-only, not a full veraPDF
+  verdict.
+- **Tiers 6 → 7 (DOCX)** — `tests/export-contract/docx-export.proof.test.ts`.
+  Generates a real `.docx`, reopens its OOXML parts (`[Content_Types].xml`,
+  `word/document.xml`), and qualifies it with `mammoth` — an OOXML reader
+  **independent** of the `docx` writer; a corrupted container and a valid-zip
+  that-is-not-a-docx are both caught.
+
+Each journey/proof writes a machine-readable proof packet under its
+`__reports__/` directory (the JSON is the truth source; the markdown is rendered
+from it).
 
 ---
 
@@ -103,29 +118,44 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
   gated.
 - **Tier 6 (export reopen)** was the thinnest rung: exporters were asserted on
   their in-memory output, and the external-validator tests ran against
-  hand-authored fixture directories rather than a real emitted package. The
-  reference journey above closes that for the eCTD path; other exporters (CER/IND
-  PDF, DOCX) still need their own reopen proof.
-- **Tier 7 (external qualification)** is real but **scoped**: the license-free
-  FDA-criteria subset is *not* the commercial LORENZ agency validator. It drops
-  in behind the same seam (`EVALIDATOR_BINARY`) with no test rewrite; until it
-  does, a Tier-7 *pass* means "survived an external reopen-and-check," not
+  hand-authored fixture directories rather than a real emitted package. It is now
+  closed for the three universal output formats — **eCTD** (backbone XML + MD5
+  integrity), **PDF** (independent pdf.js reopen), and **DOCX** (OOXML part
+  reopen). Remaining exporters (e.g. XLSX, form-filled AcroForm bundles) should
+  follow the same pattern.
+- **Tier 7 (external qualification)** is real but **scoped**: the eCTD path uses
+  the license-free FDA-criteria subset, *not* the commercial LORENZ agency
+  validator (it drops in behind the same `EVALIDATOR_BINARY` seam with no test
+  rewrite); the PDF path uses detection-only `classifyPdfA`, *not* a full veraPDF
+  verdict. Until those licensed engines are wired, a Tier-7 *pass* means
+  "survived an external reopen-and-check by an independent engine," not
   "agency-accepted." That distinction is recorded in every manifest that uses it.
+- **Durability.** `scripts/ci/check-proof-tier.mjs` (`npm run ci:proof-tier`)
+  ratchets the proof surface: it fails if a baselined proof file is deleted, if a
+  journey/proof stops emitting its manifest, or if this document references a
+  proof file that no longer exists. The current inventory is in
+  `docs/architecture/PROOF_TIER_LEDGER.md`.
 
 ---
 
 ## How to run the proof tier
 
 ```bash
-# Schema-contract + golden-journeys (Tiers 2–7), the blocking CI suite:
+# Schema-contract + golden-journeys + export-contract (Tiers 2–7), blocking suite:
 npm run test:proof-tier
 
-# Just the export → reopen → external-qualification journey:
-npx vitest run --config vitest.config.ts \
-  tests/golden-journeys/submission-export-validation.journey.test.ts
+# The eCTD export → reopen → external-qualification journey:
+npm run test:export-proof
+
+# The PDF and DOCX export → reopen → qualification proofs:
+npm run test:export-contract
 
 # Browser workflow (Tier 5) — needs a running app + DB:
 npx playwright test
+
+# Enforce the proof surface does not shrink (and regenerate the ledger):
+npm run ci:proof-tier               # fail if a proof was deleted / doc drifted
+npm run ci:proof-tier:write-baseline # ratchet the floor after adding proofs
 ```
 
 ## Classifying a test in review

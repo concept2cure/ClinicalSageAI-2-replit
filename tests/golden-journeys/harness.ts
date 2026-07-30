@@ -232,9 +232,15 @@ export class JourneyRecorder {
     };
   }
 
-  /** Write manifest JSON + a markdown rendering OF the JSON (JSON is truth). */
-  write(slug: string): { jsonPath: string; mdPath: string } {
-    const dir = path.join(REPO_ROOT, 'tests', 'golden-journeys', '__reports__');
+  /**
+   * Write manifest JSON + a markdown rendering OF the JSON (JSON is truth).
+   *
+   * @param outDir Repo-relative directory for the proof packet. Defaults to the
+   *   golden-journeys reports dir; export-format proofs (not DB journeys) pass
+   *   their own so the two proof families stay in separate homes.
+   */
+  write(slug: string, outDir = 'tests/golden-journeys/__reports__'): { jsonPath: string; mdPath: string } {
+    const dir = path.join(REPO_ROOT, outDir);
     fs.mkdirSync(dir, { recursive: true });
     const m = this.manifest();
     const jsonPath = path.join(dir, `${slug}.manifest.json`);
