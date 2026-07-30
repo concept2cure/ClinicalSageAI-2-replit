@@ -221,37 +221,40 @@ describe('buildForm3454 (financial certification: NONE)', () => {
 });
 
 describe('buildForm3455 (financial disclosure)', () => {
-  it('assembles disclosure lines for investigators with interests', () => {
+  it('discloses the first investigator with the 21 CFR 54.4 interest-type checkboxes', () => {
     const meta = fullMeta();
     meta.investigators![0].financial = {
       hasDisclosableInterest: true,
       disclosureDescription: 'Significant equity interest',
+      interestTypes: ['significant_equity', 'proprietary_interest'],
     };
     const built = buildForm3455(meta);
     expect(built.formId).toBe(FORM_3455);
-    expect(built.fields.disclosure_details).toBe(
-      'Dr. Pat Smith: Significant equity interest',
-    );
-    expect(built.fields.disclosure_descriptions_complete).toBe(true);
+    expect(built.fields.investigator_name).toBe('Dr. Pat Smith');
+    // Only the selected 21 CFR 54.4 categories are checked (verified check mapping).
+    expect(built.fields.interest_significant_equity).toBe(true);
+    expect(built.fields.interest_proprietary).toBe(true);
+    expect(built.fields.interest_financial_arrangement).toBe(false);
+    expect(built.fields.interest_significant_payments).toBe(false);
     expect(built.missingRequired).toEqual([]);
   });
 
-  it('flags incomplete descriptions as missingRequired', () => {
+  it('flags a disclosure with no interest type selected — a QC gate, not a form field', () => {
     const meta = fullMeta();
-    meta.investigators![0].financial = { hasDisclosableInterest: true };
+    meta.investigators![0].financial = { hasDisclosableInterest: true }; // no interestTypes
     const built = buildForm3455(meta);
-    expect(built.fields.disclosure_descriptions_complete).toBe(false);
-    expect(built.missingRequired).toContain('disclosure_descriptions_complete');
-    // disclosure_details is required because there IS something to disclose
-    expect(built.missingRequired).toContain('disclosure_details');
+    expect(built.fields.interest_type_selected).toBe(false);
+    // Reported for QC readiness...
+    expect(built.missingRequired).toContain('interest_type_selected');
+    // ...but excluded from requiredFields so it never blocks the official fill.
+    expect(built.requiredFields).not.toContain('interest_type_selected');
   });
 
-  it('does not require disclosure_details when nothing to disclose, but still needs sponsor/drug', () => {
+  it('needs no investigator/interest type when nothing is disclosed', () => {
+    // fullMeta's investigator has hasDisclosableInterest:false → not disclosing.
     const built = buildForm3455(fullMeta());
-    // no investigator has interests → disclosure_details not required
-    expect(built.missingRequired).not.toContain('disclosure_details');
-    // descriptions-complete is false (nothing disclosable) → flagged
-    expect(built.missingRequired).toContain('disclosure_descriptions_complete');
+    expect(built.missingRequired).not.toContain('interest_type_selected');
+    expect(built.missingRequired).not.toContain('investigator_name');
   });
 });
 

@@ -99,11 +99,28 @@ export interface InvestigatorInfo {
   financial?: InvestigatorFinancialInfo;
 }
 
+/**
+ * The 21 CFR 54.4 disclosure categories, mapped to the Form 3455 checkboxes
+ * (verified from the official form's field tooltips):
+ *   - financial_arrangement → check1: arrangement where compensation could be
+ *     affected by the study outcome
+ *   - significant_payments  → check2: significant payments of other sorts (>$25k)
+ *   - proprietary_interest  → check3: proprietary interest in the tested product
+ *   - significant_equity    → check4: significant equity interest (21 CFR 54.2(b))
+ */
+export type FinancialInterestType =
+  | 'financial_arrangement'
+  | 'significant_payments'
+  | 'proprietary_interest'
+  | 'significant_equity';
+
 export interface InvestigatorFinancialInfo {
   /** True when the investigator has interests/arrangements requiring disclosure. */
   hasDisclosableInterest?: boolean;
-  /** Free-text description of the disclosable interest(s) for Form 3455. */
+  /** Free-text description of the disclosable interest(s) — draft/record only. */
   disclosureDescription?: string;
+  /** Which 21 CFR 54.4 categories apply — drives the Form 3455 interest checkboxes. */
+  interestTypes?: FinancialInterestType[];
 }
 
 export interface IndProjectMetadata {
@@ -197,6 +214,13 @@ interface FieldSpec {
   value: FieldValue;
   required: boolean;
   allowedValues?: readonly string[];
+  /**
+   * A validation-only gate, NOT a fillable form widget (e.g. "at least one
+   * disclosure interest-type is selected"). Still reported in missingRequired for
+   * QC, but excluded from requiredFields so it never blocks the official-fill gate
+   * (which qualifies a template on real form fields only).
+   */
+  qcOnly?: boolean;
 }
 
 function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
@@ -206,7 +230,9 @@ function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
   const validationErrors: BuiltForm['validationErrors'] = [];
   for (const spec of specs) {
     fields[spec.id] = spec.value;
-    if (spec.required) requiredFields.push(spec.id);
+    // qcOnly gates stay out of requiredFields (the official-fill placeability
+    // gate) but still count toward missingRequired (QC readiness).
+    if (spec.required && !spec.qcOnly) requiredFields.push(spec.id);
     if (spec.required && !isPresent(spec.value)) {
       missingRequired.push(spec.id);
     }
@@ -462,51 +488,67 @@ export function buildForm3455(meta: IndProjectMetadata): BuiltForm {
   const disclosing = investigators.filter(
     (inv) => inv.financial?.hasDisclosableInterest === true,
   );
+  const hasDisclosable = disclosing.length > 0;
 
-  // Build one combined disclosure string: "Name: description". Only emit a
-  // line when a description is actually present, so that a disclosable interest
-  // with no description leaves disclosure_details empty (and thus flagged
-  // missingRequired) rather than emitting a meaningless "Name: " line.
+  // The 3455 is per-investigator (a single `invesname`). This single-form entry
+  // point discloses the FIRST disclosing investigator; use buildAllForm3455 for
+  // one form per investigator.
+  const first = disclosing[0];
+  const types = new Set(first?.financial?.interestTypes ?? []);
+  const anyTypeSelected = types.size > 0;
+
+  // Free-text description(s) are carried for the draft/record only — the OFFICIAL
+  // 3455 has no free-text disclosure field; the interest is expressed via the
+  // 21 CFR 54.4 checkboxes below.
   const disclosureLines = disclosing
     .filter((inv) => s(inv.financial?.disclosureDescription).length > 0)
-    .map((inv) => {
-      const name = s(inv.name) || '(unnamed investigator)';
-      const desc = s(inv.financial?.disclosureDescription);
-      return `${name}: ${desc}`;
-    })
+    .map((inv) => `${s(inv.name) || '(unnamed investigator)'}: ${s(inv.financial?.disclosureDescription)}`)
     .join('\n');
 
-  // The disclosure detail is required when there is something to disclose.
-  const hasDisclosable = disclosing.length > 0;
-  const allHaveDescriptions =
-    hasDisclosable &&
-    disclosing.every((inv) => s(inv.financial?.disclosureDescription).length > 0);
-
   const specs: FieldSpec[] = [
-    { id: 'sponsor_name', value: sponsorName, required: true },
-    { id: 'drug_name', value: s(meta.drugName), required: true },
-    { id: 'study_title', value: s(meta.studyTitle), required: false },
-    { id: 'disclosure_details', value: disclosureLines, required: hasDisclosable },
-    // If this form is being produced, descriptions for every disclosing
-    // investigator must be present.
-    { id: 'disclosure_descriptions_complete', value: allHaveDescriptions, required: true },
-    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },
-    { id: 'authorized_rep_title', value: s(meta.sponsor?.authorizedRepTitle), required: false },
+    { id: 'sponsor_name', value: sponsorName, required: true },                                  // → appFirm
+    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },    // → appName
+    { id: 'authorized_rep_title', value: s(meta.sponsor?.authorizedRepTitle), required: false }, // → appTitle
+    { id: 'study_title', value: s(meta.studyTitle), required: false },                           // → nameofstudy
+    { id: 'investigator_name', value: s(first?.name), required: hasDisclosable },                // → invesname
+    // 21 CFR 54.4 interest-type checkboxes (mapping verified from field tooltips).
+    { id: 'interest_financial_arrangement', value: types.has('financial_arrangement'), required: false }, // → check1
+    { id: 'interest_significant_payments', value: types.has('significant_payments'), required: false },   // → check2
+    { id: 'interest_proprietary', value: types.has('proprietary_interest'), required: false },            // → check3
+    { id: 'interest_significant_equity', value: types.has('significant_equity'), required: false },        // → check4
+    // QC gate: a disclosure must name at least one interest type. Not a form
+    // widget, so it never blocks the official fill — only QC readiness.
+    { id: 'interest_type_selected', value: anyTypeSelected, required: hasDisclosable, qcOnly: true },
+    // Draft/record only (no official field).
+    { id: 'drug_name', value: s(meta.drugName), required: false, qcOnly: true },
+    { id: 'disclosure_details', value: disclosureLines, required: false, qcOnly: true },
   ];
 
   return assemble(FORM_3455, specs);
 }
 
+/** Build one 3455 per disclosing investigator (empty when none disclose). */
+export function buildAllForm3455(meta: IndProjectMetadata): BuiltForm[] {
+  const disclosing = (meta.investigators ?? []).filter(
+    (inv) => inv.financial?.hasDisclosableInterest === true,
+  );
+  return disclosing.map((inv) => buildForm3455({ ...meta, investigators: [inv] }));
+}
+
 export function labels3455(): Record<string, string> {
   return {
     sponsor_name: 'Name of Applicant/Sponsor',
-    drug_name: 'Name of Drug/Product',
-    study_title: 'Study Title',
-    disclosure_details: 'Disclosed Financial Interests/Arrangements (per investigator)',
-    disclosure_descriptions_complete:
-      'All disclosing investigators have a disclosure description',
     authorized_rep_name: 'Name of Authorized Representative',
     authorized_rep_title: 'Title of Authorized Representative',
+    study_title: 'Name of Clinical Study',
+    investigator_name: 'Name of Clinical Investigator',
+    interest_financial_arrangement: 'Financial arrangement (compensation affected by outcome)',
+    interest_significant_payments: 'Significant payments of other sorts (>$25,000)',
+    interest_proprietary: 'Proprietary interest in the tested product',
+    interest_significant_equity: 'Significant equity interest (21 CFR 54.2(b))',
+    interest_type_selected: 'At least one interest type is selected',
+    drug_name: 'Name of Drug/Product',
+    disclosure_details: 'Disclosed Financial Interests/Arrangements (per investigator)',
   };
 }
 

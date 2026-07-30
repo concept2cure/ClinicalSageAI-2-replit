@@ -76,6 +76,26 @@ export const OFFICIAL_FIELD_MAPS: Record<string, OfficialFieldMap> = {
     no_disclosable_interests: 'topmostSubform[0].Page1[0].Subform1[0].checkboxList[0].LI1[0].check1[0]',
     investigator_names: 'topmostSubform[0].Page1[0].Subform1[0].checkboxList[0].LI1[0].clinInvList[0].LI1[0].invName1[0]',
   },
+
+  // FDA Form 3455 — Disclosure: Financial Interests/Arrangements (static XFA;
+  // pdf-lib strips the XFA and fills the 12-field AcroForm layer). Per-investigator
+  // (one invesname). The four interest checkboxes map to the 21 CFR 54.4 categories
+  // in the ORDER VERIFIED from the form's field tooltips: check1 financial
+  // arrangement, check2 significant payments, check3 proprietary interest, check4
+  // significant equity. Signature (appSignature) + governed date (appSigDate) are
+  // left for the signing event. NOTE (v1): this fills the FIRST disclosing
+  // investigator; per-investigator fill uses buildAllForm3455.
+  FDA_3455: {
+    sponsor_name: 'topmostSubform[0].Page1[0].appFirm[0]',
+    authorized_rep_name: 'topmostSubform[0].Page1[0].appName[0]',
+    authorized_rep_title: 'topmostSubform[0].Page1[0].appTitle[0]',
+    study_title: 'topmostSubform[0].Page1[0].nameofstudy[0]',
+    investigator_name: 'topmostSubform[0].Page1[0].invesname[0]',
+    interest_financial_arrangement: 'topmostSubform[0].Page1[0].checkboxList[0].LI1[0].check1[0]',
+    interest_significant_payments: 'topmostSubform[0].Page1[0].checkboxList[0].LI2[0].check2[0]',
+    interest_proprietary: 'topmostSubform[0].Page1[0].checkboxList[0].LI3[0].check3[0]',
+    interest_significant_equity: 'topmostSubform[0].Page1[0].checkboxList[0].LI4[0].check4[0]',
+  },
 };
 
 /** The official field map for a form id, or undefined if it has no AcroForm map. */
