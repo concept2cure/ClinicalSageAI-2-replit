@@ -1,0 +1,127 @@
+{
+  "manifestId": "fda-regulatory-reference-2026-07-30",
+  "description": "Curated regulatory reference corpus for biotech drug/biologic programs (IND → NDA/BLA). Classifies product-owner-provided FDA forms, authoring templates, and guidance for the ingestion pipeline (ingestion/pdf_extractor.py) and AnA's regulatory intelligence layer. Forms are bundled under templates/forms/acroforms; authoring templates under templates/authoring; guidance is registered for extraction/embedding on deployment. Out-of-scope items (veterinary/CVM forms and food-safety/FSVP examples) are recorded but flagged so they are not ingested into the human drug/biologic knowledge base.",
+  "generatedAt": "2026-07-30",
+  "segment": "pharma_biotech",
+  "sources": [
+    {
+      "id": "FDA_1571", "kind": "fda_form", "agency": "FDA", "formNumber": "1571",
+      "title": "Investigational New Drug Application (IND)",
+      "repoPath": "templates/forms/acroforms/FDA_1571.pdf",
+      "lifecyclePhase": "investigational", "useCase": "IND cover application form (21 CFR 312.23)",
+      "fillEngine": "xfa_dynamic_reference_only", "canonicalSource": "https://www.fda.gov/about-fda/forms"
+    },
+    {
+      "id": "FDA_1572", "kind": "fda_form", "agency": "FDA", "formNumber": "1572",
+      "title": "Statement of Investigator",
+      "repoPath": "templates/forms/acroforms/FDA_1572.pdf",
+      "lifecyclePhase": "investigational", "useCase": "Per-investigator statement (21 CFR 312.53)",
+      "fillEngine": "xfa_dynamic_reference_only", "canonicalSource": "https://www.fda.gov/about-fda/forms"
+    },
+    {
+      "id": "FDA_356H", "kind": "fda_form", "agency": "FDA", "formNumber": "356h",
+      "title": "Application to Market a New or Abbreviated New Drug or Biologic for Human Use",
+      "repoPath": "templates/forms/acroforms/FDA_356H.pdf",
+      "lifecyclePhase": "marketing_authorization", "useCase": "NDA / ANDA / BLA cover application form",
+      "fillEngine": "xfa_dynamic_reference_only", "canonicalSource": "https://www.fda.gov/about-fda/forms"
+    },
+    {
+      "id": "FDA_3674", "kind": "fda_form", "agency": "FDA", "formNumber": "3674",
+      "title": "Certification of Compliance (ClinicalTrials.gov, 42 U.S.C. 282(j))",
+      "repoPath": "templates/forms/acroforms/FDA_3674.pdf",
+      "lifecyclePhase": "investigational", "useCase": "ClinicalTrials.gov certification with IND/NDA/BLA",
+      "fillEngine": "xfa_dynamic_reference_only", "canonicalSource": "https://www.fda.gov/about-fda/forms"
+    },
+    {
+      "id": "FDA_3454", "kind": "fda_form", "agency": "FDA", "formNumber": "3454",
+      "title": "Certification: Financial Interests and Arrangements of Clinical Investigators",
+      "repoPath": "templates/forms/acroforms/FDA_3454.pdf",
+      "lifecyclePhase": "marketing_authorization", "useCase": "Sponsor financial-interest certification (21 CFR 54)",
+      "fillEngine": "xfa_dynamic_reference_only", "canonicalSource": "https://www.fda.gov/about-fda/forms"
+    },
+    {
+      "id": "REGARDD_IND_TEMPLATE", "kind": "authoring_template", "agency": "FDA", "format": "docx",
+      "title": "ReGARDD IND Application Template",
+      "repoPath": "templates/authoring/ReGARDD_IND_Template.docx",
+      "lifecyclePhase": "investigational", "useCase": "IND dossier authoring template (academic/small-sponsor oriented)",
+      "mapsToRegistryId": "US_IND"
+    },
+    {
+      "id": "PROTOCOL_TEMPLATE_V1", "kind": "authoring_template", "agency": "ICH", "format": "docx",
+      "title": "Clinical Protocol Template v1.0",
+      "repoPath": "templates/authoring/Protocol_Template_v1.0.docx",
+      "lifecyclePhase": "investigational", "useCase": "Clinical trial protocol authoring (ICH E6) — CTD 5.3.5 / M5",
+      "mapsToRegistryId": "ICH_PROTOCOL"
+    },
+    {
+      "id": "BIOANALYTICAL_METHODS_TEMPLATE_V1", "kind": "authoring_template", "agency": "FDA", "format": "pdf",
+      "title": "Bioanalytical Methods — Technical Specifications Template v1",
+      "repoPath": "templates/authoring/Bioanalytical_Methods_Template_v1.pdf",
+      "lifecyclePhase": "investigational", "useCase": "Bioanalytical method validation documentation (ICH M10) — supports Module 4/5"
+    },
+    {
+      "id": "GUIDANCE_1571_INSTRUCTIONS", "kind": "guidance", "agency": "FDA",
+      "title": "FDA Form 1571 — Instructions (Revision 14)",
+      "useCase": "Field-level completion guidance for Form 1571", "providedAsUpload": true,
+      "canonicalSource": "https://www.fda.gov/about-fda/forms", "topics": ["IND", "form_1571", "sponsor"]
+    },
+    {
+      "id": "GUIDANCE_356H_INSTRUCTIONS", "kind": "guidance", "agency": "FDA",
+      "title": "FDA Form 356h — Instructions",
+      "useCase": "Field-level completion guidance for Form 356h", "providedAsUpload": true,
+      "canonicalSource": "https://www.fda.gov/about-fda/forms", "topics": ["NDA", "BLA", "form_356h"]
+    },
+    {
+      "id": "GUIDANCE_STATEMENT_OF_INVESTIGATOR_312", "kind": "guidance", "agency": "FDA",
+      "title": "Statement of Investigator (21 CFR Part 312) — Guidance",
+      "useCase": "Investigator obligations and 1572 completion (GCP)", "providedAsUpload": true,
+      "topics": ["1572", "GCP", "21_CFR_312", "investigator"]
+    },
+    {
+      "id": "GUIDANCE_510K_ESUBMISSION", "kind": "guidance", "agency": "FDA",
+      "title": "510(k) eSubmission (eSTAR) Guidance",
+      "useCase": "Device 510(k) electronic submission preparation", "providedAsUpload": true,
+      "topics": ["510k", "eSTAR", "device"]
+    },
+    {
+      "id": "GUIDANCE_RRA_GFI", "kind": "guidance", "agency": "FDA",
+      "title": "Regulatory Review / Rare-disease Guidance for Industry (RRA GFI)",
+      "useCase": "Program strategy reference", "providedAsUpload": true, "topics": ["guidance", "strategy"]
+    },
+    {
+      "id": "REF_IND_APPLICATION_OVERVIEW", "kind": "guidance", "agency": "FDA",
+      "title": "IND Application — Overview and Contents",
+      "useCase": "IND content/format orientation (Module 1–5)", "providedAsUpload": true, "topics": ["IND", "eCTD", "content"]
+    },
+    {
+      "id": "EXAMPLE_DMF_15518", "kind": "example", "agency": "FDA",
+      "title": "Drug Master File (DMF) — example dossier",
+      "useCase": "Reference example of a Type II DMF (CMC)", "providedAsUpload": true, "topics": ["DMF", "CMC", "module_3"]
+    },
+    {
+      "id": "REF_TRANSCELERATE_1571", "kind": "guidance", "agency": "TransCelerate",
+      "title": "TransCelerate — Investigational New Drug Application (Form 1571) reference",
+      "useCase": "Industry-consortium reference for 1571 use", "providedAsUpload": true, "topics": ["IND", "1571"]
+    },
+    {
+      "id": "REF_MODERNIZING_CT_ANALYTICS", "kind": "guidance", "agency": "industry",
+      "title": "Modernizing Clinical Trial Analytics",
+      "useCase": "Background reference on clinical trial data/analytics", "providedAsUpload": true, "topics": ["analytics", "clinical_trials"]
+    },
+    {
+      "id": "REF_UCLA_IND_TEMPLATES_LINKS", "kind": "guidance", "agency": "academic",
+      "title": "ResearchGo (UCLA) — IND Templates, Education and Useful Links",
+      "useCase": "Curated links to IND templates and education", "providedAsUpload": true, "topics": ["IND", "templates", "links"]
+    },
+    {
+      "id": "REF_SAMPLE_CHECKLISTS_TC150122", "kind": "example", "agency": "industry",
+      "title": "Sample Submission Checklists",
+      "useCase": "Reference submission-readiness checklists", "providedAsUpload": true, "topics": ["checklist", "submission_readiness"]
+    }
+  ],
+  "outOfScope": {
+    "note": "Recorded so nothing is lost, but NOT ingested into the human drug/biologic (IND→BLA) knowledge base. Veterinary forms belong to CDER/CVM veterinary workflows; FSVP/food-safety items belong to FDA food-import workflows.",
+    "veterinary_forms": ["FDA_356v (New Animal Drug Application)", "FDA_431a", "FDA_1932 (Veterinary Adverse Experience)", "FDA_1932a", "FDA_1815"],
+    "food_safety_fsvp": ["FSVP Observations", "Request for FSVP Records", "Report of Sample Analysis", "Report of Sample Analysis — Aflatoxins", "Summary of Bacteriological Results", "Sample Summary"]
+  }
+}
