@@ -1,3 +1,11 @@
+-- DEPRECATED (2026-08): superseded by the REAL labeling_pi_sections store
+-- (20260801_labeling_pi_store.sql), which has a live write path
+-- (labeling-pi-service.ts via POST /api/labeling-pi). GET /api/labeling-pi now
+-- reads that real, org-scoped store — see docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This blob is retained (non-destructive)
+-- but is no longer written by the demo seed nor read by any route. A later
+-- migration may DROP it once no environment references it.
+--
 -- Labeling / prescribing-information store — the per-product label worklist
 -- backing the v2 LabelingPi surface's GET read. Each row is one section of a
 -- structured product label (USPI / PLLR — 21 CFR 201.57, or EU SmPC / QRD)

@@ -1,15 +1,17 @@
 /**
- * Wave-3 domain seed — labeling / prescribing-information worklist.
+ * Wave-3 domain seed — labeling / prescribing-information worklist into the REAL store.
  *
  * The BX-204 (rezatinib) USPI under PLLR / 21 CFR 201.57 as a per-section
- * worklist: each of the full-PI sections with its authoring status, whether
- * FDA has proposed an edit (flag), the rendered label text (content), and the
- * end-of-cycle labeling negotiation (sponsor text vs FDA redline). Read by
- * GET /api/labeling-pi; the v2 LabelingPi surface renders the section tree and
- * the agency-negotiation panel. Grounded in the app's BX-204 program — no
- * fabricated data beyond that program. to_regclass guarded, org-scoped,
- * idempotent (ON CONFLICT DO NOTHING). The rendered content and the negotiation
- * redline are stored as JSONB.
+ * worklist, seeded into the REAL, org-scoped `labeling_pi_sections` store
+ * (migration 20260801_labeling_pi_store.sql) — the exact table
+ * labeling-pi-service.ts writes via POST /api/labeling-pi, and that GET
+ * /api/labeling-pi now reads. No blob: each section carries its authoring
+ * status, whether FDA proposed an edit (flag), the rendered label text
+ * (content JSONB) and the end-of-cycle negotiation redline (negotiation JSONB).
+ * Document order is derived from the section number on read — no stored seq.
+ * to_regclass guarded, org-scoped, idempotent (upsert target's partial unique
+ * index; skips when the org already has live sections), created_by resolved
+ * from a real org member.
  */
 const CONTENT = {
   HL: { heading: 'Highlights of prescribing information', body: [
@@ -66,30 +68,43 @@ const SECTIONS = [
   { n: '17', label: 'Patient counseling information', st: 'draft' },
 ];
 
-export default async function seed(client, { org }) {
-  const t = await client.query(`SELECT to_regclass('public.c2c_labeling_pi') AS c`);
+export default async function seed(client, { org, admin }) {
+  const t = await client.query(`SELECT to_regclass('public.labeling_pi_sections') AS c`);
   if (!t.rows[0]?.c) {
-    console.log('   ⚠ c2c_labeling_pi not found — run migrations first, skipping');
+    console.log('   ⚠ labeling_pi_sections not found — run migrations first, skipping');
     return;
   }
+  const existing = await client.query(
+    `SELECT 1 FROM labeling_pi_sections WHERE organization_id = $1 AND deleted_at IS NULL LIMIT 1`,
+    [org.id],
+  );
+  if (existing.rowCount) {
+    console.log('   ✓ labeling pi: already seeded');
+    return;
+  }
+  const u = await client.query(
+    `SELECT user_id FROM organization_users WHERE organization_id = $1 ORDER BY user_id LIMIT 1`,
+    [org.id],
+  );
+  const userId = u.rows[0]?.user_id ?? admin?.id ?? null;
+
   let inserted = 0;
-  let seq = 0;
   for (const s of SECTIONS) {
-    seq += 1;
     const content = CONTENT[s.n] ?? null;
     const negotiation = NEGOTIATION[s.n] ?? null;
     const r = await client.query(
-      `INSERT INTO c2c_labeling_pi (
-         n, organization_id, seq, label, st, flag, content, negotiation
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
-       ON CONFLICT (organization_id, n) DO NOTHING`,
+      `INSERT INTO labeling_pi_sections (
+         organization_id, section_no, label, status, flag, program, content, negotiation, created_by
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9)
+       ON CONFLICT (organization_id, section_no) WHERE deleted_at IS NULL DO NOTHING`,
       [
-        s.n, org.id, seq, s.label, s.st, s.flag ?? null,
+        org.id, s.n, s.label, s.st, s.flag ?? null, 'BX-204 (rezatinib)',
         content === null ? null : JSON.stringify(content),
         negotiation === null ? null : JSON.stringify(negotiation),
+        userId,
       ],
     );
     inserted += r.rowCount ?? 0;
   }
-  console.log(`   ✓ labeling pi: ${inserted} label sections seeded`);
+  console.log(`   ✓ labeling pi: ${inserted} label section(s) seeded into labeling_pi_sections`);
 }
