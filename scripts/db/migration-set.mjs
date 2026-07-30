@@ -307,6 +307,16 @@ export const C2C_MIGRATION_FILES = [
   // statements are ALTER … IF EXISTS … DROP NOT NULL — a no-op once dropped, so
   // idempotent and safe where push already provisioned the nullable shape.
   'db/migrations/20260725_ectd_compilations_project_level.sql',
+  // eCTD sequence-continuity gate unblock (ledger C-31). ectd_compilations
+  // carried NEITHER application_number NOR sequence_number in any definition, yet
+  // ectd-validator-hardening.ts's detectSequenceGaps (step 5 of the hardened
+  // gateway-readiness gate) SELECTs both from it — so the query threw
+  // `column does not exist`, the catch reported a false "database unreachable",
+  // and every submission was blocked. Adds the two columns (nullable) + an
+  // application_number index. Existing-database half of the fix; fresh installs
+  // get the columns from shared/schema.ts via push. Additive ALTER … ADD COLUMN
+  // IF NOT EXISTS, idempotent, safe to re-run.
+  'db/migrations/20260730_ectd_compilations_sequence_columns.sql',
   // ── Part 11 DB-level immutability (added 2026-07-30, auth/e-sig audit) ────
   // electronic_signatures: DELETE always refused; UPDATE refused except the
   // write-once supersession transition (superseded_by NULL → id).

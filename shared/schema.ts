@@ -8273,6 +8273,13 @@ export const ectdCompilations = pgTable(
     xmlBackbone: text('xml_backbone'), // eCTD XML structure
     crossReferences: json('cross_references'), // ICH cross-references
     status: text('status').default('pending').notNull(), // pending, compiling, completed, failed
+    // Which regulatory application + eCTD sequence this compilation targets.
+    // Nullable: a compilation may be run before an application number / sequence
+    // is assigned. Read by ectd-validator-hardening.ts detectSequenceGaps() for
+    // submission-sequence continuity (ledger C-31); a compilation without them
+    // simply contributes no sequence to that history.
+    applicationNumber: text('application_number'),
+    sequenceNumber: text('sequence_number'),
     // Nullable for the same reason: service-initiated compilations have no
     // interactive user. The one existing writer that set it used a hardcoded 1.
     compiledBy: integer('compiled_by'),

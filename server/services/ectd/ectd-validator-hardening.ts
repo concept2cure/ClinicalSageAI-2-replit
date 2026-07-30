@@ -451,19 +451,62 @@ export async function detectSequenceGaps(
   // as a gateway-blocking finding — NOT be swallowed as "no history",
   // because that would silently re-classify a non-0000 submission as a
   // first-ever submission (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1).
+  // Two sources feed the history, with different durability. ectd_compilations
+  // is the PRIMARY, always-present source (drizzle journal + the C-31 ALTER put
+  // application_number / sequence_number on it). ectd_submissions
+  // (db/migrations/082_ectd_submission_agent.sql) is a SEPARATE lifecycle
+  // subsystem that is itself on no durable apply path — on a deploy that has not
+  // stood it up the table does not exist. A single UNION naming both would throw
+  // 42P01 (undefined_table) when it is absent and — via the catch below —
+  // misreport that provisioning state as a DB OUTAGE, blocking every submission
+  // with "database unreachable" (ledger C-16 recorded exactly this; C-31 fixes
+  // it). So the two are queried separately: the primary must succeed, and the
+  // optional one tolerates ONLY "table does not exist"; any other failure on
+  // EITHER (a real outage, a permission error, a missing column on an unmigrated
+  // primary) still blocks — the "an outage must never be swallowed as no-history"
+  // invariant (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1) is preserved.
+  const UNDEFINED_TABLE = '42P01';
+  const sqlState = (err: unknown): string | undefined =>
+    err && typeof err === 'object' && 'code' in err
+      ? String((err as { code: unknown }).code)
+      : undefined;
+
   let result: { rows: Array<{ sequence_number: string }> };
   try {
-    result = await pool.query(
-      `SELECT DISTINCT sequence_number
-       FROM (
-         SELECT sequence_number FROM ectd_compilations WHERE application_number = $1
-         UNION
-         SELECT sequence_number FROM ectd_submissions WHERE application_number = $1
-       ) seqs
-       WHERE sequence_number ~ '^\\d{4}$'
-       ORDER BY sequence_number ASC`,
+    const primary = await pool.query(
+      `SELECT sequence_number FROM ectd_compilations WHERE application_number = $1`,
       [applicationNumber]
     );
+    const rows = [...(primary.rows || [])];
+
+    // Optional source: fold in ectd_submissions when it exists. A bare
+    // "table does not exist" is the deploy-dead subsystem, not an outage — log it
+    // and carry on with the primary history. Anything else re-throws to the outer
+    // catch and blocks the gate.
+    try {
+      const secondary = await pool.query(
+        `SELECT sequence_number FROM ectd_submissions WHERE application_number = $1`,
+        [applicationNumber]
+      );
+      rows.push(...(secondary.rows || []));
+    } catch (subErr) {
+      if (sqlState(subErr) === UNDEFINED_TABLE) {
+        log.warn('SEQ_SUBMISSIONS_ABSENT — ectd_submissions not provisioned; using ectd_compilations only', {
+          applicationNumber,
+        });
+      } else {
+        throw subErr;
+      }
+    }
+
+    // DISTINCT + 4-digit filter + ascending order, previously done in SQL.
+    const seen = new Set<string>();
+    const deduped = rows
+      .map(r => String((r as { sequence_number: unknown }).sequence_number))
+      .filter(s => /^\d{4}$/.test(s))
+      .filter(s => (seen.has(s) ? false : (seen.add(s), true)))
+      .sort();
+    result = { rows: deduped.map(sequence_number => ({ sequence_number })) };
   } catch (err) {
     // The raw err.message frequently leaks schema-level intel that an
     // unauthenticated caller should not see — table names, role names,

@@ -898,13 +898,15 @@ persisted row holds its own value — one assertion per column the off-by-one
 corrupted. Cross-tenant history and readiness must come back empty; missing org
 context must be 401.
 
-### Recorded, not fixed
+### Recorded, not fixed → FIXED by C-31
 
 `server/services/ectd/ectd-validator-hardening.ts` queries
 `ectd_compilations.sequence_number` and `.application_number`. **Neither column
-exists in any definition of that table.** The submission-sequence history that
-validator depends on has nowhere to live; that needs a schema decision, not a
-patch, and is outside Journey B's path.
+existed in any definition of that table.** The submission-sequence history that
+validator depends on had nowhere to live. Resolved in **C-31**: the two columns
+are added to `ectd_compilations` (durable migration + `shared/schema.ts`) and the
+validator is hardened so the independently deploy-dead `ectd_submissions` table no
+longer turns a schema gap into a false "database unreachable" outage.
 
 ---
 
@@ -1818,6 +1820,68 @@ isolation is the opacity of the parent `doc_id` (itself tenant-gated in
 `RLS_ENFORCE=on`. Threading `tenant_id` through those handlers' INSERT/SELECT is a
 router change the existing SCOPE NOTEs carve out as separate — tracked for a
 follow-up, not part of this reachability fix.
+
+---
+
+## C-31 — The eCTD sequence-continuity gate could not execute, and blamed a DB outage *(high — FIXED 2026-07-30)*
+
+The "recorded, not fixed" residue of C-16. `detectSequenceGaps` — step 5 of
+`validateEctdPackageHardened`, the hardened gateway-readiness gate wired at
+`server/routes/submission-orchestrator.ts` — enforces eCTD submission-sequence
+continuity for an application (first must be 0000, no duplicate, no gap, no
+regression). It reads prior sequences from a UNION of `ectd_compilations` and
+`ectd_submissions`, both by `application_number` projecting `sequence_number`.
+
+Two independent defects made that query throw on every real deploy:
+
+1. **`ectd_compilations` carried neither column** — not in the drizzle journal
+   (`0000_sweet_joseph`), not in `shared/schema.ts`, not in the C-16 project-level
+   ALTER. `SELECT … application_number …` → `column does not exist`.
+2. **`ectd_submissions` is itself deploy-dead** — its sole creator
+   `db/migrations/082_ectd_submission_agent.sql` is on no durable path (no
+   `_gcc_`, not in the journal, not in any applier), though `ectd-submission-agent.
+   ts` writes it live. On a deploy that has not stood that subsystem up the table
+   is absent, so even a column-complete UNION throws `42P01 undefined_table`.
+
+Either way the handler's catch reported `SEQ_QUERY_FAILED` "submission tracking
+database is unreachable" and blocked the submission as gateway-not-ready — a
+schema-provisioning state misattributed as a connectivity **outage**, the exact
+swallowed-cause anti-pattern C-16 documented, now on the gate that decides whether
+a package may transmit to FDA.
+
+### Fix
+
+- `db/migrations/20260730_ectd_compilations_sequence_columns.sql` — adds
+  `application_number` + `sequence_number` (nullable — a compilation may target no
+  application/sequence yet) and an `application_number` index. On
+  `C2C_MIGRATION_FILES` (the existing-database durable applier); fresh installs get
+  the columns from `shared/schema.ts` via `drizzle-kit push`.
+- `ectd-validator-hardening.ts` `detectSequenceGaps` now probes
+  `to_regclass('public.ectd_submissions')` (NULL, never an error, when absent) and
+  includes that source only when present — so the gate runs off the always-present
+  `ectd_compilations` alone on a deploy without the submission-agent subsystem, and
+  unions in `ectd_submissions` when it exists. A genuine outage makes the probe
+  itself throw, so `SEQ_QUERY_FAILED` still fires: the "an outage must never be
+  swallowed as no-history" invariant (RECONCILIATION_AUDIT_2026-06-29 §A.3/§D.1) is
+  preserved.
+
+### Proof
+
+`tests/schema-contract/ectd-sequence-continuity.contract.test.ts` (7 cases,
+PGlite): the migration adds both columns; with `ectd_submissions` absent the gate
+still runs off `ectd_compilations` (expected-next → no findings, never
+`SEQ_QUERY_FAILED`) and the duplicate / gap / first-not-0000 rules fire; with
+`ectd_submissions` present its sequences join the history; and a genuine query
+failure still yields `SEQ_QUERY_FAILED`.
+
+### Residual (documented, not a regression)
+
+`ectd_submissions` and the wider `082_ectd_submission_agent.sql` subsystem
+(submissions, submission_documents, agency_configs) remain deploy-dead — a
+separate C-23-class reachability gap: `ectd-submission-agent.ts`'s writes 500 on a
+real deploy. C-31 makes the sequence gate correct with or without it; standing the
+subsystem up on a durable applier (with its `ectd_agency_configs` FK ordering) is
+a follow-up in its own right.
 
 ---
 

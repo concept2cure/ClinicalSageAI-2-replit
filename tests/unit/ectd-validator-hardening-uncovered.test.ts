@@ -84,6 +84,13 @@ function makeLeaf(over: Partial<ECTDLeaf> & { sectionCode: string }): ECTDLeaf {
 
 beforeEach(() => {
   hoisted.poolQuery.mockReset();
+  // detectSequenceGaps now queries the two history sources separately (C-31): the
+  // primary ectd_compilations, then the optional ectd_submissions. Each test's
+  // `mockResolvedValueOnce` supplies the PRIMARY (first) call; this default makes
+  // the second (submissions) call return an empty set, so the primary sequences
+  // flow through unchanged. Tests that reject the first call still block before
+  // the second runs.
+  hoisted.poolQuery.mockResolvedValue(seqRows([]));
 });
 
 // ── Mock-interception safety check ──────────────────────────────────────────
@@ -98,7 +105,8 @@ describe('mock interception sanity', () => {
     expect(hoisted.poolQuery).not.toHaveBeenCalled();
     hoisted.poolQuery.mockResolvedValueOnce(seqRows([]));
     await detectSequenceGaps('IND000000', '0000');
-    expect(hoisted.poolQuery).toHaveBeenCalledTimes(1);
+    // Two sources now (C-31): primary ectd_compilations + optional ectd_submissions.
+    expect(hoisted.poolQuery).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -295,21 +303,28 @@ describe('detectSequenceGaps (DB-backed)', () => {
     expect(result.gatewayReady).toBe(false);
   });
 
-  it('queries with the application number bound to $1 and filters DISTINCT 4-digit seqs', async () => {
+  it('queries both history sources separately, each with the application bound to $1 (C-31)', async () => {
     // Sanity: confirms the SQL contract the unit relies on. Mocks intercept
-    // before any real query, so this is just shape verification.
+    // before any real query, so this is just shape verification. C-31 split the
+    // former single UNION into a primary ectd_compilations query and an optional
+    // ectd_submissions query (so a deploy-dead submissions table degrades to
+    // "no history from that source" instead of a false outage), with the DISTINCT
+    // + 4-digit filter now applied in-process.
     hoisted.poolQuery.mockResolvedValueOnce(seqRows([]));
 
     await detectSequenceGaps('IND123456', '0000');
 
-    expect(hoisted.poolQuery).toHaveBeenCalledTimes(1);
-    const [sql, params] = hoisted.poolQuery.mock.calls[0];
-    expect(sql).toMatch(/sequence_number/i);
-    expect(sql).toMatch(/ectd_compilations/i);
-    expect(sql).toMatch(/ectd_submissions/i);
-    expect(sql).toMatch(/UNION/i);
-    expect(sql).toMatch(/application_number\s*=\s*\$1/i);
-    expect(params).toEqual(['IND123456']);
+    expect(hoisted.poolQuery).toHaveBeenCalledTimes(2);
+    const [primarySql, primaryParams] = hoisted.poolQuery.mock.calls[0];
+    expect(primarySql).toMatch(/sequence_number/i);
+    expect(primarySql).toMatch(/ectd_compilations/i);
+    expect(primarySql).toMatch(/application_number\s*=\s*\$1/i);
+    expect(primaryParams).toEqual(['IND123456']);
+
+    const [secondarySql, secondaryParams] = hoisted.poolQuery.mock.calls[1];
+    expect(secondarySql).toMatch(/ectd_submissions/i);
+    expect(secondarySql).toMatch(/application_number\s*=\s*\$1/i);
+    expect(secondaryParams).toEqual(['IND123456']);
   });
 });
 
