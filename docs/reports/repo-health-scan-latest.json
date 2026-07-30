@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T02:11:56.809Z",
+  "generatedAt": "2026-07-30T05:51:11.143Z",
   "git": {
-    "sha": "c7269e383f4d0179e9e636a22ed5b7eaa0012466",
+    "sha": "6f51f246d8550610729d6ab25931dbf587cb8e2c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 249,
+    "duplicateBasenames": 250,
     "largeFilesByBytes": 30,
     "largeFilesByLines": 84
   },
@@ -1631,6 +1631,14 @@
         ]
       },
       {
+        "basename": "estar-registration",
+        "count": 2,
+        "paths": [
+          "server/services/pathway-engines/estar/estar-registration.ts",
+          "shared/schema/estar-registration.ts"
+        ]
+      },
+      {
         "basename": "estareditor",
         "count": 2,
         "paths": [
@@ -2936,7 +2944,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 402,
+      "duplicateGroups": 403,
       "largeByBytes": 27,
       "largeByLines": 73
     },
@@ -2954,7 +2962,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 67,
+      "duplicateGroups": 68,
       "largeByBytes": 1,
       "largeByLines": 2
     },
