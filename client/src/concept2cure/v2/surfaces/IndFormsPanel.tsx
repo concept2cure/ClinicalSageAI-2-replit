@@ -90,8 +90,20 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
       a.href = url; a.download = `FDA-${formId}.pdf`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      const coverage = res.headers?.get?.('X-Form-Field-Coverage');
-      note(`FDA ${formId} PDF rendered by the real form engine${coverage ? ' · coverage ' + coverage : ''}.`);
+      // Say honestly WHAT was rendered: the official FDA template, a faithful
+      // reconstruction (dynamic-XFA forms have no official page to fill), or the
+      // labeled draft (no template installed). A tester must never mistake a
+      // reconstruction or draft for the official Adobe-rendered form.
+      const hdr = (k: string) => res.headers?.get?.(k) ?? null;
+      const kind = hdr('X-Form-Used-Official-Template') === 'true'
+        ? 'official FDA template'
+        : hdr('X-Form-Reconstructed') === 'true'
+          ? 'faithful reconstruction — NOT the official Adobe-rendered form'
+          : 'labeled draft — official template not installed';
+      const coverage = hdr('X-Form-Field-Coverage');
+      const missingHdr = hdr('X-Form-Missing-Required');
+      const missingCount = missingHdr ? missingHdr.split(',').filter(Boolean).length : 0;
+      note(`FDA ${formId} PDF: ${kind}${coverage ? ' · coverage ' + coverage : ''}${missingCount ? ' · ' + missingCount + ' required field(s) still missing' : ''}.`);
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 
