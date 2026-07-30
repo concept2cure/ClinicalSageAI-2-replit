@@ -66,6 +66,9 @@ describe('explain_design_risk', () => {
     expect(r.negativePrecedent.length).toBeGreaterThan(0);
     expect(r.citations[0].ichE3).toBe('11.4');
     expect(JSON.stringify(r)).not.toMatch(/will accept|approval probability/i);
+    // Provenance envelope: FDA-CRL sourced, precedent-not-prediction caveat.
+    expect(r.provenance.lineageObjectType).toBe('regulatory_finding');
+    expect(r.provenance.caveats.join(' ')).toMatch(/precedent, not a prediction/i);
   });
 
   it('is honest when no evidence exists', async () => {
@@ -112,6 +115,8 @@ describe('search_clinical_regulatory_evidence', () => {
     expect(r.ok).toBe(true);
     expect(r.studies.length).toBe(1);
     expect(r.note).toMatch(/not a prediction/i);
+    expect(r.provenance?.sourceType).toBeTruthy();          // carries an auditable provenance envelope
+    expect(r.provenance.citation.identifier).toBe('NSCLC');
   });
 });
 

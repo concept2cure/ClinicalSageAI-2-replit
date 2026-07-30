@@ -21,7 +21,7 @@ vi.hoisted(() => {
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 });
 
-import { nonAccessTokenReason } from '../../middleware/tokenType';
+import { nonAccessTokenReason, requireAccessTokenReason } from '../../middleware/tokenType';
 import {
   buildRegionArray,
   buildEncryptionFieldArray,
@@ -51,6 +51,35 @@ describe('MFA-bypass guard: nonAccessTokenReason', () => {
 
   it('is case-insensitive on the type claim', () => {
     expect(nonAccessTokenReason({ type: 'REFRESH' })).toBe('refresh');
+  });
+
+  it('rejects UNKNOWN explicit token classes (allow-list, not deny-list)', () => {
+    // Previously only the three known non-access classes were rejected, so a
+    // token stamped with a class this code had never heard of authenticated.
+    expect(nonAccessTokenReason({ type: 'password_reset' })).toBe('password_reset');
+    expect(nonAccessTokenReason({ type: 'invite' })).toBe('invite');
+  });
+});
+
+describe('strict access-token requirement: requireAccessTokenReason', () => {
+  it('accepts only an explicit access token', () => {
+    expect(requireAccessTokenReason({ type: 'access' })).toBeNull();
+    expect(requireAccessTokenReason({ type: 'access', role: 'user' })).toBeNull();
+  });
+
+  it('rejects a token with NO type claim (missing_token_type)', () => {
+    // The normal API path must positively assert the expected token class —
+    // "reject known bad classes" is not fail-closed.
+    expect(requireAccessTokenReason({ role: 'user' })).toBe('missing_token_type');
+    expect(requireAccessTokenReason({})).toBe('missing_token_type');
+  });
+
+  it('rejects every non-access class, known or unknown', () => {
+    expect(requireAccessTokenReason({ type: 'refresh' })).toBe('refresh');
+    expect(requireAccessTokenReason({ type: 'mfa_challenge' })).toBe('mfa_challenge');
+    expect(requireAccessTokenReason({ mfaPending: true })).toBe('mfa_partial_token');
+    expect(requireAccessTokenReason({ role: 'pending_mfa' })).toBe('mfa_pending_role');
+    expect(requireAccessTokenReason({ type: 'password_reset' })).toBe('password_reset');
   });
 });
 

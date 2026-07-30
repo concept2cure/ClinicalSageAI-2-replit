@@ -10,9 +10,21 @@ import { organizations } from '../../shared/schema';
 import { authMiddleware, requireAdminRole } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
+import { db } from '../db';
 
 const logger = createScopedLogger('tenant-config-api');
 const router = Router();
+
+// This router previously read the Drizzle handle off `req.db`, which
+// authMiddleware attached globally to every authenticated request. That
+// side-channel is gone (it undercut the fail-closed request-scoped DB
+// policy); the module imports its own handle and fails closed when absent.
+function requireDb() {
+  if (!db) {
+    throw new Error('Database connection not available');
+  }
+  return db;
+}
 
 // Schema for tenant settings
 const tenantSettingsSchema = z.object({
@@ -116,7 +128,7 @@ router.get('/:tenantId/settings', authMiddleware, requireOrganizationContext, as
     }
 
     // Get tenant settings
-    const tenant = await req.db
+    const tenant = await requireDb()
       .select()
       .from(organizations)
       .where(eq(organizations.id, tenantId))
@@ -173,7 +185,7 @@ router.patch(
       const newSettings = validationResult.data;
 
       // Get current settings
-      const tenant = await req.db
+      const tenant = await requireDb()
         .select()
         .from(organizations)
         .where(eq(organizations.id, tenantId))
@@ -188,7 +200,7 @@ router.patch(
       const mergedSettings = { ...currentSettings, ...newSettings };
 
       // Update the tenant settings
-      const updatedTenant = await req.db
+      const updatedTenant = await requireDb()
         .update(organizations)
         .set({ settings: mergedSettings })
         .where(eq(organizations.id, tenantId))
@@ -231,7 +243,7 @@ router.post(
       }
 
       // Define default settings based on tenant tier
-      const tenant = await req.db
+      const tenant = await requireDb()
         .select()
         .from(organizations)
         .where(eq(organizations.id, tenantId))
@@ -288,7 +300,7 @@ router.post(
       };
 
       // Update with default settings
-      const updatedTenant = await req.db
+      const updatedTenant = await requireDb()
         .update(organizations)
         .set({ settings: defaultSettings })
         .where(eq(organizations.id, tenantId))
@@ -367,7 +379,7 @@ router.patch(
       const sectionData = validationResult.data;
 
       // Get current settings
-      const tenant = await req.db
+      const tenant = await requireDb()
         .select()
         .from(organizations)
         .where(eq(organizations.id, tenantId))
@@ -389,7 +401,7 @@ router.patch(
       };
 
       // Update the tenant settings
-      const updatedTenant = await req.db
+      const updatedTenant = await requireDb()
         .update(organizations)
         .set({ settings: mergedSettings })
         .where(eq(organizations.id, tenantId))

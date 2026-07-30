@@ -31,6 +31,7 @@ import {
   type FeatureContext,
   type CompletenessBin,
 } from './outcome-feature-extraction.js';
+import { assertInferenceFeaturesClean } from './prediction-governance.js';
 import {
   predict as predictRisk,
   trainModel,
@@ -204,6 +205,13 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
     openEscalations: input.openEscalations ?? 0,
   };
   const features = featuresForDraft(featureCtx);
+  // Runtime prediction-governance guard at the serving boundary (Phase 7 / audit
+  // P2). featureCtx carries ONLY completeness metrics, so this is defense-in-depth
+  // against a future regression that lets a realized post-submission outcome or a
+  // regulatory-evidence signal reach inference directly: fail closed (throw) rather
+  // than ever serve a leaked score. The same invariant is enforced in CI; this makes
+  // it hold at runtime too.
+  assertInferenceFeaturesClean(features);
   const completenessBin = binCompleteness(completeness.summary.readinessPercentage);
 
   // Step 3: predict each target in parallel.

@@ -13,6 +13,13 @@ import {
   type EstarTemplateVariant,
 } from '../services/pathway-engines/estar/estar-template-registry';
 import { listAcroFields } from '../services/forms/fill-official-pdf';
+import {
+  ESTAR_VERSIONS,
+  ESTAR_FAMILY_LABELS,
+  versionLifecycleAsOf,
+} from '../services/pathway-engines/estar/estar-versions';
+import { ESTAR_CATALOG } from '../services/pathway-engines/estar/estar-catalog';
+import { assessClientEstarEligibility } from '../services/pathway-engines/estar/estar-registration';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
@@ -244,7 +251,11 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
   }
 });
 
-const ESTAR_TYPES = ['510k', 'de_novo'] as const;
+// The nIVD/IVD eSTAR (v7.0) carries 510(k), De Novo, and PMA on device/ivd
+// variants. PreSTAR request types (Q-Sub/IDE/513(g)) are modeled in the engine
+// and exposed via GET /catalog; the official-fill/scaffold endpoints here cover
+// the nIVD/IVD marketing family.
+const ESTAR_TYPES = ['510k', 'de_novo', 'pma'] as const;
 const ESTAR_VARIANTS = ['device', 'ivd'] as const;
 
 /** Turn an AcroForm field name into a stable, readable canonical-key placeholder. */
@@ -498,6 +509,79 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     return res.status(500).json({
       error: 'ESTAR_READINESS_FAILED',
       message: error.message || 'Failed to assess eSTAR readiness',
+    });
+  }
+});
+
+/**
+ * GET /api/510k/estar/catalog
+ *
+ * Read-only. Returns the whole eSTAR program surface a client can file into:
+ * the FDA version table (with each version's lifecycle computed as of today) and
+ * the full submission catalog (510(k), De Novo, PMA + supplements, Q-Sub sub-types,
+ * IDE, 513(g)). Drives the "start a submission" picker and the version-currency
+ * banner. Produces/persists nothing.
+ */
+router.get('/catalog', authMiddleware, async (_req, res) => {
+  try {
+    const asOf = new Date().toISOString().slice(0, 10);
+    const versions = ESTAR_VERSIONS.map((v) => ({
+      ...v,
+      familyLabel: ESTAR_FAMILY_LABELS[v.family],
+      lifecycle: versionLifecycleAsOf(v, asOf),
+    }));
+    return res.status(200).json({ asOf, versions, catalog: ESTAR_CATALOG });
+  } catch (error: any) {
+    logger.error('estar catalog failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_CATALOG_FAILED',
+      message: error.message || 'Failed to build the eSTAR catalog',
+    });
+  }
+});
+
+const registrationSchema = z.object({
+  clientId: z.string().min(1),
+  satisfied: z
+    .array(
+      z.enum([
+        'fda_esg_account',
+        'cdrh_portal_account',
+        'organization_identity',
+        'mdufa_fee_account',
+      ]),
+    )
+    .default([]),
+  variants: z.array(z.enum(['device', 'ivd'])).optional(),
+});
+
+/**
+ * POST /api/510k/estar/registration/assess
+ * body: { clientId, satisfied[], variants? }
+ *
+ * Given a client's eSTAR registration state (which FDA accounts/identifiers it
+ * holds), report which eSTAR submissions it can file today and what is still
+ * blocking the rest. Pure computation — nothing is persisted. This is the
+ * "clients must register for this" gate the filing surface reads before offering
+ * a submission type.
+ */
+router.post('/registration/assess', authMiddleware, async (req, res) => {
+  const validation = registrationSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    const report = assessClientEstarEligibility(validation.data);
+    return res.status(200).json(report);
+  } catch (error: any) {
+    logger.error('estar registration assessment failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_REGISTRATION_FAILED',
+      message: error.message || 'Failed to assess eSTAR registration eligibility',
     });
   }
 });

@@ -316,6 +316,7 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
         role: dbUser.orgRole || 'member',
         provider: 'saml',
         sessionIndex: samlUser.sessionIndex,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -567,6 +568,7 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
         organizationId: '2',
         role: 'client_user',
         provider,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: '24h' }

@@ -299,6 +299,16 @@ export const C2C_MIGRATION_FILES = [
   // statements are ALTER … IF EXISTS … DROP NOT NULL — a no-op once dropped, so
   // idempotent and safe where push already provisioned the nullable shape.
   'db/migrations/20260725_ectd_compilations_project_level.sql',
+  // ── Part 11 DB-level immutability (added 2026-07-30, auth/e-sig audit) ────
+  // electronic_signatures: DELETE always refused; UPDATE refused except the
+  // write-once supersession transition (superseded_by NULL → id).
+  // device_audit_trail: strictly append-only (no UPDATE, no DELETE).
+  // MUST follow the e-sig gate port above — the trigger reads superseded_by,
+  // which that port adds. Idempotent (CREATE OR REPLACE FUNCTION + conditional
+  // CREATE TRIGGER, to_regclass guarded). Proven by
+  // tests/schema-contract/esig-audit-immutability.contract.test.ts; policy in
+  // docs/compliance/part11-immutability-record-class-policy.md.
+  'db/migrations/20260730_esign_audit_db_level_immutability.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

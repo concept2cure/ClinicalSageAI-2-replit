@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Authoring: **connected the eCTD CoAuthor surface to the canonical spine** — `authoring-canonical-bridge` commits an authoring document's assembled content into `concept2cure_artifacts` through the atomic revision spine when it is submitted for review, so the working store and the canonical governed record (version + Part 11 audit + review state + placement + readiness) move together. Conservative by design: it writes only with a real project scope and a numeric-user attribution, and otherwise skips (reported, never silent, never breaks submit) rather than inventing a project or mis-attributing the governed action.
 - AnA: **canonical regulated-document spine** — `commit_document_revision`, the ONE atomic flow every AnA-authored document mutation runs through, over the canonical document identity (`concept2cure_artifacts`). A single transaction creates the new version, records the AI action, writes the 21 CFR Part 11 audit event, moves the document into review, and refreshes eCTD dossier placement; immediately after commit it records source provenance (append-only lineage) and recalculates program readiness, then notifies the UI. The core (`commitCanonicalRevision`) is dependency-injected and unit-tested for ordering + rollback with no database; `artifactVersionStore` now exposes `upsertDocumentArtifactVersionTx` so the version write joins the caller's transaction.
 - Authoring backend: **created the 22 authoring-subsystem tables the API queried but no migration created** (documents, sections, comments, reviews, audit events + trail, AI suggestions, compliance scores, suggestion feedback, change requests, checklists (+ items), permissions, signatures, workflow steps, exports, frozen snapshots, template sections, signing PINs) — closing the schema-contract gap that left enterprise authoring endpoints failing with missing-relation errors. Columns/types match the exact SQL the router runs, verified by a new `authoring-schema-contract` test that plans the router's SQL against the migration schema and guards against any table being referenced-but-uncreated.
 - AnA: biotech program orchestrator (`get_biotech_program_status`) — a modality-aware development spine (discovery → IND-enabling → Phase 1/2/3 → BLA/NDA → post-approval) that maps the client's journey plus a phase hint onto the regulatory arc and returns the objective, deliverables, gates, CTD focus, modality critical-path risk, next milestone and the exact AnA tools for the current phase.
@@ -34,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Roadmap-aligned documents and document versions schema entry points.
 - Roadmap-aligned RLS policies entry point.
 - Roadmap-aligned knowledge base and response cache schema entry points.
+
+### Fixed
+- AnA: `answer_intelligence_question` advertised a `flow_id` parameter while the stateless engine resumes from the full `flow_state` object the handler actually reads — so every intelligence flow (onboarding, IND/BLA/CMC questionnaires) failed past the first question with "flow_state and node_id are required". The tool schema now declares `flow_state`, matching the handler; guarded by a regression test.
 
 ### Changed
 - Redis rate limiter now initializes and shuts down with server lifecycle.

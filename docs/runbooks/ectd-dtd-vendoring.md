@@ -34,7 +34,7 @@ Summary:
 | File | Region | Source |
 | --- | --- | --- |
 | `ich-ectd-3-2.dtd` | ICH backbone | ICH eCTD Specification |
-| `us-regional-v2-01.dtd` | FDA | FDA eCTD Technical Conformance Guide |
+| `us-regional-v3-3.dtd` | FDA | FDA eCTD Technical Conformance Guide |
 | `eu-regional.dtd` | EMA | EMA / HMA eSubmission portal |
 | `jp-regional.dtd` | PMDA | PMDA eCTD notification |
 | `ca-regional.dtd` | Health Canada | Health Canada eCTD guidance |
@@ -86,7 +86,7 @@ some IDE auto-formatters). Treat them as byte-perfect artifacts.
 
 ```
 cp ich-ectd-3-2.dtd        assets/ectd-dtd/
-cp us-regional-v2-01.dtd   assets/ectd-dtd/
+cp us-regional-v3-3.dtd   assets/ectd-dtd/
 cp eu-regional.dtd         assets/ectd-dtd/
 cp jp-regional.dtd         assets/ectd-dtd/
 cp ca-regional.dtd         assets/ectd-dtd/
@@ -126,7 +126,7 @@ fixture.
 
 If any of these tests fail, **do not commit** — the most common causes are:
 
-- A filename typo (e.g. `us-regional-v2-1.dtd` instead of `us-regional-v2-01.dtd`).
+- A filename typo (e.g. `us-regional-v3-2.dtd` instead of `us-regional-v3-3.dtd`).
   The filenames in `dtd-bundler.ts` `REGIONAL_DTD` are case-sensitive on
   Linux; match them exactly.
 - A copy-paste corruption (e.g. saving the DTD as UTF-8 with BOM when the

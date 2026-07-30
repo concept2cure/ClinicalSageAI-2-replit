@@ -1456,13 +1456,17 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
   description:
     'Submit an answer to the current intelligence question in an active flow. ' +
     'The engine validates the answer, runs issue checks, and advances to the next question ' +
-    'or completes the flow with a structured output.',
+    'or completes the flow with a structured output. The engine is stateless: pass back the ' +
+    'entire `flow_state` object returned by the previous start_intelligence_flow / ' +
+    'answer_intelligence_question call (not just an id) so it can resume.',
   input_schema: {
     type: 'object',
     properties: {
-      flow_id: {
-        type: 'string',
-        description: 'The flow ID returned by start_intelligence_flow.',
+      flow_state: {
+        type: 'object',
+        description:
+          'The full flow state object returned by the previous call (start_intelligence_flow or the ' +
+          'prior answer_intelligence_question). Round-trip it verbatim — the engine holds no state of its own.',
       },
       node_id: {
         type: 'string',
@@ -1475,7 +1479,7 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
           'values are the user\'s answers (strings, numbers, booleans, or arrays for multi-select).',
       },
     },
-    required: ['flow_id', 'node_id', 'answers'],
+    required: ['flow_state', 'node_id', 'answers'],
   },
 };
 

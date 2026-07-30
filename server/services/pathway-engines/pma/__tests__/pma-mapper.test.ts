@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { mapToPma, type PmaInputLeaf } from '../pma-mapper';
+import {
+  mapToPma,
+  PMA_SUBMISSION_TYPES,
+  getPmaSubmissionTypeInfo,
+  isPmaSupplement,
+  type PmaInputLeaf,
+  type PmaSubmissionType,
+} from '../pma-mapper';
 
 // Leaves covering every REQUIRED PMA section.
 const completePmaLeaves: PmaInputLeaf[] = [
@@ -73,5 +80,46 @@ describe('mapToPma', () => {
   it('threads the submission type', () => {
     const r = mapToPma({ leaves: completePmaLeaves, submissionType: 'panel_track_supplement' });
     expect(r.submissionType).toBe('panel_track_supplement');
+  });
+
+  it('accepts the full PMA supplement taxonomy incl. 30-day notice and 135-day supplement', () => {
+    const types: PmaSubmissionType[] = [
+      'original',
+      'panel_track_supplement',
+      '180_day_supplement',
+      'real_time_supplement',
+      '30_day_notice',
+      '135_day_supplement',
+    ];
+    for (const t of types) {
+      expect(mapToPma({ leaves: completePmaLeaves, submissionType: t }).submissionType).toBe(t);
+    }
+  });
+});
+
+describe('PMA submission-type metadata', () => {
+  it('enumerates all six application/supplement types in lifecycle order', () => {
+    expect(PMA_SUBMISSION_TYPES.map((t) => t.value)).toEqual([
+      'original',
+      'panel_track_supplement',
+      '180_day_supplement',
+      'real_time_supplement',
+      '30_day_notice',
+      '135_day_supplement',
+    ]);
+  });
+
+  it('carries review clocks where FDA publishes one', () => {
+    expect(getPmaSubmissionTypeInfo('original')?.reviewGoalDays).toBe(180);
+    expect(getPmaSubmissionTypeInfo('30_day_notice')?.reviewGoalDays).toBe(30);
+    expect(getPmaSubmissionTypeInfo('135_day_supplement')?.reviewGoalDays).toBe(135);
+    // Real-time supplements are meeting-based — no fixed statutory clock.
+    expect(getPmaSubmissionTypeInfo('real_time_supplement')?.reviewGoalDays).toBeUndefined();
+  });
+
+  it('distinguishes originals from supplements', () => {
+    expect(isPmaSupplement('original')).toBe(false);
+    expect(isPmaSupplement('panel_track_supplement')).toBe(true);
+    expect(isPmaSupplement('30_day_notice')).toBe(true);
   });
 });

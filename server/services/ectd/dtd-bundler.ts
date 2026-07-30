@@ -30,9 +30,11 @@ export interface VendoredDtd {
 /** The ICH backbone DTD every region's index.xml references. */
 export const ICH_BACKBONE_DTD = 'ich-ectd-3-2.dtd';
 
-/** Region → the regional backbone DTD its m1 references (plus the ICH backbone). */
+/** Region → the regional backbone DTD its m1 references (plus the ICH backbone).
+ *  FDA is `us-regional-v3-3.dtd` — the current FDA eCTD Backbone Files
+ *  Specification for Module 1 (DTD version 3.3) referenced by buildFdaBackbone. */
 const REGIONAL_DTD: Record<DtdRegion, string> = {
-  fda: 'us-regional-v2-01.dtd',
+  fda: 'us-regional-v3-3.dtd',
   ema: 'eu-regional.dtd',
   pmda: 'jp-regional.dtd',
   ca: 'ca-regional.dtd',
