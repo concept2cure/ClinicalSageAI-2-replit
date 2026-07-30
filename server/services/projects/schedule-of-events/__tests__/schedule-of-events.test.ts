@@ -68,10 +68,14 @@ describe('schedule templates', () => {
 
   it('ends each new template with its submission/decision milestone', () => {
     // The last milestone should be the terminal event, so schedule end-dates are honest.
-    expect(getScheduleTemplate('SHONIN').milestones.at(-1)?.key).toBe('shonin_submission');
-    expect(getScheduleTemplate('NDS').milestones.at(-1)?.key).toBe('screening_acceptance');
-    expect(getScheduleTemplate('IDE').milestones.at(-1)?.key).toBe('ide_decision');
-    expect(getScheduleTemplate('513G').milestones.at(-1)?.key).toBe('pathway_decision');
+    const lastKey = (type: string) => {
+      const ms = getScheduleTemplate(type).milestones;
+      return ms[ms.length - 1]?.key;
+    };
+    expect(lastKey('SHONIN')).toBe('shonin_submission');
+    expect(lastKey('NDS')).toBe('screening_acceptance');
+    expect(lastKey('IDE')).toBe('ide_decision');
+    expect(lastKey('513G')).toBe('pathway_decision');
   });
 
   it('exposes the supported type list', () => {
