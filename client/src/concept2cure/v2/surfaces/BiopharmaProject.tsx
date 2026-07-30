@@ -456,10 +456,21 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
   const findingsRes = useLiveData<FindingSearchView>(
     graphOn ? '/api/clinical-regulatory-evidence/findings?limit=25' : null,
   );
-  const outcomeRes = useLiveData<RegulatoryOutcomeView>(null);
-
   const findings: RegulatoryFindingView[] = findingsRes.data?.findings ?? [];
   const coverage: CoverageView | null = findingsRes.data?.coverage ?? null;
+
+  // Verify the regulatory outcome for the application whose CRL findings are on
+  // the board (each finding carries its source application). The card names the
+  // exact application it resolves to, so a single pick is never misleading; with
+  // no findings there is no application to query and the card stays "Not verified"
+  // — never inferred from trial completion (§4.2).
+  const primaryApplicationNumber =
+    findings.find((f) => f.source?.applicationNumber)?.source.applicationNumber ?? null;
+  const outcomeRes = useLiveData<RegulatoryOutcomeView>(
+    graphOn && primaryApplicationNumber
+      ? `/api/clinical-regulatory-evidence/outcome?applicationNumber=${encodeURIComponent(primaryApplicationNumber)}`
+      : null,
+  );
   const outcome: RegulatoryOutcomeView | null = outcomeRes.data ?? null;
 
   /** Findings mapped to an ICH E3 section, for the per-row counts. */

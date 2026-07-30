@@ -1343,6 +1343,111 @@ for lineage-reachability is the natural successor and is not yet written.
 
 ---
 
+## C-23 — The migration manifest applies nothing, so journey-proven schema never shipped *(critical — FIXED 2026-07-30)*
+
+C-17/C-19/C-20 closed the *column*-level face of C-6 for the signing path. This is
+the *table*-level face, and the guard C-20 named as "the natural successor" that
+"is not yet written."
+
+### The mechanism
+
+`db/migrations/migrations_manifest.json` carries an `executionOrder` that reads
+like an apply order. **Nothing consumes it.** It is ordering metadata that
+`readiness-audit.mjs` only *reports* on. The durable apply paths a real
+environment actually runs are exactly four:
+
+1. `migrations/meta/_journal.json` → drizzle `migrate()` replays the journaled
+   baseline (`migrations/0000_sweet_joseph.sql` and its lineage).
+2. `db/migrations/*_gcc_*.sql` → the CI psql apply loop.
+3. `C2C_MIGRATION_FILES` in `scripts/db/migration-set.mjs` → `deploy-migrate.mjs`
+   (the prod one-off ECS task) and `apply-c2c-migrations.mjs`.
+4. `AUTHORING_SUBSYSTEM_FILES` in `scripts/db/authoring-subsystem.mjs`.
+
+`drizzle-kit push` (from `shared/schema.ts`) is a fifth, but provisions **fresh
+installs only** — so it can never close a gap on an existing customer database,
+which is the environment that *has* the gap.
+
+A migration authored into `db/migrations/` and listed in the manifest, but not on
+one of the four, is applied by **nothing**. It lands only on the throwaway PGlite
+a golden journey spins up, and on the ephemeral Neon branch a PR's preview job
+deletes when the PR closes. Merged, green, and never applied.
+
+### Scope
+
+A reachability sweep of every non-archived `.sql` file found **334 of 406 (82%)**
+reachable by no durable path. Most of that tail is dormant. The actionable subset
+is the one the platform's own oracle proves it needs: the migrations a
+golden-journey test provisions and drives a regulatory workflow against. Seven of
+those were deploy-dead — meaning the storage behind **C-1, C-8, C-10 and C-16**
+never landed on a real deploy even after those entries were marked FIXED:
+
+| file | ledger | what it stores |
+|---|---|---|
+| `20260220_ind_section_tracking.sql` | C-16 | `project_sections` + section tracking |
+| `20260323_assumption_decision_contradiction.sql` | C-1 | the operating-system core |
+| `20260725_governance_boundary_tables.sql` | C-8 | governance rules/transitions |
+| `20260725_resolution_orchestration_tables.sql` | C-10 | resolution plans/bundles/supersession |
+| `20260725_bundle_execution_receipts.sql` | C-10 | ADR-0009 execution receipts |
+| `20260725_project_sections_content_columns.sql` | C-16 | `project_sections` content ALTER |
+| `20260725_ectd_compilations_project_level.sql` | C-16 | project-level eCTD compile unblock |
+
+None of the first six primary tables is in `shared/schema.ts` either, so `push`
+did not create them on fresh installs — they existed on **no** real database. The
+seventh is the existing-customer half of the C-16 eCTD fix: `shared/schema.ts` was
+made nullable (fixes fresh installs via push), but the ALTER that fixes already-
+provisioned databases was itself deploy-dead.
+
+### Fix
+
+All seven added to `C2C_MIGRATION_FILES`, in dependency order, each idempotent
+(CREATE/ALTER … IF [NOT] EXISTS, DO-block-guarded enum types, no DROP/TRUNCATE,
+no self-transaction).
+
+### The guard C-20 asked for
+
+`scripts/ci/check-journey-migration-reachability.mjs` (`npm run
+ci:journey-migration-reachability`, wired into `.github/workflows/ci.yml`). It
+takes the golden-journey suite as the oracle — every migration path a
+`tests/golden-journeys/*.ts` file provisions as a standalone quoted literal — and
+fails the build if any is not on one of the four durable appliers. It counts
+`push` deliberately *not* as durable, because doing so would re-admit the exact
+existing-customer drift. No baseline, no `--strict`: the reachable set must be
+complete at all times. Verified green at 14/14, and verified to fire when any one
+port is removed from its applier.
+
+This does not resolve C-6 (two competing lineages) — ADR-0006 still owns that.
+What it does is make the *class* fail CI instead of shipping silently: a journey
+can no longer prove a migration works while no deploy applies it.
+
+---
+
+## C-24 — The document-enrollment dedup guard never actually counted *(medium — FIXED 2026-07-30)*
+
+`ModuleIntegrationService.documentExists()` — the dedup check at the canonical
+module-document enrollment boundary (`GET /api/module-integration/document-exists`,
+mounted via `register-clinical-intel-routes.ts`) — built its query as
+`.select({ count: { count: 'id' } })` and returned `result[0].count > 0`. That
+projection is a nested plain object, neither a column nor a `sql` expression, so
+Drizzle never emitted `COUNT(*)`; `result[0].count` was never a real number and
+the guard's truth value was an artifact of the malformed shape. A dedup guard that
+cannot be trusted either enrolls a duplicate twice or blocks a new document.
+
+**Fix:** an idiomatic existence probe — `select({ id }).where(triple).limit(1)`,
+`rows.length > 0`. The boundary was also typed against the schema truth: `db:
+RequestDb`, a `RegisterDocumentInput` contract, `documentExists(moduleType:
+ModuleType, originalId: string, organizationId: number)`, and an `isModuleType`
+guard so the route 400s on an unknown module instead of coercing it into the
+`module_type` enum column at runtime. (The route had been passing string org-ids
+into an integer column — the same string-vs-int inconsistency `getSecureOrgId`
+returns platform-wide; tightening the whole surface is a separate change.)
+
+**Proof:** `tests/schema-contract/module-integration-document-exists.contract.test.ts`
+— the real service against the real `module_documents` shape in PGlite: true only
+for the exact `(moduleType, originalId, org)` triple, false for every partial
+match including a same-`originalId` different-tenant collision.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
