@@ -165,16 +165,26 @@ unique). Verification refuted the ones already fixed mid-run.
 | high | `completeness` reported 100% for stub forms with zero fields | `b4e99113` — fieldless form is 0% |
 | medium | `toBoolean` checked a box on unrecognized data (`'None'` → true) | commit — only explicit affirmatives check |
 
-**Remaining — architectural (dedicated follow-up, not rushed):**
+**Fixed after the audit:**
 
-1. **[HIGH] IND-form PDFs are streamed with no governed artifact** (`ind-forms.routes.ts`
-   `/:formId/pdf`, `/pdf-from-records`). There is no canonical artifact-creation
-   service — `concept2cureArtifacts` rows are inserted ad hoc per caller — so this
-   needs a design pass: PDF-storage model (inline vs blob), IND-submission
-   association, and provenance/audit wiring, then persist-before-download (or an
-   explicit "untracked preview" label). This is the original audit's P0.
-2. **[MEDIUM] `writeMutation` audit-transaction atomicity** (`c2c/documents.ts`
-   lock route + `actions.ts`). `writeMutation` opens its own connection/transaction
-   while the mutating `UPDATE` runs in a separate statement, so the audit record
-   and the mutation are not atomic. Fixing correctly means threading one
-   transaction client through both — a cross-cutting change across all callers.
+- **[HIGH] IND-form PDFs had no governed artifact** — commit `dedf403a`. New
+  `POST /:formId/artifact` persists the deterministic structured field map (the
+  registry's `storage.format`, not the PDF bytes) as a governed, content-hashed,
+  org-/project-scoped `concept2cureArtifacts` row (`type: 'form'`) with a Part 11
+  audit event; `projectId` is required and org-validated (no cross-tenant
+  creation); the streaming renders are labeled `X-Form-Untracked-Preview`.
+  Covered by the contract suite (401 / 400-no-project / 404-cross-tenant / 201 +
+  DB assertion). Follow-ons: per-investigator 1572 persistence, IND-submission
+  association, atomic audit (see below).
+
+**Remaining — one item, dedicated follow-up (not rushed):**
+
+- **[MEDIUM] `writeMutation` audit-transaction atomicity** (`c2c/documents.ts`
+  lock/submit routes + `actions.ts`). `writeMutation` opens its own
+  connection/transaction while the mutating `UPDATE` runs in a separate
+  statement, so across all **8 call sites** the audit record and the mutation are
+  not atomic (a mutation failure after the audit commits leaves the ledger
+  ahead of reality). Correct fix: add an optional transaction `client` to
+  `writeMutation` + `recordGovernedAction`, wrap the audit + mutation in one
+  transaction at each call site, and add a rollback test. Cross-cutting
+  audit-infrastructure change — its own PR, not a tail-end edit.
