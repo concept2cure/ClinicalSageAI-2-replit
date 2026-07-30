@@ -278,8 +278,18 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
 // variants. PreSTAR request types (Q-Sub/IDE/513(g)) are modeled in the engine
 // and exposed via GET /catalog; the official-fill/scaffold endpoints here cover
 // the nIVD/IVD marketing family.
-const ESTAR_TYPES = ['510k', 'de_novo', 'pma'] as const;
+const ESTAR_TYPES = ['510k', 'de_novo', 'pma', 'q_sub', 'ide', '513g'] as const;
 const ESTAR_VARIANTS = ['device', 'ivd'] as const;
+
+// PreSTAR (Q-Sub/IDE/513(g)) share one template family regardless of device/ivd;
+// marketing pathways (510(k)/De Novo/PMA) use the device/ivd template variant.
+// The caller always states the device/ivd nature; template selection resolves it.
+function templateVariantFor(
+  type: (typeof ESTAR_TYPES)[number],
+  variant: (typeof ESTAR_VARIANTS)[number],
+): EstarTemplateVariant {
+  return type === 'q_sub' || type === 'ide' || type === '513g' ? 'prestar' : variant;
+}
 
 /** Turn an AcroForm field name into a stable, readable canonical-key placeholder. */
 function slugifyAcroFieldName(name: string): string {
@@ -321,7 +331,7 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
   }
 
   const { type, variant, templateBase64 } = validation.data;
-  const descriptor = descriptorFor(type, variant as EstarTemplateVariant);
+  const descriptor = descriptorFor(type, templateVariantFor(type, variant));
   if (!descriptor) {
     return res.status(400).json({ error: `No eSTAR template descriptor for ${type}/${variant}.` });
   }
@@ -429,7 +439,7 @@ router.post('/official', authMiddleware, requireEditorAccess, async (req, res) =
   try {
     const result = await fillEstarSubmission({
       type,
-      variant: variant as EstarTemplateVariant,
+      variant: templateVariantFor(type, variant),
       data,
       flatten,
     });
@@ -511,7 +521,7 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     // only the readiness booleans + blockers and ignore any produced bytes.
     const result = await fillEstarSubmission({
       type,
-      variant: variant as EstarTemplateVariant,
+      variant: templateVariantFor(type, variant),
       data: {},
     });
     const ready = result.templateAvailable && result.fieldMapPopulated;
