@@ -321,13 +321,43 @@ export async function listProjects(ctx: CommandContext): Promise<CommandResult> 
   }
 }
 
-/** Update project metadata */
+/**
+ * Update project metadata.
+ *
+ * Signature is (ctx, params) — the contract the command dispatcher actually
+ * uses (`handler(ctx, cmd.params)`), matching the sibling update_task handler.
+ * The previous signature was (ctx, projectId, updates), which no call site ever
+ * satisfied: dispatch passed the whole params object as `projectId` and left
+ * `updates` undefined, so Object.entries(updates) threw on EVERY invocation and
+ * update_project could never succeed. A cast in COMMAND_HANDLERS hid the
+ * mismatch from the compiler rather than fixing it.
+ */
 export async function updateProject(
   ctx: CommandContext,
-  projectId: number,
-  updates: Record<string, unknown>
+  params: { projectId?: number; updates?: Record<string, unknown> } & Record<string, unknown>
 ): Promise<CommandResult> {
+  const projectId = Number(params?.projectId ?? (params as Record<string, unknown>)?.project_id);
   try {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return {
+        success: false,
+        action: 'update_project',
+        message: 'A valid numeric projectId is required.',
+      };
+    }
+
+    // Canonical shape is { projectId, updates: {...} } (as update_task uses).
+    // Tolerate a flat { projectId, ...fields } shape by treating any non-control
+    // key as an update field, so a slightly different tool emission still works.
+    const updates: Record<string, unknown> =
+      params.updates && typeof params.updates === 'object'
+        ? (params.updates as Record<string, unknown>)
+        : Object.fromEntries(
+            Object.entries(params ?? {}).filter(
+              ([k]) => k !== 'projectId' && k !== 'project_id' && k !== 'updates'
+            )
+          );
+
     const allowedFields = [
       'name',
       'description',
@@ -357,10 +387,20 @@ export async function updateProject(
 
     setClauses.push('updated_at = NOW()');
     const setSql = setClauses.join(', ');
-    await pool.query(
+    const result = await pool.query(
       `UPDATE projects SET ${setSql} WHERE id = $1 AND organization_id = $2`,
       values
     );
+    // Do not report success when the tenant-scoped WHERE matched no row — the
+    // project does not exist or belongs to another organization. Reporting
+    // "updated" for a write that changed nothing is a false success.
+    if ((result.rowCount ?? 0) === 0) {
+      return {
+        success: false,
+        action: 'update_project',
+        message: `Project ${projectId} was not found in this organization; nothing was updated.`,
+      };
+    }
     const fieldList = Object.keys(updates).join(', ');
     return {
       success: true,
@@ -887,11 +927,20 @@ export async function updateTask(
 
     setClauses.push('updated_at = NOW()');
     const setSql = setClauses.join(', ');
-    await pool.query(
+    const result = await pool.query(
       `UPDATE project_tasks SET ${setSql}
        WHERE id = $1 AND project_id = $2 AND organization_id = $3`,
       values
     );
+    // Same false-success guard as update_project: a tenant-scoped UPDATE that
+    // matched no row (wrong task/project or another org's) must not report success.
+    if ((result.rowCount ?? 0) === 0) {
+      return {
+        success: false,
+        action: 'update_task',
+        message: `Task ${params.taskId} was not found for this project/organization; nothing was updated.`,
+      };
+    }
     return {
       success: true,
       action: 'update_task',
@@ -4538,10 +4587,10 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
 export const COMMAND_HANDLERS: Record<string, any> = {
   create_project: createProject,
   list_projects: listProjects,
-  // updateProject's declared signature is (ctx, projectId, updates); dispatch
-  // calls every handler as (ctx, params). Cast through the map signature to
-  // preserve the existing dispatch behaviour without altering the call site.
-  update_project: updateProject as unknown as (ctx: CommandContext, params: any) => Promise<CommandResult>,
+  // updateProject now takes (ctx, params), the contract dispatch actually uses —
+  // no cast needed. The previous cast masked a (ctx, projectId, updates)
+  // signature that dispatch never satisfied, so update_project always threw.
+  update_project: updateProject,
   create_artifact: createArtifact,
   update_artifact: updateArtifact,
   update_artifact_status: updateArtifactStatus,
