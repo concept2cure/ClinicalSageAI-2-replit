@@ -459,6 +459,57 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
   });
 
+  it('resolves a concurrent-signing race idempotently on a 23505 unique violation', async () => {
+    // The pre-check missed (findActiveReleaseSignature null), so we proceed to
+    // insert — but a concurrent signer won the race and the DB unique index
+    // (electronic_signatures_active_release_uniq) rejects our insert with
+    // 23505. The route must re-read the winner and return its id as an
+    // idempotent 200, NOT a 500 — OQ-3 held because exactly one row landed.
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.verifyUserCredentials.mockResolvedValue(true);
+    // First findActiveReleaseSignature (pre-check) misses; the second (post
+    // unique-violation re-read) finds the winner.
+    hoisted.findActiveReleaseSignature
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 777 });
+    const uniqueViolation = Object.assign(new Error('duplicate key value'), { code: '23505' });
+    hoisted.createElectronicSignature.mockRejectedValue(uniqueViolation);
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'right-password',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.signatureId).toBe(777);
+    expect(res.body.already_signed).toBe(true);
+    // No post-insert UPDATE on the losing path.
+    expect(hoisted.updateCalls.length).toBe(0);
+  });
+
+  it('surfaces 500 on a non-race createElectronicSignature failure', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.verifyUserCredentials.mockResolvedValue(true);
+    hoisted.createElectronicSignature.mockRejectedValue(new Error('disk on fire'));
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'right-password',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('signature_creation_failed');
+  });
+
   it('returns 422 when no documentId anchor can be resolved (lineage unresolved)', async () => {
     // Run has no submissionFk, AND loadSubmissionFkBySubmissionIdText returns null.
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun({ submissionFk: null }));

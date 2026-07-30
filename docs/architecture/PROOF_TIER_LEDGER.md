@@ -5,17 +5,17 @@
 > `scripts/ci/check-proof-tier.mjs` refuses to let shrink. See
 > `docs/architecture/PROOF_HIERARCHY.md` for what each tier means.
 
-**69 proof files** across 5 inventoried categories.
+**71 proof files** across 5 inventoried categories.
 
 | Category | Tier(s) | Count |
 |---|---|--:|
-| `schema-contract` | tier 2 (schema contract) | 22 |
+| `schema-contract` | tier 2 (schema contract) | 24 |
 | `tenant-contract` | tiers 2-4 (contract / tenant isolation) | 11 |
 | `golden-journeys` | tiers 3-7 (DB → export reopen → external qualification) | 6 |
 | `export-contract` | tiers 6-7 (export reopen → external qualification) | 3 |
 | `e2e-browser` | tier 5 (browser workflow) | 27 |
 
-## `schema-contract` — tier 2 (schema contract) (22)
+## `schema-contract` — tier 2 (schema contract) (24)
 
 - `tests/schema-contract/artifacts-relkind.contract.test.ts`
 - `tests/schema-contract/authoring-auth-parity.contract.test.ts`
@@ -32,11 +32,13 @@
 - `tests/schema-contract/drop-draft-safety.contract.test.ts`
 - `tests/schema-contract/esig-audit-immutability.contract.test.ts`
 - `tests/schema-contract/esig-gate-columns.contract.test.ts`
+- `tests/schema-contract/esignature-verify-roundtrip.contract.test.ts`
 - `tests/schema-contract/governance-boundary-failopen.contract.test.ts`
 - `tests/schema-contract/governance-boundary-gates.contract.test.ts`
 - `tests/schema-contract/governed-document-binding.contract.test.ts`
 - `tests/schema-contract/module-integration-document-exists.contract.test.ts`
 - `tests/schema-contract/operating-system-collision.contract.test.ts`
+- `tests/schema-contract/orchestrator-ledger-hardening.contract.test.ts`
 - `tests/schema-contract/resolution-receipts.contract.test.ts`
 - `tests/schema-contract/schedule-of-events-tenant-arbiter.contract.test.ts`
 
