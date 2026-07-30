@@ -87,9 +87,11 @@ Point new work at these when you need a worked example of a rung:
   pass because an authenticated user was let through, not because the route is
   public. The boot-and-run recipe (`scripts/run-e2e-smoke.mjs`) seeds the login
   user, boots the server with dev-auth enabled, and drives the spec — one command,
-  cold-start tolerant. This is the pattern to copy for a fixture-independent
-  browser proof; author new per-workflow specs (510(k) intake, submission
-  assembly) the same way rather than depending on a seeded demo project.
+  cold-start tolerant. It runs per PR via the **`tier5-browser-smoke.yml`**
+  workflow (real `pgvector` DB provisioned from scratch + real Chromium), so this
+  tier is executed, not just present. This is the pattern to copy for a
+  fixture-independent browser proof; author new per-workflow specs (510(k) intake,
+  submission assembly) the same way rather than depending on a seeded demo project.
 - **Tiers 3 → 4 → 6 → 7 fused (eCTD)** —
   `tests/golden-journeys/submission-export-validation.journey.test.ts`.
   It assembles a **real** eCTD package from the canonical core over PGlite,
@@ -138,22 +140,27 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
   golden-journey suites apply real migrations from disk and run **blocking** in
   CI. Known limitation (audit §8.2): they prove migrations *internally
   consistent*, not the migration set *complete*.
-- **Tier 5 (browser) now has a fixture-independent, reproducible proof, but
-  execution is not yet a per-PR gate.** Most of the ~30 Playwright specs in
-  `tests/e2e/` depend on a seeded demo project (e.g. `510k-founder-path` needs
-  the `demo-510k` beta fixture) and had no login step, so they proved nothing when
-  that fixture was absent. `authenticated-app-smoke.e2e.spec.ts` (above) removes
-  both dependencies: it authenticates via the real dev-login flow and asserts on
-  stable authenticated surfaces, with a negative control proving the guard bites.
-  `npm run test:e2e:smoke` runs it green from a cold boot against a provisioned DB.
-  The proof-tier gate floor-guards its **existence** (deleting it fails CI), and
-  building the smoke surfaced and fixed a real dev bug — the loopback-origin
-  blank-page (127.0.0.1 was missing from the dev CORS/CSRF allowlist;
-  `server/middleware/__tests__/enterprise-security-dev-origins.test.ts`). Honest
-  limitation (audit §8.5): `ci.yml` still does not *execute* the browser tier per
-  PR — that needs a provisioned DB + Playwright browsers in CI — so a broken login
-  can still merge green until execution is wired. Treat Tier-5 *execution* claims
-  as verified only where the smoke has been run.
+- **Tier 5 (browser) now has a fixture-independent proof that is EXECUTED per
+  PR.** Most of the ~30 Playwright specs in `tests/e2e/` depend on a seeded demo
+  project (e.g. `510k-founder-path` needs the `demo-510k` beta fixture) and had no
+  login step, so they proved nothing when that fixture was absent.
+  `authenticated-app-smoke.e2e.spec.ts` (above) removes both dependencies: it
+  authenticates via the real dev-login flow and asserts on stable authenticated
+  surfaces, with a negative control proving the guard bites. Two gates now stand
+  behind it: the proof-tier gate floor-guards its **existence** (deleting it fails
+  CI), and the **`tier5-browser-smoke.yml`** workflow **runs** it on every PR —
+  provisioning a real schema on a `pgvector` Postgres (`scripts/db/install-fresh.mjs`,
+  the same from-scratch installer ci.yml's `blank-db-provisioning` job proves),
+  installing Chromium, booting the real server with dev-auth, and driving
+  `npm run test:e2e:smoke`. A broken login, CORS/CSRF regression, or dead
+  authenticated surface now turns that job red and blocks the PR — it can no longer
+  merge green. Building the smoke also surfaced and fixed a real dev bug: the
+  loopback-origin blank-page (127.0.0.1 was missing from the dev CORS/CSRF
+  allowlist; `server/middleware/__tests__/enterprise-security-dev-origins.test.ts`).
+  Honest scope: the gate covers the authenticated app shell (login → guard →
+  landing + projects), not yet every per-workflow journey (510(k) intake,
+  submission assembly) — those specs still need the same fixture-independent
+  treatment before they prove anything.
 - **Tier 6 (export reopen)** was the thinnest rung: exporters were asserted on
   their in-memory output, and the external-validator tests ran against
   hand-authored fixture directories rather than a real emitted package. It is now

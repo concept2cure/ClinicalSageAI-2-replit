@@ -1,0 +1,104 @@
+# Tier 5 (browser workflow) of the proof hierarchy — EXECUTED per PR.
+#
+# docs/architecture/PROOF_HIERARCHY.md's honest-state note said the browser tier
+# had a fixture-independent proof (tests/e2e/authenticated-app-smoke.e2e.spec.ts)
+# but was not yet *executed* in CI, so "a broken login can still merge green."
+# This workflow closes that gap: it provisions a real schema on a real pgvector
+# Postgres, boots the real server with dev-auth, and drives a real Chromium
+# through the smoke — the same one-command recipe a developer runs locally
+# (`npm run test:e2e:smoke`).
+#
+# The recipe's negative control means green here can only mean an authenticated
+# session was genuinely admitted through ProtectedRoute; if login, CORS/CSRF, the
+# router guard, or the authenticated surfaces regress, this job goes red and
+# blocks the PR.
+#
+# Reuses the proven from-scratch provisioning recipe of ci.yml's
+# `blank-db-provisioning` job (pgvector service + scripts/db/install-fresh.mjs)
+# and the Playwright install of beta-founder-proof.yml.
+name: Tier 5 Browser Smoke
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches: ['concept2cure-v2']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tier5-smoke:
+    name: Authenticated app smoke (real browser + DB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        # pgvector, not stock postgres: install-fresh creates the `vector`
+        # extension, which stock postgres cannot provide.
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: c2c_tier5_smoke
+          # Auth method = trust; no credential literal in the workflow.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # sslmode=disable so scripts/db/connection.mjs selects the local, no-TLS
+      # branch rather than trying to verify a certificate the service has none of.
+      DATABASE_URL: postgresql://postgres@localhost:5432/c2c_tier5_smoke?sslmode=disable
+      # The dev server boots at 127.0.0.1:5000; the browser drives the same origin.
+      BASE_URL: http://127.0.0.1:5000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        # Retry to absorb transient registry/network failures (ECONNRESET etc.).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Playwright test runner + Chromium
+        # @playwright/test is intentionally kept out of package.json (see
+        # PROOF_HIERARCHY.md / run-e2e-smoke.mjs). Install it for this job only,
+        # then fetch a matching Chromium; the recipe resolves node_modules/.bin/playwright.
+        run: |
+          npm i @playwright/test@1.55.0 --no-save
+          npx playwright install --with-deps chromium
+
+      - name: Provision the application schema from scratch
+        # The same from-scratch installer ci.yml's blank-db-provisioning job runs.
+        run: node scripts/db/install-fresh.mjs
+
+      - name: Run the authenticated browser smoke
+        # Seeds the login user, boots the server with dev-auth, drives the spec.
+        run: npm run test:e2e:smoke
+
+      - name: Upload smoke artifacts (traces, screenshots, results)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tier5-browser-smoke-artifacts
+          path: |
+            test-results/e2e/**
+            test-results/e2e-results.json
+          retention-days: 14
