@@ -48,6 +48,7 @@
     "test:submission": "vitest run --config vitest.config.ts server/services/ectd server/services/submission-service server/services/region-profiles server/services/ana/__tests__/submission-center-tools.test.ts",
     "qualify:ectd": "tsx scripts/ectd/qualify-ectd.ts",
     "test:security": "vitest run --config vitest.config.ts server/__tests__/security server/services/ai-gateway/__tests__/promptInjection.test.ts server/services/__tests__/saml-provider.test.ts",
+    "test:localai-gate0": "vitest run --config vitest.config.ts server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts server/services/ai-gateway/providers/__tests__/placement.test.ts",
     "manifest:ana": "tsx scripts/generate-ana-capability-manifest.ts",
     "verify:submission": "node scripts/verify-submission-center.mjs",
     "verify:submission:bootstrap": "node scripts/bootstrap-and-verify-submission.mjs",
