@@ -82,6 +82,7 @@ const handler: AIActionHandler = {
           },
           createdBy: ctx.user.userName,
           comments: changeReason,
+          organizationId: doc.organizationId,
         })
         .returning();
 

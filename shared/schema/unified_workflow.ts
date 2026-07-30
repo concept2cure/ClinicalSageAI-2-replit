@@ -82,10 +82,16 @@ export const workflowDocumentVersions = pgTable(
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     comments: text('comments'),
+    // Direct tenant scope on version rows (consistent with concept2cure_artifact_versions
+    // and module_documents). Nullable for a non-breaking add + backfill from the parent
+    // unified_documents.organization_id; every writer now populates it directly so version
+    // reads no longer depend solely on joining through the parent document.
+    organizationId: integer('organization_id'),
   },
   table => {
     return {
       wfDocVersionIdx: uniqueIndex('wf_doc_version_idx').on(table.documentId, table.version),
+      wfDocVersionOrgIdx: index('idx_wf_doc_versions_org').on(table.organizationId),
     };
   }
 );

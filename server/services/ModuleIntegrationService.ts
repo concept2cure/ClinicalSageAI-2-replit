@@ -65,6 +65,7 @@ export class ModuleIntegrationService {
             version: 1,
             content: documentData.content || null,
             createdBy: documentData.createdBy,
+            organizationId: documentData.organizationId,
           })
           .returning();
 
@@ -331,6 +332,7 @@ export class ModuleIntegrationService {
             version: existingDoc[0].latestVersion + 1,
             content: updateData.content,
             createdBy: updateData.updatedBy,
+            organizationId,
           })
           .returning();
 

@@ -256,6 +256,7 @@ const promoteArtifactHandler: AIActionHandler = {
         content: { body: artifact.content || '', sourceArtifactId: artifact.artifactId },
         createdBy: ctx.user.userName,
         comments: `Promoted from artifact ${artifact.artifactId}`,
+        organizationId: doc.organizationId,
       });
 
       // 4c. Update artifact status
