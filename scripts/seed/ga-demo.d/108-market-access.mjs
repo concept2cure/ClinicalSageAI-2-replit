@@ -1,57 +1,57 @@
 /**
- * Wave-3 domain seed — market-access & reimbursement record (BX-204 CGM).
+ * Wave-3 domain seed — market-access payer/HTA positions into the REAL store.
  *
- * One market-access program row mirroring the v2 MarketAccess fixture, so the
- * surface renders the payer-coverage table, value-dossier section list and
- * coding-strategy table off real org data. The three rendered lists are stored
- * as JSONB nested arrays (coverage[], dossier[], coding[]). Read by
- * GET /api/market-access. Grounded in the app's device program — no fabricated
- * data beyond the program code. to_regclass guarded, org-scoped, idempotent
- * (ON CONFLICT DO NOTHING).
+ * The BX-204 CGM payer/HTA coverage narrative, seeded into the REAL, org-scoped
+ * store `market_access_positions` (migration 20260801_market_access_store.sql) —
+ * the exact table market-access-service.ts writes via POST /api/market-access,
+ * and that GET /api/market-access now reads. No blob: the surface's KPIs and its
+ * coding-strategy view are DERIVED from these flat position rows on read (the old
+ * c2c_market_access JSONB record — including its dossier/coding lists, which have
+ * no real store — is retired). Rows are staggered one minute apart so the
+ * newest-first list renders in narrative order (US → UK → DE → FR → JP).
+ * to_regclass guarded, org-scoped, idempotent (only seeds when the org has none yet).
  */
-const PROGRAMS = [
-  {
-    program: 'BX-204',
-    coverage: [
-      { region: 'United States', payer: 'CMS -- Medicare', basis: 'NCD / LCD', code: 'HCPCS E2103', status: 'covered', note: 'Therapeutic CGM covered; DME benefit category.' },
-      { region: 'United States', payer: 'Commercial (UNH · Aetna · Cigna)', basis: 'Medical policy', code: 'CPT 95249', status: 'covered', note: 'Coverage with prior auth; A1c + insulin-use criteria.' },
-      { region: 'United States', payer: 'Medicaid (state)', basis: 'State plan', code: '--', status: 'partial', note: 'Coverage varies by state; 32 of 50 cover therapeutic CGM.' },
-      { region: 'United Kingdom', payer: 'NHS -- NICE', basis: 'HTA appraisal', code: '--', status: 'review', note: 'NICE TA in progress; positioned vs Libre 3 on cost-comparability.' },
-      { region: 'Germany', payer: 'G-BA / GKV', basis: 'NUB / DiGA', code: '--', status: 'review', note: 'Benefit assessment pending; PMCF data supports.' },
-      { region: 'France', payer: 'HAS / CNEDiMTS', basis: 'HTA appraisal', code: '--', status: 'planned', note: 'LPPR listing application planned post-CE.' },
-      { region: 'Japan', payer: 'MHLW / Chuikyo', basis: 'Reimbursement pricing', code: '--', status: 'planned', note: 'C2 functional category sought after Shonin.' },
-    ],
-    dossier: [
-      { n: '1', label: 'Executive value proposition', owner: 'HEOR', st: 'complete', pct: 100 },
-      { n: '2', label: 'Disease & unmet-need background', owner: 'Med affairs', st: 'complete', pct: 100 },
-      { n: '3', label: 'Clinical evidence summary (MARD, outcomes)', owner: 'Clinical', st: 'review', pct: 80 },
-      { n: '4', label: 'Economic model -- budget impact', owner: 'HEOR', st: 'draft', pct: 55, blocker: true },
-      { n: '5', label: 'Cost-effectiveness (ICER vs SMBG / Libre 3)', owner: 'HEOR', st: 'draft', pct: 40 },
-      { n: '6', label: 'Comparative effectiveness table', owner: 'HEOR', st: 'review', pct: 75 },
-    ],
-    coding: [
-      { code: 'HCPCS E2103', desc: 'Non-adjunctive CGM receiver/monitor', kind: 'Existing', status: 'mapped', note: 'Therapeutic CGM DME code applies.' },
-      { code: 'CPT 95249', desc: 'CGM patient-owned -- startup/training', kind: 'Existing', status: 'mapped', note: 'Used for patient-owned device setup.' },
-      { code: 'CPT 0XXXT', desc: 'Category III -- predictive-low algorithm', kind: 'New PLA/Cat-III', status: 'pursue', note: 'AnA recommends a Cat-III code application for the predictive feature.' },
-    ],
-  },
+const POSITIONS = [
+  { market: 'United States', payer: 'CMS -- Medicare', mechanism: 'NCD / LCD', code: 'HCPCS E2103', status: 'covered', note: 'Therapeutic CGM covered; DME benefit category.' },
+  { market: 'United States', payer: 'Commercial (UNH · Aetna · Cigna)', mechanism: 'Medical policy', code: 'CPT 95249', status: 'covered', note: 'Coverage with prior auth; A1c + insulin-use criteria.' },
+  { market: 'United States', payer: 'Medicaid (state)', mechanism: 'State plan', code: null, status: 'partial', note: 'Coverage varies by state; 32 of 50 cover therapeutic CGM.' },
+  { market: 'United Kingdom', payer: 'NHS -- NICE', mechanism: 'HTA appraisal', code: null, status: 'review', note: 'NICE TA in progress; positioned vs Libre 3 on cost-comparability.' },
+  { market: 'Germany', payer: 'G-BA / GKV', mechanism: 'NUB / DiGA', code: null, status: 'review', note: 'Benefit assessment pending; PMCF data supports.' },
+  { market: 'France', payer: 'HAS / CNEDiMTS', mechanism: 'HTA appraisal', code: null, status: 'planned', note: 'LPPR listing application planned post-CE.' },
+  { market: 'Japan', payer: 'MHLW / Chuikyo', mechanism: 'Reimbursement pricing', code: null, status: 'planned', note: 'C2 functional category sought after Shonin.' },
 ];
 
-export default async function seed(client, { org }) {
-  const t = await client.query(`SELECT to_regclass('public.c2c_market_access') AS c`);
+export default async function seed(client, { org, admin }) {
+  const t = await client.query(`SELECT to_regclass('public.market_access_positions') AS c`);
   if (!t.rows[0]?.c) {
-    console.log('   ⚠ c2c_market_access not found — run migrations first, skipping');
+    console.log('   ⚠ market_access_positions not found — run migrations first, skipping');
     return;
   }
+  const existing = await client.query(
+    `SELECT 1 FROM market_access_positions WHERE organization_id = $1 AND deleted_at IS NULL LIMIT 1`,
+    [org.id],
+  );
+  if (existing.rowCount) {
+    console.log('   ✓ market access: already present, skipping');
+    return;
+  }
+  const u = await client.query(
+    `SELECT user_id FROM organization_users WHERE organization_id = $1 ORDER BY user_id LIMIT 1`,
+    [org.id],
+  );
+  const userId = u.rows[0]?.user_id ?? admin?.id ?? null;
+
   let inserted = 0;
-  for (const p of PROGRAMS) {
+  for (let i = 0; i < POSITIONS.length; i++) {
+    const p = POSITIONS[i];
     const r = await client.query(
-      `INSERT INTO c2c_market_access (organization_id, program, coverage, dossier, coding)
-       VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb)
-       ON CONFLICT (organization_id, program) DO NOTHING`,
-      [org.id, p.program, JSON.stringify(p.coverage), JSON.stringify(p.dossier), JSON.stringify(p.coding)],
+      `INSERT INTO market_access_positions
+         (organization_id, program, market, payer, mechanism, code, status, note, created_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+               now() - make_interval(mins => $10), now() - make_interval(mins => $10))`,
+      [org.id, 'BX-204', p.market, p.payer, p.mechanism, p.code, p.status, p.note, userId, i],
     );
     inserted += r.rowCount ?? 0;
   }
-  console.log(`   ✓ market access: ${inserted} market-access program record(s) seeded`);
+  console.log(`   ✓ market access: ${inserted} payer/HTA position row(s) seeded into market_access_positions`);
 }

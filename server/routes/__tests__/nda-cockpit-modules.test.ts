@@ -1,17 +1,27 @@
 /**
- * GET /api/nda-cockpit/modules — CTD module readiness read contract.
+ * GET /api/nda-cockpit/modules — the CONVERGED CTD-readiness read for the v2 NdaCockpit
+ * "CTD readiness" panel.
  *
- * The v2 NdaCockpit "CTD readiness" panel adopts this list and derives the
- * overall % ready from it. Locks: 403 without org, the { data } envelope with
- * the display keys ({ m, label, pct, docs, open, gate }, with open_count →
- * open), and 42P01 fail-closed to an empty list.
+ * The route is thin: guard the org, delegate to the real-store assembler
+ * (assembleOrgNdaModules over submissions where application_type IN ('nda','bla') +
+ * ectd_sequences + submission_leaves + coauthor_documents), and shape the envelope. It
+ * reads ONLY the real eCTD submission core — no seed-only c2c_nda_modules blob and no
+ * fallback — so an org with no NDA/BLA gets an honest empty list (meta.source =
+ * 'submissions'), and a 42P01 (unprovisioned core) fails closed to []. The full field
+ * mapping is proven against real SQL in
+ * server/services/nda/__tests__/nda-modules-view-assembler.pglite.integration.test.ts.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
-const query = vi.fn();
-vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+const assembleOrgNdaModules = vi.fn();
+vi.mock('../../services/nda/nda-modules-view-assembler', () => ({
+  assembleOrgNdaModules: (...a: unknown[]) => assembleOrgNdaModules(...a),
+}));
+// The route file also imports the DB pool for the /m1 and /rtf endpoints (not exercised
+// here) — mock it so importing the router never opens a real connection.
+vi.mock('../../db', () => ({ pool: { query: vi.fn() } }));
 
 import ndaRouter from '../nda-cockpit.routes';
 
@@ -25,34 +35,46 @@ function appWith(org: number | null) {
   return app;
 }
 
-beforeEach(() => query.mockReset());
+beforeEach(() => assembleOrgNdaModules.mockReset());
 
 describe('GET /api/nda-cockpit/modules', () => {
   it('403 without org context', async () => {
     const res = await request(appWith(null)).get('/api/nda-cockpit/modules');
     expect(res.status).toBe(403);
+    expect(assembleOrgNdaModules).not.toHaveBeenCalled();
   });
 
-  it('returns modules shaped to the display contract (open_count → open)', async () => {
-    query.mockResolvedValueOnce({
-      rows: [
-        { m: '1', label: 'Administrative (Module 1)', pct: 78, docs: 14, open_count: 3, gate: 'Financial disclosure outstanding' },
-        { m: '4', label: 'Nonclinical (Module 4)', pct: 96, docs: 22, open_count: 0, gate: null },
-      ],
-    });
+  it('returns the real-store CTD roll-up for the acting org, source = submissions', async () => {
+    assembleOrgNdaModules.mockResolvedValue([
+      { m: '1', label: 'Administrative & prescribing (Module 1)', pct: 80, docs: 5, open: 1, gate: 'Financial Disclosure in drafting' },
+      { m: '4', label: 'Nonclinical study reports (Module 4)', pct: 100, docs: 3, open: 0, gate: null },
+    ]);
     const res = await request(appWith(7)).get('/api/nda-cockpit/modules');
     expect(res.status).toBe(200);
-    expect(query.mock.calls[0][1]).toEqual([7]);
+    expect(assembleOrgNdaModules).toHaveBeenCalledWith(7);
+    expect(res.body.meta.source).toBe('submissions');
     const first = res.body.data[0];
     for (const k of ['m', 'label', 'pct', 'docs', 'open', 'gate']) {
       expect(first).toHaveProperty(k);
     }
-    expect(first.open).toBe(3);
+    expect(first.m).toBe('1');
+    expect(first.open).toBe(1);
     expect(res.body.data[1].gate).toBeNull();
+    expect(res.body.meta.count).toBe(2);
   });
 
-  it('fails closed to an empty list when the store is not provisioned', async () => {
-    query.mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
+  it('honest empty list when the org has no NDA/BLA — no fallback data', async () => {
+    assembleOrgNdaModules.mockResolvedValue([]);
+    const res = await request(appWith(7)).get('/api/nda-cockpit/modules');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+    expect(res.body.meta.count).toBe(0);
+  });
+
+  it('fails closed to an empty list when the submission core is not provisioned (42P01)', async () => {
+    assembleOrgNdaModules.mockImplementationOnce(async () => {
+      throw Object.assign(new Error('relation missing'), { code: '42P01' });
+    });
     const res = await request(appWith(7)).get('/api/nda-cockpit/modules');
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);

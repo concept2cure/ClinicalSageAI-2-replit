@@ -60,13 +60,10 @@ interface BlaAssessment {
 
 /* ── Inline fixture data (kit window globals) ── */
 
-const NDA_MODULES: NdaModule[] = [
-  { m: '1', label: 'Administrative & prescribing (Module 1)', pct: 78, docs: 14, open: 3, gate: 'Financial disclosure (3454/3455) — 2 investigators outstanding' },
-  { m: '2', label: 'CTD summaries (Module 2)', pct: 71, docs: 9, open: 2, gate: '2.5 Clinical Overview in review; 2.7.4 Safety Summary drafting' },
-  { m: '3', label: 'Quality / CMC (Module 3)', pct: 84, docs: 31, open: 2, gate: '3.2.S.4.4 comparability vs 3 post-change lots unreconciled' },
-  { m: '4', label: 'Nonclinical study reports (Module 4)', pct: 96, docs: 22, open: 0, gate: null },
-  { m: '5', label: 'Clinical study reports (Module 5)', pct: 69, docs: 18, open: 3, gate: 'ISS/ISE integrated summaries pending; define.xml validation 1 error' },
-];
+/* The CTD module readiness (M1–M5) is CONVERGED onto the real eCTD submission
+   core — read fixture-free from GET /api/nda-cockpit/modules below (no seed
+   blob, no local fixture). The PDUFA clock and BLA seed below remain the
+   surface's local/other-domain lists. */
 
 const NDA_CLOCK: NdaClockStep[] = [
   { id: 'sub', label: 'Submission received', day: 'Day 0', date: '14 Jul 2026', st: 'done' },
@@ -136,32 +133,15 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     onNav && onNav(id);
   };
-  /* live ?? fixture — adopt the org's seeded CTD module readiness when the
-     store returns the full shape, else keep the fixture. The overall % ready is
-     derived from whichever set loaded. The M1 worklist, PDUFA clock, and RtF
-     log stay the surface's local-first interactive lists. */
-  const [modules, setModules] = useState<NdaModule[]>(NDA_MODULES);
-  const [modulesSample, setModulesSample] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ data?: NdaModule[] }>('/api/nda-cockpit/modules', { data: [] }).then((res) => {
-      if (cancelled) return;
-      const list = res.data?.data;
-      if (
-        !res.sample &&
-        Array.isArray(list) &&
-        list.length > 0 &&
-        list[0]?.m &&
-        typeof list[0]?.pct === 'number'
-      ) {
-        setModules(list);
-        setModulesSample(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  /* Real rows — the org's CTD module (M1–M5) readiness, assembled from the real
+     eCTD submission core (submissions where application_type IN ('nda','bla') +
+     ectd_sequences + submission_leaves + coauthor_documents) by
+     GET /api/nda-cockpit/modules. Fixture-free: real data, an honest empty
+     state, or an honest failed-load state — never a fabricated stand-in. The
+     overall % ready is derived from the loaded rows. The M1 worklist, PDUFA
+     clock, and RtF log stay the surface's own lists. */
+  const modulesLive = useLiveRows<NdaModule>('/api/nda-cockpit/modules');
+  const modules = modulesLive.rows;
   const overall = modules.length
     ? Math.round(modules.reduce((a, m) => a + m.pct, 0) / modules.length)
     : 0;
@@ -368,8 +348,8 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     <div className="cv-body"><div className="reg-wrap nda">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Pharma {I.dot} filing <SampleTag sample={modulesSample} />
+          <div className="reg-eyebrow">
+            Pharma {I.dot} filing
           </div>
           <h1 className="reg-title">NDA filing cockpit</h1>
           <p className="reg-intro">BX-204 {I.dot} NDA 212345 {I.dot} 505(b)(1) {I.dot} standard review. The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
@@ -393,22 +373,39 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {tab === 'ctd' && (
-        <div className="nda-mods">
-          {modules.map(m => (
-            <button key={m.m} className="nda-mod" onClick={() => open('dossier')}>
-              <div className="nda-mod-n">M{m.m}</div>
-              <div className="nda-mod-b">
-                <div className="nda-mod-top"><span className="nda-mod-l">{m.label}</span><span className="nda-mod-pct">{m.pct}%</span></div>
-                <div className="nda-mod-track"><span className="nda-mod-fill" data-risk={m.gate ? true : undefined} style={{ width: m.pct + '%' }} /></div>
-                <div className="nda-mod-meta">
-                  <span>{m.docs} documents {I.dot} {m.open} open</span>
-                  {m.gate ? <span className="nda-mod-gate">{I.alertTriangle} {m.gate}</span> : <span className="nda-mod-ok">{I.check} module complete</span>}
+        modules.length > 0 ? (
+          <div className="nda-mods">
+            {modules.map(m => (
+              <button key={m.m} className="nda-mod" onClick={() => open('dossier')}>
+                <div className="nda-mod-n">M{m.m}</div>
+                <div className="nda-mod-b">
+                  <div className="nda-mod-top"><span className="nda-mod-l">{m.label}</span><span className="nda-mod-pct">{m.pct}%</span></div>
+                  <div className="nda-mod-track"><span className="nda-mod-fill" data-risk={m.gate ? true : undefined} style={{ width: m.pct + '%' }} /></div>
+                  <div className="nda-mod-meta">
+                    <span>{m.docs} documents {I.dot} {m.open} open</span>
+                    {m.gate ? <span className="nda-mod-gate">{I.alertTriangle} {m.gate}</span> : <span className="nda-mod-ok">{I.check} module complete</span>}
+                  </div>
                 </div>
-              </div>
-              <span className="nda-mod-go">{I.arrowRight || I.right}</span>
-            </button>
-          ))}
-        </div>
+                <span className="nda-mod-go">{I.arrowRight || I.right}</span>
+              </button>
+            ))}
+          </div>
+        ) : modulesLive.loading ? (
+          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading CTD module readiness…</div>
+        ) : modulesLive.error ? (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load CTD module readiness"
+            hint="The NDA/BLA submission core didn't respond. Sign in and retry, or check that the NDA cockpit service is reachable."
+          />
+        ) : (
+          <EmptyState
+            icon={I.fileText}
+            title="No CTD modules yet"
+            hint="No NDA/BLA application is provisioned for this organization yet. Once a submission is set up and its eCTD sections are authored, each CTD module's readiness (M1–M5) appears here org-scoped with its real completion and gating items."
+          />
+        )
       )}
 
       {tab === 'm1' && (
