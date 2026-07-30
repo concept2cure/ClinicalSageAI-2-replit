@@ -417,7 +417,9 @@ export function buildForm3454(meta: IndProjectMetadata): BuiltForm {
 
   const specs: FieldSpec[] = [
     { id: 'sponsor_name', value: sponsorName, required: true },
-    { id: 'drug_name', value: s(meta.drugName), required: true },
+    // The 3454 has no drug/product field — carry it for the record but do not
+    // inline-require it (an unmappable required field would force the fallback).
+    { id: 'drug_name', value: s(meta.drugName), required: false },
     { id: 'study_title', value: s(meta.studyTitle), required: false },
     { id: 'investigator_names', value: investigatorNames, required: false },
     // Certification is only valid when truly none have disclosable interests.

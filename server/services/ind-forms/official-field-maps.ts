@@ -60,6 +60,22 @@ export const OFFICIAL_FIELD_MAPS: Record<string, OfficialFieldMap> = {
     route_of_administration: 'db_route_admin',
     indication: 'db_indication',
   },
+
+  // FDA Form 3454 — Certification: Financial Interests/Arrangements NONE (static
+  // XFA; pdf-lib strips the XFA and fills the 14-field AcroForm layer). The "certify
+  // none" checkbox (check1), the applicant firm/name/title, and up to six covered
+  // investigator names. The signatory is a signature (appSignature) + a governed
+  // date (appSigDate), so authorized_rep is name-only here and the date stays blank.
+  // NOTE (v1): investigator_names is the composite list mapped to the first name
+  // slot; per-investigator fill across invName1..6 is a follow-on. There is no
+  // drug/product or study field on the 3454.
+  FDA_3454: {
+    sponsor_name: 'topmostSubform[0].Page1[0].Subform1[0].appFirm[0]',
+    authorized_rep_name: 'topmostSubform[0].Page1[0].Subform1[0].appName[0]',
+    authorized_rep_title: 'topmostSubform[0].Page1[0].Subform1[0].appTitle[0]',
+    no_disclosable_interests: 'topmostSubform[0].Page1[0].Subform1[0].checkboxList[0].LI1[0].check1[0]',
+    investigator_names: 'topmostSubform[0].Page1[0].Subform1[0].checkboxList[0].LI1[0].clinInvList[0].LI1[0].invName1[0]',
+  },
 };
 
 /** The official field map for a form id, or undefined if it has no AcroForm map. */
