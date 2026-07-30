@@ -70,10 +70,25 @@ CSR     → adaptCsrReport  evidence-spine        5 AnA tools    ── WIRED, r
   - Backfill of pre-existing NULL atoms: `scripts/embed-atoms.ts` (best-effort). *(P0c)*
 
 **P1**
-- [ ] RAG reachability — allow/route `clinical_regulatory_evidence` atoms in retrieval.
-- [ ] UI flag — enable (or a documented test toggle) so the surfaces are reachable.
-- [ ] `CsrWorkflow` outcome `null`-path → call `/outcome`.
-- [ ] `discipline` normalizer + `finding_domain→discipline` map; `visibility` mapper.
+- [x] **UI flag.** Already a documented runtime toggle, no rebuild needed: client
+  `?crl-graph=1` URL param or `localStorage 'c2c-crl-graph'='1'`
+  (`clinicalRegulatoryGraphFlag.ts`), over the `ENABLE_CLINICAL_REGULATORY_GRAPH`
+  feature-flag default; server routes gate on the env var of the same name. Both
+  are in the human-test walkthrough.
+- [x] **`CsrWorkflow` outcome `null`-path.** `BiopharmaProject.tsx` now derives the
+  application from the CRL findings on the board and calls `/outcome?applicationNumber=…`;
+  it stays "Not verified" only when there is genuinely no application/outcome (never inferred).
+- [x] **`discipline` / `visibility` mappers.** `index.ts` `normalizeDiscipline()` validates
+  the free-text `fdaReviewDiscipline`, falls back to a `finding_domain→discipline` map,
+  and buckets the undeterminable as `administrative` — never the fabricated `clinical`
+  default (search filter uses the same normalization). `toVisibility()` preserves
+  `project_private` instead of collapsing it into `tenant_private`.
+- [ ] **RAG reachability — DEFERRED (documented).** CRE atoms are excluded from
+  `project_knowledge_search` (source_type allowlist) and no `ragRouter` intent targets
+  them. Deferred deliberately: CRE already reaches AnA through the five always-on
+  direct-spine tools, so this only adds *semantic* discovery of CRE atoms; the change
+  touches shared RAG routing used product-wide, so it carries regression risk
+  disproportionate to a human-test demo. Revisit after the embedding backfill lands.
 
 **P2**
 - [ ] Provenance envelope for CRE tool output → `data_lineage_records`.

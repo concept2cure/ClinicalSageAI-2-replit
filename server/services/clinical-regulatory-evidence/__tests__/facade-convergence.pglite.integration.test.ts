@@ -59,7 +59,11 @@ afterAll(async () => {
 }, 30_000);
 
 /** An ingested CRL source + one finding, the way crl-ingestion writes them. */
-async function ingestCrl(orgId: number, over: Record<string, unknown> = {}) {
+async function ingestCrl(
+  orgId: number,
+  over: Record<string, unknown> = {},
+  srcOver: Record<string, unknown> = {},
+) {
   const src = await spine.createSource(orgId, {
     sourceType: 'fda_crl',
     visibilityClass: 'tenant_private',
@@ -70,6 +74,7 @@ async function ingestCrl(orgId: number, over: Record<string, unknown> = {}) {
     documentDate: '2026-05-01',
     extractionStatus: 'extracted',
     ingestionStatus: 'ingested',
+    ...srcOver,
   });
   const finding = await spine.createFinding(orgId, {
     sourceId: src.id,
@@ -220,5 +225,37 @@ describe('finding by id and verified outcomes', () => {
     const outcome = await facade.getOutcome(scopeA, 'NDA-215000');
     expect(outcome?.outcome).toBe('crl');
     expect(outcome?.applicationType).toBe('NDA');
+  });
+});
+
+describe('discipline is resolved honestly — never fabricated as clinical', () => {
+  // Fresh orgs so each read sees only its own seeded finding (no beforeEach reset).
+  it('falls back to the finding_domain mapping when the review discipline is absent', async () => {
+    await ingestCrl(7301, { fdaReviewDiscipline: null, findingDomain: 'biostatistics' });
+    const r = await facade.searchFindings({ organizationId: 7301 });
+    expect(r.findings[0].discipline).toBe('statistical'); // was fabricated as 'clinical' before
+  });
+
+  it('buckets an undeterminable discipline as administrative, not clinical', async () => {
+    await ingestCrl(7302, { fdaReviewDiscipline: null, findingDomain: 'other' });
+    const r = await facade.searchFindings({ organizationId: 7302 });
+    expect(r.findings[0].discipline).toBe('administrative');
+  });
+
+  it('normalizes a free-text review discipline through synonyms', async () => {
+    await ingestCrl(7303, { fdaReviewDiscipline: 'Biostatistics', findingDomain: 'clinical' });
+    const r = await facade.searchFindings({ organizationId: 7303 });
+    expect(r.findings[0].discipline).toBe('statistical'); // synonym wins over the raw cast
+    // …and the discipline filter matches on that SAME normalized value.
+    expect((await facade.searchFindings({ organizationId: 7303 }, { discipline: 'statistical' })).findings).toHaveLength(1);
+    expect((await facade.searchFindings({ organizationId: 7303 }, { discipline: 'clinical' })).findings).toHaveLength(0);
+  });
+});
+
+describe('source visibility is not collapsed', () => {
+  it('preserves project_private instead of widening it to tenant_private', async () => {
+    await ingestCrl(7304, {}, { visibilityClass: 'project_private' });
+    const r = await facade.searchFindings({ organizationId: 7304 });
+    expect(r.findings[0].source.visibility).toBe('project_private');
   });
 });
