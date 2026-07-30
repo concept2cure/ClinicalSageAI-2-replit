@@ -1525,10 +1525,54 @@ needs a live gateway); the journey proves the package that would be transmitted.
 
 ---
 
-## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — BASELINED, needs ADR reconciliation, 2026-07-30)*
+## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — PARTIALLY RECONCILED 2026-07-30; one table still needs a decision)*
 
 Caught by `ci:duplicate-table-ddl` the moment PR #1202 merged — the guard doing
 exactly its job.
+
+### Reconciliation decision + progress (2026-07-30)
+
+Decision: **`20260725_*` (UUID) is canonical.** It is on the durable applier
+(`AUTHORING_SUBSYSTEM_FILES`), golden-journey-proven, and the only shape that
+reaches a real database — `20260730_authoring_subsystem_schema.sql` is deploy-dead
+(on no applier), so its TEXT shape exists only on that migration's isolated test
+PGlite. The type difference (UUID vs `gen_random_uuid()::text`) is benign at
+runtime: the router mints valid-UUID strings, which coerce into the UUID columns.
+
+A column-level diff of the 10 colliding tables settled what "incompatible" really
+means:
+- **7 tables are column-identical** (`authoring_documents`, `authoring_citations`,
+  `authoring_audit_trail`, `authoring_workflow_steps`, `authoring_signatures`,
+  `frozen_documents`, `doc_permissions`) — the canonical 0725 version already has
+  every column, so the 0730 copies are pure redundancy. Safe to drop from 0730.
+- **`authoring_comments` + `user_pins` were a strict subset** — the CoAuthor
+  router (`authoring.router.ts`) SELECTs/INSERTs 8 comment columns
+  (`user_name`, `user_email`, `parent_comment_id`, `position_data`,
+  `resolved_by/at`, `resolution_note`, `updated_at`) and `user_pins.last_changed`
+  that the canonical tables lacked. On every real deploy the comment endpoints
+  therefore **500'd with "column … does not exist"** — a live bug, not just a
+  lint finding.
+- **`authoring_sections` genuinely diverges** — the router uses
+  `document_id` / `order_idx` / `section_number`; the canonical table uses
+  `doc_id` (NOT NULL) / `order_index`. A naming + NOT-NULL conflict that cannot be
+  unioned additively.
+
+**Done:** `db/migrations/20260730_authoring_comments_router_columns.sql` (on
+`AUTHORING_SUBSYSTEM_FILES`) additively adds the 8 comment columns + `last_changed`
+to the canonical tables, so one physical table serves both the freeze/signature
+loop and the CoAuthor router. This fixes the live comment-endpoint 500s. Proven by
+`tests/schema-contract/authoring-comments-router-columns.contract.test.ts` — the
+router's exact INSERT/SELECT column lists run against the canonical shape + the
+migration, including the self-referential `parent_comment_id` thread.
+
+**Still open (needs a code decision, not mechanical):** `authoring_sections`
+(`doc_id` vs `document_id`, and the NOT-NULL FK) — the router's section-insert
+path is incompatible with the canonical table until either the router adopts
+`doc_id`/`order_index`, or the canonical table makes `doc_id` nullable and adds
+`document_id` as the real FK. And the low-risk cleanup of dropping the 7 identical
+(+ now 2 unioned) table copies from `20260730_authoring_subsystem_schema.sql` and
+un-baselining those collisions, once the sections decision lands so all 10 can be
+retired from that file together.
 
 PR #1202 (“AnA canonical document spine + authoring schema-contract fix”) added
 `db/migrations/20260730_authoring_subsystem_schema.sql`, which `CREATE TABLE IF
