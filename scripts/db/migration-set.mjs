@@ -222,6 +222,13 @@ export const C2C_MIGRATION_FILES = [
   // inventing a regulatory class for a past record would be worse than leaving
   // it unbound.
   'migrations/20260728_authoring_document_governed_binding.sql',
+  // Reconcile lumen_data_atoms embeddings onto 1536 dimensions (audit P0c). The
+  // superseded db/migrations/20260125_add_atom_embeddings.sql declared the column
+  // and the search_atoms_* functions at vector(3072) and was never in this set, so
+  // on real databases the column/functions are absent and the 1536 write + hybrid
+  // search silently failed. Self-guarding: creates-or-reconciles, and only needs
+  // lumen_data_atoms (present via the drizzle baseline the preflight verifies).
+  'db/migrations/20260730_fix_atom_embedding_dimension.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

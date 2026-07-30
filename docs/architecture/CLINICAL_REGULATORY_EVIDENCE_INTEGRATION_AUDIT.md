@@ -63,7 +63,11 @@ CSR     → adaptCsrReport  evidence-spine        5 AnA tools    ── WIRED, r
   - CRL → `ingestCrl`: `POST /api/clinical-regulatory-evidence/crl` (platform-admin; global-public FDA corpus). *(P0a)*
   - CSR → `adaptCsrReport`: `projectOrgCsrReports()` batch behind `POST /api/clinical-regulatory-evidence/project-csr` (tenant-scoped, idempotent) **and** the `project_csr_evidence` AnA tool. *(P0b)*
   - `generate-atoms` bootstrap fixed — it now **projects** the org's CSRs before atomizing, so `listSources('csr')` is populated instead of empty (adapt-before-atomize). *(P0b)*
-- [ ] **Embedding dimension.** Reconcile write path + column + SQL functions on one dimension (→ 1536); stop swallowing the write error; backfill.
+- [x] **Embedding dimension.** Reconciled onto **1536** end-to-end:
+  - `db/migrations/20260730_fix_atom_embedding_dimension.sql` creates/reconciles `lumen_data_atoms.embedding` to `vector(1536)`, fixes the `embedding_model` default, rebuilds the HNSW index (invalid at 3072 — pgvector caps HNSW at 2000 dims), and recreates `search_atoms_semantic`/`search_atoms_hybrid` on the 1536 signature returning `id INTEGER` (matching the real serial-int id + the caller's `h.id = oa.id` join; the old `id UUID` was wrong).
+  - Registered in `scripts/db/migration-set.mjs` (the durable applier) — the old `20260125_add_atom_embeddings.sql` was never in it, so the column/functions were absent on real DBs; that file is now banner-marked SUPERSEDED.
+  - Write path (`retrieval-atoms.service.ts`) no longer swallows the embedding failure — it logs it, so a future dimension mismatch is visible instead of a silent NULL corpus.
+  - Backfill of pre-existing NULL atoms: `scripts/embed-atoms.ts` (best-effort). *(P0c)*
 
 **P1**
 - [ ] RAG reachability — allow/route `clinical_regulatory_evidence` atoms in retrieval.
