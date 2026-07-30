@@ -401,6 +401,36 @@ const COMPARABILITY_SECTIONS: SectionDefinition[] = [
   { code: 'CP.8', title: 'Proposed Reporting Category and Implementation', module: 3, required: true, contentType: 'narrative', guidance: 'ICH Q12' },
 ];
 
+/**
+ * Environmental Assessment (EA) — NEPA / 21 CFR Part 25.40 format for a drug
+ * manufacturing or marketing action that does not qualify for categorical
+ * exclusion. Supports the CMC/quality dossier (Module 3).
+ */
+const ENVIRONMENTAL_ASSESSMENT_SECTIONS: SectionDefinition[] = [
+  { code: 'EA.1', title: 'Date and Applicant', module: 3, required: true, contentType: 'narrative' },
+  { code: 'EA.2', title: 'Description of the Proposed Action and Need', module: 3, required: true, contentType: 'narrative', guidance: '21 CFR 25.40(a)' },
+  { code: 'EA.3', title: 'Substances Introduced into the Environment', module: 3, required: true, contentType: 'table' },
+  { code: 'EA.4', title: 'Fate and Environmental Effects of Released Substances', module: 3, required: true, contentType: 'mixed' },
+  { code: 'EA.5', title: 'Use of Resources and Energy', module: 3, required: false, contentType: 'narrative' },
+  { code: 'EA.6', title: 'Mitigation Measures', module: 3, required: true, contentType: 'narrative' },
+  { code: 'EA.7', title: 'Alternatives to the Proposed Action', module: 3, required: true, contentType: 'narrative' },
+  { code: 'EA.8', title: 'List of Preparers, Certification, and References', module: 3, required: true, contentType: 'list' },
+];
+
+/**
+ * Signal management report — systematic analysis of aggregate safety data per
+ * ICH E2E and EU GVP Module IX (signal detection → validation → assessment →
+ * recommendation). A pharmacovigilance/clinical-safety document (Module 5).
+ */
+const SIGNAL_SECTIONS: SectionDefinition[] = [
+  { code: 'SIG.1', title: 'Data Sources and Detection Method', module: 5, required: true, contentType: 'mixed', guidance: 'GVP IX.B — spontaneous, literature, EudraVigilance, disproportionality' },
+  { code: 'SIG.2', title: 'Signal Validation', module: 5, required: true, contentType: 'narrative' },
+  { code: 'SIG.3', title: 'Signal Analysis and Prioritisation', module: 5, required: true, contentType: 'mixed' },
+  { code: 'SIG.4', title: 'Signal Assessment', module: 5, required: true, contentType: 'narrative', guidance: 'ICH E2E — evidence weighting, biological plausibility' },
+  { code: 'SIG.5', title: 'Recommendation and Action', module: 5, required: true, contentType: 'narrative', guidance: 'label change, RMP update, further study, no action' },
+  { code: 'SIG.6', title: 'Documentation and Tracking', module: 5, required: true, contentType: 'table' },
+];
+
 const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // US Pre-submission
   us_pre_ind_sections: { id: 'us_pre_ind_sections', name: 'Pre-IND Meeting Briefing Package', sections: PRE_IND_SECTIONS },
@@ -515,6 +545,28 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
   // ICH CMC lifecycle
   ich_comparability_sections: { id: 'ich_comparability_sections', name: 'Comparability Protocol (ICH Q5E/Q12)', sections: COMPARABILITY_SECTIONS },
+
+  // India (CDSCO, New Drugs & Clinical Trials Rules 2019 forms)
+  in_ct06_sections: { id: 'in_ct06_sections', name: 'India CT-06 — BE/BA Study Permission', sections: GENERIC_DOSSIER_SECTIONS },
+  in_ct07_sections: { id: 'in_ct07_sections', name: 'India CT-07 — Post-Marketing (Phase IV) Study', sections: PROTOCOL_SECTIONS },
+  in_ct11_sections: { id: 'in_ct11_sections', name: 'India CT-11 — Clinical Trial Completion Report', sections: CSR_SECTIONS },
+  in_ct18_sections: { id: 'in_ct18_sections', name: 'India CT-18 — New Drug Marketing Approval', sections: CTD_ALL_REQUIRED },
+  in_ct19_sections: { id: 'in_ct19_sections', name: 'India CT-19 — New Drug Import Registration', sections: CTD_ALL_REQUIRED },
+  in_ct21_sections: { id: 'in_ct21_sections', name: 'India CT-21 — Generic Drug Marketing Approval', sections: GENERIC_DOSSIER_SECTIONS },
+
+  // US post-approval lifecycle, safety, and environmental
+  us_pmr_sections: { id: 'us_pmr_sections', name: 'Post-Marketing Requirement / Commitment Study', sections: PROTOCOL_SECTIONS },
+  us_medwatch_sections: { id: 'us_medwatch_sections', name: 'MedWatch Expedited Safety Report (ICSR)', sections: ICSR_SECTIONS },
+  us_ea_sections: { id: 'us_ea_sections', name: 'Environmental Assessment (21 CFR 25)', sections: ENVIRONMENTAL_ASSESSMENT_SECTIONS },
+  us_eua_sections: { id: 'us_eua_sections', name: 'Emergency Use Authorization (vaccine/biologic)', sections: CTD_SECTIONS },
+
+  // UK + China post-approval lifecycle
+  uk_irp_sections: { id: 'uk_irp_sections', name: 'UK International Recognition Procedure (MHRA)', sections: CTD_SECTIONS },
+  uk_variation_sections: { id: 'uk_variation_sections', name: 'UK Post-Authorisation Variation', sections: VARIATION_SECTIONS },
+  cn_renewal_sections: { id: 'cn_renewal_sections', name: 'China Registration Renewal (NMPA)', sections: VARIATION_SECTIONS },
+
+  // ICH pharmacovigilance
+  ich_signal_sections: { id: 'ich_signal_sections', name: 'Signal Management Report (ICH E2E / GVP IX)', sections: SIGNAL_SECTIONS },
 
   // Default fallback
   default_sections: { id: 'default_sections', name: 'Standard CTD Sections', sections: CTD_SECTIONS },

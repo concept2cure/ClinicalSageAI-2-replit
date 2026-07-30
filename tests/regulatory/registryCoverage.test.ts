@@ -93,6 +93,11 @@ describe('Registry coverage', () => {
       'CA_ANDS', 'KR_MA_GENERIC', 'SG_GDA',
       // EU pre-submission, designation, renewal, pharmacovigilance system + ICH CMC.
       'EU_SCIENTIFIC_ADVICE', 'EU_PRIME', 'EU_RENEWAL', 'EU_PSMF', 'ICH_COMPARABILITY',
+      // India CDSCO clinical-trial + marketing forms.
+      'IN_CT06', 'IN_CT07', 'IN_CT11', 'IN_CT18', 'IN_CT19', 'IN_CT21',
+      // US post-approval lifecycle / safety / environmental; UK + China lifecycle; ICH signal.
+      'US_PMR', 'US_MEDWATCH', 'US_EA', 'US_EUA',
+      'UK_IRP', 'UK_VARIATION', 'CN_RENEWAL', 'ICH_SIGNAL',
     ] as const;
 
     it.each(NOW_BUILDABLE)('%s has a real (non-generic) section blueprint', (id) => {
