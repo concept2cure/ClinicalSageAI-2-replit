@@ -7,7 +7,17 @@ import { describe, it, expect } from 'vitest';
 import { assessPathwayReadiness } from '../index';
 import { buildPathwayManifest } from '../pathway-manifest';
 
-const FLAT_PATHWAYS = ['estar_510k', 'estar_de_novo', 'mdr', 'ivdr', 'pmda_shonin'] as const;
+const FLAT_PATHWAYS = [
+  'estar_510k',
+  'estar_de_novo',
+  'mdr',
+  'ivdr',
+  'pmda_shonin',
+  'pma',
+  'prestar_q_sub',
+  'prestar_ide',
+  'prestar_513g',
+] as const;
 
 describe('buildPathwayManifest — flat pathways', () => {
   for (const pathway of FLAT_PATHWAYS) {
