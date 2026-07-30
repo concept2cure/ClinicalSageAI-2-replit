@@ -177,14 +177,19 @@ unique). Verification refuted the ones already fixed mid-run.
   DB assertion). Follow-ons: per-investigator 1572 persistence, IND-submission
   association, atomic audit (see below).
 
-**Remaining — one item, dedicated follow-up (not rushed):**
+- **[MEDIUM] `writeMutation` audit-transaction atomicity** — commit `e919e94e`.
+  `writeMutation` now accepts an optional caller-owned transaction client; the
+  c2c/documents **lock**, **submit**, and **delete-evidence** routes run the
+  governed audit and their mutation in ONE transaction (ROLLBACK on any failure),
+  so the ledger can never record a lock/submit/delete the document didn't take.
+  The delete-audit-order contract test asserts true atomicity (begin → audit →
+  delete → commit; begin → audit → rollback on audit failure). Correctly left
+  as-is: `actions.ts` (pure ledger write, no paired mutation), the section routes
+  (already atomic via in-transaction GUC audit), and the cerv2-sections legacy
+  best-effort secondary ledger (documented fire-and-forget).
 
-- **[MEDIUM] `writeMutation` audit-transaction atomicity** (`c2c/documents.ts`
-  lock/submit routes + `actions.ts`). `writeMutation` opens its own
-  connection/transaction while the mutating `UPDATE` runs in a separate
-  statement, so across all **8 call sites** the audit record and the mutation are
-  not atomic (a mutation failure after the audit commits leaves the ledger
-  ahead of reality). Correct fix: add an optional transaction `client` to
-  `writeMutation` + `recordGovernedAction`, wrap the audit + mutation in one
-  transaction at each call site, and add a rollback test. Cross-cutting
-  audit-infrastructure change — its own PR, not a tail-end edit.
+**All 8 unique audit-confirmed defects are now fixed** (the 9th verdict was a
+duplicate of the critical 3454 finding). Remaining items are enhancements, not
+defects: per-investigator 1572 artifact persistence, IND-submission association,
+356h official fill + granular address split, and the registry category extension
+(biotech/pharma/center/program) from the original reconciliation.
