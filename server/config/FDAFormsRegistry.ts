@@ -225,7 +225,7 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
       { id: 'authorized_rep_name', label: 'Authorized Representative', type: 'text', required: true },
       { id: 'authorized_rep_title', label: 'Representative Title', type: 'text', required: false },
     ], autoGenerationTrigger: { stage: 5 }, implementationStatus: 'full',
-    conditionalLogic: [{ when: 'investigators[].financial.hasDisclosableInterest == true', effect: 'required', fieldIds: ['disclosure_details'] }]
+    conditionalLogic: [{ when: { fieldId: 'investigators[].financial.hasDisclosableInterest', operator: 'equals', value: true }, effect: 'required', fieldIds: ['disclosure_details'] }]
   },
 
   // ============ PMA Forms ============
