@@ -56,7 +56,17 @@ const config = {
         ])
         .concat(
           process.env.NODE_ENV !== 'production'
-            ? ['http://localhost:5000', 'http://localhost:3000']
+            ? [
+                'http://localhost:5000',
+                'http://localhost:3000',
+                // Loopback IP is an equally-valid dev origin: the dev/E2E runner
+                // (scripts/run-beta-founder-proof.mjs) serves at 127.0.0.1:5000,
+                // and a browser then sends Origin: http://127.0.0.1:5000. Without
+                // these, the CSRF origin check 403s the Vite client assets and the
+                // SPA renders blank. Dev-only (NODE_ENV !== 'production').
+                'http://127.0.0.1:5000',
+                'http://127.0.0.1:3000',
+              ]
             : []
         )
         .concat(
