@@ -8,7 +8,7 @@
     "files install-fresh.mjs names explicitly",
     "the drizzle push surface (pgTable/pgView in shared/)"
   ],
-  "count": 21,
+  "count": 25,
   "tables": {
     "ai_provider_audit_log": {
       "createdOnlyBy": [
@@ -149,6 +149,47 @@
         "server/db/maudDb.ts"
       ]
     },
+    "precedent.regulatory_precedents": {
+      "createdOnlyBy": [
+        "db/migrations/20260306_precedent_engine.sql"
+      ],
+      "referencedBy": [
+        "server/services/intelligence/outcome-precedent-ingestor.ts",
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.fda_510k_clearances": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.fda_product_codes": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.predicate_safety_signals": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.toxic_predicates": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
     "programs": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/001_create_core_tables.sql"
@@ -160,19 +201,6 @@
         "server/services/innovation/evidence-confidence-heatmap-service.ts",
         "server/services/innovation/outcome-based-template-learning-service.ts",
         "server/services/innovation/regulatory-delta-radar-service.ts"
-      ]
-    },
-    "regulatory": {
-      "createdOnlyBy": [
-        "db/migrations/068_regulatory_schema_alignment.sql"
-      ],
-      "referencedBy": [
-        "server/huggingface-service.ts",
-        "server/routes/graphrag.ts",
-        "server/services/ana/intelligence-questions/flows/stability-study.ts",
-        "server/services/ana/qms-labeling-analytics-tool-defs.ts",
-        "server/services/ivd-knowledge/legal/hta-market-access.ts",
-        "server/services/keywordExtractionService.ts"
       ]
     },
     "studies": {

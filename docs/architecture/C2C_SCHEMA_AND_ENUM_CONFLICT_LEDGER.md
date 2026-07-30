@@ -2128,6 +2128,70 @@ reachability debt but a short list of specific, named defects and decisions.
 
 ---
 
+## C-35 — The reachability guard had its own blind spot: 337 schema-qualified tables went unchecked *(high — FIXED 2026-07-30)*
+
+Found while working the C-34 residual. One remaining baseline entry was a "table"
+called **`regulatory`** — which is a schema, not a table. Pulling that thread found
+the guard from C-32 wrong in two ways, each of which it reported green over. The
+irony is the point: the guard built to stop "green over a gap" had one.
+
+### 1. Schema-qualified names captured the SCHEMA
+
+Both regexes captured only the first identifier:
+
+```
+CREATE TABLE regulatory.submissions      → recorded table "regulatory"
+FROM predicate.fda_510k_clearances       → recorded reference "predicate"
+```
+
+Both sides agreed, so nothing looked broken — and the **~337 schema-qualified
+tables in this repo were never actually checked**. Not a cosmetic defect: a
+false-negative hole covering every `predicate.*`, `precedent.*`, `agent_runtime.*`,
+`ai.*` table. It also risked *masking*, since `predicate.runs` and
+`precedent.runs` would have collapsed to the same identity.
+
+Fixing it moved durably-created tables **1034 → 1292** and immediately surfaced
+**five real findings that had been invisible**: `precedent.regulatory_precedents`
+and four `predicate.*` tables, all backing the live `precedent-engine.ts`. So
+C-34's "21 remaining" was *understating* the debt, not overstating it.
+
+Identity is now normalized: `public.foo` ≡ `foo`, any other schema retained.
+
+### 2. Comments and English prose parsed as SQL
+
+The scan read raw text. A migration header reading
+`-- (CREATE TABLE IF NOT EXISTS only)` registered a table named `only`, and an
+English sentence in a `.ts` prompt string ("Update only the …") registered a
+matching reference — a phantom finding.
+
+The masking direction is the dangerous one: a commented-out or merely *described*
+`CREATE TABLE` counted as a **durable creator**, which would hide a genuinely
+missing one. SQL comments are now stripped before parsing, and a
+`NOT_A_RELATION` set filters keywords (`ONLY`, `LATERAL`, `UNNEST`, …) and common
+prose words that follow `FROM`/`UPDATE`.
+
+### Proof
+
+`tests/schema-contract/migration-reachability-guard.contract.test.ts` (6 cases)
+runs the guard's **real exported helpers** — not a copy — against known input:
+schema-qualified CREATE parsing, public-vs-unqualified normalization,
+non-public schemas staying distinct, quoted / `IF NOT EXISTS` / `UNLOGGED` /
+materialized-view forms, DDL-inside-comments being ignored, and the keyword
+filter. The guard's parsing can no longer regress silently. (The script now gates
+its scan behind an entry-point check so importing it for those helpers does not
+walk the repo or call `process.exit`.)
+
+### Result
+
+Baseline **21 → 25** — the number went **up**, and that is the correct outcome: the
+four net-new entries are real tables that were previously invisible. Honest
+accounting beats a flattering trend line. The corrected 25 are the five
+`predicate.*` / `precedent.*` tables (pgvector-blocked, C-34), the six
+`enhanced_cortex` tables (FK shape conflict, C-34), the three uuid/text identity
+collisions (C-33), and the `_consolidated/` tree (C-29 Class 3).
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
