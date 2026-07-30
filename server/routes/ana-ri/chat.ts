@@ -625,7 +625,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       action: 'chat',
       projectId: req.body.project_context?.projectId,
       organizationId: orgId ? Number(orgId) : undefined,
-      userId,
+      userId: userId ?? undefined,
       artifactCreated: false,
       anaRiOrchestrated: true,
       evidenceCompliant: evidenceCheck.compliant,

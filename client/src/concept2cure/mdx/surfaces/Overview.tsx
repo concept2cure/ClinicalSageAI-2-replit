@@ -9,7 +9,7 @@ import { MDX_HEALTH, type Program, type DueTone } from '../data/programs';
 import { AskAnaChip } from './AskAnaChip';
 import { ClientReviewZone } from '../components/ClientReviewZone';
 
-const PATHWAY_LABEL = { k510: '510(k)', pma: 'PMA', cer: 'CER' } as const;
+const PATHWAY_LABEL = { k510: '510(k)', pma: 'PMA', cer: 'CER', ivdr: 'IVDR' } as const;
 type PathFilter = 'all' | 'k510' | 'pma' | 'cer';
 type StatusFilter = 'all' | 'active' | 'blocked' | 'idle';
 

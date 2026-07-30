@@ -11,6 +11,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
+import { getPool } from '../db/runtime';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
 import { runWithTenantScope } from '../db/tenantStore';

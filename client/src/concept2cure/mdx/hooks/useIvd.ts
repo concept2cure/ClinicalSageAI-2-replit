@@ -158,7 +158,8 @@ export function adaptEvidence(e: ServerEvidence): IvdClinicalEvidence | null {
   return {
     id: String(e.id ?? Math.random().toString(36).slice(2)),
     study: e.study_name ?? e.studyName ?? e.study ?? 'Clinical study',
-    tp, fp, tn, fn,
+    // The guard above returns null unless all four are non-null integers.
+    tp: tp!, fp: fp!, tn: tn!, fn: fn!,
     // Prefer server-computed metrics; derive from the 2×2 when absent.
     sensitivity: metrics.sensitivity,
     specificity: metrics.specificity,

@@ -63,13 +63,6 @@ export class MissingRequestDbContextError extends Error {
 }
 
 export function requestDb(req: Request): RequestDb {
-  const client = (req as Request & { dbClient?: unknown }).dbClient;
-  if (!client || typeof (client as { query?: unknown }).query !== 'function') {
-    throw new Error(
-      'requestDb requires a tenant-scoped dbClient; ensure requireTenantContext runs before this handler'
-    );
-  }
-
   const cached = (req as RequestWithCachedDb).__requestDb;
   if (cached) return cached;
 
