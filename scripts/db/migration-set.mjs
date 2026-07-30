@@ -328,6 +328,13 @@ export const C2C_MIGRATION_FILES = [
   // conditional trigger). Proven by
   // tests/schema-contract/orchestrator-ledger-hardening.contract.test.ts.
   'db/migrations/20260730_orchestrator_run_ledger_hardening.sql',
+  // Release-gate OQ-3 backstop: UNIQUE partial index on the active release
+  // signature per (org, payload-digest), scoped to signature_type =
+  // 'submission-release' so document multi-signing is unaffected. MUST follow
+  // the e-sig gate port (adds bound_payload_digest/superseded_by) and the
+  // immutability migration (its dedup pre-step uses the permitted superseded_by
+  // transition). Idempotent (guarded dedup + CREATE UNIQUE INDEX IF NOT EXISTS).
+  'db/migrations/20260730_release_signature_uniqueness.sql',
   // ── Blank-DB provisioning audit (added 2026-07-30) ────────────────────────
   // Three creators the fresh-install overlay needed and existing databases
   // may equally lack (merged ≠ applied, again):

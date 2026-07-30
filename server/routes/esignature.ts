@@ -190,6 +190,26 @@ router.post('/sign', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'action is required' });
   }
 
+  // signature_type is client-supplied and lands in a column the release-gate
+  // uniqueness index keys on. Accept only the document-signing vocabulary and
+  // RESERVE 'submission-release' for the orchestrator release path
+  // (server/routes/submission-sign-release.ts) — a document signer must not be
+  // able to mint a row that masquerades as a release signature. Default
+  // 'approval' when omitted, matching the historical behaviour.
+  const DOCUMENT_SIGNATURE_TYPES = new Set([
+    'approval', 'review', 'witness', 'acknowledgment', 'verification',
+  ]);
+  const resolvedSignatureType =
+    signatureType === undefined || signatureType === null || signatureType === ''
+      ? 'approval'
+      : signatureType;
+  if (!DOCUMENT_SIGNATURE_TYPES.has(resolvedSignatureType)) {
+    return res.status(400).json({
+      error: 'signatureType must be one of: approval, review, witness, acknowledgment, verification',
+      code: 'ESIGNATURE_TYPE_INVALID',
+    });
+  }
+
   // 21 CFR Part 11 §11.200(a)(1): RE-VERIFY the signer's identity server-side at
   // the moment of signing. We never trust a client-supplied "already verified"
   // flag — the password (first factor) and, when the user has MFA enabled, the
@@ -362,7 +382,7 @@ router.post('/sign', async (req: Request, res: Response) => {
       [
         Number(documentId),
         Number(versionId),
-        signatureType || 'approval',
+        resolvedSignatureType,
         signaturePurpose,
         userId,
         signerName,
