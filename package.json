@@ -34,6 +34,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc",
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc --noEmit",
+    "typecheck:fast": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc --noEmit -p tsconfig.check.json",
     "eval:grounding": "tsx scripts/eval-grounding.ts",
     "eval:risk-backtest": "tsx scripts/backtest-risk-model.ts",
     "check:security-patterns": "tsx scripts/check-security-patterns.ts",
