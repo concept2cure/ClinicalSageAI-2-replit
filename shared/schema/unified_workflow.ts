@@ -83,10 +83,11 @@ export const workflowDocumentVersions = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     comments: text('comments'),
     // Direct tenant scope on version rows (consistent with concept2cure_artifact_versions
-    // and module_documents). Nullable for a non-breaking add + backfill from the parent
-    // unified_documents.organization_id; every writer now populates it directly so version
-    // reads no longer depend solely on joining through the parent document.
-    organizationId: integer('organization_id'),
+    // and module_documents). Added nullable + backfilled in 20260730, then tightened to
+    // NOT NULL in 20260731 once every writer was confirmed to stamp it and all historical
+    // rows were backfilled from the parent unified_documents.organization_id. NOT NULL here
+    // auto-tightens insertDocumentVersionSchema, so a writer that forgets the org fails loudly.
+    organizationId: integer('organization_id').notNull(),
   },
   table => {
     return {

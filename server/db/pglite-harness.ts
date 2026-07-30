@@ -329,13 +329,16 @@ CREATE TABLE IF NOT EXISTS unified_documents (
 );
 
 CREATE TABLE IF NOT EXISTS workflow_document_versions (
-  id          SERIAL PRIMARY KEY,
-  document_id INTEGER NOT NULL,
-  version     INTEGER NOT NULL,
-  content     JSON,
-  created_by  TEXT NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  comments    TEXT
+  id              SERIAL PRIMARY KEY,
+  document_id     INTEGER NOT NULL,
+  version         INTEGER NOT NULL,
+  content         JSON,
+  created_by      TEXT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  comments        TEXT,
+  -- Direct tenant scope (migrations 20260730 add + 20260731 NOT NULL). Mirrors
+  -- production so the harness exercises the org-scoped version reads.
+  organization_id INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ctd_onboarding_documents (

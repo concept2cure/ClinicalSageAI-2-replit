@@ -219,7 +219,14 @@ export async function materializeLeafSources(
       const [version] = await db
         .select({ content: workflowDocumentVersions.content })
         .from(workflowDocumentVersions)
-        .where(eq(workflowDocumentVersions.documentId, documentId))
+        // Scope the version read directly by organization_id (defense-in-depth),
+        // not only transitively through the parent unified_documents org gate.
+        .where(
+          and(
+            eq(workflowDocumentVersions.documentId, documentId),
+            eq(workflowDocumentVersions.organizationId, organizationId),
+          ),
+        )
         .orderBy(desc(workflowDocumentVersions.version))
         .limit(1);
       const body = version ? unifiedContentToText(version.content) : '';

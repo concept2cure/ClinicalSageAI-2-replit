@@ -169,7 +169,10 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
     taskBlueprint: task,
     requiredForms,
     formsFullyBacked,
-    hasEctdBackbone: REGIONS_WITH_ECTD_BACKBONE.has(entry.region),
+    // Honest only when the region has an eCTD backbone AND this entry actually
+    // files as eCTD. A device eSTAR/eCopy or ACTD entry in a backbone region
+    // (e.g. a US 510(k)) does NOT get an eCTD backbone, so don't claim one.
+    hasEctdBackbone: REGIONS_WITH_ECTD_BACKBONE.has(entry.region) && entry.dossierStandard === 'eCTD',
     validationProfile: entry.validationProfile,
     readiness: readinessOf(section, task),
   };

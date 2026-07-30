@@ -36,8 +36,8 @@ beforeAll(async () => {
 
     INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)
     VALUES (200, 'Quality Summary', 'summary', 'tester', ${ORG}, 1);
-    INSERT INTO workflow_document_versions (document_id, version, content, created_by)
-    VALUES (200, 1, '{"type":"doc","content":[{"type":"text","text":"Quality body"}]}'::json, 'tester');
+    INSERT INTO workflow_document_versions (document_id, version, content, created_by, organization_id)
+    VALUES (200, 1, '{"type":"doc","content":[{"type":"text","text":"Quality body"}]}'::json, 'tester', ${ORG});
 
     -- Leaves: one coauthor (m2.5), one unified (m3.2), one vault (external).
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by, checksum)

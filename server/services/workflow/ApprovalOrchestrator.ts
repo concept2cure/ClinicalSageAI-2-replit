@@ -469,6 +469,7 @@ export class ApprovalOrchestrator {
     const docIds = Array.from(new Set(activeWorkflows.map(w => w.documentId)));
     let versionRows: Array<{ documentId: number; versionId: number }> = [];
     if (docIds.length) {
+      const orgNum = typeof organizationId === 'string' ? parseInt(organizationId, 10) : organizationId;
       try {
         versionRows = await db
           .select({
@@ -481,9 +482,16 @@ export class ApprovalOrchestrator {
             and(
               eq(unifiedDocuments.id, workflowDocumentVersions.documentId),
               eq(unifiedDocuments.latestVersion, workflowDocumentVersions.version),
+              // Scope the join to the caller's org (defense-in-depth).
+              eq(unifiedDocuments.organizationId, orgNum),
             ),
           )
-          .where(inArray(workflowDocumentVersions.documentId, docIds));
+          .where(
+            and(
+              inArray(workflowDocumentVersions.documentId, docIds),
+              eq(workflowDocumentVersions.organizationId, orgNum),
+            ),
+          );
       } catch {
         /* Version resolution is an enhancement to the approval list, not
            a precondition for it. A deployment without the versions table

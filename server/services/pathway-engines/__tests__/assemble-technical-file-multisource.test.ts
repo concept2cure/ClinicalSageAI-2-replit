@@ -37,8 +37,8 @@ beforeAll(async () => {
 
     INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)
     VALUES (400, 'Clinical Evaluation Report', 'cer', 'tester', ${ORG}, 1);
-    INSERT INTO workflow_document_versions (document_id, version, content, created_by)
-    VALUES (400, 1, '{"type":"doc","content":[{"type":"text","text":"CER body"}]}'::json, 'tester');
+    INSERT INTO workflow_document_versions (document_id, version, content, created_by, organization_id)
+    VALUES (400, 1, '{"type":"doc","content":[{"type":"text","text":"CER body"}]}'::json, 'tester', ${ORG});
 
     -- Leaves: coauthor (gspr), unified (cer), ctd_onboarding (external upload).
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_type, organization_id, created_by)
