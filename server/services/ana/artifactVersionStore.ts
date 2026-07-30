@@ -62,6 +62,10 @@ export interface UpsertDocumentArtifactVersionResult {
   created: boolean;
   /** External artifact id (artifact_xxx). */
   artifactId: string;
+  /** Internal numeric PK (concept2cure_artifacts.id) — the FK target the
+   * canonical-revision spine uses for the same-transaction status/placement
+   * updates. */
+  artifactPk: number;
   version: number;
   contentHash: string;
 }
@@ -122,6 +126,7 @@ async function insertNewArtifact(
   return {
     created: true,
     artifactId: artifactInsert.rows[0].artifact_id as string,
+    artifactPk,
     version: 1,
     contentHash: ctx.contentHash,
   };
@@ -145,106 +150,119 @@ export async function upsertDocumentArtifactVersion(
 ): Promise<UpsertDocumentArtifactVersionResult> {
   const pool = getPool();
   const client = await pool.connect();
-  const now = new Date();
-  const titleSlug = normalizeTitleSlug(input.title);
-  const contentHash = sha256(input.content);
-  const userId = typeof input.userId === 'number' ? input.userId : null;
-
   try {
     await client.query('BEGIN');
-
-    // Serialize concurrent same-thread drafts on the artifacts row so two
-    // requests cannot both compute the same max(version)+1 and collide on
-    // UNIQUE(artifact_id, version). FOR UPDATE on the SELECT below is mandatory.
-    const existing = await client.query(
-      `SELECT id, artifact_id, version, content_hash
-         FROM concept2cure_artifacts
-        WHERE organization_id = $1
-          AND project_id = $2
-          AND ana_thread_id = $3
-          AND title_slug = $4
-        ORDER BY id ASC
-        LIMIT 1
-        FOR UPDATE`,
-      [input.organizationId, input.projectId, input.anaThreadId, titleSlug]
-    );
-
-    if (existing.rows.length === 0) {
-      // First draft of this document in this thread.
-      const result = await insertNewArtifact(client, input, {
-        titleSlug,
-        contentHash,
-        userId,
-        now,
-      });
-      await client.query('COMMIT');
-      return result;
-    }
-
-    const row = existing.rows[0];
-    const artifactPk = row.id as number;
-    const externalArtifactId = row.artifact_id as string;
-    const currentVersion = Number(row.version);
-
-    // De-dupe: an identical re-emit of the latest content is a no-op so flipping
-    // back and forth in the editor doesn't manufacture phantom versions.
-    if (row.content_hash === contentHash) {
-      await client.query('COMMIT');
-      return {
-        created: false,
-        artifactId: externalArtifactId,
-        version: currentVersion,
-        contentHash,
-      };
-    }
-
-    // Append the next version. Use max(version)+1 (not the cached artifacts.version)
-    // so a partially-migrated row can't reuse an existing version number.
-    const maxRes = await client.query(
-      `SELECT COALESCE(MAX(version), 0) AS max_version
-         FROM concept2cure_artifact_versions
-        WHERE artifact_id = $1`,
-      [artifactPk]
-    );
-    const nextVersion = Number(maxRes.rows[0].max_version) + 1;
-
-    await client.query(
-      `INSERT INTO concept2cure_artifact_versions (
-        artifact_id, organization_id, version, content, content_hash,
-        change_description, created_by_id, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8)`,
-      [
-        artifactPk,
-        input.organizationId,
-        nextVersion,
-        input.content,
-        contentHash,
-        resolveChangeDescription(input.reasonForChange, `AnA Document Studio revision (v${nextVersion})`),
-        userId,
-        now,
-      ]
-    );
-
-    await client.query(
-      `UPDATE concept2cure_artifacts
-          SET version = $1, content = $2, content_hash = $3, updated_at = $4
-        WHERE id = $5`,
-      [nextVersion, input.content, contentHash, now, artifactPk]
-    );
-
+    const result = await upsertDocumentArtifactVersionTx(client, input);
     await client.query('COMMIT');
-    return {
-      created: true,
-      artifactId: externalArtifactId,
-      version: nextVersion,
-      contentHash,
-    };
+    return result;
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
   } finally {
     client.release();
   }
+}
+
+/**
+ * Same as {@link upsertDocumentArtifactVersion} but runs inside the CALLER'S
+ * transaction (no BEGIN/COMMIT/connect/release of its own). This is the seam
+ * the canonical-revision spine (document-spine.ts) uses so the version write,
+ * the governed AI-action/audit ledger, the review-state flip and the dossier
+ * placement all land in ONE atomic transaction — a version can never exist
+ * without its audit row, nor a status flip without its version.
+ *
+ * The FOR UPDATE lock on the artifacts row still serializes concurrent
+ * same-thread drafts against UNIQUE(artifact_id, version); the caller owns the
+ * surrounding BEGIN/COMMIT and any ROLLBACK on failure.
+ */
+export async function upsertDocumentArtifactVersionTx(
+  client: PoolClient,
+  input: UpsertDocumentArtifactVersionInput
+): Promise<UpsertDocumentArtifactVersionResult> {
+  const now = new Date();
+  const titleSlug = normalizeTitleSlug(input.title);
+  const contentHash = sha256(input.content);
+  const userId = typeof input.userId === 'number' ? input.userId : null;
+
+  // Serialize concurrent same-thread drafts on the artifacts row so two
+  // requests cannot both compute the same max(version)+1 and collide on
+  // UNIQUE(artifact_id, version). FOR UPDATE on the SELECT below is mandatory.
+  const existing = await client.query(
+    `SELECT id, artifact_id, version, content_hash
+       FROM concept2cure_artifacts
+      WHERE organization_id = $1
+        AND project_id = $2
+        AND ana_thread_id = $3
+        AND title_slug = $4
+      ORDER BY id ASC
+      LIMIT 1
+      FOR UPDATE`,
+    [input.organizationId, input.projectId, input.anaThreadId, titleSlug]
+  );
+
+  if (existing.rows.length === 0) {
+    // First draft of this document in this thread.
+    return insertNewArtifact(client, input, { titleSlug, contentHash, userId, now });
+  }
+
+  const row = existing.rows[0];
+  const artifactPk = row.id as number;
+  const externalArtifactId = row.artifact_id as string;
+  const currentVersion = Number(row.version);
+
+  // De-dupe: an identical re-emit of the latest content is a no-op so flipping
+  // back and forth in the editor doesn't manufacture phantom versions.
+  if (row.content_hash === contentHash) {
+    return {
+      created: false,
+      artifactId: externalArtifactId,
+      artifactPk,
+      version: currentVersion,
+      contentHash,
+    };
+  }
+
+  // Append the next version. Use max(version)+1 (not the cached artifacts.version)
+  // so a partially-migrated row can't reuse an existing version number.
+  const maxRes = await client.query(
+    `SELECT COALESCE(MAX(version), 0) AS max_version
+       FROM concept2cure_artifact_versions
+      WHERE artifact_id = $1`,
+    [artifactPk]
+  );
+  const nextVersion = Number(maxRes.rows[0].max_version) + 1;
+
+  await client.query(
+    `INSERT INTO concept2cure_artifact_versions (
+      artifact_id, organization_id, version, content, content_hash,
+      change_description, created_by_id, created_at, updated_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8)`,
+    [
+      artifactPk,
+      input.organizationId,
+      nextVersion,
+      input.content,
+      contentHash,
+      resolveChangeDescription(input.reasonForChange, `AnA Document Studio revision (v${nextVersion})`),
+      userId,
+      now,
+    ]
+  );
+
+  await client.query(
+    `UPDATE concept2cure_artifacts
+        SET version = $1, content = $2, content_hash = $3, updated_at = $4
+      WHERE id = $5`,
+    [nextVersion, input.content, contentHash, now, artifactPk]
+  );
+
+  return {
+    created: true,
+    artifactId: externalArtifactId,
+    artifactPk,
+    version: nextVersion,
+    contentHash,
+  };
 }
 
 export interface DocumentArtifactVersion {
