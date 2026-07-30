@@ -287,14 +287,18 @@ export function buildForm1572(
     .join('; ');
 
   const specs: FieldSpec[] = [
-    // investigator_name / study_title reuse FDA_1572 registry field ids + labels.
+    // Required-ness mirrors the OFFICIAL FDA 1572 fillable fields, so the official
+    // AcroForm fill can qualify (see official-field-maps.ts). On the real form,
+    // Box 2 qualifications are satisfied by an ATTACHMENT (db_cv / db_oth_qual
+    // checkboxes), not an inline text field, and there is no study-title field —
+    // so both are carried for the draft/record but are not inline-required.
     { id: 'investigator_name', value: s(investigator.name), required: true },
-    { id: 'investigator_qualifications', value: s(investigator.qualifications), required: true },
+    { id: 'investigator_qualifications', value: s(investigator.qualifications), required: false },
     { id: 'facility_name', value: s(investigator.facilityNameAddress), required: true },
     { id: 'clinical_lab_name_address', value: s(investigator.clinicalLabNameAddress), required: false },
     { id: 'irb_name_address', value: s(investigator.irbNameAddress), required: true },
     { id: 'sub_investigators', value: subInv, required: false },
-    { id: 'study_title', value: s(meta.studyTitle), required: true },
+    { id: 'study_title', value: s(meta.studyTitle), required: false },
     { id: 'protocol_numbers', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: false },
   ];
 

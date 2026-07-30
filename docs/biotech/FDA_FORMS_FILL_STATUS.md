@@ -68,7 +68,7 @@ faithful **reconstruction** is the honest ceiling.
 
 | Form | Builder | Official fill mechanism | Status |
 |---|---|---|---|
-| 1572 | ✅ `buildForm1572` | AcroForm fill (decrypt + real field map) | `PARTIAL` — fill proven on real asset; field map + decrypt-onboarding not yet wired |
+| 1572 | ✅ `buildForm1572` (aligned to official form) | AcroForm fill — reviewed field map + onboarding wired | `IMPLEMENTED_UNVERIFIED` — unit-tested against real `db_*` names (`ind-form-1572-official.test.ts`); needs decrypted asset installed + granular address split |
 | 356h | ✅ `buildForm356h` | AcroForm fill | `PARTIAL` — same as 1572 |
 | 3454 | ✅ `buildForm3454` | static-XFA overlay | `STUB` — overlay engine + coordinate map not built |
 | 3455 | ✅ `buildForm3455` | static-XFA overlay | `STUB` |
@@ -100,12 +100,15 @@ Ordered; each is a bounded, tested PR feeding the **one governed document spine*
 (authoring → approval → dossier → package → audit; 21 CFR Part 312), not a
 throwaway download.
 
-1. **Decrypt-at-onboarding + AcroForm field maps (1572, 356h).** An onboarding
-   step decrypts the AES asset and emits `<formId>.pdf` + reviewed manifest
-   (`sha256` of decrypted bytes, `sourceUrl`, `reviewedBy`, `reviewedAt`,
-   `version`, `fieldMap` → real FDA names). Enrich the builders/assembler to
-   emit **granular** address fields (site/lab/IRB name + street/city/state/zip)
-   so composite strings stop collapsing into one AcroForm field.
+1. **Decrypt-at-onboarding + AcroForm field maps (1572 ✅, 356h next).**
+   `scripts/ind-forms/onboard-fda-form.ts` decrypts the AES asset (pikepdf) and
+   emits `<formId>.pdf` + a governance-gated manifest (`sha256`, fda.gov
+   `sourceUrl`, `reviewedBy`, `reviewedAt`, `version`, `fieldMap` from the
+   reviewed `official-field-maps.ts`). **1572 done** (builder aligned to the
+   official form; official fill unit-tested). **Remaining:** author the 356h map
+   + onboard it; enrich the builder/assembler to emit **granular** address
+   fields (site/lab/IRB name + street/city/state/zip) so composite strings stop
+   collapsing into one AcroForm field (1572 v1 maps the composite into `*_name`).
 2. **Static-XFA overlay engine (3454, 3455).** Decrypt → draw values at a
    reviewed per-form coordinate map on the official page → flatten. Deterministic,
    viewer-independent.

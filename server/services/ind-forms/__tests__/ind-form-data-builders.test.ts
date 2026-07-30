@@ -125,10 +125,13 @@ describe('buildForm1572', () => {
   it('detects missing required investigator fields', () => {
     const built = buildForm1572({}, {});
     expect(built.missingRequired).toContain('investigator_name');
-    expect(built.missingRequired).toContain('investigator_qualifications');
     expect(built.missingRequired).toContain('facility_name');
     expect(built.missingRequired).toContain('irb_name_address');
-    expect(built.missingRequired).toContain('study_title');
+    // Aligned to the OFFICIAL FDA 1572: Box 2 qualifications are an attachment
+    // (db_cv / db_oth_qual checkboxes) and there is no study-title field, so
+    // neither is an inline-required field (this lets the official fill qualify).
+    expect(built.missingRequired).not.toContain('investigator_qualifications');
+    expect(built.missingRequired).not.toContain('study_title');
   });
 
   it('buildAllForm1572 yields one form per investigator', () => {
