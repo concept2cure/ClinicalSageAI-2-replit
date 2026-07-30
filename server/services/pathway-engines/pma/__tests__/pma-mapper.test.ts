@@ -122,4 +122,58 @@ describe('PMA submission-type metadata', () => {
     expect(isPmaSupplement('panel_track_supplement')).toBe(true);
     expect(isPmaSupplement('30_day_notice')).toBe(true);
   });
+
+  describe('per-submission-type required sections (21 CFR 814.39)', () => {
+    it('a 30-day notice requires only admin + manufacturing (not clinical)', () => {
+      const r = mapToPma({
+        leaves: [
+          { sectionCode: '1', title: 'Cover letter and administrative information' },
+          { sectionCode: '3', title: 'Manufacturing process change description' },
+        ],
+        submissionType: '30_day_notice',
+      });
+      expect(r.summary.ready).toBe(true); // admin + manufacturing present ⇒ complete
+      expect(r.sections.find((s) => s.id === 'clinical')?.required).toBe(false);
+      expect(r.summary.missingRequired).not.toContain('clinical');
+    });
+
+    it('the same content is NOT complete as an original PMA (clinical becomes required)', () => {
+      const leaves = [
+        { sectionCode: '1', title: 'Cover letter and administrative information' },
+        { sectionCode: '3', title: 'Manufacturing and quality system information' },
+      ];
+      const original = mapToPma({ leaves, submissionType: 'original' });
+      expect(original.summary.ready).toBe(false);
+      expect(original.summary.missingRequired).toContain('clinical');
+    });
+
+    it('a real-time supplement requires admin, device description, and labeling only', () => {
+      const r = mapToPma({
+        leaves: [
+          { sectionCode: '1', title: 'Cover letter and administrative information' },
+          { sectionCode: '2', title: 'Device description and indications for use' },
+          { sectionCode: '6', title: 'Proposed labeling' },
+        ],
+        submissionType: 'real_time_supplement',
+      });
+      expect(r.summary.ready).toBe(true);
+      expect(r.sections.find((s) => s.id === 'clinical')?.required).toBe(false);
+      expect(r.sections.find((s) => s.id === 'manufacturing')?.required).toBe(false);
+    });
+
+    it('a panel-track supplement still requires new clinical data + SSED + stats', () => {
+      const r = mapToPma({
+        leaves: [
+          { sectionCode: '1', title: 'Cover letter and administrative information' },
+          { sectionCode: '2', title: 'Device description and indications for use' },
+          { sectionCode: '6', title: 'Proposed labeling' },
+        ],
+        submissionType: 'panel_track_supplement',
+      });
+      expect(r.summary.ready).toBe(false);
+      expect(r.summary.missingRequired).toContain('clinical');
+      expect(r.summary.missingRequired).toContain('ssed-summary');
+      expect(r.summary.missingRequired).toContain('statistical-analysis');
+    });
+  });
 });
