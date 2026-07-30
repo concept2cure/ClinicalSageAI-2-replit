@@ -161,6 +161,7 @@
     "audit:repo-health:full-strict": "node scripts/audits/repo-health-scan.mjs --strict --owners docs/reports/repo-health-owners.json --write-markdown docs/reports/repo-health-scan-latest.md",
     "beta:typecheck": "NODE_OPTIONS=\"--max-old-space-size=4096\" tsc --noEmit -p tsconfig.beta-slice.json",
     "beta:proof": "node scripts/run-beta-founder-proof.mjs",
+    "test:e2e:smoke": "node scripts/run-e2e-smoke.mjs",
     "validate:ui-kits": "node scripts/validate-ui-kits.mjs",
     "ci:ui-kits": "node scripts/validate-ui-kits.mjs --strict"
   },

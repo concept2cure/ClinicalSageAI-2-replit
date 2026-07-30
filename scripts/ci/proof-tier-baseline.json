@@ -1,17 +1,18 @@
 {
   "$comment": "The proof-tier FLOOR: proof files whose loss would silently weaken a maturity claim (docs/architecture/PROOF_HIERARCHY.md). scripts/ci/check-proof-tier.mjs fails when a listed file disappears. Grow this file (add proofs); never shrink it by deleting proofs. Regenerate with: npm run ci:proof-tier:write-baseline.",
-  "generatedAt": "2026-07-30T10:44:26.600Z",
+  "generatedAt": "2026-07-30T12:35:29.012Z",
   "totals": {
-    "schema-contract": 24,
+    "schema-contract": 25,
     "tenant-contract": 11,
     "golden-journeys": 6,
     "export-contract": 3,
-    "e2e-browser": 27
+    "e2e-browser": 28
   },
   "inventory": {
     "schema-contract": [
       "tests/schema-contract/artifacts-relkind.contract.test.ts",
       "tests/schema-contract/authoring-auth-parity.contract.test.ts",
+      "tests/schema-contract/authoring-comments-router-columns.contract.test.ts",
       "tests/schema-contract/authoring-role-gate.contract.test.ts",
       "tests/schema-contract/authoring-router-columns.contract.test.ts",
       "tests/schema-contract/authoring-section-gate.contract.test.ts",
@@ -63,6 +64,7 @@
     ],
     "e2e-browser": [
       "tests/e2e/510k-founder-path.e2e.spec.ts",
+      "tests/e2e/authenticated-app-smoke.e2e.spec.ts",
       "tests/e2e/authoring.e2e.spec.ts",
       "tests/e2e/beta-core-pulse.e2e.ts",
       "tests/e2e/beta-pulse.e2e.ts",
