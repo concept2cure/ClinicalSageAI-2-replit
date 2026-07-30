@@ -81,11 +81,16 @@ Point new work at these when you need a worked example of a rung:
   denies a cross-tenant leaf at the DB boundary, reopens the emitted tree from
   disk (parses the backbone XML, re-verifies every `util/index-md5.txt` entry
   against the actual bytes, checks each PDF leaf's `%PDF` magic), then
-  **externally qualifies** it with the license-free FDA-criteria eValidator
-  subset — and proves the gate is non-vacuous by showing a 0-byte leaf and a
-  deleted regional backbone are both caught. This is the journey that converts
-  "handcrafted XML, checked only by our own eyes" into a reopened,
-  externally-qualified artifact.
+  **externally qualifies** it two ways: the emitted backbone XML is validated by
+  **real libxml2** (`xmllint`, via `server/services/ectd/xml-validator.ts` — the
+  parser class agency tooling uses), and the license-free FDA-criteria eValidator
+  subset passes the whole package. It proves the gate is non-vacuous by showing a
+  0-byte leaf, a deleted regional backbone, and a malformed backbone XML are all
+  caught. This is the journey that converts "handcrafted XML, checked only by our
+  own eyes" into a reopened, libxml2- and externally-qualified artifact. (The
+  platform's fuller qualification pipeline — `server/services/ectd/qualification/`
+  `qualifyV3`/`qualifyV4`, adding DTD/XSD validation once the licensed schemas are
+  vendored — plugs in at the same seam.)
 - **Tiers 6 → 7 (PDF)** — `tests/export-contract/pdf-export.proof.test.ts`.
   Renders a real PDF, reopens it with `pdf-parse` (pdf.js — an engine
   **independent** of the pdf-lib writer), then qualifies it with the eCTD PDF/A
@@ -129,13 +134,16 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
   integrity), **PDF** (independent pdf.js reopen), **DOCX** (OOXML part reopen),
   and **XLSX** (OOXML part reopen + round-trip). Remaining exporters (e.g.
   form-filled AcroForm bundles, ZIP deliverables) should follow the same pattern.
-- **Tier 7 (external qualification)** is real but **scoped**: the eCTD path uses
-  the license-free FDA-criteria subset, *not* the commercial LORENZ agency
-  validator (it drops in behind the same `EVALIDATOR_BINARY` seam with no test
-  rewrite); the PDF path uses detection-only `classifyPdfA`, *not* a full veraPDF
-  verdict. Until those licensed engines are wired, a Tier-7 *pass* means
-  "survived an external reopen-and-check by an independent engine," not
-  "agency-accepted." That distinction is recorded in every manifest that uses it.
+- **Tier 7 (external qualification)** is real but **scoped**: the eCTD path
+  validates the backbone XML with **real libxml2** (`xmllint`) and runs the
+  license-free FDA-criteria subset — but not yet the commercial LORENZ agency
+  validator, nor DTD/XSD validation (which needs the licensed schemas vendored;
+  both drop in behind the same `xml-validator`/`EVALIDATOR_BINARY` seams with no
+  test rewrite). The PDF path uses detection-only `classifyPdfA`, *not* a full
+  veraPDF verdict. Until those licensed engines are wired, a Tier-7 *pass* means
+  "survived an external reopen-and-check by an independent engine (libxml2 /
+  pdf.js / mammoth / FDA-criteria)," not "agency-accepted." That distinction is
+  recorded in every manifest that uses it.
 - **Durability.** `scripts/ci/check-proof-tier.mjs` (`npm run ci:proof-tier`)
   ratchets the proof surface: it fails if a baselined proof file is deleted, if a
   journey/proof stops emitting its manifest, or if this document references a
