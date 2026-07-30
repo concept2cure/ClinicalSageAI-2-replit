@@ -6144,8 +6144,18 @@ export const c2cProjectWorkItems = pgTable(
     projectId: integer('project_id')
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
-    sourceType: text('source_type').notNull(), // 'review_thread' | 'review_task' | 'approval_blocker' | 'requested_changes'
+    // 'review_thread' | 'review_task' | 'approval_blocker' | 'requested_changes'
+    // | 'correspondence' (agency letters/issues, via regulatory-correspondence)
+    sourceType: text('source_type').notNull(),
+    // Integer key of the source row. Together with (source_type, org_id) this is
+    // the upsert/dedup key — see upsertProjectWorkItem.
     sourceId: integer('source_id').notNull(),
+    // Stable reference for sources keyed by a STRING/UUID rather than an integer
+    // (e.g. a correspondence issue id). Those sources previously had to pass
+    // source_id: 0, which collapsed every one of them onto the same dedup key;
+    // source_ref keeps them individually traceable back to the originating
+    // record. Null for integer-keyed sources.
+    sourceRef: text('source_ref'),
     artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id, {
       onDelete: 'cascade',
     }),
@@ -6165,6 +6175,7 @@ export const c2cProjectWorkItems = pgTable(
   table => ({
     projectIdx: index('c2c_pwi_project_idx').on(table.projectId),
     sourceIdx: index('c2c_pwi_source_idx').on(table.sourceType, table.sourceId),
+    sourceRefIdx: index('c2c_pwi_source_ref_idx').on(table.sourceRef),
     artifactIdx: index('c2c_pwi_artifact_idx').on(table.artifactId),
     ownerIdx: index('c2c_pwi_owner_idx').on(table.ownerId),
     statusIdx: index('c2c_pwi_status_idx').on(table.status),

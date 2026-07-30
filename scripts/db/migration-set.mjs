@@ -362,6 +362,10 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260730_estar_registration.sql',
   'migrations/20260730_estar_submission.sql',
   'migrations/20260730_estar_submission_project_link.sql',
+
+  // Work items: source_ref for string/UUID-keyed sources (correspondence
+  // issues), so those rows stop sharing the (source_type, source_id=0) key.
+  'migrations/20260730_work_item_source_ref.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
