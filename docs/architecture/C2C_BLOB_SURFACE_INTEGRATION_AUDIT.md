@@ -119,11 +119,30 @@ contract shows each needs either a store decision (SAE, Biostat) or a larger,
 semantically-correct assembler off a different real store (Decision-lineage), rather than a
 one-table map. They are not "one Protocol-Dev-sized change" as first estimated._
 
-**B — no obvious real store → genuine demo-only (needs a backend built, or retire):**
-market access, reg-change, human-factors files, dossier-map, investigator-brochure,
-MAA module, NDA modules, research-admin, program-journey, evidence-asks/objects,
-forecast-snapshots, rule-packs, doc-journeys, cro-portfolio. Each needs a product
-decision: build the write path, or mark it explicitly as a demo/preview surface.
+**B — traced + adversarially verified (multi-agent disposition pipeline, 2026-07-31).**
+Every Class-B blob was deep-traced (route → consuming surface → MOUNTED? → real store +
+non-seed writer? → fixture status) and each classification adversarially checked. The
+master table (execution status in brackets):
+
+| blob | surface | disposition | real store / action |
+|---|---|---|---|
+| c2c_market_access | MarketAccess (mounted, fixture-backed) | **BUILD** (verified) | no real store → build store + write path, CMC pattern **[EXEC in flight]** |
+| c2c_reg_changes | RegChange (mounted, fixture-backed) | BUILD (verify pending) | no real store found |
+| c2c_hf_files | HumanFactors (mounted, fixture-backed) | BUILD (verify pending) | no real store found |
+| c2c_nda_modules (+c2c_nda_m) | NdaCockpit (mounted, fixture-backed) | CONVERGE | eCTD submission core (submissions app_type nda/bla + sequences + leaves + coauthor_documents) — same store as the landed IND convergence **[EXEC in flight]** |
+| c2c_doc_journeys | DocJourney (mounted, fixture-backed) | CONVERGE | authoring_documents + doc_revisions + authoring_comments + frozen_documents (20260725 loop tables, real writers) **[EXEC in flight]** |
+| c2c_cro_portfolio | CroPortfolio (mounted, fixture-backed) | CONVERGE | cro_clients + cro_studies + cro_regulatory_submissions + cro_milestones + cro_team_assignments **[EXEC in flight]** |
+| c2c_dossier_map | DossierMap (mounted, fixture-free) | CONVERGE (verify pending) | project_sections |
+| c2c_research_admin | ResearchAdmin (mounted, fixture-free) | CONVERGE (verify pending) | personnel_training (+ research_personnel) |
+| c2c_evidence_asks (+_objects) | Evidence (mounted, fixture-backed) | CONVERGE (verify pending) | ai_retrieval_runs/_chunks + ai_generation_runs (AI trace chain) over lumen_data_atoms |
+| c2c_investigator_brochure | InvestigatorBrochure (mounted, fixture-free) | verify pending | trace ambivalent: real upstream nonclinical stores exist but NO IB-specific table; likely BUILD |
+| c2c_labeling_pi | LabelingPi (mounted, fixture-backed) | BUILD (verify pending) | labeling.spl_sections exists but is program-scoped (not org) and lacks negotiation — likely build org-scoped store |
+| c2c_program_journey | BiopharmaJourney (mounted, fixture-free) | BUILD (verify pending) | no real store |
+| c2c_maa_module | MaaCockpit | **ALREADY_REAL** (verified first-hand) | stale audit entry — bare table has ZERO refs; the real store is `c2c_maa_module1_components` (migration-backed, normalized, live UI write path: POST /api/maa-module1/:market INSERT/DELETE at maa-module1.routes.ts:108/:116); surface is fixture-free. No action. |
+| c2c_rule_packs | (no surface) | **ALREADY_REAL** (verified first-hand) | global doc_type×agency×version required-sections REGISTRY read by live services/routes (scaffold-project-documents.ts, c2c/projects+documents routes), installed by install-fresh — reference data, not a tenant demo blob. No action. |
+| c2c_blockers | (trace pending) | pending | — |
+
+(forecast-snapshots was already dropped with the dead intelligence cluster.)
 
 ## The proven remediation pattern (from Protocol-Dev, landed)
 
