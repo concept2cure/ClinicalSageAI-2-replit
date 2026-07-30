@@ -80,7 +80,7 @@ import type {
 import { leafIdSlug, createLeafIdAssigner } from './ectd-packager/leaf-id';
 import { buildMd5Index } from './ectd-packager/md5-index';
 import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
-import { buildIchModuleTree, type RenderedLeaf } from './ectd-packager/ich-headings';
+import { buildIchModuleTree, findDroppedLeaves, type RenderedLeaf } from './ectd-packager/ich-headings';
 
 // Re-export the public packager surface (barrel).
 export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
@@ -376,6 +376,19 @@ ${m1Leaves}
 function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
+  // Fail loudly on any leaf that maps to no ICH module — otherwise it would be
+  // silently dropped from the backbone (a submission document vanishing without
+  // a trace). Module-1 leaves are already filtered out upstream, so anything
+  // unmappable here is a genuinely out-of-range or malformed CTD section.
+  const dropped = findDroppedLeaves(m2to5);
+  if (dropped.length) {
+    const detail = dropped.map((l) => `${l.ctdSection} (${l.fileName})`).join(', ');
+    throw new ValidationError(
+      `eCTD backbone cannot place ${dropped.length} leaf(s) — no ICH Module 2–5 ` +
+        `heading matches: ${detail}. Assign each a valid CTD section.`,
+      dropped.map((l) => `unplaceable-section:${l.ctdSection}`),
+    );
+  }
   // Render each leaf, then nest it under its authoritative ICH v3.2.2 heading.
   // Flat <m2>..<m5> is NOT a valid ectd:ectd child — the DTD requires the named
   // heading tree (m3-quality > m3-2-body-of-data > m3-2-s-drug-substance > leaf).

@@ -52,6 +52,19 @@ export interface IchHeading {
  * is a segment-prefix of the leaf's CTD section; deeper CTD sub-sections (e.g.
  * 3.2.S.1, 5.3.5.1) attach as leaves under their nearest defined heading
  * (m3-2-s-drug-substance, m5-3-5-reports-of-efficacy-and-safety-studies).
+ *
+ * Depth note — this tree is intentionally complete for Modules 3/4/5, where the
+ * overwhelming majority of leaves live and the DTD's leaf-bearing headings are
+ * exactly the ones encoded here (a 3.2.S.4 leaf attaches directly under
+ * m3-2-s-drug-substance; the DTD defines no m3-2-s-4 element). Module 2 is
+ * encoded to its first sub-level (m2-2 … m2-7); the ICH DTD subdivides m2-6 and
+ * m2-7 one level deeper (m2-6-1 … m2-6-7, m2-7-1 … m2-7-6), so a 2.6.x / 2.7.x
+ * summary leaf currently attaches one level shallower than the DTD's deepest
+ * heading. Those extra element names are deliberately NOT guessed here: the
+ * `xmllint --dtdvalid` step in the qualification harness is the authority that
+ * confirms placement the moment the real DTD is vendored, and completing this
+ * sub-level against that DTD is a bounded, reviewed follow-up. The high-volume
+ * Module 3/4/5 paths carry no such gap.
  */
 export const ICH_BACKBONE: IchHeading[] = [
   {
@@ -138,6 +151,16 @@ export function allHeadingElements(): string[] {
   return out;
 }
 
+/**
+ * Normalize a CTD section to the packager's bare form. The codebase carries two
+ * section conventions — the packager's `3.2.S` and the validators' `m3.2.S`
+ * (whose regexes are built for the m-prefix) — so the resolver accepts both and
+ * strips a leading module `m` here rather than making every caller pre-clean.
+ */
+function normalizeCtdSection(ctdSection: string): string {
+  return (ctdSection ?? '').trim().replace(/^m(?=\d)/i, '');
+}
+
 /** Case-insensitive segment-aware prefix test: is `section` under `prefix`? */
 function sectionIsUnder(section: string, prefix: string): boolean {
   const s = section.toLowerCase().split('.');
@@ -150,8 +173,10 @@ function sectionIsUnder(section: string, prefix: string): boolean {
  * Find the deepest heading path (root → … → deepest) for a leaf's CTD section.
  * Returns the chain of headings the leaf nests under, or null if the leaf's
  * module is not in the tree (Module 1 is regional and handled elsewhere).
+ * Accepts both the `3.2.S` and `m3.2.S` section forms.
  */
 export function headingPathFor(ctdSection: string): IchHeading[] | null {
+  const section = normalizeCtdSection(ctdSection);
   const chain: IchHeading[] = [];
   let level = ICH_BACKBONE;
   let matched = true;
@@ -161,7 +186,7 @@ export function headingPathFor(ctdSection: string): IchHeading[] | null {
     // section is the LONGEST segment-prefix of the leaf's section.
     let best: IchHeading | null = null;
     for (const h of level) {
-      if (sectionIsUnder(ctdSection, h.section)) {
+      if (sectionIsUnder(section, h.section)) {
         if (!best || h.section.split('.').length > best.section.split('.').length) best = h;
       }
     }
@@ -172,6 +197,55 @@ export function headingPathFor(ctdSection: string): IchHeading[] | null {
     }
   }
   return chain.length ? chain : null;
+}
+
+/** The deepest heading a section resolves to (its owning element), or null. */
+export function deepestHeadingFor(ctdSection: string): IchHeading | null {
+  const path = headingPathFor(ctdSection);
+  return path ? path[path.length - 1] : null;
+}
+
+/** A heading is terminal (leaf-bearing) iff it holds no sub-headings; container
+ *  headings (e.g. m3-2-body-of-data) hold only sub-headings, never leaves. */
+function isTerminalHeading(h: IchHeading): boolean {
+  return !h.children || h.children.length === 0;
+}
+
+/**
+ * Does this section have a valid home in the eCTD backbone? True when it maps to
+ * a terminal (leaf-bearing) Module 2–5 heading, or is a Module 1 section (placed
+ * in the regional backbone, not index.xml). False for a bare container section
+ * (e.g. '3.2', which resolves only to the m3-2-body-of-data container) or a
+ * section outside Modules 1–5 — either of which would yield an invalid or
+ * lossy backbone.
+ */
+export function isPlaceableSection(ctdSection: string): boolean {
+  const section = normalizeCtdSection(ctdSection);
+  if (!section) return false;
+  if (section.split('.')[0] === '1') return true; // Module 1 → regional backbone
+  const deepest = deepestHeadingFor(section);
+  return !!deepest && isTerminalHeading(deepest);
+}
+
+/** Leaves whose section has no valid backbone home (container-only or out of
+ *  range) — see {@link isPlaceableSection}. */
+export function findUnplaceableLeaves<T extends SectionedLeaf>(leaves: T[]): T[] {
+  return leaves.filter((l) => !isPlaceableSection(l.ctdSection));
+}
+
+/**
+ * Leaves that would be SILENTLY DROPPED from the Module 2–5 backbone because
+ * their section maps to no module at all (out of range 2–5, or malformed). The
+ * packager uses this to fail loudly rather than emit a package missing a
+ * document. Module 1 sections are excluded — they belong in the regional
+ * backbone and are filtered out before the index tree is built.
+ */
+export function findDroppedLeaves<T extends SectionedLeaf>(leaves: T[]): T[] {
+  return leaves.filter((l) => {
+    const section = normalizeCtdSection(l.ctdSection);
+    if (section.split('.')[0] === '1') return false;
+    return deepestHeadingFor(section) === null;
+  });
 }
 
 /** A leaf plus the rendered `<leaf>` XML string that represents it. */
