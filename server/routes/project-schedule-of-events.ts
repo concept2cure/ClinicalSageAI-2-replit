@@ -18,6 +18,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../db';
+import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
 import {
   getScheduleOfEvents,
   generateProjectSchedule,
@@ -136,6 +137,28 @@ async function requireOwnedProject(
 }
 
 // ── routes ────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/.../projects/:id/unified-work
+ *
+ * One normalized view of everything outstanding on a project across the three
+ * systems that track work independently: schedule-of-events tasks (project_tasks),
+ * review + correspondence work items (c2c_project_work_items), and tracked
+ * filings with their FDA review clock (estar_submissions). Read-only and
+ * additive — it changes no system's writes. Blockers sort first, then soonest
+ * due; `summary` gives the roll-up counts by status and by source.
+ */
+router.get('/projects/:id/unified-work', async (req: Request, res: Response) => {
+  try {
+    const owned = await requireOwnedProject(req, res);
+    if (!owned) return;
+    const { orgId, projectId } = owned;
+    const view = await loadUnifiedWork({ organizationId: orgId, projectId });
+    return res.json(view);
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to load unified work view' });
+  }
+});
 
 router.get('/projects/:id/schedule-of-events', async (req: Request, res: Response) => {
   try {
