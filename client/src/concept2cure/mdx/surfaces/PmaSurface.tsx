@@ -9,6 +9,7 @@ import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS, type PmaPhase } from '../da
 import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { EstarFilingPanel } from './EstarFilingPanel';
 
 export interface PmaSurfaceProps {
   /** Active PMA program from App.tsx. When null, the surface renders the
@@ -161,6 +162,10 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           </button>
         ))}
       </div>
+
+      {/* eSTAR filing journey — live registration prerequisites + tracked
+          submissions (register → produce → track), org-scoped from the session. */}
+      <EstarFilingPanel />
     </>
   );
 
