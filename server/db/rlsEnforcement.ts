@@ -68,6 +68,9 @@ export function isExplicitEnforcementDecision(env: NodeJS.ProcessEnv = process.e
  *
  * Production boot matrix (non-production is always a no-op):
  *   - RLS_ENFORCE=on                    → boots, RLS filters rows.
+ *   - a non-canonical on-alias          → refuses to boot. enforce/true/1 count
+ *     as `on` for dev/test convenience, but production demands the exact token
+ *     so the flip is unambiguous and greppable across deploy tooling.
  *   - any other value, including unset  → refuses to boot.
  *
  * @returns the resolved enforcement mode.
@@ -77,9 +80,23 @@ export function assertRlsEnforcementForProduction(
 ): RlsEnforcementMode {
   const mode = readEnforcementMode(env);
   const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
-  if (!isProduction || mode === 'on') return mode;
+  if (!isProduction) return mode;
 
+  // Production accepts ONLY the exact canonical token `on`. readEnforcementMode
+  // resolves enforce/true/1 to `on` for dev/test ergonomics, but boarding a
+  // real tenant on RLS spelled a way the deploy tooling doesn't canonically
+  // emit is a fail-open trap — refuse it and name the one accepted spelling.
   const raw = (env.RLS_ENFORCE ?? '').trim();
+  if (raw.toLowerCase() === 'on') return 'on';
+
+  if (mode === 'on') {
+    throw new Error(
+      `[rls-enforcement] FAIL-CLOSED: REFUSING TO BOOT because RLS_ENFORCE is set to "${raw}" ` +
+        'in production — a non-canonical on-alias. Set RLS_ENFORCE=on (the exact token); ' +
+        'off and shadow modes are restricted to non-production environments.'
+    );
+  }
+
   const configured = raw === '' ? 'not set' : `set to "${raw}"`;
   throw new Error(
     `[rls-enforcement] FAIL-CLOSED: REFUSING TO BOOT because RLS_ENFORCE is ${configured} ` +
