@@ -353,6 +353,15 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
+
+  // eSTAR filing journey — client registration (the four FDA prerequisites),
+  // the program-agnostic filing tracker (status + review clock), and the
+  // project link that joins tracking to the PM spine. Order matters: the
+  // project-link ALTER requires estar_submissions to exist. All idempotent
+  // (CREATE TABLE / ADD COLUMN / CREATE INDEX ... IF NOT EXISTS).
+  'migrations/20260730_estar_registration.sql',
+  'migrations/20260730_estar_submission.sql',
+  'migrations/20260730_estar_submission_project_link.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
