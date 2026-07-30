@@ -7,8 +7,9 @@
  * cells[] } rows the v2 ResearchAdmin Training matrix renders — every cell DERIVED
  * live from real completion/expiry dates via citi-logic's 60-day window ('current'
  * / 'expiring' / 'expired'), an undated record honestly 'missing', an absent
- * record honestly 'n/a', the latest completion governing recertified modules —
- * with strict INTEGER org scope and soft-delete awareness on both tables.
+ * record honestly 'n/a', the best current standing governing recertified modules
+ * (a valid longer-dated cert is never masked by a lapsed refresher) — with strict
+ * INTEGER org scope and soft-delete awareness on both tables.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -109,7 +110,7 @@ describe('assembleOrgResearchAdmin', () => {
     expect(r.cells).toEqual(['current', 'expiring', 'n/a', 'missing', 'expired']);
   });
 
-  it('lets the latest completion govern a recertified module', async () => {
+  it('lets the best current standing govern a recertified module', async () => {
     const p = await insertPerson(ORG, 'M. Delgado, RN', 'coordinator');
     // Old lapsed cert + this cycle's renewal → the renewal governs (current).
     await insertTraining(ORG, p, 'citi_human_subjects', '2020-01-01', '2023-01-01');
@@ -121,6 +122,20 @@ describe('assembleOrgResearchAdmin', () => {
     const [r] = await assembleOrgResearchAdmin(ORG, TODAY) as any[];
     expect(r.cells[0]).toBe('current');
     expect(r.cells[1]).toBe('current');
+  });
+
+  it('does not let a lapsed short refresher mask a still-valid longer-dated cert', async () => {
+    const p = await insertPerson(ORG, 'M. Delgado, RN', 'coordinator');
+    // A long, still-valid certificate completed EARLIER (expires 2027-06-01,
+    // ~10 months out on TODAY = 'current')...
+    await insertTraining(ORG, p, 'citi_human_subjects', '2024-01-01', '2027-06-01');
+    // ...plus a short refresher completed LATER that has ALREADY lapsed
+    // (expired 2025-09-01). Latest-completion collapse would show 'expired' and
+    // wrongly flag a covered person; best-standing collapse must show 'current'.
+    await insertTraining(ORG, p, 'citi_human_subjects', '2025-06-01', '2025-09-01');
+
+    const [r] = await assembleOrgResearchAdmin(ORG, TODAY) as any[];
+    expect(r.cells[0]).toBe('current');
   });
 
   it('labels every roster role and sorts rows by full name', async () => {

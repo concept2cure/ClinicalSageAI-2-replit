@@ -18,9 +18,10 @@
  * window: 'expiring' = expires in 40 days, 'expired' = lapsed 120 days ago,
  * 'missing' = a record on file with no completion (assigned, not completed), and
  * an absent module simply has no record (renders '—'). Roles use the roster's
- * CHECK-constrained vocabulary. Idempotent (skips when the marker roster member
- * already exists for the org), org-scoped, created_by resolved from a real org
- * member, to_regclass-guarded + per-person fail-safe.
+ * CHECK-constrained vocabulary. Idempotent per row (resolve-or-create each
+ * person; skip trainings already on file — a partially seeded run self-heals on
+ * re-run), org-scoped, created_by resolved from a real org member,
+ * to_regclass-guarded + per-person SAVEPOINT isolation.
  */
 
 const DAY = 86_400_000;
@@ -90,43 +91,75 @@ export default async function seed(client, { org, admin }) {
     return;
   }
 
-  // Idempotency marker: the demo PI already on this org's roster means the seed ran.
-  const already = await client.query(
-    `SELECT id FROM research_personnel
-      WHERE organization_id = $1 AND full_name = $2 AND deleted_at IS NULL LIMIT 1`,
-    [org.id, PERSONNEL[0].fullName],
-  );
-  if (already.rows.length > 0) {
-    console.log('   ✓ research admin: already seeded');
-    return;
-  }
-
-  const guard = async (label, fn) => {
-    try { await fn(); } catch (e) { console.log(`   ⚠ research-admin ${label}: ${e.message ?? e}`); }
-  };
-
   let people = 0;
   let records = 0;
-  for (const p of PERSONNEL) {
-    await guard(p.fullName, async () => {
-      const person = await client.query(
-        `INSERT INTO research_personnel (organization_id, full_name, role, created_by)
-         VALUES ($1, $2, $3, $4) RETURNING id`,
-        [org.id, p.fullName, p.role, userId],
+  let skipped = 0;
+
+  // Each person is provisioned inside its OWN savepoint. A failed statement
+  // (schema drift, a CHECK rejection, an unknown STATUS_DATES key) then rolls
+  // back to the savepoint instead of leaving the runner's outer transaction in
+  // the aborted state (25P02) — which would otherwise poison every later person
+  // AND make the runner's own `RELEASE SAVEPOINT domain_mod` throw, misreporting
+  // this whole module as "backing table not provisioned". Same SAVEPOINT /
+  // ROLLBACK TO pattern as 10-risk, 40-submission-udi, 50-postmarket.
+  //
+  // Idempotency is per row and self-healing: resolve-or-create each person by
+  // (org, full_name) — the roster carries no unique constraint, so there is no
+  // ON CONFLICT target — and insert only the training rows not already on file.
+  // A roster left partial by an earlier aborted run is completed on the next
+  // run, never permanently skipped behind a single marker row.
+  for (let i = 0; i < PERSONNEL.length; i++) {
+    const p = PERSONNEL[i];
+    const sp = `sp_research_admin_${i}`;
+    let addedPeople = 0;
+    let addedRecords = 0;
+    try {
+      await client.query(`SAVEPOINT ${sp}`);
+
+      const existing = await client.query(
+        `SELECT id FROM research_personnel
+          WHERE organization_id = $1 AND full_name = $2 AND deleted_at IS NULL
+          ORDER BY id LIMIT 1`,
+        [org.id, p.fullName],
       );
-      const personnelId = Number(person.rows[0].id);
-      people++;
+      let personnelId = existing.rows[0]?.id;
+      if (personnelId == null) {
+        const inserted = await client.query(
+          `INSERT INTO research_personnel (organization_id, full_name, role, created_by)
+           VALUES ($1, $2, $3, $4) RETURNING id`,
+          [org.id, p.fullName, p.role, userId],
+        );
+        personnelId = Number(inserted.rows[0].id);
+        addedPeople++;
+      }
+
       for (const [trainingType, narrative] of Object.entries(p.trainings)) {
+        const present = await client.query(
+          `SELECT 1 FROM personnel_training
+            WHERE organization_id = $1 AND personnel_id = $2 AND training_type = $3
+              AND deleted_at IS NULL LIMIT 1`,
+          [org.id, personnelId, trainingType],
+        );
+        if (present.rows.length > 0) continue;
         const { completed, expires } = STATUS_DATES[narrative]();
         await client.query(
           `INSERT INTO personnel_training (organization_id, personnel_id, training_type, completed_date, expires_date, created_by)
            VALUES ($1, $2, $3, $4, $5, $6)`,
           [org.id, personnelId, trainingType, completed, expires, userId],
         );
-        records++;
+        addedRecords++;
       }
-    });
+
+      await client.query(`RELEASE SAVEPOINT ${sp}`);
+      people += addedPeople;
+      records += addedRecords;
+    } catch (e) {
+      await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+      skipped++;
+      console.log(`   ⚠ research-admin ${p.fullName}: ${e.message ?? e}`);
+    }
   }
 
-  console.log(`   ✓ research admin: ${people} roster member(s) + ${records} training record(s) seeded into the real store`);
+  const skipNote = skipped ? `, ${skipped} skipped` : '';
+  console.log(`   ✓ research admin: ${people} roster member(s) + ${records} training record(s) seeded into the real store${skipNote}`);
 }
