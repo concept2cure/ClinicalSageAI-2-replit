@@ -1,14 +1,18 @@
 # Repo Health Scan
 
-Generated: 2026-07-30T01:45:09.768Z
-Branch: concept2cure-v2
-SHA: 90574dc2e049002eafea8822bb68dae8fadcb48f
+Generated: 2026-07-30T02:16:40.523Z
+Branch: claude/auth-esignature-audit-13z7pg
+SHA: f20c1bc9cb1d48bd2c66d580359b158f10097692
 
 ## Summary
 
 - Duplicate basenames: 249
 - Files over byte threshold: 30
 - Files over line threshold: 84
+- Baseline: docs/reports/repo-health-scan-latest.json
+- Delta duplicate basenames: 0
+- Delta files over byte threshold: 0
+- Delta files over line threshold: 0
 
 ## Owner Summary
 

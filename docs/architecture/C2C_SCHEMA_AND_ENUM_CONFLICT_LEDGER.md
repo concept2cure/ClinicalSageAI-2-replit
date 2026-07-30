@@ -1525,6 +1525,75 @@ needs a live gateway); the journey proves the package that would be transmitted.
 
 ---
 
+## C-27 — The authoring subsystem is defined twice, with incompatible identity types *(blocking reconciliation — BASELINED 2026-07-30)*
+
+Caught by the ADR-0006 duplicate-CREATE TABLE guard the moment PR #1203 merged:
+ten authoring tables are now defined in BOTH lineages, and the two definitions
+disagree on the type of every identity column.
+
+- **Canonical creators (the shape real databases have):** the four
+  `db/migrations/20260725_authoring_*.sql` files, applied atomically by
+  `applyAuthoringSubsystem` (scripts/db/authoring-subsystem.mjs) on both durable
+  appliers. Identity columns are **UUID** (`id UUID PRIMARY KEY`,
+  `doc_id UUID REFERENCES authoring_documents(id)`, …).
+- **The rival:** `db/migrations/20260730_authoring_subsystem_schema.sql`
+  (AnA modernization, PR #1202/#1203). Identity columns are **TEXT** — a
+  deliberate, documented design decision derived from the authoring router's
+  SQL (app-minted `crypto.randomUUID()` strings, cast-free TEXT joins). It also
+  redefines `frozen_documents.version` as INTEGER where the canonical shape is
+  TEXT, and adds delta columns the router queries (`authoring_comments.user_name/
+  parent_comment_id/position_data/resolved_*`, `authoring_sections.document_id/
+  order_idx/section_number`, …).
+
+Duplicated tables: `authoring_documents`, `authoring_sections`,
+`authoring_comments`, `authoring_citations`, `authoring_audit_trail`,
+`authoring_signatures`, `authoring_workflow_steps`, `doc_permissions`,
+`frozen_documents`, `user_pins`.
+
+### Why this is not a column-delta problem
+
+An `ALTER TABLE … ADD COLUMN` reconciliation cannot express `id UUID` vs
+`id TEXT` — and even the delta columns hit the same wall
+(`authoring_comments.parent_comment_id TEXT REFERENCES authoring_comments(id)`
+cannot be added to a table whose `id` is UUID). Whichever type wins, one side's
+code or DDL must change. That is the C-21 finding ("two incompatible
+primary-key worlds") materialized in DDL.
+
+### Current blast radius — latent, not active
+
+The 20260730 file is consumed ONLY by the hermetic schema-contract test
+(`server/routes/__tests__/authoring-schema-contract.test.ts` — pure file
+parsing) and listed in the manifest nothing applies. No durable applier runs
+it, so no real database is bi-shaped **and** none of its 12 genuinely-new
+tables (`authoring_reviews`, `authoring_audit_events`, `authoring_ai_suggestions`,
+`doc_checklist(+items)`, `doc_exports`, …) exists anywhere — the C-23 pattern
+again: the router endpoints they back fail with missing relations on every
+real database, while the contract test validates the router against a file
+that is not what any database contains.
+
+### Interim disposition (this entry)
+
+The ten collisions are **baselined** in
+`scripts/ci/duplicate-table-ddl-baseline.json` (the guard's documented
+tracked-for-reconciliation mechanism) so the guard stays armed against NEW
+collisions while this one is resolved. Do NOT put the 20260730 file on a
+durable apply path in its current form — on order alone, its no-op'd CREATEs
+would leave the UUID shape in place while its new tables land, silently
+splitting the subsystem across two identity types.
+
+### Required decision
+
+One owner per table (ADR-0006), which requires the identity-type decision
+first: either the authoring subsystem is UUID (then the 20260730 file must be
+reduced to type-correct delta ALTERs + its new tables, and the router's
+TEXT-id assumptions audited), or it is TEXT (then the 20260725 files and every
+existing UUID row need a typed migration). The audit's canonical-identity P0
+(external subject → platform id resolution) is the umbrella under which this
+should be decided — the same decision governs how authoring identities join
+against the integer-keyed core.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

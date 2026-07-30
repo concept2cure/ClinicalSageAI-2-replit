@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-30T01:45:09.768Z",
+  "generatedAt": "2026-07-30T02:16:40.523Z",
   "git": {
-    "sha": "90574dc2e049002eafea8822bb68dae8fadcb48f",
-    "branch": "concept2cure-v2"
+    "sha": "f20c1bc9cb1d48bd2c66d580359b158f10097692",
+    "branch": "claude/auth-esignature-audit-13z7pg"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2743,6 +2743,10 @@
         "lines": 2020
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 2005
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2003
       },
@@ -2753,10 +2757,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2000
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2928,7 +2928,14 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

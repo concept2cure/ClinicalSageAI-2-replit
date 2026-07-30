@@ -1,7 +1,7 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-07-29T23:20:23.888Z",
-  "total": 66,
+  "generatedAt": "2026-07-30T02:12:32.678Z",
+  "total": 76,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -15,6 +15,34 @@
       "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql",
       "scripts/db-verify/00_bootstrap_base.sql",
       "sql/cro_database_schema.sql"
+    ],
+    "authoring_audit_trail": [
+      "db/migrations/20260725_authoring_audit_trail.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
+    ],
+    "authoring_citations": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
+    ],
+    "authoring_comments": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
+    ],
+    "authoring_documents": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
+    ],
+    "authoring_sections": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
+    ],
+    "authoring_signatures": [
+      "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
+    ],
+    "authoring_workflow_steps": [
+      "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
     ],
     "c2c_ana_actions": [
       "migrations/20260527_mutation_primitives.sql",
@@ -141,6 +169,10 @@
       "db/migrations/20260323_assumption_decision_contradiction.sql",
       "migrations/0010_operating_system_foundation.sql"
     ],
+    "doc_permissions": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
+    ],
     "document_versions": [
       "sql/cro_database_schema.sql",
       "sql/document_versions.sql"
@@ -152,6 +184,10 @@
     "effort_lines": [
       "migrations/20260611_effort_certification.sql",
       "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "frozen_documents": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
     ],
     "governance_boundary_rules": [
       "db/migrations/20260725_governance_boundary_tables.sql",
@@ -265,6 +301,10 @@
     "udi_records": [
       "migrations/20260507_mdx_beta_surfaces.sql",
       "migrations/20260524_udi_records.sql"
+    ],
+    "user_pins": [
+      "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "db/migrations/20260730_authoring_subsystem_schema.sql"
     ],
     "users": [
       "scripts/db-verify/00_bootstrap_base.sql",
