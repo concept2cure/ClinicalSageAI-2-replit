@@ -24,6 +24,7 @@ import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway
 import { AnaDrafter } from '../../client/src/concept2cure/mdx/components/AnaDrafter';
 import { PATHWAY_TABS_DATA } from '../../client/src/concept2cure/mdx/data/pathwayTabs';
 import { DossierStore } from '../../client/src/concept2cure/mdx/store/dossierStore';
+import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
 import type { PathwayKey } from '../../client/src/concept2cure/mdx/types';
 import { K510Surface } from '../../client/src/concept2cure/mdx/surfaces/K510Surface';
 import { PmaSurface } from '../../client/src/concept2cure/mdx/surfaces/PmaSurface';
@@ -55,6 +56,10 @@ let origWarn: typeof console.warn;
 
 beforeEach(() => {
   cleanup();
+  // Production default: sample mode OFF (real workspaces begin empty). Tests
+  // that need fixtures turn it on explicitly, and this reset stops that opt-in
+  // from leaking into the live-data tests below.
+  setSampleMode(false);
   askAna.mockClear();
   openEditor.mockClear();
   onClose.mockClear();
@@ -126,6 +131,13 @@ describe('MDX pathway panes smoke', () => {
   });
 
   it('FilesTreePane preview opens a body section in the drawer', () => {
+    // The store starts empty by design (permission-state remediation — real
+    // customer workspaces do not auto-seed; see dossierStore's "no module-load
+    // seed" note). Turn on sample mode — the real, user-facing opt-in — so
+    // useDossierHydration reaches status 'sample' and mounts the Files tree.
+    // (Seeding the store directly is not enough: the hydration hook clears the
+    // pathway on mount whenever sample mode is off.)
+    setSampleMode(true);
     const { getAllByRole, container } = renderWithClient(
       <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
     );
@@ -180,6 +192,13 @@ describe('MDX pathway panes smoke', () => {
 
 // Acceptance #4: edits round-trip through the in-memory store into the audit trail.
 describe('dossierStore round-trip', () => {
+  // The store no longer auto-seeds at module load (permission-state remediation
+  // — real workspaces begin empty). These round-trip assertions exercise the
+  // sample fixtures, so opt into them explicitly before each case.
+  beforeEach(() => {
+    DossierStore.enableSampleFixtures();
+  });
+
   it('seeds section bodies and pushes an edit onto the section activity trail', () => {
     const label = 'Substantial Equivalence Discussion'; // K510_ESTAR id 11
     const seeded = DossierStore.readSectionBody('k510', 11, label);

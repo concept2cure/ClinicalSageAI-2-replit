@@ -5,7 +5,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 vi.mock('../../server/auth.js', () => ({ authMiddleware: vi.fn() }));
-vi.mock('../../server/routes/510k-project.routes', () => ({ default: 'project-router' }));
 
 import telemetryRouter from '../../server/routes/beta-telemetry.routes';
 import { mountBetaSafeRoutes } from '../../server/betaRouteManifest';
@@ -120,8 +119,12 @@ describe('beta telemetry routes', () => {
 
     mountBetaSafeRoutes({ use } as any, authenticate);
 
+    // The telemetry mount is the only route mountBetaSafeRoutes installs (the
+    // former '/api/510k-project' mount was removed — its router module never
+    // existed). `authenticate` must still be wired BEFORE the telemetry router
+    // in the same use() call so the tester telemetry endpoint stays gated.
     expect(use).toHaveBeenNthCalledWith(
-      2,
+      1,
       '/api/telemetry/beta-workspace',
       authenticate,
       telemetryRouter

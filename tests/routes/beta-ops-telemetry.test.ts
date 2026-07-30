@@ -31,6 +31,16 @@ import betaTelemetryRouter from '../../server/routes/beta-telemetry.routes';
 const buildApp = () => {
   const app = express();
   app.use(express.json());
+  // The router requires a resolved tenant context (organization_context_required
+  // 403 otherwise — see server/routes/beta-telemetry.routes.ts). In production
+  // mountBetaSafeRoutes runs the auth/tenant middleware ahead of this router;
+  // here we stand in a fixed org so the event/issue/feed logic is exercised.
+  app.use((req, _res, next) => {
+    (req as express.Request & { tenantContext?: { organizationId: number } }).tenantContext = {
+      organizationId: 1,
+    };
+    next();
+  });
   // Mirrors mountBetaSafeRoutes in server/betaRouteManifest.ts.
   app.use('/api/telemetry/beta-workspace', betaTelemetryRouter);
   return app;
