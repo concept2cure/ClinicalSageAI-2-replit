@@ -34,7 +34,7 @@ describe('evaluatePreTransmit', () => {
   });
 
   it('blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set', () => {
-    const b = bundle({ submissionGrade: { total: 2, pdfLeaves: 2, pdfaConverted: 1, notConverted: ['m1/us/1-2/cover.pdf'] } });
+    const b = bundle({ submissionGrade: { total: 2, pdfLeaves: 2, pdfaConverted: 1, notConverted: ['m1/us/1-2/cover.pdf'], allPdfA: false } });
     const prod = evaluatePreTransmit({ region: 'fda', bundle: b, environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_PDFA: 'true' } });
     expect(prod.cleared).toBe(false);
     expect(prod.blockers.join(' ')).toMatch(/not PDF\/A/);
