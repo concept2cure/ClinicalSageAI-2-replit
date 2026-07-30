@@ -812,6 +812,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         userId: String(userData.id),
         email: userData.email,
         organizationId: userData.defaultOrganizationId ? String(userData.defaultOrganizationId) : '2',
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -918,7 +919,7 @@ router.post('/register', registerLimiter, async (req: Request, res: Response) =>
 
     // Generate JWT for immediate login
     const token = jwt.sign(
-      { userId: String(newUser.id), email: newUser.email },
+      { userId: String(newUser.id), email: newUser.email, type: 'access' },
       config.jwt.secret,
       { expiresIn: '24h' }
     );

@@ -350,14 +350,14 @@ router.post('/sign', async (req: Request, res: Response) => {
          authentication_method, authentication_timestamp, second_factor_verified,
          signature_hash, signature_meaning, signature_manifest,
          is_valid, compliance_statement, legal_disclaimer,
-         ip_address, device_info, signed_at, bound_payload_digest
+         ip_address, device_info, signed_at, bound_payload_digest, organization_id
        ) VALUES (
          $1, $2, $3, $4,
          $5, $6, $7, $8,
          'password+totp', $9, $10,
          $11, $12, $13,
          $18, $14, $15,
-         $16, $17, $9, $19
+         $16, $17, $9, $19, $20
        ) RETURNING id, signed_at`,
       [
         Number(documentId),
@@ -379,6 +379,9 @@ router.post('/sign', async (req: Request, res: Response) => {
         deviceInfo ? JSON.stringify(deviceInfo) : null,
         signatureIsValid,
         boundPayloadDigest,
+        // Tenant scope stamped at INSERT — the signer's org context is already
+        // verified above (orgId gates the version lookup).
+        orgId,
       ]
     );
 

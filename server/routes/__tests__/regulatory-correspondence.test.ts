@@ -60,6 +60,7 @@ const authToken = jwt.sign(
     userId: String(USER_ID),
     email: 'tester@example.com',
     organizationId: String(ORG_ID),
+    type: 'access',
   },
   config.jwt.secret,
   { expiresIn: '1h' }

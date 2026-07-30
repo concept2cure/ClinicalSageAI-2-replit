@@ -17,8 +17,10 @@
  *   - submission-package-orchestrator's getRun / findActiveReleaseSignature /
  *     loadSubmissionFkBySubmissionIdText
  *   - part11ComplianceService.verifyUserCredentials + createElectronicSignature
+ *     (which now receives the orchestrator's bound digest + tenant scope and
+ *     writes them AT INSERT TIME — no post-insert UPDATE exists any more,
+ *     preserving the §11.70 append-only invariant)
  *   - auditService.logAction
- *   - the Drizzle db + raw pool for the post-insert UPDATE of the bound digest
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -392,7 +394,8 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(res.body.signatureId).toBe(999);
 
     // Verify the createElectronicSignature call shape — JWT-bound signerId,
-    // tenant-scoped orgId, documentType='submission-release', meaning='approval'.
+    // tenant-scoped orgId, documentType='submission-release', meaning='approval',
+    // and the orchestrator's bound digest passed in for insert-time binding.
     expect(hoisted.createElectronicSignature).toHaveBeenCalledTimes(1);
     const callArgs = hoisted.createElectronicSignature.mock.calls[0][0] as {
       userId: number;
@@ -402,6 +405,8 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
       signatureReason: string;
       signatureMeaning: string;
       password: string;
+      boundPayloadDigest: string;
+      signerRole: string;
     };
     expect(callArgs.userId).toBe(7);
     expect(callArgs.organizationId).toBe(100);
@@ -409,16 +414,13 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(callArgs.documentType).toBe('submission-release');
     expect(callArgs.signatureMeaning).toBe('approval');
     expect(callArgs.signatureReason).toBe('release authorization');
+    expect(callArgs.boundPayloadDigest).toBe('a'.repeat(64));
+    expect(callArgs.signerRole).toBe('approver');
 
-    // The post-insert UPDATE of bound_payload_digest + organization_id ran.
-    expect(hoisted.updateCalls.length).toBe(1);
-    const patch = hoisted.updateCalls[0].patch as {
-      organizationId: number;
-      boundPayloadDigest: string;
-    };
-    expect(patch.organizationId).toBe(100);
-    expect(patch.boundPayloadDigest).toBe('a'.repeat(64));
-    expect(hoisted.updateCalls[0].whereCalled).toBe(true);
+    // §11.70 append-only: the row is complete at INSERT — the route must
+    // NEVER issue a post-insert UPDATE against electronic_signatures.
+    expect(hoisted.updateCalls.length).toBe(0);
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
 
     // Audit row written.
     expect(hoisted.auditLogAction).toHaveBeenCalledTimes(1);
