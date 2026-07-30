@@ -57,34 +57,43 @@ still merit a data-flow check.)
 - **Shadow review** → `shadow_review_runs` + `shadow_review_findings` (the tables
   `shadow-review-service.ts`'s `runShadowReview` persists). **[CONVERGED]** — assembler +
   real-store-only route + reseed + pglite test landed.
-- **SAE cases** → **needs a store decision (name-match was optimistic).** The surface
-  (`SafetyNarrative`) is a *clinical-trial* SAE worklist (subjectId, treatmentArm,
-  studyDrug, dose, firstDoseDate, expectedness, 312.32/E2A expedited clock). The
-  candidate real stores are all PV/post-market-shaped and none holds that contract
-  cleanly: `adverse_events` (written by `pharmacovigilanceService`, but has NO committed
-  DDL and the writer is 42P01-tolerant → not reliably a physical table); `pv_adverse_events`
-  (committed, real writer in `global-compliance.ts`, org-scoped — but no `expectedness`,
-  no suspect-product/dose, no demographics/arm); `ind_safety_reports` (the expedited-report
-  *record*, keyed to an AE by id, not the case facts). Viable path: converge onto
-  `pv_adverse_events` with the trial-only fields honestly null (the IND indication pattern)
-  — but confirm that is the intended canonical SAE store first, since the demo loses its
-  trial richness. Also **remove the surface's fixture fallback** (it currently falls back to
-  a codebase fixture with a "Sample" pill — a GA-bar violation) as part of this.
+- **SAE cases** → **`adverse_events`** (migrations/20260603_pv_operational.sql — the
+  UNPREFIXED, org-scoped table `pharmacovigilanceService.reportAdverseEvent` actually
+  writes; NOT `pv_adverse_events`, whose SERIAL/prefixed shape the service never uses, and
+  which lacks `expectedness` so the 312.32/E2A clock could never fire). Has the case facts
+  + `expectedness` + suspect-product/dose, so the expedited-reporting clock computes live
+  from real columns. Trial-only fields the PV intake store does not model (age/sex/arm/
+  first-dose, medical history, con-meds) are honestly null — the surface renders them
+  null-safe and its ICH E3 §16 composer flags them missing rather than inventing them.
+  The client was already fixture-free (honest empty state); only a stale route comment
+  claimed a fixture fallback. **[CONVERGED]** — assembler (live clock) + real-store-only
+  route + reseed into adverse_events + pglite test landed.
 - **Biostat** (interims / sample-sizes / SAPs / TLF) → **no clean real store.** There is no
   committed `biostat_*` table holding the surface's TLF-build / sample-size / SAP / interim
   data with a real writer; the `biostat_*` writers that exist feed a knowledge-graph /
   signal engine, not this surface's contract. This is effectively Class-B — a write path /
   store must be chosen or built.
-- **CMC changes** → `cmc_*` store + the CMC service — **unverified**; trace before assuming
-  the name-match holds (IND/SAE/decision-lineage each did not).
-- **Decision lineage** → **wrong name-match.** `data_lineage_records` is a *data-derivation*
-  provenance edge list (source→target, transformation/confidence). The `DecisionLineage`
-  surface renders a *Part-11 governance decision trail* (created → evidence-linked →
-  approved → signed → locked, with e-signature manifestation and a hash chain) — its own
-  footer says it is "sourced from the tamper-proof audit log". The real store is the
-  hash-chained **audit log + governed `sign`/approve actions** (`auditService` /
-  `c2c_ana_actions`), assembled into a per-artifact decision graph. Real, but a larger
-  assembler than a flat table map, and NOT `data_lineage_records`.
+- **CMC changes** → **Class-B (no real store).** Traced: the surface's SUPAC/variations
+  classifier needs specific change attributes (dosage_form_family, scale_change_factor,
+  excipient_level_change, site/process_change_kind, touches_critical_step,
+  has_comparability_data) that exist ONLY in the blob's own migration
+  (`20260718_cmc_changes_store.sql`) — no other table carries them and nothing writes them.
+  The rich `cmc_*` store (cmc_documents/processes/control_strategy/comparability_assessments)
+  is CMC *authoring* data, a different contract. A real post-approval change-control write
+  path must be built, or the surface labeled preview. (Also remove its "sample fallback".)
+- **Decision lineage** → **wrong name-match; real source is too coarse for a clean map.**
+  `data_lineage_records` is a *data-derivation* provenance edge list (source→target,
+  transformation/confidence). The `DecisionLineage` surface renders a *Part-11 governance
+  decision trail* (created → evidence-linked → approved → signed → locked, with per-node
+  e-signature manifestation, typed relationships, and record hashes) — its footer says it
+  is "sourced from the tamper-proof audit log". The real governance source is the
+  hash-chained **audit log + governed `sign` actions** (`auditService` / `audit_logs` /
+  `c2c_ana_actions`), but `audit_logs` is generic `(table_name, record_id, action,
+  old/new_values)` — it does not carry nodeType, per-node signatureStatus, e-signature
+  manifestation, or typed edge relationships. Faithfully producing the surface's graph is
+  a **new governance-lineage projection layer**, not a one-table converge; a heuristic map
+  would be lossy (i.e. a soft fake), so it is deferred to a real build. (verify-chain is
+  already real via `auditService.verifyChain()`.)
 
 _Data-flow trace result (the CRE methodology, applied to each target): the two genuinely
 clean, high-value Class-A convergences — **IND** and **Shadow-review** — are landed. The
@@ -112,11 +121,15 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
 
 ## Prioritized roadmap
 
-1. **Class A converges:** ~~IND~~ (landed) and ~~Shadow-review~~ (landed) were the clean
-   ones. The rest are re-scoped per the trace above: **SAE** and **Biostat** need a store
-   decision (→ effectively Class-B); **Decision-lineage** is a governance-audit-log
-   assembler (real, but larger); **CMC** to be traced. Take each only after confirming its
-   real store — do not converge onto the name-matched table.
+1. **Class A converges — DONE for the clean ones.** ~~IND~~ (→ eCTD submission core),
+   ~~Shadow-review~~ (→ shadow_review_runs/findings), and ~~SAE~~ (→ adverse_events) are
+   landed: assembler + real-store-only route + reseed + pglite test each. The other three
+   turned out, on tracing, NOT to be converge-onto-existing — they lack a real store/writer
+   for their contract and are effectively **Class-B (build a backend or label preview)**:
+   **Biostat** (no TLF/sample-size/SAP/interim store), **CMC changes** (SUPAC attributes
+   live only in the blob's own migration), **Decision-lineage** (needs a governance-lineage
+   projection layer over the audit log — a heuristic map would be a soft fake). Net: the
+   audit's original 6-target "Class A" was really 3 clean convergences + 3 Class-B builds.
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so
