@@ -1,12 +1,23 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+
+/* ════ Design Controls -- DHF surface ════
+
+   Fixture-free by construction (real-data standard). The traceability matrix is
+   the org's REAL 21 CFR 820.30(c) design inputs from the c2c_design_controls
+   store (GET /api/design-controls, written via POST /api/design-controls). The
+   surface renders real rows, an honest empty state, or an honest error state —
+   never a fabricated fixture. The traceability roll-up and the 820.30
+   completeness checklist are derived from those real rows; checklist elements
+   the design-input store cannot evidence are shown as an honest "not tracked
+   here", never a fabricated present/absent claim. */
 
 /* ── Types ── */
 
@@ -28,75 +39,74 @@ interface DcInput {
   _new?: boolean;
 }
 
-interface Dc82030Element {
+/** A 21 CFR 820.30 subsection and how (or whether) the design-input store
+ *  evidences it. `derive` returns the element's state from the REAL rows:
+ *  'present' / 'absent' where the store carries the evidence, or 'untracked'
+ *  where no store backs the element (never a fabricated have/have-not). */
+type ElState = 'present' | 'absent' | 'untracked';
+interface Dc82030Def {
   el: string;
   label: string;
-  have: boolean;
   ref: string;
+  derive: (rows: DcInput[]) => ElState;
 }
 
-/* ── Inline fixture data (kit window globals, verbatim) ── */
+/* ── Presentation vocabulary (controlled UI config, not data fixtures) ── */
 
+/** 820.30(c) input categories — the controlled vocabulary the "new design
+ *  input" form offers and the matrix labels from (not fabricated org data). */
 const DC_INPUT_CATS: [string, string][] = [
   ['intended_use', 'Intended use'], ['user_need', 'User need'], ['functional', 'Functional'],
   ['performance', 'Performance'], ['safety', 'Safety'], ['regulatory', 'Regulatory'],
   ['usability', 'Usability'], ['interface', 'Interface'],
 ];
 
+/** V&V result → cell tone (presentation map, not data). */
 const DC_RESULT: Record<string, string> = { pass: 'ok', fail: 'err', pending: 'warn', null: 'idle' };
 
-const DC_820_30: Dc82030Element[] = [
-  { el: 'designPlan', label: 'Design & development plan', have: true, ref: '820.30(b)' },
-  { el: 'designInputs', label: 'Design inputs', have: true, ref: '820.30(c)' },
-  { el: 'designOutputs', label: 'Design outputs', have: true, ref: '820.30(d)' },
-  { el: 'designReviews', label: 'Design reviews (independent)', have: true, ref: '820.30(e)' },
-  { el: 'designVerification', label: 'Design verification', have: true, ref: '820.30(f)' },
-  { el: 'designValidation', label: 'Design validation (prod.-equiv.)', have: false, ref: '820.30(g)' },
-  { el: 'designTransfer', label: 'Design transfer documented', have: false, ref: '820.30(h)' },
-  { el: 'designChanges', label: 'Design changes reviewed/verified', have: true, ref: '820.30(i)' },
-  { el: 'traceability', label: 'Full requirements<->V&V traceability', have: false, ref: '820.30(j)' },
+/** The nine 21 CFR 820.30 subsections (regulatory structure) and the rule that
+ *  derives each element's state from the REAL design-input rows. Only the five
+ *  elements the c2c_design_controls store actually evidences are derivable;
+ *  design plan / reviews / transfer / changes have no backing store here and are
+ *  reported 'untracked' rather than asserted present or absent. */
+const DC_820_30: Dc82030Def[] = [
+  { el: 'designPlan', label: 'Design & development plan', ref: '820.30(b)', derive: () => 'untracked' },
+  { el: 'designInputs', label: 'Design inputs', ref: '820.30(c)', derive: (r) => (r.length ? 'present' : 'absent') },
+  { el: 'designOutputs', label: 'Design outputs', ref: '820.30(d)', derive: (r) => (r.some(i => i.outputs && i.outputs.length) ? 'present' : 'absent') },
+  { el: 'designReviews', label: 'Design reviews (independent)', ref: '820.30(e)', derive: () => 'untracked' },
+  { el: 'designVerification', label: 'Design verification', ref: '820.30(f)', derive: (r) => (r.some(i => i.ver === 'pass') ? 'present' : 'absent') },
+  { el: 'designValidation', label: 'Design validation', ref: '820.30(g)', derive: (r) => (r.some(i => i.val === 'pass') ? 'present' : 'absent') },
+  { el: 'designTransfer', label: 'Design transfer documented', ref: '820.30(h)', derive: () => 'untracked' },
+  { el: 'designChanges', label: 'Design changes reviewed/verified', ref: '820.30(i)', derive: () => 'untracked' },
+  { el: 'traceability', label: 'Full requirements<->V&V traceability', ref: '820.30(j)',
+    derive: (r) => {
+      if (!r.length) return 'absent';
+      const traced = r.filter(i => i.outputs && i.outputs.length && i.ver === 'pass' && i.val === 'pass').length;
+      return traced === r.length ? 'present' : 'absent';
+    } },
 ];
-
-const DC_INPUTS: DcInput[] = [
-  { id: 'DI-01', cat: 'intended_use', req: 'Continuously measure interstitial glucose over a 14-day wear period.', riskRef: 'HZ-01',
-    outputs: [{ id: 'DO-01', desc: 'Sensor + algorithm spec, 14-day claim' }], ver: 'pass', verRef: 'V&V-114 accuracy', val: 'pass', valRef: 'HF summative' },
-  { id: 'DI-02', cat: 'performance', req: 'MARD <= 10% across the glycemic range vs. YSI reference.', riskRef: 'HZ-01',
-    outputs: [{ id: 'DO-02', desc: 'Accuracy algorithm; calibration model' }], ver: 'pass', verRef: 'V&V-114 MARD 8.2%', val: 'pass', valRef: 'Pivotal accuracy study' },
-  { id: 'DI-03', cat: 'safety', req: 'No therapy decision on a single erroneous low reading.', riskRef: 'HZ-01',
-    outputs: [{ id: 'DO-03', desc: 'Dual-sensor cross-check; alert logic' }], ver: 'pass', verRef: 'V&V-118 alert logic', val: 'pending', valRef: 'HF validation open' },
-  { id: 'DI-04', cat: 'usability', req: 'Applicator usable by an untrained lay user without injury.', riskRef: 'HZ-02',
-    outputs: [{ id: 'DO-04', desc: 'One-press applicator; IFU' }], ver: 'pass', verRef: 'V&V-121 wear study', val: 'pending', valRef: 'Summative HF not prod-equiv' },
-  { id: 'DI-05', cat: 'interface', req: 'Secure BLE pairing; encrypted telemetry to the reader app.', riskRef: 'HZ-03',
-    outputs: [{ id: 'DO-05', desc: 'AES-128 link; authenticated pairing' }], ver: 'pass', verRef: 'Pen-test PT-09', val: 'pass', valRef: 'Cybersecurity validation' },
-  { id: 'DI-06', cat: 'regulatory', req: 'ISO 10993 biocompatibility for a 14-day skin-contact device.', riskRef: 'HZ-04',
-    outputs: [{ id: 'DO-06', desc: 'Materials selection; adhesive' }], ver: 'pending', verRef: 'ISO 10993-11 pending', val: null, valRef: null },
-  { id: 'DI-07', cat: 'functional', req: 'Report a reading every 5 minutes with < 0.5% data loss.', riskRef: null,
-    outputs: [], ver: null, verRef: null, val: null, valRef: null },
-];
-
-/* ════ Design Controls -- DHF surface ════ */
 
 export function DesignControls({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  /* live ?? fixture — useLiveList adopts the org's seeded design inputs only
-     when GET /api/design-controls returns the full DcInput display shape, else
-     fail-closes to the codebase fixture so the matrix is never empty. */
-  const liveList = useLiveList<DcInput>('/api/design-controls', DC_INPUTS);
-  const sample = liveList.sample;
-  const [inputs, setInputs] = useState<DcInput[]>(DC_INPUTS);
 
-  /* Sync the adopted live list into local state once (the "new design input"
-     form then works off whichever set loaded). */
+  /* Fixture-free: read the org's REAL design inputs. `rows` is a fresh [] while
+     loading / on error, so the derivations below are null-safe. */
+  const live = useLiveRows<DcInput>('/api/design-controls');
+
+  /* Local working copy so the "new design input" form can insert optimistically.
+     Synced from the real rows once they load (never from a fixture). */
+  const [inputs, setInputs] = useState<DcInput[]>([]);
   useEffect(() => {
-    if (!liveList.loading && !liveList.sample) setInputs(liveList.data);
+    if (!live.loading && !live.error) setInputs(live.rows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveList.loading, liveList.sample]);
+  }, [live.loading, live.error, live.rows]);
+
   const [form, setForm] = useState(false);
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
   const catLabel = (c: string) => (DC_INPUT_CATS.find(x => x[0] === c) || [])[1] || c;
 
-  /* Traceability gaps drive the 820.30(j) completeness. */
+  /* Traceability roll-up — derived from the REAL rows. */
   const trace = useMemo(() => {
     const total = inputs.length;
     const noOutput = inputs.filter(i => !i.outputs || !i.outputs.length).length;
@@ -107,9 +117,18 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     return { total, noOutput, noVer, noVal, fullyTraced, pct };
   }, [inputs]);
 
-  const el = DC_820_30;
-  const elHave = el.filter(e => e.have).length;
-  const elPct = Math.round(elHave / el.length * 100);
+  /* 820.30 completeness — derived from the REAL rows. `untracked` elements are
+     excluded from the completeness fraction (we don't score what no store
+     evidences); they're surfaced separately as honestly not-tracked. */
+  const checklist = useMemo(
+    () => DC_820_30.map(e => ({ ...e, state: e.derive(inputs) })),
+    [inputs],
+  );
+  const assessable = checklist.filter(e => e.state !== 'untracked');
+  const present = assessable.filter(e => e.state === 'present').length;
+  const untracked = checklist.length - assessable.length;
+  const elPct = assessable.length ? Math.round(present / assessable.length * 100) : 0;
+
   const firstGap = inputs.find(i => !i.outputs || !i.outputs.length) || inputs.find(i => i.ver !== 'pass') || inputs.find(i => i.val !== 'pass');
 
   const FORM: C2CFormConfig = {
@@ -128,17 +147,8 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const addInput = async (v: Record<string, string>) => {
     setForm(false);
 
-    if (sample) {
-      // No store adopted — record locally and say so rather than claim a write.
-      const id = 'DI-' + String(inputs.length + 1).padStart(2, '0');
-      const nr: DcInput = { id, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
-      setInputs(is => [...is, nr]);
-      fire('Design input ' + id + ' added -- local/sample only, not persisted');
-      return;
-    }
-
-    // LIVE — real org-scoped POST into the store backing the read. Optimistic
-    // insert, then reconcile with the server's row; roll back on failure.
+    // Real org-scoped POST into the store backing the read. Optimistic insert,
+    // then reconcile with the server's row; roll back on failure.
     const tempId = 'dc-tmp-' + Date.now();
     const optimistic: DcInput = { id: tempId, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
     setInputs(is => [...is, optimistic]);
@@ -168,76 +178,118 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     );
   };
 
+  const hasRows = inputs.length > 0;
+  const isLive = !live.loading && !live.error;
+
   return (
     <div className="dc" style={{ maxWidth: 1200 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/design-controls {!sample ? <> {I.dot} live</> : ''}</div>
-          <h1 className="sp-title">Design controls {I.dot} DHF <SampleTag sample={sample} /></h1>
+          <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/design-controls {isLive ? <> {I.dot} live</> : ''}</div>
+          <h1 className="sp-title">Design controls {I.dot} DHF</h1>
           <p className="sp-state">21 CFR 820.30 design history file -- inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} New design input</button>
       </div>
 
-      <AnswerLead
-        tone={trace.noVal > 0 || trace.noOutput > 0 ? 'urgent' : 'calm'}
-        eyebrow="Whether the DHF will survive a design-control audit"
-        headline={trace.fullyTraced < trace.total
-          ? <><b>{trace.total - trace.fullyTraced}</b> of {trace.total} design inputs {trace.total - trace.fullyTraced === 1 ? 'is' : 'are'} not yet fully traced to output, verification and validation.</>
-          : <>Every design input traces cleanly to output {'->'} verification {'->'} validation. The DHF is audit-ready on traceability.</>}
-        body={<>Design-control completeness is <b>{elPct}%</b> across the nine 820.30 elements; traceability (820.30(j)) is <b>{trace.pct}%</b>. {trace.noVal > 0 && <>{trace.noVal} input{trace.noVal === 1 ? '' : 's'} still lack{trace.noVal === 1 ? 's' : ''} passing validation on production-equivalent units.</>}</>}
-        reassure="I'll draft the missing V&V protocols, link each to the input it covers, and flag any orphan output before the review -- you sign off."
-        action={firstGap
-          ? { label: 'Close the ' + firstGap.id + ' gap', onClick: () => ask('What is missing to fully trace ' + firstGap.id + ' (' + firstGap.req + ')?') }
-          : { label: 'Draft the design review minutes', onClick: () => ask('Draft the design review minutes confirming full traceability') }}
-        secondary="Or work the traceability matrix and 820.30 checklist below."
-      />
+      {live.loading ? (
+        <div className="reg-sub2" style={{ padding: '22px 4px' }}>Loading design inputs…</div>
+      ) : live.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the design history file"
+          hint="The design-controls store didn't respond. These are your organization's 820.30(c) design inputs — sign in and retry, or check the service is reachable."
+        />
+      ) : !hasRows ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No design inputs defined yet"
+          hint={
+            <>
+              A design input is a requirement the device must meet (820.30(c)).
+              Add your first with <b>New design input</b> above — it persists via{' '}
+              <span className="mono">POST /api/design-controls</span> and enters
+              the traceability matrix untraced until an output, verification and
+              validation are linked.
+            </>
+          }
+        />
+      ) : (
+        <>
+          <AnswerLead
+            tone={trace.noVal > 0 || trace.noOutput > 0 ? 'urgent' : 'calm'}
+            eyebrow="Whether the DHF will survive a design-control audit"
+            headline={trace.fullyTraced < trace.total
+              ? <><b>{trace.total - trace.fullyTraced}</b> of {trace.total} design inputs {trace.total - trace.fullyTraced === 1 ? 'is' : 'are'} not yet fully traced to output, verification and validation.</>
+              : <>Every design input traces cleanly to output {'->'} verification {'->'} validation. The DHF is audit-ready on traceability.</>}
+            body={<>Design-control completeness is <b>{elPct}%</b> across the {assessable.length} 820.30 elements this store can evidence{untracked > 0 && <> ({untracked} more not tracked here)</>}; traceability (820.30(j)) is <b>{trace.pct}%</b>. {trace.noVal > 0 && <>{trace.noVal} input{trace.noVal === 1 ? '' : 's'} still lack{trace.noVal === 1 ? 's' : ''} passing validation.</>}</>}
+            reassure="I'll draft the missing V&V protocols, link each to the input it covers, and flag any orphan output before the review -- you sign off."
+            action={firstGap
+              ? { label: 'Close the ' + firstGap.id + ' gap', onClick: () => ask('What is missing to fully trace ' + firstGap.id + ' (' + firstGap.req + ')?') }
+              : { label: 'Draft the design review minutes', onClick: () => ask('Draft the design review minutes confirming full traceability') }}
+            secondary="Or work the traceability matrix and 820.30 checklist below."
+          />
 
-      {/* Traceability matrix -- the hero */}
-      <div className="pj-seclbl">Design traceability matrix <span className="s">{I.dot} 820.30(j) {I.dot} input {'->'} output {'->'} verification {'->'} validation</span></div>
-      <div className="dc-matrix">
-        <div className="dc-mhead">
-          <div className="dc-mh dc-mh-in">Design input</div>
-          <div className="dc-mh">Output</div>
-          <div className="dc-mh">Verification</div>
-          <div className="dc-mh">Validation</div>
-        </div>
-        {inputs.map(i => {
-          const gap = !i.outputs || !i.outputs.length || i.ver !== 'pass' || i.val !== 'pass';
-          return (
-            <div key={i.id} className="dc-mrow" data-gap={gap || undefined} data-fresh={i._new || undefined}>
-              <div className="dc-in">
-                <div className="dc-in-top">
-                  <span className="dc-in-id mono">{i.id}</span>
-                  <span className="dc-in-cat">{catLabel(i.cat)}</span>
-                  {i.riskRef && <button className="dc-in-hz" onClick={() => ask('Show ' + i.riskRef + ' in the risk file and confirm this input controls it')}>{I.alertTriangle} {i.riskRef}</button>}
-                </div>
-                <div className="dc-in-req">{i.req}</div>
-              </div>
-              <div className="dc-cell-wrap">
-                {(i.outputs && i.outputs.length)
-                  ? <div className="dc-out">{i.outputs.map(o => <span key={o.id} className="dc-out-chip" title={o.desc}><span className="mono">{o.id}</span> {o.desc}</span>)}</div>
-                  : <div className="dc-cell tone-err"><span className="dc-cell-v">missing</span><span className="dc-cell-ref">no output</span></div>}
-              </div>
-              <div className="dc-cell-wrap">{cell(i.ver, i.verRef, 'verification')}</div>
-              <div className="dc-cell-wrap">{cell(i.val, i.valRef, 'validation')}</div>
+          {/* Traceability matrix -- the hero */}
+          <div className="pj-seclbl">Design traceability matrix <span className="s">{I.dot} 820.30(j) {I.dot} input {'->'} output {'->'} verification {'->'} validation</span></div>
+          <div className="dc-matrix">
+            <div className="dc-mhead">
+              <div className="dc-mh dc-mh-in">Design input</div>
+              <div className="dc-mh">Output</div>
+              <div className="dc-mh">Verification</div>
+              <div className="dc-mh">Validation</div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* 820.30 completeness checklist */}
-      <div className="pj-seclbl">21 CFR 820.30 completeness <span className="s">{I.dot} {elHave}/{el.length} elements present</span></div>
-      <div className="dc-820">
-        {el.map(e => (
-          <div key={e.el} className="dc-820-row" data-have={e.have || undefined}>
-            <span className={'dc-820-dot tone-' + (e.have ? 'ok' : 'err')}>{e.have ? I.check : I.alertTriangle}</span>
-            <span className="dc-820-l">{e.label}</span>
-            <span className="dc-820-ref mono">{e.ref}</span>
-            {!e.have && <button className="dc-820-fix" onClick={() => ask('What is required to satisfy ' + e.ref + ' -- ' + e.label + '?')}>Resolve</button>}
+            {inputs.map(i => {
+              const gap = !i.outputs || !i.outputs.length || i.ver !== 'pass' || i.val !== 'pass';
+              return (
+                <div key={i.id} className="dc-mrow" data-gap={gap || undefined} data-fresh={i._new || undefined}>
+                  <div className="dc-in">
+                    <div className="dc-in-top">
+                      <span className="dc-in-id mono">{i.id}</span>
+                      <span className="dc-in-cat">{catLabel(i.cat)}</span>
+                      {i.riskRef && <button className="dc-in-hz" onClick={() => ask('Show ' + i.riskRef + ' in the risk file and confirm this input controls it')}>{I.alertTriangle} {i.riskRef}</button>}
+                    </div>
+                    <div className="dc-in-req">{i.req}</div>
+                  </div>
+                  <div className="dc-cell-wrap">
+                    {(i.outputs && i.outputs.length)
+                      ? <div className="dc-out">{i.outputs.map(o => <span key={o.id} className="dc-out-chip" title={o.desc}><span className="mono">{o.id}</span> {o.desc}</span>)}</div>
+                      : <div className="dc-cell tone-err"><span className="dc-cell-v">missing</span><span className="dc-cell-ref">no output</span></div>}
+                  </div>
+                  <div className="dc-cell-wrap">{cell(i.ver, i.verRef, 'verification')}</div>
+                  <div className="dc-cell-wrap">{cell(i.val, i.valRef, 'validation')}</div>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
+
+          {/* 820.30 completeness checklist -- derived from the real rows */}
+          <div className="pj-seclbl">21 CFR 820.30 completeness <span className="s">{I.dot} {present}/{assessable.length} evidenced by design inputs{untracked > 0 && <> {I.dot} {untracked} not tracked here</>}</span></div>
+          <div className="dc-820">
+            {checklist.map(e => (
+              <div key={e.el} className="dc-820-row" data-have={e.state === 'present' || undefined} data-untracked={e.state === 'untracked' || undefined}>
+                {e.state === 'untracked' ? (
+                  <>
+                    <span className="dc-820-dot tone-idle">{I.minus || I.dot}</span>
+                    <span className="dc-820-l">{e.label}</span>
+                    <span className="dc-820-ref mono">{e.ref}</span>
+                    <span className="dc-820-note">Not tracked in this store</span>
+                    <button className="dc-820-fix" onClick={() => ask('How should we evidence ' + e.ref + ' -- ' + e.label + ' -- for this program?')}>Set up</button>
+                  </>
+                ) : (
+                  <>
+                    <span className={'dc-820-dot tone-' + (e.state === 'present' ? 'ok' : 'err')}>{e.state === 'present' ? I.check : I.alertTriangle}</span>
+                    <span className="dc-820-l">{e.label}</span>
+                    <span className="dc-820-ref mono">{e.ref}</span>
+                    {e.state === 'absent' && <button className="dc-820-fix" onClick={() => ask('What is required to satisfy ' + e.ref + ' -- ' + e.label + '?')}>Resolve</button>}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={addInput} />}
       {toast && <div className="pdev-toast">{I.check} {toast}</div>}

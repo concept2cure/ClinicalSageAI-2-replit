@@ -1,50 +1,36 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLive } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/auth-entry.css';
+
+/* ════ ClientPortal — the read-only view a CRO's client sees ════
+
+   Fixture-free by construction. Every rendered value is real org-scoped data
+   from GET /api/client-portal/overview (server/routes/client-portal.ts), which
+   resolves the caller's single client workspace server-side from the verified
+   JWT and returns ONLY that workspace's programs, shared deliverables and
+   recent updates. There is no fabricated stand-in: a caller with no portal, or
+   a backend that can't be reached, gets an honest error state; a client whose
+   partner has not shared anything yet gets an honest empty state. */
 
 interface CpProgram { id: string; title: string; pathway: string; readiness: number; status: string; next: string; blocker: string | null }
 interface CpDeliverable { name: string; prog: string; status: string; when: string; sig: boolean }
 interface CpUpdate { who: string; what: string; when: string }
+/** The render contract of GET /api/client-portal/overview (its `data` payload). */
 interface CpData {
   client: string; cro: string; user: string; mode?: 'client' | 'preview';
   programs: CpProgram[]; deliverables: CpDeliverable[]; updates: CpUpdate[];
 }
 
-/* Fixture — the fail-closed shape shown with the Sample pill when the live
-   /api/client-portal/overview is unreachable (offline, or the caller is not
-   scoped to a client workspace). Never presented as live. */
-const CP: CpData = {
-  client: 'Meridian Therapeutics',
-  cro: 'Vertex CRO',
-  user: 'Dr. Elena Ruiz',
-  programs: [
-    { id: 'mer1', title: 'MER-204 — IND enabling', pathway: 'IND', readiness: 72, status: 'active', next: 'IND filing · 38 days', blocker: null },
-    { id: 'mer2', title: 'MER-118 — 510(k)', pathway: '510(k)', readiness: 48, status: 'active', next: 'Predicate analysis in review', blocker: 'Awaiting your device spec sign-off' },
-    { id: 'mer3', title: 'MER-090 — CER refresh', pathway: 'EU MDR', readiness: 91, status: 'active', next: 'Notified body submission · Q1', blocker: null },
-  ],
-  deliverables: [
-    { name: 'IND draft — Module 2.5 Clinical Overview', prog: 'MER-204', status: 'shared', when: '2 d ago', sig: false },
-    { name: 'Predicate comparison report', prog: 'MER-118', status: 'review', when: '5 h ago', sig: false },
-    { name: 'CER v3.1 — final', prog: 'MER-090', status: 'approved', when: '1 wk ago', sig: true },
-    { name: 'Gap assessment summary', prog: 'MER-118', status: 'shared', when: '3 d ago', sig: false },
-  ],
-  updates: [
-    { who: 'Vertex CRO', what: 'shared the IND Module 2.5 draft for your review', when: '2 d ago' },
-    { who: 'AnA', what: 'flagged 2 open items on MER-118 needing your input', when: '3 d ago' },
-    { who: 'Vertex CRO', what: 'CER v3.1 approved and sealed', when: '1 wk ago' },
-  ],
-};
-
 const CP_T: Record<string, string> = { shared: 'ai', review: 'warn', approved: 'ok', active: 'ai', final: 'ok', released: 'ok', signed: 'ok' };
 
-/** Relative "2 d ago" from an ISO timestamp; passthrough for the fixture's
-    already-humanized strings. */
+/** Relative "2 d ago" from the ISO timestamps the overview returns; a blank or
+    unparseable value passes through unchanged. */
 function ago(v: string): string {
   if (!v) return '';
   const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return v; // fixture literal
+  if (Number.isNaN(d.getTime())) return v;
   const mins = Math.round((Date.now() - d.getTime()) / 60000);
   if (mins < 60) return `${Math.max(1, mins)} m ago`;
   const hrs = Math.round(mins / 60);
@@ -52,25 +38,6 @@ function ago(v: string): string {
   const days = Math.round(hrs / 24);
   if (days < 14) return `${days} d ago`;
   return `${Math.round(days / 7)} wk ago`;
-}
-
-/** Adopt the live overview only when it structurally matches the display
-    contract; otherwise keep the fixture (fail-closed). */
-function mapLive(payload: unknown): CpData | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const d = (payload as { data?: unknown }).data;
-  if (!d || typeof d !== 'object') return null;
-  const o = d as Record<string, unknown>;
-  if (typeof o.client !== 'string' || !Array.isArray(o.programs)) return null;
-  return {
-    client: o.client,
-    cro: typeof o.cro === 'string' ? o.cro : '',
-    user: typeof o.user === 'string' ? o.user : 'You',
-    mode: o.mode === 'preview' ? 'preview' : 'client',
-    programs: o.programs as CpProgram[],
-    deliverables: Array.isArray(o.deliverables) ? (o.deliverables as CpDeliverable[]) : [],
-    updates: Array.isArray(o.updates) ? (o.updates as CpUpdate[]) : [],
-  };
 }
 
 export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
@@ -87,10 +54,45 @@ export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
     wsId && /^\d+$/.test(wsId)
       ? `/api/client-portal/overview?clientWorkspaceId=${wsId}`
       : '/api/client-portal/overview';
-  const raw = useLive<unknown>(path, null);
-  const live = useMemo(() => (raw.sample ? null : mapLive(raw.data)), [raw.sample, raw.data]);
-  const isLive = live !== null;
-  const cp: CpData = live ?? CP;
+  const { data: cp, loading, error } = useLiveData<CpData>(path);
+
+  // Loading / unavailable — render the branded shell with an honest state, never
+  // a fabricated workspace. A 401/403 means this portal isn't shared with the
+  // caller's account; anything else is a genuine load failure.
+  if (loading || !cp) {
+    const notShared = !!error && /\b40[13]\b/.test(error);
+    return (
+      <div className="cp">
+        <header className="cp-top">
+          <div className="cp-brand"><b>Concept2Cure<span>.RI</span></b><span className="cp-tag">Client workspace</span></div>
+        </header>
+        <div className="cp-body">
+          {loading ? (
+            <EmptyState
+              title="Loading your workspace…"
+              hint="Fetching your programs and shared deliverables."
+              icon={I.clock}
+            />
+          ) : notShared ? (
+            <EmptyState
+              tone="error"
+              title="This workspace isn't shared with your account"
+              hint="Ask your regulatory partner to grant your account access to their client portal, then reload."
+              icon={I.lock}
+            />
+          ) : (
+            <EmptyState
+              tone="error"
+              title="We couldn't load your workspace"
+              hint="The client portal is temporarily unavailable. Please reload in a moment."
+              icon={I.alertTriangle}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="cp">
       {/* Preview banner only for CRO staff previewing a client (mode!=='client');
@@ -119,7 +121,7 @@ export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
           <div>
             <div className="ph-eyebrow">Welcome{cp.user ? `, ${cp.user.split(' ').slice(-1)[0]}` : ''}</div>
             <h1 className="ph-title" style={{ fontSize: 26 }}>
-              Your programs{cp.cro ? ` with ${cp.cro}` : ''} <SampleTag sample={!isLive} />
+              Your programs{cp.cro ? ` with ${cp.cro}` : ''}
             </h1>
             <div className="ph-sub">A read-only view of everything your regulatory partner is building for you — status, shared deliverables, and what needs your input.</div>
           </div>
