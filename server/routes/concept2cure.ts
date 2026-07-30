@@ -11885,7 +11885,7 @@ router.post('/regulatory-catalog/resolve', (req: Request, res: Response) => {
  * Preview what sections and tasks would be created for a given application type.
  * Body: { registryId: string }
  */
-router.post('/regulatory-catalog/bootstrap-preview', (req: Request, res: Response) => {
+router.post('/regulatory-catalog/bootstrap-preview', async (req: Request, res: Response) => {
   try {
     const {
       getBootstrapPreview,
@@ -11894,7 +11894,7 @@ router.post('/regulatory-catalog/bootstrap-preview', (req: Request, res: Respons
     if (!registryId) {
       return sendError(res, 400, 'registryId is required');
     }
-    const preview = getBootstrapPreview(registryId);
+    const preview = await getBootstrapPreview(registryId);
     if (!preview) {
       return sendError(res, 404, `Unknown registry ID: ${registryId}`);
     }

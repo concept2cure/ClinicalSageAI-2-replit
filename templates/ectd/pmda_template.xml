@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PMDA (Japan) eCTD Template v4.0 - Japanese regulatory submission structure.
+     Module 1 follows the Japanese regional eCTD (Gaiyo) organisation defined by
+     MHLW/PMDA notifications; titles are given in English with the Japanese term.
+     Modules 2-5 are ICH-harmonised and shared with the FDA/EMA backbones.
+     Japanese-language documentation is required for a Japanese submission. -->
+<ectd-submission xmlns="http://www.pmda.go.jp/ectd/backbone" version="4.0">
+  <administrative-information>
+    <submission-info>
+      <submission-type>original</submission-type>
+      <submission-number/>
+      <application-type>marketing-approval</application-type>
+      <sequence-number>0000</sequence-number>
+      <language>ja</language>
+    </submission-info>
+    <applicant-info>
+      <applicant-name/>
+      <contact-person/>
+      <address/>
+      <in-country-caretaker title="Information on In-Country Caretaker / Local Agent (国内管理人)"/>
+    </applicant-info>
+  </administrative-information>
+
+  <module-1 title="Administrative Information (PMDA Regional / 第1部)">
+    <m1-1 title="Table of Contents (目次)"/>
+    <m1-2 title="Approval Application Form (承認申請書)"/>
+    <m1-3 title="Certificates (証明書類)"/>
+    <m1-4 title="Patent Status (特許状況)"/>
+    <m1-5 title="Origin, Discovery and Development History (起源又は発見の経緯及び開発の経緯)"/>
+    <m1-6 title="Status of Use in Foreign Countries (外国における使用状況等に関する資料)"/>
+    <m1-7 title="Comparison with Similar Drugs (同種同効品との比較検討等に関する資料)"/>
+    <m1-8 title="Draft Package Insert (添付文書(案))"/>
+    <m1-9 title="Documents Concerning Generic Name (一般的名称に係る文書)"/>
+    <m1-10 title="Designation of Poisonous/Powerful Drugs (毒薬・劇薬等の指定審査資料のまとめ)"/>
+    <m1-12 title="List of Attached Materials (添付資料一覧)"/>
+    <m1-13 title="Other Information incl. In-Country Caretaker (その他)"/>
+  </module-1>
+
+  <module-2 title="Common Technical Document Summaries (第2部)">
+    <m2-1 title="CTD Table of Contents"/>
+    <m2-2 title="Introduction"/>
+    <m2-3 title="Quality Overall Summary">
+      <m2-3-s title="Drug Substance"/>
+      <m2-3-p title="Drug Product"/>
+    </m2-3>
+    <m2-4 title="Nonclinical Overview"/>
+    <m2-5 title="Clinical Overview"/>
+    <m2-6 title="Nonclinical Written and Tabulated Summaries"/>
+    <m2-7 title="Clinical Summary"/>
+  </module-2>
+
+  <module-3 title="Quality (第3部)">
+    <m3-1 title="Table of Contents of Module 3"/>
+    <m3-2 title="Body of Data (Drug Substance and Drug Product)"/>
+    <m3-3 title="Literature References"/>
+  </module-3>
+
+  <module-4 title="Nonclinical Study Reports (第4部)">
+    <m4-1 title="Table of Contents of Module 4"/>
+    <m4-2 title="Study Reports"/>
+    <m4-3 title="Literature References"/>
+  </module-4>
+
+  <module-5 title="Clinical Study Reports (第5部)">
+    <m5-1 title="Table of Contents of Module 5"/>
+    <m5-2 title="Tabular Listing of All Clinical Studies"/>
+    <m5-3 title="Clinical Study Reports"/>
+    <m5-4 title="Literature References"/>
+  </module-5>
+
+  <compliance-requirements>
+    <required-sections>
+      <section id="m1-2" mandatory="true" description="Approval Application Form (承認申請書) required"/>
+      <section id="m1-13" mandatory="true" description="In-Country Caretaker / Local Agent information required for foreign applicants"/>
+      <section id="m2-3" mandatory="true" description="Quality Overall Summary required"/>
+      <section id="m2-5" mandatory="true" description="Clinical Overview required"/>
+    </required-sections>
+    <validation-rules>
+      <rule id="japanese-language" description="Module 1 and summaries must be provided in Japanese"/>
+      <rule id="local-agent-present" description="Foreign applicants must designate an In-Country Caretaker (国内管理人)"/>
+      <rule id="bridging-data" description="Assess need for Japanese ethnic-bridging clinical data per ICH E5"/>
+    </validation-rules>
+  </compliance-requirements>
+</ectd-submission>

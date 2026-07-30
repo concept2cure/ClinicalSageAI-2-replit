@@ -1,0 +1,93 @@
+/**
+ * Registry Coverage — portfolio readiness invariants.
+ *
+ * These tests are the machine-checkable form of the product-management claim
+ * that the biotech document lifecycle is "in place and ready to use". They lock
+ * the core lifecycle spine (Pre-IND → IND → NDA/BLA across the primary regions)
+ * at a real, non-generic authoring structure, and they guard against a silent
+ * regression where a core type slips back to the generic CTD fallback.
+ */
+
+import { describe, it, expect } from 'vitest';
+import {
+  getDocumentCoverage,
+  buildCoverageReport,
+  getLifecycleSpineStatus,
+  BIOTECH_LIFECYCLE_SPINE,
+} from '../../server/services/regulatory/registry/registryCoverage';
+
+describe('Registry coverage', () => {
+  describe('biotech lifecycle spine', () => {
+    const spine = getLifecycleSpineStatus();
+
+    it('every lifecycle-spine type exists in the registry', () => {
+      for (const node of spine) {
+        expect(node.present, `${node.id} missing from registry`).toBe(true);
+      }
+    });
+
+    it('every lifecycle-spine type is at least buildable (real structure, not generic)', () => {
+      const below = spine.filter((n) => !n.meetsBar);
+      expect(below, `catalog-only lifecycle nodes: ${below.map((n) => n.id).join(', ')}`).toEqual([]);
+    });
+
+    it('the four named regions are represented on the spine', () => {
+      const regions = new Set(BIOTECH_LIFECYCLE_SPINE.map((n) => n.region));
+      for (const region of ['US', 'EU', 'CA', 'JP'] as const) {
+        expect(regions.has(region)).toBe(true);
+      }
+    });
+
+    it('US IND, NDA, BLA and EU MAA are production-ready (dedicated section + task blueprints)', () => {
+      for (const id of ['US_IND', 'US_NDA', 'US_BLA', 'EU_MAA'] as const) {
+        expect(getDocumentCoverage(id)?.readiness, `${id} not production_ready`).toBe('production_ready');
+      }
+    });
+
+    it('Canada NDS and Japan marketing approval are production-ready', () => {
+      expect(getDocumentCoverage('CA_NDS')?.readiness).toBe('production_ready');
+      expect(getDocumentCoverage('JP_MKT_APPROVAL')?.readiness).toBe('production_ready');
+    });
+  });
+
+  describe('per-entry coverage', () => {
+    it('US IND requires forms 1571/1572/3674 and they are FDA-registry backed and implemented', () => {
+      const cov = getDocumentCoverage('US_IND')!;
+      const numbers = cov.requiredForms.map((f) => f.formNumber).filter(Boolean);
+      expect(numbers).toEqual(expect.arrayContaining(['1571', '1572', '3674']));
+      expect(cov.requiredForms.every((f) => f.registered && f.implemented)).toBe(true);
+      expect(cov.formsFullyBacked).toBe(true);
+    });
+
+    it('the named regions have an eCTD backbone reference', () => {
+      for (const id of ['US_IND', 'EU_MAA', 'CA_NDS', 'JP_MKT_APPROVAL'] as const) {
+        expect(getDocumentCoverage(id)?.hasEctdBackbone, `${id} missing eCTD backbone`).toBe(true);
+      }
+    });
+
+    it('returns null for an unknown id', () => {
+      expect(getDocumentCoverage('NOPE')).toBeNull();
+    });
+  });
+
+  describe('portfolio report', () => {
+    const report = buildCoverageReport();
+
+    it('accounts for every active registry entry exactly once', () => {
+      const { production_ready, buildable, catalog_only } = report.summary.byReadiness;
+      expect(production_ready + buildable + catalog_only).toBe(report.summary.total);
+      expect(report.entries.length).toBe(report.summary.total);
+    });
+
+    it('has a meaningful production-ready core', () => {
+      // The wired dedicated blueprints (US IND/NDA/BLA, EU MAA/CTA, CA, JP, CN, BR, IN, AU).
+      expect(report.summary.byReadiness.production_ready).toBeGreaterThanOrEqual(8);
+    });
+
+    it('every region on the report reconciles its readiness buckets to its total', () => {
+      for (const r of report.byRegion) {
+        expect(r.productionReady + r.buildable + r.catalogOnly).toBe(r.total);
+      }
+    });
+  });
+});

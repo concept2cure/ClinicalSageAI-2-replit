@@ -51,24 +51,34 @@ export async function getTaskBlueprint(registryIdOrLegacy: string): Promise<Task
 }
 
 /**
+ * Registry ID → dedicated blueprint module that exports `taskBlueprint`.
+ * Kept in sync with `sectionBlueprintCatalog` (the same files export both).
+ */
+const TASK_BLUEPRINT_FILES: Record<string, string> = {
+  US_IND: './registry/blueprints/usIndBlueprint.js',
+  US_NDA: './registry/blueprints/usNdaBlueprint.js',
+  US_BLA: './registry/blueprints/usBlaBlueprint.js',
+  EU_MAA: './registry/blueprints/euMaaBlueprint.js',
+  EU_CTA: './registry/blueprints/euCtaBlueprint.js',
+  CA_NDS: './registry/blueprints/canadaNdsBlueprint.js',
+  CA_CTA: './registry/blueprints/canadaCtaBlueprint.js',
+  JP_MKT_APPROVAL: './registry/blueprints/japanMaaBlueprint.js',
+  JP_CTN: './registry/blueprints/japanCtnBlueprint.js',
+  CN_CTA: './registry/blueprints/chinaCtaBlueprint.js',
+  AU_CTN: './registry/blueprints/australiaCtnBlueprint.js',
+  BR_DDCM: './registry/blueprints/brazilDdcmBlueprint.js',
+  IN_CT04: './registry/blueprints/indiaCtBlueprint.js',
+};
+
+/** Registry IDs that have a dedicated, wired task blueprint. */
+export const DEDICATED_TASK_BLUEPRINT_IDS: readonly string[] =
+  Object.keys(TASK_BLUEPRINT_FILES);
+
+/**
  * Try to load a dedicated blueprint file for the given registry ID.
  */
 async function loadDedicatedBlueprint(registryId: string): Promise<TaskBlueprint | null> {
-  const fileMap: Record<string, string> = {
-    US_IND: './registry/blueprints/usIndBlueprint.js',
-    US_NDA: './registry/blueprints/usNdaBlueprint.js',
-    US_BLA: './registry/blueprints/usBlaBlueprint.js',
-    EU_MAA: './registry/blueprints/euMaaBlueprint.js',
-    EU_CTA: './registry/blueprints/euCtaBlueprint.js',
-    CA_NDS: './registry/blueprints/canadaNdsBlueprint.js',
-    JP_MKT_APPROVAL: './registry/blueprints/japanMaaBlueprint.js',
-    CN_CTA: './registry/blueprints/chinaCtaBlueprint.js',
-    AU_CTN: './registry/blueprints/australiaCtnBlueprint.js',
-    BR_DDCM: './registry/blueprints/brazilDdcmBlueprint.js',
-    IN_CT04: './registry/blueprints/indiaCtBlueprint.js',
-  };
-
-  const file = fileMap[registryId];
+  const file = TASK_BLUEPRINT_FILES[registryId];
   if (!file) return null;
 
   try {

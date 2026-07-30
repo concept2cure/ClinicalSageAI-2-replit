@@ -57,6 +57,22 @@ const DEVICE_SECTIONS: SectionDefinition[] = [
   { code: '10', title: 'Summary', module: 1, required: true, contentType: 'narrative' },
 ];
 
+/**
+ * Pre-IND meeting (Type B) briefing package sections. This is a meeting/briefing
+ * document, not a CTD dossier, so it has its own structure per the FDA "Formal
+ * Meetings Between the FDA and Sponsors" guidance and 21 CFR 312.82.
+ */
+const PRE_IND_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Meeting Request Letter', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 312.82' },
+  { code: '2', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
+  { code: '3', title: 'Product Development Background', module: 1, required: true, contentType: 'narrative' },
+  { code: '4', title: 'Proposed Nonclinical Program Summary', module: 1, required: true, contentType: 'mixed', guidance: 'ICH M3(R2)' },
+  { code: '5', title: 'Proposed Clinical Development Plan', module: 1, required: true, contentType: 'narrative', guidance: 'ICH E8(R1)' },
+  { code: '6', title: 'CMC Summary', module: 1, required: false, contentType: 'mixed', guidance: 'ICH M4Q(R1)' },
+  { code: '7', title: 'Proposed Questions for FDA', module: 1, required: true, contentType: 'list' },
+  { code: '8', title: 'References', module: 1, required: false, contentType: 'list' },
+];
+
 /** CER sections (EU MDR) */
 const CER_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Executive Summary', module: 1, required: true, contentType: 'narrative' },
@@ -69,6 +85,9 @@ const CER_SECTIONS: SectionDefinition[] = [
 ];
 
 const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
+  // US Pre-submission
+  us_pre_ind_sections: { id: 'us_pre_ind_sections', name: 'Pre-IND Meeting Briefing Package', sections: PRE_IND_SECTIONS },
+
   // US Drug Applications
   us_ind_sections: { id: 'us_ind_sections', name: 'IND Sections (CTD)', sections: CTD_SECTIONS },
   us_nda_sections: { id: 'us_nda_sections', name: 'NDA Sections (CTD)', sections: CTD_SECTIONS.map(s => s.code === '2.7' || s.code === '5.3' ? { ...s, required: true } : s) },

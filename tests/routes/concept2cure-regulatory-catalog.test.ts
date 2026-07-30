@@ -135,32 +135,32 @@ describe('Regulatory Catalog Endpoints (service-level)', () => {
   });
 
   describe('POST /regulatory-catalog/bootstrap-preview (getBootstrapPreview)', () => {
-    it('returns preview for US_IND', () => {
-      const preview = getBootstrapPreview('US_IND');
+    it('returns preview for US_IND', async () => {
+      const preview = await getBootstrapPreview('US_IND');
       expect(preview).not.toBeNull();
       expect(preview!.sections.length).toBeGreaterThan(0);
       expect(preview!.milestones.length).toBeGreaterThan(0);
       expect(preview!.dossierStandard).toBe('eCTD');
     });
 
-    it('returns preview for EU_MAA', () => {
-      const preview = getBootstrapPreview('EU_MAA');
+    it('returns preview for EU_MAA', async () => {
+      const preview = await getBootstrapPreview('EU_MAA');
       expect(preview).not.toBeNull();
       expect(preview!.entry.agency).toBe('EMA');
     });
 
-    it('returns preview for US_510K', () => {
-      const preview = getBootstrapPreview('US_510K');
+    it('returns preview for US_510K', async () => {
+      const preview = await getBootstrapPreview('US_510K');
       expect(preview).not.toBeNull();
       expect(preview!.dossierStandard).toBe('eSTAR');
     });
 
-    it('returns null for unknown ID', () => {
-      expect(getBootstrapPreview('FAKE')).toBeNull();
+    it('returns null for unknown ID', async () => {
+      expect(await getBootstrapPreview('FAKE')).toBeNull();
     });
 
-    it('each section has required fields', () => {
-      const preview = getBootstrapPreview('US_NDA');
+    it('each section has required fields', async () => {
+      const preview = await getBootstrapPreview('US_NDA');
       expect(preview).not.toBeNull();
       for (const s of preview!.sections) {
         expect(s).toHaveProperty('code');
@@ -168,6 +168,21 @@ describe('Regulatory Catalog Endpoints (service-level)', () => {
         expect(s).toHaveProperty('module');
         expect(typeof s.required).toBe('boolean');
       }
+    });
+
+    it('uses the dedicated Japan blueprint (region-specific Module 1)', async () => {
+      const preview = await getBootstrapPreview('JP_MKT_APPROVAL');
+      expect(preview).not.toBeNull();
+      // Japan Module 1 has a "Local Agent" section that the generic CTD outline lacks.
+      const hasLocalAgent = preview!.sections.some(s => /local agent/i.test(s.title));
+      expect(hasLocalAgent).toBe(true);
+    });
+
+    it('uses the dedicated Canada blueprint (Product Monograph in Module 1)', async () => {
+      const preview = await getBootstrapPreview('CA_NDS');
+      expect(preview).not.toBeNull();
+      const hasProductMonograph = preview!.sections.some(s => /product monograph/i.test(s.title));
+      expect(hasProductMonograph).toBe(true);
     });
   });
 

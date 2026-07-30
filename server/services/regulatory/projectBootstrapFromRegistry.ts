@@ -17,11 +17,11 @@
 
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import {
-  bootstrapProject,
   getSectionBlueprintForEntry,
-  getTaskBlueprintForEntry,
 } from '../../../shared/regulatory/project-bootstrap.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
+import { getSectionBlueprint } from './sectionBlueprintCatalog.js';
+import { getTaskBlueprint } from './taskBlueprintCatalog.js';
 import { buildDefaultInstructions } from './defaultInstructionBuilder.js';
 import type {
   RegulatoryApplicationType,
@@ -155,7 +155,9 @@ async function bootstrapUSIND(
     return bootstrapGeneric(entry, input);
   }
 
-  const taskBlueprint = getTaskBlueprintForEntry(entry);
+  // Prefer the dedicated, richer IND task blueprint (7 milestones with CFR/ICH
+  // detail) over the generic 3-milestone fallback.
+  const taskBlueprint = await getTaskBlueprint(entry.id);
 
   return {
     entry,
@@ -170,14 +172,26 @@ async function bootstrapUSIND(
 
 /**
  * Bootstrap any type using registry blueprints.
+ *
+ * Resolution order for sections:
+ *   1. Dedicated, hand-authored section blueprint (region-specific Module 1,
+ *      correct required flags) from `sectionBlueprintCatalog` — covers EU MAA/CTA,
+ *      Canada NDS, Japan marketing approval, China/Brazil/India/Australia, US NDA/BLA.
+ *   2. Generic CTD blueprint from `project-bootstrap` (`getSectionBlueprintForEntry`).
+ *
+ * Task/milestones prefer the dedicated blueprint via `taskBlueprintCatalog`,
+ * which itself falls back to the shared blueprints, then the default.
  */
-function bootstrapGeneric(
+async function bootstrapGeneric(
   entry: RegulatoryApplicationType,
   input: BootstrapInput
-): BootstrapResult {
-  const bootstrap = bootstrapProject(entry);
+): Promise<BootstrapResult> {
+  const dedicatedSectionBlueprint = await getSectionBlueprint(entry.id);
+  const usedDedicatedBlueprint = dedicatedSectionBlueprint !== null;
+  const sectionBlueprint = dedicatedSectionBlueprint ?? getSectionBlueprintForEntry(entry);
+  const taskBlueprint = await getTaskBlueprint(entry.id);
 
-  const sections: SectionRow[] = bootstrap.sections.map(s => ({
+  const sections: SectionRow[] = sectionBlueprint.sections.map(s => ({
     sectionCode: s.code,
     module: `M${s.module}`,
     title: s.title,
@@ -190,16 +204,18 @@ function bootstrapGeneric(
       guidance: s.guidance ?? '',
       templateId: s.templateId ?? '',
       registryId: entry.id,
+      blueprintId: sectionBlueprint.id,
+      dedicatedBlueprint: usedDedicatedBlueprint,
     },
   }));
 
   return {
     entry,
     sections,
-    milestones: bootstrap.milestones,
+    milestones: taskBlueprint.milestones,
     defaultInstructions: buildDefaultInstructions(entry, input.product, input.projectName),
-    requiredArtifacts: bootstrap.requiredArtifacts,
-    dossierStandard: bootstrap.dossierStandard,
+    requiredArtifacts: entry.requiredArtifacts,
+    dossierStandard: entry.dossierStandard,
     usedDeepAdapter: false,
   };
 }
@@ -224,6 +240,9 @@ export async function getSectionCountForType(registryIdOrLegacy: string): Promis
       // Fall through
     }
   }
+
+  const dedicated = await getSectionBlueprint(entry.id);
+  if (dedicated) return dedicated.sections.length;
 
   const blueprint = getSectionBlueprintForEntry(entry);
   return blueprint.sections.length;
