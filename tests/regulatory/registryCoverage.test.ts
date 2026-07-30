@@ -139,6 +139,15 @@ describe('Registry coverage', () => {
       expect(catalogOnly.map((e) => e.id)).toEqual([]);
     });
 
+    it('every active document type resolves to a real, family-appropriate task plan', () => {
+      // The task axis is backed too: each entry resolves through
+      // resolveTaskBlueprintKey to a workflow-family plan (a device 510(k) gets
+      // the eSTAR device-submission rhythm, a QMS file the ISO 13485 rhythm, an
+      // aggregate PV report the data-lock-point rhythm) rather than the generic
+      // drug-dossier plan. byTaskTier.generic must stay 0.
+      expect(report.summary.byTaskTier.generic).toBe(0);
+    });
+
     it('every region on the report reconciles its readiness buckets to its total', () => {
       for (const r of report.byRegion) {
         expect(r.productionReady + r.buildable + r.catalogOnly).toBe(r.total);

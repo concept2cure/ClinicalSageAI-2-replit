@@ -29,6 +29,7 @@ import {
 import {
   SECTION_BLUEPRINTS,
   TASK_BLUEPRINTS,
+  resolveTaskBlueprintKey,
 } from '../../../../shared/regulatory/project-bootstrap.js';
 import { DEDICATED_SECTION_BLUEPRINT_IDS } from '../sectionBlueprintCatalog.js';
 import { DEDICATED_TASK_BLUEPRINT_IDS } from '../taskBlueprintCatalog.js';
@@ -117,7 +118,10 @@ function sectionTier(entry: RegulatoryApplicationType): BlueprintTier {
 
 function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
   if (DEDICATED_TASK.has(entry.id)) return 'dedicated';
-  const key = entry.defaultTaskBlueprint;
+  // Resolve through the SAME family resolver the runtime bootstrap uses, so the
+  // coverage report reflects the real per-family task plan an entry receives
+  // (not just an explicit `${id}_tasks` key that never exists in TASK_BLUEPRINTS).
+  const key = resolveTaskBlueprintKey(entry);
   if (key in TASK_BLUEPRINTS && key !== 'default_tasks') return 'specific';
   return 'generic';
 }

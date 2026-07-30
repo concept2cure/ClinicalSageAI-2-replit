@@ -739,38 +739,402 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
 // ─── Task Blueprints ──────────────────────────────────────────────────────────
 
-const DEFAULT_DRUG_TASKS: MilestoneDefinition[] = [
-  {
-    id: 'ms_authoring', title: 'Document Authoring', description: 'Draft all required sections', phase: 'authoring', order: 1,
-    tasks: [
-      { id: 't_draft_m2', title: 'Draft Module 2 Summaries', description: 'Clinical, nonclinical, quality overviews' },
-      { id: 't_draft_m3', title: 'Draft Module 3 Quality', description: 'Drug substance and drug product sections' },
-      { id: 't_draft_m5', title: 'Draft Module 5 Clinical', description: 'Clinical study reports' },
-    ],
-  },
-  {
-    id: 'ms_review', title: 'Internal Review', description: 'QC and compliance review', phase: 'review', order: 2,
-    tasks: [
-      { id: 't_qc_review', title: 'QC Review', description: 'Quality control check of all sections' },
-      { id: 't_compliance', title: 'Compliance Check', description: 'Regulatory compliance validation' },
-    ],
-  },
-  {
-    id: 'ms_finalize', title: 'Finalization', description: 'Signatures, packaging, submission', phase: 'finalization', order: 3,
-    tasks: [
-      { id: 't_signatures', title: 'Electronic Signatures', description: '21 CFR Part 11 compliant e-signatures' },
-      { id: 't_ectd_package', title: 'eCTD Packaging', description: 'Assemble eCTD submission package' },
-      { id: 't_submit', title: 'Submit to Agency', description: 'Electronic submission via gateway' },
-    ],
-  },
+// Compact milestone/task builders — a task is [id, title, description].
+type TaskTriple = [string, string, string];
+function ms(
+  order: number,
+  phase: string,
+  id: string,
+  title: string,
+  description: string,
+  tasks: TaskTriple[],
+): MilestoneDefinition {
+  return { id, title, description, phase, order, tasks: tasks.map(([tid, tt, td]) => ({ id: tid, title: tt, description: td })) };
+}
+
+// ── Drug / cross-cutting workflow families ────────────────────────────────────
+
+/** Clinical trial application (IND / CTA / CTN): open a trial. 30-day clock. */
+const DRUG_CTA_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_cta_author', 'Trial Package Authoring', 'Protocol, IB, and IMPD/quality', [
+    ['t_protocol', 'Finalize Protocol', 'Lock the clinical protocol and synopsis (ICH E6)'],
+    ['t_ib', "Finalize Investigator's Brochure", 'Current IB reflecting nonclinical + clinical data'],
+    ['t_impd', 'Draft IMPD / CMC (M3)', 'Investigational product quality dossier'],
+    ['t_nonclin', 'Compile Nonclinical (M4)', 'Pharmacology, PK, and toxicology to support first-in-human'],
+  ]),
+  ms(2, 'review', 'ms_cta_review', 'Sponsor Review', 'Medical, safety, and QC review', [
+    ['t_med_review', 'Medical & Safety Review', 'Benefit-risk and starting-dose justification'],
+    ['t_qc', 'QC Review', 'Consistency and completeness check across modules'],
+  ]),
+  ms(3, 'submission', 'ms_cta_submit', 'Assemble & Submit', 'Dossier assembly and portal submission', [
+    ['t_forms', 'Regulatory Forms', 'FDA 1571/1572/3674 or regional CTA forms'],
+    ['t_assemble', 'Assemble CTA Dossier', 'Compile M1–M5 for the region'],
+    ['t_submit', 'Submit via Gateway/Portal', 'ESG / CTIS / regional portal; start the review clock'],
+  ]),
 ];
 
+/** Full marketing authorisation (NDA / BLA / MAA / NDS): market a new product. */
+const DRUG_MARKETING_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_maa_author', 'Dossier Authoring', 'Integrated summaries and full CTD', [
+    ['t_iss_ise', 'Integrated Summaries (ISS/ISE)', 'Integrated summary of safety and efficacy'],
+    ['t_csr', 'Compile Clinical Study Reports (M5)', 'Pivotal and supportive CSRs'],
+    ['t_m2', 'Draft Module 2 Summaries', 'QOS, clinical/nonclinical overviews and summaries'],
+    ['t_labeling', 'Draft Labeling (M1)', 'Prescribing information / SmPC'],
+  ]),
+  ms(2, 'review', 'ms_maa_review', 'Cross-functional Review', 'Medical, biostat, regulatory QC', [
+    ['t_xfn_review', 'Cross-functional Review', 'Medical, biostatistics, and regulatory sign-off'],
+    ['t_presub_mtg', 'Pre-submission Meeting', 'Type B/C or CHMP pre-submission alignment'],
+  ]),
+  ms(3, 'finalization', 'ms_maa_submit', 'Finalize & Submit', 'Signatures, packaging, fee, gateway', [
+    ['t_esign', 'Electronic Signatures', '21 CFR Part 11 signatures'],
+    ['t_fee', 'User Fee / Application Form', 'PDUFA/BsUFA fee, FDA 356h or regional application form'],
+    ['t_ectd', 'eCTD Assembly & Validation', 'Assemble and validate the eCTD package'],
+    ['t_submit', 'Submit to Agency', 'Electronic submission via gateway'],
+  ]),
+  ms(4, 'post_submission', 'ms_maa_post', 'Post-submission', 'Agency interaction to decision', [
+    ['t_irs', 'Respond to Information Requests', 'Answer agency questions within clock'],
+    ['t_advcom', 'Advisory Committee / Oral Explanation', 'Prepare and support where convened'],
+  ]),
+];
+
+/** Generic / abbreviated marketing (ANDA / ANDS / GDA): bioequivalence route. */
+const GENERIC_MARKETING_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_gen_author', 'Abbreviated Dossier', 'Bioequivalence and quality', [
+    ['t_be', 'Bioequivalence Study Report', 'BE/BA demonstration vs the reference product'],
+    ['t_quality', 'Quality (M3.2.S / M3.2.P)', 'Drug substance and product quality'],
+    ['t_label', 'Labeling to Reference', 'Match the reference-listed-drug labeling'],
+  ]),
+  ms(2, 'review', 'ms_gen_review', 'Review', 'BE statistics and QC', [
+    ['t_be_stats', 'BE Statistical Review', 'Confidence-interval and statistical adequacy'],
+    ['t_qc', 'QC Review', 'Completeness of the abbreviated dossier'],
+  ]),
+  ms(3, 'submission', 'ms_gen_submit', 'Assemble & Submit', 'Package and submit', [
+    ['t_assemble', 'Assemble Dossier', 'Abbreviated CTD/ACTD assembly'],
+    ['t_submit', 'Submit to Agency', 'Electronic submission'],
+  ]),
+];
+
+/** Variation / supplement / change (Type IA/IB/II, PAS/CBE, partial change). */
+const VARIATION_SUPPLEMENT_TASKS: MilestoneDefinition[] = [
+  ms(1, 'classification', 'ms_var_class', 'Change Classification', 'Determine the variation category', [
+    ['t_classify', 'Classify the Change', 'Type IA/IB/II or PAS/CBE-30/CBE-0 determination'],
+  ]),
+  ms(2, 'assessment', 'ms_var_assess', 'Impact Assessment', 'Present-vs-proposed and risk', [
+    ['t_compare', 'Present-vs-Proposed Comparison', 'Document the change side by side'],
+    ['t_data', 'Affected-Module Data', 'Supporting data for the changed modules'],
+    ['t_risk', 'Risk Assessment', 'Assess impact on quality, safety, efficacy'],
+  ]),
+  ms(3, 'submission', 'ms_var_submit', 'Update & Submit', 'Update sections, QC, submit', [
+    ['t_update', 'Update Affected Sections & Labeling', 'Revise only the impacted content'],
+    ['t_submit', 'QC & Submit', 'Quality check and agency submission'],
+  ]),
+];
+
+/** Renewal (5-year MA renewal). */
+const RENEWAL_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_ren_author', 'Renewal Package', 'Updated info and benefit-risk', [
+    ['t_pi', 'Updated Product Information', 'Refresh labeling and administrative data'],
+    ['t_br', 'Benefit-Risk Assessment', 'Consolidated benefit-risk since approval'],
+    ['t_psur_ref', 'PSUR/PBRER Reference', 'Cross-reference the latest periodic report'],
+  ]),
+  ms(2, 'review', 'ms_ren_review', 'Review', 'QC', [['t_qc', 'QC Review', 'Completeness and consistency']]),
+  ms(3, 'submission', 'ms_ren_submit', 'Submit', 'Submit renewal', [['t_submit', 'Submit to Agency', 'Electronic submission']]),
+];
+
+/** Master file (DMF / ASMF): confidential quality dossier. */
+const MASTER_FILE_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_mf_author', 'Master File Authoring', 'Restricted and applicant parts', [
+    ['t_quality', 'Quality Data (3.2.S)', 'Manufacturing, controls, and characterization'],
+    ['t_parts', 'Applicant / Restricted Parts', 'Open and closed parts of the master file'],
+  ]),
+  ms(2, 'review', 'ms_mf_review', 'Review', 'QC', [['t_qc', 'QC Review', 'Completeness check']]),
+  ms(3, 'submission', 'ms_mf_submit', 'File & Grant Access', 'File and issue letters of access', [
+    ['t_submit', 'File Master File', 'Submit to the agency'],
+    ['t_loa', 'Letters of Access', 'Issue authorization to referencing applicants'],
+  ]),
+];
+
+/** Pediatric plan (PIP / PSP). */
+const PEDIATRIC_PLAN_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_ped_author', 'Pediatric Plan', 'Development strategy and studies', [
+    ['t_strategy', 'Pediatric Development Strategy', 'Age-appropriate development plan'],
+    ['t_studies', 'Study Plans', 'Proposed pediatric studies'],
+    ['t_waivers', 'Waivers & Deferrals', 'Justify any waivers or deferrals'],
+  ]),
+  ms(2, 'review', 'ms_ped_review', 'Review', 'QC', [['t_qc', 'QC Review', 'Completeness check']]),
+  ms(3, 'submission', 'ms_ped_submit', 'Submit', 'Submit plan', [['t_submit', 'Submit to Agency', 'PDCO / FDA submission']]),
+];
+
+/** Designation request (breakthrough / fast track / orphan / PRIME / RMAT). */
+const DESIGNATION_TASKS: MilestoneDefinition[] = [
+  ms(1, 'eligibility', 'ms_des_elig', 'Eligibility Justification', 'Unmet need / prevalence case', [
+    ['t_case', 'Eligibility Case', 'Serious condition, unmet need, or prevalence threshold'],
+  ]),
+  ms(2, 'authoring', 'ms_des_author', 'Request Package', 'Draft the designation request', [
+    ['t_package', 'Designation Request', 'Preliminary evidence and rationale'],
+  ]),
+  ms(3, 'submission', 'ms_des_submit', 'Submit', 'Submit and interact', [
+    ['t_submit', 'Submit Request', 'Submit to the agency program'],
+    ['t_interact', 'Agency Interaction', 'Respond to clarification requests'],
+  ]),
+];
+
+/** Aggregate safety / pharmacovigilance (PSUR / DSUR / PBRER / REMS / RMP / signal). */
+const AGGREGATE_SAFETY_TASKS: MilestoneDefinition[] = [
+  ms(1, 'data_lock', 'ms_pv_lock', 'Data Lock & Retrieval', 'DLP and case retrieval', [
+    ['t_dlp', 'Data Lock Point', 'Set the reporting interval and lock the data'],
+    ['t_lines', 'Case Retrieval & Line Listings', 'Retrieve cases and generate line listings'],
+  ]),
+  ms(2, 'analysis', 'ms_pv_analysis', 'Aggregate Analysis', 'Benefit-risk / signal evaluation', [
+    ['t_aggregate', 'Aggregate Analysis', 'Cumulative and interval safety analysis'],
+    ['t_signal', 'Signal / Benefit-Risk Evaluation', 'Evaluate signals and overall benefit-risk'],
+  ]),
+  ms(3, 'signoff', 'ms_pv_signoff', 'Sign-off & Submit', 'QPPV medical sign-off then submit', [
+    ['t_qppv', 'QPPV / Medical Sign-off', 'Qualified person medical review and sign-off'],
+    ['t_submit', 'Submit / Transmit', 'Submit the report or transmit expedited cases'],
+  ]),
+];
+
+/** Meeting / briefing package (Pre-IND, scientific advice). */
+const MEETING_BRIEFING_TASKS: MilestoneDefinition[] = [
+  ms(1, 'prepare', 'ms_mtg_prep', 'Meeting Preparation', 'Request and questions', [
+    ['t_request', 'Meeting Request', 'Request the meeting and propose the format'],
+    ['t_questions', 'Question List', 'Frame the specific questions for the agency'],
+  ]),
+  ms(2, 'authoring', 'ms_mtg_author', 'Briefing Package', 'Draft the briefing document', [
+    ['t_briefing', 'Briefing Package', 'Development summary and position on each question'],
+  ]),
+  ms(3, 'submission', 'ms_mtg_submit', 'Submit & Meet', 'Submit package and hold the meeting', [
+    ['t_submit', 'Submit Briefing Package', 'Send ahead of the meeting'],
+    ['t_meeting', 'Hold Meeting & Minutes', 'Conduct the meeting and record minutes'],
+  ]),
+];
+
+/** CMC / quality document (comparability protocol, quality doc, environmental). */
+const CMC_QUALITY_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_cmc_author', 'CMC Authoring', 'Draft the quality/CMC package', [
+    ['t_data', 'Quality Data Package', 'Manufacturing, controls, characterization, stability'],
+  ]),
+  ms(2, 'review', 'ms_cmc_review', 'Review', 'QC', [['t_qc', 'QC Review', 'CMC completeness and consistency']]),
+  ms(3, 'submission', 'ms_cmc_submit', 'File', 'Submit or file', [['t_submit', 'Submit / File', 'File with the agency or in the dossier']]),
+];
+
+/** Single clinical document (CSR / protocol / IB / SAP / ICF) — component, no gateway. */
+const CLINICAL_DOCUMENT_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_cd_author', 'Authoring', 'Draft the document', [
+    ['t_draft', 'Draft Document', 'Author per the ICH-harmonised structure'],
+  ]),
+  ms(2, 'review', 'ms_cd_review', 'Review', 'Medical, biostatistics, QC', [
+    ['t_med', 'Medical & Biostatistics Review', 'Scientific and statistical accuracy'],
+    ['t_qc', 'QC Review', 'Editorial and consistency check'],
+  ]),
+  ms(3, 'approval', 'ms_cd_approve', 'Approval', 'Finalize and sign (component, not filed alone)', [
+    ['t_approve', 'Approve & Sign', 'Final approval and Part 11 signature'],
+  ]),
+];
+
+/** CTD module authoring surface (M1–M5). */
+const CTD_MODULE_TASKS: MilestoneDefinition[] = [
+  ms(1, 'authoring', 'ms_mod_author', 'Module Authoring', 'Draft the module sections', [
+    ['t_draft', 'Draft Module Sections', 'Author every section in this CTD module'],
+  ]),
+  ms(2, 'review', 'ms_mod_review', 'Review', 'QC', [['t_qc', 'QC Review', 'Module completeness and cross-references']]),
+  ms(3, 'assembly', 'ms_mod_assemble', 'Assemble', 'Place the module into the dossier', [
+    ['t_assemble', 'Assemble into Dossier', 'Integrate the module into the eCTD backbone'],
+  ]),
+];
+
+// ── Medical device / IVD workflow families ────────────────────────────────────
+
+/** Device market submission (510(k) / PMA / De Novo / CDx / device MA). */
+const DEVICE_SUBMISSION_TASKS: MilestoneDefinition[] = [
+  ms(1, 'evidence', 'ms_dev_evidence', 'Design & Evidence', 'Description, performance, safety', [
+    ['t_desc', 'Device Description & Intended Use', 'Design, principles of operation, indications'],
+    ['t_perf', 'Bench / Predicate or Clinical Evidence', 'Substantial equivalence or valid scientific evidence'],
+    ['t_biocomp', 'Biocompatibility & Safety', 'Biocompatibility, electrical, and mechanical safety'],
+    ['t_software', 'Software / Cybersecurity', 'Software documentation and cybersecurity where applicable'],
+  ]),
+  ms(2, 'authoring', 'ms_dev_author', 'Submission Authoring', 'Labeling and assembly', [
+    ['t_labeling', 'Labeling & IFU', 'Labeling and instructions for use'],
+    ['t_assemble', 'Assemble Submission', 'eSTAR / eCopy structured assembly'],
+  ]),
+  ms(3, 'submission', 'ms_dev_submit', 'Submit & Interact', 'Submit and respond to deficiencies', [
+    ['t_submit', 'Submit to Agency', 'eSTAR / eCopy / notified-body submission'],
+    ['t_ai', 'Respond to Deficiencies (AI)', 'Answer additional-information requests'],
+  ]),
+];
+
+/** Device pre-submission (Q-Sub / 513(g) / SaMD pre-sub / RFD). */
+const DEVICE_PRESUB_TASKS: MilestoneDefinition[] = [
+  ms(1, 'prepare', 'ms_dps_prep', 'Preparation', 'Questions and testing strategy', [
+    ['t_questions', 'Specific Questions', 'Frame the questions for the agency'],
+    ['t_strategy', 'Testing / Classification Strategy', 'Proposed testing or classification rationale'],
+  ]),
+  ms(2, 'authoring', 'ms_dps_author', 'Pre-Sub Package', 'Draft the pre-submission', [
+    ['t_package', 'Pre-Submission Package', 'Device description and question-by-question position'],
+  ]),
+  ms(3, 'submission', 'ms_dps_submit', 'Submit & Meet', 'Submit and hold the meeting', [
+    ['t_submit', 'Submit Pre-Sub', 'Submit and request feedback/meeting'],
+    ['t_meeting', 'Feedback Meeting', 'Hold the meeting and record minutes'],
+  ]),
+];
+
+/** Device / IVD clinical investigation or performance study (IDE / performance study / PMCF / PMPF). */
+const DEVICE_CLINICAL_TASKS: MilestoneDefinition[] = [
+  ms(1, 'planning', 'ms_dc_plan', 'Investigation Planning', 'CIP and risk analysis (ISO 14155)', [
+    ['t_cip', 'Clinical Investigation Plan', 'Design, endpoints, and statistical plan'],
+    ['t_risk', 'Risk Analysis', 'Benefit-risk and subject protection'],
+  ]),
+  ms(2, 'authoring', 'ms_dc_author', 'Study Documents', 'IB, consent, monitoring', [
+    ['t_ib', 'Investigator Brochure', 'Device background for investigators'],
+    ['t_icf', 'Informed Consent & Ethics', 'Consent forms and ethics documentation'],
+    ['t_monitoring', 'Monitoring & Data Management', 'Monitoring and data-management plans'],
+  ]),
+  ms(3, 'submission', 'ms_dc_submit', 'Submit', 'IRB/ethics and agency', [
+    ['t_submit', 'Submit to IRB & Agency', 'IDE / performance-study application and IRB/ethics'],
+  ]),
+];
+
+/** Quality management system file (ISO 13485 / 21 CFR 820) — internal, no agency submit. */
+const QMS_TASKS: MilestoneDefinition[] = [
+  ms(1, 'establish', 'ms_qms_establish', 'Establish', 'Procedures and records', [
+    ['t_procedures', 'Procedures & Records Structure', 'Document and record control framework'],
+    ['t_design', 'Design Controls', 'Design & development control records (820.30)'],
+  ]),
+  ms(2, 'operate', 'ms_qms_operate', 'Operate', 'CAPA and production controls', [
+    ['t_capa', 'CAPA', 'Corrective and preventive action process'],
+    ['t_production', 'Production & Process Controls', 'Process validation and controls'],
+  ]),
+  ms(3, 'assurance', 'ms_qms_assure', 'Assurance', 'Review and audit (internal file)', [
+    ['t_mgmt_review', 'Management Review', 'Periodic management review'],
+    ['t_audit', 'Internal Audit', 'Internal audit and effectiveness checks'],
+  ]),
+];
+
+/** Device post-market surveillance & vigilance (MDR/recall/trend/FSCA/device PSUR/PMA annual). */
+const DEVICE_POSTMARKET_TASKS: MilestoneDefinition[] = [
+  ms(1, 'surveillance', 'ms_dpm_surv', 'Surveillance', 'PMS plan and complaints', [
+    ['t_pms', 'Post-Market Surveillance Plan', 'Proactive surveillance plan'],
+    ['t_complaints', 'Complaint Handling', 'Intake, triage, and investigation'],
+  ]),
+  ms(2, 'vigilance', 'ms_dpm_vig', 'Vigilance', 'Reporting and trend analysis', [
+    ['t_reporting', 'Adverse Event / MDR Reporting', 'Mandatory vigilance reporting'],
+    ['t_trend', 'Trend Analysis', 'Detect significant increases in events'],
+  ]),
+  ms(3, 'action', 'ms_dpm_action', 'Action & Report', 'Field action and periodic report', [
+    ['t_fsca', 'Field Safety Corrective Action', 'Corrections/removals where required'],
+    ['t_periodic', 'Periodic / Annual Report', 'PSUR (device) or PMA annual report'],
+  ]),
+];
+
+/** Device software lifecycle (IEC 62304 + cybersecurity + PCCP). */
+const DEVICE_SOFTWARE_TASKS: MilestoneDefinition[] = [
+  ms(1, 'planning', 'ms_dsw_plan', 'Planning & Requirements', 'Dev plan and SRS', [
+    ['t_plan', 'Software Development Plan', 'Lifecycle plan per IEC 62304 safety class'],
+    ['t_srs', 'Software Requirements', 'Specify software requirements'],
+  ]),
+  ms(2, 'build', 'ms_dsw_build', 'Design & Verification', 'Architecture and V&V', [
+    ['t_arch', 'Architecture & Detailed Design', 'Software architecture and unit design'],
+    ['t_vv', 'Verification & Testing', 'Unit, integration, and system testing'],
+  ]),
+  ms(3, 'security', 'ms_dsw_sec', 'Security & Change Control', 'Cybersecurity and PCCP', [
+    ['t_cyber', 'Cybersecurity (Threat Model, SBOM)', 'Threat modeling, SBOM, vulnerability assessment'],
+    ['t_pccp', 'Change Control / PCCP', 'Predetermined change control plan for AI/ML modifications'],
+  ]),
+];
+
+// Legacy alias — the generic drug plan, retained as the neutral fallback.
+const DEFAULT_DRUG_TASKS: MilestoneDefinition[] = DRUG_MARKETING_TASKS;
+
 const TASK_BLUEPRINTS: Record<string, TaskBlueprint> = {
-  us_ind_tasks: { id: 'us_ind_tasks', name: 'IND Task Blueprint', milestones: DEFAULT_DRUG_TASKS },
-  us_nda_tasks: { id: 'us_nda_tasks', name: 'NDA Task Blueprint', milestones: DEFAULT_DRUG_TASKS },
-  us_bla_tasks: { id: 'us_bla_tasks', name: 'BLA Task Blueprint', milestones: DEFAULT_DRUG_TASKS },
+  // Drug / cross-cutting families
+  drug_cta_tasks: { id: 'drug_cta_tasks', name: 'Clinical Trial Application Tasks', milestones: DRUG_CTA_TASKS },
+  drug_marketing_tasks: { id: 'drug_marketing_tasks', name: 'Marketing Authorisation Tasks', milestones: DRUG_MARKETING_TASKS },
+  generic_marketing_tasks: { id: 'generic_marketing_tasks', name: 'Generic Marketing Tasks', milestones: GENERIC_MARKETING_TASKS },
+  variation_supplement_tasks: { id: 'variation_supplement_tasks', name: 'Variation / Supplement Tasks', milestones: VARIATION_SUPPLEMENT_TASKS },
+  renewal_tasks: { id: 'renewal_tasks', name: 'Renewal Tasks', milestones: RENEWAL_TASKS },
+  master_file_tasks: { id: 'master_file_tasks', name: 'Master File Tasks', milestones: MASTER_FILE_TASKS },
+  pediatric_plan_tasks: { id: 'pediatric_plan_tasks', name: 'Pediatric Plan Tasks', milestones: PEDIATRIC_PLAN_TASKS },
+  designation_request_tasks: { id: 'designation_request_tasks', name: 'Designation Request Tasks', milestones: DESIGNATION_TASKS },
+  aggregate_safety_tasks: { id: 'aggregate_safety_tasks', name: 'Aggregate Safety / PV Tasks', milestones: AGGREGATE_SAFETY_TASKS },
+  meeting_briefing_tasks: { id: 'meeting_briefing_tasks', name: 'Meeting / Briefing Tasks', milestones: MEETING_BRIEFING_TASKS },
+  cmc_quality_tasks: { id: 'cmc_quality_tasks', name: 'CMC / Quality Tasks', milestones: CMC_QUALITY_TASKS },
+  clinical_document_tasks: { id: 'clinical_document_tasks', name: 'Clinical Document Tasks', milestones: CLINICAL_DOCUMENT_TASKS },
+  ctd_module_tasks: { id: 'ctd_module_tasks', name: 'CTD Module Tasks', milestones: CTD_MODULE_TASKS },
+  // Device / IVD families
+  device_submission_tasks: { id: 'device_submission_tasks', name: 'Device Market Submission Tasks', milestones: DEVICE_SUBMISSION_TASKS },
+  device_presub_tasks: { id: 'device_presub_tasks', name: 'Device Pre-Submission Tasks', milestones: DEVICE_PRESUB_TASKS },
+  device_clinical_tasks: { id: 'device_clinical_tasks', name: 'Device Clinical Investigation Tasks', milestones: DEVICE_CLINICAL_TASKS },
+  qms_tasks: { id: 'qms_tasks', name: 'Quality Management System Tasks', milestones: QMS_TASKS },
+  device_postmarket_tasks: { id: 'device_postmarket_tasks', name: 'Device Post-Market Tasks', milestones: DEVICE_POSTMARKET_TASKS },
+  device_software_tasks: { id: 'device_software_tasks', name: 'Device Software Lifecycle Tasks', milestones: DEVICE_SOFTWARE_TASKS },
+  // Back-compat keys used as explicit defaultTaskBlueprint on the core US drug entries
+  us_ind_tasks: { id: 'us_ind_tasks', name: 'IND Task Blueprint', milestones: DRUG_CTA_TASKS },
+  us_nda_tasks: { id: 'us_nda_tasks', name: 'NDA Task Blueprint', milestones: DRUG_MARKETING_TASKS },
+  us_bla_tasks: { id: 'us_bla_tasks', name: 'BLA Task Blueprint', milestones: DRUG_MARKETING_TASKS },
   default_tasks: { id: 'default_tasks', name: 'Standard Task Blueprint', milestones: DEFAULT_DRUG_TASKS },
 };
+
+/**
+ * Resolve which task blueprint a registry entry uses. An explicit, real
+ * defaultTaskBlueprint wins; otherwise the entry is resolved to a workflow
+ * family by (applicationFamily, segment, productClass). A drug CTA plan is
+ * wrong for an eSTAR device 510(k), an ISO 13485 QMS file, or an aggregate PV
+ * report — this keeps each family on its real rhythm instead of the generic
+ * drug-dossier plan. Shared by the runtime bootstrap and the coverage gate so
+ * they never diverge.
+ */
+export function resolveTaskBlueprintKey(entry: RegulatoryApplicationType): string {
+  const explicit = entry.defaultTaskBlueprint;
+  if (explicit && explicit in TASK_BLUEPRINTS && explicit !== 'default_tasks') return explicit;
+
+  const seg = entry.segment;
+  const isDevice = seg === 'medical_devices' || seg === 'diagnostics_ivd';
+  const fam = entry.applicationFamily;
+
+  switch (fam) {
+    case 'clinical_trial':
+      return isDevice ? 'device_clinical_tasks' : 'drug_cta_tasks';
+    case 'marketing_authorization':
+      if (isDevice) return 'device_submission_tasks';
+      return entry.productClass?.includes('generic') ? 'generic_marketing_tasks' : 'drug_marketing_tasks';
+    case 'pre_submission':
+      return isDevice ? 'device_presub_tasks' : 'meeting_briefing_tasks';
+    case 'post_market':
+      return isDevice ? 'device_postmarket_tasks' : 'aggregate_safety_tasks';
+    case 'supplement':
+      return isDevice ? 'device_submission_tasks' : 'variation_supplement_tasks';
+    case 'variation':
+      return 'variation_supplement_tasks';
+    case 'renewal':
+      return 'renewal_tasks';
+    case 'master_file':
+      return 'master_file_tasks';
+    case 'pediatric':
+      return 'pediatric_plan_tasks';
+    case 'orphan':
+    case 'designation':
+      return 'designation_request_tasks';
+    case 'safety_report':
+      return 'aggregate_safety_tasks';
+    case 'quality_cmc':
+      return 'cmc_quality_tasks';
+    case 'clinical_document':
+      return 'clinical_document_tasks';
+    case 'dossier_module':
+      return 'ctd_module_tasks';
+    case 'device_clearance':
+    case 'device_approval':
+    case 'companion_diagnostic':
+      return 'device_submission_tasks';
+    case 'quality_system':
+      return 'qms_tasks';
+    case 'software_documentation':
+      return 'device_software_tasks';
+    default:
+      return 'default_tasks';
+  }
+}
 
 // ─── Bootstrap Functions ──────────────────────────────────────────────────────
 
@@ -786,7 +1150,7 @@ export function getSectionBlueprintForEntry(entry: RegulatoryApplicationType): S
  * Get the task blueprint for a registry entry.
  */
 export function getTaskBlueprintForEntry(entry: RegulatoryApplicationType): TaskBlueprint {
-  return TASK_BLUEPRINTS[entry.defaultTaskBlueprint] || TASK_BLUEPRINTS.default_tasks;
+  return TASK_BLUEPRINTS[resolveTaskBlueprintKey(entry)] || TASK_BLUEPRINTS.default_tasks;
 }
 
 /**
