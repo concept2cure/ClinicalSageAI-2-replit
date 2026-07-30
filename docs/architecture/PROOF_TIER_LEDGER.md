@@ -5,17 +5,17 @@
 > `scripts/ci/check-proof-tier.mjs` refuses to let shrink. See
 > `docs/architecture/PROOF_HIERARCHY.md` for what each tier means.
 
-**68 proof files** across 5 inventoried categories.
+**69 proof files** across 5 inventoried categories.
 
 | Category | Tier(s) | Count |
 |---|---|--:|
-| `schema-contract` | tier 2 (schema contract) | 21 |
+| `schema-contract` | tier 2 (schema contract) | 22 |
 | `tenant-contract` | tiers 2-4 (contract / tenant isolation) | 11 |
 | `golden-journeys` | tiers 3-7 (DB → export reopen → external qualification) | 6 |
 | `export-contract` | tiers 6-7 (export reopen → external qualification) | 3 |
 | `e2e-browser` | tier 5 (browser workflow) | 27 |
 
-## `schema-contract` — tier 2 (schema contract) (21)
+## `schema-contract` — tier 2 (schema contract) (22)
 
 - `tests/schema-contract/artifacts-relkind.contract.test.ts`
 - `tests/schema-contract/authoring-auth-parity.contract.test.ts`
@@ -30,6 +30,7 @@
 - `tests/schema-contract/cmc-module3-tenant-arbiter.contract.test.ts`
 - `tests/schema-contract/deploy-migration-mechanism.contract.test.ts`
 - `tests/schema-contract/drop-draft-safety.contract.test.ts`
+- `tests/schema-contract/esig-audit-immutability.contract.test.ts`
 - `tests/schema-contract/esig-gate-columns.contract.test.ts`
 - `tests/schema-contract/governance-boundary-failopen.contract.test.ts`
 - `tests/schema-contract/governance-boundary-gates.contract.test.ts`

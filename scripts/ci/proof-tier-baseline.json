@@ -1,8 +1,8 @@
 {
   "$comment": "The proof-tier FLOOR: proof files whose loss would silently weaken a maturity claim (docs/architecture/PROOF_HIERARCHY.md). scripts/ci/check-proof-tier.mjs fails when a listed file disappears. Grow this file (add proofs); never shrink it by deleting proofs. Regenerate with: npm run ci:proof-tier:write-baseline.",
-  "generatedAt": "2026-07-30T02:15:03.130Z",
+  "generatedAt": "2026-07-30T02:19:35.062Z",
   "totals": {
-    "schema-contract": 21,
+    "schema-contract": 22,
     "tenant-contract": 11,
     "golden-journeys": 6,
     "export-contract": 3,
@@ -23,6 +23,7 @@
       "tests/schema-contract/cmc-module3-tenant-arbiter.contract.test.ts",
       "tests/schema-contract/deploy-migration-mechanism.contract.test.ts",
       "tests/schema-contract/drop-draft-safety.contract.test.ts",
+      "tests/schema-contract/esig-audit-immutability.contract.test.ts",
       "tests/schema-contract/esig-gate-columns.contract.test.ts",
       "tests/schema-contract/governance-boundary-failopen.contract.test.ts",
       "tests/schema-contract/governance-boundary-gates.contract.test.ts",
