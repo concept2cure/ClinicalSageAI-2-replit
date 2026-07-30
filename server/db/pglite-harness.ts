@@ -341,6 +341,27 @@ CREATE TABLE IF NOT EXISTS workflow_document_versions (
   organization_id INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS canonical_documents (
+  canonical_id        TEXT PRIMARY KEY,
+  organization_id     INTEGER NOT NULL,
+  project_id          TEXT,
+  title               TEXT NOT NULL,
+  document_type       TEXT NOT NULL,
+  version             INTEGER NOT NULL DEFAULT 1,
+  stage               TEXT NOT NULL DEFAULT 'authoring',
+  has_content         BOOLEAN NOT NULL DEFAULT false,
+  content_hash        TEXT NOT NULL DEFAULT '',
+  review_signature    JSONB,
+  approval_signature  JSONB,
+  placement           JSONB,
+  packaging_validated BOOLEAN NOT NULL DEFAULT false,
+  export_facet        JSONB,
+  source_refs         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  audit               JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS ctd_onboarding_documents (
   id              SERIAL PRIMARY KEY,
   organization_id INTEGER NOT NULL,

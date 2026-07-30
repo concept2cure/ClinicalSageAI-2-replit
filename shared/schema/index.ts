@@ -41,6 +41,7 @@ export { CSR_KNOWLEDGE_DB_TABLES, type CsrKnowledgeDbTableName } from './csr-kno
 export * from './regulatory-atoms';
 export * from './api-keys';
 export * from './ctd-projects';
+export * from './canonical_documents';
 
 // unified_workflow.ts: re-export everything EXCEPT names already in schema.ts
 // Conflicts: documentComments, insertDocumentVersionSchema, DocumentVersion, InsertDocumentVersion

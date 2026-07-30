@@ -39,6 +39,7 @@ import {
   type CanonicalVersionId,
   type DocumentSourceRef,
   type DocumentSourceSystem,
+  type ExportFacet,
 } from '../../../shared/regulatory/canonical-document';
 
 // ─── Projection: collapse the three identity systems into one ─────────────────
@@ -62,6 +63,8 @@ export interface ProjectionInput {
   approvalSignature?: ApprovalSignature;
   placement?: DossierPlacement;
   packagingValidated?: boolean;
+  /** Export representation (format + md5 + sha256), required once packaged. */
+  exportFacet?: ExportFacet;
   audit: DocumentAuditEvent[];
 }
 
@@ -98,6 +101,7 @@ export function projectCanonicalDocument(input: ProjectionInput): ProjectedDocum
     createdAt: input.createdAt,
     approval: input.approvalSignature,
     placement: input.placement,
+    export: input.exportFacet,
     audit: input.audit,
   };
 
