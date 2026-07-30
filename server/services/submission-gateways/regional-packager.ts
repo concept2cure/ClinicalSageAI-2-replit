@@ -64,6 +64,27 @@ import {
   type CrossReference,
 } from '../ectd/cross-reference-resolver';
 
+// Packager primitives, split into ./ectd-packager/* so the reusable pieces
+// (types, leaf-id, md5-index, path helpers) live apart from this ~600-line
+// orchestrator. This file stays the packager barrel: it imports them for its
+// own use AND re-exports the public ones below, so every caller keeps its
+// stable `../regional-packager` import path.
+import type {
+  EctdLeaf,
+  FdaApplicantContact,
+  FdaFormLeaf,
+  FdaRegionalAdmin,
+  LeafRef,
+  ChecksumEntry,
+} from './ectd-packager/types';
+import { leafIdSlug, createLeafIdAssigner } from './ectd-packager/leaf-id';
+import { buildMd5Index } from './ectd-packager/md5-index';
+import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
+
+// Re-export the public packager surface (barrel).
+export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
+export { leafIdSlug, createLeafIdAssigner, buildMd5Index, studyFolderSlug, commonDir };
+
 /**
  * Finalize a leaf's bytes to submission grade before they are written + hashed.
  * PDFs are run through the PDF/A-1b pipeline (a no-op when Ghostscript/veraPDF
@@ -85,80 +106,6 @@ async function finalizeLeafBytes(
   if (!result.converted) return { bytes: buf, isPdf: true, converted: false };
   const bytes = Buffer.from(result.pdfBytes);
   return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true };
-}
-
-/** One leaf in the eCTD index — corresponds to one file under one CTD section. */
-export interface EctdLeaf {
-  /** CTD section code, e.g. '1.1', '2.5', '3.2.S.1.1', '5.3.5.1'. */
-  ctdSection: string;
-  /** Operation per ICH M2: 'new' | 'append' | 'replace' | 'delete'. */
-  operation: 'new' | 'append' | 'replace' | 'delete';
-  /** Absolute path to the leaf file on disk. */
-  sourcePath: string;
-  /** Output filename inside the package (e.g. 'cover-letter.pdf'). */
-  fileName: string;
-  /** Display title for the leaf in the backbone. */
-  title: string;
-  /** Optional pre-computed checksum; computed if absent. */
-  md5?: string;
-  /**
-   * For a lifecycle operation (replace/delete/append), the package-relative
-   * path (+ optional `#leafId` fragment) of the prior leaf this one modifies.
-   * Emitted as the `modified-file` attribute. For grouped submissions the path
-   * must carry the application prefix + number (Module 1 Backbone Spec
-   * Addendum 1), e.g. `../../../../nda456789/0001/m1/us/us-regional.xml#id2`.
-   */
-  modifiedFile?: string;
-  /**
-   * Controlling study identifier for an M4/M5 study-report leaf. When set (with
-   * `stfFileTag`), the leaf is tagged into its study's Study Tagging File
-   * (`stf.xml`), which the packager generates + cross-links (FDA STF v2.6.1).
-   */
-  studyId?: string;
-  /**
-   * STF file-tag classifying the leaf within its study (e.g.
-   * 'study-report-body', 'protocol-or-amendment', 'sample-crf'). Required when
-   * `studyId` is set.
-   */
-  stfFileTag?: string;
-}
-
-/** One applicant contact rendered into the FDA us-regional admin block. */
-export interface FdaApplicantContact {
-  /** Contact role — resolved to `fdaactN` (regulatory/technical/us-agent). */
-  type: string;
-  name: string;
-  email?: string;
-  phone?: string;
-}
-
-/** One transmittal form rendered under `<submission-information>/<form>`. */
-export interface FdaFormLeaf {
-  /** Form type — resolved to `fdaftN` (e.g. '356h', '1571', '3674'). */
-  formType: string;
-  leaf: EctdLeaf;
-}
-
-/**
- * FDA us-regional admin metadata. When present, the FDA backbone emits the
- * spec-conformant `<admin>` block (applicant-contacts + application-set with
- * application-type / submission-type / submission-sub-type coded attributes +
- * transmittal form). When absent, sensible values are derived from the
- * top-level PackagerInput so existing callers keep working.
- */
-export interface FdaRegionalAdmin {
-  /** Application-type: `fdaatN` code or canonical string ('nda','ind',…). */
-  applicationType?: string;
-  /** Submission-type: `fdastN` code or canonical ('original application',…). */
-  submissionType?: string;
-  /** Submission-sub-type: `fdasstN` code or canonical ('original','amendment'). */
-  submissionSubType?: string;
-  /** submission-id value (defaults to the sequence number). */
-  submissionId?: string;
-  /** Applicant contacts (regulatory/technical/US agent). */
-  contacts?: FdaApplicantContact[];
-  /** Transmittal forms (356h/1571/…) nested under `<form>`. */
-  forms?: FdaFormLeaf[];
 }
 
 export interface PackagerInput {
@@ -199,26 +146,7 @@ export interface PackagerInput {
   crossReferences?: CrossReference[];
 }
 
-/** Compute MD5 of a file on disk. */
-async function md5File(filePath: string): Promise<string> {
-  const buf = await fs.readFile(filePath);
-  return createHash('md5').update(buf).digest('hex');
-}
-
 /* ─── Region-specific backbone builders ───────────────────────────── */
-
-function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
-
-/** A leaf's finalized reference data: backbone-relative href + shipped-bytes MD5. */
-interface LeafRef {
-  /** href RELATIVE to the backbone that references it (regional backbone or index.xml). */
-  href: string;
-  /** MD5 of the bytes actually written for this leaf. */
-  md5: string;
-}
 
 /**
  * Build one `<leaf>` element with the full ICH attribute set: operation,
@@ -231,59 +159,6 @@ function leafElement(leaf: EctdLeaf, id: string, ref: LeafRef): string {
   return `<leaf operation="${leaf.operation}"${modified} checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="${escapeXml(id)}">
   <title>${escapeXml(leaf.title)}</title>
 </leaf>`;
-}
-
-/** A folder-safe slug for a study id (lowercase, non-alnum → '-'). */
-export function studyFolderSlug(studyId: string): string {
-  return studyId.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'study';
-}
-
-/** Longest common directory prefix of package-relative POSIX paths (no filename). */
-export function commonDir(paths: string[]): string {
-  if (paths.length === 0) return '';
-  const split = paths.map((p) => p.split('/').slice(0, -1)); // drop the filename
-  const first = split[0];
-  let n = first.length;
-  for (const seg of split) {
-    let i = 0;
-    while (i < n && i < seg.length && seg[i] === first[i]) i += 1;
-    n = i;
-  }
-  return first.slice(0, n).join('/');
-}
-
-/** A valid XML ID fragment from a filename: drop extension, non-alnum → '-'. */
-export function leafIdSlug(fileName: string): string {
-  return (
-    fileName
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^a-zA-Z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .toLowerCase() || 'file'
-  );
-}
-
-/**
- * Create a leaf-ID assigner scoped to a single backbone document.
- *
- * eCTD leaf IDs are XML ID-typed and must be unique within their document. The
- * CTD section alone is NOT unique — a section commonly holds several leaves
- * (e.g. multiple study reports in 5.3.5.1, multiple stability batches), and
- * `leaf-5-3-5-1` for all of them is invalid XML. Each ID is therefore based on
- * the section plus a filename slug, with a deterministic numeric suffix on the
- * (rare) remaining collision. One assigner per document, so IDs are unique
- * within — but may repeat across — separate backbones.
- */
-export function createLeafIdAssigner(): (leaf: EctdLeaf) => string {
-  const used = new Set<string>();
-  return (leaf: EctdLeaf): string => {
-    const base = `leaf-${leaf.ctdSection.replace(/\./g, '-')}-${leafIdSlug(leaf.fileName)}`;
-    let id = base;
-    let n = 2;
-    while (used.has(id)) id = `${base}-${n++}`;
-    used.add(id);
-    return id;
-  };
 }
 
 /** Render the FDA applicant-contacts block from the admin metadata. */
@@ -518,20 +393,6 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: Ect
            dtd-version="3.2">
 ${moduleBlocks}
 </ectd:ectd>`;
-}
-
-/* ─── index-md5.txt (one MD5 per file, sorted) ────────────────────── */
-
-interface ChecksumEntry { relPath: string; md5: string; }
-export function buildMd5Index(entries: ChecksumEntry[]): string {
-  return entries
-    .slice()
-    // Codepoint order, not localeCompare: the manifest must be byte-identical
-    // across environments (the checksum contract), and locale collation is
-    // locale/ICU-dependent.
-    .sort((a, b) => (a.relPath < b.relPath ? -1 : a.relPath > b.relPath ? 1 : 0))
-    .map((e) => `${e.md5}  ${e.relPath}`)
-    .join('\n');
 }
 
 /* ─── Top-level packager ──────────────────────────────────────────── */
