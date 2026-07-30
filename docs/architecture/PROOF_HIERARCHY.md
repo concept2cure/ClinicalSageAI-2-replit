@@ -75,6 +75,21 @@ Point new work at these when you need a worked example of a rung:
   `ON CONFLICT`).
 - **Tier 4** — `tests/schema-contract/cmc-module3-tenant-arbiter.contract.test.ts`
   (one tenant cannot rewrite another's canonical CMC input).
+- **Tier 5 (browser workflow)** — `tests/e2e/authenticated-app-smoke.e2e.spec.ts`
+  (helper: `tests/e2e/dev-auth-helper.ts`; recipe: `npm run test:e2e:smoke`).
+  A real Chromium boots the real SPA carrying a **real** auth session — minted by
+  the same flow the client uses (`POST /api/auth/dev-login` → `GET /api/v1/auth/session`
+  → the four `trialsage_*` storage keys), not mocked network responses — passes
+  `ProtectedRoute`, and renders authenticated-only surfaces served by the live
+  server (the landing greeting `<h1>` and the Projects `<h1>`). A **negative
+  control** navigates the same protected route with *no* session and asserts the
+  guard bounces it to `/login`, pinning the positive test's meaning: it can only
+  pass because an authenticated user was let through, not because the route is
+  public. The boot-and-run recipe (`scripts/run-e2e-smoke.mjs`) seeds the login
+  user, boots the server with dev-auth enabled, and drives the spec — one command,
+  cold-start tolerant. This is the pattern to copy for a fixture-independent
+  browser proof; author new per-workflow specs (510(k) intake, submission
+  assembly) the same way rather than depending on a seeded demo project.
 - **Tiers 3 → 4 → 6 → 7 fused (eCTD)** —
   `tests/golden-journeys/submission-export-validation.journey.test.ts`.
   It assembles a **real** eCTD package from the canonical core over PGlite,
@@ -123,10 +138,22 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
   golden-journey suites apply real migrations from disk and run **blocking** in
   CI. Known limitation (audit §8.2): they prove migrations *internally
   consistent*, not the migration set *complete*.
-- **Tier 5 (browser) exists but is not a per-PR gate.** 30 Playwright specs live
-  in `tests/e2e/`; `ci.yml` does not run them (audit §8.5) — a broken login can
-  merge green. Treat Tier-5 claims as unverified on any given PR until this is
-  gated.
+- **Tier 5 (browser) now has a fixture-independent, reproducible proof, but
+  execution is not yet a per-PR gate.** Most of the ~30 Playwright specs in
+  `tests/e2e/` depend on a seeded demo project (e.g. `510k-founder-path` needs
+  the `demo-510k` beta fixture) and had no login step, so they proved nothing when
+  that fixture was absent. `authenticated-app-smoke.e2e.spec.ts` (above) removes
+  both dependencies: it authenticates via the real dev-login flow and asserts on
+  stable authenticated surfaces, with a negative control proving the guard bites.
+  `npm run test:e2e:smoke` runs it green from a cold boot against a provisioned DB.
+  The proof-tier gate floor-guards its **existence** (deleting it fails CI), and
+  building the smoke surfaced and fixed a real dev bug — the loopback-origin
+  blank-page (127.0.0.1 was missing from the dev CORS/CSRF allowlist;
+  `server/middleware/__tests__/enterprise-security-dev-origins.test.ts`). Honest
+  limitation (audit §8.5): `ci.yml` still does not *execute* the browser tier per
+  PR — that needs a provisioned DB + Playwright browsers in CI — so a broken login
+  can still merge green until execution is wired. Treat Tier-5 *execution* claims
+  as verified only where the smoke has been run.
 - **Tier 6 (export reopen)** was the thinnest rung: exporters were asserted on
   their in-memory output, and the external-validator tests ran against
   hand-authored fixture directories rather than a real emitted package. It is now
