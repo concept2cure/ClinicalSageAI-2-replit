@@ -322,3 +322,69 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
 
   return { programs: validationPrograms, rules, summary, loading, error };
 }
+
+/* ─── Unified work (all three tracking systems) ───────────────────────── */
+
+/**
+ * useUnifiedWork — GET /api/submission-ops/unified-work
+ *
+ * The Workbench's task board reads /workload, which is `c2c_project_work_items`
+ * ALONE. That is why a schedule-of-events milestone slip or an agency hold on a
+ * filing never appears beside a review blocker, despite the page promising
+ * "everything assigned across the portfolio".
+ *
+ * This exposes the unified view across all three systems so a surface can show
+ * what the board is missing. Read-only; the board's own data path is untouched.
+ */
+export interface UnifiedWorkItemView {
+  id: string;
+  source: 'schedule' | 'review' | 'correspondence' | 'filing';
+  title: string;
+  status: 'open' | 'in_progress' | 'blocked' | 'done';
+  priority: string | null;
+  dueAt: string | null;
+  blocking: boolean;
+  detail: string | null;
+}
+
+export interface UnifiedWorkSummaryView {
+  total: number;
+  blocking: number;
+  open: number;
+  inProgress: number;
+  done: number;
+  bySource: Record<'schedule' | 'review' | 'correspondence' | 'filing', number>;
+}
+
+export interface UseUnifiedWorkResult {
+  items: UnifiedWorkItemView[] | null;
+  summary: UnifiedWorkSummaryView | null;
+  loading: boolean;
+  error: string | null;
+}
+
+/**
+ * Pure: how many outstanding items the task board cannot show, because they come
+ * from a system it does not read. Exported for unit testing.
+ */
+export function workNotOnTheBoard(summary: UnifiedWorkSummaryView | null): number {
+  if (!summary) return 0;
+  return summary.bySource.schedule + summary.bySource.filing;
+}
+
+export function useUnifiedWork(projectId?: number): UseUnifiedWorkResult {
+  const url =
+    typeof projectId === 'number' && Number.isInteger(projectId) && projectId > 0
+      ? `/api/submission-ops/unified-work?projectId=${projectId}`
+      : '/api/submission-ops/unified-work';
+  const { data, loading, error } = useFetchJson<{
+    items: UnifiedWorkItemView[];
+    summary: UnifiedWorkSummaryView;
+  }>(url);
+  return {
+    items: data?.items ?? null,
+    summary: data?.summary ?? null,
+    loading,
+    error,
+  };
+}
