@@ -568,6 +568,17 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // ICH pharmacovigilance
   ich_signal_sections: { id: 'ich_signal_sections', name: 'Signal Management Report (ICH E2E / GVP IX)', sections: SIGNAL_SECTIONS },
 
+  // Remaining drug CMC / marketing lifecycle
+  us_supac_sections: { id: 'us_supac_sections', name: 'Scale-Up & Post-Approval Changes (SUPAC)', sections: VARIATION_SECTIONS },
+  au_cat2_sections: { id: 'au_cat2_sections', name: 'Australia Category 2 Registration (abridged)', sections: CTD_SECTIONS },
+
+  // CTD module authoring surfaces (ICH M4) — the per-module section structure
+  ich_ctd_m1_sections: { id: 'ich_ctd_m1_sections', name: 'CTD Module 1 — Regional/Administrative', sections: CTD_SECTIONS.filter(s => s.module === 1) },
+  ich_ctd_m2_sections: { id: 'ich_ctd_m2_sections', name: 'CTD Module 2 — Summaries', sections: CTD_SECTIONS.filter(s => s.module === 2) },
+  ich_ctd_m3_sections: { id: 'ich_ctd_m3_sections', name: 'CTD Module 3 — Quality (CMC)', sections: CTD_SECTIONS.filter(s => s.module === 3) },
+  ich_ctd_m4_sections: { id: 'ich_ctd_m4_sections', name: 'CTD Module 4 — Nonclinical', sections: CTD_SECTIONS.filter(s => s.module === 4) },
+  ich_ctd_m5_sections: { id: 'ich_ctd_m5_sections', name: 'CTD Module 5 — Clinical', sections: CTD_SECTIONS.filter(s => s.module === 5) },
+
   // Default fallback
   default_sections: { id: 'default_sections', name: 'Standard CTD Sections', sections: CTD_SECTIONS },
 };

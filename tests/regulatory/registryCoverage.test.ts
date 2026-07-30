@@ -98,6 +98,9 @@ describe('Registry coverage', () => {
       // US post-approval lifecycle / safety / environmental; UK + China lifecycle; ICH signal.
       'US_PMR', 'US_MEDWATCH', 'US_EA', 'US_EUA',
       'UK_IRP', 'UK_VARIATION', 'CN_RENEWAL', 'ICH_SIGNAL',
+      // Remaining drug CMC/marketing lifecycle + the five CTD module authoring surfaces.
+      'US_SUPAC', 'AU_CAT2',
+      'ICH_CTD_M1', 'ICH_CTD_M2', 'ICH_CTD_M3', 'ICH_CTD_M4', 'ICH_CTD_M5',
     ] as const;
 
     it.each(NOW_BUILDABLE)('%s has a real (non-generic) section blueprint', (id) => {
