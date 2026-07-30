@@ -154,6 +154,7 @@
     "ci:report-branch-drift": "node scripts/ci/report-branch-drift.mjs",
     "audit:last-20-prs:plan:strict": "node scripts/audits/execute-last-pr-audit-build-plan.mjs --limit 20 --strict",
     "test:ops-audits": "node --test tests/ops/*.test.mjs",
+    "submission:preflight": "node scripts/ops/submission-preflight.mjs",
     "audit:prune-artifacts": "node scripts/audits/prune-generated-audit-artifacts.mjs --retain-days 14",
     "audit:dead-code": "node scripts/ci/check-unreferenced-modules.mjs --json",
     "audit:bundle": "ANALYZE=true vite build",
