@@ -6,11 +6,14 @@
  *
  * Port basis: design-system/ui_kits/pdev/Evidence.jsx.
  *
- * The kit's POOL fixture is replaced with a live search against an
- * evidence-objects endpoint. Per CLAUDE.md "Seed data fixtures must not
- * land in v2": the local POOL is gone. If the search endpoint isn't
- * wired yet, the picker shows an empty-state directing the user to
- * upload an evidence object first.
+ * The kit's POOL fixture is gone (per CLAUDE.md "Seed data fixtures must
+ * not land in v2"): this searches live against GET /api/evidence-objects,
+ * which reads the REAL, canonical `evidence_objects` graph — the same
+ * org-scoped store the attach POST resolves against. No fixture, no
+ * fallback rows: the picker renders real rows or an honest empty state
+ * only. If the store is unprovisioned the endpoint returns an empty
+ * envelope (or 404 before mount), and the picker shows its empty-state
+ * directing the user to upload an evidence object first.
  */
 
 import * as React from 'react';

@@ -1,3 +1,13 @@
+-- DEPRECATED (2026-08): superseded by the REAL, canonical `evidence_objects`
+-- graph table (shared/schema/programs.ts — uuid PK, org-scoped, read by 10+ live
+-- services and the pdev evidence attach path). GET /api/evidence-objects
+-- (server/routes/evidence-objects.routes.ts) now reads that real store directly,
+-- and scripts/seed/ga-demo.d/90-evidence-objects.mjs seeds the demo evidence into
+-- it as primary — see docs/architecture/C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md.
+-- This blob is retained (non-destructive) but is no longer written by the demo
+-- seed nor read by any route. A later migration may DROP it once no environment
+-- references it.
+--
 -- PDEV evidence-object library — the searchable pool the Evidence Picker's
 -- `GET /api/evidence-objects` reads to populate its result list. Org-scoped,
 -- FK-free, non-destructive. Schema only — demo rows are seeded by
