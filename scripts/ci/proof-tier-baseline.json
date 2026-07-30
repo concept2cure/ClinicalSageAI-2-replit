@@ -1,11 +1,11 @@
 {
   "$comment": "The proof-tier FLOOR: proof files whose loss would silently weaken a maturity claim (docs/architecture/PROOF_HIERARCHY.md). scripts/ci/check-proof-tier.mjs fails when a listed file disappears. Grow this file (add proofs); never shrink it by deleting proofs. Regenerate with: npm run ci:proof-tier:write-baseline.",
-  "generatedAt": "2026-07-30T12:35:29.012Z",
+  "generatedAt": "2026-07-30T14:07:27.188Z",
   "totals": {
     "schema-contract": 25,
     "tenant-contract": 11,
     "golden-journeys": 6,
-    "export-contract": 3,
+    "export-contract": 7,
     "e2e-browser": 28
   },
   "inventory": {
@@ -58,9 +58,13 @@
       "tests/golden-journeys/submission-release-signature.journey.test.ts"
     ],
     "export-contract": [
+      "tests/export-contract/csv-export.proof.test.ts",
       "tests/export-contract/docx-export.proof.test.ts",
+      "tests/export-contract/html-export.proof.test.ts",
+      "tests/export-contract/json-export.proof.test.ts",
       "tests/export-contract/pdf-export.proof.test.ts",
-      "tests/export-contract/xlsx-export.proof.test.ts"
+      "tests/export-contract/xlsx-export.proof.test.ts",
+      "tests/export-contract/zip-export.proof.test.ts"
     ],
     "e2e-browser": [
       "tests/e2e/510k-founder-path.e2e.spec.ts",

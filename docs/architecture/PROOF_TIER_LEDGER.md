@@ -5,14 +5,14 @@
 > `scripts/ci/check-proof-tier.mjs` refuses to let shrink. See
 > `docs/architecture/PROOF_HIERARCHY.md` for what each tier means.
 
-**73 proof files** across 5 inventoried categories.
+**77 proof files** across 5 inventoried categories.
 
 | Category | Tier(s) | Count |
 |---|---|--:|
 | `schema-contract` | tier 2 (schema contract) | 25 |
 | `tenant-contract` | tiers 2-4 (contract / tenant isolation) | 11 |
 | `golden-journeys` | tiers 3-7 (DB → export reopen → external qualification) | 6 |
-| `export-contract` | tiers 6-7 (export reopen → external qualification) | 3 |
+| `export-contract` | tiers 6-7 (export reopen → external qualification) | 7 |
 | `e2e-browser` | tier 5 (browser workflow) | 28 |
 
 ## `schema-contract` — tier 2 (schema contract) (25)
@@ -66,11 +66,15 @@
 - `tests/golden-journeys/submission-export-validation.journey.test.ts`
 - `tests/golden-journeys/submission-release-signature.journey.test.ts`
 
-## `export-contract` — tiers 6-7 (export reopen → external qualification) (3)
+## `export-contract` — tiers 6-7 (export reopen → external qualification) (7)
 
+- `tests/export-contract/csv-export.proof.test.ts`
 - `tests/export-contract/docx-export.proof.test.ts`
+- `tests/export-contract/html-export.proof.test.ts`
+- `tests/export-contract/json-export.proof.test.ts`
 - `tests/export-contract/pdf-export.proof.test.ts`
 - `tests/export-contract/xlsx-export.proof.test.ts`
+- `tests/export-contract/zip-export.proof.test.ts`
 
 ## `e2e-browser` — tier 5 (browser workflow) (28)
 
