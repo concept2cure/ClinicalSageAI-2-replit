@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-30T00:52:28.559Z",
+  "generatedAt": "2026-07-30T01:23:08.081Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 232,
+  "totalMigrations": 233,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -14,7 +14,7 @@
           "007_gcc_heatmap_views.sql",
           "007_gcc_shadow_run_groups.sql"
         ],
-        "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
+        "resolution": "Execute in alphabetical order: verify \u2192 heatmap \u2192 shadow"
       },
       {
         "prefix": "008",
@@ -553,6 +553,7 @@
     "20260725_authoring_audit_trail.sql",
     "20260725_ectd_compilations_project_level.sql",
     "20260725_project_sections_content_columns.sql",
+    "20260725_submission_orchestrator_store_port.sql",
     "20260725_esig_gate_columns_port.sql",
     "20260725_authoring_signatures_and_workflow.sql",
     "20260725_authoring_signature_freeze_binding.sql",
@@ -566,8 +567,8 @@
     "20260728_artifacts_table.sql",
     "20260728_schedule_of_events_org_scoped_uniqueness.sql",
     "20260730_fix_atom_embedding_dimension.sql",
-    "20260725_submission_orchestrator_store_port.sql",
-    "20260725_users_signing_lockout_columns.sql"
+    "20260725_users_signing_lockout_columns.sql",
+    "20260730_esign_audit_db_level_immutability.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

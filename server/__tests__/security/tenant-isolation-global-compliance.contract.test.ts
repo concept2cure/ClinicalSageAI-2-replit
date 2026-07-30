@@ -40,7 +40,7 @@ vi.mock('../../db', () => ({
 }));
 
 const token = (orgId: number, role = 'user') =>
-  jwt.sign({ userId: 1, organizationId: orgId, role }, process.env.JWT_SECRET as string, {
+  jwt.sign({ userId: 1, organizationId: orgId, role, type: 'access' }, process.env.JWT_SECRET as string, {
     algorithm: 'HS256',
   });
 

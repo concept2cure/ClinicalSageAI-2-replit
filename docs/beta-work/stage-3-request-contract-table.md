@@ -12,7 +12,7 @@ Branch / commit reviewed: `cursor/critical-files-management-f38a` @ `cfcf6882` (
 | JWT payload requirements | Requires `userId` + `organizationId` | Accepts `userId/id/sub`; `organizationId/orgId` optional in payload shape | Requires `organizationId` present after verify (403 if missing) |
 | DB membership check | **Yes** (`organizationUsers`) for role resolution | No | No |
 | Role assignment | DB-derived role, fallback `'viewer'` | JWT role/roles only | JWT roles only |
-| `req` fields populated | `req.db`, `req.userId`, `req.userRole`, `req.userEmail`, `req.tenantId`, `req.user`, `req.tenantContext` | `req.user` only | `req.user` + `req.organizationId` |
+| `req` fields populated | `req.identity` (canonical), `req.userId`, `req.userRole`, `req.userEmail`, `req.tenantId`, `req.user`, `req.tenantContext` — `req.db` removed 2026-07-30 (global-DB side channel) | `req.user` only | `req.user` + `req.organizationId` |
 | Error envelope | `{ error: string }` | `{ error: { code, message } }` | `{ status: 'error', message }` |
 | Role middleware | `requireAdminRole` / `requireSuperAdminRole` | `requireRole(...allowedRoles)` variadic | `requireRole(requiredRole)` single-role |
 | Permission model | None in this file | Flat list model (`resource:action`, `resource:*`, `*`) | Nested object model (`permissions[resource]`) |

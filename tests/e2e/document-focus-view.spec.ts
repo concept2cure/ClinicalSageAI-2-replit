@@ -28,6 +28,7 @@ function mintToken(): string {
       email: 'jm.smith@concept2cure.pro',
       organizationId: '2',
       organizationUuid: null,
+      type: 'access',
     },
     JWT_SECRET,
     { expiresIn: '1h' }

@@ -229,6 +229,32 @@ export const C2C_MIGRATION_FILES = [
   // search silently failed. Self-guarding: creates-or-reconciles, and only needs
   // lumen_data_atoms (present via the drizzle baseline the preflight verifies).
   'db/migrations/20260730_fix_atom_embedding_dimension.sql',
+  // ── Part 11 e-signature path (added 2026-07-30, auth/e-sig audit) ─────────
+  // The C-17/C-19/C-20 repair (commit 26712c1) ported the orchestrator store,
+  // the e-sig gate columns, and the users signing/lockout columns into
+  // db/migrations/ and journaled them in migrations_manifest.json — but the
+  // manifest is ordering metadata that nothing consumes, and none of the three
+  // was added HERE, the only durable apply path. So the entire e-signature
+  // release gate remained push-provisioned-only on every existing database:
+  // getRun() still hit a missing relation (404 "run not found"), and
+  // verifyUserCredentials still threw on users.locked_until (every signature
+  // "invalid credentials"). Exactly the merged ≠ applied failure mode the
+  // repair diagnosed — one apply-path short of closed.
+  //
+  // ORDER MATTERS: the store port creates submission_orchestrator_runs, which
+  // the e-sig port ALTERs (status CHECK widening). All three are idempotent
+  // (CREATE/ALTER IF NOT EXISTS, DROP CONSTRAINT IF EXISTS + re-ADD,
+  // ON CONFLICT DO NOTHING) and the first two are self-transacting.
+  'db/migrations/20260725_submission_orchestrator_store_port.sql',
+  'db/migrations/20260725_esig_gate_columns_port.sql',
+  'db/migrations/20260725_users_signing_lockout_columns.sql',
+  // DB-level immutability for electronic_signatures + device_audit_trail:
+  // DELETE always refused; UPDATE refused except the write-once supersession
+  // transition (superseded_by NULL → id). MUST follow the e-sig port above —
+  // the trigger reads superseded_by, which that port adds. Idempotent
+  // (CREATE OR REPLACE FUNCTION + conditional CREATE TRIGGER, to_regclass
+  // guarded). See docs/compliance/part11-immutability-record-class-policy.md.
+  'db/migrations/20260730_esign_audit_db_level_immutability.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
