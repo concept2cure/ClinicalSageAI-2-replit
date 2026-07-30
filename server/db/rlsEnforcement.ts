@@ -77,9 +77,24 @@ export function assertRlsEnforcementForProduction(
 ): RlsEnforcementMode {
   const mode = readEnforcementMode(env);
   const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
-  if (!isProduction || mode === 'on') return mode;
+  if (!isProduction) return mode;
 
   const raw = (env.RLS_ENFORCE ?? '').trim();
+  if (raw.toLowerCase() === 'on') return 'on';
+
+  if (mode === 'on') {
+    // A truthy alias (enforce/true/1) resolves to `on` for developer
+    // convenience OUTSIDE production, but the production kill-switch demands
+    // the canonical literal so an audit of the deployed environment is
+    // unambiguous — `grep RLS_ENFORCE=on` must be the whole check. (The
+    // authorities-consolidation refactor briefly accepted aliases here,
+    // silently weakening the boot contract this module's tests pin.)
+    throw new Error(
+      `[rls-enforcement] REFUSING TO BOOT: RLS_ENFORCE is set to "${raw}" in production. ` +
+        'Aliases are not accepted for the production kill-switch. Set RLS_ENFORCE=on (canonical form).'
+    );
+  }
+
   const configured = raw === '' ? 'not set' : `set to "${raw}"`;
   throw new Error(
     `[rls-enforcement] FAIL-CLOSED: REFUSING TO BOOT because RLS_ENFORCE is ${configured} ` +

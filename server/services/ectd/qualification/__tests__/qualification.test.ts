@@ -12,13 +12,23 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { runQualification, qualifyV3, qualifyV4 } from '../index';
+import { isXmllintAvailable } from '../../xml-validator';
 import type { Region } from '../../../submission-gateways/types';
+
+// The v3 + full-suite qualifications assert the REAL xmllint well-formed
+// validators passed — without the binary they report ran:false/valid:false and
+// every assertion here fails for a reason that has nothing to do with the
+// packages. Skip visibly instead (repo convention for environment-gated
+// suites). CI installs libxml2-utils in the Test job so the conformance
+// evidence genuinely runs there; a skip in CI would mean that install
+// regressed.
+const XMLLINT = await isXmllintAvailable();
 
 async function tmp(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), 'ectd-qual-test-'));
 }
 
-describe('eCTD v3.2.2 qualification', () => {
+describe.skipIf(!XMLLINT)('eCTD v3.2.2 qualification', () => {
   it('generates a well-formed, checksum-verified FDA package with a working lifecycle', async () => {
     const work = await tmp();
     try {
@@ -78,7 +88,7 @@ describe('eCTD v4.0 qualification', () => {
   }, 30000);
 });
 
-describe('runQualification (full suite, preserved reports)', () => {
+describe.skipIf(!XMLLINT)('runQualification (full suite, preserved reports)', () => {
   it('runs FDA v3 + v4 and writes reports with exact spec versions', async () => {
     const work = await tmp();
     const reportDir = path.join(work, 'reports');
