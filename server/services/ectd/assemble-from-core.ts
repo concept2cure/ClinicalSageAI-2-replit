@@ -63,6 +63,13 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
    * incomplete package is VISIBLE, never silently dropped.
    */
   unresolvedLeaves: UnresolvedLeaf[];
+  /**
+   * Path to the SHA-256 governance manifest (per-leaf md5+sha256 + package
+   * sha256), written OUTSIDE the eCTD backbone. The regulatory index.xml/md5.txt
+   * remain md5-only for agency compatibility; this file is the modern-hash
+   * integrity record for package governance/audit.
+   */
+  governanceManifestPath: string;
 }
 
 /**
@@ -132,13 +139,33 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     });
   }
 
+  // Governance integrity manifest: per-leaf SHA-256 (alongside the eCTD-required
+  // md5) plus the package-level SHA-256, written OUTSIDE the regulatory backbone.
+  // index.xml / md5.txt keep md5 for agency compatibility; this file carries the
+  // modern hash for package governance and audit.
+  const governanceManifestPath = path.join(outputDir, 'package-governance.sha256.json');
+  await fs.writeFile(
+    governanceManifestPath,
+    JSON.stringify(
+      {
+        sequenceId,
+        organizationId,
+        hashPolicy: 'md5 = eCTD index (agency requirement); sha256 = package governance (this file)',
+        packageSha256: result.bundle.sha256,
+        leaves: [...byKey.values()].map((f) => ({ fileName: f.fileName, md5: f.md5, sha256: f.sha256 })),
+      },
+      null,
+      2,
+    ),
+  );
+
   await auditService.logAction({
     organizationId,
     userId,
     action: 'ECTD_ASSEMBLED',
     resourceType: 'ectd_sequence',
     resourceId: sequenceId,
-    details: { materialized, skipped: result.skipped.length, unresolved: unresolvedLeaves.length, outputDir },
+    details: { materialized, skipped: result.skipped.length, unresolved: unresolvedLeaves.length, outputDir, packageSha256: result.bundle.sha256 },
   });
   logger.info('Assembled sequence from core', {
     sequenceId,
@@ -162,7 +189,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   };
 
   assembleReturned = true;
-  return { ...result, cleanup, materialized, unresolvedLeaves };
+  return { ...result, cleanup, materialized, unresolvedLeaves, governanceManifestPath };
   } finally {
     if (!assembleReturned) {
       await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});

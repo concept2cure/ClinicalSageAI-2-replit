@@ -152,7 +152,14 @@ export class ModuleIntegrationService {
     const docsResult = await this.db
       .select()
       .from(unifiedDocuments)
-      .where(inArray(unifiedDocuments.id, documentIds));
+      .where(
+        and(
+          inArray(unifiedDocuments.id, documentIds),
+          // Defense-in-depth: repeat the tenant predicate even though the ids
+          // came from org-scoped rows, so no query trusts an id list alone.
+          eq(unifiedDocuments.organizationId, organizationId)
+        )
+      );
 
     // Join the results
     return docsResult.map((doc: any) => {
@@ -192,13 +199,25 @@ export class ModuleIntegrationService {
     const documents = await this.db
       .select()
       .from(unifiedDocuments)
-      .where(inArray(unifiedDocuments.id, documentIds));
+      .where(
+        and(
+          inArray(unifiedDocuments.id, documentIds),
+          // Defense-in-depth: repeat the tenant predicate even though the ids
+          // came from org-scoped rows, so no query trusts an id list alone.
+          eq(unifiedDocuments.organizationId, organizationId)
+        )
+      );
 
     // Join with module documents
     const moduleDocsResult = await this.db
       .select()
       .from(moduleDocuments)
-      .where(inArray(moduleDocuments.unifiedDocumentId, documentIds));
+      .where(
+        and(
+          inArray(moduleDocuments.unifiedDocumentId, documentIds),
+          eq(moduleDocuments.organizationId, organizationId)
+        )
+      );
 
     // Get current approvals for each workflow
     const workflowsWithApprovals = await Promise.all(

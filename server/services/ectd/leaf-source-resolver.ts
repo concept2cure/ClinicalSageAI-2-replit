@@ -169,7 +169,12 @@ export async function materializeLeafSources(
     const fileName = `${safeName(baseName)}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
     const sourcePath = path.join(stageDir, fileName);
     await fs.writeFile(sourcePath, pdfBytes);
-    byKey.set(key, { fileName, sourcePath, md5: createHash('md5').update(pdfBytes).digest('hex') });
+    byKey.set(key, {
+      fileName,
+      sourcePath,
+      md5: createHash('md5').update(pdfBytes).digest('hex'),
+      sha256: createHash('sha256').update(pdfBytes).digest('hex'),
+    });
     materialized++;
   };
 
@@ -270,7 +275,12 @@ export async function materializeLeafSources(
       const fileName = `${safeName(doc.fileName || 'onboarding')}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
       const sourcePath = path.join(stageDir, fileName);
       await fs.writeFile(sourcePath, buf);
-      byKey.set(key, { fileName, sourcePath, md5: createHash('md5').update(buf).digest('hex') });
+      byKey.set(key, {
+        fileName,
+        sourcePath,
+        md5: createHash('md5').update(buf).digest('hex'),
+        sha256: createHash('sha256').update(buf).digest('hex'),
+      });
       materialized++;
       continue;
     }
