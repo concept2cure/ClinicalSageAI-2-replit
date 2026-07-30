@@ -4,7 +4,13 @@
  * GET /api/nda-cockpit/modules → the org's per-module (M1–M5) completeness
  * roll-up, shaped to exactly the keys the v2 NdaCockpit "CTD readiness" panel
  * renders ({ m, label, pct, docs, open, gate }). The panel derives the overall
- * "% ready" from these rows.
+ * "% ready" from these rows. This read is CONVERGED onto the REAL, org-scoped
+ * eCTD submission core (submissions where application_type IN ('nda','bla') +
+ * ectd_sequences + submission_leaves + coauthor_documents) — the same store the
+ * IND checklist converged onto — assembled by nda-modules-view-assembler. There
+ * is no seed-only blob and no fallback: an org with no NDA/BLA submission returns
+ * an empty list (meta.source = 'submissions') and the surface renders its honest
+ * empty state.
  *
  * GET  /api/nda-cockpit/m1 → the org's Module-1 administrative document set
  *   ({ id, label, st, blocker, note }), ordered by seq, backing the surface's
@@ -25,6 +31,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../db';
+import { assembleOrgNdaModules } from '../services/nda/nda-modules-view-assembler.js';
 
 const router = Router();
 
@@ -48,22 +55,8 @@ router.get('/modules', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT m, label, pct, docs, open_count, gate
-         FROM c2c_nda_modules
-        WHERE organization_id = $1
-        ORDER BY m`,
-      [orgId],
-    );
-    const data = rows.map((r) => ({
-      m: r.m,
-      label: r.label,
-      pct: r.pct,
-      docs: r.docs,
-      open: r.open_count,
-      gate: r.gate ?? null,
-    }));
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgNdaModules(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'submissions' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });
