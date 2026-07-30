@@ -2,34 +2,20 @@
  * IND form fill service.
  *
  * ============================== INTEGRATION NOTES ==============================
- * This service is NOT yet wired into any route or barrel. To expose it, a human
- * should add the following (no existing files were edited by this change):
+ * This service IS wired: server/routes/ind-forms.routes.ts mounts it at
+ * /api/ind-forms (see server/bootstrap/register-ind-lifecycle-routes.ts) with
+ * authentication. Use generateIndForm(formId, metadata) for a single form and
+ * generateAllForm1572(metadata) for one 1572 per investigator.
  *
- * 1. ROUTE (suggested):  POST /api/ind-forms/:formId/pdf
- *      - body: IndProjectMetadata (see ./ind-form-data-builders)
- *      - handler: import { generateIndForm } from
- *          'server/services/ind-forms';  (or the barrel ./index)
- *        const result = await generateIndForm(formId, metadata);
- *        res.setHeader('Content-Type', 'application/pdf');
- *        res.send(Buffer.from(result.pdfBytes));
- *      - For 1572 (per-investigator) use generateAllForm1572(metadata) which
- *        returns one result per investigator.
- *    Register that route in whatever route registry the app uses
- *    (e.g. server/routes/index.ts or server/registerRoutes) — DO NOT let this
- *    file import the router; keep the wiring in the route layer.
- *
- * 2. TEMPLATES DIR (TODO — official PDFs cannot be bundled here):
- *      Drop the OFFICIAL FDA fillable AcroForm PDFs into:
- *          ${IND_FORM_TEMPLATES_DIR || 'templates/forms/acroforms'}/<formId>.pdf
- *      e.g. templates/forms/acroforms/FDA_1571.pdf, FDA_1572.pdf, FDA_3674.pdf,
- *           FDA_3454.pdf, FDA_3455.pdf
- *      Each template's reviewed sidecar manifest must map every canonical field
- *      id to its AcroForm field name. Unmanifested or partial assets fail closed.
- *      Until the official PDFs + field map are supplied, the service falls back
- *      to a deterministic labeled PDF (usedOfficialTemplate=false) so the feature
- *      works end-to-end without the proprietary forms.
- *
- * 3. ENV: set IND_FORM_TEMPLATES_DIR if templates live outside the repo.
+ * OFFICIAL ASSETS: the official FDA blank forms for 1571, 1572, 356h, 3674, and
+ * 3454 are bundled under templates/forms/acroforms/<formId>.pdf with SHA-256
+ * sidecar manifests (IND_FORM_TEMPLATES_DIR overrides the dir). These editions
+ * are Adobe LiveCycle DYNAMIC XFA forms and expose no fillable AcroForm fields,
+ * so their manifests carry an empty fieldMap and the service renders the
+ * deterministic labeled data PDF (usedOfficialTemplate=false) — the feature works
+ * end-to-end today. To enable exact official-form filling, install a static
+ * (flattened AcroForm) edition with a reviewed canonical->AcroForm fieldMap and a
+ * non-empty reviewedBy/reviewedAt; the readTemplate gate then promotes it.
  * ==============================================================================
  *
  * Behaviour:
@@ -205,7 +191,10 @@ async function fillOfficialTemplate(
   built: BuiltForm,
   fieldMap: Record<string, string>,
 ): Promise<IndFormPdfResult> {
-  const doc = await PDFDocument.load(templateBytes);
+  // Official FDA form PDFs are permission-encrypted ("secured"); ignoreEncryption
+  // lets pdf-lib open them. (Dynamic XFA editions expose no fillable AcroForm
+  // fields, so the mapping-completeness check below fails and we fall back.)
+  const doc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
 
   // Deterministic metadata so re-fills are byte-stable.
   doc.setProducer(PRODUCER);

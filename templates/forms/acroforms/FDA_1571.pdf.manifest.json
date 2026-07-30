@@ -1,0 +1,18 @@
+{
+  "formId": "FDA_1571",
+  "formNumber": "1571",
+  "version": "2025-03-28",
+  "edition": "2025-03-28",
+  "title": "Investigational New Drug Application (IND)",
+  "sourceUrl": "https://www.fda.gov/about-fda/forms",
+  "sha256": "24adbff94268d02b4d23a85a0dc8b3f0f214326bdff11942d810d59755aeba4b",
+  "retrievedAt": "2025-03-28T00:00:00.000Z",
+  "provenance": "Official FDA secured PDF provided by the product owner (upload). Canonical source: fda.gov forms catalog.",
+  "reviewedBy": null,
+  "reviewedAt": null,
+  "xfaDynamic": true,
+  "fillSupported": false,
+  "assetTrusted": false,
+  "fieldMap": {},
+  "note": "This is the official FDA blank form. It is an Adobe LiveCycle DYNAMIC XFA form, so it cannot be reliably field-filled by the pdf-lib engine (0 AcroForm fields are exposed). The IND form service therefore renders a deterministic labeled data PDF (usedOfficialTemplate=false). To enable exact official-form filling, generate a static/flattened AcroForm edition with a reviewed canonical->AcroForm fieldMap, or fill via Adobe tooling; then set fillSupported/assetTrusted and populate fieldMap."
+}
