@@ -274,8 +274,13 @@ describe('golden journey — eCTD export to submittable package', () => {
         // The non-spec structures the consolidation removed must be gone…
         expect(indexXml).not.toContain('<ectd:submission>');
         expect(indexXml).not.toContain('ectd:m1-administrative');
-        // …replaced by a real ICH module heading carrying the authored m3 leaf.
-        expect(indexXml).toMatch(/<m3>[\s\S]*<leaf /);
+        // …and the legacy flat module block convention must be gone too…
+        expect(indexXml).not.toMatch(/<m3>/);
+        // …replaced by the authoritative ICH v3.2.2 heading hierarchy carrying
+        // the authored m3.2.P leaf nested at its correct depth.
+        expect(indexXml).toMatch(
+          /<m3-quality>[\s\S]*<m3-2-body-of-data>[\s\S]*<m3-2-p-drug-product>[\s\S]*<leaf /,
+        );
         expect(indexXml).toContain('dtd-version="3.2"');
 
         // Leaf IDs are XML ID-typed and must be unique within the backbone — the

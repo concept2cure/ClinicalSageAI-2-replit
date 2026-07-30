@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
+<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <!--
   Anonymized test fixture for server/services/ectd/ectd-validator-hardening.ts
   validateDtdConformance — represents a minimal CONFORMANT ICH eCTD backbone
   (index.xml) that should produce zero DTD findings.
+
+  Uses the AUTHORITATIVE ICH eCTD v3.2.2 heading hierarchy (the shared
+  ectd-packager/ich-headings tree the backbone generators emit): nested named
+  heading elements, not flat module blocks and not abbreviated names.
 
   Not a real submission. Applicant name, application number, study IDs, and
   leaf paths are placeholders. MD5 checksum values are illustrative only.
@@ -11,64 +15,64 @@
 
   Validator coverage exercised by this fixture:
     DTD_NO_DECLARATION       — has <?xml ... ?>
-    DTD_NO_DOCTYPE           — has <!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
+    DTD_NO_DOCTYPE           — has <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
     DTD_BAD_ROOT             — root is <ectd:ectd>
     DTD_MISSING_ECTD_NS      — declares xmlns:ectd
     DTD_MISSING_XLINK_NS     — declares xmlns:xlink
     DTD_LEAF_MISSING_ATTR    — every <leaf> has xlink:href, checksum, operation
     DTD_CHECKSUM_TYPE        — every checksum-type is "md5"
-    DTD_MISSING_REQUIRED_CHILD — has <admin> child under <ectd:ectd>
+    DTD_UNKNOWN_ELEMENT      — every m* element is in the authoritative catalogue
+    DTD_MISSING_REQUIRED_CHILD — module content elements are present
 -->
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"
            dtd-version="3.2">
-  <admin>
-    <applicant-info>
-      <applicant-name>ACME Pharmaceuticals (FIXTURE)</applicant-name>
-    </applicant-info>
-    <submission-description>
-      <submission-type>original</submission-type>
-    </submission-description>
-    <sequence-info>
-      <number>0000</number>
-      <type>original</type>
-      <description>Initial submission (fixture)</description>
-    </sequence-info>
-  </admin>
-  <m2-summaries>
-    <leaf xlink:href="m2/m2-3/quality-overall-summary.pdf"
-          operation="new"
-          checksum="d41d8cd98f00b204e9800998ecf8427e"
-          checksum-type="md5">
-      <title>Quality Overall Summary</title>
-    </leaf>
-  </m2-summaries>
-  <m3-quality>
-    <leaf xlink:href="m3/m3-2-s/drug-substance.pdf"
-          operation="new"
-          checksum="9e107d9d372bb6826bd81d3542a419d6"
-          checksum-type="md5">
-      <title>Drug Substance — General Information</title>
-    </leaf>
-  </m3-quality>
-  <m4-nonclinical>
-    <leaf xlink:href="m4/m4-2-3/toxicology-study.pdf"
-          operation="new"
-          checksum="e4d909c290d0fb1ca068ffaddf22cbd0"
-          checksum-type="md5"
-          study-id="TOX-001">
-      <title>Repeat-Dose Toxicology Study Report</title>
-    </leaf>
-  </m4-nonclinical>
-  <m5-clinical>
-    <m5-3>
-      <leaf xlink:href="m5/m5-3-5/efficacy-safety-study.pdf"
+  <m2-common-technical-document-summaries>
+    <m2-3-quality-overall-summary>
+      <leaf xlink:href="m2/23-qos/quality-overall-summary.pdf"
             operation="new"
-            checksum="1b2e1d63b7e8c64f3e3b3a18f7e6c9d2"
-            checksum-type="md5"
-            study-id="CLIN-ACME-2026-001">
-        <title>Phase 3 Efficacy &amp; Safety Study Report</title>
+            checksum="d41d8cd98f00b204e9800998ecf8427e"
+            checksum-type="md5">
+        <title>Quality Overall Summary</title>
       </leaf>
-    </m5-3>
-  </m5-clinical>
+    </m2-3-quality-overall-summary>
+  </m2-common-technical-document-summaries>
+  <m3-quality>
+    <m3-2-body-of-data>
+      <m3-2-s-drug-substance>
+        <leaf xlink:href="m3/32-body-data/32s-drug-sub/drug-substance.pdf"
+              operation="new"
+              checksum="9e107d9d372bb6826bd81d3542a419d6"
+              checksum-type="md5">
+          <title>Drug Substance — General Information</title>
+        </leaf>
+      </m3-2-s-drug-substance>
+    </m3-2-body-of-data>
+  </m3-quality>
+  <m4-nonclinical-study-reports>
+    <m4-2-study-reports>
+      <m4-2-3-toxicology>
+        <leaf xlink:href="m4/42-stud-rep/423-tox/toxicology-study.pdf"
+              operation="new"
+              checksum="e4d909c290d0fb1ca068ffaddf22cbd0"
+              checksum-type="md5"
+              study-id="TOX-001">
+          <title>Repeat-Dose Toxicology Study Report</title>
+        </leaf>
+      </m4-2-3-toxicology>
+    </m4-2-study-reports>
+  </m4-nonclinical-study-reports>
+  <m5-clinical-study-reports>
+    <m5-3-clinical-study-reports>
+      <m5-3-5-reports-of-efficacy-and-safety-studies>
+        <leaf xlink:href="m5/53-clin-stud-rep/535-rep-effic-safety-stud/efficacy-safety-study.pdf"
+              operation="new"
+              checksum="1b2e1d63b7e8c64f3e3b3a18f7e6c9d2"
+              checksum-type="md5"
+              study-id="CLIN-ACME-2026-001">
+          <title>Phase 3 Efficacy &amp; Safety Study Report</title>
+        </leaf>
+      </m5-3-5-reports-of-efficacy-and-safety-studies>
+    </m5-3-clinical-study-reports>
+  </m5-clinical-study-reports>
 </ectd:ectd>

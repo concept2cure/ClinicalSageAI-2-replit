@@ -42,8 +42,11 @@ import {
 import {
   createLeafIdAssigner,
   buildMd5Index,
-  type EctdLeaf,
 } from './submission-gateways/regional-packager';
+import {
+  buildIchModuleTree,
+  type RenderedLeaf,
+} from './submission-gateways/ectd-packager/ich-headings';
 
 // Re-exported so existing importers of the export service keep working.
 export { EctdCompletenessError };
@@ -198,32 +201,30 @@ function generateIndexXml(opts: {
   // any remaining tie).
   const assignLeafId = createLeafIdAssigner();
 
-  // ICH backbone module blocks. Each module with content is emitted as a
-  // <m{n}> heading element carrying its leaves with the full ICH <leaf>
-  // attribute set (operation, inline checksum matching the shipped bytes,
-  // backbone-relative xlink:href, and a unique ID). Empty modules are omitted
-  // rather than shipped as hollow headings. This mirrors the conformant
-  // regional packager's index.xml structure (buildIndexXml), replacing the
-  // prior non-spec <ectd:submission> metadata block, the <ectd:m1-administrative>
-  // wrapper that wrongly enclosed every module, and the custom <m{n}-slug>
-  // elements — none of which exist in the ICH eCTD DTD.
-  const moduleBlocks = opts.modules
-    .filter(m => m.granules.length > 0)
-    .map(m => {
-      const leaves = m.granules
-        .map(g => {
-          const id = assignLeafId({
-            ctdSection: g.granuleId,
-            fileName: path.posix.basename(g.filePath),
-          } as EctdLeaf);
-          return `    <leaf operation="${escapeXml(g.operation)}" checksum="${g.checksum}" checksum-type="md5" xlink:href="${escapeXml(g.filePath)}" xlink:type="simple" ID="${escapeXml(id)}">
-      <title>${escapeXml(g.granuleName)}</title>
-    </leaf>`;
-        })
-        .join('\n');
-      return `  <m${m.moduleNumber}>\n${leaves}\n  </m${m.moduleNumber}>`;
-    })
-    .join('\n');
+  // ICH backbone heading tree. index.xml covers Modules 2–5 ONLY (Module 1 is
+  // regional and is referenced from the regional backbone, not here), and its
+  // content is the authoritative ICH v3.2.2 nested heading hierarchy — flat
+  // <m2>..<m5> blocks are not valid ectd:ectd children. Each leaf is rendered
+  // with the full ICH attribute set (operation, inline checksum matching the
+  // shipped bytes, root-relative xlink:href, unique ID) and nested under the
+  // deepest matching heading via the shared ich-headings module — the same tree
+  // the regional packager emits, so both export paths produce one convention.
+  const rendered: RenderedLeaf[] = opts.modules
+    .filter(m => m.moduleNumber !== '1')
+    .flatMap(m => m.granules)
+    .map(g => {
+      const id = assignLeafId({
+        ctdSection: g.granuleId,
+        fileName: path.posix.basename(g.filePath),
+      });
+      return {
+        leaf: { ctdSection: g.granuleId },
+        xml: `<leaf operation="${escapeXml(g.operation)}" checksum="${g.checksum}" checksum-type="md5" xlink:href="${escapeXml(g.filePath)}" xlink:type="simple" ID="${escapeXml(id)}">
+  <title>${escapeXml(g.granuleName)}</title>
+</leaf>`,
+      };
+    });
+  const moduleBlocks = buildIchModuleTree(rendered, 2);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
@@ -267,8 +268,39 @@ function resolveEctdRegion(region: string): { code: string; agency: string } {
   return resolved;
 }
 
-function generateRegionalXml(region: string, applicationNumber: string): string {
+function generateRegionalXml(
+  region: string,
+  applicationNumber: string,
+  m1Granules: Array<{
+    granuleId: string;
+    granuleName: string;
+    filePath: string;
+    checksum: string;
+    operation: string;
+  }> = [],
+): string {
   const { code: regionCode, agency: agencyName } = resolveEctdRegion(region);
+
+  // Module 1 leaves belong in the REGIONAL backbone, not index.xml (the ICH
+  // backbone covers Modules 2–5 only). Render them under an m1-{code} wrapper —
+  // the same shape the canonical regional packager uses for its EU/JP/CA
+  // backbones — with hrefs RELATIVE to this file (which lives at
+  // m1/{code}-regional.xml) and document-unique leaf IDs.
+  const assignLeafId = createLeafIdAssigner();
+  const m1Block = m1Granules.length
+    ? '\n  <m1-' + regionCode + '>\n' + m1Granules
+        .map(g => {
+          const id = assignLeafId({
+            ctdSection: g.granuleId,
+            fileName: path.posix.basename(g.filePath),
+          });
+          const href = g.filePath.startsWith('m1/') ? g.filePath.slice(3) : `../${g.filePath}`;
+          return `    <leaf operation="${escapeXml(g.operation)}" checksum="${g.checksum}" checksum-type="md5" xlink:href="${escapeXml(href)}" xlink:type="simple" ID="${escapeXml(id)}">
+      <title>${escapeXml(g.granuleName)}</title>
+    </leaf>`;
+        })
+        .join('\n') + '\n  </m1-' + regionCode + '>'
+    : '';
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <${regionCode}-regional xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -279,16 +311,16 @@ function generateRegionalXml(region: string, applicationNumber: string): string 
     </applicant>
     <application-number>${escapeXml(applicationNumber)}</application-number>
     <submission-type>initial</submission-type>
-  </admin>
+  </admin>${m1Block}
 </${regionCode}-regional>`;
 }
 
 /**
  * Bundle vendored eCTD DTD files (when present) into util/dtd/ so the package is
- * self-contained and DTD-validatable. DTDs are licensed agency artifacts and are
- * NOT committed to this repo — drop them into assets/ectd-dtd/ (or set
- * ECTD_DTD_DIR) and they are bundled automatically; absence is surfaced as a
- * "not submission-ready" warning by validateEctdPackage.
+ * self-contained and DTD-validatable. DTDs are vendored agency artifacts per
+ * assets/ectd-dtd/README.md ("Vendoring policy") — place them in assets/ectd-dtd/
+ * (or set ECTD_DTD_DIR) and they are bundled automatically; absence is surfaced
+ * as a "not submission-ready" warning by validateEctdPackage.
  * See assets/ectd-dtd/README.md and HI_8_ECTD_SCOPING_BRIEF.md G1.
  */
 function bundleVendoredDtds(zip: JSZip): Array<{ relPath: string; md5: string }> {
@@ -733,8 +765,10 @@ export async function generateEctdPackage(
   zip.file('index.xml', indexXml);
   packageChecksums.push({ relPath: 'index.xml', md5: md5(indexXml) });
 
-  // 5. Generate regional XML (Module 1 regional info)
-  const regionalXml = generateRegionalXml(region, applicationNumber);
+  // 5. Generate regional XML (Module 1 regional info + Module 1 leaves —
+  // index.xml is ICH Modules 2–5 only, so m1 content is referenced from here).
+  const m1Granules = moduleGranuleMap.get('1')?.granules ?? [];
+  const regionalXml = generateRegionalXml(region, applicationNumber, m1Granules);
   const regionCode = resolveEctdRegion(region).code;
   const regionalPath = `m1/${regionCode}-regional.xml`;
   zip.file(regionalPath, regionalXml);
@@ -876,6 +910,24 @@ export async function validateEctdPackage(
       const href = match.replace('xlink:href="', '').replace('"', '');
       if (!fileNames.includes(href)) {
         errors.push(`index.xml references file "${href}" which is not present in the package`);
+      }
+    }
+  }
+
+  // 3b. Regional-backbone href resolution. Module 1 leaves are referenced from
+  // m1/{code}-regional.xml with hrefs RELATIVE to that file — resolve each one
+  // against the file's own directory and require a real ZIP entry, so a broken
+  // m1 reference is caught with the same rigor as a broken index.xml reference.
+  for (const regionalFile of fileNames.filter(f => /^m1\/[a-z]{2}-regional\.xml$/.test(f))) {
+    const regionalContent = await zip.file(regionalFile)!.async('string');
+    const baseDir = path.posix.dirname(regionalFile);
+    for (const match of regionalContent.match(/xlink:href="([^"]+)"/g) || []) {
+      const href = match.replace('xlink:href="', '').replace('"', '');
+      const resolved = path.posix.normalize(path.posix.join(baseDir, href));
+      if (!fileNames.includes(resolved)) {
+        errors.push(
+          `${regionalFile} references file "${href}" (resolves to "${resolved}") which is not present in the package`,
+        );
       }
     }
   }
