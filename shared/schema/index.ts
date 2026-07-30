@@ -539,3 +539,9 @@ export * from './effort-certification';
 // Research security / COI-FCOI disclosure (add-on; NOT-OD-26-017 / NSPM-33):
 // outside activities, foreign appointments/support, financial interests + review.
 export * from './research-security';
+
+// eSTAR client registration: one row per org recording the FDA eSTAR
+// prerequisites (ESG / CDRH portal / org identity / MDUFA fee) a client holds.
+// Service: server/services/pathway-engines/estar/estar-registration-service.ts;
+// migration: migrations/20260730_estar_registration.sql.
+export * from './estar-registration';

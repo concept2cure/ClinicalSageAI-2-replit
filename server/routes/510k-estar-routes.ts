@@ -28,6 +28,13 @@ import {
   assessEstarFilingReadiness,
   type FilingLeaf,
 } from '../services/pathway-engines/estar/estar-filing-readiness';
+import {
+  getEstarRegistration,
+  upsertEstarRegistration,
+  toClientRegistration,
+  resolveClientRegistration,
+  type EstarRegistrationWrite,
+} from '../services/pathway-engines/estar/estar-registration-service';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
@@ -99,6 +106,14 @@ function getOrganizationId(req: any): number {
     throw new Error('Valid numeric organizationId is required for governed eSTAR export');
   }
   return parsed;
+}
+
+/** Soft org resolver for read paths — returns null instead of throwing. */
+function resolveOrgId(req: any): number | null {
+  const n = Number(
+    req.resolvedOrganizationId ?? req.tenantContext?.organizationId ?? req.user?.organizationId ?? req.tenantId,
+  );
+  return Number.isInteger(n) && n > 0 ? n : null;
 }
 
 async function buildZipBuffer(
@@ -550,38 +565,128 @@ router.get('/catalog', authMiddleware, async (_req, res) => {
   }
 });
 
-const registrationSchema = z.object({
-  clientId: z.string().min(1),
-  satisfied: z
-    .array(
-      z.enum([
-        'fda_esg_account',
-        'cdrh_portal_account',
-        'organization_identity',
-        'mdufa_fee_account',
-      ]),
-    )
-    .default([]),
+const REQUIREMENT_ENUM = z.enum([
+  'fda_esg_account',
+  'cdrh_portal_account',
+  'organization_identity',
+  'mdufa_fee_account',
+]);
+
+// Assess accepts an EXPLICIT registration (what-if) OR, when `satisfied` is
+// omitted, falls back to the org's persisted registration record.
+const registrationAssessSchema = z.object({
+  clientId: z.string().min(1).optional(),
+  satisfied: z.array(REQUIREMENT_ENUM).optional(),
   variants: z.array(z.enum(['device', 'ivd'])).optional(),
 });
 
+// Upsert payload for the org's stored registration. Tenant/actor/identity are
+// resolved server-side; the body only carries the registration facts.
+const registrationWriteSchema = z.object({
+  fdaEsgAccount: z.boolean().optional(),
+  cdrhPortalAccount: z.boolean().optional(),
+  organizationIdentity: z.boolean().optional(),
+  mdufaFeeAccount: z.boolean().optional(),
+  esgAccountId: z.string().max(128).nullish(),
+  cdrhPortalEmail: z.string().max(256).nullish(),
+  duns: z.string().max(16).nullish(),
+  fei: z.string().max(16).nullish(),
+  mdufaOrgId: z.string().max(64).nullish(),
+  mdufaFeeTier: z.enum(['standard', 'small_business']).nullish(),
+  variants: z.array(z.enum(['device', 'ivd'])).optional(),
+  notes: z.string().max(2000).nullish(),
+});
+
 /**
- * POST /api/510k/estar/registration/assess
- * body: { clientId, satisfied[], variants? }
- *
- * Given a client's eSTAR registration state (which FDA accounts/identifiers it
- * holds), report which eSTAR submissions it can file today and what is still
- * blocking the rest. Pure computation — nothing is persisted. This is the
- * "clients must register for this" gate the filing surface reads before offering
- * a submission type.
+ * GET /api/510k/estar/registration
+ * Returns THIS org's persisted eSTAR registration (source of truth for "clients
+ * must register"), plus the bridged eligibility-model shape. `registered:false`
+ * with an empty registration when the client has never registered.
  */
-router.post('/registration/assess', authMiddleware, async (req, res) => {
-  const validation = registrationSchema.safeParse(req.body);
+router.get('/registration', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    const row = await getEstarRegistration({ organizationId });
+    return res.status(200).json({
+      registered: !!row,
+      registration: row,
+      clientRegistration: row
+        ? toClientRegistration(row)
+        : { clientId: String(organizationId), satisfied: [] },
+    });
+  } catch (error: any) {
+    logger.error('estar registration read failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_REGISTRATION_READ_FAILED',
+      message: error.message || 'Failed to read eSTAR registration',
+    });
+  }
+});
+
+/**
+ * PUT /api/510k/estar/registration
+ * Create/update THIS org's eSTAR registration record (upsert; one per org). This
+ * is the actual "register for eSTAR" write — editor+ only. Tenant/actor are set
+ * from the session, never the body.
+ */
+router.put('/registration', authMiddleware, requireEditorAccess, async (req, res) => {
+  const validation = registrationWriteSchema.safeParse(req.body);
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
   try {
-    const report = assessClientEstarEligibility(validation.data);
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const row = await upsertEstarRegistration(validation.data as EstarRegistrationWrite, { organizationId, userId });
+    return res.status(200).json({
+      registered: true,
+      registration: row,
+      clientRegistration: toClientRegistration(row),
+    });
+  } catch (error: any) {
+    logger.error('estar registration write failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_REGISTRATION_WRITE_FAILED',
+      message: error.message || 'Failed to save eSTAR registration',
+    });
+  }
+});
+
+/**
+ * POST /api/510k/estar/registration/assess
+ * body: { satisfied[]?, clientId?, variants? }  (all optional)
+ *
+ * Report which eSTAR submissions this client can file today and what is still
+ * blocking the rest. When `satisfied` is supplied it's a what-if against that
+ * explicit state; otherwise it assesses the org's PERSISTED registration record
+ * (the "clients must register" source of truth). Nothing is persisted here.
+ */
+router.post('/registration/assess', authMiddleware, async (req, res) => {
+  const validation = registrationAssessSchema.safeParse(req.body ?? {});
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    let registration;
+    if (validation.data.satisfied) {
+      // Explicit what-if registration state.
+      registration = {
+        clientId: validation.data.clientId ?? 'what-if',
+        satisfied: validation.data.satisfied,
+        variants: validation.data.variants,
+      };
+    } else {
+      // Source of truth: the org's persisted registration.
+      const organizationId = resolveOrgId(req);
+      if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+      registration = await resolveClientRegistration({ organizationId });
+    }
+    const report = assessClientEstarEligibility(registration);
     return res.status(200).json(report);
   } catch (error: any) {
     logger.error('estar registration assessment failure', {
@@ -603,20 +708,14 @@ const filingLeafSchema = z.object({
 const filingReadinessSchema = z.object({
   catalogKey: z.string().min(1),
   variant: z.enum(['device', 'ivd']).default('device'),
-  registration: z.object({
-    clientId: z.string().min(1),
-    satisfied: z
-      .array(
-        z.enum([
-          'fda_esg_account',
-          'cdrh_portal_account',
-          'organization_identity',
-          'mdufa_fee_account',
-        ]),
-      )
-      .default([]),
-    variants: z.array(z.enum(['device', 'ivd'])).optional(),
-  }),
+  // Optional explicit registration (what-if); omit to use the org's persisted record.
+  registration: z
+    .object({
+      clientId: z.string().min(1),
+      satisfied: z.array(REQUIREMENT_ENUM).default([]),
+      variants: z.array(z.enum(['device', 'ivd'])).optional(),
+    })
+    .optional(),
   leaves: z.array(filingLeafSchema).default([]),
   qSubType: z
     .enum([
@@ -645,7 +744,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
-  const { catalogKey, variant, registration, leaves, qSubType } = validation.data;
+  const { catalogKey, variant, leaves, qSubType } = validation.data;
 
   const entry = getCatalogEntry(catalogKey as EstarCatalogKey);
   if (!entry) {
@@ -653,6 +752,15 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
   }
 
   try {
+    // Registration: an explicit what-if payload if supplied, else the org's
+    // persisted registration record (the "clients must register" source of truth).
+    let registration = validation.data.registration;
+    if (!registration) {
+      const organizationId = resolveOrgId(req);
+      if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+      registration = await resolveClientRegistration({ organizationId });
+    }
+
     // Resolve official-template producibility from the single source of truth. The
     // PreSTAR family shares one template across variants; marketing pathways use
     // the device/ivd variant. Empty data ⇒ side-effect-free readiness probe.
