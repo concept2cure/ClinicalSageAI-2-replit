@@ -46,8 +46,14 @@ still merit a data-flow check.)
 ## Classification for remediation
 
 **A — a real normalized store already exists → converge (the Protocol-Dev pattern):**
-- **IND checklist** → the `ind_*` store (ind_protocols, ind_milestones, ind_amendments,
-  ind_safety_reports, ind_investigators, ind_sponsors, ind_drafts, …). High value.
+- **IND checklist** → the real org-scoped **eCTD submission core** (`submissions` where
+  `application_type='ind'` + `ectd_sequences` + `submission_leaves` + `coauthor_documents`),
+  with the canonical 108-section blueprint (`services/regulatory/ind-ectd-sections.ts`)
+  for title/module/CFR-ref. NOTE: the tempting `ind_*` tables (ind_protocols,
+  ind_pre_ind_data, ind_drafts, …) are the **legacy pre-IND wizard** — UUID/project-keyed,
+  no `organization_id`, no section/forms model — so they are NOT this surface's store; the
+  data-flow trace lands on the submission core the co-authoring flow actually writes.
+  **[CONVERGED]** — assembler + real-store-only route + reseed + pglite test landed.
 - **Shadow review** → `shadow-review-service.ts`. High tractability.
 - **Biostat** (interims / sample-sizes / SAPs / TLF) → `biostat_*` tables + the
   `ana-biostats` service.
@@ -75,8 +81,8 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
 
 ## Prioritized roadmap
 
-1. **Class A converges** in value order: IND → Shadow-review → SAE → Biostat → CMC →
-   Decision-lineage. Each is one Protocol-Dev-sized change.
+1. **Class A converges** in value order: ~~IND~~ (landed) → Shadow-review → SAE →
+   Biostat → CMC → Decision-lineage. Each is one Protocol-Dev-sized change.
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so
