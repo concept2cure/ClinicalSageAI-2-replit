@@ -199,3 +199,108 @@ test('the data-room migrations apply in listed order and yield the expected sche
     await db.close();
   }
 });
+
+/**
+ * ── The reverse direction ────────────────────────────────────────────────────
+ *
+ * Every assertion above checks that LISTED files exist. Nothing checked that
+ * EXISTING files are listed — and that asymmetry is a live trap: three eSTAR
+ * migrations were committed, reviewed and merged while being absent from the
+ * allowlist, so their tables would have existed in code and in shared/schema.ts
+ * but never in an already-provisioned database.
+ *
+ * Why this cannot simply demand that every migration be listed: there are two
+ * legitimate apply paths.
+ *
+ *   FRESH database  → scripts/db/install-fresh.mjs → drizzle-kit push, which
+ *                     derives the whole schema from shared/schema.ts. A plain
+ *                     CREATE TABLE migration needs no allowlist entry, because
+ *                     push already creates the table.
+ *   EXISTING database → scripts/db/deploy-migrate.mjs → C2C_MIGRATION_FILES and
+ *                     nothing else. Anything push cannot reproduce on a
+ *                     populated database — a backfill, an ALTER that must
+ *                     preserve data, a constraint, an RLS policy — reaches
+ *                     production ONLY by being on this list.
+ *
+ * So this is a baseline ratchet, matching the convention already used by
+ * .typecheck-baseline.json and duplicate-table-ddl-baseline.json: the migrations
+ * that were unlisted when the guard was introduced are grandfathered, and any
+ * NEW unlisted migration fails until someone makes a deliberate choice.
+ */
+
+/** Only migrations from this date forward are governed (earlier ones predate the guard). */
+const RATCHET_FROM = '20260701';
+
+/**
+ * Dated root migrations that are intentionally NOT on the allowlist, because
+ * their objects come from shared/schema.ts via drizzle-kit push and they carry
+ * nothing an existing database additionally needs. Seeded from the state when
+ * this guard was added — NOT an endorsement of each entry, just the honest
+ * starting line. Removing an entry (by listing the file in the applier) is
+ * always safe; adding one requires the reason above to actually hold.
+ */
+const KNOWN_UNLISTED = new Set([
+  'migrations/20260701_protocol_soa.sql',
+  'migrations/20260702_protocol_budget.sql',
+  'migrations/20260702_usage_model_credit_ledger.sql',
+  'migrations/20260703_dmsp.sql',
+  'migrations/20260704_biosketch.sql',
+  'migrations/20260704_other_support.sql',
+  'migrations/20260705_export_control.sql',
+  'migrations/20260705_invention_disclosure.sql',
+  'migrations/20260705_research_agreements.sql',
+  'migrations/20260706_org_user_persona.sql',
+  'migrations/20260706_report_definitions.sql',
+  'migrations/20260716_template_doc_types.sql',
+  'migrations/20260727_onboarding_proposal_runs.sql',
+  'migrations/20260728_chat_thread_store.sql',
+  'migrations/20260730_workflow_doc_versions_org_id.sql',
+  'migrations/20260731_workflow_doc_versions_org_not_null.sql',
+  'migrations/20260731c_canonical_documents.sql',
+]);
+
+test('no NEW root migration is silently absent from the applier allowlist', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const files = (await readdir('migrations')).filter((f) => f.endsWith('.sql'));
+  const listed = new Set(migrationList());
+
+  const governed = files
+    .filter((f) => /^\d{8}/.test(f) && f.slice(0, 8) >= RATCHET_FROM)
+    .map((f) => `migrations/${f}`);
+
+  const unaccounted = governed.filter((f) => !listed.has(f) && !KNOWN_UNLISTED.has(f));
+
+  assert.deepEqual(
+    unaccounted,
+    [],
+    `these migrations are on disk but neither listed in ${APPLIER} nor declared in ` +
+      `KNOWN_UNLISTED: ${unaccounted.join(', ')}.\n\n` +
+      `An unlisted migration NEVER runs against an already-provisioned database. Choose one:\n` +
+      `  • If it must run on existing databases (backfill, data-preserving ALTER, ` +
+      `constraint, RLS, or anything drizzle-kit push cannot reproduce) — add it to ` +
+      `C2C_MIGRATION_FILES in ${APPLIER}.\n` +
+      `  • If its objects come from shared/schema.ts and fresh installs get them via ` +
+      `drizzle-kit push — add it to KNOWN_UNLISTED in this test with a one-line reason.\n\n` +
+      `Do not skip this: it is the mechanism behind "merged != applied".`,
+  );
+});
+
+test('the grandfathered baseline stays honest (no stale or double-counted entries)', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const onDisk = new Set((await readdir('migrations')).map((f) => `migrations/${f}`));
+  const listed = new Set(migrationList());
+
+  // A baselined file that no longer exists means the baseline is drifting.
+  const vanished = [...KNOWN_UNLISTED].filter((f) => !onDisk.has(f));
+  assert.deepEqual(vanished, [], `KNOWN_UNLISTED names files that no longer exist: ${vanished.join(', ')}`);
+
+  // A file both baselined AND listed is contradictory — the ratchet should have
+  // been loosened by REMOVING the baseline entry.
+  const both = [...KNOWN_UNLISTED].filter((f) => listed.has(f));
+  assert.deepEqual(
+    both,
+    [],
+    `these are in BOTH the applier allowlist and KNOWN_UNLISTED: ${both.join(', ')}. ` +
+      `Now that they are applied, drop them from KNOWN_UNLISTED.`,
+  );
+});

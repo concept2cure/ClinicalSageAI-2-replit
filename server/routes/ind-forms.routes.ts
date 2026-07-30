@@ -1,10 +1,16 @@
 /**
- * IND FDA form generation REST surface — Forms 1571 / 1572 / 3674 / 3454 / 3455.
+ * IND FDA form generation REST surface — Forms 1571 / 1572 / 3674 / 3454 / 3455 /
+ * 356H / 1574.
  *
  * Mounted at /api/ind-forms with authenticateToken applied at mount time
- * (see server/bootstrap/register-ind-lifecycle-routes.ts). The generators are
- * stateless and deterministic: they render the supplied project metadata into a
- * PDF, using an official fillable AcroForm template when one is present in the
+ * (see server/bootstrap/register-ind-lifecycle-routes.ts). Two surfaces:
+ *   - PREVIEW (stateless, deterministic): /:formId/build, /:formId/pdf,
+ *     /:formId/pdf-from-records, /1572/pdf-all render/return without persisting.
+ *     PDF responses carry X-Form-Untracked-Preview: true.
+ *   - GOVERNED: /:formId/artifact persists the structured field map as a
+ *     concept2cureArtifacts row (org- + project-scoped, content-hashed) so the
+ *     platform records that the form exists.
+ * Rendering uses an official fillable AcroForm template when one is present in the
  * templates dir, otherwise a labeled fallback PDF.
  *
  * NOTE: official FDA AcroForm PDFs must be dropped into the templates dir (see
@@ -18,6 +24,8 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import {
   generateIndForm,
   generateAllForm1572,
+  generateAllForm3455,
+  buildFormById,
   SUPPORTED_FORM_IDS,
   type SupportedFormId,
   type IndFormPdfResult,
@@ -30,6 +38,7 @@ import {
   buildForm356h,
   buildForm1574,
   buildAllForm1572,
+  buildAllForm3455,
   FORM_1571,
   FORM_1572,
   FORM_3674,
@@ -48,6 +57,11 @@ import {
 } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
+import crypto from 'node:crypto';
+import { and, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { projects, concept2cureArtifacts } from '@shared/schema';
+import auditService from '../services/auditService';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
@@ -84,10 +98,22 @@ function metaOf(req: Request): IndProjectMetadata {
 function sendPdf(res: Response, result: IndFormPdfResult): void {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${result.formId}.pdf"`);
+  // This is a stateless PREVIEW render: the platform does not record that it was
+  // produced. Use POST /:formId/artifact for a governed, persisted record.
+  res.setHeader('X-Form-Untracked-Preview', 'true');
   res.setHeader('X-Form-Used-Official-Template', String(result.usedOfficialTemplate));
+  // Honestly signal a faithful reconstruction (pure dynamic XFA forms 1571/3674)
+  // so a consumer never mistakes it for the official Adobe-rendered PDF.
+  res.setHeader('X-Form-Reconstructed', String(result.reconstructed === true));
   res.setHeader('X-Form-Field-Coverage', result.fieldCoverage.toFixed(3));
   if (result.missingRequired.length > 0) {
     res.setHeader('X-Form-Missing-Required', result.missingRequired.join(','));
+  }
+  if (result.unmappedFields && result.unmappedFields.length > 0) {
+    res.setHeader('X-Form-Unmapped', result.unmappedFields.join(','));
+  }
+  if (result.unfilledFields && result.unfilledFields.length > 0) {
+    res.setHeader('X-Form-Unfilled', result.unfilledFields.join(','));
   }
   res.status(200).send(Buffer.from(result.pdfBytes));
 }
@@ -203,6 +229,228 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
   }
 });
 
+/**
+ * Persist a form as a GOVERNED ARTIFACT so the platform records that it exists
+ * (closes the "download a form the platform doesn't know about" gap). Stores the
+ * deterministic structured field map (the registry's declared storage.format),
+ * NOT the PDF bytes — the PDF is a reproducible derivative of the field map, with
+ * a content hash for integrity. A projectId is REQUIRED and validated against the
+ * caller's org, so an artifact is never created under another tenant's project.
+ *
+ * Body: IndProjectMetadata + { projectId: number }.
+ * For 1572 this persists the FIRST investigator's form (per-investigator
+ * persistence mirrors /1572/pdf-all and is a follow-on).
+ * Returns 201 { artifactId, formId, projectId, ready, missingRequired, contentHash }.
+ */
+router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const formId = String(req.params.formId);
+  if (!isSupported(formId)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
+  }
+  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as IndProjectMetadata & { projectId?: unknown };
+  const projectId = Number(body.projectId);
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'projectId is required to persist a governed form artifact.' } });
+  }
+  try {
+    // Tenant scope: the project must belong to the caller's org.
+    const [project] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, ctx.organizationId)))
+      .limit(1);
+    if (!project) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    }
+
+    const built = buildFormById(formId, body);
+    const content = JSON.stringify({ formId: built.formId, fields: built.fields, missingRequired: built.missingRequired });
+    const contentHash = crypto.createHash('sha256').update(content).digest('hex');
+    const artifactId = `artifact_indform_${formId.replace(/^FDA_/, '').toLowerCase()}_${crypto.randomUUID()}`;
+    const ready = built.missingRequired.length === 0;
+
+    await db.insert(concept2cureArtifacts).values({
+      artifactId,
+      projectId,
+      organizationId: ctx.organizationId,
+      createdById: ctx.userId,
+      title: `FDA Form ${formId.replace(/^FDA_/, '')}`,
+      type: 'form',
+      category: 'document',
+      content,
+      contentHash,
+      status: 'draft',
+      version: 1,
+      metadata: {
+        formId,
+        source: 'ind-forms',
+        storageFormat: 'structured-field-map',
+        ready,
+        missingRequired: built.missingRequired,
+      },
+    });
+
+    // Part 11 audit event for the governed creation. Best-effort: the artifact
+    // row already carries provenance (createdById, contentHash, timestamps), so a
+    // transient audit-log hiccup must not fail an otherwise-successful creation.
+    // (Making the two atomic is the writeMutation transaction-boundary follow-on.)
+    try {
+      await auditService.logAction({
+        action: 'ind_form.artifact.create',
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        resourceType: 'concept2cure_artifact',
+        resourceId: artifactId,
+        metadata: { formId, projectId, ready, contentHash },
+      });
+    } catch (auditErr) {
+      logger.warn('audit log failed for ind-form artifact', { err: auditErr instanceof Error ? auditErr.message : String(auditErr) });
+    }
+
+    res.status(201).json({ artifactId, formId, projectId, ready, missingRequired: built.missingRequired, contentHash });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Persist ONE governed artifact per investigator for the PER-INVESTIGATOR forms
+ * (1572 Statement of Investigator; 3455 financial disclosure). Closes the
+ * per-investigator governed-persistence gap that /:formId/artifact left as a
+ * follow-on — each investigator's form becomes its own content-hashed artifact
+ * the platform records, not just the first.
+ *
+ * All-or-nothing: every investigator form is inserted in a single DB transaction,
+ * so a mid-batch failure persists none of them (no partial governed state).
+ *
+ * Only 1572 and 3455 have a batch; any other form id → 400 (use /:formId/artifact).
+ * An empty `artifacts` array is legitimate for 3455 when no investigator has a
+ * disclosable interest (the sponsor certifies "none" on 3454 instead).
+ *
+ * Body: IndProjectMetadata + { projectId: number }.
+ * Returns 201 { formId, projectId, artifacts: [{ artifactId, investigatorName,
+ *   ready, missingRequired, contentHash }] }.
+ */
+const PER_INVESTIGATOR_FORMS = new Set<string>([FORM_1572, FORM_3455]);
+
+router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const formId = String(req.params.formId);
+  if (!PER_INVESTIGATOR_FORMS.has(formId)) {
+    return res.status(400).json({
+      error: {
+        code: 'VALIDATION',
+        message: `Form ${formId} is not per-investigator; use POST /:formId/artifact for a single governed artifact.`,
+      },
+    });
+  }
+  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as IndProjectMetadata & { projectId?: unknown };
+  const projectId = Number(body.projectId);
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'projectId is required to persist a governed form artifact.' } });
+  }
+  try {
+    // Tenant scope: the project must belong to the caller's org.
+    const [project] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, ctx.organizationId)))
+      .limit(1);
+    if (!project) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    }
+
+    const builts = formId === FORM_1572 ? buildAllForm1572(body) : buildAllForm3455(body);
+    const shortId = formId.replace(/^FDA_/, '').toLowerCase();
+    // Prepare all rows deterministically before touching the DB.
+    const rows = builts.map((built, idx) => {
+      const investigatorName = String(built.fields['investigator_name'] ?? '').trim() || `Investigator ${idx + 1}`;
+      const content = JSON.stringify({
+        formId: built.formId,
+        fields: built.fields,
+        missingRequired: built.missingRequired,
+        investigatorIndex: idx,
+      });
+      const contentHash = crypto.createHash('sha256').update(content).digest('hex');
+      const artifactId = `artifact_indform_${shortId}_${crypto.randomUUID()}`;
+      return {
+        idx,
+        investigatorName,
+        content,
+        contentHash,
+        artifactId,
+        ready: built.missingRequired.length === 0,
+        missingRequired: built.missingRequired,
+      };
+    });
+
+    // All-or-nothing: persist every investigator form, or none.
+    if (rows.length > 0) {
+      await db.transaction(async (tx) => {
+        for (const r of rows) {
+          await tx.insert(concept2cureArtifacts).values({
+            artifactId: r.artifactId,
+            projectId,
+            organizationId: ctx.organizationId,
+            createdById: ctx.userId,
+            title: `FDA Form ${formId.replace(/^FDA_/, '')} — ${r.investigatorName}`,
+            type: 'form',
+            category: 'document',
+            content: r.content,
+            contentHash: r.contentHash,
+            status: 'draft',
+            version: 1,
+            metadata: {
+              formId,
+              source: 'ind-forms',
+              storageFormat: 'structured-field-map',
+              ready: r.ready,
+              missingRequired: r.missingRequired,
+              investigatorIndex: r.idx,
+              investigatorName: r.investigatorName,
+            },
+          });
+        }
+      });
+    }
+
+    // Part 11 audit event per governed artifact. Best-effort (see /:formId/artifact):
+    // the rows already carry provenance; a transient audit hiccup must not undo a
+    // committed creation.
+    for (const r of rows) {
+      try {
+        await auditService.logAction({
+          action: 'ind_form.artifact.create',
+          userId: ctx.userId,
+          organizationId: ctx.organizationId,
+          resourceType: 'concept2cure_artifact',
+          resourceId: r.artifactId,
+          metadata: { formId, projectId, ready: r.ready, contentHash: r.contentHash, investigatorIndex: r.idx },
+        });
+      } catch (auditErr) {
+        logger.warn('audit log failed for ind-form artifact (batch)', { err: auditErr instanceof Error ? auditErr.message : String(auditErr) });
+      }
+    }
+
+    res.status(201).json({
+      formId,
+      projectId,
+      artifacts: rows.map((r) => ({
+        artifactId: r.artifactId,
+        investigatorName: r.investigatorName,
+        ready: r.ready,
+        missingRequired: r.missingRequired,
+        contentHash: r.contentHash,
+      })),
+    });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 /** Render one 1572 PDF per investigator; returns base64-encoded PDFs as JSON. */
 router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
   try {
@@ -211,6 +459,31 @@ router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
       formId: FORM_1572,
       documents: results.map((r) => ({
         usedOfficialTemplate: r.usedOfficialTemplate,
+        reconstructed: r.reconstructed === true,
+        fieldCoverage: r.fieldCoverage,
+        missingRequired: r.missingRequired,
+        pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
+      })),
+    });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Render one 3455 disclosure PDF per DISCLOSING investigator (the 3455 is a
+ * per-investigator form). Returns base64-encoded PDFs as JSON. An empty
+ * `documents` array means no investigator has a disclosable interest — the
+ * sponsor certifies "none" on Form 3454 instead (see POST /FDA_3454/pdf).
+ */
+router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
+  try {
+    const results = await generateAllForm3455(metaOf(req));
+    res.json({
+      formId: FORM_3455,
+      documents: results.map((r) => ({
+        usedOfficialTemplate: r.usedOfficialTemplate,
+        reconstructed: r.reconstructed === true,
         fieldCoverage: r.fieldCoverage,
         missingRequired: r.missingRequired,
         pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),

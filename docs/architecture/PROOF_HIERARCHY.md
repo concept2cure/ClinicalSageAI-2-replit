@@ -149,6 +149,15 @@ Point new work at these when you need a worked example of a rung:
   the real entries (no phantom members), then reopens the nested `.html` (DOM) and
   `.json` (parse) members; a corrupted container fails to reopen and a valid ZIP
   lacking a manifest is rejected.
+- **Tiers 6 → 7 (AcroForm fill)** — `tests/export-contract/acroform-fill.proof.test.ts`.
+  Not the universal packager: `server/services/forms/fill-official-pdf.ts` fills
+  official fillable PDFs (FDA eSTAR / 1571 / 1572 / 3674 …) by writing values into
+  AcroForm fields with pdf-lib. The proof fills a real form, flattens it, and
+  reopens with `pdf-parse` (pdf.js — **independent** of the pdf-lib writer) to
+  confirm the value is actually **rendered** in the emitted document, not merely
+  set in a form dictionary the writer owns. A tautology guard proves the token is
+  absent from the unfilled template; a mapped-but-missing field throws under
+  `missingFieldPolicy: 'error'` and a value-less key is skipped, never invented.
 
 Each journey/proof writes a machine-readable proof packet under its
 `__reports__/` directory (the JSON is the truth source; the markdown is rendered
@@ -196,8 +205,10 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
   qualification). The one packager format still without a reopen proof is **XML**,
   because it is declared but **not implemented** (`packageDeliverable` hits its
   `default` case and emits nothing) — a gap in the packager, not the proof set.
-  Remaining exporters outside the universal packager (e.g. form-filled AcroForm
-  bundles) should follow the same pattern.
+  The **official-PDF AcroForm fill** path (`fill-official-pdf.ts`, used for FDA
+  eSTAR/1571/1572/3674 forms) is now covered too (fill → flatten → independent
+  pdf.js reopen of the rendered value). Remaining generators outside these two
+  families should follow the same fill/generate → independent-reopen pattern.
 - **Tier 7 (external qualification)** is real but **scoped**: the eCTD path
   validates the backbone XML with **real libxml2** (`xmllint`) and runs the
   license-free FDA-criteria subset — but not yet the commercial LORENZ agency

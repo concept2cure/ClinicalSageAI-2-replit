@@ -75,6 +75,11 @@ describe('investigatorToInfo', () => {
     expect(info.name).toBe('Pat Smith, MD');
     expect(info.facilityNameAddress).toBe('Boston Clinical Site, 9 Hospital Way, Boston, MA');
     expect(info.irbNameAddress).toBe('Central IRB, 2 Ethics Rd, Boston, MA');
+    // Granular name/address (for the official 1572 db_loc_name/db_loc_address1 split).
+    expect(info.facilityName).toBe('Boston Clinical Site');
+    expect(info.facilityAddress).toBe('9 Hospital Way, Boston, MA');
+    expect(info.irbName).toBe('Central IRB');
+    expect(info.irbAddress).toBe('2 Ethics Rd, Boston, MA');
     expect(info.subInvestigators).toEqual(['Alex Lee, PharmD', 'Sam Park']);
   });
 });

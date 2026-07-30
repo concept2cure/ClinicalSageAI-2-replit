@@ -374,6 +374,52 @@ CREATE TABLE IF NOT EXISTS ctd_onboarding_documents (
 );
 `;
 
+/**
+ * Governed-artifact tables the IND-forms /:formId/artifact route writes: a
+ * minimal `projects` (org-scoping target) and `concept2cure_artifacts` (the
+ * governed record). Only the columns the route reads/writes are included; no FK
+ * constraints (test harness).
+ */
+export const FORM_ARTIFACT_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS projects (
+  id              SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL,
+  name            TEXT NOT NULL DEFAULT '',
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
+  id                   SERIAL PRIMARY KEY,
+  artifact_id          TEXT NOT NULL UNIQUE,
+  project_id           INTEGER NOT NULL,
+  conversation_id      INTEGER,
+  organization_id      INTEGER NOT NULL,
+  type                 TEXT NOT NULL,
+  category             TEXT NOT NULL,
+  title                TEXT NOT NULL,
+  content              TEXT NOT NULL,
+  content_hash         TEXT,
+  version              INTEGER NOT NULL DEFAULT 1,
+  ctd_section          TEXT,
+  template_id          TEXT,
+  ana_thread_id        TEXT,
+  title_slug           TEXT,
+  status               TEXT NOT NULL DEFAULT 'draft',
+  approved_version_id  INTEGER,
+  published_version_id INTEGER,
+  published_at         TIMESTAMPTZ,
+  locked_at            TIMESTAMPTZ,
+  locked_by_id         INTEGER,
+  created_by_id        INTEGER,
+  metadata             JSON,
+  citations            JSONB DEFAULT '[]'::jsonb,
+  citation_run_id      UUID,
+  citations_at         TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+`;
+
 export interface IndPgliteDb {
   pglite: PGlite;
   /** Drizzle instance over PGlite (insert/select against the pg-core schema). */
@@ -387,12 +433,13 @@ export interface IndPgliteDb {
  * submission_leaves (for the full filing → sequence → leaf flow).
  */
 export async function createIndPgliteDb(
-  opts: { submissionCore?: boolean; leafSources?: boolean } = {}
+  opts: { submissionCore?: boolean; leafSources?: boolean; formArtifacts?: boolean } = {}
 ): Promise<IndPgliteDb> {
   const pglite = new PGlite();
   await pglite.exec(IND_PGLITE_DDL);
   if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
   if (opts.leafSources) await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
+  if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
   const db = drizzle(pglite);
   return { pglite, db, close: () => pglite.close() };
 }

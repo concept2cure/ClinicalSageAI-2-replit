@@ -114,6 +114,11 @@ router.get('/', async (req: Request, res: Response) => {
 // established in the Day 2 backfill migration.
 
 router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) => {
+  // SECURITY: this resolver mapped ANY legacy section id to its (documentId,
+  // sectionKey) with no caller-org scoping, leaking cross-tenant document/section
+  // mappings. Scope every lookup to the caller's org via s.organization_id.
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
   const legacyId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(legacyId)) return send400(res, 'INVALID_ID');
 
@@ -126,9 +131,9 @@ router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) =
         s.section_key
       FROM cerv2_510k_sections s
       JOIN fda_510k_documents fd ON fd.id = s.document_id
-      WHERE s.id = $1 AND s.document_id IS NOT NULL
+      WHERE s.id = $1 AND s.document_id IS NOT NULL AND s.organization_id = $2
       LIMIT 1
-    `, [legacyId]);
+    `, [legacyId, orgId]);
 
     if (rows.length === 0) {
       // Section not linked to a project: fall back to org-level lookup
@@ -136,10 +141,10 @@ router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) =
         SELECT d.id AS document_id, s.section_key
         FROM cerv2_510k_sections s
         JOIN c2c_documents d ON d.doc_type = 'k510' AND d.org_id = s.organization_id
-        WHERE s.id = $1
+        WHERE s.id = $1 AND s.organization_id = $2
         ORDER BY d.created_at ASC
         LIMIT 1
-      `, [legacyId]);
+      `, [legacyId, orgId]);
 
       if (fallback.length === 0) return send404(res);
       return res.json(fallback[0]);
@@ -379,12 +384,19 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   const resolvedDraftSource = draftSource ?? 'human';
 
   try {
-    // Verify doc org membership.
+    // Verify doc org membership + lifecycle state.
     const docCheck = await pool.query(
-      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
+      `SELECT status FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
       [id, orgId],
     );
     if (docCheck.rows.length === 0) return send404(res);
+    // A locked or submitted document is immutable: its sections must not be
+    // edited in place. Amendments go through a new version/submission, not a raw
+    // section PATCH — consistent with the /submit and /lock 409 guards.
+    const docStatus = (docCheck.rows[0] as { status?: string }).status;
+    if (docStatus === 'locked' || docStatus === 'submitted') {
+      return res.status(409).json({ error: docStatus === 'submitted' ? 'DOCUMENT_SUBMITTED' : 'DOCUMENT_LOCKED' });
+    }
 
     const client = await pool.connect();
     try {
@@ -614,24 +626,31 @@ router.delete('/:id/sections/:key/evidence/:evId', async (req: Request, res: Res
 
     if (check.rows.length === 0) return send404(res);
 
-    // 21 CFR Part 11 §11.10(e): record the audit BEFORE removing the evidence,
-    // and AWAIT it. Previously the audit ran fire-and-forget AFTER the delete
-    // with a swallowed error — a crash in between, or an audit failure, left a
-    // deletion of regulated evidence with no audit trail. Auditing first and
-    // awaiting makes it fail-closed: if the governed-action write fails, the
-    // delete does not happen.
-    await writeMutation(
-      'resolve',
-      { target: `section:${id}:${key}`, reason: 'evidence unlinked', payload: { evidenceId: evId } },
-      userId,
-      orgId,
-      'api',
-      'documents',
-    );
-
-    await pool.query(`DELETE FROM c2c_document_section_evidence WHERE id = $1`, [evId]);
-
-    return res.status(204).send();
+    // 21 CFR Part 11 §11.10(e): audit the unlink and perform the DELETE in ONE
+    // transaction, so they are atomic — a failure of either rolls back both. The
+    // ledger never records a deletion of regulated evidence that didn't happen,
+    // and evidence is never deleted without its audit.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await writeMutation(
+        'resolve',
+        { target: `section:${id}:${key}`, reason: 'evidence unlinked', payload: { evidenceId: evId } },
+        userId,
+        orgId,
+        'api',
+        'documents',
+        client,
+      );
+      await client.query(`DELETE FROM c2c_document_section_evidence WHERE id = $1`, [evId]);
+      await client.query('COMMIT');
+      return res.status(204).send();
+    } catch (txnErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txnErr;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
     console.error('[c2c/documents] DELETE /:id/sections/:key/evidence/:evId', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -660,22 +679,33 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'ALREADY_LOCKED' });
     }
 
-    const result = await writeMutation(
-      'lock',
-      { target: `document:${req.params.id}`, reason: reason.trim(), reauth } as any,
-      userId,
-      orgId,
-      'api',
-      'documents',
-    );
-
-    await pool.query(
-      `UPDATE c2c_documents SET status = 'locked', locked_at = now(), updated_at = now()
-       WHERE id = $1`,
-      [req.params.id],
-    );
-
-    return res.json({ ...result, status: 'locked' });
+    // Atomic: the governed-action audit and the lock UPDATE commit or roll back
+    // together, so the ledger can never record a lock the document didn't take.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await writeMutation(
+        'lock',
+        { target: `document:${req.params.id}`, reason: reason.trim(), reauth } as any,
+        userId,
+        orgId,
+        'api',
+        'documents',
+        client,
+      );
+      await client.query(
+        `UPDATE c2c_documents SET status = 'locked', locked_at = now(), updated_at = now()
+         WHERE id = $1`,
+        [req.params.id],
+      );
+      await client.query('COMMIT');
+      return res.json({ ...result, status: 'locked' });
+    } catch (txnErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txnErr;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'INTERNAL_ERROR';
     if (msg === 'REAUTH_PASSWORD_REQUIRED' || msg.startsWith('REAUTH_')) {
@@ -713,23 +743,34 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'ALREADY_SUBMITTED' });
     }
 
-    const result = await writeMutation(
-      'transition',
-      { target: `document:${req.params.id}`, reason: reason.trim() },
-      userId,
-      orgId,
-      'api',
-      'documents',
-    );
-
-    await pool.query(
-      `UPDATE c2c_documents
-       SET status = 'submitted', submitted_at = now(), updated_at = now()
-       WHERE id = $1`,
-      [req.params.id],
-    );
-
-    return res.json({ ...result, status: 'submitted' });
+    // Atomic: the governed-action audit and the submit UPDATE commit or roll back
+    // together, so the ledger can never record a submission that didn't take.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await writeMutation(
+        'transition',
+        { target: `document:${req.params.id}`, reason: reason.trim() },
+        userId,
+        orgId,
+        'api',
+        'documents',
+        client,
+      );
+      await client.query(
+        `UPDATE c2c_documents
+         SET status = 'submitted', submitted_at = now(), updated_at = now()
+         WHERE id = $1`,
+        [req.params.id],
+      );
+      await client.query('COMMIT');
+      return res.json({ ...result, status: 'submitted' });
+    } catch (txnErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txnErr;
+    } finally {
+      client.release();
+    }
   } catch (err: unknown) {
     console.error('[c2c/documents] POST /:id/submit', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

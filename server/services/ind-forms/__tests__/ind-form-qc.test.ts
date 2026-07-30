@@ -8,7 +8,7 @@ import { runM1FormsQc } from '../ind-form-qc';
 import type { BuiltForm } from '../ind-form-data-builders';
 
 function form(formId: string, fields: Record<string, string | boolean> = {}, missingRequired: string[] = []): BuiltForm {
-  return { formId, fields, missingRequired, validationErrors: [] };
+  return { formId, fields, missingRequired, requiredFields: [], validationErrors: [] };
 }
 
 const sponsor = 'Acme Therapeutics';

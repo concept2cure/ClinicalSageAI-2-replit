@@ -36,7 +36,7 @@ function makeApp() {
 let app: express.Express;
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb();
+  harness = await createIndPgliteDb({ formArtifacts: true });
   holder.db = harness.db;
   app = makeApp();
   const ctx = { organizationId: 1, userId: 9 };
@@ -44,6 +44,8 @@ beforeAll(async () => {
   sponsorId = sponsor.id;
   const inv = await createInvestigator({ firstName: 'Pat', lastName: 'Smith', credentials: 'MD' }, ctx);
   investigatorId = inv.id;
+  // Seed a project (org 1) for the governed-artifact route's org-scoping check.
+  await harness.pglite.exec("INSERT INTO projects (id, organization_id, name) VALUES (1, 1, 'Test IND Project')");
   // PGlite bootstrap can exceed the global 10s hookTimeout when the full
   // suite runs under load; give it explicit headroom.
 }, 60_000);
@@ -140,6 +142,11 @@ describe('PDF rendering', () => {
     expect(res.headers['content-type']).toContain('application/pdf');
     expect(res.headers).toHaveProperty('x-form-field-coverage');
     expect(res.headers).toHaveProperty('x-form-used-official-template');
+    // 3674 is a pure dynamic XFA form with no fillable layer — with no official
+    // template installed it renders a faithful reconstruction, and the response
+    // must honestly say so (never the official Adobe-rendered PDF).
+    expect(res.headers['x-form-used-official-template']).toBe('false');
+    expect(res.headers['x-form-reconstructed']).toBe('true');
     expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 
@@ -157,6 +164,38 @@ describe('PDF rendering', () => {
     expect(Array.isArray(res.body.documents)).toBe(true);
     expect(res.body.documents.length).toBeGreaterThanOrEqual(1);
     expect(typeof res.body.documents[0].pdfBase64).toBe('string');
+  });
+
+  it('POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/3455/pdf-all')
+      .send({
+        sponsorName: 'Acme',
+        sponsor: { authorizedRepName: 'John Officer' },
+        investigators: [
+          { name: 'Dr. Pat Smith', financial: { hasDisclosableInterest: true, interestTypes: ['significant_equity'] } },
+          { name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } },
+        ],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.formId).toBe('FDA_3455');
+    expect(Array.isArray(res.body.documents)).toBe(true);
+    // Only the one disclosing investigator yields a form.
+    expect(res.body.documents.length).toBe(1);
+    expect(typeof res.body.documents[0].pdfBase64).toBe('string');
+  });
+
+  it('POST /3455/pdf-all → 200 with an empty documents array when none disclose', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/3455/pdf-all')
+      .send({
+        sponsorName: 'Acme',
+        sponsor: { authorizedRepName: 'John Officer' },
+        investigators: [{ name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } }],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.formId).toBe('FDA_3455');
+    expect(res.body.documents).toEqual([]);
   });
 });
 
@@ -195,6 +234,136 @@ describe('pdf-from-records (DB-backed)', () => {
     currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
     const res = await request(app).post('/api/ind-forms/FDA_1571/pdf-from-records').send({ sponsorId });
     expect(res.status).toBe(404);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
+
+describe('governed artifact (DB-backed)', () => {
+  it('401 when unauthenticated', async () => {
+    currentUser = null;
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectId: 1, sponsorName: 'Acme' });
+    expect(res.status).toBe(401);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+
+  it('400 without a projectId (a governed artifact must associate with a project)', async () => {
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ sponsorName: 'Acme' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION');
+  });
+
+  it('404 for a project in another org (never create an artifact under another tenant)', async () => {
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectId: 1, sponsorName: 'Acme' });
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+
+  it('201 persists a governed form artifact (structured field map) the platform now knows exists', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_1571/artifact')
+      .send({ projectId: 1, sponsorName: 'Acme Therapeutics', drugName: 'C2C-001' });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ formId: 'FDA_1571', projectId: 1 });
+    expect(typeof res.body.artifactId).toBe('string');
+    expect(typeof res.body.contentHash).toBe('string');
+    expect(Array.isArray(res.body.missingRequired)).toBe(true);
+
+    // A governed row now exists — org-/project-scoped, typed 'form'.
+    const { rows } = await harness.pglite.query(
+      'SELECT type, category, organization_id, project_id, content, content_hash FROM concept2cure_artifacts WHERE artifact_id = $1',
+      [res.body.artifactId],
+    );
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({ type: 'form', category: 'document', organization_id: 1, project_id: 1 });
+    // content is the deterministic structured field map, NOT PDF bytes.
+    const stored = JSON.parse((rows[0] as any).content);
+    expect(stored.formId).toBe('FDA_1571');
+    expect(stored).toHaveProperty('fields');
+    expect((rows[0] as any).content_hash).toBe(res.body.contentHash);
+  });
+});
+
+describe('per-investigator governed artifacts (DB-backed)', () => {
+  it('201 persists ONE governed artifact per investigator for 1572', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_1572/artifact-all')
+      .send({
+        projectId: 1,
+        sponsorName: 'Acme Therapeutics',
+        drugName: 'C2C-001',
+        investigators: [
+          { name: 'Dr. Pat Smith', facilityName: 'Site A', irbName: 'IRB A' },
+          { name: 'Dr. Kim Lee', facilityName: 'Site B', irbName: 'IRB B' },
+        ],
+      });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ formId: 'FDA_1572', projectId: 1 });
+    expect(Array.isArray(res.body.artifacts)).toBe(true);
+    expect(res.body.artifacts).toHaveLength(2);
+    // Each artifact names its own investigator.
+    expect(res.body.artifacts.map((a: any) => a.investigatorName).sort()).toEqual(['Dr. Kim Lee', 'Dr. Pat Smith']);
+
+    // Both governed rows exist, org-/project-scoped, titled per investigator.
+    const { rows } = await harness.pglite.query(
+      "SELECT title, organization_id, project_id, metadata FROM concept2cure_artifacts WHERE artifact_id = ANY($1)",
+      [res.body.artifacts.map((a: any) => a.artifactId)],
+    );
+    expect(rows.length).toBe(2);
+    for (const r of rows as any[]) {
+      expect(r.organization_id).toBe(1);
+      expect(r.project_id).toBe(1);
+      expect(String(r.title)).toContain('FDA Form 1572 —');
+    }
+  });
+
+  it('201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded)', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_3455/artifact-all')
+      .send({
+        projectId: 1,
+        sponsorName: 'Acme',
+        sponsor: { authorizedRepName: 'John Officer' },
+        studyTitle: 'A Phase 1 Study',
+        investigators: [
+          { name: 'Dr. Pat Smith', financial: { hasDisclosableInterest: true, interestTypes: ['significant_equity'] } },
+          { name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } },
+        ],
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.formId).toBe('FDA_3455');
+    expect(res.body.artifacts).toHaveLength(1);
+    expect(res.body.artifacts[0].investigatorName).toBe('Dr. Pat Smith');
+  });
+
+  it('201 with an empty artifacts array for 3455 when no investigator discloses (certify none on 3454)', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_3455/artifact-all')
+      .send({
+        projectId: 1,
+        sponsorName: 'Acme',
+        investigators: [{ name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } }],
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.artifacts).toEqual([]);
+  });
+
+  it('400 for a form that is not per-investigator (use /:formId/artifact instead)', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_1571/artifact-all')
+      .send({ projectId: 1, sponsorName: 'Acme' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION');
+  });
+
+  it('404 for a project in another org (never create per-investigator artifacts under another tenant)', async () => {
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_1572/artifact-all')
+      .send({ projectId: 1, investigators: [{ name: 'Dr. Pat Smith' }] });
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
     currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
   });
 });

@@ -103,8 +103,10 @@ function toText(value: unknown): string {
 
 /**
  * Coerce a value to a boolean for checkbox handling. Accepts real booleans and
- * common truthy/falsy string spellings ('true'/'false', 'yes'/'no', 'on'/'off',
- * '1'/'0', 'checked'). Anything else falls back to JS truthiness.
+ * common truthy/falsy string spellings. An UNRECOGNIZED value must NOT check an
+ * official-form box: JS truthiness would turn negative-meaning strings like
+ * 'None' / 'N/A' into a checked box, silently asserting something on ambiguous
+ * data. So only explicit affirmatives check; everything else stays unchecked.
  */
 function toBoolean(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
@@ -112,9 +114,10 @@ function toBoolean(value: unknown): boolean {
   if (typeof value === 'string') {
     const v = value.trim().toLowerCase();
     if (['true', 'yes', 'on', '1', 'checked', 'x'].includes(v)) return true;
-    if (['false', 'no', 'off', '0', 'unchecked', ''].includes(v)) return false;
+    if (['false', 'no', 'off', '0', 'unchecked', 'n', 'none', 'n/a', 'na', ''].includes(v)) return false;
   }
-  return Boolean(value);
+  // Unrecognized / non-primitive value: never check an official-form box on it.
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,13 +180,13 @@ export async function fillOfficialPdf(
           const text = toText(value);
           const options = dropdown.getOptions();
           if (!options.includes(text)) {
-            // The pdf-lib dropdown requires the value be a valid option unless
-            // it is explicitly added. Be honest: warn rather than silently
-            // injecting an out-of-range option that a real form may reject.
-            dropdown.addOptions([text]);
-            warnings.push(
-              `Dropdown "${acroField}" had no option "${text}" for key ` +
-                `"${canonicalKey}"; option was added before selecting.`,
+            // Do NOT inject an out-of-range option into an official form: a value
+            // the real form does not offer must never be reported as filled.
+            // Treat it like a missing/invalid field — the surrounding catch skips
+            // and warns (or throws under missingFieldPolicy:'error') — consistent
+            // with the radio-group case.
+            throw new Error(
+              `dropdown value "${text}" not in [${options.join(', ')}]`,
             );
           }
           dropdown.select(text);

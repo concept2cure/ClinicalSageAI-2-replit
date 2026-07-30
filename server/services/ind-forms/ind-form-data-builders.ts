@@ -42,6 +42,9 @@ export interface BuiltForm {
   fields: Record<string, FieldValue>;
   /** Ids of required fields that were left blank/false, in declaration order. */
   missingRequired: string[];
+  /** Ids of ALL required fields (present or not), in declaration order. Lets the
+   *  official-fill gate qualify a template on required-field placeability. */
+  requiredFields: string[];
   /** Deterministic semantic validation findings beyond simple presence checks. */
   validationErrors: Array<{ fieldId: string; code: string; message: string }>;
 }
@@ -73,12 +76,20 @@ export interface InvestigatorInfo {
   name?: string;
   /** Education, training and experience statement or CV reference (1572 Box 2). */
   qualifications?: string;
-  /** Name and address of the clinical site/facility (1572 Box 3). */
+  /** Name and address of the clinical site/facility (1572 Box 3), composite. */
   facilityNameAddress?: string;
+  /** Facility name only (1572 db_loc_name) — granular alternative to the composite. */
+  facilityName?: string;
+  /** Facility address only (1572 db_loc_address1) — granular alternative. */
+  facilityAddress?: string;
   /** Clinical laboratory facility name and address (1572 Box 4). */
   clinicalLabNameAddress?: string;
-  /** IRB name and address responsible for review (1572 Box 5). */
+  /** IRB name and address responsible for review (1572 Box 5), composite. */
   irbNameAddress?: string;
+  /** IRB name only (1572 db_irb_name) — granular alternative to the composite. */
+  irbName?: string;
+  /** IRB address only (1572 db_irb_address1) — granular alternative. */
+  irbAddress?: string;
   /** Names of sub-investigators (1572 Box 6). */
   subInvestigators?: string[];
   /**
@@ -88,11 +99,28 @@ export interface InvestigatorInfo {
   financial?: InvestigatorFinancialInfo;
 }
 
+/**
+ * The 21 CFR 54.4 disclosure categories, mapped to the Form 3455 checkboxes
+ * (verified from the official form's field tooltips):
+ *   - financial_arrangement → check1: arrangement where compensation could be
+ *     affected by the study outcome
+ *   - significant_payments  → check2: significant payments of other sorts (>$25k)
+ *   - proprietary_interest  → check3: proprietary interest in the tested product
+ *   - significant_equity    → check4: significant equity interest (21 CFR 54.2(b))
+ */
+export type FinancialInterestType =
+  | 'financial_arrangement'
+  | 'significant_payments'
+  | 'proprietary_interest'
+  | 'significant_equity';
+
 export interface InvestigatorFinancialInfo {
   /** True when the investigator has interests/arrangements requiring disclosure. */
   hasDisclosableInterest?: boolean;
-  /** Free-text description of the disclosable interest(s) for Form 3455. */
+  /** Free-text description of the disclosable interest(s) — draft/record only. */
   disclosureDescription?: string;
+  /** Which 21 CFR 54.4 categories apply — drives the Form 3455 interest checkboxes. */
+  interestTypes?: FinancialInterestType[];
 }
 
 export interface IndProjectMetadata {
@@ -186,14 +214,25 @@ interface FieldSpec {
   value: FieldValue;
   required: boolean;
   allowedValues?: readonly string[];
+  /**
+   * A validation-only gate, NOT a fillable form widget (e.g. "at least one
+   * disclosure interest-type is selected"). Still reported in missingRequired for
+   * QC, but excluded from requiredFields so it never blocks the official-fill gate
+   * (which qualifies a template on real form fields only).
+   */
+  qcOnly?: boolean;
 }
 
 function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
   const fields: Record<string, FieldValue> = {};
   const missingRequired: string[] = [];
+  const requiredFields: string[] = [];
   const validationErrors: BuiltForm['validationErrors'] = [];
   for (const spec of specs) {
     fields[spec.id] = spec.value;
+    // qcOnly gates stay out of requiredFields (the official-fill placeability
+    // gate) but still count toward missingRequired (QC readiness).
+    if (spec.required && !spec.qcOnly) requiredFields.push(spec.id);
     if (spec.required && !isPresent(spec.value)) {
       missingRequired.push(spec.id);
     }
@@ -205,7 +244,7 @@ function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
       });
     }
   }
-  return { formId, fields, missingRequired, validationErrors };
+  return { formId, fields, missingRequired, requiredFields, validationErrors };
 }
 
 // ---------------------------------------------------------------------------
@@ -282,14 +321,24 @@ export function buildForm1572(
     .join('; ');
 
   const specs: FieldSpec[] = [
-    // investigator_name / study_title reuse FDA_1572 registry field ids + labels.
+    // Required-ness mirrors the OFFICIAL FDA 1572 fillable fields, so the official
+    // AcroForm fill can qualify (see official-field-maps.ts). On the real form,
+    // Box 2 qualifications are satisfied by an ATTACHMENT (db_cv / db_oth_qual
+    // checkboxes), not an inline text field, and there is no study-title field —
+    // so both are carried for the draft/record but are not inline-required.
     { id: 'investigator_name', value: s(investigator.name), required: true },
-    { id: 'investigator_qualifications', value: s(investigator.qualifications), required: true },
-    { id: 'facility_name', value: s(investigator.facilityNameAddress), required: true },
+    { id: 'investigator_qualifications', value: s(investigator.qualifications), required: false },
+    // Facility + IRB split into name / address so the official 1572 fills
+    // db_loc_name and db_loc_address1 separately (not the whole "name and address"
+    // in the name box). The composite is the fallback for the manual-entry path
+    // that has no granular data.
+    { id: 'facility_name', value: s(investigator.facilityName) || s(investigator.facilityNameAddress), required: true },
+    { id: 'facility_address', value: s(investigator.facilityAddress), required: false },
     { id: 'clinical_lab_name_address', value: s(investigator.clinicalLabNameAddress), required: false },
-    { id: 'irb_name_address', value: s(investigator.irbNameAddress), required: true },
+    { id: 'irb_name', value: s(investigator.irbName) || s(investigator.irbNameAddress), required: true },
+    { id: 'irb_address', value: s(investigator.irbAddress), required: false },
     { id: 'sub_investigators', value: subInv, required: false },
-    { id: 'study_title', value: s(meta.studyTitle), required: true },
+    { id: 'study_title', value: s(meta.studyTitle), required: false },
     { id: 'protocol_numbers', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: false },
   ];
 
@@ -305,9 +354,11 @@ export function labels1572(): Record<string, string> {
   return {
     investigator_name: registryLabel(FORM_1572, 'investigator_name', 'Name of Investigator'),
     investigator_qualifications: 'Education, Training, and Experience (Qualifications)',
-    facility_name: registryLabel(FORM_1572, 'facility_name', 'Facility Name and Address'),
+    facility_name: 'Facility Name',
+    facility_address: 'Facility Address',
     clinical_lab_name_address: 'Clinical Laboratory Facility Name and Address',
-    irb_name_address: 'IRB Name and Address',
+    irb_name: 'IRB Name',
+    irb_address: 'IRB Address',
     sub_investigators: 'Sub-Investigators',
     study_title: registryLabel(FORM_1572, 'study_title', 'Study Title'),
     protocol_numbers: 'Protocol Number(s)',
@@ -374,9 +425,17 @@ export const FORM_3454 = 'FDA_3454';
 export function buildForm3454(meta: IndProjectMetadata): BuiltForm {
   const sponsorName = s(meta.sponsorName) || s(meta.sponsor?.name);
   const investigators = meta.investigators ?? [];
-  const noneHaveInterest = investigators.every(
-    (inv) => inv.financial?.hasDisclosableInterest !== true,
-  );
+  // A 21 CFR Part 54 certification of "NONE" must rest on POSITIVE confirmation,
+  // never on the ABSENCE of financial data. The prior `!== true` test auto-affirmed
+  // whenever `financial` was undefined (e.g. the master-data pdf-from-records path,
+  // where the investigators table carries no financial column), producing a
+  // certification with no factual basis. Require an explicit per-investigator
+  // `hasDisclosableInterest === false` for at least one covered investigator;
+  // otherwise no_disclosable_interests stays false and surfaces as missingRequired
+  // (the 3454 is not ready to certify until the sponsor actually confirms none).
+  const noneHaveInterest =
+    investigators.length > 0 &&
+    investigators.every((inv) => inv.financial?.hasDisclosableInterest === false);
   const investigatorNames = investigators
     .map((inv) => s(inv.name))
     .filter((n) => n.length > 0)
@@ -384,7 +443,9 @@ export function buildForm3454(meta: IndProjectMetadata): BuiltForm {
 
   const specs: FieldSpec[] = [
     { id: 'sponsor_name', value: sponsorName, required: true },
-    { id: 'drug_name', value: s(meta.drugName), required: true },
+    // The 3454 has no drug/product field — carry it for the record but do not
+    // inline-require it (an unmappable required field would force the fallback).
+    { id: 'drug_name', value: s(meta.drugName), required: false },
     { id: 'study_title', value: s(meta.studyTitle), required: false },
     { id: 'investigator_names', value: investigatorNames, required: false },
     // Certification is only valid when truly none have disclosable interests.
@@ -427,51 +488,67 @@ export function buildForm3455(meta: IndProjectMetadata): BuiltForm {
   const disclosing = investigators.filter(
     (inv) => inv.financial?.hasDisclosableInterest === true,
   );
+  const hasDisclosable = disclosing.length > 0;
 
-  // Build one combined disclosure string: "Name: description". Only emit a
-  // line when a description is actually present, so that a disclosable interest
-  // with no description leaves disclosure_details empty (and thus flagged
-  // missingRequired) rather than emitting a meaningless "Name: " line.
+  // The 3455 is per-investigator (a single `invesname`). This single-form entry
+  // point discloses the FIRST disclosing investigator; use buildAllForm3455 for
+  // one form per investigator.
+  const first = disclosing[0];
+  const types = new Set(first?.financial?.interestTypes ?? []);
+  const anyTypeSelected = types.size > 0;
+
+  // Free-text description(s) are carried for the draft/record only — the OFFICIAL
+  // 3455 has no free-text disclosure field; the interest is expressed via the
+  // 21 CFR 54.4 checkboxes below.
   const disclosureLines = disclosing
     .filter((inv) => s(inv.financial?.disclosureDescription).length > 0)
-    .map((inv) => {
-      const name = s(inv.name) || '(unnamed investigator)';
-      const desc = s(inv.financial?.disclosureDescription);
-      return `${name}: ${desc}`;
-    })
+    .map((inv) => `${s(inv.name) || '(unnamed investigator)'}: ${s(inv.financial?.disclosureDescription)}`)
     .join('\n');
 
-  // The disclosure detail is required when there is something to disclose.
-  const hasDisclosable = disclosing.length > 0;
-  const allHaveDescriptions =
-    hasDisclosable &&
-    disclosing.every((inv) => s(inv.financial?.disclosureDescription).length > 0);
-
   const specs: FieldSpec[] = [
-    { id: 'sponsor_name', value: sponsorName, required: true },
-    { id: 'drug_name', value: s(meta.drugName), required: true },
-    { id: 'study_title', value: s(meta.studyTitle), required: false },
-    { id: 'disclosure_details', value: disclosureLines, required: hasDisclosable },
-    // If this form is being produced, descriptions for every disclosing
-    // investigator must be present.
-    { id: 'disclosure_descriptions_complete', value: allHaveDescriptions, required: true },
-    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },
-    { id: 'authorized_rep_title', value: s(meta.sponsor?.authorizedRepTitle), required: false },
+    { id: 'sponsor_name', value: sponsorName, required: true },                                  // → appFirm
+    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },    // → appName
+    { id: 'authorized_rep_title', value: s(meta.sponsor?.authorizedRepTitle), required: false }, // → appTitle
+    { id: 'study_title', value: s(meta.studyTitle), required: false },                           // → nameofstudy
+    { id: 'investigator_name', value: s(first?.name), required: hasDisclosable },                // → invesname
+    // 21 CFR 54.4 interest-type checkboxes (mapping verified from field tooltips).
+    { id: 'interest_financial_arrangement', value: types.has('financial_arrangement'), required: false }, // → check1
+    { id: 'interest_significant_payments', value: types.has('significant_payments'), required: false },   // → check2
+    { id: 'interest_proprietary', value: types.has('proprietary_interest'), required: false },            // → check3
+    { id: 'interest_significant_equity', value: types.has('significant_equity'), required: false },        // → check4
+    // QC gate: a disclosure must name at least one interest type. Not a form
+    // widget, so it never blocks the official fill — only QC readiness.
+    { id: 'interest_type_selected', value: anyTypeSelected, required: hasDisclosable, qcOnly: true },
+    // Draft/record only (no official field).
+    { id: 'drug_name', value: s(meta.drugName), required: false, qcOnly: true },
+    { id: 'disclosure_details', value: disclosureLines, required: false, qcOnly: true },
   ];
 
   return assemble(FORM_3455, specs);
 }
 
+/** Build one 3455 per disclosing investigator (empty when none disclose). */
+export function buildAllForm3455(meta: IndProjectMetadata): BuiltForm[] {
+  const disclosing = (meta.investigators ?? []).filter(
+    (inv) => inv.financial?.hasDisclosableInterest === true,
+  );
+  return disclosing.map((inv) => buildForm3455({ ...meta, investigators: [inv] }));
+}
+
 export function labels3455(): Record<string, string> {
   return {
     sponsor_name: 'Name of Applicant/Sponsor',
-    drug_name: 'Name of Drug/Product',
-    study_title: 'Study Title',
-    disclosure_details: 'Disclosed Financial Interests/Arrangements (per investigator)',
-    disclosure_descriptions_complete:
-      'All disclosing investigators have a disclosure description',
     authorized_rep_name: 'Name of Authorized Representative',
     authorized_rep_title: 'Title of Authorized Representative',
+    study_title: 'Name of Clinical Study',
+    investigator_name: 'Name of Clinical Investigator',
+    interest_financial_arrangement: 'Financial arrangement (compensation affected by outcome)',
+    interest_significant_payments: 'Significant payments of other sorts (>$25,000)',
+    interest_proprietary: 'Proprietary interest in the tested product',
+    interest_significant_equity: 'Significant equity interest (21 CFR 54.2(b))',
+    interest_type_selected: 'At least one interest type is selected',
+    drug_name: 'Name of Drug/Product',
+    disclosure_details: 'Disclosed Financial Interests/Arrangements (per investigator)',
   };
 }
 
@@ -488,12 +565,21 @@ export function buildForm356h(meta: IndProjectMetadata): BuiltForm {
     { id: 'applicant_name', value: sponsorName, required: true },
     { id: 'applicant_address', value: s(meta.sponsor?.address), required: true },
     { id: 'application_type', value: applicationType, required: true, allowedValues: ['NDA', 'ANDA', 'BLA', 'Supplement'] },
+    // Derived selectors for the official form's application-type checkboxes
+    // (db_appl_type_1/2/3, verified export values NDA/ANDA/BLA). application_type
+    // above is the required datum; these mirror it onto the checkboxes so the
+    // official fill checks the right box. Non-required (Supplement selects none).
+    { id: 'appl_type_nda', value: applicationType === 'NDA', required: false },
+    { id: 'appl_type_anda', value: applicationType === 'ANDA', required: false },
+    { id: 'appl_type_bla', value: applicationType === 'BLA', required: false },
     { id: 'application_number', value: s(meta.applicationNumber), required: applicationType === 'Supplement' },
     { id: 'proprietary_established_name', value: s(meta.drugName), required: true },
     { id: 'dosage_form', value: s(meta.dosageForm), required: true },
     { id: 'route_of_administration', value: s(meta.routeOfAdministration), required: true },
     { id: 'indication', value: s(meta.indication), required: true },
-    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: true },
+    // The 356h signatory is a signature (btn_sign), not an inline text field, so
+    // the authorized-rep NAME is not an inline-required field on the official form.
+    { id: 'authorized_rep_name', value: s(meta.sponsor?.authorizedRepName), required: false },
     { id: 'authorized_rep_title', value: s(meta.sponsor?.authorizedRepTitle), required: false },
   ]);
 }
@@ -502,6 +588,9 @@ export function labels356h(): Record<string, string> {
   return {
     applicant_name: 'Applicant Name', applicant_address: 'Applicant Address',
     application_type: 'Application Type', application_number: 'Application Number',
+    appl_type_nda: 'Type: New Drug Application (NDA)',
+    appl_type_anda: 'Type: Abbreviated New Drug Application (ANDA)',
+    appl_type_bla: 'Type: Biologics License Application (BLA)',
     proprietary_established_name: 'Proprietary / Established Name', dosage_form: 'Dosage Form',
     route_of_administration: 'Route of Administration', indication: 'Indication(s)',
     authorized_rep_name: 'Authorized Representative', authorized_rep_title: 'Representative Title',
