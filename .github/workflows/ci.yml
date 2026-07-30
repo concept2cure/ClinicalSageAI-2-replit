@@ -103,12 +103,22 @@ jobs:
         # a document query.
         run: npm run check:security-patterns
 
-      - name: Proof tier — schema contracts + golden journeys
+      - name: Guardrails — proof surface must not shrink or overclaim
+        # The proof hierarchy (docs/architecture/PROOF_HIERARCHY.md) is only a
+        # ladder if it stays standing. This fails if a baselined proof file is
+        # deleted, if a journey/proof stops emitting its manifest, or if the
+        # hierarchy doc references a proof file that no longer exists — the
+        # silent-rot class that no individual test would catch.
+        run: npm run ci:proof-tier
+
+      - name: Proof tier — schema contracts + golden journeys + export contracts
         # These run inside `npm test` too, but they get their own blocking step
         # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/
         # C-14/C-16 remediations and must fail loudly and early, not be buried in
         # a full-suite run. They need no external database: the harness applies
-        # the real migration files to an in-process Postgres (PGlite).
+        # the real migration files to an in-process Postgres (PGlite). The
+        # export-contract proofs reopen real emitted PDF/DOCX bytes with
+        # independent readers (tiers 6-7 of the proof hierarchy).
         run: npm run test:proof-tier
 
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
