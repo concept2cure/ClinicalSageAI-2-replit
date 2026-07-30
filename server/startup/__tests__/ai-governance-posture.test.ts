@@ -65,7 +65,10 @@ describe('assertAiGovernancePostureForProduction', () => {
     );
     const msg = logger.warn.mock.calls[0][0] as string;
     expect(msg).toContain('AI_GROUNDEDNESS_ENFORCE');
-    expect(msg).not.toContain('AI_PII_ENFORCEMENT');
+    // The remediation footer always names both env vars ("set AI_PII_ENFORCEMENT=block
+    // and AI_GROUNDEDNESS_ENFORCE=1"), so assert on the PII *permissive clause* marker
+    // ("PHI/PII may reach…") which appears only when the PII gate itself is permissive.
+    expect(msg).not.toContain('PHI/PII');
   });
 
   it('does NOT change runtime behaviour — never blocks when only warning', () => {
