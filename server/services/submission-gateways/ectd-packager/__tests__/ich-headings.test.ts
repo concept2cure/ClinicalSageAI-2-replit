@@ -11,9 +11,14 @@ import {
   headingPathFor,
   buildIchModuleTree,
   allHeadingElements,
+  deepestHeadingFor,
+  isPlaceableSection,
+  findUnplaceableLeaves,
+  findDroppedLeaves,
   type RenderedLeaf,
 } from '../ich-headings';
 import type { EctdLeaf } from '../types';
+import { fallbackTemplates } from '../../../templates/ectd-fallback-templates';
 
 const leaf = (ctdSection: string): EctdLeaf => ({
   ctdSection,
@@ -127,5 +132,75 @@ describe('allHeadingElements', () => {
     expect(els.every((e) => /^m[2-5](-[a-z0-9-]+)?$/.test(e))).toBe(true);
     // No accidental duplicates.
     expect(new Set(els).size).toBe(els.length);
+  });
+});
+
+describe('section-format tolerance', () => {
+  it('resolves both the packager form (3.2.S.1) and the validator form (m3.2.S.1)', () => {
+    const bare = headingPathFor('3.2.S.1')!.map((h) => h.element);
+    const prefixed = headingPathFor('m3.2.S.1')!.map((h) => h.element);
+    expect(prefixed).toEqual(bare);
+    expect(prefixed[prefixed.length - 1]).toBe('m3-2-s-drug-substance');
+  });
+  it('tolerates surrounding whitespace and uppercase M', () => {
+    expect(deepestHeadingFor('  M5.3.5.1 ')?.element).toBe(
+      'm5-3-5-reports-of-efficacy-and-safety-studies',
+    );
+  });
+});
+
+describe('placeability + silent-drop detection', () => {
+  it('accepts a terminal (leaf-bearing) Module 2–5 section', () => {
+    expect(isPlaceableSection('3.2.S.1')).toBe(true);
+    expect(isPlaceableSection('m5.3.5')).toBe(true);
+  });
+  it('treats Module 1 as placeable (it lives in the regional backbone)', () => {
+    expect(isPlaceableSection('1.2')).toBe(true);
+    expect(isPlaceableSection('m1.14.1')).toBe(true);
+  });
+  it('rejects a bare container section that owns no leaves directly', () => {
+    // 3.2 resolves only to m3-2-body-of-data, which holds sub-headings, not leaves.
+    expect(isPlaceableSection('3.2')).toBe(false);
+    expect(deepestHeadingFor('3.2')?.element).toBe('m3-2-body-of-data');
+  });
+  it('rejects an out-of-range or empty section', () => {
+    expect(isPlaceableSection('6.1')).toBe(false);
+    expect(isPlaceableSection('')).toBe(false);
+  });
+  it('findDroppedLeaves flags only leaves that map to NO module (would vanish)', () => {
+    const leaves = [leaf('3.2.S.1'), leaf('6.1'), leaf('1.2'), leaf('xyz'), leaf('3.2')];
+    const dropped = findDroppedLeaves(leaves).map((l) => l.ctdSection);
+    // 6.1 + xyz vanish; 1.2 is Module 1 (regional, not dropped); 3.2 is a
+    // container placement (rendered, not dropped); 3.2.S.1 is fine.
+    expect(dropped.sort()).toEqual(['6.1', 'xyz']);
+  });
+  it('findUnplaceableLeaves is stricter — it also flags container placements', () => {
+    const leaves = [leaf('3.2.S.1'), leaf('3.2'), leaf('6.1')];
+    expect(findUnplaceableLeaves(leaves).map((l) => l.ctdSection).sort()).toEqual(['3.2', '6.1']);
+  });
+});
+
+describe('cross-validation against the repo CTD template registry', () => {
+  const sectionOf = (title: string) => /^Module\s+([\d.SPAR]+)\b/i.exec(title)?.[1] ?? '';
+
+  it('every Module 2–5 template section lands in its declared module; Module 1 is regional', () => {
+    const checked = fallbackTemplates.filter((t) => sectionOf(t.title));
+    expect(checked.length).toBeGreaterThan(0);
+    for (const t of checked) {
+      const section = sectionOf(t.title);
+      if (t.module_number === '1') {
+        // Module 1 is not in the index tree (it belongs to the regional
+        // backbone), but it must still be recognized as placeable.
+        expect(headingPathFor(section), `${section} should be regional`).toBeNull();
+        expect(isPlaceableSection(section)).toBe(true);
+        continue;
+      }
+      const path = headingPathFor(section);
+      expect(path, `${section} (${t.title}) must resolve to a heading`).not.toBeNull();
+      expect(path![0].section, `${section} should sit in Module ${t.module_number}`).toBe(
+        t.module_number,
+      );
+      expect(isPlaceableSection(section), `${section} should be placeable`).toBe(true);
+    }
   });
 });
