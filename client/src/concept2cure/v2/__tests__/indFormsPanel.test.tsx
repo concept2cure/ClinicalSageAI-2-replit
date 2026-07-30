@@ -23,13 +23,25 @@ beforeEach(() => {
       return { ok: true, status: 200, json: async () => ({ formId: '1571', fields: { sponsorName: body.sponsorName }, missingRequired: ['drugName', 'indication'] }) } as Response;
     }
     if (method === 'POST' && url === '/api/ind-forms/1571/pdf') {
-      return { ok: true, status: 200, blob: async () => new Blob(['%PDF-1.7']), json: async () => null, headers: { get: (k: string) => (k === 'X-Form-Field-Coverage' ? '8/14' : null) } } as unknown as Response;
+      // 1571 is a dynamic-XFA form → the engine returns a reconstruction, and the
+      // response headers say so honestly (not the official Adobe-rendered form).
+      const h: Record<string, string> = {
+        'X-Form-Field-Coverage': '1.000',
+        'X-Form-Used-Official-Template': 'false',
+        'X-Form-Reconstructed': 'true',
+      };
+      return { ok: true, status: 200, blob: async () => new Blob(['%PDF-1.7']), json: async () => null, headers: { get: (k: string) => h[k] ?? null } } as unknown as Response;
+    }
+    if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
+      return { ok: true, status: 201, json: async () => ({ artifactId: 'artifact_indform_1571_x', formId: 'FDA_1571', projectId: 7, ready: false, missingRequired: ['drugName'], contentHash: 'abc' }) } as Response;
     }
     return { ok: true, status: 200, json: async () => ({}) } as Response;
   });
   URL.createObjectURL = vi.fn(() => 'blob:x');
   URL.revokeObjectURL = vi.fn();
+  delete (window as any).C2C_PROJECT;
 });
+afterEach(() => { delete (window as any).C2C_PROJECT; });
 
 describe('IndFormsPanel — real FDA forms engine', () => {
   it('lists the supported forms from the engine', async () => {
@@ -59,19 +71,47 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     expect(note).toHaveBeenCalledWith(expect.stringMatching(/2 required field/));
   });
 
-  it('downloads the streamed FDA PDF and reports the coverage header', async () => {
+  it('downloads the streamed FDA PDF and reports the honest render kind + coverage', async () => {
     const note = vi.fn();
     render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
     fireEvent.click(screen.getAllByRole('button', { name: /PDF/ })[0]);
     await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-forms/1571/pdf')).toBe(true));
     expect(URL.createObjectURL).toHaveBeenCalled();
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/coverage 8\/14/)));
+    // The tester is told honestly that 1571 is a reconstruction, not the official
+    // form, with the coverage — never a bare "rendered by the real engine".
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/reconstruction — NOT the official/)));
+    expect(note).toHaveBeenCalledWith(expect.stringMatching(/coverage 1\.000/));
   });
 
   it('surfaces the regulatory-author role gate honestly', async () => {
     apiRequest.mockImplementation(async () => ({ ok: false, status: 403, json: async () => ({ error: 'FORBIDDEN' }) } as Response));
     render(<IndFormsPanel note={vi.fn()} />);
     expect(await screen.findByText('Regulatory-author role required')).toBeTruthy();
+  });
+
+  it('saves a governed artifact to the open project’s dossier', async () => {
+    (window as any).C2C_PROJECT = { id: 7 };
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Save to dossier/ })[0]);
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[1] === '/api/ind-forms/1571/artifact');
+      expect(call).toBeTruthy();
+      // The project id is threaded from C2C_PROJECT, never guessed.
+      expect(call![2]).toMatchObject({ projectId: 7 });
+    });
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier as a governed artifact/)));
+  });
+
+  it('does NOT save (or guess a project) when no project is open', async () => {
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Save to dossier/ })[0]);
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/Open a project first/)));
+    // No artifact call was made — the panel never invents a project id.
+    expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-forms/1571/artifact')).toBe(false);
   });
 });

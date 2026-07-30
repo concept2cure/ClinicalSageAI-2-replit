@@ -1,10 +1,13 @@
 /**
- * Part 11 contract test — c2c/documents evidence delete audits before deleting.
+ * Part 11 contract test — c2c/documents evidence delete audits ATOMICALLY.
  *
- * The DELETE /:id/sections/:key/evidence/:evId handler previously deleted the
- * regulated evidence and THEN fired a non-awaited writeMutation with a swallowed
- * error — a crash in between, or an audit failure, left a deletion with no audit
- * trail (§11.10(e)). The handler now audits first and awaits it (fail-closed).
+ * The DELETE /:id/sections/:key/evidence/:evId handler once deleted the regulated
+ * evidence and THEN fired a non-awaited writeMutation with a swallowed error, then
+ * later audited-first-but-in-a-separate-transaction. It now runs the governed
+ * audit and the DELETE in ONE transaction (writeMutation with the caller's
+ * client), so a failure of either rolls back both — the ledger never records a
+ * deletion that didn't happen, and evidence is never deleted without its audit
+ * (§11.10(e)).
  *
  * Mocks the data layer + the governed-action writer, so it runs without a DB.
  */
@@ -19,14 +22,20 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 
-const { order, poolQuery, writeMutationMock, state } = vi.hoisted(() => ({
+const { order, poolQuery, clientQuery, writeMutationMock, state } = vi.hoisted(() => ({
   order: [] as string[],
   poolQuery: vi.fn(),
+  clientQuery: vi.fn(),
   writeMutationMock: vi.fn(),
   state: { writeShouldThrow: false, evidenceFound: true },
 }));
 
-vi.mock('../../db', () => ({ pool: { query: poolQuery } }));
+vi.mock('../../db', () => ({
+  pool: {
+    query: poolQuery,
+    connect: vi.fn(async () => ({ query: clientQuery, release: vi.fn() })),
+  },
+}));
 vi.mock('../../routes/c2c/actions', () => ({ writeMutation: writeMutationMock }));
 
 let app: express.Express;
@@ -37,13 +46,22 @@ beforeEach(async () => {
   state.writeShouldThrow = false;
   state.evidenceFound = true;
 
+  // Ownership check runs on the pool (no transaction needed for a read).
   poolQuery.mockImplementation(async (sql: string) => {
+    if (/SELECT\s+ev\.id/i.test(sql)) {
+      return { rows: state.evidenceFound ? [{ id: 'ev1' }] : [] };
+    }
+    return { rows: [] };
+  });
+
+  // The transaction (BEGIN/COMMIT/ROLLBACK) and the DELETE run on the client.
+  clientQuery.mockImplementation(async (sql: string) => {
+    if (/^\s*BEGIN/i.test(sql)) { order.push('begin'); return { rows: [] }; }
+    if (/^\s*COMMIT/i.test(sql)) { order.push('commit'); return { rows: [] }; }
+    if (/^\s*ROLLBACK/i.test(sql)) { order.push('rollback'); return { rows: [] }; }
     if (/DELETE\s+FROM\s+c2c_document_section_evidence/i.test(sql)) {
       order.push('delete');
       return { rows: [], rowCount: 1 };
-    }
-    if (/SELECT\s+ev\.id/i.test(sql)) {
-      return { rows: state.evidenceFound ? [{ id: 'ev1' }] : [] };
     }
     return { rows: [] };
   });
@@ -68,21 +86,24 @@ const del = () =>
   request(app).delete('/api/c2c/documents/10/sections/m2/evidence/ev1');
 
 describe('Part 11 — c2c evidence delete audit ordering', () => {
-  it('audits BEFORE deleting the regulated evidence', async () => {
+  it('audits and deletes atomically in one transaction (audit before delete, then commit)', async () => {
     const res = await del();
     expect(res.status).toBe(204);
-    expect(order).toEqual(['audit', 'delete']);
+    // One transaction: audit written, then the delete, then commit.
+    expect(order).toEqual(['begin', 'audit', 'delete', 'commit']);
   });
 
-  it('fails closed — an audit-write failure blocks the delete', async () => {
+  it('fails closed — an audit-write failure rolls back the transaction; nothing is deleted', async () => {
     state.writeShouldThrow = true;
     const res = await del();
     expect(res.status).toBe(500);
-    expect(order).toEqual(['audit']); // audit attempted, delete never reached
+    // audit attempted, transaction rolled back, delete never reached, no commit.
+    expect(order).toEqual(['begin', 'audit', 'rollback']);
     expect(order).not.toContain('delete');
+    expect(order).not.toContain('commit');
   });
 
-  it('404 on unowned evidence performs neither audit nor delete', async () => {
+  it('404 on unowned evidence opens no transaction and performs neither audit nor delete', async () => {
     state.evidenceFound = false;
     const res = await del();
     expect(res.status).toBe(404);
