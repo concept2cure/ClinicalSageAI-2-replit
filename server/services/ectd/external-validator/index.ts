@@ -16,7 +16,7 @@ export { NoopExternalValidator } from './noop-validator';
 export { LorenzEValidatorAdapter } from './lorenz-adapter';
 export { FdaCriteriaValidatorAdapter, validateFdaCriteria, fdaCriteriaFallbackEnabled } from './fda-criteria-adapter';
 
-import type { ExternalValidator } from './types';
+import type { ExternalValidator, ExternalValidationReport, ValidateArgs } from './types';
 import { NoopExternalValidator } from './noop-validator';
 import { LorenzEValidatorAdapter } from './lorenz-adapter';
 import { FdaCriteriaValidatorAdapter } from './fda-criteria-adapter';
@@ -37,4 +37,33 @@ export async function resolveExternalValidator(): Promise<ExternalValidator> {
   return new NoopExternalValidator();
 }
 
-export default { resolveExternalValidator };
+/**
+ * Resolve the active external validator, run it against an unzipped package, and
+ * return its report. A configured engine that THROWS (spawn/parse failure) is
+ * caught and reported as a fail-closed un-run report (ran:false, passed:false) —
+ * never a fabricated pass — so the dispatch gate blocks under
+ * ECTD_REQUIRE_EVALIDATOR. Callers feed this into evaluateExternalValidationGate.
+ */
+export async function runExternalValidation(args: ValidateArgs): Promise<ExternalValidationReport> {
+  const validator = await resolveExternalValidator();
+  try {
+    return await validator.validate(args);
+  } catch (err) {
+    return {
+      validator: validator.name,
+      profile: args.profile ?? args.region,
+      ranAt: new Date(),
+      ran: false,
+      findings: [{
+        ruleId: 'EVALIDATOR-RUN-FAILED',
+        severity: 'error',
+        message: `External validator "${validator.name}" failed to run: ${err instanceof Error ? err.message : String(err)}`,
+      }],
+      errorCount: 0, // un-run: not counted as content errors, but ran:false blocks when required
+      warningCount: 0,
+      passed: false,
+    };
+  }
+}
+
+export default { resolveExternalValidator, runExternalValidation };
