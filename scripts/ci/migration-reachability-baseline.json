@@ -8,7 +8,7 @@
     "files install-fresh.mjs names explicitly",
     "the drizzle push surface (pgTable/pgView in shared/)"
   ],
-  "count": 45,
+  "count": 21,
   "tables": {
     "ai_provider_audit_log": {
       "createdOnlyBy": [
@@ -16,19 +16,6 @@
       ],
       "referencedBy": [
         "server/services/aiProviderRouter.ts"
-      ]
-    },
-    "ana_artifact_citation_runs": {
-      "createdOnlyBy": [
-        "db/migrations/20260508_artifact_citations.sql"
-      ],
-      "referencedBy": [
-        "server/services/ana/citation-engine.ts",
-        "server/services/ana/citation-export.ts",
-        "server/services/ana/citation-health.ts",
-        "server/services/ana/citation-run-pruner.ts",
-        "server/services/ana/citation-section-coverage.ts",
-        "server/services/ana/citation-trends.ts"
       ]
     },
     "ana_kernel_decision_log": {
@@ -39,134 +26,12 @@
         "server/src/control-plane/persistent-queries.ts"
       ]
     },
-    "artifact_compute_attempts": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_artifact_compute_plane.sql"
-      ],
-      "referencedBy": [
-        "server/services/compute/computeService.ts",
-        "server/services/workflow/temporalBridge.ts"
-      ]
-    },
-    "artifact_compute_jobs": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_artifact_compute_plane.sql"
-      ],
-      "referencedBy": [
-        "server/services/compute/computeService.ts",
-        "server/services/workflow/temporalBridge.ts"
-      ]
-    },
-    "artifact_compute_outputs": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_artifact_compute_plane.sql"
-      ],
-      "referencedBy": [
-        "server/services/compute/computeService.ts"
-      ]
-    },
-    "artifact_compute_runtime_profiles": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_artifact_compute_plane.sql"
-      ],
-      "referencedBy": [
-        "server/services/compute/runtimeProfiles.ts"
-      ]
-    },
-    "c2c_communication_timeline_events": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_regulatory_correspondence_os.sql"
-      ],
-      "referencedBy": [
-        "server/routes/regulatory-correspondence.ts"
-      ]
-    },
-    "c2c_correspondence": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_regulatory_correspondence_os.sql"
-      ],
-      "referencedBy": [
-        "server/routes/regulatory-correspondence.ts",
-        "server/routes/report-os.ts",
-        "server/routes/submission-ops.ts"
-      ]
-    },
-    "c2c_correspondence_issues": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_regulatory_correspondence_os.sql"
-      ],
-      "referencedBy": [
-        "server/routes/c2c/actions.ts",
-        "server/routes/regulatory-correspondence.ts",
-        "server/routes/report-os.ts",
-        "server/routes/submission-ops.ts"
-      ]
-    },
-    "c2c_mailbox_connections": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_regulatory_correspondence_os.sql"
-      ],
-      "referencedBy": [
-        "server/routes/regulatory-correspondence.ts"
-      ]
-    },
-    "c2c_response_packages": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_regulatory_correspondence_os.sql"
-      ],
-      "referencedBy": [
-        "server/routes/regulatory-correspondence.ts"
-      ]
-    },
-    "c2c_submissions": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_regulatory_correspondence_os.sql"
-      ],
-      "referencedBy": [
-        "server/routes/regulatory-correspondence.ts"
-      ]
-    },
     "cer_jobs": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql"
       ],
       "referencedBy": [
         "server/services/cerGenerator.ts"
-      ]
-    },
-    "concept2cure_agency_communications": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_communication_center_scaffold.sql"
-      ],
-      "referencedBy": [
-        "server/routes/concept2cure-communication-center.ts",
-        "server/routes/concept2cure.ts"
-      ]
-    },
-    "concept2cure_authority_profiles": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_communication_center_scaffold.sql"
-      ],
-      "referencedBy": [
-        "server/routes/concept2cure-communication-center.ts",
-        "server/routes/concept2cure.ts"
-      ]
-    },
-    "concept2cure_publishops_services": {
-      "createdOnlyBy": [
-        "db/migrations/20260331_communication_center_scaffold.sql"
-      ],
-      "referencedBy": [
-        "server/routes/concept2cure-communication-center.ts",
-        "server/routes/concept2cure.ts"
-      ]
-    },
-    "concept2cure_submission_center_items": {
-      "createdOnlyBy": [
-        "db/migrations/20260401_submission_center_items.sql"
-      ],
-      "referencedBy": [
-        "server/routes/concept2cure-communication-center.ts"
       ]
     },
     "conversation_os_accepted_artifact_versions": {
@@ -284,20 +149,6 @@
         "server/db/maudDb.ts"
       ]
     },
-    "precedent": {
-      "createdOnlyBy": [
-        "db/migrations/20260306_precedent_engine.sql",
-        "db/migrations/20260322_quality_checkpoints.sql"
-      ],
-      "referencedBy": [
-        "server/services/ana-ri/command-executor.ts",
-        "server/services/ana-ri/persona.ts",
-        "server/services/ana/document-intake-tool-defs.ts",
-        "server/services/clinical-regulatory-evidence/study-design-evidence.service.ts",
-        "server/services/intelligence/outcome-precedent-ingestor.ts",
-        "server/services/precedent-engine.ts"
-      ]
-    },
     "programs": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/001_create_core_tables.sql"
@@ -324,38 +175,6 @@
         "server/services/keywordExtractionService.ts"
       ]
     },
-    "regulatory_harmonization": {
-      "createdOnlyBy": [
-        "db/migrations/081_grdhe_regulatory_mapping_layer.sql"
-      ],
-      "referencedBy": [
-        "server/services/grdhe/grdheService.ts"
-      ]
-    },
-    "stab_audit": {
-      "createdOnlyBy": [
-        "db/migrations/026_stability_step4.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_inuse": {
-      "createdOnlyBy": [
-        "db/migrations/026_stability_step4.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_oot_rules": {
-      "createdOnlyBy": [
-        "db/migrations/026_stability_step4.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
     "studies": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/001_create_core_tables.sql"
@@ -375,39 +194,6 @@
         "server/services/cerGenerator.ts",
         "server/services/lumen-instruction-engine.ts",
         "server/services/templateService.ts"
-      ]
-    },
-    "user_work_queue": {
-      "createdOnlyBy": [
-        "db/migrations/20260220_user_intelligence_platform.sql"
-      ],
-      "referencedBy": [
-        "server/routes/module-subscriptions.ts",
-        "server/services/user-intelligence.ts"
-      ]
-    },
-    "user_work_sessions": {
-      "createdOnlyBy": [
-        "db/migrations/20260220_user_intelligence_platform.sql"
-      ],
-      "referencedBy": [
-        "server/services/user-intelligence.ts"
-      ]
-    },
-    "weekly_overage_ledger": {
-      "createdOnlyBy": [
-        "db/migrations/20260621_weekly_usage_limits.sql"
-      ],
-      "referencedBy": [
-        "server/services/weekly-usage-limits.ts"
-      ]
-    },
-    "weekly_usage_limits": {
-      "createdOnlyBy": [
-        "db/migrations/20260621_weekly_usage_limits.sql"
-      ],
-      "referencedBy": [
-        "server/services/weekly-usage-limits.ts"
       ]
     }
   }

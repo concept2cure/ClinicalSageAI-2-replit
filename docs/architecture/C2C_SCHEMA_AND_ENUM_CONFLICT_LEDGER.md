@@ -2049,9 +2049,82 @@ rebase, minutes after it merged. Both also arrived without the enforced eCTD aud
 header, so they were additionally taking the Lint job — and every downstream guard
 — red.
 
+**Ratcheted to 21 by C-34 below.**
+
 That is the whole argument for the guard in one day: this class is not a backlog
 of historical mistakes being worked off, it is an **ongoing rate**. Wiring the 42
 files matters less than the fact that number 43 now cannot land silently.
+
+---
+
+## C-34 — A blank database was the wrong bar; base-schema fixture takes the debt 45 → 21 *(high — FIXED 2026-07-30)*
+
+C-33 screened candidates by applying them to a **blank** Postgres and left 20 files
+baselined as "needs a prerequisite a blank DB lacks", explicitly refusing to wire
+them on the assumption they would be fine on a real database. That refusal was
+right — but the bar was wrong. A blank database is not the state a deploy
+presents, so the screen was rejecting files for legitimately building on core
+tables. Refusing to wire an unverified file and refusing to *build a real
+verifier* are different things; C-33 did the first and called it done.
+
+### The fixture
+
+`baseSchemaFixture()` builds the state a deploy actually presents:
+
+- the contrib extensions a real cluster has — `pgcrypto`, `pg_trgm`, `uuid-ossp`,
+  `citext` (PGlite ships all four);
+- the named schemas (`predicate`, `precedent`, `core`, `intelligence`,
+  `regulatory`);
+- **the drizzle journal's 290 `CREATE TABLE` blocks** — the base lineage
+  `deploy-migrate`'s `BASE_SCHEMA_SENTINELS` preflight insists on before it will
+  apply anything;
+- then the whole C2C set ahead of the candidate, so ordering dependencies are real
+  (`026_stability_step4` needs `stab_studies` from the already-wired
+  `022_stability_v2`; `20260520_growth_mindset_extensions` needs
+  `intelligence.failure_patterns` from `20260520_ana_failure_learning`).
+
+One detail matters more than it looks: a failed statement leaves the session in an
+aborted transaction, so **every** failure must be followed by `ROLLBACK` or all
+subsequent files fail with a misleading "current transaction is aborted". That is
+exactly what the real applier does between files; a fixture that omits it reports
+one real failure and 19 phantoms.
+
+### Result
+
+**15 of the 20 now verify and are wired.** The whole C2C set (113 files) then
+applies against the fixture **twice with identical results** — proving the batch is
+idempotent — and the sweep leaves **zero** integer-keyed tenant tables unpoliced.
+
+Five stay unwired, each for a **named** reason rather than an unexamined
+"probably fine", and are pinned by a test so a later batch cannot sweep them in on
+momentum:
+
+| file | reason |
+|---|---|
+| `20260207_phase6_6a_fda_clearance_universe` | requires the `vector` extension — PGlite cannot load it, so this harness **cannot verify it at all** |
+| `20260306_precedent_engine` | same |
+| `20260208_phase6_6a_risk_rollups` | needs `predicate.fda_510k_clearances` from the first of those two; blocked behind them |
+| `068_regulatory_schema_alignment` | needs `regulatory.submissions`, which **nothing in the repo creates** — a real missing-creator defect (C-11 class), not a reachability one |
+| `20260125_enhanced_cortex_schema` | its `lumen_knowledge_graph_edges_source_atom_id_fkey` cannot be implemented against the canonical `lumen_data_atoms` key type — a real shape conflict |
+
+The distinction is the point: three are genuine defects that need fixing, and two
+are simply **beyond what this harness can prove**. Wiring an unverifiable file into
+the deploy path is the precise habit this ledger exists to break, so they wait for
+a pgvector-capable harness rather than an assumption.
+
+### Proof
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` grew to 9 cases and
+now runs against the fixture rather than a blank DB — a strictly stronger proof,
+since the slice it applies twice now includes every batch-3 file. It also pins the
+three identity-collision exclusions (C-33) and the five above.
+
+### Running total
+
+`ci:migration-reachability` baseline: **112 → 108 → 45 → 21** across C-32/33/34.
+The 21 remaining are the five above, the three uuid/text identity collisions, and
+the `_consolidated/` tree (C-29 Class 3) — i.e. what is left is no longer
+reachability debt but a short list of specific, named defects and decisions.
 
 ---
 

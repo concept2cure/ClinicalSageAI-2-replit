@@ -484,6 +484,53 @@ export const C2C_MIGRATION_FILES = [
   // rebase. Same screen: idempotent, self-contained, integer organization_id.
   'db/migrations/20260801_program_journey_store.sql',
 
+  // ── Deploy-dead creators, batch 3 (ledger C-34) ──────────────────────────
+  // The fifteen files C-33 left baselined as "needs a prerequisite a blank DB
+  // lacks". C-33 refused to wire them on the assumption they would be fine on a
+  // real database; C-34 stops assuming and verifies them against a BASE-SCHEMA
+  // FIXTURE instead — the drizzle journal's 290 CREATE TABLE blocks, the contrib
+  // extensions a real cluster has (pgcrypto / pg_trgm / uuid-ossp / citext), the
+  // named schemas, and then the whole C2C set applied ahead of them, i.e. the
+  // state a deploy actually presents. Each was then applied TWICE and checked for
+  // a non-integer tenant key, exactly as batches 1-2 were.
+  //
+  // Order matters here and is the order they were verified in: several depend on
+  // tables the entries ABOVE create (026_stability_step4 needs stab_studies from
+  // 022_stability_v2; 20260520_growth_mindset_extensions needs
+  // intelligence.failure_patterns from 20260520_ana_failure_learning), which is
+  // precisely why they failed the blank-DB screen and pass this one.
+  'db/migrations/026_stability_step4.sql',
+  'db/migrations/081_grdhe_regulatory_mapping_layer.sql',
+  'db/migrations/20260209_phase6_6a_fda_ingest_runs.sql',
+  'db/migrations/20260211_phase6_6d_defense_packets.sql',
+  'db/migrations/20260211_phase6_6e_proof_pack_exports.sql',
+  'db/migrations/20260211_phase7_0a_render_jobs.sql',
+  'db/migrations/20260220_user_intelligence_platform.sql',
+  'db/migrations/20260322_quality_checkpoints.sql',
+  'db/migrations/20260326_artifact_compute_plane.sql',
+  'db/migrations/20260331_communication_center_scaffold.sql',
+  'db/migrations/20260331_regulatory_correspondence_os.sql',
+  'db/migrations/20260401_submission_center_items.sql',
+  'db/migrations/20260508_artifact_citations.sql',
+  'db/migrations/20260520_growth_mindset_extensions.sql',
+  'db/migrations/20260621_weekly_usage_limits.sql',
+  //
+  // Five remain unwired, each for a named reason rather than an unexamined
+  // "probably fine" (they stay in the ci:migration-reachability baseline):
+  //   • 20260207_phase6_6a_fda_clearance_universe, 20260306_precedent_engine —
+  //     require the `vector` extension, which PGlite cannot load, so they CANNOT
+  //     be verified by this harness at all. They may well be correct on a real
+  //     cluster; wiring an unverifiable file into the deploy path is the exact
+  //     habit this ledger exists to break.
+  //   • 20260208_phase6_6a_risk_rollups — needs predicate.fda_510k_clearances
+  //     from the first of those two; blocked behind it.
+  //   • 068_regulatory_schema_alignment — needs `regulatory.submissions`, which
+  //     NOTHING in the repo creates. A real missing-creator defect (C-11 class),
+  //     not a reachability one.
+  //   • 20260125_enhanced_cortex_schema — its
+  //     lumen_knowledge_graph_edges_source_atom_id_fkey cannot be implemented
+  //     against the canonical lumen_data_atoms key type. A real shape conflict.
+
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and
   // policies only the tables that exist at that moment. Every table added by the

@@ -27,6 +27,10 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
+import { uuid_ossp } from '@electric-sql/pglite/contrib/uuid_ossp';
+import { citext } from '@electric-sql/pglite/contrib/citext';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,9 +39,45 @@ import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
 const BATCH_START = 'db/migrations/022_stability_v2.sql';
-const T = 120_000;
+const T = 180_000;
 
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
+
+/**
+ * A BASE-SCHEMA fixture: the state a deploy actually presents to the migration
+ * set, rather than an empty database. Batch 3 (C-34) exists precisely because a
+ * blank DB is the WRONG bar — files that legitimately build on core tables fail
+ * it, and refusing to wire them on that basis is as wrong as wiring them
+ * unverified. This builds the real thing: the contrib extensions a real cluster
+ * has, the named schemas, and the drizzle journal's CREATE TABLE blocks (the base
+ * lineage deploy-migrate's BASE_SCHEMA_SENTINELS preflight insists on).
+ *
+ * `vector` is deliberately absent — PGlite cannot load it. That is why the two
+ * pgvector-dependent files stay unwired and baselined rather than assumed good.
+ */
+async function baseSchemaFixture(): Promise<PGlite> {
+  const pg = new PGlite({ extensions: { pgcrypto, pg_trgm, uuid_ossp, citext } });
+  const safe = async (sql: string) => {
+    try {
+      await pg.exec(sql);
+    } catch {
+      // A failed statement leaves the session in an aborted transaction; the real
+      // applier issues the same ROLLBACK between files.
+      await pg.exec('ROLLBACK').catch(() => {});
+    }
+  };
+  for (const ext of ['pgcrypto', 'pg_trgm', '"uuid-ossp"', 'citext']) {
+    await safe(`CREATE EXTENSION IF NOT EXISTS ${ext};`);
+  }
+  for (const s of ['predicate', 'precedent', 'core', 'intelligence', 'regulatory']) {
+    await safe(`CREATE SCHEMA IF NOT EXISTS ${s};`);
+  }
+  const journal = readMig('migrations/0000_sweet_joseph.sql');
+  for (const m of journal.matchAll(/CREATE TABLE "([a-z0-9_]+)" \([\s\S]*?\n\);/g)) {
+    await safe(m[0].replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS '));
+  }
+  return pg;
+}
 
 describe('C-33: the sweep is positioned to see everything the set creates', () => {
   it('is in C2C_MIGRATION_FILES, and is the LAST entry', () => {
@@ -65,21 +105,41 @@ describe('C-33: the sweep is positioned to see everything the set creates', () =
       expect(C2C_MIGRATION_FILES).not.toContain(excluded);
     }
   });
+
+  it('does NOT wire the five files C-34 could not verify or found defective', () => {
+    // Each is unwired for a NAMED reason, not an unexamined "probably fine".
+    // Pinning them stops a future batch from sweeping them in on momentum: two
+    // require pgvector (unverifiable by this harness at all), one is blocked
+    // behind them, and two have real defects — a missing `regulatory.submissions`
+    // creator and an unimplementable FK against lumen_data_atoms.
+    for (const unwired of [
+      'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
+      'db/migrations/20260306_precedent_engine.sql',
+      'db/migrations/20260208_phase6_6a_risk_rollups.sql',
+      'db/migrations/068_regulatory_schema_alignment.sql',
+      'db/migrations/20260125_enhanced_cortex_schema.sql',
+    ]) {
+      expect(C2C_MIGRATION_FILES).not.toContain(unwired);
+    }
+  });
 });
 
 describe('C-33: the batch applies in set order, twice, and ends fully isolated', () => {
   let pg: PGlite;
 
   beforeAll(async () => {
-    pg = new PGlite();
+    pg = await baseSchemaFixture();
     const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START));
     // Applied TWICE: a deploy re-runs the whole set every time, so a
-    // non-idempotent file would break the second deploy, not the first.
+    // non-idempotent file would break the second deploy, not the first. Any
+    // failure is fatal here — every file in this slice was screened to apply
+    // cleanly against exactly this fixture, so a throw means the set regressed.
     for (const pass of [1, 2]) {
       for (const rel of batch) {
         try {
           await pg.exec(readMig(rel));
         } catch (err) {
+          await pg.exec('ROLLBACK').catch(() => {});
           throw new Error(`pass ${pass}: ${rel} failed — ${(err as Error).message}`);
         }
       }
