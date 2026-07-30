@@ -1,16 +1,21 @@
 /**
- * Governed decision lineage — decision-trail read.
+ * Governed decision lineage — decision-trail list read for the v2 surface.
  *
- * GET /api/decision-lineage → the org's governed artifacts, each with its
- * immutable, Part-11 hash-chained decision graph, shaped to exactly the keys
- * the v2 DecisionLineage surface renders ({ rootEntityType, rootEntityId,
- * artifactLabel, nodes, edges, metadata }). nodes/edges/metadata rehydrate
- * from JSONB straight into the surface's LineageGraph shape. Org scoped; 403
- * without org context; fails closed to an empty list on 42P01 so an
+ * GET /api/decision-lineage → the org's governed artifacts, each with its immutable,
+ * Part-11 hash-chained decision graph, shaped to exactly the keys the v2 DecisionLineage
+ * surface renders ({ rootEntityType, rootEntityId, artifactLabel, nodes, edges,
+ * metadata }). Assembled ENTIRELY from the real workflow + audit store via
+ * decisionLineageService.getLineageGraph — the same real service that backs the
+ * per-artifact GET /api/decision-lineage/:entityType/:entityId endpoint and the export /
+ * compliance-report / verify-chain endpoints. There is no legacy/seed blob and no
+ * fallback: an org with no recorded decision trail returns an empty list and the surface
+ * renders its own honest empty state. See decision-lineage-view-assembler.
+ *
+ * Org scoped; 403 without org context; fails to an empty list on 42P01 so an
  * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { assembleOrgDecisionLineage } from '../services/workflow/decision-lineage-view-assembler.js';
 
 const router = Router();
 
@@ -34,22 +39,8 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT root_entity_type, root_entity_id, artifact_label, nodes, edges, metadata
-         FROM c2c_decision_lineage
-        WHERE organization_id = $1
-        ORDER BY sort_order, root_entity_id`,
-      [orgId],
-    );
-    const data = rows.map((r) => ({
-      rootEntityType: r.root_entity_type,
-      rootEntityId: r.root_entity_id,
-      artifactLabel: r.artifact_label,
-      nodes: r.nodes ?? [],
-      edges: r.edges ?? [],
-      metadata: r.metadata ?? {},
-    }));
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgDecisionLineage(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'decision_lineage_service' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });
