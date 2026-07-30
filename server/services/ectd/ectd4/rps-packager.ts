@@ -24,6 +24,7 @@ import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { finalizePdfA } from '../pdfa-pipeline';
 import { buildMd5Index } from '../../submission-gateways/regional-packager';
+import { listVendoredSchemas } from '../schema-bundler';
 import { buildRpsMessage, RPS_MESSAGE_PATH } from './rps-message-builder';
 import { validateRpsMessage, type RpsValidationResult } from './rps-validator';
 import type { RpsMessageInput } from './types';
@@ -92,6 +93,18 @@ export async function packageRpsSubmission(input: RpsPackagerInput): Promise<Rps
   const messageXml = buildRpsMessage({ ...message, creationTime: input.creationTime });
   zip.file(RPS_MESSAGE_PATH, messageXml);
   md5Entries.push({ relPath: RPS_MESSAGE_PATH, md5: createHash('md5').update(messageXml).digest('hex') });
+
+  // Bundle vendored XSDs into util/schema/ so the v4.0 package is schema
+  // self-contained (submissionUnit.xml validates against the RPS message schema;
+  // the .gc files against genericode.xsd). The licensed ICH RPS schema is not
+  // committed — it comes from assets/ectd-schema/ or $ECTD_SCHEMA_DIR — so this
+  // is a no-op when absent.
+  const vendoredSchemas = await listVendoredSchemas();
+  for (const s of vendoredSchemas) {
+    const relPath = `util/schema/${s.fileName}`;
+    zip.file(relPath, s.bytes);
+    md5Entries.push({ relPath, md5: createHash('md5').update(s.bytes).digest('hex') });
+  }
 
   // Advisory MD5 manifest (v4.0 integrity is per-document in the message; this
   // manifest aids tooling that still expects a package-level checksum list).

@@ -24,8 +24,11 @@ vocabulary package v1.1).
 | v3.2.2 packager | `server/services/submission-gateways/regional-packager.ts` | Region backbones (FDA us‑regional **DTD 3.3**, EMA, PMDA, HC) + shared `index.xml`; finalize‑first so every `<leaf>` carries an inline MD5 matching the shipped bytes; backbone‑relative hrefs; lifecycle `modified-file`; PDF/A gate; DTD self‑containment gate; `util/index-md5.txt`. |
 | v4.0 (HL7 RPS) engine | `server/services/ectd/ectd4/` | `submissionUnit.xml` serializer, deterministic UUID derivation, the v3.2.2→v4.0 forward‑compat mapper, the RPS structural + CV validator, and the RPS packager (PDF/A + SHA‑256 integrity = shipped bytes). |
 | XML validation | `server/services/ectd/xml-validator.ts` | `xmllint`-backed well‑formedness + DTD + XSD validation (replaces the hand‑rolled scanner); fail‑open when `xmllint` is absent. |
-| Qualification harness | `server/services/ectd/qualification/` | Per region + version: golden package → accepted validators → preserved report (with exact spec version) → lifecycle (replace/delete/append, revise) → reopen ZIP and re‑verify every checksum. |
-| Validators (existing) | `server/services/ectd/external-validator/` | Seam for LORENZ eValidator (opt‑in) + a license‑free FDA‑criteria subset; feeds the dispatch gate. |
+| Schema drop‑in | `server/services/ectd/schema-bundler.ts` + `assets/ectd-schema/` | `util/schema/` drop‑point for the ICH RPS message XSD + genericode.xsd (v4.0 analogue of the DTD bundler), with a fail‑closed readiness gate (`ECTD_REQUIRE_RPS_SCHEMA`). |
+| Artifact integrity | `server/services/ectd/checksum-manifest.ts` | Verifies each vendored DTD/XSD against its recorded SHA‑256 (`checksums.txt`); refuses tampered/stale/unlisted artifacts. |
+| Qualification harness | `server/services/ectd/qualification/` | Per region + version: golden package → accepted validators (xmllint well‑formed + **DTD/XSD when vendored** + checksum‑manifest integrity + external eValidator + RPS model) → preserved report (with exact spec version) → lifecycle (replace/delete/append, revise) → reopen ZIP and re‑verify every checksum. |
+| External validators | `server/services/ectd/external-validator/` | **LORENZ eValidator adapter** (CLI or endpoint invocation + JSON/XML report parsing, fail‑closed) + a license‑free FDA‑criteria subset; `runExternalValidation()` feeds `evaluateExternalValidationGate`, composed into `assess-dispatch-readiness`. |
+| Pre‑transmit gate | `server/services/submission-gateways/pre-transmit-check.ts` | Package‑fitness preconditions at the gateway guard: size limit (hard), PDF/A grade + DTD self‑containment (opt‑in), external gate (route layer) — alongside the Part 11 human authorization. |
 | API | `server/routes/ectd-v4.ts` (+ `ectd-export.ts`) | Controlled‑vocab serving, RPS validate, v3→v4 forward‑compat preview, spec versions; the existing export/compile/validate routes. |
 | Client | `client/src/concept2cure/v2/surfaces/PublishingCenter.tsx` | Version‑aware Publishing Center: spec versions, CV browser, honest states. |
 
@@ -61,15 +64,22 @@ Environment flags:
 - Reopen‑and‑verify: every `util/index-md5.txt` entry and every v4.0 per‑document
   SHA‑256 matches the bytes actually shipped.
 
-**Gated on procurement / environment (seams built, drop‑in ready):**
-- **DTD/XSD validity** against the *licensed* ICH/FDA DTDs and the ICH RPS
-  schema — the DOCTYPE/schema references and the `xml-validator` are in place;
-  vendor the files into `assets/ectd-dtd/` (DTD) / `util/schema/` (RPS XSD).
-- **Agency‑grade eValidator** (LORENZ) — the adapter + dispatch gate exist; wire
-  the licensed engine behind them.
-- **Live transmission** (FDA ESG / EMA CESP / PMDA / HC gateways) — real gateways
-  exist and are gated behind the Part 11 human e‑signature; not exercised by
-  qualification (generation ≠ transmission).
+**Wiring complete + tested — only the licensed artifact must be dropped in:**
+- **DTD/XSD validity** — the `xmllint` validator, the `assets/ectd-dtd/` and
+  `assets/ectd-schema/` drop‑points, the readiness gates, the checksum‑manifest
+  verifier, and the qualification wiring are all built and tested. Drop the
+  *licensed* ICH/FDA DTDs and the ICH RPS message schema into the drop‑points
+  (and record their SHA‑256) and validity flips from "skipped" to enforced;
+  `ECTD_REQUIRE_DTD` / `ECTD_REQUIRE_RPS_SCHEMA` make it fail‑closed in production.
+- **Agency‑grade eValidator (LORENZ)** — the adapter (CLI/endpoint invocation +
+  JSON/XML report parsing), the fail‑closed `runExternalValidation()`, and the
+  dispatch gate composition are built and tested. Point `EVALIDATOR_BINARY` /
+  `EVALIDATOR_ENDPOINT` at the licensed engine and set a region profile;
+  `ECTD_REQUIRE_EVALIDATOR` makes it block dispatch fail‑closed.
+- **Live transmission** (FDA ESG / EMA CESP / PMDA / HC) — real gateways, now
+  fronted by the pre‑transmit precondition gate **and** the Part 11 human
+  e‑signature. Not exercised by qualification (generation ≠ transmission); needs
+  live agency credentials to send for real.
 
 Qualification reports record the **exact spec version** each package was measured
 against, so "compliant" is always scoped to a named, dated specification.

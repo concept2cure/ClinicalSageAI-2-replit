@@ -32,10 +32,15 @@ import { packageRpsSubmission, validateRpsMessage } from '../ectd4';
 import {
   checkWellFormed,
   validateAgainstDtd,
+  validateAgainstXsd,
   isXmllintAvailable,
 } from '../xml-validator';
 import { validateFdaCriteria, fdaCriteriaFallbackEnabled } from '../external-validator/fda-criteria-adapter';
-import { resolveExternalValidator } from '../external-validator';
+import { resolveExternalValidator, runExternalValidation } from '../external-validator';
+import type { EctdRegion } from '../external-validator/types';
+import { verifyChecksumManifest } from '../checksum-manifest';
+import { resolveDtdDir } from '../dtd-bundler';
+import { resolveSchemaDir, RPS_MESSAGE_XSD } from '../schema-bundler';
 import {
   writeGoldenLeaves,
   v3GoldenInput,
@@ -190,12 +195,25 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
     validators.push(tally(`fda-criteria-subset`, rep.ran, rep.findings));
   }
   const external = await resolveExternalValidator();
-  if (await external.isConfigured() && (region === 'fda' || region === 'ema' || region === 'pmda')) {
-    const rep = await external.validate({ packageDir: pkgDir, region });
+  if (external.name !== 'noop' && (region === 'fda' || region === 'ema' || region === 'pmda')) {
+    // Fail-closed: a configured-but-failing engine yields an un-run report, never a throw.
+    const rep = await runExternalValidation({ packageDir: pkgDir, region: region as EctdRegion });
     validators.push(tally(external.name, rep.ran, rep.findings));
-    notes.push(`External validator "${external.name}" ran.`);
+    notes.push(`External validator "${external.name}" ${rep.ran ? 'ran' : 'was configured but did not complete'}.`);
   } else {
     notes.push('No external eValidator configured; xmllint + FDA-criteria subset are the accepted validators for this run.');
+  }
+
+  // 2b. Vendored-DTD integrity: verify the drop-point checksum manifest so a
+  //     tampered/stale DTD is refused. When no DTDs are vendored, this is a
+  //     trivially-ok no-op (nothing to verify) and DTD *validity* above is skipped.
+  const dtdManifest = await verifyChecksumManifest(resolveDtdDir(), 'checksums.txt', ['.dtd']);
+  validators.push(tally('dtd-checksum-manifest', true, [
+    ...dtdManifest.mismatched.map((m) => ({ severity: 'error', message: `DTD ${m.fileName} hash mismatch (tampered/stale).` })),
+    ...dtdManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored DTD ${f} is not recorded in checksums.txt.` })),
+  ]));
+  if (dtdManifest.verified.length === 0) {
+    notes.push('No DTDs vendored (assets/ectd-dtd/*.dtd); DTD *validity* is skipped — drop the licensed DTDs in to enable it. Backbones remain well-formed-validated.');
   }
 
   // 3. Reopen + verify checksums.
@@ -244,11 +262,35 @@ export async function qualifyV4(workDir: string): Promise<QualificationReport> {
   // 2. Validators: RPS model + xmllint well-formed on the message.
   const validators: ValidatorRunReport[] = [];
   validators.push(tally('rps-model-validator', true, pkg.validation.findings));
+  const msgPath = path.join(pkgDir, 'submissionUnit.xml');
   if (await isXmllintAvailable()) {
-    const wf = await checkWellFormed(path.join(pkgDir, 'submissionUnit.xml'), true);
+    const wf = await checkWellFormed(msgPath, true);
     validators.push(tally('xmllint well-formed (submissionUnit.xml)', wf.ran, wf.valid ? [] : wf.errors.map((m) => ({ severity: 'error', message: m }))));
   }
-  notes.push('RPS XSD validation runs when the ICH RPS schema is vendored into util/schema/ (see xml-validator).');
+  // RPS XSD validation: validate against the schema bundled into util/schema/
+  // (from assets/ectd-schema/) when the licensed ICH RPS schema is vendored.
+  const bundledSchema = path.join(pkgDir, 'util', 'schema', RPS_MESSAGE_XSD);
+  const hasRpsSchema = await fs.access(bundledSchema).then(() => true).catch(() => false);
+  if (hasRpsSchema) {
+    const xsd = await validateAgainstXsd(msgPath, bundledSchema, true);
+    validators.push(tally('xmllint XSD (submissionUnit.xml)', xsd.ran, xsd.valid ? [] : xsd.errors.map((m) => ({ severity: 'error', message: m }))));
+  } else {
+    notes.push('RPS XSD validation skipped — vendor the ICH RPS message schema into assets/ectd-schema/ (rps-message.xsd) to enable it.');
+  }
+  // Vendored-schema integrity (drop-point manifest).
+  const schemaManifest = await verifyChecksumManifest(resolveSchemaDir(), 'checksums.txt', ['.xsd']);
+  validators.push(tally('schema-checksum-manifest', true, [
+    ...schemaManifest.mismatched.map((m) => ({ severity: 'error', message: `Schema ${m.fileName} hash mismatch.` })),
+    ...schemaManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored schema ${f} is not recorded in checksums.txt.` })),
+  ]));
+
+  // External agency-grade validator (LORENZ) — runs for v4.0 too when configured.
+  const external = await resolveExternalValidator();
+  if (external.name !== 'noop') {
+    const rep = await runExternalValidation({ packageDir: pkgDir, region: 'fda' });
+    validators.push(tally(external.name, rep.ran, rep.findings));
+    notes.push(`External validator "${external.name}" ${rep.ran ? 'ran' : 'was configured but did not complete'}.`);
+  }
 
   // 3. Reopen + verify: package checksums AND in-message SHA-256 integrity.
   const checksum = await verifyZipChecksums(pkg.path);
