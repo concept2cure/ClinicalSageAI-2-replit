@@ -59,8 +59,11 @@ CSR     → adaptCsrReport  evidence-spine        5 AnA tools    ── WIRED, r
 ## 3. Remediation plan (status tracked here)
 
 **P0 — nothing works without these**
-- [ ] **Ingress.** A live path that calls `ingestCrl` (CRL → findings/outcomes) and `adaptCsrReport` (CSR → spine sources/studies): AnA tools + admin routes; fix the `generate-atoms` bootstrapping (adapt before atomize).
-- [ ] **Embedding dimension.** Reconcile write path + column + SQL functions on one dimension; stop swallowing the write error; backfill.
+- [x] **Ingress.** Live paths now exist end-to-end:
+  - CRL → `ingestCrl`: `POST /api/clinical-regulatory-evidence/crl` (platform-admin; global-public FDA corpus). *(P0a)*
+  - CSR → `adaptCsrReport`: `projectOrgCsrReports()` batch behind `POST /api/clinical-regulatory-evidence/project-csr` (tenant-scoped, idempotent) **and** the `project_csr_evidence` AnA tool. *(P0b)*
+  - `generate-atoms` bootstrap fixed — it now **projects** the org's CSRs before atomizing, so `listSources('csr')` is populated instead of empty (adapt-before-atomize). *(P0b)*
+- [ ] **Embedding dimension.** Reconcile write path + column + SQL functions on one dimension (→ 1536); stop swallowing the write error; backfill.
 
 **P1**
 - [ ] RAG reachability — allow/route `clinical_regulatory_evidence` atoms in retrieval.

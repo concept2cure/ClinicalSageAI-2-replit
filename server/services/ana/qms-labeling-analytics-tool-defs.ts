@@ -264,6 +264,19 @@ export const TRACE_DESIGN_RECOMMENDATION: AnaTool = {
   },
 };
 
+export const PROJECT_CSR_EVIDENCE: AnaTool = {
+  name: 'project_csr_evidence',
+  description:
+    "Project THIS tenant's own Clinical Study Reports (csr_reports) into the clinical-regulatory evidence spine so they become searchable precedent (comparable studies + design features). It only links your existing CSRs — it copies no text and mints no findings — and is idempotent (already-projected reports are skipped). Run this once for a workspace whose CSRs are not yet showing up as precedent in search_clinical_regulatory_evidence / compare_proposed_design_to_precedent.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      limit: { type: 'number', description: 'Max CSR reports to project this run (1–2000, default 500).' },
+    },
+    required: [],
+  },
+};
+
 export const CREATE_LABELING_DOCUMENT: AnaTool = {
   name: 'create_labeling_document',
   description:

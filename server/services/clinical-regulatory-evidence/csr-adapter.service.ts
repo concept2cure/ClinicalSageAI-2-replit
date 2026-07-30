@@ -110,6 +110,51 @@ export async function adaptCsrReport(orgId: number, csrReportId: number): Promis
   return { source, study, featureCount };
 }
 
+export interface CsrProjectionResult {
+  total: number;         // csr_reports scanned for the org
+  projected: number;     // newly adapted into the spine this run
+  alreadyPresent: number;// already had a cre 'csr' source (idempotent skip)
+  failed: number;        // not visible / read error
+  studyCount: number;    // distinct clinical-study identities touched
+}
+
+/**
+ * Project ALL of a tenant's CSR reports into the spine (idempotent per report).
+ *
+ * This is the batch entry point behind the CSR-projection route + AnA tool: it is
+ * what actually populates cre_evidence_sources(source_type='csr') and
+ * cre_clinical_studies for a tenant, so the coverage strip's `eligible`/`structured`
+ * denominators and the CSR-workflow findings have real sources to count. Without a
+ * live caller the spine is empty — this closes that gap (audit P0b). Reference-only:
+ * no CSR text is copied out of the corpus, just linked.
+ */
+export async function projectOrgCsrReports(
+  orgId: number,
+  opts: { limit?: number } = {},
+): Promise<CsrProjectionResult> {
+  const limit = Math.min(Math.max(opts.limit ?? 500, 1), 2000);
+  const { rows } = await pool.query(
+    `SELECT id FROM csr_reports WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY id LIMIT $2`,
+    [orgId, limit],
+  );
+  let projected = 0;
+  let alreadyPresent = 0;
+  let failed = 0;
+  const studies = new Set<number>();
+  for (const r of rows as { id: number }[]) {
+    try {
+      const existing = await findSourceForCsr(orgId, r.id);
+      const adapted = await adaptCsrReport(orgId, r.id);
+      if (!adapted) { failed++; continue; }
+      if (existing) alreadyPresent++; else projected++;
+      studies.add(adapted.study.id);
+    } catch {
+      failed++;
+    }
+  }
+  return { total: rows.length, projected, alreadyPresent, failed, studyCount: studies.size };
+}
+
 /**
  * Materialize retrieval atoms for one CSR's §4.3 study-design features into
  * lumen_data_atoms (via the retrieval-atoms service). Ensures the CSR is adapted
