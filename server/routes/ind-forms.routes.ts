@@ -38,6 +38,7 @@ import {
   buildForm356h,
   buildForm1574,
   buildAllForm1572,
+  buildAllForm3455,
   FORM_1571,
   FORM_1572,
   FORM_3674,
@@ -309,6 +310,142 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     }
 
     res.status(201).json({ artifactId, formId, projectId, ready, missingRequired: built.missingRequired, contentHash });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Persist ONE governed artifact per investigator for the PER-INVESTIGATOR forms
+ * (1572 Statement of Investigator; 3455 financial disclosure). Closes the
+ * per-investigator governed-persistence gap that /:formId/artifact left as a
+ * follow-on — each investigator's form becomes its own content-hashed artifact
+ * the platform records, not just the first.
+ *
+ * All-or-nothing: every investigator form is inserted in a single DB transaction,
+ * so a mid-batch failure persists none of them (no partial governed state).
+ *
+ * Only 1572 and 3455 have a batch; any other form id → 400 (use /:formId/artifact).
+ * An empty `artifacts` array is legitimate for 3455 when no investigator has a
+ * disclosable interest (the sponsor certifies "none" on 3454 instead).
+ *
+ * Body: IndProjectMetadata + { projectId: number }.
+ * Returns 201 { formId, projectId, artifacts: [{ artifactId, investigatorName,
+ *   ready, missingRequired, contentHash }] }.
+ */
+const PER_INVESTIGATOR_FORMS = new Set<string>([FORM_1572, FORM_3455]);
+
+router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const formId = String(req.params.formId);
+  if (!PER_INVESTIGATOR_FORMS.has(formId)) {
+    return res.status(400).json({
+      error: {
+        code: 'VALIDATION',
+        message: `Form ${formId} is not per-investigator; use POST /:formId/artifact for a single governed artifact.`,
+      },
+    });
+  }
+  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as IndProjectMetadata & { projectId?: unknown };
+  const projectId = Number(body.projectId);
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'projectId is required to persist a governed form artifact.' } });
+  }
+  try {
+    // Tenant scope: the project must belong to the caller's org.
+    const [project] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, ctx.organizationId)))
+      .limit(1);
+    if (!project) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    }
+
+    const builts = formId === FORM_1572 ? buildAllForm1572(body) : buildAllForm3455(body);
+    const shortId = formId.replace(/^FDA_/, '').toLowerCase();
+    // Prepare all rows deterministically before touching the DB.
+    const rows = builts.map((built, idx) => {
+      const investigatorName = String(built.fields['investigator_name'] ?? '').trim() || `Investigator ${idx + 1}`;
+      const content = JSON.stringify({
+        formId: built.formId,
+        fields: built.fields,
+        missingRequired: built.missingRequired,
+        investigatorIndex: idx,
+      });
+      const contentHash = crypto.createHash('sha256').update(content).digest('hex');
+      const artifactId = `artifact_indform_${shortId}_${crypto.randomUUID()}`;
+      return {
+        idx,
+        investigatorName,
+        content,
+        contentHash,
+        artifactId,
+        ready: built.missingRequired.length === 0,
+        missingRequired: built.missingRequired,
+      };
+    });
+
+    // All-or-nothing: persist every investigator form, or none.
+    if (rows.length > 0) {
+      await db.transaction(async (tx) => {
+        for (const r of rows) {
+          await tx.insert(concept2cureArtifacts).values({
+            artifactId: r.artifactId,
+            projectId,
+            organizationId: ctx.organizationId,
+            createdById: ctx.userId,
+            title: `FDA Form ${formId.replace(/^FDA_/, '')} — ${r.investigatorName}`,
+            type: 'form',
+            category: 'document',
+            content: r.content,
+            contentHash: r.contentHash,
+            status: 'draft',
+            version: 1,
+            metadata: {
+              formId,
+              source: 'ind-forms',
+              storageFormat: 'structured-field-map',
+              ready: r.ready,
+              missingRequired: r.missingRequired,
+              investigatorIndex: r.idx,
+              investigatorName: r.investigatorName,
+            },
+          });
+        }
+      });
+    }
+
+    // Part 11 audit event per governed artifact. Best-effort (see /:formId/artifact):
+    // the rows already carry provenance; a transient audit hiccup must not undo a
+    // committed creation.
+    for (const r of rows) {
+      try {
+        await auditService.logAction({
+          action: 'ind_form.artifact.create',
+          userId: ctx.userId,
+          organizationId: ctx.organizationId,
+          resourceType: 'concept2cure_artifact',
+          resourceId: r.artifactId,
+          metadata: { formId, projectId, ready: r.ready, contentHash: r.contentHash, investigatorIndex: r.idx },
+        });
+      } catch (auditErr) {
+        logger.warn('audit log failed for ind-form artifact (batch)', { err: auditErr instanceof Error ? auditErr.message : String(auditErr) });
+      }
+    }
+
+    res.status(201).json({
+      formId,
+      projectId,
+      artifacts: rows.map((r) => ({
+        artifactId: r.artifactId,
+        investigatorName: r.investigatorName,
+        ready: r.ready,
+        missingRequired: r.missingRequired,
+        contentHash: r.contentHash,
+      })),
+    });
   } catch (err) {
     fail(res, err);
   }
