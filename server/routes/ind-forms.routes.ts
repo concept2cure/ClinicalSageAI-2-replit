@@ -1,10 +1,16 @@
 /**
- * IND FDA form generation REST surface — Forms 1571 / 1572 / 3674 / 3454 / 3455.
+ * IND FDA form generation REST surface — Forms 1571 / 1572 / 3674 / 3454 / 3455 /
+ * 356H / 1574.
  *
  * Mounted at /api/ind-forms with authenticateToken applied at mount time
- * (see server/bootstrap/register-ind-lifecycle-routes.ts). The generators are
- * stateless and deterministic: they render the supplied project metadata into a
- * PDF, using an official fillable AcroForm template when one is present in the
+ * (see server/bootstrap/register-ind-lifecycle-routes.ts). Two surfaces:
+ *   - PREVIEW (stateless, deterministic): /:formId/build, /:formId/pdf,
+ *     /:formId/pdf-from-records, /1572/pdf-all render/return without persisting.
+ *     PDF responses carry X-Form-Untracked-Preview: true.
+ *   - GOVERNED: /:formId/artifact persists the structured field map as a
+ *     concept2cureArtifacts row (org- + project-scoped, content-hashed) so the
+ *     platform records that the form exists.
+ * Rendering uses an official fillable AcroForm template when one is present in the
  * templates dir, otherwise a labeled fallback PDF.
  *
  * NOTE: official FDA AcroForm PDFs must be dropped into the templates dir (see
@@ -18,6 +24,7 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import {
   generateIndForm,
   generateAllForm1572,
+  buildFormById,
   SUPPORTED_FORM_IDS,
   type SupportedFormId,
   type IndFormPdfResult,
@@ -48,6 +55,11 @@ import {
 } from '../services/ind-master-data/ind-master-data-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
+import crypto from 'node:crypto';
+import { and, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { projects, concept2cureArtifacts } from '@shared/schema';
+import auditService from '../services/auditService';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
@@ -84,6 +96,9 @@ function metaOf(req: Request): IndProjectMetadata {
 function sendPdf(res: Response, result: IndFormPdfResult): void {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${result.formId}.pdf"`);
+  // This is a stateless PREVIEW render: the platform does not record that it was
+  // produced. Use POST /:formId/artifact for a governed, persisted record.
+  res.setHeader('X-Form-Untracked-Preview', 'true');
   res.setHeader('X-Form-Used-Official-Template', String(result.usedOfficialTemplate));
   res.setHeader('X-Form-Field-Coverage', result.fieldCoverage.toFixed(3));
   if (result.missingRequired.length > 0) {
@@ -205,6 +220,92 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
     if (code === 'NOT_FOUND') {
       return res.status(404).json({ error: { code, message: 'A referenced master-data record was not found.' } });
     }
+    fail(res, err);
+  }
+});
+
+/**
+ * Persist a form as a GOVERNED ARTIFACT so the platform records that it exists
+ * (closes the "download a form the platform doesn't know about" gap). Stores the
+ * deterministic structured field map (the registry's declared storage.format),
+ * NOT the PDF bytes — the PDF is a reproducible derivative of the field map, with
+ * a content hash for integrity. A projectId is REQUIRED and validated against the
+ * caller's org, so an artifact is never created under another tenant's project.
+ *
+ * Body: IndProjectMetadata + { projectId: number }.
+ * For 1572 this persists the FIRST investigator's form (per-investigator
+ * persistence mirrors /1572/pdf-all and is a follow-on).
+ * Returns 201 { artifactId, formId, projectId, ready, missingRequired, contentHash }.
+ */
+router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const formId = String(req.params.formId);
+  if (!isSupported(formId)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
+  }
+  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as IndProjectMetadata & { projectId?: unknown };
+  const projectId = Number(body.projectId);
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'projectId is required to persist a governed form artifact.' } });
+  }
+  try {
+    // Tenant scope: the project must belong to the caller's org.
+    const [project] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, ctx.organizationId)))
+      .limit(1);
+    if (!project) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    }
+
+    const built = buildFormById(formId, body);
+    const content = JSON.stringify({ formId: built.formId, fields: built.fields, missingRequired: built.missingRequired });
+    const contentHash = crypto.createHash('sha256').update(content).digest('hex');
+    const artifactId = `artifact_indform_${formId.replace(/^FDA_/, '').toLowerCase()}_${crypto.randomUUID()}`;
+    const ready = built.missingRequired.length === 0;
+
+    await db.insert(concept2cureArtifacts).values({
+      artifactId,
+      projectId,
+      organizationId: ctx.organizationId,
+      createdById: ctx.userId,
+      title: `FDA Form ${formId.replace(/^FDA_/, '')}`,
+      type: 'form',
+      category: 'document',
+      content,
+      contentHash,
+      status: 'draft',
+      version: 1,
+      metadata: {
+        formId,
+        source: 'ind-forms',
+        storageFormat: 'structured-field-map',
+        ready,
+        missingRequired: built.missingRequired,
+      },
+    });
+
+    // Part 11 audit event for the governed creation. Best-effort: the artifact
+    // row already carries provenance (createdById, contentHash, timestamps), so a
+    // transient audit-log hiccup must not fail an otherwise-successful creation.
+    // (Making the two atomic is the writeMutation transaction-boundary follow-on.)
+    try {
+      await auditService.logAction({
+        action: 'ind_form.artifact.create',
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        resourceType: 'concept2cure_artifact',
+        resourceId: artifactId,
+        metadata: { formId, projectId, ready, contentHash },
+      });
+    } catch (auditErr) {
+      logger.warn('audit log failed for ind-form artifact', { err: auditErr instanceof Error ? auditErr.message : String(auditErr) });
+    }
+
+    res.status(201).json({ artifactId, formId, projectId, ready, missingRequired: built.missingRequired, contentHash });
+  } catch (err) {
     fail(res, err);
   }
 });

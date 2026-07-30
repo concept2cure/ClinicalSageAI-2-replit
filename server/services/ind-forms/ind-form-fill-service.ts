@@ -113,7 +113,7 @@ export interface IndFormPdfResult {
 // Builder dispatch
 // ---------------------------------------------------------------------------
 
-function buildFormById(formId: string, meta: IndProjectMetadata): BuiltForm {
+export function buildFormById(formId: string, meta: IndProjectMetadata): BuiltForm {
   switch (formId) {
     case FORM_1571:
       return buildForm1571(meta);

@@ -36,7 +36,7 @@ function makeApp() {
 let app: express.Express;
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb();
+  harness = await createIndPgliteDb({ formArtifacts: true });
   holder.db = harness.db;
   app = makeApp();
   const ctx = { organizationId: 1, userId: 9 };
@@ -44,6 +44,8 @@ beforeAll(async () => {
   sponsorId = sponsor.id;
   const inv = await createInvestigator({ firstName: 'Pat', lastName: 'Smith', credentials: 'MD' }, ctx);
   investigatorId = inv.id;
+  // Seed a project (org 1) for the governed-artifact route's org-scoping check.
+  await harness.pglite.exec("INSERT INTO projects (id, organization_id, name) VALUES (1, 1, 'Test IND Project')");
   // PGlite bootstrap can exceed the global 10s hookTimeout when the full
   // suite runs under load; give it explicit headroom.
 }, 60_000);
@@ -196,5 +198,52 @@ describe('pdf-from-records (DB-backed)', () => {
     const res = await request(app).post('/api/ind-forms/FDA_1571/pdf-from-records').send({ sponsorId });
     expect(res.status).toBe(404);
     currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+});
+
+describe('governed artifact (DB-backed)', () => {
+  it('401 when unauthenticated', async () => {
+    currentUser = null;
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectId: 1, sponsorName: 'Acme' });
+    expect(res.status).toBe(401);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+
+  it('400 without a projectId (a governed artifact must associate with a project)', async () => {
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ sponsorName: 'Acme' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION');
+  });
+
+  it('404 for a project in another org (never create an artifact under another tenant)', async () => {
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectId: 1, sponsorName: 'Acme' });
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+  });
+
+  it('201 persists a governed form artifact (structured field map) the platform now knows exists', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_1571/artifact')
+      .send({ projectId: 1, sponsorName: 'Acme Therapeutics', drugName: 'C2C-001' });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ formId: 'FDA_1571', projectId: 1 });
+    expect(typeof res.body.artifactId).toBe('string');
+    expect(typeof res.body.contentHash).toBe('string');
+    expect(Array.isArray(res.body.missingRequired)).toBe(true);
+
+    // A governed row now exists — org-/project-scoped, typed 'form'.
+    const { rows } = await harness.pglite.query(
+      'SELECT type, category, organization_id, project_id, content, content_hash FROM concept2cure_artifacts WHERE artifact_id = $1',
+      [res.body.artifactId],
+    );
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({ type: 'form', category: 'document', organization_id: 1, project_id: 1 });
+    // content is the deterministic structured field map, NOT PDF bytes.
+    const stored = JSON.parse((rows[0] as any).content);
+    expect(stored.formId).toBe('FDA_1571');
+    expect(stored).toHaveProperty('fields');
+    expect((rows[0] as any).content_hash).toBe(res.body.contentHash);
   });
 });
