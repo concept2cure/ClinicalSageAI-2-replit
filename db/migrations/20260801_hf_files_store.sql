@@ -1,3 +1,24 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision the real, org-scoped IEC 62366-1 HFE/UE file store with a
+--          live write path, retiring the seed-only c2c_hf_files blob.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 2 (usability summary) and the device HFE/UE report
+--   - Integrity Risk Addressed: fabricated completeness figures and a
+--     read-only demo blob presented as tenant evidence; tenant isolation
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Completeness is DERIVED from `present` on read, never stored.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
 -- Human-factors engineering (HFE/UE) file store — REAL, org-scoped, with a write path.
 --
 -- The IEC 62366-1 HFE/UE file the v2 HumanFactors surface renders: the device

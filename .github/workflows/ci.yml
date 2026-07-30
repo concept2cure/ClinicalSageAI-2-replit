@@ -63,6 +63,16 @@ jobs:
         # is a durable applier. See ledger C-6 / this migration's C-23 entry.
         run: npm run ci:journey-migration-reachability
 
+      - name: Guardrails — server SQL references a table no APPLIER creates
+        # The general case of the guard above (ledger C-32). ci:unbacked-tables
+        # asks "does a .sql file create this table?" and counts any non-archived
+        # migration — regardless of whether an applier ever RUNS it. So a file
+        # sitting in db/migrations/ on no apply path makes its tables look backed
+        # while they exist on no real database and every endpoint querying them
+        # 500s. This guard asks the durability question for EVERY server-
+        # referenced table. Baselined; anything new fails.
+        run: npm run ci:migration-reachability
+
       - name: Guardrails — server SQL references a table nothing creates
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
         # tests vi.mock the db module so a mock accepts any table name; the

@@ -1885,6 +1885,86 @@ a follow-up in its own right.
 
 ---
 
+## C-32 — `ci:unbacked-tables` could not see deploy-dead creators; 112 queried tables exist on no real database *(high — GUARD LANDED + FIRST BATCH FIXED 2026-07-30)*
+
+Found by chasing C-31's residual (the deploy-dead `ectd_submissions`). It is not
+one subsystem — it is a **blind spot in the guard that was supposed to catch this
+class**, and the reason the same defect keeps recurring under new numbers.
+
+`ci:unbacked-tables` asks *"does any file create this table?"* and counts, by its
+own documented rule, "a non-archived .sql migration (db/migrations/,
+migrations/)". It never asks whether an applier **runs** that .sql. A migration
+sitting in `db/migrations/` on no apply path — not `_gcc_`, not in the drizzle
+journal, not in `C2C_MIGRATION_FILES` / `AUTHORING_SUBSYSTEM_FILES`, not named by
+install-fresh, and whose tables are not on the drizzle push surface — therefore
+reports **"backed"** while its tables exist on no real database. Every endpoint
+querying them 500s in production, and all of CI stays green.
+
+Measured across the repo: **~140 tables the server queries were created only by a
+deploy-dead migration** (112 after this change wires its first five files; 108
+after four more became reachable via concurrent work — the figure the baseline now
+pins). The pattern is self-documenting — `referenced-tables-
+baseline.json` credits four 2026-07-30 files (`cmc_evidence_tables`,
+`submission_center_tables`, `licensing_ip_tables`, `graphrag_knowledge_tables`)
+with "resolving 20 genuinely-missing tables", but none of the four was ever put on
+an applier: the debt was marked resolved while the tables still reached no
+database.
+
+### The guard (the durable half)
+
+`scripts/ci/check-migration-reachability.mjs` (`npm run ci:migration-reachability`,
+wired into the ci.yml Lint job beside its sibling) generalizes
+`ci:journey-migration-reachability` from "migrations a golden journey declares" to
+**every server-referenced table**. It computes the durable creator set (journal,
+`_gcc_`, the two applier lists, install-fresh's named files, the drizzle push
+surface, and runtime DDL) and reports any referenced table whose only creator is
+outside it. Baselined at 108 so the existing debt does not block work; anything
+NEW fails immediately, and the guard prints which baselined entries have become
+reachable so the number ratchets down. Goal: 0.
+
+### The first batch (five files, ~25 tables)
+
+Wired onto `C2C_MIGRATION_FILES` after verifying each: applied **twice** against a
+blank Postgres (clean re-run), every `CREATE TABLE/INDEX` is `IF NOT EXISTS`,
+every `CREATE POLICY` sits in a `pg_policies`-guarded `DO` block, and every FK is
+**self-referential** — so none can abort a deploy on a missing FK target.
+
+- `082_ectd_submission_agent.sql` — the eCTD submission-agent surface
+  (`ectd-submission-agent.ts` behind the **mounted** `ectd-submission-agent.routes`):
+  agency configs, submissions, documents, validations, status history. C-32 also
+  adds its `tenant_isolation_policy` block for the four `org_id` lifecycle tables —
+  0021 has already run on this apply path and would never revisit a new table, and
+  under `RLS_ENFORCE=on` an RLS-less table is cross-tenant readable, i.e. every
+  tenant's submission history, package paths and agency correspondence.
+  `ectd_agency_configs` is deliberately left unpolicied: global gateway reference
+  data, no `org_id`, seeded for all tenants. Its `ectd_submissions` also feeds the
+  C-31 sequence-continuity gate.
+- `20260730_cmc_evidence_tables.sql`, `20260730_submission_center_tables.sql`,
+  `20260730_graphrag_knowledge_tables.sql`, `20260730_licensing_ip_tables.sql` —
+  the four "resolution" files above; each already carried its own RLS block.
+
+### Proof
+
+`tests/schema-contract/ectd-submission-agent-reachability.contract.test.ts`
+(10 cases, PGlite): the file is in `C2C_MIGRATION_FILES` (not merely present in the
+repo); applying it creates all five tables and re-applying is a clean no-op with
+the agency seed still exactly four rows; the service's real `prepareSubmission`
+INSERT executes and the agency FK genuinely rejects an unknown agency; child rows
+cascade; all four `org_id` tables are policied while `ectd_agency_configs` is not;
+and under `RLS_ENFORCE=on` a foreign tenant reads **zero** rows while the owner
+still reads its own (verified under a `NOSUPERUSER` role, since PGlite's default
+superuser bypasses RLS even under FORCE).
+
+### Residual (tracked by the guard, not hidden)
+
+103 tables remain in the baseline — the same class, across older subsystems
+(conversation-OS durability, global regulatory compliance, regulatory
+correspondence, enhanced cortex, IVDR binder packs, stability v2, artifact compute
+plane, …). Each needs the same per-file verification before wiring; the guard now
+makes the number visible, prevents it growing, and reports progress as it falls.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

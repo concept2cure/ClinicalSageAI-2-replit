@@ -376,6 +376,39 @@ export const C2C_MIGRATION_FILES = [
   // Work items: source_ref for string/UUID-keyed sources (correspondence
   // issues), so those rows stop sharing the (source_type, source_id=0) key.
   'migrations/20260730_work_item_source_ref.sql',
+
+  // ── Deploy-dead creators, wired (ledger C-32) ────────────────────────────
+  // Five files that CREATE tables live server code queries, but that sat on no
+  // durable apply path at all: not `_gcc_`, not in the drizzle journal, not in
+  // install-fresh's named lists, and their tables are not on the drizzle push
+  // surface either. Every table below therefore existed on NO real database and
+  // its endpoints 500'd with missing-relation errors — while `ci:unbacked-tables`
+  // reported them "backed", because that guard counts any non-archived .sql file
+  // as a creator regardless of whether an applier ever runs it (the blind spot
+  // ci:migration-reachability now closes).
+  //
+  // All five were verified before wiring: applied twice against a blank Postgres
+  // (idempotent, clean re-run), every CREATE TABLE/INDEX is IF NOT EXISTS, every
+  // CREATE POLICY sits in a pg_policies-guarded DO block, and every FOREIGN KEY
+  // is self-referential — so they carry no ordering dependency on anything
+  // outside themselves and cannot abort a deploy on a missing FK target.
+  //
+  // 082 backs the eCTD submission-agent surface (server/services/
+  // ectd-submission-agent.ts behind the MOUNTED ectd-submission-agent.routes),
+  // and C-32 adds its tenant_isolation_policy block — 0021 has already run on
+  // this path and would never revisit these new tables, which under
+  // RLS_ENFORCE=on would leave every tenant's submission history cross-tenant
+  // readable. Its ectd_submissions also feeds the C-31 sequence-continuity gate.
+  'db/migrations/082_ectd_submission_agent.sql',
+  // The four 20260730 "resolution" files: written to clear referenced-but-
+  // uncreated table debt (see the ratchet note in referenced-tables-baseline.json,
+  // which credits them with resolving 20 missing tables) — but never put on an
+  // applier, so the debt was marked resolved while the tables still reached no
+  // database. Each already carries its own tenant_isolation_policy DO block.
+  'db/migrations/20260730_cmc_evidence_tables.sql',
+  'db/migrations/20260730_submission_center_tables.sql',
+  'db/migrations/20260730_graphrag_knowledge_tables.sql',
+  'db/migrations/20260730_licensing_ip_tables.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

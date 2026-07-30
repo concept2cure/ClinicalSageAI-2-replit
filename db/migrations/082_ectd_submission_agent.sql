@@ -189,4 +189,54 @@ CREATE INDEX IF NOT EXISTS idx_ectd_status_history_org ON ectd_submission_status
 COMMENT ON TABLE ectd_submission_status_history IS
   'Audit trail recording every status transition for an eCTD submission';
 
+
+-- =============================================================================
+-- F) TENANT ISOLATION (ledger C-32)
+-- =============================================================================
+-- migrations/0021_enable_rls_everywhere.sql dynamically policies every table
+-- carrying organization_id/org_id/tenant_id — but only on the install-fresh path,
+-- and only for tables that exist WHEN IT RUNS. This file is applied on the
+-- apply-c2c / deploy-migrate path, where 0021 has already run and will never
+-- revisit a newly-added table. Under RLS_ENFORCE=on a table with no RLS is fully
+-- readable across tenants, so without this block standing the subsystem up would
+-- open every tenant's submission history, package paths and agency
+-- correspondence to every other tenant.
+--
+-- The four lifecycle tables key on org_id (the service filters `WHERE org_id = $n`
+-- in every query); each takes the canonical tenant_isolation_policy, shape copied
+-- from 0021 so the two converge: shadow-mode bypass when app.rls_enforce != 'on',
+-- match against either session var, super-admin escape hatch.
+--
+-- ectd_agency_configs is deliberately NOT policied: it is GLOBAL reference data
+-- (the FDA/EMA/PMDA/HC gateway catalogue seeded above), has no org_id, and is
+-- read by every tenant. It holds no tenant content.
+--
+-- Guarded by pg_policies so re-running is a no-op.
+DO $$
+DECLARE
+  t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'ectd_submissions',
+    'ectd_submission_documents',
+    'ectd_submission_validations',
+    'ectd_submission_status_history'
+  ] LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies WHERE tablename = t AND policyname = 'tenant_isolation_policy'
+    ) THEN
+      EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+      EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
+      EXECUTE format($pol$
+        CREATE POLICY tenant_isolation_policy ON %I USING (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR org_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+          OR org_id = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+        )
+      $pol$, t);
+    END IF;
+  END LOOP;
+END $$;
+
 COMMIT;
