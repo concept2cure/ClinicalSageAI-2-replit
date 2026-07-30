@@ -68,11 +68,22 @@ still merit a data-flow check.)
   The client was already fixture-free (honest empty state); only a stale route comment
   claimed a fixture fallback. **[CONVERGED]** — assembler (live clock) + real-store-only
   route + reseed into adverse_events + pglite test landed.
-- **Biostat** (interims / sample-sizes / SAPs / TLF) → **no clean real store.** There is no
-  committed `biostat_*` table holding the surface's TLF-build / sample-size / SAP / interim
-  data with a real writer; the `biostat_*` writers that exist feed a knowledge-graph /
-  signal engine, not this surface's contract. This is effectively Class-B — a write path /
-  store must be chosen or built.
+- **Biostat** (interims / sample-sizes / SAPs / TLF) → **NOT A LIVE GAP (false-positive
+  Class-A).** Traced before building: the `c2c_biostat_saps/_sample_sizes/_interims` +
+  `c2c_tlf_builds` blobs are read by `GET /api/intelligence/biostat`, whose ONLY consumer is
+  `client/src/concept2cure/intelligence/surfaces/Biostat.tsx` (via `useBiostat`) — and that
+  whole `concept2cure/intelligence/` cluster is **unmounted dead code**: nothing outside the
+  cluster imports its App/IntelligenceRoute, and `main.tsx → App` never routes to it (same
+  pattern as the retired Editor cluster). Meanwhile the LIVE v2 biostat surfaces already read
+  REAL, org-scoped backends — `Biostatistics` → `/api/ana-biostats/governed-documents`
+  (concept2cure_artifacts) and `BiostatWorkbench` → `/api/statistical-defensibility` +
+  `/api/biostat/assurance`. So there is no demo-ware to converge: building stores for these
+  blobs would be building for a dead consumer. **[NO BUILD NEEDED]** — recommend retiring the
+  dead intelligence cluster + its `c2c_biostat_*`/`c2c_tlf_builds` blobs as a separate cleanup.
+
+_Methodology refinement: a blob + a route reading it is NOT sufficient evidence of a live gap —
+the consuming surface must be a MOUNTED surface. Biostat (and earlier the Editor cluster) are
+where table-name/route matching over-counted; always confirm the reader is reachable UI._
 - **CMC changes** → **`cmc_change_controls` (built).** Was Class-B — the SUPAC attributes
   existed only in the blob's own migration with no writer. Built the real store
   (`20260730_cmc_change_control_store.sql`, org-scoped, soft-delete) with a live write path
@@ -123,14 +134,15 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
 
 ## Prioritized roadmap
 
-1. **Class A — DONE (5 of 6).** ~~IND~~ (→ eCTD submission core), ~~Shadow-review~~
+1. **Class A — COMPLETE.** ~~IND~~ (→ eCTD submission core), ~~Shadow-review~~
    (→ shadow_review_runs/findings), ~~SAE~~ (→ adverse_events), and ~~Decision-lineage~~
    (→ decisionLineageService over the real workflow/audit store) converged onto existing
    real stores; ~~CMC changes~~ was a greenfield **build** (new cmc_change_controls store +
-   write path + fixture-free client). The one remaining is **Biostat** — genuine Class-B
-   (no TLF/sample-size/SAP/interim store; needs a store + write path built). Net: the
-   audit's original 6-target "Class A" was 4 convergences + 1 greenfield build done, 1
-   Biostat build remaining.
+   write path + fixture-free client); ~~Biostat~~ turned out to be a **false-positive** — its
+   blobs feed an unmounted dead cluster and the live v2 biostat surfaces are already real, so
+   no build was needed. Net of the original 6-target "Class A": 4 convergences + 1 greenfield
+   build + 1 non-gap. The only Biostat follow-up is an OPTIONAL cleanup: retire the dead
+   `concept2cure/intelligence/` cluster and its blobs.
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so
