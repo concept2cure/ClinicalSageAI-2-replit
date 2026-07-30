@@ -45,8 +45,10 @@ import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { buildCoverage, emptyCoverage } from './coverage-service';
 import {
-  getFindingById, getSource, listFindings, listOutcomes,
+  getFindingById, getSource, listFindings, listOutcomes, listRelationshipsFor,
 } from './evidence-spine.service';
+import { simulateDesignWithRegulatoryStress } from './study-design-evidence.service';
+import type { EntityType } from './types';
 import type {
   Assumption,
   DesignEvidencePanel,
@@ -527,13 +529,92 @@ export async function getOutcome(
   };
 }
 
-// ─── Design evidence, traces, stress tests (unbuilt phases — honest stubs) ───
+// ─── Design evidence, traces, stress tests ───────────────────────────────────
+
+/** Human labels for the regulatory-stress scenarios the evidence layer selects. */
+const STRESS_LABELS: Record<string, string> = {
+  reduced_treatment_effect: 'Reduced treatment effect',
+  higher_dropout: 'Higher dropout',
+  missing_not_at_random: 'Missing not at random',
+  subgroup_heterogeneity: 'Subgroup heterogeneity',
+  site_variability: 'Site / regional variability',
+  endpoint_misclassification: 'Endpoint misclassification',
+  safety_event_increase: 'Increased safety events',
+  multiplicity_penalty: 'Multiplicity penalty',
+  protocol_deviation_impact: 'Protocol-deviation impact',
+};
+
+/**
+ * Map a selected regulatory-stress scenario to the panel DTO. The evidence layer
+ * only SELECTS which scenarios are defensible (driven by the FDA findings on
+ * record); the parameter values are the caller's and are executed on the existing
+ * simulator — so `result` is null and `parameterSource` is 'none' here. Selection,
+ * never a minted number (§8/§9.1).
+ */
+function toStressScenarioDto(s: { key: string; rationale: string; drivenBy: number[] }): StressScenario {
+  return {
+    scenarioId: s.key,
+    label: STRESS_LABELS[s.key] ?? s.key,
+    selectedBy: null,
+    parameterSource: 'none',
+    parameterNote: s.rationale,
+    result: null,
+    resultTone: 'neutral',
+  };
+}
+
+/**
+ * Resolve a design node's PRIMARY ENDPOINT from the protocol-authoring store. The
+ * endpoint is the one clinical attribute a design node reliably carries as
+ * structured data (`c2c_protocol_dev.objectives`); indication and phase live only
+ * in free-text title/prose, so they are deliberately NOT parsed here. Org-scoped
+ * and best-effort — any miss (no row, no table, malformed JSON) returns null and
+ * the caller falls back to honest-empty rather than scoping evidence on a guess.
+ */
+async function resolveDesignEndpoint(scope: EvidenceScope, designNodeId: string): Promise<string | null> {
+  try {
+    const { rows } = await pool.query(
+      `SELECT objectives FROM c2c_protocol_dev WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [designNodeId, scope.organizationId],
+    );
+    if (rows.length === 0) return null;
+    const raw = (rows[0] as { objectives?: unknown }).objectives;
+    const objectives = Array.isArray(raw) ? (raw as Array<{ objectiveType?: string; endpoint?: unknown }>) : [];
+    const pick = (o: { endpoint?: unknown }): string | null =>
+      typeof o.endpoint === 'string' && o.endpoint.trim() ? o.endpoint.trim() : null;
+    const primary = objectives.find(o => o.objectiveType === 'primary' && pick(o));
+    if (primary) return pick(primary);
+    const any = objectives.find(o => pick(o));
+    return any ? pick(any) : null;
+  } catch {
+    return null;
+  }
+}
+
+const TRACE_ENTITIES: readonly EntityType[] = [
+  'source', 'study', 'finding', 'outcome', 'design_feature', 'result_observation', 'design_lesson', 'atom',
+];
+
+/** Parse a trace ref: "<entityType>:<id>" or a bare numeric finding id. */
+function parseTraceRef(traceId: string): { entityType: EntityType; entityId: string } | null {
+  const raw = (traceId ?? '').trim();
+  if (!raw) return null;
+  const m = raw.match(/^([a-z_]+):(.+)$/i);
+  if (m && (TRACE_ENTITIES as readonly string[]).includes(m[1].toLowerCase())) {
+    return { entityType: m[1].toLowerCase() as EntityType, entityId: m[2].trim() };
+  }
+  if (/^\d+$/.test(raw)) return { entityType: 'finding', entityId: raw };
+  return null;
+}
 
 /**
  * The single payload behind the Study Design evidence panel. Coverage is real
- * (counted from the spine); the panel's evidence arrays remain honestly empty
- * until their phases land — returning real zeros with real coverage, never
- * sample content.
+ * (counted from the spine). `findings` is the design node's ENDPOINT-scoped FDA
+ * precedent — the reliable structured signal a node carries — and `stressScenarios`
+ * are the defensible regulatory-stress tests the findings on record select. The
+ * indication-scoped arrays (comparableStudies / observations / pooled) stay
+ * honest-empty because the design-node store carries no clean indication to scope
+ * them by; the coverage exclusion note explains the zero rather than guessing.
  */
 export async function getDesignEvidence(
   scope: EvidenceScope,
@@ -541,28 +622,79 @@ export async function getDesignEvidence(
   designNodeType = 'unknown',
 ): Promise<DesignEvidencePanel> {
   assertScoped(scope, 'getDesignEvidence');
+  const coverage = await getCoverage(scope, { designNodeId });
+  const endpoint = await resolveDesignEndpoint(scope, designNodeId);
+
+  const findings = endpoint
+    ? (await searchFindings(scope, { text: endpoint, limit: 50 })).findings
+    : [];
+
+  let stressScenarios: StressScenario[] = [];
+  try {
+    const plan = await simulateDesignWithRegulatoryStress(scope.organizationId, { indication: '' });
+    stressScenarios = plan.scenarios.map(toStressScenarioDto);
+  } catch {
+    /* honest-empty on a scenario-selection failure */
+  }
+
   return {
     designNodeId,
     designNodeType,
     comparableStudies: [],
     observations: [],
     pooled: null,
-    findings: [],
-    stressScenarios: [],
+    findings,
+    stressScenarios,
     assumptions: [],
     contradictions: [],
-    coverage: await getCoverage(scope, { designNodeId }),
+    coverage,
     trace: null,
   };
 }
 
-/** The evidence chain behind a recommendation. Null when the trace id is unknown. */
+/**
+ * The evidence chain behind a recommendation. `traceId` is a spine entity ref
+ * ("finding:123", "source:45", or a bare finding id); the chain is the relationship
+ * edges around that entity, each inspectable with its source and flagged when
+ * inferred. Null when the ref is unparseable or has no edges — never a fabricated
+ * chain.
+ */
 export async function getTrace(
   scope: EvidenceScope,
-  _traceId: string,
+  traceId: string,
 ): Promise<EvidenceTrace | null> {
   assertScoped(scope, 'getTrace');
-  return null;
+  const ref = parseTraceRef(traceId);
+  if (!ref) return null;
+
+  let rels;
+  try {
+    rels = await listRelationshipsFor(scope.organizationId, ref.entityType, ref.entityId);
+  } catch (e) {
+    if ((e as { code?: string })?.code === '42P01') return null;
+    throw e;
+  }
+  if (rels.length === 0) return null;
+
+  const coverage = await getCoverage(scope);
+  const byType = new Map<string, number>();
+  for (const r of rels) byType.set(r.relationshipType, (byType.get(r.relationshipType) ?? 0) + 1);
+  const chain: { step: string; count: number | null }[] = [
+    { step: `${ref.entityType} ${ref.entityId}`, count: null },
+    ...[...byType.entries()].map(([step, count]) => ({ step, count })),
+  ];
+
+  return {
+    traceId,
+    corpusSnapshot: coverage.freshness ?? 'current',
+    chain,
+    calculations: [],
+    assumptions: [],
+    contradictions: [],
+    coverage,
+    reviewState: rels.some(r => r.isInferred) ? 'extracted' : 'human_reviewed',
+    recalculateRequired: false,
+  };
 }
 
 export interface StressTestInput {
@@ -571,18 +703,25 @@ export interface StressTestInput {
 }
 
 /**
- * Run regulatory stress scenarios through the EXISTING simulator (§9.1). A
- * letter may justify WHY a scenario matters, but it may not supply a NUMBER.
- * Scenario selection from CRL patterns is phase 6; until then this returns
- * empty rather than inventing scenarios.
+ * Select the defensible regulatory-stress scenarios for a design — driven by the
+ * FDA findings on record (§8: CRLs inform WHICH tests matter, never the parameter
+ * values). The values remain the caller's and are executed on the existing
+ * simulator, so scenarios return selected-not-run. Honest-empty when no letters are
+ * on record.
  */
 export async function runStressTest(
   scope: EvidenceScope,
-  _input: StressTestInput,
+  input: StressTestInput,
 ): Promise<{ scenarios: StressScenario[]; assumptions: Assumption[] }> {
   assertScoped(scope, 'runStressTest');
-  if (!(await findingsAvailable(scope))) return { scenarios: [], assumptions: [] };
-  return { scenarios: [], assumptions: [] };
+  const assumptions = Array.isArray(input.assumptions) ? input.assumptions : [];
+  if (!(await findingsAvailable(scope))) return { scenarios: [], assumptions };
+  try {
+    const plan = await simulateDesignWithRegulatoryStress(scope.organizationId, { indication: '' });
+    return { scenarios: plan.scenarios.map(toStressScenarioDto), assumptions };
+  } catch {
+    return { scenarios: [], assumptions };
+  }
 }
 
 export * from './types';

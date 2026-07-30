@@ -1448,6 +1448,83 @@ match including a same-`originalId` different-tenant collision.
 
 ---
 
+## C-25 — eCTD export leaked one tenant's authored content to another *(critical security — FIXED 2026-07-30)*
+
+Surfaced by the submission-export golden journey (below).
+
+`generateEctdPackage` (server/services/ectdExportService.ts) assembles the eCTD
+ZIP by pulling content from four sources. Three are organization-scoped — the
+`document_versions` join filters on `d.organization_id`, and both
+`concept2cure_artifacts` lookups filter on `organization_id`. The fourth, the
+`project_sections` query, filtered on `project_id` ALONE:
+
+```sql
+SELECT section_code, title, status, content, word_count, module
+FROM project_sections WHERE project_id = $1 ORDER BY section_code
+```
+
+The export route (`POST /api/ectd/export/:submissionId`) resolves the org from
+the JWT but takes the project id from the URL and never verifies the project
+belongs to that org. So an authenticated user at org B could
+`POST /api/ectd/export/<org-A-project-id>` and receive an eCTD package containing
+org A's authored Module-3 section content rendered as leaf PDFs — a cross-tenant
+disclosure of regulated dossier text (IDOR). The module/granule queries returned
+nothing for the mismatched org, which made the package *look* empty while the
+section leaves silently carried the other tenant's content.
+
+**Fix:** scope the query by `organization_id` too (the column is NOT NULL on
+`project_sections`, so no legitimate row is excluded). One line, the same shape
+every sibling query already used.
+
+**Proof:** the isolation step of the export journey — org B's export of org A's
+project id must contain no leaf named from org A's section and zero content
+leaves. Verified to FAIL before the fix (the leaf was present) and pass after.
+
+## C-26 — Any non-WinAnsi glyph 500'd the entire eCTD export *(high — FIXED 2026-07-30)*
+
+Also surfaced by the export journey, on the very first incomplete-dossier build.
+
+The leaf PDF renderer (server/services/ectd/leaf-pdf-renderer.ts) embeds a
+pdf-lib STANDARD font (`StandardFonts.Helvetica`), whose WinAnsi/Windows-1252
+encoding cannot represent code points outside that page. `page.drawText` throws
+on the first such glyph. Two consequences, both reachable on ordinary input:
+
+1. The PENDING-placeholder generator emitted box-drawing characters
+   (`'─'.repeat(40)`, U+2500). So EVERY export of a dossier with any unauthored
+   granule threw `WinAnsi cannot encode "─" (0x2500)` — before it could even reach
+   the completeness gate. Incomplete dossiers could not be exported at all, not
+   even as drafts.
+2. Real authored content routinely carries non-WinAnsi glyphs — Greek letters,
+   arrows, math operators (≤ ≥ ≠ ≈ ∞ −), box drawing from pasted tables — so a
+   single such character anywhere in a CMC or clinical section would 500 the whole
+   submission export.
+
+**Fix:** a deterministic `toWinAnsiSafe` pass that maps the common offenders to
+faithful ASCII (─→-, →→->, μ→u, ≤→<=, …) and replaces any remaining
+non-representable code point with `?`, applied to every string before it is
+measured or drawn. The renderer is now total over arbitrary Unicode; WinAnsi-safe
+glyphs (µ, ±, °, é, curly quotes) are left intact, and determinism — the md5
+leaf-checksum contract — is preserved. The placeholder generator's box-drawing
+line was also changed to ASCII at the source.
+
+**Proof:** the export journey's incomplete-dossier step builds a draft whose
+placeholder leaf renders (no throw), and the complete-dossier section content
+carries `µg/mL ± 5%`, `2–8°C`, `≥ 98%`, `μmax →`, and a box-drawing run — all of
+which now flow into a valid package.
+
+### Journey
+
+`tests/golden-journeys/submission-export-package.journey.test.ts` — the last mile
+of the biotech submission path (compiled dossier → submittable eCTD ZIP), which
+had no coverage. Drives the real generate/validate services against canonical DDL:
+valid ICH M8 structure, authored content lands, the completeness gate blocks an
+incomplete dossier, and cross-tenant isolation of authored content. It reads
+`project_sections` from the C-23 migrations, so it both depends on and exercises
+that reachability fix. Transmission to the FDA ESG/AS2 gateway is out of scope (it
+needs a live gateway); the journey proves the package that would be transmitted.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

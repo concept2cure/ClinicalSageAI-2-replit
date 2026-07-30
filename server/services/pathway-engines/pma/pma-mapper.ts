@@ -17,7 +17,83 @@
  * @module server/services/pathway-engines/pma/pma-mapper
  */
 
-export type PmaSubmissionType = 'original' | 'panel_track_supplement' | '180_day_supplement' | 'real_time_supplement';
+/**
+ * The full FDA PMA application + supplement taxonomy (21 CFR 814). `original` is a
+ * new PMA; the rest are the supplement/notice types a sponsor files against an
+ * approved PMA. The `30_day_notice` and `135_day_supplement` types complete the
+ * set that was previously missing.
+ */
+export type PmaSubmissionType =
+  | 'original'
+  | 'panel_track_supplement'
+  | '180_day_supplement'
+  | 'real_time_supplement'
+  | '30_day_notice'
+  | '135_day_supplement';
+
+export interface PmaSubmissionTypeInfo {
+  value: PmaSubmissionType;
+  label: string;
+  description: string;
+  /** FDA review clock in days where FDA publishes one; undefined when meeting-based. */
+  reviewGoalDays?: number;
+  regulatoryRef: string;
+}
+
+/** Metadata for every PMA application/supplement type, in lifecycle order. */
+export const PMA_SUBMISSION_TYPES: PmaSubmissionTypeInfo[] = [
+  {
+    value: 'original',
+    label: 'Original PMA',
+    description: 'New premarket approval application establishing safety and effectiveness for a Class III device.',
+    reviewGoalDays: 180,
+    regulatoryRef: '21 CFR 814.20; Section 515 FD&C Act',
+  },
+  {
+    value: 'panel_track_supplement',
+    label: 'Panel-Track Supplement (PTS)',
+    description: 'Significant change (e.g., new indication) needing new clinical data and often advisory-panel review.',
+    reviewGoalDays: 180,
+    regulatoryRef: '21 CFR 814.39',
+  },
+  {
+    value: '180_day_supplement',
+    label: '180-Day Supplement',
+    description: 'Significant change in design, components, or labeling affecting safety/effectiveness, without a panel track.',
+    reviewGoalDays: 180,
+    regulatoryRef: '21 CFR 814.39(a)',
+  },
+  {
+    value: 'real_time_supplement',
+    label: 'Real-Time (RT) Supplement',
+    description: 'Minor change to design, software, or labeling reviewed interactively in a real-time meeting.',
+    regulatoryRef: '21 CFR 814.39(e); Real-Time PMA Supplements guidance',
+  },
+  {
+    value: '30_day_notice',
+    label: '30-Day Notice',
+    description: 'Notice of a manufacturing-process/method change; effective 30 days after FDA receipt unless FDA acts.',
+    reviewGoalDays: 30,
+    regulatoryRef: '21 CFR 814.39(f); Section 515(d)(6) FD&C Act',
+  },
+  {
+    value: '135_day_supplement',
+    label: '135-Day Supplement',
+    description: 'A 30-day notice FDA determines requires fuller review, reviewed on a 135-day clock.',
+    reviewGoalDays: 135,
+    regulatoryRef: '21 CFR 814.39(f); Section 515(d)(6) FD&C Act',
+  },
+];
+
+/** Look up metadata for a PMA submission type. */
+export function getPmaSubmissionTypeInfo(type: PmaSubmissionType): PmaSubmissionTypeInfo | undefined {
+  return PMA_SUBMISSION_TYPES.find((t) => t.value === type);
+}
+
+/** True when the submission type is a supplement/notice against an approved PMA. */
+export function isPmaSupplement(type: PmaSubmissionType): boolean {
+  return type !== 'original';
+}
 
 export interface PmaInputLeaf {
   sectionCode: string;
@@ -94,4 +170,4 @@ export function mapToPma(input: MapToPmaInput): PmaResult {
   };
 }
 
-export default { mapToPma };
+export default { mapToPma, PMA_SUBMISSION_TYPES, getPmaSubmissionTypeInfo, isPmaSupplement };

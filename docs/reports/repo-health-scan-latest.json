@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T00:08:49.296Z",
+  "generatedAt": "2026-07-30T02:06:00.075Z",
   "git": {
-    "sha": "8b3ecaff6389599a30337613f5c1be35e1623cf5",
+    "sha": "e53786a83c66bf66f98f8251ea3e8ef347545fe6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 102,
+        "count": 105,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -70,7 +70,10 @@
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
+          "server/services/ectd/controlled-vocab/index.ts",
+          "server/services/ectd/ectd4/index.ts",
           "server/services/ectd/external-validator/index.ts",
+          "server/services/ectd/qualification/index.ts",
           "server/services/entitlements/index.ts",
           "server/services/external-intelligence/index.ts",
           "server/services/fda/index.ts",
@@ -125,7 +128,7 @@
       },
       {
         "basename": "types",
-        "count": 48,
+        "count": 49,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -149,6 +152,7 @@
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
+          "server/services/ectd/ectd4/types.ts",
           "server/services/ectd/external-validator/types.ts",
           "server/services/entitlements/types.ts",
           "server/services/global-markets/types.ts",
@@ -2470,7 +2474,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 943411
+        "bytes": 943984
       },
       {
         "file": "shared/schema.ts",
@@ -2534,7 +2538,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 119571
+        "bytes": 120258
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2600,7 +2604,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18338
+        "lines": 18348
       },
       {
         "file": "server/statistics-service.ts",
@@ -2656,7 +2660,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2662
+        "lines": 2672
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2743,6 +2747,10 @@
         "lines": 2020
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 2005
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2003
       },
@@ -2753,10 +2761,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2000
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2932,7 +2936,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 398,
+      "duplicateGroups": 402,
       "largeByBytes": 27,
       "largeByLines": 73
     },

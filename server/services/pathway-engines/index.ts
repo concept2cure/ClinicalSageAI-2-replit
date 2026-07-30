@@ -14,15 +14,40 @@ import { mapToCtis, type CtisInputLeaf } from './ctis/ctis-mapper';
 import { assembleTechDoc, type TechDocInputLeaf } from './mdr-ivdr/tech-doc-assembler';
 import { mapToEstar, type EstarInputLeaf } from './estar/estar-mapper';
 import { assessPmdaShonin, type PmdaInputLeaf } from './pmda/pmda-shonin';
+import { mapToPma, type PmaInputLeaf, type PmaSubmissionType } from './pma/pma-mapper';
+import { mapToPreStar, type PreStarInputLeaf, type QSubType } from './prestar/prestar-mapper';
 
 export * from './ctis/ctis-mapper';
 export * from './mdr-ivdr/tech-doc-assembler';
 export * from './estar/estar-mapper';
 export * from './pmda/pmda-shonin';
+export * from './pma/pma-mapper';
+export * from './prestar/prestar-mapper';
 
-export type Pathway = 'ctis' | 'mdr' | 'ivdr' | 'estar_510k' | 'estar_de_novo' | 'pmda_shonin';
+export type Pathway =
+  | 'ctis'
+  | 'mdr'
+  | 'ivdr'
+  | 'estar_510k'
+  | 'estar_de_novo'
+  | 'pmda_shonin'
+  | 'pma'
+  | 'prestar_q_sub'
+  | 'prestar_ide'
+  | 'prestar_513g';
 
-export const PATHWAYS: Pathway[] = ['ctis', 'mdr', 'ivdr', 'estar_510k', 'estar_de_novo', 'pmda_shonin'];
+export const PATHWAYS: Pathway[] = [
+  'ctis',
+  'mdr',
+  'ivdr',
+  'estar_510k',
+  'estar_de_novo',
+  'pmda_shonin',
+  'pma',
+  'prestar_q_sub',
+  'prestar_ide',
+  'prestar_513g',
+];
 
 /** A canonical leaf accepted by any pathway engine. */
 export interface PathwayLeaf {
@@ -45,6 +70,10 @@ export interface AssessPathwayInput {
   leaves: PathwayLeaf[];
   /** CTIS only: concerned EU member states. */
   memberStates?: string[];
+  /** PMA only: application/supplement type (defaults to 'original'). */
+  pmaSubmissionType?: PmaSubmissionType;
+  /** PreSTAR Q-Sub only: sub-type (defaults to 'pre_submission'). */
+  qSubType?: QSubType;
 }
 
 /** Run the right pathway engine and return a normalized readiness verdict. */
@@ -72,6 +101,22 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
     case 'pmda_shonin': {
       const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[] });
       return { pathway: 'pmda_shonin', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+    }
+    case 'pma': {
+      const r = mapToPma({ leaves: leaves as PmaInputLeaf[], submissionType: input.pmaSubmissionType });
+      return { pathway: 'pma', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+    }
+    case 'prestar_q_sub': {
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'q_sub', qSubType: input.qSubType });
+      return { pathway: 'prestar_q_sub', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+    }
+    case 'prestar_ide': {
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'ide' });
+      return { pathway: 'prestar_ide', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+    }
+    case 'prestar_513g': {
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: '513g' });
+      return { pathway: 'prestar_513g', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
     }
     default: {
       const _exhaustive: never = input.pathway;

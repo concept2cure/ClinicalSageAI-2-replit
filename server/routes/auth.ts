@@ -522,6 +522,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           organizationId: organizationId.toString(),
           organizationUuid: organization?.uuid || null,
           role: jwtRole,
+          type: 'access',
         },
         config.jwt.secret,
         { expiresIn: JWT_EXPIRES_IN }
@@ -719,6 +720,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         organizationId: organizationId.toString(),
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
@@ -910,6 +912,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         organizationId: result.org.id.toString(),
         organizationUuid: result.org.uuid,
         role: 'admin',
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
@@ -1114,6 +1117,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         email: decoded.email,
         organizationId: refreshOrgId.toString(),
         role: refreshMembershipRole.role,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
@@ -1329,6 +1333,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationId: challenge.organizationId,
         organizationUuid: challenge.organizationUuid,
         role: challenge.role,
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }

@@ -33,6 +33,14 @@ describe('startup middleware guard helpers', () => {
   // succeed and /api/audit/bulk-delete-preview to be mutable, which the broad
   // assertions below forbid. No pattern set satisfies both; a human must decide
   // the intended Part 11 immutable surface. The narrow shipped impl is retained.
+  //
+  // A record-class policy resolving this is PROPOSED (awaiting sign-off) in
+  // docs/compliance/part11-immutability-record-class-policy.md; on approval,
+  // REWRITE these assertions to the classified surface (signature + audit
+  // records immutable; archive index + previews mutable) rather than the
+  // whole-namespace blanket below. Until then the records are protected at the
+  // database layer (20260730_esign_audit_db_level_immutability.sql), so this
+  // HTTP-surface question no longer gates record integrity.
   it.skip('protects the full audit and e-signature trail surface (Part 11 immutability)', () => {
     // Previously-guarded paths still match.
     expect(isImmutableAuditRoute('/api/audit/events/1')).toBe(true);

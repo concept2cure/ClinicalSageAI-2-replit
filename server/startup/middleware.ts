@@ -149,6 +149,15 @@ export function applyAuthBoundary(app: Express): void {
 // This keeps the integration-validated narrow surface (events + bulk-delete) that
 // actually ships, and the broad-surface unit assertions are skipped with a note
 // pointing here. A human must decide the intended surface.
+//
+// UPDATE 2026-07-30: a record-class policy that dissolves the contradiction
+// (classify records, derive routes) is PROPOSED in
+// docs/compliance/part11-immutability-record-class-policy.md — awaiting
+// compliance sign-off. Meanwhile the records themselves are now protected at
+// the DATABASE layer regardless of HTTP surface:
+// db/migrations/20260730_esign_audit_db_level_immutability.sql (triggers on
+// electronic_signatures + device_audit_trail), so an HTTP-pattern gap can no
+// longer reach the rows.
 const IMMUTABLE_ROUTE_PATTERNS = [
   /^\/api\/audit\/events(?:\/|$)/, // Audit trail events — append-only
   /^\/api\/audit\/bulk-delete(?:\/|$)/, // Explicit bulk-delete block

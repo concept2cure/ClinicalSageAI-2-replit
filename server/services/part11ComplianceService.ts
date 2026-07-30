@@ -68,6 +68,8 @@ class Part11ComplianceService {
     signatureReason,
     signatureMeaning,
     password,
+    boundPayloadDigest: preboundPayloadDigest,
+    signerRole,
   }: {
     userId: number;
     organizationId: number;
@@ -76,6 +78,17 @@ class Part11ComplianceService {
     signatureReason: string;
     signatureMeaning: string;
     password: string;
+    /**
+     * Optional pre-computed §11.70 payload-binding digest (e.g. the submission
+     * orchestrator's release digest). When provided it is persisted on the row
+     * AT INSERT TIME, so the signature record is complete when it is born and
+     * no post-insert UPDATE is ever needed (§11.70 append-only invariant).
+     * When absent, the digest is derived from the latest version content of
+     * `documentId` as before.
+     */
+    boundPayloadDigest?: string;
+    /** Signer's organization role, snapshotted into the signature manifest. */
+    signerRole?: string;
   }) {
     try {
       const dbInstance = this.getDb();
@@ -84,7 +97,23 @@ class Part11ComplianceService {
         throw new Error('User authentication failed for electronic signature');
       }
 
-      const [user] = await dbInstance.select().from(users).where(eq(users.id, userId)).limit(1);
+      // Snapshot ONLY the signer-display fields the signature record needs.
+      // A full-row `select().from(users)` makes Drizzle enumerate every column
+      // declared in shared/schema.ts, so ANY drift between the declared users
+      // table and the physical one breaks signing (ledger C-20: 16 missing
+      // columns made every signature attempt report a database error). The
+      // narrow select keeps credential-verified signing decoupled from
+      // unrelated schema evolution.
+      const [user] = await dbInstance
+        .select({
+          id: users.id,
+          name: users.name,
+          title: users.title,
+          email: users.email,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
       if (!user) {
         throw new Error('User not found');
@@ -94,19 +123,24 @@ class Part11ComplianceService {
       const signatureData = {
         userId,
         userName: user.name,
+        userEmail: user.email,
+        organizationId,
+        signerRole: signerRole ?? null,
         documentId,
         documentType,
         timestamp: timestamp.toISOString(),
         reason: signatureReason,
         meaning: signatureMeaning,
+        authenticationMethod: 'password',
       };
-
-      const signature = this.generateCryptographicSignature(signatureData, userId);
 
       // §11.70 content binding: resolve the latest version AND its content, and
       // bind the signature to a deterministic digest of that content (stored in
       // bound_payload_digest). Fail CLOSED if there is no version content — a
-      // signature must not be applied to content that isn't there.
+      // signature must not be applied to content that isn't there. When the
+      // caller supplies a pre-bound digest, the version row still anchors
+      // version_id but the caller's digest is authoritative and the content
+      // column is not read.
       const versionRows = await dbInstance
         .select({
           id: documentVersions.id,
@@ -123,18 +157,30 @@ class Part11ComplianceService {
         );
       }
       const versionId = versionRows[0].id;
-      const boundPayloadDigest = buildVersionBindingDigest({
-        documentId,
-        versionId,
-        versionNumber: versionRows[0].versionNumber,
-        content: versionRows[0].content,
-      });
+      const boundPayloadDigest =
+        preboundPayloadDigest ??
+        buildVersionBindingDigest({
+          documentId,
+          versionId,
+          versionNumber: versionRows[0].versionNumber,
+          content: versionRows[0].content,
+        });
+
+      // The attribution hash is computed over the EXACT manifest that is
+      // persisted. Previously the hash covered signatureData while the stored
+      // manifest additionally carried boundPayloadDigest, so
+      // validateElectronicSignature's integrity re-derivation (which hashes
+      // the stored manifest) could never match — every signature verified as
+      // "integrity compromised". Hash and manifest must be the same bytes.
+      const signatureManifest = { ...signatureData, boundPayloadDigest };
+      const signature = this.generateCryptographicSignature(signatureManifest, userId);
 
       const [electronicSig] = await dbInstance
         .insert(electronicSignatures)
         .values({
           documentId,
           versionId,
+          organizationId,
           signatureType: documentType,
           signaturePurpose: signatureReason,
           signatureLevel: 1,
@@ -147,7 +193,7 @@ class Part11ComplianceService {
           secondFactorVerified: false,
           signatureHash: signature.hash,
           signatureMeaning,
-          signatureManifest: { ...signatureData, boundPayloadDigest },
+          signatureManifest,
           boundPayloadDigest,
           signedAt: timestamp,
           complianceStatement: 'Electronic signature complies with 21 CFR Part 11',

@@ -11,7 +11,7 @@
 # Required entries once vendored (one line each):
 #
 #   <sha256>  ich-ectd-3-2.dtd
-#   <sha256>  us-regional-v2-01.dtd
+#   <sha256>  us-regional-v3-3.dtd
 #   <sha256>  eu-regional.dtd
 #   <sha256>  jp-regional.dtd
 #   <sha256>  ca-regional.dtd
@@ -39,7 +39,7 @@
 # --- Manifest entries below this line (placeholders until DTDs are vendored) ---
 
 # <sha256>  ich-ectd-3-2.dtd
-# <sha256>  us-regional-v2-01.dtd
+# <sha256>  us-regional-v3-3.dtd
 # <sha256>  eu-regional.dtd
 # <sha256>  jp-regional.dtd
 # <sha256>  ca-regional.dtd
