@@ -123,6 +123,11 @@ const ECTD_DDL = `
     xml_backbone TEXT,
     cross_references JSON,
     status TEXT NOT NULL DEFAULT 'pending',
+    -- C-31 (20260730_ectd_compilations_sequence_columns.sql): sequence-continuity
+    -- columns read by detectSequenceGaps. Drizzle lists every mapped column in
+    -- its INSERTs, so this mirror must carry them or the compilation insert fails.
+    application_number TEXT,
+    sequence_number TEXT,
     compiled_by INTEGER,
     compiled_at TIMESTAMPTZ,
     version TEXT DEFAULT '1.0',
