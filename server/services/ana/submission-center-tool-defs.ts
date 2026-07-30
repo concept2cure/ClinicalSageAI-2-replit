@@ -23,7 +23,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
   name: 'compute_lifecycle_operations',
   description:
-    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You pass the prior leaves and the desired leaves, each with its md5 checksum; you get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged). This is pure computation — nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
+    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You pass the prior leaves and the desired leaves, each with its md5 checksum; you get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged). Every replace/append/delete also gets an ICH modified-file pointer at the prior leaf it acts on — supply each prior leaf\'s published href and the prior_sequence_prefix for that to resolve cross-sequence. This is pure computation — nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -39,9 +39,14 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
             md5: { type: 'string', description: 'Published content checksum.' },
             title: { type: 'string', description: 'Leaf title.' },
             source_path: { type: 'string', description: 'Path of the prior file (used for delete leaves).' },
+            href: { type: 'string', description: 'Published backbone-relative path of the prior leaf in its sequence (e.g. "m3/32-body-data/32s-drug-sub/general.pdf", optionally with a "#leafId" fragment). Used to build the modified-file pointer for a superseding op.' },
           },
           required: ['ctd_section', 'file_name', 'md5'],
         },
+      },
+      prior_sequence_prefix: {
+        type: 'string',
+        description: 'Relative traversal from the NEW sequence\'s backbone to the prior sequence root, e.g. "../0000/" when sequences are sibling folders under the application. Prepended to each prior leaf\'s href to form the cross-sequence modified-file value. Omit for an ungrouped/same-root lifecycle (the bare prior href is used).',
       },
       desired_leaves: {
         type: 'array',

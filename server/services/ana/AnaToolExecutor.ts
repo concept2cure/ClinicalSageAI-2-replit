@@ -8535,6 +8535,9 @@ registerToolHandler('compute_lifecycle_operations', async (input) => {
       md5: p.md5,
       title: p.title,
       sourcePath: p.source_path,
+      // Published path of the prior leaf in its sequence — lets a superseding op
+      // (replace/append/delete) emit the ICH modified-file pointer at it.
+      href: p.href,
     }));
     const desired = (Array.isArray(input.desired_leaves) ? input.desired_leaves : []).map((d: any) => ({
       leafKey: d.leaf_key,
@@ -8545,7 +8548,11 @@ registerToolHandler('compute_lifecycle_operations', async (input) => {
       sourcePath: d.source_path ?? '',
       appendOnChange: d.append_on_change === true,
     }));
-    const result = computeLifecycleOperations(prior, desired);
+    const result = computeLifecycleOperations(prior, desired, {
+      // Relative traversal from the new sequence's backbone to the prior
+      // sequence root (e.g. '../0000/') so modified-file resolves cross-sequence.
+      priorSequencePrefix: typeof input.prior_sequence_prefix === 'string' ? input.prior_sequence_prefix : undefined,
+    });
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
     return JSON.stringify({

@@ -87,6 +87,22 @@ describe('compute_lifecycle_operations (pure)', () => {
     expect(out.ok).toBe(true);
     expect(out.summary).toMatchObject({ new: 1, replace: 1 });
   });
+
+  it('forwards prior href + prior_sequence_prefix so a replace emits modified-file', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    const out = JSON.parse(
+      await handler({
+        prior_sequence_prefix: '../0000/',
+        prior_leaves: [
+          { ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' },
+        ],
+        desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
+      })
+    );
+    expect(out.ok).toBe(true);
+    const replaced = out.leaves.find((l: any) => l.operation === 'replace');
+    expect(replaced.modifiedFile).toBe('../0000/m3/32-body-data/32s-drug-sub/general.pdf');
+  });
 });
 
 describe('generate_stf (pure)', () => {
