@@ -127,6 +127,7 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
         organizationId: result.org.id.toString(),
         organizationUuid: result.org.uuid,
         role: 'admin',
+        type: 'access',
       },
       config.jwt.secret,
       { expiresIn: config.jwt.expiresIn }

@@ -97,6 +97,8 @@ docs/reports/workflow-audit-results.json
 # Golden-journey run artifacts (regenerated every run; the committed docs in
 # docs/proof/golden-journeys describe the journeys, the manifests prove a run)
 tests/golden-journeys/__reports__/
+# Export-contract proof packets (regenerated every run; the tests are the truth)
+tests/export-contract/__reports__/
 
 # generated report intermediates
 docs/audit-2026-07/evidence/.report-*.html

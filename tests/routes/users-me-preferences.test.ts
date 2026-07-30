@@ -45,7 +45,7 @@ vi.mock('../../server/db', () => {
 const SECRET = process.env.JWT_SECRET || 'test-jwt-secret-for-unit-tests-min-32-chars-long';
 
 function tokenFor(userId: number): string {
-  return jwt.sign({ userId: String(userId), email: 'user@example.com', organizationId: '3' }, SECRET, {
+  return jwt.sign({ userId: String(userId), email: 'user@example.com', organizationId: '3', type: 'access' }, SECRET, {
     algorithm: 'HS256',
     expiresIn: '1h',
   });
