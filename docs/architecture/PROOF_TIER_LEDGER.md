@@ -5,14 +5,14 @@
 > `scripts/ci/check-proof-tier.mjs` refuses to let shrink. See
 > `docs/architecture/PROOF_HIERARCHY.md` for what each tier means.
 
-**66 proof files** across 5 inventoried categories.
+**68 proof files** across 5 inventoried categories.
 
 | Category | Tier(s) | Count |
 |---|---|--:|
 | `schema-contract` | tier 2 (schema contract) | 21 |
 | `tenant-contract` | tiers 2-4 (contract / tenant isolation) | 11 |
-| `golden-journeys` | tiers 3-7 (DB → export reopen → external qualification) | 5 |
-| `export-contract` | tiers 6-7 (export reopen → external qualification) | 2 |
+| `golden-journeys` | tiers 3-7 (DB → export reopen → external qualification) | 6 |
+| `export-contract` | tiers 6-7 (export reopen → external qualification) | 3 |
 | `e2e-browser` | tier 5 (browser workflow) | 27 |
 
 ## `schema-contract` — tier 2 (schema contract) (21)
@@ -53,18 +53,20 @@
 - `tests/tenant-admission-guard.contract.test.ts`
 - `tests/ui/surface-honesty.contract.test.ts`
 
-## `golden-journeys` — tiers 3-7 (DB → export reopen → external qualification) (5)
+## `golden-journeys` — tiers 3-7 (DB → export reopen → external qualification) (6)
 
 - `tests/golden-journeys/haq-correction.journey.test.ts`
 - `tests/golden-journeys/ind-authoring.journey.test.ts`
 - `tests/golden-journeys/marketing-application.journey.test.ts`
+- `tests/golden-journeys/submission-export-package.journey.test.ts`
 - `tests/golden-journeys/submission-export-validation.journey.test.ts`
 - `tests/golden-journeys/submission-release-signature.journey.test.ts`
 
-## `export-contract` — tiers 6-7 (export reopen → external qualification) (2)
+## `export-contract` — tiers 6-7 (export reopen → external qualification) (3)
 
 - `tests/export-contract/docx-export.proof.test.ts`
 - `tests/export-contract/pdf-export.proof.test.ts`
+- `tests/export-contract/xlsx-export.proof.test.ts`
 
 ## `e2e-browser` — tier 5 (browser workflow) (27)
 
