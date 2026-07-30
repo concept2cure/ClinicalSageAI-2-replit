@@ -1,3 +1,12 @@
+-- DEPRECATED (2026-07): the v2 CroPortfolio surface no longer reads this blob.
+-- GET /api/cro-portfolio is now assembled ENTIRELY from the real, org-scoped CRO
+-- engagement store (cro_clients + cro_studies + cro_regulatory_submissions +
+-- cro_milestones + cro_team_assignments — the tables the /api/cro CRUD routes
+-- write) — see server/services/cro/cro-portfolio-view-assembler.ts and
+-- docs/architecture/C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This table is retained
+-- (non-destructive) but is no longer written by the demo seed nor read by any
+-- route. A later migration may DROP it once no environment references it.
+--
 -- CRO sponsor-portfolio store — the multi-sponsor client roster (one row per
 -- sponsor client) backing the v2 CroPortfolio surface's GET read. Each row is
 -- one org-isolated sponsor engagement: the sponsor's type, engagement lead and
