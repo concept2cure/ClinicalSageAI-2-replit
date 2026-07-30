@@ -39,6 +39,41 @@ export const JOURNEY_PREREQUISITES = `
   INSERT INTO projects (id, organization_id, name) VALUES (1, 1, 'journey-project'), (2, 2, 'other-project');
 `;
 
+/**
+ * Extract named `CREATE TABLE` blocks verbatim from a real migration file.
+ *
+ * Some journeys need a handful of tables out of a very large file — the drizzle
+ * baseline (migrations/0000_sweet_joseph.sql) is thousands of lines and defines
+ * hundreds of tables, most irrelevant and some using constructs an in-process
+ * Postgres will not accept. The alternative is hand-mirroring the columns into
+ * the test, which is exactly the drift this harness exists to avoid (see the
+ * header note about server/db/pglite-harness.ts).
+ *
+ * FK constraints in that baseline are applied by separate `ALTER TABLE … ADD
+ * CONSTRAINT` statements at the end of the file, which are deliberately NOT
+ * extracted: a journey seeds only the subset of tables it needs, so enforcing
+ * every FK would require dragging in the whole graph.
+ *
+ * Throws when a requested table is absent — a silent miss would surface later as
+ * a confusing "relation does not exist" from inside a service.
+ */
+export function extractTableDdl(file: string, tables: readonly string[]): string {
+  const sql = fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
+  const out: string[] = [];
+  for (const table of tables) {
+    // Accepts an optional schema qualifier (`public.submissions`) and optional
+    // quoting on either part, which the two lineages use inconsistently.
+    const re = new RegExp(
+      `CREATE TABLE (?:IF NOT EXISTS )?(?:"?public"?\\.)?"?${table}"?\\s*\\(([\\s\\S]*?)\\n\\);`,
+      'i',
+    );
+    const m = sql.match(re);
+    if (!m) throw new Error(`extractTableDdl: ${table} not found in ${file}`);
+    out.push(`CREATE TABLE IF NOT EXISTS "${table}" (${m[1]}\n);`);
+  }
+  return out.join('\n');
+}
+
 export interface JourneyDb {
   pglite: import('@electric-sql/pglite').PGlite;
   db: unknown;

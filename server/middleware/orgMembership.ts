@@ -48,11 +48,23 @@ const orgMembershipCache = new Map<string, OrgMembershipCacheEntry>();
 const membershipCacheKey = (userId: number, organizationId: number): string =>
   `${userId}|${organizationId}`;
 
-/** Mirror of server/auth.ts parseFiniteInt — accepts number | numeric string. */
+/**
+ * Mirror of server/auth.ts parseFiniteInt — accepts number | integer string.
+ *
+ * A string is accepted ONLY if it is entirely an integer. Number.parseInt is a
+ * prefix parser: parseInt('3f1c2a10-…', 10) === 3, so a UUID JWT subject used to
+ * become a valid-looking integer user id for a DIFFERENT real user, and this
+ * middleware then re-checked membership for that wrong user — or 503'd the whole
+ * authoring surface (UUID subjects) when the integer-keyed organization_users had
+ * no matching row. A non-integer subject now yields null, and the caller's
+ * documented null-branch (no numeric identity → no membership to re-check) runs
+ * instead. See ledger C-21.
+ */
 export function parseFiniteInt(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
   if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number.parseInt(value, 10);
+    if (!/^[+-]?\d+$/.test(value.trim())) return null;
+    const parsed = Number.parseInt(value.trim(), 10);
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;

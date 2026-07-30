@@ -1230,6 +1230,119 @@ under enforcement for the first time.
 
 ---
 
+## C-19 — The submission orchestrator store is provisioned only by `drizzle-kit push` *(critical — FIXED 2026-07-25)*
+
+Found while building Journey B phase 2.
+
+`submission_orchestrator_runs` / `_steps` / `_dependencies` are created **only** by
+`migrations/0018_submission_orchestrator.sql`, and their later columns only by
+`migrations/20260629_orchestrator_{tenant_scope,submission_id_fk,awaiting_async_status}.sql`
+— four files, all in the root lineage. That lineage is not journaled, none of the
+four is in the `apply-c2c-migrations.mjs` allowlist, and none is in the manifest.
+**Nothing in the repository applies them.** They exist on one path only:
+`drizzle-kit push`, because `shared/schema.ts` re-exports
+`shared/schema/submissions.ts`, which mirrors these tables.
+
+### The failure is quieter than C-17's, and worse for it
+
+`getRun()` selects `run_id, …, submission_id_fk` from a relation that does not
+exist. The query throws, and `getRun`'s own catch returns **null**. Every caller
+then reports "run not found" — so `POST /sign-release` answers **404**, and the
+orchestrator looks *empty* rather than *unprovisioned*. A 500 gets investigated; a
+404 gets believed.
+
+### It also exposed a defect in the C-17 port
+
+`20260725_esig_gate_columns_port.sql` ALTERs `submission_orchestrator_runs` to
+widen its status CHECK — presuming the table exists. On the migration path it did
+not, so that port could not have applied cleanly on a fresh database. My own fix
+was incomplete.
+
+**Fix:** `db/migrations/20260725_submission_orchestrator_store_port.sql` — a
+verbatim port of all four files in dependency order, inserted into
+`executionOrder` **before** the C-17 port. Every statement is idempotent, so it is
+a no-op where push already created the tables.
+
+**Proof:** two contract tests pin the ordering and apply both ports to an empty
+database, asserting every column `getRun()` selects exists and that a run can be
+parked in `awaiting-signature`.
+
+---
+
+## C-20 — Electronic signatures are impossible on any migration-provisioned environment *(critical — FIXED 2026-07-25)*
+
+The widest-blast-radius finding of this class.
+
+`part11ComplianceService.verifyUserCredentials` is the §11.200 identity check in
+front of **every** electronic signature on the platform. It selects
+`users.locked_until`. `createElectronicSignature` then loads the signer with a
+bare `select().from(users)`, which drizzle expands to **every column declared in
+`shared/schema.ts`**.
+
+`public.users` as `migrations/0000_sweet_joseph.sql` creates it has 14 columns.
+`shared/schema.ts` declares 16 more that no migration adds:
+
+| group | columns |
+|---|---|
+| lockout | `locked_until`, `failed_login_attempts`, `last_failed_login` |
+| MFA | `mfa_enabled`, `mfa_secret`, `mfa_backup_codes`, `mfa_method`, `mfa_verified_at` |
+| email OTP | `email_otp_hash`, `email_otp_expires_at`, `email_otp_attempts` |
+| password policy | `password_changed_at`, `password_history`, `must_change_password` |
+| reset | `reset_token`, `reset_token_expires_at` |
+
+(`db/migrations/051_gcc_multi_tenant_identity.sql` does define
+`failed_login_attempts` — on `identity.users`, a different schema-qualified
+table. It is not the one this code reads.)
+
+### Consequence
+
+On a migration-provisioned environment both queries throw, and
+`verifyUserCredentials` catches the error and returns `false`. So **every**
+signing surface — `/api/esignature/sign`, `/api/submissions/:id/sign-release`,
+`/api/part11/signatures`, the AnA verified-seal route — fails identically, and
+fails as **"invalid credentials"**. A correct password is indistinguishable from a
+wrong one, and the schema fault is invisible.
+
+Two more tables carry the same drift on this path:
+
+- `electronic_signatures` — missing `created_at`, `updated_at`.
+  `findActiveReleaseSignature` orders by `created_at`, and its failure is logged
+  **non-fatally**, so the "already signed?" idempotency check silently never
+  worked.
+- `device_audit_trail` — missing `updated_at`. One absent column failed the whole
+  signature creation, because drizzle's insert names every declared column.
+
+### Why it had to be fixed as a set
+
+Each fix revealed the next: `locked_until` → `mfa_enabled` → `created_at` →
+`updated_at`. A bare `select().from(users)` fails on the **first** absent column
+regardless of whether the code needs its value, so fixing only what the error
+named would have moved the failure rather than removed it. That is the diagnosis
+order preserved in the migration's comments.
+
+**Fix:** `db/migrations/20260725_users_signing_lockout_columns.sql` — additive,
+all nullable or defaulted, types mirroring `shared/schema.ts`.
+
+**Proof:** Journey B phase 2 (`tests/golden-journeys/submission-release-signature.journey.test.ts`)
+— 9 steps, 4 ok / 5 blocked-as-expected. It signs a release over HTTP through the
+real services and asserts the row is payload-bound, version-linked, idempotent and
+tenant-scoped. Every step failed before these three migrations.
+
+### The pattern, stated plainly
+
+C-17, C-19 and C-20 are one defect wearing three faces: **the drizzle push surface
+and the migration lineage have drifted apart, and only push was kept current.**
+Any environment provisioned from migrations is missing capabilities that appear to
+exist in the code. This is C-6 (two competing lineages) expressed at column level,
+and it is why ADR-0006 is still the highest-value open decision in this ledger.
+
+**`ci:unbacked-tables` cannot see this class.** It asks "does any `.sql` file
+create this table?" — and `0018_submission_orchestrator.sql` does. It has no model
+of whether that file is ever *applied*, and no model of columns at all. A guard
+for lineage-reachability is the natural successor and is not yet written.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
