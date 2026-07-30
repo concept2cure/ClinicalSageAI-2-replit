@@ -1582,6 +1582,35 @@ land-blocker patch.
 
 ---
 
+## C-28 — The authoring router's own tables were retired from runtime DDL into a deploy-dead migration *(high — FIXED 2026-07-30)*
+
+The other half of the PR #1202/#1205 authoring-spine landing (commit `398500dc6`
+“retire runtime DDL”), exposed the moment C-27's `duplicate-table-ddl` fix let the
+proof tier run again.
+
+`server/routes/authoring.router.ts` used to create seven of its own tables
+(`authoring_tokens`, `authoring_templates`, `template_guidance`, `template_usage`,
+`section_guidance`, `authoring_export_history`,
+`authoring_tracked_change_decisions`) via runtime `ensure*` DDL at module load.
+The canonical-spine refactor correctly retired that anti-pattern and moved the DDL
+into `db/migrations/20260730_authoring_runtime_ddl.sql` — but wired that migration
+into **nothing**: not `AUTHORING_SUBSYSTEM_FILES`, not the journal, no `_gcc_`
+infix. So the tables were created *nowhere* on a real deploy (C-23 all over again),
+and the router would 500 on first use in production. Three proof-tier tests failed
+on the missing relations (`authoring-router-columns`, `authoring-role-gate`,
+`ind-authoring`), and had been failing on the base since the merge — masked only
+because CI died earlier at the duplicate-table step.
+
+**Fix:** added `20260730_authoring_runtime_ddl.sql` to `AUTHORING_SUBSYSTEM_FILES`
+(the durable applier the deploy runs) and to the three tests' migration lists. The
+migration is additive and idempotent (all CREATE TABLE/INDEX IF NOT EXISTS), and
+its tables are disjoint from the C-27 conflicted set, so this is orthogonal to the
+UUID/TEXT reconciliation still owed there. Proof tier is back to green (263/263),
+and the lineage-reachability guard now covers the ind-authoring journey's use of
+this migration.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
