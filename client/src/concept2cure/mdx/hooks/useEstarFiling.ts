@@ -203,6 +203,8 @@ export interface UseEstarSubmissionsResult {
     catalogKey: string;
     variant?: 'device' | 'ivd';
     title?: string;
+    /** Attach the filing to a project (joins the PM spine). */
+    projectId?: number;
   }) => Promise<EstarSubmissionView | null>;
   /** PATCH /submissions/:id — advance the lifecycle. */
   advance: (
@@ -212,14 +214,29 @@ export interface UseEstarSubmissionsResult {
   ) => Promise<EstarSubmissionView | null>;
 }
 
-export function useEstarSubmissions(status?: string): UseEstarSubmissionsResult {
-  const url = status
-    ? `/api/510k/estar/submissions?status=${encodeURIComponent(status)}`
-    : '/api/510k/estar/submissions';
+/**
+ * Build the /submissions query string from optional status + project filters.
+ * Pure + exported so the filter contract is unit-testable without a DOM.
+ */
+export function submissionsQueryUrl(opts: { status?: string; projectId?: number } = {}): string {
+  const params = new URLSearchParams();
+  if (opts.status) params.set('status', opts.status);
+  if (typeof opts.projectId === 'number' && Number.isInteger(opts.projectId) && opts.projectId > 0) {
+    params.set('projectId', String(opts.projectId));
+  }
+  const qs = params.toString();
+  return qs ? `/api/510k/estar/submissions?${qs}` : '/api/510k/estar/submissions';
+}
+
+export function useEstarSubmissions(
+  status?: string,
+  projectId?: number,
+): UseEstarSubmissionsResult {
+  const url = submissionsQueryUrl({ status, projectId });
   const { data, loading, error, refresh } = useFetchJson<{ submissions: EstarSubmissionView[] }>(url);
 
   const startTracking = useCallback(
-    async (input: { catalogKey: string; variant?: 'device' | 'ivd'; title?: string }) => {
+    async (input: { catalogKey: string; variant?: 'device' | 'ivd'; title?: string; projectId?: number }) => {
       try {
         const res = await fetch('/api/510k/estar/submissions', {
           method: 'POST',

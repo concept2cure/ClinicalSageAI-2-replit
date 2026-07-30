@@ -47,6 +47,13 @@ export const estarSubmissions = pgTable(
     // Tenant — never trusted from request input; set by the service layer.
     organizationId: integer('organization_id').notNull(),
 
+    // The project this filing belongs to, connecting a tracked submission to the
+    // PM spine (projects → schedule of events / milestones / work items) so a
+    // filing is not an island. Nullable: a filing can be tracked before it is
+    // attached to a project. Plain column (no cross-file FK) per the convention
+    // in q-sub / ind-master-data — the service layer scopes and validates.
+    projectId: integer('project_id'),
+
     // What was filed — the EstarCatalogKey and its program type (denormalized so
     // tracking survives independent of the catalog module).
     catalogKey: varchar('catalog_key', { length: 64 }).notNull(),
@@ -80,6 +87,7 @@ export const estarSubmissions = pgTable(
   (t) => ({
     byOrg: index('estar_submissions_org_idx').on(t.organizationId),
     byStatus: index('estar_submissions_status_idx').on(t.status),
+    byProject: index('estar_submissions_project_idx').on(t.projectId),
   }),
 );
 

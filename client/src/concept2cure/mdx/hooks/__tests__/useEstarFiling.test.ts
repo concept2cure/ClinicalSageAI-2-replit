@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { prerequisiteRows, registrationPatchToggling, ESTAR_PREREQUISITES } from '../useEstarFiling';
+import {
+  prerequisiteRows,
+  registrationPatchToggling,
+  submissionsQueryUrl,
+  ESTAR_PREREQUISITES,
+} from '../useEstarFiling';
 
 describe('prerequisiteRows (eSTAR registration → prerequisite chips)', () => {
   it('marks satisfied prerequisites and leaves the rest missing', () => {
@@ -42,5 +47,28 @@ describe('registrationPatchToggling (PUT /registration body builder)', () => {
     expect(Object.keys(patch).sort()).toEqual(
       ['cdrhPortalAccount', 'fdaEsgAccount', 'mdufaFeeAccount', 'organizationIdentity'],
     );
+  });
+});
+
+describe('submissionsQueryUrl (project/status filter contract)', () => {
+  it('returns the bare endpoint when no filters are set', () => {
+    expect(submissionsQueryUrl()).toBe('/api/510k/estar/submissions');
+    expect(submissionsQueryUrl({})).toBe('/api/510k/estar/submissions');
+  });
+
+  it('scopes to a project (the PM-spine view)', () => {
+    expect(submissionsQueryUrl({ projectId: 42 })).toBe('/api/510k/estar/submissions?projectId=42');
+  });
+
+  it('combines status and project filters', () => {
+    const url = submissionsQueryUrl({ status: 'under_review', projectId: 7 });
+    expect(url).toContain('status=under_review');
+    expect(url).toContain('projectId=7');
+  });
+
+  it('ignores a non-positive or non-integer projectId rather than widening the query', () => {
+    expect(submissionsQueryUrl({ projectId: 0 })).toBe('/api/510k/estar/submissions');
+    expect(submissionsQueryUrl({ projectId: -1 })).toBe('/api/510k/estar/submissions');
+    expect(submissionsQueryUrl({ projectId: 1.5 })).toBe('/api/510k/estar/submissions');
   });
 });

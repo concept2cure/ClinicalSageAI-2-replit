@@ -850,6 +850,8 @@ const createSubmissionSchema = z.object({
   title: z.string().max(500).nullish(),
   qSubmissionId: z.string().uuid().nullish(),
   notes: z.string().max(2000).nullish(),
+  /** Attach the filing to a project so tracking joins the PM spine. */
+  projectId: z.coerce.number().int().positive().nullish(),
 });
 
 const advanceSubmissionSchema = z.object({
@@ -889,8 +891,15 @@ router.get('/submissions', authMiddleware, async (req, res) => {
   const status = raw && (ESTAR_SUBMISSION_STATUSES as readonly string[]).includes(raw)
     ? (raw as EstarSubmissionStatus)
     : undefined;
+  // ?projectId= scopes to one project's filings (the PM-spine view). Ignored
+  // when not a positive integer, so a malformed filter never widens the result.
+  const projectIdRaw = Number(req.query.projectId);
+  const projectId = Number.isInteger(projectIdRaw) && projectIdRaw > 0 ? projectIdRaw : undefined;
   try {
-    const rows = await listEstarSubmissions({ organizationId }, status ? { status } : {});
+    const rows = await listEstarSubmissions(
+      { organizationId },
+      { ...(status ? { status } : {}), ...(projectId !== undefined ? { projectId } : {}) },
+    );
     return res.status(200).json({ submissions: rows });
   } catch (error: any) {
     return submissionFail(res, error);
