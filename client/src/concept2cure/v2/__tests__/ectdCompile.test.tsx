@@ -72,3 +72,61 @@ describe('EctdCompile — real eCTD assembly', () => {
     expect(apiRequest).not.toHaveBeenCalled();
   });
 });
+
+describe('EctdCompile — what the surface may claim', () => {
+  /** Route the three reads with a caller-supplied compile payload. */
+  function mockWith(compile: Record<string, unknown>, status: Record<string, unknown> = STATUS) {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/ectd-compile/42/status') return ok(status);
+      if (method === 'GET' && url === '/api/ectd-compile/42/history') return ok({ compilations: [] });
+      if (method === 'POST' && url === '/api/ectd-compile/42/compile') return ok(compile);
+      return ok({});
+    });
+  }
+
+  beforeEach(() => { (window as any).C2C_PROJECT = { id: 42 }; });
+
+  it('names what is still missing instead of a bare negative', async () => {
+    mockWith({
+      ...COMPILE,
+      submissionReady: false,
+      contentValidationPassed: true,
+      leafFilesRendered: 0,
+      submissionBlockers: [
+        'No leaf files have been rendered. This platform compiles the eCTD backbone over authored section content; it does not yet produce the PDF leaf files a sequence consists of, so the package cannot be transmitted to an agency gateway.',
+      ],
+    });
+    render(<EctdCompile {...props()} />);
+    fireEvent.click(await screen.findByText(/Compile eCTD/));
+
+    expect(await screen.findByText('Not yet submittable:')).toBeTruthy();
+    expect(screen.getByText(/does not yet produce the PDF leaf files/)).toBeTruthy();
+  });
+
+  it('warns that the downloadable backbone is not a sequence', async () => {
+    // The download button is right there; the user has to know what they got.
+    mockWith({ ...COMPILE, submissionReady: false, submissionBlockers: ['x'] });
+    render(<EctdCompile {...props()} />);
+    fireEvent.click(await screen.findByText(/Compile eCTD/));
+
+    await screen.findByText(/Download eCTD 4.0 backbone XML/);
+    expect(screen.getByText(/not a sequence to transmit/)).toBeTruthy();
+  });
+
+  it('reports the readiness number as content completeness, not readiness to submit', async () => {
+    // The chip read "100% · submission-ready" over a package with no leaf files.
+    mockWith(COMPILE, { ...STATUS, overallReadiness: 100, contentComplete: true, submissionReady: false });
+    render(<EctdCompile {...props()} />);
+    expect(await screen.findByText(/100% · content complete/)).toBeTruthy();
+    expect(screen.queryByText(/submission-ready/)).toBeNull();
+  });
+
+  it('claims nothing extra in the compile toast', async () => {
+    mockWith({ ...COMPILE, submissionReady: false, submissionBlockers: ['x'] });
+    render(<EctdCompile {...props()} />);
+    fireEvent.click(await screen.findByText(/Compile eCTD/));
+    await waitFor(() => expect(screen.getByText(/eCTD backbone compiled/)).toBeTruthy());
+    expect(screen.queryByText(/— submission-ready/)).toBeNull();
+  });
+});

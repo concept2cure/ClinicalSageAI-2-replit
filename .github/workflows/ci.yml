@@ -48,6 +48,69 @@ jobs:
       - name: Guardrails — RLS allowlist TS↔SQL parity
         run: npm run ci:rls-allowlist-sync
 
+      - name: Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+        # The prefix-collision guard scans migrations/ only and the manifest
+        # generator scans db/migrations/ only — neither sees cross-lineage table
+        # collisions, and neither checks table NAMES. See ADR-0006 / conflict C-6.
+        run: npm run ci:duplicate-table-ddl
+
+      - name: Guardrails — golden-journey migrations must be on a durable apply path
+        # The C-6/C-8/C-10/C-11/C-16/C-17 class from the applier side: a migration
+        # a golden journey provisions and depends on, that no real deploy runs —
+        # merged, green, and applied to the throwaway journey DB only. The
+        # duplicate/unbacked guards cannot see this: the table IS created (on the
+        # journey's PGlite) and the SQL DOES have a backing file; what is missing
+        # is a durable applier. See ledger C-6 / this migration's C-23 entry.
+        run: npm run ci:journey-migration-reachability
+
+      - name: Guardrails — server SQL references a table nothing creates
+        # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
+        # tests vi.mock the db module so a mock accepts any table name; the
+        # failure surfaces only in production, as a 500 (unguarded query) or as
+        # a silent no-op (query inside try/catch). See ledger C-14.
+        run: npm run ci:unbacked-tables
+
+      - name: Guardrails — source files nothing can reach
+        # The inverse of the unbacked-table class: not a table with no code, but
+        # code with no caller. Nothing imports the module, so its routes are
+        # unmounted and nothing it contains can run — yet it greps like product.
+        #
+        # `audit:dead-code` (knip) was meant to cover this and could not: two
+        # config-load failures abort its analysis, so it reported zero
+        # unreferenced files while calling @anthropic-ai/sdk unused, and it ran
+        # with --no-exit-code so the job passed regardless.
+        run: npm run ci:unreferenced-modules
+
+      - name: Guardrails — no direct Pool construction in runtime code
+        # Was enforced nowhere. Its scan list also named ten of server/'s ~35
+        # directories, so server/src, server/bootstrap, server/lib and others
+        # were invisible to it; it now scans server/ with exclusions instead.
+        run: npm run ci:ban-new-pool
+
+      - name: Guardrails — eCTD stub bundle + generated risk-code types
+        # Both were pre-push-hook only, so a `git push --no-verify` skipped them
+        # and nothing checked the branch.
+        run: |
+          npm run ci:ectd-stubs
+          npm run ci:risk-codes
+
+      - name: Guardrails — security patterns (tenant / identity / role trust)
+        # Existed only as a pre-commit hook, so it was skipped by any commit made
+        # with --no-verify and never enforced on the branch. It now blocks in CI.
+        # Covers the PR #496-500 tenant-trust rules plus identity-trust-header
+        # (ledger C-18), which caught 11 further violations across four files on
+        # its first run — including a header-supplied userId passed straight into
+        # a document query.
+        run: npm run check:security-patterns
+
+      - name: Proof tier — schema contracts + golden journeys
+        # These run inside `npm test` too, but they get their own blocking step
+        # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/
+        # C-14/C-16 remediations and must fail loudly and early, not be buried in
+        # a full-suite run. They need no external database: the harness applies
+        # the real migration files to an in-process Postgres (PGlite).
+        run: npm run test:proof-tier
+
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
         run: node scripts/ci/check-i18n-integrity.mjs
 
@@ -137,10 +200,28 @@ jobs:
       - name: Audit — repo health scan (no regressions)
         run: npm run audit:repo-health:no-regression
 
-      - name: Audit — orphaned endpoints (threshold 900)
+      - name: Audit — orphaned endpoints (threshold 600)
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
-        # if the orphan count exceeds 900 (current: ~713). Ratchet the
-        # threshold down in package.json as the backlog is triaged.
+        # if the orphan count exceeds 570 (current: 556). Ratchet the threshold
+        # down in package.json as the backlog is triaged.
+        #
+        # Tightened from 900 -> 600 -> 570. The count had fallen to 556 without
+        # the gate following it, leaving 344 of slack — enough for the backlog
+        # to grow by more than half again while CI reported green. A ratchet
+        # that trails reality by that much is not a ratchet.
+        #
+        # The 14 of remaining headroom is deliberate, for the reason the 600
+        # step gave: a feature branch legitimately adds endpoints before the
+        # client that calls them exists, and a PR adding more than that is worth
+        # a conversation rather than a silent pass.
+        #
+        # Why 570 and not 556. Orphans are computed as `declared - consumed`, so
+        # this gate is equally sensitive to DELETING CLIENT CODE as to adding
+        # endpoints. Pinned at exactly 556, a PR that removes the last caller of
+        # a few endpoints fails CI having added none — the gate would punish
+        # deleting dead client code, which is the opposite of what it is for.
+        # The 2026-07 audit originally proposed 556; that was wrong, and this
+        # comment is the rebuttal. See Chapter 15, "Correction to item 0.8".
         run: npm run audit:orphaned-endpoints:strict
 
       - name: Upload governance audit artifacts
@@ -473,6 +554,149 @@ jobs:
           RUN_INTEGRATION_TESTS: 'true'
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+  # ── Blank-database provisioning + deploy-migration proof ──────────────────
+  #
+  # C2C-DB-001 / REM-7. Proves, against a genuinely empty Postgres, that:
+  #   1. the deploy-time migration REFUSES an unprovisioned database (exit 3)
+  #      instead of laying an island of tables onto an empty schema;
+  #   2. the from-scratch installer turns that empty database into the full
+  #      application schema;
+  #   3. the deploy-time migration then succeeds and its readiness contract
+  #      holds — the same contract /readyz enforces at boot; and
+  #   4. re-running it is a no-op, because a deploy runs it on every release.
+  #
+  # This exists because "the provisioning path works" was, until now, a claim no
+  # job tested. Every other DB-backed job here runs against a schema some earlier
+  # step already created, so a break in the from-scratch path would surface for
+  # the first time on a real deployment.
+  blank-db-provisioning:
+    name: Blank DB Provisioning + Deploy Migration
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        # pgvector, not stock postgres: the installer creates the `vector`
+        # extension, which stock postgres cannot provide.
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: c2c_blank_proof
+          # Auth method = trust; no credential literal in the workflow.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # sslmode=disable so scripts/db/connection.mjs selects the local, no-TLS
+      # branch rather than trying to verify a certificate the service has none of.
+      DATABASE_URL: postgresql://postgres@localhost:5432/c2c_blank_proof?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Assert the database really is blank
+        run: |
+          COUNT=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          echo "public tables before provisioning: $COUNT"
+          [[ "$COUNT" == "0" ]] || { echo "::error::Fixture is not a blank database"; exit 1; }
+
+      - name: Deploy migration must REFUSE an unprovisioned database
+        # The fail-closed leg. Exit 3 is deploy-migrate.mjs's distinct
+        # "never provisioned" code; any other outcome — success included — is a
+        # failure of this test, because succeeding here would mean the deploy
+        # path is willing to half-provision production.
+        run: |
+          set +e
+          node scripts/db/deploy-migrate.mjs
+          CODE=$?
+          set -e
+          echo "exit code: $CODE (expected 3)"
+          [[ "$CODE" == "3" ]] || { echo "::error::Expected exit 3 on a blank DB, got $CODE"; exit 1; }
+
+          AFTER=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          echo "public tables after refusal: $AFTER"
+          [[ "$AFTER" == "0" ]] || { echo "::error::Refused run still created $AFTER tables"; exit 1; }
+
+      - name: Provision from scratch
+        run: node scripts/db/install-fresh.mjs
+
+      - name: Deploy migration succeeds on the provisioned database
+        run: node scripts/db/deploy-migrate.mjs
+
+      - name: Deploy migration is idempotent (every release re-runs it)
+        run: node scripts/db/deploy-migrate.mjs
+
+      - name: Verify the readiness contract independently
+        # deploy-migrate.mjs checks this itself; asserting it again from psql
+        # means a regression in the script's own verification cannot hide a
+        # regression in the schema.
+        run: |
+          set -euo pipefail
+          check() {
+            local label="$1" expected="$2" sql="$3"
+            local actual
+            actual=$(psql "$DATABASE_URL" -tAc "$sql")
+            echo "$label: $actual (expected $expected)"
+            [[ "$actual" == "$expected" ]] || { echo "::error::$label = $actual, expected $expected"; exit 1; }
+          }
+
+          check "authoring subsystem tables" 11 "
+            SELECT count(*) FROM information_schema.tables
+             WHERE table_schema='public' AND table_name IN (
+               'authoring_documents','authoring_sections','doc_revisions','authoring_comments',
+               'authoring_citations','frozen_documents','user_pins','authoring_audit_trail',
+               'authoring_signatures','authoring_workflow_steps','doc_permissions')"
+
+          check "tenant-parentage FKs" 4 "
+            SELECT count(*) FROM pg_constraint WHERE conname IN (
+              'authoring_sections_doc_tenant_fkey','doc_revisions_section_tenant_fkey',
+              'authoring_comments_section_tenant_fkey','authoring_citations_section_tenant_fkey')"
+
+          check "authoring tables carrying tenant_isolation_policy" 11 "
+            SELECT count(*) FROM pg_policies
+             WHERE schemaname='public' AND policyname='tenant_isolation_policy'
+               AND tablename IN (
+                 'authoring_documents','authoring_sections','doc_revisions','authoring_comments',
+                 'authoring_citations','frozen_documents','user_pins','authoring_audit_trail',
+                 'authoring_signatures','authoring_workflow_steps','doc_permissions')"
+
+          # Lineages that reached real databases through no durable path before
+          # the migration set existed — their absence is what made the RBM and
+          # evidence-graph routes write to tables that were not there.
+          check "collaboration CRDT state table" 1 "
+            SELECT count(*) FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='collab_document_state'"
+
+          RBM=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'rbm\\_%'")
+          CRE=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'cre\\_%'")
+          echo "rbm_* tables: $RBM · cre_* tables: $CRE"
+          [[ "$RBM" -ge 8 ]] || { echo "::error::RBM lineage did not land ($RBM tables)"; exit 1; }
+          [[ "$CRE" -ge 6 ]] || { echo "::error::Evidence spine did not land ($CRE tables)"; exit 1; }
 
   aios-audit-assets:
     name: AIOS Audit Assets

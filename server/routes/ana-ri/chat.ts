@@ -82,6 +82,7 @@ import {
   sendSuccess,
   sendError,
   extractRequestContext,
+  isPositiveIntegerId,
   ensureGateway,
   VALID_LENSES,
   VALID_ROLES,
@@ -466,21 +467,26 @@ router.post('/chat', async (req: Request, res: Response) => {
     const fileIds = req.body.file_ids;
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
-        const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
-          [fileIds, orgId ? Number(orgId) : 0]
+        // Shared tenant-scoped lookup — checks both the organization column and
+        // the storage-path prefix. See uploaded-file-access.ts.
+        const { loadUploadedFileMetadata } = await import(
+          '../../services/ana/uploaded-file-access.js'
         );
-        if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows
-            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+        const attachedFiles = await loadUploadedFileMetadata(
+          fileIds,
+          orgId != null ? Number(orgId) : null
+        );
+        if (attachedFiles.length > 0) {
+          const fileContext = attachedFiles
+            .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)
             .join('\n');
           messages.push({
             role: 'user' as const,
             content: `[The user has attached the following files to this message:\n${fileContext}\nReference these files in your response when relevant.]`,
           });
         }
-      } catch {
-        /* non-blocking */
+      } catch (fileErr: any) {
+        console.warn('[AnA RI Chat] Attachment context failed:', fileErr?.message);
       }
     }
 
@@ -619,7 +625,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       action: 'chat',
       projectId: req.body.project_context?.projectId,
       organizationId: orgId ? Number(orgId) : undefined,
-      userId,
+      userId: userId ?? undefined,
       artifactCreated: false,
       anaRiOrchestrated: true,
       evidenceCompliant: evidenceCheck.compliant,
@@ -664,7 +670,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     let executedActions: any[] = [];
     const chatProjectIdForActions = chatProjectId;
     let postGuidanceResponseContent = response.content;
-    if (response.content && chatProjectIdForActions && orgId) {
+    if (response.content && chatProjectIdForActions && orgId && isPositiveIntegerId(userId)) {
       try {
         const guidance = await processResponseActions(response.content, {
           projectId:
@@ -672,7 +678,7 @@ router.post('/chat', async (req: Request, res: Response) => {
               ? Number.parseInt(chatProjectIdForActions, 10)
               : chatProjectIdForActions,
           organizationId: Number(orgId),
-          userId: typeof userId === 'number' ? userId : 0,
+          userId,
           userName: 'AnA',
           threadId: resolvedThreadId || undefined,
         });
@@ -687,10 +693,10 @@ router.post('/chat', async (req: Request, res: Response) => {
     // (Parity with /stream — previously only ran on stream path)
     let executedCommands: any[] = [];
     let cleanedResponseContent = postGuidanceResponseContent;
-    if (postGuidanceResponseContent && orgId) {
+    if (postGuidanceResponseContent && orgId && isPositiveIntegerId(userId)) {
       try {
         const cmdCtx: CommandContext = {
-          userId: typeof userId === 'number' ? userId : 0,
+          userId,
           organizationId: Number(orgId),
           activeProjectId: chatProjectIdForActions
             ? typeof chatProjectIdForActions === 'string'

@@ -1,118 +1,99 @@
 #!/usr/bin/env node
-// Wrap `npm audit --audit-level=high` so we don't fail CI on a fixed-but-still-
-// flagged advisory. npm audit's hosted database lags the actual fix landing in
-// the registry: when a maintainer ships a patch version >N+1, the advisory still
-// lists ranges up to <=N, but npm audit reports any installed version of the
-// package as vulnerable because it folds the advisory under the package name
-// instead of the specific range. As of 2026-05-21 the following packages ship
-// at versions ABOVE their CVE's vulnerable range yet npm audit still flags them:
+// Wrap `npm audit --audit-level=high` so CI does not fail on a fixed-but-still-
+// flagged advisory. npm audit's hosted database lags the fix landing in the
+// registry: when a maintainer ships a patch, the advisory still lists ranges up
+// to the last vulnerable version, but npm audit folds it under the package name
+// and reports ANY installed version as vulnerable.
 //
-//   - lodash@4.18.1                       (advisory range <=4.17.23)
-//   - @figma/code-connect@1.4.5           (advisory range 1.3.6-1.4.3, via lodash)
-//   - fast-uri@3.1.2                      (advisory range <=3.1.1)
-//   - protobufjs@7.6.0                    (advisory range <=7.5.7)
-//   - @babel/plugin-transform-modules-systemjs@7.29.4 (advisory range <=7.29.3)
+// ── Rules for this list ────────────────────────────────────────────────────
+// An entry here suppresses a real advisory, so it is a risk acceptance, not
+// bookkeeping. Before adding one, establish which kind it is and say so:
 //
-// We list the advisory IDs we accept as resolved-in-installed and require any
-// new high/critical advisory to either land here with explicit justification
-// (e.g. "fixed in installed version X > advisory range Y") or be cleared via
-// `npm audit fix`. New direct deps or genuine vulnerabilities will fail loudly.
+//   registry lag   the installed version is ABOVE the vulnerable range. Prove
+//                  it with `npm ls <pkg> --all` and record the versions.
+//   real exposure  an in-range copy IS installed and the risk is accepted for
+//                  a stated reason (e.g. build-time only). Record what has to
+//                  change for the entry to go away.
+//
+// Do NOT write a justification about how the package is used without checking
+// that it is used that way. Two entries were removed for exactly that:
+// react-router was accepted as "used in SPA / data-router mode" when the app
+// never imported it, and tmp as "no upgrade path exists" long after an
+// override had fixed it. Both read as considered decisions for months.
+//
+// The scan prints any accepted id npm audit did not flag on that run. Treat
+// that list as a work queue: re-verify each and delete it, or confirm the id
+// has only dropped out of the advisory database temporarily.
+//
+// As of 2026-07-26 this list was reduced from 27 entries to 1. Every other
+// package had ONLY versions above its advisory range (verified per package
+// with `npm ls <pkg> --all`), so those entries suppressed nothing.
+//
+// RECONCILED with the parallel audit that landed on concept2cure-v2 in #1111
+// (5522c1cb). That change reached the SAME findings from the same evidence —
+// react-router's justification described usage that did not exist, tmp's
+// "no upgrade path" had been overtaken by an overrides entry, and several
+// version claims had drifted — but kept the entries and corrected their notes.
+// This keeps the removals instead, because a correctly-documented entry that
+// suppresses nothing is still a standing risk acceptance nobody will re-check.
+//
+// The merge was decided by measurement, not preference: against the tree at that
+// commit, `npm audit --audit-level=high` reports ZERO high/critical advisories,
+// and the scan exits 0 with an EMPTY allowlist. All 32 entries on the base were
+// dead. The dependency work in the same range (Pillow bump, react-router
+// removal, the tmp override) is what cleared them.
+//
+// SECOND MERGE, against #1057, which added two more entries. Both were checked
+// the way this header requires and both were dropped:
+//
+//   brace-expansion (GHSA-3jxr-9vmj-r5cp) — `npm ls brace-expansion --all` shows
+//     a single copy at 5.0.8, above every vulnerable range, via the
+//     "brace-expansion": "5.0.8" override. Registry lag at most; suppresses
+//     nothing today.
+//
+//   react-router (GHSA-qwww-vcr4-c8h2) — the note read "this app routes with
+//     wouter and uses react-router-dom only for a couple of auth screens" and
+//     referenced "the react-router/react-router-dom ^7.18.1 override in
+//     package.json". None of that holds: there is NO react-router import in
+//     client/src, server/ or shared/ (the only match is the word inside a code
+//     comment), no react-router entry in dependencies, devDependencies or
+//     overrides, and `npm ls react-router react-router-dom --all` returns
+//     nothing. The package is not installed.
+//
+// That is the SECOND time this exact advisory has been re-added with a usage
+// claim that does not survive checking — #1106 removed the first one, which said
+// the app used react-router "in SPA / data-router mode". Twice is a pattern, and
+// it is the reason the rules at the top of this file are stated as rules rather
+// than left as etiquette: the failure is not carelessness, it is that writing a
+// plausible justification is easier than running `npm ls`.
 
 import { spawnSync } from 'node:child_process';
 
 const ACCEPTED_GHSA_IDS = new Set([
-  // lodash — advisory range <=4.17.23, we ship 4.18.1
-  'GHSA-r5fr-rjxr-66jc', // _.template code injection
-  // fast-uri — advisory ranges <=3.1.0 / <=3.1.1, we ship 3.1.2
-  'GHSA-q3j6-qgpj-74h6', // percent-encoded dot traversal
-  'GHSA-v39h-62p7-jpjc', // percent-encoded authority confusion
-  // protobufjs — advisory ranges <7.5.5 / <=7.5.5, we ship 7.6.0
-  'GHSA-xq3m-2v4x-88gg', // arbitrary code execution
-  'GHSA-66ff-xgx4-vchm', // bytes field defaults code injection
-  'GHSA-75px-5xx7-5xc7', // codegen gadget after prototype pollution
-  'GHSA-jvwf-75h9-cwgg', // unsafe option paths DoS
-  'GHSA-685m-2w69-288q', // unbounded protobuf recursion
-  // @babel/plugin-transform-modules-systemjs — advisory range <=7.29.3, we ship 7.29.4
-  'GHSA-fv7c-fp4j-7gwp', // arbitrary code generation
-  // tmp — advisory range <0.2.6; exceljs@4.4.0 (latest) declares `tmp: ^0.2.0`
-  // resolving to 0.2.5. No upgrade path exists: exceljs has no newer release that
-  // bumps tmp. The vulnerability requires attacker-controlled prefix/postfix options
-  // to tmp.tmpName(); exceljs passes fixed internal strings — not user input — so
-  // the path-traversal gadget is not reachable in our usage. Accepted until exceljs
-  // ships a release that depends on tmp >= 0.2.6.
-  'GHSA-ph9p-34f9-6g65', // tmp path traversal via unsanitized prefix/postfix
-  // esbuild — advisory GHSA-gv7w-rqvm-qjhr, vulnerable range >=0.17.0 <0.28.1
-  // (build-time RCE via NPM_CONFIG_REGISTRY during esbuild's binary fetch).
-  // NOTE: unlike the entries above, this is NOT a registry-lag false positive —
-  // installed copies (0.25.12 direct; 0.27.4 via tsx; older via
-  // drizzle-kit/@esbuild-kit) are genuinely within range. Accepted as a low,
-  // BUILD-TIME-ONLY risk (dev/build tooling, not a runtime/production path)
-  // pending a coordinated bump to esbuild >= 0.28.1 across vite/tsx/drizzle-kit.
-  // Accepting the esbuild advisory also clears the tsx/vite "transitive
-  // vulnerability" flags, which are this same advisory surfaced through their
-  // bundled esbuild.
+  // ── esbuild — the ONLY entry still covering a real exposure ───────────────
+  // GHSA-gv7w-rqvm-qjhr, vulnerable range >=0.17.0 <0.28.1 (build-time RCE via
+  // NPM_CONFIG_REGISTRY during esbuild's binary fetch).
+  //
+  // Not a registry-lag false positive: `npm ls esbuild --all` shows 0.18.20,
+  // 0.19.12 and 0.25.12 installed alongside 0.28.1, and the first three are
+  // inside the range. Accepted as a low, BUILD-TIME-ONLY risk (dev/build
+  // tooling, never a runtime path) pending a coordinated bump across
+  // vite / tsx / drizzle-kit. Re-check with `npm ls esbuild --all` before
+  // renewing this — the moment no in-range copy remains, delete it.
+  //
+  // KEPT DESPITE BEING UNFLAGGED. The stale report below now names this id:
+  // npm audit has stopped reporting the advisory entirely (it currently reports
+  // zero high/critical advisories of any kind). That is the "dropped out of the
+  // database temporarily" case the report is there to distinguish, and it is why
+  // the report is advisory rather than enforcing. The exposure itself is
+  // unchanged — three in-range copies remain installed, re-verified with
+  // `npm ls esbuild --all` at this commit — so the entry stays. Deleting it on
+  // the strength of a quiet scan would be the exact mistake this file's rules
+  // warn about, run in the opposite direction.
+  //
+  // Accepting this also clears the tsx/vite "transitive vulnerability" flags,
+  // which are this same advisory surfaced through their bundled esbuild.
   'GHSA-gv7w-rqvm-qjhr', // esbuild binary-integrity RCE (build-time; dep bump pending)
-  // ── Upgraded in place via package.json `overrides` to a version ABOVE the
-  // advisory's vulnerable range. These are genuinely fixed in the installed
-  // tree (confirmed: `npm ls <pkg> --all` shows only the patched version), but
-  // npm audit still folds the advisory under the package name (registry lag),
-  // so they are accepted here as resolved-in-installed. ──
-  // ws — advisory <8.21.0; override ^8.21.0 (installed 8.21.0)
-  'GHSA-96hv-2xvq-fx4p', // ws memory-exhaustion DoS from tiny fragments
-  // form-data — advisory <4.0.6; override ^4.0.6 (installed 4.0.6)
-  'GHSA-hmw2-7cc7-3qxx', // form-data CRLF injection via unescaped field names
-  // protobufjs — advisory ranges <=7.6.0 and <=7.6.2; override ^7.6.4 (installed 7.6.4)
-  'GHSA-wcpc-wj8m-hjx6', // unbounded Any expansion DoS during JSON conversion
-  'GHSA-f38q-mgvj-vph7', // protobufjs (advisory range <=7.6.2)
-  // vite — advisory ranges <=6.4.2; bumped direct dep + override ^6.4.3 (installed 6.4.3).
-  // Both advisories are dev-server-only (server.fs.deny bypass), not a prod/runtime path.
-  'GHSA-fx2h-pf6j-xcff', // vite server.fs.deny bypass on Windows alternate paths
-  'GHSA-v6wh-96g9-6wx3', // vite (advisory range <=6.4.2)
-  // http-proxy-middleware — advisory range >=3.0.4 <3.0.7; bumped direct dep +
-  // override ^3.0.7 (installed 3.0.7, above range).
-  'GHSA-gcq2-9pq2-cxqm', // http-proxy-middleware multipart/form-data CRLF field injection
-  // nodemailer — advisory range <=9.0.0; bumped direct dep ^9.0.1 (installed 9.0.1,
-  // above range). Our usage is createTransport/sendMail only — no `raw` option.
-  'GHSA-p6gq-j5cr-w38f', // nodemailer raw-option file read / SSRF
-  // undici — advisory ranges <7.28.0 (3 advisories); override ^7.28.0 (installed
-  // 7.28.0, above range). All undici consumers (cheerio, jsdom, @figma/code-connect)
-  // accept ^7, so the override is non-breaking.
-  'GHSA-vmh5-mc38-953g', // undici TLS cert validation bypass via dropped requestTls (SOCKS5)
-  'GHSA-vxpw-j846-p89q', // undici WebSocket DoS via fragment count bypass
-  'GHSA-hm92-r4w5-c3mj', // undici cross-origin request routing via SOCKS5 proxy pool reuse
-  // Accepting the ws advisory above also clears the engine.io / engine.io-client /
-  // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
-  // unaccepted dependency" flags — that is this same ws advisory surfaced through
-  // their dependency chain.
-  // ── brace-expansion / fast-uri / linkify-it / postcss / react-router: upgraded
-  // in place (package.json `overrides`, or a direct-dep bump for postcss +
-  // react-router-dom) to a version ABOVE each advisory's vulnerable range.
-  // Confirmed fixed-in-installed via `npm ls <pkg> --all` (only the patched
-  // version present); npm audit still folds each advisory under the package name
-  // (registry lag), so accepted here as resolved-in-installed. ──
-  // brace-expansion — advisory ranges <1.1.16 / >=2.0.0 <2.1.2 / >=3.0.0 <5.0.7 /
-  // <=5.0.7; override 5.0.8 (installed 5.0.8, only version in the tree).
-  'GHSA-3jxr-9vmj-r5cp', // brace-expansion DoS: exponential expansion of non-expanding {} groups
-  'GHSA-mh99-v99m-4gvg', // brace-expansion DoS: unbounded expansion length OOM crash
-  // fast-uri — advisory ranges <=3.1.3 / >=3.0.0 <3.1.3; override ^3.1.4 (installed
-  // 3.1.4). ajv declares fast-uri ^3.0.1, so the ^3.1.4 override is non-breaking.
-  'GHSA-v2hh-gcrm-f6hx', // fast-uri host confusion via literal backslash authority delimiter
-  'GHSA-4c8g-83qw-93j6', // fast-uri host confusion via failed IDN canonicalization
-  // linkify-it — advisory range <=5.0.1; override ^5.0.2 (installed 5.0.2).
-  // markdown-it declares linkify-it ^5.0.2, so the override is non-breaking.
-  'GHSA-v245-v573-v5vm', // linkify-it quadratic-complexity DoS via the mailto: validator scan-loop
-  // postcss — advisory range <=8.5.17; direct dep bumped ^8.5.23 (installed 8.5.23).
-  'GHSA-r28c-9q8g-f849', // postcss path traversal in previous-source-map auto-loading
-  // react-router — DoS advisory range >=7.0.0 <7.18.0; bumped react-router-dom to
-  // ^7.18.1 (installed react-router 7.18.1, above range). Genuinely fixed.
-  'GHSA-chx6-hx7r-mcp5', // react-router unauthenticated DoS via inefficient route matching
-  // react-router — RSC-mode CSRF advisory range >=7.12.0 <8.3.0. NOT a registry-lag
-  // false positive: the fix lands in 8.3.0 (a major upgrade). This is an RSC /
-  // framework-mode-only bypass (actions executing before a 400 in React Server
-  // Components mode); this app uses react-router-dom in SPA / data-router mode with
-  // no RSC server actions, so the vector is not reachable. Accepted as a
-  // not-reachable risk pending a coordinated react-router 8.x major upgrade.
-  'GHSA-qwww-vcr4-c8h2', // react-router RSC-mode CSRF bypass (SPA usage; 8.x upgrade deferred)
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
@@ -190,6 +171,42 @@ for (const [pkgName, vuln] of Object.entries(vulns)) {
   }
 }
 
+// ── Stale-entry detection ───────────────────────────────────────────────────
+// Every id here suppresses a real advisory, so an entry that no longer matches
+// anything is not harmless: it is a standing risk acceptance for a problem that
+// may no longer exist, and its justification rots without anyone noticing.
+//
+// Two entries have already drifted this way. `react-router` was accepted with
+// "this app uses react-router-dom in SPA / data-router mode" — the app never
+// imported it at all. `tmp` was accepted with "no upgrade path exists" long
+// after an override had fixed it. Both read as considered decisions and
+// discouraged the check that would have found them.
+//
+// Reported, not enforced: npm audit's database moves, so an id can drop out
+// for a release and return. Failing the build on that would be worse than the
+// drift. The point is to make it visible in the log every run.
+const flaggedIds = new Set();
+for (const vuln of Object.values(vulns)) {
+  for (const adv of (vuln.via || []).filter((x) => typeof x === 'object')) {
+    const id = ghsaFromUrl(adv.url);
+    if (id) flaggedIds.add(id);
+  }
+}
+const staleAccepted = [...ACCEPTED_GHSA_IDS].filter((id) => !flaggedIds.has(id));
+
+function reportStale() {
+  if (staleAccepted.length === 0) return;
+  console.log('');
+  console.log(
+    `Note: ${staleAccepted.length} allowlist entr${staleAccepted.length === 1 ? 'y is' : 'ies are'} no longer flagged by npm audit:`,
+  );
+  for (const id of staleAccepted) console.log(`  - ${id}`);
+  console.log(
+    'Each suppresses an advisory that no longer matches. Re-verify the justification and remove it,',
+  );
+  console.log('or confirm the id has only dropped out of the advisory database temporarily.');
+}
+
 if (blocking.length === 0) {
   // Report what we accepted so the log is searchable.
   const accepted = [];
@@ -201,8 +218,11 @@ if (blocking.length === 0) {
   if (accepted.length > 0) {
     console.log('Accepted (registry-lag false positives):', accepted.join(', '));
   }
+  reportStale();
   process.exit(0);
 }
+
+reportStale();
 
 console.error(`Security Scan: ${blocking.length} blocking high/critical advisor${blocking.length === 1 ? 'y' : 'ies'} found:`);
 for (const b of blocking) {

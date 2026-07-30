@@ -10,25 +10,25 @@ extractor with a quote-context-aware lexer: this revealed ~7 queries the old
 extractor could not see (several were real cross-tenant leaks, fixed the same
 day) and cleared several false positives. A 2026-06-15 GA pass landed three
 more genuine scoping fixes (billing-dashboard, deep-research updateJobProgress,
-the RAG neighbour-window fetch) — see Resolved. Current baseline: **24 entries**,
-every one enumerated here. **Policy: a new baseline entry requires a row in
+the RAG neighbour-window fetch) — see Resolved. Current baseline: **25 entries**,
+every one is dispositioned by the class-level rows below. **Policy: a new baseline entry requires a row in
 this table — enforced by `scripts/ci/check-baseline-justifications.mjs`.**
 
 ## Justified entries (remain in baseline)
 
-| File:line | Class | Justification |
-|---|---|---|
-| `server/db/bootstrap/seed-default-org.ts:75, 87` | bootstrap | Pre-tenant seed inside the schema-migration transaction; no org exists yet. |
-| `server/routes/esignature.ts:45, 173` | self-lookup | Part 11 re-auth / signer denormalization reads the **session user's own row**; `users` has no org column by design (tenancy lives in `organization_users`). |
-| `server/services/billing.ts:632, 672, 678` | webhook | Stripe webhook idempotency/processing keyed by globally-unique `evt_…` id; signature-verified; org resolved asynchronously (`stripe_events.organization_id` nullable by design). |
-| `server/routes/tenant-users.ts:233, 265` | provisioning | Org-admin-gated invite dedupe by globally-unique email; `users` has no org column. (Cross-org **profile mutation** during dedupe was removed in wave 7.) |
-| `server/services/atomicQuotaService.js:172, 202` | provisioning | Same dedupe pattern inside the org-quota transaction. |
-| `server/routes/part11-compliance.ts:263` | self-lookup | bcrypt verify against the session user behind a policy guard; only `{valid}` is returned. |
-| `server/services/ana-ri/command-executor.ts:1000` | self-lookup | Reads the authenticated `ctx.userId`'s own row. |
-| `server/services/ana-ri/governed-action-signoff.ts:106` | self-lookup | Part 11 §11.200 e-signature re-auth: reads the signing user's own `password_hash` by `userId` for bcrypt compare; identical query to the justified `esignature.ts` re-auth. `users` has no org column by design (tenancy lives in `organization_users`); fails closed on schema drift. |
-| `server/services/securityHealth.ts:337` | diagnostics | System security-health counters (24h event-type counts, no row data). |
-| `server/storage.ts:2177, 2189, 2205, 2240, 2255` | users CRUD | `users` carries no tenant column (`shared/schema.ts` — only `default_organization_id`); tenancy is enforced through `organization_users` at the route layer. |
-| `server/services/advancedRAGPipeline.ts` (vault arms) | RLS | Vault retrieval arms (dense + lexical) **and the small-to-big neighbour-window fetch** on `vault.document_chunks` run inside `withTenantContext(pool, organizationUuid, …)` — isolation is enforced by Postgres RLS session context, not a WHERE clause the static scanner can see. |
+| File:line                                                  | Class             | Justification                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server/db/bootstrap/seed-default-org.ts:75, 87`           | bootstrap         | Pre-tenant seed inside the schema-migration transaction; no org exists yet.                                                                                                                                                                                                                                                       |
+| `server/routes/esignature.ts:45, 173`                      | self-lookup       | Part 11 re-auth / signer denormalization reads the **session user's own row**; `users` has no org column by design (tenancy lives in `organization_users`).                                                                                                                                                                       |
+| `server/services/billing.ts:632, 672, 678`                 | webhook           | Stripe webhook idempotency/processing keyed by globally-unique `evt_…` id; signature-verified; org resolved asynchronously (`stripe_events.organization_id` nullable by design).                                                                                                                                                  |
+| `server/routes/tenant-users.ts:233, 265`                   | provisioning      | Org-admin-gated invite dedupe by globally-unique email; `users` has no org column. (Cross-org **profile mutation** during dedupe was removed in wave 7.)                                                                                                                                                                          |
+| `server/services/atomicQuotaService.js:172, 202`           | provisioning      | Same dedupe pattern inside the org-quota transaction.                                                                                                                                                                                                                                                                             |
+| `server/routes/part11-compliance.ts:263`                   | self-lookup       | bcrypt verify against the session user behind a policy guard; only `{valid}` is returned.                                                                                                                                                                                                                                         |
+| `server/services/ana-ri/command-executor.ts:1000`          | self-lookup       | Reads the authenticated `ctx.userId`'s own row.                                                                                                                                                                                                                                                                                   |
+| `server/services/ana-ri/governed-action-signoff.ts:106`    | self-lookup       | Part 11 §11.200 e-signature re-auth: reads the signing user's own `password_hash` by `userId` for bcrypt compare; identical query to the justified `esignature.ts` re-auth. `users` has no org column by design (tenancy lives in `organization_users`); fails closed on schema drift.                                            |
+| `server/services/securityHealth.ts:337`                    | diagnostics       | System security-health counters (24h event-type counts, no row data).                                                                                                                                                                                                                                                             |
+| `server/storage.ts:2177, 2189, 2205, 2240, 2255`           | users CRUD        | `users` carries no tenant column (`shared/schema.ts` — only `default_organization_id`); tenancy is enforced through `organization_users` at the route layer.                                                                                                                                                                      |
+| `server/services/advancedRAGPipeline.ts` (vault arms)      | RLS               | Vault retrieval arms (dense + lexical) **and the small-to-big neighbour-window fetch** on `vault.document_chunks` run inside `withTenantContext(pool, organizationUuid, …)` — isolation is enforced by Postgres RLS session context, not a WHERE clause the static scanner can see.                                               |
 | `server/services/advancedRAGPipeline.ts` (rag_chunks arms) | conditional scope | rag_chunks retrieval arms (dense + lexical) append `AND d.organization_id = $N` via an interpolated filter variable when tenant context is provided (the scanner cannot resolve the variable; every route-facing caller passes the org). The small-to-big neighbour-window fetch is now **explicitly** org-scoped (see Resolved). |
 
 ## Resolved (no longer in baseline)
@@ -89,7 +89,7 @@ this table — enforced by `scripts/ci/check-baseline-justifications.mjs`.**
 
 ## Standing follow-up
 
-- Invite dedupe can still *add* an existing cross-org user to the inviting
+- Invite dedupe can still _add_ an existing cross-org user to the inviting
   org by email — that is the intended invite-by-email feature; the profile
   mutation half was removed. If invite-by-email should require consent,
   that's a product change, not a query fix.

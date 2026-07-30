@@ -1,0 +1,281 @@
+{
+  "$comment": "Tables referenced by server SQL that NOTHING in the repo creates — no migration, no drizzle pgTable, no runtime DDL. Pinned to the exact referencing file set, so an entry cannot silently acquire new call sites. Every entry is a feature that either returns 500 (unguarded query) or silently no-ops (query inside try/catch). Each is a defect awaiting a code-derived migration or a retirement, NOT an approved pattern. Shrink this file; never grow it. See ledger C-11/C-14 for the remediation pattern: derive the shape from the queries, add one canonical migration, prove it with a golden journey.",
+  "generatedAt": "2026-07-28T03:16:35.391Z",
+  "total": 89,
+  "entries": {
+    "academic_embeddings": [
+      "server/academic-knowledge-tracker.ts"
+    ],
+    "academic_resources": [
+      "server/academic-knowledge-tracker.ts"
+    ],
+    "agent_runtime.threads": [
+      "server/services/cognitive-ecosystem/langgraph-orchestrator.service.ts"
+    ],
+    "analytical_accuracy_points": [
+      "server/services/analytical/lims.ts"
+    ],
+    "analytical_linearity_points": [
+      "server/services/analytical/lims.ts"
+    ],
+    "analytical_precision_runs": [
+      "server/services/analytical/lims.ts"
+    ],
+    "analytical_spec_thresholds": [
+      "server/services/analytical/lims.ts"
+    ],
+    "audit.audit_logs": [
+      "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
+    ],
+    "authoring_ai_suggestions": [
+      "server/routes/authoring.router.ts"
+    ],
+    "authoring_audit_events": [
+      "server/routes/authoring.router.ts"
+    ],
+    "authoring_comment_activity": [
+      "server/routes/authoring.router.ts"
+    ],
+    "authoring_compliance_scores": [
+      "server/routes/authoring.router.ts"
+    ],
+    "authoring_reviews": [
+      "server/routes/authoring.router.ts"
+    ],
+    "authoring_suggestion_feedback": [
+      "server/routes/authoring.router.ts"
+    ],
+    "c2c_investigator_brochure": [
+      "server/routes/investigator-brochure.routes.ts"
+    ],
+    "cer_jobs": [
+      "server/services/cerGenerator.ts"
+    ],
+    "citation_chains": [
+      "server/routes/graphrag.ts"
+    ],
+    "clinical_ops.endpoint_results": [
+      "server/services/regulatory-programs.service.ts"
+    ],
+    "cmc_methods": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "concept2cure_projects": [
+      "server/services/resolution/contradiction-resolution-orchestrator.ts"
+    ],
+    "correspondences": [
+      "server/services/ana-ri/mdx-proactive-signals.ts"
+    ],
+    "cortex.statistics": [
+      "server/services/cortexPrimeService.ts"
+    ],
+    "created_at": [
+      "server/services/innovation/regulatory-negotiation-logbook-service.ts"
+    ],
+    "cyp": [
+      "server/services/ana/pediatricTools.ts"
+    ],
+    "doc_change_requests": [
+      "server/routes/authoring.router.ts"
+    ],
+    "doc_checklist": [
+      "server/routes/authoring.router.ts"
+    ],
+    "doc_checklist_items": [
+      "server/routes/authoring.router.ts"
+    ],
+    "doc_sections": [
+      "server/services/ana-ri/command-executor.ts"
+    ],
+    "dp_specs": [
+      "server/api/cmc/regulatory_aiDraft.ts"
+    ],
+    "ectd_v4.submissions": [
+      "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
+    ],
+    "expected_prev": [
+      "server/src/control-plane/persistent-queries.ts"
+    ],
+    "extraction_jobs": [
+      "server/routes/integration-test.ts"
+    ],
+    "fda_510k_initial_data_forms": [
+      "server/routes/fda-forms.routes.ts"
+    ],
+    "ind_milestones": [
+      "server/routes/preIndRoutes.ts"
+    ],
+    "ind_pre_ind_data": [
+      "server/routes/preIndRoutes.ts"
+    ],
+    "ind_source_documents": [
+      "server/routes/ind-pdf.ts"
+    ],
+    "knowledge_documents": [
+      "server/sage-plus-service.ts"
+    ],
+    "knowledge_graph_edges": [
+      "server/routes/graphrag.ts"
+    ],
+    "knowledge_graph_nodes": [
+      "server/routes/graphrag.ts"
+    ],
+    "licenses": [
+      "server/routes/project-hierarchy.ts"
+    ],
+    "literature_entries": [
+      "server/services/regulatory-programs.service.ts"
+    ],
+    "lumen.atom_relationships": [
+      "server/services/knowledge-graph.ts",
+      "server/workers/enhanced-ingestion-pipeline.ts"
+    ],
+    "lumen.entity_extractions": [
+      "server/services/knowledge-graph.ts",
+      "server/workers/enhanced-ingestion-pipeline.ts",
+      "server/workers/entity-extraction-worker.ts"
+    ],
+    "lumen.traceability_matrix": [
+      "server/services/knowledge-graph.ts"
+    ],
+    "lumen.v_council_session_progress": [
+      "server/api/neuro-symbolic/routes.ts"
+    ],
+    "lumen.v_graph_statistics": [
+      "server/services/knowledge-graph.ts"
+    ],
+    "lumen.v_verification_summary": [
+      "server/api/neuro-symbolic/routes.ts"
+    ],
+    "maud_algorithms": [
+      "server/db/maudDb.ts"
+    ],
+    "maud_validation_requests": [
+      "server/db/maudDb.ts"
+    ],
+    "maud_validations": [
+      "server/db/maudDb.ts"
+    ],
+    "medline": [
+      "server/db/setupLiterature.ts"
+    ],
+    "patent_portfolio": [
+      "server/routes/concept2cure.ts"
+    ],
+    "predicate_intelligence_results": [
+      "server/routes/concept2cure.ts"
+    ],
+    "proc_control_strategy": [
+      "server/src/services/reg/evidence.ts"
+    ],
+    "publication_date": [
+      "server/services/regulatory-programs.service.ts"
+    ],
+    "qa_methods": [
+      "server/api/cmc/regulatory_aiDraft.ts"
+    ],
+    "qc_specs": [
+      "server/src/services/reg/evidence.ts"
+    ],
+    "reg_m3_sections": [
+      "server/api/cmc/portfolio.ts",
+      "server/api/cmc/regulatory_aiDraft.ts",
+      "server/src/services/reg/rpi.ts"
+    ],
+    "reg_mail_ingest": [
+      "server/src/services/integrations/gmail.ts"
+    ],
+    "reg_question_events": [
+      "server/api/cmc/regulatoryIR.ts"
+    ],
+    "reg_rpi_snapshots": [
+      "server/api/cmc/portfolio.ts"
+    ],
+    "regulatory_status": [
+      "server/sage-plus-service.ts"
+    ],
+    "site_intel.site_scorecard": [
+      "server/api/site-intel/routes.ts"
+    ],
+    "skip": [
+      "server/workers/ivdr-pack-worker.ts"
+    ],
+    "specification_audit_log": [
+      "server/api/cmc/specificationRoutes.ts"
+    ],
+    "stab_assignments": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "stab_capa": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "stab_chain": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "stab_excursions": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "stab_protocols": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "stab_samples": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "stab_signoffs": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "step_runs": [
+      "server/services/workflow/WorkflowExecutionEngine.ts"
+    ],
+    "submission_projects": [
+      "server/routes/submissionCenter.routes.ts"
+    ],
+    "submission_tasks": [
+      "server/routes/submissionCenter.routes.ts"
+    ],
+    "tasks": [
+      "server/routes/concept2cure.ts"
+    ],
+    "templates": [
+      "server/services/cerGenerator.ts"
+    ],
+    "trials": [
+      "server/storage.ts"
+    ],
+    "uploads": [
+      "server/services/autoExtractionPipeline.ts"
+    ],
+    "user_roles": [
+      "server/services/rules-engine/actions/index.ts"
+    ],
+    "v_stab_due_tp": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "v_stab_upcoming_tp": [
+      "server/src/routes/stability.router.ts"
+    ],
+    "vault.document_chunks": [
+      "server/services/advancedRAGPipeline.ts",
+      "server/workers/layout-aware-ingestion.ts",
+      "server/workers/vectorization-worker.ts"
+    ],
+    "vault.drafting_sessions": [
+      "server/api/drafting/routes.ts"
+    ],
+    "vault.evidence_citations": [
+      "server/services/advancedRAGPipeline.ts"
+    ],
+    "vault.extracted_entities": [
+      "server/api/drafting/routes.ts"
+    ],
+    "vault.processing_queue": [
+      "server/workers/vectorization-worker.ts"
+    ],
+    "workflow_definitions": [
+      "server/services/workflow/WorkflowExecutionEngine.ts"
+    ],
+    "workflow_step_definitions": [
+      "server/services/workflow/WorkflowExecutionEngine.ts"
+    ]
+  }
+}

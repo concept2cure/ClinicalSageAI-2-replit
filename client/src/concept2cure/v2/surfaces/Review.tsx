@@ -4,7 +4,12 @@
  * Registry id: `review`
  *
  * Review queue, threaded comments, reject-with-reason, delegate-step,
- * multi-step approval workflows, e-sign manifestation per 21 CFR §11.50.
+ * multi-step approval workflows.
+ *
+ * NOTE: this surface records review decisions locally. It does NOT apply a
+ * 21 CFR §11.50 electronic signature — see ESignModal below. Binding signatures
+ * are applied from the authoring workspace (server/routes/authoring.router.ts),
+ * PIN-verified and sealed against a frozen document version.
  */
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
@@ -71,21 +76,32 @@ function ESignModal({ onClose, item, onSigned }: {
   item: ReviewItem;
   onSigned?: () => void;
 }) {
+  /**
+   * This dialog does NOT apply an electronic signature, and no longer claims to.
+   *
+   * What it used to do: collect a password and a TOTP into component state, use
+   * NEITHER, write `window.C2C_SIGNED` (read nowhere in the repository), make
+   * zero network calls, attribute the signature to the hardcoded string
+   * 'Jordan Chen' — a fixture identity from v2/fixtures/admin-data.ts — and tell
+   * the user "Manifestation recorded per 21 CFR §11.50".
+   *
+   * Every part of that is a problem, and the credential fields are the worst of
+   * them: a control that asks for a password and discards it teaches users to
+   * type their password into things that do nothing, and is indistinguishable
+   * from a harvesting UI. They are gone.
+   *
+   * A §11.50 signature manifestation has to record the signer's printed name,
+   * the date and time of execution, and the meaning of the signing — bound to
+   * the signed record. None of that can come from the browser's say-so. The real
+   * implementation exists: server/routes/authoring.router.ts applies a
+   * PIN-verified signature into `authoring_signatures`, bound to a frozen
+   * document version. This surface is not wired to it.
+   *
+   * Until it is, the honest thing is a local review decision that says so.
+   */
   const [meaning, setMeaning] = useState('APPROVER');
-  const [pw, setPw] = useState('');
-  const [totp, setTotp] = useState('');
 
-  const sign = () => {
-    try {
-      if (item && item.pid && item.secKey) {
-        (window as any).C2C_SIGNED = (window as any).C2C_SIGNED || {};
-        (window as any).C2C_SIGNED[item.pid + '::' + item.secKey] = {
-          meaning,
-          by: 'Jordan Chen',
-          when: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
-        };
-      }
-    } catch (_e) { /* noop */ }
+  const recordDecision = () => {
     onSigned ? onSigned() : onClose();
   };
 
@@ -94,7 +110,7 @@ function ESignModal({ onClose, item, onSigned }: {
       <div className="esign-modal" onClick={(e) => e.stopPropagation()}>
         <div className="esign-h">
           <span className="ico">{I.lock}</span>
-          <span className="t">Electronic signature</span>
+          <span className="t">Record review decision</span>
         </div>
         <div className="esign-b">
           {item && (
@@ -111,21 +127,18 @@ function ESignModal({ onClose, item, onSigned }: {
               ))}
             </select>
           </div>
-          <div className="esign-field">
-            <label>Password</label>
-            <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Re-enter your password" />
-          </div>
-          <div className="esign-field">
-            <label>Authenticator code</label>
-            <input value={totp} onChange={(e) => setTotp(e.target.value.replace(/\D/g, ''))} placeholder="6-digit TOTP" maxLength={6} />
-          </div>
           <div className="esign-manifest">
-            Signing as <b>Jordan Chen</b> · {new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC · meaning <b>{meaning.replace(/_/g, ' ')}</b>. Manifestation recorded per 21 CFR §11.50{item && item.secKey ? ' — the section is sealed back in the editor.' : ''}.
+            This records a review decision of <b>{meaning.replace(/_/g, ' ')}</b> in
+            this session only. <b>It is not an electronic signature</b> and it is
+            not a 21 CFR §11.50 manifestation — no signer identity is verified,
+            nothing is bound to a document version, and nothing is persisted.
+            Apply a binding signature from the authoring workspace, where the
+            signature is PIN-verified and sealed against a frozen version.
           </div>
         </div>
         <div className="esign-f">
           <button className="btn ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={onClose}>Cancel</button>
-          <button className="btn primary" style={{ flex: 1, justifyContent: 'center' }} disabled={!pw || totp.length < 6} onClick={sign}>{I.shieldCheck} Sign</button>
+          <button className="btn primary" style={{ flex: 1, justifyContent: 'center' }} onClick={recordDecision}>{I.shieldCheck} Record decision</button>
         </div>
       </div>
     </div>
@@ -141,14 +154,14 @@ function ApproveSign({ item, onApproved }: { item: ReviewItem; onApproved?: () =
   if (done) {
     return (
       <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>
-        {I.shieldCheck} Approved &amp; sealed
+        {I.shieldCheck} Review decision recorded
       </span>
     );
   }
 
   return (
     <>
-      <button className="btn primary" onClick={() => setOpen(true)}>{I.shieldCheck} Approve &amp; sign</button>
+      <button className="btn primary" onClick={() => setOpen(true)}>{I.shieldCheck} Record review decision</button>
       {open && (
         <ESignModal
           item={item}
@@ -299,7 +312,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       <PageHead
         eyebrow="Project · review"
         title="Review & approval"
-        sub="Review queue, threaded comments, reject-with-reason, e-sign manifestation per 21 CFR §11.50."
+        sub="Review queue, threaded comments, reject-with-reason, delegate a step."
         actions={
           <button className="btn ghost" onClick={() => onAsk('Summarize open review comments')}>
             {I.sparkles} Ask AnA
@@ -312,10 +325,10 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
         eyebrow="What is waiting on your approval right now"
         headline={
           signSteps.length
-            ? <><b>{signSteps.length}</b> document{signSteps.length === 1 ? '' : 's'} {signSteps.length === 1 ? 'is' : 'are'} at your <b>sign-off step</b> and {signSteps.length === 1 ? 'needs' : 'need'} an e-signature{dueToday ? <> — <b>{dueToday}</b> due today</> : null}.</>
+            ? <><b>{signSteps.length}</b> document{signSteps.length === 1 ? '' : 's'} {signSteps.length === 1 ? 'is' : 'are'} at your <b>sign-off step</b> and {signSteps.length === 1 ? 'needs' : 'need'} your sign-off{dueToday ? <> — <b>{dueToday}</b> due today</> : null}.</>
             : <>Nothing is blocked on your signature — <b>{queue.filter((r) => r.state !== 'approved').length}</b> document{queue.filter((r) => r.state !== 'approved').length === 1 ? '' : 's'} still moving through review.</>
         }
-        body={<>Each document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. E-sign is re-verified and manifested per 21 CFR §11.50.</>}
+        body={<>Each document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.</>}
         reassure="I'll surface exactly which step you own and pre-read the document so your sign-off is one informed click."
         action={
           signSteps.length
@@ -352,7 +365,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               {item.state === 'approved'
-                ? <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.shieldCheck} Approved &amp; sealed</span>
+                ? <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.shieldCheck} Review decision recorded</span>
                 : item.state === 'changes-requested'
                   ? <span className="rd-chip tone-warn" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.alertTriangle} Changes requested</span>
                   : <>
@@ -451,7 +464,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           </div>
 
           <div className="esign-banner">
-            <span className="ico">{I.lock}</span> E-signature requires password re-verification + TOTP. Manifestation recorded per 21 CFR §11.50.
+            <span className="ico">{I.lock}</span> Decisions recorded on this surface are not electronic signatures. A binding 21 CFR §11.50 signature is applied from the authoring workspace, where it is PIN-verified and sealed against a frozen document version.
           </div>
 
           <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>

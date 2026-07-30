@@ -22,3 +22,14 @@ AVD-AWS-0093
 # TODO(security): upgrade chromadb as soon as a patched release ships, and
 # confirm chromadb is not exposed to untrusted pre-auth network input.
 CVE-2026-45829
+
+# react-router GHSA-qwww-vcr4-c8h2 (RSC-mode CSRF: an action can run before a
+# 400 response). Range >=7.12.0 <8.3.0; the only fix is the react-router 8.x
+# major. This app routes with wouter and uses react-router-dom only on a couple
+# of auth screens — no RSC / data-router server actions — so the RSC CSRF path
+# is not reachable. Trivy scans package-lock.json separately from npm audit, so
+# this must be listed here in ADDITION to ACCEPTED_GHSA_IDS in
+# scripts/ci/audit-with-allowlist.mjs. The other react-router advisory (route-
+# matching DoS) is genuinely fixed by the react-router-dom 7.18.1 bump.
+# TODO(security): adopt react-router 8.x in a dedicated upgrade PR, then drop this.
+GHSA-qwww-vcr4-c8h2

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { I } from '../icons';
+import { connected } from '../dataConnect';
 
 const SEG_ICONS: Record<string, string> = {
   pharma_biotech: 'beaker', medical_devices: 'stethoscope',
@@ -239,9 +240,20 @@ export function StreamingRenderer({
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const ctx = (window as any).getSubmissionTypeContext?.(submissionTypeId) ?? null;
+  // canLive had TWO dead dependencies, not one. `api?.connected?.()` read
+  // window.C2C_API — assigned nowhere — and is now the ported connected().
+  // `authoring?.streamDraft` reads window.C2C_AUTHORING, which is ALSO assigned
+  // nowhere: it is the design kit's streaming channel, declared in BatchDraft.tsx
+  // and never provided. So fixing the first blocker does not make this path live,
+  // and pretending otherwise would be the same defect in a new place.
+  //
+  // The streamDraft dependency stays because it is REAL — a streaming draft needs
+  // a streamer. What is missing is the provider, not the check. Until that channel
+  // is ported, canLive is correctly false and the surface takes its honest
+  // non-streaming path. tests/ci/no-ghost-globals.contract.test.ts pins the ghost
+  // to this file and BatchDraft so it cannot spread further.
   const authoring = (window as any).C2C_AUTHORING;
-  const api = (window as any).C2C_API;
-  const canLive = !!(documentId && sectionKey && authoring?.streamDraft && api?.connected?.());
+  const canLive = !!(documentId && sectionKey && authoring?.streamDraft && connected());
   const acceptable = verb === 'draft' || verb === 'edit';
   useEffect(() => {
     if (!active || !verb) {

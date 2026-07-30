@@ -242,8 +242,14 @@ describe('GOLDEN SCENARIO 1: Assumption Change → Reapproval Cascade', () => {
     expect(step).toBeDefined();
     expect(step!.stepType).toBe('reapprove');
     expect(step!.result).toBe('prepared');
-    // System correctly identifies reapproval is needed (either via state detection or precautionary)
-    expect(step!.preparedAction).toContain('reapproval');
+    // System correctly identifies reapproval is needed (either via state
+    // detection or precautionary). Case-insensitive because the two paths
+    // capitalise differently: with the artifact's live status actually read, the
+    // executor emits "Reapproval required for artifact … (currently approved)".
+    // This assertion previously passed only because the mock's raw-SQL matching
+    // was inert, so the status lookup returned nothing and the precautionary
+    // (lowercase) wording was produced instead.
+    expect(step!.preparedAction).toMatch(/reapproval/i);
     expect(receipt.requiresReapproval).toContain('artifact:art-sample-calc');
   });
 
@@ -439,8 +445,14 @@ describe('GOLDEN SCENARIO 2: Low-Confidence Contradiction → No Auto-Execution'
     const step = receipt.preparedSteps.find(s => s.targetId === 'art-dsur-table');
     expect(step).toBeDefined();
     expect(step!.stepType).toBe('reapprove');
-    // System correctly identifies reapproval is needed (either via state detection or precautionary)
-    expect(step!.preparedAction).toContain('reapproval');
+    // System correctly identifies reapproval is needed (either via state
+    // detection or precautionary). Case-insensitive because the two paths
+    // capitalise differently: with the artifact's live status actually read, the
+    // executor emits "Reapproval required for artifact … (currently approved)".
+    // This assertion previously passed only because the mock's raw-SQL matching
+    // was inert, so the status lookup returned nothing and the precautionary
+    // (lowercase) wording was produced instead.
+    expect(step!.preparedAction).toMatch(/reapproval/i);
   });
 
   it('escalation is always prepared, never auto-executed', () => {

@@ -92,6 +92,14 @@ vi.mock('../server/services/submission-gateways', () => {
       { region: 'pmda', gateway: 'pmda_gateway',  transport: 'rest' },
     ],
     gatewayConfigurationStatus: configStatusFn,
+    // The route names the download by provenance, so the module mock has to
+    // carry this too. A missing export SHOULD 500 the route rather than be
+    // silently tolerated, which is why it is added here and not defended
+    // against in the handler.
+    acknowledgementFilename: (ack: { transmissionId: string; provenance?: string }) =>
+      ack.provenance === 'agency'
+        ? `agency-acknowledgement-${ack.transmissionId}.txt`
+        : `concept2cure-transmittal-record-${ack.transmissionId}-NOT-AN-AGENCY-ACK.txt`,
     CredentialError: MockCredentialError,
     GatewayError:    MockGatewayError,
     TransportError:  MockTransportError,
@@ -397,11 +405,46 @@ describe('status + ack endpoints', () => {
       contentType: 'text/plain',
       buffer: Buffer.from('ACK OK', 'utf8'),
       receivedAt: new Date(),
+      provenance: 'agency',
     });
     const res = await request(makeApp()).get('/api/mdx/gateways/transmittals/1/ack');
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('text/plain');
     expect(res.text).toContain('ACK OK');
+  });
+
+  it('tells the client who wrote the acknowledgement bytes', async () => {
+    // A platform-composed record must not leave here looking like an agency
+    // receipt: the header lets the surface pick its wording, and the filename
+    // carries the same fact into the user's downloads folder, where it
+    // outlives the page that served it.
+    queryFn.mockResolvedValueOnce({ rows: [{ region: 'pmda', gateway: 'pmda_gateway' }] });
+    ackFn.mockResolvedValueOnce({
+      transmittalId: 2, transmissionId: 'pmda-9',
+      contentType: 'text/plain',
+      buffer: Buffer.from('CONCEPT2CURE TRANSMITTAL RECORD', 'utf8'),
+      receivedAt: new Date(),
+      provenance: 'platform-record',
+    });
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmittals/2/ack');
+    expect(res.status).toBe(200);
+    expect(res.headers['x-ack-provenance']).toBe('platform-record');
+    expect(res.headers['content-disposition']).toContain('NOT-AN-AGENCY-ACK');
+    expect(res.headers['content-disposition']).not.toMatch(/filename="ack-/);
+  });
+
+  it('names a genuine agency acknowledgement as one', async () => {
+    queryFn.mockResolvedValueOnce({ rows: [{ region: 'fda', gateway: 'esg' }] });
+    ackFn.mockResolvedValueOnce({
+      transmittalId: 3, transmissionId: 'mdn-3',
+      contentType: 'message/disposition-notification',
+      buffer: Buffer.from('Disposition: automatic-action', 'utf8'),
+      receivedAt: new Date(),
+      provenance: 'agency',
+    });
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmittals/3/ack');
+    expect(res.headers['x-ack-provenance']).toBe('agency');
+    expect(res.headers['content-disposition']).toContain('agency-acknowledgement-mdn-3.txt');
   });
 });
 

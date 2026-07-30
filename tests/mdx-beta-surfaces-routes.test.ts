@@ -330,19 +330,47 @@ describe('GET /api/mdx/engineering/:programId', () => {
     expect(res.status).toBe(404);
   });
 
-  it('returns 4 KPIs + deliverables list', async () => {
+  it('returns the panel shape the useEngineering hook destructures', async () => {
+    /* The route used to return { dhfCompletion, openEcrs, bomLines,
+       riskLastUpdated, deliverables } while its only consumer read
+       { dhf, trace, risks, ecrs, issues, documents }. Every field came
+       back undefined, so the surface silently rendered design-kit
+       fixtures — a stranger's example risk file presented as the
+       tenant's own. The route now serves what the hook reads, and the
+       scalar KPIs live under `summary`. */
     queryFn
-      .mockResolvedValueOnce({ rows: [{ id: PROGRAM_ID }] })           // program scope
-      .mockResolvedValueOnce({ rows: [{ total: 10, done: 6 }] })       // sections
-      .mockResolvedValueOnce({ rows: [{ n: 2 }] })                     // open ecrs
-      .mockResolvedValueOnce({ rows: [{ n: 3 }] })                     // bom
-      .mockResolvedValueOnce({ rows: [{ updated_at: new Date('2026-05-10') }] }) // risk
-      .mockResolvedValueOnce({ rows: [{ kind: 'section', title: 'Device Description', section: '10', status: 'drafting', owner: null, last_edit: new Date(), blocker: true }] });
+      .mockResolvedValueOnce({ rows: [{ id: PROGRAM_ID }] }) // tenancy check
+      .mockResolvedValue({ rows: [] });                      // every panel
+
     const res = await request(makeApp()).get(`/api/mdx/engineering/${PROGRAM_ID}`);
+
     expect(res.status).toBe(200);
-    expect(res.body.data.dhfCompletion).toBe(60);
-    expect(res.body.data.openEcrs).toBe(2);
-    expect(res.body.data.bomLines).toBe(3);
-    expect(res.body.data.deliverables).toHaveLength(1);
+    for (const key of ['summary', 'dhf', 'trace', 'risks', 'ecrs', 'issues', 'documents']) {
+      expect(res.body.data).toHaveProperty(key);
+    }
+    /* Per-panel tenancy, so organisation-wide panels can be labelled as
+       such rather than implying they belong to the selected programme. */
+    expect(res.body.meta.scopes.risks).toBe('program');
   });
+
+  it('derives DHF completion over required sections only', async () => {
+    queryFn
+      .mockResolvedValueOnce({ rows: [{ id: PROGRAM_ID }] }) // tenancy
+      .mockResolvedValueOnce({ rows: [] })                   // risks
+      .mockResolvedValueOnce({ rows: [] })                   // trace
+      .mockResolvedValueOnce({
+        rows: [
+          { id: 1, section_number: '01', section_title: 'Plan',   status: 'approved', is_required: true,  completion_percentage: 100, updated_at: null },
+          { id: 2, section_number: '02', section_title: 'Inputs', status: 'draft',    is_required: true,  completion_percentage: 40,  updated_at: null },
+          { id: 3, section_number: '03', section_title: 'Extra',  status: 'draft',    is_required: false, completion_percentage: 0,   updated_at: null },
+        ],
+      })
+      .mockResolvedValue({ rows: [] });
+
+    const res = await request(makeApp()).get(`/api/mdx/engineering/${PROGRAM_ID}`);
+    /* 1 of 2 required approved; the optional row is excluded from both
+       numerator and denominator. */
+    expect(res.body.data.summary.dhfCompletion).toBe(50);
+  });
+
 });

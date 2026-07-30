@@ -18,8 +18,13 @@
  */
 
 import cron from 'node-cron';
-import { ingestCtgovToCorpus, type CtgovIngestQuery, type IngestSummary } from '../services/corpus/index.js';
+import {
+  ingestCtgovToCorpus,
+  type CtgovIngestQuery,
+  type IngestSummary,
+} from '../services/corpus/index.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const logger = createScopedLogger('corpus-ingestion');
 
@@ -80,7 +85,10 @@ function planFromEnv(): CtgovIngestQuery[] {
 
 export interface CorpusIngestionSweepResult {
   queries: number;
-  totals: Pick<IngestSummary, 'fetched' | 'normalized' | 'inserted' | 'updated' | 'skipped' | 'errors'>;
+  totals: Pick<
+    IngestSummary,
+    'fetched' | 'normalized' | 'inserted' | 'updated' | 'skipped' | 'errors'
+  >;
 }
 
 /**
@@ -88,42 +96,47 @@ export interface CorpusIngestionSweepResult {
  * query is logged and the sweep continues with the next.
  */
 export async function runCorpusIngestionSweep(): Promise<CorpusIngestionSweepResult> {
-  const plan = planFromEnv();
-  const totals = { fetched: 0, normalized: 0, inserted: 0, updated: 0, skipped: 0, errors: 0 };
+  return runWithSystemTenantScope('corpus-ingestion-sweep', async () => {
+    const plan = planFromEnv();
+    const totals = { fetched: 0, normalized: 0, inserted: 0, updated: 0, skipped: 0, errors: 0 };
 
-  if (plan.length === 0) {
-    logger.warn(
-      'Corpus ingestion sweep skipped: no indications configured (set CORPUS_INGESTION_INDICATIONS).',
-    );
-    return { queries: 0, totals };
-  }
-
-  logger.info(`Corpus ingestion sweep starting: ${plan.length} quer${plan.length === 1 ? 'y' : 'ies'}.`);
-
-  for (const query of plan) {
-    try {
-      const summary = await ingestCtgovToCorpus(query);
-      totals.fetched += summary.fetched;
-      totals.normalized += summary.normalized;
-      totals.inserted += summary.inserted;
-      totals.updated += summary.updated;
-      totals.skipped += summary.skipped;
-      totals.errors += summary.errors;
-      logger.info(
-        `Ingested ${describeQuery(query)}: +${summary.inserted} new, ${summary.updated} updated, ` +
-          `${summary.skipped} skipped, ${summary.errors} errors.`,
+    if (plan.length === 0) {
+      logger.warn(
+        'Corpus ingestion sweep skipped: no indications configured (set CORPUS_INGESTION_INDICATIONS).'
       );
-    } catch (err: any) {
-      totals.errors += 1;
-      logger.error(`Corpus ingestion failed for ${describeQuery(query)}: ${err?.message}`);
+      return { queries: 0, totals };
     }
-  }
 
-  logger.info(
-    `Corpus ingestion sweep done: +${totals.inserted} new, ${totals.updated} updated across ` +
-      `${plan.length} queries (${totals.errors} errors).`,
-  );
-  return { queries: plan.length, totals };
+    logger.info(
+      `Corpus ingestion sweep starting: ${plan.length} quer${plan.length === 1 ? 'y' : 'ies'}.`
+    );
+
+    for (const query of plan) {
+      try {
+        const summary = await ingestCtgovToCorpus(query);
+        totals.fetched += summary.fetched;
+        totals.normalized += summary.normalized;
+        totals.inserted += summary.inserted;
+        totals.updated += summary.updated;
+        totals.skipped += summary.skipped;
+        totals.errors += summary.errors;
+        logger.info(
+          `Ingested ${describeQuery(query)}: +${summary.inserted} new, ${
+            summary.updated
+          } updated, ` + `${summary.skipped} skipped, ${summary.errors} errors.`
+        );
+      } catch (err: any) {
+        totals.errors += 1;
+        logger.error(`Corpus ingestion failed for ${describeQuery(query)}: ${err?.message}`);
+      }
+    }
+
+    logger.info(
+      `Corpus ingestion sweep done: +${totals.inserted} new, ${totals.updated} updated across ` +
+        `${plan.length} queries (${totals.errors} errors).`
+    );
+    return { queries: plan.length, totals };
+  });
 }
 
 function describeQuery(q: CtgovIngestQuery): string {

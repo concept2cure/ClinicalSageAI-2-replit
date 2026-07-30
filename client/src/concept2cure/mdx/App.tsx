@@ -18,13 +18,14 @@ import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
 import { IvdSurface } from './surfaces/IvdSurface';
+import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
+import { SoftwareSurface } from './surfaces/SoftwareSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
 import { UdiSurface } from './surfaces/UdiSurface';
 import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
 import { MemorySurface } from './surfaces/MemorySurface';
-import { AdminSurface } from './surfaces/AdminSurface';
 import { VaultSurface } from './surfaces/VaultSurface';
 import {
   TasksSurface,
@@ -35,9 +36,10 @@ import {
 import { ProjectHome } from './projectHome/ProjectHome';
 import { PreSubManager } from './presub/PreSubManager';
 import { type AnaMode } from './data/nav';
-import { MDX_PROGRAMS, type Program } from './data/programs';
+import { type Program } from './data/programs';
 import { useAnaChat } from '../components/ana/useAnaChat';
 import { useMdxPrograms } from './hooks/useMdxPrograms';
+import { resolveMdxSurfaceId } from '../../../../shared/constants/mdx';
 
 const HERE_LABEL: Record<string, string> = {
   overview:       'Overview',
@@ -46,6 +48,8 @@ const HERE_LABEL: Record<string, string> = {
   pma:            'PMA Submissions',
   cer:            'CER Generator',
   'device-diagnostics-workbench': 'IVD diagnostics workbench',
+  'clinical-studies': 'Clinical studies',
+  software:        'Software lifecycle',
   predicate:      'Precedent intelligence',
   engineering:    'Device engineering',
   udi:            'UDI and labeling',
@@ -103,7 +107,7 @@ export interface AppProps {
 
 export function App({ initialNav, projectName, onOpenAuthoring, projectId }: AppProps = {}) {
   const [activeNav,    setActiveNav]    = React.useState<string>(() =>
-    initialNav ?? getStored('mdx.activeNav', 'overview'),
+    resolveMdxSurfaceId(initialNav ?? getStored('mdx.activeNav', 'overview')),
   );
   const [railCollapsed,setRailCollapsed]= React.useState<boolean>(() => getStored('mdx.railCollapsed', false));
   const [anaOpen,      setAnaOpen]      = React.useState<boolean>(() => getStored('mdx.anaOpen', false));
@@ -111,12 +115,14 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
   const [selectedProgram, setSelectedProgram] = React.useState<Program | null>(null);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
 
-  /* Single source of truth for the program list — feeds TabBar counts,
-     the Overview surface, and pathway-default lookup below. Falls back to
-     the kit fixture only during the initial fetch / on error so the shell
-     doesn't render with zero counts. */
+  /* Single source of truth for the program list. Loading and failures stay
+     explicit; live-customer state must never be replaced by kit fixtures. */
   const liveProgramsResult = useMdxPrograms();
-  const programs: Program[] = liveProgramsResult.programs ?? MDX_PROGRAMS;
+  const programs: Program[] = liveProgramsResult.programs ?? [];
+
+  React.useEffect(() => {
+    if (initialNav) setActiveNav(resolveMdxSurfaceId(initialNav));
+  }, [initialNav]);
 
   // First-visit discovery — open AnA once.
   React.useEffect(() => {
@@ -169,7 +175,10 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
     if (activeNav === 'cer')          return programs.find(p => p.pathway === 'cer')  ?? null;
     // IVD workbench is org-scoped (IVDR lists), but anchor to a device program
     // for the GSPR matrix + dossier scope when one exists.
-    if (activeNav === 'device-diagnostics-workbench') return programs.find(p => p.pathway === 'k510') ?? null;
+    if (activeNav === 'device-diagnostics-workbench') return programs.find(p => p.pathway === 'ivdr') ?? null;
+    // Software lifecycle is project-scoped; anchor to a device program when
+    // none is explicitly selected so the completeness summary can load.
+    if (activeNav === 'software') return programs.find(p => p.pathway === 'k510') ?? programs[0] ?? null;
     if (activeNav === 'project-home') return programs[0] ?? null;
     return null;
   }, [activeNav, selectedProgram, programs]);
@@ -232,7 +241,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         surface = <UdiSurface onAskAna={askAna} />;
         break;
       case 'postmarket':
-        surface = <PostmarketSurface onAskAna={askAna} />;
+        surface = <PostmarketSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'analytics':
         surface = <AnalyticsSurface onAskAna={askAna} />;
@@ -240,9 +249,9 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
       case 'memory':
         surface = <MemorySurface onAskAna={askAna} />;
         break;
-      case 'admin':
-        surface = <AdminSurface onAskAna={askAna} />;
-        break;
+      // 'admin' intentionally removed — admin is product-level (ui-v2
+      // AdminConsole), shared by all client types, not a per-workstream
+      // surface. A stale stored activeNav='admin' falls through to Overview.
       case 'k510':
         surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('k510')} />;
         break;
@@ -254,6 +263,12 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         break;
       case 'device-diagnostics-workbench':
         surface = <IvdSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('device-diagnostics-workbench')} />;
+        break;
+      case 'clinical-studies':
+        surface = <ClinicalStudiesSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'software':
+        surface = <SoftwareSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;
@@ -289,8 +304,15 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
       case 'pre-sub':
         surface = <PreSubManager onAskAna={askAna} />;
         break;
+      case 'overview':
+        surface = liveProgramsResult.loading
+          ? <div role="status">Loading MDx programs…</div>
+          : liveProgramsResult.error
+            ? <div role="alert">MDx program data is unavailable. Customer data has not been replaced with sample data.</div>
+            : <Overview programs={programs} onOpenProgram={openProgram} onAskAna={askAna} />;
+        break;
       default:
-        surface = <Overview programs={programs} onOpenProgram={openProgram} onAskAna={askAna} />;
+        surface = <div role="alert"><h2>MDx surface not found</h2><p>The requested MDx workspace is not recognized.</p></div>;
     }
   }
 

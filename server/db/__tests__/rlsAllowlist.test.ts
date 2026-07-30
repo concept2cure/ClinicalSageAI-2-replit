@@ -3,9 +3,10 @@ import { RLS_ALLOWLIST, rlsAllowlistSqlArray } from '../rlsAllowlist';
 
 describe('RLS_ALLOWLIST', () => {
   it('contains the load-bearing entries the rollout depends on', () => {
-    // organization_users is the chicken-and-egg case: requireTenantContext
-    // queries it BEFORE the tenant session var is set. If it ever falls off
-    // the allowlist, every authenticated request returns 403. Pin it.
+    // organization_users remains temporarily allowlisted while the rollout
+    // migration is reconciled. requireTenantContext now establishes a
+    // JWT-claimed bootstrap scope before this lookup, so removing this entry
+    // is tracked remediation rather than a production authentication outage.
     expect(RLS_ALLOWLIST).toContain('organization_users');
   });
 

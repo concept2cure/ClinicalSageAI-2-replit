@@ -21,6 +21,9 @@ function selectedNames(prompt: string): Set<string> {
 
 // Representative prompt → the tool that MUST survive the top-50 cut for it.
 const CASES: { prompt: string; expect: string }[] = [
+  { prompt: 'prepare FDA form 1571 as an editable document draft', expect: 'prepare_fda_form' },
+  { prompt: 'amend this FDA form with a reason for the field changes', expect: 'amend_fda_form' },
+  { prompt: 'list all FDA forms available in the canonical catalog', expect: 'list_fda_forms' },
   { prompt: 'open a time and effort certification statement for this person for the period', expect: 'create_effort_certification' },
   { prompt: 'file a foreign appointment conflict of interest disclosure for this investigator', expect: 'create_coi_disclosure' },
   { prompt: 'search grants.gov for posted cancer funding opportunities', expect: 'search_grants_gov' },

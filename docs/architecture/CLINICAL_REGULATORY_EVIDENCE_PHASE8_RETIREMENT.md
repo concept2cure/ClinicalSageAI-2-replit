@@ -6,9 +6,9 @@
 
 ---
 
-## Part A — Legacy retirement (DEAD services: deprecated now, removable next)
+## Part A — Legacy retirement (DEAD services) — ✅ DELETED
 
-All three have **zero production callers** (verified). They are marked `@deprecated` in-code now (JSDoc banner, the house convention) and are safe to delete in a follow-up once the deprecation has soaked. Deletion steps + rollback are recorded so removal is mechanical.
+All three had **zero production callers** (re-verified against the current branch before removal). Now **deleted**, along with their only references — the barrel re-export + the never-resolved `SERVICE_REGISTRY` `'clinical.study-design'` key in `server/services/index.ts`, and the dead import in `server/research-companion-service.ts`. `ServiceCapability` is `keyof typeof SERVICE_REGISTRY`, so dropping the key narrowed the union with no downstream break. Rollback: `git revert`.
 
 | # | File | Verdict & evidence | Removal steps (when deleted) | Rollback |
 |---|---|---|---|---|
@@ -22,14 +22,15 @@ All three have **zero production callers** (verified). They are marked `@depreca
 
 ---
 
-## Part B — Foresight path (LIVE, already Sunset-flagged): retire, don't patch internals
+## Part B — Foresight path (past-Sunset): retired — ✅ DONE
 
-The foresight path is **live but already HTTP-deprecated** — `server/bootstrap/register-integrations-routes.ts:9-14` sets `Deprecation: true` + `Sunset: 2026-04-01` on `/api/foresight`, `/api/foresight-ai`, `/api/foresight-feedback`. It also reaches users through the `compute_dose_escalation` AnA command (`server/services/ana-ri/command-executor.ts:2636-2653`) and Cortex re-mounts (`server/routes/cortex-unified.ts:1275/1284/1293`).
+The foresight path was live but past its `2026-04-01` Sunset and surfaced fabricated dose "confidence intervals" (a flat ±20 %/±25 % of the computed dose). It has now been **unmounted from every live surface** (C3 goes away with it):
 
-**Decision:** because the whole path is on a published Sunset, the correct action is **retirement of the path**, not investing in de-fabricating its internals. Retirement checklist (follow-up, reviewed):
-1. Remove/redirect the three mounted prefixes (`register-integrations-routes.ts:18-20`) and the Cortex re-mounts.
-2. Retire or redirect the `compute_dose_escalation` command to the honest dose-strategy surface — `clinical-regulatory-evidence/study-design-evidence.service.ts` `assessDoseStrategy`, which **emits no dose value** and requires a governing calculation + expert review (the honest replacement for the fabricated `±20%/±25%-of-dose` "confidence intervals" at `foresight-ai-engine.ts:400,:459` and the `confidence: 0.85 // Would calculate actual` at `:1065`).
-3. Until the path is removed, its Sunset headers already warn consumers.
+1. ✅ **Route mounts removed.** `register-integrations-routes.ts` is now a documented no-op (was `/api/foresight`, `/api/foresight-ai`, `/api/foresight-feedback`); the three Cortex re-mounts in `cortex-unified.ts` (`/clinical`, `/feedback`, `/foresight`) are gone; the `/api/foresight-ai/feedback` alias in `register-inline-routes.ts` is removed.
+2. ✅ **`compute_dose_escalation` retired.** The AnA command no longer instantiates `ForesightAIEngine`; it returns an honest guardrail — no dose value is emitted, and it states that a next dose requires a governing exposure–response/MTD calculation + clinical-pharmacology review (the honest stance of `study-design-evidence.assessDoseStrategy`). Its advertised definition was updated to match. This removed the last reader of the fabricated `±%-of-dose` CIs.
+3. ✅ **Orphaned files `@deprecated`, not deleted.** `foresight-ai-engine.ts` + the three route files carry retirement banners; they are retained only for the barrel / mock-data script / tenant-isolation contract test and are safe to delete once those references are cleaned up (mechanical follow-up).
+
+Build note: this cutover is independent of the CRE type collision — its files do not import the collided types, so it adds no new type errors.
 
 ---
 
@@ -57,5 +58,16 @@ Covered by **Part B** (retire the path); the honest dose surface is `assessDoseS
 1. **Done:** `@deprecated` banners on the 3 DEAD services + this plan (commit `d36180a`). Safe, reversible, zero behavior change.
 2. **Done:** C1 precedent-confidence de-fabrication behind the preserved numeric field shape (write-side, new rows only). Tested.
 3. **Done:** C2 — endpoint `success_rate` de-fabrication behind preserved (null-safe) field shapes: nullable success_rate emitted only from real outcomes, honest `evidence_strength`/`evidence_basis` for rank/label, no fabricated eval score. Tested.
-4. **Next (reviewed):** delete the 3 DEAD files + their dead wiring (mechanical, per Part A) once soaked.
-5. **Next (reviewed, route removal):** retire the already-Sunset foresight path (Part B) — this also removes the fabricated dose confidence intervals (C3). Deferred because it removes live mounted routes + an AnA command, which warrants a coordinated cutover.
+4. **Done:** foresight path retired (Part B) — all mounts removed, `compute_dose_escalation` returns an honest guardrail, orphaned files `@deprecated`. This also removed the last live reader of the fabricated dose CIs (C3).
+5. **Done:** deleted the 3 DEAD services (Part A) + their barrel/registry/import references (re-verified orphaned first; typecheck clean).
+6. **Done:** deleted the entire foresight **subtree** — 13 files (6 services incl. `foresight-ai-engine.ts` + `csr-foresight-orchestrator.ts`, the `foresight/` barrel dir, 3 routes, 2 scripts, the tenant-isolation contract test) + the 5 remaining `server/services/index.ts` references (the `foresight` namespace re-export, the knowledge-graph / feedback-orchestrator / csr-orchestrator exports, and the `'cortex.knowledge'` registry key). Verified before removal: the engine was referenced **only** within the deleted closure (already dead after step 4's retirement), the `Foresight*` interfaces were not consumed externally (the `shared/schema.ts` `ForesightPrediction` is a distinct table-derived type), and the AnA `foresight-*` capabilities + the `'foresight'` RAG intent are concept strings that import none of these files. `ana-proactive-foresight.test.ts` was KEPT — it tests the AnA persona directive, not the engine. Typecheck clean.
+
+**✅ DROPPED (product-owner approved).** The two orphaned tables were removed in `db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql` (drop order `clinical_feedback` → `foresight_predictions`, idempotent `IF EXISTS`) together with their `shared/schema.ts` definitions, insert schemas, and `ForesightPrediction`/`InsertForesightPrediction` + `ClinicalFeedback`/`InsertClinicalFeedback` types. `translational_patterns` was KEPT (shared). Because `scripts/check_no_destructive_migrations.sh` blocks `DROP TABLE` by policy, the migration follows its documented approved-exception path: each statement carries a `destructive-approved` marker with an inline justification, and the guard gained a surgical allowlist entry that exempts ONLY marked `DROP TABLE IF EXISTS` statements (unmarked destructive ops stay blocked). Authorized by the product owner in lieu of the standard DBA sign-off.
+
+Original analysis (retained for the record) — the orphaned tables were, precisely:
+- `foresight_predictions` (`foresightPredictions`) — zero code consumers after the deletion; safe to drop.
+- `clinical_feedback` (`clinicalFeedback`) — zero code consumers; holds the only FK into `foresight_predictions` (`prediction_id`), so it drops **first**, then `foresight_predictions`.
+
+**KEEP** `translational_patterns` (`translationalPatterns`) — it is **shared**, still written by `server/services/csr-knowledge-extractor.ts` (not a foresight file), so it is NOT part of this drop-set.
+
+The actual drop is deliberately **deferred to a DBA-approved migration**, because `scripts/check_no_destructive_migrations.sh` blocks `DROP TABLE` by policy: in this regulated environment a destructive schema change requires written justification, a data-migration/backup plan, and database-admin approval (and an explicit `ALLOWED_PATTERNS` allowlist entry). Leaving the two tables in place is harmless — nothing reads or writes them. When the drop is approved, it is a two-line idempotent migration (`DROP TABLE IF EXISTS clinical_feedback;` then `DROP TABLE IF EXISTS foresight_predictions;`) plus removal of their `shared/schema.ts` definitions, insert schemas, and `ForesightPrediction`/`InsertForesightPrediction` types.

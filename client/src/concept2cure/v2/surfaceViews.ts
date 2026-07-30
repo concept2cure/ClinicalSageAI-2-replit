@@ -16,7 +16,8 @@
 import type React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { CapabilityIndex } from './intelligence/Intelligence';
-import { Setup, AuditTrail, Apps, ArtifactsCenter, AdminConsole } from './surfaces/AdminSurfaces';
+import { Setup, Apps, ArtifactsCenter, AuditTrail } from './surfaces/AdminSurfaces';
+import { AdminAccess } from './surfaces/AdminAccess';
 import { AgencyMeetings } from './surfaces/AgencyMeetings';
 import { AnaCommand } from './surfaces/AnaCommand';
 import { AnaMemory } from './surfaces/AnaMemory';
@@ -30,6 +31,7 @@ import { Biostatistics } from './surfaces/Biostatistics';
 import { BiostatWorkbench } from './surfaces/BiostatWorkbench';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
+import { ClientPortal } from './surfaces/ClientPortal';
 import { ConversationThread } from './surfaces/ConversationThread';
 import { CrlLibrary } from './surfaces/CrlLibrary';
 import { CroPortfolio } from './surfaces/CroPortfolio';
@@ -66,6 +68,7 @@ import { MarketAccess } from './surfaces/MarketAccess';
 import { NdaCockpit } from './surfaces/NdaCockpit';
 import { Nonclinical } from './surfaces/Nonclinical';
 import { Onboarding } from './surfaces/Onboarding';
+import { OnboardingIngest } from './surfaces/OnboardingIngest';
 import { Orchestration } from './surfaces/Orchestration';
 import { PdevInd } from './surfaces/PdevInd';
 import { PrecedentEngine } from './surfaces/PrecedentEngine';
@@ -74,7 +77,6 @@ import { ProjectHome } from './surfaces/ProjectHome';
 import { Projects } from './surfaces/Projects';
 import { PyramidShell } from './surfaces/Pyramid';
 import { Rbm } from './surfaces/Rbm';
-import { RbmOperations } from './surfaces/RbmOperations';
 import { RegChange } from './surfaces/RegChange';
 import { Registrations } from './surfaces/Registrations';
 import { ReportEngine } from './surfaces/ReportEngine';
@@ -115,7 +117,10 @@ export interface SurfaceView {
 /* Kit load order (app/index.html) is the port order; flags mirror the kit's
    window.SURFACE_VIEWS registrations exactly. */
 export const SURFACE_VIEWS: Record<string, SurfaceView> = {
-  'admin-console': { component: AdminConsole },
+  // The one product admin for every client type — Claude Design's canonical
+  // "Admin and Access" (5 tabs + KPIs + Part 11 audit band), wired to
+  // /api/mdx/admin. Reached from the bottom-left account menu (admin-gated).
+  'admin-console': { component: AdminAccess, full: true, hideAna: true },
   'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
   'ana-memory': { component: AnaMemory },
@@ -129,6 +134,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'biostat-workbench': { component: BiostatWorkbench },
   'change-assessment': { component: ChangeAssessment },
   'clinical-ops': { component: ClinicalOps },
+  // External client portal — full-page read-only view (no internal AnA rail).
+  // Deep-link only (/concept2cure/client-portal); external-client users are
+  // scoped to their own workspace server-side, CRO staff can preview.
+  'client-portal': { component: ClientPortal, full: true, hideAna: true },
   cmc: { component: CmcModule },
   'communication-center': { component: CommunicationCenter },
   'conversation-thread': { component: ConversationThread, hideAna: true },
@@ -176,6 +185,9 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'nda-cockpit': { component: NdaCockpit },
   nonclinical: { component: Nonclinical },
   onboarding: { component: Onboarding },
+  // Upload a document -> AnA proposes values with verified provenance -> the
+  // human reviews and applies them through the governed, audited commit.
+  'onboarding-ingest': { component: OnboardingIngest, full: true },
   orchestration: { component: Orchestration },
   orphan: { component: Orphan },
   pdev: { component: PdevInd },
@@ -189,7 +201,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'protocol-dev': { component: ProtocolWorkspace, full: true, hideAna: true },
   pyramid: { component: PyramidShell },
   rbm: { component: Rbm, hideAna: true },
-  'rbm-operations': { component: RbmOperations },
   'reg-change': { component: RegChange },
   registrations: { component: Registrations },
   'regulatory-workspace': { component: RegulatoryWorkspace, full: true },

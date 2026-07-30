@@ -46,7 +46,22 @@ COPY --from=builder /app/dist ./dist
 # Copy necessary runtime files
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
+
+# Migration payload. `npm run db:migrate:deploy` (scripts/db/deploy-migrate.mjs)
+# runs from THIS image as a one-off ECS task before the services roll — see the
+# `migrate` job in .github/workflows/deploy-aws.yml. It reads .sql out of BOTH
+# trees, so both must be present or the deploy-time migration has nothing to
+# apply. db/migrations was previously absent, which is one reason no production
+# migration mechanism could exist.
+#
+# Only `pg` and `dotenv` are needed at runtime and both are production
+# dependencies. install-fresh.mjs is deliberately NOT usable here — it shells out
+# to drizzle-kit, a devDependency pruned by `npm ci --omit=dev`; from-scratch
+# provisioning runs from a repo checkout, and deploy-migrate.mjs fails closed
+# (exit 3) rather than pretending it can bootstrap a blank database.
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/db/migrations ./db/migrations
+COPY --from=builder /app/scripts/db ./scripts/db
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app
@@ -57,9 +72,12 @@ EXPOSE 5000
 # Switch to non-root user
 USER appuser
 
-# Health check for ECS / ALB target group registration
+# Health check for ECS / ALB target group registration.
+# Probe /readyz (not /api/health): /api/health is a static liveness ping that
+# returns 200 even against a missing-schema DB, whereas /readyz fails closed on
+# a down database or a positively-verified missing schema.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD ["node", "-e", "const h=require('http');h.get('http://localhost:5000/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+  CMD ["node", "-e", "const h=require('http');h.get('http://localhost:5000/readyz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
 
 # Start the application
 CMD ["npm", "run", "start"]

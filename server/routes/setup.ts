@@ -18,6 +18,7 @@ import { users, organizations, organizationUsers } from '../../shared/schema';
 import { validatePasswordPolicy } from '../services/auth-security-service';
 import { config } from '../config/environment';
 import { createScopedLogger } from '../utils/logger.js';
+import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 
 const logger = createScopedLogger('setup');
 const router = Router();
@@ -95,6 +96,11 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '') || 'default';
     const tier = config.singleTenant.defaultOrgTier || 'enterprise';
+
+    // Tenant isolation posture: refuse to make this deployment multi-tenant while
+    // Postgres RLS is not filtering rows. No-ops locally and for the founding
+    // organization. See server/db/tenantAdmission.ts.
+    await assertCanAdmitNewTenant();
 
     const result = await db.transaction(async tx => {
       const [org] = await tx

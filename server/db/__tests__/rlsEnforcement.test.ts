@@ -1,15 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
-import { EventEmitter } from 'events';
+import { describe, it, expect } from 'vitest';
 import {
-  installRlsEnforcement,
+  buildRlsStartupOptions,
   isExplicitEnforcementDecision,
   readEnforcementMode,
   assertRlsEnforcementForProduction,
 } from '../rlsEnforcement';
-
-class FakePool extends EventEmitter {
-  query = vi.fn(() => Promise.resolve({ rows: [], rowCount: 0 }));
-}
 
 describe('readEnforcementMode', () => {
   it('returns off by default', () => {
@@ -68,6 +63,15 @@ describe('assertRlsEnforcementForProduction', () => {
     );
   });
 
+  it.each(['enforce', 'true', '1'])(
+    'rejects the non-canonical on alias %s in production',
+    alias => {
+      expect(() =>
+        assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: alias })
+      ).toThrow(/Set RLS_ENFORCE=on/);
+    }
+  );
+
   it('refuses to boot in production when RLS_ENFORCE is unset (no silent default)', () => {
     expect(() => assertRlsEnforcementForProduction({ NODE_ENV: 'production' })).toThrow(
       /REFUSING TO BOOT.*RLS_ENFORCE is not set/s
@@ -77,45 +81,41 @@ describe('assertRlsEnforcementForProduction', () => {
     ).toThrow(/REFUSING TO BOOT/);
   });
 
-  it('refuses to boot in production on an unrecognized value (typo is not a decision)', () => {
+  it('refuses to boot in production on an unrecognized value', () => {
     expect(() =>
       assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'onn' })
-    ).toThrow(/unrecognized value "onn"/);
+    ).toThrow(/set to "onn"/);
   });
 
-  it('boot-failure message names all accepted operator decisions', () => {
+  it('boot-failure message identifies on as the only production mode', () => {
     try {
       assertRlsEnforcementForProduction({ NODE_ENV: 'production' });
       throw new Error('expected throw');
     } catch (e: unknown) {
       const msg = (e as Error).message;
       expect(msg).toContain('RLS_ENFORCE=on');
-      expect(msg).toContain('RLS_ENFORCE=shadow');
-      expect(msg).toContain('RLS_ENFORCE=off');
+      expect(msg).toContain('off and shadow modes are restricted');
     }
   });
 
-  it('warns but does not throw when RLS is EXPLICITLY off in production', () => {
+  it('fails closed when RLS is explicitly off in production', () => {
     expect(() =>
       assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'off' })
-    ).not.toThrow();
-    expect(assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'off' })).toBe(
-      'off'
-    );
+    ).toThrow(/FAIL-CLOSED/);
   });
 
-  it('warns but does not throw when RLS is EXPLICITLY shadow in production', () => {
-    expect(
+  it('fails closed when RLS is explicitly shadow in production', () => {
+    expect(() =>
       assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_ENFORCE: 'shadow' })
-    ).toBe('shadow');
+    ).toThrow(/FAIL-CLOSED/);
   });
 
   it('hard-fails in production when RLS_REQUIRE_ENFORCE=true and RLS is not on', () => {
-    // Unset keeps the FAIL-CLOSED message under the opt-in flag.
+    // The legacy flag is no longer required, but must not weaken the strict gate.
     expect(() =>
       assertRlsEnforcementForProduction({ NODE_ENV: 'production', RLS_REQUIRE_ENFORCE: 'true' })
     ).toThrow(/FAIL-CLOSED/);
-    // Explicit off is still "not on" → blocked under the opt-in flag.
+    // Explicit off remains blocked.
     expect(() =>
       assertRlsEnforcementForProduction({
         NODE_ENV: 'production',
@@ -123,7 +123,7 @@ describe('assertRlsEnforcementForProduction', () => {
         RLS_REQUIRE_ENFORCE: 'true',
       })
     ).toThrow(/FAIL-CLOSED/);
-    // shadow is still "not on" → also blocked under the opt-in flag.
+    // Shadow remains blocked.
     expect(() =>
       assertRlsEnforcementForProduction({
         NODE_ENV: 'production',
@@ -144,44 +144,59 @@ describe('assertRlsEnforcementForProduction', () => {
   });
 });
 
-describe('installRlsEnforcement', () => {
-  it('sets app.rls_enforce to "on" on connect when RLS_ENFORCE=on', async () => {
-    process.env.RLS_ENFORCE = 'on';
-    const pool = new FakePool();
-    installRlsEnforcement(pool as unknown as any);
-
-    const fakeClient = { query: vi.fn(() => Promise.resolve({ rows: [], rowCount: 0 })) };
-    pool.emit('connect', fakeClient);
-
-    // Defer to next tick so the listener's promise has a chance to invoke.
-    await Promise.resolve();
-
-    expect(fakeClient.query).toHaveBeenCalledWith(
-      "SELECT set_config('app.rls_enforce', $1, false)",
-      ['on']
-    );
-    delete process.env.RLS_ENFORCE;
-  });
-
-  it('sets app.rls_enforce to "" (no-op) when RLS_ENFORCE is unset', async () => {
-    delete process.env.RLS_ENFORCE;
-    const pool = new FakePool();
-    installRlsEnforcement(pool as unknown as any);
-
-    const fakeClient = { query: vi.fn(() => Promise.resolve({ rows: [], rowCount: 0 })) };
-    pool.emit('connect', fakeClient);
-    await Promise.resolve();
-
-    expect(fakeClient.query).toHaveBeenCalledWith(
-      "SELECT set_config('app.rls_enforce', $1, false)",
-      ['']
+describe('buildRlsStartupOptions', () => {
+  it('places active enforcement in the PostgreSQL startup packet', () => {
+    expect(buildRlsStartupOptions({ NODE_ENV: 'production', RLS_ENFORCE: 'on' })).toBe(
+      '-c app.rls_enforce=on',
     );
   });
 
-  it('is idempotent — second install adds no second listener', () => {
-    const pool = new FakePool();
-    installRlsEnforcement(pool as unknown as any);
-    installRlsEnforcement(pool as unknown as any);
-    expect(pool.listenerCount('connect')).toBe(1);
+  it('preserves existing PGOPTIONS while appending enforcement', () => {
+    expect(
+      buildRlsStartupOptions(
+        { NODE_ENV: 'production', RLS_ENFORCE: 'on' },
+        '-c statement_timeout=30000',
+      ),
+    ).toBe('-c statement_timeout=30000 -c app.rls_enforce=on');
+  });
+
+  it('does not add an inert setting outside production', () => {
+    expect(buildRlsStartupOptions({ NODE_ENV: 'test' })).toBeUndefined();
+  });
+
+  it('fails before pool construction for an inert production mode', () => {
+    expect(() =>
+      buildRlsStartupOptions({ NODE_ENV: 'production', RLS_ENFORCE: 'shadow' }),
+    ).toThrow(/FAIL-CLOSED/);
+  });
+});
+
+describe('RLS catalog posture', () => {
+  function posturePool(role: Record<string, unknown>, tables: Array<Record<string, unknown>>) {
+    return { query: async (sql: string) => ({ rows: sql.includes('pg_roles') ? [role] : tables }) } as any;
+  }
+
+  it('accepts a non-bypass role when every tenant table is forced and governed', async () => {
+    const { assertRlsCatalogPosture } = await import('../rlsEnforcement');
+    const report = await assertRlsCatalogPosture(posturePool(
+      { role: 'concept2cure_app', rolsuper: false, rolbypassrls: false },
+      [{ table_name: 'projects', relrowsecurity: true, relforcerowsecurity: true, policy_count: 1 }],
+    ));
+    expect(report.failures).toEqual([]);
+  });
+
+  it('fails closed for superuser, BYPASSRLS, missing FORCE, or missing policy', async () => {
+    const { assertRlsCatalogPosture } = await import('../rlsEnforcement');
+    await expect(assertRlsCatalogPosture(posturePool(
+      { role: 'postgres', rolsuper: true, rolbypassrls: true },
+      [{ table_name: 'projects', relrowsecurity: true, relforcerowsecurity: false, policy_count: 0 }],
+    ))).rejects.toThrow(/BYPASSRLS.*FORCE ROW LEVEL SECURITY.*no RLS policy/s);
+  });
+
+  it('fails closed when no tenant-keyed table is discovered', async () => {
+    const { assertRlsCatalogPosture } = await import('../rlsEnforcement');
+    await expect(assertRlsCatalogPosture(posturePool(
+      { role: 'app', rolsuper: false, rolbypassrls: false }, [],
+    ))).rejects.toThrow(/no tenant-keyed public tables/);
   });
 });

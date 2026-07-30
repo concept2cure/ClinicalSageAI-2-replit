@@ -28,6 +28,7 @@ import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
 import { precedentEngine } from '../services/precedent-engine.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { runWithTenantScope } from '../db/tenantStore';
 
 const log = createScopedLogger('public-api');
 
@@ -67,7 +68,15 @@ async function requireApiKey(req: ApiRequest, res: Response, next: NextFunction)
     });
   }
 
-  const result = await validateApiKey(rawKey);
+  const result = await runWithTenantScope(
+    {
+      tenantId: '0',
+      role: 'app_super_admin',
+      source: 'request',
+      caller: 'public-api:key-resolution',
+    },
+    () => validateApiKey(rawKey)
+  );
 
   if (!result.valid) {
     return res.status(401).json({
@@ -111,7 +120,15 @@ async function requireApiKey(req: ApiRequest, res: Response, next: NextFunction)
   // this router reaches handlers only via this middleware, so the flag is
   // always set before any requireApiScope check runs.
   (req as Request).authMethod = 'api_key';
-  next();
+  return runWithTenantScope(
+    {
+      tenantId: String(result.organizationId),
+      role: 'api_key',
+      source: 'request',
+      caller: req.path,
+    },
+    next
+  );
 }
 
 function requireScope(scope: string) {

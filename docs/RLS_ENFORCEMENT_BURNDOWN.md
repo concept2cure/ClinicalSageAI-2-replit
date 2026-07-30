@@ -1,6 +1,7 @@
 # RLS Enforcement Burndown — runway to `RLS_ENFORCE=on`
 
-Status: **analysis / planning** (no enforcement flip in this doc).
+Status: **implementation / live evidence pending** (production boot requires enforcement;
+request and scheduled-worker scopes are implemented; live-policy proof remains pending).
 Owner: unassigned. Relates to `GA_READINESS_PLAN.md` item **0.1** (highest severity).
 
 This is the map for turning on Postgres Row-Level Security as tenant-isolation
@@ -14,50 +15,52 @@ RLS boot-posture hardening, PR #1042).
 | Piece | State | Where |
 |---|---|---|
 | RLS policy installed (compiles to no-op unless `app.rls_enforce='on'`) | ✅ done | migrations; `server/db/tenantRls.ts` |
-| Three-knob rollout `RLS_ENFORCE=off\|shadow\|on` + per-connection `app.rls_enforce` | ✅ done | `server/db/rlsEnforcement.ts` |
-| Prod fail-closed boot posture (explicit decision required; `RLS_REQUIRE_ENFORCE`) | ✅ done (#1042) | `server/db/rlsEnforcement.ts` |
+| Three-knob local/test rollout `RLS_ENFORCE=off\|shadow\|on` + per-connection `app.rls_enforce` | ✅ done; production accepts canonical `on` only | `server/db/rlsEnforcement.ts` |
+| Prod fail-closed boot posture | ✅ done; missing, invalid, `off`, and `shadow` refuse startup | `server/db/rlsEnforcement.ts`; `server/config/environment.ts` |
 | Observability shim: counts queries with no tenant scope (`tenant_session_var_missing_total`, labeled by caller) | ✅ done | `server/db/poolInstrumentation.ts` |
 | AsyncLocalStorage tenant scope (`runWithTenantScope` / `getTenantScope`) | ✅ done | `server/db/tenantStore.ts` |
-| Request middleware establishes scope + per-request scoped client | ✅ done, but **mounted on one route only** | `server/middleware/tenantContext.ts` |
-| `withTenantConnection` (dedicated scoped client for jobs/scripts) | ✅ exists, **~1 caller** | `server/db/withTenantConnection.ts`; only `server/services/memory-consolidation-job.ts` |
-| Request-scoped drizzle over the tenant client (`requestDb(req)` / `getDb(req)`) | ✅ **exists**, low adoption | `server/db/requestDb.ts`, `server/db/tenantDbHelper.ts` |
-| Scope **adopted** across all request routes + jobs/workers | ❌ not done | the burndown |
+| Auth boundary establishes a verified tenant execution scope for protected routes | ✅ global protected-route adoption | `server/middleware/authBoundary.ts`; `server/middleware/orgMembership.ts` |
+| `withTenantConnection` and named system scopes for jobs/scripts | ✅ exists; failed cleanup destroys the connection | `server/db/withTenantConnection.ts`; `server/db/tenantStore.ts` |
+| Request-scoped drizzle over the tenant client (`requestDb(req)` / `getDb(req)`) | ✅ exists and fails closed if middleware omitted; low adoption | `server/db/requestDb.ts`, `server/db/tenantDbHelper.ts` |
+| Shared-pool automatic scoping | ✅ promise/callback paths implemented; missing scope blocked when enforcement is on | `server/db/poolInstrumentation.ts` |
+| Connection poisoning after uncertain tenant setup/cleanup | ✅ mock-tested for pool and lazy request clients | `server/db/poolInstrumentation.ts`; `server/middleware/lazyRequestDbClient.ts` |
+| Shared-pool route disposition | ✅ 77/77 classified: 75 JWT-bound, 2 explicit pre-tenant; 0 unclassified | `docs/reports/requestdb-coverage-baseline.json` |
+| Scheduled job/worker scope | ✅ repository schedulers use named system scope; IVDR work switches to the claimed tenant | `server/jobs/*`; `server/workers/vectorization-worker.ts`; `server/workers/ivdr-pack-worker.ts` |
+| Live two-tenant and policy-matrix evidence | ❌ environment-blocked; release gate remains closed | `scripts/db-verify/verify-rls.ts`; pool integration tests |
 
-## The real gap: adoption, not a missing primitive
+## Adopted execution model
 
-`db` (drizzle) is built over the **pool** (`server/db/runtime.ts:120`), whose
-connections carry `app.rls_enforce` but **not** `app.current_tenant_id`. So a
-pooled `db.*` query returns **zero rows** under `RLS_ENFORCE=on`.
+`db` (drizzle) is built over the **pool** (`server/db/runtime.ts`). The pool
+instrumentation now reads AsyncLocalStorage scope and applies tenant values in a
+transaction-local micro-transaction. When enforcement is on, a non-infrastructure
+pool operation with no scope is rejected rather than returning an ambiguous empty
+result. The global boundary and explicit alternative-entry scopes now supply that
+context; an omitted scope becomes an availability failure rather than silently
+under-filtered access.
 
 But the per-connection primitives already exist:
 
-- **Requests:** `requestDb(req)` returns a drizzle bound to `req.dbClient` — the
-  lazy per-request client that runs `SET LOCAL app.current_tenant_id`. Queries
-  through it are RLS-correct. `req.dbClient` + the AsyncLocalStorage scope are set
-  up by the `requireTenantContext` middleware.
+- **Requests:** `requestDb(req)` returns a drizzle bound to `req.dbClient` and
+  throws if that client is absent. `requireTenantContext` bootstraps a scope from
+  the signed JWT organization claim for tenant/membership lookup, authorizes from
+  the membership record, and installs the resolved role for downstream work.
 - **Jobs/scripts:** `withTenantConnection({tenantId, role})` gives a dedicated
   scoped client; run drizzle on it via `drizzle(client, { schema })`.
 
-So the linchpin is **adoption**, and it has two blockers:
+The application-level adoption pass is now complete. The global authentication
+boundary installs ALS scope and a lazy request client only after authentication;
+membership lookup is itself bootstrap-scoped and fails closed when membership
+cannot be verified. Alternative entry points establish their own named scope:
+API keys, signed SAML, Firecrawl, and Stripe callbacks. The 77 shared-pool route
+files remain a performance/maintainability migration backlog, but are no longer
+unclassified isolation paths: 75 inherit the authenticated JWT boundary and two
+install an explicit pre-tenant scope. New shared-pool routes remain prohibited by
+the ratchet.
 
-1. **`requireTenantContext` is mounted on one route only** (`server/routes/ana-features.ts`).
-   Until it's promoted to the global `/api` chain (after the merged auth/default-deny
-   gate, with a public/health/webhook allowlist), `req.dbClient` isn't set up for
-   other routes and `requestDb(req)` falls back to the pool-bound `db`.
-2. **Handlers still call the pool-bound `db`** instead of `requestDb(req)`.
-
-Two ways to close it:
-
-- **(A) Mass-adopt the existing scoped clients** — global-mount `requireTenantContext`,
-  then migrate handlers `db.*` → `requestDb(req).*` and jobs → `withTenantConnection`.
-  Correct, but a large call-site migration (~6,100 sites, though many are already
-  behind services that can take the scoped db).
-- **(B) Automatic pool primitive** — a query/checkout hook that reads
-  `getTenantScope()` and applies `app.current_tenant_id` on the connection, so the
-  *shared* `db` becomes RLS-correct wherever scope is established, **without** the
-  call-site migration. Lives next to `installRlsEnforcement`. Delicate
-  (pool reuse / transaction / `SET LOCAL`-needs-a-txn semantics) — needs targeted
-  tests. Higher leverage if it can be made safe.
+The automatic pool primitive is the compatibility bridge for the 77 classified
+shared-pool routes. `requestDb(req)` remains the preferred explicit primitive for
+new and multi-statement request work, and the ratchet prevents new shared-pool
+adoption while the compatibility backlog is reduced.
 
 > ⚠️ Do **not** wrap code in bare `runWithTenantScope` alone to turn the metric
 > green: without (A) using a scoped client or (B) the auto primitive, the pooled
@@ -73,18 +76,18 @@ Two ways to close it:
 
 ## Runway size (static approximation of the runtime metric)
 
-Middleware is **piecemeal, not global**: the global `/api` gate is auth-only;
-`requireTenantContext` (which calls `runWithTenantScope`) is mounted on **one**
-route file (`server/routes/ana-features.ts`). So the unscoped surface is:
+The global `/api` gate now combines authentication and tenant execution context.
+The remaining inventory is classified as follows:
 
-- **(D) Request routes** — effectively **all** data routes except `ana-features`.
-  Closed in one move by promoting the global `/api` gate to also establish scope
-  (with an allowlist for public/health/webhook prefixes). Coordinate with the
-  merged `authBoundary` gate.
-- **(A-jobs) Background writers, ~13 files** — the scariest, all unscoped:
-  `server/jobs/*` (retentionCron, auditChainIntegritySweep, corpusIngestionSweep,
-  driftSentinelSweep, externalIntelligenceSweep, regulatoryHorizonScan,
-  scheduleOfEventsSweep, periodicReview) + `server/workers/*`.
+- **Request routes:** 75 shared-pool files inherit the JWT boundary; Firecrawl
+  and SSO are explicitly pre-tenant scoped. Stripe and API-key callbacks also
+  establish named scope at their authentication boundary.
+- **Scheduled jobs/workers:** audit, corpus ingestion, drift, external intelligence,
+  regulatory horizon, retention, schedule-of-events, and vectorization use a named
+  system scope. IVDR claims work system-wide, then processes inside the job's tenant.
+  Non-scheduled ingestion helpers remain caller-scoped and fail closed if invoked
+  without an established request/job scope. `periodicReview.js` uses its external
+  Supabase client rather than the instrumented PostgreSQL pool.
 - **(C) Schedulers/timers, ~9 files** — sentinel/scheduler, securityHealthScheduler,
   pv-periodic-scheduler, pdev-readiness-scheduler, submission-chat-sweep-scheduler,
   report-os worker, automation/scheduled-jobs, audit/chainIntegrityMonitor,
@@ -116,7 +119,7 @@ tenant.
 
 ## Recommended sequence
 
-1. ✅ **DONE — the (B) auto primitive is built, dormant.** `instrumentPool`
+1. ✅ **DONE — the (B) auto primitive is built and active when enforcement is on.** `instrumentPool`
    (`server/db/poolInstrumentation.ts`) now applies the active scope's tenant vars
    via a `set_config(..., true)` **LOCAL** micro-transaction, gated on
    `RLS_ENFORCE==='on' && getTenantScope()`. LOCAL settings vanish at
@@ -127,26 +130,48 @@ tenant.
    (has the `rls_enforce` escape clause); `server/db/tenantRls.ts` is dead legacy;
    the RAISE-on-missing-tenant insert trigger is installed on only ~5
    `concept2cure_*` tables. **Still needs a live-Postgres integration test** (no-leak
-   reuse + zero-row cross-tenant) before the flip — RLS row-filtering isn't
+   reuse + cross-tenant filtering) before production acceptance — RLS row-filtering isn't
    exercised by the mock-pool unit tests. Keep (A) `requestDb` adoption as the
    escape hatch for hot read paths if per-statement transaction overhead bites.
-2. **Promote `requireTenantContext` to the global `/api` chain** (after the merged
-   auth/default-deny gate), with a public/health/webhook allowlist. This sets up
-   `req.dbClient` + AsyncLocalStorage scope for all routes — the prerequisite for
-   either approach. **High blast radius: an over-broad mount 401s public routes** —
-   build the allowlist deliberately and verify against the merged `authBoundary`.
-3. **Adopt scoped clients:** for (A), migrate handlers `db.*` → `requestDb(req).*`;
+2. ✅ **Global protected-route context is implemented** in `authBoundary`; public
+   and alternative-auth entry points are either allowlisted or explicitly scoped.
+3. **Continue scoped-client migration:** for (A), migrate handlers `db.*` → `requestDb(req).*`;
    for (B), no per-handler change once the primitive reads the now-global scope.
    Either way, watch `tenant_session_var_missing_total` fall for the request path.
-4. **Wrap background writers** (jobs → workers → schedulers) in
+4. ✅ **Scheduled background writers are wrapped** in
    `withTenantConnection` + `drizzle(client)`: per-org loop, or `app_super_admin`
    for legitimate global sweeps. Verify the auto-set trigger still lands inserts in
    the intended org.
 5. **Verify in staging** with `RLS_ENFORCE=on`: run the cron/worker set + a
    cross-tenant request smoke test asserting **zero-row leakage**, and watch
    `tenant_session_var_missing_total` drop to ~0 (labels pinpoint stragglers).
-6. **Flip:** `RLS_ENFORCE=on`, then `RLS_REQUIRE_ENFORCE=true` so any regression
-   fails boot (`server/db/rlsEnforcement.ts`).
+6. **Production posture:** `RLS_ENFORCE=on` is now mandatory; no secondary
+   `RLS_REQUIRE_ENFORCE` opt-in is required (`server/db/rlsEnforcement.ts`).
 
-**Acceptance (GA plan 0.1):** cross-tenant read returns zero rows in a staging test;
-prod boot fails closed if enforcement is missing.
+**Acceptance (GA plan 0.1):** cross-tenant reads/writes are rejected or filtered in
+a live two-tenant staging test, unscoped application access is rejected, connection
+failure cannot leak tenant state, and production boot fails closed if enforcement
+is missing.
+
+## Canonical control reuse review (2026-07-29)
+
+No separate remediation epic, audit manifest, or architecture-baseline generator
+is needed for this work. The repository already has canonical control artifacts:
+
+| Need | Existing source of truth |
+|---|---|
+| Program sequencing and release stages | `docs/audit-2026-07/15-remediation-plan.md`, `docs/GA_READINESS_PLAN.md` |
+| RLS rollout status and residual work | this document |
+| Tenant-isolation proof boundaries | `docs/security/C2C_TENANT_ISOLATION_PROOF.md` |
+| Raw-SQL isolation ratchet | `scripts/ci/check-tenant-isolation.mjs`, `docs/reports/tenant-isolation-baseline.json`, `docs/reports/tenant-isolation-justifications.md` |
+| Request-scoped DB adoption | `scripts/ci/audit-requestdb-coverage.mjs`, `docs/reports/requestdb-coverage-baseline.json` |
+| RLS policy/allowlist parity | `scripts/ci/check-rls-allowlist-sync.mjs`, `server/db/rlsAllowlist.ts` |
+| Database readiness | `scripts/db/readiness-audit.mjs`, `docs/operations/DB_READINESS.md` |
+| Evidence packaging | `scripts/audits/generate-evidence-pack.mjs`, `docs/reports/evidence-pack-2026-07-28.md` |
+
+New controls must extend these artifacts rather than introduce parallel manifests.
+The current tenant audit's 25 findings are individually dispositioned in
+`docs/reports/tenant-isolation-justifications.md`, and its justification parity
+gate passes. The 77 shared-pool routes are classified in the request-DB baseline
+(75 JWT-bound, two explicit pre-tenant, zero unclassified). Those dispositions do
+not replace the still-mandatory live PostgreSQL evidence gate.

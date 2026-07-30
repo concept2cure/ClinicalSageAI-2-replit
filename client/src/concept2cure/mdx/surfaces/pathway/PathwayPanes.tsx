@@ -17,6 +17,8 @@ import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
+import { useSectionSave, type SaveState } from '../../hooks/useSectionSave';
+import { useElectronicSignature } from '../../hooks/useElectronicSignature';
 import type {
   Approval,
   AuditEvent,
@@ -463,21 +465,56 @@ function ApprovalsPane({ approvals, onOpenSection, currentUser = 'You' }: { appr
 function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; onOpenSection: OpenSection }) {
   const [signing, setSigning] = React.useState(false);
   const [pwd, setPwd] = React.useState('');
+  const [mfa, setMfa] = React.useState('');
   const [meaning, setMeaning] = React.useState(a.meaning || '');
-  const [signed, setSigned] = React.useState(false);
+  const esig = useElectronicSignature();
 
   const days = daysUntil(a.due);
   const overdue = days !== null && days < 0;
 
-  if (signed) {
+  /* A Part 11 signature must identify what was signed (§11.50(a)). When
+     the approval feed cannot name a document *and* a revision, signing
+     is disabled rather than pinned to a guessed version. */
+  const canSign =
+    typeof a.document_id === 'number' && typeof a.version_id === 'number';
+
+  const applySignature = async () => {
+    if (!canSign) return;
+    await esig.sign({
+      documentId: a.document_id as number,
+      versionId: a.version_id as number,
+      signatureMeaning: meaning.trim(),
+      signaturePurpose: 'approval',
+      action: 'approved',
+      password: pwd,
+      mfaToken: mfa.trim() || undefined,
+    });
+    /* Credentials are cleared whatever the outcome — they are never
+       retained in component state after the request. */
+    setPwd('');
+    setMfa('');
+  };
+
+  /* Rendered only once the server has returned a signature record.
+     There is no local "signed" flag any more: if the request failed,
+     the card stays unsigned and shows why. */
+  if (esig.receipt) {
     return (
       <div className="ap-card signed">
         <div className="ap-card-hdr">
           <span className="ap-stage-pill" data-stage={a.stage}>{a.stage}</span>
-          <span className="audit-signed">{I.lock} Signed just now</span>
+          <span className="audit-signed">
+            {I.lock} Signed {esig.receipt.signedAt ? fmtTime(esig.receipt.signedAt) : ''}
+          </span>
         </div>
         <div className="ap-card-target">{a.target}</div>
-        <div className="ap-card-meta">Acknowledged: &quot;{meaning}&quot; · WP-{Math.floor(Math.random() * 9000 + 1000)}</div>
+        <div className="ap-card-meta">
+          Acknowledged: &quot;{meaning}&quot; · signature{' '}
+          <span className="mono">#{esig.receipt.signatureId}</span> ·{' '}
+          <span className="mono" title={esig.receipt.signatureHash}>
+            {esig.receipt.signatureHash.slice(0, 12)}…
+          </span>
+        </div>
       </div>
     );
   }
@@ -501,7 +538,18 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
 
       {mine && !signing && (
         <div className="ap-card-actions">
-          <button className="ap-sign-btn" onClick={() => setSigning(true)}>{I.lock} E-sign</button>
+          <button
+            className="ap-sign-btn"
+            onClick={() => setSigning(true)}
+            disabled={!canSign}
+            title={
+              canSign
+                ? undefined
+                : 'This approval has no document revision on record, so it cannot carry a Part 11 signature.'
+            }
+          >
+            {I.lock} E-sign
+          </button>
           <button className="ap-decline-btn">Decline</button>
           {a.target_id && (
             <button className="ap-review-btn" onClick={() => onOpenSection({ id: a.target_id!, label: a.target })}>
@@ -529,14 +577,52 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
             <input className="ap-sign-input" value={meaning} onChange={(e) => setMeaning(e.target.value)} placeholder="e.g. Reviewed and approved" />
           </div>
           <div className="ap-sign-creds">
-            <input className="ap-sign-input" type="password" placeholder="Re-enter password" value={pwd} onChange={(e) => setPwd(e.target.value)} />
-            <button className="ap-sign-confirm" disabled={pwd.length < 6 || meaning.trim().length === 0} onClick={() => setSigned(true)}>
-              {I.lock} Apply signature
+            <input
+              className="ap-sign-input"
+              type="password"
+              placeholder="Re-enter password"
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              autoComplete="current-password"
+            />
+            {/* Sent only when filled. The server decides whether a second
+                factor is required for this signer and rejects the
+                signature if one is needed and missing. */}
+            <input
+              className="ap-sign-input"
+              inputMode="numeric"
+              placeholder="MFA code (if enabled)"
+              value={mfa}
+              onChange={(e) => setMfa(e.target.value)}
+              autoComplete="one-time-code"
+            />
+            <button
+              className="ap-sign-confirm"
+              disabled={
+                esig.submitting || pwd.length < 6 || meaning.trim().length === 0
+              }
+              onClick={applySignature}
+            >
+              {I.lock} {esig.submitting ? 'Signing…' : 'Apply signature'}
             </button>
-            <button className="ap-sign-cancel" onClick={() => { setSigning(false); setPwd(''); }}>Cancel</button>
+            <button
+              className="ap-sign-cancel"
+              onClick={() => { setSigning(false); setPwd(''); setMfa(''); esig.reset(); }}
+            >
+              Cancel
+            </button>
           </div>
+          {esig.error && (
+            <div className="ap-sign-error" role="alert">
+              {I.alertCircle} {esig.error}
+            </div>
+          )}
           <div className="ap-sign-foot">
-            21 CFR §11.100(b) · By signing you certify the listed meaning. Time, IP, and a SHA-256 of this record will be appended to the audit trail.
+            21 CFR §11.100(b) · By signing you certify the listed meaning. Your
+            password — and your second factor where enabled — are re-verified on
+            the server at the moment of signing; the time, IP address and record
+            hash are computed there and written to the audit trail before the
+            signature is accepted.
           </div>
         </div>
       )}
@@ -549,14 +635,21 @@ export interface DossierDrawerProps {
   open: boolean;
   target: SectionTarget | null;
   pathway: PathwayKey;
+  /**
+   * c2c_documents id backing this dossier, from useDossierHydration.
+   * Null when the drawer is showing a section that was never hydrated
+   * from the governed store — in that case edits stay local and the
+   * editor says so rather than claiming a save.
+   */
+  documentId?: string | null;
   onClose: () => void;
   onOpenEditor?: OpenEditor;
 }
 
-export function DossierDrawer({ open, target, pathway, onClose, onOpenEditor }: DossierDrawerProps) {
+export function DossierDrawer({ open, target, pathway, documentId = null, onClose, onOpenEditor }: DossierDrawerProps) {
   const safeTarget: SectionTarget = target || { id: '', label: '' };
   const [tab, setTab] = React.useState<'document' | 'attachments' | 'activity'>('document');
-  const [autosaveAt, setAutosaveAt] = React.useState<Date | null>(null);
+  const sectionSave = useSectionSave(documentId);
 
   const { body, meta, attachments, folder } = useSection(pathway, safeTarget.id, safeTarget.label);
 
@@ -571,8 +664,12 @@ export function DossierDrawer({ open, target, pathway, onClose, onOpenEditor }: 
 
   const onCommitBody = (next: string) => {
     if (next === body) return;
+    /* Local store first so the editor stays responsive, then the
+       governed write. The status line reports the *server's* outcome,
+       so a failed PATCH reads as "not saved" even though the in-memory
+       copy updated. */
     DossierStore.writeSectionBody(pathway, safeTarget.id, safeTarget.label, next, { who: 'You', role: 'Reg Lead' });
-    setAutosaveAt(new Date());
+    void sectionSave.save(String(safeTarget.id), next);
   };
 
   const onAttach = (files: FileList) => {
@@ -582,7 +679,6 @@ export function DossierDrawer({ open, target, pathway, onClose, onOpenEditor }: 
         name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
       }, { who: 'You', role: 'Reg Lead' });
     });
-    setAutosaveAt(new Date());
   };
 
   const labelByPathway = pathway === 'k510' ? '510(k) dossier' : pathway === 'pma' ? 'PMA dossier' : pathway === 'ivd' ? 'IVD dossier' : 'CER dossier';
@@ -623,7 +719,7 @@ export function DossierDrawer({ open, target, pathway, onClose, onOpenEditor }: 
         </div>
 
         <div className="dd-body">
-          {tab === 'document' && <DDDocumentTab body={body} onCommit={onCommitBody} autosaveAt={autosaveAt} />}
+          {tab === 'document' && <DDDocumentTab body={body} onCommit={onCommitBody} saveState={sectionSave.state} />}
           {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} />}
           {tab === 'activity' && <DDActivityTab events={activity} />}
         </div>
@@ -648,7 +744,63 @@ export function DossierDrawer({ open, target, pathway, onClose, onOpenEditor }: 
 }
 
 /* ── Drawer tabs ─────────────────────────────────────────────── */
-function DDDocumentTab({ body, onCommit, autosaveAt }: { body: string; onCommit: (next: string) => void; autosaveAt: Date | null }) {
+/**
+ * Status line for the section editor.
+ *
+ * This used to read "● saved · edits sync to audit + activity" at all
+ * times, including when nothing had been sent anywhere. It now reports
+ * the actual outcome of the governed PATCH, and says plainly when a
+ * section has no backing document and the edit is local only.
+ */
+function DDSaveStatus({ dirty, state }: { dirty: boolean; state: SaveState }) {
+  if (dirty) {
+    return (
+      <>
+        <span className="dd-doc-dot dirty" /> editing…
+      </>
+    );
+  }
+  switch (state.status) {
+    case 'saving':
+      return (
+        <>
+          <span className="dd-doc-dot dirty" /> saving…
+        </>
+      );
+    case 'saved':
+      return (
+        <>
+          <span className="dd-doc-dot saved" /> saved {fmtTime(state.at.toISOString())}
+          <span className="dd-doc-hint">version recorded with your name and reason</span>
+        </>
+      );
+    case 'error':
+      return (
+        <>
+          <span className="dd-doc-dot err" /> {state.message}
+          <span className="dd-doc-hint">your text is still here — retry by editing again</span>
+        </>
+      );
+    case 'unavailable':
+      return (
+        <>
+          <span className="dd-doc-dot err" /> local draft — not saved
+          <span className="dd-doc-hint">
+            this section has no governed document behind it, so edits are lost on refresh
+          </span>
+        </>
+      );
+    case 'idle':
+    default:
+      return (
+        <>
+          <span className="dd-doc-dot" /> no changes yet
+        </>
+      );
+  }
+}
+
+function DDDocumentTab({ body, onCommit, saveState }: { body: string; onCommit: (next: string) => void; saveState: SaveState }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dirty, setDirty] = React.useState(false);
@@ -679,12 +831,7 @@ function DDDocumentTab({ body, onCommit, autosaveAt }: { body: string; onCommit:
   return (
     <div className="dd-doc-wrap">
       <div className="dd-doc-status">
-        {dirty
-          ? <><span className="dd-doc-dot dirty" /> editing…</>
-          : autosaveAt
-            ? <><span className="dd-doc-dot saved" /> saved {fmtTime(autosaveAt.toISOString())}</>
-            : <><span className="dd-doc-dot saved" /> saved</>}
-        <span className="dd-doc-hint">edits sync to audit + activity</span>
+        <DDSaveStatus dirty={dirty} state={saveState} />
       </div>
       <div
         ref={ref}
@@ -806,7 +953,7 @@ export interface PathwayPanesProps {
   onAskAna: (text: string) => void;
   onOpenEditor?: OpenEditor;
   /** Canonical project id — anchors live audit + scopes correspondence. When
-   *  absent, the panes fall back to the kit fixtures. */
+   *  absent, live panes render an explicit empty state. */
   programId?: string | null;
 }
 
@@ -852,17 +999,26 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
         )}
         {tab === 'approvals' && <ApprovalsPane approvals={data.approvals} onOpenSection={openSection} />}
         {tab === 'files' && (
-          <FilesTreePane
-            key={`ftp-${pathway}-${dossier.version}`}
-            pathway={pathway}
-            onOpenSection={openSection}
-          />
+          <>
+            {dossier.status === 'loading' && <div role="status">Loading dossier files…</div>}
+            {dossier.status === 'unavailable' && <div role="alert">Dossier files are unavailable. Sample evidence has not been substituted.</div>}
+            {dossier.status === 'permission-denied' && <div role="alert">You do not have permission to view this program's dossier files.</div>}
+            {dossier.status === 'empty' && <div role="status">No dossier sections have been created for this program.</div>}
+            {(dossier.status === 'live-data' || dossier.status === 'sample') && (
+              <FilesTreePane
+                key={`ftp-${pathway}-${dossier.version}`}
+                pathway={pathway}
+                onOpenSection={openSection}
+              />
+            )}
+          </>
         )}
       </div>
       <DossierDrawer
         open={!!drawerTarget}
         target={drawerTarget}
         pathway={pathway}
+        documentId={dossier.documentId}
         onClose={() => setDrawerTarget(null)}
         onOpenEditor={onOpenEditor}
       />

@@ -17,6 +17,7 @@ import pdfParse from '../utils/pdfParse';
 import { pool } from '../db';
 import * as crypto from 'crypto';
 import { createScopedLogger } from '../utils/logger.js';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const log = createScopedLogger('vectorization-worker');
 
@@ -411,40 +412,42 @@ async function getPendingJobs(limit: number = 10): Promise<ProcessingJob[]> {
  * Main worker loop
  */
 async function runWorker(): Promise<void> {
-  log.debug('🚀 Starting Evidence Vault Vectorization Worker');
-  log.debug(`   Model: ${EMBEDDING_MODEL}`);
-  log.debug(`   Chunk size: ${CHUNK_SIZE} tokens`);
-  log.debug(`   Overlap: ${CHUNK_OVERLAP} tokens`);
-  log.debug(`   Batch size: ${BATCH_SIZE}`);
+  return runWithSystemTenantScope('vectorization-worker', async () => {
+    log.debug('🚀 Starting Evidence Vault Vectorization Worker');
+    log.debug(`   Model: ${EMBEDDING_MODEL}`);
+    log.debug(`   Chunk size: ${CHUNK_SIZE} tokens`);
+    log.debug(`   Overlap: ${CHUNK_OVERLAP} tokens`);
+    log.debug(`   Batch size: ${BATCH_SIZE}`);
 
-  while (true) {
-    try {
-      const jobs = await getPendingJobs(BATCH_SIZE);
+    while (true) {
+      try {
+        const jobs = await getPendingJobs(BATCH_SIZE);
 
-      if (jobs.length === 0) {
-        // No jobs, wait before checking again
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        continue;
-      }
-
-      log.debug(`📋 Found ${jobs.length} pending jobs`);
-
-      // Process jobs sequentially to respect rate limits
-      for (const job of jobs) {
-        try {
-          await processDocument(job);
-        } catch (error) {
-          // Error already logged and handled in processDocument
+        if (jobs.length === 0) {
+          // No jobs, wait before checking again
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          continue;
         }
 
-        // Small delay between documents
-        await new Promise(resolve => setTimeout(resolve, 500));
+        log.debug(`📋 Found ${jobs.length} pending jobs`);
+
+        // Process jobs sequentially to respect rate limits
+        for (const job of jobs) {
+          try {
+            await processDocument(job);
+          } catch (error) {
+            // Error already logged and handled in processDocument
+          }
+
+          // Small delay between documents
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } catch (error: any) {
+        log.error('Worker error:', error.message);
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
-    } catch (error: any) {
-      log.error('Worker error:', error.message);
-      await new Promise(resolve => setTimeout(resolve, 10000));
     }
-  }
+  });
 }
 
 /**
@@ -453,21 +456,22 @@ async function runWorker(): Promise<void> {
 export async function processSingleDocument(
   documentId: string
 ): Promise<{ success: boolean; chunks?: number; error?: string }> {
-  try {
-    const dbPool = requirePool();
-    // Create a processing job
-    await dbPool.query(
-      `
+  return runWithSystemTenantScope('vectorization-worker:single-document', async () => {
+    try {
+      const dbPool = requirePool();
+      // Create a processing job
+      await dbPool.query(
+        `
       INSERT INTO vault.processing_queue (document_id, processing_type, priority)
       VALUES ($1, 'vectorize', 'high')
       ON CONFLICT DO NOTHING
     `,
-      [documentId]
-    );
+        [documentId]
+      );
 
-    // Get the job
-    const jobResult = await dbPool.query(
-      `
+      // Get the job
+      const jobResult = await dbPool.query(
+        `
       SELECT
         pq.id,
         pq.document_id,
@@ -482,30 +486,31 @@ export async function processSingleDocument(
       JOIN vault.documents d ON d.id = pq.document_id
       WHERE pq.document_id = $1 AND pq.status = 'pending'
     `,
-      [documentId]
-    );
+        [documentId]
+      );
 
-    if (jobResult.rowCount === 0) {
-      return { success: false, error: 'Document not found or already processed' };
-    }
+      if (jobResult.rowCount === 0) {
+        return { success: false, error: 'Document not found or already processed' };
+      }
 
-    await processDocument(jobResult.rows[0]);
+      await processDocument(jobResult.rows[0]);
 
-    // Get chunk count
-    const countResult = await dbPool.query(
-      `
+      // Get chunk count
+      const countResult = await dbPool.query(
+        `
       SELECT chunk_count FROM vault.documents WHERE id = $1
     `,
-      [documentId]
-    );
+        [documentId]
+      );
 
-    return {
-      success: true,
-      chunks: countResult.rows[0]?.chunk_count || 0,
-    };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+      return {
+        success: true,
+        chunks: countResult.rows[0]?.chunk_count || 0,
+      };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
 }
 
 /**
@@ -517,7 +522,8 @@ export async function getWorkerStatus(): Promise<{
   completed: number;
   failed: number;
 }> {
-  const result = await requirePool().query(`
+  return runWithSystemTenantScope('vectorization-worker:status', async () => {
+    const result = await requirePool().query(`
     SELECT
       COUNT(*) FILTER (WHERE status = 'pending') as pending,
       COUNT(*) FILTER (WHERE status = 'processing') as processing,
@@ -526,12 +532,13 @@ export async function getWorkerStatus(): Promise<{
     FROM vault.processing_queue
   `);
 
-  return {
-    pending: parseInt(result.rows[0].pending) || 0,
-    processing: parseInt(result.rows[0].processing) || 0,
-    completed: parseInt(result.rows[0].completed) || 0,
-    failed: parseInt(result.rows[0].failed) || 0,
-  };
+    return {
+      pending: parseInt(result.rows[0].pending) || 0,
+      processing: parseInt(result.rows[0].processing) || 0,
+      completed: parseInt(result.rows[0].completed) || 0,
+      failed: parseInt(result.rows[0].failed) || 0,
+    };
+  });
 }
 
 // Export for use as module

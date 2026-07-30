@@ -18,7 +18,7 @@
  *   `requestDb(req)` returns a Drizzle wrapped around the request-scoped
  *   lazy wrapper. Drizzle's node-postgres driver only calls `.query()` on
  *   the client, which our lazy wrapper exposes — first call acquires a
- *   pool connection and runs `SET LOCAL app.current_tenant_id` on it,
+ *   pool connection and applies session-level tenant variables on it,
  *   then delegates. So all queries through this Drizzle instance run on
  *   the same connection with the RLS session vars set, and connection
  *   acquisition is deferred until the first DB hit.
@@ -35,16 +35,15 @@
  * object (`req.__requestDb`) so multiple calls in the same handler do
  * not pay the construction cost twice.
  *
- * Safe outside the request scope: if `req.dbClient` is missing (e.g. a
- * route that ran before requireTenantContext, or a test that fakes the
- * request), this falls back to the pool-bound default `db`. PR A's
- * pool instrumentation will count that case as missing-tenant.
+ * This helper is intentionally unsafe outside a tenant request scope. If
+ * `req.dbClient` is absent or malformed, it throws a typed error rather than
+ * falling back to the shared pool. System operations must use an explicitly
+ * audited system database path; they must never manufacture a request.
  */
 
 import type { Request } from 'express';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../shared/schema';
-import { db as poolBoundDb } from './runtime';
 
 type Schema = typeof schema;
 export type RequestDb = NodePgDatabase<Schema>;
@@ -53,18 +52,33 @@ interface RequestWithCachedDb extends Request {
   __requestDb?: RequestDb;
 }
 
+export class MissingRequestDbContextError extends Error {
+  readonly code = 'REQUEST_DB_CONTEXT_REQUIRED';
+  readonly statusCode = 500;
+
+  constructor() {
+    super('Request-scoped database context is required');
+    this.name = 'MissingRequestDbContextError';
+  }
+}
+
 export function requestDb(req: Request): RequestDb {
+  // A bad merge left two copies of this function body here, so `client` was
+  // declared twice (TS2451) and the file did not compile. The canonical shape is
+  // cache-first, then a single guarded lookup that throws the typed
+  // MissingRequestDbContextError (not a bare Error). Ledger C-22.
   const cached = (req as RequestWithCachedDb).__requestDb;
   if (cached) return cached;
 
-  const client = (req as Request & { dbClient?: unknown }).dbClient;
+  const client = (req as Request & { dbClient?: { query?: unknown } }).dbClient;
+  if (!client || typeof client.query !== 'function') {
+    throw new MissingRequestDbContextError();
+  }
   // Drizzle's node-postgres driver only needs `.query()` on the client.
   // The lazy wrapper installed by requireTenantContext satisfies that;
   // we cast to `any` here so we don't have to pull pg types into the
   // Drizzle type parameter just to widen the constructor signature.
-  const built: RequestDb = client
-    ? (drizzle(client as any, { schema }) as RequestDb)
-    : (poolBoundDb as unknown as RequestDb);
+  const built = drizzle(client as any, { schema }) as RequestDb;
 
   (req as RequestWithCachedDb).__requestDb = built;
   return built;

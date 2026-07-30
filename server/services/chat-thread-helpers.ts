@@ -26,6 +26,10 @@ async function ensureChatTables(): Promise<void> {
         user_id INTEGER,
         project_id INTEGER,
         organization_id INTEGER,
+        title TEXT,
+        model TEXT,
+        system_prompt TEXT,
+        metadata JSONB,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
@@ -34,12 +38,27 @@ async function ensureChatTables(): Promise<void> {
         thread_id TEXT REFERENCES chat_threads(id) ON DELETE CASCADE,
         role TEXT NOT NULL,
         content TEXT NOT NULL,
+        model TEXT,
+        tokens_used INTEGER DEFAULT 0,
+        metadata JSONB,
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
     tablesEnsured = true;
   } catch (e: unknown) {
-    // Tables may already exist with different schema — that's fine
+    // This catch used to say "Tables may already exist with different schema —
+    // that's fine". It was not fine, and that comment was the defect's alibi:
+    // the CREATE above omitted model, tokens_used and metadata on
+    // chat_messages (and title, model, system_prompt, metadata on
+    // chat_threads), while the queries BELOW IN THIS FILE select and insert
+    // exactly those columns. Every write failed with
+    // `column "model" of relation "chat_messages" does not exist`, and this
+    // handler is why nothing louder happened.
+    //
+    // The canonical shape now lives in migrations/20260728_chat_thread_store.sql,
+    // which both creates it and repairs databases carrying the old narrow
+    // shape. The DDL here is kept as a same-shape fallback for a database that
+    // has not had migrations applied — it must stay in sync with that file.
     console.warn('[chat-thread-helpers] Table ensure warning:', e instanceof Error ? e.message : String(e));
     tablesEnsured = true; // Don't retry
   }

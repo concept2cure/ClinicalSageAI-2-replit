@@ -47,16 +47,22 @@ export const sendError = (
  */
 export function extractRequestContext(req: Request): {
   orgId: number | null;
-  userId: number;
+  userId: number | null;
   numericOrgId: number | null;
 } {
-  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId || null;
-  const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+  const rawOrgId = (req as any).tenantId || (req as any).tenantContext?.organizationId || null;
+  const rawUserId = (req as any).userId || (req as any).user?.id || null;
+  const orgId = Number(rawOrgId);
+  const userId = Number(rawUserId);
   return {
-    orgId: orgId ? Number(orgId) : null,
-    userId: typeof userId === 'number' ? userId : 0,
-    numericOrgId: orgId ? Number(orgId) : null,
+    orgId: isPositiveIntegerId(orgId) ? orgId : null,
+    userId: isPositiveIntegerId(userId) ? userId : null,
+    numericOrgId: isPositiveIntegerId(orgId) ? orgId : null,
   };
+}
+
+export function isPositiveIntegerId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
 }
 
 // ─── Gateway singleton ───────────────────────────────────────────────────────

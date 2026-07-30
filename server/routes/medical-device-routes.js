@@ -243,7 +243,11 @@ router.put('/510k/:submissionId', authenticateJWT, requireOrganization, async (r
 });
 
 /**
- * Submit 510(k) to FDA
+ * Validate + sign a 510(k) package. Despite the route name this performs NO
+ * transmission to FDA — see medicalDeviceService.submit510kToFDA. The response
+ * carries `transmitted: false` and a message saying so; do not present it as a
+ * completed agency submission. Real transmission is the gateway path
+ * (server/services/submission-gateways), surfaced as Gateway Transmittals.
  */
 router.post(
   '/510k/:submissionId/submit',

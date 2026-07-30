@@ -10,11 +10,16 @@ const DEFAULT_BLOCKED_PREFIXES = [
 
 const parseBlockedPrefixes = (raw: string | undefined): string[] => {
   if (!raw) return DEFAULT_BLOCKED_PREFIXES;
-  const parsed = raw
-    .split(',')
-    .map(token => token.trim())
-    .filter(Boolean)
-    .map(token => (token.startsWith('/') ? token : `/${token}`));
+  const parsed = [
+    ...new Set(
+      raw
+        .split(',')
+        .map(token => token.trim())
+        .filter(Boolean)
+        .map(token => (token.startsWith('/') ? token : `/${token}`))
+        .map(token => (token.length > 1 ? token.replace(/\/+$/, '') : token))
+    ),
+  ];
   return parsed.length > 0 ? parsed : DEFAULT_BLOCKED_PREFIXES;
 };
 
@@ -33,7 +38,7 @@ export function createBetaRouteFence(
 
     const reqPath = req.path || '';
     const isBlocked = blockedPrefixes.some(
-      prefix => reqPath === prefix || reqPath.startsWith(`${prefix}/`)
+      prefix => prefix === '/' || reqPath === prefix || reqPath.startsWith(`${prefix}/`)
     );
     if (!isBlocked) return next();
 

@@ -66,15 +66,16 @@ import {
   PDEV_COMMAND_HANDLERS,
   PDEV_COMMAND_METADATA,
 } from './pdev-command-handlers';
-import { loadAnaToolPolicy } from './mdx-tool-policy';
+import { loadAnaToolPolicyStrict } from './mdx-tool-policy';
 import {
   requiresPart11Signoff,
   requiresEsignature,
   validateSignoff,
   buildSignatureRequiredResult,
-  loadPart11Enforce,
+  loadPart11EnforceStrict,
   type Part11Signoff,
 } from './part11-governance';
+import { authorizeCommand, isPrivacyAdmin } from './command-rbac';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -131,6 +132,18 @@ export interface CommandContext {
    * verifies the user's re-authentication via the e-signature service.
    */
   signoff?: Part11Signoff;
+  /**
+   * Set true by `executeCommands` when the tenant's governance configuration
+   * could not be RESOLVED for this dispatch — the tool-policy read or the
+   * Part 11 flag read failed (DB error / no pool). It is NOT set when a read
+   * succeeds and simply finds no restriction configured.
+   *
+   * Every mutation-capable command fails CLOSED while it is set
+   * (command-rbac.ts `authorizeCommand`, and again in
+   * `requireGovernedToolGate`). Read-only commands deliberately continue to
+   * work: AnA degrades to read-only rather than to un-governed.
+   */
+  governanceUnavailable?: boolean;
 }
 
 export interface CommandResult {
@@ -218,18 +231,11 @@ async function persistGovernedCommandArtifact(
   return execution.artifactMutation;
 }
 
-function hasPrivacyAdminRole(role?: string): boolean {
-  const normalized = String(role || '').toLowerCase();
-  return [
-    'admin',
-    'manager',
-    'owner',
-    'super_admin',
-    'platform_admin',
-    'dpo',
-    'privacy_officer',
-  ].includes(normalized);
-}
+// Privacy-admin authorization for the GDPR data-subject commands lives in
+// command-rbac.ts (`isPrivacyAdmin`). It reads organization_users.role through
+// the canonical RBAC service instead of the self-asserted `ctx.userRole`, which
+// the chat bridge never populates — so the previous check evaluated `undefined`
+// for every AnA-initiated cross-subject export/erase.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. PROJECT OPERATIONS
@@ -1130,7 +1136,9 @@ export async function exportPersonalData(
 ): Promise<CommandResult> {
   try {
     const dataSubjectId = params?.dataSubjectId || ctx.userId;
-    if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+    // Self-service is always permitted (GDPR Art. 15/20). Acting on ANOTHER
+    // subject requires a DB-sourced privacy-admin grant — fail-closed.
+    if (dataSubjectId !== ctx.userId && !(await isPrivacyAdmin(ctx))) {
       return {
         success: false,
         action: 'export_personal_data',
@@ -1213,7 +1221,9 @@ export async function erasePersonalData(
   params: { dataSubjectId?: number; reason?: string }
 ): Promise<CommandResult> {
   const dataSubjectId = params?.dataSubjectId || ctx.userId;
-  if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+  // Self-service is always permitted (GDPR Art. 17). Acting on ANOTHER subject
+  // requires a DB-sourced privacy-admin grant — fail-closed.
+  if (dataSubjectId !== ctx.userId && !(await isPrivacyAdmin(ctx))) {
     return {
       success: false,
       action: 'erase_personal_data',
@@ -2627,42 +2637,28 @@ export async function computeSampleSize(
   }
 }
 
-/** Compute dose escalation design */
+/**
+ * Dose escalation — retired (Phase 8). The Foresight engine that formerly answered
+ * this attached a FABRICATED confidence interval (a flat ±20 %/±25 % of the computed
+ * dose, not a real statistical interval), so it no longer backs this command. A next
+ * dose is never emitted as a value here: selecting one requires a governing
+ * exposure–response / MTD calculation with stated assumptions and clinical-pharmacology
+ * review — it cannot be inferred from precedent (§14). The honest dose-strategy
+ * evidence surface is clinical-regulatory-evidence/study-design-evidence.assessDoseStrategy.
+ */
 export async function computeDoseEscalation(
-  ctx: CommandContext,
-  params: Record<string, unknown>
+  _ctx: CommandContext,
+  _params: Record<string, unknown>
 ): Promise<CommandResult> {
-  try {
-    const { ForesightAIEngine } = await import('../foresight-ai-engine.js').catch(() => ({
-      ForesightAIEngine: null,
-    }));
-    if (!ForesightAIEngine) {
-      return {
-        success: false,
-        action: 'compute_dose_escalation',
-        message: 'Foresight engine not available.',
-      };
-    }
-    const engine = new ForesightAIEngine();
-    const result: any = await engine.calculateOptimalDoseEscalation(
-      String(params.studyId || 'design-mode')
-    );
-    return {
-      success: true,
-      action: 'compute_dose_escalation',
-      data: result,
-      message: `Dose escalation designed. Method: ${result?.method || params.method || '3+3'}. ${
-        result?.recommendation || 'See results for details.'
-      }`,
-    };
-  } catch (err: unknown) {
-    return {
-      success: false,
-      action: 'compute_dose_escalation',
-      message: 'Dose escalation computation failed.',
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return {
+    success: true,
+    action: 'compute_dose_escalation',
+    message:
+      'A dose-escalation value is not emitted here. Selecting a next dose requires a governing ' +
+      'exposure–response / MTD calculation with stated assumptions and clinical-pharmacology review; ' +
+      'it cannot be inferred from precedent. Ask for the FDA dose-selection evidence on record to ' +
+      'inform that calculation.',
+  };
 }
 
 /** Assess statistical defensibility */
@@ -2880,14 +2876,18 @@ export async function exportDocument(
     const docId = params.docId || params.documentId;
     const format = String(params.format || 'docx');
     if (!docId) return { success: false, action: 'export_document', message: 'docId required.' };
-    // Log export event
+    // Log export event to authoring_export_history — the table the authoring
+    // router's export path writes and its diff-since-export reader reads.
+    // This previously wrote `doc_exports`, which nothing in this repo creates,
+    // so every ANA-initiated export went unrecorded. See ledger C-14.
     try {
       await pool.query(
-        `INSERT INTO doc_exports (doc_id, format, exported_by, created_at) VALUES ($1, $2, $3, NOW())`,
+        `INSERT INTO authoring_export_history (document_id, export_type, exported_by, exported_at)
+         VALUES ($1, $2, $3, NOW())`,
         [docId, format, ctx.userId]
       );
     } catch {
-      /* table might not exist */
+      /* the authoring router provisions this table lazily; skip if absent */
     }
     return {
       success: true,
@@ -4136,9 +4136,10 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'compute_dose_escalation',
-    description: 'Design dose escalation with MTD estimation',
-    parameters: 'method (3plus3/boin/crm/fibonacci), startingDose, doseLevels, targetDLTRate?',
-    example: '"Design a BOIN dose escalation starting at 10mg with 5 dose levels"',
+    description:
+      'Explain dose-escalation requirements and guardrails. Does NOT emit a dose value — a next dose requires a governing exposure–response/MTD calculation and clinical-pharmacology review.',
+    parameters: 'indication?, phase?',
+    example: '"What does dose selection require for my Phase 1 program?"',
   },
   {
     name: 'assess_defensibility',
@@ -4649,6 +4650,21 @@ export const COMMAND_HANDLERS: Record<string, any> = {
 /** Names of every dispatchable platform command (the parity guard's source of truth). */
 export const COMMAND_HANDLER_NAMES: string[] = Object.keys(COMMAND_HANDLERS);
 
+function isPositiveIntegerId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
+export function validateCommandContext(ctx: CommandContext): string | null {
+  if (!isPositiveIntegerId(ctx.userId)) return 'userId must be a positive integer';
+  if (!isPositiveIntegerId(ctx.organizationId)) {
+    return 'organizationId must be a positive integer';
+  }
+  if (ctx.activeProjectId !== undefined && !isPositiveIntegerId(ctx.activeProjectId)) {
+    return 'activeProjectId must be a positive integer when provided';
+  }
+  return null;
+}
+
 /**
  * Execute parsed commands and return results.
  */
@@ -4658,37 +4674,58 @@ export async function executeCommands(
 ): Promise<CommandResult[]> {
   const results: CommandResult[] = [];
 
+  // Identity is a dispatcher precondition, not merely an RBAC concern. Reject
+  // every command before tenant policy reads, Part 11 reads, authorization, or
+  // handler invocation when the verified principal context is invalid.
+  const contextError = validateCommandContext(ctx);
+  if (contextError) {
+    return commands.map(cmd => ({
+      success: false,
+      action: cmd.command,
+      message: `Command blocked: ${contextError}.`,
+      error: 'COMMAND_CONTEXT_INVALID',
+    }));
+  }
+
   // ── Load per-tenant AnA tool policy once per dispatch ──
   // Stamps ctx.anaToolPolicy from organizations.settings.anaToolPolicy.
   // The policy gate in mdx-tool-policy.ts reads from this cached value;
   // populating it here means handlers don't need to know about the load.
-  // Loader is fail-soft: any DB error → default-allow.
+  //
+  // FAIL-CLOSED: this used to swallow read errors into {} (allow-all), so a
+  // transient DB fault silently removed the tenant's deny/allow lists from
+  // every governed mutation. The strict loader propagates the error and we
+  // record the indeterminate state instead of inventing a permissive default.
   if (
     ctx.anaToolPolicy === undefined &&
     ctx.organizationId !== undefined &&
     Number.isFinite(ctx.organizationId)
   ) {
     try {
-      if (pool) {
-        ctx.anaToolPolicy = await loadAnaToolPolicy(pool, ctx.organizationId);
-      }
+      if (!pool) throw new Error('no db pool available for AnA governance load');
+      ctx.anaToolPolicy = await loadAnaToolPolicyStrict(pool, ctx.organizationId);
     } catch {
-      ctx.anaToolPolicy = {};
+      ctx.governanceUnavailable = true;
     }
   }
 
   // ── Load per-tenant Part 11 enforcement flag once per dispatch ──
   // Stamps ctx.part11Enforce from organizations.settings.anaPart11Enforce.
-  // Fail-soft: any DB error → not enforced (existing behavior preserved).
+  //
+  // FAIL-CLOSED: this used to swallow read errors into `false` (not enforced),
+  // which meant a settings-DB outage removed the 21 CFR Part 11 sign-off gate
+  // from record-altering commands at exactly the moment the system was least
+  // trustworthy. A determinate "tenant has not opted in" still yields false.
   if (
     ctx.part11Enforce === undefined &&
     ctx.organizationId !== undefined &&
     Number.isFinite(ctx.organizationId)
   ) {
     try {
-      ctx.part11Enforce = pool ? await loadPart11Enforce(pool, ctx.organizationId) : false;
+      if (!pool) throw new Error('no db pool available for Part 11 governance load');
+      ctx.part11Enforce = await loadPart11EnforceStrict(pool, ctx.organizationId);
     } catch {
-      ctx.part11Enforce = false;
+      ctx.governanceUnavailable = true;
     }
   }
 
@@ -4709,6 +4746,26 @@ export async function executeCommands(
           continue;
         }
       }
+
+      // ── Central authorization gate ────────────────────────────────────
+      // The single place every AnA-dispatched command is authorized, for all
+      // four entry points (chat bridge tool, POST /execute, POST
+      // /governed-action, chat action blocks). Fail-closed by construction:
+      // a command with no entry in COMMAND_AUTHORIZATION is denied, so a new
+      // handler cannot ship ungated. Mutations additionally require the
+      // caller's canonical organization_users role (via rbacService) and a
+      // RESOLVED governance configuration. See command-rbac.ts.
+      //
+      // Deliberately AFTER the Part 11 gate: both are fail-closed pre-handler
+      // gates, and this ordering keeps the Part 11 signature demand as the
+      // first thing a signer is told when enforcement is on.
+      const authz = await authorizeCommand(cmd.command, ctx);
+      if (!authz.ok) {
+        results.push(authz.result);
+        console.warn(`[AnA Command] Blocked ${cmd.command}: ${authz.result.error}`);
+        continue;
+      }
+
       try {
         const result = await handler(ctx, cmd.params);
         results.push(result);

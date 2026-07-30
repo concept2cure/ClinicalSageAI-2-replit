@@ -31,12 +31,16 @@ import * as svc from '../evidence-spine.service';
 const ORG_A = 101;
 const ORG_B = 202;
 
+// Standing up a WASM Postgres and applying real migration DDL costs seconds, and
+// the cost scales with how many other pglite suites are running concurrently.
+// vitest's 10s default hook timeout is a load measurement, not a correctness one:
+// these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
   const here = path.dirname(fileURLToPath(import.meta.url));
   const migration = path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql');
   await pglite.exec(fs.readFileSync(migration, 'utf8'));
-});
+}, 90_000);
 afterAll(async () => { await pglite.close(); });
 
 describe('schema + CRUD (real Postgres)', () => {
@@ -75,7 +79,7 @@ describe('schema + CRUD (real Postgres)', () => {
     expect(b.studyStatus).toBe('completed');       // updated in place
     expect(await svc.listStudies(ORG_A, {})).toHaveLength(1);
   });
-});
+}, 30_000);
 
 describe('§13 tenant isolation', () => {
   it('a tenant sees GLOBAL_PUBLIC + its own rows, never another tenant’s private rows', async () => {

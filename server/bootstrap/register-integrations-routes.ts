@@ -1,24 +1,18 @@
-import type { Express, Request, Response } from 'express';
-import { requireAuth } from '../middleware/auth.js';
-import foresightApiRoutes from '../routes/foresight-api';
-import foresightAIAdvancedRoutes from '../routes/foresight-ai-advanced';
-import foresightFeedbackRoutes from '../routes/foresight-feedback';
+import type { Express } from 'express';
 
-export function registerIntegrationRoutes(app: Express) {
-  try {
-    const deprecate = (_req: Request, res: Response, next: () => void) => {
-      res.setHeader('Deprecation', 'true');
-      res.setHeader('Sunset', '2026-04-01');
-      res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-      next();
-    };
-
-    // These AI routers were unauthenticated. Fail closed: require auth (an
-    // unauthenticated caller now gets 401 rather than reaching an AI endpoint).
-    app.use('/api/foresight', deprecate, requireAuth, foresightApiRoutes);
-    app.use('/api/foresight-ai', deprecate, requireAuth, foresightAIAdvancedRoutes);
-    app.use('/api/foresight-feedback', deprecate, requireAuth, foresightFeedbackRoutes);
-  } catch (error) {
-    console.error('Failed to mount integration routes:', error);
-  }
+/**
+ * @deprecated Foresight integration routes retired (Phase 8, Clinical Regulatory
+ * Evidence migration). `/api/foresight`, `/api/foresight-ai` and
+ * `/api/foresight-feedback` were past their 2026-04-01 Sunset and surfaced fabricated
+ * dose "confidence intervals"; they are unmounted here. Honest dose-strategy evidence
+ * now lives in clinical-regulatory-evidence/study-design-evidence.service.ts
+ * (assessDoseStrategy — emits no dose value, requires a governing calculation + expert
+ * review), and the canonical AI surface is Cortex.
+ *
+ * Kept as a no-op so the startup sequence (server/startup/routes.ts) resolves without
+ * change; remove the call and this file together once the orphaned foresight route
+ * files are deleted. See docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md.
+ */
+export function registerIntegrationRoutes(_app: Express): void {
+  // Foresight routes retired — intentionally nothing to mount.
 }

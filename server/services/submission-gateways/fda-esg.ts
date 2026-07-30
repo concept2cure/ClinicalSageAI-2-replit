@@ -38,6 +38,7 @@ import * as https from 'node:https';
 import { URL } from 'url';
 import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';
+import { platformTransmittalRecord } from './acknowledgement';
 import {
   CredentialError, GatewayError, TransportError,
   resolveToRegistryEntry, getSubmissionTypeLabel,
@@ -512,14 +513,22 @@ export class FdaEsgGateway implements SubmissionGateway {
         contentType: 'message/disposition-notification',
         buffer: Buffer.from(r.mdn_raw, 'utf8'),
         receivedAt: r.ack_received_at ?? new Date(),
+        // The only genuine agency artefact the platform holds: FDA's own MDN,
+        // stored verbatim at transmit time. Everything else served from this
+        // method is a platform record and is labelled as one.
+        provenance: 'agency',
       };
     }
-    const text = `FDA ESG Acknowledgement\nTransmission: ${r.transmission_id}\nStatus: ${r.status}\nReceived: ${r.ack_received_at?.toISOString() ?? 'pending'}\n`;
-    return {
-      transmittalId, transmissionId: r.transmission_id,
-      contentType: 'text/plain', buffer: Buffer.from(text, 'utf8'),
-      receivedAt: r.ack_received_at ?? new Date(),
-    };
+    // Not an agency acknowledgement — this platform's own record of the
+    // transmission, titled as such. See ./acknowledgement.ts.
+    return platformTransmittalRecord({
+      transmittalId,
+      transmissionId: r.transmission_id,
+      gatewayLabel: 'FDA ESG (esg)',
+      status: r.status,
+      ackReceivedAt: r.ack_received_at,
+      extra: { 'Transmission': r.transmission_id },
+    });
   }
 }
 
@@ -538,6 +547,20 @@ export interface RollbackResult {
   actionId: string;
   /** ISO timestamp of the rollback. */
   rolledBackAt: string;
+  /**
+   * Always true. The platform cannot un-send bytes to an agency — this
+   * operation records the rollback in THIS platform's Part 11 audit trail and
+   * frees the transmit lock; the agency still holds everything that was
+   * transmitted, and the operator must file the agency-side retraction
+   * separately (FDA: WebTrader).
+   *
+   * It is a field rather than a comment because the surface previously told the
+   * user "Transmittal #N rolled back at the gateway", and the response carried
+   * nothing the client could have used to say otherwise.
+   */
+  agencyRetractionRequired: true;
+  /** What the operator still has to do, in words the surface can render. */
+  agencyRetractionNote: string;
 }
 
 /** Thrown when a rollback is requested on a transmittal that hasn't shipped
@@ -692,6 +715,11 @@ export async function rollbackTransmittal(params: {
       auditId:       gov.auditId,
       actionId:      gov.actionId,
       rolledBackAt:  rolledBackAt.toISOString(),
+      agencyRetractionRequired: true,
+      agencyRetractionNote:
+        'The agency still holds the transmitted bytes. This rollback is recorded in the ' +
+        'Concept2Cure audit trail only — file the agency-side retraction directly with the ' +
+        'agency (FDA: WebTrader).',
     };
   } catch (err) {
     try { await client.query('ROLLBACK'); } catch { /* noop */ }

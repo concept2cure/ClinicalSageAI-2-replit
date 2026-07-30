@@ -76,7 +76,8 @@ export interface CtArtProv {
   model: string;
   inputs: string;
   evidence: string[];
-  audit: string;
+  /** Server-issued audit id. Absent when the artifact was not governed-written. */
+  audit?: string;
 }
 
 export interface CtArtifact {
@@ -127,7 +128,17 @@ export const CT_LINKIC: Record<string, string> = {
 
 let _ctSeq = 100;
 const _ctId = () => 'ART-' + (++_ctSeq);
-const _ctAudit = () => 'AUD-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+// Was: `() => 'AUD-' + Math.random()...` — a fabricated Part 11 audit
+// identifier, rendered by ConversationThread.tsx behind a padlock icon as
+// "Audit AUD-X7K2P9". These artifacts are built client-side from this fixture;
+// no governed action was recorded and the id referred to nothing. Real audit
+// ids are issued server-side by recordGovernedAction, which writes a
+// hash-chained audit_logs row and returns its id.
+//
+// Returning undefined rather than a placeholder string so the renderer can omit
+// the provenance chip entirely — an absent claim is honest, a decorative one is
+// not.
+const _ctAudit = (): string | undefined => undefined;
 
 export function buildClassification(): CtArtifact {
   return {

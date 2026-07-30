@@ -20,6 +20,7 @@ import { registerExportGovernanceQuick } from '../services/compute/exportGoverna
 import { createScopedLogger } from '../utils/logger.js';
 import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
 import { getEntry as getKnowledgeEntry } from '../services/ivd-knowledge/knowledge.service';
+import { calculateClinical2x2 } from '../../shared/ivdr/manifest';
 
 const log = createScopedLogger('ivdr-routes');
 
@@ -59,6 +60,14 @@ const clinicalEvidenceSchema = z.object({
   npv: z.number().min(0).max(100).optional(),
 });
 
+const clinicalResultsSchema = z.object({
+  truePositive: z.number().int().nonnegative(),
+  falsePositive: z.number().int().nonnegative(),
+  trueNegative: z.number().int().nonnegative(),
+  falseNegative: z.number().int().nonnegative(),
+  prevalence: z.number().min(0).max(1).optional(),
+}).passthrough();
+
 const cdxWorkflowSchema = z.object({
   deviceName: z.string().min(1),
   companionTherapy: z.string().min(1),
@@ -87,6 +96,34 @@ export default function createIVDRRoutes(pool: Pool): Router {
       throw new Error('IVDR_BAD_TENANT: invalid organization ID in session');
     }
     return n;
+  }
+
+  function getAuthenticatedActorId(req: Request): string | null {
+    const raw = (req as any).userId ?? (req as any).user?.id;
+    if (raw === undefined || raw === null) return null;
+    const actorId = String(raw).trim();
+    return actorId.length > 0 ? actorId : null;
+  }
+
+  /* ── Optional programme scoping ───────────────────────────────────────
+     The IVD workbench names one diagnostic programme in its header but its
+     classification, validation and clinical-evidence panels were reading the
+     whole organisation. A user could attribute another assay's Class C
+     determination, LoD or sensitivity to the device in front of them.
+
+     `program_id` is optional so existing callers keep the portfolio-wide
+     view. A malformed value is rejected rather than ignored: silently
+     returning the unscoped list for a typo'd UUID is how a scoped panel
+     starts showing everything again. */
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /** Sentinel distinguishing "absent" (undefined) from "present but bad". */
+  const INVALID = Symbol('invalid-program-id');
+
+  function parseProgramId(req: Request): string | undefined | typeof INVALID {
+    const raw = req.query.program_id;
+    if (raw === undefined || raw === '') return undefined;
+    if (typeof raw !== 'string' || !UUID_RE.test(raw)) return INVALID;
+    return raw;
   }
 
   /**
@@ -250,11 +287,28 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/classifications', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      /* Optional narrowing to one diagnostic programme. Without it the IVD
+         workbench showed every classification in the organisation while its
+         header named a single programme — so a user reading "Class C, Rule 3"
+         could attribute another assay's classification to the device in front
+         of them. program_id is guaranteed present by 20260524_ivdr_cdx.sql,
+         which adds it idempotently regardless of which of the three competing
+         CREATE TABLE definitions for this table won on a given deployment. */
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      const scoped = programId !== undefined;
       const result = await pool.query(
-        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
-        [orgId]
+        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at
+           FROM ivdr_classifications
+          WHERE organization_id = $1${scoped ? ' AND program_id = $2' : ''}
+          ORDER BY created_at DESC`,
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ classifications: result.rows });
+      return res.json({
+        classifications: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_CLASS_ERROR', 'List classifications');
     }
@@ -371,15 +425,27 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/validations', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      /* Validations reach a programme through their classification. The join
+         stays LEFT so an unclassified validation is still visible in the
+         portfolio view; adding the programme predicate necessarily excludes
+         those rows when scoping, which is correct — a validation with no
+         classification cannot be claimed for a programme. */
+      const scoped = programId !== undefined;
       const result = await pool.query(
         `SELECT v.*, c.classification, c.is_cdx
          FROM ivdr_analytical_validations v
          LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
-         WHERE v.organization_id = $1
+         WHERE v.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
          ORDER BY v.created_at DESC`,
-        [orgId]
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ validations: result.rows });
+      return res.json({
+        validations: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_VALID_ERROR', 'List validations');
     }
@@ -602,15 +668,25 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/clinical-evidence', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      /* Same reachability as validations: clinical evidence belongs to a
+         programme via its classification. Sensitivity and specificity are
+         exactly the numbers a user must not read off the wrong assay. */
+      const scoped = programId !== undefined;
       const result = await pool.query(
         `SELECT e.*, c.device_name, c.classification, c.is_cdx
          FROM ivdr_clinical_evidence e
          LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
-         WHERE e.organization_id = $1
+         WHERE e.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
          ORDER BY e.created_at DESC`,
-        [orgId]
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ evidence: result.rows });
+      return res.json({
+        evidence: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_EVID_ERROR', 'List clinical evidence');
     }
@@ -624,12 +700,11 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
+      const parsed = clinicalResultsSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(422).json({ error: 'Invalid diagnostic counts', details: parsed.error.issues });
+      }
       const {
-        truePositive,
-        falsePositive,
-        trueNegative,
-        falseNegative,
-        prevalence,
         performanceClaims,
         comparisonMethod,
         conclusionText,
@@ -639,36 +714,23 @@ export default function createIVDRRoutes(pool: Pool): Router {
         sourceDocuments,
         reason,
       } = req.body;
-      const userId = (req as any).userId || 'system';
+      const { truePositive, falsePositive, trueNegative, falseNegative } = parsed.data;
+      const userId = getAuthenticatedActorId(req);
+      if (!userId) {
+        return res.status(403).json({ error: 'An authenticated actor is required for clinical evidence changes' });
+      }
 
-      // Calculate derived metrics from 2x2 table
-      const tp = Number(truePositive) || 0;
-      const fp = Number(falsePositive) || 0;
-      const tn = Number(trueNegative) || 0;
-      const fn = Number(falseNegative) || 0;
-      const total = tp + fp + tn + fn;
+      const tp = truePositive;
+      const fp = falsePositive;
+      const tn = trueNegative;
+      const fn = falseNegative;
+      const calculatedMetrics = calculateClinical2x2({ tp, fp, tn, fn });
 
-      const calculatedMetrics = {
-        sensitivity: total > 0 ? tp / (tp + fn) : null,
-        specificity: total > 0 ? tn / (tn + fp) : null,
-        ppv: tp + fp > 0 ? tp / (tp + fp) : null, // Positive Predictive Value
-        npv: tn + fn > 0 ? tn / (tn + fn) : null, // Negative Predictive Value
-        accuracy: total > 0 ? (tp + tn) / total : null,
-        prevalence: prevalence || (total > 0 ? (tp + fn) / total : null),
-        total,
-      };
-
-      // Append to history (immutable)
-      await pool.query(
-        `INSERT INTO ivdr_evidence_result_history
-         (evidence_id, results, updated_by, reason, created_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [id, JSON.stringify({ ...req.body, calculatedMetrics }), userId, reason || null]
-      );
-
-      // Update current record including population + source docs
+      // Update + immutable history are one statement: a missing/foreign row
+      // cannot create orphan history, and either both effects commit or neither.
       const result = await pool.query(
-        `UPDATE ivdr_clinical_evidence SET
+        `WITH updated AS (
+         UPDATE ivdr_clinical_evidence SET
            true_positive = $2,
            false_positive = $3,
            true_negative = $4,
@@ -688,7 +750,15 @@ export default function createIVDRRoutes(pool: Pool): Router {
            status = 'completed',
            updated_at = NOW()
          WHERE id = $1 AND organization_id = $18
-         RETURNING *`,
+         RETURNING *
+       ), history AS (
+         INSERT INTO ivdr_evidence_result_history
+           (evidence_id, results, updated_by, reason, created_at)
+         SELECT id, $19, $20, $21, NOW() FROM updated
+         RETURNING evidence_id
+       )
+       SELECT updated.* FROM updated
+       INNER JOIN history ON history.evidence_id = updated.id`,
         [
           id,
           tp,
@@ -708,8 +778,15 @@ export default function createIVDRRoutes(pool: Pool): Router {
           exclusionCriteria || null,
           sourceDocuments ? JSON.stringify(sourceDocuments) : null,
           orgId,
+          JSON.stringify({ ...req.body, calculatedMetrics }),
+          userId,
+          reason || null,
         ]
       );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Clinical evidence was not found' });
+      }
 
       return res.json({
         evidence: result.rows[0],

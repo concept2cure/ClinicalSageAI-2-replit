@@ -71,7 +71,14 @@ ALLOWED_PATTERNS=(
   "DROP POLICY IF EXISTS"           # Replacing RLS policies is OK
   "DROP VIEW IF EXISTS"             # Replacing views is OK (views are queryable, not data)
   "DROP INDEX IF EXISTS"            # Replacing indexes is OK
+  "DROP FUNCTION IF EXISTS"         # Replacing functions is OK (code, not data) — needed when a return type changes and CREATE OR REPLACE cannot
   "CREATE OR REPLACE"               # Replacing functions/views is OK
+  # Explicitly-approved table drop: a `DROP TABLE IF EXISTS` statement that carries a
+  # `destructive-approved` marker inline. This is the documented approved-exception
+  # mechanism (justify in the migration comments + mark each statement). It exempts ONLY
+  # marked DROP TABLE statements; any unmarked DROP TABLE (or other destructive op) is
+  # still blocked.
+  "DROP TABLE IF EXISTS.*destructive-approved"
 )
 
 ERRORS=0

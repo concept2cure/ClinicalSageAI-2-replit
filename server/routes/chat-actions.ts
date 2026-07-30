@@ -162,7 +162,18 @@ router.post('/chat/actions/run', async (req: Request, res: Response) => {
           JSON.stringify({ action, params }),
           userId || null,
         ]
-      ).catch((e: any) => console.warn('[artifacts] persist failed:', e?.message));
+      ).catch((e: any) =>
+        // Deliberately non-blocking — the action already succeeded and the user
+        // should not lose it to a slow write. But this must be LOUD: a warn is
+        // how this table went missing for the life of the feature, with every
+        // insert failing "relation does not exist" while the response said
+        // ok:true. error() puts it where monitoring sees it.
+        console.error(
+          '[artifacts] PERSIST FAILED — artifact generated but NOT saved; ' +
+            'it will not appear in Recent artifacts:',
+          e?.message
+        )
+      );
     }
 
     return res.json({ ok: true, ...result });

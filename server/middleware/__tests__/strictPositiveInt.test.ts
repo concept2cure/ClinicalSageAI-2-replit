@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 vi.mock('../../db', () => ({ db: { select: vi.fn() }, getPool: vi.fn() }));
 vi.mock('../../db/tenantStore', () => ({ runWithTenantScope: vi.fn() }));
 vi.mock('../../../shared/schema', () => ({ organizations: {}, organizationUsers: {} }));
 
-import { strictPositiveInt } from '../tenantContext';
+import { getRequestDbClient, strictPositiveInt } from '../tenantContext';
 
 describe('strictPositiveInt', () => {
   it('accepts clean positive integer strings', () => {
@@ -48,5 +49,49 @@ describe('strictPositiveInt', () => {
 
   it('rejects values beyond safe integer range', () => {
     expect(strictPositiveInt('99999999999999999999')).toBeNull();
+  });
+});
+
+describe('getRequestDbClient', () => {
+  it('returns the request-scoped client', () => {
+    const dbClient = { query: vi.fn() };
+    expect(getRequestDbClient({ dbClient } as any)).toBe(dbClient);
+  });
+
+  it.each([undefined, null, {}])('fails closed for an invalid request client: %j', dbClient => {
+    expect(() => getRequestDbClient({ dbClient } as any)).toThrow(/requires tenant context/);
+  });
+});
+
+describe('requireTenantContext bootstrap scope contract', () => {
+  const source = readFileSync('server/middleware/tenantContext.ts', 'utf8');
+
+  it('scopes tenant and membership lookups but authorizes from membership', () => {
+    const bootstrapIndex = source.indexOf('runWithTenantScope(bootstrap');
+    const tenantLookup = source.indexOf('.from(organizations)', bootstrapIndex);
+    const membershipLookup = source.indexOf('.from(organizationUsers)', tenantLookup);
+    const membershipDecision = source.indexOf('if (!membership.length)', membershipLookup);
+    const resolvedRole = source.indexOf(
+      'const resolvedRole = membership[0].role',
+      membershipDecision
+    );
+    const downstreamScope = source.indexOf('role: resolvedRole || null', resolvedRole);
+
+    expect(bootstrapIndex).toBeGreaterThan(-1);
+    expect(tenantLookup).toBeGreaterThan(bootstrapIndex);
+    expect(membershipLookup).toBeGreaterThan(tenantLookup);
+    expect(membershipDecision).toBeGreaterThan(membershipLookup);
+    expect(resolvedRole).toBeGreaterThan(membershipDecision);
+    expect(downstreamScope).toBeGreaterThan(resolvedRole);
+  });
+});
+
+describe('organization membership availability posture', () => {
+  const source = readFileSync('server/middleware/orgMembership.ts', 'utf8');
+
+  it('fails closed when live membership cannot be verified', () => {
+    expect(source).toContain("code: 'AUTH_010'");
+    expect(source).toContain('sendMembershipIndeterminate(res)');
+    expect(source).not.toContain('allowing on JWT claims (fail-open)');
   });
 });

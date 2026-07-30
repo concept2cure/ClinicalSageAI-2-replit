@@ -20,6 +20,23 @@ import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// The facade now counts the real cre_* spine through the shared pool. These are
+// CONTRACT tests, so they drive the real facade over a stubbed EMPTY store —
+// every query resolves to zero rows. (The previous facade returned its empty
+// path whenever the drizzle handle was null, which made a dead database
+// connection indistinguishable from an empty corpus; the new one reports a
+// connection failure as a failure, so the tests must provide an actual empty
+// store rather than a null handle.)
+vi.mock('../../db', () => ({
+  db: null,
+  pool: {
+    query: async (sql: string) =>
+      /FROM cre_evidence_sources/.test(sql) && /COUNT\(\*\)/.test(sql)
+        ? { rows: [{ scanned: 0, eligible: 0, structured: 0, verified: 0, cited: 0, freshness: null }], rowCount: 1 }
+        : { rows: [], rowCount: 0 },
+  },
+}));
+
 import createClinicalRegulatoryEvidenceRoutes, {
   isGraphEnabled,
 } from '../clinical-regulatory-evidence-routes';

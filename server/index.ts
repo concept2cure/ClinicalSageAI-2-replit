@@ -100,10 +100,6 @@ registerShutdownHandlers({
 });
 
 // ── Middleware stack (order is load-bearing — see module docs) ─────────────
-if (flags.debug) {
-  applyDebugRequestLogging(app, debugLog);
-}
-
 applyTelemetryMiddleware(app);
 
 // Fast-path health endpoints BEFORE security/rate-limit — they need to
@@ -111,6 +107,12 @@ applyTelemetryMiddleware(app);
 mountFastPathHealthEndpoints(app, pool);
 
 applyCoreMiddleware(app, debugLog);
+
+// Must follow core middleware so parsed request bodies are available for
+// safe, redacted debug logging. Fast-path health endpoints remain excluded.
+if (flags.debug) {
+  applyDebugRequestLogging(app, debugLog);
+}
 
 // Tamper-proof audit trail (21 CFR Part 11 §11.10(e)). Mounted after the
 // core middleware so user/auth context is populated before observation,
@@ -144,6 +146,11 @@ async function startServer() {
 
   await verifyDatabaseConnection(pool);
   await initializeEarlyServices();
+
+  if (process.env.NODE_ENV === 'production') {
+    const { assertRlsCatalogPosture } = await import('./db/rlsEnforcement');
+    await assertRlsCatalogPosture(pool);
+  }
 
   // Security self-test — run AFTER the DB connection is verified
   // (so the audit-chain check can query) but BEFORE any other

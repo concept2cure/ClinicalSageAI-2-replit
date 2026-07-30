@@ -101,6 +101,15 @@ CREATE TABLE IF NOT EXISTS c2c_document_sections (
   accepted_by        integer,
   accepted_at        timestamptz,
   version            integer NOT NULL DEFAULT 1,
+  -- Added 2026-07-28. FOUR shipped queries referenced ds.updated_at against a
+  -- table that never had it — projects.ts:334 (/workstreams), :371,:377
+  -- (/drafts), project-vault.ts:365, and documents.ts:441 (the UPDATE branch of
+  -- the canonical Part 11 section save). Postgres rejects an unknown column at
+  -- plan time, so those were unconditional 42703 failures, not empty results.
+  -- Present here so fresh installs match; the guarded ALTER for existing
+  -- databases is migrations/20260728_c2c_document_sections_timestamps.sql.
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  updated_at         timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT c2c_doc_sections_status_check
     CHECK (status IN ('todo','drafted','review','approved','locked')),
@@ -119,7 +128,12 @@ CREATE TABLE IF NOT EXISTS c2c_document_section_versions (
   version            integer NOT NULL,
   content            jsonb NOT NULL,
   author_id          integer NOT NULL,
-  author_kind        text NOT NULL DEFAULT 'human',          -- 'human' | 'ana'
+  -- How the CONTENT in this row was authored, carried from the section's
+  -- draft_source at the moment it was superseded: 'human' | 'ana' | 'template'
+  -- | 'imported'. 'template' means the row being superseded was an unedited
+  -- scaffold placeholder. Deliberately no CHECK: adding one to a table that may
+  -- already hold rows is a separate, validated migration.
+  author_kind        text NOT NULL DEFAULT 'human',
   reason             text NOT NULL,                          -- Part-11 reason for change
   ana_action_id      text REFERENCES c2c_ana_actions(id),    -- backlink when AnA-mediated
   parent_version_id  bigint REFERENCES c2c_document_section_versions(id),
@@ -183,10 +197,37 @@ BEGIN
     IF v_actor IS NULL OR v_actor = '' THEN
       RAISE EXCEPTION 'c2c_snapshot_section_version: app.actor_id GUC required for section content change (Part-11 attribution)';
     END IF;
+    -- author_kind describes the CONTENT IN THIS ROW, which is OLD.content — so
+    -- it is read from OLD.draft_source, not NEW.draft_source.
+    --
+    -- It was hardcoded 'human'. The route goes to real trouble to collect
+    -- provenance (documents.ts validates draftSource against {human, ana} and
+    -- writes it to c2c_document_sections.draft_source) and the trigger threw it
+    -- away, so the immutable ledger asserted that a person wrote AnA-generated
+    -- text. That is precisely the claim 21 CFR Part 11 §11.10(e) exists to make
+    -- reliable.
+    --
+    -- OLD, not NEW, because this row is the snapshot of the superseded content:
+    -- if a human edits an AnA-drafted section, the version row must record that
+    -- the text being superseded was AnA-authored. Taking NEW.draft_source would
+    -- stamp it 'human' and the AI provenance would be gone the first time
+    -- anyone touched it — c2c_document_sections.draft_source is mutable and is
+    -- overwritten by that same edit, so the version ledger is the only place
+    -- the fact can survive.
+    --
+    -- author_id remains the actor performing the supersession (as does reason),
+    -- which is the pre-existing semantics of this row and is deliberately NOT
+    -- changed here. There is no reliable stored id for "who authored
+    -- OLD.content" — c2c_document_sections.owner_id is never written by any
+    -- route — so making author_id mean that would require a schema change and
+    -- a backfill, not a trigger edit.
     INSERT INTO c2c_document_section_versions
       (section_id, version, content, author_id, author_kind, reason)
     VALUES
-      (NEW.id, OLD.version, OLD.content, v_actor::integer, 'human', COALESCE(NULLIF(v_reason, ''), 'content change'));
+      (NEW.id, OLD.version, OLD.content, v_actor::integer,
+       CASE WHEN OLD.draft_source IN ('ana','template','imported')
+            THEN OLD.draft_source ELSE 'human' END,
+       COALESCE(NULLIF(v_reason, ''), 'content change'));
     NEW.version := OLD.version + 1;
   END IF;
   RETURN NEW;

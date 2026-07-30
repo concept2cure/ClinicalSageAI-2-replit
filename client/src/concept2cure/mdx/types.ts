@@ -222,6 +222,17 @@ export interface Approval {
   due?: string;
   signed_at?: string;
   meaning?: string;
+  /**
+   * Document and revision this approval covers. Both are required to
+   * apply a 21 CFR Part 11 signature (§11.50(a) — the signature must
+   * identify what was signed), so the approval card disables signing
+   * when either is missing rather than pinning a signature to a guessed
+   * revision.
+   */
+  document_id?: number;
+  version_id?: number;
+  /** workflow_approvals row id, for advancing the workflow after signing. */
+  approval_id?: number;
   /** Loose fields the Files-tree approval preview reads opportunistically. */
   label?: string;
   requestor?: string;

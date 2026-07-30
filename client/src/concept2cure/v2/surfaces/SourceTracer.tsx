@@ -1,146 +1,112 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
-import { ST_SOURCETYPES, ST_VSTATUS } from '../fixtures/source-tracer-data';
 
-/* Real source-tracer read-model — GET /api/source-tracer/sections
-   ({ data: { sections } }). Every sentence is a persisted, org-scoped
-   source_citations row joined to its document; no provenance is fabricated.
-   The service fail-closes (503) when the provenance store is unmigrated. */
-interface StSentence {
-  idx: number;
-  sourceType: string;
-  conf: number;
-  text: string;
-  sourceTitle: string;
-  sourceId: string;
-  sourceUrl?: string | null;
-  pmid?: string;
-  doi?: string;
+/* ---- Source tracer — RECORDED source lineage per authored section ----
+
+   GET /api/source-tracer/sections serves the sections that carry recorded
+   canonical-source citations (authoring_citations → cre_evidence_sources via
+   source-usage.service). Every row exists because a person recorded it, and
+   each carries the source's checksum captured AT CITE TIME, so its standing
+   against the source's content today is a stored fact the SERVER computes —
+   this surface renders states, it never infers them.
+
+   What this surface deliberately does NOT show: sentence-level "provenance"
+   with model confidence scores. The previous read-model was backed by a table
+   that never existed in any database and whose writer/reader disagreed about
+   what its ids meant; its content was model-asserted similarity, not lineage.
+   Inferred matches are never presented as locked source lineage — model-
+   asserted claim support lives in the trace-chain tooling, labelled as
+   inference. */
+
+interface StCitedSource {
+  citationId: string;
+  state: 'current' | 'changed' | 'unverified' | 'unresolved';
+  citedAt: string | null;
+  citationText: string | null;
+  citedChecksum: string | null;
+  sourceId: number | null;
+  sourceTitle: string | null;
+  currentChecksum: string | null;
+  extractionStatus: string | null;
+  mimeType: string | null;
 }
 interface StSection {
   id: string;
   doc: string;
   sec: string;
-  module?: string | null;
+  sectionTitle: string | null;
+  module: string | null;
   status: string;
-  model: string;
-  sentences: StSentence[];
-}
-interface StVerifyResult { id?: string; status: string }
-interface StVerify {
-  results: StVerifyResult[];
-  summary: { verified: number; notFound: number; unverifiable: number; error: number };
+  sources: StCitedSource[];
 }
 
-/* Sentence click-through — POST /api/audit-services/traceability/click-through
-   (sentenceTraceabilityService). The service takes the raw content + a char
-   offset, re-detects sentence boundaries server-side, and resolves the exact
-   source spans (file/page/excerpt + highlight range + access URL). */
-interface CtSource {
-  sourceId: string; sourceType: string; title: string; documentPath?: string;
-  pageNumber?: number; excerpt: string; relevanceScore: number; linkType: string;
-  isVerified: boolean; fullContent?: string; highlightRange?: { start: number; end: number }; accessUrl?: string;
-}
-interface CtResult {
-  sentence: { index: number; text: string; charStart: number; charEnd: number; contentHash: string };
-  sources: CtSource[];
-  relatedSentences: Array<{ index: number; text: string }>;
-  confidence: number;
+/** How each recorded citation's standing reads. Mirrors the authoring Sources
+ *  rail so the same fact never gets two vocabularies. */
+function stateLabel(s: StCitedSource): { text: string; tone: string; hint: string } {
+  switch (s.state) {
+    case 'current':
+      return {
+        text: 'content unchanged since cited',
+        tone: 'ok',
+        hint: 'The checksum recorded when this section cited the source still matches the source today.',
+      };
+    case 'changed':
+      return {
+        text: 'source changed since cited',
+        tone: 'warn',
+        hint:
+          'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what the section says.',
+      };
+    case 'unresolved':
+      return {
+        text: 'source no longer available',
+        tone: 'warn',
+        hint: 'The citation is recorded but its source does not resolve in this organization — it may have been deleted.',
+      };
+    default:
+      return {
+        text: 'not checked against content',
+        tone: 'idle',
+        hint: 'No checksum was recorded for this citation, so no claim is made about whether the source has changed.',
+      };
+  }
 }
 
-/* ---- Source tracer — provenance for every sentence AnA writes ---- */
+function fmtWhen(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isFinite(d.getTime())
+    ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : '';
+}
 
 export function SourceTracer({ onAsk }: SurfaceViewProps) {
-  const ST = ST_SOURCETYPES;
   const ask = onAsk || (() => {});
   const st = useLiveData<{ sections: StSection[] }>('/api/source-tracer/sections');
   const sections = st.data?.sections ?? [];
 
   const [selId, setSel] = useState<string | null>(null);
-  const [verify, setVerify] = useState<StVerify | null>(null);
-  const [verifying, setVerifying] = useState(false);
-  // Click-through state: which sentence is being traced and the server's result.
-  const [trace, setTrace] = useState<{ idx: number; state: 'loading' | 'ready' | 'none' | 'error'; result: CtResult | null; note?: string } | null>(null);
 
   // Default the selection to the first real section once they load.
   useEffect(() => {
     if (selId == null && sections.length) setSel(sections[0].id);
   }, [sections, selId]);
-  useEffect(() => { setVerify(null); }, [selId]);
 
   const sec = sections.find(s => s.id === selId) || sections[0] || null;
-  const stTone = (s: string) => (s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'idle');
-  const allSents = sections.flatMap(s => s.sentences);
-  const litAll = allSents.filter(s => s.sourceType === 'literature');
-  const weak = allSents.filter(s => s.conf < 0.7);
-  const secLits = sec ? sec.sentences.filter(s => s.sourceType === 'literature') : [];
+  const stTone = (s: string) => (s === 'approved' ? 'ok' : s === 'in_review' || s === 'review' ? 'warn' : 'idle');
 
-  /* Real citation verification — POST /api/citations/verify checks each
-     literature citation against PubMed + CrossRef and returns a per-citation
-     status + summary. No fabricated verdict. */
-  const runVerify = async () => {
-    if (!sec || secLits.length === 0 || verifying) return;
-    setVerifying(true);
-    try {
-      const res = await apiRequest('POST', '/api/citations/verify', {
-        citations: secLits.map(s => ({
-          id: s.sourceId,
-          title: s.sourceTitle,
-          ...(s.pmid ? { pmid: s.pmid } : {}),
-          ...(s.doi ? { doi: s.doi } : {}),
-        })),
-      });
-      const body = await res.json().catch(() => null);
-      setVerify(res.ok && body?.data ? (body.data as StVerify) : null);
-    } catch {
-      setVerify(null);
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  /* Sentence click-through — resolves the clicked sentence to its exact source
-     spans via the real traceability service. The service keys on raw content +
-     a char offset (it re-detects sentence boundaries server-side), so the
-     section's own sentence texts are joined into the content and the offset
-     points inside the clicked sentence. Nothing is fabricated: no project open,
-     no trace found, or a failed call all render honestly. */
-  const clickThrough = async (idx: number) => {
-    if (!sec) return;
-    const proj = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
-    const projectId = proj?.id != null ? String(proj.id) : null;
-    if (!projectId) {
-      setTrace({ idx, state: 'error', result: null, note: 'Open a program first — sentence traces are resolved per project.' });
-      return;
-    }
-    setTrace({ idx, state: 'loading', result: null });
-    try {
-      const ordered = sec.sentences;
-      const pos = ordered.findIndex(x => x.idx === idx);
-      const content = ordered.map(x => x.text).join(' ');
-      const charOffset = ordered.slice(0, pos).reduce((acc, x) => acc + x.text.length + 1, 0) + 1;
-      const res = await apiRequest('POST', '/api/audit-services/traceability/click-through', { content, charOffset, projectId });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) {
-        setTrace({ idx, state: 'error', result: null, note: res.status === 401 ? 'Sign in to trace sentences.' : `Trace failed (HTTP ${res.status}).` });
-        return;
-      }
-      const ct = (body as { clickThrough?: CtResult | null })?.clickThrough ?? null;
-      setTrace({ idx, state: ct ? 'ready' : 'none', result: ct });
-    } catch (e) {
-      setTrace({ idx, state: 'error', result: null, note: 'Trace failed — ' + (e instanceof Error ? e.message : String(e)) + '.' });
-    }
-  };
+  const allSources = sections.flatMap(s => s.sources);
+  const changed = allSources.filter(s => s.state === 'changed');
+  const unresolved = allSources.filter(s => s.state === 'unresolved');
 
   // Four-state on the real read-model — never a fabricated stand-in.
   if (st.loading) {
     return (
-      <div className="sp"><div style={{ padding: 24 }}><EmptyState title="Loading source provenance…" icon={I.clock} /></div></div>
+      <div className="sp"><div style={{ padding: 24 }}><EmptyState title="Loading recorded source lineage…" icon={I.clock} /></div></div>
     );
   }
   if (st.error) {
@@ -149,8 +115,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
-          title="Couldn't load source provenance"
-          hint="The source-tracer service didn't respond (the provenance store may not be provisioned for this organization yet). Sign in and retry — nothing is shown from a cached sample."
+          title="Couldn't load source lineage"
+          hint="The source-tracer service didn't respond (the citation store may not be provisioned for this organization yet). Sign in and retry — a failed read is a failed read, not an empty library."
         />
       </div></div>
     );
@@ -160,8 +126,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
       <div className="sp"><div style={{ padding: 24 }}>
         <EmptyState
           icon={I.shieldCheck || I.check}
-          title="No traced document sections yet"
-          hint="Once AnA writes governed document sections, every sentence's typed source and confidence appears here — provenance for each claim, checkable against PubMed and CrossRef. Nothing here is simulated."
+          title="No recorded source citations yet"
+          hint="When a section records what it is drafted from — in the authoring editor's Sources rail — it appears here with its source's content identity. Only recorded citations are shown; nothing is inferred from text similarity."
         />
       </div></div>
     );
@@ -173,38 +139,48 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Provenance / 21 CFR Part 11</div>
           <h1 className="sp-title">Source tracer</h1>
-          <p className="sp-state">Every sentence AnA writes carries a typed source and a confidence score — trial data, literature, regulatory guidance, or internal data. Literature citations are checked against PubMed and CrossRef. No untraceable number reaches a submission.</p>
+          <p className="sp-state">
+            Each section below records the sources it was drafted from, with the source&rsquo;s
+            content identity captured at the moment of citation. A citation whose source has since
+            changed is flagged — nothing is rewritten for you. Only recorded citations appear here;
+            this surface never presents an inferred match as source lineage.
+          </p>
         </div>
-        <button className="sp-primary" onClick={runVerify} disabled={verifying || secLits.length === 0}>{I.shieldCheck} {verifying ? 'Verifying…' : 'Verify sources'}</button>
       </div>
 
       <AnswerLead
-        tone={weak.length ? 'calm' : 'good'}
-        eyebrow="Whether every number in your dossier traces to a real source"
-        headline={<>Every one of the <b>{allSents.length}</b> traced sentences across your generated sections carries a typed source — each with a confidence score.</>}
-        body={<><b>{litAll.length}</b> of them cite published literature. I can check those against PubMed and CrossRef right now, so an untraceable citation never reaches the submission.</>}
-        reassure={weak.length
-          ? <><b>{weak.length}</b> sentence{weak.length > 1 ? 's' : ''} carr{weak.length > 1 ? 'y' : 'ies'} a confidence below 70% — flagged so nothing unverified slips through.</>
-          : <>Every citation is confirmable against a public index.</>}
+        tone={changed.length || unresolved.length ? 'calm' : 'good'}
+        eyebrow="What your authored sections are drafted from"
+        headline={<><b>{sections.length}</b> section{sections.length === 1 ? '' : 's'} carr{sections.length === 1 ? 'ies' : 'y'} <b>{allSources.length}</b> recorded source citation{allSources.length === 1 ? '' : 's'} — each with the source&rsquo;s content identity at cite time. Sections that recorded nothing do not appear.</>}
+        body={changed.length
+          ? <><b>{changed.length}</b> citation{changed.length === 1 ? ' is' : 's are'} against content the source no longer has — those sections were written from an earlier version.</>
+          : <>Every recorded citation still matches its source&rsquo;s current content, or says plainly that it was never checked.</>}
+        reassure={unresolved.length
+          ? <><b>{unresolved.length}</b> citation{unresolved.length === 1 ? '' : 's'} point{unresolved.length === 1 ? 's' : ''} at a source that no longer resolves — kept visible rather than dropped, because &ldquo;cites something unavailable&rdquo; is worth seeing.</>
+          : <>Recorded lineage only — nothing here is a similarity guess.</>}
         action={{
-          label: 'Verify ' + sec.doc.split('/')[0].trim() + ' citations',
+          label: changed.length ? 'Review sections on changed sources' : 'Analyze for unrecorded claims',
           icon: I.shieldCheck,
-          onClick: runVerify,
-          alt: { label: 'Ask AnA to re-trace a claim', onClick: () => ask('Re-trace every cited value in ' + sec.doc + ' to its locked source and flag anything unverified.') },
+          onClick: () => ask(changed.length
+            ? 'List every section whose recorded source changed after it was cited, and for each, what in the section may no longer match. Do not rewrite anything yet.'
+            : 'Analyze ' + sec.doc + ' for claims with no recorded source citation and flag each one.'),
         }}
-        secondary="Or inspect any sentence-level chain below."
+        secondary="Or inspect any section's recorded sources below."
       />
 
       <div className="sp-2col" style={{ gridTemplateColumns: '296px 1fr' }}>
         <div className="pj-card" style={{ alignSelf: 'start' }}>
-          <div className="pj-card-h"><span className="t">Generated sections</span><span className="s">{sections.length}</span></div>
+          <div className="pj-card-h"><span className="t">Sections with recorded sources</span><span className="s">{sections.length}</span></div>
           <div className="pj-card-b" style={{ padding: 8 }}>
             <div className="sp-list">
               {sections.map(s => {
-                const lit = s.sentences.filter(x => x.sourceType === 'literature').length;
+                const nChanged = s.sources.filter(x => x.state === 'changed').length;
                 return (
                   <button key={s.id} className="sp-row" style={{ width: '100%', textAlign: 'left', borderRadius: 8, padding: '9px 10px', border: selId === s.id ? '1px solid var(--accent-muted)' : '1px solid transparent', background: selId === s.id ? 'var(--accent-000)' : 'transparent' }} onClick={() => setSel(s.id)}>
-                    <span className="sp-row-b"><span className="sp-row-t">{s.doc}</span><span className="sp-row-s">{'§'}{s.sec} / {s.sentences.length} sentences / {lit} literature</span></span>
+                    <span className="sp-row-b">
+                      <span className="sp-row-t">{s.doc}</span>
+                      <span className="sp-row-s">{'§'}{s.sec} / {s.sources.length} source{s.sources.length === 1 ? '' : 's'}{nChanged ? ` / ${nChanged} changed` : ''}</span>
+                    </span>
                     <span className={'rd-chip tone-' + stTone(s.status)}>{s.status}</span>
                   </button>
                 );
@@ -214,53 +190,43 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         </div>
 
         <div>
-          {/* Per-sentence provenance — the real source_citations rows */}
-          <div className="pj-card" style={{ marginBottom: 14 }}>
-            <div className="pj-card-h"><span className="t">{sec.doc} / {'§'}{sec.sec}</span><span className="s">{sec.model}</span></div>
+          {/* Recorded citations for the selected section — the real
+              authoring_citations rows, states computed server-side. */}
+          <div className="pj-card">
+            <div className="pj-card-h">
+              <span className="t">{sec.doc} / {'§'}{sec.sec}{sec.sectionTitle ? ` — ${sec.sectionTitle}` : ''}</span>
+              <span className="s">{sec.sources.length} recorded</span>
+            </div>
             <div className="pj-card-b">
-              <div className="pj-seclbl">Sentence-level provenance <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>/ claim -- typed source -- confidence</span></div>
+              <div className="pj-seclbl">Drafted from <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>/ recorded citation -- content identity at cite time -- standing today</span></div>
               <div className="st-sents">
-                {sec.sentences.map(s => {
-                  const ty = ST[s.sourceType] || { label: s.sourceType, tone: 'idle' };
-                  const low = s.conf < 0.7;
+                {sec.sources.map(s => {
+                  const lab = stateLabel(s);
                   return (
-                    <div key={s.idx} className="st-sent">
-                      <div className="st-sent-txt">{s.text}</div>
+                    <div key={s.citationId} className="st-sent">
                       <div className="st-sent-src">
-                        <span className={'rd-chip tone-' + ty.tone}>{ty.label}</span>
-                        <span className="st-sent-title">{s.sourceTitle}</span>
-                        {s.pmid && <span className="st-pmid">PMID {s.pmid}</span>}
-                        <span className={'st-conf' + (low ? ' low' : '')} title="model confidence">{Math.round(s.conf * 100)}%</span>
-                        {s.sourceUrl && <a className="sp-go" href={s.sourceUrl} target="_blank" rel="noreferrer" title="Open source">{I.externalLink || I.right}</a>}
-                        <button className="nda-open" style={{ marginLeft: 'auto' }} onClick={() => clickThrough(s.idx)}
-                          title="Resolve this sentence to its exact source spans">
-                          {I.search} {trace?.idx === s.idx && trace.state === 'loading' ? 'Tracing…' : 'Trace'}
-                        </button>
+                        <span className="st-sent-title" style={{ fontWeight: 600 }}>
+                          {s.sourceTitle ?? 'Source no longer resolvable'}
+                        </span>
+                        <span className={'rd-chip tone-' + lab.tone} title={lab.hint}>{lab.text}</span>
+                        {fmtWhen(s.citedAt) && <span style={{ fontSize: 12, color: 'var(--text-400,#667085)' }}>cited {fmtWhen(s.citedAt)}</span>}
                       </div>
-                      {trace?.idx === s.idx && trace.state !== 'loading' && (
-                        <div className="st-sent-src" style={{ display: 'block', marginTop: 6, paddingLeft: 10, borderLeft: '2px solid var(--accent-muted,#c7d7fe)' }}>
-                          {trace.state === 'error' ? (
-                            <span className="sp-tone-warn" style={{ fontSize: 12.5 }}>{trace.note}</span>
-                          ) : trace.state === 'none' || !trace.result ? (
-                            <span style={{ fontSize: 12.5, color: 'var(--text-400,#667085)' }}>No source span resolved for this sentence — the traceability service found no mapped source above its confidence floor. Nothing is fabricated.</span>
-                          ) : (
-                            <div>
-                              <div style={{ fontSize: 12, color: 'var(--text-400,#667085)', marginBottom: 4 }}>
-                                Resolved by the traceability service · confidence {Math.round((trace.result.confidence ?? 0) * 100)}% · sentence hash <span className="mono">{trace.result.sentence.contentHash}</span>
-                              </div>
-                              {trace.result.sources.length === 0 ? (
-                                <span style={{ fontSize: 12.5 }}>No mapped sources.</span>
-                              ) : trace.result.sources.map((src, i) => (
-                                <div key={i} style={{ fontSize: 12.5, marginBottom: 4 }}>
-                                  <b>{src.title}</b>
-                                  {src.pageNumber != null ? ' · p.' + src.pageNumber : ''}
-                                  {' · '}{src.sourceType}{' · relevance '}{Math.round((src.relevanceScore ?? 0) * 100)}%
-                                  {src.accessUrl && <> · <a className="sp-go" href={src.accessUrl} target="_blank" rel="noreferrer">open source</a></>}
-                                  {src.excerpt && <div style={{ color: 'var(--text-400,#667085)', marginTop: 2 }}>“{src.excerpt}”</div>}
-                                </div>
-                              ))}
-                            </div>
+                      {s.citationText && <div className="st-sent-txt" style={{ marginTop: 4 }}>{s.citationText}</div>}
+                      {s.citedChecksum && (
+                        <div style={{ fontSize: 11.5, color: 'var(--text-400,#667085)', marginTop: 4 }}>
+                          cited checksum <span className="mono">{s.citedChecksum.slice(0, 12)}…</span>
+                          {s.state === 'changed' && s.currentChecksum && (
+                            <> · source now <span className="mono">{s.currentChecksum.slice(0, 12)}…</span></>
                           )}
+                        </div>
+                      )}
+                      {s.state === 'changed' && (
+                        <div className="cm-pushbar" style={{ marginTop: 6 }}>
+                          <button className="nda-open" onClick={() => ask(
+                            `The source "${s.sourceTitle ?? 'this document'}" changed after section ${sec.sec} of ${sec.doc} was drafted from it. Read the current source and tell me what in this section no longer matches. Do not rewrite it yet.`,
+                          )}>
+                            {I.sparkles} Ask what changed
+                          </button>
                         </div>
                       )}
                     </div>
@@ -268,48 +234,9 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
                 })}
               </div>
               <div className="cm-pushbar" style={{ marginTop: 14 }}>
-                <button className="sp-ask" onClick={() => ask('Analyze ' + sec.doc + ' ' + '§' + sec.sec + ' for any claim without a traceable source and flag each one.')}>{I.sparkles} Analyze for untraced claims</button>
-                <button className="sp-ask" onClick={() => ask('Show the full audit trail for ' + sec.doc + ' ' + '§' + sec.sec + ' including who approved each source.')}>{I.history} View audit trail</button>
+                <button className="sp-ask" onClick={() => ask('Analyze ' + sec.doc + ' ' + '§' + sec.sec + ' for any claim without a recorded source citation and flag each one. Do not invent citations.')}>{I.sparkles} Analyze for unrecorded claims</button>
+                <button className="sp-ask" onClick={() => ask('Show the audit trail for ' + sec.doc + ' ' + '§' + sec.sec + ' including who recorded each source citation and when.')}>{I.history} View audit trail</button>
               </div>
-            </div>
-          </div>
-
-          {/* Citation verification — real POST /api/citations/verify */}
-          <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Citation verification</span><span className="s">PubMed + CrossRef / /api/citations/verify</span></div>
-            <div className="pj-card-b">
-              {secLits.length === 0 ? (
-                <div className="scaf-note">No published-literature citations in this section — every source is trial, guidance, or internal data, which trace directly to a locked dataset.</div>
-              ) : (
-                <>
-                  <div className="scaf-note" style={{ marginBottom: 10 }}>{secLits.length} literature citation{secLits.length > 1 ? 's' : ''} in this section. AnA checks each against PubMed and CrossRef — a citation that cannot be confirmed is flagged, never assumed.</div>
-                  <div className="sp-list">
-                    {secLits.map(s => {
-                      const r = verify && verify.results.find(x => x.id === s.sourceId);
-                      const stv = r ? ST_VSTATUS[r.status] : null;
-                      return (
-                        <div key={s.sourceId} className="sp-row">
-                          <span className="sp-q-ic">{I.fileText}</span>
-                          <span className="sp-row-b"><span className="sp-row-t" style={{ fontSize: 12.5 }}>{s.sourceTitle}</span><span className="sp-row-s">{s.pmid ? ('PMID ' + s.pmid) : 'no index identifier'}{s.doi ? (' / DOI ' + s.doi) : ''}</span></span>
-                          {stv ? <span className={'rd-chip tone-' + stv.t}>{stv.l}</span> : <span className="st-unchecked">not checked</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {verify && (
-                    <div className="st-vsum">
-                      <span className="st-vsum-i tone-ok">{verify.summary.verified} verified</span>
-                      {verify.summary.notFound > 0 && <span className="st-vsum-i tone-warn">{verify.summary.notFound} not found</span>}
-                      {verify.summary.unverifiable > 0 && <span className="st-vsum-i tone-idle">{verify.summary.unverifiable} unverifiable</span>}
-                      {verify.summary.error > 0 && <span className="st-vsum-i tone-warn">{verify.summary.error} error</span>}
-                      {verify.summary.notFound > 0 && <button className="sp-ask" style={{ marginLeft: 'auto' }} onClick={() => ask('Find a peer-reviewed source to replace the unconfirmed citation in ' + sec.doc + ', or remove the claim.')}>{I.sparkles} Fix flagged citation</button>}
-                    </div>
-                  )}
-                  <div className="cm-pushbar" style={{ marginTop: 12 }}>
-                    <button className="sp-primary" style={{ padding: '8px 14px' }} onClick={runVerify} disabled={verifying}>{I.shieldCheck} {verifying ? 'Verifying…' : (verify ? 'Re-verify' : 'Verify')} against PubMed and CrossRef</button>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </div>

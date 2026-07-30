@@ -580,105 +580,21 @@ router.post('/revoke-signature',       makeHandler('revoke-signature'));
 router.post('/reject-ai-suggestion',   makeHandler('reject-ai-suggestion'));
 router.post('/unlock',                 makeHandler('unlock'));
 
-// ── Legacy delegation: POST /api/cerv2-sections/:id/accept-ana-draft ────────
+// ── Legacy delegation handler: REMOVED ─────────────────────────────────────
 //
-// Not a redirect (HTTP 308 POST redirects aren't followed transparently by
-// fetch). Instead, this handler is mounted in cerv2-sections.ts to delegate
-// internally to writeMutation. See cerv2-sections.ts for the mount point.
+// `legacyAcceptAnaDraftHandler` lived here, ~70 lines, exported and never
+// imported: a repo-wide grep for the symbol returned exactly one hit, its own
+// definition. Its comment claimed "this handler is mounted in
+// cerv2-sections.ts"; that was false — cerv2-sections.ts:547 has its own
+// independent implementation, and that one IS correctly org-scoped on both the
+// SELECT and the UPDATE.
 //
-// Exported so cerv2-sections.ts can import it directly without an HTTP hop.
-
-export async function legacyAcceptAnaDraftHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
-  const userId = resolveUserId(req);
-  const orgId  = resolveOrgId(req);
-
-  if (!userId || !orgId) {
-    res.status(401).json({ error: 'AUTH_REQUIRED' });
-    return;
-  }
-
-  const sectionId = Number(req.params.sectionId);
-  if (!Number.isFinite(sectionId)) {
-    res.status(400).json({ error: 'INVALID_SECTION_ID' });
-    return;
-  }
-
-  const {
-    refinedContent,
-    status = 'ready_for_review',
-    groundednessScore,
-    confidence,
-    groundednessReviewAck,
-  } = req.body ?? {};
-
-  // Build a synthetic accept-ai-suggestion envelope pointing at the section
-  // using the legacy integer section id as a cerv2 target pointer. Attach
-  // governance metadata so the acceptance is recorded against the capability
-  // contract and the groundedness gate can engage on this path too.
-  const target = `section:cerv2:${sectionId}`;
-  const payload: Record<string, unknown> = { status, capabilityKey: 'authoring-review' };
-  if (refinedContent !== undefined) payload.refinedContent = refinedContent;
-  if (groundednessScore !== undefined) payload.groundednessScore = groundednessScore;
-  if (confidence !== undefined) payload.confidence = confidence;
-  if (groundednessReviewAck !== undefined) payload.groundednessReviewAck = groundednessReviewAck;
-
-  // If refinedContent present, patch the section first (existing behavior).
-  if (refinedContent !== undefined) {
-    try {
-      await pool.query(
-        `UPDATE cerv2_510k_sections
-         SET content = $1, draft_source = NULL, status = $2,
-             accepted_by = $3, accepted_at = now(), updated_at = now()
-         WHERE id = $4`,
-        [refinedContent, status, userId, sectionId],
-      );
-    } catch (err: any) {
-      console.warn('[c2c/legacyAcceptAnaDraft] patch failed:', err?.message);
-    }
-  } else {
-    try {
-      await pool.query(
-        `UPDATE cerv2_510k_sections
-         SET draft_source = NULL, status = $1,
-             accepted_by = $2, accepted_at = now(), updated_at = now()
-         WHERE id = $3`,
-        [status, userId, sectionId],
-      );
-    } catch (err: any) {
-      console.warn('[c2c/legacyAcceptAnaDraft] status patch failed:', err?.message);
-    }
-  }
-
-  try {
-    const result = await writeMutation(
-      'accept-ai-suggestion',
-      {
-        target,
-        reason: `Accepted AnA draft for section ${sectionId}`,
-        payload,
-      },
-      userId,
-      orgId,
-    );
-    res.json({ success: true, ...result });
-  } catch (err: any) {
-    if (err instanceof GroundednessReviewError) {
-      const g = err.gateResult;
-      res.status(422).json({
-        error: 'GROUNDEDNESS_REVIEW_REQUIRED',
-        gate: g.gate,
-        groundednessThreshold: g.groundednessThreshold,
-        groundednessScore: g.groundednessScore,
-        detail: g.reason,
-      });
-      return;
-    }
-    console.error('[c2c/legacyAcceptAnaDraft]', err?.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-}
+// It mattered because the dead copy carried an unscoped cross-tenant write:
+//   UPDATE cerv2_510k_sections SET content=..., status=..., accepted_by=...
+//    WHERE id = $4
+// matching on section id alone, with orgId resolved and then unused. It was not
+// exploitable only by the accident of never being mounted — a loaded write that
+// would have become a P0 the moment anyone wired it up. Deleted rather than
+// fixed, because the correct implementation already exists elsewhere.
 
 export default router;

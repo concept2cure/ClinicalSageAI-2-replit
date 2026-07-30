@@ -391,6 +391,7 @@ import {
   EXPLAIN_DESIGN_RISK,
   STRESS_TEST_PROTOCOL,
   TRACE_DESIGN_RECOMMENDATION,
+  PROJECT_CSR_EVIDENCE,
   CREATE_LABELING_DOCUMENT,
   ADD_LABELING_TRANSLATION,
   ADD_LABELING_SYMBOL,
@@ -513,6 +514,30 @@ import { POST_APPROVAL_TOOLS } from './postApprovalTools';
 // the top of this file, so ALL_ANA_TOOLS_RAW and the drafting/review tool
 // arrays reference them unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Onboarding (read-only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lets a client ask AnA, in conversation, what its workspace still needs and
+ * what a document could contribute — WITHOUT giving the model a way to write.
+ *
+ * Deliberately read-only. There is no `onboarding_commit` tool and there will
+ * not be one: a model-callable commit could self-invoke inside the agentic loop,
+ * which would defeat the human-approval gate the whole onboarding flow is built
+ * on. Applying proposals stays a human action through the governed endpoint.
+ */
+export const SUMMARIZE_ONBOARDING_READINESS: AnaTool = {
+  name: 'summarize_onboarding_readiness',
+  description:
+    "Report which onboarding fields this organization's profile already has and which are still blank, and explain what a client can upload to fill the gaps. Read-only: it inspects the org profile and never changes it. Use when a client asks what setup they still need, or what a document could help with. To actually apply values from a document, direct the client to the 'Set up from a document' flow — extraction proposes, the client reviews and approves, and only then is anything written.",
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FDA Postmarket Surveillance Tools (live openFDA)
@@ -1269,8 +1294,12 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
 
 export const TRANSMIT_SUBMISSION: AnaTool = {
   name: 'transmit_submission',
+  // The description states the refusal, because a tool whose description
+  // promises transmission will be called for transmission and its refusal
+  // reported to the user as a failure. It does not transmit — see the handler
+  // in AnaToolExecutor.ts and the gateway guard in submission-gateways/index.ts.
   description:
-    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, or Health Canada CESG). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
+    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1662,7 +1691,34 @@ export const LIST_REPORT_DEFINITIONS: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
+const LIST_FDA_FORMS: AnaTool = {
+  name: 'list_fda_forms',
+  description: 'List forms from the existing canonical FDA registry for project selection, including implementation and release-readiness status.',
+  input_schema: { type: 'object', properties: {
+    category: { type: 'string' }, implementationStatus: { type: 'string', enum: ['metadata', 'full'] },
+  } },
+};
+
+const PREPARE_FDA_FORM: AnaTool = {
+  name: 'prepare_fda_form',
+  description: 'Use the existing universal FDAFormGenerator to prepare any registered FDA form as a structured editable draft for Document Studio. Does not approve, sign, or submit.',
+  input_schema: { type: 'object', properties: {
+    formId: { type: 'string' }, values: { type: 'object' }, reasonForChange: { type: 'string' },
+  }, required: ['formId'] },
+};
+
+const AMEND_FDA_FORM: AnaTool = {
+  name: 'amend_fda_form',
+  description: 'Use the existing universal FDAFormGenerator to amend a structured FDA form into a new Document Studio draft. Requires a reason and never mutates an approved version.',
+  input_schema: { type: 'object', properties: {
+    formId: { type: 'string' }, currentValues: { type: 'object' }, changes: { type: 'object' }, reasonForChange: { type: 'string' },
+  }, required: ['formId', 'currentValues', 'changes', 'reasonForChange'] },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
+  LIST_FDA_FORMS,
+  PREPARE_FDA_FORM,
+  AMEND_FDA_FORM,
   LIST_VAULT_DOCUMENTS,
   READ_VAULT_DOCUMENT,
   GET_DOCUMENT_VERSIONS,
@@ -2019,6 +2075,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   EXPLAIN_DESIGN_RISK,
   STRESS_TEST_PROTOCOL,
   TRACE_DESIGN_RECOMMENDATION,
+  PROJECT_CSR_EVIDENCE,
   CREATE_LABELING_DOCUMENT,
   ADD_LABELING_TRANSLATION,
   ADD_LABELING_SYMBOL,
@@ -2513,6 +2570,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_INTELLIGENCE_FLOWS,
   // War Game Simulation — FDA auditor pressure-testing of intelligence flow output
   START_WAR_GAME,
+  // Onboarding — read-only look at what a document could contribute to setup.
+  SUMMARIZE_ONBOARDING_READINESS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers

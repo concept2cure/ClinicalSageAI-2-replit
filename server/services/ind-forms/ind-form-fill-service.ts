@@ -23,8 +23,8 @@
  *          ${IND_FORM_TEMPLATES_DIR || 'templates/forms/acroforms'}/<formId>.pdf
  *      e.g. templates/forms/acroforms/FDA_1571.pdf, FDA_1572.pdf, FDA_3674.pdf,
  *           FDA_3454.pdf, FDA_3455.pdf
- *      Each template's AcroForm field names must be mapped to our field ids via
- *      ACROFORM_FIELD_MAP below (FDA's internal field names are not our ids).
+ *      Each template's reviewed sidecar manifest must map every canonical field
+ *      id to its AcroForm field name. Unmanifested or partial assets fail closed.
  *      Until the official PDFs + field map are supplied, the service falls back
  *      to a deterministic labeled PDF (usedOfficialTemplate=false) so the feature
  *      works end-to-end without the proprietary forms.
@@ -45,6 +45,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import crypto from 'node:crypto';
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from 'pdf-lib';
 
 import {
@@ -54,6 +55,8 @@ import {
   buildForm3674,
   buildForm3454,
   buildForm3455,
+  buildForm356h,
+  buildForm1574,
   labelsForForm,
   type BuiltForm,
   type FieldValue,
@@ -64,6 +67,8 @@ import {
   FORM_3674,
   FORM_3454,
   FORM_3455,
+  FORM_356H,
+  FORM_1574,
 } from './ind-form-data-builders';
 
 // ---------------------------------------------------------------------------
@@ -86,20 +91,11 @@ export const SUPPORTED_FORM_IDS = [
   FORM_3674,
   FORM_3454,
   FORM_3455,
+  FORM_356H,
+  FORM_1574,
 ] as const;
 
 export type SupportedFormId = (typeof SUPPORTED_FORM_IDS)[number];
-
-/**
- * Map our field ids → official FDA AcroForm field names, per form. These names
- * depend entirely on the proprietary FDA PDF and MUST be filled in when the real
- * templates are dropped in (see INTEGRATION NOTES). When a mapping is absent the
- * filler tries the field id verbatim as the AcroForm field name, then skips
- * gracefully if the template has no such field (reflected in fieldCoverage).
- */
-export const ACROFORM_FIELD_MAP: Record<string, Record<string, string>> = {
-  // [FORM_1571]: { sponsor_name: 'form1[0].#subform[0].SponsorName[0]', ... },
-};
 
 // ---------------------------------------------------------------------------
 // Result shape
@@ -130,6 +126,10 @@ function buildFormById(formId: string, meta: IndProjectMetadata): BuiltForm {
       return buildForm3454(meta);
     case FORM_3455:
       return buildForm3455(meta);
+    case FORM_356H:
+      return buildForm356h(meta);
+    case FORM_1574:
+      return buildForm1574(meta);
     case FORM_1572: {
       // 1572 is per-investigator; for the single-form entry point use the first
       // investigator (or an empty one so missingRequired is populated).
@@ -153,9 +153,34 @@ export function templatePathFor(formId: string): string {
   return path.join(templatesDir(), `${formId}.pdf`);
 }
 
-async function readTemplate(formId: string): Promise<Buffer | null> {
+interface VerifiedTemplate {
+  bytes: Buffer;
+  fieldMap: Record<string, string>;
+}
+
+async function readTemplate(formId: string): Promise<VerifiedTemplate | null> {
   try {
-    return await fs.readFile(templatePathFor(formId));
+    const templatePath = templatePathFor(formId);
+    const [bytes, rawManifest] = await Promise.all([
+      fs.readFile(templatePath),
+      fs.readFile(`${templatePath}.manifest.json`, 'utf8'),
+    ]);
+    const manifest = JSON.parse(rawManifest) as Record<string, unknown>;
+    const sourceUrl = new URL(String(manifest.sourceUrl ?? ''));
+    const sourceIsFda = sourceUrl.protocol === 'https:' && (sourceUrl.hostname === 'fda.gov' || sourceUrl.hostname.endsWith('.fda.gov'));
+    const actualSha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const reviewedAt = Date.parse(String(manifest.reviewedAt ?? ''));
+    const fieldMap = manifest.fieldMap && typeof manifest.fieldMap === 'object' && !Array.isArray(manifest.fieldMap)
+      ? manifest.fieldMap as Record<string, string> : {};
+    const verified = manifest.formId === formId
+      && typeof manifest.version === 'string' && manifest.version.length > 0
+      && typeof manifest.reviewedBy === 'string' && manifest.reviewedBy.length > 0
+      && Number.isFinite(reviewedAt)
+      && sourceIsFda
+      && manifest.sha256 === actualSha256
+      && Object.keys(fieldMap).length > 0
+      && Object.values(fieldMap).every((value) => typeof value === 'string' && value.length > 0);
+    return verified ? { bytes, fieldMap } : null;
   } catch {
     return null;
   }
@@ -178,6 +203,7 @@ async function fillOfficialTemplate(
   formId: string,
   templateBytes: Buffer,
   built: BuiltForm,
+  fieldMap: Record<string, string>,
 ): Promise<IndFormPdfResult> {
   const doc = await PDFDocument.load(templateBytes);
 
@@ -189,12 +215,16 @@ async function fillOfficialTemplate(
   doc.setModificationDate(EPOCH);
 
   const form = doc.getForm();
-  const fieldMap = ACROFORM_FIELD_MAP[formId] ?? {};
   const entries = Object.entries(built.fields);
+  const availableFields = new Set(form.getFields().map((field) => field.getName()));
+  const mappingComplete = entries.every(([fieldId]) => fieldMap[fieldId] && availableFields.has(fieldMap[fieldId]));
+  if (!mappingComplete) {
+    throw new Error(`Verified FDA template mapping is incomplete for ${formId}`);
+  }
   let filled = 0;
 
   for (const [fieldId, value] of entries) {
-    const acroName = fieldMap[fieldId] ?? fieldId;
+    const acroName = fieldMap[fieldId];
     try {
       if (typeof value === 'boolean') {
         const cb = form.getCheckBox(acroName);
@@ -363,7 +393,12 @@ export async function renderBuiltForm(
 ): Promise<IndFormPdfResult> {
   const template = await readTemplate(formId);
   if (template) {
-    return fillOfficialTemplate(formId, template, built);
+    try {
+      return await fillOfficialTemplate(formId, template.bytes, built, template.fieldMap);
+    } catch {
+      // A reviewed asset with an incomplete/outdated field map is never used.
+      return renderFallback(formId, built);
+    }
   }
   return renderFallback(formId, built);
 }
@@ -378,5 +413,7 @@ export async function generateAllIndForms(
   results.push(await generateIndForm(FORM_3674, meta));
   results.push(await generateIndForm(FORM_3454, meta));
   results.push(await generateIndForm(FORM_3455, meta));
+  results.push(await generateIndForm(FORM_356H, meta));
+  results.push(await generateIndForm(FORM_1574, meta));
   return results;
 }

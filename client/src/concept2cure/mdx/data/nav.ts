@@ -33,6 +33,8 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'pma',          label: 'PMA Submissions',       icon: 'shieldCheck',  group: 'workstream' },
   { id: 'cer',          label: 'CER Generator',         icon: 'microscope',   group: 'workstream' },
   { id: 'device-diagnostics-workbench', label: 'IVD Diagnostics', icon: 'flask', group: 'workstream' },
+  { id: 'clinical-studies', label: 'Clinical Studies',   icon: 'stethoscope',  group: 'workstream' },
+  { id: 'software',     label: 'Software Lifecycle',     icon: 'code',         group: 'workstream' },
   { id: 'predicate',    label: 'Precedent Intelligence',icon: 'scale',        group: 'workstream' },
 
   // Workbench — cross-program work surfaces.
@@ -46,8 +48,11 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'analytics',    label: 'Analytics',             icon: 'barChart3',    group: 'intelligence' },
   { id: 'memory',       label: 'Claude Memory',         icon: 'database',     group: 'intelligence' },
 
-  // System — admin + the only link that exits the workstream.
-  { id: 'admin',        label: 'Admin and Access',      icon: 'userCheck',    group: 'system' },
+  // System — deliberately empty. Admin is a PRODUCT-level surface, not a
+  // per-workstream one: the device/diagnostics workstream embeds this module
+  // inside the ui-v2 product shell, whose single AdminConsole serves every
+  // client type. Keeping a separate "Admin and Access" here produced two
+  // admins (one per client type); it was removed so there is one product admin.
 ];
 
 export interface StubInfo {
@@ -104,6 +109,8 @@ export const MDX_SUGGESTIONS: Record<string, string[]> = {
   pma:        ['Summarize enrollment gap', 'Draft DSMB charter', 'Pull pivotal precedents'],
   cer:        ['Run FAERS signal scan', 'Adjudicate lead dislodgement', 'Draft Article 61 section'],
   'device-diagnostics-workbench': ['Classify under Annex VIII', 'Summarize analytical performance', 'Close open GSPR requirements'],
+  'clinical-studies': ['Summarize enrollment gaps', 'List open major deviations', 'Assess BIMO readiness'],
+  software:   ['Check IEC 62304 completeness', 'Which deliverables are unapproved?', 'Draft the SBOM'],
   predicate:  ['Compare K221847 vs subject', 'Find predicates for CGM', 'Cluster by product code'],
   engineering:['ISO 14971 risk review', 'Cybersecurity premarket', 'Biocompatibility for 14-day'],
   udi:        ['Generate UDI for BX-204', 'Labeling MRI statements', 'Multi-language harmonization'],

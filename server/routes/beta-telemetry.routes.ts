@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { mkdir, appendFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
+import { resolveOrgId } from '../types/auth-request';
 
 const router = Router();
 
@@ -35,6 +36,15 @@ const issueSchema = z.object({
   createdAt: z.string().optional(),
 });
 
+router.use((req, res, next) => {
+  const organizationId = resolveOrgId(req);
+  if (organizationId === null) {
+    return res.status(403).json({ ok: false, error: 'organization_context_required' });
+  }
+  res.locals.betaTelemetryOrganizationId = String(organizationId);
+  return next();
+});
+
 async function persistTelemetry(record: Record<string, unknown>) {
   await mkdir(TELEMETRY_DIR, { recursive: true });
   // Guard against unbounded file growth
@@ -55,6 +65,7 @@ router.post('/event', async (req, res) => {
 
   const event = {
     ...parsed.data,
+    organizationId: res.locals.betaTelemetryOrganizationId,
     createdAt: new Date().toISOString(),
   };
 
@@ -79,6 +90,7 @@ router.post('/issue', async (req, res) => {
   const issue = {
     type: 'issue',
     ...parsed.data,
+    organizationId: res.locals.betaTelemetryOrganizationId,
     createdAt: parsed.data.createdAt || new Date().toISOString(),
   };
 
@@ -99,6 +111,7 @@ router.get('/events', (_req, res) => {
   const projectId = typeof _req.query.projectId === 'string' ? _req.query.projectId : null;
 
   const filtered = inMemoryEvents.filter(event => {
+    if (event.organizationId !== res.locals.betaTelemetryOrganizationId) return false;
     if (type && event.type !== type) return false;
     if (projectId && String(event.projectId ?? '') !== projectId) return false;
     return true;

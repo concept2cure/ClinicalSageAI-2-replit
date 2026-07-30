@@ -10,10 +10,11 @@
  * ─────────────────────────────────────────────────────────────────────
  * Why each entry is here:
  *
- *   organization_users — read by `requireTenantContext` middleware to
- *     resolve the user's role BEFORE the tenant session variable is set.
- *     If RLS is on, the middleware's own membership lookup would be
- *     filtered out and every request would 403. Chicken-and-egg.
+ *   organization_users — temporarily retained from the staged rollout.
+ *     `requireTenantContext` now establishes a JWT-claimed tenant bootstrap
+ *     scope before resolving membership, so this entry is no longer required
+ *     to prevent an authentication chicken-and-egg failure. Remove it only via
+ *     a migration/allowlist-sync change with live two-tenant evidence.
  *
  *   __drizzle_migrations — Drizzle's internal migration ledger. Has no
  *     tenant column today, so technically the audit migration won't try

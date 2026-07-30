@@ -38,5 +38,24 @@ describe('betaRouteFence middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(status).not.toHaveBeenCalled();
   });
-});
 
+  it('normalizes configured prefixes and matches path boundaries', () => {
+    const middleware = createBetaRouteFence({
+      ENABLE_BETA_ROUTE_FENCE: 'true',
+      BETA_ROUTE_FENCE_PREFIXES: ' evidence/ , /programs/, evidence ',
+    } as NodeJS.ProcessEnv);
+
+    const json = vi.fn();
+    const status = vi.fn(() => ({ json }));
+    const setHeader = vi.fn();
+    const blockedNext = vi.fn();
+
+    middleware({ path: '/evidence/search' } as any, { status, setHeader } as any, blockedNext);
+    expect(status).toHaveBeenCalledWith(503);
+    expect(blockedNext).not.toHaveBeenCalled();
+
+    const allowedNext = vi.fn();
+    middleware({ path: '/evidence-preview' } as any, { status, setHeader } as any, allowedNext);
+    expect(allowedNext).toHaveBeenCalledTimes(1);
+  });
+});

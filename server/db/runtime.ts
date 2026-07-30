@@ -30,7 +30,7 @@ import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
-import { installRlsEnforcement, assertRlsEnforcementForProduction } from './rlsEnforcement';
+import { buildRlsStartupOptions, assertRlsEnforcementForProduction } from './rlsEnforcement';
 
 const logger = createScopedLogger('database');
 
@@ -44,6 +44,7 @@ try {
   if (databaseUrl) {
     logger.info('Initializing PostgreSQL connection pool');
     const isProduction = process.env.NODE_ENV === 'production';
+    const rlsStartupOptions = buildRlsStartupOptions(process.env, process.env.PGOPTIONS);
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
@@ -53,6 +54,7 @@ try {
       statement_timeout: 30000,
       idle_in_transaction_session_timeout: 60000,
       allowExitOnIdle: !isProduction,
+      options: rlsStartupOptions,
     } as ConstructorParameters<typeof Pool>[0]);
 
     // Observability hook for the RLS rollout (PR A): every pool.query /
@@ -60,16 +62,7 @@ try {
     // caller. No DB behavior change — just measurement.
     instrumentPool(pool);
 
-    // Apply the RLS enforcement mode to every new connection. Default is
-    // off/shadow; the policy installed by 0021 has a leading
-    // `current_setting('app.rls_enforce') IS DISTINCT FROM 'on'` clause,
-    // so unless RLS_ENFORCE=on is explicitly set, every row passes.
-    installRlsEnforcement(pool);
-
-    // Boot-time visibility for the RLS rollout (issue #843). Loudly warns when
-    // production is running with RLS off (defense-in-depth disabled), and
-    // hard-fails the boot when the operator opts into fail-closed via
-    // RLS_REQUIRE_ENFORCE=true. Default behaviour is unchanged (warn only).
+    // Boot-time fail-closed assertion. Production cannot run with RLS inert.
     const rlsMode = assertRlsEnforcementForProduction();
     logger.info('RLS enforcement mode resolved', { mode: rlsMode });
 
@@ -261,7 +254,11 @@ export async function runMigrations(): Promise<void> {
 
   try {
     logger.info('Running database migrations...');
-    const migrationsFolder = path.resolve(__dirname, '../../migrations');
+    // cwd-anchored, not __dirname: this file ships inside the esbuild bundle
+    // (dist/index.js), where __dirname is undefined under ESM. Both dev (cwd =
+    // repo root) and prod (WORKDIR /app, migrations/ copied into the image)
+    // put the migrations at <cwd>/migrations.
+    const migrationsFolder = path.resolve(process.cwd(), 'migrations');
     await migrate(db, { migrationsFolder });
     logger.info('Database migrations completed successfully');
   } catch (error: any) {

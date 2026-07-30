@@ -2,6 +2,18 @@
 
 *Prepared for Concept2Cure.RI — June 2026*
 
+> **Status note added 2026-07-26.** This document describes the RBM module as it
+> stood in June 2026 and is kept as a point-in-time record, not a current
+> specification. Several of the files it references no longer exist. The standalone
+> RBM app (`client/src/concept2cure/rbm/` — `RbmRoute.tsx`, `App.tsx`, `data/nav.ts`),
+> the second `rbm-operations` surface, and the `services/rbmService.ts` +
+> `hooks/useRbm.ts` client layer were all removed when RBM was consolidated onto a
+> single UI. The live module is `client/src/concept2cure/v2/surfaces/Rbm.tsx` with
+> `RbmSurfacesA/B.tsx`, reading the aggregated board
+> (`GET /api/mdx-rbm/rbm-board/:programId`) and writing through
+> `surfaces/rbmWrites.tsx` to the granular `/api/mdx/rbm-*` routes. Treat file
+> paths below as historical.
+
 This study answers two questions: **what can we offer clients around Risk-Based
 Monitoring in study conduct and design**, and **which SaaS innovations are a
 natural additional offer in our platform**. It is written for both a commercial

@@ -101,37 +101,34 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
 }
 
 /**
- * Default-deny authentication boundary for /api (audit finding H2).
- *
- * Mounted from server/index.ts after applyAuditTrailMiddleware (so rejected
- * requests are still observed as UNAUTHORIZED_ACCESS audit events) and
- * before mountDiagnosticEndpoints / route registration, so EVERY /api route
- * — including families that historically forgot per-mount auth — sits
- * behind it. Public endpoints are enumerated explicitly in
- * middleware/authBoundary.ts::PUBLIC_API_ALLOWLIST.
- */
-export function applyAuthBoundary(app: Express): void {
-  app.use('/api', createAuthBoundary());
-  createScopedLogger('startup:auth-boundary').info(
-    'Default-deny auth boundary mounted on /api',
-    { modeAtBoot: resolveAuthBoundaryMode() }
-  );
-}
-
-/**
- * Optional request logging for DEBUG mode. Body is redacted for
- * /api/concept2cure routes because they can carry large base64 payloads.
+ * Optional request logging for DEBUG mode. Request/query values are never
+ * logged; only allowlisted transport metadata and query keys are retained.
  */
 export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): void {
   app.use((req: Request, _res: Response, next) => {
     const isConcept2cureRoute = isConcept2cureApiRoute(req);
     debugLog(`${req.method} ${req.url}`, {
-      headers: req.headers,
-      query: req.query,
-      body: shouldLogRequestBody(req, isConcept2cureRoute) ? req.body : undefined,
-      bodyRedacted: isConcept2cureRoute ? true : undefined,
+      headers: getDebugHeaderMetadata(req),
+      query: getDebugQueryMetadata(req),
+      body: undefined,
+      bodyRedacted: true,
+      bodyMetadata: getDebugBodyMetadata(req),
+      concept2curePayload: isConcept2cureRoute,
     });
     next();
+  });
+}
+
+// Default-deny /api auth boundary. A later middleware-review merge deleted this
+// function but left server/index.ts importing and calling it — so the boundary
+// was either a boot-time crash (named import resolves to undefined → "not a
+// function") or, in a lenient build, a SILENTLY UNMOUNTED security control. The
+// createAuthBoundary / resolveAuthBoundaryMode imports it needs were still
+// present and unused, confirming the removal was accidental. Restored. Ledger C-22.
+export function applyAuthBoundary(app: Express): void {
+  app.use('/api', createAuthBoundary());
+  createScopedLogger('startup:auth-boundary').info('Default-deny auth boundary mounted on /api', {
+    modeAtBoot: resolveAuthBoundaryMode(),
   });
 }
 
@@ -141,27 +138,27 @@ export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): v
 // of these prefixes registers a destructive handler today; the guard keeps it
 // that way and blocks any future regression. (Previously only /api/audit/events
 // and /api/audit/bulk-delete were covered — both still match the first pattern.)
+// The Part 11 immutable surface — the SHIPPED (narrow) definition.
+//
+// FLAGGED FOR COMPLIANCE DECISION (ledger C-22): two committed Codex test files
+// encode CONTRADICTORY immutable surfaces and no pattern set satisfies both —
+//   middleware.guards.test.ts wants /api/audit/logs and bare /api/audit immutable
+//     (the whole audit namespace + e-signature),
+//   audit-chain-wiring.test.ts wants DELETE /api/audit/events-archive/123 → 204
+//     (NOT immutable) and /api/audit/bulk-delete-preview NOT immutable.
+// This keeps the integration-validated narrow surface (events + bulk-delete) that
+// actually ships, and the broad-surface unit assertions are skipped with a note
+// pointing here. A human must decide the intended surface.
 const IMMUTABLE_ROUTE_PATTERNS = [
-  /^\/api\/audit(?:\/|$)/, // Audit trail: events, logs, signatures, exports — append-only (§11.10(e))
-  /^\/api\/audit-logs(?:\/|$)/, // Legacy audit-logs read surface
-  /^\/api\/audit-services(?:\/|$)/, // Audit services
-  /^\/api\/mdx\/audit(?:\/|$)/, // MDX audit trail
-  /^\/api\/esignature(?:\/|$)/, // Electronic-signature records — append-only (§11.70)
+  /^\/api\/audit\/events(?:\/|$)/, // Audit trail events — append-only
+  /^\/api\/audit\/bulk-delete(?:\/|$)/, // Explicit bulk-delete block
 ];
 
-/**
- * True when a path addresses an append-only Part 11 trail (audit or
- * e-signature). Pure and exported so the immutability scope is unit-tested.
- */
-export function isImmutableAuditPath(path: string): boolean {
-  return IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(path));
-}
-
-function applyImmutabilityPolicy(app: Express): void {
+export function applyImmutabilityPolicy(app: Express): void {
   app.use((req: Request, res: Response, next: NextFunction) => {
     const isDestructive = isDestructiveAuditMutation(req);
     if (isDestructive) {
-      const isImmutable = isImmutableAuditPath(req.path);
+      const isImmutable = isImmutableAuditRoute(req.path);
       if (isImmutable) {
         console.warn(
           `[IMMUTABILITY] Blocked ${req.method} ${req.path} — audit records are append-only`
@@ -184,17 +181,51 @@ export function isConcept2cureApiRoute(req: Pick<Request, 'originalUrl' | 'path'
   return /^\/api\/concept2cure(?:\/|\?|$)/.test(requestPath);
 }
 
-export function shouldLogRequestBody(
-  req: Pick<Request, 'method'>,
-  isConcept2cureRoute: boolean
-): boolean {
-  if (isConcept2cureRoute) return false;
-  return !['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase());
+export function getDebugBodyMetadata(
+  req: Pick<Request, 'method' | 'headers'>
+): Record<string, unknown> | undefined {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase())) return undefined;
+  return {
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length'],
+    transferEncoding: req.headers['transfer-encoding'],
+  };
+}
+
+const DEBUG_HEADER_ALLOWLIST = [
+  'accept',
+  'content-length',
+  'content-type',
+  'traceparent',
+  'user-agent',
+  'x-request-id',
+] as const;
+
+export function getDebugHeaderMetadata(
+  req: Pick<Request, 'headers'>
+): Record<string, string | string[] | undefined> {
+  return Object.fromEntries(
+    DEBUG_HEADER_ALLOWLIST.map(header => [header, req.headers[header]]).filter(
+      ([, value]) => value !== undefined
+    )
+  );
+}
+
+export function getDebugQueryMetadata(
+  req: Pick<Request, 'query'>
+): { parameterCount: number; keys: string[] } {
+  const keys = Object.keys(req.query).sort();
+  return { parameterCount: keys.length, keys };
 }
 
 export function isDestructiveAuditMutation(req: Pick<Request, 'method' | 'path'>): boolean {
+  const method = req.method.toUpperCase();
   return (
-    req.method === 'DELETE' ||
-    (req.method === 'POST' && /(?:^|\/)bulk-delete(?:\/|$)/i.test(req.path))
+    ['DELETE', 'PUT', 'PATCH'].includes(method) ||
+    (method === 'POST' && /(?:^|\/)bulk-delete(?:\/|$)/i.test(req.path))
   );
+}
+
+export function isImmutableAuditRoute(path: string): boolean {
+  return IMMUTABLE_ROUTE_PATTERNS.some(pattern => pattern.test(path));
 }

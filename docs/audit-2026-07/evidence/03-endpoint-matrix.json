@@ -1,0 +1,2635 @@
+{
+  "_note": "Route-level guards only. A global default-deny boundary (server/middleware/authBoundary.ts) covers /api before any route registers, and live probing confirmed it holds — so \"unguarded\" measures DEFENCE IN DEPTH, not exposure. See evidence/00-live-proof-log.md §LP-08.",
+  "totalEndpoints": 4077,
+  "guardedEndpoints": 589,
+  "unguardedEndpoints": 3488,
+  "filesWithEndpoints": 513,
+  "guardsObserved": [
+    "authenticateToken",
+    "requireAuth",
+    "requireOrgAccess",
+    "requirePermission",
+    "requirePlatformAdmin",
+    "requireRole",
+    "requireSuperAdmin",
+    "requireTenantContext"
+  ],
+  "topFilesByUnguardedCount": [
+    {
+      "file": "server/routes/concept2cure.ts",
+      "count": 158
+    },
+    {
+      "file": "server/routes/authoring.router.ts",
+      "count": 78
+    },
+    {
+      "file": "server/src/routes/stability.router.ts",
+      "count": 74
+    },
+    {
+      "file": "server/routes/ivd-lifecycle.ts",
+      "count": 49
+    },
+    {
+      "file": "server/routes/biostatPlatform.ts",
+      "count": 48
+    },
+    {
+      "file": "server/routes/regulatory-precedent-intelligence.ts",
+      "count": 39
+    },
+    {
+      "file": "server/routes/mission-control.ts",
+      "count": 38
+    },
+    {
+      "file": "server/routes/mdx-rbm.ts",
+      "count": 37
+    },
+    {
+      "file": "server/routes/mdx-qms.ts",
+      "count": 35
+    },
+    {
+      "file": "server/routes/client-intelligence.ts",
+      "count": 33
+    },
+    {
+      "file": "server/routes/resolution.ts",
+      "count": 33
+    },
+    {
+      "file": "server/routes/authoring-actions.ts",
+      "count": 32
+    },
+    {
+      "file": "server/routes/grants.ts",
+      "count": 30
+    },
+    {
+      "file": "server/routes/submission-ops.ts",
+      "count": 30
+    },
+    {
+      "file": "server/routes/operating-system.ts",
+      "count": 27
+    },
+    {
+      "file": "server/routes/cortexManagementRoutes.ts",
+      "count": 26
+    },
+    {
+      "file": "server/routes/regulatory-graph.ts",
+      "count": 26
+    },
+    {
+      "file": "server/api/cmc/projectRoutes.ts",
+      "count": 26
+    },
+    {
+      "file": "server/api/cmc/routes.ts",
+      "count": 25
+    },
+    {
+      "file": "server/routes/assumption-decision-contradiction.ts",
+      "count": 24
+    },
+    {
+      "file": "server/routes/grdheRoutes.ts",
+      "count": 24
+    },
+    {
+      "file": "server/routes/ivdr-routes.ts",
+      "count": 23
+    },
+    {
+      "file": "server/routes/predicate-intelligence.ts",
+      "count": 23
+    },
+    {
+      "file": "server/routes/report-os.ts",
+      "count": 23
+    },
+    {
+      "file": "server/routes/pdev/pdev-routes.ts",
+      "count": 22
+    },
+    {
+      "file": "server/routes/ana-cortex-ft.ts",
+      "count": 21
+    },
+    {
+      "file": "server/routes/defense-packet.ts",
+      "count": 21
+    },
+    {
+      "file": "server/routes/medical-device-routes.js",
+      "count": 21
+    },
+    {
+      "file": "server/routes/project-sections.ts",
+      "count": 21
+    },
+    {
+      "file": "server/routes/clinical-operations-routes.ts",
+      "count": 20
+    },
+    {
+      "file": "server/routes/cortexRoutes.ts",
+      "count": 20
+    },
+    {
+      "file": "server/routes/design-risk.ts",
+      "count": 20
+    },
+    {
+      "file": "server/routes/snowglobe.ts",
+      "count": 20
+    },
+    {
+      "file": "server/routes/global-compliance.ts",
+      "count": 19
+    },
+    {
+      "file": "server/routes/ind_automation_routes.ts",
+      "count": 19
+    },
+    {
+      "file": "server/routes/auth.ts",
+      "count": 18
+    },
+    {
+      "file": "server/routes/biotech-rag.js",
+      "count": 18
+    },
+    {
+      "file": "server/routes/mdx-clinical-studies.ts",
+      "count": 17
+    },
+    {
+      "file": "server/routes/pharmacovigilance-routes.ts",
+      "count": 17
+    },
+    {
+      "file": "server/routes/qms.ts",
+      "count": 17
+    },
+    {
+      "file": "server/routes/study-design.ts",
+      "count": 17
+    },
+    {
+      "file": "server/api/neuro-symbolic/routes.ts",
+      "count": 17
+    },
+    {
+      "file": "server/src/routes/control-plane.router.ts",
+      "count": 17
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/admin/master-admin.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/audit-services.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/capa-mdr.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/cognitive-ecosystem.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/conversation-os.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/intelligent-reports.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/moduleIntegrationRoutes.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/submission-twin.ts",
+      "count": 16
+    },
+    {
+      "file": "server/routes/biostat-design-stats.ts",
+      "count": 15
+    },
+    {
+      "file": "server/routes/coauthor.ts",
+      "count": 15
+    },
+    {
+      "file": "server/routes/docx-factory.ts",
+      "count": 15
+    },
+    {
+      "file": "server/routes/qc.routes.ts",
+      "count": 15
+    },
+    {
+      "file": "server/routes/cro.ts",
+      "count": 14
+    },
+    {
+      "file": "server/routes/intelligence.ts",
+      "count": 14
+    },
+    {
+      "file": "server/routes/knowledge-base.ts",
+      "count": 14
+    },
+    {
+      "file": "server/routes/part11-compliance.ts",
+      "count": 14
+    }
+  ],
+  "unguardedSample": [
+    {
+      "file": "server/routes/510k-estar-routes.ts",
+      "line": 138,
+      "method": "POST",
+      "routePath": "/build",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-estar-routes.ts",
+      "line": 280,
+      "method": "POST",
+      "routePath": "/scaffold-field-map",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-estar-routes.ts",
+      "line": 384,
+      "method": "POST",
+      "routePath": "/official",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-estar-routes.ts",
+      "line": 468,
+      "method": "GET",
+      "routePath": "/readiness",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 21,
+      "method": "POST",
+      "routePath": "/:projectId",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 300,
+      "method": "GET",
+      "routePath": "/:projectId/stage-data",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 334,
+      "method": "GET",
+      "routePath": "/",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 360,
+      "method": "GET",
+      "routePath": "/:projectId",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 394,
+      "method": "POST",
+      "routePath": "/:projectId/generate-document",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 461,
+      "method": "GET",
+      "routePath": "/:projectId/audit-trail",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 481,
+      "method": "GET",
+      "routePath": "/:projectId/data-lineage",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 494,
+      "method": "GET",
+      "routePath": "/:projectId/versions",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/510k-workflow-routes.ts",
+      "line": 511,
+      "method": "GET",
+      "routePath": "/:projectId/compliance-report",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/_ops-predicate-shadow.ts",
+      "line": 35,
+      "method": "GET",
+      "routePath": "/live",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/_ops-predicate-shadow.ts",
+      "line": 39,
+      "method": "GET",
+      "routePath": "/ready",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/_ops-predicate-shadow.ts",
+      "line": 89,
+      "method": "GET",
+      "routePath": "/info",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 63,
+      "method": "POST",
+      "routePath": "/canon",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 105,
+      "method": "GET",
+      "routePath": "/canon",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 124,
+      "method": "POST",
+      "routePath": "/canon/:id/validate",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 143,
+      "method": "POST",
+      "routePath": "/canon/:id/lock",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 162,
+      "method": "POST",
+      "routePath": "/canon/:id/supersede",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 208,
+      "method": "GET",
+      "routePath": "/events",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 231,
+      "method": "GET",
+      "routePath": "/projection",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 245,
+      "method": "POST",
+      "routePath": "/projection/rebuild",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 264,
+      "method": "POST",
+      "routePath": "/resolve",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 312,
+      "method": "POST",
+      "routePath": "/bundles",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 363,
+      "method": "GET",
+      "routePath": "/bundles",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 380,
+      "method": "PATCH",
+      "routePath": "/bundles/:id",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 438,
+      "method": "POST",
+      "routePath": "/terms",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 475,
+      "method": "GET",
+      "routePath": "/terms",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 496,
+      "method": "POST",
+      "routePath": "/templates",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/account-intelligence.ts",
+      "line": 541,
+      "method": "GET",
+      "routePath": "/templates",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/access-management.ts",
+      "line": 60,
+      "method": "GET",
+      "routePath": "/grants",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/access-management.ts",
+      "line": 78,
+      "method": "POST",
+      "routePath": "/grants",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/access-management.ts",
+      "line": 160,
+      "method": "DELETE",
+      "routePath": "/grants/:id",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/business/rate-cards.ts",
+      "line": 20,
+      "method": "GET",
+      "routePath": "/cost-rates",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/business/rate-cards.ts",
+      "line": 67,
+      "method": "PATCH",
+      "routePath": "/cost-rates/:costKey",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/business/rate-cards.ts",
+      "line": 119,
+      "method": "GET",
+      "routePath": "/tier-pricing",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/business/rate-cards.ts",
+      "line": 144,
+      "method": "PATCH",
+      "routePath": "/tier-pricing/:tier",
+      "guards": [],
+      "guarded": false
+    },
+    {
+      "file": "server/routes/admin/business-center.ts",
+      "line": 50,
+      "method": "GET",
+      "routePath": "/cost-accounting",
+      "guards": [],
+      "guarded": false
+    }
+  ],
+  "byFile": {
+    "server/routes/510k-estar-routes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/510k-workflow-routes.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/_ops-predicate-shadow.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/account-intelligence.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/admin/access-management.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/admin/audit-siem.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/admin/business/rate-cards.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/admin/business-center.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/admin/master-admin.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/admin/scim-ip-allowlist.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/admin/scim-tenants.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/admin-security.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/agency-meetings.routes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/agent-swarm.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/ai-actions.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/ai-assistance.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/ai-claims-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ana-biostats-governed-documents.ts": {
+      "total": 1,
+      "guarded": 1
+    },
+    "server/routes/ana-biostats.ts": {
+      "total": 11,
+      "guarded": 11
+    },
+    "server/routes/ana-cortex-ft.ts": {
+      "total": 21,
+      "guarded": 0
+    },
+    "server/routes/ana-cortex.ts": {
+      "total": 9,
+      "guarded": 5
+    },
+    "server/routes/ana-features.ts": {
+      "total": 68,
+      "guarded": 68
+    },
+    "server/routes/ana-intelligence.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/ana-mdx-context.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ana-platform-control.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/chat.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/generate-execute.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/kernel.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/lookups.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/plan.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/stream.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/threads.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ana-ri/utility.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/ana-ri-inline-routes.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/ana-tool-policy.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/analytics-routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/api-keys.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/approval-workflow.ts": {
+      "total": 8,
+      "guarded": 8
+    },
+    "server/routes/artifacts-center-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/assumption-decision-contradiction.ts": {
+      "total": 24,
+      "guarded": 0
+    },
+    "server/routes/atoms.js": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/audit-services.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/audit-trail-ledger.routes.ts": {
+      "total": 1,
+      "guarded": 1
+    },
+    "server/routes/audit-trail-routes.ts": {
+      "total": 14,
+      "guarded": 10
+    },
+    "server/routes/auth.ts": {
+      "total": 18,
+      "guarded": 0
+    },
+    "server/routes/authEnterprise.ts": {
+      "total": 13,
+      "guarded": 0
+    },
+    "server/routes/authoring-actions.ts": {
+      "total": 32,
+      "guarded": 0
+    },
+    "server/routes/authoring-pdf.routes.ts": {
+      "total": 5,
+      "guarded": 5
+    },
+    "server/routes/authoring.router.ts": {
+      "total": 78,
+      "guarded": 0
+    },
+    "server/routes/batch-draft-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/beta-telemetry.routes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/billing-dashboard.ts": {
+      "total": 21,
+      "guarded": 21
+    },
+    "server/routes/billing.ts": {
+      "total": 7,
+      "guarded": 4
+    },
+    "server/routes/biologics-routes.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/biopharma/bla-workbench.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/biopharma/ctd.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/biopharma/programs.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/biopharma/submissions.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/biopharma-specialty.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/biosketch.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/biostat-design-stats.ts": {
+      "total": 15,
+      "guarded": 0
+    },
+    "server/routes/biostatPlatform.ts": {
+      "total": 48,
+      "guarded": 0
+    },
+    "server/routes/biotech-artifacts.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/biotech-rag.js": {
+      "total": 18,
+      "guarded": 0
+    },
+    "server/routes/c2c/actions.ts": {
+      "total": 13,
+      "guarded": 0
+    },
+    "server/routes/c2c/commitments.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/c2c/documents.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/c2c/governance.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/c2c/project-vault.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/c2c/projects.ts": {
+      "total": 13,
+      "guarded": 0
+    },
+    "server/routes/c2c/study-twin.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/c2c/templates.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/capa-mdr.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/cdisc-validation.routes.ts": {
+      "total": 9,
+      "guarded": 9
+    },
+    "server/routes/cer-routes.ts": {
+      "total": 8,
+      "guarded": 4
+    },
+    "server/routes/cerv2-ai-routes.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/cerv2-document-routes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/cerv2-export-routes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/cerv2-sections.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/cerv2-versions.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/change-assessment.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/change-propagation.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/charters.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/chat-actions.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/chat.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/citations.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/citi-training.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/client-branding.ts": {
+      "total": 11,
+      "guarded": 10
+    },
+    "server/routes/client-intelligence.ts": {
+      "total": 33,
+      "guarded": 0
+    },
+    "server/routes/client-portal.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/clients-routes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/clinical-operations-routes.ts": {
+      "total": 20,
+      "guarded": 0
+    },
+    "server/routes/clinical-regulatory-evidence-routes.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/cmc-changes.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/cmc-module3-board.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/coauthor.ts": {
+      "total": 15,
+      "guarded": 0
+    },
+    "server/routes/cognitive-ecosystem.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/collaboration.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/committees.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/companion-diagnostics.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/compute.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/concept2cure-communication-center.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/concept2cure.ts": {
+      "total": 158,
+      "guarded": 0
+    },
+    "server/routes/content-plan.js": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/contentAssembly.routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/controlled-substances.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/conversation-health.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/conversation-os.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/conversation-thread-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/corpus-routes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/cortex-unified.ts": {
+      "total": 9,
+      "guarded": 7
+    },
+    "server/routes/cortexAdvisoryRoutes.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/cortexManagementRoutes.ts": {
+      "total": 26,
+      "guarded": 0
+    },
+    "server/routes/cortexQueryRoutes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/cortexRoutes.ts": {
+      "total": 31,
+      "guarded": 11
+    },
+    "server/routes/coverage-analysis.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/cro-portfolio.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/cro.ts": {
+      "total": 14,
+      "guarded": 0
+    },
+    "server/routes/csp-report.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/csr-analytics.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/csr-builder-routes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/csr-intelligence-routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/csr-jobs.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/csr-workflow-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ctd-onboarding.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/cybersecurity-524b.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/data-lineage.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/decision-lineage.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/decision-lineage.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/deep-research-board.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/deep-research.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/defense-packet.ts": {
+      "total": 21,
+      "guarded": 0
+    },
+    "server/routes/design-controls.routes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/design-risk.ts": {
+      "total": 20,
+      "guarded": 0
+    },
+    "server/routes/device-classification.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/device-cockpit.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/device-projects.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/diagnostics-performance.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/dmsp.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/doc-journey.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/docs.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/document-authoring-workspace.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/document-data-center.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/document-intelligence-routes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/document-routes.ts": {
+      "total": 9,
+      "guarded": 5
+    },
+    "server/routes/document-understanding.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/documentAuthoring.routes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/documentOrchestrationRoutes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/document_qc_routes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/documents-unified.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/docx-factory.ts": {
+      "total": 15,
+      "guarded": 0
+    },
+    "server/routes/dossier-map.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/dossier-readiness.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/dossier_routes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/ectd-compile.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/ectd-documents.ts": {
+      "total": 8,
+      "guarded": 7
+    },
+    "server/routes/ectd-export.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/ectd-submission-agent.routes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/effort-certification.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/enablement.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/escalate.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/esgSubmissionRoutes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/esignature.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/etmf.routes.ts": {
+      "total": 8,
+      "guarded": 8
+    },
+    "server/routes/etmf.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/evidence-ask.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/evidence-asks.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/evidence-fabric.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/evidence-management.routes.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/evidence-objects.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/evidence-search.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/evidence-sufficiency.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/evidence.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/export-control.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/external-evidence.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/external-intelligence-routes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/fda-forms.routes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/fda510k-routes.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/fda510k-unified.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/fieldSync.routes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/financial-disclosures.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/firecrawl-webhooks.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/firecrawl.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/folder-management.js": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/global-compliance.ts": {
+      "total": 19,
+      "guarded": 0
+    },
+    "server/routes/global-markets.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/global-ri/advanced-therapies.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/bioequivalence.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/catalog.routes.ts": {
+      "total": 3,
+      "guarded": 3
+    },
+    "server/routes/global-ri/changes.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/clinical-evidence-standards.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/cmc.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/combination.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/companion-diagnostics.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/controlled-substances.routes.ts": {
+      "total": 3,
+      "guarded": 3
+    },
+    "server/routes/global-ri/cta.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/device.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/disclosure.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/dossier.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/establishment-registration.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/exclusivity.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/expanded-access.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/fees.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/gcp.routes.ts": {
+      "total": 3,
+      "guarded": 3
+    },
+    "server/routes/global-ri/gdp.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/guidance.routes.ts": {
+      "total": 5,
+      "guarded": 5
+    },
+    "server/routes/global-ri/import-export-licensing.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/impurities.routes.ts": {
+      "total": 6,
+      "guarded": 6
+    },
+    "server/routes/global-ri/inspection.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/labeling.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/lifecycle.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/module1.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/nonclinical.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/pediatric.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/pharmacovigilance.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/process-validation.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/programs.routes.ts": {
+      "total": 7,
+      "guarded": 7
+    },
+    "server/routes/global-ri/promotional-compliance.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/reliance.routes.ts": {
+      "total": 3,
+      "guarded": 3
+    },
+    "server/routes/global-ri/safety-reporting.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/stability.routes.ts": {
+      "total": 4,
+      "guarded": 4
+    },
+    "server/routes/global-ri/strategy.routes.ts": {
+      "total": 1,
+      "guarded": 1
+    },
+    "server/routes/global-ri/submission-format.routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/routes/global-ri/timeline.routes.ts": {
+      "total": 1,
+      "guarded": 1
+    },
+    "server/routes/governed-intelligence-inconsistency-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/grant-finder.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/grants.ts": {
+      "total": 30,
+      "guarded": 0
+    },
+    "server/routes/graphrag.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/grdheRoutes.ts": {
+      "total": 26,
+      "guarded": 2
+    },
+    "server/routes/gspr-postmarket.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/ha-interactions.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/haq-manager.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/harmonize.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/health.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/human-factors.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/iacuc.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/ibc.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/ind-autodraft.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/ind-checklist.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ind-database.routes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/ind-forms.routes.ts": {
+      "total": 6,
+      "guarded": 6
+    },
+    "server/routes/ind-generation.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/ind-kpi.routes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/ind-lifecycle/compute.routes.ts": {
+      "total": 7,
+      "guarded": 7
+    },
+    "server/routes/ind-lifecycle/documents.routes.ts": {
+      "total": 22,
+      "guarded": 22
+    },
+    "server/routes/ind-lifecycle/filing.routes.ts": {
+      "total": 3,
+      "guarded": 3
+    },
+    "server/routes/ind-lifecycle/registers.routes.ts": {
+      "total": 21,
+      "guarded": 21
+    },
+    "server/routes/ind-lifecycle/sequence.routes.ts": {
+      "total": 8,
+      "guarded": 8
+    },
+    "server/routes/ind-lifecycle/submission.routes.ts": {
+      "total": 7,
+      "guarded": 7
+    },
+    "server/routes/ind-lifecycle.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ind-master-data.routes.ts": {
+      "total": 4,
+      "guarded": 4
+    },
+    "server/routes/ind-pdf.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/ind-sections.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/ind-submissions.routes.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/ind-templates.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/ind-unified.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/ind.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/ind_automation_routes.ts": {
+      "total": 19,
+      "guarded": 0
+    },
+    "server/routes/inline-annotations.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/innovation-routes.ts": {
+      "total": 61,
+      "guarded": 55
+    },
+    "server/routes/insights-canvas-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/inspections.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/integration-test.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/intelligence-cluster.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/intelligence.ts": {
+      "total": 14,
+      "guarded": 0
+    },
+    "server/routes/intelligent-reports.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/intelligentDocs.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/invention-disclosure.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/investigator-brochure.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/irb.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/ivd-assessments.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/ivd-completeness-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/ivd-knowledge.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/ivd-lifecycle.ts": {
+      "total": 49,
+      "guarded": 0
+    },
+    "server/routes/ivdr-binder-routes.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/ivdr-routes.ts": {
+      "total": 23,
+      "guarded": 0
+    },
+    "server/routes/k510-document-preview.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/knowledge-base.ts": {
+      "total": 14,
+      "guarded": 0
+    },
+    "server/routes/knowledge.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/labeling-pi.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/labeling-smpc.routes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/learning-horizon.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/leaves.js": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/license-routes.js": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/licensing.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/lifecycle.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/maa-module1.routes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/manufacturing-routes.ts": {
+      "total": 13,
+      "guarded": 0
+    },
+    "server/routes/market-access.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/market-access.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/mdx-admin.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-ana-drafts.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/mdx-ana-memory.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/mdx-analytics.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/mdx-audit.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-cdx.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/mdx-clia.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/mdx-client-review.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-clinical-studies.ts": {
+      "total": 17,
+      "guarded": 0
+    },
+    "server/routes/mdx-engineering.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-imports.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/mdx-industry-context.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/mdx-ivd-performance.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/mdx-ivdr.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/mdx-labeling.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/mdx-ldt.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/mdx-notifications.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/mdx-postmarket.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-qms.ts": {
+      "total": 35,
+      "guarded": 0
+    },
+    "server/routes/mdx-rbm-board.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/mdx-rbm-data.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/mdx-rbm.ts": {
+      "total": 37,
+      "guarded": 0
+    },
+    "server/routes/mdx-risk-management.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/mdx-search.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-software.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/mdx-study-archetypes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-submission-gateway.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/mdx-templates.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx-udi.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/mdx-vault.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/mdx-work-packages.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/mdx.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/medical-device-routes.js": {
+      "total": 21,
+      "guarded": 0
+    },
+    "server/routes/misc-inline-routes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/mission-control.ts": {
+      "total": 38,
+      "guarded": 0
+    },
+    "server/routes/module-subscriptions.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/moduleIntegrationRoutes.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/nanoBanana.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/nda-cockpit.routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/nonclinical-summary.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/nonclinical.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/notification_routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/onboarding-proposals.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/operating-system.ts": {
+      "total": 27,
+      "guarded": 0
+    },
+    "server/routes/orchestration-checkpoints.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/orchestration.ts": {
+      "total": 13,
+      "guarded": 0
+    },
+    "server/routes/organizations-routes.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/other-support.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/part11-compliance.ts": {
+      "total": 14,
+      "guarded": 0
+    },
+    "server/routes/pccp.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/pdev/pdev-routes.ts": {
+      "total": 22,
+      "guarded": 0
+    },
+    "server/routes/pdf-task-routes.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/pharmacovigilance-board.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/pharmacovigilance-routes.ts": {
+      "total": 17,
+      "guarded": 0
+    },
+    "server/routes/planner-routes.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/platform-capabilities.routes.ts": {
+      "total": 3,
+      "guarded": 3
+    },
+    "server/routes/pma-workflow-routes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/postmarket-surveillance.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/preIndRoutes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/precedent-engine-board.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/precedent-engine.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/preclinical.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/predicate-intelligence.ts": {
+      "total": 23,
+      "guarded": 0
+    },
+    "server/routes/predictive-sections.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/program-journey.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/programs.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/project-hierarchy.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/project-home-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/project-modules.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/project-rules.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/project-schedule-of-events.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/project-sections.ts": {
+      "total": 21,
+      "guarded": 0
+    },
+    "server/routes/projects-management.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/protocol-amendments.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/protocol-budget.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/protocol-consent.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/protocol-dev.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/protocol-development.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/protocol-deviations.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/protocol-export.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/protocol-milestones.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/protocol-portfolio.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/protocol-reviews.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/protocol-risks.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/protocol-soa.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/protocol-templates.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/protocol_routes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/public-api.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/pyramid.routes.ts": {
+      "total": 4,
+      "guarded": 4
+    },
+    "server/routes/q-sub.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/qc.routes.ts": {
+      "total": 45,
+      "guarded": 30
+    },
+    "server/routes/qms.ts": {
+      "total": 17,
+      "guarded": 0
+    },
+    "server/routes/quality-management-api.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/real-world-evidence.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/realtime-collab.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/reg-change.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/region-profiles.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/registrations-standards.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/regulatory-assessments.routes.ts": {
+      "total": 4,
+      "guarded": 4
+    },
+    "server/routes/regulatory-correspondence.ts": {
+      "total": 13,
+      "guarded": 0
+    },
+    "server/routes/regulatory-digital-twin.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/regulatory-graph.ts": {
+      "total": 26,
+      "guarded": 0
+    },
+    "server/routes/regulatory-intelligence.ts": {
+      "total": 26,
+      "guarded": 26
+    },
+    "server/routes/regulatory-precedent-intelligence.ts": {
+      "total": 39,
+      "guarded": 0
+    },
+    "server/routes/regulatory-programs.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/routes/regulatory-registry.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/regulatory-workspace-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/regulatoryRoutes.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/regulatorySubmissions.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/report-os-insights.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/report-os.ts": {
+      "total": 23,
+      "guarded": 0
+    },
+    "server/routes/reports/generate-report.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/reports/subscriptions-routes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/research-admin.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/research-agreements.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/research-compliance.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/research-security.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/resolution.ts": {
+      "total": 33,
+      "guarded": 0
+    },
+    "server/routes/review-board-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/rim.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/rtm-export.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/safety-narrative.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/saved-precedent-queries.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/scim.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/se-matrix.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/seed-demo.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/sentinel-routes.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/setup.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/shadow-review.routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/smart-blocks.js": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/snowglobe.ts": {
+      "total": 20,
+      "guarded": 0
+    },
+    "server/routes/source-tracer-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/spl-fhir.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/sso.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/standards.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/statistical-defensibility.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/study-design.ts": {
+      "total": 17,
+      "guarded": 0
+    },
+    "server/routes/submission-ops.ts": {
+      "total": 30,
+      "guarded": 0
+    },
+    "server/routes/submission-orchestrator.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/routes/submission-readiness.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/submission-sign-release.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/submission-twin.ts": {
+      "total": 16,
+      "guarded": 0
+    },
+    "server/routes/submissionCenter.routes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/submissions.ts": {
+      "total": 64,
+      "guarded": 64
+    },
+    "server/routes/substantial-equivalence.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/taskBoard.routes.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/taskManagement.routes.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/routes/templates.routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/tenant-config.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/tenant-ctq-factors.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/routes/tenant-export.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/tenant-quality-validation.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/tenant-section-gating.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/tenant-stats.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/tenant-traceability.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/tenant-users.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/tenants-simple.ts": {
+      "total": 6,
+      "guarded": 4
+    },
+    "server/routes/tenants.ts": {
+      "total": 6,
+      "guarded": 1
+    },
+    "server/routes/test-assembly.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/routes/translation.routes.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/routes/udi-ivdr.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/unifiedTasks.routes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/routes/universal-packager.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/routes/users.ts": {
+      "total": 13,
+      "guarded": 0
+    },
+    "server/routes/validate-completeness.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/validation-kit.ts": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/routes/well-known.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/routes/workflow.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/routes/workspace-config.routes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/routes/workspace-summary.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/api/ai/phase3-routes.js": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/api/ai/routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/cmc/audit-risk-monitor.js": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/api/cmc/batchRecordRoutes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/api/cmc/blueprint-generator.js": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/cmc/blueprintRoutes.ts": {
+      "total": 3,
+      "guarded": 1
+    },
+    "server/api/cmc/change-impact-simulator.js": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/cmc/cmc-copilot.js": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/cmc/collaborationRoutes.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/api/cmc/documentRoutes.ts": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/api/cmc/global-compliance.js": {
+      "total": 7,
+      "guarded": 0
+    },
+    "server/api/cmc/index.js": {
+      "total": 2,
+      "guarded": 1
+    },
+    "server/api/cmc/manufacturing-tuner.js": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/cmc/module3AutoDraftRoutes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/api/cmc/module3BuildStateRoutes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/api/cmc/module3ConvergenceRoutes.ts": {
+      "total": 3,
+      "guarded": 0
+    },
+    "server/api/cmc/module3OperatingSystemRoutes.ts": {
+      "total": 12,
+      "guarded": 0
+    },
+    "server/api/cmc/playbookRoutes.ts": {
+      "total": 6,
+      "guarded": 4
+    },
+    "server/api/cmc/portfolio.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/api/cmc/preclinical-translator.js": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/cmc/projectRoutes.ts": {
+      "total": 26,
+      "guarded": 0
+    },
+    "server/api/cmc/regulatoryIR.ts": {
+      "total": 8,
+      "guarded": 0
+    },
+    "server/api/cmc/routes.ts": {
+      "total": 25,
+      "guarded": 0
+    },
+    "server/api/cmc/specificationRoutes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/cmc/stabilityRoutes.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/api/cmc/workflowRoutes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/api/drafting/routes.ts": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/api/ectd/routes.ts": {
+      "total": 6,
+      "guarded": 0
+    },
+    "server/api/enterprise/rbac-routes.js": {
+      "total": 10,
+      "guarded": 7
+    },
+    "server/api/enterprise/routes.js": {
+      "total": 9,
+      "guarded": 5
+    },
+    "server/api/gcc/ectd/routes.js": {
+      "total": 2,
+      "guarded": 0
+    },
+    "server/api/gcc/index.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/api/gcc/labeling/routes.js": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/api/gcc/signing/routes.js": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/api/gcc/site-intel/routes.js": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/api/gcc/vault/routes.js": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/api/labeling/routes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/api/neuro-symbolic/routes.ts": {
+      "total": 17,
+      "guarded": 0
+    },
+    "server/api/semantic-search.js": {
+      "total": 6,
+      "guarded": 6
+    },
+    "server/api/signing/routes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/api/site-intel/routes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/api/templates/routes.ts": {
+      "total": 10,
+      "guarded": 0
+    },
+    "server/api/validation/index.js": {
+      "total": 5,
+      "guarded": 0
+    },
+    "server/startup/frontend.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/startup/inline-endpoints.ts": {
+      "total": 9,
+      "guarded": 0
+    },
+    "server/startup/services.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/bootstrap/register-advanced-platform-routes.ts": {
+      "total": 2,
+      "guarded": 2
+    },
+    "server/bootstrap/register-ind-lifecycle-routes.ts": {
+      "total": 1,
+      "guarded": 1
+    },
+    "server/bootstrap/register-inline-routes.ts": {
+      "total": 1,
+      "guarded": 0
+    },
+    "server/bootstrap/register-platform-routes.ts": {
+      "total": 11,
+      "guarded": 0
+    },
+    "server/src/routes/control-plane.router.ts": {
+      "total": 17,
+      "guarded": 0
+    },
+    "server/src/routes/pm-settings.router.ts": {
+      "total": 4,
+      "guarded": 0
+    },
+    "server/src/routes/stability.router.ts": {
+      "total": 74,
+      "guarded": 0
+    }
+  }
+}

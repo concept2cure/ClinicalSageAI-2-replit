@@ -282,6 +282,16 @@ export interface BundleExecutionReceipt {
   };
 
   timestamp: string;
+
+  /**
+   * Set by the executor after the receipt row is durably written to
+   * bundle_execution_receipts (ADR-0009). Absent only on receipts that predate
+   * receipt capture — those have no durable proof and must be presented as
+   * such, never inferred from bundle-item status.
+   */
+  receiptId?: string;
+  /** sha256 over the canonical (key-sorted) JSON of this receipt body. */
+  receiptHash?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -68,7 +68,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
     const inserted = await pool.query(
       `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload, source_hash, version)
        VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7)
-       ON CONFLICT (project_id, source_type, source_key, version)
+       ON CONFLICT (organization_id, project_id, source_type, source_key, version)
        DO UPDATE SET source_payload = excluded.source_payload, source_hash = excluded.source_hash, updated_at = NOW()
        RETURNING id, source_type as "sourceType", source_key as "sourceKey", source_hash as "sourceHash", version`,
       [orgId, projectId, data.sourceType, data.sourceKey, JSON.stringify(data.sourcePayload), sourceHash, version]
@@ -135,12 +135,35 @@ router.post('/compile/:projectId', async (req, res) => {
       [orgId, projectId]
     );
 
+    // Refuse to compile from nothing.
+    //
+    // composeModule3FromCanonicalSources is MODULE3_SECTION_RULES.map(...) — it
+    // emits all 17 sections unconditionally, so zero sources still yields 17
+    // bodies reading "has no source data available", with completeness 0 and no
+    // lineage. The upsert below then writes `stale = false, stale_reason = NULL`
+    // and does not touch approval_state, so those empty bodies land marked
+    // not-stale over whatever approval state was already there — which is
+    // exactly what canFinalizeExport reads before releasing a Module 3.
+    //
+    // Compiling a project that has no canonical sources is never a legitimate
+    // request; it is either a mistake or a probe. 409 says so, instead of
+    // manufacturing seventeen empty-but-clean sections. The AnA command handler
+    // already guards this way (server/services/ana-ri/module3-command-handlers.ts).
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: 'No canonical source objects for this project — nothing to compile.',
+        hint: 'Upsert source objects via POST /api/cmc/module3-os/source-objects/:projectId first.',
+      });
+    }
+
     const compiled = composeModule3FromCanonicalSources(rows as any);
     for (const section of compiled) {
       const upsert = await client.query(
         `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
          VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,'draft')
-         ON CONFLICT (project_id, section_key)
+         ON CONFLICT (organization_id, project_id, section_key)
          DO UPDATE SET deterministic_json = excluded.deterministic_json,
                        compiled_hash = excluded.compiled_hash,
                        stale = excluded.stale,
@@ -167,7 +190,14 @@ router.post('/compile/:projectId', async (req, res) => {
       const sectionId = upsert.rows[0]?.id;
       if (!sectionId) continue;
 
-      await client.query(`DELETE FROM cmc_section_lineage WHERE section_id = $1`, [sectionId]);
+      // Scoped by org as well as section id. `sectionId` comes from the upsert's
+      // RETURNING, so before the arbiter carried organization_id this deleted the
+      // VICTIM's provenance rows — the traceability tying each Module 3 section
+      // back to the source objects it was compiled from.
+      await client.query(
+        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
+        [sectionId, orgId]
+      );
       for (const lin of section.lineage) {
         await client.query(
           `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)

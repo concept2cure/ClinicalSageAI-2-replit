@@ -3,7 +3,6 @@
  *
  * Given a `regulatoryPrograms.id`, this service joins:
  *   - regulatoryPrograms                              (program metadata)
- *   - ind_package_plans + plan_documents              (IND assembly state)
  *   - q_submissions + q_sub_meetings + q_sub_questions (Pre-IND / INTERACT)
  *   - fda_communications                              (raw FDA correspondence)
  *   - pdev_program_activities                         (per-activity state)

@@ -20,7 +20,7 @@ vi.unmock('pg');
 
 import { Pool } from 'pg';
 import { instrumentPool } from '../poolInstrumentation';
-import { installRlsEnforcement } from '../rlsEnforcement';
+import { buildRlsStartupOptions } from '../rlsEnforcement';
 import { runWithTenantScope } from '../tenantStore';
 
 const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
@@ -31,7 +31,6 @@ const skip = !databaseUrl || isSentinelTestUrl;
 const describeIfDb = skip ? describe.skip : describe;
 
 if (skip) {
-  // eslint-disable-next-line no-console
   console.warn('[pool-primitive-integration] skipping — set TEST_DATABASE_URL or DATABASE_URL to run');
 }
 
@@ -83,13 +82,13 @@ describeIfDb('pool-instrumentation tenant-scope primitive — integration', () =
 
     // max:1 → every query reuses the single physical connection, so the
     // no-leak assertion is meaningful.
-    pool = new Pool({ connectionString: databaseUrl, max: 1 });
-    // Each connection: enforce the policy (rls_enforce=on) and drop to the
-    // non-superuser role so RLS is not bypassed.
-    pool.on('connect', client => {
-      void client.query(`SET ROLE ${ROLE}`);
-    });
-    installRlsEnforcement(pool); // sets app.rls_enforce from RLS_ENFORCE=on
+    pool = new Pool({
+      connectionString: databaseUrl,
+      max: 1,
+      // Both settings complete during the PostgreSQL startup handshake, before
+      // the pool can expose the client to the first application query.
+      options: buildRlsStartupOptions(process.env, `-c role=${ROLE}`),
+    } as any);
     instrumentPool(pool); // the primitive under test
   });
 
@@ -102,6 +101,31 @@ describeIfDb('pool-instrumentation tenant-scope primitive — integration', () =
     }
     if (prevEnforce === undefined) delete process.env.RLS_ENFORCE;
     else process.env.RLS_ENFORCE = prevEnforce;
+  });
+
+  it('exposes RLS enforcement to the first query on concurrent startup connections', async () => {
+    const concurrent = new Pool({
+      connectionString: databaseUrl,
+      max: 4,
+      options: buildRlsStartupOptions({ NODE_ENV: 'production', RLS_ENFORCE: 'on' }),
+    } as any);
+    try {
+      const results = await Promise.all(Array.from({ length: 8 }, () =>
+        concurrent.query("SELECT current_setting('app.rls_enforce', true) AS mode"),
+      ));
+      expect(results.every(result => result.rows[0]?.mode === 'on')).toBe(true);
+    } finally {
+      await concurrent.end();
+    }
+  });
+
+  it('rejects malformed startup options before application SQL executes', async () => {
+    const malformed = new Pool({ connectionString: databaseUrl, max: 1, options: '-c' } as any);
+    try {
+      await expect(malformed.query('SELECT 1')).rejects.toBeDefined();
+    } finally {
+      await malformed.end().catch(() => undefined);
+    }
   });
 
   it('scope tenant 1 → sees only tenant-1 rows (vars applied automatically)', async () => {
@@ -130,17 +154,30 @@ describeIfDb('pool-instrumentation tenant-scope primitive — integration', () =
     expect(rows.rowCount).toBe(2);
   });
 
-  it('NO-LEAK: after a scoped query, a subsequent unscoped query on the reused connection sees zero rows', async () => {
+  it('NO-LEAK: rejects an unscoped query after scoped connection reuse', async () => {
     // Tenant 2 scope populates current_tenant_id LOCAL to its micro-transaction.
     await runWithTenantScope(
       { tenantId: '2', source: 'job', caller: 'test' },
       () => pool.query(`SELECT id FROM ${TABLE}`),
     );
-    // No scope → primitive is inert → query runs directly on the SAME (max:1)
-    // connection. If the LOCAL var had leaked, this would see tenant-2's row.
-    // Under rls_enforce=on with no current_tenant_id, the policy yields zero.
-    const leaked = await pool.query(`SELECT id FROM ${TABLE}`);
-    expect(leaked.rowCount).toBe(0);
+    // Missing tenant context is rejected before SQL reaches the reused
+    // connection; callers cannot mistake an empty RLS result for authorized
+    // access or execute a policy-misconfigured table unscoped.
+    await expect(pool.query(`SELECT id FROM ${TABLE}`)).rejects.toThrow(
+      /requires an active tenant scope/,
+    );
+  });
+
+  it('NO-LEAK: reused connection switches from tenant 2 to tenant 1', async () => {
+    await runWithTenantScope(
+      { tenantId: '2', source: 'job', caller: 'test' },
+      () => pool.query(`SELECT id FROM ${TABLE}`),
+    );
+    const tenantOne = await runWithTenantScope(
+      { tenantId: '1', source: 'job', caller: 'test' },
+      () => pool.query(`SELECT organization_id FROM ${TABLE}`),
+    );
+    expect(tenantOne.rows).toEqual([{ organization_id: 1 }]);
   });
 
   it('WITH CHECK rejects an insert under a mismatched tenant scope', async () => {

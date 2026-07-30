@@ -549,7 +549,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE, 'motion-discipline'],
-    notes: 'ICH E6(R3) RBQM domain shell — 10 surfaces (overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight, monitoring plan) over 40 /api/mdx/rbm-* routes. 5 deterministic engines produce every score; assessment + plan approvals are Part 11 governed (reason-for-change + e-sign). Contract ref (not yet a @shared file): client/src/concept2cure/services/rbmService.ts · hooks/useRbm.ts',
+    notes: 'ICH E6(R3) RBQM domain shell — 10 surfaces (overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight, monitoring plan) over the /api/mdx/rbm-* routes, read through the aggregated board (GET /api/mdx-rbm/rbm-board/:programId). 5 deterministic engines produce every score; assessment + plan approvals are Part 11 governed (reason-for-change + e-sign). Every in-surface edit is a real write followed by a board re-read — no local optimistic state. Write layer: client/src/concept2cure/v2/surfaces/rbmWrites.tsx.',
   },
   {
     id: 'orchestration',
@@ -826,6 +826,23 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Client onboarding wizard: org archetype → pricing model → tier → seats → personnel → module provisioning → activate.',
+  },
+  {
+    id: 'onboarding-ingest',
+    label: 'Set up from a document',
+    navTier: 'admin',
+    layoutMode: 'onboarding',
+    group: 'admin',
+    icon: 'upload',
+    uiKit: null,
+    apiPrefixes: ['/api/onboarding'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'Upload an onboarding document; AnA proposes values whose provenance it verified against the document text, the human reviews and approves, and approved org-profile fields are applied through the governed, audited commit.',
   },
   {
     id: 'usage',

@@ -173,6 +173,57 @@ export const organizations = pgTable('organizations', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Industry-context tailoring — governed profiles that preset one self-tailoring
+// workspace (see docs/MDX_INDUSTRY_CONTEXT_GAP_ANALYSIS.md). Replaces the
+// free-text industry_mode column, the localStorage admin blob, and the
+// onboarding mock as the authoritative source of a tenant's industry context.
+export const organizationIndustryProfiles = pgTable('organization_industry_profiles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .unique()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  // medical_device_diagnostics | biotech_pharma | cro | regulatory_consulting | academic_research
+  primaryIndustry: text('primary_industry').notNull(),
+  // medical_device | ivd_diagnostics | both | samd | companion_diagnostic | combination_product
+  mdxSpecialization: text('mdx_specialization'),
+  defaultMarkets: jsonb('default_markets').$type<string[]>().default([]).notNull(),
+  defaultPathways: jsonb('default_pathways').$type<string[]>().default([]).notNull(),
+  // single_reviewer | regulated_dual_review | qa_lock | signoff_required
+  defaultApprovalRigor: text('default_approval_rigor'),
+  effectiveAt: timestamp('effective_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+// organization_id is UNIQUE, so Postgres already indexes it — no extra index.
+
+// Per-project override, keyed on the canonical project id space
+// (regulatory_programs.id uuid) that clinical_studies / rbm_* / cdisc_prm share.
+// Inherits org defaults; a project may refine vertical/specialization/pathways
+// without changing navigation.
+export const projectIndustryProfiles = pgTable('project_industry_profiles', {
+  id: serial('id').primaryKey(),
+  programId: uuid('program_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  vertical: text('vertical'), // mdx | biopharma
+  specialization: text('specialization'),
+  productType: text('product_type'),
+  lifecycleStage: text('lifecycle_stage'),
+  targetMarkets: jsonb('target_markets').$type<string[]>().default([]).notNull(),
+  regulatoryPathways: jsonb('regulatory_pathways').$type<string[]>().default([]).notNull(),
+  filingTypes: jsonb('filing_types').$type<string[]>().default([]).notNull(),
+  inheritedFromOrg: boolean('inherited_from_org').default(true).notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  // program_id is UNIQUE (auto-indexed); org needs its own index for list scans.
+  pipOrgIdx: index('pip_org_idx').on(t.organizationId),
+}));
+
 // Organization Insert Schema
 export const insertOrganizationSchema = createInsertSchemaOmit(organizations, {
   id: true,
@@ -6847,7 +6898,15 @@ export const projectScheduleOfEvents = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   table => ({
-    uniqueProjectSchedule: unique('unique_project_schedule').on(table.projectId),
+    // Tenant-aware arbiter. This was `unique('unique_project_schedule')` on
+    // projectId ALONE, and uniqueness is what ON CONFLICT resolves against —
+    // so the org-blind key let an upsert in one organization land on another
+    // organization's row. Never narrow this back to projectId.
+    // See db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql
+    uniqueProjectScheduleOrg: unique('unique_project_schedule_org').on(
+      table.organizationId,
+      table.projectId
+    ),
     idx_project_schedule_org: index('idx_project_schedule_org').on(table.organizationId),
     idx_project_schedule_project: index('idx_project_schedule_project').on(table.projectId),
   })
@@ -7040,6 +7099,14 @@ export const unifiedTasks = pgTable(
     comments: json('comments'),
     metadata: json('metadata'),
 
+    // MDx / regulatory task metadata (20260727_unified_tasks_mdx_metadata.sql)
+    lifecyclePhase: text('lifecycle_phase'), // see LIFECYCLE_PHASES below
+    market: text('market'), // target market/jurisdiction (e.g. US, EU, JP)
+    filingType: text('filing_type'), // e.g. 510(k), PMA, IVDR, IND, NDA
+    studyId: integer('study_id'), // linked study (no FK; tenant-provisioned store)
+    deliverableId: integer('deliverable_id'), // linked deliverable (no FK)
+    clientVisibility: text('client_visibility'), // internal | client_visible
+
     // Audit
     createdById: integer('created_by_id').references(() => users.id),
     lastModifiedBy: integer('last_modified_by').references(() => users.id),
@@ -7055,8 +7122,26 @@ export const unifiedTasks = pgTable(
     priorityIdx: index('unified_priority_idx').on(table.priority),
     projectIdx: index('unified_project_idx').on(table.projectId),
     idx_unified_tasks_org: index('idx_unified_tasks_org').on(table.organizationId),
+    lifecyclePhaseIdx: index('unified_lifecycle_phase_idx').on(table.lifecyclePhase),
   })
 );
+
+/**
+ * Canonical lifecycle phases for unified_tasks.lifecycle_phase (device/IVD
+ * development lifecycle through post-market). App-enforced domain — the column
+ * stays plain text so the migration remains purely additive.
+ */
+export const LIFECYCLE_PHASES = [
+  'strategy',
+  'design',
+  'verification',
+  'clinical_performance',
+  'submission_prep',
+  'authority_review',
+  'market_authorization',
+  'postmarket',
+] as const;
+export type LifecyclePhase = (typeof LIFECYCLE_PHASES)[number];
 
 // Unified Task Insert Schema
 export const insertUnifiedTaskSchema = createInsertSchemaOmit(unifiedTasks, {
@@ -8165,9 +8250,10 @@ export const ectdCompilations = pgTable(
     organizationId: integer('organization_id')
       .references(() => organizations.id)
       .notNull(),
-    moduleId: integer('module_id')
-      .references(() => ectdModules.id)
-      .notNull(),
+    // Nullable: a PROJECT-level compilation (POST /api/ectd-compile/:projectId/compile)
+    // spans every module and has no single module to point at. The column was
+    // NOT NULL, so that route's insert could never succeed — see ledger C-16.
+    moduleId: integer('module_id').references(() => ectdModules.id),
     compilationName: text('compilation_name').notNull(),
     compilationType: text('compilation_type').notNull(), // module, section, custom
     includedGranules: json('included_granules'), // Array of granule IDs
@@ -8176,7 +8262,9 @@ export const ectdCompilations = pgTable(
     xmlBackbone: text('xml_backbone'), // eCTD XML structure
     crossReferences: json('cross_references'), // ICH cross-references
     status: text('status').default('pending').notNull(), // pending, compiling, completed, failed
-    compiledBy: integer('compiled_by').notNull(),
+    // Nullable for the same reason: service-initiated compilations have no
+    // interactive user. The one existing writer that set it used a hardcoded 1.
+    compiledBy: integer('compiled_by'),
     compiledAt: timestamp('compiled_at'),
     version: text('version').default('1.0'),
     changeLog: json('change_log'), // Track changes in compilation
@@ -12547,6 +12635,11 @@ export const cdiscPrmStudies = pgTable(
       .notNull()
       .references(() => organizations.id),
     studyId: varchar('study_id', { length: 100 }).notNull().unique(),
+    // Canonical project key (regulatory_programs.id) — shared with
+    // clinical_studies and rbm_*. Nullable: populated on persist from a
+    // design's programId when it is a UUID. Bare uuid, no FK, matching the
+    // clinical-spine convention.
+    programId: uuid('program_id'),
     protocolId: varchar('protocol_id', { length: 100 }).notNull(),
     protocolTitle: text('protocol_title').notNull(),
     protocolVersion: varchar('protocol_version', { length: 20 }).notNull(),
@@ -12575,6 +12668,7 @@ export const cdiscPrmStudies = pgTable(
   table => ({
     tenantStudyIdx: uniqueIndex('prm_tenant_study_idx').on(table.tenantId, table.studyId),
     protocolIdx: index('prm_protocol_idx').on(table.protocolId),
+    programIdx: index('prm_program_idx').on(table.programId),
     phaseIdx: index('prm_phase_idx').on(table.studyPhase),
   })
 );
@@ -13021,70 +13115,9 @@ export const clinicalOutcomes = pgTable(
   }
 );
 
-/**
- * ForesightAI Predictions Table
- * Stores predictive scores and recommendations for studies
- */
-export const foresightPredictions = pgTable(
-  'foresight_predictions',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    studyId: varchar('study_id', { length: 255 }).notNull(),
-    phase: text('phase').notNull(),
-    predictionType: text('prediction_type').notNull(), // success_score, enrollment_rate, safety_risk
-    successScore: real('success_score'),
-    confidenceInterval: json('confidence_interval'), // {lower: 0.65, upper: 0.85}
-    riskFactors: json('risk_factors'), // [{factor: 'small_sample', impact: -0.15}]
-    recommendations: json('recommendations'), // [{type: 'protocol', action: 'increase_dose'}]
-    similarTrials: json('similar_trials'), // [{id: 'NCT123', similarity: 0.92}]
-    failurePatterns: json('failure_patterns'), // [{pattern: 'dose_toxicity', probability: 0.23}]
-    modelVersion: text('model_version'),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-    expiresAt: timestamp('expires_at'),
-  },
-  table => {
-    return {
-      studyPhaseIdx: index('prediction_study_phase_idx').on(table.studyId, table.phase),
-      orgIdx: index('prediction_org_idx').on(table.organizationId),
-    };
-  }
-);
-
-/**
- * Clinical Feedback Loop Table
- * Captures real-world outcomes for continuous learning
- */
-export const clinicalFeedback = pgTable(
-  'clinical_feedback',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    studyId: varchar('study_id', { length: 255 }).notNull(),
-    predictionId: uuid('prediction_id').references(() => foresightPredictions.id),
-    phase: text('phase'),
-    feedbackType: text('feedback_type').notNull(), // outcome, protocol_change, safety_event
-    actualOutcome: text('actual_outcome'),
-    predictedOutcome: text('predicted_outcome'),
-    accuracyScore: real('accuracy_score'),
-    learningPoints: json('learning_points'), // Extracted insights for model improvement
-    impactOnModel: json('impact_on_model'), // How this feedback affects future predictions
-    verified: boolean('verified').default(false),
-    verifiedBy: text('verified_by'),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    capturedAt: timestamp('captured_at').defaultNow().notNull(),
-    processedAt: timestamp('processed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => {
-    return {
-      studyIdx: index('feedback_study_idx').on(table.studyId),
-      predictionIdx: index('feedback_prediction_idx').on(table.predictionId),
-      idx_clinical_feedback_org: index('idx_clinical_feedback_org').on(table.organizationId),
-    };
-  }
-);
+// foresight_predictions + clinical_feedback tables removed (Phase 8 — foresight
+// retirement). Their code was deleted; the tables are dropped in
+// db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql.
 
 /**
  * Translational Patterns Table
@@ -13129,16 +13162,6 @@ export const insertClinicalOutcomeSchema = createInsertSchemaOmit(clinicalOutcom
   createdAt: true,
 });
 
-export const insertForesightPredictionSchema = createInsertSchemaOmit(foresightPredictions, {
-  id: true,
-  createdAt: true,
-});
-
-export const insertClinicalFeedbackSchema = createInsertSchemaOmit(clinicalFeedback, {
-  id: true,
-  capturedAt: true,
-});
-
 export const insertTranslationalPatternSchema = createInsertSchemaOmit(translationalPatterns, {
   id: true,
   createdAt: true,
@@ -13156,12 +13179,6 @@ export type InsertBiomarkerEndpoint = typeof biomarkerEndpoints.$inferInsert;
 // to `{}` here) — yields the correct column shape for .values() calls.
 export type ClinicalOutcome = InferSelectModel<typeof clinicalOutcomes>;
 export type InsertClinicalOutcome = typeof clinicalOutcomes.$inferInsert;
-
-export type ForesightPrediction = InferSelectModel<typeof foresightPredictions>;
-export type InsertForesightPrediction = typeof foresightPredictions.$inferInsert;
-
-export type ClinicalFeedback = InferSelectModel<typeof clinicalFeedback>;
-export type InsertClinicalFeedback = typeof clinicalFeedback.$inferInsert;
 
 export type TranslationalPattern = InferSelectModel<typeof translationalPatterns>;
 export type InsertTranslationalPattern = typeof translationalPatterns.$inferInsert;
@@ -15800,62 +15817,24 @@ export const concept2cureConversationsRelations = relations(
 );
 
 // ============================================================================
-// SOURCE CITATIONS — Sentence-level source linking for regulatory traceability
+// SOURCE CITATIONS — REMOVED (2026-07-27)
 // ============================================================================
-
-export const sourceTypeEnum = pgEnum('source_type', [
-  'trial_data',
-  'literature',
-  'regulatory_guidance',
-  'internal_data',
-]);
-
-export const sourceCitations = pgTable(
-  'source_citations',
-  {
-    id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => documents.id),
-    sectionId: integer('section_id'),
-    sentenceIndex: integer('sentence_index').notNull(),
-    sentenceText: text('sentence_text').notNull(),
-    sourceType: sourceTypeEnum('source_type').notNull(),
-    sourceId: text('source_id').notNull(),
-    sourceTitle: text('source_title').notNull(),
-    sourceUrl: text('source_url'),
-    confidence: real('confidence').notNull().default(1.0),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    createdBy: integer('created_by').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  table => ({
-    documentIdx: index('source_citations_document_idx').on(table.documentId),
-    orgIdx: index('source_citations_org_idx').on(table.organizationId),
-    sectionIdx: index('source_citations_section_idx').on(table.documentId, table.sectionId),
-  })
-);
-
-export const insertSourceCitationSchema = createInsertSchemaOmit(sourceCitations, {
-  id: true,
-  createdAt: true,
-});
-
-export type SourceCitation = InferSelectModel<typeof sourceCitations>;
-export type InsertSourceCitation = z.infer<typeof insertSourceCitationSchema>;
-
-export const sourceCitationsRelations = relations(sourceCitations, ({ one }) => ({
-  document: one(documents, {
-    fields: [sourceCitations.documentId],
-    references: [documents.id],
-  }),
-  organization: one(organizations, {
-    fields: [sourceCitations.organizationId],
-    references: [organizations.id],
-  }),
-}));
+// The `source_citations` drizzle table that lived here was never backed by DDL:
+// no migration in migrations/, db/migrations/ or sql/ ever created it, so every
+// runtime access 42P01'd (the writer swallowed the error; the reader returned
+// 503). It also could not be salvaged by writing the DDL — the AI-edit writer
+// inserted `concept2cure_artifacts` ids into `document_id` while the declared FK
+// and the Source Tracer's join pointed at `documents.id`, an unrelated serial
+// sequence. Provisioning the table would have turned a silent failure into
+// cross-labelled provenance on a Part 11 surface.
+//
+// Recorded section→source lineage lives in `authoring_citations` under the
+// convention documented in migrations/20260726_authoring_citation_source_usage.sql
+// (source = 'cre_evidence_source', reference_id = cre_evidence_sources.id,
+// payload_sha256 = the source's checksum at cite time), read and written through
+// server/services/clinical-regulatory-evidence/source-usage.service.ts.
+// Model-asserted sentence↔chunk support lives in the ai-trace-chain tables,
+// labelled as inference. Do not reintroduce a third store between them.
 
 // ============================================================
 // BIOSTATISTICS PLATFORM TABLES
@@ -18356,7 +18335,7 @@ export const rbmKris = pgTable(
     thresholdAmber:   numeric('threshold_amber', { precision: 12, scale: 4 }),
     thresholdRed:     numeric('threshold_red', { precision: 12, scale: 4 }),
     currentValue:     numeric('current_value', { precision: 12, scale: 4 }),
-    status:           text('status').default('green').notNull(),
+    status:           text('status').default('not_evaluated').notNull(),
     evaluatedAt:      timestamp('evaluated_at', { withTimezone: true }),
     metadata:         jsonb('metadata').default('{}'),
     createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -18392,6 +18371,81 @@ export const rbmKriValues = pgTable(
   }),
 );
 export type RbmKriValue = InferSelectModel<typeof rbmKriValues>;
+
+/**
+ * One ingestion attempt against a program's RBM data. Carries the provenance
+ * an indicator is meaningless without: which feed, as of what cutoff, how many
+ * rows landed and what was rejected. A green KRI computed from a feed that
+ * last succeeded three weeks ago is not evidence of control, and this is the
+ * row that lets the board say so.
+ */
+export const rbmDataRuns = pgTable(
+  'rbm_data_runs',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    source:         text('source').notNull(),
+    sourceRef:      text('source_ref'),
+    /** The date the extract represents — NOT when it was loaded. */
+    dataCutoff:     date('data_cutoff'),
+    status:         text('status').default('running').notNull(),
+    rowsReceived:   integer('rows_received').default(0).notNull(),
+    rowsAccepted:   integer('rows_accepted').default(0).notNull(),
+    rowsRejected:   integer('rows_rejected').default(0).notNull(),
+    /** Per-row reject reasons — a dropped row is never silent. */
+    rejects:        jsonb('rejects').default('[]').notNull(),
+    error:          text('error'),
+    startedAt:      timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+    finishedAt:     timestamp('finished_at', { withTimezone: true }),
+    ingestedBy:     integer('ingested_by').references(() => users.id),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_data_runs_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_data_runs_org_program_idx').on(table.organizationId, table.programId),
+    freshnessIdx:  index('rbm_data_runs_freshness_idx')
+      .on(table.organizationId, table.programId, table.source, table.startedAt),
+  }),
+);
+export type RbmDataRun = InferSelectModel<typeof rbmDataRuns>;
+
+/**
+ * A landed measurement, scoped to the study, a country, a site or a subject,
+ * and tied to the run that produced it. `numerator`/`denominator` are carried
+ * when the source supplies them: a rate over 3 subjects is not the same
+ * evidence as the same rate over 300, and `value` alone cannot express that.
+ */
+export const rbmMetricObservations = pgTable(
+  'rbm_metric_observations',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    runId:          integer('run_id').references(() => rbmDataRuns.id, { onDelete: 'cascade' }),
+    metricKey:      text('metric_key').notNull(),
+    scopeLevel:     text('scope_level').default('study').notNull(),
+    scopeId:        text('scope_id'),
+    value:          numeric('value', { precision: 18, scale: 6 }),
+    numerator:      numeric('numerator', { precision: 18, scale: 6 }),
+    denominator:    numeric('denominator', { precision: 18, scale: 6 }),
+    unit:           text('unit'),
+    observedAt:     timestamp('observed_at', { withTimezone: true }).defaultNow().notNull(),
+    dataCutoff:     date('data_cutoff'),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_metric_obs_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_metric_obs_org_program_idx').on(table.organizationId, table.programId),
+    runIdx:        index('rbm_metric_obs_run_idx').on(table.runId),
+    lookupIdx:     index('rbm_metric_obs_lookup_idx')
+      .on(table.organizationId, table.programId, table.metricKey, table.scopeLevel, table.scopeId, table.observedAt),
+  }),
+);
+export type RbmMetricObservation = InferSelectModel<typeof rbmMetricObservations>;
 
 export const rbmPatientProfiles = pgTable(
   'rbm_patient_profiles',
@@ -18433,7 +18487,7 @@ export const rbmQtls = pgTable(
     currentValue:      numeric('current_value', { precision: 12, scale: 4 }),
     breached:          boolean('breached').default(false),
     breachActionTaken: text('breach_action_taken'),
-    status:            text('status').default('within').notNull(),
+    status:            text('status').default('not_evaluated').notNull(),
     metadata:          jsonb('metadata').default('{}'),
     createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -19720,387 +19774,61 @@ export const aiPlacementPolicies = pgTable('ai_placement_policies', {
 });
 export type AiPlacementPolicy = InferSelectModel<typeof aiPlacementPolicies>;
 
-/* ════════════════════════════════════════════════════════════════════════════
-   CLINICAL-REGULATORY INTELLIGENCE GRAPH
-   (migration 20260725_clinical_regulatory_evidence.sql)
+/* ════════════════════════════════════════════════════════════════════════
+   CLINICAL-REGULATORY EVIDENCE (drizzle mirror) — REMOVED (2026-07-27)
 
-   The evidence and reasoning spine joining the proposed design, the executed
-   study, the observed result, the FDA review finding, the application outcome
-   and the derived lesson:
+   Eight drizzle tables lived here (clinical_evidence_sources,
+   clinical_study_identities, study_result_observations,
+   regulatory_applications, regulatory_findings,
+   regulatory_application_outcomes, evidence_relationships, design_lessons),
+   mirroring migrations/20260725_clinical_regulatory_evidence.sql. They were a
+   PARALLEL lineage to the cre_* spine
+   (db/migrations/20260724_clinical_regulatory_evidence_spine.sql): same domain,
+   different id space (UUID vs SERIAL), written by a CSR adapter nothing called,
+   read by facade functions that were otherwise hardcoded empty stubs — while
+   the real data flows (CRL ingestion, CSR projection, chat-upload identity,
+   citations) all write cre_*. The split had a concrete casualty: the CRL
+   Library surface read findings through this lineage, so ingested CRLs could
+   never reach the surface built to show them.
 
-     clinical_evidence_sources       CSR / protocol / SAP / CRL / registry record
-     clinical_study_identities       NCT · sponsor study · protocol · product
-     study_result_observations       one endpoint result with its uncertainty
-     regulatory_applications         NDA / BLA / ANDA / 510(k) …
-     regulatory_findings             one FDA finding, resolvable to source+page
-     regulatory_application_outcomes verified outcome events only
-     evidence_relationships          typed edges (work order §4.1 vocabulary)
-     design_lessons                  governed, reversible derived insight
-
-   ── Two names are prefixed because the obvious ones are taken ─────────────
-   `evidence_sources` and `regulatory_outcomes` already exist in this schema and
-   mean different things, so this domain uses `clinical_evidence_sources` and
-   `regulatory_application_outcomes` rather than mutating live tables:
-
-   - `evidence_sources` (line ~17230) is the Evidence Fabric's document
-     registry. Close in spirit, but `organization_id` is NOT NULL, so it
-     structurally cannot hold globally-readable public FDA evidence. Widening it
-     would be a breaking change to a table with existing consumers.
-
-   - `regulatory_outcomes` (line ~16022) belongs to the Regulatory Outcome
-     Optimizer. It is keyed to `csr_id`, carries a free-text `decision`, and has
-     no verification column — so an "outcome" there can be derived from CSR data
-     with nothing recording whether a human confirmed it. That is a SECOND
-     instance of the §4.2 conflation the work order flags in
-     precedent-benchmark-reader, and it is documented in the discovery report as
-     transitional. This new table deliberately cannot express it: a resolved
-     outcome without `verified_at` fails a CHECK constraint.
-
-   ── Why relational, not a graph store (ADR-CRIG-001) ──────────────────────
-   The access pattern is metadata-constrained filter-then-rank, which
-   advancedRAGPipeline already serves. `evidence_relationships` carries the typed
-   edges as ordinary rows; no graph database is introduced.
-
-   ── Visibility is a column, and it is load-bearing (§14) ──────────────────
-   `organization_id` is NULL exactly for globally-readable public evidence
-   (official FDA letters). Tenant evidence always carries an org. Retrieval is
-   therefore `(organization_id IS NULL AND visibility = 'public') OR
-   organization_id = :org` — public evidence is shared, and one tenant's private
-   CSR can never enter another tenant's retrieval or a global benchmark.
-
-   ── The four honesty invariants the columns enforce ───────────────────────
-   1. Explicit vs inferred are SEPARATE columns everywhere they occur
-      (`ctd_section` / `ctd_section_status`, `study_link_status`). §7.2 — an
-      inferred mapping must never be storable as if FDA stated it.
-   2. `verification` and `conflict` travel WITH the row, so a finding cannot be
-      displayed without its review state. A conflicted row is excluded from
-      retrieval, indexing and export until a human resolves it.
-   3. `applicability` defaults to 'unknown', never 'study'. Many CRL findings are
-      application-, facility-, CMC- or labeling-level, and defaulting to study
-      would silently fabricate an attribution (§6.2).
-   4. Outcomes are recorded only when verified. There is deliberately no column
-      from which an outcome could be derived from trial status (§4.2).
-
-   ── CHECK constraints live in the migration, not here ─────────────────────
-   Drizzle's pgTable cannot express the CHECK constraints these invariants
-   need, and `drizzle-kit push` is unusable on this schema anyway (see
-   AGENTS.md — use `npm run db:ensure`). The migration
-   20260725_clinical_regulatory_evidence.sql is therefore the source of truth
-   for eight constraints that the type system alone cannot hold, among them:
-
-     cre_find_study_requires_study_level  a finding may carry a study_id only
-                                          when applicability = 'study', so the
-                                          database itself refuses to pin a
-                                          facility or CMC deficiency onto a
-                                          clinical trial
-     cre_src_visibility_scope             public evidence is never tenant-owned
-     cre_outcome_resolved_needs_verification  only 'unresolved' may lack a
-                                          verified_at
-     cre_rel_potential_is_inferred        POTENTIALLY_RELATED is always inferred
-                                          and always carries a rationale
-
-   __tests__/clinicalRegulatoryEvidenceSchema.test.ts pins column parity
-   between this file and that migration, because the two can otherwise drift
-   silently.
+   The cre_* spine is the ONE evidence store (recorded decision, 2026-07-26 —
+   "cre_evidence_sources, via its service"). The facade
+   (services/clinical-regulatory-evidence/index.ts) now reads it. Any
+   db:push-created copies of the eight tables are removed by
+   db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql.
+   Do not reintroduce a second evidence lineage here.
    ════════════════════════════════════════════════════════════════════════ */
 
-export const clinicalEvidenceSources = pgTable(
-  'clinical_evidence_sources',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    /** NULL ⇒ globally-readable public evidence. Non-null ⇒ tenant-private. */
-    organizationId: integer('organization_id').references(() => organizations.id),
-    projectId: integer('project_id'),
-    /** crl | csr | protocol | sap | review_memo | registry | publication | guidance | client_doc */
-    sourceType: text('source_type').notNull(),
-    /** public | tenant_private | project_private */
-    visibility: text('visibility').notNull().default('tenant_private'),
-    title: text('title'),
-    officialUrl: text('official_url'),
-    /** Content hash — drives idempotent re-ingestion and version bumps. */
-    checksum: text('checksum'),
-    version: integer('version').default(1).notNull(),
-    documentDate: timestamp('document_date'),
-    /** pending | fetched | extracted | reviewed | failed | retired */
-    ingestionStatus: text('ingestion_status').notNull().default('pending'),
-    extractionMethod: text('extraction_method'),
-    provenance: json('provenance'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    orgIdx: index('cre_src_org_idx').on(table.organizationId),
-    typeIdx: index('cre_src_type_idx').on(table.sourceType, table.visibility),
-    /** Re-ingesting the same bytes must not create a second source. */
-    uniqChecksum: unique('cre_src_checksum_uniq').on(table.checksum, table.version),
-  })
-);
-export type ClinicalEvidenceSourceRow = InferSelectModel<typeof clinicalEvidenceSources>;
+/* ════════════════════════════════════════════════════════════════════════
+   AnA onboarding — proposal runs (durable record of what AnA proposed).
 
-export const clinicalStudyIdentities = pgTable(
-  'clinical_study_identities',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    nctId: text('nct_id'),
-    sponsorStudyId: text('sponsor_study_id'),
-    protocolNumber: text('protocol_number'),
-    product: text('product'),
-    indication: text('indication'),
-    phase: text('phase'),
-    sponsor: text('sponsor'),
-    modality: text('modality'),
-    /** explicit | inferred — an inferred linkage is labelled everywhere it shows. */
-    linkageStatus: text('linkage_status').notNull().default('inferred'),
-    /** Why the linkage was made. Required reading before trusting an inferred link. */
-    linkageRationale: text('linkage_rationale'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    nctIdx: index('cre_study_nct_idx').on(table.nctId),
-    orgIdx: index('cre_study_org_idx').on(table.organizationId),
-    indicationIdx: index('cre_study_indication_idx').on(table.indication, table.phase),
-  })
-);
-export type ClinicalStudyIdentityRow = InferSelectModel<typeof clinicalStudyIdentities>;
+   The governed onboarding commit may only apply what the SERVER extracted, so
+   an ingest run records its own proposals here and the commit re-reads them.
+   Persisting them (rather than holding them in memory) means a review survives
+   a restart, and — the part that matters for an audit — the suggestions a human
+   REJECTED remain inspectable, not just the ones they approved. Committed
+   values are already recorded per-field in the sha256-chained audit trail.
 
-export const studyResultObservations = pgTable(
-  'study_result_observations',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    sourceId: uuid('source_id').references(() => clinicalEvidenceSources.id).notNull(),
-    studyId: uuid('study_id').references(() => clinicalStudyIdentities.id),
-    endpoint: text('endpoint').notNull(),
-    population: text('population'),
-    effectMeasure: text('effect_measure'),
-    /** Effect and its uncertainty. An effect WITHOUT se/ci is admitted to no prior. */
-    value: real('value'),
-    se: real('se'),
-    ciLow: real('ci_low'),
-    ciHigh: real('ci_high'),
-    pValue: real('p_value'),
-    n: integer('n'),
-    timepoint: text('timepoint'),
-    /** Recorded, never silently applied — a hidden transformation is a lie by omission. */
-    transformations: text('transformations').array(),
-    benefitDirectionNormalized: boolean('benefit_direction_normalized').default(false).notNull(),
-    method: text('method'),
-    /** Verbatim span backing the numbers. Never a paraphrase. */
-    sourceExcerpt: text('source_excerpt'),
-    sourcePage: integer('source_page'),
-    verification: text('verification').notNull().default('extracted_unreviewed'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    srcIdx: index('cre_obs_src_idx').on(table.sourceId),
-    studyIdx: index('cre_obs_study_idx').on(table.studyId),
-    endpointIdx: index('cre_obs_endpoint_idx').on(table.endpoint, table.verification),
-    orgIdx: index('cre_obs_org_idx').on(table.organizationId),
-  })
-);
-export type StudyResultObservationRow = InferSelectModel<typeof studyResultObservations>;
-
-export const regulatoryApplications = pgTable(
-  'regulatory_applications',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    /** NDA | BLA | ANDA | 510(k) | PMA | De Novo */
-    applicationType: text('application_type').notNull(),
-    applicationNumber: text('application_number').notNull(),
-    sponsor: text('sponsor'),
-    product: text('product'),
-    indication: text('indication'),
-    submittedAt: timestamp('submitted_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    uniqApp: unique('cre_app_number_uniq').on(table.applicationType, table.applicationNumber),
-    orgIdx: index('cre_app_org_idx').on(table.organizationId),
-  })
-);
-export type RegulatoryApplicationRow = InferSelectModel<typeof regulatoryApplications>;
-
-export const regulatoryFindings = pgTable(
-  'regulatory_findings',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    sourceId: uuid('source_id').references(() => clinicalEvidenceSources.id).notNull(),
-    applicationId: uuid('application_id').references(() => regulatoryApplications.id),
-    /** Only set when the finding is genuinely study-level. See `applicability`. */
-    studyId: uuid('study_id').references(() => clinicalStudyIdentities.id),
-    finding: text('finding').notNull(),
-    requestedAction: text('requested_action'),
-    /** critical | high | medium | low — as recorded, not as scored by a model. */
-    severity: text('severity').notNull().default('medium'),
-    /** clinical | statistical | safety | clinical_pharmacology | cmc | … (§7.1) */
-    discipline: text('discipline').notNull(),
-    /** Normalized issue type: "endpoint validity", "multiplicity", … */
-    category: text('category'),
-    /**
-     * study | application | facility | product | cmc | labeling | unknown.
-     * Defaults to 'unknown', NEVER 'study' — see the header note.
-     */
-    applicability: text('applicability').notNull().default('unknown'),
-
-    /* ── Mappings. Each value/status pair is stored separately so an inferred
-       mapping is structurally incapable of being read as source-explicit. ── */
-    ctdSection: text('ctd_section'),
-    ctdSectionStatus: text('ctd_section_status'),
-    ichE3Section: text('ich_e3_section'),
-    ichE3SectionStatus: text('ich_e3_section_status'),
-    designNodeType: text('design_node_type'),
-    designNodeStatus: text('design_node_status'),
-    /** Maps into the EXISTING ana-ri/deficiency-taxonomy vocabulary. */
-    deficiencyId: text('deficiency_id'),
-
-    /** explicit | inferred — for the finding itself. */
-    epistemicStatus: text('epistemic_status').notNull().default('inferred'),
-    /** The seven §13.2 display states. */
-    verification: text('verification').notNull().default('extracted_unreviewed'),
-    reviewedAt: timestamp('reviewed_at'),
-    reviewedBy: integer('reviewed_by').references(() => users.id),
-    /**
-     * Deterministic parse and model extraction disagree. Blocks retrieval,
-     * indexing and export until a human resolves it.
-     */
-    conflict: boolean('conflict').default(false).notNull(),
-    conflictNote: text('conflict_note'),
-
-    /** Verbatim excerpt and its exact location. Release gate: both resolvable. */
-    sourceExcerpt: text('source_excerpt'),
-    sourcePage: integer('source_page'),
-    sourceLocator: text('source_locator'),
-
-    extractionMethod: text('extraction_method'),
-    modelVersion: text('model_version'),
-    promptVersion: text('prompt_version'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    srcIdx: index('cre_find_src_idx').on(table.sourceId),
-    appIdx: index('cre_find_app_idx').on(table.applicationId),
-    studyIdx: index('cre_find_study_idx').on(table.studyId),
-    orgIdx: index('cre_find_org_idx').on(table.organizationId),
-    /** The §8.1 constraint set — these run BEFORE semantic ranking. */
-    constraintIdx: index('cre_find_constraint_idx').on(
-      table.discipline,
-      table.category,
-      table.verification,
-      table.applicability
-    ),
-    ctdIdx: index('cre_find_ctd_idx').on(table.ctdSection),
-    e3Idx: index('cre_find_e3_idx').on(table.ichE3Section),
-    designNodeIdx: index('cre_find_design_node_idx').on(table.designNodeType),
-    /** Lets the retrieval adapter exclude conflicted rows cheaply. */
-    conflictIdx: index('cre_find_conflict_idx').on(table.conflict),
-  })
-);
-export type RegulatoryFindingRow = InferSelectModel<typeof regulatoryFindings>;
-
-export const regulatoryApplicationOutcomes = pgTable(
-  'regulatory_application_outcomes',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    applicationId: uuid('application_id').references(() => regulatoryApplications.id).notNull(),
-    sourceId: uuid('source_id').references(() => clinicalEvidenceSources.id),
-    /** crl | resubmission | approval | withdrawal | unresolved */
-    outcome: text('outcome').notNull(),
-    outcomeDate: timestamp('outcome_date'),
-    resubmissionState: text('resubmission_state'),
-    /**
-     * A row exists ONLY for a verified outcome. There is no column here from
-     * which an outcome could be inferred from trial status — that conflation is
-     * the specific defect this table replaces (§4.2).
-     */
-    verifiedAt: timestamp('verified_at'),
-    verifiedBy: integer('verified_by').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    appIdx: index('cre_outcome_app_idx').on(table.applicationId),
-    orgIdx: index('cre_outcome_org_idx').on(table.organizationId),
-  })
-);
-export type RegulatoryApplicationOutcomeRow = InferSelectModel<typeof regulatoryApplicationOutcomes>;
-
-export const evidenceRelationships = pgTable(
-  'evidence_relationships',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    /** evidence_source | study | design_node | observation | finding | application | outcome */
-    fromType: text('from_type').notNull(),
-    fromId: text('from_id').notNull(),
-    toType: text('to_type').notNull(),
-    toId: text('to_id').notNull(),
-    /**
-     * §4.1 vocabulary: DESCRIBES_STUDY · REPORTS_RESULT · SUPPORTS_APPLICATION ·
-     * REVIEWED_IN_APPLICATION · FINDING_APPLIES_TO_STUDY ·
-     * FINDING_APPLIES_TO_DESIGN_NODE · FINDING_APPLIES_TO_ENDPOINT ·
-     * FINDING_APPLIES_TO_ANALYSIS · REQUESTS_ADDITIONAL_STUDY ·
-     * REQUESTS_REANALYSIS · REQUESTS_SAFETY_DATA · REQUESTS_CMC_REMEDIATION ·
-     * RESOLVED_BY_EVIDENCE · POTENTIALLY_RELATED
-     */
-    relationship: text('relationship').notNull(),
-    /**
-     * POTENTIALLY_RELATED must always be 'inferred' and must carry a rationale.
-     * Enforced in the relationship service, checked in tests.
-     */
-    epistemicStatus: text('epistemic_status').notNull().default('inferred'),
-    rationale: text('rationale'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  table => ({
-    fromIdx: index('cre_rel_from_idx').on(table.fromType, table.fromId),
-    toIdx: index('cre_rel_to_idx').on(table.toType, table.toId),
-    relIdx: index('cre_rel_kind_idx').on(table.relationship),
-    orgIdx: index('cre_rel_org_idx').on(table.organizationId),
-  })
-);
-export type EvidenceRelationshipRow = InferSelectModel<typeof evidenceRelationships>;
-
-export const designLessons = pgTable(
-  'design_lessons',
-  {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    /** A lesson derived from private evidence inherits that tenant's privacy (§14). */
-    organizationId: integer('organization_id').references(() => organizations.id),
-    projectId: integer('project_id'),
-    lesson: text('lesson').notNull(),
-    /** Where the lesson applies — population and design context. */
-    applicability: json('applicability'),
-    /** How it was derived. A lesson without a method cannot be published. */
-    derivationMethod: text('derivation_method').notNull(),
-    minimumEvidence: json('minimum_evidence'),
-    supportingSourceIds: text('supporting_source_ids').array(),
-    /** Retrieved and stored separately from support — never averaged in (§8.1). */
-    contradictingSourceIds: text('contradicting_source_ids').array(),
-    coverage: json('coverage'),
-    /** The METHOD, not a bare number. No confidence without a documented method. */
-    confidenceMethod: text('confidence_method'),
-    version: integer('version').default(1).notNull(),
-    /** draft | extracted | human_reviewed — client-facing requires human_reviewed. */
-    reviewState: text('review_state').notNull().default('draft'),
-    reviewedAt: timestamp('reviewed_at'),
-    reviewedBy: integer('reviewed_by').references(() => users.id),
-    /** Lessons are reversible: when the corpus moves, they must be recomputed. */
-    recalculateAfter: timestamp('recalculate_after'),
-    retiredAt: timestamp('retired_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    orgIdx: index('cre_lesson_org_idx').on(table.organizationId),
-    reviewIdx: index('cre_lesson_review_idx').on(table.reviewState),
-  })
-);
-export type DesignLessonRow = InferSelectModel<typeof designLessons>;
+   Tenant-scoped by organization_id so RLS applies; rows are deleted once a run
+   is committed or expires, so an abandoned onboarding upload leaves nothing
+   behind. Document text is never stored — only the extracted proposals.
+   ════════════════════════════════════════════════════════════════════════ */
+export const onboardingProposalRuns = pgTable('onboarding_proposal_runs', {
+  id: serial('id').primaryKey(),
+  /** Opaque id handed to the client; the commit references this, never a row id. */
+  runId: text('run_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id),
+  /** The user whose review session this is — a run is visible only to them. */
+  userId: integer('user_id').notNull(),
+  /** The server's own extraction: OnboardingProposalField[] keyed by id. */
+  proposals: jsonb('proposals').notNull(),
+  /** Source documents this run read (file names + sizes; never content). */
+  sources: jsonb('sources'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  /** After this instant the run is refused rather than served stale. */
+  expiresAt: timestamp('expires_at').notNull(),
+  /** Set when the run's approved fields were committed, for post-hoc review. */
+  committedAt: timestamp('committed_at'),
+});

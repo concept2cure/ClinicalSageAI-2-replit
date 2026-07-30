@@ -22,6 +22,13 @@
 
 import type { Request } from 'express';
 
+type RequestWithAuthContext = Request & {
+  organizationId?: number | string;
+  tenantId?: number | string;
+  tenantContext?: { organizationId?: number | string | null };
+  user?: { id?: number | string; organizationId?: number | string };
+};
+
 /**
  * Resolve the caller's organization id as a positive integer, or null
  * when no org context is attached. Reads from the four conventions
@@ -29,11 +36,12 @@ import type { Request } from 'express';
  * route handler regardless of mount path.
  */
 export function resolveOrgId(req: Request): number | null {
+  const authReq = req as RequestWithAuthContext;
   const v =
-    (req as Request & { organizationId?: number | string }).organizationId ??
-    req.tenantContext?.organizationId ??
-    req.user?.organizationId ??
-    (req as Request & { tenantId?: number | string }).tenantId;
+    authReq.organizationId ??
+    authReq.tenantContext?.organizationId ??
+    authReq.user?.organizationId ??
+    authReq.tenantId;
   if (v === undefined || v === null) return null;
   const n = typeof v === 'string' ? parseInt(v, 10) : Number(v);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -45,7 +53,7 @@ export function resolveOrgId(req: Request): number | null {
  * each mutating action.
  */
 export function resolveUserId(req: Request): number | null {
-  const raw = req.user?.id;
+  const raw = (req as RequestWithAuthContext).user?.id;
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;

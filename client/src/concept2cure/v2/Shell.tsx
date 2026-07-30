@@ -18,8 +18,15 @@ import React from 'react';
 import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
+import {
+  useChatUpload,
+  attachmentReadLabel,
+  CHAT_UPLOAD_ACCEPT,
+  SR_ONLY_STYLE,
+} from '../hooks/useChatUpload';
 import { I } from './icons';
-import { SampleTag, useLive, connected } from './dataConnect';
+import { SampleTag, connected } from './dataConnect';
+import type { OnboardingWelcome } from './onboardingWelcome';
 import { GovernedActionSignoff } from '../components/ana/GovernedActionSignoff';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -85,12 +92,19 @@ export function Rail({
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
   const role = user?.roles?.[0] ?? '';
+  const isOrgAdmin = (user?.roles ?? []).some((r) =>
+    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
+  );
   const acctGo = (id?: string) => {
     setAcct(false);
     if (id) onNav(id);
   };
   const ACCT_ITEMS: ({ label: string; ic: string; to?: string; action?: 'logout' } | { sep: true })[] = [
-    { label: 'Settings', ic: 'settings', to: 'admin-console' },
+    // Admin is reached from the bottom-left account menu — the same place and
+    // gesture as Claude's admin/settings. Gated to org admins; admin-console
+    // itself renders a non-leaky denied state, but we hide the entry entirely
+    // for non-admins to mirror Claude exactly.
+    ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
     { sep: true },
@@ -395,6 +409,10 @@ export function AnaRail({
   messages,
   onSend,
   onAct,
+  welcome,
+  onDismissWelcome,
+  onNav,
+  projectId = null,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -405,37 +423,89 @@ export function AnaRail({
   messages: AnaMessage[];
   onSend: (text: string) => void;
   onAct: (id: string) => void;
+  /** First-run AnA welcome (P1, assist-only). Null once the client has started
+   *  a conversation or dismissed it — the rail only renders it when present. */
+  welcome?: OnboardingWelcome | null;
+  onDismissWelcome?: () => void;
+  /** Lets a welcome starter open a real surface (e.g. the upload flow). */
+  onNav?: (id: string) => void;
+  /** Scopes chat uploads so extracted text lands in that project's memory.
+   *  Null is valid — the file still uploads, it is just not project-scoped. */
+  projectId?: string | number | null;
 }) {
   const [draft, setDraft] = React.useState('');
-  const [files, setFiles] = React.useState<string[]>([]);
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const imgRef = React.useRef<HTMLInputElement>(null);
-  const addFiles = (fl: FileList | null) => {
-    if (!fl) return;
-    setFiles((f) => [...f, ...Array.from(fl).map((x) => x.name)]);
-  };
+
+  /* The attach button used to be a lie.
+   *
+   * State was `useState<string[]>` and addFiles did
+   * `Array.from(fl).map((x) => x.name)` — it kept the NAMES and dropped the
+   * File objects on the floor. Nothing was ever uploaded. The composer then
+   * sent `Attached ${files.length} file(s)`, so a user could pick a PDF, watch
+   * a chip with its filename appear, hit send, and get an answer from an
+   * assistant that had never received a single byte of it. On a regulatory
+   * platform, an assistant confidently answering about a document it cannot
+   * see is worse than one that refuses.
+   *
+   * Now uploads go through the shared useChatUpload hook — the same
+   * /api/chat/upload path the main Ana composer, the MDX rail and the PDEV
+   * dock use, which OCRs the document and writes its text into project memory
+   * so AnA can actually retrieve it. */
+  const { attachments, addFiles, removeAttachment, clear: clearAttachments, statusMessage } =
+    useChatUpload({ projectId });
+
+  const readyAttachments = attachments.filter((a) => a.status === 'ready');
+  const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
+  const failedAttachments = attachments.filter((a) => a.status === 'error');
   const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
   const co = getCoauthor(segment);
-  const ac0: AnaContext = getAnaContext(surface.id, segment);
-  /* HARD RULE: bind AnA to the real co-author endpoint (live ?? fixture). When
-     the backend is reachable, live co-author state overrides the fixture. */
-  const liveCo = useLive<Partial<AnaContext> | null>(
-    `/api/coauthor?surface=${encodeURIComponent(surface.id)}&segment=${encodeURIComponent(segment ?? '')}`,
-    null,
-    [surface.id, segment]
-  );
-  const ac: AnaContext = liveCo.data ? { ...ac0, ...liveCo.data } : ac0;
-  const anaSample = !connected() || liveCo.sample;
+  /* AnA's per-surface context is local, and says so.
+   *
+   * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
+   * calling it a HARD RULE that bound AnA to "the real co-author endpoint".
+   * There is no such endpoint. server/routes/coauthor.ts mounts `/sessions`,
+   * `/documents`, `/documents/:id` and `/templates` — it has no root handler, so
+   * that request 404'd on every render of every surface, forever, and the result
+   * was discarded into the same fixture fallback used when it was never issued.
+   *
+   * The `sample` flag is what the user actually sees, and it was being derived
+   * from a call that could not succeed. Deriving it from `connected()` alone is
+   * the same answer honestly obtained. If per-surface AnA context becomes a real
+   * server concern, add the endpoint and restore the merge — do not reinstate a
+   * fetch against a route that does not exist. */
+  const ac: AnaContext = getAnaContext(surface.id, segment);
+  const anaSample = !connected();
   const suggestions = ac.suggestions?.length ? ac.suggestions : [];
   const send = () => {
     const t = draft.trim();
-    if (!t && !files.length) return;
-    onSend(agent ? `[Agent] ${t}` : t || `Attached ${files.length} file(s)`);
+
+    // Never send while an upload is in flight. The previous composer had no
+    // concept of "in flight" at all, so this case could not arise — and that
+    // was the bug.
+    if (uploadingAttachments.length > 0) return;
+
+    // Only files the server confirmed it read are referenced. A failed upload
+    // must never be described as attached: the chip stays visible with its
+    // error, and the message says nothing about it.
+    if (!t && readyAttachments.length === 0) return;
+
+    const names = readyAttachments.map((a) => a.name);
+    const attachmentLine = names.length
+      ? `Attached: ${names.join(', ')}`
+      : '';
+
+    // With text, the attachment reference is appended so AnA has both. Without
+    // text, the reference IS the message — and it names the files it actually
+    // received rather than counting chips the user happened to see.
+    const bodyText = t ? (attachmentLine ? `${t}\n\n${attachmentLine}` : t) : attachmentLine;
+
+    onSend(agent ? `[Agent] ${bodyText}` : bodyText);
     setDraft('');
-    setFiles([]);
+    clearAttachments();
   };
 
   if (!open) {
@@ -470,6 +540,36 @@ export function AnaRail({
         </div>
       </div>
       <div className="ana-body" aria-live="polite">
+        {welcome && (
+          <div className="ana-welcome">
+            <div className="ana-welcome-greet">
+              <span className="ana-welcome-mark">✻</span> {welcome.greeting}
+            </div>
+            <div className="ana-welcome-sub">{welcome.subline}</div>
+            <div className="ana-welcome-starters">
+              {welcome.starters.map((s) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  className="ana-welcome-starter"
+                  // A starter either opens a real flow (upload) or begins a
+                  // live AnA turn — never a canned reply either way.
+                  onClick={() => (s.navTo && onNav ? onNav(s.navTo) : onSend(s.prompt))}
+                >
+                  <span className="ico">
+                    {(s.iconKey ? (I as Record<string, React.ReactNode>)[s.iconKey] : null) ?? I.sparkles}
+                  </span>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            {onDismissWelcome && (
+              <button type="button" className="ana-welcome-dismiss" onClick={onDismissWelcome}>
+                Skip for now
+              </button>
+            )}
+          </div>
+        )}
         {ac.module && (
           <div className="ana-ctx">
             <div className="ana-ctx-module">
@@ -628,19 +728,46 @@ export function AnaRail({
           </div>
         )}
         <div className="ana-composer">
-          {files.length > 0 && (
+          {attachments.length > 0 && (
             <div className="ana-files">
-              {files.map((f, i) => (
-                <span key={i} className="ana-file">
-                  <span className="ico">{I.paperclip}</span>
-                  {f}
-                  <button type="button" onClick={() => setFiles(files.filter((_, k) => k !== i))}>
-                    {I.close}
-                  </button>
-                </span>
-              ))}
+              {attachments.map((a) => {
+                // The chip states what actually happened. A chip that shows a
+                // filename and nothing else is what let the old composer imply
+                // a file had been received when it had not.
+                const read = attachmentReadLabel(a.extractionMethod, a.extractionWords);
+                const label =
+                  a.status === 'uploading'
+                    ? `Uploading ${a.name}…`
+                    : a.status === 'error'
+                      ? `${a.name} — ${a.error || 'upload failed'}`
+                      : read
+                        ? `${a.name} · ${read}`
+                        : a.name;
+                return (
+                  <span
+                    key={a.id}
+                    className={`ana-file ana-file-${a.status}`}
+                    title={label}
+                  >
+                    <span className="ico">{I.paperclip}</span>
+                    {label}
+                    <button
+                      type="button"
+                      aria-label={`Remove ${a.name}`}
+                      onClick={() => removeAttachment(a.id)}
+                    >
+                      {I.close}
+                    </button>
+                  </span>
+                );
+              })}
             </div>
           )}
+          {/* Upload lifecycle for screen readers: the chips above are visual
+              only, and a failed upload must be announced, not just coloured. */}
+          <span aria-live="polite" style={SR_ONLY_STYLE}>
+            {statusMessage}
+          </span>
           <textarea
             rows={1}
             placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, or describe a task…'}
@@ -657,17 +784,29 @@ export function AnaRail({
             ref={fileRef}
             type="file"
             multiple
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml"
+            // Was ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml" — it offered
+            // spreadsheet and XML types the extraction service cannot read, so
+            // picking one produced a chip and no content. CHAT_UPLOAD_ACCEPT is
+            // the single source of truth for what the server can actually
+            // extract; the picker now offers exactly that.
+            accept={CHAT_UPLOAD_ACCEPT}
             className="ana-hidden-input"
-            onChange={(e) => addFiles(e.target.files)}
+            onChange={(e) => {
+              addFiles(e.target.files);
+              // Reset so re-picking the same file fires onChange again.
+              e.target.value = '';
+            }}
           />
           <input
             ref={imgRef}
             type="file"
             multiple
-            accept="image/*"
+            accept="image/png,image/jpeg,image/gif,image/webp"
             className="ana-hidden-input"
-            onChange={(e) => addFiles(e.target.files)}
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = '';
+            }}
           />
           <div className="ana-crow">
             <div className="ana-tools">
@@ -703,7 +842,10 @@ export function AnaRail({
               <button
                 type="button"
                 className="ana-send"
-                disabled={!draft.trim() && !files.length}
+                disabled={
+                  uploadingAttachments.length > 0 ||
+                  (!draft.trim() && readyAttachments.length === 0)
+                }
                 onClick={send}
                 aria-label="Send"
               >
@@ -737,7 +879,10 @@ export function AnaRail({
                   setPlusOpen(false);
                 }}
               >
-                <span className="ico">{I.paperclip}</span>Attach file<span className="mh">PDF · DOCX · XLSX · CSV</span>
+                {/* Was "PDF · DOCX · XLSX · CSV" — XLSX and CSV are not
+                    extractable, so the menu named formats that would be
+                    rejected. This lists what the server can actually read. */}
+                <span className="ico">{I.paperclip}</span>Attach file<span className="mh">PDF · DOCX · TXT</span>
               </button>
               <button
                 type="button"

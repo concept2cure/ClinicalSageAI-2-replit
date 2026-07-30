@@ -272,6 +272,18 @@ export function Ana({
   const { summary: agentActivity } = useAgentActivity({ enabled: view === 'home' });
   // Tools the user pins for the next turn (additive focus). Empty = auto.
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  // Sources the user pinned in the project data room, handed over through
+  // window.C2C_SOURCE_PINS (the same cross-surface convention as
+  // window.C2C_PROJECT). Read once on mount so a pinned set survives the
+  // navigation from ProjectHome into AnA.
+  const [pinnedSourceIds] = useState<string[]>(() => {
+    try {
+      const pins = (window as unknown as { C2C_SOURCE_PINS?: string[] }).C2C_SOURCE_PINS;
+      return Array.isArray(pins) ? pins.filter((p) => typeof p === 'string' && p) : [];
+    } catch {
+      return [];
+    }
+  });
   // Model/effort picker state (flag-gated in the Composer). Effort defaults to
   // 'balanced'; modelOverride null = Auto (server routes by effort).
   const [effort, setEffort] = useState<EffortLevel>('balanced');
@@ -286,6 +298,7 @@ export function Ana({
     authoringContext: authoringContext ?? undefined,
     moduleContext: moduleContext ?? undefined,
     selectedTools,
+    selectedSourceIds: pinnedSourceIds,
     effortLevel: effort,
     modelOverride,
   });

@@ -164,7 +164,7 @@ const CATEGORY_RULES: ReadonlyArray<{ id: string; label: string; test: RegExp }>
   { id: 'submission', label: 'Submission / eCTD', test: /ectd|submission|transmit|gateway|validation_finding|legacy_import|q_sub|package/ },
   { id: 'biostatistics', label: 'Biostatistics', test: /sample_size|statistical|study_design|scenario|defensibility|missing_data|dose_escalation/ },
   { id: 'evidence', label: 'Evidence & intelligence', test: /search|lookup|precedent|literature|guidance|reviewer|change_impact|mine_/ },
-  { id: 'authoring', label: 'Authoring & rendering', test: /docx|pdf|template|generate_document|generate_citation|write_|extract_|rasterize|compare_document|draft_/ },
+  { id: 'authoring', label: 'Authoring & rendering', test: /fda_form|docx|pdf|template|generate_document|generate_citation|write_|extract_|rasterize|compare_document|draft_/ },
   { id: 'governance', label: 'Governance & data', test: /memory|metadata|notification|import|consistency|numerical_integrity|cross_reference/ },
 ];
 

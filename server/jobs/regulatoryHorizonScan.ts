@@ -18,6 +18,7 @@
 
 import cron from 'node-cron';
 import { createScopedLogger } from '../utils/logger.js';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 import {
   enabledSources,
   cadenceDays,
@@ -28,7 +29,11 @@ import { distill } from '../services/learning/distiller.js';
 import { decidePromotion, policyFromEnv } from '../services/learning/promotion-policy.js';
 import { getHorizonStore } from '../services/learning/horizon-store.js';
 import { assessIchCurrency, type IchCurrencyReport } from '../services/learning/ich-currency.js';
-import { buildHorizonDigest, type HorizonDigest, type ScanRecord } from '../services/learning/horizon-digest.js';
+import {
+  buildHorizonDigest,
+  type HorizonDigest,
+  type ScanRecord,
+} from '../services/learning/horizon-digest.js';
 
 const logger = createScopedLogger('regulatory-horizon');
 
@@ -42,7 +47,11 @@ export interface HorizonScanResult {
 }
 
 /** Decide whether a source is due, given the last time it ran (ISO) and now. */
-export function isSourceDue(source: HorizonSource, lastRunIso: string | undefined, now: Date): boolean {
+export function isSourceDue(
+  source: HorizonSource,
+  lastRunIso: string | undefined,
+  now: Date
+): boolean {
   if (!lastRunIso) return true;
   const last = Date.parse(lastRunIso);
   if (Number.isNaN(last)) return true;
@@ -64,51 +73,61 @@ export function getLastHorizonResult(): HorizonScanResult | null {
  * source is logged and the scan continues with the next.
  */
 export async function runRegulatoryHorizonScan(now: Date = new Date()): Promise<HorizonScanResult> {
-  const store = getHorizonStore();
-  await store.load();
+  return runWithSystemTenantScope('regulatory-horizon-scan', async () => {
+    const store = getHorizonStore();
+    await store.load();
 
-  const policy = policyFromEnv();
-  const limit = Number(process.env.HORIZON_SCAN_LIMIT) > 0 ? Number(process.env.HORIZON_SCAN_LIMIT) : DEFAULT_LIMIT;
-  const sources = enabledSources().filter(s => isSourceDue(s, _lastRunBySource.get(s.id), now));
+    const policy = policyFromEnv();
+    const limit =
+      Number(process.env.HORIZON_SCAN_LIMIT) > 0
+        ? Number(process.env.HORIZON_SCAN_LIMIT)
+        : DEFAULT_LIMIT;
+    const sources = enabledSources().filter(s => isSourceDue(s, _lastRunBySource.get(s.id), now));
 
-  logger.info(`Horizon scan starting: ${sources.length} due source(s).`);
+    logger.info(`Horizon scan starting: ${sources.length} due source(s).`);
 
-  const records: ScanRecord[] = [];
+    const records: ScanRecord[] = [];
 
-  for (const source of sources) {
-    try {
-      const items = await harvest(source, { limit });
-      for (const item of items) {
-        const card = await distill(item, source);
-        if (!card) continue;
+    for (const source of sources) {
+      try {
+        const items = await harvest(source, { limit });
+        for (const item of items) {
+          const card = await distill(item, source);
+          if (!card) continue;
 
-        const { decision, reason } = decidePromotion(card, policy);
-        const status = decision === 'auto_promote' ? 'promoted' : decision === 'review' ? 'pending' : 'quarantined';
+          const { decision, reason } = decidePromotion(card, policy);
+          const status =
+            decision === 'auto_promote'
+              ? 'promoted'
+              : decision === 'review'
+              ? 'pending'
+              : 'quarantined';
 
-        const next = { ...card, status } as typeof card;
-        store.upsert(next);
-        records.push({ card: next, decision, reason });
+          const next = { ...card, status } as typeof card;
+          store.upsert(next);
+          records.push({ card: next, decision, reason });
+        }
+        _lastRunBySource.set(source.id, now.toISOString());
+        logger.info(`Scanned ${source.id}: ${items.length} item(s) harvested.`);
+      } catch (err: any) {
+        logger.error(`Horizon scan failed for ${source.id}: ${err?.message}`);
       }
-      _lastRunBySource.set(source.id, now.toISOString());
-      logger.info(`Scanned ${source.id}: ${items.length} item(s) harvested.`);
-    } catch (err: any) {
-      logger.error(`Horizon scan failed for ${source.id}: ${err?.message}`);
     }
-  }
 
-  await store.persist();
+    await store.persist();
 
-  const digest = buildHorizonDigest(records, sources.length, now);
-  const ichCurrency = assessIchCurrency(store.all(), now);
+    const digest = buildHorizonDigest(records, sources.length, now);
+    const ichCurrency = assessIchCurrency(store.all(), now);
 
-  logger.info(
-    `Horizon scan done: ${digest.totals.ingested} ingested ` +
-      `(${digest.totals.autoPromoted} auto, ${digest.totals.review} review, ${digest.totals.quarantined} quarantined); ` +
-      `${ichCurrency.actions.length} ICH corpus action(s).`,
-  );
+    logger.info(
+      `Horizon scan done: ${digest.totals.ingested} ingested ` +
+        `(${digest.totals.autoPromoted} auto, ${digest.totals.review} review, ${digest.totals.quarantined} quarantined); ` +
+        `${ichCurrency.actions.length} ICH corpus action(s).`
+    );
 
-  _lastResult = { sourcesScanned: sources.length, digest, ichCurrency };
-  return _lastResult;
+    _lastResult = { sourcesScanned: sources.length, digest, ichCurrency };
+    return _lastResult;
+  });
 }
 
 /**

@@ -1,0 +1,58 @@
+/* OnboardingProposalReview — AnA onboarding proposal review + approval gate.
+   All rules scoped under .opr to avoid collision with global shell classes.
+   Uses the shared design tokens (design-system/colors_and_type.css). */
+
+.opr { max-width: 720px; margin: 0 auto; padding: 20px 4px 40px; font-family: var(--font-sans); }
+
+.opr-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.opr-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-200); }
+.opr-title { font-family: var(--font-serif); font-size: 22px; line-height: 1.2; color: var(--text-100); margin: 2px 0 6px; }
+.opr-sub { font-size: 12.5px; line-height: 1.55; color: var(--text-300); max-width: 52ch; }
+.opr-approve-all { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-200); border-radius: var(--radius-md); padding: 7px 11px; font-size: 12px; cursor: pointer; }
+.opr-approve-all:hover:not(:disabled) { border-color: var(--accent-100); color: var(--accent-200); }
+.opr-approve-all svg { width: 13px; height: 13px; }
+.opr-approve-all:disabled { opacity: .5; cursor: not-allowed; }
+
+.opr-sources { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-400); margin-bottom: 12px; }
+.opr-sources svg { width: 13px; height: 13px; }
+
+.opr-warnings { border: 1px solid var(--warning); background: color-mix(in srgb, var(--warning) 8%, transparent); border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 16px; }
+.opr-warn-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-100); margin-bottom: 4px; }
+.opr-warn-h svg { width: 13px; height: 13px; color: var(--warning); }
+.opr-warnings ul { margin: 0; padding-left: 20px; }
+.opr-warnings li { font-size: 11.5px; line-height: 1.6; color: var(--text-300); }
+
+.opr-group { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-050); padding: 4px 14px 12px; margin-bottom: 14px; }
+.opr-group-h { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-400); padding: 12px 0 8px; border-bottom: 1px solid var(--border); }
+.opr-empty { font-size: 12px; color: var(--text-400); padding: 12px 0; }
+
+.opr-field { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.opr-field:last-child { border-bottom: none; }
+.opr-field[data-status="rejected"] { opacity: .5; }
+.opr-field[data-status="approved"] { }
+.opr-field-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
+.opr-field-label { font-size: 12.5px; font-weight: 600; color: var(--text-100); }
+.opr-conf { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--success); }
+.opr-conf.low { color: var(--warning); }
+.opr-field-input { width: 100%; box-sizing: border-box; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px; font-family: inherit; }
+.opr-field-input:focus { outline: none; border-color: var(--accent-200); }
+.opr-field-input:disabled { background: var(--bg-100); color: var(--text-400); }
+.opr-field[data-low] .opr-field-input { border-color: var(--warning); }
+
+.opr-field-foot { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.opr-prov { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-400); }
+.opr-prov svg { width: 11px; height: 11px; }
+.opr-edited { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--accent-200); }
+.opr-actions { margin-left: auto; display: inline-flex; gap: 6px; }
+.opr-act { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-300); border-radius: var(--radius-sm); padding: 4px 9px; font-size: 11px; cursor: pointer; }
+.opr-act svg { width: 12px; height: 12px; }
+.opr-act:disabled { opacity: .4; cursor: not-allowed; }
+.opr-act.approve[aria-pressed="true"] { border-color: var(--success); color: var(--success); background: color-mix(in srgb, var(--success) 8%, transparent); }
+.opr-act.reject[aria-pressed="true"] { border-color: var(--error-text); color: var(--error-text); }
+
+.opr-commit { position: sticky; bottom: 0; background: var(--bg-000); border-top: 1px solid var(--border); padding: 14px 0 4px; margin-top: 8px; }
+.opr-reason { width: 100%; box-sizing: border-box; border: 1px solid var(--border); background: var(--bg-050); color: var(--text-100); border-radius: var(--radius-sm); padding: 8px 11px; font-size: 12px; font-family: inherit; margin-bottom: 10px; }
+.opr-commit-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.opr-cancel { border: 1px solid var(--border); background: var(--bg-000); color: var(--text-300); border-radius: var(--radius-md); padding: 8px 14px; font-size: 12.5px; cursor: pointer; }
+.opr-commit-btn { border: none; background: var(--accent-200); color: #fff; border-radius: var(--radius-md); padding: 8px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.opr-commit-btn:disabled { opacity: .45; cursor: not-allowed; }

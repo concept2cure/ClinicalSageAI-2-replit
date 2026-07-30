@@ -3,12 +3,25 @@
  * rows so document tools (read_uploaded_document, ocr_document_pages,
  * read_spreadsheet, edit_spreadsheet, …) can work directly from a file_id.
  *
- * Tenancy: `file_uploads` has no organization column; the org lives in the
- * storage path written by the upload route (`uploads/org-{id}/{fileId}`, or
- * `uploads/unscoped/{fileId}` when no org was present). Access therefore
- * enforces a path-prefix match against the caller's organizationId — a foreign
- * tenant's file is indistinguishable from a missing one. Edits never mutate the
- * original: `saveDerivedUpload` writes a new row + new bytes (provenance intact).
+ * Tenancy is carried two independent ways and BOTH are enforced on every read
+ * (see migrations/20260726_file_uploads_tenancy.sql, which owns the contract):
+ *
+ *   1. `file_uploads.organization_id` — the explicit, indexable column.
+ *   2. The storage path written by the upload route — `uploads/org-{id}/{fileId}`,
+ *      or `uploads/unscoped/{fileId}` when no org was present.
+ *
+ * Requiring both means a row whose org column is wrong or NULL (legacy writes
+ * predating the column) still cannot serve another tenant's bytes, and a
+ * forged/mismatched storage path cannot escape the org filter. A foreign
+ * tenant's file is indistinguishable from a missing one.
+ *
+ * This module is the ONLY place that resolves an upload id to a tenant. Route
+ * handlers must not hand-roll `WHERE id = ANY(...)` lookups — that is precisely
+ * how stream.ts, chat.ts and chat-context-builder.ts drifted into three
+ * different (and two broken) tenancy rules.
+ *
+ * Edits never mutate the original: `saveDerivedUpload` writes a new row + new
+ * bytes (provenance intact).
  */
 
 import { promises as fs } from 'node:fs';
@@ -36,10 +49,109 @@ function assertWithinUploads(resolved: string): void {
   }
 }
 
+/** Metadata-only view of an upload — no bytes read. */
+export interface UploadedFileMetadata {
+  fileId: string;
+  fileName: string;
+  mimeType: string;
+  storagePath: string;
+}
+
 /**
- * Load an upload's metadata + bytes, enforcing tenant scoping via the storage
- * path prefix. Throws (with a tool-friendly message) when the file is unknown,
- * belongs to another tenant, or its bytes are no longer on disk.
+ * True when `storagePath` is the "no proven owner" form: uploads written
+ * without an authenticated org (`uploads/unscoped/…`) and pre-tenancy flat rows
+ * (`uploads/file_*`).
+ */
+function isUnscopedPath(storagePath: string): boolean {
+  return storagePath.startsWith('uploads/unscoped/') || /^uploads\/file_[^/]+$/.test(storagePath);
+}
+
+/**
+ * Tenancy predicate, enforced symmetrically:
+ *
+ *   tenant caller  → may read only rows whose org column AND storage path name
+ *                    that same org.
+ *   unscoped caller → may read only unscoped rows.
+ *
+ * Symmetry matters in both directions. Letting a tenant read unscoped files
+ * would make every ownerless upload globally readable; letting an unscoped
+ * caller read tenant files would bypass tenancy entirely. The previous rule
+ * did the former — `unscoped` short-circuited the check for every caller.
+ *
+ * `organization_id` may be undefined on a database that has not yet run
+ * migrations/20260726_file_uploads_tenancy.sql; there the path prefix alone
+ * carries the decision rather than failing every read closed.
+ */
+function rowBelongsToOrg(
+  row: { organization_id?: number | string | null; storage_path?: string | null },
+  organizationId?: number | null,
+): boolean {
+  const storagePath = row.storage_path || '';
+
+  if (organizationId == null) {
+    // An unscoped caller gets unscoped files only, and only when the row does
+    // not claim an owner of its own.
+    return isUnscopedPath(storagePath) && !row.organization_id;
+  }
+
+  if (!storagePath.startsWith(`uploads/org-${Number(organizationId)}/`)) return false;
+  if (row.organization_id === undefined) return true; // pre-migration database
+  if (row.organization_id === null) return false;
+  return Number(row.organization_id) === Number(organizationId);
+}
+
+/**
+ * Batch, tenant-scoped metadata lookup for chat attachments. Returns only rows
+ * the caller's org provably owns; unknown and foreign ids are simply absent
+ * (never an error that would confirm their existence).
+ *
+ * This is the single lookup every chat/stream path must use to resolve
+ * `file_ids` from a turn.
+ */
+export async function loadUploadedFileMetadata(
+  fileIds: string[],
+  organizationId?: number | null,
+): Promise<UploadedFileMetadata[]> {
+  const ids = (Array.isArray(fileIds) ? fileIds : []).filter(
+    (id): id is string => typeof id === 'string' && id.length > 0,
+  );
+  if (ids.length === 0) return [];
+
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  const { rows } = await pool.query<{
+    id: string;
+    original_name: string;
+    mime_type: string;
+    storage_path: string;
+    organization_id: number | string | null;
+  }>(
+    `SELECT id, original_name, mime_type, storage_path, organization_id
+       FROM file_uploads WHERE id = ANY($1)`,
+    [ids],
+  );
+
+  const allowed = rows.filter(row => rowBelongsToOrg(row, organizationId));
+  if (allowed.length !== rows.length) {
+    logger.warn('tenant-scoped attachment access denied', {
+      orgId: organizationId,
+      requested: ids.length,
+      denied: rows.length - allowed.length,
+    });
+  }
+  return allowed.map(row => ({
+    fileId: row.id,
+    fileName: row.original_name || row.id,
+    mimeType: row.mime_type || 'application/octet-stream',
+    storagePath: row.storage_path || '',
+  }));
+}
+
+/**
+ * Load an upload's metadata + bytes, enforcing tenant scoping via both the
+ * organization column and the storage path prefix. Throws (with a tool-friendly
+ * message) when the file is unknown, belongs to another tenant, or its bytes
+ * are no longer on disk.
  */
 export async function loadUploadedFile(
   fileId: string,
@@ -56,8 +168,9 @@ export async function loadUploadedFile(
     mime_type: string;
     file_size: string | number;
     storage_path: string;
+    organization_id: number | string | null;
   }>(
-    `SELECT id, original_name, mime_type, file_size, storage_path
+    `SELECT id, original_name, mime_type, file_size, storage_path, organization_id
        FROM file_uploads WHERE id = $1`,
     [fileId],
   );
@@ -67,15 +180,10 @@ export async function loadUploadedFile(
   const row = rows[0];
   const storagePath = row.storage_path || '';
 
-  const unscoped =
-    storagePath.startsWith('uploads/unscoped/') || /^uploads\/file_[^/]+$/.test(storagePath);
-  if (!unscoped) {
-    const expected = organizationId != null ? `uploads/org-${Number(organizationId)}/` : null;
-    if (!expected || !storagePath.startsWith(expected)) {
-      // Same response as "not found" — don't confirm a foreign tenant's file exists.
-      logger.warn('tenant-scoped upload access denied', { fileId, orgId: organizationId ?? null });
-      throw new Error(`upload "${fileId}" not found`);
-    }
+  if (!rowBelongsToOrg(row, organizationId)) {
+    // Same response as "not found" — don't confirm a foreign tenant's file exists.
+    logger.warn('tenant-scoped upload access denied', { fileId, orgId: organizationId ?? null });
+    throw new Error(`upload "${fileId}" not found`);
   }
 
   const resolved = path.resolve(process.cwd(), storagePath);
@@ -123,9 +231,17 @@ export async function saveDerivedUpload(params: {
   const { getPool } = await import('../../db.js');
   const pool = getPool();
   await pool.query(
-    `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, status, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, 'uploaded', NOW())`,
-    [fileId, params.userId ?? null, params.fileName, params.mimeType, params.buffer.length, storagePath],
+    `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, status, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'uploaded', NOW())`,
+    [
+      fileId,
+      params.userId ?? null,
+      params.organizationId != null ? Number(params.organizationId) : null,
+      params.fileName,
+      params.mimeType,
+      params.buffer.length,
+      storagePath,
+    ],
   );
 
   logger.info('derived upload saved', { fileId, bytes: params.buffer.length });

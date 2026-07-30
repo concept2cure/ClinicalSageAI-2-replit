@@ -65,6 +65,12 @@ export function runWithTenantScope<T>(scope: TenantScope, fn: () => T): T {
   return tenantStorage.run(scope, fn);
 }
 
+/** Explicit scope for audited estate-wide schedulers and workers. */
+export function runWithSystemTenantScope<T>(caller: string, fn: () => T): T {
+  if (!caller.trim()) throw new Error('runWithSystemTenantScope: caller is required');
+  return runWithTenantScope({ tenantId: '0', role: 'app_super_admin', source: 'job', caller }, fn);
+}
+
 /**
  * Read the active tenant scope, or `undefined` if none is set. Pool
  * instrumentation calls this on every query.
@@ -78,7 +84,9 @@ export function getTenantScope(): TenantScope | undefined {
  * route is resolved). No-op if there is no active scope. Returns the
  * updated scope (same identity) for convenience.
  */
-export function annotateTenantScope(patch: Partial<Pick<TenantScope, 'caller'>>): TenantScope | undefined {
+export function annotateTenantScope(
+  patch: Partial<Pick<TenantScope, 'caller'>>
+): TenantScope | undefined {
   const scope = tenantStorage.getStore();
   if (!scope) return undefined;
   if (patch.caller !== undefined) scope.caller = patch.caller;

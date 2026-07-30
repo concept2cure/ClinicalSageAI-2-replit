@@ -23,12 +23,37 @@ import {
 import { initializeProofDatabasePersistence } from '../../services/proof/database-setup';
 import FeatureToggleService from '../services/featureToggleService';
 import { ensureCoreTables } from '../db/ensureCoreTables';
+import { setSchemaReadiness } from './readiness-state';
 
 /** Python backend is currently disabled (size optimization). Kept as a stub
  * so the graceful-shutdown handler can address it if it gets re-enabled. */
 export function startPythonBackend(): Promise<null> {
   return Promise.resolve(null);
 }
+
+/**
+ * Tables classified "important" by ensureCoreTables that are nonetheless
+ * security-load-bearing: authentication, authorization and licensing.
+ *
+ * The distinction matters because the flat critical-table check passes without
+ * these, so a database missing every one of them reported ready. A process
+ * that cannot resolve a user, a role or a permission has no safe behaviour
+ * available to it — every request either errors or takes an unauthenticated
+ * path — so their absence fails readiness rather than degrading it.
+ *
+ * Kept as an explicit list, not a prefix match, so adding a table to
+ * IMPORTANT_TABLES is a deliberate decision about whether it belongs here.
+ */
+const SECURITY_CRITICAL_TABLES = [
+  'auth_users',
+  'auth_refresh_tokens',
+  'roles',
+  'permissions',
+  'user_roles',
+  'organization_users',
+  'licenses',
+  'audit_logs',
+];
 
 /**
  * Verify that the database is reachable and that core tables/extensions exist.
@@ -45,35 +70,119 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
       console.error('   Fatal in production — exiting');
       process.exit(1);
     }
+    // Non-production returns early without ever running schema verification.
+    // Record that explicitly: the /readyz database check would fail this probe
+    // anyway, but leaving the schema flag at its default here is precisely the
+    // "no verdict recorded" state the fail-closed default exists to catch.
+    setSchemaReadiness('error', `database unreachable: ${err?.message ?? String(err)}`);
     return;
   }
 
   try {
     const result = await ensureCoreTables(process.env.DATABASE_URL);
-    if (result.success) {
-      console.log(
-        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables)`
-      );
-    } else if (result.missingCritical.length > 0) {
+    // A regulated subsystem that is partially or wholly absent fails readiness
+    // even when the flat critical-table check passes — a database that cannot
+    // run the authoring loop is not ready, and /readyz must say so rather than
+    // report green while those routes throw. `result.success` intentionally does
+    // NOT fold in subsystems (validateCoreTables/diagnostics keep their meaning),
+    // so this is checked ahead of the success branch.
+    const failingSubsystem = result.subsystems.find((s) => s.readinessFailing);
+    const missingSecurityTables = result.missingImportant.filter((t) =>
+      SECURITY_CRITICAL_TABLES.includes(t)
+    );
+    if (result.missingCritical.length > 0) {
+      setSchemaReadiness('missing', `missing tables: ${result.missingCritical.join(', ')}`);
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
     } else if (result.missingExtensions.length > 0) {
+      setSchemaReadiness(
+        'missing',
+        `missing extensions: ${result.missingExtensions.join(', ')}`
+      );
       console.error(
         '❌ CRITICAL: Missing required database extensions:',
         result.missingExtensions.join(', ')
       );
-    } else if (result.errors.length > 0) {
-      console.error('⚠️ Table verification errors:', result.errors);
-    } else if (result.missingSchemas.length > 0) {
-      console.warn(
-        '⚠️ Database schemas required initialization:',
-        result.missingSchemas.join(', ')
+    } else if (failingSubsystem) {
+      const detail = `${failingSubsystem.name} subsystem ${failingSubsystem.state} (missing: ${failingSubsystem.missing.join(', ')})`;
+      setSchemaReadiness('missing', detail);
+      console.error(`❌ CRITICAL: ${detail}`);
+      console.error(
+        '   Provision it as a unit: APPLY_C2C_MIGRATIONS=true npm run db:apply-c2c',
       );
+      console.error(
+        '   (or scripts/db/install-fresh.mjs on a fresh database). To run without',
+      );
+      console.error(
+        '   authoring, set AUTHORING_SUBSYSTEM_OPTIONAL=true — never over a PARTIAL subsystem.',
+      );
+    } else if (missingSecurityTables.length > 0) {
+      // Auth / RBAC / licensing tables. These are classified "important"
+      // rather than "critical" by ensureCoreTables, so the flat critical check
+      // above passes without them — but a database with no `auth_users`,
+      // `roles`, `permissions` or `user_roles` cannot authenticate or
+      // authorize anybody. Serving traffic in that state means every request
+      // either fails or, worse, takes an unauthenticated path. That is not
+      // degraded, it is down.
+      const detail = `security-critical tables missing: ${missingSecurityTables.join(', ')}`;
+      setSchemaReadiness('missing', detail);
+      console.error(`❌ CRITICAL: ${detail}`);
+      console.error('   Auth, RBAC and licensing cannot function. Run: npm run db:push');
+    } else if (result.success) {
+      // Remaining "important" tables are module surfaces (CERV2 sections,
+      // templates, assembly docs). Their absence breaks those modules but not
+      // the platform, so this serves traffic — and names the gap, rather than
+      // reporting an unqualified green that hides it.
+      const otherMissingImportant = result.missingImportant.filter(
+        (t) => !SECURITY_CRITICAL_TABLES.includes(t)
+      );
+      if (otherMissingImportant.length > 0) {
+        setSchemaReadiness(
+          'degraded',
+          `important tables missing: ${otherMissingImportant.join(', ')}`
+        );
+        console.warn(
+          `⚠️ Database serving DEGRADED — important tables missing: ${otherMissingImportant.join(', ')}`
+        );
+      } else {
+        setSchemaReadiness('ready');
+        // console.info, not console.log — the repo's no-console rule permits
+        // warn/error/info only, and this line moved into the else branch above.
+        console.info(
+          `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables, authoring subsystem present)`
+        );
+      }
+    } else if (result.errors.length > 0) {
+      // Verification ran and reported errors. `result.success` is false, so we
+      // do NOT know the schema is sound — previously this branch logged and
+      // left the flag at 'unknown', which /readyz served as ready.
+      const detail = `table verification errors: ${result.errors.join('; ')}`;
+      setSchemaReadiness('error', detail);
+      console.error('❌ CRITICAL: Table verification errors:', result.errors);
+    } else if (result.missingSchemas.length > 0) {
+      const detail = `schemas missing: ${result.missingSchemas.join(', ')}`;
+      setSchemaReadiness('missing', detail);
+      console.error('❌ CRITICAL: Database schemas required initialization:', detail);
     } else if (result.warnings.length > 0) {
+      // Warnings with success=false. Not provably broken, not provably sound.
+      setSchemaReadiness('error', `verification inconclusive: ${result.warnings.join('; ')}`);
       console.warn('⚠️ Database readiness warnings:', result.warnings);
+    } else {
+      // Explicit terminal else. `success` is false and nothing above explains
+      // why — exactly the shape that used to fall through to 'unknown' and be
+      // served as ready. An unexplained failure is still a failure.
+      setSchemaReadiness(
+        'error',
+        'schema verification reported failure without a diagnosable cause'
+      );
+      console.error('❌ CRITICAL: Schema verification failed without a diagnosable cause.');
     }
   } catch (err: any) {
-    console.error('⚠️ Core table verification failed:', err.message);
+    // The check ITSELF threw. This is the branch that most needs to fail
+    // closed: we know less about the schema here than in any other path, and
+    // it previously left readiness at 'unknown' and served 200.
+    setSchemaReadiness('error', `core table verification threw: ${err?.message ?? String(err)}`);
+    console.error('❌ CRITICAL: Core table verification failed:', err?.message ?? String(err));
   }
 }
 
@@ -111,6 +220,26 @@ export async function initializeEarlyServices(): Promise<void> {
     console.log('✅ Auth schema bootstrap complete');
   } catch (error: any) {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
+  }
+
+  // Login OTP is mandatory 2FA delivered by email. If SMTP is unconfigured in
+  // production, NO user can complete a login — fail LOUD at boot so this is
+  // caught before testers hit it, not silently one login at a time.
+  try {
+    const { isEmailConfigured } = await import('../services/emailService.js');
+    if (isEmailConfigured()) {
+      console.info('✅ Email (SMTP) configured — login OTP can be delivered');
+    } else if (process.env.NODE_ENV === 'production') {
+      console.error(
+        '❌ CRITICAL: SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS). ' +
+          'Login OTP is mandatory 2FA — NO user can log in until email delivery works. ' +
+          'Configure SMTP and verify a code reaches a real inbox before onboarding testers.',
+      );
+    } else {
+      console.warn('⚠️ SMTP not configured — login OTP codes will be logged to the console (dev only)');
+    }
+  } catch (error: any) {
+    console.error('⚠️ Email configuration check failed:', error.message);
   }
 
   try {
@@ -282,7 +411,18 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
   if (hocuspocus.status === 'fulfilled') {
     try {
       hocuspocus.value.attachHocuspocusToServer(httpServer);
-      console.log('[Hocuspocus] CRDT collaboration server initialized');
+      // Report the state that is actually true. attachHocuspocusToServer is a
+      // no-op unless ENABLE_COLLAB_CRDT is on, and logging "initialized"
+      // unconditionally is how the previous transport break stayed invisible:
+      // boot said the collaboration server was up every single time, including
+      // for the entire period when no socket could physically connect to it.
+      if (hocuspocus.value.isCollabEnabled()) {
+        console.log('[Hocuspocus] CRDT collaboration server attached at /collab');
+      } else {
+        console.log(
+          'ℹ️ [Hocuspocus] CRDT collaboration not attached (ENABLE_COLLAB_CRDT is not "true")'
+        );
+      }
     } catch (err: any) {
       console.warn('[Hocuspocus] Failed to initialize (non-blocking):', err?.message);
     }

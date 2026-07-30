@@ -14,8 +14,10 @@
  * without breaking existing behavior; once the modal lands, a tenant flips the
  * flag and every governed AnA action is gated.
  *
- * Pure / deterministic except for {@link loadPart11Enforce}, which is a
- * fail-soft org-settings read (any DB issue → not enforced).
+ * Pure / deterministic except for the org-settings readers. Two variants:
+ * {@link loadPart11EnforceStrict} propagates DB errors (used by the governed
+ * dispatch so an unreadable flag fails CLOSED) and {@link loadPart11Enforce}
+ * is its fail-soft wrapper for non-enforcement reads.
  */
 
 /** AnA command names whose effect alters the regulatory record and therefore
@@ -31,6 +33,15 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   'sign_document',
   'submit_document',
   'create_submission_package',
+  // Applying AnA's onboarding proposals writes the organization profile on the
+  // client's behalf, so it is governed: a reason-for-change is required and the
+  // action is recorded. It is deliberately NOT in the e-sign set below — it
+  // matches the bar the equivalent PATCH /organizations/:id/profile already
+  // sets, and demanding re-authentication during first-run setup would land on
+  // a client least equipped to satisfy it. Adding it to PART11_ESIGN_COMMANDS
+  // escalates it centrally; the onboarding route consults that policy and fails
+  // closed rather than continuing on a weaker path.
+  'onboarding.apply_proposals',
 ]);
 
 /**
@@ -166,21 +177,37 @@ export function buildSignatureRequiredResult(
 }
 
 /**
- * Fail-soft org-settings read: is Part 11 enforcement enabled for this tenant?
- * Any DB issue → false (not enforced), mirroring loadAnaToolPolicy. Reads
- * organizations.settings.anaPart11Enforce (boolean).
+ * STRICT org-settings read: is Part 11 enforcement enabled for this tenant?
+ * DB errors PROPAGATE, so the caller can distinguish a DETERMINATE "tenant has
+ * not opted in" (false) from an INDETERMINATE "could not read the flag"
+ * (throws). The governed-mutation dispatch uses this variant and fails CLOSED
+ * on the indeterminate case — see executeCommands -> ctx.governanceUnavailable.
+ * Reads organizations.settings.anaPart11Enforce (boolean).
+ */
+export async function loadPart11EnforceStrict(
+  pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> },
+  organizationId: number
+): Promise<boolean> {
+  if (!Number.isFinite(organizationId) || organizationId <= 0) return false;
+  const { rows } = await pool.query(
+    `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
+    [organizationId]
+  );
+  return rows[0]?.settings?.anaPart11Enforce === true;
+}
+
+/**
+ * FAIL-SOFT wrapper around {@link loadPart11EnforceStrict}, for non-enforcement
+ * READ callers (surfacing the tenant's current setting in a UI). Any DB issue →
+ * false. It must NOT be used to decide whether a governed mutation may run:
+ * that path uses the strict variant so an unreadable flag blocks the write.
  */
 export async function loadPart11Enforce(
   pool: { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> },
   organizationId: number
 ): Promise<boolean> {
-  if (!Number.isFinite(organizationId) || organizationId <= 0) return false;
   try {
-    const { rows } = await pool.query(
-      `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
-      [organizationId]
-    );
-    return rows[0]?.settings?.anaPart11Enforce === true;
+    return await loadPart11EnforceStrict(pool, organizationId);
   } catch {
     return false;
   }

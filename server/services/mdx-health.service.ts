@@ -4,8 +4,8 @@
  * Used by ops to verify that every backing table the kit's surfaces
  * depend on is provisioned and accessible, plus the optional shadow
  * services that gate enriched panels (predicate intelligence). The
- * /api/mdx/health endpoint is the canonical "is the MDX module ready
- * for paying-client traffic" check — one round-trip, full picture.
+ * /api/mdx/health endpoint reports deployment capability evidence. Schema
+ * presence is deliberately not treated as commercial release readiness.
  *
  * No surface depends on this at runtime; it's an operator/investor
  * tool. Output is shaped for both human reading (warnings array) and
@@ -53,6 +53,18 @@ export interface PathwayCoverage {
 }
 
 export type ReadinessLevel = 'ready' | 'partial' | 'not_ready';
+export type MdxReleaseStatus = 'not_ready' | 'demo' | 'design_partner' | 'controlled_beta' | 'production';
+export type ProbeStatus = 'pass' | 'fail' | 'not_run' | 'unverified';
+
+export interface MdxQualification {
+  status: 'pass' | 'fail' | 'not_run';
+  testedAt: string | null;
+  codeCommit: string | null;
+  templateVersion: string | null;
+  testSuiteVersion: string | null;
+  stale: boolean;
+  blockers: string[];
+}
 
 export interface MdxHealthReport {
   module: 'mdx';
@@ -66,8 +78,28 @@ export interface MdxHealthReport {
   /** Human-readable advisories, ordered by severity. Empty when
    *  readiness === 'ready'. */
   warnings: string[];
+  schema: { status: ProbeStatus; requiredTablesPresent: boolean; tables: TableHealth[] };
+  dependencies: Record<string, { status: ProbeStatus; detail: string }>;
+  workflows: Record<string, { status: ProbeStatus; detail: string }>;
+  qualification: MdxQualification;
+  releaseStatus: MdxReleaseStatus;
   /** ISO timestamp the probe ran. */
   probedAt: string;
+}
+
+export function deriveMdxReleaseStatus(input: {
+  requiredTablesPresent: boolean;
+  dependencies: MdxHealthReport['dependencies'];
+  workflows: MdxHealthReport['workflows'];
+  qualification: MdxQualification;
+}): MdxReleaseStatus {
+  if (!input.requiredTablesPresent) return 'not_ready';
+  if (input.qualification.status !== 'pass' || input.qualification.stale) return 'not_ready';
+  if (Object.values(input.workflows).some((probe) => probe.status !== 'pass')) return 'not_ready';
+  if (Object.values(input.dependencies).some((probe) => probe.status !== 'pass')) return 'not_ready';
+  // A passing technical qualification is necessary but not sufficient to
+  // promote beyond controlled beta; production requires a separate release gate.
+  return 'controlled_beta';
 }
 
 /* Tables backing the kit surfaces. The `required` flag separates
@@ -212,6 +244,8 @@ async function probePathwayCoverage(): Promise<PathwayCoverage[]> {
       'de_novo': 'k510',
       'pma':     'pma',
       'cer':     'cer',
+      'ivd':     'ivdr',
+      'ivdr':    'ivdr',
     };
     const counts = new Map<RegulatoryPathway, number>();
     for (const r of result.rows) {
@@ -273,10 +307,52 @@ export async function probeMdxHealth(): Promise<MdxHealthReport> {
     );
   }
 
+  const requiredTablesPresent = missingRequired.length === 0;
+  const schema: MdxHealthReport['schema'] = {
+    status: requiredTablesPresent ? 'pass' : 'fail',
+    requiredTablesPresent,
+    tables,
+  };
+  const dependencies: MdxHealthReport['dependencies'] = {
+    database: { status: requiredTablesPresent ? 'pass' : 'fail', detail: 'Required-table queries completed during this probe.' },
+    objectStorage: { status: 'unverified', detail: 'Configuration is not an availability or read/write qualification.' },
+    predicateService: {
+      status: shadowServices.find((service) => service.name === 'predicate-intelligence')?.configured ? 'unverified' : 'fail',
+      detail: 'No live tenant-scoped request/timeout probe was run.',
+    },
+    pdfExport: { status: 'unverified', detail: 'No controlled generation and reopen probe was run.' },
+    officialTemplate: { status: 'unverified', detail: 'No authorized-template qualification result is recorded.' },
+    queue: { status: 'unverified', detail: 'No enqueue/consume probe was run.' },
+    audit: { status: 'unverified', detail: 'No required audit write/read probe was run.' },
+  };
+  const workflows: MdxHealthReport['workflows'] = {
+    authenticatedProgramRead: { status: 'not_run', detail: 'Deployment health does not impersonate a tenant.' },
+    artifactCreateRead: { status: 'not_run', detail: 'No regulated artifact was created.' },
+    auditWriteRead: { status: 'not_run', detail: 'No audit round-trip was attempted.' },
+    controlledExportDryRun: { status: 'not_run', detail: 'No controlled export dry run was attempted.' },
+    templateQualification: { status: 'not_run', detail: 'No eSTAR generation/reopen qualification was attempted.' },
+    serviceTimeout: { status: 'not_run', detail: 'No dependency timeout behavior was exercised.' },
+  };
+  const qualification: MdxQualification = {
+    status: 'not_run',
+    testedAt: null,
+    codeCommit: process.env.GIT_COMMIT_SHA ?? null,
+    templateVersion: null,
+    testSuiteVersion: null,
+    stale: false,
+    blockers: [
+      'Workflow qualification has not run in this deployment.',
+      'Official eSTAR template generation/reopen qualification is absent.',
+      'External dependencies have not been live-probed.',
+    ],
+  };
+  const releaseStatus = deriveMdxReleaseStatus({ requiredTablesPresent, dependencies, workflows, qualification });
+  warnings.push(...qualification.blockers);
+
   let readiness: ReadinessLevel;
   if (missingRequired.length > 0) {
     readiness = 'not_ready';
-  } else if (warnings.length > 0) {
+  } else if (warnings.length > 0 || releaseStatus === 'not_ready') {
     readiness = 'partial';
   } else {
     readiness = 'ready';
@@ -290,6 +366,11 @@ export async function probeMdxHealth(): Promise<MdxHealthReport> {
     shadowServices,
     pathwayCoverage,
     warnings,
+    schema,
+    dependencies,
+    workflows,
+    qualification,
+    releaseStatus,
     probedAt:        new Date().toISOString(),
   };
 }

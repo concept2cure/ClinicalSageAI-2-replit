@@ -3,9 +3,12 @@
 -- The MultiAgentCouncilService (server/services/multi-agent-council.ts) — the
 -- Drafter → Statistician → Critic → Synthesizer pipeline with Part-11 audit —
 -- has always referenced lumen.* tables that no migration created, leaving the
--- capability dormant. This migration provisions the schema, tables, and the
--- four default agents idempotently (IF NOT EXISTS / ON CONFLICT DO NOTHING),
--- so AnA's convene_drafting_council tool becomes live.
+-- capability dormant. This migration provisions the schema, the tables it owns,
+-- and the four default agents idempotently (IF NOT EXISTS / ON CONFLICT DO
+-- NOTHING), so AnA's convene_drafting_council tool becomes live.
+--
+-- lumen.data_atoms is the one lumen table this file does NOT own — see the note
+-- where it used to be defined, below.
 --
 -- Model note: the per-agent model_provider/model_name columns are informational
 -- lineage — actual routing goes through the governed AI gateway (Claude-first,
@@ -89,13 +92,22 @@ CREATE TABLE IF NOT EXISTS lumen.data_verifications (
 CREATE INDEX IF NOT EXISTS idx_lumen_data_verifications_session
   ON lumen.data_verifications (session_id);
 
-CREATE TABLE IF NOT EXISTS lumen.data_atoms (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL DEFAULT '',
-  content TEXT NOT NULL DEFAULT '',
-  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- lumen.data_atoms is deliberately NOT defined here.
+--
+-- Its canonical definition is db/migrations/044b_gcc_lumen_schema_prerequisite.sql
+-- (manifest position 25). This file previously carried a second, minimal
+-- definition (id TEXT, 5 columns). Because both were CREATE TABLE IF NOT EXISTS,
+-- whichever ran first won and the other silently no-opped — so on any database
+-- where the c2c apply script ran before the manifest lineage, lumen.data_atoms
+-- would have come up WITHOUT atom_type, source_path, content_hash, version,
+-- updated_at or created_by, and without the uuid default. That shape breaks
+-- server/workers/enhanced-ingestion-pipeline.ts:172, which inserts
+-- (id, title, content, atom_type, source_path, metadata, content_hash, created_at).
+--
+-- The council itself only reads content/metadata/title/id (multi-agent-council.ts
+-- :864, :1070), all of which the canonical shape provides. scripts/db/apply-c2c-migrations.mjs
+-- now applies 044b ahead of this file so the canonical shape is guaranteed on the
+-- preview/deploy path too. See ledger C-12 and ADR-0006.
 
 CREATE TABLE IF NOT EXISTS lumen.data_bindings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

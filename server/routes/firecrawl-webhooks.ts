@@ -3,6 +3,7 @@ import express from 'express';
 import { verifyFirecrawlWebhook } from '../integrations/firecrawl/webhook';
 import { getPool } from '../db';
 import { firecrawlError } from '../integrations/firecrawl/errors';
+import { runWithTenantScope } from '../db/tenantStore';
 
 const router = Router();
 
@@ -11,16 +12,24 @@ router.post('/', express.text({ type: '*/*', limit: '2mb' }), async (req, res) =
   const signature = req.header('x-firecrawl-signature') || req.header('x-signature') || undefined;
   const isValid = verifyFirecrawlWebhook(rawPayload, signature);
 
-  const pool = getPool();
-  await pool.query(
-    `INSERT INTO external_tool_audit_log (tenant_id, actor_user_id, event_type, event_payload_json, created_at)
-     VALUES ($1,$2,$3,$4,NOW())`,
-    [
-      Number((req as any).tenantId || 0),
-      null,
-      isValid ? 'firecrawl_webhook_received' : 'webhook_verification_failed',
-      JSON.stringify({ rawPayload, signaturePresent: Boolean(signature) }),
-    ]
+  await runWithTenantScope(
+    {
+      tenantId: '0',
+      role: 'app_super_admin',
+      source: 'request',
+      caller: 'firecrawl-webhook:audit',
+    },
+    () =>
+      getPool().query(
+        `INSERT INTO external_tool_audit_log (tenant_id, actor_user_id, event_type, event_payload_json, created_at)
+       VALUES ($1,$2,$3,$4,NOW())`,
+        [
+          0,
+          null,
+          isValid ? 'firecrawl_webhook_received' : 'webhook_verification_failed',
+          JSON.stringify({ signaturePresent: Boolean(signature) }),
+        ]
+      )
   );
 
   if (!isValid) {

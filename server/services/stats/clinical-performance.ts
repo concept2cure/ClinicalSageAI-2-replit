@@ -12,6 +12,7 @@
 import { clopperPearsonInterval } from './special';
 import { normalQuantile } from './normal';
 import { buildProvenance, type StatsProvenance } from './computation-provenance';
+import { calculateClinical2x2 } from '../../../shared/ivdr/manifest';
 
 export interface ConfusionMatrix {
   /** Test-positive AND reference/comparator-positive. */
@@ -69,27 +70,23 @@ export function computeDiagnosticAccuracy(
   options: DiagnosticAccuracyOptions = {}
 ): DiagnosticAccuracyResult {
   const { tp, fp, fn, tn } = cm;
-  for (const [k, v] of Object.entries(cm)) {
-    if (!Number.isFinite(v) || v < 0 || !Number.isInteger(v)) {
-      throw new Error(`Confusion-matrix cell "${k}" must be a non-negative integer.`);
-    }
-  }
+  const point = calculateClinical2x2(cm);
   const conf = options.conf ?? 0.95;
   const positives = tp + fn; // reference/comparator positives
   const negatives = tn + fp; // reference/comparator negatives
-  const n = tp + fp + fn + tn;
+  const n = point.total;
   if (n === 0) throw new Error('Confusion matrix is empty.');
   if (positives === 0 || negatives === 0) {
     throw new Error('Both reference-positive and reference-negative cases are required.');
   }
 
-  const sensitivity = tp / positives;
-  const specificity = tn / negatives;
+  const sensitivity = point.sensitivity as number;
+  const specificity = point.specificity as number;
   const sensitivityCi = clopperPearsonInterval(tp, positives, conf);
   const specificityCi = clopperPearsonInterval(tn, negatives, conf);
 
-  const ppvSample = tp + fp > 0 ? tp / (tp + fp) : NaN;
-  const npvSample = tn + fn > 0 ? tn / (tn + fn) : NaN;
+  const ppvSample = point.ppv ?? NaN;
+  const npvSample = point.npv ?? NaN;
 
   let ppvAdjusted: number | null = null;
   let npvAdjusted: number | null = null;
@@ -102,7 +99,7 @@ export function computeDiagnosticAccuracy(
     npvAdjusted = npvDen > 0 ? (specificity * (1 - p)) / npvDen : NaN;
   }
 
-  const accuracy = (tp + tn) / n;
+  const accuracy = point.accuracy as number;
   const youdenJ = sensitivity + specificity - 1;
   const lrPositive = specificity < 1 ? sensitivity / (1 - specificity) : Infinity;
   const lrNegative = sensitivity < 1 ? (1 - sensitivity) / specificity : 0;

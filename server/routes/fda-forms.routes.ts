@@ -10,7 +10,7 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService';
 import FDAFormGenerator from '../services/FDAFormGenerator';
-import { FDAFormsRegistryClass } from '../config/FDAFormsRegistry';
+import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
 
 const router = Router();
 
@@ -50,6 +50,7 @@ router.get('/registry', async (req: Request, res: Response) => {
       registry,
       categories,
       totalForms,
+      releaseReadiness: FDA_FORMS_RELEASE_READINESS,
       version: '2.0.0',
       lastUpdated: new Date().toISOString()
     });
@@ -186,14 +187,20 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
       updatedAt: new Date()
     };
 
-    // Check if form already exists and update or insert
+    // SECURITY (cross-tenant write): this lookup matched on projectId +
+    // documentType with no organizationId filter, and the UPDATE below then
+    // keyed on the row id it found. A caller who guessed another tenant's
+    // projectId would overwrite that tenant's FDA form — content, formData and
+    // compliance score — and bump its version. `organizationId` was already
+    // resolved from the verified JWT above and simply not used here.
     const existingForm = await db
       .select()
       .from(fda510kDocuments)
       .where(
         and(
           eq(fda510kDocuments.projectId, parseInt(projectId)),
-          eq(fda510kDocuments.documentType, formType)
+          eq(fda510kDocuments.documentType, formType),
+          eq(fda510kDocuments.organizationId, organizationId)
         )
       )
       .limit(1);
@@ -210,7 +217,14 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
           updatedBy: documentRecord.updatedBy,
           updatedAt: new Date()
         })
-        .where(eq(fda510kDocuments.id, existingForm[0].id));
+        // Org predicate repeated on the write: the SELECT and the UPDATE are
+        // separate statements, so scoping only the read is a check-then-act.
+        .where(
+          and(
+            eq(fda510kDocuments.id, existingForm[0].id),
+            eq(fda510kDocuments.organizationId, organizationId)
+          )
+        );
       
       documentRecord.version = (existingForm[0].version ?? 1) + 1;
     } else {
@@ -318,10 +332,14 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
       const existingForm = await db
         .select()
         .from(fda510kDocuments)
+        // SECURITY: same cross-tenant write as the handler above — projectId +
+        // documentType with no tenant filter, then an UPDATE keyed on the found
+        // row id.
         .where(
           and(
             eq(fda510kDocuments.projectId, parseInt(projectId)),
-            eq(fda510kDocuments.documentType, formId)
+            eq(fda510kDocuments.documentType, formId),
+            eq(fda510kDocuments.organizationId, organizationId)
           )
         )
         .limit(1);
@@ -338,7 +356,12 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
             updatedBy: documentRecord.updatedBy,
             updatedAt: new Date()
           })
-          .where(eq(fda510kDocuments.id, existingForm[0].id));
+          .where(
+            and(
+              eq(fda510kDocuments.id, existingForm[0].id),
+              eq(fda510kDocuments.organizationId, organizationId)
+            )
+          );
         
         documentRecord.version = (existingForm[0].version ?? 1) + 1;
       } else {

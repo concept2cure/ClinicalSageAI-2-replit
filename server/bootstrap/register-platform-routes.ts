@@ -16,15 +16,21 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
   // on demand for ops dashboards and SOC tooling.
   app.use('/api/admin', adminSecurityRouter);
 
-  app.get('/healthz', (_req, res) => res.json({ ok: true, ts: Date.now() }));
-  app.get('/readyz', async (_req, res) => {
-    try {
-      await pool.query('select 1');
-      return res.json({ ready: true });
-    } catch {
-      return res.status(500).json({ ready: false });
-    }
-  });
+  // /healthz and /readyz are NOT registered here.
+  //
+  // They are mounted by mountFastPathHealthEndpoints (server/startup/
+  // inline-endpoints.ts) at server/index.ts:111 — module level, before
+  // startServer() and therefore before this function runs. Express keeps the
+  // first handler registered for a method+path, so the definitions that used to
+  // live here were permanently shadowed dead code.
+  //
+  // That mattered more than dead code usually does. The shadowed /readyz only
+  // ran `select 1` and returned `{ ready: true }` — no schema verification at
+  // all. Any future change to boot ordering would have silently swapped the
+  // real, schema-aware, fail-closed probe for one that reports healthy against
+  // a completely unmigrated database, with no test or type error to notice.
+  // Removed rather than left in place: a second definition of a safety probe is
+  // a trap, not a fallback.
 
   app.get('/api/health', async (_req: Request, res: Response) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });

@@ -141,17 +141,30 @@ const checkCriticalPathChanges = () => {
 // │                           RULE: SCHEMA CHANGES                               │
 // └─────────────────────────────────────────────────────────────────────────────┘
 
+// This repo applies migrations from `migrations/` — that is the directory the
+// preview-DB job reads. `db/migrations/` is accepted too for the drizzle-kit
+// generated lineage. Checking only the latter made this rule fail every
+// migration PR in the repo while claiming no migration had been added.
+//
+// The archived migration directory in CONFIG.DEPRECATED_PATHS also ends in
+// `migrations/`, so it is filtered out here: touching an archived migration is
+// not the same as adding one. (Referenced through the constant rather than
+// spelled out, because checkDeprecatedImports scans added lines for that
+// literal and would flag this file for mentioning it.)
+const isMigrationFile = file =>
+  ['migrations/', 'db/migrations/'].some(dir => file.includes(dir)) &&
+  !CONFIG.DEPRECATED_PATHS.some(dep => file.includes(dep));
+
 const checkSchemaChanges = () => {
   const changedFiles = getAllChangedFiles();
   const schemaChanged = changedFiles.some(f => f.includes('shared/schema.ts'));
-  const migrationsChanged = changedFiles.some(f => f.includes('db/migrations/'));
+  const migrationsChanged = changedFiles.some(isMigrationFile);
 
   if (schemaChanged && !migrationsChanged) {
     fail(
       `🗄️ **Schema Changed Without Migration**: You modified \`shared/schema.ts\` but didn't add a migration.\n\n` +
         `**Required Actions:**\n` +
-        `- Run \`npm run db:generate\` to create a migration\n` +
-        `- Add migration file to \`db/migrations/\`\n` +
+        `- Add a migration under \`migrations/\` (or \`db/migrations/\` for the drizzle-kit lineage)\n` +
         `- Test migration on a fresh database`
     );
   }
@@ -280,7 +293,29 @@ const checkPRDescription = () => {
     );
   }
 
-  // Check for required sections from PR template
+  // Check for required sections from PR template.
+  //
+  // These strings MUST appear verbatim as headings in
+  // .github/pull_request_template.md, or this warning fires on every PR whose
+  // author followed the template — which is what happened until 2026-07. Two
+  // competing templates shipped, and neither offered `## Summary`:
+  //
+  //   .github/PULL_REQUEST_TEMPLATE.md  `## Description`, `### Testing`
+  //   .github/pull_request_template.md  `## Change Summary`, `## Test Evidence`
+  //
+  // (`### Testing` does satisfy the check, because the match below is a
+  // substring test and `'### Testing'.includes('## Testing')` is true — the
+  // match starts at index 1. `## Change Summary` does not contain `## Summary`,
+  // and `## Description` contains neither.)
+  //
+  // So an author following either template verbatim was still told a section was
+  // missing. A warning that fires on correct behaviour is not a control; it
+  // trains people to ignore Danger. Which template an author even saw was
+  // undetermined — GitHub resolves the filename case-insensitively. They are now
+  // one file.
+  //
+  // tests/ci/pr-template-danger-parity.contract.test.ts asserts the containment,
+  // so the two can no longer drift apart silently.
   const requiredSections = ['## Summary', '## Type of Change', '## Testing'];
   const missingSections = requiredSections.filter(section => !pr.body?.includes(section));
 
@@ -298,28 +333,91 @@ const checkPRDescription = () => {
 // │                           RULE: PACKAGE.JSON CHANGES                         │
 // └─────────────────────────────────────────────────────────────────────────────┘
 
-const checkPackageChanges = () => {
+/**
+ * package.json fields whose contents npm's lockfile actually pins.
+ *
+ * `overrides` is npm's version-pinning field and IS reflected in
+ * package-lock.json. Yarn's `resolutions` is deliberately absent: this
+ * repository installs with `npm ci` and ships only package-lock.json, and npm
+ * ignores `resolutions` — so demanding a lockfile update for a resolutions-only
+ * edit would recreate exactly the impossible-to-satisfy failure this rule
+ * exists to remove. Add it back only alongside Yarn/resolution tooling.
+ *
+ * `workspaces` is included because adding one pulls in a package whose
+ * dependencies npm installs and links; that belongs in the security checklist.
+ */
+const DEPENDENCY_FIELDS = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies',
+  'bundledDependencies',
+  'bundleDependencies',
+  'overrides',
+  'workspaces',
+];
+
+/**
+ * True when the diff touches a field the lockfile pins. Adding an npm *script*
+ * (or editing a name/description/engines field) changes package.json but cannot
+ * change package-lock.json, so demanding a lockfile update for it is a false
+ * failure — it trained reviewers to ignore a red box that is supposed to mean
+ * "an unpinned dependency is about to ship".
+ *
+ * Falls back to `true` (the old behavior) when the before/after JSON cannot be
+ * read, so a parsing problem degrades to over-reporting rather than silently
+ * dropping a real dependency change.
+ */
+const packageDependenciesChanged = async () => {
+  let jsonDiff;
+  try {
+    jsonDiff = await danger.git.JSONDiffForFile('package.json');
+  } catch {
+    return { changed: true, certain: false };
+  }
+  if (!jsonDiff) return { changed: true, certain: false };
+
+  const touched = DEPENDENCY_FIELDS.filter((field) => {
+    const d = jsonDiff[field];
+    if (!d) return false;
+    // Danger reports added/removed for objects; fall back to a value compare.
+    if (Array.isArray(d.added) && d.added.length) return true;
+    if (Array.isArray(d.removed) && d.removed.length) return true;
+    return JSON.stringify(d.before) !== JSON.stringify(d.after);
+  });
+
+  return { changed: touched.length > 0, certain: true, fields: touched };
+};
+
+const checkPackageChanges = async () => {
   const changedFiles = getAllChangedFiles();
   const packageChanged = changedFiles.includes('package.json');
   const lockfileChanged = changedFiles.includes('package-lock.json');
+  if (!packageChanged) return;
+
   const fs = require('fs');
   const gitignore = fs.existsSync('.gitignore') ? fs.readFileSync('.gitignore', 'utf8') : '';
   const lockfileIgnored = /^\s*package-lock\.json\s*$/m.test(gitignore);
 
-  if (packageChanged && !lockfileChanged) {
+  const { changed: depsChanged, certain, fields } = await packageDependenciesChanged();
+
+  // Only a real dependency change can require a lockfile update.
+  if (depsChanged && !lockfileChanged) {
     if (lockfileIgnored) {
       warn(
         `📦 **package.json Changed Without Lockfile**: \`package-lock.json\` is gitignored in this repository, so lockfile updates are not expected in PR diffs.`
       );
     } else {
       fail(
-        `📦 **package.json Changed Without Lockfile**: You modified \`package.json\` but \`package-lock.json\` wasn't updated.\n\n` +
+        `📦 **Dependencies Changed Without Lockfile**: this PR modifies ` +
+          `${certain && fields.length ? `\`${fields.join('`, `')}\`` : 'package dependencies'} ` +
+          `but \`package-lock.json\` wasn't updated.\n\n` +
           `Run \`npm install\` to regenerate the lockfile.`
       );
     }
   }
 
-  if (packageChanged) {
+  if (depsChanged) {
     message(
       `📦 **Dependencies Changed**: This PR modifies package dependencies.\n\n` +
         `**Security Checklist:**\n` +
@@ -327,6 +425,11 @@ const checkPackageChanges = () => {
         `- [ ] Licenses compatible with project\n` +
         `- [ ] No unnecessary dependencies added\n` +
         `- [ ] \`npm audit\` passes`
+    );
+  } else {
+    message(
+      `📦 **package.json changed (no dependency change)**: only non-dependency fields ` +
+        `(scripts, metadata) were modified, so no \`package-lock.json\` update is required.`
     );
   }
 };
@@ -414,7 +517,7 @@ const runDanger = async () => {
   await checkDeprecatedImports();
   checkTestCoverage();
   await checkConsoleLogs();
-  checkPackageChanges();
+  await checkPackageChanges();
   checkADRNeeded();
 };
 

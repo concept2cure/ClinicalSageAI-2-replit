@@ -26,7 +26,6 @@ import { getEndpointRecommenderService } from '../services/endpoint-recommender-
 
 import deviceProjectsRouter from '../routes/device-projects';
 import predictiveSectionsRoutes from '../routes/predictive-sections';
-import foresightFeedbackRoutes from '../routes/foresight-feedback';
 import { createCsrIntelligenceRoutes } from '../routes/csr-intelligence-routes';
 import csrAnalyticsRouter from '../routes/csr-analytics';
 import { createAuditTrailRoutes } from '../routes/audit-trail-routes';
@@ -47,6 +46,7 @@ import mdxEngineeringRoutes from '../routes/mdx-engineering';
 import mdxUdiRoutes from '../routes/mdx-udi';
 import mdxRiskRoutes from '../routes/mdx-risk-management';
 import mdxRbmRoutes from '../routes/mdx-rbm';
+import mdxRbmDataRoutes from '../routes/mdx-rbm-data';
 import mdxSoftwareRoutes from '../routes/mdx-software';
 import mdxIvdPerformanceRoutes from '../routes/mdx-ivd-performance';
 import mdxIvdrRoutes from '../routes/mdx-ivdr';
@@ -60,6 +60,10 @@ import mdxAdminRoutes from '../routes/mdx-admin';
 import mdxTemplatesRoutes from '../routes/mdx-templates';
 import mdxPostmarketRoutes from '../routes/mdx-postmarket';
 import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
+import mdxIndustryContextRoutes from '../routes/mdx-industry-context';
+import mdxStudyArchetypesRoutes from '../routes/mdx-study-archetypes';
+import mdxWorkPackagesRoutes from '../routes/mdx-work-packages';
+import mdxClientReviewRoutes from '../routes/mdx-client-review';
 import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
 import mdxQmsRoutes from '../routes/mdx-qms';
 import mdxLabelingRoutes from '../routes/mdx-labeling';
@@ -118,25 +122,8 @@ export async function registerInlineAnaIntelligenceRoutes({
   // Predictive sections.
   app.use('/api/predictive-sections', predictiveSectionsRoutes);
 
-  // Foresight AI feedback — deprecated alias.
-  try {
-    app.use(
-      '/api/foresight-ai/feedback',
-      (_req: Request, res: Response, next: () => void) => {
-        res.setHeader('Deprecation', 'true');
-        res.setHeader('Sunset', '2026-04-01');
-        res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-        next();
-      },
-      (req, _res, next) => {
-        req.url = `/feedback${req.url}`;
-        next();
-      },
-      foresightFeedbackRoutes
-    );
-  } catch (error) {
-    console.error('Failed to mount foresight-ai/feedback alias:', error);
-  }
+  // Foresight AI feedback alias retired in Phase 8 (past 2026-04-01 Sunset; the
+  // Foresight path surfaced fabricated dose confidence intervals). No longer mounted.
 
   // RAG routes (parallel startup for faster boot).
   {
@@ -1082,7 +1069,15 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
   app.use('/api/mdx', mdxRbmRoutes);
+  // RBM data layer: metric ingestion + the engine runs over ingested data.
+  app.use('/api/mdx', mdxRbmDataRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
+  app.use('/api/mdx', mdxIndustryContextRoutes);
+  /* Regulatory work-package compiler (MDX-PM-02) — read-only deterministic
+     plan derived from the effective industry context; no persistence. */
+  app.use('/api/mdx', mdxWorkPackagesRoutes);
+  /* Client review zone (MDX-CLIENT-01) — internal-visibility items never leak. */
+  app.use('/api/mdx', mdxClientReviewRoutes);
   /* IVD + diagnostic surfaces (migration 20260508). */
   app.use('/api/mdx', mdxIvdPerformanceRoutes);
   app.use('/api/mdx', mdxIvdrRoutes);
@@ -1098,6 +1093,8 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxTemplatesRoutes);
   app.use('/api/mdx', mdxPostmarketRoutes);
   app.use('/api/mdx', mdxClinicalStudiesRoutes);
+  /* Study-archetype registry — read-only static registry (MDX-STUDY-01). */
+  app.use('/api/mdx', mdxStudyArchetypesRoutes);
   app.use('/api/mdx', mdxAnaMemoryRoutes);
   /* QMS + Labeling + Global search + Analytics (migration 20260511). */
   app.use('/api/mdx', mdxQmsRoutes);

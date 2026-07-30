@@ -394,11 +394,13 @@ export interface FindingSearchResult {
 
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Evidence-spine workstream (claude/quality-assurance-module-tegqkr), landed
-   VERBATIM alongside the evidence-graph implementation above. The two models
-   overlap (RegulatoryFinding / RegulatoryOutcome / StudyResultObservation are
-   defined by both), so this file has duplicate identifiers and does NOT compile
-   until the two are reconciled in the follow-up. Nothing is dropped by design.
+   Evidence-spine workstream — the persistence-row contract over the cre_* tables,
+   the platform's single evidence store. The evidence-graph domain contract above
+   (the `Resolved*` DTOs) is now SERVED from these rows: the facade in ./index.ts
+   converged onto evidence-spine.service and the duplicate table lineage was retired
+   (#1150). The three names both workstreams defined were disambiguated by the
+   `Resolved*` rename above, so this file compiles with no duplicate identifiers.
+   (The earlier "does not compile until reconciled" note is obsolete — that happened.)
    ══════════════════════════════════════════════════════════════════════════ */
 
 /**
@@ -485,6 +487,9 @@ export interface EvidenceSource {
   organizationId: number | null;          // null = GLOBAL_PUBLIC
   visibilityClass: VisibilityClass;
   clientWorkspaceId: number | null;
+  /** regulatory_programs.id (UUID) — the project-management id-space. Null when
+   *  the source is scoped by clientWorkspaceId instead, or not project-scoped. */
+  clientProgramId: string | null;
   sourceType: SourceType;
   agency: string | null;
   sourceRecordIdentifier: string | null;

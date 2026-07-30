@@ -32,6 +32,13 @@
  *   5. `?? 1` or `|| 1` following organizationId reads
  *      → never default a tenant id; always 403 instead
  *
+ *   6. namespace-global Socket.IO publishes (`.broadcast.emit(` and a publish
+ *      straight off the server handle, e.g. `io.emit(`)
+ *      → use emitToOrgPeers / emitToOrg from server/socket/tenantBroadcast,
+ *        which can only address the room derived from the verified principal
+ *        (C2C-COLLAB-003). Ordinary EventEmitter publishes such as
+ *        `this.emit('fieldUpdated', …)` are NOT matched.
+ *
  * Exemptions:
  *   - Test files (*.test.ts, *.spec.ts, __tests__/**) — they
  *     deliberately construct bad-input fixtures.
@@ -126,12 +133,70 @@ const PATTERNS: Pattern[] = [
     ],
   },
   {
+    // Ledger C-18. The tenant-header rule above was already here; identity and
+    // ROLE headers were not, and that is where the bypass lived: a valid token
+    // with no `roles` claim plus a forged `x-roles: ADMIN` header passed every
+    // requireAny() gate in the authoring router, returning 201 on an
+    // ADMIN-gated route. The same class in server/src/routes/stability.router.ts
+    // attributed GxP audit records to `x-user-name || x-user-email || 'user'`.
+    //
+    // Deriving these headers from verified claims is not enough on its own —
+    // overwrite without delete leaves the caller's value in place whenever the
+    // claim is absent. Route code must read the claim (req.user.*) directly.
+    name: 'identity-trust-header',
+    regex: /\breq\.headers\s*\[\s*['"]x-(roles?|user-email|user-name|user-id)['"]\s*\]/i,
+    message:
+      'Do not read identity or roles from request headers — they are ' +
+      'attacker-controlled. Read the verified claim: req.user.roles for ' +
+      'authorization, req.user.email / req.user.id for attribution. See ledger ' +
+      'C-18: a forged x-roles header passed every role gate in the authoring ' +
+      'router.',
+    exemptFiles: [
+      // This router's OWN JWT middleware derives and then sanitises these
+      // headers for legacy readers; it must be able to delete and set them.
+      /(?:^|\/)server\/routes\/authoring\.router\.ts$/,
+      // Telemetry only: extractActor() prefers req.user.id / req.user.userId and
+      // reaches the header solely to label an otherwise anonymous request in
+      // logs. The value is never an authorization or audit-record identity.
+      // Same rationale as this file's tenant-header exemption for observability.
+      /(?:^|\/)server\/src\/mw\/observability\.ts$/,
+    ],
+  },
+  {
     name: 'direct-jwt-verify',
     regex: /\bjwt\.verify\s*\(/,
     message:
       'Use verifyJwtWithRotation from server/utils/jwtVerify instead of jwt.verify ' +
       'directly — needed for zero-downtime JWT secret rotation (PR #500).',
     exemptFiles: [/(?:^|\/)server\/utils\/jwtVerify\.ts$/],
+  },
+  {
+    // Ledger C2C-COLLAB-003. Eleven Socket.IO handlers re-published task,
+    // notification, compliance and timer payloads with the namespace-global
+    // primitives. Those ignore room membership, and because every tenant's
+    // sockets share the default namespace, org A's task titles, assignees and
+    // compliance findings reached org B's authenticated clients.
+    //
+    // Matches ONLY the two global primitives:
+    //   - any `<x>.broadcast.emit(...)`
+    //   - a publish straight off the Socket.IO server handle
+    //     (`io.emit(...)`, `io?.emit(...)`, `ioInstance.emit(...)`,
+    //      `ioServer.emit(...)`, `socketServer.emit(...)`)
+    // It deliberately does NOT match ordinary EventEmitter publishes
+    // (`this.emit('fieldUpdated', …)`, `engine.emit(…)`,
+    // `smartFieldLinking.emit(…)`), a reply to one socket (`socket.emit(…)`),
+    // or an already room-scoped send (`io.to(room).emit(…)`,
+    // `socket.to(room).emit(…)`).
+    name: 'socket-global-broadcast',
+    regex:
+      /\.\s*broadcast\s*\.\s*emit\s*\(|\b(?:io|ioInstance|ioServer|socketServer)\s*\??\s*\.\s*emit\s*\(/,
+    message:
+      'Do not publish tenant data with a namespace-global Socket.IO broadcast — ' +
+      'it reaches every connected socket in every organization. Use ' +
+      'emitToOrgPeers(socket, event, payload) or emitToOrg(io, orgId, event, ' +
+      'payload) from server/socket/tenantBroadcast, which address only the room ' +
+      'derived from the verified principal (socket.orgId). See finding ' +
+      'C2C-COLLAB-003.',
   },
   {
     name: 'org-id-fallback',

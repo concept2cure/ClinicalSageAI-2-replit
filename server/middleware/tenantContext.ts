@@ -9,10 +9,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { Pool } from 'pg';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
-import { db } from '../db';
-import { getPool } from '../db';
+import { db, getPool } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
 import { runWithTenantScope } from '../db/tenantStore';
@@ -217,15 +215,39 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
       });
     }
 
-    const tenant = await db
-      .select({
-        id: organizations.id,
-        industryMode: organizations.industryMode,
-        status: organizations.status,
-      })
-      .from(organizations)
-      .where(eq(organizations.id, orgIdInt))
-      .limit(1);
+    // Bootstrap the database scope from the signed JWT organization claim
+    // before querying tenant/membership records. The claim is not sufficient
+    // authorization by itself—the membership query below still decides that—
+    // but scoping to the claimed tenant prevents the instrumented pool's
+    // fail-closed guard from turning every production request into a 401 when
+    // RLS_ENFORCE=on.
+    const bootstrap = {
+      tenantId: organizationId,
+      orgUuid: decoded.organizationUuid || null,
+      role: null,
+      source: 'request' as const,
+      caller: `${req.path}:tenant-bootstrap`,
+    };
+
+    const { tenant, membership } = await runWithTenantScope(bootstrap, async () => {
+      const tenantRows = await db
+        .select({
+          id: organizations.id,
+          industryMode: organizations.industryMode,
+          status: organizations.status,
+        })
+        .from(organizations)
+        .where(eq(organizations.id, orgIdInt))
+        .limit(1);
+
+      const membershipRows = await db
+        .select({ role: organizationUsers.role })
+        .from(organizationUsers)
+        .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, orgIdInt)))
+        .limit(1);
+
+      return { tenant: tenantRows, membership: membershipRows };
+    });
 
     if (!tenant.length || tenant[0].status === 'suspended') {
       return res.status(401).json({
@@ -233,12 +255,6 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
         message: 'Tenant not active',
       });
     }
-
-    const membership = await db
-      .select({ role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, orgIdInt)))
-      .limit(1);
 
     if (!membership.length) {
       return res.status(403).json({
@@ -359,14 +375,17 @@ export function getTenantContext(req: Request): TenantContext {
 }
 
 /**
- * Get the DB client to use for the current request. Returns the lazy
- * request-scoped wrapper installed by `requireTenantContext` when present,
- * or the shared pool as a fallback (which will NOT have RLS session vars
- * set — caller must accept that or route through `requireTenantContext`
- * upstream).
+ * Get the tenant-scoped DB client for the current request. Missing context is
+ * rejected rather than falling back to the shared pool: a route that omitted
+ * `requireTenantContext` must never gain unscoped database access.
  */
-export function getRequestDbClient(req: Request): RequestDbClient | Pool {
-  return req.dbClient ?? getPool();
+export function getRequestDbClient(req: Request): RequestDbClient {
+  if (!req.dbClient || typeof req.dbClient.query !== 'function') {
+    throw new Error(
+      'getRequestDbClient requires tenant context; install requireTenantContext before this handler'
+    );
+  }
+  return req.dbClient;
 }
 
 /**

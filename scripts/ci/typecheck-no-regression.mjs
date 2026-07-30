@@ -55,13 +55,20 @@ if (typeof baselineCount !== 'number') {
 
 console.log(`[ci:typecheck-no-regression] running tsc --noEmit (baseline: ${baselineCount})`);
 
+// Heap. tsc OOMs on this project at 6144 MB — reproduced on a 15 GB host, where
+// it thrashed for 379 s and then died with "Ineffective mark-compacts near heap
+// limit". It completes at 24576. Overridable so a smaller runner can tune it,
+// but the default must be a value that actually finishes: a cap that kills the
+// compiler is indistinguishable from a clean run to the counter below.
+const heapMb = process.env.TYPECHECK_HEAP_MB || '24576';
+
 const tsc = spawnSync(
   'npx',
   ['tsc', '--noEmit', '-p', 'tsconfig.json'],
   {
     cwd: repoRoot,
     encoding: 'utf8',
-    env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=6144' },
+    env: { ...process.env, NODE_OPTIONS: `--max-old-space-size=${heapMb}` },
     maxBuffer: 64 * 1024 * 1024,
   }
 );
@@ -72,7 +79,54 @@ const combined = stdout + stderr;
 
 const errorCount = (combined.match(/error TS/g) || []).length;
 
-console.log(`[ci:typecheck-no-regression] errors found: ${errorCount}`);
+// ─────────────────────────────────────────────────────────────────────────────
+// Did the compiler actually finish?
+//
+// THE INCIDENT. This gate counted `error TS` matches and compared them to the
+// baseline, and did nothing else. When tsc ran out of memory it died with a V8
+// fatal error — a message containing ZERO `error TS` substrings — so errorCount
+// came out 0, which is <= a baseline of 0, and the gate printed "OK" and exited
+// 0. The gate passed *because* the compiler crashed. It was observed doing this
+// in CI on a tree carrying two real TS7016 errors (PR #1180).
+//
+// tsc's own exit codes: 0 = clean, 1 and 2 = diagnostics reported. Anything else
+// — a null status (killed by a signal, which is what OOM looks like), a spawn
+// error, or a status > 2 — means the run did not complete and errorCount is
+// meaningless rather than reassuring. Fail loudly instead of silently passing.
+// ─────────────────────────────────────────────────────────────────────────────
+const abnormal =
+  tsc.error != null ||
+  tsc.status === null ||
+  tsc.status === undefined ||
+  tsc.status > 2;
+
+if (abnormal) {
+  console.error('[ci:typecheck-no-regression] FAIL — tsc did not complete.');
+  console.error(
+    `  exit status : ${tsc.status === null ? 'null (killed by signal ' + tsc.signal + ')' : tsc.status}`
+  );
+  if (tsc.error) console.error(`  spawn error : ${tsc.error.message}`);
+  console.error(`  heap cap    : ${heapMb} MB (override with TYPECHECK_HEAP_MB)`);
+  console.error('  The error count below is NOT trustworthy — the compiler died before finishing.');
+  console.error('  Last 40 lines of output:');
+  console.error(
+    combined.split('\n').slice(-40).map((l) => `    ${l}`).join('\n')
+  );
+  process.exit(1);
+}
+
+// A completed run that reports diagnostics must have produced at least one
+// parseable "error TS" line. If it did not, the output was truncated or the
+// process died mid-write — same class of problem, same refusal to guess.
+if (tsc.status > 0 && errorCount === 0) {
+  console.error(
+    `[ci:typecheck-no-regression] FAIL — tsc exited ${tsc.status} (diagnostics reported) but no "error TS" lines were parsed.`
+  );
+  console.error('  Output was truncated or the process died mid-write; the count cannot be trusted.');
+  process.exit(1);
+}
+
+console.log(`[ci:typecheck-no-regression] errors found: ${errorCount} (tsc exit ${tsc.status})`);
 
 if (writeBaseline) {
   const next = { ...baseline, errorCount };
