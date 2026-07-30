@@ -76,16 +76,33 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       const names = Object.keys(zip.files);
       const index = await zip.file('index.xml')!.async('string');
 
-      // replace: the changed general doc, pointing modified-file at the prior file.
-      expect(index).toMatch(
-        /<leaf operation="replace" modified-file="\.\.\/0000\/m3\/3-2-s-1\/general\.pdf"[^>]*>/,
-      );
-      // new: the brand-new stability doc, no modified-file.
-      expect(index).toMatch(/<leaf operation="new"(?![^>]*modified-file)[^>]*stability\.pdf/);
-      // delete: the withdrawn doc, pointing modified-file at the prior file.
-      expect(index).toMatch(
-        /<leaf operation="delete" modified-file="\.\.\/0000\/m3\/3-2-s-2\/old-manufacture\.pdf"/,
-      );
+      // Pull each leaf element out of the backbone so the exact ICH lifecycle
+      // convention (which href points where) is pinned, not just "contains".
+      const leafFor = (file: string) =>
+        index.match(new RegExp(`<leaf\\b[^>]*${file.replace('.', '\\.')}[^>]*>`))?.[0] ?? '';
+      const hrefOf = (el: string) => /xlink:href="([^"]*)"/.exec(el)?.[1] ?? '';
+      const modOf = (el: string) => /modified-file="([^"]*)"/.exec(el)?.[1] ?? '';
+
+      // REPLACE: ships the NEW file (xlink:href is THIS sequence's own path, not
+      // "../"), and modified-file points BACK at the prior sequence's copy.
+      const replaceLeaf = leafFor('general.pdf');
+      expect(replaceLeaf).toMatch(/operation="replace"/);
+      expect(hrefOf(replaceLeaf)).not.toMatch(/^\.\.\//); // current-sequence path
+      expect(hrefOf(replaceLeaf)).toMatch(/general\.pdf$/);
+      expect(modOf(replaceLeaf)).toBe('../0000/m3/3-2-s-1/general.pdf');
+
+      // NEW: a first-time leaf carries NO modified-file and ships at its own path.
+      const newLeaf = leafFor('stability.pdf');
+      expect(newLeaf).toMatch(/operation="new"/);
+      expect(newLeaf).not.toMatch(/modified-file=/);
+      expect(hrefOf(newLeaf)).not.toMatch(/^\.\.\//);
+
+      // DELETE: no new bytes — both xlink:href AND modified-file point at the
+      // prior sequence's withdrawn file.
+      const deleteLeaf = leafFor('old-manufacture.pdf');
+      expect(deleteLeaf).toMatch(/operation="delete"/);
+      expect(modOf(deleteLeaf)).toBe('../0000/m3/3-2-s-2/old-manufacture.pdf');
+      expect(hrefOf(deleteLeaf)).toBe('../0000/m3/3-2-s-2/old-manufacture.pdf');
 
       // The new + replaced leaves ship real bytes; the deleted one ships NONE.
       expect(names.some((n) => n.endsWith('general.pdf'))).toBe(true);
