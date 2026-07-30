@@ -87,6 +87,12 @@ describe('Registry coverage', () => {
       'EU_PIP', 'US_PSP', 'US_351K', 'US_ACCEL_APPROVAL', 'EU_CMA',
       'UK_MA', 'CH_MA', 'KR_MA_NEW', 'SG_NDA', 'CN_MAA', 'BR_MA', 'AU_CAT1',
       'ICH_ICF', 'ICH_ICSR', 'ICH_BENEFIT_RISK',
+      // Regional clinical trial applications (full CTD, mirroring EU_CTA / US_IND).
+      'UK_CTA', 'CA_CTA_A', 'AU_CTA', 'CH_CTA', 'KR_IND', 'BR_DEEC',
+      // Generic / abbreviated marketing (bioequivalence dossier).
+      'CA_ANDS', 'KR_MA_GENERIC', 'SG_GDA',
+      // EU pre-submission, designation, renewal, pharmacovigilance system + ICH CMC.
+      'EU_SCIENTIFIC_ADVICE', 'EU_PRIME', 'EU_RENEWAL', 'EU_PSMF', 'ICH_COMPARABILITY',
     ] as const;
 
     it.each(NOW_BUILDABLE)('%s has a real (non-generic) section blueprint', (id) => {

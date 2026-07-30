@@ -357,6 +357,50 @@ const BENEFIT_RISK_SECTIONS: SectionDefinition[] = [
 /** Full CTD with every section required (for marketing/registration applications). */
 const CTD_ALL_REQUIRED: SectionDefinition[] = CTD_SECTIONS.map(sec => ({ ...sec, required: true }));
 
+/**
+ * Abbreviated / generic dossier: administrative + quality modules plus the
+ * bioequivalence study that stands in for original clinical data. Shared by the
+ * generic marketing pathways (Canada ANDS, Korea generic MA, Singapore GDA),
+ * the same shape the US ANDA blueprint uses.
+ */
+const GENERIC_DOSSIER_SECTIONS: SectionDefinition[] = CTD_SECTIONS.filter(sec =>
+  ['1.1', '1.2', '1.5', '2.3', '3.2.S', '3.2.P', '5.3', '5.4'].includes(sec.code),
+);
+
+/**
+ * EU Pharmacovigilance System Master File (PSMF) — structure per GVP Module II
+ * and Commission Implementing Regulation (EU) 520/2012 Art. 2. It describes the
+ * pharmacovigilance SYSTEM rather than a product, so it sits in the regional /
+ * administrative module.
+ */
+const PSMF_SECTIONS: SectionDefinition[] = [
+  { code: 'PSMF.1', title: 'Qualified Person for Pharmacovigilance (QPPV)', module: 1, required: true, contentType: 'narrative', guidance: 'GVP Module II.B.2 — name, 24h contact, CV, responsibilities' },
+  { code: 'PSMF.2', title: 'Organisational Structure of the MAH', module: 1, required: true, contentType: 'mixed', guidance: 'GVP Module II.B.3 — org chart, PV positioning' },
+  { code: 'PSMF.3', title: 'Sources of Safety Data', module: 1, required: true, contentType: 'table', guidance: 'GVP Module II.B.4 — units, activities, delegated/contracted tasks' },
+  { code: 'PSMF.4', title: 'Computerised Systems and Databases', module: 1, required: true, contentType: 'mixed', guidance: 'GVP Module II.B.5 — EudraVigilance connectivity, validation status' },
+  { code: 'PSMF.5', title: 'Pharmacovigilance Processes', module: 1, required: true, contentType: 'narrative', guidance: 'GVP Module II.B.6 — ADR handling, signal management, PSUR, RMP, variations' },
+  { code: 'PSMF.6', title: 'Pharmacovigilance System Performance', module: 1, required: true, contentType: 'mixed', guidance: 'GVP Module II.B.7 — KPIs, compliance metrics' },
+  { code: 'PSMF.7', title: 'Quality System', module: 1, required: true, contentType: 'narrative', guidance: 'GVP Module II.B.8 — documentation, training, audits, CAPA' },
+  { code: 'PSMF.8', title: 'Annexes', module: 1, required: true, contentType: 'list', guidance: 'GVP Module II.C — product list, contracts, audit schedule, logbook of changes' },
+];
+
+/**
+ * Comparability Protocol — a pre-approved plan for managing future CMC /
+ * manufacturing changes with pre-defined tests and acceptance criteria
+ * (ICH Q5E comparability; ICH Q12 established conditions / post-approval change
+ * management). A quality/CMC document (Module 3).
+ */
+const COMPARABILITY_SECTIONS: SectionDefinition[] = [
+  { code: 'CP.1', title: 'Purpose and Scope of the Change', module: 3, required: true, contentType: 'narrative' },
+  { code: 'CP.2', title: 'Description of the Manufacturing Change', module: 3, required: true, contentType: 'mixed' },
+  { code: 'CP.3', title: 'Quality Attributes Potentially Affected', module: 3, required: true, contentType: 'table', guidance: 'ICH Q5E / Q8 — impacted CQAs' },
+  { code: 'CP.4', title: 'Analytical Comparability Plan', module: 3, required: true, contentType: 'mixed', guidance: 'methods, tests, characterisation' },
+  { code: 'CP.5', title: 'Comparability Acceptance Criteria', module: 3, required: true, contentType: 'table' },
+  { code: 'CP.6', title: 'Stability Commitment', module: 3, required: true, contentType: 'mixed', guidance: 'ICH Q1A / Q5C' },
+  { code: 'CP.7', title: 'Risk Assessment', module: 3, required: true, contentType: 'narrative', guidance: 'ICH Q9' },
+  { code: 'CP.8', title: 'Proposed Reporting Category and Implementation', module: 3, required: true, contentType: 'narrative', guidance: 'ICH Q12' },
+];
+
 const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // US Pre-submission
   us_pre_ind_sections: { id: 'us_pre_ind_sections', name: 'Pre-IND Meeting Briefing Package', sections: PRE_IND_SECTIONS },
@@ -449,6 +493,28 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_cta_sections: { id: 'eu_cta_sections', name: 'EU CTA Sections', sections: CTD_SECTIONS },
   eu_maa_sections: { id: 'eu_maa_sections', name: 'MAA Sections (CTD)', sections: CTD_SECTIONS.map(s => ({ ...s, required: true })) },
   eu_cer_sections: { id: 'eu_cer_sections', name: 'CER Sections (EU MDR)', sections: CER_SECTIONS },
+
+  // Regional clinical trial applications (full CTD, mirroring EU_CTA / US_IND)
+  uk_cta_sections: { id: 'uk_cta_sections', name: 'UK Clinical Trial Authorisation (MHRA)', sections: CTD_SECTIONS },
+  ca_cta_a_sections: { id: 'ca_cta_a_sections', name: 'Canada CTA Amendment', sections: CTD_SECTIONS },
+  au_cta_sections: { id: 'au_cta_sections', name: 'Australia Clinical Trial Approval (TGA)', sections: CTD_SECTIONS },
+  ch_cta_sections: { id: 'ch_cta_sections', name: 'Switzerland Clinical Trial Application (Swissmedic)', sections: CTD_SECTIONS },
+  kr_ind_sections: { id: 'kr_ind_sections', name: 'Korea IND Application (MFDS)', sections: CTD_SECTIONS },
+  br_deec_sections: { id: 'br_deec_sections', name: 'Brazil Clinical Trial Dossier (ANVISA DEEC)', sections: CTD_SECTIONS },
+
+  // Generic / abbreviated marketing applications (bioequivalence-focused dossier)
+  ca_ands_sections: { id: 'ca_ands_sections', name: 'Canada Abbreviated NDS (generic)', sections: GENERIC_DOSSIER_SECTIONS },
+  kr_ma_generic_sections: { id: 'kr_ma_generic_sections', name: 'Korea Generic Marketing Application', sections: GENERIC_DOSSIER_SECTIONS },
+  sg_gda_sections: { id: 'sg_gda_sections', name: 'Singapore Generic Drug Application', sections: GENERIC_DOSSIER_SECTIONS },
+
+  // EU pre-submission, designation, renewal, and pharmacovigilance system
+  eu_scientific_advice_sections: { id: 'eu_scientific_advice_sections', name: 'EU Scientific Advice / Protocol Assistance', sections: PRE_IND_SECTIONS },
+  eu_prime_sections: { id: 'eu_prime_sections', name: 'EU PRIME Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
+  eu_renewal_sections: { id: 'eu_renewal_sections', name: 'EU Marketing Authorisation Renewal', sections: VARIATION_SECTIONS },
+  eu_psmf_sections: { id: 'eu_psmf_sections', name: 'Pharmacovigilance System Master File (EU GVP II)', sections: PSMF_SECTIONS },
+
+  // ICH CMC lifecycle
+  ich_comparability_sections: { id: 'ich_comparability_sections', name: 'Comparability Protocol (ICH Q5E/Q12)', sections: COMPARABILITY_SECTIONS },
 
   // Default fallback
   default_sections: { id: 'default_sections', name: 'Standard CTD Sections', sections: CTD_SECTIONS },
