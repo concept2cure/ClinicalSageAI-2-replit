@@ -63,6 +63,7 @@ import {
   FORM_356H,
   FORM_1574,
 } from './ind-form-data-builders';
+import { hasReconstruction, reconstructForm } from './ind-form-reconstruct';
 
 // ---------------------------------------------------------------------------
 // Constants (mirror leaf-pdf-renderer for the deterministic fallback)
@@ -107,6 +108,13 @@ export interface IndFormPdfResult {
   unmappedFields?: string[];
   /** Built fields whose mapped widget rejected the value (wrong widget type). */
   unfilledFields?: string[];
+  /**
+   * True when the output is a faithful sectioned RECONSTRUCTION of the form
+   * (drawn box structure), used for pure dynamic XFA forms (1571/3674) that have
+   * no fillable AcroForm layer and no official page to overlay. Never the
+   * official Adobe-rendered PDF; see ./ind-form-reconstruct.
+   */
+  reconstructed?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -421,8 +429,14 @@ export async function renderBuiltForm(
       return await fillOfficialTemplate(formId, template.bytes, built, template.fieldMap);
     } catch {
       // A reviewed asset with an incomplete/outdated field map is never used.
-      return renderFallback(formId, built);
+      // Fall through to a reconstruction if the form has one, else the draft.
     }
+  }
+  // Pure dynamic XFA forms (1571/3674) have no fillable AcroForm layer and no
+  // official page to overlay — render a faithful sectioned reconstruction rather
+  // than the bare labeled draft. Clearly labeled as NOT the official form.
+  if (hasReconstruction(formId)) {
+    return reconstructForm(formId, built);
   }
   return renderFallback(formId, built);
 }

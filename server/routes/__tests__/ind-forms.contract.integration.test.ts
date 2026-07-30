@@ -142,6 +142,11 @@ describe('PDF rendering', () => {
     expect(res.headers['content-type']).toContain('application/pdf');
     expect(res.headers).toHaveProperty('x-form-field-coverage');
     expect(res.headers).toHaveProperty('x-form-used-official-template');
+    // 3674 is a pure dynamic XFA form with no fillable layer — with no official
+    // template installed it renders a faithful reconstruction, and the response
+    // must honestly say so (never the official Adobe-rendered PDF).
+    expect(res.headers['x-form-used-official-template']).toBe('false');
+    expect(res.headers['x-form-reconstructed']).toBe('true');
     expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 

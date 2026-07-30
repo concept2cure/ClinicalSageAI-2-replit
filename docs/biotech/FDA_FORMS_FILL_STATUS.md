@@ -57,8 +57,8 @@ decryption**, so a decrypt step at asset-onboarding is mandatory before any fill
 | **356h** | AES-256 | **AcroForm** | **1348** (`db_aplcnt_name`…) | real (4pg) | **AcroForm fill** (after decrypt) |
 | **3454** | AES-256 | static XFA **+ AcroForm** | **14** (`appFirm`, `check1`, `invName1..6`) | **real** (1pg) | **AcroForm fill** — pdf-lib strips the XFA and fills the layer (round-trips); **done** |
 | **3455** | AES-256 | static XFA **+ AcroForm** | **12** (`invesname`, `nameofstudy`, `check1..4`, `appFirm`) | **real** (1pg) | **AcroForm fill** — **done** (21 CFR 54.4 interest checkboxes, verified mapping) |
-| **1571** | AES-128 | **dynamic XFA** | 0 | **SHELL** ("Please wait… open in Adobe") | **reconstructed layout** — no official page exists outside Adobe |
-| **3674** | AES-128 | **dynamic XFA** | 0 | **SHELL** | **reconstructed layout** |
+| **1571** | AES-128 | **dynamic XFA** | 0 | **SHELL** ("Please wait… open in Adobe") | **reconstruction — done** (`ind-form-reconstruct.ts`); no official page exists outside Adobe |
+| **3674** | AES-128 | **dynamic XFA** | 0 | **SHELL** | **reconstruction — done** |
 
 The dynamic-XFA shell is the key constraint: 1571 and 3674's "official PDF" pages
 contain only the Adobe placeholder — the visible form is generated at render
@@ -76,11 +76,14 @@ faithful **reconstruction** is the honest ceiling.
 | 356h | ✅ `buildForm356h` (aligned to official form) | AcroForm fill — reviewed map + application-type checkboxes | `IMPLEMENTED_UNVERIFIED` — unit-tested against real `db_*` names incl. the NDA/ANDA/BLA type checkboxes (`ind-form-356h-official.test.ts`); needs decrypted asset installed |
 | 3454 | ✅ `buildForm3454` | AcroForm fill (static XFA → AcroForm layer) | `IMPLEMENTED_UNVERIFIED` — reviewed field map, unit-tested (`ind-form-3454-official.test.ts`): certify-none checkbox + applicant firm/name/title + first investigator; `drug_name` (no field) non-required |
 | 3455 | ✅ `buildForm3455` (interest-type model) | AcroForm fill — 21 CFR 54.4 interest checkboxes | `IMPLEMENTED_UNVERIFIED` — reviewed field map + `check1..4` mapping **verified from the form's field tooltips**; per-investigator `invesname`; `interest_type_selected` is a `qcOnly` gate (QC-only, never blocks the fill). Unit-tested (`ind-form-3455-official.test.ts`). Follow-on: a `/3455/pdf-all` per-investigator route (builder `buildAllForm3455` exists) |
-| 1571 | ✅ `buildForm1571` | reconstructed layout | `STUB` — deterministic labeled draft renders today; pure **dynamic** XFA, official layout must be reconstructed |
-| 3674 | ✅ `buildForm3674` | reconstructed layout | `STUB` — pure dynamic XFA |
+| 1571 | ✅ `buildForm1571` | reconstructed layout | `IMPLEMENTED` — faithful sectioned reconstruction (`ind-form-reconstruct.ts`): FDA header + OMB, numbered boxes, blank Part-11 signature block, clearly labeled NOT the official form. Deterministic + data-sensitive, unit-tested (`ind-form-reconstruct.test.ts`). Pure **dynamic** XFA — no official page exists to fill/overlay |
+| 3674 | ✅ `buildForm3674` | reconstructed layout | `IMPLEMENTED` — faithful reconstruction with the three 42 U.S.C. § 282(j) certification checkboxes rendered ☒/☐; unit-tested. Pure dynamic XFA |
 
-All six already produce a deterministic **labeled draft** PDF today
-(`usedOfficialTemplate=false`); none yet produce governed official output.
+All six produce deterministic output today (`usedOfficialTemplate=false`): the
+four AcroForm forms fill their reviewed field map once the decrypted asset is
+installed (labeled draft until then); 1571/3674 render a faithful **reconstruction**
+(`reconstructed=true`) — a drawn full-page layout, never the official Adobe PDF.
+None yet produce governed *official* output.
 
 ---
 
@@ -123,9 +126,12 @@ throwaway download.
    3455 required a builder model change (per-investigator `invesname`, verified
    21 CFR 54.4 interest checkboxes, and a `qcOnly` gate so a validation-only field
    never blocks the official fill).
-3. **Reconstructed layout (1571, 3674).** No official page exists; render a
-   faithful full-page layout, explicitly labeled as a reconstruction, not the
-   Adobe-rendered original.
+3. **Reconstructed layout (1571, 3674). DONE.** No official page exists outside
+   Adobe, so `ind-form-reconstruct.ts` draws a faithful full-page layout — FDA
+   header + OMB number, numbered/titled sections, bordered field boxes, ☒/☐
+   checkboxes, and an intentionally blank Part-11 signature block — explicitly
+   labeled a reconstruction, not the Adobe-rendered original. `renderBuiltForm`
+   routes these two forms to it; the result carries `reconstructed=true`.
 4. **Governed persistence (finding #2).** Every fill (draft or official) becomes
    a versioned governed artifact with a source snapshot and an audit event, and
    is placed in the dossier — closing the "download a form the platform doesn't
@@ -144,7 +150,11 @@ throwaway download.
   the deploy env for a live end-to-end run.
 - **3455** now fills officially (interest-type model + verified checkbox mapping).
   **1571 / 3674** are pure **dynamic** XFA (no AcroForm, no official page outside
-  Adobe) and are the sole remaining fill gap — reconstruction only.
+  Adobe); they now render a faithful **reconstruction** (`reconstructed=true`,
+  `ind-form-reconstruct.ts`), which is the honest ceiling for these two forms —
+  there is no official page to fill or overlay. Every drug-IND form now produces
+  a filled or reconstructed PDF (no bare labeled-list draft remains as the ceiling
+  for any form).
 - Official PDFs are **not committed** (repo convention; assets install via
   `IND_FORM_TEMPLATES_DIR`). Tests use synthetic fixtures with the real field
   names.
@@ -205,8 +215,11 @@ program-scoped form lists via `GET /api/fda-forms/applicable`), which closes the
 original "device-centric registry / no client filtering" concern.
 
 All four static-XFA / AcroForm forms now fill officially (1572, 356h, 3454,
-3455). Remaining: **dynamic-XFA reconstruction for 1571/3674** — the sole fill
-gap (no AcroForm layer, no official page outside Adobe; the labeled draft renders
-their data truthfully today); per-investigator `/1572` + `/3455` `pdf-all` and
-artifact persistence; IND-submission association; and full address granularity
-(`db_*_city/state/zip`, blocked on a granular data source).
+3455), and the two pure **dynamic-XFA** forms (1571, 3674) now render a faithful
+**reconstruction** (`ind-form-reconstruct.ts`, `reconstructed=true`) — the honest
+ceiling, since no official page exists to fill or overlay. Every drug-IND form
+therefore produces a filled or reconstructed PDF; no form's ceiling is the bare
+labeled draft anymore. Remaining (follow-on, not fill gaps): per-investigator
+`/1572` + `/3455` `pdf-all` and artifact persistence; IND-submission association;
+and full address granularity (`db_*_city/state/zip`, blocked on a granular data
+source).

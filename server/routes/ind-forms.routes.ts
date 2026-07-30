@@ -100,6 +100,9 @@ function sendPdf(res: Response, result: IndFormPdfResult): void {
   // produced. Use POST /:formId/artifact for a governed, persisted record.
   res.setHeader('X-Form-Untracked-Preview', 'true');
   res.setHeader('X-Form-Used-Official-Template', String(result.usedOfficialTemplate));
+  // Honestly signal a faithful reconstruction (pure dynamic XFA forms 1571/3674)
+  // so a consumer never mistakes it for the official Adobe-rendered PDF.
+  res.setHeader('X-Form-Reconstructed', String(result.reconstructed === true));
   res.setHeader('X-Form-Field-Coverage', result.fieldCoverage.toFixed(3));
   if (result.missingRequired.length > 0) {
     res.setHeader('X-Form-Missing-Required', result.missingRequired.join(','));
