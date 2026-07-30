@@ -572,44 +572,23 @@ function toStressScenarioDto(s: { key: string; rationale: string; drivenBy: numb
  * the caller falls back to honest-empty rather than scoping evidence on a guess.
  */
 async function resolveDesignEndpoint(scope: EvidenceScope, designNodeId: string): Promise<string | null> {
-  const orgId = scope.organizationId;
-
-  // Prefer the REAL normalized protocol store (protocol_objectives) — the converged
-  // /api/protocol-dev read now returns protocol_documents ids, so a real design node
-  // resolves here. Only attempt it for a numeric id (protocol_document_id is an int);
-  // a legacy blob id like "PROT-2041" falls straight through to the blob read below.
-  if (/^\d+$/.test(designNodeId.trim())) {
-    try {
-      const { rows } = await pool.query(
-        `SELECT endpoint FROM protocol_objectives
-          WHERE protocol_document_id = $1::int AND organization_id = $2
-            AND endpoint IS NOT NULL AND btrim(endpoint) <> ''
-          ORDER BY (objective_type = 'primary') DESC, order_index, id
-          LIMIT 1`,
-        [designNodeId.trim(), orgId],
-      );
-      const ep = rows.length > 0 ? (rows[0] as { endpoint?: unknown }).endpoint : null;
-      if (typeof ep === 'string' && ep.trim()) return ep.trim();
-    } catch {
-      /* real store absent / not provisioned here — fall back to the legacy blob */
-    }
-  }
-
-  // Legacy fallback: the deprecated c2c_protocol_dev blob (seed/demo + legacy rows).
+  const id = designNodeId.trim();
+  // The design node is a real protocol_documents id (integer). Resolve its primary
+  // endpoint from the normalized protocol store — the same store the converged
+  // /api/protocol-dev read serves. Non-numeric ids never match a protocol document,
+  // so they resolve to null (honest-empty) rather than a guess.
+  if (!/^\d+$/.test(id)) return null;
   try {
     const { rows } = await pool.query(
-      `SELECT objectives FROM c2c_protocol_dev WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [designNodeId, orgId],
+      `SELECT endpoint FROM protocol_objectives
+        WHERE protocol_document_id = $1::int AND organization_id = $2
+          AND endpoint IS NOT NULL AND btrim(endpoint) <> ''
+        ORDER BY (objective_type = 'primary') DESC, order_index, id
+        LIMIT 1`,
+      [id, scope.organizationId],
     );
-    if (rows.length === 0) return null;
-    const raw = (rows[0] as { objectives?: unknown }).objectives;
-    const objectives = Array.isArray(raw) ? (raw as Array<{ objectiveType?: string; endpoint?: unknown }>) : [];
-    const pick = (o: { endpoint?: unknown }): string | null =>
-      typeof o.endpoint === 'string' && o.endpoint.trim() ? o.endpoint.trim() : null;
-    const primary = objectives.find(o => o.objectiveType === 'primary' && pick(o));
-    if (primary) return pick(primary);
-    const any = objectives.find(o => pick(o));
-    return any ? pick(any) : null;
+    const ep = rows.length > 0 ? (rows[0] as { endpoint?: unknown }).endpoint : null;
+    return typeof ep === 'string' && ep.trim() ? ep.trim() : null;
   } catch {
     return null;
   }
