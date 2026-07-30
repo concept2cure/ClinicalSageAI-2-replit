@@ -23,7 +23,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
   name: 'compute_lifecycle_operations',
   description:
-    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You pass the prior leaves and the desired leaves, each with its md5 checksum; you get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged). Every replace/append/delete also gets an ICH modified-file pointer at the prior leaf it acts on — supply each prior leaf\'s published href and the prior_sequence_prefix for that to resolve cross-sequence. This is pure computation — nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
+    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on. Two ways to supply the prior state: (a) list prior_leaves by hand, each with its published href, plus prior_sequence_prefix; or (b) give application_number + prior_sequence_number and the prior sequence\'s stored leaf manifest is loaded automatically from your organization\'s compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -47,6 +47,14 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
       prior_sequence_prefix: {
         type: 'string',
         description: 'Relative traversal from the NEW sequence\'s backbone to the prior sequence root, e.g. "../0000/" when sequences are sibling folders under the application. Prepended to each prior leaf\'s href to form the cross-sequence modified-file value. Omit for an ungrouped/same-root lifecycle (the bare prior href is used).',
+      },
+      application_number: {
+        type: 'string',
+        description: 'When set together with prior_sequence_number (and prior_leaves is NOT given), the prior sequence\'s published leaf manifest is loaded automatically from that application\'s compilation history — you do not need to list prior leaves by hand. Scoped to your organization.',
+      },
+      prior_sequence_number: {
+        type: 'string',
+        description: 'The prior eCTD sequence to diff against, e.g. "0000". With application_number set (and prior_leaves omitted), the engine loads that sequence\'s stored leaves and derives the "../<seq>/" modified-file prefix automatically.',
       },
       desired_leaves: {
         type: 'array',

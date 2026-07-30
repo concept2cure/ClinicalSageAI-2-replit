@@ -8525,10 +8525,10 @@ registerToolHandler('gateway_configuration_status', async (input, ctx) => {
 // existing governed tools.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('compute_lifecycle_operations', async (input) => {
+registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
   try {
     const { computeLifecycleOperations } = await import('../ectd/lifecycle-operator.js');
-    const prior = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
+    let prior = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
       leafKey: p.leaf_key,
       ctdSection: p.ctd_section,
       fileName: p.file_name,
@@ -8539,6 +8539,36 @@ registerToolHandler('compute_lifecycle_operations', async (input) => {
       // (replace/append/delete) emit the ICH modified-file pointer at it.
       href: p.href,
     }));
+    let priorSequencePrefix =
+      typeof input.prior_sequence_prefix === 'string' ? input.prior_sequence_prefix : undefined;
+    let autoLoadedPrior = 0;
+
+    // Auto-load the prior sequence from its stored leaf manifest when the caller
+    // gives an application + prior sequence instead of hand-listing prior leaves.
+    // This is the tenant-scoped path: the organization comes from ToolContext,
+    // never from model input, and the prefix defaults to the grouped '../<seq>/'.
+    const priorSeq =
+      typeof input.prior_sequence_number === 'string' ? input.prior_sequence_number.trim() : '';
+    const appNum =
+      typeof input.application_number === 'string' ? input.application_number.trim() : '';
+    if (prior.length === 0 && priorSeq && appNum) {
+      if (!ctx?.organizationId) {
+        return JSON.stringify({
+          error: 'auto-loading a prior sequence requires tenant context (organizationId).',
+        });
+      }
+      const { loadPriorSequenceManifest } = await import('../ectd/prior-sequence-loader.js');
+      const { computeSequencePrefix } = await import('../ectd/sequence-manifest.js');
+      const { getPool } = await import('../../db.js');
+      prior = await loadPriorSequenceManifest(getPool(), {
+        organizationId: ctx.organizationId,
+        applicationNumber: appNum,
+        priorSequenceNumber: priorSeq,
+      });
+      autoLoadedPrior = prior.length;
+      priorSequencePrefix = priorSequencePrefix ?? computeSequencePrefix(priorSeq);
+    }
+
     const desired = (Array.isArray(input.desired_leaves) ? input.desired_leaves : []).map((d: any) => ({
       leafKey: d.leaf_key,
       ctdSection: d.ctd_section,
@@ -8551,9 +8581,9 @@ registerToolHandler('compute_lifecycle_operations', async (input) => {
     const result = computeLifecycleOperations(prior, desired, {
       // Relative traversal from the new sequence's backbone to the prior
       // sequence root (e.g. '../0000/') so modified-file resolves cross-sequence.
-      priorSequencePrefix: typeof input.prior_sequence_prefix === 'string' ? input.prior_sequence_prefix : undefined,
+      priorSequencePrefix,
     });
-    return JSON.stringify({ ok: true, ...result });
+    return JSON.stringify({ ok: true, autoLoadedPrior, ...result });
   } catch (err) {
     return JSON.stringify({
       error: `compute_lifecycle_operations failed: ${err instanceof Error ? err.message : String(err)}`,
