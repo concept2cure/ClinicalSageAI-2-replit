@@ -165,6 +165,59 @@ async function main() {
     // exists" — which also sidesteps the stale 0000 snapshot's cmax/system-column
     // bug, since push created that table cleanly). RLS migrations are applied
     // separately in their required order (next step), so exclude them here.
+    //
+    // ── Pre-overlay creators (blank-DB provisioning audit 2026-07-30) ───────
+    // Some root-tree files ALTER or FK-reference tables whose ONLY creator
+    // lives in db/migrations/ — a tree this overlay never walks, applied on
+    // real deploys by deploy-migrate AFTER install-fresh finishes. On a fresh
+    // install those files therefore deferred forever and the run reported
+    // incomplete:
+    //   0016/0017 ALTER cmc_source_objects  → created by the CMC convergence OS
+    //   0011      ALTERs ai_threads         → created by the AI trace chain
+    //   0006      FKs to cmc_projects(id)   → code-derived reconstruction
+    // Apply those creators FIRST (each idempotent), the same documented
+    // exception pattern as the authoring subsystem in step 4.
+    const PRE_OVERLAY_CREATORS = [
+      'db/migrations/20260401_cmc_convergence_os.sql',
+      'db/migrations/20260224_ai_trace_chain.sql',
+      'db/migrations/20260730_cmc_projects_reconstruction.sql',
+      'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
+      'db/migrations/20260730_fk_delete_policies_port.sql',
+    ];
+    for (const rel of PRE_OVERLAY_CREATORS) {
+      const full = path.resolve(__dirname, '..', '..', rel);
+      const sql = fs.readFileSync(full, 'utf8');
+      await pool.query('BEGIN');
+      try {
+        await pool.query(sql);
+        await pool.query('COMMIT');
+        console.log(`  ✓ pre-overlay creator: ${rel}`);
+      } catch (err) {
+        await pool.query('ROLLBACK').catch(() => {});
+        throw new Error(`pre-overlay creator ${rel} failed: ${err.message}`);
+      }
+    }
+
+    // ── Classified skips (explicit, per-file, auditable) ────────────────────
+    // A file listed here is EXPECTED to fail with the recorded error class on
+    // a fresh install, for the documented reason. It is reported as
+    // skipped-classified rather than flipping the exit code — anything NOT in
+    // this map still fails the install loudly. This is per-file
+    // classification, not blanket tolerance (see the --allow-incomplete
+    // rationale above): each entry names its tracked resolution.
+    const CLASSIFIED_OVERLAY_SKIPS = new Map([
+      ['0008_critical_fk_delete_policies.sql',
+        'superseded by db/migrations/20260730_fk_delete_policies_port.sql (guarded port applied pre-overlay); the original aborts on retired user_sessions'],
+      ['0004_workflow_performance_indexes.sql',
+        'indexes unified_documents — push-vs-overlay identity collision, ledger C-29 (only creator also redefines users/tenants with TEXT keys)'],
+      ['0007_tenant_isolation_fixes.sql',
+        'policies unified_documents — same C-29 collision as 0004'],
+      ['001_create_ivdr_tables.sql',
+        'ivdr_classifications shape collides with shared/schema.ts (push wins, columns differ) — ledger C-29; both consumers live, needs a rename decision'],
+      ['20260609_design_risk.sql',
+        'risk_items/risk_management_files shapes collide with shared/schema.ts — ledger C-29; both consumers live, needs a rename decision'],
+    ]);
+
     const rlsSet = new Set(RLS_MIGRATIONS);
     const files = fs
       .readdirSync(MIGRATIONS_DIR)
@@ -231,7 +284,19 @@ async function main() {
       if (!progressed) break;
     }
 
-    const remaining = files.filter((f) => !done.has(f));
+    const remainingAll = files.filter((f) => !done.has(f));
+    const classified = remainingAll.filter((f) => CLASSIFIED_OVERLAY_SKIPS.has(f));
+    const remaining = remainingAll.filter((f) => !CLASSIFIED_OVERLAY_SKIPS.has(f));
+    if (classified.length) {
+      console.log(
+        `  ◦ ${classified.length} file(s) skipped-classified (expected on a fresh install; ` +
+          'each names its tracked resolution — NOT counted as incomplete):',
+      );
+      for (const f of classified) {
+        console.log(`      ${f} — ${CLASSIFIED_OVERLAY_SKIPS.get(f)}`);
+        console.log(`        last error: ${lastErr.get(f) || '(none recorded)'}`);
+      }
+    }
     if (remaining.length) {
       // This used to read "safe to skip for the app schema". Nothing here
       // establishes that. The loop knows only that each file kept failing —

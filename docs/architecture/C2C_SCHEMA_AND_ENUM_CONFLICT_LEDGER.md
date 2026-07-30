@@ -1630,6 +1630,75 @@ this migration.
 
 ---
 
+## C-29 — Push-vs-overlay identity collisions: four more tables defined twice, three features dead on every real database *(high — PARTIALLY FIXED / BASELINED 2026-07-30)*
+
+Found by making the blank-DB provisioning job locally reproducible (real
+postgres 16 + pgvector, the CI job's exact five-step sequence). install-fresh
+reported nine root-tree files unapplied; each traced to one of three classes.
+
+### Class 1 — creators that existed but were reachable by nothing (FIXED)
+
+- `ai_threads` (+ the whole AI provenance chain): sole creator
+  `db/migrations/20260224_ai_trace_chain.sql`, on NO durable path (the C-23
+  pattern) while 8 live server files query the tables. Now on
+  `C2C_MIGRATION_FILES` and install-fresh's pre-overlay creators.
+- `cmc_source_objects` ordering: root files 0016/0017 ALTER it, but its
+  creator (the CMC convergence OS file) runs via deploy-migrate AFTER
+  install-fresh. Now also applied pre-overlay.
+
+### Class 2 — live tables with NO creator anywhere (FIXED via C-11 reconstruction)
+
+- `cmc_projects`: INSERTed by the CMC blueprint route, FK-referenced by
+  0006_regulatory_atoms — no DDL existed in any tree.
+  → `20260730_cmc_projects_reconstruction.sql` (code-derived).
+- `manufacturing_processes`: SELECTed by ich-compliance-checker + qbd-analyzer,
+  FK target of 0006 — no DDL existed.
+  → `20260730_manufacturing_processes_reconstruction.sql` (code-derived).
+- `project_milestones`: TWO rival shapes (baseline/schema.ts `due_date` model
+  vs 20260220_ind_section_tracking `target_date` model) and the one live
+  consumer (project-sections.ts) STRADDLES them — its INSERT names columns
+  from both plus `created_by` from neither, i.e. milestone creation was
+  broken on every database of either shape.
+  → `20260730_project_milestones_reconciliation.sql` lands the additive
+  union (ordered BEFORE 20260220 so its target_date index applies), and
+  20260220's five CREATE POLICYs / two CREATE TRIGGERs gained the standard
+  DROP-IF-EXISTS guards (it was also the file that broke deploy-migrate's
+  idempotency re-run).
+- 0008's sixteen live FK delete-policies, aborted forever by its first
+  statement targeting retired `user_sessions`
+  → `20260730_fk_delete_policies_port.sql` (guarded port).
+
+### Class 3 — irreconcilable-by-ALTER shape collisions (BASELINED, decision required)
+
+Same anatomy as C-27 (two live features on one table name, incompatible
+identity/column models — no additive migration can express the difference):
+
+| table(s) | shape A (deploys via push) | shape B (raw SQL, dead on real DBs) |
+|---|---|---|
+| `ivdr_classifications` | schema.ts: `ivdr_class`, `companion_diagnostic`, … (ivd-completeness-routes) | 001_create_ivdr_tables: `classification CHAR(1)`, `is_cdx`, `rule_trace`, … (ivdr-routes — mounted) |
+| `risk_management_files` / `risk_items` / `risk_controls` | schema.ts: program-scoped integer-scored model (rbm risk-report, mdx-rbm) | 20260609_design_risk: RMF-anchored uuid model with `rmf_id` (design-risk.service — mounted) |
+| `unified_documents` | — (12 live server files query it; push does NOT create it) | only creator is `_consolidated/20250108_…`, which ALSO redefines `users`/`tenants` with TEXT keys — porting it would introduce rival core-identity definitions and a TEXT tenant column |
+
+Interim disposition: install-fresh now carries an explicit per-file
+CLASSIFIED_OVERLAY_SKIPS map (each entry names its tracked resolution;
+anything unlisted still fails the install loudly). The five classified files
+are 0004/0007 (unified_documents), 0008 (superseded by the port),
+001_create_ivdr_tables and 20260609_design_risk.
+
+### Required decisions
+
+1. ivdr + design-risk: rename ONE side's tables (the raw-SQL features are
+   already broken on every push-provisioned database, so renaming their
+   tables and putting creators on the durable path restores them without
+   touching the drizzle-side features) — or reconcile the models. Owner:
+   whoever owns the IVD/design-controls roadmap.
+2. unified_documents: decide the ingestion subsystem's identity model
+   (TEXT-keyed tenants/users vs the integer core) — the same umbrella
+   decision as C-27's authoring TEXT-vs-UUID. Until then, 12 server files
+   query a table that exists on no fresh database.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

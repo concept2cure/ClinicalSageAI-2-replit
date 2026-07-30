@@ -281,6 +281,14 @@ export const C2C_MIGRATION_FILES = [
   // contract. A new CI lineage-reachability guard asserts every golden-journey-
   // declared migration is present on a durable applier, so this class of gap
   // fails the build instead of shipping silently.
+  // Reconciliation MUST precede the ind-section-tracking entry below: that
+  // file's CREATE TABLE IF NOT EXISTS no-ops against the baseline
+  // project_milestones shape and its CREATE INDEX ON (target_date) then
+  // halts the whole run (blank-DB provisioning audit 2026-07-30). This lands
+  // the additive union of both rival shapes first — which is also what the
+  // one live consumer (project-sections.ts) actually needs, since its INSERT
+  // straddles the two.
+  'db/migrations/20260730_project_milestones_reconciliation.sql',
   'db/migrations/20260220_ind_section_tracking.sql',
   'db/migrations/20260323_assumption_decision_contradiction.sql',
   'db/migrations/20260725_governance_boundary_tables.sql',
@@ -320,6 +328,24 @@ export const C2C_MIGRATION_FILES = [
   // conditional trigger). Proven by
   // tests/schema-contract/orchestrator-ledger-hardening.contract.test.ts.
   'db/migrations/20260730_orchestrator_run_ledger_hardening.sql',
+  // ── Blank-DB provisioning audit (added 2026-07-30) ────────────────────────
+  // Three creators the fresh-install overlay needed and existing databases
+  // may equally lack (merged ≠ applied, again):
+  //   ai_trace_chain — the ONLY creator of ai_threads + the provenance chain
+  //     (8 live server files query them); was in db/migrations on no durable
+  //     path, so root file 0011 could never ALTER ai_threads on fresh DBs.
+  //   cmc_projects reconstruction — code-derived (C-11 pattern) creator for a
+  //     table with NO DDL anywhere, yet INSERTed by the CMC blueprint route
+  //     and FK-referenced by migrations/0006_regulatory_atoms.sql.
+  //   fk_delete_policies port — guarded port of root 0008, whose first pair
+  //     targets retired user_sessions and aborted the file's 16 live FK
+  //     delete-policies on every fresh install.
+  // All idempotent (IF NOT EXISTS / DROP CONSTRAINT IF EXISTS + re-ADD /
+  // to_regclass guards).
+  'db/migrations/20260224_ai_trace_chain.sql',
+  'db/migrations/20260730_cmc_projects_reconstruction.sql',
+  'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
+  'db/migrations/20260730_fk_delete_policies_port.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
