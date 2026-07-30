@@ -53,6 +53,7 @@
     "ai:model-cards": "tsx scripts/ai-governance/generate-model-cards.ts",
     "ai:evidence-pack": "tsx scripts/ai-governance/generate-evidence-pack.ts",
     "cre:atoms": "tsx scripts/cre/generate-atoms.ts",
+    "cre:seed-demo": "tsx scripts/cre/seed-demo-evidence.ts",
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
     "benchmark:rtf": "tsx server/services/shadow-review/benchmark/cli.ts",
     "ci:duplicate-table-ddl": "node scripts/ci/check-duplicate-table-ddl.mjs",

@@ -96,7 +96,22 @@ CSR     → adaptCsrReport  evidence-spine        5 AnA tools    ── WIRED, r
 - [ ] Build `getDesignEvidence` evidence arrays, `getTrace`, `runStressTest` on real spine data.
 
 **Human-testing readiness**
-- [ ] Seed demo CRE evidence (a CRL + findings/outcomes + a design lesson) so surfaces render real data on a fresh tenant.
-- [ ] Human-test walkthrough.
+- [x] **Seed demo CRE evidence.** `scripts/cre/seed-demo-evidence.ts` (`npm run cre:seed-demo -- --org <id>`):
+  a `[DEMO]` CRL (3 findings + verified outcome), a `[DEMO]` CSR + canonical study, and a
+  governed design lesson — all tenant-private and labelled, never the shared corpus. Also runs
+  `projectOrgCsrReports` to fold the tenant's own CSRs in. Idempotent; `--verify` prints counts.
+- [x] **Human-test walkthrough.** `CLINICAL_REGULATORY_EVIDENCE_HUMAN_TEST.md` — apply schema →
+  flag on (server env + client `?crl-graph=1`) → seed → exercise the 6 AnA tools and the v2
+  surfaces, with the honest-empty panels named explicitly.
 
-The spine itself needs no rework — this is connective tissue plus two schema/enum corrections.
+The spine itself needs no rework — this was connective tissue plus two schema/enum corrections.
+
+---
+
+## 4. Status — remediation complete for human testing
+
+P0 (ingress + embedding) and P1 (egress correctness + flag) are **done and landed**; the demo
+seed + walkthrough make the module exercisable end-to-end on a fresh tenant. Remaining **P2** is
+depth, not blockers: the facade design-evidence/trace/stress deep panels (still honest stubs), the
+provenance envelope → `data_lineage_records`, the runtime `assertInferenceFeaturesClean` wiring, and
+(deferred) RAG semantic reachability for CRE atoms. None gate a human test; each is tracked above.
