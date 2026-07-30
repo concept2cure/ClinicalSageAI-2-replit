@@ -54,6 +54,15 @@ jobs:
         # collisions, and neither checks table NAMES. See ADR-0006 / conflict C-6.
         run: npm run ci:duplicate-table-ddl
 
+      - name: Guardrails — golden-journey migrations must be on a durable apply path
+        # The C-6/C-8/C-10/C-11/C-16/C-17 class from the applier side: a migration
+        # a golden journey provisions and depends on, that no real deploy runs —
+        # merged, green, and applied to the throwaway journey DB only. The
+        # duplicate/unbacked guards cannot see this: the table IS created (on the
+        # journey's PGlite) and the SQL DOES have a backing file; what is missing
+        # is a durable applier. See ledger C-6 / this migration's C-23 entry.
+        run: npm run ci:journey-migration-reachability
+
       - name: Guardrails — server SQL references a table nothing creates
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
         # tests vi.mock the db module so a mock accepts any table name; the

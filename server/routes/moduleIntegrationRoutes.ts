@@ -10,6 +10,7 @@ import { db } from '../db';
 import {
   ModuleIntegrationService,
   DocumentNotFoundException,
+  isModuleType,
 } from '../services/ModuleIntegrationService';
 import { WorkflowService } from '../services/WorkflowService';
 import { cacheResponse } from '../middleware/enterprise-performance';
@@ -52,10 +53,15 @@ router.post('/register-document', asyncHandler(async (req, res) => {
 router.get('/document-exists', asyncHandler(async (req, res) => {
   const { moduleType, originalId } = req.query;
   const organizationId = getSecureOrgId(req);
+  if (!isModuleType(moduleType) || typeof originalId !== 'string' || !organizationId) {
+    return res.status(400).json({
+      error: 'moduleType (a valid module), originalId, and organization context are required',
+    });
+  }
   const exists = await moduleIntegrationService.documentExists(
-    moduleType as string,
-    originalId as string,
-    organizationId as string
+    moduleType,
+    originalId,
+    Number(organizationId)
   );
   res.json({ exists });
 }));

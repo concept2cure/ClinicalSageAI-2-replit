@@ -53,6 +53,8 @@ import type {
   Discipline,
   EvidenceScope,
   EvidenceTrace,
+  EvidenceVisibility,
+  FindingDomain,
   FindingQuery,
   FindingSearchResult,
   FindingSeverity,
@@ -236,6 +238,73 @@ function toVerificationState(status: string): VerificationState {
   return status === 'verified' ? 'source_verified' : 'extracted_unreviewed';
 }
 
+const DISCIPLINE_SET = new Set<Discipline>([
+  'clinical', 'statistical', 'safety', 'clinical_pharmacology', 'cmc',
+  'microbiology', 'device', 'labeling', 'facility', 'administrative',
+]);
+
+/** Common CRL review-discipline phrasings → the canonical Discipline enum. */
+const DISCIPLINE_SYNONYMS: Record<string, Discipline> = {
+  biostatistics: 'statistical', statistics: 'statistical', biometrics: 'statistical',
+  pharmacovigilance: 'safety', pv: 'safety', clinical_safety: 'safety',
+  clinpharm: 'clinical_pharmacology', pharmacology: 'clinical_pharmacology',
+  clinical_pharmacology_and_biopharmaceutics: 'clinical_pharmacology',
+  chemistry: 'cmc', chemistry_manufacturing_and_controls: 'cmc', product_quality: 'cmc', quality: 'cmc',
+  labelling: 'labeling',
+  facilities: 'facility', inspection: 'facility', bimo: 'facility',
+  regulatory_project_management: 'administrative', rpm: 'administrative', project_management: 'administrative',
+};
+
+/** finding_domain is a normalized enum; map the ones with a clean discipline. */
+const FINDING_DOMAIN_TO_DISCIPLINE: Record<FindingDomain, Discipline> = {
+  clinical: 'clinical',
+  biostatistics: 'statistical',
+  clinical_pharmacology: 'clinical_pharmacology',
+  cmc: 'cmc',
+  safety: 'safety',
+  labeling: 'labeling',
+  facility: 'facility',
+  nonclinical: 'administrative', // no nonclinical Discipline member — bucket as unclassified
+  other: 'administrative',
+};
+
+/**
+ * Resolve a finding's review discipline HONESTLY. The stored fdaReviewDiscipline
+ * is free text; it was previously cast straight to Discipline (so an unrecognized
+ * value became an invalid enum) and, when null, defaulted to 'clinical' — a
+ * fabricated attribution. This validates the raw value, then falls back to a
+ * mapping from the normalized finding_domain, then to 'administrative' as the
+ * explicit "not stated / not derivable" bucket. It never invents 'clinical'.
+ */
+function normalizeDiscipline(raw: string | null, domain: FindingDomain | null): Discipline {
+  if (raw) {
+    const key = raw.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (DISCIPLINE_SET.has(key as Discipline)) return key as Discipline;
+    if (DISCIPLINE_SYNONYMS[key]) return DISCIPLINE_SYNONYMS[key];
+  }
+  if (domain && FINDING_DOMAIN_TO_DISCIPLINE[domain]) return FINDING_DOMAIN_TO_DISCIPLINE[domain];
+  return 'administrative';
+}
+
+/**
+ * Map a source's storage visibility to the DTO's EvidenceVisibility WITHOUT
+ * collapsing project_private into tenant_private (the previous behavior widened
+ * how private a project-scoped source appeared). Global-public sources carry a
+ * NULL org, so they resolve to 'public' regardless of class.
+ */
+function toVisibility(src: EvidenceSource | null): EvidenceVisibility {
+  if (src == null || src.organizationId == null) return 'public';
+  switch (src.visibilityClass) {
+    case 'project_private':
+      return 'project_private';
+    case 'global_public':
+      return 'public';
+    case 'tenant_private':
+    default:
+      return 'tenant_private';
+  }
+}
+
 function toSourceRef(src: EvidenceSource | null, finding: RegulatoryFinding): SourceRef {
   const version = src?.version != null ? Number.parseInt(String(src.version), 10) : NaN;
   return {
@@ -251,7 +320,7 @@ function toSourceRef(src: EvidenceSource | null, finding: RegulatoryFinding): So
     officialUrl: src?.officialUrl ?? null,
     checksum: src?.checksum ?? null,
     version: Number.isFinite(version) ? version : null,
-    visibility: src == null || src.organizationId == null ? 'public' : 'tenant_private',
+    visibility: toVisibility(src),
   };
 }
 
@@ -268,7 +337,7 @@ function toResolvedFinding(f: RegulatoryFinding, src: EvidenceSource | null): Re
   return {
     findingId: String(f.id),
     severity: normalizeSeverity(f.severity),
-    discipline: (f.fdaReviewDiscipline ?? 'clinical') as Discipline,
+    discipline: normalizeDiscipline(f.fdaReviewDiscipline, f.findingDomain),
     category: f.findingCategory ?? f.findingDomain ?? 'uncategorized',
     finding: f.normalizedSummary ?? f.findingText ?? '',
     requestedAction: f.requestedAction,
@@ -358,7 +427,11 @@ export async function searchFindings(
 
   const matched = rows.filter(f => {
     const src = sources.get(f.sourceId) ?? null;
-    if (query.discipline && lc(f.fdaReviewDiscipline) !== lc(query.discipline)) return false;
+    // Filter on the SAME normalized discipline the DTO exposes, so a discipline
+    // filter matches what the row actually displays as (not the raw free text).
+    if (query.discipline && normalizeDiscipline(f.fdaReviewDiscipline, f.findingDomain) !== query.discipline) {
+      return false;
+    }
     if (query.category && lc(f.findingCategory) !== lc(query.category)) return false;
     if (query.ctdSection && !(f.affectedCtdSection ?? '').startsWith(query.ctdSection)) return false;
     if (query.ichE3Section && !(f.affectedIchE3Section ?? '').startsWith(query.ichE3Section)) return false;
