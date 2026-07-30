@@ -76,12 +76,20 @@ export interface InvestigatorInfo {
   name?: string;
   /** Education, training and experience statement or CV reference (1572 Box 2). */
   qualifications?: string;
-  /** Name and address of the clinical site/facility (1572 Box 3). */
+  /** Name and address of the clinical site/facility (1572 Box 3), composite. */
   facilityNameAddress?: string;
+  /** Facility name only (1572 db_loc_name) — granular alternative to the composite. */
+  facilityName?: string;
+  /** Facility address only (1572 db_loc_address1) — granular alternative. */
+  facilityAddress?: string;
   /** Clinical laboratory facility name and address (1572 Box 4). */
   clinicalLabNameAddress?: string;
-  /** IRB name and address responsible for review (1572 Box 5). */
+  /** IRB name and address responsible for review (1572 Box 5), composite. */
   irbNameAddress?: string;
+  /** IRB name only (1572 db_irb_name) — granular alternative to the composite. */
+  irbName?: string;
+  /** IRB address only (1572 db_irb_address1) — granular alternative. */
+  irbAddress?: string;
   /** Names of sub-investigators (1572 Box 6). */
   subInvestigators?: string[];
   /**
@@ -294,9 +302,15 @@ export function buildForm1572(
     // so both are carried for the draft/record but are not inline-required.
     { id: 'investigator_name', value: s(investigator.name), required: true },
     { id: 'investigator_qualifications', value: s(investigator.qualifications), required: false },
-    { id: 'facility_name', value: s(investigator.facilityNameAddress), required: true },
+    // Facility + IRB split into name / address so the official 1572 fills
+    // db_loc_name and db_loc_address1 separately (not the whole "name and address"
+    // in the name box). The composite is the fallback for the manual-entry path
+    // that has no granular data.
+    { id: 'facility_name', value: s(investigator.facilityName) || s(investigator.facilityNameAddress), required: true },
+    { id: 'facility_address', value: s(investigator.facilityAddress), required: false },
     { id: 'clinical_lab_name_address', value: s(investigator.clinicalLabNameAddress), required: false },
-    { id: 'irb_name_address', value: s(investigator.irbNameAddress), required: true },
+    { id: 'irb_name', value: s(investigator.irbName) || s(investigator.irbNameAddress), required: true },
+    { id: 'irb_address', value: s(investigator.irbAddress), required: false },
     { id: 'sub_investigators', value: subInv, required: false },
     { id: 'study_title', value: s(meta.studyTitle), required: false },
     { id: 'protocol_numbers', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: false },
@@ -314,9 +328,11 @@ export function labels1572(): Record<string, string> {
   return {
     investigator_name: registryLabel(FORM_1572, 'investigator_name', 'Name of Investigator'),
     investigator_qualifications: 'Education, Training, and Experience (Qualifications)',
-    facility_name: registryLabel(FORM_1572, 'facility_name', 'Facility Name and Address'),
+    facility_name: 'Facility Name',
+    facility_address: 'Facility Address',
     clinical_lab_name_address: 'Clinical Laboratory Facility Name and Address',
-    irb_name_address: 'IRB Name and Address',
+    irb_name: 'IRB Name',
+    irb_address: 'IRB Address',
     sub_investigators: 'Sub-Investigators',
     study_title: registryLabel(FORM_1572, 'study_title', 'Study Title'),
     protocol_numbers: 'Protocol Number(s)',

@@ -126,7 +126,7 @@ describe('buildForm1572', () => {
     const built = buildForm1572({}, {});
     expect(built.missingRequired).toContain('investigator_name');
     expect(built.missingRequired).toContain('facility_name');
-    expect(built.missingRequired).toContain('irb_name_address');
+    expect(built.missingRequired).toContain('irb_name');
     // Aligned to the OFFICIAL FDA 1572: Box 2 qualifications are an attachment
     // (db_cv / db_oth_qual checkboxes) and there is no study-title field, so
     // neither is an inline-required field (this lets the official fill qualify).

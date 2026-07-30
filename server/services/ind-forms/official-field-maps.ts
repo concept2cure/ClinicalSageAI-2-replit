@@ -24,14 +24,18 @@ export interface OfficialFieldMap {
 
 export const OFFICIAL_FIELD_MAPS: Record<string, OfficialFieldMap> = {
   // FDA Form 1572 — Statement of Investigator (AcroForm, 740 fields).
-  // NOTE (v1): the site/lab/IRB values are currently the builder's composite
-  // "name and address" strings mapped to the *_name field. Granular address
-  // fields (db_*_address1/city/state/zip) are a follow-up; see the status doc.
+  // Facility and IRB are split into name (db_*_name) + address (db_*_address1)
+  // from the master data's separate siteName/siteAddress + irbName/irbAddress.
+  // The clinical lab has no separate source field, so it stays composite in the
+  // name field. Full granularity (db_*_city/state/zip) is a further follow-up
+  // (the master data holds one address string).
   FDA_1572: {
     investigator_name: 'db_invest_name',
     facility_name: 'db_loc_name',
+    facility_address: 'db_loc_address1',
     clinical_lab_name_address: 'db_lab_name',
-    irb_name_address: 'db_irb_name',
+    irb_name: 'db_irb_name',
+    irb_address: 'db_irb_address1',
     sub_investigators: 'db_sub_inv_names',
     protocol_numbers: 'db_prot_name_code',
   },

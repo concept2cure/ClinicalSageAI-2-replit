@@ -85,8 +85,9 @@ describe('FDA 1572 official AcroForm fill', () => {
     expect(result.unmappedFields).toEqual(
       expect.arrayContaining(['investigator_qualifications', 'study_title']),
     );
-    // 6 of the 8 built fields map to real widgets and were written.
-    expect(result.fieldCoverage).toBeCloseTo(6 / 8, 5);
+    // 8 of the 10 built fields map to real widgets and were written (facility and
+    // IRB now split into name + address).
+    expect(result.fieldCoverage).toBeCloseTo(8 / 10, 5);
     // Valid, reloadable (flattened) PDF.
     expect(Buffer.from(result.pdfBytes).subarray(0, 5).toString('latin1')).toBe('%PDF-');
     const reloaded = await PDFDocument.load(result.pdfBytes);

@@ -110,12 +110,13 @@ throwaway download.
    `sourceUrl`, `reviewedBy`, `reviewedAt`, `version`, `fieldMap` from the
    reviewed `official-field-maps.ts`). **1572 and 356h done** (builders aligned to
    the official forms; official fill unit-tested — 356h maps application type onto
-   the real NDA/ANDA/BLA checkboxes via derived booleans). **Remaining:** onboard
-   the decrypted assets in the deploy env; enrich the builder/assembler to emit
-   **granular** address fields (site/lab/IRB name + street/city/state/zip) so
-   composite strings stop collapsing into one AcroForm field — the real 1572/356h
-   have db_*_address1/city/state/zip; the master data currently holds a single
-   address string, so v1 maps name → `*_name` and the composite → address line 1.
+   the real NDA/ANDA/BLA checkboxes via derived booleans). The 1572 facility and
+   IRB are now **split into name + address** (`db_loc_name`/`db_loc_address1`,
+   `db_irb_name`/`db_irb_address1`) from the master data's separate
+   siteName/siteAddress + irbName/irbAddress, with the composite kept as the
+   manual-entry fallback. **Remaining:** onboard the decrypted assets in the deploy
+   env; full granularity (`db_*_city/state/zip`) and the clinical-lab split await a
+   granular source (the master data holds one address string per entity).
 2. **Static-XFA overlay engine (3454, 3455).** Decrypt → draw values at a
    reviewed per-form coordinate map on the official page → flatten. Deterministic,
    viewer-independent.
