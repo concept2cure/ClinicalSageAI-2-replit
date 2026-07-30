@@ -29,7 +29,28 @@ export type TherapeuticAreaId =
   | 'oncology'
   | 'rare-disease'
   | 'neurology'
-  | 'immunology';
+  | 'immunology'
+  | 'allergy'
+  | 'cardiology'
+  | 'dental'
+  | 'dermatology'
+  | 'endocrinology'
+  | 'gastroenterology'
+  | 'gene-cell-therapy'
+  | 'hematology'
+  | 'infectious-disease'
+  | 'metabolic'
+  | 'musculoskeletal'
+  | 'nephrology'
+  | 'obstetrics-gynecology'
+  | 'ophthalmology'
+  | 'other'
+  | 'pain'
+  | 'psychiatry'
+  | 'respiratory'
+  | 'transplant'
+  | 'urology'
+  | 'vaccines';
 
 export type ProfileSeverity = 'critical' | 'major' | 'minor' | 'info';
 

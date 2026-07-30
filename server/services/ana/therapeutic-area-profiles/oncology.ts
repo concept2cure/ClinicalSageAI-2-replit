@@ -109,7 +109,7 @@ export const oncologyProfile: TherapeuticAreaProfile = {
     {
       ctdSection: '5.3.5.1',
       prefix: true,
-      patterns: ['independent review committee', 'IRC', 'BICR'],
+      patterns: ['independent review committee', 'irc', 'bicr'],
       description:
         'Pivotal CSR missing blinded independent central review (BICR) of imaging-based endpoints',
       severity: 'major',
@@ -126,7 +126,7 @@ export const oncologyProfile: TherapeuticAreaProfile = {
     },
     {
       ctdSection: '1.16',
-      patterns: ['REMS', 'risk management', 'pregnancy prevention'],
+      patterns: ['rems', 'risk management', 'pregnancy prevention'],
       description: 'REMS proposal missing for genotoxic/teratogenic agents',
       severity: 'major',
       guidanceRef: '21 USC 355-1',
