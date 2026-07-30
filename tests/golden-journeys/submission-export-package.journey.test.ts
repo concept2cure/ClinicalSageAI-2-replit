@@ -40,6 +40,7 @@ vi.mock('../../server/db', () => ({
 }));
 
 import JSZip from 'jszip';
+import { createHash } from 'node:crypto';
 import { generateEctdPackage, validateEctdPackage } from '../../server/services/ectdExportService';
 import { EctdCompletenessError } from '../../server/services/ectd/completeness';
 import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
@@ -257,6 +258,53 @@ describe('golden journey — eCTD export to submittable package', () => {
           hasRegional,
           m3LeafCount: m3Leaves.length,
         };
+      });
+
+      // 2b. CONFORMANCE (path-1 consolidation, audit gap G2): the backbone is the
+      //     conformant ICH structure — the non-spec <ectd:submission> metadata
+      //     block, the <ectd:m1-administrative> wrapper that wrongly enclosed every
+      //     module, and the custom <m{n}-slug> elements are gone; leaves carry
+      //     unique XML IDs; and util/index-md5.txt is a re-verifiable integrity
+      //     manifest whose every line matches the shipped bytes.
+      await R.step('index.xml is conformant and index-md5.txt re-verifies', async () => {
+        const pkg = await generateEctdPackage(1, 1, { region: 'FDA' });
+        const zip = await JSZip.loadAsync(pkg.buffer);
+        const indexXml = await zip.file('index.xml')!.async('string');
+
+        // The non-spec structures the consolidation removed must be gone…
+        expect(indexXml).not.toContain('<ectd:submission>');
+        expect(indexXml).not.toContain('ectd:m1-administrative');
+        // …replaced by a real ICH module heading carrying the authored m3 leaf.
+        expect(indexXml).toMatch(/<m3>[\s\S]*<leaf /);
+        expect(indexXml).toContain('dtd-version="3.2"');
+
+        // Leaf IDs are XML ID-typed and must be unique within the backbone — the
+        // regression guard for the granuleId-only collision the old scheme had.
+        const ids = [...indexXml.matchAll(/\bID="([^"]+)"/g)].map((m) => m[1]);
+        expect(ids.length).toBeGreaterThan(0);
+        expect(new Set(ids).size).toBe(ids.length);
+
+        // util/index-md5.txt is present and every line resolves to a real ZIP
+        // entry whose bytes hash to the recorded MD5 (reopen-and-verify).
+        const manifest = await zip.file('util/index-md5.txt')!.async('string');
+        const lines = manifest.split('\n').map((l) => l.trim()).filter(Boolean);
+        expect(lines.length).toBeGreaterThan(0);
+        let verified = 0;
+        for (const line of lines) {
+          const sep = line.indexOf('  ');
+          const expectedMd5 = line.slice(0, sep).trim();
+          const relPath = line.slice(sep + 2).trim();
+          const entry = zip.file(relPath);
+          expect(entry, `index-md5.txt references missing file ${relPath}`).toBeTruthy();
+          const actual = createHash('md5')
+            .update(await entry!.async('nodebuffer'))
+            .digest('hex');
+          expect(actual, `checksum mismatch for ${relPath}`).toBe(expectedMd5);
+          verified += 1;
+        }
+        // The backbone itself is covered by the manifest.
+        expect(lines.some((l) => l.endsWith('  index.xml'))).toBe(true);
+        return { leafIds: ids.length, filesInManifest: lines.length, verified };
       });
 
       // 3. requireComplete passes for the complete dossier (no throw).
