@@ -384,12 +384,19 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   const resolvedDraftSource = draftSource ?? 'human';
 
   try {
-    // Verify doc org membership.
+    // Verify doc org membership + lifecycle state.
     const docCheck = await pool.query(
-      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
+      `SELECT status FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
       [id, orgId],
     );
     if (docCheck.rows.length === 0) return send404(res);
+    // A locked or submitted document is immutable: its sections must not be
+    // edited in place. Amendments go through a new version/submission, not a raw
+    // section PATCH — consistent with the /submit and /lock 409 guards.
+    const docStatus = (docCheck.rows[0] as { status?: string }).status;
+    if (docStatus === 'locked' || docStatus === 'submitted') {
+      return res.status(409).json({ error: docStatus === 'submitted' ? 'DOCUMENT_SUBMITTED' : 'DOCUMENT_LOCKED' });
+    }
 
     const client = await pool.connect();
     try {

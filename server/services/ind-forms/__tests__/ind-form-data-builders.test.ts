@@ -201,11 +201,22 @@ describe('buildForm3454 (financial certification: NONE)', () => {
     expect(built.missingRequired).toContain('no_disclosable_interests');
   });
 
-  it('treats no investigators as "none have interests" (vacuously true)', () => {
+  it('does NOT certify none when there are no covered investigators to certify about', () => {
     const meta = fullMeta();
     meta.investigators = [];
     const built = buildForm3454(meta);
-    expect(built.fields.no_disclosable_interests).toBe(true);
+    expect(built.fields.no_disclosable_interests).toBe(false);
+    expect(built.missingRequired).toContain('no_disclosable_interests');
+  });
+
+  it('does NOT auto-certify none when investigator financial interest is UNKNOWN (absent)', () => {
+    // The master-data path (investigatorToInfo) omits `financial`, so it arrives
+    // undefined. Absence must never be read as "confirmed none" (21 CFR Part 54).
+    const meta = fullMeta();
+    delete (meta.investigators![0] as { financial?: unknown }).financial;
+    const built = buildForm3454(meta);
+    expect(built.fields.no_disclosable_interests).toBe(false);
+    expect(built.missingRequired).toContain('no_disclosable_interests');
   });
 });
 

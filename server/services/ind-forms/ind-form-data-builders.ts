@@ -383,9 +383,17 @@ export const FORM_3454 = 'FDA_3454';
 export function buildForm3454(meta: IndProjectMetadata): BuiltForm {
   const sponsorName = s(meta.sponsorName) || s(meta.sponsor?.name);
   const investigators = meta.investigators ?? [];
-  const noneHaveInterest = investigators.every(
-    (inv) => inv.financial?.hasDisclosableInterest !== true,
-  );
+  // A 21 CFR Part 54 certification of "NONE" must rest on POSITIVE confirmation,
+  // never on the ABSENCE of financial data. The prior `!== true` test auto-affirmed
+  // whenever `financial` was undefined (e.g. the master-data pdf-from-records path,
+  // where the investigators table carries no financial column), producing a
+  // certification with no factual basis. Require an explicit per-investigator
+  // `hasDisclosableInterest === false` for at least one covered investigator;
+  // otherwise no_disclosable_interests stays false and surfaces as missingRequired
+  // (the 3454 is not ready to certify until the sponsor actually confirms none).
+  const noneHaveInterest =
+    investigators.length > 0 &&
+    investigators.every((inv) => inv.financial?.hasDisclosableInterest === false);
   const investigatorNames = investigators
     .map((inv) => s(inv.name))
     .filter((n) => n.length > 0)

@@ -43,7 +43,14 @@ export default class FDAFormGenerator {
     }
 
     // Calculate completeness
-    completeness = requiredCount > 0 ? Math.round((filledCount / requiredCount) * 100) : 100;
+    // A stub form with no fields defined is not "100% complete" — it has nothing
+    // to complete. Only report 100 for a form that actually has fields and no
+    // outstanding required ones.
+    completeness = formDefinition.fields.length === 0
+      ? 0
+      : requiredCount > 0
+        ? Math.round((filledCount / requiredCount) * 100)
+        : 100;
 
     // Generate HTML content
     const htmlContent = this.generateUniversalFormHTML(formDefinition, formData);
@@ -385,11 +392,14 @@ export default class FDAFormGenerator {
       deviceName: fda510kProject?.deviceName || 'Not Specified',
       certifierName: workflowData?.certification?.certifierName || workflowData?.setup?.projectLead || '',
       certifierTitle: workflowData?.certification?.certifierTitle || 'Regulatory Affairs Manager',
-      certificationStatement: true,
+      // Certification attestations are the signer's to make — never hardcode them
+      // true. Source each from an explicit input and default to false (unchecked)
+      // so a generated draft never pre-certifies compliance the user hasn't affirmed.
+      certificationStatement: workflowData?.certification?.certificationStatement === true,
       clinicalStudies: fda510kProject?.hasClinicalData || false,
       financialInterests: workflowData?.certification?.financialInterests || false,
-      deviceCompliance: true,
-      truthfulStatement: true,
+      deviceCompliance: workflowData?.certification?.deviceCompliance === true,
+      truthfulStatement: workflowData?.certification?.truthfulStatement === true,
       // Never fabricate an execution date. A signature date comes from the actual
       // signing event (21 CFR Part 11), not the render clock; leave blank until signed.
       signatureDate: ''
