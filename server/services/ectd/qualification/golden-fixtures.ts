@@ -30,11 +30,12 @@ trailer<< /Root 1 0 R >>
   return Buffer.from(body, 'utf8');
 }
 
-/** The golden leaf set (section, filename, title) — module 1 + 2 + 3. */
+/** The golden leaf set (section, filename, title) — module 1 + 2 + 3 + 5 (study). */
 export const GOLDEN_LEAVES: Array<{ ctdSection: string; fileName: string; title: string }> = [
   { ctdSection: '1.2', fileName: 'cover-letter.pdf', title: 'Cover Letter' },
   { ctdSection: '2.2', fileName: 'intro.pdf', title: 'Introduction' },
   { ctdSection: '3.2.p.1', fileName: 'description-composition.pdf', title: 'Description and Composition' },
+  { ctdSection: '5.3.5.1', fileName: 'study-report.pdf', title: 'Pivotal Study Report' },
 ];
 
 /** The golden transmittal form (Form FDA 356h) rendered under submission-information. */
@@ -96,6 +97,12 @@ export function v3GoldenInput(opts: {
       ctdSection: '3.2.p.1', operation: op('delete'), sourcePath: paths.byName['description-composition.pdf'],
       fileName: 'description-composition.pdf', title: 'Description and Composition',
     },
+    {
+      // M5 study-report leaf → drives Study Tagging File generation + cross-linking.
+      ctdSection: '5.3.5.1', operation: 'new', sourcePath: paths.byName['study-report.pdf'],
+      fileName: 'study-report.pdf', title: 'Pivotal Study Report',
+      studyId: 'STUDY-001', stfFileTag: 'study-report-body',
+    },
   ];
 
   return {
@@ -110,6 +117,9 @@ export function v3GoldenInput(opts: {
     emitUnzipped: true,
     environment: 'staging',
     leaves,
+    studyMeta: [{ studyId: 'STUDY-001', studyTitle: 'Pivotal efficacy study', studyCategory: 'clinical-study-report' }],
+    // A resolvable intra-package cross-reference (2.7.1 clinical summary cites the study report).
+    crossReferences: [{ source: '2.5', target: '5.3.5.1', label: 'clinical overview cites the pivotal study' }],
     fda: region === 'fda' ? {
       applicationType: 'nda',
       submissionType: 'original application',

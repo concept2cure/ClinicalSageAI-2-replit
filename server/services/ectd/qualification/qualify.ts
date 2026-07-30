@@ -216,6 +216,19 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
     notes.push('No DTDs vendored (assets/ectd-dtd/*.dtd); DTD *validity* is skipped — drop the licensed DTDs in to enable it. Backbones remain well-formed-validated.');
   }
 
+  // 2c. STF cross-linking + intra-package cross-reference resolution evidence
+  //     (surfaced by the packager on the bundle).
+  if (bundle.stf) {
+    validators.push(tally('stf-cross-linking', true,
+      bundle.stf.untagged > 0 ? [{ severity: 'warning', message: `${bundle.stf.untagged} study leaf/leaves untagged` }] : []));
+    notes.push(`STF: ${bundle.stf.studies} study tagging file(s) generated + cross-linked (${bundle.stf.leaves} tagged leaves).`);
+  }
+  if (bundle.crossReferenceStatus) {
+    validators.push(tally('cross-references', true,
+      bundle.crossReferenceStatus.broken.map((b) => ({ severity: 'error', message: `${b.source}→${b.target}: ${b.reason}` }))));
+    notes.push(`Cross-references: ${bundle.crossReferenceStatus.resolved} resolved, ${bundle.crossReferenceStatus.broken.length} broken.`);
+  }
+
   // 3. Reopen + verify checksums.
   const checksum = await verifyZipChecksums(bundle.path);
 

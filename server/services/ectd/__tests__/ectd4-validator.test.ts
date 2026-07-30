@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   validateFilename,
   validatePackage,
-  generateBackbone,
   computeChecksum,
   quickValidate,
   type ECTDLeaf,
@@ -122,39 +121,5 @@ describe('validatePackage', () => {
     leaves[0] = leaf({ sectionCode: 'm1.1', checksum: 'not-a-real-md5' });
     const res = validatePackage(leaves);
     expect(res.findings.some((f) => /md5|checksum/i.test(f.message))).toBe(true);
-  });
-});
-
-describe('generateBackbone', () => {
-  const base = {
-    applicantName: 'Concept2Cure',
-    applicationNumber: 'IND123456',
-    submissionType: 'IND',
-    leaves: [
-      leaf({ sectionCode: 'm2.5', title: 'Clinical Overview' }),
-      leaf({ sectionCode: 'm2.5', title: 'Clinical Overview Appendix' }),
-      leaf({ sectionCode: 'm3.2.S', title: 'Drug Substance' }),
-    ],
-  };
-
-  it('emits a v4.0 backbone with a deterministic SHA-256 integrity hash', () => {
-    const b = generateBackbone({ ...base, sequenceNumber: '0000' });
-    expect(b.schemaVersion).toBe('4.0');
-    expect(b.submission.id).toBe('IND123456-0000');
-    expect(b.submission.applicationNumber).toBe('IND123456');
-    expect(b.regulatoryActivity.type).toBe('original-application');
-    expect(b.integrity.backboneHash).toMatch(/^[a-f0-9]{64}$/);
-  });
-
-  it('groups leaves into one context-of-use per distinct section', () => {
-    const b = generateBackbone({ ...base, sequenceNumber: '0000' });
-    expect(b.contextOfUse).toHaveLength(2); // m2.5 (×2 docs) + m3.2.S
-    const m25 = b.contextOfUse.find((c) => c.code === 'm2-5');
-    expect(m25?.documents).toHaveLength(2);
-  });
-
-  it('classifies a non-0000 sequence as a supplement', () => {
-    const b = generateBackbone({ ...base, sequenceNumber: '0001' });
-    expect(b.regulatoryActivity.type).toBe('supplement');
   });
 });

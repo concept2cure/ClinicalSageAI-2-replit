@@ -16,10 +16,24 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const MIGRATION = path.join(
-  __dirname,
-  '../../../db/migrations/20260730_authoring_subsystem_schema.sql',
-);
+// The router validates against the CANONICAL authoring schema — the union of the
+// migrations a real deploy actually applies (ledger C-27). The 20260725_* loop /
+// audit / signature files are the canonical definitions of the shared tables;
+// 20260730_authoring_runtime_ddl adds the router's own tables; the
+// comments_router_columns ALTER unions the CoAuthor columns onto the canonical
+// authoring_comments / user_pins; and 20260730_authoring_subsystem_schema now
+// contributes only its genuinely-new workflow tables (its 10 duplicate copies of
+// the canonical tables were retired). Parsing the union — not one file — is what
+// keeps this contract honest about the schema that ships.
+const CANONICAL_MIGRATIONS = [
+  'db/migrations/20260725_authoring_document_loop_tables.sql',
+  'db/migrations/20260725_authoring_audit_trail.sql',
+  'db/migrations/20260725_authoring_signatures_and_workflow.sql',
+  'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+  'db/migrations/20260730_authoring_runtime_ddl.sql',
+  'db/migrations/20260730_authoring_comments_router_columns.sql',
+  'db/migrations/20260730_authoring_subsystem_schema.sql',
+].map((r) => path.join(__dirname, '../../../', r));
 const ROUTER = path.join(__dirname, '../authoring.router.ts');
 
 /** Parse `CREATE TABLE IF NOT EXISTS name ( ... )` blocks → table → Set(columns). */
@@ -55,6 +69,35 @@ function parseCreatedTables(sql: string): Record<string, Set<string>> {
   return out;
 }
 
+/** Fold `ALTER TABLE [IF EXISTS] name ADD COLUMN [IF NOT EXISTS] col …` into the map. */
+function applyAlterAddColumns(sql: string, into: Record<string, Set<string>>): void {
+  const alterRe =
+    /ALTER TABLE(?:\s+IF EXISTS)?\s+([a-z_][a-z0-9_]*)([\s\S]*?);/gi;
+  let m: RegExpExecArray | null;
+  while ((m = alterRe.exec(sql))) {
+    const table = m[1].toLowerCase();
+    const cols = into[table] ?? (into[table] = new Set<string>());
+    const addRe = /ADD COLUMN(?:\s+IF NOT EXISTS)?\s+([a-z_][a-z0-9_]*)\s+/gi;
+    let a: RegExpExecArray | null;
+    while ((a = addRe.exec(m[2]))) cols.add(a[1].toLowerCase());
+  }
+}
+
+/** The canonical created-table map: CREATE TABLE across every canonical migration, plus ALTER-added columns. */
+function buildCanonicalSchema(): Record<string, Set<string>> {
+  const merged: Record<string, Set<string>> = {};
+  for (const file of CANONICAL_MIGRATIONS) {
+    const sql = fs.readFileSync(file, 'utf8');
+    const created = parseCreatedTables(sql);
+    for (const [table, cols] of Object.entries(created)) {
+      const target = merged[table] ?? (merged[table] = new Set<string>());
+      for (const c of cols) target.add(c);
+    }
+    applyAlterAddColumns(sql, merged);
+  }
+  return merged;
+}
+
 /**
  * Columns the router references per table. If the router starts querying a new
  * column, add it here and to the migration together — the test keeps them honest.
@@ -65,10 +108,14 @@ const CONTRACT: Record<string, string[]> = {
     'template_id', 'submitted_at', 'current_workflow_id', 'approved_at', 'frozen_at',
     'locked_at', 'locked_by', 'version', 'tenant_id', 'created_at', 'updated_at',
   ],
+  // Canonical (0725) column names — the router uses doc_id / order_index / code
+  // (see the note near the router's freeze-diff query: authoring_sections "has
+  // `code` and `doc_id`, never `section_number` or `document_id`"). The
+  // document_id / order_idx / section_number names belong to OTHER tables
+  // (frozen_documents, export history) or to on-disk template JSON, not this one.
   authoring_sections: [
-    'id', 'doc_id', 'document_id', 'code', 'title', 'content', 'order_index',
-    'order_idx', 'section_number', 'track_changes', 'created_by', 'updated_by',
-    'tenant_id', 'created_at', 'updated_at',
+    'id', 'doc_id', 'code', 'title', 'content', 'order_index',
+    'track_changes', 'tenant_id', 'created_at', 'updated_at',
   ],
   authoring_comments: [
     'id', 'doc_id', 'section_id', 'body', 'anchor', 'status', 'created_by',
@@ -157,8 +204,7 @@ const PROVISIONED_ELSEWHERE = new Set([
 ]);
 
 describe('authoring schema contract — migration matches the router SQL', () => {
-  const migrationSql = fs.readFileSync(MIGRATION, 'utf8');
-  const created = parseCreatedTables(migrationSql);
+  const created = buildCanonicalSchema();
 
   it('parses the migration into tables', () => {
     expect(Object.keys(created).length).toBeGreaterThanOrEqual(Object.keys(CONTRACT).length);
@@ -192,8 +238,7 @@ describe('authoring schema contract — no table is referenced-but-uncreated', (
         refs.add(t);
       }
     }
-    const migrationSql = fs.readFileSync(MIGRATION, 'utf8');
-    const created = new Set(Object.keys(parseCreatedTables(migrationSql)));
+    const created = new Set(Object.keys(buildCanonicalSchema()));
     const unprovisioned = [...refs].filter(
       (t) => !created.has(t) && !PROVISIONED_ELSEWHERE.has(t),
     );

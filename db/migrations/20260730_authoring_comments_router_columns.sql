@@ -17,11 +17,11 @@
 -- Rollback: ALTER TABLE ... DROP COLUMN for the columns below (all additive,
 --   nullable or defaulted; safe to drop).
 --
--- NOTE (C-27, still open): authoring_sections is NOT reconciled here. The router
--- uses document_id / order_idx / section_number while the canonical table uses
--- doc_id (NOT NULL) / order_index, a naming + NOT NULL conflict that cannot be
--- unioned additively and needs a code decision (rename in the router, or make
--- doc_id nullable and document_id the FK). Tracked in the ledger.
+-- authoring_sections is reconciled too (below): the router already uses the
+-- canonical doc_id / order_index / code names (the document_id / order_idx /
+-- section_number references in authoring.router.ts belong to OTHER tables or to
+-- on-disk template JSON, not this table), so no rename is needed — only the
+-- unique constraint its upsert requires.
 
 -- authoring_comments — the eight columns authoring.router.ts references for
 -- threaded comments, resolution workflow, and author attribution. parent_comment_id
@@ -42,3 +42,11 @@ CREATE INDEX IF NOT EXISTS authoring_comments_parent_idx
 -- user_pins — the router touches last_changed when it rotates a signing PIN.
 ALTER TABLE IF EXISTS user_pins
   ADD COLUMN IF NOT EXISTS last_changed TIMESTAMPTZ NOT NULL DEFAULT now();
+
+-- authoring_sections — the router upserts sections with
+-- INSERT ... ON CONFLICT (doc_id, code, tenant_id) DO UPDATE. The canonical table
+-- (0725) had no unique constraint on that triple, so Postgres rejects the upsert
+-- with "no unique or exclusion constraint matching the ON CONFLICT specification"
+-- on every real deploy. A unique index is the arbiter ON CONFLICT infers.
+CREATE UNIQUE INDEX IF NOT EXISTS authoring_sections_doc_code_tenant_uq
+  ON authoring_sections (doc_id, code, tenant_id);

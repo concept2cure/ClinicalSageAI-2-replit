@@ -53,73 +53,6 @@
 
 -- ─── Core document + section + comment surface ───────────────────────────────
 
-CREATE TABLE IF NOT EXISTS authoring_documents (
-  id                   TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  title                TEXT        NOT NULL,
-  module               TEXT,
-  product_code         TEXT,
-  locale               TEXT        DEFAULT 'en-US',
-  status               TEXT        NOT NULL DEFAULT 'draft',
-                       -- draft | IN_REVIEW | APPROVED | FROZEN | locked (router mixes case)
-  created_by           TEXT,
-  template_id          TEXT,
-  submitted_at         TIMESTAMPTZ,
-  current_workflow_id  TEXT,
-  approved_at          TIMESTAMPTZ,
-  frozen_at            TIMESTAMPTZ,
-  locked_at            TIMESTAMPTZ,
-  locked_by            TEXT,
-  version              TEXT        DEFAULT '1.0',
-  tenant_id            INTEGER     NOT NULL,
-  created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS authoring_documents_tenant_idx ON authoring_documents (tenant_id);
-CREATE INDEX IF NOT EXISTS authoring_documents_tenant_status_idx ON authoring_documents (tenant_id, status);
-
-CREATE TABLE IF NOT EXISTS authoring_sections (
-  id              TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  doc_id          TEXT        NOT NULL,
-  document_id     TEXT,            -- router references both doc_id and document_id
-  code            TEXT,
-  title           TEXT,
-  content         TEXT,
-  order_index     INTEGER     DEFAULT 0,
-  order_idx       INTEGER     DEFAULT 0,  -- router references both order_index and order_idx
-  section_number  TEXT,
-  track_changes   BOOLEAN     DEFAULT false,
-  created_by      TEXT,
-  updated_by      TEXT,
-  tenant_id       INTEGER     NOT NULL,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  -- Section upsert uses ON CONFLICT (doc_id, code, tenant_id).
-  CONSTRAINT authoring_sections_doc_code_tenant_uniq UNIQUE (doc_id, code, tenant_id)
-);
-CREATE INDEX IF NOT EXISTS authoring_sections_doc_idx ON authoring_sections (doc_id, tenant_id);
-CREATE INDEX IF NOT EXISTS authoring_sections_document_idx ON authoring_sections (document_id);
-
-CREATE TABLE IF NOT EXISTS authoring_comments (
-  id                 TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  doc_id             TEXT        NOT NULL,
-  section_id         TEXT,
-  body               TEXT,
-  anchor             JSONB,
-  status             TEXT        NOT NULL DEFAULT 'open',
-  created_by         TEXT,
-  user_name          TEXT,
-  user_email         TEXT,
-  parent_comment_id  TEXT        REFERENCES authoring_comments (id) ON DELETE CASCADE,
-  position_data      JSONB,
-  resolved_by        TEXT,
-  resolved_at        TIMESTAMPTZ,
-  resolution_note    TEXT,
-  tenant_id          INTEGER     NOT NULL,
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS authoring_comments_doc_idx ON authoring_comments (doc_id, tenant_id);
-
 CREATE TABLE IF NOT EXISTS authoring_comment_activity (
   id             TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
   doc_id         TEXT,
@@ -132,21 +65,6 @@ CREATE TABLE IF NOT EXISTS authoring_comment_activity (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS authoring_comment_activity_doc_idx ON authoring_comment_activity (doc_id, tenant_id);
-
-CREATE TABLE IF NOT EXISTS authoring_citations (
-  id             TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  section_id     TEXT,
-  source         TEXT,
-  anchor         JSONB,
-  citation_text  TEXT,
-  reference_id   TEXT,
-  created_by     TEXT,
-  payload_sha256 TEXT,
-  frozen_at      TIMESTAMPTZ,
-  tenant_id      INTEGER     NOT NULL,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS authoring_citations_section_idx ON authoring_citations (section_id);
 
 -- ─── Review + audit surface ──────────────────────────────────────────────────
 
@@ -179,27 +97,6 @@ CREATE TABLE IF NOT EXISTS authoring_audit_events (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS authoring_audit_events_doc_idx ON authoring_audit_events (doc_id, tenant_id);
-
-CREATE TABLE IF NOT EXISTS authoring_audit_trail (
-  id                   TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  doc_id               TEXT,
-  section_id           TEXT,
-  operation_type       TEXT,
-  actor_email          TEXT,
-  actor_role           TEXT,
-  before_content       TEXT,
-  after_content        TEXT,
-  content_hash_before  TEXT,
-  content_hash_after   TEXT,
-  change_reason        TEXT,
-  metadata             JSONB,
-  ip_address           TEXT,
-  user_agent           TEXT,
-  session_id           TEXT,
-  tenant_id            INTEGER     NOT NULL,
-  created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS authoring_audit_trail_doc_idx ON authoring_audit_trail (doc_id, tenant_id);
 
 -- ─── AI suggestions + compliance scoring + feedback ──────────────────────────
 
@@ -257,37 +154,6 @@ CREATE INDEX IF NOT EXISTS authoring_suggestion_feedback_suggestion_idx ON autho
 
 -- ─── Workflow + signatures + export + freeze ─────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS authoring_workflow_steps (
-  id             TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  workflow_id    TEXT        NOT NULL,
-  doc_id         TEXT,
-  step_no        INTEGER,
-  role           TEXT,
-  approver_email TEXT,
-  status         TEXT        NOT NULL DEFAULT 'PENDING',
-  decision_note  TEXT,
-  decided_at     TIMESTAMPTZ,
-  tenant_id      INTEGER     NOT NULL,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS authoring_workflow_steps_workflow_idx ON authoring_workflow_steps (workflow_id, tenant_id);
-CREATE INDEX IF NOT EXISTS authoring_workflow_steps_doc_idx ON authoring_workflow_steps (doc_id, tenant_id);
-
-CREATE TABLE IF NOT EXISTS authoring_signatures (
-  id                TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  doc_id            TEXT,
-  signer_email      TEXT,
-  signer_name       TEXT,
-  meaning           TEXT,
-  reason            TEXT,
-  method            TEXT,
-  content_hash      TEXT,
-  signature_digest  TEXT,
-  signed_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-  tenant_id         INTEGER     NOT NULL
-);
-CREATE INDEX IF NOT EXISTS authoring_signatures_doc_idx ON authoring_signatures (doc_id, tenant_id);
-
 CREATE TABLE IF NOT EXISTS authoring_exports (
   id            TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
   doc_id        TEXT,
@@ -299,19 +165,6 @@ CREATE TABLE IF NOT EXISTS authoring_exports (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS authoring_exports_doc_idx ON authoring_exports (doc_id, tenant_id);
-
-CREATE TABLE IF NOT EXISTS frozen_documents (
-  id             TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  document_id    TEXT,
-  version        INTEGER,
-  frozen_content TEXT,
-  content_hash   TEXT,
-  frozen_by      TEXT,
-  frozen_reason  TEXT,
-  frozen_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  tenant_id      INTEGER     NOT NULL
-);
-CREATE INDEX IF NOT EXISTS frozen_documents_doc_idx ON frozen_documents (document_id, tenant_id);
 
 -- ─── Change requests + checklists + permissions (no tenant_id in router SQL) ──
 
@@ -355,16 +208,6 @@ CREATE TABLE IF NOT EXISTS doc_checklist_items (
 );
 CREATE INDEX IF NOT EXISTS doc_checklist_items_checklist_idx ON doc_checklist_items (checklist_id);
 
-CREATE TABLE IF NOT EXISTS doc_permissions (
-  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  doc_id      TEXT,
-  section_id  TEXT,
-  email       TEXT,
-  role        TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS doc_permissions_doc_idx ON doc_permissions (doc_id);
-
 CREATE TABLE IF NOT EXISTS doc_exports (
   id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
   doc_id      TEXT,
@@ -387,17 +230,3 @@ CREATE TABLE IF NOT EXISTS template_sections (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS template_sections_template_idx ON template_sections (template_id, tenant_id);
-
-CREATE TABLE IF NOT EXISTS user_pins (
-  email            TEXT        NOT NULL,
-  pin_hash         TEXT        NOT NULL,
-  tenant_id        INTEGER     NOT NULL,
-  failed_attempts  INTEGER     NOT NULL DEFAULT 0,
-  locked_until     TIMESTAMPTZ,
-  last_attempt     TIMESTAMPTZ,
-  pin_expires_at   TIMESTAMPTZ,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-  last_changed     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT user_pins_email_tenant_pk PRIMARY KEY (email, tenant_id)
-);

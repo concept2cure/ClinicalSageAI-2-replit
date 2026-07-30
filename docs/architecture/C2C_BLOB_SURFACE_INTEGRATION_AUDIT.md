@@ -78,8 +78,12 @@ still merit a data-flow check.)
   REAL, org-scoped backends — `Biostatistics` → `/api/ana-biostats/governed-documents`
   (concept2cure_artifacts) and `BiostatWorkbench` → `/api/statistical-defensibility` +
   `/api/biostat/assurance`. So there is no demo-ware to converge: building stores for these
-  blobs would be building for a dead consumer. **[NO BUILD NEEDED]** — recommend retiring the
-  dead intelligence cluster + its `c2c_biostat_*`/`c2c_tlf_builds` blobs as a separate cleanup.
+  blobs would be building for a dead consumer. **[RETIRED]** — deleted the dead
+  `concept2cure/intelligence/` client cluster and its `server/routes/intelligence-cluster.ts`
+  route (+ format helper, tests, the pure-dead `91-biostat-docs` seed), and dropped the five
+  orphaned blobs (c2c_biostat_saps / _sample_sizes / _interims / c2c_tlf_builds /
+  c2c_forecast_snapshots) via `20260731_retire_intelligence_cluster_blobs.sql` (IF EXISTS;
+  seed-only, no real data, no live reader).
 
 _Methodology refinement: a blob + a route reading it is NOT sufficient evidence of a live gap —
 the consuming surface must be a MOUNTED surface. Biostat (and earlier the Editor cluster) are
@@ -141,8 +145,9 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
    write path + fixture-free client); ~~Biostat~~ turned out to be a **false-positive** — its
    blobs feed an unmounted dead cluster and the live v2 biostat surfaces are already real, so
    no build was needed. Net of the original 6-target "Class A": 4 convergences + 1 greenfield
-   build + 1 non-gap. The only Biostat follow-up is an OPTIONAL cleanup: retire the dead
-   `concept2cure/intelligence/` cluster and its blobs.
+   build + 1 non-gap. Biostat follow-up cleanup DONE: the dead `concept2cure/intelligence/`
+   cluster and its five orphaned blobs were retired
+   (`20260731_retire_intelligence_cluster_blobs.sql`).
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so
