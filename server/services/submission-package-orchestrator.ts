@@ -191,6 +191,17 @@ export interface OrchestratorRun {
     | 'failed'
     | 'partial';
   steps: StepRecord[];
+  /**
+   * Workflow-definition provenance (auth/e-sig audit 2026-07-30). The steps
+   * array snapshots per-step dependsOn edges, but nothing recorded WHICH
+   * definition produced the run — so a code change to STEP_DEPENDENCIES
+   * silently changed what a historical run meant. Stamped at run creation,
+   * write-once in persistRun (COALESCE keeps the original on resume-writes).
+   * Nullable: rows created before the hardening migration carry NULL.
+   */
+  workflowVersion?: string | null;
+  /** sha256 over the canonical dependency graph + step order at creation. */
+  dependencyGraphDigest?: string | null;
 }
 
 export interface StepRecord {
@@ -424,6 +435,29 @@ const STEP_DEPENDENCIES: Record<StepKey, StepKey[]> = {
   // (package.validate already depends on package.assemble). See design doc §B.2.
   'package.sign': ['package.validate'],
 };
+
+/**
+ * Human-meaningful version of the workflow definition (the dependency graph +
+ * step order above). BUMP THIS whenever STEP_DEPENDENCIES or ORDERED_STEPS
+ * changes shape — the digest below catches an unbumped edit, but the version
+ * string is what an auditor reads off a run row.
+ */
+export const WORKFLOW_DEFINITION_VERSION = 'wdv-2026.07.30-1';
+
+/**
+ * Deterministic digest of the workflow definition. Recorded on every run at
+ * creation; the resume path compares it against the live definition and logs
+ * loudly on drift (the stored per-step dependsOn edges — not the live
+ * constant — govern how that run's history is interpreted, see
+ * markDownstreamStale).
+ */
+export function computeDependencyGraphDigest(): string {
+  const canonical = JSON.stringify({
+    dependencies: STEP_DEPENDENCIES,
+    order: ORDERED_STEPS,
+  });
+  return crypto.createHash('sha256').update(canonical).digest('hex');
+}
 
 const ORDERED_STEPS: StepKey[] = [
   'm3.compose',
@@ -769,13 +803,17 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
         : null;
     await pool.query(
       `INSERT INTO submission_orchestrator_runs
-        (run_id, organization_id, submission_id, submission_id_fk, application_number, region, submission_type, started_at, completed_at, status, steps)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        (run_id, organization_id, submission_id, submission_id_fk, application_number, region, submission_type, started_at, completed_at, status, steps, workflow_version, dependency_graph_digest)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        ON CONFLICT (run_id) DO UPDATE SET
          completed_at = EXCLUDED.completed_at,
          status = EXCLUDED.status,
          steps = EXCLUDED.steps,
-         submission_id_fk = COALESCE(EXCLUDED.submission_id_fk, submission_orchestrator_runs.submission_id_fk)`,
+         submission_id_fk = COALESCE(EXCLUDED.submission_id_fk, submission_orchestrator_runs.submission_id_fk),
+         -- Write-once provenance: the ORIGINAL definition version survives every
+         -- resume-write; a resume under a newer deploy must not relabel history.
+         workflow_version = COALESCE(submission_orchestrator_runs.workflow_version, EXCLUDED.workflow_version),
+         dependency_graph_digest = COALESCE(submission_orchestrator_runs.dependency_graph_digest, EXCLUDED.dependency_graph_digest)`,
       [
         run.runId,
         run.organizationId,
@@ -788,6 +826,8 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
         run.completedAt || null,
         run.status,
         JSON.stringify(run.steps),
+        run.workflowVersion ?? null,
+        run.dependencyGraphDigest ?? null,
       ]
     );
   } catch (err) {
@@ -965,6 +1005,8 @@ export async function runOrchestrator(
       inputHash: '',
       dependsOn: STEP_DEPENDENCIES[key],
     })),
+    workflowVersion: WORKFLOW_DEFINITION_VERSION,
+    dependencyGraphDigest: computeDependencyGraphDigest(),
   };
 
   await persistRun(run);
@@ -1794,6 +1836,23 @@ async function resumeOrchestratorRun(
     );
   }
 
+  // Workflow-definition drift check (auth/e-sig audit 2026-07-30): the run
+  // recorded the definition it was created under; resuming under a different
+  // one is legal (the run's own dependsOn snapshot governs its history — see
+  // markDownstreamStale) but must be VISIBLE, not silent — an auditor reading
+  // the run needs to know its execution spanned two workflow definitions.
+  if (
+    previousRun.dependencyGraphDigest &&
+    previousRun.dependencyGraphDigest !== computeDependencyGraphDigest()
+  ) {
+    console.warn(
+      `[Orchestrator] resume: workflow definition drift — run ${resumeRunId} was created under ` +
+        `${previousRun.workflowVersion ?? 'unknown version'} (digest ${previousRun.dependencyGraphDigest.slice(0, 12)}…) ` +
+        `but the live definition is ${WORKFLOW_DEFINITION_VERSION} (digest ${computeDependencyGraphDigest().slice(0, 12)}…). ` +
+        'The run resumes under its own step snapshot; new steps use the live definition.',
+    );
+  }
+
   // Path-to-GA §C.11 resume support: check for an awaiting-signature step
   // BEFORE the awaiting-async check. The two suspend states are
   // mutually-exclusive on a single run today (csr.draft-narrative happens
@@ -2415,12 +2474,21 @@ export function markDownstreamStale(steps: StepRecord[], changedStep: StepKey): 
   const stale = new Set<StepKey>();
   const queue: StepKey[] = [changedStep];
 
+  // Honor the run's OWN dependency snapshot (each StepRecord carries the
+  // dependsOn edges it was created with), not the live STEP_DEPENDENCIES
+  // constant — otherwise a deploy that edits the graph silently reinterprets
+  // which steps of an in-flight run are downstream of a change. The live
+  // constant is only the fallback for legacy records persisted before
+  // dependsOn was snapshotted.
+  const edgesFor = (s: StepRecord): StepKey[] =>
+    Array.isArray(s.dependsOn) ? s.dependsOn : (STEP_DEPENDENCIES[s.key] ?? []);
+
   while (queue.length > 0) {
     const current = queue.shift()!;
-    for (const [key, deps] of Object.entries(STEP_DEPENDENCIES) as [StepKey, StepKey[]][]) {
-      if (deps.includes(current) && !stale.has(key)) {
-        stale.add(key);
-        queue.push(key);
+    for (const step of steps) {
+      if (edgesFor(step).includes(current) && !stale.has(step.key)) {
+        stale.add(step.key);
+        queue.push(step.key);
       }
     }
   }
@@ -2514,7 +2582,7 @@ export async function getRun(
   try {
     const result = await pool.query(
       `SELECT run_id, organization_id, submission_id, submission_id_fk, application_number, region, submission_type,
-              started_at, completed_at, status, steps
+              started_at, completed_at, status, steps, workflow_version, dependency_graph_digest
        FROM submission_orchestrator_runs
        WHERE run_id = $1 AND organization_id = $2`,
       [runId, organizationId]
@@ -2549,6 +2617,9 @@ export async function getRun(
       completedAt: row.completed_at ? String(row.completed_at) : undefined,
       status: String(row.status) as OrchestratorRun['status'],
       steps: typeof row.steps === 'string' ? JSON.parse(row.steps) : (row.steps as StepRecord[]),
+      workflowVersion: typeof row.workflow_version === 'string' ? row.workflow_version : null,
+      dependencyGraphDigest:
+        typeof row.dependency_graph_digest === 'string' ? row.dependency_graph_digest : null,
     };
   } catch (err) {
     console.warn('[Orchestrator] getRun failed:', err);
