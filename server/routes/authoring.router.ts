@@ -5071,7 +5071,7 @@ router.post('/docs/:docId/submit', async (req: Request, res: Response) => {
       const numericActor = Number.isInteger(Number(actorRaw)) ? Number(actorRaw) : null;
       const outcome = await bridgeAuthoringToCanonical(
         {
-          docId,
+          docId: String(docId),
           organizationId: tenantId,
           projectId,
           userId: numericActor,
