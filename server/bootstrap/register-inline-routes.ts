@@ -850,8 +850,9 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount CRO portfolio route:', error);
   }
 
-  // Regulatory change horizon scan — org-scoped change records read by GET
-  // /api/reg-change (own sub-prefix). Feeds the RegChange surface.
+  // Regulatory change horizon scan — the REAL org-scoped reg_change_items store,
+  // read by GET and written by POST /api/reg-change (own sub-prefix). Feeds the
+  // RegChange surface.
   try {
     const regChangeModule = await import('../routes/reg-change.routes');
     app.use('/api/reg-change', authMiddleware, regChangeModule.default);

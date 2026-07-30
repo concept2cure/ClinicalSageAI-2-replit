@@ -127,7 +127,7 @@ master table (execution status in brackets):
 | blob | surface | disposition | real store / action |
 |---|---|---|---|
 | c2c_market_access | MarketAccess (mounted, fixture-backed) | **BUILD** (verified) | no real store → build store + write path, CMC pattern **[EXEC in flight]** |
-| c2c_reg_changes | RegChange (mounted, fixture-backed) | BUILD (verify pending) | no real store found |
+| c2c_reg_changes | RegChange (mounted, fixture-free) | **BUILD** (verified) | no real store existed → built `reg_change_items` (20260801, org-scoped, soft-delete) + write path (`reg-change-service.ts`: createRegChange, validated; POST /api/reg-change, audited); GET reads the real store; client migrated off its fixture onto `useLiveRows`; reseed into the real table; blob deprecated **[BUILT]** |
 | c2c_hf_files | HumanFactors (mounted, fixture-backed) | BUILD (verify pending) | no real store found |
 | c2c_nda_modules (+c2c_nda_m) | NdaCockpit (mounted, fixture-backed) | CONVERGE | eCTD submission core (submissions app_type nda/bla + sequences + leaves + coauthor_documents) — same store as the landed IND convergence **[EXEC in flight]** |
 | c2c_doc_journeys | DocJourney (mounted, fixture-backed) | CONVERGE | authoring_documents + doc_revisions + authoring_comments + frozen_documents (20260725 loop tables, real writers) **[EXEC in flight]** |
