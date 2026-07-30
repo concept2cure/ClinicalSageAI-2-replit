@@ -46,7 +46,8 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
 
   /* Real, org-scoped simulated-reviewer worklist. GET /api/shadow-review
      returns one row per reviewer lens that has been run — { lens, findings[] }
-     — straight from the c2c_shadow_review store (findings JSONB). No fixture
+     — assembled from the real shadow-review store (shadow_review_runs +
+     shadow_review_findings, the tables runShadowReview persists). No fixture
      fallback: real rows, an honest empty, or an honest error. */
   const live = useLiveRows<ShadowLensRow>('/api/shadow-review');
 

@@ -54,7 +54,9 @@ still merit a data-flow check.)
   no `organization_id`, no section/forms model — so they are NOT this surface's store; the
   data-flow trace lands on the submission core the co-authoring flow actually writes.
   **[CONVERGED]** — assembler + real-store-only route + reseed + pglite test landed.
-- **Shadow review** → `shadow-review-service.ts`. High tractability.
+- **Shadow review** → `shadow_review_runs` + `shadow_review_findings` (the tables
+  `shadow-review-service.ts`'s `runShadowReview` persists). **[CONVERGED]** — assembler +
+  real-store-only route + reseed + pglite test landed.
 - **Biostat** (interims / sample-sizes / SAPs / TLF) → `biostat_*` tables + the
   `ana-biostats` service.
 - **SAE cases** → `adverse_events`.
@@ -81,8 +83,8 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
 
 ## Prioritized roadmap
 
-1. **Class A converges** in value order: ~~IND~~ (landed) → Shadow-review → SAE →
-   Biostat → CMC → Decision-lineage. Each is one Protocol-Dev-sized change.
+1. **Class A converges** in value order: ~~IND~~ (landed) → ~~Shadow-review~~ (landed) →
+   SAE → Biostat → CMC → Decision-lineage. Each is one Protocol-Dev-sized change.
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so
