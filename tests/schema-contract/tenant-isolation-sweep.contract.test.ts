@@ -1,0 +1,195 @@
+/**
+ * Tenant-isolation sweep + deploy-dead batch 2 — reachability & isolation
+ * contract (ledger C-33).
+ *
+ * C-32 established the class: a migration sitting in db/migrations/ on no apply
+ * path makes its tables look "backed" while they exist on no real database, so
+ * every endpoint querying them 500s. C-33 wires forty more such files onto
+ * C2C_MIGRATION_FILES — which creates a SECOND hazard the wiring itself
+ * introduces:
+ *
+ *   migrations/0021_enable_rls_everywhere.sql policies every tenant-keyed table,
+ *   but it runs ONCE, on install-fresh, over the tables that exist at that
+ *   moment. Tables added later by the apply-c2c / deploy-migrate set land on an
+ *   already-provisioned database where 0021 has long since run and will never
+ *   revisit them. Under RLS_ENFORCE=on a table with no RLS is fully readable
+ *   ACROSS TENANTS. Wiring forty files without an isolation step would therefore
+ *   provision ~27 new tenant-keyed tables with none.
+ *
+ * db/migrations/20260801_tenant_isolation_sweep.sql closes that, and runs LAST in
+ * the set so it sees everything the set just created. This pins both halves:
+ * the batch applies cleanly and in order, and the sweep leaves NO integer-keyed
+ * tenant table unpoliced — while never aborting a deploy and never clobbering a
+ * subsystem's own policy.
+ *
+ * @compliance 21 CFR Part 11 §11.10(d) — limiting system access to authorized
+ *             individuals. A tenant table with no isolation is not access control.
+ */
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+const BATCH_START = 'db/migrations/022_stability_v2.sql';
+const T = 120_000;
+
+const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
+
+describe('C-33: the sweep is positioned to see everything the set creates', () => {
+  it('is in C2C_MIGRATION_FILES, and is the LAST entry', () => {
+    // Ordering is the whole contract: a sweep that runs before the creators
+    // policies nothing.
+    expect(C2C_MIGRATION_FILES).toContain(SWEEP);
+    expect(C2C_MIGRATION_FILES[C2C_MIGRATION_FILES.length - 1]).toBe(SWEEP);
+  });
+
+  it('the batch-2 files are wired ahead of it', () => {
+    const sweepAt = C2C_MIGRATION_FILES.indexOf(SWEEP);
+    const batchAt = C2C_MIGRATION_FILES.indexOf(BATCH_START);
+    expect(batchAt).toBeGreaterThan(-1);
+    expect(batchAt).toBeLessThan(sweepAt);
+  });
+
+  it('does NOT wire the three uuid/text-tenant-keyed files (identity collision)', () => {
+    // These would provision tenant tables the integer-keyed RLS model cannot
+    // police; the sweep skips them, so wiring them would ship unisolated tables.
+    for (const excluded of [
+      'db/migrations/20260125_ai_provider_audit_log.sql',
+      'db/migrations/20260324_ana_kernel_decision_log.sql',
+      'db/migrations/20260326_conversation_os_durability_phase2.sql',
+    ]) {
+      expect(C2C_MIGRATION_FILES).not.toContain(excluded);
+    }
+  });
+});
+
+describe('C-33: the batch applies in set order, twice, and ends fully isolated', () => {
+  let pg: PGlite;
+
+  beforeAll(async () => {
+    pg = new PGlite();
+    const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START));
+    // Applied TWICE: a deploy re-runs the whole set every time, so a
+    // non-idempotent file would break the second deploy, not the first.
+    for (const pass of [1, 2]) {
+      for (const rel of batch) {
+        try {
+          await pg.exec(readMig(rel));
+        } catch (err) {
+          throw new Error(`pass ${pass}: ${rel} failed — ${(err as Error).message}`);
+        }
+      }
+    }
+  }, T);
+
+  afterAll(async () => {
+    await pg.close();
+  });
+
+  it('creates tables and leaves NO integer-keyed tenant table unpoliced', async () => {
+    const { rows } = await pg.query<{ table_name: string }>(
+      `SELECT DISTINCT c.table_name
+         FROM information_schema.columns c
+         JOIN information_schema.tables t
+           ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+          AND t.table_type = 'BASE TABLE'
+        WHERE c.table_schema = 'public'
+          AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
+          AND c.data_type IN ('integer', 'bigint', 'smallint')
+          AND c.table_name <> ALL (ARRAY['organizations','organization_users','stripe_events','ectd_agency_configs'])
+          AND NOT EXISTS (
+            SELECT 1 FROM pg_policies p
+             WHERE p.tablename = c.table_name AND p.policyname = 'tenant_isolation_policy'
+          )`,
+    );
+    expect(rows.map((r) => r.table_name), 'unpoliced tenant tables').toEqual([]);
+  }, T);
+
+  it('actually blocks a cross-tenant read on a table it sweeps', async () => {
+    // End-to-end, not just "a policy row exists". A dedicated table is used
+    // rather than an arbitrary real one: the real tables carry their own NOT NULL
+    // columns, so seeding them would test their shape, not the sweep. Creating it
+    // AFTER the batch and re-running the (idempotent) sweep reproduces exactly the
+    // production situation this guards — a tenant table that appears on an
+    // already-provisioned database, which 0021 will never revisit.
+    const table = 'sweep_probe_table';
+    await pg.exec(`RESET ROLE; SET app.rls_enforce = 'off';`);
+    await pg.exec(`CREATE TABLE ${table} (id serial primary key, organization_id integer);`);
+    await pg.exec(readMig(SWEEP));
+
+    const policy = await pg.query(
+      `SELECT 1 FROM pg_policies WHERE tablename = '${table}' AND policyname = 'tenant_isolation_policy'`,
+    );
+    expect(policy.rows, 'sweep did not policy the new table').toHaveLength(1);
+
+    await pg.query(`INSERT INTO ${table} (organization_id) VALUES (1), (2)`);
+    await pg.exec(`CREATE ROLE sweep_reader NOSUPERUSER; GRANT SELECT ON ${table} TO sweep_reader;`);
+
+    const readAs = async (tenant: string) => {
+      await pg.exec(
+        `RESET ROLE; SET app.rls_enforce = 'on'; SET app.current_tenant_id = '${tenant}'; SET ROLE sweep_reader;`,
+      );
+      const r = await pg.query(`SELECT organization_id FROM ${table}`);
+      await pg.exec('RESET ROLE;');
+      return r.rows.length;
+    };
+
+    expect(await readAs('1')).toBe(1); // own tenant's row
+    expect(await readAs('2')).toBe(1);
+    expect(await readAs('9')).toBe(0); // a tenant with no rows sees nothing
+  }, T);
+});
+
+describe('C-33: the sweep is deploy-safe', () => {
+  let pg: PGlite;
+
+  beforeAll(async () => {
+    pg = new PGlite();
+    await pg.exec(`
+      CREATE TABLE int_tenant  (id serial primary key, organization_id integer);
+      CREATE TABLE txt_tenant  (id serial primary key, tenant_id text);
+      CREATE TABLE no_tenant   (id serial primary key, v text);
+      CREATE TABLE organizations (id serial primary key, organization_id integer);
+      CREATE TABLE preexisting (id serial primary key, tenant_id integer);
+      ALTER TABLE preexisting ENABLE ROW LEVEL SECURITY;
+      CREATE POLICY tenant_isolation_policy ON preexisting USING (tenant_id = 42);
+      CREATE VIEW v_int AS SELECT * FROM int_tenant;
+    `);
+    await pg.exec(readMig(SWEEP));
+    await pg.exec(readMig(SWEEP)); // idempotent
+  }, T);
+
+  afterAll(async () => {
+    await pg.close();
+  });
+
+  it('a TEXT tenant key is SKIPPED, not raised — a deploy must not halt on pre-existing drift', async () => {
+    // 0021 RAISE EXCEPTIONs here, which is right at install time and wrong mid
+    // production deploy (deploy-migrate stops at the first failure).
+    const { rows } = await pg.query(`SELECT 1 FROM pg_policies WHERE tablename = 'txt_tenant'`);
+    expect(rows).toHaveLength(0); // skipped, and the sweep still completed
+  });
+
+  it('never clobbers a policy a subsystem installed for itself', async () => {
+    const { rows } = await pg.query<{ qual: string }>(
+      `SELECT qual FROM pg_policies WHERE tablename = 'preexisting' AND policyname = 'tenant_isolation_policy'`,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].qual).toContain('42'); // the original predicate, untouched
+  });
+
+  it('skips the allowlist, tables with no tenant column, and views', async () => {
+    const { rows } = await pg.query<{ tablename: string }>(
+      `SELECT tablename FROM pg_policies WHERE policyname = 'tenant_isolation_policy' ORDER BY tablename`,
+    );
+    const policied = rows.map((r) => r.tablename);
+    expect(policied).toContain('int_tenant');
+    expect(policied).not.toContain('organizations'); // allowlist
+    expect(policied).not.toContain('no_tenant');
+    expect(policied).not.toContain('v_int'); // ENABLE RLS errors on a view
+  });
+});

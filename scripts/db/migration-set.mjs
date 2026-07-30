@@ -409,6 +409,91 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260730_submission_center_tables.sql',
   'db/migrations/20260730_graphrag_knowledge_tables.sql',
   'db/migrations/20260730_licensing_ip_tables.sql',
+
+  // ── Deploy-dead creators, batch 2 (ledger C-33) ──────────────────────────
+  // Forty more files in the C-32 class: they CREATE tables live server code
+  // queries, and sat on no durable apply path, so those tables existed on no real
+  // database. Selected mechanically from the ci:migration-reachability baseline
+  // and verified the same way — each was applied TWICE against a BLANK Postgres
+  // in isolation and came up clean, which proves three things at once: every
+  // CREATE TABLE/INDEX is idempotent (the re-run is a no-op), the file is
+  // self-contained (it needs no table, schema or extension it does not itself
+  // create — nothing here can abort a deploy on a missing dependency), and it
+  // carries no non-integer tenant key (see the sweep note below).
+  //
+  // Excluded by that same screen, deliberately:
+  //   • files needing prerequisites a blank DB lacks (organizations/users, the
+  //     `vector`/`pgcrypto` extensions, the predicate/precedent/core schemas) —
+  //     they may well be fine on a real database, but "probably fine" is how this
+  //     class of defect got here; they stay baselined until verified against a
+  //     real base schema.
+  //   • 20260125_ai_provider_audit_log / 20260324_ana_kernel_decision_log /
+  //     20260326_conversation_os_durability_phase2 — uuid/text tenant keys, the
+  //     same identity-model collision as C-27/C-29. Wiring them would provision
+  //     tenant tables the integer-keyed RLS model cannot police. Needs a
+  //     decision, not a wiring.
+  //   • db/migrations/_consolidated/** — ledger C-29 Class 3 (its only creators
+  //     also redefine users/tenants with TEXT keys).
+  'db/migrations/022_stability_v2.sql',
+  'db/migrations/024_stability_step3.sql',
+  'db/migrations/030_stability_results.sql',
+  'db/migrations/20260129_phase5_intelligent_document_system.sql',
+  'db/migrations/20260206_phase5_contradiction_scanner.sql',
+  'db/migrations/20260206_phase5_evidence_fabric.sql',
+  'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
+  'db/migrations/20260223_ivdr_binder_packs.sql',
+  'db/migrations/20260306_chat_tool_runs.sql',
+  'db/migrations/20260317_global_regulatory_compliance.sql',
+  'db/migrations/20260322_regulatory_precedent_intelligence.sql',
+  'db/migrations/20260323_reactive_dependency_layer.sql',
+  'db/migrations/20260324_ai_goal_plan_runs.sql',
+  'db/migrations/20260324_ai_kernel_agent_protocol_events.sql',
+  'db/migrations/20260324_ai_kernel_decision_records.sql',
+  'db/migrations/20260324_ai_kernel_policy_outcomes.sql',
+  'db/migrations/20260325_ai_goal_plan_step_events.sql',
+  'db/migrations/20260325_decision_receipts.sql',
+  'db/migrations/20260326_conversation_os_durability.sql',
+  'db/migrations/20260508_ana_submission_chat_proposals.sql',
+  'db/migrations/20260520_ana_failure_learning.sql',
+  'db/migrations/20260520_document_templates.sql',
+  'db/migrations/20260520_regulatory_intelligence_layer.sql',
+  'db/migrations/20260717_agency_meetings_store.sql',
+  'db/migrations/20260717_design_controls_store.sql',
+  'db/migrations/20260717_evidence_asks_store.sql',
+  'db/migrations/20260717_evidence_objects_store.sql',
+  'db/migrations/20260717_human_factors_store.sql',
+  'db/migrations/20260717_labeling_pi_store.sql',
+  'db/migrations/20260717_maa_module1_store.sql',
+  'db/migrations/20260717_nda_m1_docs_store.sql',
+  'db/migrations/20260717_nda_rtf_store.sql',
+  'db/migrations/20260717_program_journey_store.sql',
+  'db/migrations/20260718_pediatric_orphan_cards.sql',
+  'db/migrations/20260718_smpc_sections_store.sql',
+  'db/migrations/20260724_qms_change_control_store.sql',
+  'db/migrations/20260730_cmc_change_control_store.sql',
+  'db/migrations/20260801_hf_files_store.sql',
+  'db/migrations/20260801_market_access_store.sql',
+  'db/migrations/20260801_reg_change_store.sql',
+  // Landed the same day as this batch, with a live writer (labeling-pi-service.ts
+  // via POST /api/labeling-pi) and no applier — a fresh instance of the very class
+  // C-32's guard exists to catch, caught by that guard. Same screen: idempotent,
+  // self-contained on a blank DB, integer organization_id.
+  'db/migrations/20260801_labeling_pi_store.sql',
+  // Same story again, hours later: a real program-journey store with a live
+  // writer (program-journey-service.ts) and no applier, flagged by the guard on
+  // rebase. Same screen: idempotent, self-contained, integer organization_id.
+  'db/migrations/20260801_program_journey_store.sql',
+
+  // ── Tenant isolation for everything the set just created (ledger C-33) ───
+  // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and
+  // policies only the tables that exist at that moment. Every table added by the
+  // set above lands on an already-provisioned database where 0021 has long since
+  // run and will never revisit it — and under RLS_ENFORCE=on a table with no RLS
+  // is fully readable across tenants. This sweep is 0021's loop made re-runnable
+  // and deploy-safe: it only ADDS a policy where none exists (never clobbering a
+  // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
+  // non-integer tenant key with a NOTICE instead of aborting the deploy.
+  'db/migrations/20260801_tenant_isolation_sweep.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

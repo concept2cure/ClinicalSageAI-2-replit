@@ -8,53 +8,8 @@
     "files install-fresh.mjs names explicitly",
     "the drizzle push surface (pgTable/pgView in shared/)"
   ],
-  "count": 108,
+  "count": 45,
   "tables": {
-    "ai_goal_plan_runs": {
-      "createdOnlyBy": [
-        "db/migrations/20260324_ai_goal_plan_runs.sql"
-      ],
-      "referencedBy": [
-        "server/services/kernel-observability.ts",
-        "server/services/kernel-plan-runtime.ts"
-      ]
-    },
-    "ai_goal_plan_step_events": {
-      "createdOnlyBy": [
-        "db/migrations/20260325_ai_goal_plan_step_events.sql"
-      ],
-      "referencedBy": [
-        "server/services/kernel-plan-runtime.ts"
-      ]
-    },
-    "ai_kernel_agent_protocol_events": {
-      "createdOnlyBy": [
-        "db/migrations/20260324_ai_kernel_agent_protocol_events.sql"
-      ],
-      "referencedBy": [
-        "server/services/kernel-agent-protocol.ts",
-        "server/services/kernel-observability.ts"
-      ]
-    },
-    "ai_kernel_decision_records": {
-      "createdOnlyBy": [
-        "db/migrations/20260324_ai_kernel_decision_records.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ana-ri/kernel.ts",
-        "server/services/kernel-decision-record.ts",
-        "server/services/kernel-observability.ts"
-      ]
-    },
-    "ai_kernel_policy_outcomes": {
-      "createdOnlyBy": [
-        "db/migrations/20260324_ai_kernel_policy_outcomes.sql"
-      ],
-      "referencedBy": [
-        "server/services/kernel-adaptive-policy.ts",
-        "server/services/kernel-observability.ts"
-      ]
-    },
     "ai_provider_audit_log": {
       "createdOnlyBy": [
         "db/migrations/20260125_ai_provider_audit_log.sql"
@@ -82,18 +37,6 @@
       ],
       "referencedBy": [
         "server/src/control-plane/persistent-queries.ts"
-      ]
-    },
-    "ana_submission_chat_proposals": {
-      "createdOnlyBy": [
-        "db/migrations/20260508_ana_submission_chat_proposals.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ana-features.ts",
-        "server/services/ana/citation-health.ts",
-        "server/services/ana/submission-chat-proposal-store.ts",
-        "server/services/ana/submission-chat-timeline.ts",
-        "server/services/export/docx-ledger-collector.ts"
       ]
     },
     "artifact_compute_attempts": {
@@ -130,38 +73,6 @@
         "server/services/compute/runtimeProfiles.ts"
       ]
     },
-    "biopharma_orphan_advocacy": {
-      "createdOnlyBy": [
-        "db/migrations/20260718_pediatric_orphan_cards.sql"
-      ],
-      "referencedBy": [
-        "server/routes/biopharma-specialty.routes.ts"
-      ]
-    },
-    "biopharma_orphan_rpd": {
-      "createdOnlyBy": [
-        "db/migrations/20260718_pediatric_orphan_cards.sql"
-      ],
-      "referencedBy": [
-        "server/routes/biopharma-specialty.routes.ts"
-      ]
-    },
-    "biopharma_prea_milestones": {
-      "createdOnlyBy": [
-        "db/migrations/20260718_pediatric_orphan_cards.sql"
-      ],
-      "referencedBy": [
-        "server/routes/biopharma-specialty.routes.ts"
-      ]
-    },
-    "c2c_agency_meetings": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_agency_meetings_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/agency-meetings.routes.ts"
-      ]
-    },
     "c2c_communication_timeline_events": {
       "createdOnlyBy": [
         "db/migrations/20260331_regulatory_correspondence_os.sql"
@@ -191,85 +102,12 @@
         "server/routes/submission-ops.ts"
       ]
     },
-    "c2c_design_controls": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_design_controls_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/design-controls.routes.ts",
-        "server/routes/mdx-engineering.ts"
-      ]
-    },
-    "c2c_evidence_asks": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_evidence_asks_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/evidence-asks.routes.ts"
-      ]
-    },
-    "c2c_evidence_objects": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_evidence_objects_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/evidence-objects.routes.ts"
-      ]
-    },
-    "c2c_hf_scenarios": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_human_factors_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/human-factors.ts"
-      ]
-    },
-    "c2c_labeling_pi": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_labeling_pi_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/labeling-pi.routes.ts"
-      ]
-    },
-    "c2c_maa_module1_components": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_maa_module1_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/maa-module1.routes.ts"
-      ]
-    },
     "c2c_mailbox_connections": {
       "createdOnlyBy": [
         "db/migrations/20260331_regulatory_correspondence_os.sql"
       ],
       "referencedBy": [
         "server/routes/regulatory-correspondence.ts"
-      ]
-    },
-    "c2c_nda_m1_docs": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_nda_m1_docs_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/nda-cockpit.routes.ts"
-      ]
-    },
-    "c2c_nda_rtf": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_nda_rtf_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/nda-cockpit.routes.ts"
-      ]
-    },
-    "c2c_program_journey": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_program_journey_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/program-journey.routes.ts"
       ]
     },
     "c2c_response_packages": {
@@ -280,14 +118,6 @@
         "server/routes/regulatory-correspondence.ts"
       ]
     },
-    "c2c_smpc_sections": {
-      "createdOnlyBy": [
-        "db/migrations/20260718_smpc_sections_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/labeling-smpc.routes.ts"
-      ]
-    },
     "c2c_submissions": {
       "createdOnlyBy": [
         "db/migrations/20260331_regulatory_correspondence_os.sql"
@@ -296,36 +126,12 @@
         "server/routes/regulatory-correspondence.ts"
       ]
     },
-    "capa": {
-      "createdOnlyBy": [
-        "db/migrations/030_stability_results.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
     "cer_jobs": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql"
       ],
       "referencedBy": [
         "server/services/cerGenerator.ts"
-      ]
-    },
-    "chat_tool_runs": {
-      "createdOnlyBy": [
-        "db/migrations/20260306_chat_tool_runs.sql"
-      ],
-      "referencedBy": [
-        "server/services/toolRegistry.ts"
-      ]
-    },
-    "cmc_change_controls": {
-      "createdOnlyBy": [
-        "db/migrations/20260730_cmc_change_control_store.sql"
-      ],
-      "referencedBy": [
-        "server/services/cmc/cmc-change-control-service.ts"
       ]
     },
     "concept2cure_agency_communications": {
@@ -371,94 +177,6 @@
         "server/services/conversation-os/persistence.ts"
       ]
     },
-    "conversation_os_artifact_proposals": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_execution_plans": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_execution_steps": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_proposal_versions": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_quality_evaluations": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_retrieval_chunks": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_retrieval_sources": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_scout_findings": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_tool_events": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "conversation_os_tool_manifests": {
-      "createdOnlyBy": [
-        "db/migrations/20260326_conversation_os_durability.sql"
-      ],
-      "referencedBy": [
-        "server/services/conversation-os/persistence.ts"
-      ]
-    },
-    "decision_receipts": {
-      "createdOnlyBy": [
-        "db/migrations/20260325_decision_receipts.sql"
-      ],
-      "referencedBy": [
-        "server/services/decision-lifecycle-service.ts"
-      ]
-    },
     "doc_sections": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/012_document_authoring_schema.sql"
@@ -475,45 +193,6 @@
         "server/services/enhancedEmbeddingService.ts"
       ]
     },
-    "evidence": {
-      "createdOnlyBy": [
-        "db/migrations/20260206_phase5_contradiction_scanner.sql",
-        "db/migrations/20260206_phase5_evidence_fabric.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ana-ri/post-processing.ts",
-        "server/routes/evidence-management.routes.ts",
-        "server/routes/evidence.ts",
-        "server/routes/ivdr-routes.ts",
-        "server/services/EvidenceManagementService.ts",
-        "server/services/ai/openai-orchestrator.ts"
-      ]
-    },
-    "governed_dependencies": {
-      "createdOnlyBy": [
-        "db/migrations/20260323_reactive_dependency_layer.sql"
-      ],
-      "referencedBy": [
-        "server/services/reactive-dependency-service.ts"
-      ]
-    },
-    "hf_engineering_files": {
-      "createdOnlyBy": [
-        "db/migrations/20260801_hf_files_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/human-factors.ts",
-        "server/services/human-factors/hf-files-service.ts"
-      ]
-    },
-    "impact_propagation_log": {
-      "createdOnlyBy": [
-        "db/migrations/20260323_reactive_dependency_layer.sql"
-      ],
-      "referencedBy": [
-        "server/services/reactive-dependency-service.ts"
-      ]
-    },
     "ind_milestones": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/ind_wizard_schema.sql"
@@ -528,87 +207,6 @@
       ],
       "referencedBy": [
         "server/routes/preIndRoutes.ts"
-      ]
-    },
-    "intelligence": {
-      "createdOnlyBy": [
-        "db/migrations/20260520_ana_failure_learning.sql",
-        "db/migrations/20260520_document_templates.sql",
-        "db/migrations/20260520_growth_mindset_extensions.sql",
-        "db/migrations/20260520_regulatory_intelligence_layer.sql"
-      ],
-      "referencedBy": [
-        "server/routes/authoring.router.ts",
-        "server/services/ana-ri/context-enrichment.ts",
-        "server/services/intelligence-engine/index.ts",
-        "server/services/intelligence/ana-failure-learning.ts",
-        "server/services/intelligence/calibration.ts",
-        "server/services/intelligence/counterfactual-replay.ts"
-      ]
-    },
-    "intelligent_docs": {
-      "createdOnlyBy": [
-        "db/migrations/20260129_phase5_intelligent_document_system.sql"
-      ],
-      "referencedBy": [
-        "server/routes/intelligentDocs.ts"
-      ]
-    },
-    "ivdr_binder_claims": {
-      "createdOnlyBy": [
-        "db/migrations/20260223_ivdr_binder_packs.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ai-claims-routes.ts",
-        "server/routes/ivdr-binder-routes.ts",
-        "server/services/ivdrPackManifest.ts",
-        "server/workers/ivdr-pack-worker.ts"
-      ]
-    },
-    "ivdr_binder_evidence": {
-      "createdOnlyBy": [
-        "db/migrations/20260223_ivdr_binder_packs.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ai-claims-routes.ts",
-        "server/routes/ivdr-binder-routes.ts",
-        "server/services/ivdrPackManifest.ts",
-        "server/workers/ivdr-pack-worker.ts"
-      ]
-    },
-    "ivdr_pack_build_jobs": {
-      "createdOnlyBy": [
-        "db/migrations/20260223_ivdr_binder_packs.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ivdr-binder-routes.ts",
-        "server/workers/ivdr-pack-worker.ts"
-      ]
-    },
-    "ivdr_pack_counters": {
-      "createdOnlyBy": [
-        "db/migrations/20260223_ivdr_binder_packs.sql"
-      ],
-      "referencedBy": [
-        "server/workers/ivdr-pack-worker.ts"
-      ]
-    },
-    "ivdr_pack_snapshots": {
-      "createdOnlyBy": [
-        "db/migrations/20260223_ivdr_binder_packs.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ivdr-binder-routes.ts",
-        "server/workers/ivdr-pack-worker.ts"
-      ]
-    },
-    "ivdr_packs": {
-      "createdOnlyBy": [
-        "db/migrations/20260223_ivdr_binder_packs.sql"
-      ],
-      "referencedBy": [
-        "server/routes/ivdr-binder-routes.ts",
-        "server/workers/ivdr-pack-worker.ts"
       ]
     },
     "literature_entries": {
@@ -662,14 +260,6 @@
         "server/services/knowledgeGraphService.ts"
       ]
     },
-    "market_access_positions": {
-      "createdOnlyBy": [
-        "db/migrations/20260801_market_access_store.sql"
-      ],
-      "referencedBy": [
-        "server/services/market-access/market-access-service.ts"
-      ]
-    },
     "maud_algorithms": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/20250512-create-maud-validations-table.sql"
@@ -708,22 +298,6 @@
         "server/services/precedent-engine.ts"
       ]
     },
-    "predicate": {
-      "createdOnlyBy": [
-        "db/migrations/20260207_phase6_6_predicate_intelligence.sql",
-        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql",
-        "db/migrations/20260208_phase6_6a_risk_rollups.sql",
-        "db/migrations/20260209_phase6_6a_fda_ingest_runs.sql",
-        "db/migrations/20260211_phase6_6d_defense_packets.sql",
-        "db/migrations/20260211_phase6_6e_proof_pack_exports.sql",
-        "db/migrations/20260211_phase7_0a_render_jobs.sql"
-      ],
-      "referencedBy": [
-        "server/scripts/seedDemoProjects.ts",
-        "server/services/lumen-context/sections.ts",
-        "server/services/precedent-engine.ts"
-      ]
-    },
     "programs": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/001_create_core_tables.sql"
@@ -735,62 +309,6 @@
         "server/services/innovation/evidence-confidence-heatmap-service.ts",
         "server/services/innovation/outcome-based-template-learning-service.ts",
         "server/services/innovation/regulatory-delta-radar-service.ts"
-      ]
-    },
-    "pv_adverse_events": {
-      "createdOnlyBy": [
-        "db/migrations/20260317_global_regulatory_compliance.sql"
-      ],
-      "referencedBy": [
-        "server/routes/global-compliance.ts"
-      ]
-    },
-    "pv_risk_management_plans": {
-      "createdOnlyBy": [
-        "db/migrations/20260317_global_regulatory_compliance.sql"
-      ],
-      "referencedBy": [
-        "server/routes/global-compliance.ts"
-      ]
-    },
-    "pv_safety_signals": {
-      "createdOnlyBy": [
-        "db/migrations/20260317_global_regulatory_compliance.sql"
-      ],
-      "referencedBy": [
-        "server/routes/global-compliance.ts"
-      ]
-    },
-    "qms_change_controls": {
-      "createdOnlyBy": [
-        "db/migrations/20260724_qms_change_control_store.sql"
-      ],
-      "referencedBy": [
-        "server/services/qms/changeControl.service.ts"
-      ]
-    },
-    "qms_change_links": {
-      "createdOnlyBy": [
-        "db/migrations/20260724_qms_change_control_store.sql"
-      ],
-      "referencedBy": [
-        "server/services/qms/changeControl.service.ts"
-      ]
-    },
-    "reg_change_items": {
-      "createdOnlyBy": [
-        "db/migrations/20260801_reg_change_store.sql"
-      ],
-      "referencedBy": [
-        "server/services/reg-change/reg-change-service.ts"
-      ]
-    },
-    "regional_compliance_config": {
-      "createdOnlyBy": [
-        "db/migrations/20260317_global_regulatory_compliance.sql"
-      ],
-      "referencedBy": [
-        "server/routes/global-compliance.ts"
       ]
     },
     "regulatory": {
@@ -814,42 +332,12 @@
         "server/services/grdhe/grdheService.ts"
       ]
     },
-    "regulatory_intel": {
-      "createdOnlyBy": [
-        "db/migrations/20260322_regulatory_precedent_intelligence.sql"
-      ],
-      "referencedBy": [
-        "server/services/regulatory-precedent-intelligence/advisory-committee-service.ts",
-        "server/services/regulatory-precedent-intelligence/confidence-calibration-service.ts",
-        "server/services/regulatory-precedent-intelligence/crl-trigger-service.ts",
-        "server/services/regulatory-precedent-intelligence/cross-jurisdictional-service.ts",
-        "server/services/regulatory-precedent-intelligence/ema-question-taxonomy-service.ts",
-        "server/services/regulatory-precedent-intelligence/rtf-trigger-service.ts"
-      ]
-    },
     "stab_audit": {
       "createdOnlyBy": [
         "db/migrations/026_stability_step4.sql"
       ],
       "referencedBy": [
         "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_conditions": {
-      "createdOnlyBy": [
-        "db/migrations/022_stability_v2.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_exports": {
-      "createdOnlyBy": [
-        "db/migrations/030_stability_results.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts",
-        "server/src/services/reg/evidence.ts"
       ]
     },
     "stab_inuse": {
@@ -863,47 +351,6 @@
     "stab_oot_rules": {
       "createdOnlyBy": [
         "db/migrations/026_stability_step4.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_reminders": {
-      "createdOnlyBy": [
-        "db/migrations/024_stability_step3.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_results": {
-      "createdOnlyBy": [
-        "db/migrations/022_stability_v2.sql",
-        "db/migrations/030_stability_results.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_studies": {
-      "createdOnlyBy": [
-        "db/migrations/022_stability_v2.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_tests": {
-      "createdOnlyBy": [
-        "db/migrations/022_stability_v2.sql"
-      ],
-      "referencedBy": [
-        "server/src/routes/stability.router.ts"
-      ]
-    },
-    "stab_timepoints": {
-      "createdOnlyBy": [
-        "db/migrations/022_stability_v2.sql"
       ],
       "referencedBy": [
         "server/src/routes/stability.router.ts"

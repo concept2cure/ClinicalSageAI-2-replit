@@ -1,3 +1,23 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision the real, org-scoped program-journey store (journeys and
+--          their stages) with a live write path, retiring the seed-only blob.
+--
+-- eCTD/CTD Context:
+--   - Module(s): all (a program journey spans the submission lifecycle)
+--   - Integrity Risk Addressed: program milestone state presented from a
+--     read-only demo blob rather than tenant-scoped records; tenant isolation
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
 -- Program-journey store (REAL, org-scoped, with a write path) — parent journey
 -- rows + one REAL row per lifecycle stage.
 --
