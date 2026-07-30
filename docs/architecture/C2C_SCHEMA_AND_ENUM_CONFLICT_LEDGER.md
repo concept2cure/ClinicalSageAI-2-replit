@@ -1764,6 +1764,63 @@ are 0004/0007 (unified_documents), 0008 (superseded by the port),
 
 ---
 
+## C-30 — The authoring WORKFLOW tables were deploy-dead: twelve router-queried tables on no apply path *(high — FIXED 2026-07-30)*
+
+The residue of C-27. After C-27 retired the ten duplicate CREATE TABLE blocks
+from `db/migrations/20260730_authoring_subsystem_schema.sql` (the 0725 files own
+the shared document/section/comment/signature tables), that file was left
+carrying only its twelve genuinely-new WORKFLOW tables — comment activity,
+reviews, audit events, AI suggestions, compliance scoring, suggestion feedback,
+exports, change requests, checklists(+items), doc exports, template sections.
+Every one is a live target of `server/routes/authoring.router.ts`, and the file
+was on **no durable apply path** (not `*_gcc_*`, not in the drizzle journal, not
+in any applier's file list) — the exact C-23 / C-6 blind spot. A real deploy
+shipped the router onto a schema missing all twelve, so the review-request,
+audit, AI-suggestion, compliance-scoring, change-request and checklist endpoints
+each 500'd with a missing-relation error — precisely what the SCOPE NOTEs in the
+router's change-request and checklist handlers already recorded ("`doc_change_
+requests` … has no CREATE statement anywhere in the repo, so the handler 500s").
+The schema itself was already *proven* (`authoring-migration.pglite.integration.
+test.ts` applies the file and executes the router's real SQL; the schema-contract
+test pins the columns) — it simply never shipped. "Merged, green, never applied."
+
+### Fix
+
+- **Durable applier.** The file is now the last entry in `AUTHORING_SUBSYSTEM_
+  FILES` (`scripts/db/authoring-subsystem.mjs`) — the atomic unit `deploy-migrate.
+  mjs` and `apply-c2c-migrations.mjs` run. It applies after the loop/audit/
+  signature files (its tables soft-reference them but declare no cross-file FK).
+- **Tenant isolation, two shapes.** The eight tenant_id-carrying tables join
+  `AUTHORING_SUBSYSTEM_TABLES` and take the standard `tenant_isolation_policy`
+  (and are now gated by `/readyz`, the deploy readiness contract, and the pilot
+  go/no-go check — mirrored into `server/db/ensureCoreTables.ts`). The four the
+  router keys by an opaque `doc_id`/`checklist_id` and never tenant-filters
+  (`doc_change_requests`, `doc_checklist`, `doc_checklist_items`, `doc_exports`)
+  carry no tenant_id, so a new `AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES` list gives
+  each a PARENT-scoped policy: an `EXISTS` against the owning `authoring_documents`
+  row's tenant (via `doc_checklist` for the items table). Same shadow/enforce
+  shape as the tenant policy — pass-through under the `app.rls_enforce != 'on'`
+  default the raw-pool router runs under, tenant-confined under `RLS_ENFORCE=on`.
+- **Proof.** `tests/schema-contract/authoring-durable-applier.contract.test.ts`
+  drives `applyAuthoringSubsystem` itself (not a hand-rolled file list) and
+  asserts all twelve tables exist, all carry a `tenant_isolation_policy`, and the
+  parent-scoped policy genuinely blocks a cross-tenant read under enforcement
+  (verified under a NOSUPERUSER role, since PGlite's default superuser bypasses
+  RLS even under FORCE). If the file ever falls off the applier, assertion 1 fails
+  here rather than silently on a deploy.
+
+### Residual (documented, not a regression)
+
+The three live tenant-less tables have no service-layer tenant filter either (the
+router queries them by `doc_id` alone). Under the shadow default their only
+isolation is the opacity of the parent `doc_id` (itself tenant-gated in
+`authoring_documents`); the parent-scoped RLS closes the gap only under
+`RLS_ENFORCE=on`. Threading `tenant_id` through those handlers' INSERT/SELECT is a
+router change the existing SCOPE NOTEs carve out as separate — tracked for a
+follow-up, not part of this reachability fix.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

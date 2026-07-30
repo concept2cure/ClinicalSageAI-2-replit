@@ -1,7 +1,7 @@
 /**
- * Authoring subsystem provisioning — the four db/migrations files that back the
+ * Authoring subsystem provisioning — the db/migrations files that back the
  * flagship IND authoring loop (server/routes/authoring.router.ts), applied AS A
- * SINGLE ATOMIC UNIT.
+ * SINGLE ATOMIC UNIT (AUTHORING_SUBSYSTEM_FILES below is the authoritative list).
  *
  * (Durable CRDT state is NOT part of this unit. It lives in its own table,
  * created by db/migrations/20260727_collab_document_state.sql and applied on the
@@ -48,10 +48,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * The four files, in dependency order. The loop-tables file creates
+ * The files, in dependency order. The loop-tables file creates
  * authoring_documents / authoring_sections that later files reference; the
  * freeze-binding file ALTERs the authoring_signatures table the signatures file
- * creates, so it MUST follow it. Repo-relative (joined against repoRoot).
+ * creates, so it MUST follow it; the C-30 workflow-schema file applies last (its
+ * tables soft-reference the loop tables but declare no cross-file FK).
+ * Repo-relative (joined against repoRoot).
  */
 export const AUTHORING_SUBSYSTEM_FILES = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
@@ -76,6 +78,22 @@ export const AUTHORING_SUBSYSTEM_FILES = [
   // 20260730_authoring_subsystem_schema.sql). Additive ALTER … ADD COLUMN IF NOT
   // EXISTS; must run after the loop tables that create these tables.
   'db/migrations/20260730_authoring_comments_router_columns.sql',
+  // C-30: the genuinely-new authoring WORKFLOW tables (reviews, audit events, AI
+  // suggestions, compliance scoring, suggestion feedback, comment activity,
+  // exports, change requests, checklists(+items), template sections). After C-27
+  // retired this file's 10 duplicate copies of the canonical loop tables, these
+  // 12 residual tables are the ONLY thing it creates — and every one is queried
+  // by server/routes/authoring.router.ts, yet the file was on NO durable applier
+  // (deploy-dead, ledger C-23 class): its endpoints 500 on every real deploy with
+  // missing-relation errors, exactly as the SCOPE NOTEs in the router's
+  // change-request/checklist handlers describe. The schema was already PROVEN
+  // (authoring-migration.pglite.integration.test.ts applies it and executes the
+  // router's real SQL against it; authoring-schema-contract pins the columns) —
+  // it just never shipped. Adding it here is what actually provisions it.
+  // FK-free across subsystems except its two internal cascades
+  // (doc_checklist_items.checklist_id → doc_checklist, and the router's soft
+  // doc_id references), so it applies last with no dependency on the files above.
+  'db/migrations/20260730_authoring_subsystem_schema.sql',
 ];
 
 /**
@@ -91,8 +109,17 @@ export const AUTHORING_SUBSYSTEM_FILES = [
  * already run and will never revisit a new table — an RLS-less table under
  * RLS_ENFORCE is readable across tenants, i.e. every tenant's section grants.
  *
- * The twin literal in server/db/ensureCoreTables.ts carries the SAME eleven
- * entries, so /readyz gates on doc_permissions too.
+ * The twin literal in server/db/ensureCoreTables.ts carries the SAME entries,
+ * so /readyz gates on doc_permissions too.
+ *
+ * Every table in THIS list carries `tenant_id INTEGER` and is therefore eligible
+ * for the standard tenant_isolation_policy applyAuthoringSubsystem installs and
+ * deploy-migrate's verifyReadinessContract asserts. The workflow tables that do
+ * NOT carry tenant_id (doc_change_requests / doc_checklist(+items) / doc_exports)
+ * are provisioned by the same files but isolated by a DIFFERENT, parent-scoped
+ * policy — see AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES below; they must not appear
+ * here or both the policy install and the readiness check would try to filter a
+ * `tenant_id` column that does not exist.
  */
 export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_documents',
@@ -111,6 +138,76 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
   // it — 0021 has already run on the apply-c2c path and would never revisit a
   // newly-added table, which would leave the grant store cross-tenant readable.
   'doc_permissions',
+  // C-30: the eight tenant-scoped WORKFLOW tables from
+  // 20260730_authoring_subsystem_schema.sql. Each carries tenant_id INTEGER and
+  // is filtered `WHERE tenant_id = $n` by the router, so each takes the standard
+  // tenant_isolation_policy exactly like its siblings above. Being in this list
+  // also means deploy-migrate's readiness contract, /readyz (ensureCoreTables),
+  // and the pilot go/no-go gate all now surface their absence instead of letting
+  // the first authoring request discover it as a 500.
+  'authoring_comment_activity',
+  'authoring_reviews',
+  'authoring_audit_events',
+  'authoring_ai_suggestions',
+  'authoring_compliance_scores',
+  'authoring_suggestion_feedback',
+  'authoring_exports',
+  'template_sections',
+];
+
+/**
+ * C-30: the workflow tables from 20260730_authoring_subsystem_schema.sql that
+ * carry NO tenant_id. The router keys them by an opaque doc_id / checklist_id and
+ * never tenant-filters them (see the SCOPE NOTEs in authoring.router.ts's
+ * change-request and checklist handlers), so they cannot take the standard
+ * tenant_isolation_policy — there is no tenant_id column to compare.
+ *
+ * They are still tenant-sensitive: a change request or checklist belongs to the
+ * document it hangs off, and that document IS tenant-isolated. So each gets a
+ * PARENT-SCOPED policy that ties its visibility to the owning authoring_documents
+ * row's tenant, expressed as an EXISTS subquery. The policy has the same
+ * shadow/enforce shape as tenant_isolation_policy: when app.rls_enforce != 'on'
+ * (the production default this raw-pool router runs under) it passes everything,
+ * so the router keeps working unchanged; under RLS_ENFORCE=on it isolates by the
+ * parent document's tenant, closing what would otherwise be a cross-tenant read
+ * of another tenant's change requests / checklists for any caller that already
+ * holds a foreign doc_id.
+ *
+ * `parentExists` is the row-visibility predicate: an EXISTS against
+ * authoring_documents (directly for the doc_id-keyed tables, via doc_checklist
+ * for the items table). doc_exports is legacy (no live SQL references it after the
+ * canonical export path moved to authoring_export_history) but is still created
+ * by the file and blessed by the integration test, so it is isolated the same
+ * way rather than left policy-free.
+ */
+// The tenant match reused by every parent-scoped predicate below — the SAME two
+// session vars tenant_isolation_policy consults, applied to the PARENT document's
+// tenant_id. Kept as one constant so the doc-scoped and tenant policies converge.
+const PARENT_TENANT_MATCH = `(d.tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+        OR d.tenant_id = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT)`;
+
+export const AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES = [
+  {
+    table: 'doc_change_requests',
+    parentExists: `EXISTS (SELECT 1 FROM public.authoring_documents d
+        WHERE d.id::text = doc_change_requests.doc_id AND ${PARENT_TENANT_MATCH})`,
+  },
+  {
+    table: 'doc_checklist',
+    parentExists: `EXISTS (SELECT 1 FROM public.authoring_documents d
+        WHERE d.id::text = doc_checklist.doc_id AND ${PARENT_TENANT_MATCH})`,
+  },
+  {
+    table: 'doc_checklist_items',
+    parentExists: `EXISTS (SELECT 1 FROM public.doc_checklist c
+        JOIN public.authoring_documents d ON d.id::text = c.doc_id
+        WHERE c.checklist_id = doc_checklist_items.checklist_id AND ${PARENT_TENANT_MATCH})`,
+  },
+  {
+    table: 'doc_exports',
+    parentExists: `EXISTS (SELECT 1 FROM public.authoring_documents d
+        WHERE d.id::text = doc_exports.doc_id AND ${PARENT_TENANT_MATCH})`,
+  },
 ];
 
 /**
@@ -162,6 +259,33 @@ function tenantPolicySql(table) {
 }
 
 /**
+ * C-30: the parent-scoped counterpart of tenantPolicySql for the workflow tables
+ * that carry no tenant_id of their own (AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES).
+ * Same shadow/enforce/super-admin shape — the ONLY difference is the tenant match
+ * runs against the OWNING document's tenant via `parentExists` instead of a local
+ * `tenant_id` column. Under the shadow default (app.rls_enforce != 'on') it is a
+ * full pass-through, so the raw-pool router is unaffected; under RLS_ENFORCE=on it
+ * confines each row to the tenant that owns its parent document.
+ */
+function docScopedPolicySql(table, parentExists) {
+  const predicate = `
+        NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+        OR ${parentExists}
+        OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'`;
+  return `
+    ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.${table} FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS ${TENANT_POLICY_NAME} ON public.${table};
+    CREATE POLICY ${TENANT_POLICY_NAME} ON public.${table}
+      FOR ALL
+      USING (${predicate}
+      )
+      WITH CHECK (${predicate}
+      );
+  `;
+}
+
+/**
  * Apply the authoring subsystem as one atomic unit against `pool` (a connected
  * `pg` Pool): the four migration files, then tenant-isolation RLS on every table
  * they create. On any failure the whole transaction is rolled back, leaving the
@@ -190,8 +314,15 @@ export async function applyAuthoringSubsystem(pool, repoRoot, { log = () => {} }
     for (const table of AUTHORING_SUBSYSTEM_TABLES) {
       await pool.query(tenantPolicySql(table));
     }
+    // C-30: the workflow tables without a local tenant_id are isolated by their
+    // parent document's tenant instead — same shadow/enforce semantics, applied
+    // in the same transaction so the subsystem is never half-policied.
+    for (const { table, parentExists } of AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES) {
+      await pool.query(docScopedPolicySql(table, parentExists));
+    }
     await pool.query('COMMIT');
-    log(`  ✓ authoring subsystem provisioned as a unit (${applied.length} files, ${AUTHORING_SUBSYSTEM_TABLES.length} tables, tenant-isolated)`);
+    const policied = AUTHORING_SUBSYSTEM_TABLES.length + AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES.length;
+    log(`  ✓ authoring subsystem provisioned as a unit (${applied.length} files, ${policied} tables, tenant-isolated)`);
     return { applied };
   } catch (err) {
     await pool.query('ROLLBACK').catch(() => {});

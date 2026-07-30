@@ -7,18 +7,27 @@
 -- Reviewed: schema-contract test (authoring-schema-contract.test.ts)
 -- Rollback: DROP TABLE for the tables below (all CREATE IF NOT EXISTS; additive).
 --
--- Authoring subsystem schema — the database contract the eCTD CoAuthor /
--- authoring surface has always assumed but never created.
+-- Authoring subsystem schema — the genuinely-new WORKFLOW tables the eCTD
+-- CoAuthor / authoring surface queries, that no canonical migration creates.
 --
--- server/routes/authoring.router.ts issues SQL against ~24 tables. Only a
--- handful were ever provisioned (authoring_tokens/templates/export_history/
--- tracked_change_decisions via runtime `ensure*` DDL in the router itself, plus
--- template_guidance/section_guidance/template_usage and electronic_signatures).
--- The rest — the entire enterprise authoring workflow: documents, sections,
--- comments, reviews, audit, AI suggestions, compliance scoring, feedback,
--- change requests, checklists, signatures, workflow steps, exports, freezes —
--- were referenced by the API but created NOWHERE, so those endpoints failed
--- with missing-relation errors. This migration closes that schema-contract gap.
+-- SCOPE (post ledger C-27). This file once carried both the enterprise workflow
+-- tables AND a second copy of the canonical document/section/comment/signature
+-- tables the 20260725_authoring_* loop/audit/signature migrations own. C-27
+-- retired those ten duplicate CREATE TABLE blocks — the 0725 files are the single
+-- source for the shared tables — leaving this file with ONLY the twelve tables
+-- below, each a live target of server/routes/authoring.router.ts that lives
+-- nowhere else: comment activity, reviews, audit events, AI suggestions,
+-- compliance scoring, suggestion feedback, exports, change requests,
+-- checklists(+items), doc exports, and template sections.
+--
+-- REACHABILITY (ledger C-30). Being correct was never enough — this file was on
+-- NO durable apply path (not a *_gcc_* file, not in the drizzle journal, not in
+-- any applier's file list), so a deploy shipped the router onto a schema missing
+-- these tables and every one of those endpoints failed with missing-relation
+-- errors, exactly as the SCOPE NOTEs in the router's change-request/checklist
+-- handlers record. C-30 adds it to AUTHORING_SUBSYSTEM_FILES in
+-- scripts/db/authoring-subsystem.mjs (the deploy-migrate / apply-c2c applier),
+-- proven by authoring-durable-applier.contract.test.ts.
 --
 -- Column names and types are derived from the exact SQL the router executes
 -- (INSERT column lists, SELECT projections, UPDATE SET, WHERE, ON CONFLICT,
@@ -33,20 +42,17 @@
 --     id-like columns must share one type. TEXT accepts every value the router
 --     produces and keeps every equality/JOIN cast-free. Server-generated rows
 --     (audit, AI suggestions, feedback) default to gen_random_uuid()::text.
---   * authoring_sections deliberately carries BOTH doc_id and document_id, and
---     BOTH order_index and order_idx: the router references each set on different
---     endpoints. Creating only one would leave the other endpoint broken. (The
---     duplication is a latent router inconsistency; this migration keeps both
---     columns so no endpoint 500s, and the inconsistency can be reconciled in the
---     router separately.)
 --   * Tenant scoping is service-layer (tenant_id INTEGER, filtered as
---     WHERE tenant_id = $n in every scoped query), matching the c2c/_store family;
---     no RLS policy is added here. Tables the router never tenant-filters
---     (doc_change_requests, doc_checklist(+items), doc_permissions, doc_exports)
---     intentionally carry no tenant_id.
---   * FK-free across subsystems (soft references) EXCEPT the two the router relies
---     on for cascade: authoring_comments.parent_comment_id and
---     doc_checklist_items.checklist_id.
+--     WHERE tenant_id = $n in every scoped query), matching the c2c/_store family.
+--     The eight tenant_id-carrying tables here take the standard
+--     tenant_isolation_policy the applier (scripts/db/authoring-subsystem.mjs)
+--     installs. The four the router keys by an opaque doc_id / checklist_id and
+--     never tenant-filters (doc_change_requests, doc_checklist(+items),
+--     doc_exports) carry no tenant_id and are isolated instead by a PARENT-scoped
+--     policy tied to the owning authoring_documents row's tenant — see
+--     AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES (ledger C-30).
+--   * FK-free across subsystems (soft references) EXCEPT the cascade the router
+--     relies on: doc_checklist_items.checklist_id → doc_checklist.
 --   * Idempotent (CREATE TABLE / INDEX IF NOT EXISTS); TIMESTAMPTZ throughout;
 --     JSONB for structured columns (metadata, options, patch_json, position_data,
 --     anchor, compliance detail blobs).
