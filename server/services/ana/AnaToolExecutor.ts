@@ -159,6 +159,7 @@ import {
 } from './agentic-loop.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
+import { registerDocumentSpineHandlers } from './document-spine.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -14409,6 +14410,10 @@ registerAgenticWorkflowHandlers(registerToolHandler);
 // The biotech program orchestrator (get_biotech_program_status) is registered
 // from its own sibling module the same way — injected register, no import cycle.
 registerBiotechProgramHandlers(registerToolHandler);
+
+// The canonical document revision spine (commit_document_revision) — the one
+// atomic flow every AnA-authored document mutation runs through — same pattern.
+registerDocumentSpineHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop

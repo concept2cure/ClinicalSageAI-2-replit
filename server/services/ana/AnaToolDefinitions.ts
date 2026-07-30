@@ -23,6 +23,10 @@ import {
 // spine (discovery → IND → Phase 1/2/3 → BLA → post-approval). Handler is
 // registered from biotech-program.ts via the inject-and-sibling pattern.
 import { GET_BIOTECH_PROGRAM_STATUS } from './biotech-program.js';
+// Canonical document revision spine — the ONE atomic flow (version → AI action →
+// audit → review → placement → provenance → readiness) over concept2cure_artifacts.
+// Handler registered from document-spine.ts via the inject-and-sibling pattern.
+import { COMMIT_DOCUMENT_REVISION } from './document-spine.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -2029,6 +2033,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   CONVENE_DRAFTING_COUNCIL,
   GET_CLIENT_JOURNEY,
   GET_BIOTECH_PROGRAM_STATUS,
+  COMMIT_DOCUMENT_REVISION,
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
   DRAFT_FDA_IR_RESPONSE,
