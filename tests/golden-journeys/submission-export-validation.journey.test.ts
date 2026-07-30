@@ -170,8 +170,8 @@ beforeAll(async () => {
 
     INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)
     VALUES (200, 'Drug Substance', 'summary', 'tester', ${ORG}, 1);
-    INSERT INTO workflow_document_versions (document_id, version, content, created_by)
-    VALUES (200, 1, '{"type":"doc","content":[{"type":"text","text":"Drug substance specification."}]}'::json, 'tester');
+    INSERT INTO workflow_document_versions (document_id, version, content, created_by, organization_id)
+    VALUES (200, 1, '{"type":"doc","content":[{"type":"text","text":"Drug substance specification."}]}'::json, 'tester', ${ORG});
 
     -- A same-id document in a DIFFERENT org: proves tenant scoping on assemble.
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
