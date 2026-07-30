@@ -103,6 +103,35 @@ describe('compute_lifecycle_operations (pure)', () => {
     const replaced = out.leaves.find((l: any) => l.operation === 'replace');
     expect(replaced.modifiedFile).toBe('../0000/m3/32-body-data/32s-drug-sub/general.pdf');
   });
+
+  it('refuses to auto-load a prior sequence without tenant context (org from ToolContext only)', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    // application_number + prior_sequence_number (and no explicit prior_leaves)
+    // triggers the tenant-scoped auto-load path, which must not run org-less.
+    const out = JSON.parse(
+      await handler({
+        application_number: 'IND-123',
+        prior_sequence_number: '0000',
+        desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
+      }),
+    );
+    expect(out.error).toMatch(/tenant context/i);
+  });
+
+  it('does NOT engage auto-load when explicit prior_leaves are supplied (org not required)', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    const out = JSON.parse(
+      await handler({
+        application_number: 'IND-123',
+        prior_sequence_number: '0000',
+        prior_leaves: [{ ctd_section: '2.5', file_name: 'o.pdf', md5: 'a' }],
+        desired_leaves: [{ ctd_section: '2.5', file_name: 'o.pdf', md5: 'b' }],
+      }),
+    );
+    expect(out.ok).toBe(true);
+    expect(out.autoLoadedPrior).toBe(0);
+    expect(out.summary).toMatchObject({ replace: 1 });
+  });
 });
 
 describe('generate_stf (pure)', () => {

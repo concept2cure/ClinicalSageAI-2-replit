@@ -106,21 +106,82 @@ describe('C-33: the sweep is positioned to see everything the set creates', () =
     }
   });
 
-  it('does NOT wire the five files C-34 could not verify or found defective', () => {
+  it('does NOT wire the files that remain genuinely unverifiable', () => {
     // Each is unwired for a NAMED reason, not an unexamined "probably fine".
     // Pinning them stops a future batch from sweeping them in on momentum: two
-    // require pgvector (unverifiable by this harness at all), one is blocked
-    // behind them, and two have real defects — a missing `regulatory.submissions`
-    // creator and an unimplementable FK against lumen_data_atoms.
+    // require pgvector (which this harness cannot load, so it cannot verify them
+    // AT ALL), and one is blocked behind those two.
     for (const unwired of [
       'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
       'db/migrations/20260306_precedent_engine.sql',
       'db/migrations/20260208_phase6_6a_risk_rollups.sql',
-      'db/migrations/068_regulatory_schema_alignment.sql',
-      'db/migrations/20260125_enhanced_cortex_schema.sql',
     ]) {
       expect(C2C_MIGRATION_FILES).not.toContain(unwired);
     }
+  });
+
+  it('DOES wire enhanced_cortex, whose identity conflict C-36 resolved', () => {
+    // C-34 excluded it for an unimplementable FK. That was a real defect, not a
+    // harness limit — and defects get fixed rather than permanently excluded.
+    expect(C2C_MIGRATION_FILES).toContain('db/migrations/20260125_enhanced_cortex_schema.sql');
+  });
+});
+
+describe('C-36: enhanced cortex keys atoms the way the canonical store does', () => {
+  let pg: PGlite;
+
+  beforeAll(async () => {
+    pg = await baseSchemaFixture();
+    const sql = readMig('db/migrations/20260125_enhanced_cortex_schema.sql');
+    await pg.exec(sql);
+    await pg.exec(sql); // idempotent
+  }, T);
+
+  afterAll(async () => {
+    await pg.close();
+  });
+
+  it('the canonical lumen_data_atoms.id is an integer, not a uuid', async () => {
+    // This is the fact the migration was written against wrongly. Pinning it
+    // means a future change to either side surfaces here rather than as an
+    // unimplementable FK at deploy time.
+    const { rows } = await pg.query<{ data_type: string }>(
+      `SELECT data_type FROM information_schema.columns
+        WHERE table_name = 'lumen_data_atoms' AND column_name = 'id'`,
+    );
+    expect(rows[0]?.data_type).toBe('integer');
+  });
+
+  it('every atom-referencing column is an integer, so the FKs are implementable', async () => {
+    const { rows } = await pg.query<{ table_name: string; column_name: string; data_type: string }>(
+      `SELECT table_name, column_name, data_type FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND column_name IN ('atom_id','source_atom_id','target_atom_id','atom_a_id','atom_b_id')
+          AND data_type <> 'integer'`,
+    );
+    expect(
+      rows.map((r) => `${r.table_name}.${r.column_name}:${r.data_type}`),
+      'atom references must match lumen_data_atoms.id',
+    ).toEqual([]);
+  });
+
+  it('the two previously-impossible foreign keys now exist', async () => {
+    const { rows } = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM information_schema.table_constraints
+        WHERE constraint_type = 'FOREIGN KEY' AND table_name = 'lumen_knowledge_graph_edges'`,
+    );
+    expect(rows[0].n).toBe(2); // source_atom_id + target_atom_id
+  });
+
+  it("the services' real JOIN typechecks (it could not before)", async () => {
+    // conflictDetectionService.ts issues exactly this. Against the old uuid
+    // columns it failed with "operator does not exist: integer = uuid" — so even
+    // had the tables existed, the query could not run.
+    await expect(
+      pg.query(`SELECT a.id, q.overall_score FROM lumen_data_atoms a
+                LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id
+                WHERE a.id = $1`, [1]),
+    ).resolves.toBeDefined();
   });
 });
 

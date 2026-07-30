@@ -2192,6 +2192,75 @@ collisions (C-33), and the `_consolidated/` tree (C-29 Class 3).
 
 ---
 
+## C-36 — Enhanced cortex was keyed to an atom store that does not exist *(high — FIXED 2026-07-30)*
+
+The largest single item C-34 left baselined, and the first of the residual that
+turned out to be a **defect to fix** rather than a harness limit.
+
+`db/migrations/20260125_enhanced_cortex_schema.sql` creates six tables behind five
+live services — `knowledgeGraphService`, `atomVersionService`, `atomQualityService`,
+`conflictDetectionService`, `enhancedEmbeddingService`. It declares every atom
+foreign key as `UUID`:
+
+```sql
+source_atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE
+```
+
+But the canonical `lumen_data_atoms.id` is **`serial`** — an integer — in both the
+drizzle journal and `shared/schema.ts`. The FK is therefore *unimplementable*, which
+is why the file failed every screen.
+
+The deeper point is that the FK was not the only casualty. The services'
+own SQL joins atoms directly:
+
+```sql
+FROM lumen_data_atoms a LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id
+```
+
+Against `uuid` columns that fails with `operator does not exist: integer = uuid`.
+So even if the tables had somehow been provisioned, **the queries could not have
+run**. The file was written against an imagined uuid-keyed atom store that exists
+nowhere in the repo — the same identity-model family as C-27 / C-29, but here the
+canonical side is unambiguous (journal *and* push surface agree on `serial`), so
+this is a correction, not a decision.
+
+### Fix
+
+Every ATOM-id reference becomes `INTEGER`: `source_atom_id`, `target_atom_id`,
+`atom_id`, `atom_a_id`, `atom_b_id`, `related_atom_ids UUID[]` → `INTEGER[]`, the
+function parameters (`p_atom_id`, `p_source_id`, `p_target_id`, `path_atoms`) and
+`get_enriched_atom`'s `RETURNS TABLE (id …)`, which projects `a.id`.
+
+Each table's own `id UUID PRIMARY KEY DEFAULT gen_random_uuid()` is deliberately
+**untouched** — those are the tables' own identities, not atom references — as is
+`collection_id`, which correctly references `lumen_atom_collections(id)`, a UUID
+table this same file creates.
+
+### Proof
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` gained four cases:
+the canonical `lumen_data_atoms.id` is pinned as `integer` (so a future change on
+either side surfaces here, not at deploy time); no atom-referencing column
+anywhere is a non-integer; the two previously-impossible foreign keys on
+`lumen_knowledge_graph_edges` now exist; and the services' real JOIN typechecks.
+The full C2C set then applies against the base fixture **twice** (110/114, the four
+being pre-existing fixture limits) with zero unpoliced tenant tables.
+
+### Also corrected
+
+C-34 recorded `068_regulatory_schema_alignment` as "needs `regulatory.submissions`,
+which nothing creates — a real missing-creator defect". That was **an artifact of
+the guard bug C-35 fixed**: the file creates only
+`regulatory.information_requests`, and once schema-qualified names parsed
+correctly it became clear no server code references it. It is dead schema, not a
+live gap, and is no longer counted as a defect.
+
+### Result
+
+Baseline **25 → 19**.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
