@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T02:03:51.150Z",
+  "generatedAt": "2026-07-30T02:06:00.075Z",
   "git": {
-    "sha": "f20c1bc9cb1d48bd2c66d580359b158f10097692",
+    "sha": "e53786a83c66bf66f98f8251ea3e8ef347545fe6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 102,
+        "count": 105,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -70,7 +70,10 @@
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
+          "server/services/ectd/controlled-vocab/index.ts",
+          "server/services/ectd/ectd4/index.ts",
           "server/services/ectd/external-validator/index.ts",
+          "server/services/ectd/qualification/index.ts",
           "server/services/entitlements/index.ts",
           "server/services/external-intelligence/index.ts",
           "server/services/fda/index.ts",
@@ -125,7 +128,7 @@
       },
       {
         "basename": "types",
-        "count": 48,
+        "count": 49,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -149,6 +152,7 @@
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
+          "server/services/ectd/ectd4/types.ts",
           "server/services/ectd/external-validator/types.ts",
           "server/services/entitlements/types.ts",
           "server/services/global-markets/types.ts",
@@ -2932,7 +2936,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 398,
+      "duplicateGroups": 402,
       "largeByBytes": 27,
       "largeByLines": 73
     },
