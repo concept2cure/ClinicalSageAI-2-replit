@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T13:51:08.556Z",
+  "generatedAt": "2026-07-30T14:00:10.146Z",
   "git": {
-    "sha": "cccb1ad63517c6963b2cc32e814ec12fa416486a",
+    "sha": "99293dd07242fcde4a6fd371f4200390f4c8842d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -128,7 +128,7 @@
       },
       {
         "basename": "types",
-        "count": 49,
+        "count": 50,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -171,6 +171,7 @@
           "server/services/report-os/sealing/types.ts",
           "server/services/rules-engine/types.ts",
           "server/services/sentinel/types.ts",
+          "server/services/submission-gateways/ectd-packager/types.ts",
           "server/services/submission-gateways/types.ts",
           "server/services/translation/qa/types.ts",
           "server/services/translation/terminology/types.ts",
@@ -2938,7 +2939,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 403,
+      "duplicateGroups": 404,
       "largeByBytes": 27,
       "largeByLines": 73
     },
