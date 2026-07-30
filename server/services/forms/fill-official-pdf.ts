@@ -180,13 +180,13 @@ export async function fillOfficialPdf(
           const text = toText(value);
           const options = dropdown.getOptions();
           if (!options.includes(text)) {
-            // The pdf-lib dropdown requires the value be a valid option unless
-            // it is explicitly added. Be honest: warn rather than silently
-            // injecting an out-of-range option that a real form may reject.
-            dropdown.addOptions([text]);
-            warnings.push(
-              `Dropdown "${acroField}" had no option "${text}" for key ` +
-                `"${canonicalKey}"; option was added before selecting.`,
+            // Do NOT inject an out-of-range option into an official form: a value
+            // the real form does not offer must never be reported as filled.
+            // Treat it like a missing/invalid field — the surrounding catch skips
+            // and warns (or throws under missingFieldPolicy:'error') — consistent
+            // with the radio-group case.
+            throw new Error(
+              `dropdown value "${text}" not in [${options.join(', ')}]`,
             );
           }
           dropdown.select(text);

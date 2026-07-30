@@ -114,6 +114,11 @@ router.get('/', async (req: Request, res: Response) => {
 // established in the Day 2 backfill migration.
 
 router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) => {
+  // SECURITY: this resolver mapped ANY legacy section id to its (documentId,
+  // sectionKey) with no caller-org scoping, leaking cross-tenant document/section
+  // mappings. Scope every lookup to the caller's org via s.organization_id.
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
   const legacyId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(legacyId)) return send400(res, 'INVALID_ID');
 
@@ -126,9 +131,9 @@ router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) =
         s.section_key
       FROM cerv2_510k_sections s
       JOIN fda_510k_documents fd ON fd.id = s.document_id
-      WHERE s.id = $1 AND s.document_id IS NOT NULL
+      WHERE s.id = $1 AND s.document_id IS NOT NULL AND s.organization_id = $2
       LIMIT 1
-    `, [legacyId]);
+    `, [legacyId, orgId]);
 
     if (rows.length === 0) {
       // Section not linked to a project: fall back to org-level lookup
@@ -136,10 +141,10 @@ router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) =
         SELECT d.id AS document_id, s.section_key
         FROM cerv2_510k_sections s
         JOIN c2c_documents d ON d.doc_type = 'k510' AND d.org_id = s.organization_id
-        WHERE s.id = $1
+        WHERE s.id = $1 AND s.organization_id = $2
         ORDER BY d.created_at ASC
         LIMIT 1
-      `, [legacyId]);
+      `, [legacyId, orgId]);
 
       if (fallback.length === 0) return send404(res);
       return res.json(fallback[0]);
