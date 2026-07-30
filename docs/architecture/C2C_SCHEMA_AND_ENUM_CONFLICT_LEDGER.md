@@ -1580,6 +1580,25 @@ remaining new tables onto `AUTHORING_SUBSYSTEM_FILES` so they actually deploy. T
 touches two routers and a Part 11 signature path, so it is its own change, not a
 land-blocker patch.
 
+**Addendum (parallel analysis, same day).** A concurrent audit branch hit the
+same guard failure and reached the same disposition independently; two points
+from that analysis worth preserving:
+
+- Even the ten tables' NON-identity delta columns cannot be back-ported to the
+  deployed UUID shape without the type decision: e.g.
+  `authoring_comments.parent_comment_id TEXT REFERENCES authoring_comments(id)`
+  cannot be ALTERed onto a table whose `id` is UUID (FK type mismatch). The
+  delta inventory the router needs on the deployed shape:
+  `authoring_comments.user_name/user_email/parent_comment_id/position_data/
+  resolved_by/resolved_at/resolution_note/updated_at`,
+  `authoring_sections.document_id/order_idx/section_number/created_by/updated_by`,
+  `user_pins.last_changed`, plus `frozen_documents.version` TEXT↔INTEGER.
+- The identity-type decision is the same decision as the platform's
+  canonical-identity P0 (external subject → platform user resolution, ledger
+  C-21): whichever type the authoring subsystem standardizes on determines how
+  authoring identities join against the integer-keyed core. Decide once, under
+  that umbrella — not per-table.
+
 ---
 
 ## C-28 — The authoring router's own tables were retired from runtime DDL into a deploy-dead migration *(high — FIXED 2026-07-30)*

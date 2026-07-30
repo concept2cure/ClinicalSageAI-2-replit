@@ -12,7 +12,7 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { runQualification, qualifyV3, qualifyV4 } from '../index';
-import type { Region } from '../../../submission-gateways/regional-packager';
+import type { Region } from '../../../submission-gateways/types';
 
 async function tmp(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), 'ectd-qual-test-'));
