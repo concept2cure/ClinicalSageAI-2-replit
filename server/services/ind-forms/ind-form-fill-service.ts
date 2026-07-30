@@ -103,6 +103,10 @@ export interface IndFormPdfResult {
   fieldCoverage: number;
   /** Required fields that were missing (from the builder). */
   missingRequired: string[];
+  /** Built fields with no reviewed mapping, or whose widget is absent here. */
+  unmappedFields?: string[];
+  /** Built fields whose mapped widget rejected the value (wrong widget type). */
+  unfilledFields?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -210,28 +214,53 @@ async function fillOfficialTemplate(
   const form = doc.getForm();
   const entries = Object.entries(built.fields);
   const availableFields = new Set(form.getFields().map((field) => field.getName()));
-  const mappingComplete = entries.every(([fieldId]) => fieldMap[fieldId] && availableFields.has(fieldMap[fieldId]));
-  if (!mappingComplete) {
-    throw new Error(`Verified FDA template mapping is incomplete for ${formId}`);
-  }
+
+  // Fill every built field that has a reviewed mapping AND a matching widget in
+  // the template. Two honest outcomes are recorded rather than swallowed:
+  //   - unmapped: no manifest mapping, or the mapped widget is absent here;
+  //   - unfilled: the widget exists but rejected the value (wrong widget type,
+  //     e.g. a radio/dropdown named where we expected text/checkbox).
+  // A field the official form carries as an attachment or derived content (e.g.
+  // the 1572 "CV attached" checkbox, or a study_title with no inline widget)
+  // legitimately has no text mapping — that must NOT force a fallback, so the
+  // qualification gate below is on REQUIRED fields only, not every built field.
+  const requiredIds = new Set(built.requiredFields);
+  const unmapped: string[] = [];
+  const unfilled: string[] = [];
   let filled = 0;
 
   for (const [fieldId, value] of entries) {
     const acroName = fieldMap[fieldId];
+    if (!acroName || !availableFields.has(acroName)) {
+      unmapped.push(fieldId);
+      continue;
+    }
     try {
       if (typeof value === 'boolean') {
         const cb = form.getCheckBox(acroName);
         if (value) cb.check();
         else cb.uncheck();
-        filled += 1;
       } else {
-        const tf = form.getTextField(acroName);
-        tf.setText(value);
-        filled += 1;
+        form.getTextField(acroName).setText(value);
       }
+      filled += 1;
     } catch {
-      // Field not present in this template (or wrong type) — leave uncovered.
+      // Present but a different widget than expected — record it; never
+      // silently claim success on a field we did not actually write.
+      unfilled.push(fieldId);
     }
+  }
+
+  // Fail closed: an official fill may not claim success if a REQUIRED field
+  // could not be placed or written. Such a template is unqualified for this
+  // form, and renderBuiltForm falls back to the deterministic labeled draft.
+  const requiredUnplaced = [...requiredIds].filter(
+    (id) => unmapped.includes(id) || unfilled.includes(id),
+  );
+  if (requiredUnplaced.length > 0) {
+    throw new Error(
+      `Official ${formId}: required field(s) unfillable (${requiredUnplaced.join(', ')})`,
+    );
   }
 
   // Flatten so the values are baked into the page content (read-only output).
@@ -250,6 +279,8 @@ async function fillOfficialTemplate(
     usedOfficialTemplate: true,
     fieldCoverage: filled / total,
     missingRequired: built.missingRequired,
+    unmappedFields: unmapped.length > 0 ? unmapped : undefined,
+    unfilledFields: unfilled.length > 0 ? unfilled : undefined,
   };
 }
 

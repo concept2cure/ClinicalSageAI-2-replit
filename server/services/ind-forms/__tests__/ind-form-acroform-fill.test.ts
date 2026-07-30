@@ -98,14 +98,36 @@ describe('official AcroForm fill path', () => {
     await fs.writeFile(manifestPath, valid);
   });
 
-  it('fails closed when the reviewed field mapping is incomplete', async () => {
+  it('fails closed when a REQUIRED field mapping is missing', async () => {
     const manifestPath = path.join(tmpDir, `${FORM_1571}.pdf.manifest.json`);
     const valid = await fs.readFile(manifestPath, 'utf8');
     const manifest = JSON.parse(valid);
-    delete manifest.fieldMap.drug_name;
+    delete manifest.fieldMap.drug_name; // drug_name is required on the 1571
     await fs.writeFile(manifestPath, JSON.stringify(manifest));
     const result = await generateIndForm(FORM_1571, { sponsorName: 'Acme', drugName: 'Drug' });
     expect(result.usedOfficialTemplate).toBe(false);
+    await fs.writeFile(manifestPath, valid);
+  });
+
+  it('still fills officially when only a NON-REQUIRED field is unmapped', async () => {
+    // Real official forms carry fields with no inline text widget (e.g. the
+    // 1572 "CV attached" checkbox). An unmapped OPTIONAL field must be reported
+    // but must NOT force a fallback — the whole point of the required-only gate.
+    const manifestPath = path.join(tmpDir, `${FORM_1571}.pdf.manifest.json`);
+    const valid = await fs.readFile(manifestPath, 'utf8');
+    const manifest = JSON.parse(valid);
+    delete manifest.fieldMap.sponsor_contact_name; // optional on the 1571
+    await fs.writeFile(manifestPath, JSON.stringify(manifest));
+    const result = await generateIndForm(FORM_1571, {
+      sponsorName: 'Acme Therapeutics',
+      sponsor: { address: '1 Main St', contactName: 'Jo Contact', authorizedRepName: 'Dana Rep' },
+      drugName: 'C2C-001',
+      indication: 'NSCLC',
+      indType: 'Research IND',
+      studyPhase: 'Phase 1',
+    });
+    expect(result.usedOfficialTemplate).toBe(true);
+    expect(result.unmappedFields).toContain('sponsor_contact_name');
     await fs.writeFile(manifestPath, valid);
   });
 });

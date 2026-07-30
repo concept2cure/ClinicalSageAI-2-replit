@@ -89,6 +89,12 @@ function sendPdf(res: Response, result: IndFormPdfResult): void {
   if (result.missingRequired.length > 0) {
     res.setHeader('X-Form-Missing-Required', result.missingRequired.join(','));
   }
+  if (result.unmappedFields && result.unmappedFields.length > 0) {
+    res.setHeader('X-Form-Unmapped', result.unmappedFields.join(','));
+  }
+  if (result.unfilledFields && result.unfilledFields.length > 0) {
+    res.setHeader('X-Form-Unfilled', result.unfilledFields.join(','));
+  }
   res.status(200).send(Buffer.from(result.pdfBytes));
 }
 

@@ -42,6 +42,9 @@ export interface BuiltForm {
   fields: Record<string, FieldValue>;
   /** Ids of required fields that were left blank/false, in declaration order. */
   missingRequired: string[];
+  /** Ids of ALL required fields (present or not), in declaration order. Lets the
+   *  official-fill gate qualify a template on required-field placeability. */
+  requiredFields: string[];
   /** Deterministic semantic validation findings beyond simple presence checks. */
   validationErrors: Array<{ fieldId: string; code: string; message: string }>;
 }
@@ -191,9 +194,11 @@ interface FieldSpec {
 function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
   const fields: Record<string, FieldValue> = {};
   const missingRequired: string[] = [];
+  const requiredFields: string[] = [];
   const validationErrors: BuiltForm['validationErrors'] = [];
   for (const spec of specs) {
     fields[spec.id] = spec.value;
+    if (spec.required) requiredFields.push(spec.id);
     if (spec.required && !isPresent(spec.value)) {
       missingRequired.push(spec.id);
     }
@@ -205,7 +210,7 @@ function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
       });
     }
   }
-  return { formId, fields, missingRequired, validationErrors };
+  return { formId, fields, missingRequired, requiredFields, validationErrors };
 }
 
 // ---------------------------------------------------------------------------
