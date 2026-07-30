@@ -21,8 +21,8 @@ import type { OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
 
 /**
  * Per-descriptor field maps. Keys are descriptor ids from ESTAR_TEMPLATE_MANIFEST
- * ('510k-device', '510k-ivd', 'de_novo-device', 'de_novo-ivd'). Empty until the
- * official template's AcroForm field names are verified and filled in here.
+ * (510(k)/De Novo/PMA × device/ivd, plus the PreSTAR request types). Empty until
+ * the official template's AcroForm field names are verified and filled in here.
  *
  * To populate one:
  *   1. Drop the official eSTAR PDF into assets/estar-templates/.
@@ -31,10 +31,17 @@ import type { OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
  *   4. Pin the template `version` in ESTAR_TEMPLATE_MANIFEST and re-validate.
  */
 export const ESTAR_FIELD_MAPS: Record<string, OfficialPdfFieldMap> = {
+  // nIVD / IVD eSTAR — marketing pathways
   '510k-device': {},
   '510k-ivd': {},
   'de_novo-device': {},
   'de_novo-ivd': {},
+  'pma-device': {},
+  'pma-ivd': {},
+  // PreSTAR2 — Early Submission Requests
+  'q_sub-prestar': {},
+  'ide-prestar': {},
+  '513g-prestar': {},
 };
 
 /** The field map for a descriptor id, or undefined if the descriptor is unknown. */

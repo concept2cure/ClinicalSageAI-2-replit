@@ -51,6 +51,10 @@ const FRAMEWORK: Record<Pathway, string> = {
   estar_510k: 'FDA eSTAR — 510(k) premarket notification',
   estar_de_novo: 'FDA eSTAR — De Novo classification request',
   pmda_shonin: 'Japan PMDA — Shōnin (marketing approval) application',
+  pma: 'FDA PMA (21 CFR 814) — premarket approval application',
+  prestar_q_sub: 'FDA PreSTAR — Q-Submission (Q-Sub) request',
+  prestar_ide: 'FDA PreSTAR — Investigational Device Exemption (IDE)',
+  prestar_513g: 'FDA PreSTAR — 513(g) request for information',
 };
 
 const DEFAULT_GROUP: Record<Pathway, string> = {
@@ -60,6 +64,10 @@ const DEFAULT_GROUP: Record<Pathway, string> = {
   estar_510k: 'eSTAR',
   estar_de_novo: 'eSTAR',
   pmda_shonin: 'STED',
+  pma: 'PMA',
+  prestar_q_sub: 'PreSTAR',
+  prestar_ide: 'PreSTAR',
+  prestar_513g: 'PreSTAR',
 };
 
 interface FlatSlot {

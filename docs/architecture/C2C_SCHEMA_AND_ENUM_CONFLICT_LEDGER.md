@@ -1525,72 +1525,79 @@ needs a live gateway); the journey proves the package that would be transmitted.
 
 ---
 
-## C-27 — The authoring subsystem is defined twice, with incompatible identity types *(blocking reconciliation — BASELINED 2026-07-30)*
+## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — BASELINED, needs ADR reconciliation, 2026-07-30)*
 
-Caught by the ADR-0006 duplicate-CREATE TABLE guard the moment PR #1203 merged:
-ten authoring tables are now defined in BOTH lineages, and the two definitions
-disagree on the type of every identity column.
+Caught by `ci:duplicate-table-ddl` the moment PR #1202 merged — the guard doing
+exactly its job.
 
-- **Canonical creators (the shape real databases have):** the four
-  `db/migrations/20260725_authoring_*.sql` files, applied atomically by
-  `applyAuthoringSubsystem` (scripts/db/authoring-subsystem.mjs) on both durable
-  appliers. Identity columns are **UUID** (`id UUID PRIMARY KEY`,
-  `doc_id UUID REFERENCES authoring_documents(id)`, …).
-- **The rival:** `db/migrations/20260730_authoring_subsystem_schema.sql`
-  (AnA modernization, PR #1202/#1203). Identity columns are **TEXT** — a
-  deliberate, documented design decision derived from the authoring router's
-  SQL (app-minted `crypto.randomUUID()` strings, cast-free TEXT joins). It also
-  redefines `frozen_documents.version` as INTEGER where the canonical shape is
-  TEXT, and adds delta columns the router queries (`authoring_comments.user_name/
-  parent_comment_id/position_data/resolved_*`, `authoring_sections.document_id/
-  order_idx/section_number`, …).
+PR #1202 (“AnA canonical document spine + authoring schema-contract fix”) added
+`db/migrations/20260730_authoring_subsystem_schema.sql`, which `CREATE TABLE IF
+NOT EXISTS`-declares 23 authoring tables derived from the SQL
+`server/routes/authoring.router.ts` issues. **Ten of those already exist**, defined
+by the golden-journey-proven `20260725_authoring_*` migrations
+(`authoring_documents`, `authoring_sections`, `authoring_signatures`,
+`authoring_workflow_steps`, `authoring_comments`, `authoring_citations`,
+`authoring_audit_trail`, `doc_permissions`, `frozen_documents`, `user_pins`).
 
-Duplicated tables: `authoring_documents`, `authoring_sections`,
-`authoring_comments`, `authoring_citations`, `authoring_audit_trail`,
-`authoring_signatures`, `authoring_workflow_steps`, `doc_permissions`,
-`frozen_documents`, `user_pins`.
+The two definitions are **incompatible**, not merely redundant. For
+`authoring_documents` alone:
 
-### Why this is not a column-delta problem
+| column | 20260725 (loop tables) | 20260730 (Codex, router-derived) |
+|---|---|---|
+| `id` | `UUID PRIMARY KEY` | `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text` |
+| `template_id` | `UUID` | `TEXT` |
+| `current_workflow_id` | `UUID` | `TEXT` |
+| `created_by` | `TEXT NOT NULL` | `TEXT` (nullable) |
 
-An `ALTER TABLE … ADD COLUMN` reconciliation cannot express `id UUID` vs
-`id TEXT` — and even the delta columns hit the same wall
-(`authoring_comments.parent_comment_id TEXT REFERENCES authoring_comments(id)`
-cannot be added to a table whose `id` is UUID). Whichever type wins, one side's
-code or DDL must change. That is the C-21 finding ("two incompatible
-primary-key worlds") materialized in DDL.
+Under `CREATE TABLE IF NOT EXISTS` the FIRST definition to run wins and the other
+silently no-ops, so the surviving column *types* depend on apply order — the exact
+C-6 hazard. Two consumers disagree on the shape: the freeze/signature handlers
+behind the ind-authoring golden journey assume the UUID shape (0725); Codex's
+`authoring.router.ts` mints TEXT ids app-side and its schema-contract test pins the
+TEXT shape (0730).
 
-### Current blast radius — latent, not active
+**What actually deploys.** `20260730` is on NO durable apply path — no `_gcc_`
+infix, not in `C2C_MIGRATION_FILES`, not in `AUTHORING_SUBSYSTEM_FILES`, not in the
+journal. It is deploy-dead (the very C-23 gap, re-introduced). `20260725` IS on a
+durable applier (`AUTHORING_SUBSYSTEM_FILES`). So on every real database only the
+UUID (0725) shape lands; the TEXT (0730) shape exists only on the PGlite the Codex
+schema-contract test spins up. Codex's router — if it truly needs TEXT ids or the
+0730-only columns — is therefore mis-provisioned on real deploys regardless of this
+collision.
 
-The 20260730 file is consumed ONLY by the hermetic schema-contract test
-(`server/routes/__tests__/authoring-schema-contract.test.ts` — pure file
-parsing) and listed in the manifest nothing applies. No durable applier runs
-it, so no real database is bi-shaped **and** none of its 12 genuinely-new
-tables (`authoring_reviews`, `authoring_audit_events`, `authoring_ai_suggestions`,
-`doc_checklist(+items)`, `doc_exports`, …) exists anywhere — the C-23 pattern
-again: the router endpoints they back fail with missing relations on every
-real database, while the contract test validates the router against a file
-that is not what any database contains.
+**Action taken:** the 10 collisions are added to
+`scripts/ci/duplicate-table-ddl-baseline.json` (66 → 76) to unblock the branch,
+using the guard's documented tracked-for-reconciliation mechanism — the same way
+the pre-existing 66 are tracked. This is an unblock, **not a resolution**, and it
+is recorded here so it is not mistaken for one.
 
-### Interim disposition (this entry)
+**Proper fix (ADR-0006 class, not done here):** decide the ONE canonical authoring
+schema. Given 0725 is what deploys and what the golden journey proves, the likely
+outcome is: keep 0725 as canonical, delete the 10 duplicate `CREATE TABLE` blocks
+from `20260730` (leaving only its genuinely-new tables), reconcile
+`authoring.router.ts` and the schema-contract test to the UUID shape, and wire the
+remaining new tables onto `AUTHORING_SUBSYSTEM_FILES` so they actually deploy. That
+touches two routers and a Part 11 signature path, so it is its own change, not a
+land-blocker patch.
 
-The ten collisions are **baselined** in
-`scripts/ci/duplicate-table-ddl-baseline.json` (the guard's documented
-tracked-for-reconciliation mechanism) so the guard stays armed against NEW
-collisions while this one is resolved. Do NOT put the 20260730 file on a
-durable apply path in its current form — on order alone, its no-op'd CREATEs
-would leave the UUID shape in place while its new tables land, silently
-splitting the subsystem across two identity types.
+**Addendum (parallel analysis, same day).** A concurrent audit branch hit the
+same guard failure and reached the same disposition independently; two points
+from that analysis worth preserving:
 
-### Required decision
-
-One owner per table (ADR-0006), which requires the identity-type decision
-first: either the authoring subsystem is UUID (then the 20260730 file must be
-reduced to type-correct delta ALTERs + its new tables, and the router's
-TEXT-id assumptions audited), or it is TEXT (then the 20260725 files and every
-existing UUID row need a typed migration). The audit's canonical-identity P0
-(external subject → platform id resolution) is the umbrella under which this
-should be decided — the same decision governs how authoring identities join
-against the integer-keyed core.
+- Even the ten tables' NON-identity delta columns cannot be back-ported to the
+  deployed UUID shape without the type decision: e.g.
+  `authoring_comments.parent_comment_id TEXT REFERENCES authoring_comments(id)`
+  cannot be ALTERed onto a table whose `id` is UUID (FK type mismatch). The
+  delta inventory the router needs on the deployed shape:
+  `authoring_comments.user_name/user_email/parent_comment_id/position_data/
+  resolved_by/resolved_at/resolution_note/updated_at`,
+  `authoring_sections.document_id/order_idx/section_number/created_by/updated_by`,
+  `user_pins.last_changed`, plus `frozen_documents.version` TEXT↔INTEGER.
+- The identity-type decision is the same decision as the platform's
+  canonical-identity P0 (external subject → platform user resolution, ledger
+  C-21): whichever type the authoring subsystem standardizes on determines how
+  authoring identities join against the integer-keyed core. Decide once, under
+  that umbrella — not per-table.
 
 ---
 

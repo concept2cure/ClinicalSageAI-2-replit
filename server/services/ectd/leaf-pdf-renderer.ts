@@ -81,8 +81,6 @@ const WIN_ANSI_SUBSTITUTIONS: ReadonlyArray<readonly [RegExp, string]> = [
   [/ω/g, 'omega'],
   [/[Α-Ωα-ω]/g, ''], // any other Greek letter → drop (rare in body)
   // Zero-width / BOM artifacts from copy-paste (U+200B–200D, U+FEFF).
-  // Escapes, not literal glyphs: the characters are invisible in source, so a
-  // literal class both trips no-irregular-whitespace and hides what it matches.
   [/[\u200B-\u200D\uFEFF]/g, ''],
 ];
 
