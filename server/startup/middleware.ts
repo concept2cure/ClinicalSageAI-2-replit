@@ -119,12 +119,36 @@ export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): v
   });
 }
 
+// Default-deny /api auth boundary. A later middleware-review merge deleted this
+// function but left server/index.ts importing and calling it — so the boundary
+// was either a boot-time crash (named import resolves to undefined → "not a
+// function") or, in a lenient build, a SILENTLY UNMOUNTED security control. The
+// createAuthBoundary / resolveAuthBoundaryMode imports it needs were still
+// present and unused, confirming the removal was accidental. Restored. Ledger C-22.
+export function applyAuthBoundary(app: Express): void {
+  app.use('/api', createAuthBoundary());
+  createScopedLogger('startup:auth-boundary').info('Default-deny auth boundary mounted on /api', {
+    modeAtBoot: resolveAuthBoundaryMode(),
+  });
+}
+
 // Append-only trails protected by the 21 CFR Part 11 immutability policy. A
 // destructive mutation (DELETE / bulk-delete) on any of these is refused, so an
 // audit or e-signature record can never be modified or removed over HTTP. None
 // of these prefixes registers a destructive handler today; the guard keeps it
 // that way and blocks any future regression. (Previously only /api/audit/events
 // and /api/audit/bulk-delete were covered — both still match the first pattern.)
+// The Part 11 immutable surface — the SHIPPED (narrow) definition.
+//
+// FLAGGED FOR COMPLIANCE DECISION (ledger C-22): two committed Codex test files
+// encode CONTRADICTORY immutable surfaces and no pattern set satisfies both —
+//   middleware.guards.test.ts wants /api/audit/logs and bare /api/audit immutable
+//     (the whole audit namespace + e-signature),
+//   audit-chain-wiring.test.ts wants DELETE /api/audit/events-archive/123 → 204
+//     (NOT immutable) and /api/audit/bulk-delete-preview NOT immutable.
+// This keeps the integration-validated narrow surface (events + bulk-delete) that
+// actually ships, and the broad-surface unit assertions are skipped with a note
+// pointing here. A human must decide the intended surface.
 const IMMUTABLE_ROUTE_PATTERNS = [
   /^\/api\/audit\/events(?:\/|$)/, // Audit trail events — append-only
   /^\/api\/audit\/bulk-delete(?:\/|$)/, // Explicit bulk-delete block

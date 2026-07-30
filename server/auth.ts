@@ -19,7 +19,16 @@ const logger = createScopedLogger('auth');
 const parseFiniteInt = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
   if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number.parseInt(value, 10);
+    // Only a string that is ENTIRELY an integer may parse. Number.parseInt is a
+    // prefix parser — parseInt('3f1c2a10-0000-…', 10) === 3 — so a UUID JWT
+    // subject silently became a valid-looking integer user id (here, user 3, a
+    // DIFFERENT real user). enforceOrgMembership then re-checked membership for
+    // the wrong user, and on the authoring surface (UUID subjects) 503'd every
+    // request when the integer-keyed organization_users had no such row. A
+    // non-integer subject must yield null so the caller treats it as "no numeric
+    // identity", never as a truncated one. See ledger C-21.
+    if (!/^[+-]?\d+$/.test(value.trim())) return null;
+    const parsed = Number.parseInt(value.trim(), 10);
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;

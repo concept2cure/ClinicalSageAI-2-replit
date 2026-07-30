@@ -18,6 +18,11 @@ vi.mock('../../services/clinical-regulatory-evidence/crl-ingestion.service', () 
   extractFindingsFromText: (...a: unknown[]) => extractFindingsFromText(...a),
 }));
 
+const projectOrgCsrReports = vi.fn();
+vi.mock('../../services/clinical-regulatory-evidence/csr-adapter.service', () => ({
+  projectOrgCsrReports: (...a: unknown[]) => projectOrgCsrReports(...a),
+}));
+
 import createClinicalRegulatoryEvidenceRoutes from '../clinical-regulatory-evidence-routes';
 
 function appWith(user: Record<string, unknown> | null, org = 7) {
@@ -43,6 +48,7 @@ beforeEach(() => {
   process.env.ENABLE_CLINICAL_REGULATORY_GRAPH = 'true';
   ingestCrl.mockReset();
   extractFindingsFromText.mockReset();
+  projectOrgCsrReports.mockReset();
 });
 afterEach(() => {
   if (ORIGINAL_FLAG === undefined) delete process.env.ENABLE_CLINICAL_REGULATORY_GRAPH;
@@ -94,5 +100,50 @@ describe('POST /crl — CRL ingestion (platform-admin only)', () => {
       .send({ applicationNumber: 'BLA-3', text: 'B'.repeat(60) });
     expect(res.status).toBe(422);
     expect(ingestCrl).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /project-csr — CSR → spine projection (tenant-scoped)', () => {
+  const PROJECTION = { total: 3, projected: 2, alreadyPresent: 1, failed: 0, studyCount: 2 };
+
+  it('404 when the graph flag is off — the surface does not exist', async () => {
+    process.env.ENABLE_CLINICAL_REGULATORY_GRAPH = 'false';
+    const res = await request(appWith(nonAdmin))
+      .post('/api/clinical-regulatory-evidence/project-csr')
+      .send({});
+    expect(res.status).toBe(404);
+    expect(projectOrgCsrReports).not.toHaveBeenCalled();
+  });
+
+  it('401 when there is no tenant context — never an unscoped projection', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/clinical-regulatory-evidence', createClinicalRegulatoryEvidenceRoutes());
+    const res = await request(app).post('/api/clinical-regulatory-evidence/project-csr').send({});
+    expect(res.status).toBe(401);
+    expect(projectOrgCsrReports).not.toHaveBeenCalled();
+  });
+
+  it('projects the acting org — 200 with counts, scoped to the JWT org (no admin needed)', async () => {
+    projectOrgCsrReports.mockResolvedValue(PROJECTION);
+    const res = await request(appWith(nonAdmin))
+      .post('/api/clinical-regulatory-evidence/project-csr')
+      .send({});
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject(PROJECTION);
+    expect(projectOrgCsrReports).toHaveBeenCalledWith(7, { limit: undefined });
+  });
+
+  it('passes a numeric limit through; ignores a non-numeric one', async () => {
+    projectOrgCsrReports.mockResolvedValue(PROJECTION);
+    await request(appWith(nonAdmin))
+      .post('/api/clinical-regulatory-evidence/project-csr')
+      .send({ limit: 50 });
+    expect(projectOrgCsrReports).toHaveBeenLastCalledWith(7, { limit: 50 });
+
+    await request(appWith(nonAdmin))
+      .post('/api/clinical-regulatory-evidence/project-csr')
+      .send({ limit: 'lots' });
+    expect(projectOrgCsrReports).toHaveBeenLastCalledWith(7, { limit: undefined });
   });
 });

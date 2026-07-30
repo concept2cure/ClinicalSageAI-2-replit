@@ -25,7 +25,7 @@ const pool = {
 // we don't exercise here (stubbed so the import resolves).
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
-import { adaptCsrReport, extractDesignFeatures, atomizeCsrReport } from '../csr-adapter.service';
+import { adaptCsrReport, extractDesignFeatures, atomizeCsrReport, projectOrgCsrReports } from '../csr-adapter.service';
 import { listSources, listStudies, listRelationshipsFor } from '../evidence-spine.service';
 import { countCreAtoms } from '../retrieval-atoms.service';
 
@@ -118,6 +118,45 @@ describe('adaptCsrReport', () => {
   it('returns null for a CSR not visible to the org', async () => {
     const csrId = await seedCsr();
     expect(await adaptCsrReport(999, csrId)).toBeNull();       // different org → not visible
+  });
+});
+
+describe('projectOrgCsrReports (batch bootstrap of a tenant corpus)', () => {
+  // Distinct identities so each CSR resolves to its own canonical study.
+  async function seedDistinct(reportId: string, nct: string): Promise<number> {
+    const rep = await pglite.query(
+      `INSERT INTO csr_reports (organization_id, report_id, report_title, sponsor, indication, phase,
+         study_id, sample_size, nct_id, regulatory_agency)
+       VALUES (7,$1,'Study','Acme Bio','NSCLC','3',$2,300,$3,'FDA') RETURNING id`,
+      [reportId, `S-${reportId}`, nct],
+    );
+    return (rep.rows[0] as { id: number }).id;
+  }
+
+  it('projects every visible CSR into the spine, counting new vs already-present', async () => {
+    await seedDistinct('CSR-A', 'NCT00000001');
+    await seedDistinct('CSR-B', 'NCT00000002');
+
+    const first = await projectOrgCsrReports(ORG, {});
+    expect(first).toMatchObject({ total: 2, projected: 2, alreadyPresent: 0, failed: 0, studyCount: 2 });
+    expect(await listSources(ORG, { sourceType: 'csr' })).toHaveLength(2);
+
+    // Idempotent: a second run adapts nothing new — the same reports report as present.
+    const second = await projectOrgCsrReports(ORG, {});
+    expect(second).toMatchObject({ total: 2, projected: 0, alreadyPresent: 2, failed: 0 });
+    expect(await listSources(ORG, { sourceType: 'csr' })).toHaveLength(2);
+  });
+
+  it('scopes strictly to the acting org and skips soft-deleted reports', async () => {
+    await seedDistinct('CSR-A', 'NCT00000001');
+    const del = await seedDistinct('CSR-DEL', 'NCT00000009');
+    await pglite.query(`UPDATE csr_reports SET deleted_at = now() WHERE id = $1`, [del]);
+
+    const mine = await projectOrgCsrReports(ORG, {});
+    expect(mine).toMatchObject({ total: 1, projected: 1 });   // soft-deleted one excluded
+
+    const other = await projectOrgCsrReports(999, {});         // no csr_reports for org 999
+    expect(other).toMatchObject({ total: 0, projected: 0, alreadyPresent: 0, studyCount: 0 });
   });
 });
 

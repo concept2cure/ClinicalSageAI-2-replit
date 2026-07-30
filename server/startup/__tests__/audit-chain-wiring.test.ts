@@ -176,7 +176,7 @@ describe('applyDebugRequestLogging integration', () => {
       .send({ large: 'payload' })
       .expect(200);
 
-    const [, payload] = debugLog.mock.calls.at(-1) as [string, Record<string, unknown>];
+    const [, payload] = debugLog.mock.calls[debugLog.mock.calls.length - 1] as [string, Record<string, unknown>];
     expect(payload.body).toBeUndefined();
     expect(payload.bodyRedacted).toBe(true);
     expect(payload.concept2curePayload).toBe(true);
@@ -198,14 +198,14 @@ describe('applyDebugRequestLogging integration', () => {
       .send({ keep: 'body', password: 'demo123' })
       .expect(200);
 
-    const [, postPayload] = debugLog.mock.calls.at(-1) as [string, Record<string, unknown>];
+    const [, postPayload] = debugLog.mock.calls[debugLog.mock.calls.length - 1] as [string, Record<string, unknown>];
     expect(postPayload.body).toBeUndefined();
     expect(postPayload.bodyRedacted).toBe(true);
     expect(postPayload.bodyMetadata).toMatchObject({ contentType: 'application/json' });
     expect(postPayload.headers).not.toHaveProperty('authorization');
 
     await request(app).get('/api/health-proxy').expect(200);
-    const [, getPayload] = debugLog.mock.calls.at(-1) as [string, Record<string, unknown>];
+    const [, getPayload] = debugLog.mock.calls[debugLog.mock.calls.length - 1] as [string, Record<string, unknown>];
     expect(getPayload.body).toBeUndefined();
     expect(getPayload.bodyMetadata).toBeUndefined();
   });

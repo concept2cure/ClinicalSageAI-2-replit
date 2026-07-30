@@ -49,6 +49,7 @@ import {
   extractFindingsFromText,
   type CrlIngestInput,
 } from '../services/clinical-regulatory-evidence/crl-ingestion.service.js';
+import { projectOrgCsrReports } from '../services/clinical-regulatory-evidence/csr-adapter.service.js';
 import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -369,6 +370,31 @@ async function handleIngestCrl(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Project this tenant's own CSR reports into the evidence spine.
+ *
+ * Unlike CRL ingestion, this writes TENANT-PRIVATE evidence sourced from the
+ * caller's existing `csr_reports` — a business admin curating their own corpus,
+ * not minting shared FDA records — so it is gated by the tenant `guard()` (flag +
+ * JWT-bound org) alone, with no platform-admin requirement. `adaptCsrReport` is
+ * idempotent: rows already projected report as `alreadyPresent`, never duplicated.
+ * A bounded `limit` (1–2000, default 500) keeps a single call from sweeping an
+ * unbounded corpus in one request.
+ */
+async function handleProjectCsr(req: Request, res: Response): Promise<void> {
+  const scope = guard(req, res);
+  if (!scope) return;
+  const body = (req.body ?? {}) as { limit?: unknown };
+  const limit =
+    typeof body.limit === 'number' && Number.isFinite(body.limit) ? body.limit : undefined;
+  try {
+    const data = await projectOrgCsrReports(scope.organizationId, { limit });
+    res.json({ success: true, data });
+  } catch (e) {
+    fail(res, 'project-csr', e);
+  }
+}
+
 export default function createClinicalRegulatoryEvidenceRoutes(): Router {
   const router = Router();
 
@@ -382,6 +408,10 @@ export default function createClinicalRegulatoryEvidenceRoutes(): Router {
 
   // Write path — platform-admin only (fills the shared global-public FDA corpus).
   router.post('/crl', requirePlatformAdmin, handleIngestCrl);
+
+  // Tenant curation — projects the caller's OWN csr_reports into the spine
+  // (tenant-private, idempotent). Gated by the tenant guard only, no platform admin.
+  router.post('/project-csr', handleProjectCsr);
 
   return router;
 }

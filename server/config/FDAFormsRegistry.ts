@@ -228,9 +228,11 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
     ], autoGenerationTrigger: { stage: 5 }, implementationStatus: 'full',
     // Disclosure detail is required only when a covered investigator actually has a
     // disclosable interest. Typed and declarative (never an executable expression):
-    // the `when` clause references an in-form field id so the evaluator in
-    // FDAFormGenerator.validateEditableValues can resolve it. A string expression
-    // here is both a compile error and a silent always-true rule.
+    // the `when` clause references an in-form field id (has_disclosable_interest,
+    // defined in this form's fields above) so the flat-lookup evaluator in
+    // FDAFormGenerator.validateEditableValues can actually resolve it. NB: a dotted
+    // path like 'investigators[].financial.hasDisclosableInterest' compiles but the
+    // evaluator does values[fieldId], so it never resolves and the rule never fires.
     conditionalLogic: [{
       when: { fieldId: 'has_disclosable_interest', operator: 'truthy' },
       effect: 'required',

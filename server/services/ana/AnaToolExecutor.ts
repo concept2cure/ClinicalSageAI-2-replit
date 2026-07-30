@@ -13586,6 +13586,26 @@ registerToolHandler('trace_design_recommendation', async (input, ctx) => {
   }
 });
 
+// Tenant curation — projects THIS org's own csr_reports into the spine so they
+// become searchable precedent. Idempotent; writes tenant-private links only, copies
+// no CSR text, mints no findings. This is what populates the spine for the read
+// tools above on a workspace whose CSRs are not yet projected (audit P0b).
+registerToolHandler('project_csr_evidence', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'project_csr_evidence requires tenant context.' });
+  const limit = typeof input.limit === 'number' && Number.isFinite(input.limit) ? input.limit : undefined;
+  try {
+    const adapter = await import('../clinical-regulatory-evidence/csr-adapter.service.js');
+    const result = await adapter.projectOrgCsrReports(ctx.organizationId, { limit });
+    const message =
+      result.total === 0
+        ? 'No CSR reports found for this workspace to project.'
+        : `Projected ${result.projected} new CSR(s) into the evidence spine (${result.alreadyPresent} already present, ${result.failed} unreadable) across ${result.studyCount} study identities.`;
+    return JSON.stringify({ ok: true, ...result, message, note: 'Reference-only projection of your own CSRs — no text copied, no findings minted.' });
+  } catch (err) {
+    return JSON.stringify({ error: `project_csr_evidence failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('register_supplier', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'register_supplier requires tenant context.' });
   const name = typeof input.supplier_name === 'string' ? input.supplier_name.trim() : '';

@@ -24,8 +24,12 @@ const pool = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 // benchmarkDesign reuses the CSR effect extractor (Drizzle); stub it here.
+// projectOrgCsrReports is stubbed so the project_csr_evidence handler test can
+// assert output shaping without standing up the full csr_reports corpus.
+const projectOrgCsrReports = vi.fn();
 vi.mock('../../clinical-regulatory-evidence/csr-adapter.service', () => ({
   gatherResultObservations: vi.fn(async () => ({ observations: [], withStructuredEffect: 0, scanned: 0, note: 'stubbed' })),
+  projectOrgCsrReports: (...a: unknown[]) => projectOrgCsrReports(...a),
 }));
 
 import { getToolHandler } from '../AnaToolExecutor';
@@ -117,5 +121,25 @@ describe('compare_proposed_design_to_precedent', () => {
     expect(r.ok).toBe(true);
     expect(r.benchmark).toHaveProperty('provenance');
     expect(r.note).toMatch(/not a verdict/i);
+  });
+});
+
+describe('project_csr_evidence', () => {
+  beforeEach(() => projectOrgCsrReports.mockReset());
+
+  it('projects the acting org and reports counts with an honest reference-only note', async () => {
+    projectOrgCsrReports.mockResolvedValue({ total: 3, projected: 2, alreadyPresent: 1, failed: 0, studyCount: 2 });
+    const r = await call('project_csr_evidence', { limit: 100 });
+    expect(r.ok).toBe(true);
+    expect(projectOrgCsrReports).toHaveBeenCalledWith(42, { limit: 100 });
+    expect(r.message).toMatch(/Projected 2 new CSR/);
+    expect(r.note).toMatch(/no text copied, no findings minted/i);
+  });
+
+  it('is honest when the workspace has no CSRs to project', async () => {
+    projectOrgCsrReports.mockResolvedValue({ total: 0, projected: 0, alreadyPresent: 0, failed: 0, studyCount: 0 });
+    const r = await call('project_csr_evidence', {});
+    expect(r.ok).toBe(true);
+    expect(r.message).toMatch(/No CSR reports found/i);
   });
 });
