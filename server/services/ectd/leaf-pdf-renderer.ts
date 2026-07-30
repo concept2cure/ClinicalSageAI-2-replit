@@ -44,6 +44,65 @@ export interface LeafPdfOptions {
   bookmarks?: OutlineNode[];
 }
 
+/**
+ * Faithful ASCII substitutions for the non-WinAnsi glyphs that actually occur in
+ * submission source text. pdf-lib's standard (WinAnsi/Windows-1252) fonts throw
+ * in page.drawText on any code point the code page cannot represent, and a single
+ * such glyph would otherwise 500 the WHOLE eCTD export — box drawing from the
+ * generated placeholder leaves, and arrows / Greek letters / math operators /
+ * minus signs pasted out of Word or PubMed in CMC and clinical prose. Mapped
+ * BEFORE the catch-all below so they read correctly rather than becoming '?'.
+ */
+const WIN_ANSI_SUBSTITUTIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  // Box drawing (U+2500–257F) / block elements (U+2580–259F): placeholder leaves,
+  // ASCII tables.
+  [/[─-╿]/g, '-'],
+  [/[▀-▟]/g, '#'],
+  // Arrows.
+  [/[→↦⇒]/g, '->'],
+  [/[←⇐]/g, '<-'],
+  [/[↔⇔]/g, '<->'],
+  // Math operators not in WinAnsi (note: +/- U+00B1, x U+00D7, / U+00F7,
+  // degree U+00B0 and micro U+00B5 ARE in WinAnsi and are left untouched).
+  [/−/g, '-'], // minus sign → hyphen
+  [/≤/g, '<='], // ≤
+  [/≥/g, '>='], // ≥
+  [/≠/g, '!='], // ≠
+  [/≈/g, '~'], // ≈
+  [/∞/g, 'inf'], // ∞
+  // Greek letters common in CMC/PK text (α, β, μ-as-U+03BC, …).
+  [/α/g, 'alpha'],
+  [/β/g, 'beta'],
+  [/γ/g, 'gamma'],
+  [/δ/g, 'delta'],
+  [/λ/g, 'lambda'],
+  [/μ/g, 'u'], // Greek small mu → u (micro sign U+00B5 is WinAnsi, untouched)
+  [/σ/g, 'sigma'],
+  [/ω/g, 'omega'],
+  [/[Α-Ωα-ω]/g, ''], // any other Greek letter → drop (rare in body)
+  // Zero-width / BOM artifacts from copy-paste (U+200B–200D, U+FEFF).
+  [/[​-‍﻿]/g, ''],
+];
+
+/**
+ * Make text safe for pdf-lib's WinAnsi standard fonts: apply the substitutions
+ * above, then replace ANY remaining character the code page cannot represent
+ * (everything outside tab/newlines/printable-ASCII/Latin-1) with '?'. This makes
+ * the renderer total over arbitrary Unicode input — no authored glyph can crash a
+ * submission export. Pure and deterministic, so the md5 leaf-checksum contract is
+ * preserved. NBSP (U+00A0) is Latin-1 and WinAnsi-safe, so it is left intact.
+ */
+export function toWinAnsiSafe(input: string): string {
+  let out = input;
+  for (const [pattern, replacement] of WIN_ANSI_SUBSTITUTIONS) {
+    out = out.replace(pattern, replacement);
+  }
+  // Keep: tab, LF, CR, printable ASCII (0x20–0x7E), Latin-1 (0xA0–0xFF).
+  // Replace everything else (other controls, and any code point > 0xFF that was
+  // not mapped above) with '?'.
+  return out.replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, '?');
+}
+
 /** Reduce HTML to readable plain text: block tags → newlines, strip the rest. */
 export function htmlToPlainText(input: string): string {
   return input
@@ -125,16 +184,21 @@ export async function renderLeafPdf(content: string, options: LeafPdfOptions = {
     y -= LINE_HEIGHT;
   };
 
-  // Header (title + section code) for traceability.
-  const header = options.sectionCode
-    ? `${options.sectionCode}  ${options.title ?? ''}`.trim()
-    : options.title ?? '';
+  // Header (title + section code) for traceability. Sanitized like the body so a
+  // non-WinAnsi glyph in a section title cannot crash the render.
+  const header = toWinAnsiSafe(
+    (options.sectionCode
+      ? `${options.sectionCode}  ${options.title ?? ''}`.trim()
+      : options.title ?? '')
+  );
   if (header) {
     drawLine(header, bold);
     y -= LINE_HEIGHT / 2;
   }
 
-  const text = htmlToPlainText(content || '');
+  // toWinAnsiSafe BEFORE wrapping: both width measurement and drawText must see
+  // only representable glyphs, or either can throw on the raw content.
+  const text = toWinAnsiSafe(htmlToPlainText(content || ''));
   const logicalLines = text.length ? text.split('\n') : ['(no content)'];
   for (const logical of logicalLines) {
     for (const wrapped of wrapLine(logical, font, maxWidth)) {
@@ -212,9 +276,11 @@ export async function renderStructuredLeafPdf(
   };
 
   // Document title header.
-  const header = options.sectionCode
-    ? `${options.sectionCode}  ${options.title ?? ''}`.trim()
-    : options.title ?? '';
+  const header = toWinAnsiSafe(
+    (options.sectionCode
+      ? `${options.sectionCode}  ${options.title ?? ''}`.trim()
+      : options.title ?? '')
+  );
   if (header) {
     draw(header, bold);
     y -= LINE_HEIGHT / 2;
@@ -229,10 +295,10 @@ export async function renderStructuredLeafPdf(
       // not orphaned away from its body — and so its bookmark page is accurate.
       if (y < MARGIN + LINE_HEIGHT * 2) newPage();
       const pageIndex = doc.getPageCount() - 1;
-      const label = s.sectionCode ? `${s.sectionCode}  ${s.heading}` : s.heading;
+      const label = toWinAnsiSafe(s.sectionCode ? `${s.sectionCode}  ${s.heading}` : s.heading);
       draw(label, bold, indent);
 
-      const bodyText = htmlToPlainText(s.body ?? '');
+      const bodyText = toWinAnsiSafe(htmlToPlainText(s.body ?? ''));
       const lines = bodyText.length ? bodyText.split('\n') : ['—'];
       for (const logical of lines) {
         for (const wrapped of wrapLine(logical, font, maxWidth - indent)) {

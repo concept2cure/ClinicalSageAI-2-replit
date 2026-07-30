@@ -342,7 +342,7 @@ function generateStructuredDocument(opts: {
     `${'='.repeat(72)}`,
     ``,
     `  Document Metadata`,
-    `  ${'─'.repeat(40)}`,
+    `  ${'-'.repeat(40)}`,
     `  Section Code:    ${opts.sectionCode}`,
     `  Module:          ${moduleLabel}`,
     `  Version:         ${opts.version}`,
@@ -350,7 +350,7 @@ function generateStructuredDocument(opts: {
     `  Generated:       ${opts.generatedAt}`,
     opts.wordCount ? `  Word Count:      ${opts.wordCount.toLocaleString()}` : null,
     ``,
-    `  ${'─'.repeat(40)}`,
+    `  ${'-'.repeat(40)}`,
     `  Content Status: PENDING`,
     ``,
     `  This document is part of the eCTD submission package for`,
@@ -440,12 +440,22 @@ export async function generateEctdPackage(
   // Also try to pull sections from project_sections table (used by ectd-compile)
   let projectSections: any[] = [];
   try {
+    // SECURITY (tenant isolation): scope by organization_id, not project_id
+    // alone. Every other content query in this service is org-scoped (lines
+    // below: document_versions on d.organization_id, both concept2cure_artifacts
+    // lookups on organization_id); project_sections was the lone exception. Since
+    // the export route resolves submissionId from the URL and does not verify the
+    // project belongs to the caller's org, a project_id-only filter let an
+    // authenticated org-B user export org-A's authored section content into their
+    // own eCTD package — a cross-tenant leak of regulated dossier text. The
+    // organization_id column is NOT NULL on project_sections, so this cannot
+    // exclude legitimate rows. Surfaced by the submission-export golden journey.
     const result = await pool.query(
       `SELECT section_code, title, status, content, word_count, module
        FROM project_sections
-       WHERE project_id = $1
+       WHERE project_id = $1 AND organization_id = $2
        ORDER BY section_code`,
-      [submissionId]
+      [submissionId, organizationId]
     );
     projectSections = result.rows;
   } catch {
