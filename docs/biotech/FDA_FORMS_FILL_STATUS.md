@@ -56,7 +56,7 @@ decryption**, so a decrypt step at asset-onboarding is mandatory before any fill
 | **1572** | AES-256 | **AcroForm** | **740** (`db_invest_name`, `db_loc_name`, `db_irb_name`, `db_cv`…) | real (2pg) | **AcroForm fill** (pdf-lib, after decrypt) — proven |
 | **356h** | AES-256 | **AcroForm** | **1348** (`db_aplcnt_name`…) | real (4pg) | **AcroForm fill** (after decrypt) |
 | **3454** | AES-256 | static XFA **+ AcroForm** | **14** (`appFirm`, `check1`, `invName1..6`) | **real** (1pg) | **AcroForm fill** — pdf-lib strips the XFA and fills the layer (round-trips); **done** |
-| **3455** | AES-256 | static XFA **+ AcroForm** | **12** (`invesname`, `nameofstudy`, `check1..4`, `appFirm`) | **real** (1pg) | **AcroForm fill** — layer fills, but needs a builder interest-type model (see §3) |
+| **3455** | AES-256 | static XFA **+ AcroForm** | **12** (`invesname`, `nameofstudy`, `check1..4`, `appFirm`) | **real** (1pg) | **AcroForm fill** — **done** (21 CFR 54.4 interest checkboxes, verified mapping) |
 | **1571** | AES-128 | **dynamic XFA** | 0 | **SHELL** ("Please wait… open in Adobe") | **reconstructed layout** — no official page exists outside Adobe |
 | **3674** | AES-128 | **dynamic XFA** | 0 | **SHELL** | **reconstructed layout** |
 
@@ -75,7 +75,7 @@ faithful **reconstruction** is the honest ceiling.
 | 1572 | ✅ `buildForm1572` (aligned to official form) | AcroForm fill — reviewed field map + onboarding wired | `IMPLEMENTED_UNVERIFIED` — unit-tested against real `db_*` names (`ind-form-1572-official.test.ts`); needs decrypted asset installed + granular address split |
 | 356h | ✅ `buildForm356h` (aligned to official form) | AcroForm fill — reviewed map + application-type checkboxes | `IMPLEMENTED_UNVERIFIED` — unit-tested against real `db_*` names incl. the NDA/ANDA/BLA type checkboxes (`ind-form-356h-official.test.ts`); needs decrypted asset installed |
 | 3454 | ✅ `buildForm3454` | AcroForm fill (static XFA → AcroForm layer) | `IMPLEMENTED_UNVERIFIED` — reviewed field map, unit-tested (`ind-form-3454-official.test.ts`): certify-none checkbox + applicant firm/name/title + first investigator; `drug_name` (no field) non-required |
-| 3455 | ✅ `buildForm3455` | AcroForm fill — **blocked on builder model** | `PARTIAL` — the AcroForm layer fills, but the official form uses per-investigator `invesname` + interest-type checkboxes (`check1..4`), while the builder models free-text disclosure + a required `disclosure_descriptions_complete` QC flag with no form field. Needs: per-investigator 3455 + interest-type data + a qc-flag/form-field split. Forcing it would weaken the disclosure gate |
+| 3455 | ✅ `buildForm3455` (interest-type model) | AcroForm fill — 21 CFR 54.4 interest checkboxes | `IMPLEMENTED_UNVERIFIED` — reviewed field map + `check1..4` mapping **verified from the form's field tooltips**; per-investigator `invesname`; `interest_type_selected` is a `qcOnly` gate (QC-only, never blocks the fill). Unit-tested (`ind-form-3455-official.test.ts`). Follow-on: a `/3455/pdf-all` per-investigator route (builder `buildAllForm3455` exists) |
 | 1571 | ✅ `buildForm1571` | reconstructed layout | `STUB` — deterministic labeled draft renders today; pure **dynamic** XFA, official layout must be reconstructed |
 | 3674 | ✅ `buildForm3674` | reconstructed layout | `STUB` — pure dynamic XFA |
 
@@ -117,11 +117,12 @@ throwaway download.
    manual-entry fallback. **Remaining:** onboard the decrypted assets in the deploy
    env; full granularity (`db_*_city/state/zip`) and the clinical-lab split await a
    granular source (the master data holds one address string per entity).
-2. **Static-XFA AcroForm fill (3454 ✅, 3455 blocked).** Corrected finding: 3454
-   and 3455 are static XFA that ALSO carry a fillable AcroForm layer (14 / 12
-   fields) — pdf-lib strips the XFA and fills it, no coordinate overlay needed.
-   **3454 done.** 3455 needs a builder model change (per-investigator + interest-
-   type checkboxes + qc-flag/form-field split) before it can fill faithfully.
+2. **Static-XFA AcroForm fill (3454 ✅, 3455 ✅).** Corrected finding: 3454 and
+   3455 are static XFA that ALSO carry a fillable AcroForm layer (14 / 12 fields)
+   — pdf-lib strips the XFA and fills it, no coordinate overlay needed. Both DONE:
+   3455 required a builder model change (per-investigator `invesname`, verified
+   21 CFR 54.4 interest checkboxes, and a `qcOnly` gate so a validation-only field
+   never blocks the official fill).
 3. **Reconstructed layout (1571, 3674).** No official page exists; render a
    faithful full-page layout, explicitly labeled as a reconstruction, not the
    Adobe-rendered original.
@@ -141,9 +142,9 @@ throwaway download.
 - Official **AcroForm** fill is wired + unit-tested for **1572, 356h, 3454**
   (against the real field names); the decrypted assets still need onboarding in
   the deploy env for a live end-to-end run.
-- **3455** has a fillable AcroForm layer but is blocked on a builder model change
-  (see §3). **1571 / 3674** are pure **dynamic** XFA (no AcroForm, no official
-  page outside Adobe) and can only be reconstructed.
+- **3455** now fills officially (interest-type model + verified checkbox mapping).
+  **1571 / 3674** are pure **dynamic** XFA (no AcroForm, no official page outside
+  Adobe) and are the sole remaining fill gap — reconstruction only.
 - Official PDFs are **not committed** (repo convention; assets install via
   `IND_FORM_TEMPLATES_DIR`). Tests use synthetic fixtures with the real field
   names.
@@ -203,8 +204,9 @@ checkboxes) and the **registry applicability model** (center/domain/program →
 program-scoped form lists via `GET /api/fda-forms/applicable`), which closes the
 original "device-centric registry / no client filtering" concern.
 
-Remaining enhancements: **3455** AcroForm fill (blocked on a builder
-interest-type / qc-flag model change — see §3); **dynamic-XFA reconstruction for
-1571/3674** (no AcroForm layer, no official page outside Adobe); per-investigator
-1572/3454 artifact persistence; IND-submission association; and full address
-granularity (`db_*_city/state/zip`, blocked on a granular data source).
+All four static-XFA / AcroForm forms now fill officially (1572, 356h, 3454,
+3455). Remaining: **dynamic-XFA reconstruction for 1571/3674** — the sole fill
+gap (no AcroForm layer, no official page outside Adobe; the labeled draft renders
+their data truthfully today); per-investigator `/1572` + `/3455` `pdf-all` and
+artifact persistence; IND-submission association; and full address granularity
+(`db_*_city/state/zip`, blocked on a granular data source).
