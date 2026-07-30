@@ -35,6 +35,17 @@ import {
   resolveClientRegistration,
   type EstarRegistrationWrite,
 } from '../services/pathway-engines/estar/estar-registration-service';
+import {
+  createEstarSubmission,
+  listEstarSubmissions,
+  getEstarSubmission,
+  advanceEstarSubmission,
+  EstarSubmissionError,
+} from '../services/pathway-engines/estar/estar-submission-service';
+import {
+  ESTAR_SUBMISSION_STATUSES,
+  type EstarSubmissionStatus,
+} from '../../shared/schema/estar-submission';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
@@ -801,6 +812,104 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       error: 'ESTAR_FILING_READINESS_FAILED',
       message: error.message || 'Failed to assess eSTAR filing readiness',
     });
+  }
+});
+
+// ── Submission lifecycle tracking (the filing → tracking bridge) ─────────────
+
+function submissionFail(res: any, error: any) {
+  if (error instanceof EstarSubmissionError) {
+    return res.status(error.code === 'NOT_FOUND' ? 404 : 400).json({ error: error.code, message: error.message });
+  }
+  logger.error('estar submission route error', { err: error instanceof Error ? error.message : String(error) });
+  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: error.message || 'eSTAR submission tracking failed' });
+}
+
+const createSubmissionSchema = z.object({
+  catalogKey: z.string().min(1),
+  variant: z.enum(['device', 'ivd']).optional(),
+  title: z.string().max(500).nullish(),
+  qSubmissionId: z.string().uuid().nullish(),
+  notes: z.string().max(2000).nullish(),
+});
+
+const advanceSubmissionSchema = z.object({
+  status: z.enum(ESTAR_SUBMISSION_STATUSES),
+  filedAt: z.coerce.date().optional(),
+  fdaTrackingNumber: z.string().max(64).nullish(),
+  decision: z.string().max(40).nullish(),
+});
+
+/**
+ * POST /api/510k/estar/submissions
+ * Start tracking a filing from a catalog key — the bridge from filing-readiness
+ * to lifecycle tracking. Program type + review clock are pulled from the catalog;
+ * starts in `draft`. Editor+ only.
+ */
+router.post('/submissions', authMiddleware, requireEditorAccess, async (req, res) => {
+  const validation = createSubmissionSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    const row = await createEstarSubmission(validation.data, {
+      organizationId: getOrganizationId(req),
+      userId: getUserId(req),
+    });
+    return res.status(201).json(row);
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/** GET /api/510k/estar/submissions — this org's tracked filings (optional ?status). */
+router.get('/submissions', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  const raw = typeof req.query.status === 'string' ? req.query.status : undefined;
+  const status = raw && (ESTAR_SUBMISSION_STATUSES as readonly string[]).includes(raw)
+    ? (raw as EstarSubmissionStatus)
+    : undefined;
+  try {
+    const rows = await listEstarSubmissions({ organizationId }, status ? { status } : {});
+    return res.status(200).json({ submissions: rows });
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/** GET /api/510k/estar/submissions/:id — one tracked filing. */
+router.get('/submissions/:id', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    const row = await getEstarSubmission(String(req.params.id), { organizationId });
+    return res.status(200).json(row);
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/**
+ * PATCH /api/510k/estar/submissions/:id
+ * Advance the lifecycle (validated transition). Moving to `filed` stamps the
+ * review clock (filedAt + decisionDueAt). Editor+ only.
+ */
+router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req, res) => {
+  const validation = advanceSubmissionSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    const { status, ...rest } = validation.data;
+    const row = await advanceEstarSubmission(
+      String(req.params.id),
+      { toStatus: status, ...rest },
+      { organizationId: getOrganizationId(req), userId: getUserId(req) },
+    );
+    return res.status(200).json(row);
+  } catch (error: any) {
+    return submissionFail(res, error);
   }
 });
 
