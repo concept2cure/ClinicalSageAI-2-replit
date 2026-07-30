@@ -149,7 +149,7 @@ async function resolveTarget(
       case 'blocker': {
         // C-9: match on blocker_id (text business key), not serial PK
         const r = await pool.query(
-          `SELECT id FROM c2c_blockers WHERE blocker_id = $1 AND organization_id = $2 LIMIT 1`,
+          `SELECT id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`,
           [rest, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'c2c_blockers', id: rest } : null;

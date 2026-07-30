@@ -76,7 +76,7 @@ export async function resolveTargetOwnerId(target: string, orgId: number): Promi
       }
       case 'blocker': {
         const r = await pool.query(
-          `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND organization_id = $2 LIMIT 1`,
+          `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`,
           [rest, orgId],
         );
         return intOrNull(r.rows[0]?.owner_user_id);
