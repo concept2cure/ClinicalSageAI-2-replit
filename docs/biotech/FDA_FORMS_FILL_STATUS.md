@@ -4,9 +4,13 @@
 and the shared SMART-forms machinery. Device forms (510k/PMA/eSTAR) are out of
 scope per the biotech work order §2.2.
 
-**Branch:** `claude/fda-forms-architecture-audit-7wqn45`. This branch carries the
-FDA-forms rework (typed `conditionalLogic`, manifest-gated official fill, forms
-356H/1574). That work is **not** on `concept2cure-v2` yet.
+**Branch:** `claude/fda-forms-architecture-audit-7wqn45` — based on and current
+with `origin/concept2cure-v2` (the repo's default branch) plus this session's
+commits (5-commit catch-up merged in `f644488f`). An earlier note here said the
+FDA-forms rework was "not on `concept2cure-v2` yet"; that compared against a
+**stale local** `concept2cure-v2` ref. The canonical remote already carries the
+rework (typed `conditionalLogic`, manifest-gated official fill, 356H/1574);
+integration is a small catch-up, not a fork.
 
 **Truthfulness (work order §21):** nothing here is claimed "complete",
 "submission ready", or "Part 11 validated". Status values are evidence-linked.
@@ -135,4 +139,42 @@ throwaway download.
 - Official PDFs are **not committed** (repo convention; assets install via
   `IND_FORM_TEMPLATES_DIR`). Tests use synthetic fixtures with the real field
   names.
-- This branch is behind `concept2cure-v2`; landing requires a merge-forward.
+- This branch is current with `origin/concept2cure-v2` (merged `f644488f`);
+  landing is a normal PR, not a large merge-forward.
+
+---
+
+## Defect audit — this session
+
+An exhaustive, adversarially-verified defect audit (21 agents) over the FDA-forms
+/ IND / governed-document-spine subsystems confirmed **9 defects** (deduped to 8
+unique). Verification refuted the ones already fixed mid-run.
+
+**Fixed (with commits):**
+
+| Severity | Defect | Fix |
+|---|---|---|
+| critical | `buildForm3454` auto-certified "no financial interest" (21 CFR Part 54) from **absent** master-data | `b4e99113` — requires explicit per-investigator `hasDisclosableInterest === false`; else `missingRequired` |
+| high | Legacy generator fabricated signature/certification/submission dates from the render clock; stale `CERV2` branding | `de8aca91` — dates blank until a real event; branding + determinism fixed |
+| high | `generateForm3654` hardcoded `certificationStatement/deviceCompliance/truthfulStatement: true` | `b4e99113` — sourced from input, default false |
+| high | `FDA_3654` HTML swapped the 3454/3455 form numbers (certify-none vs disclose) | batch commit — corrected |
+| high | `/by-legacy/cerv2-section/:id` unscoped → cross-tenant IDOR | `e56a7099` — org-scoped both queries |
+| high | `/auto-generate` doc lookup+update missing org predicate (vs hardened siblings) | batch commit — org-scoped read+write |
+| high | `fill-official-pdf` dropdown injected out-of-range options + reported filled | `e56a7099` — rejects like the radio case |
+| high | PATCH `/:id/sections/:key` edited LOCKED/SUBMITTED documents in place | `b4e99113` — 409 `DOCUMENT_LOCKED`/`_SUBMITTED` |
+| high | `completeness` reported 100% for stub forms with zero fields | `b4e99113` — fieldless form is 0% |
+| medium | `toBoolean` checked a box on unrecognized data (`'None'` → true) | commit — only explicit affirmatives check |
+
+**Remaining — architectural (dedicated follow-up, not rushed):**
+
+1. **[HIGH] IND-form PDFs are streamed with no governed artifact** (`ind-forms.routes.ts`
+   `/:formId/pdf`, `/pdf-from-records`). There is no canonical artifact-creation
+   service — `concept2cureArtifacts` rows are inserted ad hoc per caller — so this
+   needs a design pass: PDF-storage model (inline vs blob), IND-submission
+   association, and provenance/audit wiring, then persist-before-download (or an
+   explicit "untracked preview" label). This is the original audit's P0.
+2. **[MEDIUM] `writeMutation` audit-transaction atomicity** (`c2c/documents.ts`
+   lock route + `actions.ts`). `writeMutation` opens its own connection/transaction
+   while the mutating `UPDATE` runs in a separate statement, so the audit record
+   and the mutation are not atomic. Fixing correctly means threading one
+   transaction client through both — a cross-cutting change across all callers.
