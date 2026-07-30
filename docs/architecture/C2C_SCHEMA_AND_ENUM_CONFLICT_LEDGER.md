@@ -1525,6 +1525,63 @@ needs a live gateway); the journey proves the package that would be transmitted.
 
 ---
 
+## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — BASELINED, needs ADR reconciliation, 2026-07-30)*
+
+Caught by `ci:duplicate-table-ddl` the moment PR #1202 merged — the guard doing
+exactly its job.
+
+PR #1202 (“AnA canonical document spine + authoring schema-contract fix”) added
+`db/migrations/20260730_authoring_subsystem_schema.sql`, which `CREATE TABLE IF
+NOT EXISTS`-declares 23 authoring tables derived from the SQL
+`server/routes/authoring.router.ts` issues. **Ten of those already exist**, defined
+by the golden-journey-proven `20260725_authoring_*` migrations
+(`authoring_documents`, `authoring_sections`, `authoring_signatures`,
+`authoring_workflow_steps`, `authoring_comments`, `authoring_citations`,
+`authoring_audit_trail`, `doc_permissions`, `frozen_documents`, `user_pins`).
+
+The two definitions are **incompatible**, not merely redundant. For
+`authoring_documents` alone:
+
+| column | 20260725 (loop tables) | 20260730 (Codex, router-derived) |
+|---|---|---|
+| `id` | `UUID PRIMARY KEY` | `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text` |
+| `template_id` | `UUID` | `TEXT` |
+| `current_workflow_id` | `UUID` | `TEXT` |
+| `created_by` | `TEXT NOT NULL` | `TEXT` (nullable) |
+
+Under `CREATE TABLE IF NOT EXISTS` the FIRST definition to run wins and the other
+silently no-ops, so the surviving column *types* depend on apply order — the exact
+C-6 hazard. Two consumers disagree on the shape: the freeze/signature handlers
+behind the ind-authoring golden journey assume the UUID shape (0725); Codex's
+`authoring.router.ts` mints TEXT ids app-side and its schema-contract test pins the
+TEXT shape (0730).
+
+**What actually deploys.** `20260730` is on NO durable apply path — no `_gcc_`
+infix, not in `C2C_MIGRATION_FILES`, not in `AUTHORING_SUBSYSTEM_FILES`, not in the
+journal. It is deploy-dead (the very C-23 gap, re-introduced). `20260725` IS on a
+durable applier (`AUTHORING_SUBSYSTEM_FILES`). So on every real database only the
+UUID (0725) shape lands; the TEXT (0730) shape exists only on the PGlite the Codex
+schema-contract test spins up. Codex's router — if it truly needs TEXT ids or the
+0730-only columns — is therefore mis-provisioned on real deploys regardless of this
+collision.
+
+**Action taken:** the 10 collisions are added to
+`scripts/ci/duplicate-table-ddl-baseline.json` (66 → 76) to unblock the branch,
+using the guard's documented tracked-for-reconciliation mechanism — the same way
+the pre-existing 66 are tracked. This is an unblock, **not a resolution**, and it
+is recorded here so it is not mistaken for one.
+
+**Proper fix (ADR-0006 class, not done here):** decide the ONE canonical authoring
+schema. Given 0725 is what deploys and what the golden journey proves, the likely
+outcome is: keep 0725 as canonical, delete the 10 duplicate `CREATE TABLE` blocks
+from `20260730` (leaving only its genuinely-new tables), reconcile
+`authoring.router.ts` and the schema-contract test to the UUID shape, and wire the
+remaining new tables onto `AUTHORING_SUBSYSTEM_FILES` so they actually deploy. That
+touches two routers and a Part 11 signature path, so it is its own change, not a
+land-blocker patch.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
