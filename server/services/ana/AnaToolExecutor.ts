@@ -158,6 +158,7 @@ import {
   type FailedToolCall,
 } from './agentic-loop.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { registerBiotechProgramHandlers } from './biotech-program.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -14404,6 +14405,10 @@ registerToolHandler('draft_fda_ir_response', async (input) => {
 // client journey) are registered from their own module now — see
 // agentic-workflow-tools.ts. Injected register avoids an import cycle.
 registerAgenticWorkflowHandlers(registerToolHandler);
+
+// The biotech program orchestrator (get_biotech_program_status) is registered
+// from its own sibling module the same way — injected register, no import cycle.
+registerBiotechProgramHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
