@@ -409,6 +409,26 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260730_submission_center_tables.sql',
   'db/migrations/20260730_graphrag_knowledge_tables.sql',
   'db/migrations/20260730_licensing_ip_tables.sql',
+
+  // ── Real-store follow-ups from the "retire the blob" tranche (2026-08-01) ──
+  // The labeling-pi and program-journey commits (001ac83d, f8435174) replaced
+  // seed-only c2c_* blobs with REAL org-scoped stores + write paths — but the
+  // creators were merged into db/migrations without being put on any durable
+  // apply path. ci:migration-reachability caught that gap on the follow-on PR.
+  //
+  // labeling_pi_sections is written by server/services/labeling/
+  //   labeling-pi-service.ts and read by GET /api/labeling-pi.
+  // program_journeys + program_journey_stages are written by
+  //   server/services/program-journey/program-journey-service.ts and read by
+  //   GET /api/program-journey.
+  //
+  // Both are fully idempotent (CREATE TABLE / INDEX IF NOT EXISTS, no unguarded
+  // DDL, no data statements) and FK-free (repo migration convention), so
+  // ordering only matters for legibility — placed last. Adding them here closes
+  // the "endpoints 500 in production while ci:unbacked-tables reports them
+  // backed" failure mode the same way the ledger C-32 entries above did.
+  'db/migrations/20260801_labeling_pi_store.sql',
+  'db/migrations/20260801_program_journey_store.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

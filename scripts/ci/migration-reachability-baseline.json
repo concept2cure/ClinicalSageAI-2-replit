@@ -224,14 +224,6 @@
         "server/routes/human-factors.ts"
       ]
     },
-    "c2c_labeling_pi": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_labeling_pi_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/labeling-pi.routes.ts"
-      ]
-    },
     "c2c_maa_module1_components": {
       "createdOnlyBy": [
         "db/migrations/20260717_maa_module1_store.sql"
@@ -262,14 +254,6 @@
       ],
       "referencedBy": [
         "server/routes/nda-cockpit.routes.ts"
-      ]
-    },
-    "c2c_program_journey": {
-      "createdOnlyBy": [
-        "db/migrations/20260717_program_journey_store.sql"
-      ],
-      "referencedBy": [
-        "server/routes/program-journey.routes.ts"
       ]
     },
     "c2c_response_packages": {
