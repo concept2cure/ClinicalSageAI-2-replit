@@ -53,6 +53,13 @@ beforeAll(async () => {
       'utf8',
     ),
   );
+  // Minimal protocol-authoring store — only the columns getDesignEvidence's
+  // endpoint resolver reads.
+  await pglite.exec(
+    `CREATE TABLE IF NOT EXISTS c2c_protocol_dev (
+       id text NOT NULL, organization_id integer NOT NULL,
+       objectives jsonb NOT NULL DEFAULT '[]'::jsonb );`,
+  );
 }, 90_000);
 afterAll(async () => {
   await pglite.close();
@@ -257,5 +264,68 @@ describe('source visibility is not collapsed', () => {
     await ingestCrl(7304, {}, { visibilityClass: 'project_private' });
     const r = await facade.searchFindings({ organizationId: 7304 });
     expect(r.findings[0].source.visibility).toBe('project_private');
+  });
+});
+
+describe('getDesignEvidence — endpoint-scoped findings + selected stress scenarios', () => {
+  it('resolves the primary endpoint and returns its FDA precedent + defensible stress tests', async () => {
+    const ORG = 8801;
+    await pglite.query(
+      `INSERT INTO c2c_protocol_dev (id, organization_id, objectives)
+       VALUES ('PROT-8801', $1, $2::jsonb)`,
+      [ORG, JSON.stringify([{ objectiveType: 'primary', endpoint: 'Overall survival' }])],
+    );
+    await ingestCrl(ORG, {
+      findingDomain: 'biostatistics',
+      fdaReviewDiscipline: 'statistical',
+      findingText: 'Overall survival endpoint: multiplicity control across the co-primary family was inadequate.',
+      normalizedSummary: 'Overall survival multiplicity control inadequate.',
+    });
+
+    const panel = await facade.getDesignEvidence({ organizationId: ORG }, 'PROT-8801', 'endpoint');
+    expect(panel.findings.length).toBeGreaterThan(0);            // endpoint-scoped, real
+    expect(panel.stressScenarios.map(s => s.scenarioId)).toContain('multiplicity_penalty');
+    expect(panel.stressScenarios.every(s => s.result === null)).toBe(true); // selected, not run
+    expect(panel.comparableStudies).toHaveLength(0);             // honest-empty (no clean indication)
+    expect(panel.coverage).toBeTruthy();
+  });
+
+  it('is honest-empty when the design node is unknown', async () => {
+    const panel = await facade.getDesignEvidence({ organizationId: 8809 }, 'NO-SUCH-NODE');
+    expect(panel.findings).toHaveLength(0);
+  });
+});
+
+describe('getTrace — the inspectable relationship chain for a spine entity', () => {
+  it('returns the edges around a source ref, and null for unknown/garbage refs', async () => {
+    const ORG = 8802;
+    const src = await spine.createSource(ORG, { sourceType: 'csr', visibilityClass: 'tenant_private' });
+    const study = await spine.upsertStudy(ORG, { canonicalStudyKey: 'S-8802', indication: 'NSCLC' });
+    await spine.addRelationship(ORG, {
+      fromEntityType: 'source', fromEntityId: src.id, toEntityType: 'study', toEntityId: study.id,
+      relationshipType: 'describes_study',
+    });
+
+    const trace = await facade.getTrace({ organizationId: ORG }, `source:${src.id}`);
+    expect(trace).not.toBeNull();
+    expect(trace!.chain.some(c => c.step === 'describes_study' && c.count === 1)).toBe(true);
+
+    expect(await facade.getTrace({ organizationId: ORG }, 'source:999999')).toBeNull(); // no edges
+    expect(await facade.getTrace({ organizationId: ORG }, 'not-a-ref')).toBeNull();      // unparseable
+  });
+});
+
+describe('runStressTest — findings-driven scenario selection', () => {
+  it('selects scenarios from the findings on record; empty when none exist', async () => {
+    const ORG = 8803;
+    await ingestCrl(ORG, {
+      findingDomain: 'biostatistics',
+      findingText: 'Multiplicity control across secondary endpoints was inadequate.',
+    });
+    const run = await facade.runStressTest({ organizationId: ORG }, { designNodeId: 'PROT-8803' });
+    expect(run.scenarios.map(s => s.scenarioId)).toContain('multiplicity_penalty');
+
+    const empty = await facade.runStressTest({ organizationId: 8804 }, { designNodeId: 'x' });
+    expect(empty.scenarios).toHaveLength(0);
   });
 });
