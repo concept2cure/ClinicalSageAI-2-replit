@@ -187,6 +187,15 @@ beforeAll(async () => {
   // Stands in for the app's auth + tenant middleware: the route reads req.user
   // and the tenant from verified context, never from the body.
   app.use((req, _res, next) => {
+    // A raw (non-integer) subject header attaches user.id VERBATIM — models a
+    // surface that issued a UUID token subject reaching the route, so the
+    // route's OWN numeric-identity guard is what's under test (not the stub's).
+    const raw = req.headers['x-journey-user-raw'];
+    if (typeof raw === 'string' && raw) {
+      (req as any).user = { id: raw, userId: raw, email: 'uuid@journey.example', organizationId: ORG };
+      (req as any).tenantId = ORG;
+      return next();
+    }
     const id = Number(req.headers['x-journey-user']);
     if (Number.isFinite(id) && id > 0) {
       (req as any).user = {
@@ -308,6 +317,19 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
           [ORG, APPROVER.id, APPROVER.role],
         );
       }
+    });
+
+    // ── KNOWN-BAD: a UUID token subject cannot sign ─────────────────────────
+    // The route derives signerId from req.user.id and requires a positive
+    // integer (Number(uuid) is NaN). A UUID subject that reached the route —
+    // the C-21 identity-worlds hazard — is refused before any run/credential
+    // work, so it can never be mangled into a wrong integer user.
+    await R.expectBlocked('uuid-subject-cannot-sign', async () => {
+      const res = await request(app)
+        .post(`/api/submissions/${SUBMISSION_ID}/sign-release`)
+        .set('x-journey-user-raw', '3f1c2a10-0000-4000-8000-000000000009')
+        .send(signBody());
+      return { blocked: res.status === 401, status: res.status, error: res.body.error };
     });
 
     // ── KNOWN-BAD: wrong password (§11.200 two-factor) ──────────────────────

@@ -295,6 +295,28 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     });
     signatureId = result.signatureId;
   } catch (err) {
+    // Concurrent-signing race: the pre-check (findActiveReleaseSignature)
+    // and this INSERT are not atomic, so two signers can both pass the check
+    // and race to insert. The database backstop
+    // (electronic_signatures_active_release_uniq) rejects the loser with a
+    // unique-violation (23505). That is not a failure — it is exactly the
+    // idempotent "already signed" outcome: re-read the winner's row and
+    // return its id, the same 200 the pre-check hit returns. OQ-3 holds
+    // because the DB guaranteed exactly one active release signature landed.
+    if ((err as { code?: string } | null)?.code === '23505') {
+      const winner = await findActiveReleaseSignature({ organizationId, boundPayloadDigest });
+      if (winner) {
+        return res.json({ signatureId: winner.id, already_signed: true });
+      }
+      // Unique violation but no active row found — a superseded-chain edge
+      // case. Surface honestly rather than papering over it.
+      log.error('release signature unique-violation with no resolvable active row', {
+        organizationId,
+        runId,
+        signerId,
+      });
+      return res.status(409).json({ error: 'signature_race_unresolved' });
+    }
     log.error('createElectronicSignature failed', {
       organizationId,
       runId,
