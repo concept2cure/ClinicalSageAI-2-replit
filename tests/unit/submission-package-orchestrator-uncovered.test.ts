@@ -159,26 +159,30 @@ beforeEach(() => {
 
 describe('markDownstreamStale', () => {
   function freshSteps(): StepRecord[] {
-    // Mirror the ORDERED_STEPS array (private) without importing it: use the
-    // same keys so the function can find them by key.
-    const keys: StepKey[] = [
-      'm3.compose',
-      'm3.appendices',
-      'm3.regional',
-      'csr.tabulate',
-      'm2.3.qos',
-      'm2.4.nonclinical',
-      'm2.5.clinical',
-      'm2.7.clinical',
-      'm1.admin',
-      'package.assemble',
-      'package.validate',
-    ];
-    return keys.map(key => ({
+    // Since the run-ledger hardening (auth/e-sig audit 2026-07-30),
+    // markDownstreamStale traverses each step's OWN dependsOn snapshot — the
+    // edges the run was created with — not the live STEP_DEPENDENCIES
+    // constant. So the fixture must carry real edges, exactly as
+    // runOrchestrator snapshots them at run creation ([] is a real snapshot
+    // meaning "root step", not a shortcut).
+    const graph: Record<string, StepKey[]> = {
+      'm3.compose': [],
+      'm3.appendices': ['m3.compose'],
+      'm3.regional': ['m3.compose', 'm3.refine'],
+      'csr.tabulate': [],
+      'm2.3.qos': ['m3.compose', 'm3.refine', 'm3.appendices', 'm3.regional'],
+      'm2.4.nonclinical': [],
+      'm2.5.clinical': ['csr.tabulate'],
+      'm2.7.clinical': ['csr.tabulate', 'csr.draft-narrative'],
+      'm1.admin': [],
+      'package.assemble': ['m2.3.qos', 'm2.4.nonclinical', 'm2.5.clinical', 'm2.7.clinical', 'm1.admin'],
+      'package.validate': ['package.assemble'],
+    };
+    return (Object.keys(graph) as StepKey[]).map(key => ({
       key,
       status: 'complete' as const,
       inputHash: 'h',
-      dependsOn: [],
+      dependsOn: graph[key],
     }));
   }
 
@@ -230,6 +234,24 @@ describe('markDownstreamStale', () => {
 
     // Failed steps stay failed — only completed work is invalidated.
     expect(target.status).toBe('failed');
+  });
+
+  it('honors the run\'s OWN dependsOn snapshot over the live definition', () => {
+    // Workflow-definition versioning (auth/e-sig audit): a run created under
+    // an older graph must be interpreted by ITS edges, not today's constant.
+    // Fabricate a snapshot where m1.admin depended on m3.compose (contrary to
+    // the live graph, where m1.admin is a root step): the traversal must
+    // follow the snapshot and mark m1.admin stale.
+    const steps = freshSteps();
+    steps.find(s => s.key === 'm1.admin')!.dependsOn = ['m3.compose'];
+
+    const stale = markDownstreamStale(steps, 'm3.compose');
+
+    expect(stale).toContain('m1.admin');
+    expect(steps.find(s => s.key === 'm1.admin')!.status).toBe('stale');
+    // And a snapshot that REMOVED an edge is honored too: csr pipeline is
+    // untouched by an m3 change in both graphs.
+    expect(stale).not.toContain('csr.tabulate');
   });
 });
 

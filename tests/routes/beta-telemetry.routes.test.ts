@@ -5,7 +5,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 vi.mock('../../server/auth.js', () => ({ authMiddleware: vi.fn() }));
-vi.mock('../../server/routes/510k-project.routes', () => ({ default: 'project-router' }));
 
 import telemetryRouter from '../../server/routes/beta-telemetry.routes';
 import { mountBetaSafeRoutes } from '../../server/betaRouteManifest';
@@ -120,8 +119,12 @@ describe('beta telemetry routes', () => {
 
     mountBetaSafeRoutes({ use } as any, authenticate);
 
+    // The telemetry mount is the manifest's ONLY mount since the deprecated
+    // /api/510k-project router was sunset (deleted 2026-06-30, ledger C-22) —
+    // it used to be the 2nd app.use call, after that router's.
+    expect(use).toHaveBeenCalledTimes(1);
     expect(use).toHaveBeenNthCalledWith(
-      2,
+      1,
       '/api/telemetry/beta-workspace',
       authenticate,
       telemetryRouter

@@ -309,6 +309,17 @@ export const C2C_MIGRATION_FILES = [
   // tests/schema-contract/esig-audit-immutability.contract.test.ts; policy in
   // docs/compliance/part11-immutability-record-class-policy.md.
   'db/migrations/20260730_esign_audit_db_level_immutability.sql',
+  // Orchestrator run-ledger hardening (same audit's P1 follow-ups): run rows
+  // gain write-once workflow_version + dependency_graph_digest provenance
+  // columns (the service now SELECTs and INSERTs them — schema-shape errors
+  // are deliberately fatal there, so this entry must ship with that code);
+  // the step-events FK drops ON DELETE CASCADE for RESTRICT (deleting a run
+  // can no longer erase its history); and a trigger makes step events
+  // append-only at the database. MUST follow the orchestrator store port.
+  // Idempotent (ADD COLUMN IF NOT EXISTS; FK swap only rewrites a CASCADE;
+  // conditional trigger). Proven by
+  // tests/schema-contract/orchestrator-ledger-hardening.contract.test.ts.
+  'db/migrations/20260730_orchestrator_run_ledger_hardening.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

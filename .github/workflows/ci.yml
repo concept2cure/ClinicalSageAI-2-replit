@@ -306,8 +306,13 @@ jobs:
           done
           echo "::error::npm ci failed after 3 attempts"; exit 1
 
-      - name: Install Postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install Postgres client + xmllint (eCTD qualification)
+        # libxml2-utils provides xmllint, which the eCTD qualification harness
+        # (server/services/ectd/qualification) uses to validate generated
+        # backbones for real. Its suite skipIf's when the binary is absent —
+        # installing it here is what makes CI actually run that conformance
+        # evidence rather than silently skipping it.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client libxml2-utils
 
       - name: Setup Python (document runtime)
         uses: actions/setup-python@v5

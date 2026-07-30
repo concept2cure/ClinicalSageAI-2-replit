@@ -289,4 +289,46 @@ describe('GET /api/510k/estar/readiness (drives the gated UI button)', () => {
       expect(payload.blockers).toEqual([]);
     });
   });
+
+  // Production coverage now spans the WHOLE eSTAR program, not just 510(k)/De Novo.
+  // Each type is accepted (never 400) and fails closed honestly until its official
+  // template is vendored — the journey reaches production for every submission type.
+  describe('accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored', () => {
+    let emptyDir: string;
+    let priorEnv: string | undefined;
+
+    beforeAll(async () => {
+      emptyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-readiness-alltypes-'));
+      priorEnv = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = emptyDir;
+    });
+    afterAll(async () => {
+      if (priorEnv === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = priorEnv;
+      await fs.rm(emptyDir, { recursive: true, force: true });
+    });
+    beforeEach(() => vi.clearAllMocks());
+
+    const cases: Array<{ type: string; variant: string; descriptorId: string }> = [
+      { type: 'pma', variant: 'device', descriptorId: 'pma-device' },
+      { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' },
+      // PreSTAR types resolve to the shared prestar template regardless of device/ivd.
+      { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' },
+      { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' },
+      { type: '513g', variant: 'device', descriptorId: '513g-prestar' },
+    ];
+
+    it.each(cases)('readiness for %s is accepted and fails closed', async ({ type, variant, descriptorId }) => {
+      const req = makeQueryReq({ type, variant });
+      const res = createMockResponse() as any;
+
+      await getGetHandler('/readiness')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200); // accepted — not a 400 rejected type
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.descriptorId).toBe(descriptorId); // prestar variant resolved internally
+      expect(payload.ready).toBe(false);
+      expect(payload.blockers.length).toBeGreaterThan(0);
+    });
+  });
 });

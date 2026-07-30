@@ -122,7 +122,7 @@ describe('assessEstarFilingReadiness', () => {
     expect(qsub.ombNumbers).toContain('0910-0756');
   });
 
-  it('dispatches PMA keys to the PMA mapper (reports PMA-specific gaps)', () => {
+  it('dispatches PMA keys to the PMA mapper with per-submission-type required sections', () => {
     const r = assessEstarFilingReadiness({
       catalogKey: 'pma_30_day_notice',
       variant: 'device',
@@ -131,9 +131,11 @@ describe('assessEstarFilingReadiness', () => {
     })!;
     expect(r.programType).toBe('pma');
     expect(r.contentReady).toBe(false);
-    // PMA section ids, not eSTAR/PreSTAR ones.
-    expect(r.missingSections).toContain('clinical');
+    // A 30-day manufacturing notice (814.39(f)) requires admin + manufacturing —
+    // NOT the full original-PMA clinical package. PMA section ids, not eSTAR ones.
     expect(r.missingSections).toContain('manufacturing');
+    expect(r.missingSections).toContain('admin-regulatory');
+    expect(r.missingSections).not.toContain('clinical');
   });
 
   it('dispatches Q-Sub keys to the PreSTAR mapper (reports Q-Sub-specific gaps)', () => {

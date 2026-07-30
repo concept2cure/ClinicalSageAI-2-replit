@@ -143,6 +143,38 @@ const PMA_SLOTS: Array<PmaSlot & { match: Matcher }> = [
   { id: 'references', module: 10, label: 'References & bibliography', required: false, match: any(dt('references', 'bibliography'), ti('references', 'bibliography')) },
 ];
 
+/**
+ * Required sections PER submission type. An original PMA (21 CFR 814.20) carries
+ * the full safety-and-effectiveness package; a supplement/notice (21 CFR 814.39)
+ * need only contain the sections its change actually touches, so each type
+ * requires a focused subset. Sections NOT listed for a type stay conditionally
+ * required (present-if-applicable) — reported by the mapper but not blocking —
+ * so readiness never OVERSTATES what a supplement owes (e.g. a 30-day
+ * manufacturing notice is not gated on new clinical data).
+ */
+const REQUIRED_BY_TYPE: Record<PmaSubmissionType, readonly string[]> = {
+  // Full package establishing safety & effectiveness (814.20).
+  original: [
+    'admin-regulatory', 'device-description', 'manufacturing', 'nonclinical',
+    'clinical', 'labeling', 'ssed-summary', 'statistical-analysis',
+  ],
+  // Significant change needing NEW clinical data (+ often panel) (814.39).
+  panel_track_supplement: [
+    'admin-regulatory', 'device-description', 'clinical', 'ssed-summary',
+    'statistical-analysis', 'labeling',
+  ],
+  // Significant design/component/labeling change, no panel (814.39(a)).
+  '180_day_supplement': [
+    'admin-regulatory', 'device-description', 'manufacturing', 'nonclinical', 'labeling',
+  ],
+  // Minor change reviewed interactively (814.39(e)).
+  real_time_supplement: ['admin-regulatory', 'device-description', 'labeling'],
+  // Manufacturing-process change notice (814.39(f)).
+  '30_day_notice': ['admin-regulatory', 'manufacturing'],
+  // 30-day notice escalated to fuller review (814.39(f)).
+  '135_day_supplement': ['admin-regulatory', 'manufacturing', 'nonclinical'],
+};
+
 function evalSlot(slot: PmaSlot & { match: Matcher }, leaves: PmaInputLeaf[]): PmaSlotStatus {
   const sources = leaves.filter((l) => slot.match(l)).map((l) => l.sectionCode || l.title);
   const { match, ...rest } = slot;
@@ -158,7 +190,10 @@ export interface MapToPmaInput {
 export function mapToPma(input: MapToPmaInput): PmaResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   const submissionType = input.submissionType ?? 'original';
-  const sections = PMA_SLOTS.map((s) => evalSlot(s, leaves));
+  // Required-ness is per submission type (814.20 original vs 814.39 supplements);
+  // override each slot's default flag with the type-specific profile.
+  const requiredIds = new Set(REQUIRED_BY_TYPE[submissionType] ?? REQUIRED_BY_TYPE.original);
+  const sections = PMA_SLOTS.map((s) => ({ ...evalSlot(s, leaves), required: requiredIds.has(s.id) }));
   const requiredSections = sections.filter((s) => s.required);
   const missingRequired = requiredSections.filter((s) => !s.present).map((s) => s.id);
   const presentRequired = requiredSections.length - missingRequired.length;

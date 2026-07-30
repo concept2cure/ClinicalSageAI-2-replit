@@ -545,3 +545,8 @@ export * from './research-security';
 // Service: server/services/pathway-engines/estar/estar-registration-service.ts;
 // migration: migrations/20260730_estar_registration.sql.
 export * from './estar-registration';
+
+// eSTAR submission tracking: program-agnostic filing-tracking spine (status +
+// review clock) for any catalog key. Service: estar-submission-service.ts;
+// migration: migrations/20260730_estar_submission.sql.
+export * from './estar-submission';

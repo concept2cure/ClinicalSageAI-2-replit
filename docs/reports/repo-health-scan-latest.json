@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T05:51:11.143Z",
+  "generatedAt": "2026-07-30T08:22:54.460Z",
   "git": {
-    "sha": "6f51f246d8550610729d6ab25931dbf587cb8e2c",
+    "sha": "d8389974e9200a331f43791a7a76db4b5969bac9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2502,7 +2502,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 182939
+        "bytes": 186584
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2549,16 +2549,16 @@
         "bytes": 120635
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 119906
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 117471
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 115960
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2628,7 +2628,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4806
+        "lines": 4878
       },
       {
         "file": "server/storage.ts",
@@ -2663,12 +2663,12 @@
         "lines": 2759
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2676
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 2744
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 2673
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2676
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
