@@ -54,4 +54,28 @@ describe('GET /api/protocol-dev', () => {
     expect(res.body.data).toEqual([]);
     expect(res.body.meta.count).toBe(0);
   });
+
+  it('fails closed to an empty list when the store is not provisioned (42P01)', async () => {
+    // The route catches a missing-relation error and returns an empty list
+    // with pendingStore:true, so an unprovisioned store never 500s. (Moved
+    // here from the retired protocol-dev-read.test.ts, which tested the
+    // pre-refactor single-query route; the field mapping it also asserted is
+    // now proven against real SQL in the pdev-view-assembler pglite test.)
+    assembleOrgPdevDocs.mockImplementationOnce(() => {
+      throw Object.assign(new Error('relation does not exist'), { code: '42P01' });
+    });
+    const res = await request(appWith(7)).get('/api/protocol-dev');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+    expect(res.body.meta.pendingStore).toBe(true);
+  });
+
+  it('500s on a non-42P01 assembler failure', async () => {
+    assembleOrgPdevDocs.mockImplementationOnce(() => {
+      throw new Error('connection reset');
+    });
+    const res = await request(appWith(7)).get('/api/protocol-dev');
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('INTERNAL');
+  });
 });
