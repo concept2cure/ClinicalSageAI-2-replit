@@ -124,4 +124,13 @@ export function resolveCrossReferences(
   return { resolved, broken, ok: broken.length === 0 };
 }
 
-export default { resolveCrossReferences };
+/**
+ * Opt-in production enforcement: block packaging/dispatch when a declared
+ * cross-reference is broken (dangling or points at withdrawn content). Default
+ * (unset) is report-only, mirroring the PDF/A, DTD, and eValidator gates.
+ */
+export function xrefRequiredFromEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  return String(env.ECTD_REQUIRE_XREF ?? '').toLowerCase() === 'true';
+}
+
+export default { resolveCrossReferences, xrefRequiredFromEnv };

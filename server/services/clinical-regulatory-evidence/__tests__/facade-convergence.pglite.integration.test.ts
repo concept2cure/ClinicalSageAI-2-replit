@@ -53,12 +53,12 @@ beforeAll(async () => {
       'utf8',
     ),
   );
-  // Minimal protocol-authoring store — only the columns getDesignEvidence's
-  // endpoint resolver reads.
+  // Minimal real protocol-objectives store — only the columns getDesignEvidence's
+  // endpoint resolver reads (it resolves a protocol_documents id → primary endpoint).
   await pglite.exec(
-    `CREATE TABLE IF NOT EXISTS c2c_protocol_dev (
-       id text NOT NULL, organization_id integer NOT NULL,
-       objectives jsonb NOT NULL DEFAULT '[]'::jsonb );`,
+    `CREATE TABLE IF NOT EXISTS protocol_objectives (
+       id serial PRIMARY KEY, organization_id integer NOT NULL, protocol_document_id integer NOT NULL,
+       objective_type text, objective text, endpoint text, order_index integer NOT NULL DEFAULT 0 );`,
   );
 }, 90_000);
 afterAll(async () => {
@@ -270,10 +270,11 @@ describe('source visibility is not collapsed', () => {
 describe('getDesignEvidence — endpoint-scoped findings + selected stress scenarios', () => {
   it('resolves the primary endpoint and returns its FDA precedent + defensible stress tests', async () => {
     const ORG = 8801;
+    const DOC_ID = 8801001;                                      // a real protocol_documents id
     await pglite.query(
-      `INSERT INTO c2c_protocol_dev (id, organization_id, objectives)
-       VALUES ('PROT-8801', $1, $2::jsonb)`,
-      [ORG, JSON.stringify([{ objectiveType: 'primary', endpoint: 'Overall survival' }])],
+      `INSERT INTO protocol_objectives (organization_id, protocol_document_id, objective_type, objective, endpoint, order_index)
+       VALUES ($1, $2, 'primary', 'Demonstrate OS benefit', 'Overall survival', 0)`,
+      [ORG, DOC_ID],
     );
     await ingestCrl(ORG, {
       findingDomain: 'biostatistics',
@@ -282,7 +283,7 @@ describe('getDesignEvidence — endpoint-scoped findings + selected stress scena
       normalizedSummary: 'Overall survival multiplicity control inadequate.',
     });
 
-    const panel = await facade.getDesignEvidence({ organizationId: ORG }, 'PROT-8801', 'endpoint');
+    const panel = await facade.getDesignEvidence({ organizationId: ORG }, String(DOC_ID), 'endpoint');
     expect(panel.findings.length).toBeGreaterThan(0);            // endpoint-scoped, real
     expect(panel.stressScenarios.map(s => s.scenarioId)).toContain('multiplicity_penalty');
     expect(panel.stressScenarios.every(s => s.result === null)).toBe(true); // selected, not run
