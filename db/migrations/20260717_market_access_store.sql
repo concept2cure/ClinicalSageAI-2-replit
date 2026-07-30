@@ -1,3 +1,11 @@
+-- DEPRECATED (2026-08): superseded by the REAL market_access_positions store
+-- (20260801_market_access_store.sql), which has a live write path
+-- (market-access-service.ts via POST /api/market-access). GET /api/market-access now
+-- reads that real, org-scoped store — see docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This blob is retained (non-destructive) but is
+-- no longer written by the demo seed nor read by any route. A later migration may DROP it
+-- once no environment references it.
+--
 -- Market-access & reimbursement store — the payer-coverage / value-dossier /
 -- coding-strategy record backing the v2 MarketAccess surface's GET read. One row
 -- per market-access program per org (the org's CGM program, BX-204), holding the
