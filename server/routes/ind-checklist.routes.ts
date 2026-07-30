@@ -1,17 +1,20 @@
 /**
- * IND lifecycle checklist — per-org IND instance read.
+ * IND lifecycle checklist — per-org IND instance read for the v2 surface.
  *
- * GET /api/ind-checklist → the org's IND checklist rows (21 CFR 312), each
- * shaped to exactly the keys the v2 IndLifecycle surface consumes
- * ({ code, drugName, productName, indication, sponsorName, submissionType,
- * targetReceiptOffsetDays, forms[], sections[] }). The `id` column rehydrates as
- * `code`; the two nested checklist arrays (forms, sections) rehydrate straight
- * from JSONB into IndlForm[] / IndlSection[]. Org scoped; 403 without org
- * context; fails closed to an empty list on 42P01 so an unprovisioned store
- * never 500s.
+ * GET /api/ind-checklist → the org's IND application(s), each shaped to exactly the
+ * keys the v2 IndLifecycle surface consumes ({ code, drugName, productName, indication,
+ * sponsorName, submissionType, targetReceiptOffsetDays, forms[], sections[] }), assembled
+ * ENTIRELY from the real, org-scoped eCTD submission core (submissions + ectd_sequences
+ * + submission_leaves + coauthor_documents) — the same tables the submission service and
+ * the eCTD co-authoring flow write. There is no legacy/seed blob and no fallback: an org
+ * with no IND returns an empty list and the surface renders its own honest empty state.
+ * See ind-checklist-view-assembler.
+ *
+ * Org scoped; 403 without org context; fails to an empty list on 42P01 so an
+ * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { assembleOrgIndChecklists } from '../services/ind-lifecycle/ind-checklist-view-assembler.js';
 
 const router = Router();
 
@@ -35,26 +38,8 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT id, drug_name, product_name, indication, sponsor_name,
-              submission_type, target_receipt_offset_days, forms, sections
-         FROM c2c_ind_checklist
-        WHERE organization_id = $1
-        ORDER BY seq, id`,
-      [orgId],
-    );
-    const data = rows.map((r) => ({
-      code: r.id,
-      drugName: r.drug_name,
-      productName: r.product_name,
-      indication: r.indication,
-      sponsorName: r.sponsor_name,
-      submissionType: r.submission_type,
-      targetReceiptOffsetDays: r.target_receipt_offset_days,
-      forms: r.forms ?? [],
-      sections: r.sections ?? [],
-    }));
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgIndChecklists(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'submissions' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });

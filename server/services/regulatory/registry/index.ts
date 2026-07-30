@@ -8,3 +8,4 @@ export * from './globalDocumentRegistryService.js';
 export * from './legacySubmissionTypeMapper.js';
 export * from './registrySearch.js';
 export * from './registryValidation.js';
+export * from './registryCoverage.js';

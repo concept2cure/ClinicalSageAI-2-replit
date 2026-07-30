@@ -50,16 +50,23 @@ describe('Project Bootstrap from Registry', () => {
       expect(result!.entry.agency).toBe('EMA');
     });
 
-    it('bootstraps Canada NDS from registryId', async () => {
+    it('bootstraps Canada NDS from registryId with the dedicated HC blueprint', async () => {
       const result = await bootstrapFromRegistry({ registryId: 'CA_NDS' });
       expect(result).not.toBeNull();
       expect(result!.entry.agency).toBe('Health_Canada');
+      // The dedicated Health Canada blueprint contributes a Product Monograph in
+      // Module 1 that the generic CTD fallback does not have.
+      expect(result!.sections.some(s => /product monograph/i.test(s.title))).toBe(true);
+      expect(result!.sections.every(s => s.metadata?.dedicatedBlueprint === true)).toBe(true);
     });
 
-    it('bootstraps Japan marketing approval', async () => {
+    it('bootstraps Japan marketing approval with the dedicated PMDA blueprint', async () => {
       const result = await bootstrapFromRegistry({ registryId: 'JP_MKT_APPROVAL' });
       expect(result).not.toBeNull();
       expect(result!.entry.agency).toBe('PMDA');
+      // Japan Module 1 requires local-agent information — absent from generic CTD.
+      expect(result!.sections.some(s => /local agent/i.test(s.title))).toBe(true);
+      expect(result!.milestones.length).toBeGreaterThan(0);
     });
 
     it('returns null for unknown type', async () => {

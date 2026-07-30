@@ -15,7 +15,7 @@
  * CORRESP_DETAIL); fetch is mocked to 404 only as a safety net.
  */
 
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { describe, expect, it, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { render, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
@@ -24,6 +24,7 @@ import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway
 import { AnaDrafter } from '../../client/src/concept2cure/mdx/components/AnaDrafter';
 import { PATHWAY_TABS_DATA } from '../../client/src/concept2cure/mdx/data/pathwayTabs';
 import { DossierStore } from '../../client/src/concept2cure/mdx/store/dossierStore';
+import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
 import type { PathwayKey } from '../../client/src/concept2cure/mdx/types';
 import { K510Surface } from '../../client/src/concept2cure/mdx/surfaces/K510Surface';
 import { PmaSurface } from '../../client/src/concept2cure/mdx/surfaces/PmaSurface';
@@ -126,12 +127,24 @@ describe('MDX pathway panes smoke', () => {
   });
 
   it('FilesTreePane preview opens a body section in the drawer', () => {
-    const { getAllByRole, container } = renderWithClient(
-      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    fireEvent.click(getAllByRole('tab')[4]); // Files
-    expect(container.querySelector('.ftp-pane')).toBeTruthy();
-    assertNoReactErrors();
+    // Data honesty redesign: the Files tab renders the tree ONLY on live
+    // backend data or explicit sample mode — with the fetch mocked to 404 and
+    // sample off it correctly shows "unavailable" and mounts nothing. This
+    // smoke test exercises the pane WITH content, so it crosses the demo
+    // boundary the same way a user does: the explicit sample-mode signal plus
+    // the store's opt-in fixtures.
+    setSampleMode(true);
+    DossierStore.enableSampleFixtures();
+    try {
+      const { getAllByRole, container } = renderWithClient(
+        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+      );
+      fireEvent.click(getAllByRole('tab')[4]); // Files
+      expect(container.querySelector('.ftp-pane')).toBeTruthy();
+      assertNoReactErrors();
+    } finally {
+      setSampleMode(false);
+    }
   });
 
   it('AnaDrafter renders a drafted response (rta-3)', () => {
@@ -180,6 +193,14 @@ describe('MDX pathway panes smoke', () => {
 
 // Acceptance #4: edits round-trip through the in-memory store into the audit trail.
 describe('dossierStore round-trip', () => {
+  // Seeding is opt-in since the no-mock-data-in-prod remediation: the store
+  // starts EMPTY and sample content exists only behind the explicit demo
+  // boundary. These round-trip tests exercise store mechanics over that
+  // sample content, so they enable it deliberately.
+  beforeAll(() => {
+    DossierStore.enableSampleFixtures();
+  });
+
   it('seeds section bodies and pushes an edit onto the section activity trail', () => {
     const label = 'Substantial Equivalence Discussion'; // K510_ESTAR id 11
     const seeded = DossierStore.readSectionBody('k510', 11, label);

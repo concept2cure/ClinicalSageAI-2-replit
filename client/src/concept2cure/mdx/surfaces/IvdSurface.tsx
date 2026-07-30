@@ -27,6 +27,7 @@ import {
 } from '../hooks/useIvd';
 import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { EstarFilingPanel } from './EstarFilingPanel';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
@@ -480,6 +481,10 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
           </div>
         </div>
       </div>
+
+      {/* eSTAR filing journey — register → assess → produce-gate → track,
+          org-scoped from the session. The IVD eSTAR shares this flow. */}
+      <EstarFilingPanel />
     </>
   );
 

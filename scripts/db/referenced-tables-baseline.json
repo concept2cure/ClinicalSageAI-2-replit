@@ -1,0 +1,27 @@
+{
+  "_comment": "Known referenced-but-uncreated table candidates (schema-contract debt). Ratcheted from 33 -> 10 on 2026-07-30: 20 genuinely-missing tables were created by migrations (graphrag_knowledge_tables, cmc_evidence_tables, submission_center_tables, licensing_ip_tables) and 3 false positives (medline, module_tree, trend_data) were fixed in the audit. The 10 below are DELIBERATELY NOT created — each is a collision with an existing table, a query bug, or dead/ambiguous code where creating a guessed schema would be wrong. See _dispositions. The --check gate fails if a NEW name appears; resolve an entry (fix the query or create the table) then remove it here to ratchet down. Goal: 0.",
+  "_dispositions": {
+    "analytical_accuracy_points": "DEAD CODE — referenced only by server/services/analytical/lims.ts, an unreferenced module (nothing imports its exports); read-only SELECTs with no INSERT to pin the contract and an ambiguous method_id type. No active failure. Create only when the module is wired to a route.",
+    "analytical_linearity_points": "DEAD CODE — same as analytical_accuracy_points (lims.ts unreferenced module).",
+    "analytical_precision_runs": "DEAD CODE — same as analytical_accuracy_points; distinct from the existing analytical_method_runs.",
+    "analytical_spec_thresholds": "DEAD CODE — same as analytical_accuracy_points.",
+    "concept2cure_projects": "THIN/BEST-EFFORT — single try/catch UPDATE (updated_at only) in contradiction-resolution-orchestrator.ts; likely intended as the existing generic `projects` table. Contract unknowable from one best-effort write.",
+    "correspondences": "COLLISION — the existing c2c_correspondence matches 8/9 queried columns; the query (mdx-proactive-signals.ts) even comments 'may have a different name in some tenants' and silently no-ops. Fix = repoint the query to c2c_correspondence, not a new table.",
+    "tasks": "QUERY BUG — bare `tasks` should target the existing unified_tasks table (and column assignee_id, not assigned_to), per the code's own comment in concept2cure.ts. Fix the query, do not create a `tasks` table.",
+    "trials": "COLLISION/LEGACY — bare public.trials CRUD in storage.ts uses an integer PK and loose dynamic columns; collides with (but is not) the schema-qualified registry.trials (uuid PK + required FKs). Likely legacy; reconcile before creating.",
+    "uploads": "COLLISION — bare `uploads` (needs content + file_path) collides with the existing file_uploads (storage_path, no content). Speculative best-effort fallback in autoExtractionPipeline.ts that degrades to a placeholder. Repoint or intentionally model before creating.",
+    "user_roles": "INCOMPATIBLE SHAPES — two callers expect different schemas (rules-engine: user_id+role text; rbac-routes: role_id+is_active junction) and real RBAC lives on user_organizations.role_id -> roles(id). Reconcile the callers before creating."
+  },
+  "knownMissing": [
+    "analytical_accuracy_points",
+    "analytical_linearity_points",
+    "analytical_precision_runs",
+    "analytical_spec_thresholds",
+    "concept2cure_projects",
+    "correspondences",
+    "tasks",
+    "trials",
+    "uploads",
+    "user_roles"
+  ]
+}

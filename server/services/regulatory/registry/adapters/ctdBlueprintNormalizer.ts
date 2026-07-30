@@ -93,6 +93,18 @@ const MODULE_1_TEMPLATES: Record<string, SectionDefinition[]> = {
     { code: '1.12', title: 'Information on Local Agent', module: 1, required: true, contentType: 'form' },
     { code: '1.13', title: 'PMDA Specific Data', module: 1, required: false, contentType: 'mixed' },
   ],
+  // Health Canada CTD Module 1 (per HC "Preparation of Drug Regulatory
+  // Activities in eCTD Format" guidance). Canada uses a region-specific
+  // Module 1 distinct from the ICH default; the Product Monograph is the
+  // hallmark HC-specific labeling artifact.
+  CA: [
+    { code: '1.0', title: 'Correspondence / Cover Letter', module: 1, required: true, contentType: 'narrative' },
+    { code: '1.1', title: 'Comprehensive Table of Contents', module: 1, required: true, contentType: 'list' },
+    { code: '1.2', title: 'Administrative Information (HC/SC Application & Fee Forms)', module: 1, required: true, contentType: 'form' },
+    { code: '1.3', title: 'Product Information (Product Monograph, Labels, Package Insert)', module: 1, required: true, contentType: 'narrative' },
+    { code: '1.4', title: 'Health Canada Summaries', module: 1, required: false, contentType: 'mixed' },
+    { code: '1.5', title: 'Environmental Assessment', module: 1, required: false, contentType: 'narrative' },
+  ],
   DEFAULT: [
     { code: '1.1', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
     { code: '1.2', title: 'Administrative Forms', module: 1, required: true, contentType: 'form' },

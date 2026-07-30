@@ -118,8 +118,10 @@ describe('FDA form reconstruction (pure dynamic XFA → sectioned reconstruction
     expect(Buffer.from(first.pdfBytes).equals(Buffer.from(second.pdfBytes))).toBe(true);
   });
 
-  it('generateIndForm routes 1571/3674 to the reconstruction when no template is installed', async () => {
-    // No IND_FORM_TEMPLATES_DIR fixture here, so the official path is unavailable.
+  it('generateIndForm routes 1571/3674 to the reconstruction (dynamic XFA never promotes)', async () => {
+    // The bundled official 1571/3674 assets are pure dynamic XFA with an empty
+    // fieldMap, so the readTemplate gate never promotes them and reconstruction
+    // is the effective path — regardless of whether a template dir is installed.
     const r1571 = await generateIndForm(FORM_1571, COMPLETE_1571);
     const r3674 = await generateIndForm(FORM_3674, COMPLETE_3674);
     expect(r1571.reconstructed).toBe(true);

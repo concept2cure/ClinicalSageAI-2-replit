@@ -54,6 +54,15 @@ jobs:
         # collisions, and neither checks table NAMES. See ADR-0006 / conflict C-6.
         run: npm run ci:duplicate-table-ddl
 
+      - name: Guardrails — golden-journey migrations must be on a durable apply path
+        # The C-6/C-8/C-10/C-11/C-16/C-17 class from the applier side: a migration
+        # a golden journey provisions and depends on, that no real deploy runs —
+        # merged, green, and applied to the throwaway journey DB only. The
+        # duplicate/unbacked guards cannot see this: the table IS created (on the
+        # journey's PGlite) and the SQL DOES have a backing file; what is missing
+        # is a durable applier. See ledger C-6 / this migration's C-23 entry.
+        run: npm run ci:journey-migration-reachability
+
       - name: Guardrails — server SQL references a table nothing creates
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
         # tests vi.mock the db module so a mock accepts any table name; the
@@ -94,12 +103,22 @@ jobs:
         # a document query.
         run: npm run check:security-patterns
 
-      - name: Proof tier — schema contracts + golden journeys
+      - name: Guardrails — proof surface must not shrink or overclaim
+        # The proof hierarchy (docs/architecture/PROOF_HIERARCHY.md) is only a
+        # ladder if it stays standing. This fails if a baselined proof file is
+        # deleted, if a journey/proof stops emitting its manifest, or if the
+        # hierarchy doc references a proof file that no longer exists — the
+        # silent-rot class that no individual test would catch.
+        run: npm run ci:proof-tier
+
+      - name: Proof tier — schema contracts + golden journeys + export contracts
         # These run inside `npm test` too, but they get their own blocking step
         # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/
         # C-14/C-16 remediations and must fail loudly and early, not be buried in
         # a full-suite run. They need no external database: the harness applies
-        # the real migration files to an in-process Postgres (PGlite).
+        # the real migration files to an in-process Postgres (PGlite). The
+        # export-contract proofs reopen real emitted PDF/DOCX bytes with
+        # independent readers (tiers 6-7 of the proof hierarchy).
         run: npm run test:proof-tier
 
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
@@ -287,8 +306,13 @@ jobs:
           done
           echo "::error::npm ci failed after 3 attempts"; exit 1
 
-      - name: Install Postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install Postgres client + xmllint (eCTD qualification)
+        # libxml2-utils provides xmllint, which the eCTD qualification harness
+        # (server/services/ectd/qualification) uses to validate generated
+        # backbones for real. Its suite skipIf's when the binary is absent —
+        # installing it here is what makes CI actually run that conformance
+        # evidence rather than silently skipping it.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client libxml2-utils
 
       - name: Setup Python (document runtime)
         uses: actions/setup-python@v5

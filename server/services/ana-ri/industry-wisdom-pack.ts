@@ -403,6 +403,247 @@ const BIOTECH_WISDOM: WisdomHeuristic[] = [
       'Treat any process change as a comparability exercise scoped to the modality, plan changes against the approved control strategy, and use the established-conditions framework to bound what is reportable.',
     basis: 'ICH Q5E; FDA CGT CMC expectations; ICH Q12 established conditions.',
   },
+  // ─── strategy ─────────────────────────────────────────────────────────────
+  {
+    id: 'bio-tpp-is-the-contract',
+    segment: 'biotech',
+    stage: 'strategy',
+    title: 'The target product profile is the contract every later decision is judged against',
+    situation:
+      'A team starts nonclinical and CMC work before writing a target product profile, treating the TPP as a marketing document to backfill later.',
+    consequence:
+      'Without a TPP, endpoint choices, comparator selection, and manufacturing scale get made ad hoc, and they do not line up when the filing has to argue a single coherent benefit-risk story. The reviewer sees a program assembled from parts rather than designed toward a claim.',
+    veteranMove:
+      'Write the TPP first, as the label you intend to earn. Make every downstream decision — indication wording, primary endpoint, dosing, safety database size — trace back to a line in it, and revisit it at each milestone rather than at the end.',
+    basis: 'FDA target product profile guidance (2007); development-to-label alignment under 21 CFR 314/601.',
+  },
+  {
+    id: 'bio-pathway-is-a-data-commitment',
+    segment: 'biotech',
+    stage: 'strategy',
+    title: 'The pathway you pick is a commitment to a specific evidence package, not a filing shortcut',
+    situation:
+      'A team selects a regulatory pathway — full BLA, accelerated approval, or a reliance route in a second market — based on speed, without mapping what evidence each one actually obligates.',
+    consequence:
+      'A pathway chosen for speed but under-resourced on evidence stalls at the first major review cycle, and switching pathways mid-development usually costs more time than the original slower route would have.',
+    veteranMove:
+      'For each candidate pathway, write down the evidence it requires, the post-marketing obligations it creates, and the agency interactions it presumes. Choose the one whose evidence commitment your program can actually meet on its timeline, then plan to it.',
+    basis: 'FDA expedited programs guidance (2014); accelerated approval confirmatory obligations under subpart H/E.',
+  },
+  {
+    id: 'bio-safety-database-size-early',
+    segment: 'biotech',
+    stage: 'strategy',
+    title: 'Size the safety database against the label you want, before Phase 3 locks',
+    situation:
+      'A team powers Phase 3 for efficacy alone and discovers at pre-BLA that total exposure falls short of what the intended chronic-use indication requires.',
+    consequence:
+      'An efficacy-adequate but exposure-short database forces either a narrower label than intended or a post-marketing requirement the sponsor wanted to avoid, and neither is recoverable once the trials have read out.',
+    veteranMove:
+      'Back-calculate the required patient-years of exposure from the intended indication and dosing duration, confirm the Phase 3 program delivers it before locking enrollment, and raise it at the End-of-Phase-2 meeting.',
+    basis: 'ICH E1 extent of population exposure for chronic conditions; FDA safety database expectations at pre-BLA.',
+  },
+  // ─── nonclinical_cmc ──────────────────────────────────────────────────────
+  {
+    id: 'bio-reference-standard-is-infrastructure',
+    segment: 'biotech',
+    stage: 'nonclinical_cmc',
+    title: 'A qualified reference standard is infrastructure, not a late CMC deliverable',
+    situation:
+      'A team runs comparability and potency across development against shifting in-house material because a formal two-tiered reference standard was never qualified early.',
+    consequence:
+      'Without a stable primary and working reference standard, every comparability and stability claim rests on a moving baseline, and the reviewer cannot trust that pre- and post-change results are measured against the same thing.',
+    veteranMove:
+      'Qualify a two-tiered reference standard (primary plus working) early, with a documented bridging protocol between lots, and treat it as the measurement backbone all comparability, potency, and stability data depend on.',
+    basis: 'ICH Q6B reference standards; ICH Q5E comparability against a defined baseline.',
+  },
+  {
+    id: 'bio-specs-justified-by-clinical-experience',
+    segment: 'biotech',
+    stage: 'nonclinical_cmc',
+    title: 'Your specifications have to be justified by clinical experience, not just process capability',
+    situation:
+      'A team sets release and stability acceptance criteria from process capability alone, without tying the ranges to the quality of material actually used in the pivotal trials.',
+    consequence:
+      'A specification wider than the clinically qualified range invites the reviewer to ask what evidence supports safety and efficacy at the edges, and a specification tighter than the process can hold generates out-of-specification results and supply risk after approval.',
+    veteranMove:
+      'Anchor each specification to the range of material that was clinically qualified, confirm the process can consistently meet it, and resolve any disagreement between the two before filing rather than in a deficiency response.',
+    basis: 'ICH Q6B specifications; clinical qualification of specifications in FDA and EMA review.',
+  },
+  {
+    id: 'bio-process-validation-is-a-lifecycle',
+    segment: 'biotech',
+    stage: 'nonclinical_cmc',
+    title: 'Process validation is a three-stage lifecycle, and the Stage 1 rationale is due at filing',
+    situation:
+      'A team treats process validation as the PPQ batches run just before filing and under-documents the process-design and control-strategy rationale that should precede them.',
+    consequence:
+      'PPQ batches without a documented process-design rationale read as three successful runs rather than a validated process, and the reviewer asks for the control-strategy justification that should have been built in from the start.',
+    veteranMove:
+      'Build the control strategy — CQAs to CPPs to specs to methods — as Stage 1 process design, run PPQ against it as Stage 2, carry continued verification into the lifecycle as Stage 3, and file the Stage 1 rationale, not just the batch results.',
+    basis: 'FDA Process Validation guidance (2011) three-stage lifecycle; ICH Q8/Q11 control strategy.',
+  },
+  // ─── clinical ─────────────────────────────────────────────────────────────
+  {
+    id: 'bio-clinical-hold-is-a-response',
+    segment: 'biotech',
+    stage: 'clinical',
+    title: 'A clinical hold is a defined set of questions with a response clock, not an ending',
+    situation:
+      'A team receives a clinical hold and reacts to it as a program-level failure, losing time to alarm rather than reading the hold letter as the specific, answerable list of deficiencies it is.',
+    consequence:
+      'Treating a hold as a verdict rather than a question set delays the complete response that restarts the program, and a disorganized response can draw a second cycle of the same questions.',
+    veteranMove:
+      'Parse the hold letter into its specific deficiencies, request a Type A meeting if the path to resolution is genuinely unclear, and submit a complete response that answers each item directly. FDA has 30 days to respond to a complete response to a hold.',
+    basis: '21 CFR 312.42 clinical holds; Type A meeting eligibility; complete-response-to-hold procedures.',
+  },
+  {
+    id: 'bio-ind-safety-report-clock',
+    segment: 'biotech',
+    stage: 'clinical',
+    title: 'The IND safety-report clock starts at the determination, not at case entry',
+    situation:
+      'A team defaults to reporting individual serious adverse events as expedited IND safety reports without applying the aggregate, causality, and expectedness analysis that actually triggers the 15-day clock.',
+    consequence:
+      'Over-reporting uninformative single cases buries the signals FDA is watching for and erodes the credibility of the surveillance, while missing a genuine aggregate signal is a serious compliance and patient-safety failure.',
+    veteranMove:
+      'Apply the four-factor test — serious, unexpected, a reasonable possibility of causation, and where relevant an aggregate analysis across the program — before the clock starts. Report what meets 21 CFR 312.32 and document the analysis for what does not.',
+    basis: '21 CFR 312.32 IND safety reporting; FDA safety-reporting guidance and the aggregate-analysis expectation.',
+  },
+  {
+    id: 'bio-adaptive-design-prespecify',
+    segment: 'biotech',
+    stage: 'clinical',
+    title: 'An adaptive design earns its flexibility only if the rules are pre-specified and simulated',
+    situation:
+      'A team adopts an adaptive or seamless design for speed but leaves the adaptation rules, alpha-spending, and decision boundaries loosely specified, intending to finalize them near the interim.',
+    consequence:
+      'An adaptation that was not fully pre-specified and simulated invites the reviewer to question the type I error control of the entire trial, and a late change to the rule can invalidate the pivotal evidence the design was meant to accelerate.',
+    veteranMove:
+      'Pre-specify every adaptation rule, the alpha-spending function, and the operating characteristics from trial simulation, agree them with the agency before the first patient, and treat the simulation report as part of the design rather than an appendix.',
+    basis: 'FDA Adaptive Designs guidance (2019); ICH E9 type I error control; simulation-based operating characteristics.',
+  },
+  // ─── pre_submission ───────────────────────────────────────────────────────
+  {
+    id: 'bio-pre-ind-sets-the-program',
+    segment: 'biotech',
+    stage: 'pre_submission',
+    title: 'The pre-IND meeting is where you resolve the questions that would otherwise become a hold',
+    situation:
+      'A team uses the pre-IND meeting to confirm decisions it has already made rather than to resolve the genuine uncertainties — starting dose rationale, tox package adequacy, first-in-human protocol design — that FDA could later hold the IND on.',
+    consequence:
+      'A pre-IND meeting spent on settled questions wastes the single cheapest chance to de-risk the IND, and the unresolved uncertainty resurfaces as a clinical hold once the IND is filed.',
+    veteranMove:
+      'Bring the two or three questions whose wrong answer would trigger a hold — the starting dose and its nonclinical basis, the pivotal tox program, the first-in-human protocol — with your own position on each, and ask for agreement rather than open-ended advice.',
+    basis: 'FDA pre-IND (Type B) meeting practice; 21 CFR 312.82; clinical-hold prevention through early alignment.',
+  },
+  {
+    id: 'bio-endofphase2-locks-the-pivotal',
+    segment: 'biotech',
+    stage: 'pre_submission',
+    title: 'The End-of-Phase-2 meeting is the last cheap chance to change the pivotal',
+    situation:
+      'A team goes into the End-of-Phase-2 meeting without a locked pivotal protocol, or skips it to save calendar time, planning to finalize the Phase 3 design internally afterward.',
+    consequence:
+      'Any disagreement about the primary endpoint, the control arm, the analysis population, or the statistical plan that is not resolved at EOP2 becomes a review-cycle deficiency after the pivotal has read out, when it is far too late and far too expensive to fix.',
+    veteranMove:
+      'Walk into EOP2 with the pivotal protocol, the SAP outline, and the proposed labeling claim, get explicit agreement on the endpoint, comparator, and success criterion, and capture every agreement in the minutes.',
+    basis: 'FDA End-of-Phase-2 (Type B) meeting practice; 21 CFR 312.47; pivotal-design agreement as the review-risk hinge.',
+  },
+  // ─── submission ───────────────────────────────────────────────────────────
+  {
+    id: 'bio-bla-rtf-is-a-checklist',
+    segment: 'biotech',
+    stage: 'submission',
+    title: 'A refuse-to-file is almost always a completeness failure, not a science failure',
+    situation:
+      'A team focuses filing effort on the strength of the efficacy argument and treats administrative completeness — the integrated summaries, datasets in the required format, financial disclosures, the pediatric plan — as clerical work to finish last.',
+    consequence:
+      'FDA can refuse to file a BLA in the first 60 days for a missing integrated summary, non-conformant datasets, or an absent required plan, regardless of how strong the underlying science is. The review clock never starts.',
+    veteranMove:
+      'Run a filing checklist against the refuse-to-file criteria before transmit: ISS and ISE present and consistent, datasets conformant, financial disclosures complete, required plans included. Close every administrative gap as a binary gate.',
+    basis: 'FDA refuse-to-file guidance; 21 CFR 314.101 filing standards applied to BLAs; ISS/ISE completeness expectations.',
+  },
+  {
+    id: 'bio-datasets-must-reproduce',
+    segment: 'biotech',
+    stage: 'submission',
+    title: 'The reviewer reruns your analyses, so the datasets have to reproduce the summaries',
+    situation:
+      'A team submits the clinical summaries and the study datasets as separate workstreams without confirming that the submitted CDISC datasets actually regenerate the numbers in the CSRs and Module 2 summaries.',
+    consequence:
+      'The statistical reviewer runs the analyses from the submitted datasets. Any number that does not reproduce becomes an information request, and a pattern of non-reproducing results erodes confidence in the entire efficacy package.',
+    veteranMove:
+      'Before filing, confirm the submitted SDTM and ADaM datasets and analysis programs regenerate the primary and key secondary results exactly as the summaries report them, and ship the define.xml and reviewer guides that let the reviewer do it fast.',
+    basis: 'FDA Study Data Technical Conformance Guide; CDISC SDTM/ADaM; reproducibility of the primary analysis in review.',
+  },
+  // ─── agency_interaction ───────────────────────────────────────────────────
+  {
+    id: 'bio-advisory-committee-is-a-defense',
+    segment: 'biotech',
+    stage: 'agency_interaction',
+    title: 'An advisory committee is a public cross-examination, and the questions are knowable in advance',
+    situation:
+      'A team preparing for an advisory committee rehearses its own story rather than the specific voting questions FDA will pose and the weaknesses the briefing documents have already exposed.',
+    consequence:
+      'A sponsor that has not war-gamed the actual voting questions and the panel objections gets surprised in public, and a poor showing can shift a borderline benefit-risk decision against approval.',
+    veteranMove:
+      'Derive the likely voting questions from the FDA briefing document, assemble the data and back-up slides that answer each directly, run a mock panel with external skeptics, and prepare the honest answer to your weakest point before the panel asks for it.',
+    basis: 'FDA advisory committee procedures; briefing-document-driven voting questions; benefit-risk framing under review.',
+  },
+  {
+    id: 'bio-information-request-clock',
+    segment: 'biotech',
+    stage: 'agency_interaction',
+    title: 'How you manage the review-cycle clock is part of the submission strategy',
+    situation:
+      'A team treats every information request during review as a task to answer as fast as possible, without distinguishing requests that can pause or extend the review clock from those that cannot.',
+    consequence:
+      'An unmanaged late submission of significant new data can be treated as a major amendment and extend the review cycle by three months, and answering a complex request too quickly with an incomplete response can draw a sharper repeat.',
+    veteranMove:
+      'Track which requests carry clock consequences, resource the load-bearing responses to be complete rather than merely fast, and decide deliberately whether new analyses are worth a major-amendment clock extension.',
+    basis: 'PDUFA review-cycle and major-amendment procedures; FDA information-request practice during review.',
+  },
+  // ─── lifecycle ────────────────────────────────────────────────────────────
+  {
+    id: 'bio-rems-is-a-label-negotiation',
+    segment: 'biotech',
+    stage: 'lifecycle',
+    title: 'A REMS is part of the benefit-risk negotiation, so design the minimum that makes the label approvable',
+    situation:
+      'A team treats a REMS as a compliance burden to accept whatever FDA proposes rather than as a risk-mitigation instrument it can shape to secure the label it wants.',
+    consequence:
+      'An over-built REMS with unnecessary elements to assure safe use creates a permanent operational and commercial burden, while under-proposing mitigation for a genuine risk can cost the approval or force a narrower indication.',
+    veteranMove:
+      'Match the REMS to the specific characterized risk: a medication guide or communication plan where that suffices, elements to assure safe use only where the risk genuinely requires it, and negotiate the minimum that makes the benefit-risk approvable.',
+    basis: 'FDAAA REMS authority; 21 CFR 208 medication guides; FDA REMS design and ETASU proportionality guidance.',
+  },
+  {
+    id: 'bio-post-approval-change-pathway',
+    segment: 'biotech',
+    stage: 'lifecycle',
+    title: 'A post-approval CMC change is a reporting-category decision before it is a technical one',
+    situation:
+      'A team plans a post-approval manufacturing change and focuses on the comparability work without first deciding the reporting category — prior-approval supplement, CBE-30, CBE-0, or annual report — that governs when the change can be implemented.',
+    consequence:
+      'Misclassifying a change that required a prior-approval supplement as a lower category is a compliance violation that can trigger enforcement, while over-classifying a minor change as a prior-approval supplement ties up a needed improvement in a months-long review.',
+    veteranMove:
+      'Classify the change against the reporting-category framework and any established comparability protocol first, then scope the comparability evidence to what that category requires, using an approved protocol to down-classify anticipated changes ahead of time.',
+    basis: 'FDA post-approval changes guidance; 21 CFR 601.12 for biologics; ICH Q12 established conditions and comparability protocols.',
+  },
+  {
+    id: 'bio-pbrer-is-the-living-benefit-risk',
+    segment: 'biotech',
+    stage: 'lifecycle',
+    title: 'The periodic benefit-risk report is a cumulative argument, not a reporting-period snapshot',
+    situation:
+      'A team assembles each PBRER or PSUR from the current reporting interval alone, restating cases without maintaining the cumulative benefit-risk evaluation that ties the intervals together.',
+    consequence:
+      'A periodic report that reads as a disconnected interval summary invites regulators to question whether the sponsor is actually tracking the evolving benefit-risk profile, and a missed cumulative signal is both a safety failure and a compliance one.',
+    veteranMove:
+      'Maintain the benefit-risk evaluation as a living document across intervals, carry forward and update the important identified and potential risks, and let each report present the cumulative picture with the interval new information folded in.',
+    basis: 'ICH E2C(R2) PBRER; EU GVP Module VII; cumulative benefit-risk evaluation expectation.',
+  },
 ];
 
 // ─── Pharma wisdom (small molecule, lifecycle) ───────────────────────────────

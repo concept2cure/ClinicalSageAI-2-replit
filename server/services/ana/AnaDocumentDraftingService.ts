@@ -34,6 +34,7 @@ import {
   resolveToRegistryEntry,
   getSubmissionTypeContext,
 } from '../../../shared/regulatory/submission-type-bridge.js';
+import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -182,6 +183,40 @@ QUALITY REQUIREMENTS:
  * Resolve any submission type string to the best system prompt.
  * Checks hardcoded frameworks first, then builds a dynamic prompt from registry data.
  */
+/**
+ * Ground a draft in the section blueprint. Resolves (submissionType, sectionType)
+ * to the exact SectionDefinition and returns a REQUIREMENTS block carrying the
+ * governing standard (ICH/MDR/ISO reference), the content type, and whether the
+ * section is required — so the model drafts to the real regulatory structure
+ * rather than re-deriving it. Returns null when the pair can't be resolved (the
+ * draft then proceeds on the framework prompt alone, as before).
+ */
+export function resolveSectionRequirements(
+  submissionType: string | undefined,
+  sectionType: string,
+): string | null {
+  if (!submissionType) return null;
+  const entry = resolveToRegistryEntry(submissionType);
+  if (!entry) return null;
+
+  const blueprint = getSectionBlueprintForEntry(entry);
+  const norm = (s: string) => s.trim().toLowerCase();
+  const target = norm(sectionType);
+  const section = blueprint.sections.find(
+    (s) => norm(s.code) === target || norm(s.title) === target || norm(`${s.code} ${s.title}`) === target,
+  );
+  if (!section) return null;
+
+  const lines = [
+    `SECTION REQUIREMENTS (from the ${entry.displayName} authoring blueprint):`,
+    `- Section: ${section.code} — ${section.title}`,
+    `- Content type: ${section.contentType}`,
+    `- ${section.required ? 'REQUIRED section' : 'Optional section'}`,
+  ];
+  if (section.guidance) lines.push(`- Governing standard: ${section.guidance} (cite it and draft to its structure)`);
+  return lines.join('\n');
+}
+
 export function resolveSystemPrompt(submissionType: string): string {
   // Direct framework key (e.g. 'fda_510k', 'ich_clinical') — backward compatible.
   if (REGULATORY_SYSTEM_PROMPTS[submissionType]) {
@@ -335,6 +370,13 @@ export class AnaDocumentDraftingService {
     }
 
     userPrompt += `SECTION TO DRAFT: ${req.sectionType}\n\n`;
+
+    // Ground the draft in the section blueprint (guidance reference, content
+    // type, required flag) so every one of the 158 types drafts to its real
+    // regulatory structure rather than the model re-deriving it.
+    const requirements = resolveSectionRequirements(req.submissionType, req.sectionType);
+    if (requirements) userPrompt += `${requirements}\n\n`;
+
     userPrompt += `INSTRUCTIONS:\n${req.instructions}`;
 
     if (req.existingContent) {

@@ -82,10 +82,17 @@ export const workflowDocumentVersions = pgTable(
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     comments: text('comments'),
+    // Direct tenant scope on version rows (consistent with concept2cure_artifact_versions
+    // and module_documents). Added nullable + backfilled in 20260730, then tightened to
+    // NOT NULL in 20260731 once every writer was confirmed to stamp it and all historical
+    // rows were backfilled from the parent unified_documents.organization_id. NOT NULL here
+    // auto-tightens insertDocumentVersionSchema, so a writer that forgets the org fails loudly.
+    organizationId: integer('organization_id').notNull(),
   },
   table => {
     return {
       wfDocVersionIdx: uniqueIndex('wf_doc_version_idx').on(table.documentId, table.version),
+      wfDocVersionOrgIdx: index('idx_wf_doc_versions_org').on(table.organizationId),
     };
   }
 );

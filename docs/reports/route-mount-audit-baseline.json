@@ -1,21 +1,11 @@
 {
   "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
-  "generatedAt": "2026-07-20T05:57:29.084Z",
-  "mounts": 323,
-  "errors": 8,
-  "warnings": 7,
+  "generatedAt": "2026-07-30T02:55:49.580Z",
+  "mounts": 324,
+  "errors": 6,
+  "warnings": 8,
   "issues": {
     "errors": [
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/healthz"
-      },
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/readyz"
-      },
       {
         "type": "duplicate-method-route",
         "path": null,
@@ -66,6 +56,11 @@
       {
         "type": "multi-use-prefix",
         "path": "/api/cmc/module3-os",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/ectd",
         "key": null
       },
       {

@@ -55,9 +55,6 @@ import {
   PACKAGE_SIGN_SIGNATURE_MEANING,
   loadSubmissionFkBySubmissionIdText,
 } from '../services/submission-package-orchestrator.js';
-import { db, pool } from '../db.js';
-import { electronicSignatures } from '../../shared/schema.js';
-import { eq } from 'drizzle-orm';
 import part11ComplianceService from '../services/part11ComplianceService.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
@@ -278,6 +275,11 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   }
 
   // ── Create the signature row ────────────────────────────────────────────
+  // OQ-6 + OQ-7: the orchestrator's bound_payload_digest and the tenant's
+  // organization_id are passed INTO the canonical insertion path and written
+  // at INSERT time, so the row is complete when it is born. No row is ever
+  // UPDATEd after insertion (§11.70 append-only invariant) — the previous
+  // insert-then-tighten UPDATE was itself a violation of that invariant.
   let signatureId: number;
   try {
     const result = await part11ComplianceService.createElectronicSignature({
@@ -288,9 +290,33 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
       signatureReason: reason,
       signatureMeaning, // 'approval' — OQ-8
       password,
+      boundPayloadDigest,
+      signerRole: signerRole ?? undefined,
     });
     signatureId = result.signatureId;
   } catch (err) {
+    // Concurrent-signing race: the pre-check (findActiveReleaseSignature)
+    // and this INSERT are not atomic, so two signers can both pass the check
+    // and race to insert. The database backstop
+    // (electronic_signatures_active_release_uniq) rejects the loser with a
+    // unique-violation (23505). That is not a failure — it is exactly the
+    // idempotent "already signed" outcome: re-read the winner's row and
+    // return its id, the same 200 the pre-check hit returns. OQ-3 holds
+    // because the DB guaranteed exactly one active release signature landed.
+    if ((err as { code?: string } | null)?.code === '23505') {
+      const winner = await findActiveReleaseSignature({ organizationId, boundPayloadDigest });
+      if (winner) {
+        return res.json({ signatureId: winner.id, already_signed: true });
+      }
+      // Unique violation but no active row found — a superseded-chain edge
+      // case. Surface honestly rather than papering over it.
+      log.error('release signature unique-violation with no resolvable active row', {
+        organizationId,
+        runId,
+        signerId,
+      });
+      return res.status(409).json({ error: 'signature_race_unresolved' });
+    }
     log.error('createElectronicSignature failed', {
       organizationId,
       runId,
@@ -298,55 +324,6 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
       err: err instanceof Error ? err.message : String(err),
     });
     return res.status(500).json({ error: 'signature_creation_failed' });
-  }
-
-  // ── Update the new row with orchestrator-bound fields ───────────────────
-  // OQ-6 + OQ-7: write the bound_payload_digest + organization_id columns.
-  // The createElectronicSignature service is the canonical insertion path
-  // and doesn't yet know about these orchestrator-specific columns; we
-  // tighten them here in the same request lifecycle. This is the ONLY
-  // mutation to electronic_signatures — no row is ever UPDATEd after this
-  // initial set (§11.70 append-only invariant).
-  if (db) {
-    try {
-      await db
-        .update(electronicSignatures)
-        .set({
-          organizationId,
-          boundPayloadDigest,
-        })
-        .where(eq(electronicSignatures.id, signatureId));
-    } catch (err) {
-      log.error('failed to set bound_payload_digest on signature row', {
-        organizationId,
-        runId,
-        signatureId,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      // The row exists but isn't findable by the resume-path lookup —
-      // surface as 500 because the gate is now broken for this run.
-      return res.status(500).json({ error: 'signature_binding_failed' });
-    }
-  } else {
-    // db is null — fall back to raw pool to avoid hard-failing on
-    // environments that haven't initialized the Drizzle wrapper. This path
-    // is the same shape the orchestrator uses elsewhere when db is absent.
-    try {
-      await pool.query(
-        `UPDATE electronic_signatures
-            SET organization_id = $1, bound_payload_digest = $2
-          WHERE id = $3`,
-        [organizationId, boundPayloadDigest, signatureId],
-      );
-    } catch (err) {
-      log.error('failed to set bound_payload_digest on signature row (pool path)', {
-        organizationId,
-        runId,
-        signatureId,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      return res.status(500).json({ error: 'signature_binding_failed' });
-    }
   }
 
   // ── Audit the action ────────────────────────────────────────────────────

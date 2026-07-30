@@ -27,9 +27,12 @@ import type {
   SubmissionGateway,
   TransmitAuthorization,
 } from './types';
-import { TransmitAuthorizationError } from './types';
+import { TransmitAuthorizationError, ValidationError } from './types';
+import { evaluatePreTransmit } from './pre-transmit-check';
 
 export * from './types';
+export { evaluatePreTransmit } from './pre-transmit-check';
+export type { PreTransmitResult, PreTransmitInput, PreTransmitCheck } from './pre-transmit-check';
 export { platformTransmittalRecord, acknowledgementFilename } from './acknowledgement';
 export { packageEctdSubmission } from './regional-packager';
 export type { EctdLeaf, PackagerInput } from './regional-packager';
@@ -130,6 +133,23 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
     // slips past `.catch()` handlers that are otherwise correct.
     transmit: async (req: GatewayTransmitRequest) => {
       assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
+      // Package-fitness preconditions (belt-and-suspenders alongside the human
+      // gate): size limit (always), + PDF/A grade and DTD self-containment when
+      // the operator opts in for production. External agency-grade validation is
+      // enforced upstream in assess-dispatch-readiness (which holds the report),
+      // so it is not re-run here.
+      const pre = evaluatePreTransmit({
+        region: impl.region,
+        bundle: req.bundle,
+        environment: req.environment,
+        enforceExternal: false,
+      });
+      if (!pre.cleared) {
+        throw new ValidationError(
+          `Refusing to transmit to ${impl.region.toUpperCase()} ${impl.gateway}: package failed pre-transmit checks. ${pre.blockers.join(' ')}`,
+          pre.blockers,
+        );
+      }
       return impl.transmit(req);
     },
     checkStatus: (transmittalId: number) => impl.checkStatus(transmittalId),

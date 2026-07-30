@@ -52,10 +52,10 @@ beforeAll(async () => {
     -- A unified doc with body content in a workflow version — the NEW path.
     INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)
     VALUES (10, 'Unified Leaf', 'protocol', 'tester', ${ORG}, 2);
-    INSERT INTO workflow_document_versions (document_id, version, content, created_by)
+    INSERT INTO workflow_document_versions (document_id, version, content, created_by, organization_id)
     VALUES
-      (10, 1, '{"type":"doc","content":[{"type":"text","text":"old body"}]}'::json, 'tester'),
-      (10, 2, '{"type":"doc","content":[{"type":"text","text":"Unified body v2"}]}'::json, 'tester');
+      (10, 1, '{"type":"doc","content":[{"type":"text","text":"old body"}]}'::json, 'tester', ${ORG}),
+      (10, 2, '{"type":"doc","content":[{"type":"text","text":"Unified body v2"}]}'::json, 'tester', ${ORG});
 
     -- A unified doc with NO version rows — should still render (title fallback).
     INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)

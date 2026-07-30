@@ -127,6 +127,28 @@ export interface SubmissionBundle {
     missing: string[];
     selfContained: boolean;
   };
+  /**
+   * Optional Study Tagging File (STF) roll-up: how many per-study stf.xml files
+   * were generated + cross-linked into M4/M5, and how many study leaves were
+   * untagged (missing a studyId). Set by the packager when study leaves are
+   * present; absent otherwise.
+   */
+  stf?: {
+    studies: number;
+    leaves: number;
+    untagged: number;
+  };
+  /**
+   * Optional intra-package cross-reference resolution result: how many declared
+   * hyperlinks between leaves resolved, and which are broken (dangling /
+   * withdrawn target). Set by the packager only when `crossReferences` were
+   * declared; absent otherwise.
+   */
+  crossReferenceStatus?: {
+    resolved: number;
+    broken: Array<{ source: string; target: string; reason: 'TARGET_NOT_FOUND' | 'TARGET_DELETED' }>;
+    ok: boolean;
+  };
 }
 
 /**

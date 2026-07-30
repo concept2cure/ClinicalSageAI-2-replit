@@ -85,10 +85,17 @@ function extractRoot(css, label) {
 function buildGlobalCascade() {
   const canonical = fs.readFileSync(CANONICAL,  'utf8');
   const indexCss  = fs.readFileSync(INDEX_SHIM, 'utf8');
-  const zenCss    = fs.readFileSync(ZEN_CSS,    'utf8');
+  // zen.css was retired: its 49 --zen-* tokens and 92 .zen-* selectors were
+  // folded into client/src/index.css (see the note there). The file no longer
+  // exists, so reading it unconditionally crashed this guard with ENOENT. Read it
+  // only if present, and take its :root tokens from the index shim otherwise —
+  // where they now live — so the cascade still resolves either way.
+  const zenTokens = fs.existsSync(ZEN_CSS)
+    ? extractRoot(fs.readFileSync(ZEN_CSS, 'utf8'), 'zen')
+    : {};
   return {
     ...extractRoot(canonical, 'canonical'),
-    ...extractRoot(zenCss,    'zen'),
+    ...zenTokens,
     ...extractRoot(indexCss,  'index-shim'),
   };
 }

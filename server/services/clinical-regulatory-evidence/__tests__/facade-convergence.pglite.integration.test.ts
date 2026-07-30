@@ -53,13 +53,24 @@ beforeAll(async () => {
       'utf8',
     ),
   );
+  // Minimal real protocol-objectives store — only the columns getDesignEvidence's
+  // endpoint resolver reads (it resolves a protocol_documents id → primary endpoint).
+  await pglite.exec(
+    `CREATE TABLE IF NOT EXISTS protocol_objectives (
+       id serial PRIMARY KEY, organization_id integer NOT NULL, protocol_document_id integer NOT NULL,
+       objective_type text, objective text, endpoint text, order_index integer NOT NULL DEFAULT 0 );`,
+  );
 }, 90_000);
 afterAll(async () => {
   await pglite.close();
 }, 30_000);
 
 /** An ingested CRL source + one finding, the way crl-ingestion writes them. */
-async function ingestCrl(orgId: number, over: Record<string, unknown> = {}) {
+async function ingestCrl(
+  orgId: number,
+  over: Record<string, unknown> = {},
+  srcOver: Record<string, unknown> = {},
+) {
   const src = await spine.createSource(orgId, {
     sourceType: 'fda_crl',
     visibilityClass: 'tenant_private',
@@ -70,6 +81,7 @@ async function ingestCrl(orgId: number, over: Record<string, unknown> = {}) {
     documentDate: '2026-05-01',
     extractionStatus: 'extracted',
     ingestionStatus: 'ingested',
+    ...srcOver,
   });
   const finding = await spine.createFinding(orgId, {
     sourceId: src.id,
@@ -220,5 +232,101 @@ describe('finding by id and verified outcomes', () => {
     const outcome = await facade.getOutcome(scopeA, 'NDA-215000');
     expect(outcome?.outcome).toBe('crl');
     expect(outcome?.applicationType).toBe('NDA');
+  });
+});
+
+describe('discipline is resolved honestly — never fabricated as clinical', () => {
+  // Fresh orgs so each read sees only its own seeded finding (no beforeEach reset).
+  it('falls back to the finding_domain mapping when the review discipline is absent', async () => {
+    await ingestCrl(7301, { fdaReviewDiscipline: null, findingDomain: 'biostatistics' });
+    const r = await facade.searchFindings({ organizationId: 7301 });
+    expect(r.findings[0].discipline).toBe('statistical'); // was fabricated as 'clinical' before
+  });
+
+  it('buckets an undeterminable discipline as administrative, not clinical', async () => {
+    await ingestCrl(7302, { fdaReviewDiscipline: null, findingDomain: 'other' });
+    const r = await facade.searchFindings({ organizationId: 7302 });
+    expect(r.findings[0].discipline).toBe('administrative');
+  });
+
+  it('normalizes a free-text review discipline through synonyms', async () => {
+    await ingestCrl(7303, { fdaReviewDiscipline: 'Biostatistics', findingDomain: 'clinical' });
+    const r = await facade.searchFindings({ organizationId: 7303 });
+    expect(r.findings[0].discipline).toBe('statistical'); // synonym wins over the raw cast
+    // …and the discipline filter matches on that SAME normalized value.
+    expect((await facade.searchFindings({ organizationId: 7303 }, { discipline: 'statistical' })).findings).toHaveLength(1);
+    expect((await facade.searchFindings({ organizationId: 7303 }, { discipline: 'clinical' })).findings).toHaveLength(0);
+  });
+});
+
+describe('source visibility is not collapsed', () => {
+  it('preserves project_private instead of widening it to tenant_private', async () => {
+    await ingestCrl(7304, {}, { visibilityClass: 'project_private' });
+    const r = await facade.searchFindings({ organizationId: 7304 });
+    expect(r.findings[0].source.visibility).toBe('project_private');
+  });
+});
+
+describe('getDesignEvidence — endpoint-scoped findings + selected stress scenarios', () => {
+  it('resolves the primary endpoint and returns its FDA precedent + defensible stress tests', async () => {
+    const ORG = 8801;
+    const DOC_ID = 8801001;                                      // a real protocol_documents id
+    await pglite.query(
+      `INSERT INTO protocol_objectives (organization_id, protocol_document_id, objective_type, objective, endpoint, order_index)
+       VALUES ($1, $2, 'primary', 'Demonstrate OS benefit', 'Overall survival', 0)`,
+      [ORG, DOC_ID],
+    );
+    await ingestCrl(ORG, {
+      findingDomain: 'biostatistics',
+      fdaReviewDiscipline: 'statistical',
+      findingText: 'Overall survival endpoint: multiplicity control across the co-primary family was inadequate.',
+      normalizedSummary: 'Overall survival multiplicity control inadequate.',
+    });
+
+    const panel = await facade.getDesignEvidence({ organizationId: ORG }, String(DOC_ID), 'endpoint');
+    expect(panel.findings.length).toBeGreaterThan(0);            // endpoint-scoped, real
+    expect(panel.stressScenarios.map(s => s.scenarioId)).toContain('multiplicity_penalty');
+    expect(panel.stressScenarios.every(s => s.result === null)).toBe(true); // selected, not run
+    expect(panel.comparableStudies).toHaveLength(0);             // honest-empty (no clean indication)
+    expect(panel.coverage).toBeTruthy();
+  });
+
+  it('is honest-empty when the design node is unknown', async () => {
+    const panel = await facade.getDesignEvidence({ organizationId: 8809 }, 'NO-SUCH-NODE');
+    expect(panel.findings).toHaveLength(0);
+  });
+});
+
+describe('getTrace — the inspectable relationship chain for a spine entity', () => {
+  it('returns the edges around a source ref, and null for unknown/garbage refs', async () => {
+    const ORG = 8802;
+    const src = await spine.createSource(ORG, { sourceType: 'csr', visibilityClass: 'tenant_private' });
+    const study = await spine.upsertStudy(ORG, { canonicalStudyKey: 'S-8802', indication: 'NSCLC' });
+    await spine.addRelationship(ORG, {
+      fromEntityType: 'source', fromEntityId: src.id, toEntityType: 'study', toEntityId: study.id,
+      relationshipType: 'describes_study',
+    });
+
+    const trace = await facade.getTrace({ organizationId: ORG }, `source:${src.id}`);
+    expect(trace).not.toBeNull();
+    expect(trace!.chain.some(c => c.step === 'describes_study' && c.count === 1)).toBe(true);
+
+    expect(await facade.getTrace({ organizationId: ORG }, 'source:999999')).toBeNull(); // no edges
+    expect(await facade.getTrace({ organizationId: ORG }, 'not-a-ref')).toBeNull();      // unparseable
+  });
+});
+
+describe('runStressTest — findings-driven scenario selection', () => {
+  it('selects scenarios from the findings on record; empty when none exist', async () => {
+    const ORG = 8803;
+    await ingestCrl(ORG, {
+      findingDomain: 'biostatistics',
+      findingText: 'Multiplicity control across secondary endpoints was inadequate.',
+    });
+    const run = await facade.runStressTest({ organizationId: ORG }, { designNodeId: 'PROT-8803' });
+    expect(run.scenarios.map(s => s.scenarioId)).toContain('multiplicity_penalty');
+
+    const empty = await facade.runStressTest({ organizationId: 8804 }, { designNodeId: 'x' });
+    expect(empty.scenarios).toHaveLength(0);
   });
 });

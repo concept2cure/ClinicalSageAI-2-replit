@@ -45,12 +45,12 @@ const EMPTY_CASES: LiveSaeCase[] = [];
 export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
 
-  /* Real SAE case worklist. GET /api/safety-narratives/cases queries the governed
-     c2c_sae_cases table (server/routes/safety-narrative.ts, pool.query, scoped by
-     organization) and computes each row's 21 CFR 312.32(c) / ICH E2A expedited-
-     reporting clock live. useLiveRows unwraps the { data } envelope into real
-     cases, an honest empty (an unprovisioned store fails closed to []), or an
-     honest error (no org / unreachable) — never a fixture. */
+  /* Real SAE case worklist. GET /api/safety-narratives/cases is assembled from the
+     real, org-scoped pharmacovigilance store (adverse_events — the table
+     pharmacovigilanceService writes) and computes each row's 21 CFR 312.32(c) / ICH
+     E2A expedited-reporting clock live from the case facts. useLiveRows unwraps the
+     { data } envelope into real cases, an honest empty (an unprovisioned store fails
+     closed to []), or an honest error (no org / unreachable) — never a fixture. */
   const live = useLiveRows<LiveSaeCase>('/api/safety-narratives/cases');
   /* Feed the editable store a STABLE empty seed while loading / on error (see
      EMPTY_CASES) so the re-seed effect below doesn't loop. */

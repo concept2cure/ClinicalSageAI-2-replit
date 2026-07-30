@@ -27,10 +27,11 @@ import {
   getAllFamiliesSorted,
 } from '../../../../shared/regulatory/application-families.js';
 import {
-  bootstrapProject,
   getSectionBlueprintForEntry,
   getTaskBlueprintForEntry,
 } from '../../../../shared/regulatory/project-bootstrap.js';
+import { getSectionBlueprint } from '../sectionBlueprintCatalog.js';
+import { getTaskBlueprint } from '../taskBlueprintCatalog.js';
 import {
   getTaxonomyTree,
   getCountBySegment,
@@ -178,30 +179,35 @@ export function resolve(idOrLegacy: string): ResolveResult | null {
  * Get a bootstrap preview for a given registry entry ID.
  * Used by the UI to show what will be created before project creation.
  */
-export function getBootstrapPreview(registryId: string): BootstrapPreview | null {
+export async function getBootstrapPreview(registryId: string): Promise<BootstrapPreview | null> {
   const entry = getApplicationType(registryId);
   if (!entry) return null;
 
-  const bootstrap = bootstrapProject(entry);
+  // Prefer the dedicated, region-specific section blueprint (Canada, Japan, EU,
+  // China, Brazil, India, Australia, US NDA/BLA) so the preview matches what
+  // project creation actually seeds; fall back to the generic CTD blueprint.
+  const dedicatedSection = await getSectionBlueprint(entry.id);
+  const sectionBlueprint = dedicatedSection ?? getSectionBlueprintForEntry(entry);
+  const taskBlueprint = await getTaskBlueprint(entry.id);
   const regionProfile = getRegionProfile(entry.region);
 
   return {
     entry,
     regionProfile,
-    sections: bootstrap.sections.map(s => ({
+    sections: sectionBlueprint.sections.map(s => ({
       code: s.code,
       title: s.title,
       module: s.module,
       required: s.required,
     })),
-    milestones: bootstrap.milestones.map(m => ({
+    milestones: taskBlueprint.milestones.map(m => ({
       id: m.id,
       title: m.title,
       taskCount: m.tasks.length,
     })),
-    requiredArtifacts: bootstrap.requiredArtifacts,
-    dossierStandard: bootstrap.dossierStandard as DossierStandard,
-    validationProfile: bootstrap.validationProfile,
+    requiredArtifacts: entry.requiredArtifacts,
+    dossierStandard: entry.dossierStandard as DossierStandard,
+    validationProfile: entry.validationProfile,
   };
 }
 

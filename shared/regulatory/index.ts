@@ -14,3 +14,5 @@ export * from './global-document-registry';
 export * from './filing-taxonomy';
 export * from './project-bootstrap';
 export * from './study-archetypes';
+export * from './document-lifecycle';
+export * from './canonical-document';

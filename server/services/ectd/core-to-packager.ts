@@ -40,7 +40,11 @@ export interface CoreLeaf {
 export interface ResolvedFile {
   fileName: string;
   sourcePath: string;
+  /** MD5 — the eCTD index requirement (goes into the regulatory backbone). */
   md5?: string;
+  /** SHA-256 — modern integrity hash retained for package governance OUTSIDE the
+   *  eCTD backbone (the index/md5.txt still use md5 for agency compatibility). */
+  sha256?: string;
 }
 
 /** Resolve a core leaf's polymorphic document reference to an on-disk file. */

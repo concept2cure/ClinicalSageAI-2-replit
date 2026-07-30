@@ -329,13 +329,38 @@ CREATE TABLE IF NOT EXISTS unified_documents (
 );
 
 CREATE TABLE IF NOT EXISTS workflow_document_versions (
-  id          SERIAL PRIMARY KEY,
-  document_id INTEGER NOT NULL,
-  version     INTEGER NOT NULL,
-  content     JSON,
-  created_by  TEXT NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  comments    TEXT
+  id              SERIAL PRIMARY KEY,
+  document_id     INTEGER NOT NULL,
+  version         INTEGER NOT NULL,
+  content         JSON,
+  created_by      TEXT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  comments        TEXT,
+  -- Direct tenant scope (migrations 20260730 add + 20260731 NOT NULL). Mirrors
+  -- production so the harness exercises the org-scoped version reads.
+  organization_id INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS canonical_documents (
+  canonical_id        TEXT PRIMARY KEY,
+  organization_id     INTEGER NOT NULL,
+  project_id          TEXT,
+  title               TEXT NOT NULL,
+  document_type       TEXT NOT NULL,
+  version             INTEGER NOT NULL DEFAULT 1,
+  stage               TEXT NOT NULL DEFAULT 'authoring',
+  has_content         BOOLEAN NOT NULL DEFAULT false,
+  content_hash        TEXT NOT NULL DEFAULT '',
+  review_signature    JSONB,
+  approval_signature  JSONB,
+  placement           JSONB,
+  packaging_validated BOOLEAN NOT NULL DEFAULT false,
+  export_facet        JSONB,
+  source_refs         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  outline             JSONB NOT NULL DEFAULT '[]'::jsonb,
+  audit               JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS ctd_onboarding_documents (

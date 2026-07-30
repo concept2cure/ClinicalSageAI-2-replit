@@ -13,6 +13,40 @@ import {
   type EstarTemplateVariant,
 } from '../services/pathway-engines/estar/estar-template-registry';
 import { listAcroFields } from '../services/forms/fill-official-pdf';
+import {
+  ESTAR_VERSIONS,
+  ESTAR_FAMILY_LABELS,
+  versionLifecycleAsOf,
+} from '../services/pathway-engines/estar/estar-versions';
+import {
+  ESTAR_CATALOG,
+  getCatalogEntry,
+  type EstarCatalogKey,
+} from '../services/pathway-engines/estar/estar-catalog';
+import { assessClientEstarEligibility } from '../services/pathway-engines/estar/estar-registration';
+import {
+  assessEstarFilingReadiness,
+  type FilingLeaf,
+} from '../services/pathway-engines/estar/estar-filing-readiness';
+import { loadDeviceContentLeaves } from '../services/pathway-engines/estar/estar-content-leaves';
+import {
+  getEstarRegistration,
+  upsertEstarRegistration,
+  toClientRegistration,
+  resolveClientRegistration,
+  type EstarRegistrationWrite,
+} from '../services/pathway-engines/estar/estar-registration-service';
+import {
+  createEstarSubmission,
+  listEstarSubmissions,
+  getEstarSubmission,
+  advanceEstarSubmission,
+  EstarSubmissionError,
+} from '../services/pathway-engines/estar/estar-submission-service';
+import {
+  ESTAR_SUBMISSION_STATUSES,
+  type EstarSubmissionStatus,
+} from '../../shared/schema/estar-submission';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
@@ -84,6 +118,14 @@ function getOrganizationId(req: any): number {
     throw new Error('Valid numeric organizationId is required for governed eSTAR export');
   }
   return parsed;
+}
+
+/** Soft org resolver for read paths — returns null instead of throwing. */
+function resolveOrgId(req: any): number | null {
+  const n = Number(
+    req.resolvedOrganizationId ?? req.tenantContext?.organizationId ?? req.user?.organizationId ?? req.tenantId,
+  );
+  return Number.isInteger(n) && n > 0 ? n : null;
 }
 
 async function buildZipBuffer(
@@ -244,8 +286,22 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
   }
 });
 
-const ESTAR_TYPES = ['510k', 'de_novo'] as const;
+// The nIVD/IVD eSTAR (v7.0) carries 510(k), De Novo, and PMA on device/ivd
+// variants. PreSTAR request types (Q-Sub/IDE/513(g)) are modeled in the engine
+// and exposed via GET /catalog; the official-fill/scaffold endpoints here cover
+// the nIVD/IVD marketing family.
+const ESTAR_TYPES = ['510k', 'de_novo', 'pma', 'q_sub', 'ide', '513g'] as const;
 const ESTAR_VARIANTS = ['device', 'ivd'] as const;
+
+// PreSTAR (Q-Sub/IDE/513(g)) share one template family regardless of device/ivd;
+// marketing pathways (510(k)/De Novo/PMA) use the device/ivd template variant.
+// The caller always states the device/ivd nature; template selection resolves it.
+function templateVariantFor(
+  type: (typeof ESTAR_TYPES)[number],
+  variant: (typeof ESTAR_VARIANTS)[number],
+): EstarTemplateVariant {
+  return type === 'q_sub' || type === 'ide' || type === '513g' ? 'prestar' : variant;
+}
 
 /** Turn an AcroForm field name into a stable, readable canonical-key placeholder. */
 function slugifyAcroFieldName(name: string): string {
@@ -287,7 +343,7 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
   }
 
   const { type, variant, templateBase64 } = validation.data;
-  const descriptor = descriptorFor(type, variant as EstarTemplateVariant);
+  const descriptor = descriptorFor(type, templateVariantFor(type, variant));
   if (!descriptor) {
     return res.status(400).json({ error: `No eSTAR template descriptor for ${type}/${variant}.` });
   }
@@ -395,7 +451,7 @@ router.post('/official', authMiddleware, requireEditorAccess, async (req, res) =
   try {
     const result = await fillEstarSubmission({
       type,
-      variant: variant as EstarTemplateVariant,
+      variant: templateVariantFor(type, variant),
       data,
       flatten,
     });
@@ -477,7 +533,7 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     // only the readiness booleans + blockers and ignore any produced bytes.
     const result = await fillEstarSubmission({
       type,
-      variant: variant as EstarTemplateVariant,
+      variant: templateVariantFor(type, variant),
       data: {},
     });
     const ready = result.templateAvailable && result.fieldMapPopulated;
@@ -499,6 +555,389 @@ router.get('/readiness', authMiddleware, async (req, res) => {
       error: 'ESTAR_READINESS_FAILED',
       message: error.message || 'Failed to assess eSTAR readiness',
     });
+  }
+});
+
+/**
+ * GET /api/510k/estar/catalog
+ *
+ * Read-only. Returns the whole eSTAR program surface a client can file into:
+ * the FDA version table (with each version's lifecycle computed as of today) and
+ * the full submission catalog (510(k), De Novo, PMA + supplements, Q-Sub sub-types,
+ * IDE, 513(g)). Drives the "start a submission" picker and the version-currency
+ * banner. Produces/persists nothing.
+ */
+router.get('/catalog', authMiddleware, async (_req, res) => {
+  try {
+    const asOf = new Date().toISOString().slice(0, 10);
+    const versions = ESTAR_VERSIONS.map((v) => ({
+      ...v,
+      familyLabel: ESTAR_FAMILY_LABELS[v.family],
+      lifecycle: versionLifecycleAsOf(v, asOf),
+    }));
+    return res.status(200).json({ asOf, versions, catalog: ESTAR_CATALOG });
+  } catch (error: any) {
+    logger.error('estar catalog failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_CATALOG_FAILED',
+      message: error.message || 'Failed to build the eSTAR catalog',
+    });
+  }
+});
+
+const REQUIREMENT_ENUM = z.enum([
+  'fda_esg_account',
+  'cdrh_portal_account',
+  'organization_identity',
+  'mdufa_fee_account',
+]);
+
+// Assess accepts an EXPLICIT registration (what-if) OR, when `satisfied` is
+// omitted, falls back to the org's persisted registration record.
+const registrationAssessSchema = z.object({
+  clientId: z.string().min(1).optional(),
+  satisfied: z.array(REQUIREMENT_ENUM).optional(),
+  variants: z.array(z.enum(['device', 'ivd'])).optional(),
+});
+
+// Upsert payload for the org's stored registration. Tenant/actor/identity are
+// resolved server-side; the body only carries the registration facts.
+const registrationWriteSchema = z.object({
+  fdaEsgAccount: z.boolean().optional(),
+  cdrhPortalAccount: z.boolean().optional(),
+  organizationIdentity: z.boolean().optional(),
+  mdufaFeeAccount: z.boolean().optional(),
+  esgAccountId: z.string().max(128).nullish(),
+  cdrhPortalEmail: z.string().max(256).nullish(),
+  duns: z.string().max(16).nullish(),
+  fei: z.string().max(16).nullish(),
+  mdufaOrgId: z.string().max(64).nullish(),
+  mdufaFeeTier: z.enum(['standard', 'small_business']).nullish(),
+  variants: z.array(z.enum(['device', 'ivd'])).optional(),
+  notes: z.string().max(2000).nullish(),
+});
+
+/**
+ * GET /api/510k/estar/registration
+ * Returns THIS org's persisted eSTAR registration (source of truth for "clients
+ * must register"), plus the bridged eligibility-model shape. `registered:false`
+ * with an empty registration when the client has never registered.
+ */
+router.get('/registration', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    const row = await getEstarRegistration({ organizationId });
+    return res.status(200).json({
+      registered: !!row,
+      registration: row,
+      clientRegistration: row
+        ? toClientRegistration(row)
+        : { clientId: String(organizationId), satisfied: [] },
+    });
+  } catch (error: any) {
+    logger.error('estar registration read failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_REGISTRATION_READ_FAILED',
+      message: error.message || 'Failed to read eSTAR registration',
+    });
+  }
+});
+
+/**
+ * PUT /api/510k/estar/registration
+ * Create/update THIS org's eSTAR registration record (upsert; one per org). This
+ * is the actual "register for eSTAR" write — editor+ only. Tenant/actor are set
+ * from the session, never the body.
+ */
+router.put('/registration', authMiddleware, requireEditorAccess, async (req, res) => {
+  const validation = registrationWriteSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    const organizationId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const row = await upsertEstarRegistration(validation.data as EstarRegistrationWrite, { organizationId, userId });
+    return res.status(200).json({
+      registered: true,
+      registration: row,
+      clientRegistration: toClientRegistration(row),
+    });
+  } catch (error: any) {
+    logger.error('estar registration write failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_REGISTRATION_WRITE_FAILED',
+      message: error.message || 'Failed to save eSTAR registration',
+    });
+  }
+});
+
+/**
+ * POST /api/510k/estar/registration/assess
+ * body: { satisfied[]?, clientId?, variants? }  (all optional)
+ *
+ * Report which eSTAR submissions this client can file today and what is still
+ * blocking the rest. When `satisfied` is supplied it's a what-if against that
+ * explicit state; otherwise it assesses the org's PERSISTED registration record
+ * (the "clients must register" source of truth). Nothing is persisted here.
+ */
+router.post('/registration/assess', authMiddleware, async (req, res) => {
+  const validation = registrationAssessSchema.safeParse(req.body ?? {});
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    let registration;
+    if (validation.data.satisfied) {
+      // Explicit what-if registration state.
+      registration = {
+        clientId: validation.data.clientId ?? 'what-if',
+        satisfied: validation.data.satisfied,
+        variants: validation.data.variants,
+      };
+    } else {
+      // Source of truth: the org's persisted registration.
+      const organizationId = resolveOrgId(req);
+      if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+      registration = await resolveClientRegistration({ organizationId });
+    }
+    const report = assessClientEstarEligibility(registration);
+    return res.status(200).json(report);
+  } catch (error: any) {
+    logger.error('estar registration assessment failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_REGISTRATION_FAILED',
+      message: error.message || 'Failed to assess eSTAR registration eligibility',
+    });
+  }
+});
+
+const filingLeafSchema = z.object({
+  sectionCode: z.string(),
+  title: z.string(),
+  documentType: z.string().optional(),
+});
+
+const filingReadinessSchema = z.object({
+  catalogKey: z.string().min(1),
+  variant: z.enum(['device', 'ivd']).default('device'),
+  // Optional explicit registration (what-if); omit to use the org's persisted record.
+  registration: z
+    .object({
+      clientId: z.string().min(1),
+      satisfied: z.array(REQUIREMENT_ENUM).default([]),
+      variants: z.array(z.enum(['device', 'ivd'])).optional(),
+    })
+    .optional(),
+  leaves: z.array(filingLeafSchema).default([]),
+  // When true, the org's authored device content (cerv2_510k_sections) is loaded
+  // as leaves and assessed — so readiness reflects real content, not a hand-fed
+  // list. `documentId` narrows to one document's sections; omit for org-wide.
+  useProjectContent: z.boolean().optional(),
+  documentId: z.coerce.number().int().positive().optional(),
+  qSubType: z
+    .enum([
+      'pre_submission',
+      'submission_issue_request',
+      'informational_meeting',
+      'study_risk_determination',
+      'pma_day_100_meeting',
+      'accessory_classification_request',
+    ])
+    .optional(),
+});
+
+/**
+ * POST /api/510k/estar/filing-readiness
+ * body: { catalogKey, variant, registration, leaves, qSubType? }
+ *
+ * The single "can this client file X, and what's left?" answer. Combines
+ * registration eligibility + template/version resolution + content readiness (via
+ * the right mapper) + official-template producibility into one honest verdict.
+ * Producibility is resolved server-side from the fill orchestration, so the caller
+ * gets a complete picture. Produces/persists nothing.
+ */
+router.post('/filing-readiness', authMiddleware, async (req, res) => {
+  const validation = filingReadinessSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId } = validation.data;
+
+  const entry = getCatalogEntry(catalogKey as EstarCatalogKey);
+  if (!entry) {
+    return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
+  }
+
+  try {
+    // Org is needed to read the persisted registration and/or the org's authored
+    // content; resolve it once when either path requires it.
+    const needsOrg = !validation.data.registration || useProjectContent;
+    const organizationId = needsOrg ? resolveOrgId(req) : null;
+    if (needsOrg && !organizationId) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
+
+    // Registration: an explicit what-if payload if supplied, else the org's
+    // persisted registration record (the "clients must register" source of truth).
+    const registration =
+      validation.data.registration ?? (await resolveClientRegistration({ organizationId: organizationId! }));
+
+    // Content: explicit body leaves, plus the org's REAL authored device content
+    // when requested — so readiness reflects what's actually written, not a
+    // hand-fed list. Content-bearing sections only (a gap is never invented).
+    const contentLeaves =
+      useProjectContent && organizationId
+        ? await loadDeviceContentLeaves(organizationId, documentId !== undefined ? { documentId } : {})
+        : [];
+    const effectiveLeaves = [...(leaves as FilingLeaf[]), ...contentLeaves];
+
+    // Resolve official-template producibility from the single source of truth. The
+    // PreSTAR family shares one template across variants; marketing pathways use
+    // the device/ivd variant. Empty data ⇒ side-effect-free readiness probe.
+    const isPreStar =
+      entry.programType === 'q_sub' || entry.programType === 'ide' || entry.programType === '513g';
+    const templateVariant: EstarTemplateVariant = isPreStar ? 'prestar' : variant;
+    const fill = await fillEstarSubmission({ type: entry.programType, variant: templateVariant, data: {} });
+
+    const result = assessEstarFilingReadiness({
+      catalogKey: catalogKey as EstarCatalogKey,
+      variant,
+      registration,
+      leaves: effectiveLeaves,
+      qSubType,
+      templateAvailable: fill.templateAvailable,
+      fieldMapPopulated: fill.fieldMapPopulated,
+    });
+
+    if (!result) {
+      return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
+    }
+    return res.status(200).json(result);
+  } catch (error: any) {
+    logger.error('estar filing-readiness failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_FILING_READINESS_FAILED',
+      message: error.message || 'Failed to assess eSTAR filing readiness',
+    });
+  }
+});
+
+// ── Submission lifecycle tracking (the filing → tracking bridge) ─────────────
+
+function submissionFail(res: any, error: any) {
+  if (error instanceof EstarSubmissionError) {
+    return res.status(error.code === 'NOT_FOUND' ? 404 : 400).json({ error: error.code, message: error.message });
+  }
+  logger.error('estar submission route error', { err: error instanceof Error ? error.message : String(error) });
+  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: error.message || 'eSTAR submission tracking failed' });
+}
+
+const createSubmissionSchema = z.object({
+  catalogKey: z.string().min(1),
+  variant: z.enum(['device', 'ivd']).optional(),
+  title: z.string().max(500).nullish(),
+  qSubmissionId: z.string().uuid().nullish(),
+  notes: z.string().max(2000).nullish(),
+  /** Attach the filing to a project so tracking joins the PM spine. */
+  projectId: z.coerce.number().int().positive().nullish(),
+});
+
+const advanceSubmissionSchema = z.object({
+  status: z.enum(ESTAR_SUBMISSION_STATUSES),
+  filedAt: z.coerce.date().optional(),
+  fdaTrackingNumber: z.string().max(64).nullish(),
+  decision: z.string().max(40).nullish(),
+});
+
+/**
+ * POST /api/510k/estar/submissions
+ * Start tracking a filing from a catalog key — the bridge from filing-readiness
+ * to lifecycle tracking. Program type + review clock are pulled from the catalog;
+ * starts in `draft`. Editor+ only.
+ */
+router.post('/submissions', authMiddleware, requireEditorAccess, async (req, res) => {
+  const validation = createSubmissionSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    const row = await createEstarSubmission(validation.data, {
+      organizationId: getOrganizationId(req),
+      userId: getUserId(req),
+    });
+    return res.status(201).json(row);
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/** GET /api/510k/estar/submissions — this org's tracked filings (optional ?status). */
+router.get('/submissions', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  const raw = typeof req.query.status === 'string' ? req.query.status : undefined;
+  const status = raw && (ESTAR_SUBMISSION_STATUSES as readonly string[]).includes(raw)
+    ? (raw as EstarSubmissionStatus)
+    : undefined;
+  // ?projectId= scopes to one project's filings (the PM-spine view). Ignored
+  // when not a positive integer, so a malformed filter never widens the result.
+  const projectIdRaw = Number(req.query.projectId);
+  const projectId = Number.isInteger(projectIdRaw) && projectIdRaw > 0 ? projectIdRaw : undefined;
+  try {
+    const rows = await listEstarSubmissions(
+      { organizationId },
+      { ...(status ? { status } : {}), ...(projectId !== undefined ? { projectId } : {}) },
+    );
+    return res.status(200).json({ submissions: rows });
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/** GET /api/510k/estar/submissions/:id — one tracked filing. */
+router.get('/submissions/:id', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    const row = await getEstarSubmission(String(req.params.id), { organizationId });
+    return res.status(200).json(row);
+  } catch (error: any) {
+    return submissionFail(res, error);
+  }
+});
+
+/**
+ * PATCH /api/510k/estar/submissions/:id
+ * Advance the lifecycle (validated transition). Moving to `filed` stamps the
+ * review clock (filedAt + decisionDueAt). Editor+ only.
+ */
+router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req, res) => {
+  const validation = advanceSubmissionSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  try {
+    const { status, ...rest } = validation.data;
+    const row = await advanceEstarSubmission(
+      String(req.params.id),
+      { toStatus: status, ...rest },
+      { organizationId: getOrganizationId(req), userId: getUserId(req) },
+    );
+    return res.status(200).json(row);
+  } catch (error: any) {
+    return submissionFail(res, error);
   }
 });
 

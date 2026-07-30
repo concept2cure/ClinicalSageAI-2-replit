@@ -158,6 +158,8 @@ import {
   type FailedToolCall,
 } from './agentic-loop.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { registerBiotechProgramHandlers } from './biotech-program.js';
+import { registerDocumentSpineHandlers } from './document-spine.js';
 import { assertWithinDocumentWorkspace } from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13511,7 +13513,13 @@ registerToolHandler('search_clinical_regulatory_evidence', async (input, ctx) =>
     if (types.includes('findings')) result.findings = await spine.listFindings(org, { limit });
     if (types.includes('outcomes')) result.outcomes = await spine.listOutcomes(org, { limit });
     if (types.includes('lessons')) result.designLessons = await spine.listDesignLessons(org, { limit });
-    return JSON.stringify({ ok: true, ...result, note: 'Precedent evidence from the shared spine (global-public + your org). This is evidence, not a prediction.' });
+    const provenance = buildProvenance({
+      sourceId: 'clinical_regulatory_evidence',
+      citation: { title: 'Clinical regulatory evidence spine', identifier: indication ?? null, url: null },
+      query: [indication, phase].filter(Boolean).join(' ') || null,
+      confidence: 'moderate',
+    });
+    return JSON.stringify({ ok: true, ...result, provenance, note: 'Precedent evidence from the shared spine (global-public + your org). This is evidence, not a prediction.' });
   } catch (err) {
     return JSON.stringify({ error: `search_clinical_regulatory_evidence failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -13534,7 +13542,13 @@ registerToolHandler('compare_proposed_design_to_precedent', async (input, ctx) =
     const endpointRisk = endpoint
       ? await sde.assessEndpointRegulatoryRisk(ctx.organizationId, endpoint, { indication, phase: typeof input.phase === 'string' ? input.phase : undefined })
       : null;
-    return JSON.stringify({ ok: true, benchmark, endpointRisk, note: 'Evidence comparison with provenance — not a verdict on FDA acceptance.' });
+    const provenance = buildProvenance({
+      sourceId: 'clinical_regulatory_evidence',
+      citation: { title: `Precedent for ${indication}${endpoint ? ` · ${endpoint}` : ''}`, identifier: indication, url: null },
+      query: [indication, endpoint].filter(Boolean).join(' ') || null,
+      confidence: 'moderate',
+    });
+    return JSON.stringify({ ok: true, benchmark, endpointRisk, provenance, note: 'Evidence comparison with provenance — not a verdict on FDA acceptance.' });
   } catch (err) {
     return JSON.stringify({ error: `compare_proposed_design_to_precedent failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -13550,7 +13564,13 @@ registerToolHandler('explain_design_risk', async (input, ctx) => {
       indication: typeof input.indication === 'string' ? input.indication : undefined,
       phase: typeof input.phase === 'string' ? input.phase : undefined,
     });
-    return JSON.stringify({ ok: true, ...r });
+    const provenance = buildProvenance({
+      sourceId: 'fda_crl',
+      citation: { title: `FDA precedent referencing "${feature}"`, identifier: feature, url: null },
+      query: feature,
+      confidence: r.evidenceQuality === 'substantial' ? 'high' : r.evidenceQuality === 'insufficient' ? 'low' : 'moderate',
+    });
+    return JSON.stringify({ ok: true, ...r, provenance });
   } catch (err) {
     return JSON.stringify({ error: `explain_design_risk failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -13566,7 +13586,13 @@ registerToolHandler('stress_test_protocol', async (input, ctx) => {
       indication, phase: typeof input.phase === 'string' ? input.phase : undefined,
       endpoint: typeof input.endpoint === 'string' ? input.endpoint : undefined,
     });
-    return JSON.stringify({ ok: true, ...plan });
+    const provenance = buildProvenance({
+      sourceId: 'fda_crl',
+      citation: { title: `Regulatory-stress scenarios for ${indication}`, identifier: indication, url: null },
+      query: indication,
+      confidence: 'moderate',
+    });
+    return JSON.stringify({ ok: true, ...plan, provenance });
   } catch (err) {
     return JSON.stringify({ error: `stress_test_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -13580,7 +13606,13 @@ registerToolHandler('trace_design_recommendation', async (input, ctx) => {
   try {
     const spine = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
     const chain = await spine.listRelationshipsFor(ctx.organizationId, entityType as Parameters<typeof spine.listRelationshipsFor>[1], entityId);
-    return JSON.stringify({ ok: true, entity: { type: entityType, id: entityId }, chain, note: 'Every edge is inspectable with its source; inferred edges are flagged.' });
+    const provenance = buildProvenance({
+      sourceId: 'clinical_regulatory_evidence',
+      citation: { title: `Evidence chain for ${entityType} ${entityId}`, identifier: `${entityType}:${entityId}`, url: null },
+      query: `${entityType}:${entityId}`,
+      confidence: 'moderate',
+    });
+    return JSON.stringify({ ok: true, entity: { type: entityType, id: entityId }, chain, provenance, note: 'Every edge is inspectable with its source; inferred edges are flagged.' });
   } catch (err) {
     return JSON.stringify({ error: `trace_design_recommendation failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -14579,6 +14611,14 @@ registerToolHandler('draft_fda_ir_response', async (input) => {
 // client journey) are registered from their own module now — see
 // agentic-workflow-tools.ts. Injected register avoids an import cycle.
 registerAgenticWorkflowHandlers(registerToolHandler);
+
+// The biotech program orchestrator (get_biotech_program_status) is registered
+// from its own sibling module the same way — injected register, no import cycle.
+registerBiotechProgramHandlers(registerToolHandler);
+
+// The canonical document revision spine (commit_document_revision) — the one
+// atomic flow every AnA-authored document mutation runs through — same pattern.
+registerDocumentSpineHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop

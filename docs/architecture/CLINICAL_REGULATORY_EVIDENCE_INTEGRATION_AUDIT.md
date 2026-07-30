@@ -70,18 +70,72 @@ CSR     → adaptCsrReport  evidence-spine        5 AnA tools    ── WIRED, r
   - Backfill of pre-existing NULL atoms: `scripts/embed-atoms.ts` (best-effort). *(P0c)*
 
 **P1**
-- [ ] RAG reachability — allow/route `clinical_regulatory_evidence` atoms in retrieval.
-- [ ] UI flag — enable (or a documented test toggle) so the surfaces are reachable.
-- [ ] `CsrWorkflow` outcome `null`-path → call `/outcome`.
-- [ ] `discipline` normalizer + `finding_domain→discipline` map; `visibility` mapper.
+- [x] **UI flag.** Already a documented runtime toggle, no rebuild needed: client
+  `?crl-graph=1` URL param or `localStorage 'c2c-crl-graph'='1'`
+  (`clinicalRegulatoryGraphFlag.ts`), over the `ENABLE_CLINICAL_REGULATORY_GRAPH`
+  feature-flag default; server routes gate on the env var of the same name. Both
+  are in the human-test walkthrough.
+- [x] **`CsrWorkflow` outcome `null`-path.** `BiopharmaProject.tsx` now derives the
+  application from the CRL findings on the board and calls `/outcome?applicationNumber=…`;
+  it stays "Not verified" only when there is genuinely no application/outcome (never inferred).
+- [x] **`discipline` / `visibility` mappers.** `index.ts` `normalizeDiscipline()` validates
+  the free-text `fdaReviewDiscipline`, falls back to a `finding_domain→discipline` map,
+  and buckets the undeterminable as `administrative` — never the fabricated `clinical`
+  default (search filter uses the same normalization). `toVisibility()` preserves
+  `project_private` instead of collapsing it into `tenant_private`.
+- [ ] **RAG reachability — DEFERRED (documented).** CRE atoms are excluded from
+  `project_knowledge_search` (source_type allowlist) and no `ragRouter` intent targets
+  them. Deferred deliberately: CRE already reaches AnA through the five always-on
+  direct-spine tools, so this only adds *semantic* discovery of CRE atoms; the change
+  touches shared RAG routing used product-wide, so it carries regression risk
+  disproportionate to a human-test demo. Revisit after the embedding backfill lands.
 
 **P2**
-- [ ] Provenance envelope for CRE tool output → `data_lineage_records`.
-- [ ] Wire `assertInferenceFeaturesClean` at the serving boundary.
-- [ ] Build `getDesignEvidence` evidence arrays, `getTrace`, `runStressTest` on real spine data.
+- [x] **Provenance envelope.** The five CRE AnA tools now emit a `buildProvenance`
+  envelope (registered `clinical_regulatory_evidence` / `fda_crl` sources, citation +
+  caveat + confidence) — the platform's in-response provenance convention, the same
+  one every other evidence tool uses. (Per-tool `data_lineage_records` writes are not
+  the codebase convention — no AnA handler persists directly; the envelope is what the
+  trace UI and audit consume.)
+- [x] **Runtime prediction guard.** `assertInferenceFeaturesClean` wired at the real
+  serving boundary (`regulatory-intelligence.ts`, on the assembled inference feature
+  vector) — fail-closed defense-in-depth over the CI-enforced invariant. Verified
+  across the full `scoreSubmissionDraft` integration suite.
+- [x] **Facade evidence reads.** `getDesignEvidence` (endpoint-scoped FDA precedent +
+  selected stress scenarios; indication-scoped arrays honest-empty because the
+  design-node store carries no clean indication), `getTrace` (entity-ref → relationship
+  chain), and `runStressTest` (findings-driven scenario selection, selected-not-run) are
+  wired on real spine data.
 
 **Human-testing readiness**
-- [ ] Seed demo CRE evidence (a CRL + findings/outcomes + a design lesson) so surfaces render real data on a fresh tenant.
-- [ ] Human-test walkthrough.
+- [x] **Seed demo CRE evidence.** `scripts/cre/seed-demo-evidence.ts` (`npm run cre:seed-demo -- --org <id>`):
+  a `[DEMO]` CRL (3 findings + verified outcome), a `[DEMO]` CSR + canonical study, and a
+  governed design lesson — all tenant-private and labelled, never the shared corpus. Also runs
+  `projectOrgCsrReports` to fold the tenant's own CSRs in. Idempotent; `--verify` prints counts.
+- [x] **Human-test walkthrough.** `CLINICAL_REGULATORY_EVIDENCE_HUMAN_TEST.md` — apply schema →
+  flag on (server env + client `?crl-graph=1`) → seed → exercise the 6 AnA tools and the v2
+  surfaces, with the honest-empty panels named explicitly.
 
-The spine itself needs no rework — this is connective tissue plus two schema/enum corrections.
+The spine itself needs no rework — this was connective tissue plus two schema/enum corrections.
+
+---
+
+## 4. Status — remediation complete
+
+P0 (ingress + embedding), P1 (egress correctness + flag), **P2** (provenance envelope,
+runtime prediction guard, facade design-evidence/trace/stress reads), and the demo seed +
+human-test walkthrough are **all done and landed on `concept2cure-v2`**. The module is
+exercisable end-to-end on a fresh tenant and every gap the audit found is closed or
+explicitly, defensibly deferred.
+
+**One deliberate deferral remains, documented, not a blocker:** RAG *semantic* reachability
+for CRE atoms (the `project_knowledge_search` source-type allowlist + a `ragRouter` intent).
+CRE already reaches AnA through the five always-on direct-spine tools, so this only adds
+semantic discovery; the change touches shared RAG routing used product-wide, so it is best
+sequenced after the embedding backfill rather than rushed. **Two honest data-model limits are
+named where they surface:** the design-node store (`c2c_protocol_dev`) carries no clean
+indication, so `getDesignEvidence`'s indication-scoped arrays stay honest-empty (endpoint-scoped
+precedent + stress scenarios are populated); and the shared-corpus CRL library is best filled by
+the platform-admin `POST /crl` path with real letters (the demo seed stays tenant-private by
+design). The spine itself needed no rework — this was connective tissue plus schema/enum
+corrections.

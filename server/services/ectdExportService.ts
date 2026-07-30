@@ -36,6 +36,14 @@ import {
   type CompletenessReport,
   type IncompleteLeaf,
 } from './ectd/completeness';
+// Canonical eCTD builders (single source of truth, shared with the regional
+// packager) — reused here so /api/ectd/export produces byte-consistent leaf IDs
+// and the same index-md5.txt manifest format as the conformant packager path.
+import {
+  createLeafIdAssigner,
+  buildMd5Index,
+  type EctdLeaf,
+} from './submission-gateways/regional-packager';
 
 // Re-exported so existing importers of the export service keep working.
 export { EctdCompletenessError };
@@ -181,35 +189,39 @@ function generateIndexXml(opts: {
   }>;
   generatedAt: string;
 }): string {
-  const leafElements = opts.modules
-    .flatMap(m =>
-      m.granules.map(g => {
-        return `      <leaf ID="${g.granuleId.replace(/\./g, '-')}"
-            xlink:href="${g.filePath}"
-            checksum="${g.checksum}"
-            checksum-type="md5"
-            operation="${g.operation}"
-            modified-file="">
-        <title>${escapeXml(g.granuleName)}</title>
-      </leaf>`;
-      })
-    )
-    .join('\n');
+  // One leaf-ID assigner per index.xml document. eCTD leaf IDs are XML ID-typed
+  // and must be unique within the backbone; the CTD section alone is NOT unique
+  // (a section commonly holds several leaves), so the previous
+  // `granuleId.replace('.','-')` scheme collided. Reuse the canonical assigner —
+  // the same one the regional packager uses — so both export paths emit
+  // identical, collision-free IDs (section + filename slug, numeric suffix on
+  // any remaining tie).
+  const assignLeafId = createLeafIdAssigner();
 
-  const moduleElements = opts.modules
+  // ICH backbone module blocks. Each module with content is emitted as a
+  // <m{n}> heading element carrying its leaves with the full ICH <leaf>
+  // attribute set (operation, inline checksum matching the shipped bytes,
+  // backbone-relative xlink:href, and a unique ID). Empty modules are omitted
+  // rather than shipped as hollow headings. This mirrors the conformant
+  // regional packager's index.xml structure (buildIndexXml), replacing the
+  // prior non-spec <ectd:submission> metadata block, the <ectd:m1-administrative>
+  // wrapper that wrongly enclosed every module, and the custom <m{n}-slug>
+  // elements — none of which exist in the ICH eCTD DTD.
+  const moduleBlocks = opts.modules
+    .filter(m => m.granules.length > 0)
     .map(m => {
-      const mGranules = m.granules
-        .map(g => `        <leaf ID="${g.granuleId.replace(/\./g, '-')}"
-              xlink:href="${g.filePath}"
-              checksum="${g.checksum}"
-              checksum-type="md5"
-              operation="${g.operation}">
-          <title>${escapeXml(g.granuleName)}</title>
-        </leaf>`)
+      const leaves = m.granules
+        .map(g => {
+          const id = assignLeafId({
+            ctdSection: g.granuleId,
+            fileName: path.posix.basename(g.filePath),
+          } as EctdLeaf);
+          return `    <leaf operation="${escapeXml(g.operation)}" checksum="${g.checksum}" checksum-type="md5" xlink:href="${escapeXml(g.filePath)}" xlink:type="simple" ID="${escapeXml(id)}">
+      <title>${escapeXml(g.granuleName)}</title>
+    </leaf>`;
+        })
         .join('\n');
-
-      return `    <m${m.moduleNumber}-${escapeXml(m.moduleName.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}>${mGranules ? '\n' + mGranules : ''}
-    </m${m.moduleNumber}-${escapeXml(m.moduleName.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}>`;
+      return `  <m${m.moduleNumber}>\n${leaves}\n  </m${m.moduleNumber}>`;
     })
     .join('\n');
 
@@ -219,6 +231,8 @@ function generateIndexXml(opts: {
   eCTD Submission Backbone (ICH eCTD v3.2.2)
   Application: ${escapeXml(opts.applicationNumber)}
   Sequence: ${opts.sequenceNumber}
+  Submission type: ${escapeXml(opts.submissionType)}
+  Region: ${escapeXml(opts.region)}
   Generated: ${opts.generatedAt}
   Generator: Concept2Cure.RI eCTD Export Service
 -->
@@ -226,16 +240,7 @@ function generateIndexXml(opts: {
            xmlns:xlink="http://www.w3.org/1999/xlink"
            dtd-version="3.2"
            xml:lang="en">
-  <ectd:submission>
-    <ectd:application-number>${escapeXml(opts.applicationNumber)}</ectd:application-number>
-    <ectd:sequence-number>${opts.sequenceNumber}</ectd:sequence-number>
-    <ectd:submission-type>${escapeXml(opts.submissionType)}</ectd:submission-type>
-    <ectd:region>${escapeXml(opts.region)}</ectd:region>
-    <ectd:generated-at>${opts.generatedAt}</ectd:generated-at>
-  </ectd:submission>
-  <ectd:m1-administrative>
-${moduleElements}
-  </ectd:m1-administrative>
+${moduleBlocks}
 </ectd:ectd>`;
 }
 
@@ -286,18 +291,24 @@ function generateRegionalXml(region: string, applicationNumber: string): string 
  * "not submission-ready" warning by validateEctdPackage.
  * See assets/ectd-dtd/README.md and HI_8_ECTD_SCOPING_BRIEF.md G1.
  */
-function bundleVendoredDtds(zip: JSZip): number {
+function bundleVendoredDtds(zip: JSZip): Array<{ relPath: string; md5: string }> {
+  const recorded: Array<{ relPath: string; md5: string }> = [];
   try {
     const dir = process.env.ECTD_DTD_DIR || path.resolve(process.cwd(), 'assets/ectd-dtd');
-    if (!fs.existsSync(dir)) return 0;
+    if (!fs.existsSync(dir)) return recorded;
     const dtdFiles = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.dtd'));
     for (const file of dtdFiles) {
-      zip.file(`util/dtd/${file}`, fs.readFileSync(path.join(dir, file)));
+      const bytes = fs.readFileSync(path.join(dir, file));
+      const relPath = `util/dtd/${file}`;
+      zip.file(relPath, bytes);
+      // DTDs are package files, so they are checksummed into index-md5.txt
+      // alongside the backbone + leaves.
+      recorded.push({ relPath, md5: md5(bytes) });
     }
-    return dtdFiles.length;
   } catch {
-    return 0; // non-fatal — absence is reported by validateEctdPackage
+    // non-fatal — absence is reported by validateEctdPackage
   }
+  return recorded;
 }
 
 function generateModulePlaceholderXml(moduleNumber: string, moduleName: string, granules: GranuleRecord[]): string {
@@ -342,7 +353,7 @@ function generateStructuredDocument(opts: {
     `${'='.repeat(72)}`,
     ``,
     `  Document Metadata`,
-    `  ${'─'.repeat(40)}`,
+    `  ${'-'.repeat(40)}`,
     `  Section Code:    ${opts.sectionCode}`,
     `  Module:          ${moduleLabel}`,
     `  Version:         ${opts.version}`,
@@ -350,7 +361,7 @@ function generateStructuredDocument(opts: {
     `  Generated:       ${opts.generatedAt}`,
     opts.wordCount ? `  Word Count:      ${opts.wordCount.toLocaleString()}` : null,
     ``,
-    `  ${'─'.repeat(40)}`,
+    `  ${'-'.repeat(40)}`,
     `  Content Status: PENDING`,
     ``,
     `  This document is part of the eCTD submission package for`,
@@ -440,12 +451,22 @@ export async function generateEctdPackage(
   // Also try to pull sections from project_sections table (used by ectd-compile)
   let projectSections: any[] = [];
   try {
+    // SECURITY (tenant isolation): scope by organization_id, not project_id
+    // alone. Every other content query in this service is org-scoped (lines
+    // below: document_versions on d.organization_id, both concept2cure_artifacts
+    // lookups on organization_id); project_sections was the lone exception. Since
+    // the export route resolves submissionId from the URL and does not verify the
+    // project belongs to the caller's org, a project_id-only filter let an
+    // authenticated org-B user export org-A's authored section content into their
+    // own eCTD package — a cross-tenant leak of regulated dossier text. The
+    // organization_id column is NOT NULL on project_sections, so this cannot
+    // exclude legitimate rows. Surfaced by the submission-export golden journey.
     const result = await pool.query(
       `SELECT section_code, title, status, content, word_count, module
        FROM project_sections
-       WHERE project_id = $1
+       WHERE project_id = $1 AND organization_id = $2
        ORDER BY section_code`,
-      [submissionId]
+      [submissionId, organizationId]
     );
     projectSections = result.rows;
   } catch {
@@ -471,6 +492,11 @@ export async function generateEctdPackage(
 
   // 2. Build the ZIP archive
   const zip = new JSZip();
+  // Running MD5 manifest of every package file (one `md5  relPath` line per
+  // file), written last as util/index-md5.txt. This is the eCTD integrity
+  // contract — the same format the conformant regional packager emits and the
+  // qualification harness re-verifies after reopening the ZIP.
+  const packageChecksums: Array<{ relPath: string; md5: string }> = [];
 
   // Create the standard eCTD directory structure
   for (const [_moduleNum, def] of Object.entries(MODULE_DEFS)) {
@@ -594,12 +620,16 @@ export async function generateEctdPackage(
       : fileContent;
     zip.file(filePath, leafBytes);
     totalFiles++;
+    // One MD5 per leaf, reused for both the inline backbone checksum and the
+    // index-md5.txt manifest line so they can never disagree.
+    const leafMd5 = md5(leafBytes);
+    packageChecksums.push({ relPath: filePath, md5: leafMd5 });
 
     entry.granules.push({
       granuleId: granule.granuleId,
       granuleName: granule.granuleName,
       filePath,
-      checksum: md5(leafBytes),
+      checksum: leafMd5,
       operation: 'new',
     });
 
@@ -671,12 +701,14 @@ export async function generateEctdPackage(
     });
     zip.file(filePath, sectionPdf);
     totalFiles++;
+    const sectionMd5 = md5(sectionPdf);
+    packageChecksums.push({ relPath: filePath, md5: sectionMd5 });
 
     entry.granules.push({
       granuleId: section.section_code,
       granuleName: section.title || section.section_code,
       filePath,
-      checksum: md5(sectionPdf),
+      checksum: sectionMd5,
       operation: 'new',
     });
   }
@@ -699,11 +731,14 @@ export async function generateEctdPackage(
     generatedAt,
   });
   zip.file('index.xml', indexXml);
+  packageChecksums.push({ relPath: 'index.xml', md5: md5(indexXml) });
 
   // 5. Generate regional XML (Module 1 regional info)
   const regionalXml = generateRegionalXml(region, applicationNumber);
   const regionCode = resolveEctdRegion(region).code;
-  zip.file(`m1/${regionCode}-regional.xml`, regionalXml);
+  const regionalPath = `m1/${regionCode}-regional.xml`;
+  zip.file(regionalPath, regionalXml);
+  packageChecksums.push({ relPath: regionalPath, md5: md5(regionalXml) });
 
   // 6. Generate per-module manifest XMLs
   for (const [moduleNum, def] of Object.entries(MODULE_DEFS)) {
@@ -716,7 +751,9 @@ export async function generateEctdPackage(
       def.name,
       moduleGranules
     );
-    zip.file(`${def.folder}/module-${moduleNum}-manifest.xml`, moduleManifestXml);
+    const manifestPath = `${def.folder}/module-${moduleNum}-manifest.xml`;
+    zip.file(manifestPath, moduleManifestXml);
+    packageChecksums.push({ relPath: manifestPath, md5: md5(moduleManifestXml) });
   }
 
   // 7. Generate STF (Submission Tracking File) for the envelope
@@ -735,11 +772,20 @@ export async function generateEctdPackage(
   </submission>
 </submission-tracking>`;
   zip.file('util/stf.xml', stfXml);
+  packageChecksums.push({ relPath: 'util/stf.xml', md5: md5(stfXml) });
 
   // 7b. Bundle vendored ICH/regional DTDs into util/dtd/ when available, so the
   // package is self-contained. No-op (with a validator warning) until the team
   // vendors the licensed DTD files. See HI_8_ECTD_SCOPING_BRIEF.md G1.
-  bundleVendoredDtds(zip);
+  packageChecksums.push(...bundleVendoredDtds(zip));
+
+  // 7c. Write the MD5 integrity manifest LAST, once every other file's bytes are
+  // final. util/index-md5.txt lists one `md5  relPath` line per package file
+  // (sorted, byte-stable) — the eCTD integrity contract. Emitted via the same
+  // canonical builder as the conformant regional packager, so both export paths
+  // produce an identical manifest format that the FDA criteria adapter accepts
+  // and the qualification harness re-verifies after reopening the ZIP.
+  zip.file('util/index-md5.txt', buildMd5Index(packageChecksums));
 
   // 8. Record the compilation in the database
   try {

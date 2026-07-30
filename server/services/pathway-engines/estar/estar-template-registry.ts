@@ -22,10 +22,25 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 
-import type { EstarType } from './estar-mapper';
+import {
+  currentVersionFor,
+  type EstarProgramSubmissionType,
+  type EstarTemplateFamily,
+} from './estar-versions';
 
-/** Whether the device is an in-vitro diagnostic — FDA ships a distinct IVD eSTAR. */
-export type EstarTemplateVariant = 'device' | 'ivd';
+/**
+ * The submission types a template can carry. Superset of the 510(k)/De Novo
+ * mapper's `EstarType`: adds PMA (nIVD/IVD eSTAR) and the PreSTAR request types
+ * (Q-Sub, IDE, 513(g)) so the registry covers the whole eSTAR program.
+ */
+export type EstarTemplateType = EstarProgramSubmissionType;
+
+/**
+ * Which FDA template a submission is filed on. `device`/`ivd` select the nIVD vs
+ * IVD eSTAR; `prestar` is the cross-cutting Early Submission Requests template
+ * (PreSTAR2), which serves both nIVD and IVD for Q-Sub/IDE/513(g).
+ */
+export type EstarTemplateVariant = 'device' | 'ivd' | 'prestar';
 
 /** A vendored official eSTAR template read from the drop-point directory. */
 export interface VendoredEstarTemplate {
@@ -41,22 +56,39 @@ export interface VendoredEstarTemplate {
  */
 export interface EstarTemplateDescriptor {
   id: string;
-  type: EstarType;
+  type: EstarTemplateType;
   variant: EstarTemplateVariant;
+  /** FDA template family (nIVD/IVD/PreSTAR) — links to the version registry. */
+  family: EstarTemplateFamily;
   expectedFileName: string;
+  /**
+   * The vendored template revision this descriptor is pinned to. Stays `'unset'`
+   * until a maintainer drops the licensed FDA PDF in and pins it; the *program*
+   * version (e.g. nIVD 7.0) is looked up from the version registry via `family`.
+   */
   version: string;
 }
 
 /**
- * The official-template manifest. Filenames/versions are placeholders pending
- * the procurement drop — keep them in sync with the files in
- * `assets/estar-templates/` and the README. Do NOT regenerate FDA's form.
+ * The official-template manifest — every FDA eSTAR template the platform fills.
+ * Filenames/versions are placeholders pending the procurement drop — keep them in
+ * sync with the files in `assets/estar-templates/` and the README. Do NOT
+ * regenerate FDA's form. The nIVD/IVD eSTAR (v7.0) carries 510(k)/De Novo/PMA and
+ * the PreSTAR2 (v3.0) carries Q-Sub/IDE/513(g); several logical descriptors may
+ * resolve to the same physical FDA PDF (a maintainer can point them at one file).
  */
 export const ESTAR_TEMPLATE_MANIFEST: EstarTemplateDescriptor[] = [
-  { id: '510k-device', type: '510k', variant: 'device', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: 'unset' },
-  { id: '510k-ivd', type: '510k', variant: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: 'unset' },
-  { id: 'de_novo-device', type: 'de_novo', variant: 'device', expectedFileName: 'eSTAR-denovo-non-ivd.pdf', version: 'unset' },
-  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', expectedFileName: 'eSTAR-denovo-ivd.pdf', version: 'unset' },
+  // nIVD / IVD eSTAR — marketing pathways
+  { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: 'unset' },
+  { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: 'unset' },
+  { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-denovo-non-ivd.pdf', version: 'unset' },
+  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-denovo-ivd.pdf', version: 'unset' },
+  { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-pma-non-ivd.pdf', version: 'unset' },
+  { id: 'pma-ivd', type: 'pma', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-pma-ivd.pdf', version: 'unset' },
+  // PreSTAR2 — Early Submission Requests (serves both nIVD and IVD)
+  { id: 'q_sub-prestar', type: 'q_sub', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-q-sub.pdf', version: 'unset' },
+  { id: 'ide-prestar', type: 'ide', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-ide.pdf', version: 'unset' },
+  { id: '513g-prestar', type: '513g', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-513g.pdf', version: 'unset' },
 ];
 
 /** Resolve the template drop-point directory (ESTAR_TEMPLATE_DIR or assets/estar-templates). */
@@ -65,8 +97,13 @@ export function resolveEstarTemplateDir(env: NodeJS.ProcessEnv = process.env): s
 }
 
 /** The manifest descriptor for a given pathway + variant, or undefined if none. */
-export function descriptorFor(type: EstarType, variant: EstarTemplateVariant): EstarTemplateDescriptor | undefined {
+export function descriptorFor(type: EstarTemplateType, variant: EstarTemplateVariant): EstarTemplateDescriptor | undefined {
   return ESTAR_TEMPLATE_MANIFEST.find((d) => d.type === type && d.variant === variant);
+}
+
+/** All descriptors for a template family (nIVD/IVD/PreSTAR). */
+export function descriptorsForFamily(family: EstarTemplateFamily): EstarTemplateDescriptor[] {
+  return ESTAR_TEMPLATE_MANIFEST.filter((d) => d.family === family);
 }
 
 /**
@@ -95,7 +132,7 @@ export async function listVendoredTemplates(
 }
 
 export interface EstarTemplateReadinessInput {
-  type: EstarType;
+  type: EstarTemplateType;
   variant: EstarTemplateVariant;
   /** Template filenames actually present in the drop-point directory. */
   present: string[];
@@ -108,6 +145,8 @@ export interface EstarTemplateReadinessResult {
   /** The descriptor required for this pathway+variant, if the manifest knows it. */
   descriptor?: EstarTemplateDescriptor;
   requiredFileName?: string;
+  /** The current FDA program version recommended for this family (e.g. "7.0"). */
+  programVersion?: string;
   present: string[];
   /** True when the required official template is available to fill. */
   available: boolean;
@@ -146,6 +185,7 @@ export function assessEstarTemplateReadiness(
   return {
     descriptor,
     requiredFileName,
+    programVersion: descriptor ? currentVersionFor(descriptor.family)?.version : undefined,
     present: input.present,
     available,
     cleared: blockers.length === 0,
@@ -162,6 +202,7 @@ export default {
   ESTAR_TEMPLATE_MANIFEST,
   resolveEstarTemplateDir,
   descriptorFor,
+  descriptorsForFamily,
   listVendoredTemplates,
   assessEstarTemplateReadiness,
   estarTemplateRequiredFromEnv,

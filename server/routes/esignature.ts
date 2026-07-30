@@ -190,6 +190,26 @@ router.post('/sign', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'action is required' });
   }
 
+  // signature_type is client-supplied and lands in a column the release-gate
+  // uniqueness index keys on. Accept only the document-signing vocabulary and
+  // RESERVE 'submission-release' for the orchestrator release path
+  // (server/routes/submission-sign-release.ts) — a document signer must not be
+  // able to mint a row that masquerades as a release signature. Default
+  // 'approval' when omitted, matching the historical behaviour.
+  const DOCUMENT_SIGNATURE_TYPES = new Set([
+    'approval', 'review', 'witness', 'acknowledgment', 'verification',
+  ]);
+  const resolvedSignatureType =
+    signatureType === undefined || signatureType === null || signatureType === ''
+      ? 'approval'
+      : signatureType;
+  if (!DOCUMENT_SIGNATURE_TYPES.has(resolvedSignatureType)) {
+    return res.status(400).json({
+      error: 'signatureType must be one of: approval, review, witness, acknowledgment, verification',
+      code: 'ESIGNATURE_TYPE_INVALID',
+    });
+  }
+
   // 21 CFR Part 11 §11.200(a)(1): RE-VERIFY the signer's identity server-side at
   // the moment of signing. We never trust a client-supplied "already verified"
   // flag — the password (first factor) and, when the user has MFA enabled, the
@@ -350,19 +370,19 @@ router.post('/sign', async (req: Request, res: Response) => {
          authentication_method, authentication_timestamp, second_factor_verified,
          signature_hash, signature_meaning, signature_manifest,
          is_valid, compliance_statement, legal_disclaimer,
-         ip_address, device_info, signed_at, bound_payload_digest
+         ip_address, device_info, signed_at, bound_payload_digest, organization_id
        ) VALUES (
          $1, $2, $3, $4,
          $5, $6, $7, $8,
          'password+totp', $9, $10,
          $11, $12, $13,
          $18, $14, $15,
-         $16, $17, $9, $19
+         $16, $17, $9, $19, $20
        ) RETURNING id, signed_at`,
       [
         Number(documentId),
         Number(versionId),
-        signatureType || 'approval',
+        resolvedSignatureType,
         signaturePurpose,
         userId,
         signerName,
@@ -379,6 +399,9 @@ router.post('/sign', async (req: Request, res: Response) => {
         deviceInfo ? JSON.stringify(deviceInfo) : null,
         signatureIsValid,
         boundPayloadDigest,
+        // Tenant scope stamped at INSERT — the signer's org context is already
+        // verified above (orgId gates the version lookup).
+        orgId,
       ]
     );
 

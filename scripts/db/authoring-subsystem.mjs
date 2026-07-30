@@ -58,6 +58,24 @@ export const AUTHORING_SUBSYSTEM_FILES = [
   'db/migrations/20260725_authoring_audit_trail.sql',
   'db/migrations/20260725_authoring_signatures_and_workflow.sql',
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+  // The router's own tables (authoring_tokens/templates/template_guidance/
+  // template_usage/section_guidance/export_history/tracked_change_decisions).
+  // These were created by runtime `ensure*` DDL inside authoring.router.ts until
+  // the canonical-spine refactor retired that DDL and moved it into this
+  // migration — but left the migration on NO durable applier, so the router now
+  // writes to tables nothing creates (a 500 on every real deploy, and the
+  // authoring schema-contract / role-gate / ind-authoring proof-tier tests fail
+  // for the same missing relations). Adding it here is what actually provisions
+  // them. Additive, all CREATE TABLE/INDEX IF NOT EXISTS.
+  'db/migrations/20260730_authoring_runtime_ddl.sql',
+  // C-27 reconciliation: add the columns authoring.router.ts references on
+  // authoring_comments (threaded comments / resolution / attribution) and
+  // user_pins (last_changed) to the CANONICAL tables the loop-tables migration
+  // above creates. Without these the router's comment endpoints 500 on every
+  // real deploy (the columns live only in the deploy-dead
+  // 20260730_authoring_subsystem_schema.sql). Additive ALTER … ADD COLUMN IF NOT
+  // EXISTS; must run after the loop tables that create these tables.
+  'db/migrations/20260730_authoring_comments_router_columns.sql',
 ];
 
 /**

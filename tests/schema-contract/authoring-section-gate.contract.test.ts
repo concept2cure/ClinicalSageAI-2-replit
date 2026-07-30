@@ -67,27 +67,31 @@ vi.mock('../../server/db', () => ({
 const ORG_A = 1;
 const ORG_B = 2;
 
-/** Integer-looking ids would trip the live organization_users re-check; UUID
- *  subjects skip it (parseFiniteInt → null), exactly as the sibling role-gate
- *  contract does. Authorization, not membership, is under test here. */
+/** These subjects must skip the live organization_users re-check so that
+ *  authorization — not membership — is what this contract exercises. The skip
+ *  fires only when parseFiniteInt(userId) === null (enforceOrgMembership), and
+ *  Number.parseInt reads leading digits, so the UUID's FIRST hex nibble has to
+ *  be a letter (a–f): 'fa1c2a10…' → NaN → null → skipped. A digit-leading UUID
+ *  like '7a1c2a10…' parses to 7, runs the re-check, and 503s with no seeded
+ *  membership row. Keep the leading nibble non-numeric. */
 const MEMBER = {
-  id: '7a1c2a10-0000-4000-8000-00000000a001',
+  id: 'fa1c2a10-0000-4000-8000-00000000a001',
   email: 'member@authoring.example',
   organizationId: ORG_A,
 };
 const GRANTEE = {
-  id: '7a1c2a10-0000-4000-8000-00000000a002',
+  id: 'fa1c2a10-0000-4000-8000-00000000a002',
   email: 'grantee@authoring.example',
   organizationId: ORG_A,
 };
 const QA_USER = {
-  id: '7a1c2a10-0000-4000-8000-00000000a003',
+  id: 'fa1c2a10-0000-4000-8000-00000000a003',
   email: 'qa@authoring.example',
   organizationId: ORG_A,
   roles: ['QA'],
 };
 const OUTSIDER = {
-  id: '7a1c2a10-0000-4000-8000-00000000b001',
+  id: 'fa1c2a10-0000-4000-8000-00000000b001',
   email: 'outsider@other.example',
   organizationId: ORG_B,
 };
@@ -362,7 +366,7 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
     // not the writer. `roamer` holds a document-level grant on DOC_OTHER and
     // nothing else, correctly tenant-keyed.
     const roamer: Principal = {
-      id: '7a1c2a10-0000-4000-8000-00000000a005',
+      id: 'fa1c2a10-0000-4000-8000-00000000a005',
       email: 'roamer@authoring.example',
       organizationId: ORG_A,
     };
@@ -401,7 +405,7 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
     expect(grant.status).toBe(200);
 
     const narrow: Principal = {
-      id: '7a1c2a10-0000-4000-8000-00000000a004',
+      id: 'fa1c2a10-0000-4000-8000-00000000a004',
       email: 'narrow@authoring.example',
       organizationId: ORG_A,
     };

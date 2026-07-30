@@ -87,16 +87,35 @@ const OUTSIDER = {
   name: 'Iris Intruder',
 };
 
+// The authoring router re-checks live org membership (enforceOrgMembership),
+// coercing the token's userId with Number.parseInt (orgMembership.parseFiniteInt).
+// All three journey subjects share the '3f1c2a10…' prefix, so each coerces to
+// the same leading integer; seed organization_users under that id or every
+// authenticated request is refused as membership-indeterminate (503) — which is
+// exactly what made the first step return 503 instead of the honest 400.
+const MEMBERSHIP_ID = Number.parseInt(AUTHOR.id, 10); // 3f1c2a10-… → 3
+
 const PREREQ = `
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
   -- users.id is UUID here: the history handler joins users ON
   -- u.id = doc_revisions.created_by::uuid, and created_by holds JWT subject ids.
   CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organization_users (
+    organization_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member'
+  );
   INSERT INTO organizations (id, name) VALUES (1, 'journey-org'), (2, 'other-org');
   INSERT INTO users (id, name, email) VALUES
     ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}'),
     ('${APPROVER.id}', '${APPROVER.name}', '${APPROVER.email}'),
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
+  -- AUTHOR + APPROVER are in org 1; OUTSIDER is a genuine member of org 2 (its
+  -- own org) — tenant isolation to org 1 is enforced separately by the router,
+  -- not by this membership row.
+  INSERT INTO organization_users (organization_id, user_id, role) VALUES
+    (1, ${MEMBERSHIP_ID}, 'member'),
+    (2, ${MEMBERSHIP_ID}, 'member');
 `;
 
 let jdb: JourneyDb;
@@ -120,6 +139,9 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+      // The router's own tables (templates/tokens/export_history/…), moved out of
+      // retired runtime DDL into this migration by the canonical-spine refactor.
+      'db/migrations/20260730_authoring_runtime_ddl.sql',
     ],
   });
   h.db = jdb.db;

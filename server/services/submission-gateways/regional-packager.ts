@@ -32,6 +32,11 @@ import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import type { Region, SubmissionFormat, SubmissionBundle } from './types';
 import { ValidationError, resolveToRegistryEntry, getSubmissionTypeLabel } from './types';
+
+// Re-export the region taxonomy from this packager's public surface: callers
+// that import `packageEctdSubmission` (e.g. the eCTD qualification subsystem)
+// also need its `Region` type, and the packager is their entry point.
+export type { Region } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
 import {
   evaluateSubmissionGrade,
@@ -44,6 +49,41 @@ import {
   dtdRequiredFromEnv,
   type DtdRegion,
 } from '../ectd/dtd-bundler';
+import {
+  resolveApplicationTypeCode,
+  resolveSubmissionTypeCode,
+  resolveSubmissionSubTypeCode,
+  resolveFormTypeCode,
+  resolveContactTypeCode,
+  usRegionalSectionElement,
+} from '../ectd/controlled-vocab';
+import { generateStfFiles, type StfLeaf, type StfStudyMeta } from '../ectd/stf-generator';
+import {
+  resolveCrossReferences,
+  xrefRequiredFromEnv,
+  type CrossReference,
+} from '../ectd/cross-reference-resolver';
+
+// Packager primitives, split into ./ectd-packager/* so the reusable pieces
+// (types, leaf-id, md5-index, path helpers) live apart from this ~600-line
+// orchestrator. This file stays the packager barrel: it imports them for its
+// own use AND re-exports the public ones below, so every caller keeps its
+// stable `../regional-packager` import path.
+import type {
+  EctdLeaf,
+  FdaApplicantContact,
+  FdaFormLeaf,
+  FdaRegionalAdmin,
+  LeafRef,
+  ChecksumEntry,
+} from './ectd-packager/types';
+import { leafIdSlug, createLeafIdAssigner } from './ectd-packager/leaf-id';
+import { buildMd5Index } from './ectd-packager/md5-index';
+import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
+
+// Re-export the public packager surface (barrel).
+export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
+export { leafIdSlug, createLeafIdAssigner, buildMd5Index, studyFolderSlug, commonDir };
 
 /**
  * Finalize a leaf's bytes to submission grade before they are written + hashed.
@@ -66,22 +106,6 @@ async function finalizeLeafBytes(
   if (!result.converted) return { bytes: buf, isPdf: true, converted: false };
   const bytes = Buffer.from(result.pdfBytes);
   return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true };
-}
-
-/** One leaf in the eCTD index — corresponds to one file under one CTD section. */
-export interface EctdLeaf {
-  /** CTD section code, e.g. '1.1', '2.5', '3.2.S.1.1', '5.3.5.1'. */
-  ctdSection: string;
-  /** Operation per ICH M2: 'new' | 'append' | 'replace' | 'delete'. */
-  operation: 'new' | 'append' | 'replace' | 'delete';
-  /** Absolute path to the leaf file on disk. */
-  sourcePath: string;
-  /** Output filename inside the package (e.g. 'cover-letter.pdf'). */
-  fileName: string;
-  /** Display title for the leaf in the backbone. */
-  title: string;
-  /** Optional pre-computed checksum; computed if absent. */
-  md5?: string;
 }
 
 export interface PackagerInput {
@@ -109,112 +133,140 @@ export interface PackagerInput {
   /** Submission environment for the PDF/A gate. 'production' (the default)
    *  enforces PDF/A when ECTD_REQUIRE_PDFA=true; 'staging' never blocks. */
   environment?: 'staging' | 'production';
-}
-
-/** Compute MD5 of a file on disk. */
-async function md5File(filePath: string): Promise<string> {
-  const buf = await fs.readFile(filePath);
-  return createHash('md5').update(buf).digest('hex');
+  /** FDA us-regional admin metadata (only used when region === 'fda'). */
+  fda?: FdaRegionalAdmin;
+  /** Per-study metadata for the Study Tagging Files generated from study leaves. */
+  studyMeta?: StfStudyMeta[];
+  /**
+   * Declared intra-package cross-references (hyperlinks between leaves/sections,
+   * e.g. a 2.7.3 summary citing a 5.3.5.1 study report). Resolved at package
+   * time; a broken (dangling / withdrawn-target) reference is surfaced on the
+   * bundle and blocks a production build when ECTD_REQUIRE_XREF=true.
+   */
+  crossReferences?: CrossReference[];
 }
 
 /* ─── Region-specific backbone builders ───────────────────────────── */
 
-function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
-
-/** Build leaf elements common to all regions. */
-function leafElement(leaf: EctdLeaf, sectionHref: string, id: string): string {
-  return `<leaf operation="${leaf.operation}" xlink:href="${escapeXml(sectionHref)}/${escapeXml(leaf.fileName)}" ID="${escapeXml(id)}">
+/**
+ * Build one `<leaf>` element with the full ICH attribute set: operation,
+ * inline `checksum`/`checksum-type="md5"` (matching the shipped bytes), the
+ * backbone-relative `xlink:href`, and — for a lifecycle operation — the
+ * `modified-file` pointer at the superseded leaf.
+ */
+function leafElement(leaf: EctdLeaf, id: string, ref: LeafRef): string {
+  const modified = leaf.modifiedFile ? ` modified-file="${escapeXml(leaf.modifiedFile)}"` : '';
+  return `<leaf operation="${leaf.operation}"${modified} checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="${escapeXml(id)}">
   <title>${escapeXml(leaf.title)}</title>
 </leaf>`;
 }
 
-/** A valid XML ID fragment from a filename: drop extension, non-alnum → '-'. */
-export function leafIdSlug(fileName: string): string {
-  return (
-    fileName
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^a-zA-Z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .toLowerCase() || 'file'
-  );
+/** Render the FDA applicant-contacts block from the admin metadata. */
+function fdaContactsBlock(contacts: FdaApplicantContact[]): string {
+  if (!contacts.length) return '      <applicant-info/>';
+  const rows = contacts
+    .map((c) => {
+      const code = resolveContactTypeCode(c.type) ?? 'fdaact1';
+      const telecom = [
+        c.email ? `          <email>${escapeXml(c.email)}</email>` : '',
+        c.phone ? `          <telephone>${escapeXml(c.phone)}</telephone>` : '',
+      ].filter(Boolean).join('\n');
+      return `        <applicant-contact>
+          <applicant-contact-name applicant-contact-type="${code}">${escapeXml(c.name)}</applicant-contact-name>${telecom ? '\n' + telecom : ''}
+        </applicant-contact>`;
+    })
+    .join('\n');
+  return `      <applicant-info>
+        <applicant-contacts>
+${rows}
+        </applicant-contacts>
+      </applicant-info>`;
 }
 
-/**
- * Create a leaf-ID assigner scoped to a single backbone document.
- *
- * eCTD leaf IDs are XML ID-typed and must be unique within their document. The
- * CTD section alone is NOT unique — a section commonly holds several leaves
- * (e.g. multiple study reports in 5.3.5.1, multiple stability batches), and
- * `leaf-5-3-5-1` for all of them is invalid XML. Each ID is therefore based on
- * the section plus a filename slug, with a deterministic numeric suffix on the
- * (rare) remaining collision. One assigner per document, so IDs are unique
- * within — but may repeat across — separate backbones.
- */
-export function createLeafIdAssigner(): (leaf: EctdLeaf) => string {
-  const used = new Set<string>();
-  return (leaf: EctdLeaf): string => {
-    const base = `leaf-${leaf.ctdSection.replace(/\./g, '-')}-${leafIdSlug(leaf.fileName)}`;
-    let id = base;
-    let n = 2;
-    while (used.has(id)) id = `${base}-${n++}`;
-    used.add(id);
-    return id;
-  };
-}
-
-/**
- * FDA us-regional.xml backbone. Per FDA eCTD Technical Conformance
- * Guide (current as of 2024). Module 1 sits under m1/us/.
- */
-function buildFdaBackbone(input: PackagerInput): string {
+/** Render the `<form>` elements nested under submission-information. */
+function fdaFormsBlock(forms: FdaFormLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
-  const m1Leaves = input.leaves
-    .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/us/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+  return forms
+    .map((f) => {
+      const code = resolveFormTypeCode(f.formType) ?? 'fdaft2';
+      return `          <form form-type="${code}">
+${leafElement(f.leaf, assignId(f.leaf), resolve(f.leaf)).split('\n').map((l) => '            ' + l).join('\n')}
+          </form>`;
+    })
+    .join('\n');
+}
+
+/**
+ * FDA us-regional.xml backbone — conformant with the FDA eCTD Backbone Files
+ * Specification for Module 1 (DTD version 3.3). Module 1 sits under m1/us/;
+ * the backbone declares `xmlns:fda-regional="http://www.ich.org/fda"`, carries
+ * the coded admin block (application-type / submission-type / submission-sub-
+ * type / form-type as `fdaXX` attributes), and nests content leaves under
+ * FDA-published section heading elements (e.g. `<m1-2-cover-letters>`).
+ */
+function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
+  const fda = input.fda ?? {};
+  const appTypeCode =
+    resolveApplicationTypeCode(fda.applicationType ?? '') ??
+    resolveApplicationTypeCode(input.submissionType) ??
+    'fdaat1';
+  const subTypeCode =
+    resolveSubmissionTypeCode(fda.submissionType ?? input.submissionType) ?? 'fdast1';
+  const subSubTypeCode =
+    resolveSubmissionSubTypeCode(fda.submissionSubType ?? 'original') ?? 'fdasst1';
+  const submissionId = fda.submissionId ?? input.sequence;
+
+  const contacts = fdaContactsBlock(fda.contacts ?? []);
+  const forms = fda.forms?.length ? '\n' + fdaFormsBlock(fda.forms, resolve) : '';
+
+  // Group Module 1 content leaves under FDA section heading elements.
+  const assignId = createLeafIdAssigner();
+  const bySection = new Map<string, string[]>();
+  for (const l of input.leaves.filter((x) => x.ctdSection.startsWith('1'))) {
+    const el = usRegionalSectionElement(l.ctdSection);
+    const list = bySection.get(el) ?? [];
+    list.push(leafElement(l, assignId(l), resolve(l)));
+    bySection.set(el, list);
+  }
+  const m1Regional = [...bySection.entries()]
+    .map(([el, leaves]) => `    <${el}>\n${leaves.map((x) => x.split('\n').map((y) => '      ' + y).join('\n')).join('\n')}\n    </${el}>`)
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE us-regional SYSTEM "../util/dtd/us-regional-v2-01.dtd">
-<us-regional xmlns:xlink="http://www.w3.org/1999/xlink"
-             dtd-version="2.01"
-             xmlns="urn:hl7-org:v3">
+<!DOCTYPE fda-regional:fda-regional SYSTEM "../util/dtd/us-regional-v3-3.dtd">
+<?xml-stylesheet type="text/xsl" href="../util/style/us-regional.xsl"?>
+<fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
+    xmlns:fda-regional="http://www.ich.org/fda"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
   <admin>
+${contacts}
     <application-set>
       <application>
         <application-information>
-          <application-number>${escapeXml(input.applicationId)}</application-number>
-          <application-type>${escapeXml(input.submissionType)}</application-type>
+          <application-number application-type="${appTypeCode}">${escapeXml(input.applicationId)}</application-number>
         </application-information>
+        <submission-information>
+          <submission-id submission-type="${subTypeCode}">${escapeXml(submissionId)}</submission-id>
+          <sequence-number submission-sub-type="${subSubTypeCode}">${escapeXml(input.sequence)}</sequence-number>${forms}
+        </submission-information>
       </application>
     </application-set>
-    <applicant-info>
-      <id>${escapeXml(input.sponsorId)}</id>
-      <name>${escapeXml(input.sponsorName)}</name>
-    </applicant-info>
-    <submission>
-      <submission-id>${escapeXml(input.sequence)}</submission-id>
-      <submission-type>${escapeXml(input.submissionType)}</submission-type>
-      <submission-description>${escapeXml(input.productName)} — ${escapeXml(input.submissionType)} sequence ${escapeXml(input.sequence)}</submission-description>
-    </submission>
   </admin>
-  <m1-us>
-${m1Leaves}
-  </m1-us>
-</us-regional>`;
+  <m1-regional>
+${m1Regional}
+  </m1-regional>
+</fda-regional:fda-regional>`;
 }
 
 /**
  * EMA eu-regional.xml backbone. Per EMA EU eCTD Specification v3.0.
  * Module 1 sits under m1/eu/ with eu-regional.xml at the m1/eu/ root.
  */
-function buildEmaBackbone(input: PackagerInput): string {
+function buildEmaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/eu/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+    .map((l) => leafElement(l, assignId(l), resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -247,11 +299,11 @@ ${m1Leaves}
  * Common Technical Document" (initial 2016, updated 2021). Module 1
  * sits under m1/jp/ with multi-byte titles permitted.
  */
-function buildPmdaBackbone(input: PackagerInput): string {
+function buildPmdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/jp/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+    .map((l) => leafElement(l, assignId(l), resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -286,11 +338,11 @@ ${m1Leaves}
  * backbone at m1/ca/ca-regional.xml. Transmission is via the Common
  * Electronic Submissions Gateway (CESG).
  */
-function buildHcBackbone(input: PackagerInput): string {
+function buildHcBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
-    .map((l) => leafElement(l, `m1/ca/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+    .map((l) => leafElement(l, assignId(l), resolve(l)))
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -320,7 +372,7 @@ ${m1Leaves}
 
 /* ─── M2-M5 common backbone (ICH M8) ──────────────────────────────── */
 
-function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
+function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
   const grouped: Record<string, EctdLeaf[]> = { m2: [], m3: [], m4: [], m5: [] };
@@ -330,7 +382,7 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
   }
   const moduleBlocks = (['m2', 'm3', 'm4', 'm5'] as const).map((m) => {
     const leaves = grouped[m]
-      .map((l) => leafElement(l, `${m}/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+      .map((l) => leafElement(l, assignId(l), resolve(l)))
       .join('\n');
     return `  <${m}>\n${leaves}\n  </${m}>`;
   }).join('\n');
@@ -341,20 +393,6 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
            dtd-version="3.2">
 ${moduleBlocks}
 </ectd:ectd>`;
-}
-
-/* ─── index-md5.txt (one MD5 per file, sorted) ────────────────────── */
-
-interface ChecksumEntry { relPath: string; md5: string; }
-export function buildMd5Index(entries: ChecksumEntry[]): string {
-  return entries
-    .slice()
-    // Codepoint order, not localeCompare: the manifest must be byte-identical
-    // across environments (the checksum contract), and locale collation is
-    // locale/ICU-dependent.
-    .sort((a, b) => (a.relPath < b.relPath ? -1 : a.relPath > b.relPath ? 1 : 0))
-    .map((e) => `${e.md5}  ${e.relPath}`)
-    .join('\n');
 }
 
 /* ─── Top-level packager ──────────────────────────────────────────── */
@@ -379,22 +417,6 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   };
 
   const region = input.region;
-  const backboneByRegion: Record<Region, () => string> = {
-    fda:  () => buildFdaBackbone(normalizedInput),
-    ema:  () => buildEmaBackbone(normalizedInput),
-    pmda: () => buildPmdaBackbone(normalizedInput),
-    ca:   () => buildHcBackbone(normalizedInput),
-    // ICH-aligned / EU-structure regions use EMA backbone as the closest standard
-    uk:   () => buildEmaBackbone(normalizedInput),
-    ch:   () => buildEmaBackbone(normalizedInput),
-    au:   () => buildEmaBackbone(normalizedInput),
-    // CTD/eCTD regions without a distinct backbone builder — EMA ICH M4 fallback
-    cn:   () => buildEmaBackbone(normalizedInput),
-    br:   () => buildEmaBackbone(normalizedInput),
-    in:   () => buildEmaBackbone(normalizedInput),
-    kr:   () => buildEmaBackbone(normalizedInput),
-    sg:   () => buildEmaBackbone(normalizedInput),
-  };
   const m1FolderByRegion: Record<Region, string> = {
     fda:  'm1/us',
     ema:  'm1/eu',
@@ -428,7 +450,114 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const checksums: ChecksumEntry[] = [];
   const grades: LeafGradeRecord[] = [];
 
-  /* Write regional Module 1 backbone. */
+  /* PASS 1 — finalize every leaf's bytes FIRST, so the backbone can carry each
+     leaf's real (post-PDF/A) MD5 as an inline `checksum` and a backbone-relative
+     `xlink:href`. eCTD requires the checksum in the backbone to match the bytes
+     shipped; finalization can change the bytes, so it must happen before the
+     backbone is built. */
+  interface PreparedLeaf { leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer; }
+  const prepared: PreparedLeaf[] = [];
+  const refByLeaf = new Map<EctdLeaf, LeafRef>();
+  for (const leaf of input.leaves) {
+    const sectionDashed = leaf.ctdSection.replace(/\./g, '-');
+    const raw = await fs.readFile(leaf.sourcePath);
+    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
+    grades.push({ fileName: leaf.fileName, isPdf, converted });
+    const md5 = md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex');
+
+    let relPath: string;
+    let href: string;
+    if (leaf.ctdSection.startsWith('1')) {
+      // Module 1 → under the regional folder; href relative to the regional backbone.
+      relPath = `${m1FolderByRegion[region]}/${sectionDashed}/${leaf.fileName}`;
+      href = `${sectionDashed}/${leaf.fileName}`;
+    } else {
+      // Module 2–5 → shared folders; href relative to index.xml at the root.
+      // Study-report leaves (studyId set) go under a per-study subfolder so each
+      // study owns its folder + its own stf.xml (FDA STF convention).
+      const studySub = leaf.studyId ? `/${studyFolderSlug(leaf.studyId)}` : '';
+      relPath = `m${leaf.ctdSection.charAt(0)}/${sectionDashed}${studySub}/${leaf.fileName}`;
+      href = relPath;
+    }
+    const ref: LeafRef = { href, md5 };
+    refByLeaf.set(leaf, ref);
+    prepared.push({ leaf, relPath, ref, bytes });
+  }
+  const resolve = (l: EctdLeaf): LeafRef =>
+    refByLeaf.get(l) ?? { href: l.fileName, md5: l.md5 ?? '' };
+
+  /* PASS 1.5 — Study Tagging Files (FDA STF v2.6.1, audit gap G5). For each
+     M4/M5 study (leaves carrying studyId + stfFileTag) generate a per-study
+     stf.xml that tags the study's leaves, place it in the study's folder,
+     reference it in index.xml, and checksum it. Graceful no-op when there are
+     no study leaves. */
+  const stfSyntheticLeaves: EctdLeaf[] = [];
+  let stfSummary: { studies: number; leaves: number; untagged: number } | undefined;
+  {
+    const studyPrepared = prepared.filter(
+      (p) => p.leaf.studyId && p.leaf.stfFileTag && !p.leaf.ctdSection.startsWith('1'),
+    );
+    if (studyPrepared.length > 0) {
+      const byStudy = new Map<string, typeof studyPrepared>();
+      for (const p of studyPrepared) {
+        const list = byStudy.get(p.leaf.studyId!) ?? [];
+        list.push(p);
+        byStudy.set(p.leaf.studyId!, list);
+      }
+      const studyFolder = new Map<string, string>();
+      const stfLeaves: StfLeaf[] = [];
+      for (const [studyId, entries] of byStudy) {
+        const folder = commonDir(entries.map((e) => e.relPath));
+        studyFolder.set(studyId, folder);
+        for (const e of entries) {
+          stfLeaves.push({
+            studyId,
+            fileTag: e.leaf.stfFileTag!,
+            ctdSection: e.leaf.ctdSection,
+            href: e.relPath.slice(folder.length + 1), // relative to the study folder
+            title: e.leaf.title,
+            operation: e.leaf.operation,
+          });
+        }
+      }
+      const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? []);
+      stfSummary = stfResult.summary;
+      for (const file of stfResult.files) {
+        const folder = studyFolder.get(file.studyId)!;
+        const relPath = `${folder}/stf.xml`;
+        const bytes = Buffer.from(file.xml, 'utf8');
+        const md5 = createHash('md5').update(bytes).digest('hex');
+        const section = byStudy.get(file.studyId)![0].leaf.ctdSection;
+        const synthetic: EctdLeaf = {
+          ctdSection: section, operation: 'new', sourcePath: '',
+          fileName: 'stf.xml', title: `Study Tagging File — ${file.studyId}`,
+        };
+        const ref: LeafRef = { href: relPath, md5 };
+        refByLeaf.set(synthetic, ref);
+        prepared.push({ leaf: synthetic, relPath, ref, bytes });
+        stfSyntheticLeaves.push(synthetic);
+      }
+    }
+  }
+
+  const backboneByRegion: Record<Region, () => string> = {
+    fda:  () => buildFdaBackbone(normalizedInput, resolve),
+    ema:  () => buildEmaBackbone(normalizedInput, resolve),
+    pmda: () => buildPmdaBackbone(normalizedInput, resolve),
+    ca:   () => buildHcBackbone(normalizedInput, resolve),
+    // ICH-aligned / EU-structure regions use EMA backbone as the closest standard
+    uk:   () => buildEmaBackbone(normalizedInput, resolve),
+    ch:   () => buildEmaBackbone(normalizedInput, resolve),
+    au:   () => buildEmaBackbone(normalizedInput, resolve),
+    // CTD/eCTD regions without a distinct backbone builder — EMA ICH M4 fallback
+    cn:   () => buildEmaBackbone(normalizedInput, resolve),
+    br:   () => buildEmaBackbone(normalizedInput, resolve),
+    in:   () => buildEmaBackbone(normalizedInput, resolve),
+    kr:   () => buildEmaBackbone(normalizedInput, resolve),
+    sg:   () => buildEmaBackbone(normalizedInput, resolve),
+  };
+
+  /* PASS 2 — write the regional Module 1 backbone (now that hrefs+md5s exist). */
   const regionalXml = backboneByRegion[region]();
   const regionalPath = backboneFileByRegion[region];
   zip.file(regionalPath, regionalXml);
@@ -437,34 +566,17 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     md5: createHash('md5').update(regionalXml).digest('hex'),
   });
 
-  /* Write Module 1 leaves under the region-specific folder. */
-  const m1Leaves = input.leaves.filter((l) => l.ctdSection.startsWith('1'));
-  for (const leaf of m1Leaves) {
-    const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
-    grades.push({ fileName: leaf.fileName, isPdf, converted });
-    const targetPath = `${m1FolderByRegion[region]}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
-    zip.file(targetPath, bytes);
-    checksums.push({
-      relPath: targetPath,
-      md5: md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex'),
-    });
+  /* Write all finalized leaf bytes. */
+  for (const p of prepared) {
+    zip.file(p.relPath, p.bytes);
+    checksums.push({ relPath: p.relPath, md5: p.ref.md5 });
   }
-
-  /* Write Module 2–5 leaves under shared folders. */
-  const m2to5 = input.leaves.filter((l) => !l.ctdSection.startsWith('1'));
-  for (const leaf of m2to5) {
-    const mod = `m${leaf.ctdSection.charAt(0)}`;
-    const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
-    grades.push({ fileName: leaf.fileName, isPdf, converted });
-    const targetPath = `${mod}/${leaf.ctdSection.replace(/\./g, '-')}/${leaf.fileName}`;
-    zip.file(targetPath, bytes);
-    checksums.push({
-      relPath: targetPath,
-      md5: md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex'),
-    });
-  }
+  // Module 2–5 leaves for index.xml, including the generated STF files so each
+  // stf.xml is a referenced leaf in the backbone (not an orphan file).
+  const m2to5 = [
+    ...input.leaves.filter((l) => !l.ctdSection.startsWith('1')),
+    ...stfSyntheticLeaves,
+  ];
 
   /* PDF/A submission-grade gate (audit gap P0-2): when ECTD_REQUIRE_PDFA=true
      and this is a production package, refuse to ship any PDF leaf that the
@@ -511,8 +623,23 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     );
   }
 
+  /* Cross-reference resolution (intra-package hyperlinks). Resolve declared
+     references against the leaf set; a broken (dangling / withdrawn-target)
+     reference is an eCTD technical-validation defect. Surfaced on the bundle;
+     blocks a production build when ECTD_REQUIRE_XREF=true (report-only default,
+     mirroring the PDF/A + DTD gates). */
+  const xref = resolveCrossReferences(input.leaves, input.crossReferences ?? []);
+  if (!xref.ok && xrefRequiredFromEnv() && (input.environment ?? 'production') === 'production') {
+    const detail = xref.broken.map((b) => `${b.source}→${b.target} (${b.reason})`).join(', ');
+    throw new ValidationError(
+      `eCTD package has ${xref.broken.length} broken cross-reference(s): ${detail}. ` +
+        `Resolve them, or clear ECTD_REQUIRE_XREF for non-submission builds.`,
+      xref.broken.map((b) => `${b.source}→${b.target}: ${b.reason}`),
+    );
+  }
+
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
-  const indexXml = buildIndexXml(input, m2to5);
+  const indexXml = buildIndexXml(input, m2to5, resolve);
   zip.file('index.xml', indexXml);
   checksums.push({ relPath: 'index.xml', md5: createHash('md5').update(indexXml).digest('hex') });
 
@@ -557,5 +684,15 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       missing: dtdGate.missing,
       selfContained: dtdGate.selfContained,
     },
+    ...(stfSummary ? { stf: stfSummary } : {}),
+    ...(input.crossReferences?.length
+      ? {
+          crossReferenceStatus: {
+            resolved: xref.resolved.length,
+            broken: xref.broken.map((b) => ({ source: b.source, target: b.target, reason: b.reason })),
+            ok: xref.ok,
+          },
+        }
+      : {}),
   };
 }

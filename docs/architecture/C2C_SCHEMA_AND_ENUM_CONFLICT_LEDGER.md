@@ -1343,6 +1343,427 @@ for lineage-reachability is the natural successor and is not yet written.
 
 ---
 
+## C-23 — The migration manifest applies nothing, so journey-proven schema never shipped *(critical — FIXED 2026-07-30)*
+
+C-17/C-19/C-20 closed the *column*-level face of C-6 for the signing path. This is
+the *table*-level face, and the guard C-20 named as "the natural successor" that
+"is not yet written."
+
+### The mechanism
+
+`db/migrations/migrations_manifest.json` carries an `executionOrder` that reads
+like an apply order. **Nothing consumes it.** It is ordering metadata that
+`readiness-audit.mjs` only *reports* on. The durable apply paths a real
+environment actually runs are exactly four:
+
+1. `migrations/meta/_journal.json` → drizzle `migrate()` replays the journaled
+   baseline (`migrations/0000_sweet_joseph.sql` and its lineage).
+2. `db/migrations/*_gcc_*.sql` → the CI psql apply loop.
+3. `C2C_MIGRATION_FILES` in `scripts/db/migration-set.mjs` → `deploy-migrate.mjs`
+   (the prod one-off ECS task) and `apply-c2c-migrations.mjs`.
+4. `AUTHORING_SUBSYSTEM_FILES` in `scripts/db/authoring-subsystem.mjs`.
+
+`drizzle-kit push` (from `shared/schema.ts`) is a fifth, but provisions **fresh
+installs only** — so it can never close a gap on an existing customer database,
+which is the environment that *has* the gap.
+
+A migration authored into `db/migrations/` and listed in the manifest, but not on
+one of the four, is applied by **nothing**. It lands only on the throwaway PGlite
+a golden journey spins up, and on the ephemeral Neon branch a PR's preview job
+deletes when the PR closes. Merged, green, and never applied.
+
+### Scope
+
+A reachability sweep of every non-archived `.sql` file found **334 of 406 (82%)**
+reachable by no durable path. Most of that tail is dormant. The actionable subset
+is the one the platform's own oracle proves it needs: the migrations a
+golden-journey test provisions and drives a regulatory workflow against. Seven of
+those were deploy-dead — meaning the storage behind **C-1, C-8, C-10 and C-16**
+never landed on a real deploy even after those entries were marked FIXED:
+
+| file | ledger | what it stores |
+|---|---|---|
+| `20260220_ind_section_tracking.sql` | C-16 | `project_sections` + section tracking |
+| `20260323_assumption_decision_contradiction.sql` | C-1 | the operating-system core |
+| `20260725_governance_boundary_tables.sql` | C-8 | governance rules/transitions |
+| `20260725_resolution_orchestration_tables.sql` | C-10 | resolution plans/bundles/supersession |
+| `20260725_bundle_execution_receipts.sql` | C-10 | ADR-0009 execution receipts |
+| `20260725_project_sections_content_columns.sql` | C-16 | `project_sections` content ALTER |
+| `20260725_ectd_compilations_project_level.sql` | C-16 | project-level eCTD compile unblock |
+
+None of the first six primary tables is in `shared/schema.ts` either, so `push`
+did not create them on fresh installs — they existed on **no** real database. The
+seventh is the existing-customer half of the C-16 eCTD fix: `shared/schema.ts` was
+made nullable (fixes fresh installs via push), but the ALTER that fixes already-
+provisioned databases was itself deploy-dead.
+
+### Fix
+
+All seven added to `C2C_MIGRATION_FILES`, in dependency order, each idempotent
+(CREATE/ALTER … IF [NOT] EXISTS, DO-block-guarded enum types, no DROP/TRUNCATE,
+no self-transaction).
+
+### The guard C-20 asked for
+
+`scripts/ci/check-journey-migration-reachability.mjs` (`npm run
+ci:journey-migration-reachability`, wired into `.github/workflows/ci.yml`). It
+takes the golden-journey suite as the oracle — every migration path a
+`tests/golden-journeys/*.ts` file provisions as a standalone quoted literal — and
+fails the build if any is not on one of the four durable appliers. It counts
+`push` deliberately *not* as durable, because doing so would re-admit the exact
+existing-customer drift. No baseline, no `--strict`: the reachable set must be
+complete at all times. Verified green at 14/14, and verified to fire when any one
+port is removed from its applier.
+
+This does not resolve C-6 (two competing lineages) — ADR-0006 still owns that.
+What it does is make the *class* fail CI instead of shipping silently: a journey
+can no longer prove a migration works while no deploy applies it.
+
+---
+
+## C-24 — The document-enrollment dedup guard never actually counted *(medium — FIXED 2026-07-30)*
+
+`ModuleIntegrationService.documentExists()` — the dedup check at the canonical
+module-document enrollment boundary (`GET /api/module-integration/document-exists`,
+mounted via `register-clinical-intel-routes.ts`) — built its query as
+`.select({ count: { count: 'id' } })` and returned `result[0].count > 0`. That
+projection is a nested plain object, neither a column nor a `sql` expression, so
+Drizzle never emitted `COUNT(*)`; `result[0].count` was never a real number and
+the guard's truth value was an artifact of the malformed shape. A dedup guard that
+cannot be trusted either enrolls a duplicate twice or blocks a new document.
+
+**Fix:** an idiomatic existence probe — `select({ id }).where(triple).limit(1)`,
+`rows.length > 0`. The boundary was also typed against the schema truth: `db:
+RequestDb`, a `RegisterDocumentInput` contract, `documentExists(moduleType:
+ModuleType, originalId: string, organizationId: number)`, and an `isModuleType`
+guard so the route 400s on an unknown module instead of coercing it into the
+`module_type` enum column at runtime. (The route had been passing string org-ids
+into an integer column — the same string-vs-int inconsistency `getSecureOrgId`
+returns platform-wide; tightening the whole surface is a separate change.)
+
+**Proof:** `tests/schema-contract/module-integration-document-exists.contract.test.ts`
+— the real service against the real `module_documents` shape in PGlite: true only
+for the exact `(moduleType, originalId, org)` triple, false for every partial
+match including a same-`originalId` different-tenant collision.
+
+---
+
+## C-25 — eCTD export leaked one tenant's authored content to another *(critical security — FIXED 2026-07-30)*
+
+Surfaced by the submission-export golden journey (below).
+
+`generateEctdPackage` (server/services/ectdExportService.ts) assembles the eCTD
+ZIP by pulling content from four sources. Three are organization-scoped — the
+`document_versions` join filters on `d.organization_id`, and both
+`concept2cure_artifacts` lookups filter on `organization_id`. The fourth, the
+`project_sections` query, filtered on `project_id` ALONE:
+
+```sql
+SELECT section_code, title, status, content, word_count, module
+FROM project_sections WHERE project_id = $1 ORDER BY section_code
+```
+
+The export route (`POST /api/ectd/export/:submissionId`) resolves the org from
+the JWT but takes the project id from the URL and never verifies the project
+belongs to that org. So an authenticated user at org B could
+`POST /api/ectd/export/<org-A-project-id>` and receive an eCTD package containing
+org A's authored Module-3 section content rendered as leaf PDFs — a cross-tenant
+disclosure of regulated dossier text (IDOR). The module/granule queries returned
+nothing for the mismatched org, which made the package *look* empty while the
+section leaves silently carried the other tenant's content.
+
+**Fix:** scope the query by `organization_id` too (the column is NOT NULL on
+`project_sections`, so no legitimate row is excluded). One line, the same shape
+every sibling query already used.
+
+**Proof:** the isolation step of the export journey — org B's export of org A's
+project id must contain no leaf named from org A's section and zero content
+leaves. Verified to FAIL before the fix (the leaf was present) and pass after.
+
+## C-26 — Any non-WinAnsi glyph 500'd the entire eCTD export *(high — FIXED 2026-07-30)*
+
+Also surfaced by the export journey, on the very first incomplete-dossier build.
+
+The leaf PDF renderer (server/services/ectd/leaf-pdf-renderer.ts) embeds a
+pdf-lib STANDARD font (`StandardFonts.Helvetica`), whose WinAnsi/Windows-1252
+encoding cannot represent code points outside that page. `page.drawText` throws
+on the first such glyph. Two consequences, both reachable on ordinary input:
+
+1. The PENDING-placeholder generator emitted box-drawing characters
+   (`'─'.repeat(40)`, U+2500). So EVERY export of a dossier with any unauthored
+   granule threw `WinAnsi cannot encode "─" (0x2500)` — before it could even reach
+   the completeness gate. Incomplete dossiers could not be exported at all, not
+   even as drafts.
+2. Real authored content routinely carries non-WinAnsi glyphs — Greek letters,
+   arrows, math operators (≤ ≥ ≠ ≈ ∞ −), box drawing from pasted tables — so a
+   single such character anywhere in a CMC or clinical section would 500 the whole
+   submission export.
+
+**Fix:** a deterministic `toWinAnsiSafe` pass that maps the common offenders to
+faithful ASCII (─→-, →→->, μ→u, ≤→<=, …) and replaces any remaining
+non-representable code point with `?`, applied to every string before it is
+measured or drawn. The renderer is now total over arbitrary Unicode; WinAnsi-safe
+glyphs (µ, ±, °, é, curly quotes) are left intact, and determinism — the md5
+leaf-checksum contract — is preserved. The placeholder generator's box-drawing
+line was also changed to ASCII at the source.
+
+**Proof:** the export journey's incomplete-dossier step builds a draft whose
+placeholder leaf renders (no throw), and the complete-dossier section content
+carries `µg/mL ± 5%`, `2–8°C`, `≥ 98%`, `μmax →`, and a box-drawing run — all of
+which now flow into a valid package.
+
+### Journey
+
+`tests/golden-journeys/submission-export-package.journey.test.ts` — the last mile
+of the biotech submission path (compiled dossier → submittable eCTD ZIP), which
+had no coverage. Drives the real generate/validate services against canonical DDL:
+valid ICH M8 structure, authored content lands, the completeness gate blocks an
+incomplete dossier, and cross-tenant isolation of authored content. It reads
+`project_sections` from the C-23 migrations, so it both depends on and exercises
+that reachability fix. Transmission to the FDA ESG/AS2 gateway is out of scope (it
+needs a live gateway); the journey proves the package that would be transmitted.
+
+---
+
+## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — RESOLVED 2026-07-30)*
+
+Caught by `ci:duplicate-table-ddl` the moment PR #1202 merged — the guard doing
+exactly its job.
+
+### Reconciliation decision + progress (2026-07-30)
+
+Decision: **`20260725_*` (UUID) is canonical.** It is on the durable applier
+(`AUTHORING_SUBSYSTEM_FILES`), golden-journey-proven, and the only shape that
+reaches a real database — `20260730_authoring_subsystem_schema.sql` is deploy-dead
+(on no applier), so its TEXT shape exists only on that migration's isolated test
+PGlite. The type difference (UUID vs `gen_random_uuid()::text`) is benign at
+runtime: the router mints valid-UUID strings, which coerce into the UUID columns.
+
+A column-level diff of the 10 colliding tables settled what "incompatible" really
+means:
+- **7 tables are column-identical** (`authoring_documents`, `authoring_citations`,
+  `authoring_audit_trail`, `authoring_workflow_steps`, `authoring_signatures`,
+  `frozen_documents`, `doc_permissions`) — the canonical 0725 version already has
+  every column, so the 0730 copies are pure redundancy. Safe to drop from 0730.
+- **`authoring_comments` + `user_pins` were a strict subset** — the CoAuthor
+  router (`authoring.router.ts`) SELECTs/INSERTs 8 comment columns
+  (`user_name`, `user_email`, `parent_comment_id`, `position_data`,
+  `resolved_by/at`, `resolution_note`, `updated_at`) and `user_pins.last_changed`
+  that the canonical tables lacked. On every real deploy the comment endpoints
+  therefore **500'd with "column … does not exist"** — a live bug, not just a
+  lint finding.
+- **`authoring_sections` genuinely diverges** — the router uses
+  `document_id` / `order_idx` / `section_number`; the canonical table uses
+  `doc_id` (NOT NULL) / `order_index`. A naming + NOT-NULL conflict that cannot be
+  unioned additively.
+
+**Done:** `db/migrations/20260730_authoring_comments_router_columns.sql` (on
+`AUTHORING_SUBSYSTEM_FILES`) additively adds the 8 comment columns + `last_changed`
+to the canonical tables, so one physical table serves both the freeze/signature
+loop and the CoAuthor router. This fixes the live comment-endpoint 500s. Proven by
+`tests/schema-contract/authoring-comments-router-columns.contract.test.ts` — the
+router's exact INSERT/SELECT column lists run against the canonical shape + the
+migration, including the self-referential `parent_comment_id` thread.
+
+### Full resolution (2026-07-30)
+
+`authoring_sections` turned out NOT to need a code decision after all: reading the
+router closely, it already uses the canonical `doc_id` / `order_index` / `code`
+names — the `document_id` / `order_idx` / `section_number` references in
+`authoring.router.ts` belong to OTHER tables (`frozen_documents`, export history)
+or to on-disk template JSON, and the router itself documents that
+"authoring_sections has `code` and `doc_id`, never `section_number` or
+`document_id`." So the 0730 `authoring_sections` shape was simply wrong/unused.
+The router did need one thing the canonical table lacked — a unique arbiter for its
+`ON CONFLICT (doc_id, code, tenant_id)` section upsert, which 500'd on every real
+deploy without it. Added additively (`authoring_sections_doc_code_tenant_uq`) in
+the same reconciliation migration.
+
+All **10 duplicate `CREATE TABLE` blocks are now retired** from
+`20260730_authoring_subsystem_schema.sql` (it keeps only its 12 genuinely-new
+workflow tables), and the 10 collisions are removed from the `duplicate-table-ddl`
+baseline (76 → 66 — genuinely resolved, not re-baselined). Two proof tests were
+repointed at the canonical union and hardened: `authoring-schema-contract.test.ts`
+now validates the router's SQL against the full canonical schema with an
+ALTER-aware parser (not one file), and `authoring-migration.pglite.integration.test.ts`
+execs the canonical union and runs the router's real INSERT/upsert SQL against it
+with real UUID ids — proving genuine runtime compatibility, not just column-name
+parsing.
+
+Net: one canonical authoring schema (UUID, 0725) serves both the freeze/signature
+loop and the CoAuthor router; the router's comment endpoints and section upserts,
+which 500'd on every real deploy, now work; the duplicate-table conflict is fully
+gone.
+
+PR #1202 (“AnA canonical document spine + authoring schema-contract fix”) added
+`db/migrations/20260730_authoring_subsystem_schema.sql`, which `CREATE TABLE IF
+NOT EXISTS`-declares 23 authoring tables derived from the SQL
+`server/routes/authoring.router.ts` issues. **Ten of those already exist**, defined
+by the golden-journey-proven `20260725_authoring_*` migrations
+(`authoring_documents`, `authoring_sections`, `authoring_signatures`,
+`authoring_workflow_steps`, `authoring_comments`, `authoring_citations`,
+`authoring_audit_trail`, `doc_permissions`, `frozen_documents`, `user_pins`).
+
+The two definitions are **incompatible**, not merely redundant. For
+`authoring_documents` alone:
+
+| column | 20260725 (loop tables) | 20260730 (Codex, router-derived) |
+|---|---|---|
+| `id` | `UUID PRIMARY KEY` | `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text` |
+| `template_id` | `UUID` | `TEXT` |
+| `current_workflow_id` | `UUID` | `TEXT` |
+| `created_by` | `TEXT NOT NULL` | `TEXT` (nullable) |
+
+Under `CREATE TABLE IF NOT EXISTS` the FIRST definition to run wins and the other
+silently no-ops, so the surviving column *types* depend on apply order — the exact
+C-6 hazard. Two consumers disagree on the shape: the freeze/signature handlers
+behind the ind-authoring golden journey assume the UUID shape (0725); Codex's
+`authoring.router.ts` mints TEXT ids app-side and its schema-contract test pins the
+TEXT shape (0730).
+
+**What actually deploys.** `20260730` is on NO durable apply path — no `_gcc_`
+infix, not in `C2C_MIGRATION_FILES`, not in `AUTHORING_SUBSYSTEM_FILES`, not in the
+journal. It is deploy-dead (the very C-23 gap, re-introduced). `20260725` IS on a
+durable applier (`AUTHORING_SUBSYSTEM_FILES`). So on every real database only the
+UUID (0725) shape lands; the TEXT (0730) shape exists only on the PGlite the Codex
+schema-contract test spins up. Codex's router — if it truly needs TEXT ids or the
+0730-only columns — is therefore mis-provisioned on real deploys regardless of this
+collision.
+
+**Action taken:** the 10 collisions are added to
+`scripts/ci/duplicate-table-ddl-baseline.json` (66 → 76) to unblock the branch,
+using the guard's documented tracked-for-reconciliation mechanism — the same way
+the pre-existing 66 are tracked. This is an unblock, **not a resolution**, and it
+is recorded here so it is not mistaken for one.
+
+**Proper fix (ADR-0006 class, not done here):** decide the ONE canonical authoring
+schema. Given 0725 is what deploys and what the golden journey proves, the likely
+outcome is: keep 0725 as canonical, delete the 10 duplicate `CREATE TABLE` blocks
+from `20260730` (leaving only its genuinely-new tables), reconcile
+`authoring.router.ts` and the schema-contract test to the UUID shape, and wire the
+remaining new tables onto `AUTHORING_SUBSYSTEM_FILES` so they actually deploy. That
+touches two routers and a Part 11 signature path, so it is its own change, not a
+land-blocker patch.
+
+**Addendum (parallel analysis, same day).** A concurrent audit branch hit the
+same guard failure and reached the same disposition independently; two points
+from that analysis worth preserving:
+
+- Even the ten tables' NON-identity delta columns cannot be back-ported to the
+  deployed UUID shape without the type decision: e.g.
+  `authoring_comments.parent_comment_id TEXT REFERENCES authoring_comments(id)`
+  cannot be ALTERed onto a table whose `id` is UUID (FK type mismatch). The
+  delta inventory the router needs on the deployed shape:
+  `authoring_comments.user_name/user_email/parent_comment_id/position_data/
+  resolved_by/resolved_at/resolution_note/updated_at`,
+  `authoring_sections.document_id/order_idx/section_number/created_by/updated_by`,
+  `user_pins.last_changed`, plus `frozen_documents.version` TEXT↔INTEGER.
+- The identity-type decision is the same decision as the platform's
+  canonical-identity P0 (external subject → platform user resolution, ledger
+  C-21): whichever type the authoring subsystem standardizes on determines how
+  authoring identities join against the integer-keyed core. Decide once, under
+  that umbrella — not per-table.
+
+---
+
+## C-28 — The authoring router's own tables were retired from runtime DDL into a deploy-dead migration *(high — FIXED 2026-07-30)*
+
+The other half of the PR #1202/#1205 authoring-spine landing (commit `398500dc6`
+“retire runtime DDL”), exposed the moment C-27's `duplicate-table-ddl` fix let the
+proof tier run again.
+
+`server/routes/authoring.router.ts` used to create seven of its own tables
+(`authoring_tokens`, `authoring_templates`, `template_guidance`, `template_usage`,
+`section_guidance`, `authoring_export_history`,
+`authoring_tracked_change_decisions`) via runtime `ensure*` DDL at module load.
+The canonical-spine refactor correctly retired that anti-pattern and moved the DDL
+into `db/migrations/20260730_authoring_runtime_ddl.sql` — but wired that migration
+into **nothing**: not `AUTHORING_SUBSYSTEM_FILES`, not the journal, no `_gcc_`
+infix. So the tables were created *nowhere* on a real deploy (C-23 all over again),
+and the router would 500 on first use in production. Three proof-tier tests failed
+on the missing relations (`authoring-router-columns`, `authoring-role-gate`,
+`ind-authoring`), and had been failing on the base since the merge — masked only
+because CI died earlier at the duplicate-table step.
+
+**Fix:** added `20260730_authoring_runtime_ddl.sql` to `AUTHORING_SUBSYSTEM_FILES`
+(the durable applier the deploy runs) and to the three tests' migration lists. The
+migration is additive and idempotent (all CREATE TABLE/INDEX IF NOT EXISTS), and
+its tables are disjoint from the C-27 conflicted set, so this is orthogonal to the
+UUID/TEXT reconciliation still owed there. Proof tier is back to green (263/263),
+and the lineage-reachability guard now covers the ind-authoring journey's use of
+this migration.
+
+---
+
+## C-29 — Push-vs-overlay identity collisions: four more tables defined twice, three features dead on every real database *(high — PARTIALLY FIXED / BASELINED 2026-07-30)*
+
+Found by making the blank-DB provisioning job locally reproducible (real
+postgres 16 + pgvector, the CI job's exact five-step sequence). install-fresh
+reported nine root-tree files unapplied; each traced to one of three classes.
+
+### Class 1 — creators that existed but were reachable by nothing (FIXED)
+
+- `ai_threads` (+ the whole AI provenance chain): sole creator
+  `db/migrations/20260224_ai_trace_chain.sql`, on NO durable path (the C-23
+  pattern) while 8 live server files query the tables. Now on
+  `C2C_MIGRATION_FILES` and install-fresh's pre-overlay creators.
+- `cmc_source_objects` ordering: root files 0016/0017 ALTER it, but its
+  creator (the CMC convergence OS file) runs via deploy-migrate AFTER
+  install-fresh. Now also applied pre-overlay.
+
+### Class 2 — live tables with NO creator anywhere (FIXED via C-11 reconstruction)
+
+- `cmc_projects`: INSERTed by the CMC blueprint route, FK-referenced by
+  0006_regulatory_atoms — no DDL existed in any tree.
+  → `20260730_cmc_projects_reconstruction.sql` (code-derived).
+- `manufacturing_processes`: SELECTed by ich-compliance-checker + qbd-analyzer,
+  FK target of 0006 — no DDL existed.
+  → `20260730_manufacturing_processes_reconstruction.sql` (code-derived).
+- `project_milestones`: TWO rival shapes (baseline/schema.ts `due_date` model
+  vs 20260220_ind_section_tracking `target_date` model) and the one live
+  consumer (project-sections.ts) STRADDLES them — its INSERT names columns
+  from both plus `created_by` from neither, i.e. milestone creation was
+  broken on every database of either shape.
+  → `20260730_project_milestones_reconciliation.sql` lands the additive
+  union (ordered BEFORE 20260220 so its target_date index applies), and
+  20260220's five CREATE POLICYs / two CREATE TRIGGERs gained the standard
+  DROP-IF-EXISTS guards (it was also the file that broke deploy-migrate's
+  idempotency re-run).
+- 0008's sixteen live FK delete-policies, aborted forever by its first
+  statement targeting retired `user_sessions`
+  → `20260730_fk_delete_policies_port.sql` (guarded port).
+
+### Class 3 — irreconcilable-by-ALTER shape collisions (BASELINED, decision required)
+
+Same anatomy as C-27 (two live features on one table name, incompatible
+identity/column models — no additive migration can express the difference):
+
+| table(s) | shape A (deploys via push) | shape B (raw SQL, dead on real DBs) |
+|---|---|---|
+| `ivdr_classifications` | schema.ts: `ivdr_class`, `companion_diagnostic`, … (ivd-completeness-routes) | 001_create_ivdr_tables: `classification CHAR(1)`, `is_cdx`, `rule_trace`, … (ivdr-routes — mounted) |
+| `risk_management_files` / `risk_items` / `risk_controls` | schema.ts: program-scoped integer-scored model (rbm risk-report, mdx-rbm) | 20260609_design_risk: RMF-anchored uuid model with `rmf_id` (design-risk.service — mounted) |
+| `unified_documents` | — (12 live server files query it; push does NOT create it) | only creator is `_consolidated/20250108_…`, which ALSO redefines `users`/`tenants` with TEXT keys — porting it would introduce rival core-identity definitions and a TEXT tenant column |
+
+Interim disposition: install-fresh now carries an explicit per-file
+CLASSIFIED_OVERLAY_SKIPS map (each entry names its tracked resolution;
+anything unlisted still fails the install loudly). The five classified files
+are 0004/0007 (unified_documents), 0008 (superseded by the port),
+001_create_ivdr_tables and 20260609_design_risk.
+
+### Required decisions
+
+1. ivdr + design-risk: rename ONE side's tables (the raw-SQL features are
+   already broken on every push-provisioned database, so renaming their
+   tables and putting creators on the durable path restores them without
+   touching the drizzle-side features) — or reconcile the models. Owner:
+   whoever owns the IVD/design-controls roadmap.
+2. unified_documents: decide the ingestion subsystem's identity model
+   (TEXT-keyed tenants/users vs the integer core) — the same umbrella
+   decision as C-27's authoring TEXT-vs-UUID. Until then, 12 server files
+   query a table that exists on no fresh database.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

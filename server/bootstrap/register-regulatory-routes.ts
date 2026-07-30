@@ -422,5 +422,18 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount Submission Pyramid routes:', error);
   }
 
+  // ── Governed document lifecycle (the ONE pipeline) ──
+  // Create → sign → advance a canonical document one gated stage at a time
+  // (authoring → in_review → approved → placed → packaged → submitted). Every
+  // transition runs the fail-closed gate, routes to the bound effect, and
+  // appends one hash-chained event to the per-document audit trail. Tenant-scoped.
+  try {
+    const lifecycleModule = await import('../routes/document-lifecycle');
+    app.use('/api/regulatory/documents', authenticateToken, lifecycleModule.createDocumentLifecycleRouter());
+    console.log('✅ Governed document lifecycle routes mounted (/api/regulatory/documents)');
+  } catch (error) {
+    console.error('❌ Failed to mount document lifecycle routes:', error);
+  }
+
   console.log('✅ Regulatory route family registered');
 }

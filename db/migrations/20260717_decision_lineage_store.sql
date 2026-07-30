@@ -1,3 +1,14 @@
+-- DEPRECATED (2026-07): the v2 DecisionLineage surface no longer reads this blob.
+-- GET /api/decision-lineage is now assembled ENTIRELY from the REAL workflow + audit
+-- store via decisionLineageService.getLineageGraph (document_workflows /
+-- workflow_approvals / workflow_history / document_audit_logs + hash-chained
+-- audit_logs) — the same real service that backs the per-artifact
+-- /api/decision-lineage/:entityType/:entityId, export, and verify-chain endpoints.
+-- See server/services/workflow/decision-lineage-view-assembler.ts and
+-- docs/architecture/C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This table is retained
+-- (non-destructive) but is no longer written by the demo seed nor read by any route.
+-- A later migration may DROP it once no environment references it.
+--
 -- Decision-lineage store — the governed-artifact decision-trail worklist backing
 -- the v2 DecisionLineage surface's GET read. Each row is one governed artifact
 -- (BX-204 program) with its immutable, Part-11 hash-chained decision graph:

@@ -64,11 +64,25 @@ vi.mock('../server/db', () => ({
     (h.pool as { query: (t: string, p?: unknown[]) => Promise<unknown> }).query(text, params),
 }));
 
+// The authoring router re-checks live org membership (enforceOrgMembership)
+// by coercing the token's userId with parseInt (server/middleware/orgMembership
+// .parseFiniteInt). A UUID like '4a2b3c10-…' coerces to its leading integer, so
+// the seeded organization_users row must key on that same coerced id or every
+// request is refused as membership-indeterminate (503).
+const AUTHOR_MEMBERSHIP_ID = Number.parseInt(AUTHOR.id, 10); // 4a2b3c10-… → 4
+
 const PREREQ = `
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
   CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organization_users (
+    organization_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member'
+  );
   INSERT INTO organizations (id, name) VALUES (1, 'scope-org');
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
+  INSERT INTO organization_users (organization_id, user_id, role)
+    VALUES (${AUTHOR.organizationId}, ${AUTHOR_MEMBERSHIP_ID}, 'member');
 `;
 
 let jdb: JourneyDb;

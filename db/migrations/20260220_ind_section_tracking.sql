@@ -50,6 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_psec_deadline ON project_sections(deadline) WHERE
 
 -- RLS policy for multi-tenant isolation
 ALTER TABLE project_sections ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS project_sections_org_policy ON project_sections;
 CREATE POLICY project_sections_org_policy ON project_sections
   USING (organization_id = current_setting('app.organization_id', true)::INTEGER);
 
@@ -77,6 +78,7 @@ CREATE INDEX IF NOT EXISTS idx_ssl_org ON section_status_log(organization_id);
 
 -- RLS
 ALTER TABLE section_status_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS section_status_log_org_policy ON section_status_log;
 CREATE POLICY section_status_log_org_policy ON section_status_log
   USING (organization_id = current_setting('app.organization_id', true)::INTEGER);
 
@@ -106,6 +108,7 @@ CREATE INDEX IF NOT EXISTS idx_sc_org ON section_comments(organization_id);
 
 -- RLS
 ALTER TABLE section_comments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS section_comments_org_policy ON section_comments;
 CREATE POLICY section_comments_org_policy ON section_comments
   USING (organization_id = current_setting('app.organization_id', true)::INTEGER);
 
@@ -155,6 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_pm_target ON project_milestones(target_date);
 
 -- RLS
 ALTER TABLE project_milestones ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS project_milestones_org_policy ON project_milestones;
 CREATE POLICY project_milestones_org_policy ON project_milestones
   USING (organization_id = current_setting('app.organization_id', true)::INTEGER);
 
@@ -184,6 +188,7 @@ CREATE INDEX IF NOT EXISTS idx_pn_project ON project_notifications(project_id);
 
 -- RLS
 ALTER TABLE project_notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS project_notifications_org_policy ON project_notifications;
 CREATE POLICY project_notifications_org_policy ON project_notifications
   USING (organization_id = current_setting('app.organization_id', true)::INTEGER);
 
@@ -199,6 +204,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_project_sections_updated_at ON project_sections;
 CREATE TRIGGER trg_project_sections_updated_at
   BEFORE UPDATE ON project_sections
   FOR EACH ROW
@@ -227,6 +233,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_section_status_log ON project_sections;
 CREATE TRIGGER trg_section_status_log
   AFTER UPDATE ON project_sections
   FOR EACH ROW

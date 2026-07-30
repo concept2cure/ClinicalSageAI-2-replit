@@ -17,8 +17,10 @@
  *   - submission-package-orchestrator's getRun / findActiveReleaseSignature /
  *     loadSubmissionFkBySubmissionIdText
  *   - part11ComplianceService.verifyUserCredentials + createElectronicSignature
+ *     (which now receives the orchestrator's bound digest + tenant scope and
+ *     writes them AT INSERT TIME — no post-insert UPDATE exists any more,
+ *     preserving the §11.70 append-only invariant)
  *   - auditService.logAction
- *   - the Drizzle db + raw pool for the post-insert UPDATE of the bound digest
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -392,7 +394,8 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(res.body.signatureId).toBe(999);
 
     // Verify the createElectronicSignature call shape — JWT-bound signerId,
-    // tenant-scoped orgId, documentType='submission-release', meaning='approval'.
+    // tenant-scoped orgId, documentType='submission-release', meaning='approval',
+    // and the orchestrator's bound digest passed in for insert-time binding.
     expect(hoisted.createElectronicSignature).toHaveBeenCalledTimes(1);
     const callArgs = hoisted.createElectronicSignature.mock.calls[0][0] as {
       userId: number;
@@ -402,6 +405,8 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
       signatureReason: string;
       signatureMeaning: string;
       password: string;
+      boundPayloadDigest: string;
+      signerRole: string;
     };
     expect(callArgs.userId).toBe(7);
     expect(callArgs.organizationId).toBe(100);
@@ -409,16 +414,13 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(callArgs.documentType).toBe('submission-release');
     expect(callArgs.signatureMeaning).toBe('approval');
     expect(callArgs.signatureReason).toBe('release authorization');
+    expect(callArgs.boundPayloadDigest).toBe('a'.repeat(64));
+    expect(callArgs.signerRole).toBe('approver');
 
-    // The post-insert UPDATE of bound_payload_digest + organization_id ran.
-    expect(hoisted.updateCalls.length).toBe(1);
-    const patch = hoisted.updateCalls[0].patch as {
-      organizationId: number;
-      boundPayloadDigest: string;
-    };
-    expect(patch.organizationId).toBe(100);
-    expect(patch.boundPayloadDigest).toBe('a'.repeat(64));
-    expect(hoisted.updateCalls[0].whereCalled).toBe(true);
+    // §11.70 append-only: the row is complete at INSERT — the route must
+    // NEVER issue a post-insert UPDATE against electronic_signatures.
+    expect(hoisted.updateCalls.length).toBe(0);
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
 
     // Audit row written.
     expect(hoisted.auditLogAction).toHaveBeenCalledTimes(1);
@@ -455,6 +457,57 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     // No new signature row, no password check (idempotent short-circuit).
     expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+
+  it('resolves a concurrent-signing race idempotently on a 23505 unique violation', async () => {
+    // The pre-check missed (findActiveReleaseSignature null), so we proceed to
+    // insert — but a concurrent signer won the race and the DB unique index
+    // (electronic_signatures_active_release_uniq) rejects our insert with
+    // 23505. The route must re-read the winner and return its id as an
+    // idempotent 200, NOT a 500 — OQ-3 held because exactly one row landed.
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.verifyUserCredentials.mockResolvedValue(true);
+    // First findActiveReleaseSignature (pre-check) misses; the second (post
+    // unique-violation re-read) finds the winner.
+    hoisted.findActiveReleaseSignature
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 777 });
+    const uniqueViolation = Object.assign(new Error('duplicate key value'), { code: '23505' });
+    hoisted.createElectronicSignature.mockRejectedValue(uniqueViolation);
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'right-password',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.signatureId).toBe(777);
+    expect(res.body.already_signed).toBe(true);
+    // No post-insert UPDATE on the losing path.
+    expect(hoisted.updateCalls.length).toBe(0);
+  });
+
+  it('surfaces 500 on a non-race createElectronicSignature failure', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.verifyUserCredentials.mockResolvedValue(true);
+    hoisted.createElectronicSignature.mockRejectedValue(new Error('disk on fire'));
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'right-password',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('signature_creation_failed');
   });
 
   it('returns 422 when no documentId anchor can be resolved (lineage unresolved)', async () => {
