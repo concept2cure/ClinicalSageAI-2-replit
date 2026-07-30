@@ -111,6 +111,11 @@ beforeAll(async () => {
       // and every signature attempt — correct password or not — reports
       // invalid_credentials (ledger C-20).
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // Run-ledger hardening: getRun now SELECTs workflow_version +
+      // dependency_graph_digest (schema-shape errors are fatal by design), and
+      // this also puts the RESTRICT FK + append-only step trigger under the
+      // journey so the gate runs against the hardened schema.
+      'db/migrations/20260730_orchestrator_run_ledger_hardening.sql',
     ],
   });
   h.db = jdb.db;
@@ -250,6 +255,59 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
         request(app).post('/api/submissions/9999/sign-release'),
       ).send(signBody());
       return { blocked: res.status === 404, status: res.status };
+    });
+
+    // ── KNOWN-BAD: locked account cannot sign, even with the right password ─
+    // (negative-journey follow-ups from the 2026-07-30 auth/e-sig audit)
+    await R.expectBlocked('locked-account-cannot-sign', async () => {
+      await jdb.pool.query(
+        `UPDATE users SET locked_until = NOW() + interval '1 hour' WHERE id = $1`,
+        [APPROVER.id],
+      );
+      try {
+        const res = await asUser(APPROVER)(
+          request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`),
+        ).send(signBody());
+        // Correct password, locked account → §11.300(d): credentials refused.
+        // Indistinguishable from a wrong password to the caller.
+        return { blocked: res.status === 401, status: res.status, error: res.body.error };
+      } finally {
+        await jdb.pool.query(`UPDATE users SET locked_until = NULL WHERE id = $1`, [APPROVER.id]);
+      }
+    });
+
+    // ── KNOWN-BAD: suspended account cannot sign ────────────────────────────
+    await R.expectBlocked('suspended-account-cannot-sign', async () => {
+      await jdb.pool.query(`UPDATE users SET status = 'suspended' WHERE id = $1`, [APPROVER.id]);
+      try {
+        const res = await asUser(APPROVER)(
+          request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`),
+        ).send(signBody());
+        return { blocked: res.status === 401, status: res.status, error: res.body.error };
+      } finally {
+        await jdb.pool.query(`UPDATE users SET status = 'active' WHERE id = $1`, [APPROVER.id]);
+      }
+    });
+
+    // ── KNOWN-BAD: revoked membership loses signing authority ───────────────
+    // The role is resolved from the LIVE membership row (never the token), so
+    // deleting the row revokes authority immediately — §11.10(g).
+    await R.expectBlocked('revoked-membership-cannot-sign', async () => {
+      await jdb.pool.query(
+        `DELETE FROM organization_users WHERE user_id = $1 AND organization_id = $2`,
+        [APPROVER.id, ORG],
+      );
+      try {
+        const res = await asUser(APPROVER)(
+          request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`),
+        ).send(signBody());
+        return { blocked: res.status === 403, status: res.status, code: res.body.code };
+      } finally {
+        await jdb.pool.query(
+          `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)`,
+          [ORG, APPROVER.id, APPROVER.role],
+        );
+      }
     });
 
     // ── KNOWN-BAD: wrong password (§11.200 two-factor) ──────────────────────
