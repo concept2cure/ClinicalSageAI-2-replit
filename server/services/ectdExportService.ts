@@ -47,6 +47,7 @@ import {
   buildIchModuleTree,
   type RenderedLeaf,
 } from './submission-gateways/ectd-packager/ich-headings';
+import { buildLeafManifest } from './ectd/sequence-manifest';
 
 // Re-exported so existing importers of the export service keep working.
 export { EctdCompletenessError };
@@ -821,7 +822,23 @@ export async function generateEctdPackage(
   // and the qualification harness re-verifies after reopening the ZIP.
   zip.file('util/index-md5.txt', buildMd5Index(packageChecksums));
 
-  // 8. Record the compilation in the database
+  // 8. Record the compilation in the database, capturing the immutable
+  // per-sequence leaf manifest (every published leaf's precise section, href,
+  // and MD5) so a LATER sequence can diff against exactly what shipped and emit
+  // correct lifecycle operators + modified-file pointers. application_number and
+  // sequence_number are set here too so this path's compilations feed the
+  // sequence-continuity gate (they were previously left null — C-31).
+  const leafManifest = buildLeafManifest(
+    Array.from(moduleGranuleMap.values()).flatMap(m =>
+      m.granules.map(g => ({
+        ctdSection: g.granuleId,
+        href: g.filePath,
+        md5: g.checksum,
+        operation: g.operation,
+        title: g.granuleName,
+      })),
+    ),
+  );
   try {
     if (modules.length > 0) {
       await db
@@ -835,6 +852,9 @@ export async function generateEctdPackage(
           compiledBy: 1,
           compiledAt: new Date(),
           xmlBackbone: indexXml,
+          applicationNumber,
+          sequenceNumber,
+          leafManifest,
           version: '1.0',
         });
     }

@@ -1,0 +1,47 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Give ectd_compilations an immutable per-sequence leaf manifest so a
+--          later sequence computes its lifecycle + modified-file pointers
+--          against what was ACTUALLY published, not mutable current state.
+--
+-- eCTD/CTD Context:
+--   - Module(s): all (a sequence spans every module)
+--   - Integrity Risk Addressed: incorrect lifecycle operators / missing
+--     modified-file pointers on replace/append/delete, caused by diffing a new
+--     sequence against a prior state that was never captured exactly.
+--
+-- Determinism Contract:
+--   - The manifest is a deterministic snapshot taken at compile time; it is
+--     never rewritten. It is the canonical evidence pointer for prior state.
+--
+-- Notes:
+--   - RLS policies enforce organization_id isolation on ectd_compilations.
+--   - Migration is idempotent (IF NOT EXISTS).
+-- =============================================================================
+--
+-- The eCTD lifecycle operator (server/services/ectd/lifecycle-operator.ts) diffs
+-- a NEW sequence against the PRIOR sequence to derive each leaf's operation
+-- (new/replace/append/delete) and the ICH modified-file pointer at the leaf it
+-- supersedes. Doing that correctly requires the prior sequence's EXACT published
+-- leaves — precise CTD section, filename, package-relative href, and MD5.
+--
+-- Neither existing source can supply that:
+--   - ectd_granules is mutable current-state and drifts as authoring continues,
+--     so it no longer reflects what a past sequence shipped;
+--   - the published index.xml records only a leaf's HEADING-level section (it
+--     nests a 3.2.S.4.2 leaf under m3-2-s-drug-substance), losing the sub-section
+--     needed for stable cross-sequence identity.
+--
+-- This adds a JSONB manifest column that the compiler writes once per sequence:
+-- an array of { ctdSection, fileName, href, md5, operation }. The lifecycle
+-- loader reads it back verbatim. Nullable — pre-existing rows and metadata-only
+-- compilations simply have no manifest and contribute no prior state.
+--
+-- Fresh installs get the column from shared/schema.ts via drizzle-kit push; this
+-- is the durable, existing-database half. Widening + idempotent: every existing
+-- row stays valid; safe to re-run.
+
+ALTER TABLE ectd_compilations
+  ADD COLUMN IF NOT EXISTS leaf_manifest JSONB;
