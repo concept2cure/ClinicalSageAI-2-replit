@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-30T01:54:59.435Z",
+  "generatedAt": "2026-07-30T02:10:01.663Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 234,
+  "totalMigrations": 235,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -14,7 +14,7 @@
           "007_gcc_heatmap_views.sql",
           "007_gcc_shadow_run_groups.sql"
         ],
-        "resolution": "Execute in alphabetical order: verify \u2192 heatmap \u2192 shadow"
+        "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
       },
       {
         "prefix": "008",
@@ -569,7 +569,8 @@
     "20260730_fix_atom_embedding_dimension.sql",
     "20260725_users_signing_lockout_columns.sql",
     "20260730_authoring_subsystem_schema.sql",
-    "20260730_esign_audit_db_level_immutability.sql"
+    "20260730_esign_audit_db_level_immutability.sql",
+    "20260730_authoring_runtime_ddl.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

@@ -203,3 +203,27 @@ describe('authoring schema contract — no table is referenced-but-uncreated', (
     ).toEqual([]);
   });
 });
+
+describe('authoring schema contract — the router issues no runtime DDL', () => {
+  const RUNTIME_DDL_MIGRATION = path.join(
+    __dirname,
+    '../../../db/migrations/20260730_authoring_runtime_ddl.sql',
+  );
+  const RUNTIME_DDL_TABLES = [
+    'authoring_tokens', 'authoring_templates', 'template_guidance', 'template_usage',
+    'section_guidance', 'authoring_export_history', 'authoring_tracked_change_decisions',
+  ];
+
+  it('authoring.router.ts contains no CREATE TABLE — schema lives in migrations', () => {
+    const router = fs.readFileSync(ROUTER, 'utf8');
+    const createTableCount = (router.match(/CREATE TABLE/gi) ?? []).length;
+    expect(createTableCount, 'the router must not create tables at runtime; declare them in a migration').toBe(0);
+  });
+
+  it('the previously runtime-only tables are now declared in a migration', () => {
+    const sql = fs.readFileSync(RUNTIME_DDL_MIGRATION, 'utf8');
+    const created = new Set(Object.keys(parseCreatedTables(sql)));
+    const missing = RUNTIME_DDL_TABLES.filter((t) => !created.has(t));
+    expect(missing, `runtime-DDL tables missing from the migration: ${missing.join(', ')}`).toEqual([]);
+  });
+});
