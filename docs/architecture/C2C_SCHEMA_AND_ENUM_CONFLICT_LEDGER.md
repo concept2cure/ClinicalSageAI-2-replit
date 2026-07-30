@@ -1525,7 +1525,7 @@ needs a live gateway); the journey proves the package that would be transmitted.
 
 ---
 
-## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — PARTIALLY RECONCILED 2026-07-30; one table still needs a decision)*
+## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — RESOLVED 2026-07-30)*
 
 Caught by `ci:duplicate-table-ddl` the moment PR #1202 merged — the guard doing
 exactly its job.
@@ -1565,14 +1565,35 @@ loop and the CoAuthor router. This fixes the live comment-endpoint 500s. Proven 
 router's exact INSERT/SELECT column lists run against the canonical shape + the
 migration, including the self-referential `parent_comment_id` thread.
 
-**Still open (needs a code decision, not mechanical):** `authoring_sections`
-(`doc_id` vs `document_id`, and the NOT-NULL FK) — the router's section-insert
-path is incompatible with the canonical table until either the router adopts
-`doc_id`/`order_index`, or the canonical table makes `doc_id` nullable and adds
-`document_id` as the real FK. And the low-risk cleanup of dropping the 7 identical
-(+ now 2 unioned) table copies from `20260730_authoring_subsystem_schema.sql` and
-un-baselining those collisions, once the sections decision lands so all 10 can be
-retired from that file together.
+### Full resolution (2026-07-30)
+
+`authoring_sections` turned out NOT to need a code decision after all: reading the
+router closely, it already uses the canonical `doc_id` / `order_index` / `code`
+names — the `document_id` / `order_idx` / `section_number` references in
+`authoring.router.ts` belong to OTHER tables (`frozen_documents`, export history)
+or to on-disk template JSON, and the router itself documents that
+"authoring_sections has `code` and `doc_id`, never `section_number` or
+`document_id`." So the 0730 `authoring_sections` shape was simply wrong/unused.
+The router did need one thing the canonical table lacked — a unique arbiter for its
+`ON CONFLICT (doc_id, code, tenant_id)` section upsert, which 500'd on every real
+deploy without it. Added additively (`authoring_sections_doc_code_tenant_uq`) in
+the same reconciliation migration.
+
+All **10 duplicate `CREATE TABLE` blocks are now retired** from
+`20260730_authoring_subsystem_schema.sql` (it keeps only its 12 genuinely-new
+workflow tables), and the 10 collisions are removed from the `duplicate-table-ddl`
+baseline (76 → 66 — genuinely resolved, not re-baselined). Two proof tests were
+repointed at the canonical union and hardened: `authoring-schema-contract.test.ts`
+now validates the router's SQL against the full canonical schema with an
+ALTER-aware parser (not one file), and `authoring-migration.pglite.integration.test.ts`
+execs the canonical union and runs the router's real INSERT/upsert SQL against it
+with real UUID ids — proving genuine runtime compatibility, not just column-name
+parsing.
+
+Net: one canonical authoring schema (UUID, 0725) serves both the freeze/signature
+loop and the CoAuthor router; the router's comment endpoints and section upserts,
+which 500'd on every real deploy, now work; the duplicate-table conflict is fully
+gone.
 
 PR #1202 (“AnA canonical document spine + authoring schema-contract fix”) added
 `db/migrations/20260730_authoring_subsystem_schema.sql`, which `CREATE TABLE IF

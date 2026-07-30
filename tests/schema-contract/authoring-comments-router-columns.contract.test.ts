@@ -41,6 +41,18 @@ const CANONICAL_0725 = `
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
+  CREATE TABLE authoring_sections (
+    id UUID PRIMARY KEY,
+    doc_id UUID NOT NULL,
+    code TEXT,
+    title TEXT,
+    content TEXT,
+    order_index INTEGER DEFAULT 0,
+    track_changes BOOLEAN DEFAULT FALSE,
+    tenant_id INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
 `;
 
 // Exactly the column list authoring.router.ts writes on POST comment
@@ -103,6 +115,18 @@ describe('C-27: authoring_comments router columns land on the canonical table', 
       `SELECT ${ROUTER_SELECT_COLUMNS.map((c) => `c.${c}`).join(', ')} FROM authoring_comments c`,
     );
     expect(Array.isArray(r.rows)).toBe(true);
+  });
+
+  it("authoring_sections gains the unique arbiter for the router's ON CONFLICT upsert", async () => {
+    const upsert = `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (doc_id, code, tenant_id) DO UPDATE SET title = EXCLUDED.title`;
+    const doc = '55555555-5555-5555-5555-555555555555';
+    await pglite.query(upsert, ['66666666-6666-6666-6666-666666666661', doc, '3.2.S', 'First', 'x', 0, 1]);
+    await pglite.query(upsert, ['66666666-6666-6666-6666-666666666662', doc, '3.2.S', 'Revised', 'y', 0, 1]);
+    const r = await pglite.query('SELECT title FROM authoring_sections WHERE doc_id=$1 AND code=$2 AND tenant_id=1', [doc, '3.2.S']);
+    expect(r.rows).toHaveLength(1);
+    expect((r.rows[0] as { title: string }).title).toBe('Revised');
   });
 
   it('user_pins gains last_changed', async () => {

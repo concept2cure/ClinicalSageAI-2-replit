@@ -18,8 +18,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const MIGRATIONS = path.join(__dirname, '../../../db/migrations');
-const SUBSYSTEM_SQL = fs.readFileSync(path.join(MIGRATIONS, '20260730_authoring_subsystem_schema.sql'), 'utf8');
-const RUNTIME_DDL_SQL = fs.readFileSync(path.join(MIGRATIONS, '20260730_authoring_runtime_ddl.sql'), 'utf8');
+
+// The CANONICAL authoring schema a real deploy applies, in order (ledger C-27):
+// the 20260725_* loop/audit/signature files own the shared tables; the
+// comments_router_columns ALTER unions the CoAuthor columns onto the canonical
+// authoring_comments / user_pins; runtime_ddl adds the router's own tables; and
+// 20260730_authoring_subsystem_schema now contributes only its genuinely-new
+// workflow tables. (Its 10 duplicate copies of the canonical tables were retired,
+// so it can no longer stand alone — the 0725 files provide them.)
+const CANONICAL_MIGRATION_FILES = [
+  '20260725_authoring_document_loop_tables.sql',
+  '20260725_authoring_audit_trail.sql',
+  '20260725_authoring_signatures_and_workflow.sql',
+  '20260725_authoring_signature_freeze_binding.sql',
+  '20260730_authoring_comments_router_columns.sql',
+  '20260730_authoring_runtime_ddl.sql',
+  '20260730_authoring_subsystem_schema.sql',
+];
 
 // Minimal concept2cure_artifacts to exercise the spine's status/placement SQL
 // (the canonical identity; its full DDL lives in the core schema, out of scope).
@@ -34,12 +49,23 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
 );
 `;
 
+// The canonical authoring_documents/sections/comments carry UUID ids (0725). The
+// router mints ids with gen_random_uuid()::text — valid UUID strings — so these
+// fixtures use real UUIDs, matching runtime, rather than the TEXT-id shorthand
+// that only worked against the retired 20260730 shape.
+const DOC_ID = '11111111-1111-1111-1111-111111111111';
+const SEC_ID = '22222222-2222-2222-2222-222222222222';
+const SEC_ID_2 = '22222222-2222-2222-2222-2222222222a2';
+const SEC_ID_3 = '22222222-2222-2222-2222-2222222222a3';
+const CMT_ID = '33333333-3333-3333-3333-333333333333';
+
 let pg: PGlite;
 
 beforeAll(async () => {
   pg = new PGlite();
-  await pg.exec(SUBSYSTEM_SQL);
-  await pg.exec(RUNTIME_DDL_SQL);
+  for (const f of CANONICAL_MIGRATION_FILES) {
+    await pg.exec(fs.readFileSync(path.join(MIGRATIONS, f), 'utf8'));
+  }
   await pg.exec(ARTIFACTS_MINIMAL_DDL);
 });
 afterAll(async () => {
@@ -73,18 +99,18 @@ describe("the router's real SQL executes against the migrated schema", () => {
       `INSERT INTO authoring_documents
        (id, title, module, product_code, locale, status, created_by, created_at, updated_at, tenant_id, template_id)
        VALUES ($1, $2, $3, $4, $5, 'draft', $6, NOW(), NOW(), $7, $8)`,
-      ['doc-1', 'Clinical Overview', 'M2', 'PRD-1', 'en-US', 'author-1', 1, null],
+      [DOC_ID, 'Clinical Overview', 'M2', 'PRD-1', 'en-US', 'author-1', 1, null],
     );
     await pg.query(
       `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, tenant_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      ['sec-1', 'doc-1', '2.5', 'Clinical Overview', 'Body', 0, 1],
+      [SEC_ID, DOC_ID, '2.5', 'Clinical Overview', 'Body', 0, 1],
     );
     const back = await pg.query<{ title: string }>(
       `SELECT s.title FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
-      ['sec-1', 1],
+      [SEC_ID, 1],
     );
     expect(back.rows[0]?.title).toBe('Clinical Overview');
   });
@@ -93,9 +119,9 @@ describe("the router's real SQL executes against the migrated schema", () => {
     const sql = `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, tenant_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (doc_id, code, tenant_id) DO UPDATE SET title = EXCLUDED.title`;
-    await pg.query(sql, ['sec-2', 'doc-1', '3.2.S', 'Drug Substance', 'x', 1, 1]);
-    await pg.query(sql, ['sec-3', 'doc-1', '3.2.S', 'Drug Substance (rev)', 'y', 1, 1]);
-    const rows = await pg.query(`SELECT title FROM authoring_sections WHERE doc_id='doc-1' AND code='3.2.S' AND tenant_id=1`);
+    await pg.query(sql, [SEC_ID_2, DOC_ID, '3.2.S', 'Drug Substance', 'x', 1, 1]);
+    await pg.query(sql, [SEC_ID_3, DOC_ID, '3.2.S', 'Drug Substance (rev)', 'y', 1, 1]);
+    const rows = await pg.query(`SELECT title FROM authoring_sections WHERE doc_id=$1 AND code='3.2.S' AND tenant_id=1`, [DOC_ID]);
     expect(rows.rows).toHaveLength(1);
     expect((rows.rows[0] as { title: string }).title).toBe('Drug Substance (rev)');
   });
@@ -107,9 +133,9 @@ describe("the router's real SQL executes against the migrated schema", () => {
       `INSERT INTO authoring_comments
        (id, doc_id, section_id, body, anchor, status, created_by, user_name, user_email, parent_comment_id, position_data, tenant_id, created_at)
        VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, $11, NOW())`,
-      ['c-1', 'doc-1', 'sec-1', 'Please cite this', JSON.stringify({ from: 10, to: 20 }), 'author-1', 'Author', 'a@x.io', null, JSON.stringify({ x: 1 }), 1],
+      [CMT_ID, DOC_ID, SEC_ID, 'Please cite this', JSON.stringify({ from: 10, to: 20 }), 'author-1', 'Author', 'a@x.io', null, JSON.stringify({ x: 1 }), 1],
     );
-    const r = await pg.query<{ anchor: unknown }>(`SELECT anchor FROM authoring_comments WHERE id='c-1'`);
+    const r = await pg.query<{ anchor: unknown }>(`SELECT anchor FROM authoring_comments WHERE id=$1`, [CMT_ID]);
     expect(r.rows[0]?.anchor).toEqual({ from: 10, to: 20 });
   });
 
