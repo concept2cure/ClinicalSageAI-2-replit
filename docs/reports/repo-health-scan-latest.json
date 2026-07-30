@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T14:00:10.146Z",
+  "generatedAt": "2026-07-30T14:25:47.298Z",
   "git": {
-    "sha": "99293dd07242fcde4a6fd371f4200390f4c8842d",
+    "sha": "51ed1141201f5020f4815ceabcc31ecb6493418f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 250,
+    "duplicateBasenames": 251,
     "largeFilesByBytes": 30,
     "largeFilesByLines": 84
   },
@@ -1562,6 +1562,14 @@
         ]
       },
       {
+        "basename": "document-lifecycle",
+        "count": 2,
+        "paths": [
+          "server/routes/document-lifecycle.ts",
+          "shared/regulatory/document-lifecycle.ts"
+        ]
+      },
+      {
         "basename": "documents-panel",
         "count": 2,
         "paths": [
@@ -2485,7 +2493,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 681739
+        "bytes": 681751
       },
       {
         "file": "server/statistics-service.ts",
@@ -2939,7 +2947,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 404,
+      "duplicateGroups": 405,
       "largeByBytes": 27,
       "largeByLines": 73
     },
@@ -2957,7 +2965,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 68,
+      "duplicateGroups": 69,
       "largeByBytes": 1,
       "largeByLines": 2
     },
