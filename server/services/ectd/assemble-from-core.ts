@@ -30,6 +30,7 @@ import { db } from '../../db';
 import { submissionLeaves } from '../../../shared/schema';
 import { packageSequenceFromCore, type PackageFromCoreResult } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
+import { validateLeafPaths } from './leaf-path-safety';
 import type { LeafFileResolver } from './core-to-packager';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
@@ -111,6 +112,30 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     organizationId,
     stageDir,
   });
+
+  // 2b. Path-safety gate (fail-closed): every staged leaf file must be a real,
+  //     non-symlink PDF contained within the staging root, with no output-name
+  //     collisions. This guards the injectable resolveFile seam — a caller-
+  //     supplied path outside the root, a symlink, or a non-PDF is refused before
+  //     anything is packaged.
+  const pathSafety = await validateLeafPaths(
+    [...byKey.values()].map((f) => ({ fileName: f.fileName, sourcePath: f.sourcePath })),
+    { allowedRoot: stageDir },
+  );
+  if (!pathSafety.ok) {
+    await auditService.logAction({
+      organizationId,
+      userId,
+      action: 'ECTD_ASSEMBLE_BLOCKED',
+      resourceType: 'ectd_sequence',
+      resourceId: sequenceId,
+      details: { reason: 'leaf_path_safety', violations: pathSafety.violations },
+    });
+    throw new Error(
+      `eCTD assembly blocked: ${pathSafety.violations.length} leaf path-safety violation(s): ` +
+        pathSafety.violations.map((v) => `${v.fileName}:${v.code}`).join(', '),
+    );
+  }
 
   // 3. Sync resolver over the materialized map (package-from-core needs sync).
   const resolveFile: LeafFileResolver = (leaf) => {
