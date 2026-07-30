@@ -229,6 +229,76 @@ export const C2C_MIGRATION_FILES = [
   // search silently failed. Self-guarding: creates-or-reconciles, and only needs
   // lumen_data_atoms (present via the drizzle baseline the preflight verifies).
   'db/migrations/20260730_fix_atom_embedding_dimension.sql',
+
+  // ── The 21 CFR Part 11 e-signature path (ledger C-17/C-19/C-20) ────────────
+  //
+  // These reconcile the drizzle push surface with the incremental-deploy lineage
+  // for the entire signing path. They were authored into db/migrations and the
+  // manifest, but the manifest APPLIES NOTHING — only this set (and drizzle-kit
+  // push at one-time fresh install) is durable — so on an existing customer DB
+  // that deploys incrementally they never landed. Adding them here is what makes
+  // the release-signature gate actually work on such an environment. ORDER
+  // MATTERS: the orchestrator store must exist before the e-sig port widens its
+  // status CHECK; the users/auth columns are independent. All additive and
+  // guarded (CREATE/ALTER ... IF NOT EXISTS), so idempotent where push already
+  // provisioned them.
+  'db/migrations/20260725_submission_orchestrator_store_port.sql',
+  'db/migrations/20260725_esig_gate_columns_port.sql',
+  'db/migrations/20260725_users_signing_lockout_columns.sql',
+
+  // ── Golden-journey-proven, deploy-dead migrations (ledger C-1/C-8/C-10/C-16) ─
+  //
+  // Each file below creates tables that the product's own golden-journey tests
+  // exercise end-to-end, yet NONE was on a durable apply path: none carries the
+  // `_gcc_` infix (CI psql loop skips them), all live in db/migrations (the
+  // install-fresh root overlay never sees them), none is in the drizzle journaled
+  // baseline, and — decisively — NOT ONE of their primary tables is defined in
+  // shared/schema.ts, so drizzle-kit push does not create them on a fresh install
+  // either. They existed on NO real database, fresh or incremental. The only
+  // record that "declared" them was db/migrations/migrations_manifest.json, which
+  // applies nothing. This is the same code-derived-only gap the C-11 authoring
+  // loop tables had; the fix is the same — put them on this list, the one durable
+  // path a real deploy runs.
+  //
+  // ORDER MATTERS:
+  //   ind_section_tracking creates project_sections (+ the section-tracking
+  //     tables); the content_columns ALTER below widens it, so it must land first.
+  //   assumption/decision/contradiction is the operating-system core — self-
+  //     contained, only FKs itself + organizations/projects.
+  //   governance_boundary FKs concept2cure_artifacts (a base table push
+  //     provisions and deploy-migrate asserts is present before this loop).
+  //   resolution_orchestration creates the resolution_* / supersession tables and
+  //     their enum types (each guarded by DO $$ … EXCEPTION WHEN duplicate_object,
+  //     so re-runnable).
+  //   bundle_execution_receipts (ADR-0009) carries bundle_id as a plain UUID —
+  //     no FK — but is conceptually downstream of the bundles above; listed after.
+  //   project_sections_content_columns ALTERs project_sections and self-guards on
+  //     ALTER TABLE IF EXISTS, so it no-ops if ind_section_tracking is absent.
+  //
+  // All six are idempotent (CREATE TABLE/INDEX IF NOT EXISTS, ALTER … IF EXISTS /
+  // ADD COLUMN IF NOT EXISTS, DO-block-guarded types), open no transaction of
+  // their own, and contain no DROP/TRUNCATE — safe under the repeated-run
+  // contract. A new CI lineage-reachability guard asserts every golden-journey-
+  // declared migration is present on a durable applier, so this class of gap
+  // fails the build instead of shipping silently.
+  'db/migrations/20260220_ind_section_tracking.sql',
+  'db/migrations/20260323_assumption_decision_contradiction.sql',
+  'db/migrations/20260725_governance_boundary_tables.sql',
+  'db/migrations/20260725_resolution_orchestration_tables.sql',
+  'db/migrations/20260725_bundle_execution_receipts.sql',
+  'db/migrations/20260725_project_sections_content_columns.sql',
+
+  // eCTD project-level compilation unblock (ledger C-16). shared/schema.ts was
+  // corrected to make ectd_compilations.module_id and .compiled_by nullable — a
+  // PROJECT-level compilation spans every module and has no interactive user, so
+  // the NOT NULLs made POST /api/ectd-compile/:projectId/compile impossible. But
+  // a schema.ts edit only reaches FRESH installs (via drizzle-kit push); every
+  // EXISTING customer database still carries the original NOT NULLs and rejects
+  // the insert. This ALTER is the existing-database half of that fix and was
+  // itself deploy-dead (db/migrations, no `_gcc_`, not in the journal). Both
+  // statements are ALTER … IF EXISTS … DROP NOT NULL — a no-op once dropped, so
+  // idempotent and safe where push already provisioned the nullable shape.
+  'db/migrations/20260725_ectd_compilations_project_level.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

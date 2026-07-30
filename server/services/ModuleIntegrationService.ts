@@ -6,16 +6,50 @@
  * managing documents across different modules.
  */
 
-import { db } from '../db';
 import { eq, and, inArray } from 'drizzle-orm';
+import type { RequestDb } from '../db/requestDb';
 import { WorkflowService } from './WorkflowService';
 import {
   unifiedDocuments,
   moduleDocuments,
+  moduleTypeEnum,
   workflowDocumentVersions,
   documentAuditLogs,
   documentWorkflows,
 } from '../../shared/schema/unified_workflow';
+
+/**
+ * The module_type enum's value union — the only legal module identities. Typing
+ * the enrollment boundary against this (rather than `any`) is what keeps an
+ * unknown module string from being written into module_documents.module_type,
+ * which is a NOT NULL enum column that would otherwise reject it at runtime only.
+ */
+export type ModuleType = (typeof moduleTypeEnum.enumValues)[number];
+
+/** Narrow an untrusted request value to a legal module_type enum member. */
+export function isModuleType(value: unknown): value is ModuleType {
+  return typeof value === 'string' && (moduleTypeEnum.enumValues as readonly string[]).includes(value);
+}
+
+/**
+ * The document-enrollment input contract. This service is the canonical boundary
+ * through which a module document enters the unified workflow, so the shape is
+ * declared here rather than accepted as `any`: title/documentType/createdBy are
+ * the NOT NULL columns of unified_documents, organizationId is its integer tenant
+ * key, and moduleType/originalId form the module_documents identity that
+ * documentExists() dedupes on.
+ */
+export interface RegisterDocumentInput {
+  title: string;
+  documentType: string;
+  status?: string;
+  createdBy: string;
+  organizationId: number;
+  moduleType: ModuleType;
+  originalId: string;
+  content?: string | null;
+  metadata?: Record<string, unknown>;
+}
 
 /**
  * Exception for document not found errors
@@ -30,7 +64,7 @@ export class DocumentNotFoundException extends Error {
 export class ModuleIntegrationService {
   private workflowService: WorkflowService;
 
-  constructor(private db: any) {
+  constructor(private db: RequestDb) {
     this.workflowService = new WorkflowService(db);
   }
 
@@ -40,7 +74,7 @@ export class ModuleIntegrationService {
    * @param documentData The document data to register
    * @returns The registered document
    */
-  async registerDocument(documentData: any) {
+  async registerDocument(documentData: RegisterDocumentInput) {
     return this.db.transaction(async (tx: any) => {
       try {
         // Create the unified document
@@ -110,9 +144,19 @@ export class ModuleIntegrationService {
    * @param organizationId The organization ID
    * @returns Whether the document exists
    */
-  async documentExists(moduleType: any, originalId: any, organizationId: any) {
-    const result = await this.db
-      .select({ count: { count: 'id' } })
+  async documentExists(
+    moduleType: ModuleType,
+    originalId: string,
+    organizationId: number
+  ): Promise<boolean> {
+    // Existence check, not a count. The previous form selected
+    // `{ count: { count: 'id' } }` — a nested plain object that is neither a
+    // column nor a `sql` expression, so Drizzle never emitted COUNT(*) and
+    // result[0].count was never a real number; the guard's truth value was an
+    // accident of that malformed projection. A LIMIT 1 on the id column is the
+    // idiomatic exists probe and cannot scan more than one row.
+    const rows = await this.db
+      .select({ id: moduleDocuments.id })
       .from(moduleDocuments)
       .where(
         and(
@@ -120,9 +164,10 @@ export class ModuleIntegrationService {
           eq(moduleDocuments.originalId, originalId),
           eq(moduleDocuments.organizationId, organizationId)
         )
-      );
+      )
+      .limit(1);
 
-    return result.length > 0 && result[0].count > 0;
+    return rows.length > 0;
   }
 
   /**
