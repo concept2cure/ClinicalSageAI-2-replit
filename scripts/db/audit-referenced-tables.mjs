@@ -52,7 +52,7 @@ for (const f of walk(ROOT, isProdTs)) { const t = fs.readFileSync(f, 'utf8'); ad
 const BACKTICK_RE = /`([^`]*)`/g;
 const SQLISH = /\$\d|\bselect\b[\s\S]*\bfrom\b|\binsert\s+into\b|\bupdate\s+\w+\s+set\b|\bdelete\s+from\b/i;
 const REF_RE = /\b(?:from|join|into|update|delete\s+from)\s+"?([a-z_][a-z0-9_]*)"?/gi;
-const CTE_RE = /\b(?:with|,)\s+([a-z_][a-z0-9_]*)\s+as\s*\(/gi;
+const CTE_RE = /\b(?:with(?:\s+recursive)?|,)\s+([a-z_][a-z0-9_]*)\s+as\s*\(/gi;
 const SQL_KEYWORDS = new Set(['select','set','where','values','lateral','only','returning']);
 const SYSTEM = new Set(['information_schema','dual']);
 // Common non-table words the heuristic catches inside SQL-ish strings (columns,
@@ -60,6 +60,13 @@ const SYSTEM = new Set(['information_schema','dual']);
 const STOPLIST = new Set([
   'acks','active','ancestors','correction_counts','created_at','descendants','expected_prev',
   'fingerprint_correction_json','history','hybrid','publication_date','skip','was','yields',
+  // 'medline' is a substring of a description text literal ('...from MEDLINE') inside an
+  // INSERT INTO literature_sources — not a table (confirmed triage 2026-07-30).
+  'medline',
+  // 'trend_data' is a CTE + output-column alias in regulatory-delta-radar-service.ts (the
+  // real relation is innovation.delta_radar_scans); its CTE def and JOIN span separate
+  // concatenated SQL fragments, so per-string CTE tracking can't pair them (triage 2026-07-30).
+  'trend_data',
 ]);
 
 const refs = new Map();
