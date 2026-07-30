@@ -11,7 +11,8 @@
 
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import type { EctdLeaf, PackagerInput, Region } from '../../submission-gateways/regional-packager';
+import type { EctdLeaf, PackagerInput } from '../../submission-gateways/regional-packager';
+import type { Region } from '../../submission-gateways/types';
 import type { RpsMessageInput } from '../ectd4';
 import { submissionUnitId, contextOfUseId, documentId } from '../ectd4';
 import { oidForV4List } from '../controlled-vocab';

@@ -24,7 +24,10 @@ import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
-import { packageEctdSubmission, type Region } from '../../submission-gateways/regional-packager';
+import { packageEctdSubmission } from '../../submission-gateways/regional-packager';
+// Region is declared in the gateway's types module; regional-packager only
+// imports it (TS2459 if re-imported from there).
+import type { Region } from '../../submission-gateways/types';
 import { packageRpsSubmission, validateRpsMessage } from '../ectd4';
 import {
   checkWellFormed,
