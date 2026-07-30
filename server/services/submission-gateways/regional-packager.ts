@@ -58,6 +58,11 @@ import {
   usRegionalSectionElement,
 } from '../ectd/controlled-vocab';
 import { generateStfFiles, type StfLeaf, type StfStudyMeta } from '../ectd/stf-generator';
+import {
+  resolveCrossReferences,
+  xrefRequiredFromEnv,
+  type CrossReference,
+} from '../ectd/cross-reference-resolver';
 
 /**
  * Finalize a leaf's bytes to submission grade before they are written + hashed.
@@ -185,6 +190,13 @@ export interface PackagerInput {
   fda?: FdaRegionalAdmin;
   /** Per-study metadata for the Study Tagging Files generated from study leaves. */
   studyMeta?: StfStudyMeta[];
+  /**
+   * Declared intra-package cross-references (hyperlinks between leaves/sections,
+   * e.g. a 2.7.3 summary citing a 5.3.5.1 study report). Resolved at package
+   * time; a broken (dangling / withdrawn-target) reference is surfaced on the
+   * bundle and blocks a production build when ECTD_REQUIRE_XREF=true.
+   */
+  crossReferences?: CrossReference[];
 }
 
 /** Compute MD5 of a file on disk. */
@@ -750,6 +762,21 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     );
   }
 
+  /* Cross-reference resolution (intra-package hyperlinks). Resolve declared
+     references against the leaf set; a broken (dangling / withdrawn-target)
+     reference is an eCTD technical-validation defect. Surfaced on the bundle;
+     blocks a production build when ECTD_REQUIRE_XREF=true (report-only default,
+     mirroring the PDF/A + DTD gates). */
+  const xref = resolveCrossReferences(input.leaves, input.crossReferences ?? []);
+  if (!xref.ok && xrefRequiredFromEnv() && (input.environment ?? 'production') === 'production') {
+    const detail = xref.broken.map((b) => `${b.source}→${b.target} (${b.reason})`).join(', ');
+    throw new ValidationError(
+      `eCTD package has ${xref.broken.length} broken cross-reference(s): ${detail}. ` +
+        `Resolve them, or clear ECTD_REQUIRE_XREF for non-submission builds.`,
+      xref.broken.map((b) => `${b.source}→${b.target}: ${b.reason}`),
+    );
+  }
+
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
   const indexXml = buildIndexXml(input, m2to5, resolve);
   zip.file('index.xml', indexXml);
@@ -797,5 +824,14 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       selfContained: dtdGate.selfContained,
     },
     ...(stfSummary ? { stf: stfSummary } : {}),
+    ...(input.crossReferences?.length
+      ? {
+          crossReferenceStatus: {
+            resolved: xref.resolved.length,
+            broken: xref.broken.map((b) => ({ source: b.source, target: b.target, reason: b.reason })),
+            ok: xref.ok,
+          },
+        }
+      : {}),
   };
 }

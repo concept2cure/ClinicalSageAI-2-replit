@@ -138,6 +138,17 @@ export interface SubmissionBundle {
     leaves: number;
     untagged: number;
   };
+  /**
+   * Optional intra-package cross-reference resolution result: how many declared
+   * hyperlinks between leaves resolved, and which are broken (dangling /
+   * withdrawn target). Set by the packager only when `crossReferences` were
+   * declared; absent otherwise.
+   */
+  crossReferenceStatus?: {
+    resolved: number;
+    broken: Array<{ source: string; target: string; reason: 'TARGET_NOT_FOUND' | 'TARGET_DELETED' }>;
+    ok: boolean;
+  };
 }
 
 /**
