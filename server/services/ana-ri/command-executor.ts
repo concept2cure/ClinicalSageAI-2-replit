@@ -693,6 +693,29 @@ export async function updateArtifactStatus(
       };
     }
 
+    // Guard: a controlled document cannot skip its review/approval gates. Locking
+    // (the freeze that precedes an e-signature) requires a prior APPROVED state,
+    // and approval requires a prior REVIEW — 21 CFR Part 11 §11.10. Blocking only
+    // the unambiguous early-state skips (draft/review → locked, draft → approved)
+    // keeps documents already past these gates (approved/effective/signed/final)
+    // unaffected. The lawful path is draft → review → approved → locked.
+    if (toStatus === 'locked' && (fromStatus === 'draft' || fromStatus === 'review')) {
+      return {
+        success: false,
+        action: 'update_artifact_status',
+        message: `"${current.title}" cannot be locked from "${fromStatus}". A document must be approved before it can be locked. Move it through review and approval first.`,
+        data: { artifactId: params.artifactId, currentStatus: fromStatus, requestedStatus: toStatus },
+      };
+    }
+    if (toStatus === 'approved' && fromStatus === 'draft') {
+      return {
+        success: false,
+        action: 'update_artifact_status',
+        message: `"${current.title}" cannot be approved directly from draft. It must be submitted for review first (draft → review → approved).`,
+        data: { artifactId: params.artifactId, currentStatus: fromStatus, requestedStatus: toStatus },
+      };
+    }
+
     // Guard: warn about approved → draft regression (but allow it)
     const isRegression =
       fromStatus === 'approved' && (toStatus === 'draft' || toStatus === 'review');
