@@ -23,8 +23,61 @@ describe('schedule templates', () => {
     expect(getScheduleTemplate(null).type).toBe('GENERIC');
   });
 
+  it('resolves Japan and Canada filings (regions that already have eCTD backbones)', () => {
+    expect(getScheduleTemplate('SHONIN').type).toBe('SHONIN');
+    expect(getScheduleTemplate('Shōnin').type).toBe('SHONIN'); // non-ASCII normalizes via alias
+    expect(getScheduleTemplate('PMDA').type).toBe('SHONIN');
+    expect(getScheduleTemplate('NDS').type).toBe('NDS');
+    expect(getScheduleTemplate('New Drug Submission').type).toBe('NDS');
+    expect(getScheduleTemplate('Health Canada').type).toBe('NDS');
+  });
+
+  it('resolves the FDA device request types', () => {
+    expect(getScheduleTemplate('Q-Sub').type).toBe('Q_SUB');
+    expect(getScheduleTemplate('Pre-Sub').type).toBe('Q_SUB');
+    expect(getScheduleTemplate('Q Submission').type).toBe('Q_SUB');
+    expect(getScheduleTemplate('IDE').type).toBe('IDE');
+    expect(getScheduleTemplate('513(g)').type).toBe('513G');
+    expect(getScheduleTemplate('513g').type).toBe('513G');
+  });
+
+  it('grounds the new templates in their real regulatory frameworks', () => {
+    expect(getScheduleTemplate('SHONIN').framework).toBe('PMDA');
+    expect(getScheduleTemplate('NDS').framework).toBe('Health Canada');
+    // Every milestone that cites a basis cites a real one (no empty strings).
+    for (const t of ['SHONIN', 'NDS', 'Q_SUB', 'IDE', '513G']) {
+      const tpl = getScheduleTemplate(t);
+      expect(tpl.milestones.length).toBeGreaterThan(0);
+      for (const m of tpl.milestones) {
+        if (m.regulatoryBasis !== undefined) expect(m.regulatoryBasis.trim().length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('keeps every dependsOn pointing at a real milestone key in the same template', () => {
+    for (const t of listSupportedTypes()) {
+      const tpl = getScheduleTemplate(t);
+      const keys = new Set(tpl.milestones.map((m) => m.key));
+      for (const m of tpl.milestones) {
+        for (const dep of m.dependsOn ?? []) {
+          expect(keys.has(dep)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('ends each new template with its submission/decision milestone', () => {
+    // The last milestone should be the terminal event, so schedule end-dates are honest.
+    expect(getScheduleTemplate('SHONIN').milestones.at(-1)?.key).toBe('shonin_submission');
+    expect(getScheduleTemplate('NDS').milestones.at(-1)?.key).toBe('screening_acceptance');
+    expect(getScheduleTemplate('IDE').milestones.at(-1)?.key).toBe('ide_decision');
+    expect(getScheduleTemplate('513G').milestones.at(-1)?.key).toBe('pathway_decision');
+  });
+
   it('exposes the supported type list', () => {
-    expect(listSupportedTypes()).toEqual(expect.arrayContaining(['IND', 'NDA', '510K', 'CER']));
+    expect(listSupportedTypes()).toEqual(
+      expect.arrayContaining(['IND', 'NDA', '510K', 'CER', 'SHONIN', 'NDS', 'Q_SUB', 'IDE', '513G']),
+    );
   });
 });
 
