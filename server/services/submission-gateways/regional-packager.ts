@@ -169,7 +169,7 @@ export function createLeafIdAssigner(): (leaf: EctdLeaf) => string {
  * FDA us-regional.xml backbone. Per FDA eCTD Technical Conformance
  * Guide (current as of 2024). Module 1 sits under m1/us/.
  */
-function buildFdaBackbone(input: PackagerInput): string {
+export function buildFdaBackbone(input: PackagerInput): string {
   const assignId = createLeafIdAssigner();
   const m1Leaves = input.leaves
     .filter((l) => l.ctdSection.startsWith('1'))
@@ -320,7 +320,7 @@ ${m1Leaves}
 
 /* ─── M2-M5 common backbone (ICH M8) ──────────────────────────────── */
 
-function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
+export function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
   const grouped: Record<string, EctdLeaf[]> = { m2: [], m3: [], m4: [], m5: [] };
