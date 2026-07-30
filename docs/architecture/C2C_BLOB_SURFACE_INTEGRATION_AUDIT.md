@@ -46,15 +46,52 @@ still merit a data-flow check.)
 ## Classification for remediation
 
 **A — a real normalized store already exists → converge (the Protocol-Dev pattern):**
-- **IND checklist** → the `ind_*` store (ind_protocols, ind_milestones, ind_amendments,
-  ind_safety_reports, ind_investigators, ind_sponsors, ind_drafts, …). High value.
-- **Shadow review** → `shadow-review-service.ts`. High tractability.
-- **Biostat** (interims / sample-sizes / SAPs / TLF) → `biostat_*` tables + the
-  `ana-biostats` service.
-- **SAE cases** → `adverse_events`.
-- **CMC changes** → the `cmc_*` store + the CMC service.
-- **Decision lineage** → `data_lineage_records` (the same lineage store the CRE
-  provenance envelope feeds).
+- **IND checklist** → the real org-scoped **eCTD submission core** (`submissions` where
+  `application_type='ind'` + `ectd_sequences` + `submission_leaves` + `coauthor_documents`),
+  with the canonical 108-section blueprint (`services/regulatory/ind-ectd-sections.ts`)
+  for title/module/CFR-ref. NOTE: the tempting `ind_*` tables (ind_protocols,
+  ind_pre_ind_data, ind_drafts, …) are the **legacy pre-IND wizard** — UUID/project-keyed,
+  no `organization_id`, no section/forms model — so they are NOT this surface's store; the
+  data-flow trace lands on the submission core the co-authoring flow actually writes.
+  **[CONVERGED]** — assembler + real-store-only route + reseed + pglite test landed.
+- **Shadow review** → `shadow_review_runs` + `shadow_review_findings` (the tables
+  `shadow-review-service.ts`'s `runShadowReview` persists). **[CONVERGED]** — assembler +
+  real-store-only route + reseed + pglite test landed.
+- **SAE cases** → **needs a store decision (name-match was optimistic).** The surface
+  (`SafetyNarrative`) is a *clinical-trial* SAE worklist (subjectId, treatmentArm,
+  studyDrug, dose, firstDoseDate, expectedness, 312.32/E2A expedited clock). The
+  candidate real stores are all PV/post-market-shaped and none holds that contract
+  cleanly: `adverse_events` (written by `pharmacovigilanceService`, but has NO committed
+  DDL and the writer is 42P01-tolerant → not reliably a physical table); `pv_adverse_events`
+  (committed, real writer in `global-compliance.ts`, org-scoped — but no `expectedness`,
+  no suspect-product/dose, no demographics/arm); `ind_safety_reports` (the expedited-report
+  *record*, keyed to an AE by id, not the case facts). Viable path: converge onto
+  `pv_adverse_events` with the trial-only fields honestly null (the IND indication pattern)
+  — but confirm that is the intended canonical SAE store first, since the demo loses its
+  trial richness. Also **remove the surface's fixture fallback** (it currently falls back to
+  a codebase fixture with a "Sample" pill — a GA-bar violation) as part of this.
+- **Biostat** (interims / sample-sizes / SAPs / TLF) → **no clean real store.** There is no
+  committed `biostat_*` table holding the surface's TLF-build / sample-size / SAP / interim
+  data with a real writer; the `biostat_*` writers that exist feed a knowledge-graph /
+  signal engine, not this surface's contract. This is effectively Class-B — a write path /
+  store must be chosen or built.
+- **CMC changes** → `cmc_*` store + the CMC service — **unverified**; trace before assuming
+  the name-match holds (IND/SAE/decision-lineage each did not).
+- **Decision lineage** → **wrong name-match.** `data_lineage_records` is a *data-derivation*
+  provenance edge list (source→target, transformation/confidence). The `DecisionLineage`
+  surface renders a *Part-11 governance decision trail* (created → evidence-linked →
+  approved → signed → locked, with e-signature manifestation and a hash chain) — its own
+  footer says it is "sourced from the tamper-proof audit log". The real store is the
+  hash-chained **audit log + governed `sign`/approve actions** (`auditService` /
+  `c2c_ana_actions`), assembled into a per-artifact decision graph. Real, but a larger
+  assembler than a flat table map, and NOT `data_lineage_records`.
+
+_Data-flow trace result (the CRE methodology, applied to each target): the two genuinely
+clean, high-value Class-A convergences — **IND** and **Shadow-review** — are landed. The
+remaining "Class A" candidates were classified by table-NAME; tracing the actual read
+contract shows each needs either a store decision (SAE, Biostat) or a larger,
+semantically-correct assembler off a different real store (Decision-lineage), rather than a
+one-table map. They are not "one Protocol-Dev-sized change" as first estimated._
 
 **B — no obvious real store → genuine demo-only (needs a backend built, or retire):**
 market access, reg-change, human-factors files, dossier-map, investigator-brochure,
@@ -75,8 +112,11 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
 
 ## Prioritized roadmap
 
-1. **Class A converges** in value order: IND → Shadow-review → SAE → Biostat → CMC →
-   Decision-lineage. Each is one Protocol-Dev-sized change.
+1. **Class A converges:** ~~IND~~ (landed) and ~~Shadow-review~~ (landed) were the clean
+   ones. The rest are re-scoped per the trace above: **SAE** and **Biostat** need a store
+   decision (→ effectively Class-B); **Decision-lineage** is a governance-audit-log
+   assembler (real, but larger); **CMC** to be traced. Take each only after confirming its
+   real store — do not converge onto the name-matched table.
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so

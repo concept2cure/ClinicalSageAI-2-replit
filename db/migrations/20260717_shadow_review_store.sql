@@ -1,3 +1,12 @@
+-- DEPRECATED (2026-07): the v2 ShadowReview surface no longer reads this blob.
+-- GET /api/shadow-review is now assembled ENTIRELY from the real, org-scoped
+-- shadow-review store (shadow_review_runs + shadow_review_findings) — the tables
+-- runShadowReview persists — see server/services/shadow-review/
+-- shadow-review-view-assembler.ts and docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This table is retained (non-destructive)
+-- but is no longer written by the demo seed nor read by any route. A later
+-- migration may DROP it once no environment references it.
+--
 -- Shadow-review store — the pre-file reviewer worklist backing the v2
 -- ShadowReview surface's GET read. AnA simulates the reviewer who will read a
 -- submission BEFORE it is filed and returns, per reviewer lens, the findings a

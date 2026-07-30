@@ -18,13 +18,14 @@ import type {
 } from '../fixtures/ind-lifecycle-data';
 import '../styles/project-home-v2.css';
 
-/* ── Live read shape: one org-scoped IND checklist row (GET /api/ind-checklist).
-   Shaped by server/routes/ind-checklist.routes.ts to exactly the keys this
-   surface renders (id → code; forms/sections rehydrated from JSONB). The nullable
-   TEXT columns (drug_name, product_name, indication, sponsor_name,
-   submission_type) are `| null` and rendered null-safe — never fabricated.
-   target_receipt_offset_days is NOT NULL DEFAULT 14; forms/sections coalesce to
-   [] server-side (JSONB NOT NULL DEFAULT '[]'), so both are always arrays. */
+/* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist).
+   Assembled by server/services/ind-lifecycle/ind-checklist-view-assembler.ts from
+   the REAL eCTD submission core (submissions + ectd_sequences + submission_leaves +
+   coauthor_documents) to exactly the keys this surface renders. drugName /
+   productName / indication / sponsorName / submissionType are `| null` and rendered
+   null-safe — never fabricated (indication has no column and is honestly null;
+   sponsor is the tenant org). targetReceiptOffsetDays defaults to 14; forms/sections
+   are always arrays (the assembler returns [] when nothing is authored yet). */
 interface IndlChecklist {
   code: string;
   drugName: string | null;
@@ -48,12 +49,11 @@ const EMPTY_SECTIONS: IndlSection[] = [];
 export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
 
-  /* The org's IND checklist — GET /api/ind-checklist (c2c_ind_checklist, org
-     scoped, shaped by ind-checklist.routes.ts). useLiveRows unwraps the { data }
-     envelope; the surface renders one IND, so it reads the first row. Real data,
-     an honest empty state, or an honest failed-load state — never a fixture.
-     Readiness and the 30-day clock are computed deterministically from the
-     loaded forms/sections. */
+  /* The org's IND checklist — GET /api/ind-checklist (assembled from the real eCTD
+     submission core, org scoped). useLiveRows unwraps the { data } envelope; the
+     surface renders one IND, so it reads the first row. Real data, an honest empty
+     state, or an honest failed-load state — never a fixture. Readiness and the
+     30-day clock are computed deterministically from the loaded forms/sections. */
   const { rows, loading, error } = useLiveRows<IndlChecklist>('/api/ind-checklist');
   const checklist = rows[0] ?? null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
