@@ -220,12 +220,22 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
       { id: 'sponsor_name', label: 'Applicant/Sponsor', type: 'text', required: true },
       { id: 'drug_name', label: 'Drug/Product', type: 'text', required: true },
       { id: 'study_title', label: 'Study Title', type: 'text', required: false },
+      { id: 'has_disclosable_interest', label: 'A covered clinical investigator has a disclosable financial interest or arrangement', type: 'checkbox', required: false },
       { id: 'disclosure_details', label: 'Disclosure Details', type: 'textarea', required: false, maxLength: 10000 },
       { id: 'disclosure_descriptions_complete', label: 'All disclosures complete', type: 'checkbox', required: true },
       { id: 'authorized_rep_name', label: 'Authorized Representative', type: 'text', required: true },
       { id: 'authorized_rep_title', label: 'Representative Title', type: 'text', required: false },
     ], autoGenerationTrigger: { stage: 5 }, implementationStatus: 'full',
-    conditionalLogic: [{ when: 'investigators[].financial.hasDisclosableInterest == true', effect: 'required', fieldIds: ['disclosure_details'] }]
+    // Disclosure detail is required only when a covered investigator actually has a
+    // disclosable interest. Typed and declarative (never an executable expression):
+    // the `when` clause references an in-form field id so the evaluator in
+    // FDAFormGenerator.validateEditableValues can resolve it. A string expression
+    // here is both a compile error and a silent always-true rule.
+    conditionalLogic: [{
+      when: { fieldId: 'has_disclosable_interest', operator: 'truthy' },
+      effect: 'required',
+      fieldIds: ['disclosure_details'],
+    }],
   },
 
   // ============ PMA Forms ============

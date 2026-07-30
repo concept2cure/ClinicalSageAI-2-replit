@@ -2,21 +2,14 @@
  * IND form fill service.
  *
  * ============================== INTEGRATION NOTES ==============================
- * This service is NOT yet wired into any route or barrel. To expose it, a human
- * should add the following (no existing files were edited by this change):
+ * This service is wired into server/routes/ind-forms.routes.ts. The remaining
+ * setup below concerns OFFICIAL fillable output only.
  *
- * 1. ROUTE (suggested):  POST /api/ind-forms/:formId/pdf
- *      - body: IndProjectMetadata (see ./ind-form-data-builders)
- *      - handler: import { generateIndForm } from
- *          'server/services/ind-forms';  (or the barrel ./index)
- *        const result = await generateIndForm(formId, metadata);
- *        res.setHeader('Content-Type', 'application/pdf');
- *        res.send(Buffer.from(result.pdfBytes));
- *      - For 1572 (per-investigator) use generateAllForm1572(metadata) which
- *        returns one result per investigator.
- *    Register that route in whatever route registry the app uses
- *    (e.g. server/routes/index.ts or server/registerRoutes) — DO NOT let this
- *    file import the router; keep the wiring in the route layer.
+ * 1. ROUTE (DONE): POST /api/ind-forms/:formId/pdf streams the filled form,
+ *      /:formId/build returns the field map, and /:formId/pdf-from-records fills
+ *      from tenant master data. For 1572 (per-investigator) the route calls
+ *      generateAllForm1572(metadata). The wiring stays in the route layer — this
+ *      file must never import a router.
  *
  * 2. TEMPLATES DIR (TODO — official PDFs cannot be bundled here):
  *      Drop the OFFICIAL FDA fillable AcroForm PDFs into:
