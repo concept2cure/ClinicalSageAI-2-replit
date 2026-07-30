@@ -33,6 +33,15 @@ const FORM_LABELS: Record<string, string> = {
 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3'];
 
+/** The open program's numeric project id, or null when absent / non-numeric.
+ *  Mirrors the convention used by the other v2 surfaces (Dossier, EctdCompile). */
+function readNumericProjectId(): number | null {
+  const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+  const raw = String(p?.id ?? '').replace(/^proj_/, '');
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 export function IndFormsPanel({ note }: { note: (m: string) => void }) {
   const [forms, setForms] = useState<string[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
@@ -107,6 +116,27 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 
+  // Persist the form as a GOVERNED artifact the platform records (not just a
+  // downloaded file). Needs the open program's project id — without it we do NOT
+  // guess; we tell the user to open a project.
+  const save = useCallback(async (formId: string) => {
+    const projectId = readNumericProjectId();
+    if (projectId == null) {
+      note('Open a project first — a governed artifact must be saved to a project’s dossier.');
+      return;
+    }
+    setBusy('save-' + formId);
+    try {
+      const res = await apiRequest('POST', `/api/ind-forms/${formId}/artifact`, { ...metadataBody(), projectId });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.'); return; }
+      if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.'); return; }
+      if (!res.ok || !json?.artifactId) { note(`Couldn’t save form ${formId} — ` + ((json as any)?.error?.message ?? `HTTP ${res.status}`) + '.'); return; }
+      const missing = Array.isArray(json.missingRequired) ? json.missingRequired.length : 0;
+      note(`FDA ${formId} saved to the dossier as a governed artifact${json.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)'}.`);
+    } finally { setBusy(null); }
+  }, [metadataBody, note]);
+
   if (state === 'forbidden') {
     return <EmptyState icon={I.lock} title="Regulatory-author role required"
       hint="Building and rendering FDA Module-1 forms (1571/1572/3674) requires the regulatory-author role. Sign in with an authoring account." />;
@@ -149,6 +179,7 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
               <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                 <button className="nda-open" onClick={() => check(f)} disabled={busy != null}>{I.checkCircle} {busy === 'check-' + f ? 'Building…' : 'Build & check'}</button>
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => download(f)} disabled={busy != null}>{I.download} {busy === 'pdf-' + f ? 'Rendering…' : 'PDF'}</button>
+                <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => save(f)} disabled={busy != null} title="Persist as a governed artifact in the project dossier">{I.database} {busy === 'save-' + f ? 'Saving…' : 'Save to dossier'}</button>
               </td>
             </tr>
           );
