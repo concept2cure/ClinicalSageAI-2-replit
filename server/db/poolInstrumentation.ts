@@ -41,6 +41,12 @@ const INFRASTRUCTURE_QUERIES = new Set<string>([
   "SELECT set_config('app.current_org_id', '', false)",
 ]);
 
+// DELIBERATELY EXACT-MATCH ONLY. BEGIN/COMMIT/ROLLBACK and any set_config
+// that carries a REAL value are NOT exempt: an unscoped transaction open or
+// an unscoped tenant-var write is precisely the activity this instrumentation
+// exists to surface (fix: reject unscoped pool access, 2026-07-29, and its
+// contract test poolInstrumentation-tenant-scope.test.ts). Only inert probes
+// and the empty-value CLEAR variants are noise.
 function isInfrastructureQuery(text: string | undefined): boolean {
   if (!text) return false;
   if (INFRASTRUCTURE_QUERIES.has(text)) return true;

@@ -112,21 +112,38 @@ describe('instrumentPool', () => {
     expect(counterValue(tenantSessionVarPresent, { source: 'request', op: 'pool.query' })).toBe(1);
   });
 
-  it('skips infrastructure queries (SELECT 1, BEGIN, set_config bootstrap)', async () => {
+  it('skips only inert infrastructure probes; unscoped BEGIN/set_config-with-value still count', async () => {
+    // The exemption list is deliberately exact-match (fix: reject unscoped
+    // pool access, 2026-07-29): an unscoped BEGIN or a set_config carrying a
+    // REAL tenant value is exactly the activity the instrumentation must
+    // surface, so only inert probes and the empty-value CLEAR variants are
+    // exempt. The strict side of this contract is pinned in
+    // poolInstrumentation-tenant-scope.test.ts; this test pins the exemptions.
     const pool = new FakePool();
     instrumentPool(pool as unknown as any);
 
+    const missingTotalNow = () =>
+      Object.values((tenantSessionVarMissing as any).hashMap || {})
+        .reduce((acc: number, entry: any) => acc + (entry?.value ?? 0), 0);
+    const presentTotalNow = () =>
+      Object.values((tenantSessionVarPresent as any).hashMap || {})
+        .reduce((acc: number, entry: any) => acc + (entry?.value ?? 0), 0);
+
+    const missingBase = missingTotalNow();
+    const presentBase = presentTotalNow();
+
+    // Exempt: inert probes + the empty-value CLEAR bootstrap variants.
     await (pool as any).query('SELECT 1');
+    await (pool as any).query('SELECT NOW()');
+    await (pool as any).query("SELECT set_config('app.current_tenant_id', '', false)");
+    expect(presentTotalNow()).toBe(presentBase);
+    expect(missingTotalNow()).toBe(missingBase);
+
+    // NOT exempt: unscoped transaction control and value-carrying set_config.
     await (pool as any).query('BEGIN');
     await (pool as any).query("SELECT set_config('app.current_tenant_id', '42', false)");
-
-    const presentTotal = Object.values((tenantSessionVarPresent as any).hashMap || {})
-      .reduce((acc: number, entry: any) => acc + (entry?.value ?? 0), 0);
-    const missingTotal = Object.values((tenantSessionVarMissing as any).hashMap || {})
-      .reduce((acc: number, entry: any) => acc + (entry?.value ?? 0), 0);
-
-    expect(presentTotal).toBe(0);
-    expect(missingTotal).toBe(0);
+    expect(presentTotalNow()).toBe(presentBase);
+    expect(missingTotalNow()).toBe(missingBase + 2);
   });
 
   it('counts pool.connect checkouts', async () => {
