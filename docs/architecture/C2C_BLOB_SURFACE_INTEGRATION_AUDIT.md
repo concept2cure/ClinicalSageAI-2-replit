@@ -57,19 +57,17 @@ still merit a data-flow check.)
 - **Shadow review** → `shadow_review_runs` + `shadow_review_findings` (the tables
   `shadow-review-service.ts`'s `runShadowReview` persists). **[CONVERGED]** — assembler +
   real-store-only route + reseed + pglite test landed.
-- **SAE cases** → **needs a store decision (name-match was optimistic).** The surface
-  (`SafetyNarrative`) is a *clinical-trial* SAE worklist (subjectId, treatmentArm,
-  studyDrug, dose, firstDoseDate, expectedness, 312.32/E2A expedited clock). The
-  candidate real stores are all PV/post-market-shaped and none holds that contract
-  cleanly: `adverse_events` (written by `pharmacovigilanceService`, but has NO committed
-  DDL and the writer is 42P01-tolerant → not reliably a physical table); `pv_adverse_events`
-  (committed, real writer in `global-compliance.ts`, org-scoped — but no `expectedness`,
-  no suspect-product/dose, no demographics/arm); `ind_safety_reports` (the expedited-report
-  *record*, keyed to an AE by id, not the case facts). Viable path: converge onto
-  `pv_adverse_events` with the trial-only fields honestly null (the IND indication pattern)
-  — but confirm that is the intended canonical SAE store first, since the demo loses its
-  trial richness. Also **remove the surface's fixture fallback** (it currently falls back to
-  a codebase fixture with a "Sample" pill — a GA-bar violation) as part of this.
+- **SAE cases** → **`adverse_events`** (migrations/20260603_pv_operational.sql — the
+  UNPREFIXED, org-scoped table `pharmacovigilanceService.reportAdverseEvent` actually
+  writes; NOT `pv_adverse_events`, whose SERIAL/prefixed shape the service never uses, and
+  which lacks `expectedness` so the 312.32/E2A clock could never fire). Has the case facts
+  + `expectedness` + suspect-product/dose, so the expedited-reporting clock computes live
+  from real columns. Trial-only fields the PV intake store does not model (age/sex/arm/
+  first-dose, medical history, con-meds) are honestly null — the surface renders them
+  null-safe and its ICH E3 §16 composer flags them missing rather than inventing them.
+  The client was already fixture-free (honest empty state); only a stale route comment
+  claimed a fixture fallback. **[CONVERGED]** — assembler (live clock) + real-store-only
+  route + reseed into adverse_events + pglite test landed.
 - **Biostat** (interims / sample-sizes / SAPs / TLF) → **no clean real store.** There is no
   committed `biostat_*` table holding the surface's TLF-build / sample-size / SAP / interim
   data with a real writer; the `biostat_*` writers that exist feed a knowledge-graph /
@@ -112,11 +110,13 @@ decision: build the write path, or mark it explicitly as a demo/preview surface.
 
 ## Prioritized roadmap
 
-1. **Class A converges:** ~~IND~~ (landed) and ~~Shadow-review~~ (landed) were the clean
-   ones. The rest are re-scoped per the trace above: **SAE** and **Biostat** need a store
-   decision (→ effectively Class-B); **Decision-lineage** is a governance-audit-log
-   assembler (real, but larger); **CMC** to be traced. Take each only after confirming its
-   real store — do not converge onto the name-matched table.
+1. **Class A converges:** ~~IND~~, ~~Shadow-review~~, and ~~SAE~~ (→ `adverse_events`)
+   are landed. Remaining, re-scoped per the trace above: **Biostat** needs a store decision
+   (→ effectively Class-B — no committed store holds its TLF/sample-size/SAP/interim
+   contract); **Decision-lineage** is a governance-audit-log assembler (real, but larger
+   than a one-table map, off the hash-chained audit log + governed `sign` actions, NOT
+   `data_lineage_records`); **CMC** to be traced. Take each only after confirming its real
+   store — do not converge onto the name-matched table.
 2. **Class B triage** with product: build vs. label-as-preview. Do not leave a
    real-tenant surface silently empty with no signal.
 3. A CI guard: fail when a registered surface's read table has only seed writers, so

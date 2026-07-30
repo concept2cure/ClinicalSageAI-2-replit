@@ -11,8 +11,7 @@
 
 import { Router, Request, Response } from 'express';
 import { safetyNarrativeService } from '../services/safety-narrative-service';
-import { computeExpeditedReportingClock } from '../services/pv/expedited-reporting-clock';
-import { pool } from '../db';
+import { assembleOrgSaeCases } from '../services/pv/sae-cases-view-assembler';
 
 const router = Router();
 
@@ -31,13 +30,17 @@ function getOrgId(req: Request): number | null {
 }
 
 /**
- * GET /cases — the org's individual SAE case worklist (expedited-reporting
- * clock + subject/event facts), shaped to exactly the keys the v2
- * SafetyNarrative surface renders. The surface adopts this via liveGet and
- * falls back to its codebase fixture (with a Sample pill) when the store is
- * empty or unreachable, then runs the deterministic ICH E3 §16 composer over
- * whichever case is selected. Ordered by clock urgency. Fails closed to an
- * empty list on 42P01 so an unprovisioned store never 500s.
+ * GET /cases — the org's individual SAE case worklist, assembled ENTIRELY from the
+ * real, org-scoped pharmacovigilance store (`adverse_events`, the table
+ * pharmacovigilanceService writes) and shaped to exactly the keys the v2
+ * SafetyNarrative surface renders. Each case's 21 CFR 312.32(c) / ICH E2A
+ * expedited-reporting clock is computed LIVE from its facts (awareness date +
+ * seriousness + causality + expectedness + outcome) by the pure PV module. There is
+ * no legacy/seed blob and no fallback: an org with no adverse events returns an empty
+ * list and the surface renders its own honest empty state. Trial-only fields the PV
+ * intake store does not carry (demographics, arm, medical history, con-meds) are
+ * honestly absent. Fails closed to an empty list on 42P01 so an unprovisioned store
+ * never 500s. See sae-cases-view-assembler.
  */
 router.get('/cases', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -45,69 +48,8 @@ router.get('/cases', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT id, due, clock, due_days, subject_id, age, sex, study_id,
-              treatment_arm, study_drug, dose, first_dose_date,
-              medical_history, concomitant_meds, event,
-              awareness_date, expectedness
-         FROM c2c_sae_cases
-        WHERE organization_id = $1
-        ORDER BY due_days ASC, id`,
-      [orgId],
-    );
-    // Compute the 21 CFR 312.32(c) / ICH E2A expedited-reporting clock LIVE from
-    // the stored facts (awareness_date + event seriousness/causality/outcome +
-    // expectedness) via the pure PV module — never from the static due/clock
-    // columns, which are kept only for backward compatibility. A single `now`
-    // anchors every row so the worklist is internally consistent. When
-    // awareness_date is absent the module fails closed (null due date /
-    // days-remaining, overdue false) and the client falls back to the stored
-    // display.
-    const now = new Date();
-    const data = rows.map((r) => {
-      const event = (r.event ?? {}) as {
-        seriousnessCriteria?: string[];
-        causality?: string;
-        outcome?: string;
-      };
-      const reporting = computeExpeditedReportingClock(
-        {
-          awarenessDate: r.awareness_date ?? null,
-          seriousnessCriteria: Array.isArray(event.seriousnessCriteria) ? event.seriousnessCriteria : [],
-          causality: event.causality ?? null,
-          expectedness: r.expectedness ?? null,
-          outcome: event.outcome ?? null,
-        },
-        now,
-      );
-      return {
-        id: r.id,
-        due: r.due,
-        clock: r.clock,
-        dueDays: r.due_days,
-        subjectId: r.subject_id,
-        age: r.age ?? undefined,
-        sex: r.sex ?? undefined,
-        studyId: r.study_id ?? undefined,
-        treatmentArm: r.treatment_arm ?? undefined,
-        studyDrug: r.study_drug ?? undefined,
-        dose: r.dose ?? undefined,
-        firstDoseDate: r.first_dose_date ?? undefined,
-        awarenessDate: r.awareness_date ?? undefined,
-        expectedness: r.expectedness ?? undefined,
-        medicalHistory: Array.isArray(r.medical_history) ? r.medical_history : [],
-        concomitantMeds: Array.isArray(r.concomitant_meds) ? r.concomitant_meds : [],
-        event: r.event ?? {},
-        // Live-computed expedited-reporting clock (additive; stored columns kept).
-        reportingCategory: reporting.category,
-        reportingClockStart: reporting.clockStart,
-        reportingDueDate: reporting.dueDate,
-        reportingDaysRemaining: reporting.daysRemaining,
-        reportingOverdue: reporting.overdue,
-        reportingBasis: reporting.basis,
-      };
-    });
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgSaeCases(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'adverse_events' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });
