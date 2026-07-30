@@ -26,7 +26,9 @@ RLS boot-posture hardening, PR #1042).
 | Connection poisoning after uncertain tenant setup/cleanup | ✅ mock-tested for pool and lazy request clients | `server/db/poolInstrumentation.ts`; `server/middleware/lazyRequestDbClient.ts` |
 | Shared-pool route disposition | ✅ 77/77 classified: 75 JWT-bound, 2 explicit pre-tenant; 0 unclassified | `docs/reports/requestdb-coverage-baseline.json` |
 | Scheduled job/worker scope | ✅ repository schedulers use named system scope; IVDR work switches to the claimed tenant | `server/jobs/*`; `server/workers/vectorization-worker.ts`; `server/workers/ivdr-pack-worker.ts` |
-| Live two-tenant and policy-matrix evidence | ❌ environment-blocked; release gate remains closed | `scripts/db-verify/verify-rls.ts`; pool integration tests |
+| Policy **behaviour** proof (enforce isolates; shadow passes all; WITH CHECK blocks cross-tenant insert; super-admin bypass) | ✅ done, against real Postgres in CI | `server/db/__tests__/rlsPolicy.integration.test.ts` (integration-tests job) |
+| Policy **coverage** gate — every org-keyed base table carries `tenant_isolation_policy` on the fully provisioned **+ deploy-migrated** schema (catches a later C2C-set table shipped unprotected because deploy-migrate does not re-run 0021) | ✅ CI-gated | `scripts/db/rls-coverage-check.sql`; `blank-db-provisioning` job in `.github/workflows/ci.yml` |
+| Live two-tenant probe across the **real** schema's tables under `RLS_ENFORCE=on` (behaviour is proven on a synthetic table; a full-schema cross-table probe in a dedicated enforce-mode job is the remaining evidence) | ⏳ pending | dedicated enforce-mode job (to add) |
 
 ## Adopted execution model
 

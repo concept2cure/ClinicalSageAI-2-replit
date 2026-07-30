@@ -68,6 +68,7 @@ import {
   applyAuthoringSubsystem,
   AUTHORING_SUBSYSTEM_TABLES,
 } from './authoring-subsystem.mjs';
+import { applyMigrationFiles, C2C_MIGRATION_FILES } from './migration-set.mjs';
 import { resolveDatabaseUrl, sslFor, INSTALL_URL_VARS } from './connection.mjs';
 
 dotenv.config();
@@ -121,7 +122,7 @@ async function step(label, fn) {
 }
 
 async function main() {
-  await step('1/7 Prerequisites — schemas + extensions', async () => {
+  await step('1/8 Prerequisites — schemas + extensions', async () => {
     await pool.query(`
       CREATE SCHEMA IF NOT EXISTS vault;
       CREATE SCHEMA IF NOT EXISTS precedent;
@@ -134,7 +135,7 @@ async function main() {
     console.log('  ✓ schemas (vault, precedent, audit) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
   });
 
-  await step('2/7 Tables — drizzle-kit push', async () => {
+  await step('2/8 Tables — drizzle-kit push', async () => {
     // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
     // destructive changes so it proceeds. Inherit env so drizzle.config.ts
     // resolves the same DATABASE_URL.
@@ -152,7 +153,7 @@ async function main() {
     console.log('  ✓ schema pushed from shared/schema.ts');
   });
 
-  await step('3/7 Complete schema — raw migration overlay', async () => {
+  await step('3/8 Complete schema — raw migration overlay', async () => {
     // drizzle-kit push lays down ONLY shared/schema.ts. The core product tables
     // — regulatory_programs, c2c_documents / c2c_document_sections /
     // c2c_rule_packs, c2c_ana_*, the submission-ops set, and ~200 more — live
@@ -318,7 +319,7 @@ async function main() {
     console.log(`  ✓ overlay: ${applied} applied, ${present} already-present from push`);
   });
 
-  await step('4/7 Authoring subsystem (Part-11 unit)', async () => {
+  await step('4/8 Authoring subsystem (Part-11 unit)', async () => {
     // The four db/migrations/20260725_authoring_* files back the flagship IND
     // authoring loop and, until now, had NO durable provisioning path — the
     // root overlay above only touches migrations/, and the *_gcc_* psql loop
@@ -330,7 +331,36 @@ async function main() {
     });
   });
 
-  await step('5/7 Row-Level Security policies (raw migrations)', async () => {
+  await step('5/8 Out-of-band C2C migration set', async () => {
+    // C2C_MIGRATION_FILES (scripts/db/migration-set.mjs) is the ordered set of
+    // db/migrations/ and root files that NO other durable path applies — not
+    // drizzle push, not the raw overlay (step 3), not the authoring unit (step
+    // 4), not the *_gcc_* loop (step 7). On real deploys deploy-migrate.mjs
+    // applies them to an EXISTING schema; a fresh install never ran them, so
+    // their tables (e.g. cre_evidence_sources, project_sections, the
+    // governance-boundary and resolution-orchestration sets) were absent and the
+    // routes that read them silently fell back to fixtures — the "fresh install
+    // half-works" gap. Apply them here, BEFORE the RLS step, so 0021 enables
+    // tenant policies on the tables they create. Every file is
+    // CREATE/ALTER ... IF NOT EXISTS and dependency-ordered; failures are
+    // recorded (not fatal-thrown) so report() adjudicates the whole run.
+    const repoRoot = path.resolve(__dirname, '..', '..');
+    const { applied, failures } = await applyMigrationFiles(
+      pool,
+      repoRoot,
+      C2C_MIGRATION_FILES,
+      { log: (m) => console.log(`  ${m}`), error: (m) => console.error(`  ${m}`) },
+    );
+    console.log(`  ${applied.length}/${C2C_MIGRATION_FILES.length} C2C migration file(s) applied`);
+    if (failures.length) {
+      recordIncomplete(
+        'C2C migration set',
+        `${failures.length} file(s) failed: ${failures.map((f) => f.file).join(', ')}`,
+      );
+    }
+  });
+
+  await step('6/8 Row-Level Security policies (raw migrations)', async () => {
     // The RLS rollout (0021) hard-fails if ANY tenant column is still text.
     // 0020 coerces a fixed list, but the raw overlay adds tables (e.g.
     // adverse_events) with a text organization_id that predate that list. On a
@@ -413,7 +443,7 @@ async function main() {
     }
   });
 
-  await step('6/7 Governed content — Part 11 audit tree (*_gcc_*.sql)', async () => {
+  await step('7/8 Governed content — Part 11 audit tree (*_gcc_*.sql)', async () => {
     // This step used to not exist. The script PRINTED a psql loop and told the
     // operator to run it themselves, then declared the install complete —
     // so following the instructions on screen produced a database with no
@@ -476,7 +506,7 @@ async function main() {
     }
   });
 
-  await step('7/7 Verify', async () => {
+  await step('8/8 Verify', async () => {
     const tables = await pool.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`,
     );
@@ -530,6 +560,25 @@ async function main() {
       );
     }
 
+    // C2C out-of-band set (step 5/8). These tables have NO creator in push, the
+    // raw overlay, or the authoring unit — only C2C_MIGRATION_FILES applies them.
+    // Their absence is exactly the "fresh install silently half-works" gap, so a
+    // regression in step 5 must fail the install rather than ship a DB whose
+    // routes read absent tables. Representative slice (spine + section tracking).
+    const C2C_TABLES = ['cre_evidence_sources', 'project_sections'];
+    const c2c = await pool.query(
+      `SELECT t AS name, to_regclass('public.' || t) IS NOT NULL AS present
+         FROM unnest($1::text[]) AS t`,
+      [C2C_TABLES],
+    );
+    const missingC2c = c2c.rows.filter((r) => !r.present).map((r) => r.name);
+    console.log(`  C2C out-of-band tables: ${C2C_TABLES.length - missingC2c.length}/${C2C_TABLES.length} present`);
+    if (missingC2c.length) {
+      throw new Error(
+        `C2C out-of-band tables missing (the C2C migration set did not apply → routes read absent tables): ${missingC2c.join(', ')}`,
+      );
+    }
+
     // The success banner is printed by main(), and ONLY when nothing was
     // recorded incomplete. It used to print here, unconditionally.
   });
@@ -546,6 +595,9 @@ async function main() {
 function report() {
   if (!incomplete.length) {
     console.log('\n✅ Application schema install complete.');
+    console.log('   The out-of-band C2C migration set is applied in-process (step 5/8), so a');
+    console.log('   fresh install is fully provisioned — no separate deploy-migrate run is');
+    console.log('   required for this database.');
     console.log('   Next:');
     console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');
     console.log('   • leave SEED_DEMO_USER unset in production (no known-password admin).');

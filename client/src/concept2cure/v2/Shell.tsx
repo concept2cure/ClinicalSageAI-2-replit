@@ -1076,9 +1076,23 @@ export function CmdK({
       }));
     }
     const results: CmdKItem[] = [];
-    const navs = UI_SURFACES.filter(
-      (s) => s.label.toLowerCase().includes(term) || (s.notes ?? '').toLowerCase().includes(term)
-    ).slice(0, 8);
+    // Match across every meaningful field, not just label/notes: the kebab id
+    // (de-hyphenated so "submission center" matches "submission-center"), the
+    // domain group, and the AnA tool families the surface exposes. Cap high —
+    // .cmdk-list scrolls (app.css) — so ⌘K reaches the full ~99-surface registry
+    // rather than stopping at the first 8 label/notes hits.
+    const navs = UI_SURFACES.filter((s) => {
+      const haystack = [
+        s.label,
+        s.notes ?? '',
+        s.id.replace(/-/g, ' '),
+        s.group ?? '',
+        (s.anaToolFamilies ?? []).join(' '),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(term);
+    }).slice(0, 25);
     if (navs.length) {
       results.push({ id: '_hd_surfaces', kind: 'header', label: 'Surfaces' });
       navs.forEach((s) =>
