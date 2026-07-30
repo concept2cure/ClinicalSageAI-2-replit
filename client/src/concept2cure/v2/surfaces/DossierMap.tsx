@@ -11,15 +11,17 @@ import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
-/* ── Read contract (aligned to the real c2c_dossier_map columns) ── */
+/* ── Read contract (rolled up from the real project_sections store) ── */
 
 /**
  * One row of GET /api/dossier-map — a single CTD module (M1–M5) for the org,
- * read straight from c2c_dossier_map (server/routes/dossier-map.routes.ts).
- * `m` is TEXT NOT NULL (module id / primary key). `label`, `pct` and `tone`
- * are nullable columns returned raw from the table — rendered null-safe and
- * never fabricated. `sections` is JSONB NOT NULL DEFAULT '[]', coerced to a
- * string array by the route.
+ * rolled up from the real, org-scoped project_sections tracking store by
+ * server/services/dossier/dossier-map-view-assembler.ts (via
+ * server/routes/dossier-map.routes.ts). `m` is the bare module digit ('1'..'5',
+ * printed as "M{m}"). `label` is the canonical CTD module title. `pct` is the
+ * derived completeness (complete sections / total, rounded) and `tone` is derived
+ * from it ('ok' / 'warn' / 'idle') — never a stored number, never fabricated.
+ * `sections` is the module's distinct tracked section labels.
  */
 interface DossierModule {
   m: string;
@@ -53,9 +55,10 @@ function PageHead({ eyebrow, title, sub, actions }: {
 
 export function DossierMap({ onAsk }: SurfaceViewProps) {
   /* Real-data anchor — the org's CTD / eCTD module map from
-     GET /api/dossier-map (server/routes/dossier-map.routes.ts → c2c_dossier_map,
-     org-scoped). Renders the real rows, an honest empty state when the store has
-     no modules for the org, or an honest error — never a fixture. */
+     GET /api/dossier-map (server/routes/dossier-map.routes.ts → the
+     project_sections tracking store, rolled up to module grain, org-scoped).
+     Renders the real rows, an honest empty state when the org tracks no CTD
+     sections yet, or an honest error — never a fixture. */
   const { rows: modules, loading, error, empty } = useLiveRows<DossierModule>('/api/dossier-map');
 
   return (
