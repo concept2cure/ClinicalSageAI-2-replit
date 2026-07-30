@@ -165,6 +165,38 @@ describe('PDF rendering', () => {
     expect(res.body.documents.length).toBeGreaterThanOrEqual(1);
     expect(typeof res.body.documents[0].pdfBase64).toBe('string');
   });
+
+  it('POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/3455/pdf-all')
+      .send({
+        sponsorName: 'Acme',
+        sponsor: { authorizedRepName: 'John Officer' },
+        investigators: [
+          { name: 'Dr. Pat Smith', financial: { hasDisclosableInterest: true, interestTypes: ['significant_equity'] } },
+          { name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } },
+        ],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.formId).toBe('FDA_3455');
+    expect(Array.isArray(res.body.documents)).toBe(true);
+    // Only the one disclosing investigator yields a form.
+    expect(res.body.documents.length).toBe(1);
+    expect(typeof res.body.documents[0].pdfBase64).toBe('string');
+  });
+
+  it('POST /3455/pdf-all → 200 with an empty documents array when none disclose', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/3455/pdf-all')
+      .send({
+        sponsorName: 'Acme',
+        sponsor: { authorizedRepName: 'John Officer' },
+        investigators: [{ name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } }],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.formId).toBe('FDA_3455');
+    expect(res.body.documents).toEqual([]);
+  });
 });
 
 describe('pdf-from-records (DB-backed)', () => {

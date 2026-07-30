@@ -15,7 +15,7 @@ import path from 'path';
 import os from 'os';
 import crypto from 'node:crypto';
 import { PDFDocument } from 'pdf-lib';
-import { generateIndForm } from '../ind-form-fill-service';
+import { generateIndForm, generateAllForm3455 } from '../ind-form-fill-service';
 import { FORM_3455 } from '../ind-form-data-builders';
 import { OFFICIAL_FIELD_MAPS } from '../official-field-maps';
 
@@ -101,5 +101,41 @@ describe('FDA 3455 official fill (static XFA → AcroForm layer, interest-type c
     expect(result.usedOfficialTemplate).toBe(true);
     // ...but QC flags the missing interest type — an honest "filled but not ready".
     expect(result.missingRequired).toContain('interest_type_selected');
+  });
+});
+
+describe('FDA 3455 per-investigator expansion (generateAllForm3455)', () => {
+  const base = {
+    sponsorName: 'Acme Therapeutics, Inc.',
+    studyTitle: 'A Phase 1 Study of ACME-001',
+    sponsor: { authorizedRepName: 'John Officer', authorizedRepTitle: 'CMO' },
+  };
+
+  it('produces ONE disclosure form per DISCLOSING investigator', async () => {
+    const results = await generateAllForm3455({
+      ...base,
+      investigators: [
+        { name: 'Dr. Pat Smith', financial: { hasDisclosableInterest: true, interestTypes: ['significant_equity'] } },
+        { name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } }, // certified none — no 3455
+        { name: 'Dr. Sam Ray', financial: { hasDisclosableInterest: true, interestTypes: ['proprietary_interest'] } },
+      ],
+    });
+    // Two disclosing investigators → two forms (the non-disclosing one is excluded).
+    expect(results).toHaveLength(2);
+    for (const r of results) {
+      expect(r.usedOfficialTemplate).toBe(true);
+      expect(r.missingRequired).toEqual([]);
+    }
+    // Each form carries its own investigator, so the filled bytes differ.
+    expect(Buffer.from(results[0].pdfBytes).equals(Buffer.from(results[1].pdfBytes))).toBe(false);
+  });
+
+  it('produces NO forms when no investigator has a disclosable interest', async () => {
+    const results = await generateAllForm3455({
+      ...base,
+      investigators: [{ name: 'Dr. Kim Lee', financial: { hasDisclosableInterest: false } }],
+    });
+    // None disclose → certify "none" on Form 3454 instead; zero 3455s.
+    expect(results).toEqual([]);
   });
 });

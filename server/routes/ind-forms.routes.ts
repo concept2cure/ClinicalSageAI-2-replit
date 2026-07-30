@@ -24,6 +24,7 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import {
   generateIndForm,
   generateAllForm1572,
+  generateAllForm3455,
   buildFormById,
   SUPPORTED_FORM_IDS,
   type SupportedFormId,
@@ -321,6 +322,31 @@ router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
       formId: FORM_1572,
       documents: results.map((r) => ({
         usedOfficialTemplate: r.usedOfficialTemplate,
+        reconstructed: r.reconstructed === true,
+        fieldCoverage: r.fieldCoverage,
+        missingRequired: r.missingRequired,
+        pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
+      })),
+    });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Render one 3455 disclosure PDF per DISCLOSING investigator (the 3455 is a
+ * per-investigator form). Returns base64-encoded PDFs as JSON. An empty
+ * `documents` array means no investigator has a disclosable interest — the
+ * sponsor certifies "none" on Form 3454 instead (see POST /FDA_3454/pdf).
+ */
+router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
+  try {
+    const results = await generateAllForm3455(metaOf(req));
+    res.json({
+      formId: FORM_3455,
+      documents: results.map((r) => ({
+        usedOfficialTemplate: r.usedOfficialTemplate,
+        reconstructed: r.reconstructed === true,
         fieldCoverage: r.fieldCoverage,
         missingRequired: r.missingRequired,
         pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),

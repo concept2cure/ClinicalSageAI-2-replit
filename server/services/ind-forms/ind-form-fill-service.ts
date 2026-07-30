@@ -48,6 +48,7 @@ import {
   buildForm3674,
   buildForm3454,
   buildForm3455,
+  buildAllForm3455,
   buildForm356h,
   buildForm1574,
   labelsForForm,
@@ -418,6 +419,20 @@ export async function generateAllForm1572(
   return Promise.all(builts.map((b) => renderBuiltForm(FORM_1572, b)));
 }
 
+/**
+ * Generate one 3455 disclosure PDF per DISCLOSING investigator. The 3455 is a
+ * per-investigator form (a single `invesname` / interest-type checkbox set), so
+ * a project with N disclosing investigators produces N forms. Returns an empty
+ * array when no investigator has a disclosable interest (in which case the
+ * sponsor certifies "none" on Form 3454 instead).
+ */
+export async function generateAllForm3455(
+  meta: IndProjectMetadata,
+): Promise<IndFormPdfResult[]> {
+  const builts = buildAllForm3455(meta);
+  return Promise.all(builts.map((b) => renderBuiltForm(FORM_3455, b)));
+}
+
 /** Render a pre-built form map to a PDF (official template if present, else fallback). */
 export async function renderBuiltForm(
   formId: string,
@@ -450,7 +465,9 @@ export async function generateAllIndForms(
   results.push(...(await generateAllForm1572(meta)));
   results.push(await generateIndForm(FORM_3674, meta));
   results.push(await generateIndForm(FORM_3454, meta));
-  results.push(await generateIndForm(FORM_3455, meta));
+  // 3455 is per-investigator: one form per DISCLOSING investigator (none → zero
+  // forms, since the sponsor then certifies "none" on the 3454 instead).
+  results.push(...(await generateAllForm3455(meta)));
   results.push(await generateIndForm(FORM_356H, meta));
   results.push(await generateIndForm(FORM_1574, meta));
   return results;
