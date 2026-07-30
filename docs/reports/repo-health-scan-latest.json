@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T22:34:00.327Z",
+  "generatedAt": "2026-07-30T23:13:18.422Z",
   "git": {
-    "sha": "a3954dd7a3beb0e162fd7ff47df3d7d117f18a66",
+    "sha": "25ddf08af41323e59f3f72aea13651a1e2d397c2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2489,7 +2489,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 834991
+        "bytes": 835632
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2607,7 +2607,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19853
+        "lines": 19862
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2875,7 +2875,7 @@
       },
       {
         "file": "server/services/client-intelligence-memory.ts",
-        "lines": 1699
+        "lines": 1717
       },
       {
         "file": "server/routes/fda510k-routes.ts",
