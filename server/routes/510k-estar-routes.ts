@@ -18,8 +18,16 @@ import {
   ESTAR_FAMILY_LABELS,
   versionLifecycleAsOf,
 } from '../services/pathway-engines/estar/estar-versions';
-import { ESTAR_CATALOG } from '../services/pathway-engines/estar/estar-catalog';
+import {
+  ESTAR_CATALOG,
+  getCatalogEntry,
+  type EstarCatalogKey,
+} from '../services/pathway-engines/estar/estar-catalog';
 import { assessClientEstarEligibility } from '../services/pathway-engines/estar/estar-registration';
+import {
+  assessEstarFilingReadiness,
+  type FilingLeaf,
+} from '../services/pathway-engines/estar/estar-filing-readiness';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
@@ -582,6 +590,98 @@ router.post('/registration/assess', authMiddleware, async (req, res) => {
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_FAILED',
       message: error.message || 'Failed to assess eSTAR registration eligibility',
+    });
+  }
+});
+
+const filingLeafSchema = z.object({
+  sectionCode: z.string(),
+  title: z.string(),
+  documentType: z.string().optional(),
+});
+
+const filingReadinessSchema = z.object({
+  catalogKey: z.string().min(1),
+  variant: z.enum(['device', 'ivd']).default('device'),
+  registration: z.object({
+    clientId: z.string().min(1),
+    satisfied: z
+      .array(
+        z.enum([
+          'fda_esg_account',
+          'cdrh_portal_account',
+          'organization_identity',
+          'mdufa_fee_account',
+        ]),
+      )
+      .default([]),
+    variants: z.array(z.enum(['device', 'ivd'])).optional(),
+  }),
+  leaves: z.array(filingLeafSchema).default([]),
+  qSubType: z
+    .enum([
+      'pre_submission',
+      'submission_issue_request',
+      'informational_meeting',
+      'study_risk_determination',
+      'pma_day_100_meeting',
+      'accessory_classification_request',
+    ])
+    .optional(),
+});
+
+/**
+ * POST /api/510k/estar/filing-readiness
+ * body: { catalogKey, variant, registration, leaves, qSubType? }
+ *
+ * The single "can this client file X, and what's left?" answer. Combines
+ * registration eligibility + template/version resolution + content readiness (via
+ * the right mapper) + official-template producibility into one honest verdict.
+ * Producibility is resolved server-side from the fill orchestration, so the caller
+ * gets a complete picture. Produces/persists nothing.
+ */
+router.post('/filing-readiness', authMiddleware, async (req, res) => {
+  const validation = filingReadinessSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  const { catalogKey, variant, registration, leaves, qSubType } = validation.data;
+
+  const entry = getCatalogEntry(catalogKey as EstarCatalogKey);
+  if (!entry) {
+    return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
+  }
+
+  try {
+    // Resolve official-template producibility from the single source of truth. The
+    // PreSTAR family shares one template across variants; marketing pathways use
+    // the device/ivd variant. Empty data ⇒ side-effect-free readiness probe.
+    const isPreStar =
+      entry.programType === 'q_sub' || entry.programType === 'ide' || entry.programType === '513g';
+    const templateVariant: EstarTemplateVariant = isPreStar ? 'prestar' : variant;
+    const fill = await fillEstarSubmission({ type: entry.programType, variant: templateVariant, data: {} });
+
+    const result = assessEstarFilingReadiness({
+      catalogKey: catalogKey as EstarCatalogKey,
+      variant,
+      registration,
+      leaves: leaves as FilingLeaf[],
+      qSubType,
+      templateAvailable: fill.templateAvailable,
+      fieldMapPopulated: fill.fieldMapPopulated,
+    });
+
+    if (!result) {
+      return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
+    }
+    return res.status(200).json(result);
+  } catch (error: any) {
+    logger.error('estar filing-readiness failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_FILING_READINESS_FAILED',
+      message: error.message || 'Failed to assess eSTAR filing readiness',
     });
   }
 });

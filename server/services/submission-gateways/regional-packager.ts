@@ -32,6 +32,11 @@ import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import type { Region, SubmissionFormat, SubmissionBundle } from './types';
 import { ValidationError, resolveToRegistryEntry, getSubmissionTypeLabel } from './types';
+
+// Re-export the region taxonomy from this packager's public surface: callers
+// that import `packageEctdSubmission` (e.g. the eCTD qualification subsystem)
+// also need its `Region` type, and the packager is their entry point.
+export type { Region } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
 import {
   evaluateSubmissionGrade,

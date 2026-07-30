@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T22:54:48.336Z",
+  "generatedAt": "2026-07-30T02:53:15.893Z",
   "onSharedPool": [
     "server/routes/admin-security.ts",
     "server/routes/ana-cortex.ts",
@@ -71,6 +71,7 @@
     "server/routes/taskManagement.routes.ts",
     "server/routes/templates.routes.ts",
     "server/routes/templates.ts",
+    "server/routes/tenant-config.ts",
     "server/routes/tenant-ctq-factors.ts",
     "server/routes/tenant-quality-validation.ts",
     "server/routes/tenant-section-gating.ts",
@@ -149,6 +150,7 @@
       "server/routes/taskManagement.routes.ts",
       "server/routes/templates.routes.ts",
       "server/routes/templates.ts",
+      "server/routes/tenant-config.ts",
       "server/routes/tenant-ctq-factors.ts",
       "server/routes/tenant-quality-validation.ts",
       "server/routes/tenant-section-gating.ts",

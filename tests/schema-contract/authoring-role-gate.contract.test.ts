@@ -77,7 +77,12 @@ let app: express.Express;
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
-    migrations: ['db/migrations/20260725_authoring_document_loop_tables.sql'],
+    migrations: [
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // authoring_templates et al. — moved out of retired runtime DDL by the
+      // canonical-spine refactor; the router's role-gated reads hit this table.
+      'db/migrations/20260730_authoring_runtime_ddl.sql',
+    ],
   });
   h.db = jdb.db;
   h.pool = jdb.pool;

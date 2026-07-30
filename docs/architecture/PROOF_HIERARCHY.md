@@ -97,6 +97,12 @@ Point new work at these when you need a worked example of a rung:
   `word/document.xml`), and qualifies it with `mammoth` — an OOXML reader
   **independent** of the `docx` writer; a corrupted container and a valid-zip
   that-is-not-a-docx are both caught.
+- **Tiers 6 → 7 (XLSX)** — `tests/export-contract/xlsx-export.proof.test.ts`.
+  Generates a real `.xlsx` via the universal packager, reopens its OOXML parts
+  (`[Content_Types].xml`, `xl/workbook.xml`, the worksheet) with `adm-zip`
+  **independently of the writer's object model**, and round-trips the tabular
+  rows back through ExcelJS; a corrupted container and a valid-zip
+  that-is-not-a-workbook are both caught.
 
 Each journey/proof writes a machine-readable proof packet under its
 `__reports__/` directory (the JSON is the truth source; the markdown is rendered
@@ -119,10 +125,10 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
 - **Tier 6 (export reopen)** was the thinnest rung: exporters were asserted on
   their in-memory output, and the external-validator tests ran against
   hand-authored fixture directories rather than a real emitted package. It is now
-  closed for the three universal output formats — **eCTD** (backbone XML + MD5
-  integrity), **PDF** (independent pdf.js reopen), and **DOCX** (OOXML part
-  reopen). Remaining exporters (e.g. XLSX, form-filled AcroForm bundles) should
-  follow the same pattern.
+  closed for the four universal output formats — **eCTD** (backbone XML + MD5
+  integrity), **PDF** (independent pdf.js reopen), **DOCX** (OOXML part reopen),
+  and **XLSX** (OOXML part reopen + round-trip). Remaining exporters (e.g.
+  form-filled AcroForm bundles, ZIP deliverables) should follow the same pattern.
 - **Tier 7 (external qualification)** is real but **scoped**: the eCTD path uses
   the license-free FDA-criteria subset, *not* the commercial LORENZ agency
   validator (it drops in behind the same `EVALIDATOR_BINARY` seam with no test

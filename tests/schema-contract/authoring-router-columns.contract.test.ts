@@ -68,6 +68,11 @@ const MIGRATIONS = [
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',
   'db/migrations/20260508_authoring_plans.sql',
   'migrations/20260728_authoring_comments_threading.sql',
+  // The router's own tables (templates/tokens/template_guidance/template_usage/
+  // section_guidance/export_history/tracked_change_decisions). The canonical-spine
+  // refactor retired the router's runtime CREATE TABLE blocks and moved them here,
+  // so this migration is now their only definition.
+  'db/migrations/20260730_authoring_runtime_ddl.sql',
 ].map((r) => path.join(REPO_ROOT, r));
 
 /** SQL string literals in the router that touch the tables it owns. */

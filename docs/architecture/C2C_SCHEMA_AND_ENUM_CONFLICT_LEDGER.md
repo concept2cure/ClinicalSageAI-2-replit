@@ -1525,6 +1525,111 @@ needs a live gateway); the journey proves the package that would be transmitted.
 
 ---
 
+## C-27 — Two incompatible definitions of the authoring tables (Codex PR #1202) *(high — BASELINED, needs ADR reconciliation, 2026-07-30)*
+
+Caught by `ci:duplicate-table-ddl` the moment PR #1202 merged — the guard doing
+exactly its job.
+
+PR #1202 (“AnA canonical document spine + authoring schema-contract fix”) added
+`db/migrations/20260730_authoring_subsystem_schema.sql`, which `CREATE TABLE IF
+NOT EXISTS`-declares 23 authoring tables derived from the SQL
+`server/routes/authoring.router.ts` issues. **Ten of those already exist**, defined
+by the golden-journey-proven `20260725_authoring_*` migrations
+(`authoring_documents`, `authoring_sections`, `authoring_signatures`,
+`authoring_workflow_steps`, `authoring_comments`, `authoring_citations`,
+`authoring_audit_trail`, `doc_permissions`, `frozen_documents`, `user_pins`).
+
+The two definitions are **incompatible**, not merely redundant. For
+`authoring_documents` alone:
+
+| column | 20260725 (loop tables) | 20260730 (Codex, router-derived) |
+|---|---|---|
+| `id` | `UUID PRIMARY KEY` | `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text` |
+| `template_id` | `UUID` | `TEXT` |
+| `current_workflow_id` | `UUID` | `TEXT` |
+| `created_by` | `TEXT NOT NULL` | `TEXT` (nullable) |
+
+Under `CREATE TABLE IF NOT EXISTS` the FIRST definition to run wins and the other
+silently no-ops, so the surviving column *types* depend on apply order — the exact
+C-6 hazard. Two consumers disagree on the shape: the freeze/signature handlers
+behind the ind-authoring golden journey assume the UUID shape (0725); Codex's
+`authoring.router.ts` mints TEXT ids app-side and its schema-contract test pins the
+TEXT shape (0730).
+
+**What actually deploys.** `20260730` is on NO durable apply path — no `_gcc_`
+infix, not in `C2C_MIGRATION_FILES`, not in `AUTHORING_SUBSYSTEM_FILES`, not in the
+journal. It is deploy-dead (the very C-23 gap, re-introduced). `20260725` IS on a
+durable applier (`AUTHORING_SUBSYSTEM_FILES`). So on every real database only the
+UUID (0725) shape lands; the TEXT (0730) shape exists only on the PGlite the Codex
+schema-contract test spins up. Codex's router — if it truly needs TEXT ids or the
+0730-only columns — is therefore mis-provisioned on real deploys regardless of this
+collision.
+
+**Action taken:** the 10 collisions are added to
+`scripts/ci/duplicate-table-ddl-baseline.json` (66 → 76) to unblock the branch,
+using the guard's documented tracked-for-reconciliation mechanism — the same way
+the pre-existing 66 are tracked. This is an unblock, **not a resolution**, and it
+is recorded here so it is not mistaken for one.
+
+**Proper fix (ADR-0006 class, not done here):** decide the ONE canonical authoring
+schema. Given 0725 is what deploys and what the golden journey proves, the likely
+outcome is: keep 0725 as canonical, delete the 10 duplicate `CREATE TABLE` blocks
+from `20260730` (leaving only its genuinely-new tables), reconcile
+`authoring.router.ts` and the schema-contract test to the UUID shape, and wire the
+remaining new tables onto `AUTHORING_SUBSYSTEM_FILES` so they actually deploy. That
+touches two routers and a Part 11 signature path, so it is its own change, not a
+land-blocker patch.
+
+**Addendum (parallel analysis, same day).** A concurrent audit branch hit the
+same guard failure and reached the same disposition independently; two points
+from that analysis worth preserving:
+
+- Even the ten tables' NON-identity delta columns cannot be back-ported to the
+  deployed UUID shape without the type decision: e.g.
+  `authoring_comments.parent_comment_id TEXT REFERENCES authoring_comments(id)`
+  cannot be ALTERed onto a table whose `id` is UUID (FK type mismatch). The
+  delta inventory the router needs on the deployed shape:
+  `authoring_comments.user_name/user_email/parent_comment_id/position_data/
+  resolved_by/resolved_at/resolution_note/updated_at`,
+  `authoring_sections.document_id/order_idx/section_number/created_by/updated_by`,
+  `user_pins.last_changed`, plus `frozen_documents.version` TEXT↔INTEGER.
+- The identity-type decision is the same decision as the platform's
+  canonical-identity P0 (external subject → platform user resolution, ledger
+  C-21): whichever type the authoring subsystem standardizes on determines how
+  authoring identities join against the integer-keyed core. Decide once, under
+  that umbrella — not per-table.
+
+---
+
+## C-28 — The authoring router's own tables were retired from runtime DDL into a deploy-dead migration *(high — FIXED 2026-07-30)*
+
+The other half of the PR #1202/#1205 authoring-spine landing (commit `398500dc6`
+“retire runtime DDL”), exposed the moment C-27's `duplicate-table-ddl` fix let the
+proof tier run again.
+
+`server/routes/authoring.router.ts` used to create seven of its own tables
+(`authoring_tokens`, `authoring_templates`, `template_guidance`, `template_usage`,
+`section_guidance`, `authoring_export_history`,
+`authoring_tracked_change_decisions`) via runtime `ensure*` DDL at module load.
+The canonical-spine refactor correctly retired that anti-pattern and moved the DDL
+into `db/migrations/20260730_authoring_runtime_ddl.sql` — but wired that migration
+into **nothing**: not `AUTHORING_SUBSYSTEM_FILES`, not the journal, no `_gcc_`
+infix. So the tables were created *nowhere* on a real deploy (C-23 all over again),
+and the router would 500 on first use in production. Three proof-tier tests failed
+on the missing relations (`authoring-router-columns`, `authoring-role-gate`,
+`ind-authoring`), and had been failing on the base since the merge — masked only
+because CI died earlier at the duplicate-table step.
+
+**Fix:** added `20260730_authoring_runtime_ddl.sql` to `AUTHORING_SUBSYSTEM_FILES`
+(the durable applier the deploy runs) and to the three tests' migration lists. The
+migration is additive and idempotent (all CREATE TABLE/INDEX IF NOT EXISTS), and
+its tables are disjoint from the C-27 conflicted set, so this is orthogonal to the
+UUID/TEXT reconciliation still owed there. Proof tier is back to green (263/263),
+and the lineage-reachability guard now covers the ind-authoring journey's use of
+this migration.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

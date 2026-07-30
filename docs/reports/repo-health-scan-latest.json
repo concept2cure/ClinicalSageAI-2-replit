@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-30T02:06:00.075Z",
+  "generatedAt": "2026-07-30T02:11:56.809Z",
   "git": {
-    "sha": "e53786a83c66bf66f98f8251ea3e8ef347545fe6",
+    "sha": "c7269e383f4d0179e9e636a22ed5b7eaa0012466",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2474,7 +2474,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 943984
+        "bytes": 945535
       },
       {
         "file": "shared/schema.ts",
@@ -2490,7 +2490,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 217004
+        "bytes": 215364
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2538,7 +2538,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 120258
+        "bytes": 120635
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2599,12 +2599,12 @@
         "lines": 19835
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 18351
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "lines": 18378
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18348
+        "file": "server/routes/concept2cure.ts",
+        "lines": 18351
       },
       {
         "file": "server/statistics-service.ts",
@@ -2612,7 +2612,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6129
+        "lines": 6047
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2655,12 +2655,12 @@
         "lines": 2759
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 2673
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2676
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2672
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 2673
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
