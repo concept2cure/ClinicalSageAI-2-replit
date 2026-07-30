@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   parseMemoryEntries,
   buildExtractionPrompt,
   isLlmMemoryExtractionEnabled,
+  resolveMemoryEntries,
+  type MemoryEntryDraft,
 } from '../llm-extraction';
 
 const validEntry = {
@@ -104,6 +106,64 @@ describe('buildExtractionPrompt', () => {
       text: 'short',
     });
     expect(project).toContain('project "Study 001"');
+  });
+});
+
+describe('resolveMemoryEntries (LLM-first, heuristic fallback)', () => {
+  const heuristicEntry: MemoryEntryDraft = {
+    category: 'pipeline',
+    subcategory: 'therapeutic_areas',
+    title: 'heuristic',
+    content: 'from regex',
+    confidenceScore: 0.7,
+    importanceLevel: 'medium',
+  };
+  const llmEntry: MemoryEntryDraft = { ...heuristicEntry, title: 'llm', content: 'from model' };
+  const baseInput = {
+    kind: 'client' as const,
+    text: 'doc text',
+    fileName: 'f.pdf',
+    subjectName: 'Acme',
+    organizationId: 1,
+    userId: 2,
+  };
+
+  it('uses LLM entries and does NOT call the heuristic when the model returns entries', async () => {
+    const heuristic = vi.fn(() => [heuristicEntry]);
+    const extract = vi.fn(async () => [llmEntry]);
+    const out = await resolveMemoryEntries({ ...baseInput, heuristic }, { extract, enabled: () => true });
+    expect(out).toEqual([llmEntry]);
+    expect(extract).toHaveBeenCalledOnce();
+    expect(heuristic).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the heuristic when the model returns an empty list', async () => {
+    const heuristic = vi.fn(() => [heuristicEntry]);
+    const out = await resolveMemoryEntries(
+      { ...baseInput, heuristic },
+      { extract: async () => [], enabled: () => true },
+    );
+    expect(out).toEqual([heuristicEntry]);
+    expect(heuristic).toHaveBeenCalledOnce();
+  });
+
+  it('falls back to the heuristic when the gateway extraction fails (null)', async () => {
+    const heuristic = vi.fn(() => [heuristicEntry]);
+    const out = await resolveMemoryEntries(
+      { ...baseInput, heuristic },
+      { extract: async () => null, enabled: () => true },
+    );
+    expect(out).toEqual([heuristicEntry]);
+    expect(heuristic).toHaveBeenCalledOnce();
+  });
+
+  it('never calls the gateway when LLM extraction is disabled', async () => {
+    const heuristic = vi.fn(() => [heuristicEntry]);
+    const extract = vi.fn(async () => [llmEntry]);
+    const out = await resolveMemoryEntries({ ...baseInput, heuristic }, { extract, enabled: () => false });
+    expect(out).toEqual([heuristicEntry]);
+    expect(extract).not.toHaveBeenCalled();
+    expect(heuristic).toHaveBeenCalledOnce();
   });
 });
 

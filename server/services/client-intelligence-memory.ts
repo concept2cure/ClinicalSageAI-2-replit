@@ -28,11 +28,7 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
-import {
-  extractMemoryEntriesViaGateway,
-  isLlmMemoryExtractionEnabled,
-  type MemoryEntryDraft,
-} from './memory/llm-extraction.js';
+import { resolveMemoryEntries } from './memory/llm-extraction.js';
 import { ragRetrieve } from './ragRouter.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -351,35 +347,6 @@ async function extractTextFromFile(
     console.error(`[ClientIntelligence] Text extraction failed for ${fileName}:`, err.message);
     return { text: `[File: ${fileName} — extraction error: ${err.message}]` };
   }
-}
-
-/**
- * Resolve memory entries for a document: try governed LLM extraction first
- * (routed through the AI gateway — audited, tenant-scoped, PII-screened) and
- * fall back to the deterministic heuristic extractor when LLM extraction is
- * disabled, unavailable (e.g. no model configured), or returns nothing.
- */
-async function resolveMemoryEntries(params: {
-  kind: 'client' | 'project';
-  text: string;
-  fileName: string;
-  subjectName: string;
-  organizationId: number;
-  userId: number;
-  heuristic: () => MemoryEntryDraft[];
-}): Promise<MemoryEntryDraft[]> {
-  if (isLlmMemoryExtractionEnabled()) {
-    const llm = await extractMemoryEntriesViaGateway({
-      kind: params.kind,
-      text: params.text,
-      fileName: params.fileName,
-      subjectName: params.subjectName,
-      organizationId: params.organizationId,
-      userId: params.userId,
-    });
-    if (llm && llm.length > 0) return llm;
-  }
-  return params.heuristic();
 }
 
 /**

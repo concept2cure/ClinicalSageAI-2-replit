@@ -205,3 +205,29 @@ export async function extractMemoryEntriesViaGateway(
 export function isLlmMemoryExtractionEnabled(): boolean {
   return process.env.MEMORY_LLM_EXTRACTION_ENABLED !== 'false';
 }
+
+/** Injectable dependencies for resolveMemoryEntries (defaults to real impls). */
+export interface ResolveMemoryDeps {
+  extract?: (input: MemoryExtractionInput) => Promise<MemoryEntryDraft[] | null>;
+  enabled?: () => boolean;
+}
+
+/**
+ * Resolve memory entries for a document: try governed LLM extraction first
+ * (audited, tenant-scoped), and fall back to the caller's deterministic
+ * heuristic extractor when LLM extraction is disabled, unavailable, or returns
+ * nothing. Dependencies are injectable for testing; production callers pass
+ * only the input + heuristic.
+ */
+export async function resolveMemoryEntries(
+  input: MemoryExtractionInput & { heuristic: () => MemoryEntryDraft[] },
+  deps: ResolveMemoryDeps = {},
+): Promise<MemoryEntryDraft[]> {
+  const enabled = deps.enabled ?? isLlmMemoryExtractionEnabled;
+  const extract = deps.extract ?? extractMemoryEntriesViaGateway;
+  if (enabled()) {
+    const llm = await extract(input);
+    if (llm && llm.length > 0) return llm;
+  }
+  return input.heuristic();
+}
