@@ -49,8 +49,13 @@ vi.mock('../../server/db', () => ({
     (h.pool as { query: (t: string, p?: unknown[]) => Promise<unknown> }).query(text, params),
 }));
 
+// The leading hex nibble is a letter on purpose: enforceOrgMembership skips the
+// live organization_users re-check only when parseFiniteInt(userId) === null,
+// and Number.parseInt reads leading digits — so 'fa1c2a10…' → NaN → null →
+// skipped, while a digit-leading UUID would parse to an int, run the re-check,
+// and 503. This contract tests role gating, not membership; keep it letter-led.
 const USER = {
-  id: '7a1c2a10-0000-4000-8000-0000000000a1',
+  id: 'fa1c2a10-0000-4000-8000-0000000000a1',
   email: 'unprivileged@journey.example',
   organizationId: 1,
 };
