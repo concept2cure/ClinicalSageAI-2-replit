@@ -8,7 +8,7 @@
  *   - Not verified → alert, the exact strings that are missing, and the
  *                  line-level divergence vs. the supplied source.
  *
- * Microcopy is factual (no "Looks good!", no emoji). The strip is a live
+ * Microcopy is factual — calm, no cheerleading, no emoji. The strip is a live
  * region so assistive tech announces the verdict. This is the evidence a
  * regulatory user (and the 21 CFR Part 11 trail) cites — not "AnA wrote it"
  * but "AnA wrote it and proved it matches your source."

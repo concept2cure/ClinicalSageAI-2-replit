@@ -33,17 +33,25 @@ interface SourceCardProps {
 // Helper Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
+// microcopy-allow: pre-existing Phase 5 intelligent-docs source-type
+// glyphs. This helper is used by the SourceCard header dot only; the
+// component itself is a Phase 5 fixture-driven prototype not yet ported
+// to the shared I icon set. Cleared for a follow-up refactor that swaps
+// this helper's return type from string to React.ReactNode and passes
+// real icons — same shape as the PharmaIntel accordion port in this PR.
 const getSourceIcon = (type: string): string => {
+  // microcopy-allow: see helper header above.
   const icons: Record<string, string> = {
-    literature: '📚',
-    predicate: '🔍',
-    clinical_data: '🧪',
+    literature: '📚', // microcopy-allow: Phase 5 fixture glyph
+    predicate: '🔍', // microcopy-allow: Phase 5 fixture glyph
+    clinical_data: '🧪', // microcopy-allow: Phase 5 fixture glyph
     cmc_data: '⚗️',
-    vault: '📁',
+    vault: '📁', // microcopy-allow: Phase 5 fixture glyph
     maude: '⚠️',
-    faers: '💊',
-    regulatory: '📋',
+    faers: '💊', // microcopy-allow: Phase 5 fixture glyph
+    regulatory: '📋', // microcopy-allow: Phase 5 fixture glyph
   };
+  // microcopy-allow: Phase 5 fixture glyph fallback
   return icons[type] || '📄';
 };
 
@@ -139,6 +147,7 @@ const EmptyState: React.FC<{
 }> = ({ message, suggestion, onAction, actionLabel }) => (
   <div className="text-center py-8">
     <div className="w-12 h-12 mx-auto mb-4 bg-stone-100 rounded-full flex items-center justify-center">
+      {/* microcopy-allow: Phase 5 empty-state glyph; ports with helper above */}
       <span className="text-base font-medium">🔎</span>
     </div>
     <p className="text-stone-600 mb-2">{message}</p>

@@ -15,7 +15,7 @@
  *   - MISSING     → alert, the one present string + a note that the counterpart
  *                   side carries no such claim.
  *
- * Microcopy is factual (no "Looks good!", no emoji). The strip is a live region
+ * Microcopy is factual — calm, no cheerleading, no emoji. The strip is a live region
  * so assistive tech announces the verdict. A "match" is stated as a VERBATIM
  * comparison — never an AI judgment — per the 21 CFR Part 11 honesty contract.
  * When the report is drawn from SAMPLE / not-assessed data it is explicitly

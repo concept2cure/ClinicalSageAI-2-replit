@@ -65,6 +65,18 @@ jobs:
         # `compliance-claim-allow: <reason>`.
         run: npm run check:compliance-claims
 
+      - name: Microcopy tone check
+        # Hard gate. Customer-facing copy must not carry exclamation marks or
+        # pictograph emoji — a design-system non-negotiable the 2026-07 UI/UX
+        # audit found violated in the exact sites the rule was meant to
+        # govern (signup CTAs, error boundaries, AnA fallback strings). PR
+        # #1260 fixed the named sites; this gate stops the drift. The check
+        # is narrow (sentence-terminating `!` only, surrogate-pair emoji only
+        # — functional dingbats like ✓✕⚠☰ are allowed) so it does not
+        # generate noise. Deliberate exceptions annotate the line with
+        # `microcopy-allow: <reason>`.
+        run: npm run check:microcopy
+
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh
 
