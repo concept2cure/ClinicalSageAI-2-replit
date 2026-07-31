@@ -57,3 +57,37 @@ export async function loadPriorSequenceManifest(
   if (!res?.rows?.length) return [];
   return manifestToPriorLeaves(res.rows[0].leaf_manifest);
 }
+
+/**
+ * Load the manifest of the MOST RECENT sequence strictly before `currentSequence`
+ * for this application — the natural prior when exporting a new sequence without
+ * naming the predecessor. Sequence numbers are zero-padded 4-digit strings, so
+ * lexical `<` ordering is correct. Returns the prior sequence number alongside
+ * its leaves (empty leaves + empty number when there is no prior). Always
+ * organization-scoped.
+ */
+export async function loadLatestPriorManifest(
+  pool: PoolLike,
+  args: { organizationId: number; applicationNumber: string; currentSequence: string },
+): Promise<{ priorSequenceNumber: string; leaves: PriorLeaf[] }> {
+  const { organizationId, applicationNumber, currentSequence } = args;
+  if (!organizationId || !applicationNumber || !currentSequence) {
+    return { priorSequenceNumber: '', leaves: [] };
+  }
+  const res = await pool.query(
+    `SELECT sequence_number, leaf_manifest
+       FROM ectd_compilations
+      WHERE organization_id = $1
+        AND application_number = $2
+        AND sequence_number < $3
+        AND leaf_manifest IS NOT NULL
+      ORDER BY sequence_number DESC, compiled_at DESC NULLS LAST, id DESC
+      LIMIT 1`,
+    [organizationId, applicationNumber, currentSequence],
+  );
+  if (!res?.rows?.length) return { priorSequenceNumber: '', leaves: [] };
+  return {
+    priorSequenceNumber: String(res.rows[0].sequence_number ?? ''),
+    leaves: manifestToPriorLeaves(res.rows[0].leaf_manifest),
+  };
+}

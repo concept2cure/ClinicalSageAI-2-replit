@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { loadPriorSequenceManifest, type PoolLike } from '../prior-sequence-loader';
+import { loadPriorSequenceManifest, loadLatestPriorManifest, type PoolLike } from '../prior-sequence-loader';
 
 const manifestRow = [
   { ctdSection: '3.2.S.1', fileName: 'general.pdf', href: 'm3/32/general.pdf', md5: 'a' },
@@ -73,5 +73,33 @@ describe('loadPriorSequenceManifest', () => {
       priorSequenceNumber: '0000',
     });
     expect(prior).toEqual([]);
+  });
+});
+
+describe('loadLatestPriorManifest', () => {
+  it('finds the most recent sequence BEFORE the current one, org-scoped', async () => {
+    const pool = stubPool([{ sequence_number: '0002', leaf_manifest: manifestRow }]);
+    const spy = vi.spyOn(pool, 'query');
+    const res = await loadLatestPriorManifest(pool, {
+      organizationId: 7,
+      applicationNumber: 'IND-123',
+      currentSequence: '0003',
+    });
+    expect(res.priorSequenceNumber).toBe('0002');
+    expect(res.leaves).toHaveLength(2);
+    const [sql, params] = spy.mock.calls[0];
+    expect(String(sql)).toMatch(/sequence_number\s*<\s*\$3/);
+    expect(String(sql)).toMatch(/organization_id\s*=\s*\$1/);
+    expect(params).toEqual([7, 'IND-123', '0003']);
+  });
+
+  it('returns an empty prior for a first sequence (no earlier compilation)', async () => {
+    const pool = stubPool([]);
+    const res = await loadLatestPriorManifest(pool, {
+      organizationId: 7,
+      applicationNumber: 'IND-123',
+      currentSequence: '0000',
+    });
+    expect(res).toEqual({ priorSequenceNumber: '', leaves: [] });
   });
 });
