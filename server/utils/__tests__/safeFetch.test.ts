@@ -171,3 +171,126 @@ describe('safeFetch — DNS rebinding defense (resolve + assert every IP is publ
     ).rejects.toThrow(/Refused Veeva Vault request/);
   });
 });
+
+describe('safeFetch — redirects are re-validated on every hop', () => {
+  /** Resolve each hostname to a caller-specified address set; '*' is the fallback. */
+  function resolveByHost(map: Record<string, Array<{ address: string; family: number }>>): void {
+    lookupMock.mockImplementation((host: string, _opts: unknown, cb: Function) => {
+      const addrs = map[host] ?? map['*'];
+      if (!addrs) return cb(new Error(`no dns mock for ${host}`), []);
+      cb(null, addrs);
+    });
+  }
+
+  /** Queue real Response objects for successive fetch calls; records each call. */
+  function queueResponses(responses: Response[]): Array<{ url: unknown; init: unknown }> {
+    const calls: Array<{ url: unknown; init: unknown }> = [];
+    fetchMock.mockImplementation(async (url: unknown, init: unknown) => {
+      calls.push({ url, init });
+      const next = responses.shift();
+      if (!next) throw new Error(`unexpected fetch call to ${String(url)}`);
+      return next;
+    });
+    return calls;
+  }
+
+  const redirectTo = (location: string, status = 302) =>
+    new Response(null, { status, headers: { location } });
+  const ok = (body = 'final') => new Response(body, { status: 200 });
+
+  const PUBLIC = [{ address: '93.184.216.34', family: 4 }];
+
+  it('REGRESSION: rejects a 302 to an IP-literal metadata host (SSRF via redirect)', async () => {
+    // The attacker host is public and pins fine; its 302 points at the cloud
+    // metadata service by IP literal. The metadata hop must NEVER be fetched.
+    resolveByHost({ 'attacker.example': PUBLIC });
+    const calls = queueResponses([redirectTo('http://169.254.169.254/latest/meta-data/iam/')]);
+    await expect(
+      safeFetch('https://attacker.example/', undefined, 'Veeva Vault request'),
+    ).rejects.toThrow(/not a public https endpoint/);
+    expect(calls.length).toBe(1); // only the attacker hop; metadata never reached
+  });
+
+  it('REGRESSION: rejects a 302 to the IPv4-mapped IPv6 metadata literal', async () => {
+    resolveByHost({ 'attacker.example': PUBLIC });
+    const calls = queueResponses([redirectTo('https://[::ffff:169.254.169.254]/')]);
+    await expect(safeFetch('https://attacker.example/')).rejects.toThrow(
+      /not a public https endpoint/,
+    );
+    expect(calls.length).toBe(1);
+  });
+
+  it('rejects a redirect to a host that DNS-resolves to a private IP', async () => {
+    resolveByHost({ 'start.example': PUBLIC, 'rebind.example': [{ address: '10.0.0.5', family: 4 }] });
+    const calls = queueResponses([redirectTo('https://rebind.example/'), ok()]);
+    await expect(safeFetch('https://start.example/')).rejects.toThrow(
+      /resolved to non-public address 10\.0\.0\.5/,
+    );
+    expect(calls.length).toBe(1); // the rebinding hop is refused before fetch
+  });
+
+  it('follows a redirect to another public host, re-pins, and strips Authorization cross-origin', async () => {
+    resolveByHost({ '*': PUBLIC });
+    const calls = queueResponses([redirectTo('https://other-public.example/next'), ok()]);
+    const res = await safeFetch('https://start.example/', {
+      headers: { Authorization: 'Bearer secret', 'X-Keep': '1' },
+    });
+    expect(res.status).toBe(200);
+    expect(calls.length).toBe(2);
+    const h2 = new Headers((calls[1].init as { headers?: HeadersInit }).headers);
+    expect(h2.get('authorization')).toBeNull(); // stripped: cross-origin
+    expect(h2.get('x-keep')).toBe('1'); // non-sensitive header retained
+    expect((calls[1].init as { dispatcher?: unknown }).dispatcher).toBeInstanceOf(Agent); // re-pinned
+  });
+
+  it('keeps Authorization on a same-origin redirect', async () => {
+    resolveByHost({ '*': PUBLIC });
+    const calls = queueResponses([redirectTo('https://start.example/step2'), ok()]);
+    await safeFetch('https://start.example/step1', { headers: { Authorization: 'Bearer keep' } });
+    const h2 = new Headers((calls[1].init as { headers?: HeadersInit }).headers);
+    expect(h2.get('authorization')).toBe('Bearer keep');
+  });
+
+  it('downgrades POST to GET and drops the body on a 303', async () => {
+    resolveByHost({ '*': PUBLIC });
+    const calls = queueResponses([redirectTo('https://start.example/done', 303), ok()]);
+    await safeFetch('https://start.example/submit', {
+      method: 'POST',
+      body: 'payload',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    expect((calls[1].init as { method?: string }).method).toBe('GET');
+    expect((calls[1].init as { body?: unknown }).body).toBeUndefined();
+  });
+
+  it('preserves method and body on a 307', async () => {
+    resolveByHost({ '*': PUBLIC });
+    const calls = queueResponses([redirectTo('https://start.example/moved', 307), ok()]);
+    await safeFetch('https://start.example/submit', { method: 'POST', body: 'payload' });
+    expect((calls[1].init as { method?: string }).method).toBe('POST');
+    expect((calls[1].init as { body?: unknown }).body).toBe('payload');
+  });
+
+  it('fails closed after too many redirects', async () => {
+    resolveByHost({ '*': PUBLIC });
+    let n = 0;
+    fetchMock.mockImplementation(async () => redirectTo(`https://loop.example/${n++}`));
+    await expect(safeFetch('https://loop.example/start')).rejects.toThrow(/too many redirects/);
+  });
+
+  it('returns the 3xx untouched when the caller sets redirect:manual', async () => {
+    resolveByHost({ '*': PUBLIC });
+    const calls = queueResponses([redirectTo('https://elsewhere.example/')]);
+    const res = await safeFetch('https://start.example/', { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(calls.length).toBe(1); // not followed
+  });
+
+  it('throws on a redirect when the caller sets redirect:error', async () => {
+    resolveByHost({ '*': PUBLIC });
+    queueResponses([redirectTo('https://elsewhere.example/')]);
+    await expect(safeFetch('https://start.example/', { redirect: 'error' })).rejects.toThrow(
+      /unexpected redirect/,
+    );
+  });
+});
