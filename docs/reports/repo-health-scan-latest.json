@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-30T17:41:04.083Z",
+  "generatedAt": "2026-07-31T00:06:41.283Z",
   "git": {
-    "sha": "3399e0aa19dfeb9536c27e7df044d785482cd33b",
-    "branch": "concept2cure-v2"
+    "sha": "657bee672fdb115c32d34dcd262030bc4c479e71",
+    "branch": "claude/ui-design-kit-review-tpsb71"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2943,7 +2943,14 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

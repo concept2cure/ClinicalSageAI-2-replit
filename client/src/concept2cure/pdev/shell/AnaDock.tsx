@@ -18,7 +18,7 @@
 import * as React from 'react';
 import { PdevIcon } from '../icons';
 import { PDEV_SUGGESTIONS } from '../data/enums';
-import type { PdevCommand } from '../data/commands';
+import type { PdevCommand } from '../data/pdevCommands';
 import { useChatUpload, CHAT_UPLOAD_ACCEPT, attachmentReadLabel, SR_ONLY_STYLE } from '../../hooks/useChatUpload';
 import type { PdevProgramView, PdevActivityView } from '../data/types';
 

@@ -52,7 +52,7 @@ import {
   PdevConfirmDialog,
   type ConfirmConfig,
 } from './components/ConfirmDialog';
-import { PDEV_COMMANDS } from './data/commands';
+import { PDEV_COMMANDS } from './data/pdevCommands';
 
 const HERE_LABEL: Record<string, string> = {
   overview: 'Program dashboard',

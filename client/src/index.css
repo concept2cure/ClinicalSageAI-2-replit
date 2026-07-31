@@ -477,7 +477,9 @@ kbd {
   animation: fadeIn 0.3s ease-in-out forwards;
 }
 .animate-slideUp {
-  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  /* Calm-motion rule (design-system CLAUDE.md): 200ms ease-out, no overshoot.
+     The prior cubic-bezier(0.175, 0.885, 0.32, 1.275) is an overshoot curve. */
+  animation: slideUp var(--dur-normal, 200ms) var(--ease, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
 }
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;

@@ -60,7 +60,7 @@ const HERE_LABEL: Record<string, string> = {
   submissions:    'Submission center',
   templates:      'Templates',
   analytics:      'Analytics',
-  memory:         'Claude memory',
+  memory:         'AnA memory',
   admin:          'Admin and access',
   'pre-sub':      'Pre-submission manager',
 };

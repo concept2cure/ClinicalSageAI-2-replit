@@ -46,7 +46,7 @@ export const MDX_NAV_V2: NavItem[] = [
 
   // Intelligence — read-only reporting + cross-cutting memory.
   { id: 'analytics',    label: 'Analytics',             icon: 'barChart3',    group: 'intelligence' },
-  { id: 'memory',       label: 'Claude Memory',         icon: 'database',     group: 'intelligence' },
+  { id: 'memory',       label: 'AnA Memory',            icon: 'database',     group: 'intelligence' },
 
   // System — deliberately empty. Admin is a PRODUCT-level surface, not a
   // per-workstream one: the device/diagnostics workstream embeds this module
