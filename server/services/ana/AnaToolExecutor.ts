@@ -15,6 +15,11 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+// Type-only: the prior-sequence auto-load path assigns loadPriorSequenceManifest's
+// PriorLeaf[] into the same local as the hand-mapped input leaves. Without this
+// annotation the local is inferred from `p: any`, which makes every field
+// REQUIRED and so rejects PriorLeaf's optional ones.
+import type { PriorLeaf } from '../ectd/lifecycle-operator.js';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import { searchPubmed } from '../integrations/pubmed-client.js';
@@ -8528,7 +8533,8 @@ registerToolHandler('gateway_configuration_status', async (input, ctx) => {
 registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
   try {
     const { computeLifecycleOperations } = await import('../ectd/lifecycle-operator.js');
-    let prior: import('../ectd/lifecycle-operator.js').PriorLeaf[] = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
+    let prior: PriorLeaf[] = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map(
+      (p: any) => ({
       leafKey: p.leaf_key,
       ctdSection: p.ctd_section,
       fileName: p.file_name,
