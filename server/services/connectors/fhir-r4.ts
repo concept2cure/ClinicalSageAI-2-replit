@@ -15,6 +15,7 @@ import {
   ConnectorCredentials,
 } from './connector-interface.js';
 import { assertSafePublicUrl } from '../../utils/ssrfGuard.js';
+import { safeFetch as safePublicFetch } from '../../utils/safeFetch.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -572,9 +573,9 @@ export class FHIRR4Connector implements DataConnector {
   ): Promise<Response> {
     // SSRF guard at the single outbound sink — covers base URL, the discovered
     // token endpoint (which may come from untrusted SMART/Capability discovery),
-    // and per-resource fetches. Defends against DNS rebinding too: re-checked at
-    // every call, not just at authenticate time.
-    assertSafePublicUrl(url, 'FHIR request');
+    // and per-resource fetches. safePublicFetch re-runs the literal host guard
+    // AND resolves + pins the socket to public IPs, so a public name that rebinds
+    // to a private/metadata address between checks cannot be reached.
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
@@ -582,7 +583,7 @@ export class FHIRR4Connector implements DataConnector {
     );
 
     try {
-      return await fetch(url, { ...init, signal: controller.signal });
+      return await safePublicFetch(url, { ...init, signal: controller.signal }, 'FHIR request');
     } finally {
       clearTimeout(timeoutId);
     }
