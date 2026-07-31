@@ -31,6 +31,10 @@ import {
   governedToPicker,
   pickerMatchesProfile,
 } from '../../mdx/lib/industryProfileMapping';
+import {
+  GovernedConfirmDialog,
+  type ConfirmConfig,
+} from '../../_shared/components/GovernedConfirmDialog';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
@@ -1811,6 +1815,14 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   // state for a single reveal, never persisted or logged, cleared on dismiss.
   const [mintedKey, setMintedKey] = useState<{ name: string; secret: string; prefix: string } | null>(null);
   const [form, setForm] = useState<AcFormState>({ email: '', role: 'support', reason: '' });
+  // Revoke API-key gate. Was window.confirm() — unstyled, unlocalized, no
+  // audit hook, no typed-word gate on a destructive irreversible action. Now
+  // routes through the canonical GovernedConfirmDialog: captures a real
+  // reason (audit-logged verbatim server-side) + requires the user to type
+  // the exact word 'revoke' before the DELETE fires.
+  const [revokeConfirm, setRevokeConfirm] =
+    useState<{ id: number | string; name: string; config: ConfirmConfig } | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
   const [toast, fireToast] = useToast();
   const nav = (id: string) => {
     try {
@@ -1935,32 +1947,42 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  // revokeKey — REAL, audited DELETE /api/api-keys/:id. Confirmed first because
-  // it immediately breaks any integration using the key. Only drops the row on
-  // a real 2xx; the live list is re-fetched to reflect the server state.
-  const revokeKey = async (id: number | string, name: string) => {
-    if (
-      typeof window !== 'undefined' &&
-      window.confirm &&
-      !window.confirm(
-        'Revoke API key "' + name + '"? Any integration using it stops working immediately. This is audited and cannot be undone.',
-      )
-    ) {
-      return;
-    }
+  // revokeKey — REAL, audited DELETE /api/api-keys/:id. Opens the governed
+  // confirm dialog first because revocation immediately breaks any integration
+  // using the key and is not reversible. The DELETE only fires once the user
+  // types the confirmWord and provides a reason (both captured in the audit
+  // trail server-side). Only drops the row on a real 2xx; the live list is
+  // re-fetched to reflect the server state.
+  const revokeKey = (id: number | string, name: string) => {
+    setRevokeError(null);
+    setRevokeConfirm({
+      id,
+      name,
+      config: {
+        action: 'Revoke API key',
+        target: name,
+        resource: 'api-key:' + String(id),
+        minReason: 10,
+        confirmWord: 'revoke',
+      },
+    });
+  };
+
+  const onConfirmRevoke = async () => {
+    if (!revokeConfirm) return;
+    setRevokeError(null);
     try {
-      const res = await apiRequest('DELETE', '/api/api-keys/' + id);
+      const res = await apiRequest('DELETE', '/api/api-keys/' + revokeConfirm.id);
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        fireToast('Could not revoke -- ' + (json?.error || 'sign in as an admin'));
+        setRevokeError(json?.error || 'Sign in as an admin');
         return;
       }
       fireToast('API key revoked -- audited');
+      setRevokeConfirm(null);
       setKeysReload((n) => n + 1);
     } catch (e) {
-      fireToast(
-        'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
-      );
+      setRevokeError(e instanceof Error && e.message ? e.message : 'Request failed');
     }
   };
 
@@ -2482,6 +2504,22 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         </div>
       </div>
       <C2CToast msg={toast} />
+
+      {/* Governed revoke — captures reason + 'revoke' typed word before the
+          irreversible DELETE fires. Replaces window.confirm() (unstyled,
+          unlocalized, no audit hook). Position: fixed, so it overlays. */}
+      {revokeConfirm && (
+        <GovernedConfirmDialog
+          open={true}
+          {...revokeConfirm.config}
+          onCancel={() => {
+            setRevokeConfirm(null);
+            setRevokeError(null);
+          }}
+          onConfirm={onConfirmRevoke}
+          submitError={revokeError}
+        />
+      )}
     </div>
   );
 }
