@@ -723,6 +723,17 @@ jobs:
           [[ "$RBM" -ge 8 ]] || { echo "::error::RBM lineage did not land ($RBM tables)"; exit 1; }
           [[ "$CRE" -ge 6 ]] || { echo "::error::Evidence spine did not land ($CRE tables)"; exit 1; }
 
+      - name: Post-deploy invariants hold on the real deployed database
+        # The end-to-end backstop for the reachability / identity / isolation
+        # program (ledger C-31 → C-40). The static guards reason about SQL text;
+        # this runs against the database install-fresh + deploy-migrate just
+        # built, and asserts the invariants only a real deploy can show: NO
+        # integer-tenant table left unpoliced across the WHOLE schema, the
+        # enhanced-cortex atom FKs actually created, pgvector loaded, and every
+        # consumer query that was once a live 500 now executing. A regression
+        # here fails the build on a real DB before it can ship.
+        run: node scripts/db/deploy-smoke-assert.mjs
+
   aios-audit-assets:
     name: AIOS Audit Assets
     runs-on: ubuntu-latest

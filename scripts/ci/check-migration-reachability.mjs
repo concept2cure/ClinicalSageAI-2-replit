@@ -31,10 +31,16 @@
  *                     question is "can this table exist on a real database at
  *                     all?", and push genuinely provisions fresh installs.
  *
- * BASELINE. The debt predates the guard and is large, so findings are pinned in
- * migration-reachability-baseline.json. Anything NEW fails immediately; resolving
- * an entry (put its migration on an applier, or delete the dead reference) then
- * removing it from the baseline ratchets the number down. Goal: 0.
+ * BASELINE. Findings are pinned in migration-reachability-baseline.json so that
+ * pre-existing debt does not block unrelated work, while anything NEW fails
+ * immediately. The debt started at 112 and was ratcheted to **0** across ledger
+ * C-32 → C-40; the baseline is now EMPTY, which means any finding at all is a
+ * regression. Keep it that way: resolving a table (put its migration on an
+ * applier, or delete the dead reference) is always preferable to re-baselining.
+ *
+ * If you are tempted to run --write-baseline to make a failure go away, read the
+ * finding first. Every entry it would record is an endpoint that 500s on a real
+ * deploy while CI stays green — that is the entire point of the guard.
  *
  * Usage:
  *   node scripts/ci/check-migration-reachability.mjs
@@ -106,17 +112,50 @@ const tablesIn = (sql) => {
 };
 
 /**
- * Words that follow FROM/JOIN/INTO/UPDATE in SQL but are not relations, plus the
- * ones that show up because the reference scan reads whole .ts files — including
- * English prose in comments and prompt strings ("Update only the …"). A guard
- * that reports phantoms gets its real findings ignored.
+ * Words that follow FROM/JOIN/INTO/UPDATE in SQL but are not relations. This is a
+ * backstop only — the primary defence against prose is `sqlishSegments` below.
  */
 const NOT_A_RELATION = new Set([
   'only', 'lateral', 'unnest', 'select', 'values', 'generate_series', 'jsonb_array_elements',
   'jsonb_to_recordset', 'json_array_elements', 'json_to_recordset', 'each', 'dual',
-  'information_schema', 'pg_catalog', 'this', 'that', 'them', 'these', 'those', 'their',
-  'here', 'when', 'where', 'which', 'with', 'your', 'both', 'each_row',
+  'information_schema', 'pg_catalog',
 ]);
+
+/**
+ * Extract the parts of a .ts file that are plausibly SQL, so the reference scan
+ * never reads English.
+ *
+ * The reference side reads whole TypeScript files, which are full of prose — FDA
+ * guidance text, prompt strings, comments. Scanning that raw text matched
+ * ordinary sentences: "Summary of nonclinical safety findings FROM STUDIES
+ * completed during the reporting period" registered a reference to a table named
+ * `studies`, and "Results FROM STUDIES Evaluating Diagnostic Tests" a second one.
+ * A keyword blocklist cannot fix this — `studies` is a perfectly plausible table
+ * name, and the next false positive will be a different ordinary noun.
+ *
+ * So instead of filtering words, filter CONTEXT: consider only quoted segments
+ * (template literals, single- and double-quoted strings) that contain a SQL verb
+ * — SELECT / INSERT INTO / UPDATE … SET / DELETE FROM / a CTE. Prose almost never
+ * does; real queries always do.
+ *
+ * This direction of error is the safe one. Missing a table because its query was
+ * built in some exotic way costs a finding the OTHER guards may still catch; a
+ * stream of phantom findings gets the whole guard ignored, which costs all of
+ * them (ledger C-35 / C-39).
+ */
+const SQL_VERB = /\b(SELECT\s|INSERT\s+INTO\s|UPDATE\s+[a-z_."]+\s+SET\s|DELETE\s+FROM\s|WITH\s+[a-z_]+\s+AS\s*\()/i;
+function sqlishSegments(src) {
+  const out = [];
+  // Template literals, then ordinary quoted strings. Non-greedy, newline-aware
+  // for backticks (multi-line queries are the norm here).
+  for (const re of [/`([\s\S]*?)`/g, /'((?:[^'\\\n]|\\.)*)'/g, /"((?:[^"\\\n]|\\.)*)"/g]) {
+    re.lastIndex = 0;
+    for (const m of src.matchAll(re)) {
+      if (m[1] && SQL_VERB.test(m[1])) out.push(m[1]);
+    }
+  }
+  return out;
+}
 
 /** Walk a directory for files matching `test`, skipping vendored/archived trees. */
 function walk(dir, test, acc = []) {
@@ -136,7 +175,7 @@ function walk(dir, test, acc = []) {
 // (tests/schema-contract/migration-reachability-guard.contract.test.ts, ledger
 // C-35). Everything below runs only when this file is the entry point — importing
 // it must not walk the repo or call process.exit.
-export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION };
+export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION, sqlishSegments };
 
 const isEntryPoint =
   process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
@@ -210,13 +249,15 @@ for (const abs of walk(
   (n) => n.endsWith('.ts') && !/\.test\.|\.spec\./.test(n),
 )) {
   const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
-  const src = read(abs);
-  REF_RE.lastIndex = 0;
-  for (const m of src.matchAll(REF_RE)) {
-    if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
-    const t = qualify(m[1], m[2]);
-    if (!referenced.has(t)) referenced.set(t, new Set());
-    referenced.get(t).add(rel);
+  // Only SQL-looking string segments — never the whole file. See sqlishSegments.
+  for (const segment of sqlishSegments(read(abs))) {
+    REF_RE.lastIndex = 0;
+    for (const m of segment.matchAll(REF_RE)) {
+      if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
+      const t = qualify(m[1], m[2]);
+      if (!referenced.has(t)) referenced.set(t, new Set());
+      referenced.get(t).add(rel);
+    }
   }
 }
 

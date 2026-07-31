@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet, useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -58,12 +58,15 @@ interface BlaAssessment {
   program_id?: string | null;
 }
 
-/* ── Inline fixture data (kit window globals) ── */
+/* ── Inline surface constants ── */
 
-/* The CTD module readiness (M1–M5) is CONVERGED onto the real eCTD submission
-   core — read fixture-free from GET /api/nda-cockpit/modules below (no seed
-   blob, no local fixture). The PDUFA clock and BLA seed below remain the
-   surface's local/other-domain lists. */
+/* The CTD module readiness (M1–M5), the Module-1 admin worklist, the
+   Refuse-to-File risk log, and the BLA 351(a) biologics assessments are all read
+   fixture-free from their real, org-scoped stores (see the hooks below) — real
+   data, an honest empty state, or an honest failed-load state, never a
+   fabricated stand-in. The PDUFA review-clock steps below remain the surface's
+   own local list: there is no clock store to read (nda-cockpit.routes.ts and
+   bla-workbench.ts back every other panel; neither exposes a clock). */
 
 const NDA_CLOCK: NdaClockStep[] = [
   { id: 'sub', label: 'Submission received', day: 'Day 0', date: '14 Jul 2026', st: 'done' },
@@ -76,9 +79,11 @@ const NDA_CLOCK: NdaClockStep[] = [
 
 /* Biologics (BLA 351(a)) science-engine assessments — the biosimilar/biologic
    analytical-similarity, comparability, immunogenicity, and RTF/CRL filing-risk
-   verdicts produced by /api/biopharma/bla and persisted to c2c_bla_assessments.
-   Shown live when the org has run assessments; sample rows illustrate the shape
-   for an sBLA/351(k) program otherwise. */
+   verdicts produced by /api/biopharma/bla and persisted org-scoped to
+   c2c_bla_assessments. Read fixture-free below from
+   GET /api/biopharma/bla/assessments: real rows, an honest empty state, or an
+   honest failed-load state. The two maps here are display helpers (a kind→label
+   map and a passing-verdict allowlist), not data. */
 const BLA_KIND_LABEL: Record<string, string> = {
   analytical_similarity: 'Analytical similarity (CQA tiering)',
   comparability: 'Comparability (Q5E / post-change)',
@@ -95,13 +100,6 @@ const BLA_KIND_LABEL: Record<string, string> = {
    `risk.tier`, filing-risk `crlRisk`. */
 const BLA_PASSING_VERDICTS = new Set(['similar', 'comparable', 'low', 'minimal', 'negligible', 'none']);
 const isPassingBlaVerdict = (v?: string | null): boolean => !!v && BLA_PASSING_VERDICTS.has(v.toLowerCase());
-
-const BLA_SEED: BlaAssessment[] = [
-  { id: 'bla-as', kind: 'analytical_similarity', title: 'BX-204 vs US-licensed reference', modality: 'mAb', reference_product: 'US-licensed reference', target_agency: 'FDA', verdict: 'similar', status: 'draft' },
-  { id: 'bla-cp', kind: 'comparability', title: 'Post-change drug substance (Process C)', modality: 'mAb', target_agency: 'FDA', verdict: 'comparable', status: 'draft' },
-  { id: 'bla-im', kind: 'immunogenicity', title: 'Pivotal ADA / NAb integrated analysis', modality: 'mAb', target_agency: 'FDA', verdict: 'low', status: 'draft' },
-  { id: 'bla-fr', kind: 'filing_risk', title: 'BLA 761xxx filing-risk profile', modality: 'mAb', target_agency: 'FDA', verdict: 'moderate', status: 'draft' },
-];
 
 /* ── Inline shared kit helpers ── */
 
@@ -183,27 +181,16 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     setM1((rs) => [row, ...rs]);
     setTimeout(() => setM1((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
   };
-  /* live ?? fixture — biologics BLA assessments from /api/biopharma/bla. The
-     endpoint returns { assessments: [...] } (not the standard { data } envelope),
-     so read it directly and only adopt when the org actually has rows; else keep
-     the sample shape (no empty-flash). Read-only here — assessments are authored
-     in the biologics workbench and signed there. */
-  const [bla, setBla] = useState<BlaAssessment[]>(BLA_SEED);
-  const [blaSample, setBlaSample] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ assessments?: BlaAssessment[] }>('/api/biopharma/bla/assessments', { assessments: [] }).then((res) => {
-      if (cancelled) return;
-      const list = res.data?.assessments;
-      if (!res.sample && Array.isArray(list) && list.length > 0 && typeof list[0]?.kind === 'string') {
-        setBla(list);
-        setBlaSample(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  /* Real rows — the org's BLA 351(a) biologics assessments, read fixture-free
+     from GET /api/biopharma/bla/assessments (org-scoped read of
+     c2c_bla_assessments). That endpoint returns { assessments: [...] } rather
+     than the standard { data } envelope, so read the object payload and take the
+     list off it. Read-only here — assessments are authored and Part 11-signed in
+     the biologics workbench. Real data, an honest empty state, or an honest
+     failed-load state — never a fabricated stand-in. */
+  const blaLive = useLiveData<{ assessments?: BlaAssessment[] }>('/api/biopharma/bla/assessments');
+  const blaList = blaLive.data?.assessments;
+  const bla: BlaAssessment[] = Array.isArray(blaList) ? blaList : [];
 
   const [form, setForm] = useState<null | 'rtf' | 'm1'>(null);
   const [toast, fireToast] = useToast();
@@ -499,35 +486,54 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         <div className="reg-card">
           <div className="reg-card-h">
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              BLA 351(a) biologics &mdash; science-engine assessments <SampleTag sample={blaSample} />
+              BLA 351(a) biologics &mdash; science-engine assessments
             </span>
             <span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               Analytical similarity · comparability · immunogenicity · filing risk
               {ask && <button className="nda-open" onClick={() => ask('Run the BLA filing-risk (RTF/CRL) assessment for the biologics program and summarize the top triggers')}>{I.sparkles} Assess filing risk</button>}
             </span>
           </div>
-          <table className="reg-tbl">
-            <thead><tr><th>Assessment</th><th>Modality</th><th>Verdict</th><th>Status</th></tr></thead>
-            <tbody>
-              {bla.map(a => (
-                <tr key={a.id}>
-                  <td>
-                    <div className="nda-m1-l">{BLA_KIND_LABEL[a.kind] || a.kind}</div>
-                    {a.title && <div className="nda-m1-note">{a.title}{a.target_agency ? ' · ' + a.target_agency : ''}</div>}
-                  </td>
-                  <td>{a.modality || '—'}</td>
-                  <td>{a.verdict ? <span className={'reg-pill ' + (isPassingBlaVerdict(a.verdict) ? 'complete' : 'review')}>{a.verdict.replace(/_/g, ' ')}</span> : '—'}</td>
-                  <td><span className={'reg-pill ' + (a.status === 'signed' ? 'complete' : 'draft')}>{a.status}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="scaf-note" style={{ marginTop: 10 }}>
-            The three biologics science engines (CQA-tiered analytical similarity, Q5E comparability, ADA/NAb
-            immunogenicity) and the RTF/CRL filing-risk profile are deterministic functions of the submitted data,
-            authored and Part 11-signed in the biologics workbench (<code>/api/biopharma/bla</code>). This tab reflects
-            the org's persisted assessments &mdash; it never fabricates a verdict.
-          </p>
+          {bla.length > 0 ? (
+            <>
+              <table className="reg-tbl">
+                <thead><tr><th>Assessment</th><th>Modality</th><th>Verdict</th><th>Status</th></tr></thead>
+                <tbody>
+                  {bla.map(a => (
+                    <tr key={a.id}>
+                      <td>
+                        <div className="nda-m1-l">{BLA_KIND_LABEL[a.kind] || a.kind}</div>
+                        {a.title && <div className="nda-m1-note">{a.title}{a.target_agency ? ' · ' + a.target_agency : ''}</div>}
+                      </td>
+                      <td>{a.modality || '—'}</td>
+                      <td>{a.verdict ? <span className={'reg-pill ' + (isPassingBlaVerdict(a.verdict) ? 'complete' : 'review')}>{a.verdict.replace(/_/g, ' ')}</span> : '—'}</td>
+                      <td><span className={'reg-pill ' + (a.status === 'signed' ? 'complete' : 'draft')}>{a.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="scaf-note" style={{ marginTop: 10 }}>
+                The three biologics science engines (CQA-tiered analytical similarity, Q5E comparability, ADA/NAb
+                immunogenicity) and the RTF/CRL filing-risk profile are deterministic functions of the submitted data,
+                authored and Part 11-signed in the biologics workbench (<code>/api/biopharma/bla</code>). This tab reflects
+                the org's persisted assessments &mdash; it never fabricates a verdict.
+              </p>
+            </>
+          ) : blaLive.loading ? (
+            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading BLA biologics assessments…</div>
+          ) : blaLive.error ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load BLA biologics assessments"
+              hint="The biologics assessment store didn't respond. Sign in and retry, or check that the biologics workbench service is reachable."
+            />
+          ) : (
+            <EmptyState
+              icon={I.fileText}
+              title="No BLA biologics assessments yet"
+              hint="No 351(a) biologics assessments have been run for this organization yet. The analytical-similarity, comparability, immunogenicity, and filing-risk engines are authored and Part 11-signed in the biologics workbench; once an assessment is persisted here org-scoped, it appears with its verdict."
+            />
+          )}
         </div>
       )}
 
