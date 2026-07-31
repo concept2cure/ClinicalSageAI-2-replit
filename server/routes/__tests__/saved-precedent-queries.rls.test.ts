@@ -28,6 +28,9 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 import savedPrecedentQueriesRouter from '../saved-precedent-queries';
 
@@ -143,26 +146,36 @@ describe('GET /api/saved-precedent-queries — org scoping preserved through req
   });
 });
 
-describe('Defense-in-depth: 0021 RLS policy denies cross-tenant reads on the request-scoped connection', () => {
+describe('Defense-in-depth: the 0021 RLS policy filters on the request-scoped connection', () => {
+  // Mirror migrations/0021_enable_rls_everywhere.sql: the uniform
+  // tenant_isolation_policy with the shadow-bypass clause plus USING and
+  // WITH CHECK tenant predicates. The table is re-owned by a NON-superuser role
+  // (app_owner) to mirror production on Neon, where 0021's own comment (lines
+  // 33-38) notes the app's login role IS the table owner. FORCE is left OFF
+  // here and toggled explicitly per test, because FORCE governs the OWNER (it
+  // is a no-op for a non-owner role) — the owner test below proves it is
+  // load-bearing.
   beforeEach(async () => {
-    // Install the uniform tenant-isolation policy exactly as
-    // migrations/0021_enable_rls_everywhere.sql does (ENABLE + FORCE + the
-    // shadow-bypass USING clause), and act as a NON-owner, non-superuser role
-    // so FORCE ROW LEVEL SECURITY actually engages (PGlite's default role is
-    // superuser and would otherwise bypass RLS — the same owner-bypass hole
-    // 0021 documents and closes with FORCE).
     await pg.exec(`
+      RESET ROLE;
       DROP POLICY IF EXISTS tenant_isolation_policy ON saved_precedent_queries;
       DO $$ BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user') THEN
-          CREATE ROLE app_user NOLOGIN;
-        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user')  THEN CREATE ROLE app_user  NOLOGIN; END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_owner') THEN CREATE ROLE app_owner NOLOGIN; END IF;
       END $$;
-      GRANT SELECT ON saved_precedent_queries TO app_user;
+      ALTER TABLE saved_precedent_queries OWNER TO app_owner;
+      GRANT SELECT, INSERT ON saved_precedent_queries TO app_user, app_owner;
+      GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user, app_owner;
       ALTER TABLE saved_precedent_queries ENABLE ROW LEVEL SECURITY;
-      ALTER TABLE saved_precedent_queries FORCE ROW LEVEL SECURITY;
+      ALTER TABLE saved_precedent_queries NO FORCE ROW LEVEL SECURITY;
       CREATE POLICY tenant_isolation_policy ON saved_precedent_queries
         USING (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+          OR organization_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+        )
+        WITH CHECK (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
           OR organization_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
@@ -172,27 +185,89 @@ describe('Defense-in-depth: 0021 RLS policy denies cross-tenant reads on the req
   });
 
   afterAll(async () => {
-    await pg.exec(`RESET ROLE; DROP POLICY IF EXISTS tenant_isolation_policy ON saved_precedent_queries;`);
+    await pg.exec(
+      `RESET ROLE; DROP POLICY IF EXISTS tenant_isolation_policy ON saved_precedent_queries; ALTER TABLE saved_precedent_queries OWNER TO postgres;`,
+    );
   });
 
-  it('with RLS_ENFORCE=on, an UNFILTERED read as tenant 1 is denied org 2 rows by Postgres', async () => {
+  it('as a NON-owner role, RLS_ENFORCE=on filters an UNFILTERED read to the acting tenant', async () => {
     await pg.exec(`SET ROLE app_user;`);
     await pg.query("SELECT set_config('app.rls_enforce','on',false)");
     await pg.query("SELECT set_config('app.current_tenant_id','1',false)");
 
     // Deliberately NO app-layer WHERE — prove the policy alone filters.
     const enforced = await pg.query('SELECT organization_id FROM saved_precedent_queries');
-    const orgs = (enforced.rows as Array<{ organization_id: number }>)
-      .map(r => r.organization_id)
-      .sort();
-    expect(orgs).toEqual([1, 1]);
+    expect(
+      (enforced.rows as Array<{ organization_id: number }>).map(r => r.organization_id).sort(),
+    ).toEqual([1, 1]);
 
     // Shadow bypass (rls_enforce unset) → policy passes everything, proving the
-    // above filtering came from the policy, not from a lucky empty table.
+    // filtering came from the policy, not from a lucky empty table.
     await pg.query("SELECT set_config('app.rls_enforce','',false)");
     const shadow = await pg.query('SELECT organization_id FROM saved_precedent_queries');
     expect((shadow.rows as unknown[]).length).toBe(3);
 
     await pg.exec(`RESET ROLE;`);
+  });
+
+  it('FORCE is load-bearing: the table OWNER bypasses RLS with ENABLE only, and is isolated once FORCE is set', async () => {
+    await pg.exec(`SET ROLE app_owner;`);
+    await pg.query("SELECT set_config('app.rls_enforce','on',false)");
+    await pg.query("SELECT set_config('app.current_tenant_id','1',false)");
+
+    // ENABLE-only: the OWNER BYPASSES RLS and sees every tenant's rows. This is
+    // exactly the production hole on Neon, where the app login role owns the
+    // tables — the case FORCE exists to close (0021 lines 33-38).
+    const enableOnly = await pg.query('SELECT organization_id FROM saved_precedent_queries');
+    expect(
+      (enableOnly.rows as Array<{ organization_id: number }>).map(r => r.organization_id).sort(),
+    ).toEqual([1, 1, 2]);
+
+    // FORCE ROW LEVEL SECURITY (what 0021 adds) subjects the owner to the policy.
+    await pg.exec(
+      `RESET ROLE; ALTER TABLE saved_precedent_queries FORCE ROW LEVEL SECURITY; SET ROLE app_owner;`,
+    );
+    const forced = await pg.query('SELECT organization_id FROM saved_precedent_queries');
+    expect(
+      (forced.rows as Array<{ organization_id: number }>).map(r => r.organization_id).sort(),
+    ).toEqual([1, 1]);
+
+    await pg.exec(`RESET ROLE;`);
+    // If FORCE were removed from migration 0021, the second assertion above
+    // would revert to [1, 1, 2] and this test would fail — so FORCE is covered.
+  });
+
+  it('WITH CHECK blocks writing a row for another tenant', async () => {
+    await pg.exec(`SET ROLE app_user;`);
+    await pg.query("SELECT set_config('app.rls_enforce','on',false)");
+    await pg.query("SELECT set_config('app.current_tenant_id','1',false)");
+
+    // Same-tenant write passes the WITH CHECK predicate.
+    await expect(
+      pg.query("INSERT INTO saved_precedent_queries (organization_id, label, query) VALUES (1,'ok','q')"),
+    ).resolves.toBeTruthy();
+
+    // Cross-tenant write is denied by the WITH CHECK clause.
+    await expect(
+      pg.query("INSERT INTO saved_precedent_queries (organization_id, label, query) VALUES (2,'evil','q')"),
+    ).rejects.toThrow(/row-level security|policy/i);
+
+    await pg.exec(`RESET ROLE;`);
+  });
+});
+
+describe('Migration 0021 keeps the FORCE + tenant predicate that makes owner-bypass impossible', () => {
+  const sql = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '../../../migrations/0021_enable_rls_everywhere.sql'),
+    'utf8',
+  );
+
+  it('still FORCEs row level security (removing this silently disables RLS for table owners)', () => {
+    expect(sql).toMatch(/FORCE ROW LEVEL SECURITY/);
+  });
+
+  it('still carries the shadow-bypass and tenant predicates', () => {
+    expect(sql).toMatch(/app\.rls_enforce/);
+    expect(sql).toMatch(/app\.current_tenant_id/);
   });
 });
