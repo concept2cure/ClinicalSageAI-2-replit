@@ -100,7 +100,12 @@ router.get('/kernel/self-test', requireControlPlaneAccess, (_req, res) => {
 
 router.get('/kernel/hash-chain/verify', requireControlPlaneAccess, async (_req, res) => {
   const verification = await verifyPersistentKernelHashChain();
-  res.json({ verification });
+  // A detected tamper (broken chain) must never be a 200 OK — monitoring that
+  // watches HTTP status would otherwise miss an integrity violation. The honest
+  // non-failure states (verified / empty / disabled / unavailable) stay 200; the
+  // discriminated `status` in the body carries the full truth for each.
+  const httpStatus = verification.status === 'broken' ? 409 : 200;
+  res.status(httpStatus).json({ verification });
 });
 
 router.get('/kernel/summary/persistent', requireControlPlaneAccess, async (req, res) => {

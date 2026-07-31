@@ -2375,9 +2375,10 @@ artifact on no apply path, using an entirely different uuid CRO model.
   DDL in `openai-orchestrator.ts` is a redundant `CREATE TABLE IF NOT EXISTS`, not
   the sole creator.
 - **`ana_kernel_decision_log`** now provisions a table nothing writes, so
-  `GET /kernel/hash-chain/verify` will answer `valid: true, totalRows: 0`. An
-  empty chain reporting "verified" is a weaker signal than a 500; worth a
-  follow-up on that endpoint's empty-state semantics.
+  `GET /kernel/hash-chain/verify` answered `valid: true, totalRows: 0`. Followed up
+  and **RESOLVED in C-42** — which found the deeper defect (the verify queried
+  `entry_hash`/`prev_hash` columns the table never had) and made the endpoint
+  report the truth instead of a fake pass.
 
 ---
 
@@ -2421,6 +2422,64 @@ its `--seed-base` models the journal only, so it reports the three push-surface 
 gcc-tree tables (`submissions`, `ana_capability_registry`,
 `c2c_project_work_items`) as missing prerequisites — correctly labeled as such,
 not errors. The full sequence above is the authoritative proof.
+
+---
+
+## C-42 — The Part 11 hash-chain verifier reported "valid" for a chain that does not exist *(high — FIXED 2026-07-31)*
+
+The item C-40 left flagged, run to ground — and it was worse than "empty state
+semantics". `GET /kernel/hash-chain/verify` is a 21 CFR Part 11 tamper-evidence
+endpoint, and `verifyPersistentKernelHashChain` was false-assurance on three
+separate counts:
+
+1. **`valid: true` conflated three states.** A verified chain, persistence
+   disabled, and an empty table all returned `valid: true`. An operator or auditor
+   reading `valid: true` could not distinguish an intact audit chain from an
+   absent one — the whole point of the endpoint, inverted.
+2. **The chain query selected columns the table does not have.** It reads
+   `entry_hash` / `prev_hash`, but `ana_kernel_decision_log` (its full schema:
+   request_id, decisions, score, policy bundle, flags, trace, recorded_at) has
+   **neither**. The only reason it never `42703`'d is that **nothing writes the
+   table**, so the `totalRows === 0` early-return fired before the broken query
+   ran. It certified "hash chain valid" for a log with no chain, no data, and a
+   verify that could not execute against a populated table.
+3. **No genesis check.** Even with columns and data, deleting rows from the front
+   of the chain would pass — the new earliest row still links to its successor.
+
+### Fix — make it tell the truth
+
+`HashChainVerification` now carries a discriminated `status`
+(`verified` | `broken` | `empty` | `disabled` | `unavailable`) and a **nullable**
+`valid`: a real boolean ONLY when a populated chain was actually checked, `null`
+otherwise. The verifier probes `information_schema` for the chain columns before
+querying them, so the current reality — a decision log that is **not** a
+tamper-evident chain — is reported honestly as `unavailable` instead of masked as
+`valid: true`. When a populated chain with the columns does exist it now checks
+both **genesis** (the earliest row's `prev_hash` is a recognized no-predecessor
+marker: NULL, empty, or all-zero hex) and **linkage** (each row's `prev_hash`
+equals the prior row's `entry_hash`). The stated limitation — it verifies the
+links, not that each `entry_hash` re-hashes its content — is documented in the
+code; full content re-hashing needs a writer's digest construction, and there is
+no writer yet.
+
+The endpoint maps `status` to HTTP honestly too: a detected tamper (`broken`) is a
+**409**, never a `200 OK` that HTTP-level monitoring would sail past; the honest
+non-failure states stay 200 with the truth in the body.
+
+### Proof
+
+`tests/schema-contract/kernel-hash-chain-honesty.contract.test.ts` (8 cases,
+PGlite): disabled / no-columns / absent-table / empty all return `valid: null`
+with the right `status` (never a fake `true`); a well-formed chain verifies; a
+broken link and a front-deleted (broken-genesis) chain both report `broken` with
+`valid: false`; an all-zero-hex genesis is accepted. The "table exists with no
+chain columns" case reproduces the exact production shape the old code passed.
+
+Not done, deliberately: building the writer + `entry_hash`/`prev_hash` columns to
+make the chain REAL is a product feature (where decisions are persisted, the
+digest construction, the genesis convention) — invented here would be worse than
+the honest `unavailable` the endpoint now returns. The verifier is correct for the
+day that writer lands.
 
 ---
 
