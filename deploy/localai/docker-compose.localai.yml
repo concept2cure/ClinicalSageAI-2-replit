@@ -1,0 +1,115 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Self-hosted / on-prem OpenAI-compatible inference — deployment FRAGMENT.
+#
+# Companion to LOCALAI_ONPREM_INFERENCE_PILOT_PLAN_2026-07-30.md. This wires the
+# platform's EXISTING provider seams to self-hosted backends — you are not
+# building a new integration, you are pointing two env vars at endpoints:
+#
+#   generation lane  -> LOCAL_AI_BASE_URL        (gateway createLocalClient)
+#                       server/services/ai-gateway/providers/clients.ts:111
+#   embedding lane   -> EMBEDDING_LOCAL_BASE_URL (getEmbeddingProvider, EMBEDDING_PROVIDER=local)
+#                       server/services/ai-gateway/embeddings/embedding-provider.ts:132
+#
+# This is a FRAGMENT, not a turnkey deploy: it names concrete services and the
+# exact env wiring, but the GPU host, driver/CUDA stack, model weights (pinned +
+# SHA-256 verified), and the air-gap network policy are the operator's IQ work
+# (pilot plan §7). Bring it up on infrastructure you control, INSIDE the isolated
+# boundary, with public-internet egress blocked at the network layer.
+#
+# vLLM / LiteLLM / TGI / TEI / LocalAI are all valid behind the same seam; vLLM
+# (generation) + Text-Embeddings-Inference (embeddings) are used here as a
+# concrete, high-throughput default. Swap freely.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# NOTE: pin every image to an immutable digest (image@sha256:...) for a validated
+# deploy. Tags shown for readability; record the resolved digest in the IQ record.
+
+services:
+  # ── Generation lane ────────────────────────────────────────────────────────
+  # OpenAI-compatible /v1/chat/completions. Serves ONE open-weight chat model.
+  # The gateway's `local-default` approved-models entry maps to whatever this
+  # serves; it stays restricted from high-risk regulatory drafting until PQ
+  # (pilot plan §8) is signed off.
+  vllm-generation:
+    image: vllm/vllm-openai:v0.6.6
+    command:
+      - "--model=${LOCAL_GEN_MODEL:-meta-llama/Meta-Llama-3.1-8B-Instruct}"
+      - "--served-model-name=local-default"
+      - "--max-model-len=${LOCAL_GEN_MAX_LEN:-32000}"
+      - "--api-key=${LOCAL_AI_API_KEY:-not-required}"
+    environment:
+      HUGGING_FACE_HUB_TOKEN: "${HUGGING_FACE_HUB_TOKEN:-}"
+    ports:
+      - "8000:8000"   # -> LOCAL_AI_BASE_URL=http://<host>:8000/v1
+    volumes:
+      - model-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+    restart: unless-stopped
+
+  # ── Embedding lane, 1536-d (serves the 7 x 1536-d corpora) ─────────────────
+  # ragChunks, knowledgeEntries, clientMemoryEntries, projectMemoryEntries,
+  # accountCanonItems, biostatKnowledgeNodes, vaultDocumentChunks.
+  # The deployed model MUST emit EXACTLY 1536-d (verify — many open models do
+  # not; see embedding-corpus-policy.ts). TEI exposes an OpenAI-compatible
+  # /v1/embeddings surface.
+  tei-embeddings-1536:
+    image: ghcr.io/huggingface/text-embeddings-inference:1.5
+    command:
+      - "--model-id=${LOCAL_EMBED_MODEL_1536:-intfloat/e5-mistral-7b-instruct}"
+      - "--auto-truncate"
+    ports:
+      - "8080:80"    # -> EMBEDDING_LOCAL_BASE_URL=http://<host>:8080/v1
+    volumes:
+      - embed-cache:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu"]
+    restart: unless-stopped
+
+  # ── Embedding lane, 3072-d (serves documentVectors ONLY) ───────────────────
+  # DEFERRED / OPTION A (pilot plan §4): documentVectors is 3072-d. The current
+  # embedding seam reads a SINGLE EMBEDDING_LOCAL_BASE_URL, so serving both 1536
+  # and 3072 from self-hosted models needs the deferred per-corpus routing +
+  # re-vectorization work (server/services/revectorize-corpus.ts). This service
+  # is included so the 3072-d model can be provisioned and qualified now; do NOT
+  # cut documentVectors over to it until Gate 1 (§9) is signed. Commented out by
+  # default to avoid claiming an unqualified capability.
+  #
+  # tei-embeddings-3072:
+  #   image: ghcr.io/huggingface/text-embeddings-inference:1.5
+  #   command:
+  #     - "--model-id=${LOCAL_EMBED_MODEL_3072:-<a-validated-3072d-model>}"
+  #     - "--auto-truncate"
+  #   ports:
+  #     - "8081:80"
+  #   volumes:
+  #     - embed-cache-3072:/data
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: ["gpu"]
+  #   restart: unless-stopped
+
+volumes:
+  model-cache:
+  embed-cache:
+  # embed-cache-3072:
