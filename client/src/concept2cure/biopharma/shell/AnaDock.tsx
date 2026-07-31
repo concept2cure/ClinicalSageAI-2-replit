@@ -60,12 +60,34 @@ export function BiopharmaAnaDock({
   projectId,
 }: BiopharmaAnaDockProps) {
   const [draft, setDraft] = React.useState('');
+  const [confirmNewThread, setConfirmNewThread] = React.useState(false);
   const label = HERE_LABEL_BIOPHARMA[activeNav] ?? 'Overview';
   const suggestions = (BIOPHARMA_SUGGESTIONS[activeNav] ?? BIOPHARMA_SUGGESTIONS.overview).slice(0, 3);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const confirmBtnRef = React.useRef<HTMLButtonElement>(null);
+  const confirmTitleId = React.useId();
   const upload = useChatUpload({ projectId });
   const readyCount = upload.attachments.filter(a => a.status === 'ready').length;
+
+  // Focus the destructive-side button when the confirm dialog opens, and
+  // return focus + close on Esc — replaces the native `window.confirm()`,
+  // which had no focus management, no styling, and no audit hook.
+  React.useEffect(() => {
+    if (!confirmNewThread) return;
+    const t = window.setTimeout(() => confirmBtnRef.current?.focus(), 30);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setConfirmNewThread(false);
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, [confirmNewThread]);
 
   React.useEffect(() => {
     const el = scrollRef.current;
@@ -118,12 +140,11 @@ export function BiopharmaAnaDock({
             disabled={!onNewThread}
             onClick={() => {
               if (!onNewThread) return;
-              if (
-                messages.length === 0 ||
-                window.confirm('Start a fresh AnA thread? Current messages will be cleared.')
-              ) {
+              if (messages.length === 0) {
                 onNewThread();
+                return;
               }
+              setConfirmNewThread(true);
             }}
           >
             <BioIcon name="plus" />
@@ -241,6 +262,72 @@ export function BiopharmaAnaDock({
             disabled={isStreaming}
             aria-label="Ask AnA"
           />
+          {confirmNewThread && (
+            <div
+              className="ad-confirm-overlay"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={confirmTitleId}
+              onMouseDown={e => {
+                if (e.target === e.currentTarget) setConfirmNewThread(false);
+              }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(15, 12, 8, 0.55)',
+                zIndex: 200,
+              }}
+            >
+              <div
+                className="ad-confirm"
+                onMouseDown={e => e.stopPropagation()}
+                style={{
+                  width: 320,
+                  maxWidth: 'calc(100% - 32px)',
+                  padding: 20,
+                  borderRadius: 10,
+                  background: 'var(--surface, #fff)',
+                  color: 'var(--foreground, #1c1c1c)',
+                  border: '1px solid var(--border, rgba(0,0,0,0.12))',
+                  boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+                  display: 'grid',
+                  gap: 12,
+                }}
+              >
+                <div id={confirmTitleId} style={{ fontWeight: 600, fontSize: 14 }}>
+                  Start a fresh AnA thread?
+                </div>
+                <div style={{ fontSize: 13, lineHeight: 1.4, opacity: 0.8 }}>
+                  Current messages in this dock will be cleared. The prior
+                  thread is preserved in AnA history.
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    className="ad-chip"
+                    onClick={() => setConfirmNewThread(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    ref={confirmBtnRef}
+                    type="button"
+                    className="ad-send"
+                    style={{ padding: '6px 14px' }}
+                    onClick={() => {
+                      setConfirmNewThread(false);
+                      onNewThread?.();
+                    }}
+                  >
+                    Start fresh
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="ad-composer-row">
             <div className="ad-composer-left">
               <input

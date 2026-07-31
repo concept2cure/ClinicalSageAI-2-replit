@@ -100,9 +100,16 @@ export { leafIdSlug, createLeafIdAssigner, buildMd5Index, studyFolderSlug, commo
 async function finalizeLeafBytes(
   buf: Buffer,
   fileName: string,
+  skipPdfaConversion = false,
 ): Promise<{ bytes: Buffer; md5Override?: string; isPdf: boolean; converted: boolean }> {
   const isPdf = fileName.toLowerCase().endsWith('.pdf');
   if (!isPdf) return { bytes: buf, isPdf: false, converted: false };
+  // Deterministic path: skip PDF/A normalization so the shipped bytes equal the
+  // input bytes exactly. Used for validation-only assembly (e.g. the submission
+  // orchestrator) where byte-determinism across re-renders matters more than
+  // PDF/A-1b normalization — Ghostscript conversion embeds timestamps and is
+  // non-deterministic, which would break a re-derive-and-compare drift check.
+  if (skipPdfaConversion) return { bytes: buf, isPdf: true, converted: false };
   const result = await finalizePdfA(buf);
   if (!result.converted) return { bytes: buf, isPdf: true, converted: false };
   const bytes = Buffer.from(result.pdfBytes);
@@ -134,6 +141,15 @@ export interface PackagerInput {
   /** Submission environment for the PDF/A gate. 'production' (the default)
    *  enforces PDF/A when ECTD_REQUIRE_PDFA=true; 'staging' never blocks. */
   environment?: 'staging' | 'production';
+  /**
+   * Skip PDF/A-1b normalization so each leaf ships byte-identical to its source.
+   * For validation-only assembly (e.g. the submission orchestrator) where
+   * re-render byte-determinism matters more than PDF/A normalization: Ghostscript
+   * conversion embeds timestamps and is non-deterministic, which would make a
+   * re-derive-and-compare drift check false-positive. Default false (the real
+   * deliverable path always normalizes to PDF/A).
+   */
+  skipPdfaConversion?: boolean;
   /** FDA us-regional admin metadata (only used when region === 'fda'). */
   fda?: FdaRegionalAdmin;
   /** Per-study metadata for the Study Tagging Files generated from study leaves. */
@@ -489,7 +505,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     }
 
     const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
+    const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName, input.skipPdfaConversion);
     grades.push({ fileName: leaf.fileName, isPdf, converted });
     const md5 = md5Override ?? leaf.md5 ?? createHash('md5').update(bytes).digest('hex');
 

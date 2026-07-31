@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
 import MdxRoute from '../mdx/MdxRoute';
+import { isFeatureEnabled } from '@/flags/featureFlags';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
 // API ship here; route registrations are added back when the designed UI lands.
@@ -42,6 +43,12 @@ import {
 // Phase 7: the legacy ZenApp shell is deleted; the v2 shell IS the product.
 // Lazy so auth entry pages never download the app chunk (or its stylesheet).
 const V2App = lazy(() => import('../v2/V2App'));
+
+// PDEV kit — Phase 7 Pharmaceutical Development workstream. Mirrors the MDX
+// module pattern: its own top-level route so the kit's Rail/TopBar/AnaDock own
+// the whole viewport, kept out of the v2 shell to avoid a double-rail. Gated
+// on `ENABLE_PDEV_SURFACE` at render time — off ↔ redirects back to the shell.
+const PdevRoute = lazy(() => import('../pdev/PdevRoute'));
 
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
@@ -159,6 +166,7 @@ export const ZenRouter: React.FC = () => {
   const uiV2Owns =
     !uiV2AuthRoute &&
     !location.startsWith('/concept2cure/mdx') &&
+    !location.startsWith('/concept2cure/pdev') &&
     (location === '/' || location.startsWith('/concept2cure'));
   if (uiV2Owns) {
     return (
@@ -226,6 +234,27 @@ export const ZenRouter: React.FC = () => {
                 </PageTransition>
               </ProtectedRoute>
             )}
+          </Route>
+
+          {/* PDEV (Pharmaceutical Development) module — Phase 7 design-system
+              port. Same mount pattern as MDX: the kit owns its own Rail /
+              TopBar / AnaDock, so keep it out of the v2 shell (double-rail
+              otherwise). Gated on ENABLE_PDEV_SURFACE — flag off redirects
+              back to the shell home. */}
+          <Route path="/concept2cure/pdev">
+            {() =>
+              isFeatureEnabled('ENABLE_PDEV_SURFACE') ? (
+                <ProtectedRoute>
+                  <PageTransition>
+                    <Suspense fallback={<ZenLoadingScreen />}>
+                      <PdevRoute />
+                    </Suspense>
+                  </PageTransition>
+                </ProtectedRoute>
+              ) : (
+                <Redirect to="/concept2cure" />
+              )
+            }
           </Route>
 
           {/* App routes — /, /concept2cure and every surface/project deep link —

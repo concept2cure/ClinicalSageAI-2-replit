@@ -71,7 +71,7 @@ import { Nonclinical } from './surfaces/Nonclinical';
 import { Onboarding } from './surfaces/Onboarding';
 import { OnboardingIngest } from './surfaces/OnboardingIngest';
 import { Orchestration } from './surfaces/Orchestration';
-import { PdevInd } from './surfaces/PdevInd';
+import { PdevRedirect } from './surfaces/PdevRedirect';
 import { PrecedentEngine } from './surfaces/PrecedentEngine';
 import { ProtocolWorkspace } from './surfaces/ProtocolDev';
 import { ProjectHome } from './surfaces/ProjectHome';
@@ -192,7 +192,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'onboarding-ingest': { component: OnboardingIngest, full: true },
   orchestration: { component: Orchestration },
   orphan: { component: Orphan },
-  pdev: { component: PdevInd },
+  // The PDEV Phase 7 kit mounts as a top-level route in ZenRouter (mirrors
+  // MDX). When the v2 rail selects `pdev`, PdevRedirect kicks the URL over to
+  // /concept2cure/pdev where the kit's own shell takes over.
+  pdev: { component: PdevRedirect },
   pediatric: { component: Pediatric },
   pharmacovigilance: { component: Pharmacovigilance },
   'pv-cockpit': { component: PvCockpit },

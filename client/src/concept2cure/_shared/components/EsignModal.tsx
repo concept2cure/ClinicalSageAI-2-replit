@@ -29,6 +29,7 @@
 
 import * as React from 'react';
 import { useEsignature, type EsigMeaning } from '../../hooks/useEsignature';
+import { GovernedTimestamp } from './GovernedTimestamp';
 import './EsignModal.css';
 
 // ── Inline Lucide icons (stroke, currentColor) ───────────────────────────────
@@ -338,7 +339,10 @@ export function EsignModal({
               </div>
               <div className="es-manifest-row">
                 <span>When</span>
-                <span className="es-mono">{new Date(manifest.signedAt).toLocaleString()}</span>
+                {/* GovernedTimestamp: UTC primary + local/tz — audit rows are
+                    UTC, and a browser-locale render without a tz label reads
+                    as clock drift to an inspector diffing this screen. */}
+                <GovernedTimestamp value={manifest.signedAt} className="es-mono" />
               </div>
               {manifest.hash ? (
                 <div className="es-manifest-row">

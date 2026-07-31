@@ -61,6 +61,7 @@ import {
   type HardenedValidationContext,
 } from './ectd/ectd-validator-hardening.js';
 import type { ECTDLeaf } from './ectd/ectd4-validator.js';
+import { assembleRealPackage, isPackagerBuildableRegion } from './ectd/orchestrator-real-package.js';
 import { launchCSRBuildAsync } from './csr-builder.js';
 import { getCSRBuildJobStatus } from './csr/csr-job-runner.js';
 import {
@@ -395,6 +396,14 @@ export interface AssembledPackage {
   sequenceNumber: string;
   region: RegionCode;
   submissionType: string;
+  /**
+   * The generated ICH backbone (index.xml) text for this assembly. Passed to the
+   * hardened validator as backboneXml so DTD conformance actually runs (the
+   * stand-in path left it undefined). Persisted (a plain string) so it survives
+   * the run record; the per-leaf byte buffers used for MD5 recompute are held in
+   * memory only within the assembling run and are not part of this JSON shape.
+   */
+  backboneXml?: string;
 }
 
 // ── Dependency graph ────────────────────────────────────────────────────────
@@ -504,61 +513,85 @@ function hashOutput(output: unknown): string {
   return crypto.createHash('sha256').update(JSON.stringify(output)).digest('hex');
 }
 
-// ── Leaf-manifest derivation (package.assemble → package.validate hand-off) ──
+// ── Real package assembly (package.assemble → package.validate hand-off) ──
 
 /**
- * Map a Module 3 section key (e.g. "3.2.S.4.1") to the eCTD leaf section
- * code (e.g. "m3.2.S.4.1") expected by the hardened validator's
- * regional + study-id audits. Module 2 / Module 1 placeholder leaves use
- * the same shape.
- */
-function sectionKeyToLeafCode(sectionKey: string): string {
-  // sectionKey is "3.2.S.1" / "3.2.P.8" / "3.2.A.2" / "3.2.R.1.US" etc.
-  // Validator expects "m3.2.S.1" / "m5.3.5" / "m4.2.3" style.
-  return `m${sectionKey}`;
-}
-
-/**
- * Map a section key to a stable on-disk relative path. Validator + regional
- * rules key off filePath (FDA ESG ASCII filename rule, MD5 audit lookup,
- * EU/JP regional file presence checks) so the path has to be deterministic
- * given the same inputs.
- */
-function sectionKeyToFilePath(sectionKey: string): string {
-  // "3.2.S.1" → "m3/32-s-1/content.xml". Lowercase + dots-to-dashes keeps
-  // the path ASCII-safe per FDA ESG Technical Conformance Guide §3.2.1.
-  const slug = sectionKey.toLowerCase().replace(/\./g, '-');
-  return `m3/${slug}/content.xml`;
-}
-
-/**
- * Build the leaf manifest that `package.validate` consumes. Each composed
- * Module 3 section becomes one leaf; the MD5 is computed over its rendered
- * payload so subsequent runs over identical inputs produce byte-identical
- * checksums (which the validator's `enforceMd5Checksums` then reads back).
+ * Assemble a REAL eCTD package from the composed Module 3 sections and derive
+ * the validator inputs. Replaces the former derived stand-in manifest: it renders
+ * each ComposedSection to a leaf PDF, runs the canonical packager (deterministic:
+ * PDF/A conversion skipped), and returns the AssembledPackage (leaves with real
+ * package hrefs + real MD5s + the generated index.xml backbone) plus the per-leaf
+ * byte buffers keyed by filePath. package.validate then runs DTD conformance
+ * against the real backbone and recomputes MD5 against the real bytes.
  *
- * This is a "derived" manifest — it stands in for a real ZIP builder until
- * the export pipeline is wired into the orchestrator. The validator's leaf
- * checks (study-id tagging, MD5 format, regional path rules) all run
- * against this shape; only buffer-level checksum-mismatch detection is
- * deferred (the validator will skip MD5_MISMATCH when no buffers are
- * passed — by design).
+ * Deterministic across re-renders (renderLeafPdf is deterministic and PDF/A
+ * normalization is skipped), so the sign-path drift check — which re-derives and
+ * compares sha256(assembly.leaves) — stays stable.
  */
-function buildLeafManifestFromSections(sections: ComposedSection[]): ECTDLeaf[] {
-  return sections.map(s => {
-    const payload = JSON.stringify({
-      narrative: s.narrativeDraft,
-      tables: s.tables,
-      structured: s.structuredPayload,
-    });
-    const checksum = crypto.createHash('md5').update(payload).digest('hex');
+async function assembleForValidation(
+  sections: ComposedSection[],
+  inputs: OrchestratorInputs,
+  sequenceNumber: string,
+): Promise<{ assembled: AssembledPackage; leafBuffers: Record<string, Buffer> }> {
+  // Region widening (Move-7) accepts regions beyond the four the canonical
+  // packager has a backbone builder for. For a region the packager cannot build,
+  // fall back to a derived manifest so the run still assembles + validates
+  // structurally (no real backbone/buffers) rather than throwing. Every region
+  // with a builder gets the real package.
+  if (!isPackagerBuildableRegion(inputs.region)) {
+    const leaves = buildDerivedManifest(sections);
     return {
-      sectionCode: sectionKeyToLeafCode(s.sectionKey),
+      assembled: {
+        leaves,
+        totalSizeBytes: leaves.reduce((sum, l) => sum + (l.fileSize || 0), 0),
+        applicationNumber: inputs.applicationNumber,
+        sequenceNumber,
+        region: inputs.region,
+        submissionType: inputs.submissionType,
+      },
+      leafBuffers: {},
+    };
+  }
+
+  const real = await assembleRealPackage(sections, {
+    region: inputs.region,
+    applicationNumber: inputs.applicationNumber,
+    sequenceNumber,
+    submissionType: inputs.submissionType,
+    productName: inputs.drugProductName ?? inputs.drugSubstanceName,
+  });
+  return {
+    assembled: {
+      leaves: real.leaves,
+      totalSizeBytes: real.totalSizeBytes,
+      applicationNumber: inputs.applicationNumber,
+      sequenceNumber,
+      region: inputs.region,
+      submissionType: inputs.submissionType,
+      backboneXml: real.backboneXml,
+    },
+    leafBuffers: real.leafBuffers,
+  };
+}
+
+/**
+ * Derived stand-in leaf manifest — the fallback for regions the canonical
+ * packager cannot build a backbone for (Move-7 widened regions without a
+ * dedicated builder). One leaf per composed section, MD5 over its rendered
+ * payload so the checksum is deterministic; no real files, so the validator's
+ * DTD + buffer-MD5 checks are skipped (structural/regional/sequence rules still
+ * run). Buildable regions use the real package instead.
+ */
+function buildDerivedManifest(sections: ComposedSection[]): ECTDLeaf[] {
+  return sections.map(s => {
+    const payload = JSON.stringify({ narrative: s.narrativeDraft, tables: s.tables, structured: s.structuredPayload });
+    return {
+      sectionCode: `m${s.sectionKey}`,
       title: s.sectionKey,
-      checksum,
-      checksumType: 'md5',
-      operation: 'new',
-      filePath: sectionKeyToFilePath(s.sectionKey),
+      checksum: crypto.createHash('md5').update(payload).digest('hex'),
+      checksumType: 'md5' as const,
+      operation: 'new' as const,
+      filePath: `m3/${s.sectionKey.toLowerCase().replace(/\./g, '-')}/content.xml`,
       mimeType: 'text/xml',
       fileSize: Buffer.byteLength(payload, 'utf8'),
     };
@@ -1478,20 +1511,23 @@ export async function runOrchestrator(
     // Move 3 (was an opaque section-count summary). The manifest is the
     // load-bearing contract between assemble and validate.
     const sequenceNumber = inputs.sequenceNumber ?? '0000';
+    // Per-leaf bytes from the real assembly, kept in memory for the immediately
+    // following validate (the AssembledPackage persists only the backbone string,
+    // not binary buffers). A resumed run re-runs package.assemble and so
+    // repopulates this; it is only empty for the derived-manifest fallback used
+    // by regions the packager cannot build (no real files → MD5 recompute is a
+    // no-op there, and the DTD check is skipped for the same reason).
+    let assembledLeafBuffers: Record<string, Buffer> | undefined;
     await runStep('package.assemble', hashOutput(outputs), async () => {
-      const leaves = buildLeafManifestFromSections(outputs.module3Sections);
-      const totalSizeBytes = leaves.reduce((sum, l) => sum + (l.fileSize || 0), 0);
-      const assembled: AssembledPackage = {
-        leaves,
-        totalSizeBytes,
-        applicationNumber: inputs.applicationNumber,
+      const { assembled, leafBuffers } = await assembleForValidation(
+        outputs.module3Sections,
+        inputs,
         sequenceNumber,
-        region: inputs.region,
-        submissionType: inputs.submissionType,
-      };
+      );
       outputs.assembly = assembled;
+      assembledLeafBuffers = leafBuffers;
       return {
-        outputRef: `package.assemble:${leaves.length}-leaves`,
+        outputRef: `package.assemble:${assembled.leaves.length}-leaves`,
         output: assembled,
       };
     });
@@ -1528,16 +1564,14 @@ export async function runOrchestrator(
           sequenceNumber: assembly.sequenceNumber,
           submissionType: assembly.submissionType,
           totalSizeBytes: assembly.totalSizeBytes,
-          // leafBuffers intentionally omitted: this orchestrator path
-          // derives leaf checksums from the composed-section payload (see
-          // buildLeafManifestFromSections), so re-hashing the same payload
-          // would always match. Real on-disk buffer comparison happens
-          // when the ZIP builder is wired in.
+          // Real per-leaf bytes (keyed by filePath) so enforceMd5Checksums
+          // recomputes + compares against the actual packaged bytes.
+          leafBuffers: assembledLeafBuffers,
         };
         const result = await validateEctdPackageHardened(
           assembly.leaves,
           context,
-          /* backboneXml */ undefined
+          assembly.backboneXml,
         );
         outputs.validation = result;
 
@@ -2101,19 +2135,16 @@ async function resumeOrchestratorRun(
 
     // package.assemble
     const sequenceNumber = inputs.sequenceNumber ?? '0000';
+    let assembledLeafBuffers: Record<string, Buffer> | undefined;
     await runStep('package.assemble', hashOutput(outputs), async () => {
-      const leaves = buildLeafManifestFromSections(outputs.module3Sections);
-      const totalSizeBytes = leaves.reduce((sum, l) => sum + (l.fileSize || 0), 0);
-      const assembled: AssembledPackage = {
-        leaves,
-        totalSizeBytes,
-        applicationNumber: inputs.applicationNumber,
+      const { assembled, leafBuffers } = await assembleForValidation(
+        outputs.module3Sections,
+        inputs,
         sequenceNumber,
-        region: inputs.region,
-        submissionType: inputs.submissionType,
-      };
+      );
       outputs.assembly = assembled;
-      return { outputRef: `package.assemble:${leaves.length}-leaves`, output: assembled };
+      assembledLeafBuffers = leafBuffers;
+      return { outputRef: `package.assemble:${assembled.leaves.length}-leaves`, output: assembled };
     });
 
     // package.validate
@@ -2132,11 +2163,12 @@ async function resumeOrchestratorRun(
           sequenceNumber: assembly.sequenceNumber,
           submissionType: assembly.submissionType,
           totalSizeBytes: assembly.totalSizeBytes,
+          leafBuffers: assembledLeafBuffers,
         };
         const result = await validateEctdPackageHardened(
           assembly.leaves,
           context,
-          /* backboneXml */ undefined,
+          assembly.backboneXml,
         );
         outputs.validation = result;
         if (!result.gatewayReady) {
@@ -2263,18 +2295,17 @@ async function resumeAwaitingSignature(
         })
       : undefined;
 
-  // package.assemble + package.validate re-derivation
+  // package.assemble + package.validate re-derivation. The re-derived assembly
+  // is byte-deterministic (renderLeafPdf is deterministic + PDF/A conversion is
+  // skipped), so the OQ-5 drift digest — sha256(assembly.leaves) — matches the
+  // originally validated run.
   const sequenceNumber = inputs.sequenceNumber ?? '0000';
-  const leaves = buildLeafManifestFromSections(outputs.module3Sections);
-  const totalSizeBytes = leaves.reduce((sum, l) => sum + (l.fileSize || 0), 0);
-  outputs.assembly = {
-    leaves,
-    totalSizeBytes,
-    applicationNumber: inputs.applicationNumber,
+  const { assembled, leafBuffers } = await assembleForValidation(
+    outputs.module3Sections,
+    inputs,
     sequenceNumber,
-    region: inputs.region,
-    submissionType: inputs.submissionType,
-  };
+  );
+  outputs.assembly = assembled;
 
   if (!inputs.skipValidation) {
     const context: HardenedValidationContext = {
@@ -2284,11 +2315,12 @@ async function resumeAwaitingSignature(
       sequenceNumber: outputs.assembly.sequenceNumber,
       submissionType: outputs.assembly.submissionType,
       totalSizeBytes: outputs.assembly.totalSizeBytes,
+      leafBuffers,
     };
     outputs.validation = await validateEctdPackageHardened(
       outputs.assembly.leaves,
       context,
-      /* backboneXml */ undefined,
+      outputs.assembly.backboneXml,
     );
   }
 

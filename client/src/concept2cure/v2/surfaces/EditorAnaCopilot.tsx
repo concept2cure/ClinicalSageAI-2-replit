@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { connected, SampleTag } from '../dataConnect';
 import { AnaVerbBar, RegistryContextHeader, StreamingRenderer } from './AnaVerbs';
-import { GovernedActionModal } from './GovernedActionModal';
+import { EsignModal } from '../../_shared/components/EsignModal';
 import { GLOBAL_REGISTRY } from './RegistryBridge';
 import { getSectionContext } from '../fixtures/editor-health-data';
 import { REG_LANGS, type LangCode } from '../fixtures/editor-data-types';
@@ -360,13 +360,23 @@ export function AnaCopilot({
         </div>
       )}
 
-      {/* Governed action modal */}
-      {govAction && (
-        <GovernedActionModal action={govAction} submissionTypeId={subTypeId || undefined}
-          sectionLabel={section.num}
-          onConfirm={() => { onAction && onAction(govAction); setGovAction(null); }}
-          onCancel={() => setGovAction(null)} />
-      )}
+      {/* Governed action — real 21 CFR Part 11 modal (was the non-compliant
+          v2/surfaces/GovernedActionModal, retired). The shared modal enforces
+          password re-auth (§11.200), a signature-meaning enum (§11.50), and
+          a real reason-for-change (min 8 chars). onSign fires only after
+          re-auth succeeds; the parent's onAction runs then, and the manifest
+          keeps a real signed timestamp for the confirmation view. */}
+      <EsignModal
+        open={!!govAction}
+        action={govAction || 'Confirm governed action'}
+        target={`§${section.num}${section.label ? ' · ' + section.label : ''}`}
+        targetMeta={subTypeId ? subTypeId : undefined}
+        onClose={() => setGovAction(null)}
+        onSign={async ({ meaning, reason }) => {
+          if (govAction) onAction && onAction(govAction);
+          return { meaning, reason, signedAt: new Date().toISOString() };
+        }}
+      />
 
       {/* Compose area */}
       <div className="rce-ana-comp">

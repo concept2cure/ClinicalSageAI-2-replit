@@ -37,7 +37,15 @@ interface EctdProvenance {
   src: string;
   model: string;
   conf: string;
-  audit: string;
+  /**
+   * Server-issued Part 11 audit id. OPTIONAL and never fabricated client-side —
+   * a real audit id is minted by the server when the governed record is
+   * persisted (assemblyService), and client fixtures MUST leave this absent
+   * rather than invent one. The provenance renderer hides the "Audit …" line
+   * when audit is falsy so a fixture cannot pretend to reference an audit row
+   * that does not exist.
+   */
+  audit?: string | null;
 }
 
 interface EctdBlock {
@@ -161,10 +169,10 @@ const ECTD_ARTIFACT: EctdArtifactData = {
   ],
   blocks: [
     { type: 'h2', text: '2.5.1 Product Development Rationale' },
-    { type: 'p', conf: 'hi', text: 'BX-301 is a humanized IgG1κ monoclonal antibody targeting B-cell maturation antigen (BCMA), developed for adults with relapsed or refractory multiple myeloma who have received at least three prior lines of therapy. The development program was designed to establish benefit-risk in a population with limited remaining options.', cite: '2.4', prov: { src: 'Nonclinical Overview §2.4', model: 'AnA -- Maximum', conf: '0.94', audit: 'AUD-2.5-0012' } },
-    { type: 'p', conf: 'hi', text: 'The clinical pharmacology and efficacy conclusions in this overview are integrated from the pivotal study BX301-301 and the supporting Phase 1 study BX301-101, with exposure-response characterized across the studied dose range.', cite: '5.3.5', prov: { src: 'CSR BX301-301 §11 -- CSR BX301-101 §11', model: 'AnA -- Maximum', conf: '0.91', audit: 'AUD-2.5-0013' } },
+    { type: 'p', conf: 'hi', text: 'BX-301 is a humanized IgG1κ monoclonal antibody targeting B-cell maturation antigen (BCMA), developed for adults with relapsed or refractory multiple myeloma who have received at least three prior lines of therapy. The development program was designed to establish benefit-risk in a population with limited remaining options.', cite: '2.4', prov: { src: 'Nonclinical Overview §2.4', model: 'AnA -- Maximum', conf: '0.94' } },
+    { type: 'p', conf: 'hi', text: 'The clinical pharmacology and efficacy conclusions in this overview are integrated from the pivotal study BX301-301 and the supporting Phase 1 study BX301-101, with exposure-response characterized across the studied dose range.', cite: '5.3.5', prov: { src: 'CSR BX301-301 §11 -- CSR BX301-101 §11', model: 'AnA -- Maximum', conf: '0.91' } },
     { type: 'h2', text: '2.5.4 Overview of Efficacy' },
-    { type: 'p', conf: 'hi', text: 'In the pivotal single-arm study BX301-301 (N=128), the overall response rate was 38.6% (95% CI 30.2–47.5) by independent review committee assessment per IMWG criteria, with a median duration of response not yet reached at the data cutoff.', cite: '5.3.5.2', prov: { src: 'CSR BX301-301 §11.4.1 (locked)', model: 'AnA -- Maximum', conf: '0.96', audit: 'AUD-2.5-0014' } },
+    { type: 'p', conf: 'hi', text: 'In the pivotal single-arm study BX301-301 (N=128), the overall response rate was 38.6% (95% CI 30.2–47.5) by independent review committee assessment per IMWG criteria, with a median duration of response not yet reached at the data cutoff.', cite: '5.3.5.2', prov: { src: 'CSR BX301-301 §11.4.1 (locked)', model: 'AnA -- Maximum', conf: '0.96' } },
     { type: 'table', head: ['Endpoint', 'Result', '95% CI'], rows: [
       ['Overall response rate', '38.6%', '30.2–47.5', 'ok'],
       ['Very good partial response or better', '24.2%', '17.2–32.4', 'ok'],
@@ -172,8 +180,8 @@ const ECTD_ARTIFACT: EctdArtifactData = {
       ['Median overall survival', 'HR 0.62', '0.44–0.87', 'ok'],
     ] },
     { type: 'h2', text: '2.5.5 Overview of Safety' },
-    { type: 'p', conf: 'med', text: 'The safety profile was consistent with the mechanism of action and the heavily pretreated population. Cytokine release syndrome occurred in 42% of subjects (Grade ≥3 in 3%), was predominantly confined to the first cycle, and was managed with the protocol-specified mitigation strategy.', cite: '2.7.4', prov: { src: 'Clinical Summary §2.7.4 (draft)', model: 'AnA -- Maximum', conf: '0.83', audit: 'AUD-2.5-0015' } },
-    { type: 'p', conf: 'lo', text: 'Long-term safety follow-up is ongoing; the description of delayed neurotoxicity below the reporting threshold is provisional pending the Day-120 safety update and should be reconciled with the integrated summary of safety before lock.', cite: null, prov: { src: 'Unresolved -- pending ISS lock', model: 'AnA -- Maximum', conf: '0.61', audit: 'AUD-2.5-0016' } },
+    { type: 'p', conf: 'med', text: 'The safety profile was consistent with the mechanism of action and the heavily pretreated population. Cytokine release syndrome occurred in 42% of subjects (Grade ≥3 in 3%), was predominantly confined to the first cycle, and was managed with the protocol-specified mitigation strategy.', cite: '2.7.4', prov: { src: 'Clinical Summary §2.7.4 (draft)', model: 'AnA -- Maximum', conf: '0.83' } },
+    { type: 'p', conf: 'lo', text: 'Long-term safety follow-up is ongoing; the description of delayed neurotoxicity below the reporting threshold is provisional pending the Day-120 safety update and should be reconciled with the integrated summary of safety before lock.', cite: null, prov: { src: 'Unresolved -- pending ISS lock', model: 'AnA -- Maximum', conf: '0.61' } },
   ],
 };
 
@@ -233,7 +241,11 @@ function EcPara({ b }: { b: EctdBlock }) {
           <span className="ec-prov-row"><span className="ec-prov-lbl">Source</span><span className="ec-prov-val">{p.src}</span></span>
           <span className="ec-prov-row"><span className="ec-prov-lbl">Model</span><span className="ec-prov-val">{p.model}</span></span>
           <span className="ec-prov-row"><span className="ec-prov-lbl">Confidence</span><span className="ec-prov-val">{p.conf}</span></span>
-          <span className="ec-prov-foot">Audit <b>{p.audit}</b> -- 21 CFR Part 11</span>
+          {p.audit ? (
+            <span className="ec-prov-foot">Audit <b>{p.audit}</b> · 21 CFR Part 11 audit trail</span>
+          ) : (
+            <span className="ec-prov-foot">Audit id issued on server persist · 21 CFR Part 11 audit trail</span>
+          )}
         </span>
       )}
     </p>
