@@ -13,6 +13,7 @@ import { THERAPEUTIC_AREAS } from '../../shared/constants/domain/therapeutic-are
 import {
   getProfile,
   listProfiles,
+  listAcceptedSlugs,
   renderProfileForPrompt,
 } from '../../server/services/ana/therapeutic-area-profiles/index';
 
@@ -25,6 +26,16 @@ describe('therapeutic-area coverage', () => {
   it('registers at least the full 25-area vocabulary as distinct profiles', () => {
     // 21 generated + 4 hand-authored (oncology, rare-disease, neurology, immunology).
     expect(listProfiles().length).toBeGreaterThanOrEqual(25);
+  });
+
+  it('every vocabulary area passes the set-project-area validation gate', () => {
+    // Mirrors setProjectTherapeuticArea's gate: a project can only be set to a
+    // slug in listAcceptedSlugs (after _/space -> - normalization). If a real
+    // area is rejected here, a user cannot select it.
+    const accepted = new Set(listAcceptedSlugs());
+    const gate = (slug: string) => accepted.has(slug.trim().toLowerCase().replace(/[\s_]+/g, '-'));
+    const rejected = THERAPEUTIC_AREAS.filter((ta) => !gate(ta.value)).map((ta) => ta.value);
+    expect(rejected, `set-gate rejects real areas: ${rejected.join(', ')}`).toEqual([]);
   });
 
   it('every profile is complete and industry-grade', () => {

@@ -22,6 +22,7 @@ import {
   getCtdAuthoringGuidance,
   listLifecycleDocumentTypes,
   getLifecycleDocumentType,
+  getLifecycleDocumentTypeForRegistry,
   resolveCtdSectionsForDocType,
 } from '../services/ind/ctd/index.js';
 import { getGateway } from '../services/ai-gateway/index.js';
@@ -78,6 +79,21 @@ router.get('/lifecycle-types', (_req: Request, res: Response) => {
     regulatoryBasis: dt.regulatoryBasis,
   }));
   res.json({ success: true, data: { types, total: types.length } });
+});
+
+// ─── GET /api/ind/lifecycle-types/by-registry/:registryId ─────────────────────
+// Resolve a canonical document-taxonomy id (US_NDA, US_IND_SR, ...) — the kind
+// the product's catalog already offers — to its deep authoring guidance.
+
+router.get('/lifecycle-types/by-registry/:registryId', (req: Request, res: Response) => {
+  const dt = getLifecycleDocumentTypeForRegistry(String(req.params.registryId));
+  if (!dt) {
+    return res.status(404).json({ success: false, error: `No authoring guidance mapped to registry id: ${req.params.registryId}` });
+  }
+  const ctdSections = resolveCtdSectionsForDocType(dt).map(s => ({
+    code: s.code, title: s.title, module: s.module, guidance: s.guidance,
+  }));
+  res.json({ success: true, data: { ...dt, ctdSections } });
 });
 
 // ─── GET /api/ind/lifecycle-types/:id ─────────────────────────────────────────

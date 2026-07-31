@@ -188,6 +188,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the numbered questions for FDA for {{SPONSOR}}'s Pre-IND meeting on {{PRODUCT_NAME}} in {{INDICATION}} at {{PHASE}}, grouped by nonclinical, CMC, clinical, and clinical pharmacology/statistics. For each question provide brief context, an explicit sponsor position/proposal, supporting rationale cross-referenced to the relevant summary section, and a precise ask phrased so FDA can confirm agreement. Keep questions focused and answerable; do not fabricate data underlying the positions."
       }
     ],
+    "registryId": "US_PRE_IND",
     "timing": "Requested and held before IND submission; FDA schedules a Type B meeting within 60 days of receipt of the meeting request, with the briefing document due no later than 30 calendar days before the meeting date.",
     "ctdSectionCodes": [
       "2.4",
@@ -1022,6 +1023,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Summarize previous human experience with {{PRODUCT_NAME}} for {{SPONSOR}}'s IND in {{INDICATION}} at {{PHASE}}, per 21 CFR 312.23(a)(9). Integrate any prior clinical safety/efficacy/PK data, list countries of marketing and any safety/efficacy withdrawals, and cross-reference literature and Module 5 reports; if this is first-in-human, state so and point to the nonclinical basis. Do not fabricate human data."
       }
     ],
+    "registryId": "US_IND",
     "timing": "Submit at least 30 calendar days before the sponsor intends to begin the first clinical investigation; the study may not be initiated until the 30-day review period has elapsed without FDA imposing a clinical hold under 21 CFR 312.40(b) and 312.42.",
     "ctdSectionCodes": [
       "1.1",
@@ -1131,6 +1133,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Provide the supporting information and safety justification for {{SPONSOR}}'s protocol amendment to {{PRODUCT_NAME}} in {{INDICATION}}, summarizing any new nonclinical/clinical/CMC data behind the change, cross-referencing the full reports in the CTD modules, and giving the benefit-risk rationale. If the change is administrative, state that no supporting data are required. Do not invent data."
       }
     ],
+    "registryId": "US_IND_AMENDMENT",
     "timing": "A new protocol may be submitted and its investigation begun once the protocol is submitted to FDA and approved by an IRB (312.30(a)). Changes affecting safety must be submitted before implementation, except that a change intended to eliminate an apparent immediate hazard may be implemented immediately with notification as soon as possible (312.30(b)(2)(ii)). A new investigator must be added within 30 days of being added to the study.",
     "ctdSectionCodes": [
       "5.3.5.1",
@@ -1225,6 +1228,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Assemble the supporting technical data for {{SPONSOR}}'s information amendment on {{PRODUCT_NAME}}: place new nonclinical reports in Module 4, CMC updates in Module 3.2.S/3.2.P with change rationale and comparability, or clinical pharmacology in Module 5 as applicable, noting GLP/GMP status. Describe required content and CTD placement; do not invent study results or product facts."
       }
     ],
+    "registryId": "US_IND_AMENDMENT",
     "timing": "Submitted as necessary but, to the extent feasible, not more than every 30 days (21 CFR 312.31(b)). Information important to the safety of the investigation should be submitted promptly rather than batched.",
     "ctdSectionCodes": [
       "3.2.S",
@@ -1331,6 +1335,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Assemble the updated Module 3 quality content for {{SPONSOR}}'s CMC amendment to {{PRODUCT_NAME}}: revise the affected 3.2.S and/or 3.2.P subsections (manufacture, controls, specifications, stability), update specifications and method validation, and include batch analysis, impurity, and stability tables supporting the change per ICH Q1A/Q3A/Q3B/Q6A. Describe required content and CTD placement; do not invent analytical results."
       }
     ],
+    "registryId": "US_IND_AMENDMENT",
     "timing": "Submitted as needed, and to the extent feasible not more than every 30 days (21 CFR 312.31(b)); changes that could affect the safety of subjects (e.g., a new impurity, a significant manufacturing change) should be submitted before the affected clinical material is used.",
     "ctdSectionCodes": [
       "3.2.S.2",
@@ -1435,6 +1440,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Prepare the revised documents implementing corrective actions for {{SPONSOR}}'s clinical hold response on {{PRODUCT_NAME}}: provide clean and redlined revised protocol, updated IB/reference safety information, revised informed consent, or updated Module 3/Module 4 content as needed to resolve each hold issue, version-controlled and consistent with the point-by-point response. If no document changes are needed, state that the hold is resolved by data/analysis alone. Do not invent study results."
       }
     ],
+    "registryId": "US_IND_AMENDMENT",
     "timing": "Submitted after the sponsor has addressed all clinical hold issues. Under 21 CFR 312.42(e) FDA must respond within 30 calendar days of receiving the sponsor's complete response (a submission that addresses all identified deficiencies); the investigation may resume only after FDA notifies the sponsor that the hold is removed.",
     "ctdSectionCodes": [
       "1.11.3",
@@ -1582,6 +1588,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft a follow-up IND safety report for a case in {{SPONSOR}}'s {{PHASE}} study of {{PRODUCT_NAME}} ({{INDICATION}}). Link it to the initial report, state the date the new information was received, and clearly flag what changed (outcome, coding, causality, or expectedness) and whether the reporting category is upgraded. Update the seriousness/causality/expectedness conclusions accordingly. Use placeholders for case-specific facts; do not fabricate results."
       }
     ],
+    "registryId": "US_IND_SR",
     "timing": "7 calendar days (fatal or life-threatening, unexpected, suspected adverse reaction — initial notification, which may be by telephone or fax/electronic) / 15 calendar days (other serious and unexpected suspected adverse reactions; findings from other studies or class; clinically important rate increase). Clock starts on day zero — the day the sponsor first receives information meeting the reporting criteria. Follow-up information is submitted within 15 calendar days of receipt."
   },
   {
@@ -1708,6 +1715,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the administrative closing section (21 CFR 312.33(e)-(g)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}). Cover significant Part 56/IRB actions, foreign marketing developments (approvals, withdrawals, safety-related regulatory actions with jurisdictions and dates), and a log of outstanding business for which FDA response is requested. Use bracketed placeholders; do not fabricate regulatory actions."
       }
     ],
+    "registryId": "US_IND_ANNUAL",
     "timing": "Within 60 days of the anniversary date on which the IND went into effect (30 days after original submission, i.e., the anniversary of the effective date)."
   },
   {
@@ -1836,6 +1844,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the DSUR conclusions and appendix structure (ICH E2F Section 19 and appendices) for {{SPONSOR}}'s {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Summarize the most important new safety information, state the benefit-risk impact and whether it remains favorable, and commit to proposed/taken actions. List the appendices (RSI/IB in effect at DLP, cumulative tabulations, trial inventory, region-specific US tables, contacts). Use bracketed placeholders; do not fabricate conclusions."
       }
     ],
+    "registryId": "ICH_DSUR",
     "timing": "Annually, within 60 calendar days of the Data Lock Point (DLP). The DLP is set to the Development International Birth Date (DIBD) — the anniversary of the first authorization to conduct a clinical trial in any country. One DSUR covers all products containing the active substance held by the sponsor."
   },
   {
@@ -1982,6 +1991,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the postmarketing study status section (21 CFR 314.81(b)(2)(vii)-(viii); FDAAA 505(o)) for {{SPONSOR}}'s NDA/BLA Annual Report on {{PRODUCT_NAME}}. Provide a per-study table template listing each PMC/PMR with tracking ID, original milestone schedule, standardized status category, status against schedule, and an explanation for any delay, distinguishing 505(o) required studies from voluntary commitments. Use bracketed placeholders; do not fabricate study statuses."
       }
     ],
+    "registryId": "US_NDA_ANNUAL",
     "timing": "Within 60 days of the anniversary date of US approval of the application (the anniversary of the original approval)."
   },
   {
@@ -2223,6 +2233,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the Integrated Summary of Efficacy framework for {{PRODUCT_NAME}} in {{INDICATION}} ({{SPONSOR}}, {{PHASE}}). Identify the pivotal and supportive studies, articulate the endpoints, estimand, and multiplicity strategy per ICH E9, lay out the pooled and by-study effect presentation and subgroup consistency analyses with placeholders for all estimates, and describe how the analyses support the proposed indication and remain reproducible from ADaM datasets. Do not fabricate efficacy results."
       }
     ],
+    "registryId": "US_NDA",
     "timing": "Submitted after successful completion of Phase 3 (or adequate and well-controlled studies establishing effectiveness) and typically following a Pre-NDA meeting; FDA files or issues Refuse-to-File within 60 days of receipt.",
     "ctdSectionCodes": [
       "1",
@@ -2419,6 +2430,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the Integrated Summary of Efficacy framework for the biologic {{PRODUCT_NAME}} in {{INDICATION}} ({{SPONSOR}}, {{PHASE}}). Identify pivotal and supportive studies, articulate endpoints, estimand, and multiplicity strategy per ICH E9, lay out pooled and by-study effect presentation, subgroup consistency, durability and exposure-response including any immunogenicity impact on efficacy, with placeholders for all estimates, and describe reproducibility from ADaM datasets. Do not fabricate efficacy results."
       }
     ],
+    "registryId": "US_BLA",
     "timing": "Submitted after pivotal clinical studies and process/commercial-scale validation are complete, typically following a Pre-BLA meeting; FDA files or issues Refuse-to-File within 60 days and a pre-license inspection of manufacturing facilities is scheduled during review.",
     "ctdSectionCodes": [
       "1",
@@ -2555,6 +2567,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Prepare the user-fee and field-copy documentation for a Prior Approval Supplement to {{SPONSOR}}'s {{PRODUCT_NAME}}. State the PDUFA fee determination and, if applicable, the Form FDA 3397 fields and Field Copy Certification language. Use placeholders for payment identifiers and facility names; do not assert a fee status you cannot determine."
       }
     ],
+    "registryId": "US_NDA_SUPP",
     "timing": "Submit and obtain FDA approval BEFORE distributing product made with the change. FDA review clock is 4 months (major change) unless designated for a different classification; user must not distribute until an approval letter issues.",
     "ctdSectionCodes": [
       "1.2",
@@ -2672,6 +2685,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Draft the environmental section for a CBE-30 supplement to {{SPONSOR}}'s {{PRODUCT_NAME}}. Claim the categorical exclusion under 21 CFR 25.31 and affirm no extraordinary circumstances under 25.21, or outline an EA under 25.40 if unavailable. State facts only where known; use placeholders otherwise."
       }
     ],
+    "registryId": "US_CBE",
     "timing": "Product may be distributed 30 days after FDA receives the supplement, provided FDA has not, within 30 days of receipt, informed the applicant that the change requires prior approval or that the submission is deficient. Applicant bears the risk if FDA later disapproves.",
     "ctdSectionCodes": [
       "1.2",
@@ -2775,6 +2789,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "generationPrompt": "Write the supporting safety assessment for a CBE-0 labeling change to {{SPONSOR}}'s {{PRODUCT_NAME}}. Describe the signal, the data sources, the weight-of-evidence logic, and how it justifies the specific labeling language and placement, cross-referencing Module 2.7.4 and periodic safety reports. Do not invent case counts or rates; use placeholders and describe WHERE the data reside."
       }
     ],
+    "registryId": "US_CBE",
     "timing": "The change may be implemented immediately upon FDA receipt of the supplement (day 0). FDA reviews and may later require modification or disapprove; the applicant assumes the risk of distributing before the review is complete.",
     "ctdSectionCodes": [
       "1.2",

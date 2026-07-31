@@ -18,6 +18,7 @@ import {
   getCtdAuthoringGuidance,
   LIFECYCLE_DOCUMENT_TYPES,
   getLifecycleDocumentType,
+  getLifecycleDocumentTypeForRegistry,
   resolveCtdSectionsForDocType,
 } from '../../server/services/ind/ctd/index';
 import { getGenerationPrompt } from '../../server/services/ind/ind-section-registry';
@@ -111,6 +112,25 @@ describe('CTD authoring depth — lifecycle document types', () => {
     const sections = resolveCtdSectionsForDocType(nda!);
     // Pulling whole CTD modules should surface many leaf sections.
     expect(sections.length).toBeGreaterThan(20);
+  });
+
+  it('links document types to the canonical taxonomy so the catalog can reach deep guidance', () => {
+    // The applications, amendments, safety/periodic reports and supplements the
+    // product offers in its catalog must resolve to this deep authoring guidance.
+    const mustLink: Array<[string, string]> = [
+      ['US_NDA', 'nda'],
+      ['US_BLA', 'bla'],
+      ['US_IND', 'ind_initial'],
+      ['US_IND_SR', 'ind_safety_report'],
+      ['ICH_DSUR', 'dsur'],
+      ['US_NDA_SUPP', 'nda_pas'],
+      ['US_CBE', 'cbe_30'],
+    ];
+    for (const [registryId, expectedId] of mustLink) {
+      const dt = getLifecycleDocumentTypeForRegistry(registryId);
+      expect(dt, `no lifecycle type for taxonomy ${registryId}`).toBeTruthy();
+      expect(dt!.id).toBe(expectedId);
+    }
   });
 
   it('meeting packages are flagged and the ISS/ISE integrated summaries exist', () => {
