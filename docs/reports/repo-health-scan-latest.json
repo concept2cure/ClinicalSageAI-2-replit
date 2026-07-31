@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-31T03:17:23.695Z",
+  "generatedAt": "2026-07-31T03:49:26.820Z",
   "git": {
-    "sha": "ca784c7a2863adbe8debd8bf6ef0fc17322d9cc3",
+    "sha": "8a1aba68069e2b78fb4df521198562eeeca333a9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 251,
     "largeFilesByBytes": 32,
-    "largeFilesByLines": 86
+    "largeFilesByLines": 85
   },
   "findings": {
     "duplicateBasenames": [
@@ -2487,7 +2487,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 949455
+        "bytes": 949780
       },
       {
         "file": "shared/schema.ts",
@@ -2621,7 +2621,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18464
+        "lines": 18470
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2892,10 +2892,6 @@
         "lines": 1726
       },
       {
-        "file": "server/services/client-intelligence-memory.ts",
-        "lines": 1717
-      },
-      {
         "file": "server/routes/fda510k-routes.ts",
         "lines": 1691
       },
@@ -2967,7 +2963,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 407,
       "largeByBytes": 29,
-      "largeByLines": 75
+      "largeByLines": 74
     },
     {
       "owner": "Unassigned (TBD)",
