@@ -114,6 +114,35 @@ Final `payloadDigest = sha256(leafManifestDigest || validatorDigest || submissio
 > change carry no snapshot and fall back to the legacy re-derive path (steps 1–2).
 > See `server/services/__tests__/sign-payload-snapshot.test.ts` and
 > `docs/runbooks/ectd-signature-payload-deploy-boundary.md`.
+>
+> The snapshot is **self-contained**: it stores the full identity tuple
+> (`submissionId`, `organizationId`, `applicationNumber`, `sequenceNumber`,
+> `region`, `submissionType`) plus the backbone, and the resume integrity
+> recompute draws every digest component from the snapshot — so all of the frozen
+> record is covered, not just leaves + validator outcome. A resume whose call
+> identity differs from the signed snapshot is reported as
+> `signature_resume_identity_mismatch` (distinct from record corruption). The
+> backbone is now bound into the digest (the OQ-5 deferral is resolved for the
+> real-packager path; fallback regions have no backbone and omit it consistently).
+>
+> **Residual authenticity gap (GATES resume route-wiring).** The integrity guard
+> proves the snapshot is *internally consistent* with the digest, but both live in
+> the mutable `submission_orchestrator_runs.steps` JSONB column. An adversary with
+> DB write to that column could replace the snapshot AND recompute a matching
+> digest, then have a legitimate signer bind a real §11.70 signature to the forged
+> record (the signer is shown a digest, not the manifest). The legacy re-derive
+> path resisted this because it re-anchored to source; the hydrate path does not.
+> This requires DB-level write privilege (a very high bar — such an adversary can
+> already forge signature rows directly), and the resume path is **not yet
+> route-wired** (test-only today), so it is latent. Before the resume path is
+> exposed to production, the snapshot must be anchored to something the
+> steps-column writer cannot forge — either (a) the signer attests to the actual
+> manifest/backbone hash they were shown at sign time (content attestation in the
+> signing UX), or (b) the snapshot digest is HMAC'd with a server-side secret /
+> mirrored into the append-only ledger (`submission_orchestrator_steps`, which has
+> the immutability trigger) and cross-checked on resume. Tracked as an OQ-5
+> follow-up; do not route-wire `runOrchestrator(_, { resumeRunId })` for the
+> release-signature flow until it lands.
 
 When `runOrchestrator(inputs, { resumeRunId })` is invoked and finds `package.sign` in `awaiting-signature` (legacy, pre-snapshot runs):
 

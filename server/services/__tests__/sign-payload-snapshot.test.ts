@@ -128,17 +128,36 @@ function makeRunRow(signPayload: unknown): Record<string, unknown> {
   };
 }
 
-function snapshotFor(leaves: ECTDLeaf[]) {
+function snapshotFor(leaves: ECTDLeaf[], overrides: Record<string, unknown> = {}) {
   return {
     leaves,
     backboneXml: '<index.xml/>',
     validatorOutcome: VO,
+    // Full identity tuple — the snapshot is self-contained.
+    submissionId: IDENTITY.submissionId,
+    organizationId: IDENTITY.organizationId,
     applicationNumber: IDENTITY.applicationNumber,
     sequenceNumber: '0000',
     region: 'US',
     submissionType: 'IND',
     totalSizeBytes: 2048,
+    ...overrides,
   };
+}
+
+/** Compute the digest the way sign-prep + resume do for a snapshot: identity
+ *  from the snapshot, backbone bound when truthy. */
+function digestForSnapshot(snap: ReturnType<typeof snapshotFor>): string {
+  return computeBoundPayloadDigestFromComponents({
+    leaves: snap.leaves as ECTDLeaf[],
+    validatorOutcome: snap.validatorOutcome as BoundDigestValidatorOutcome,
+    submissionId: snap.submissionId as string,
+    applicationNumber: snap.applicationNumber as string,
+    region: snap.region as 'US',
+    submissionType: snap.submissionType as string,
+    organizationId: snap.organizationId as number,
+    backboneXml: (snap.backboneXml as string) || undefined,
+  });
 }
 
 beforeEach(() => {
@@ -168,8 +187,10 @@ describe('computeBoundPayloadDigest refactor', () => {
   });
 
   it('full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant)', () => {
-    // Mirror sign-prep EXACTLY: digest via the wrapper with backboneXml:undefined.
+    // Mirror sign-prep: digest via the wrapper WITH the backbone bound (OQ-5
+    // resolved for the real-packager path).
     const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32)), makeLeaf('m3.2.P.1', 'b'.repeat(32))];
+    const backboneXml = '<index>real backbone</index>';
     const assembly = {
       leaves,
       totalSizeBytes: 4096,
@@ -177,28 +198,23 @@ describe('computeBoundPayloadDigest refactor', () => {
       sequenceNumber: '0000',
       region: 'US' as const,
       submissionType: 'IND',
-      backboneXml: '<index>real backbone</index>',
+      backboneXml,
     };
     const validation = { gatewayReady: VO.gatewayReady, hardenedScore: VO.hardenedScore, summary: VO.summary } as never;
-    const prepDigest = computeBoundPayloadDigest({ assembly, validation, ...IDENTITY, backboneXml: undefined });
+    const prepDigest = computeBoundPayloadDigest({ assembly, validation, ...IDENTITY, backboneXml });
 
-    // Persist the snapshot the way the sign step does, then JSON round-trip it
-    // through the steps column (getRun does JSON.parse), then recompute the way
-    // resume does — must equal the prep digest or every new run fails on resume.
+    // Persist the snapshot the way the sign step does (identity + backbone), JSON
+    // round-trip it through the steps column, then recompute the way resume does
+    // (self-contained, from the snapshot) — must equal the prep digest or every
+    // new run fails on resume.
     const persisted = JSON.parse(
       JSON.stringify({
         payloadDigest: prepDigest,
         awaitingSince: new Date(0).toISOString(),
-        signedSnapshot: snapshotFor(leaves),
+        signedSnapshot: snapshotFor(leaves, { backboneXml, totalSizeBytes: 4096 }),
       }),
     );
-    const resumeDigest = computeBoundPayloadDigestFromComponents({
-      leaves: persisted.signedSnapshot.leaves,
-      validatorOutcome: persisted.signedSnapshot.validatorOutcome,
-      ...IDENTITY,
-      // resume also passes NO backboneXml — matching sign-prep's undefined.
-    });
-    expect(resumeDigest).toBe(prepDigest);
+    expect(digestForSnapshot(persisted.signedSnapshot)).toBe(prepDigest);
   });
 
   it('depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not', () => {
@@ -220,8 +236,9 @@ describe('computeBoundPayloadDigest refactor', () => {
 describe('resumeAwaitingSignature — snapshot hydration', () => {
   it('HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs', async () => {
     const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32)), makeLeaf('m3.2.P.1', 'b'.repeat(32))];
-    const payloadDigest = computeBoundPayloadDigestFromComponents({ leaves, validatorOutcome: VO, ...IDENTITY });
-    const payload = { payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snapshotFor(leaves) };
+    const snap = snapshotFor(leaves);
+    const payloadDigest = digestForSnapshot(snap);
+    const payload = { payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snap };
 
     H.runRow = makeRunRow(payload);
     H.signatureRows = [{ id: 777 }]; // a matching signature exists
@@ -241,8 +258,8 @@ describe('resumeAwaitingSignature — snapshot hydration', () => {
 
   it('stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet', async () => {
     const leaves = [makeLeaf('m3.2.S.1', 'c'.repeat(32))];
-    const payloadDigest = computeBoundPayloadDigestFromComponents({ leaves, validatorOutcome: VO, ...IDENTITY });
-    const payload = { payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snapshotFor(leaves) };
+    const snap = snapshotFor(leaves);
+    const payload = { payloadDigest: digestForSnapshot(snap), awaitingSince: new Date(0).toISOString(), signedSnapshot: snap };
 
     H.runRow = makeRunRow(payload);
     H.signatureRows = []; // no signature yet
@@ -254,11 +271,11 @@ describe('resumeAwaitingSignature — snapshot hydration', () => {
   });
 
   it('fails closed when the persisted snapshot no longer matches its signed digest', async () => {
-    const signedLeaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32))];
-    const payloadDigest = computeBoundPayloadDigestFromComponents({ leaves: signedLeaves, validatorOutcome: VO, ...IDENTITY });
-    // Persist a snapshot whose leaves were tampered AFTER the digest was bound.
-    const tamperedLeaves = [makeLeaf('m3.2.S.1', 'f'.repeat(32))];
-    const payload = { payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snapshotFor(tamperedLeaves) };
+    // Digest bound over the untampered leaves; snapshot then carries tampered
+    // leaves — the recompute won't match → integrity failure (fail closed).
+    const payloadDigest = digestForSnapshot(snapshotFor([makeLeaf('m3.2.S.1', 'a'.repeat(32))]));
+    const tamperedSnap = snapshotFor([makeLeaf('m3.2.S.1', 'f'.repeat(32))]);
+    const payload = { payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: tamperedSnap };
 
     H.runRow = makeRunRow(payload);
     H.signatureRows = [{ id: 777 }];
@@ -267,6 +284,42 @@ describe('resumeAwaitingSignature — snapshot hydration', () => {
     const sign = run.steps.find((s) => s.key === 'package.sign')!;
     expect(sign.status).toBe('failed');
     expect(sign.error).toBe('signature_snapshot_integrity_failure');
+  });
+
+  it('fails closed (not throw) on a structurally-malformed snapshot', async () => {
+    // leaves dropped entirely — must surface as integrity failure, not an
+    // uncaught error at digest recompute.
+    const badSnap = { ...snapshotFor([makeLeaf('m3.2.S.1', 'a'.repeat(32))]) } as Record<string, unknown>;
+    delete badSnap.leaves;
+    const payload = { payloadDigest: 'anything', awaitingSince: new Date(0).toISOString(), signedSnapshot: badSnap };
+
+    H.runRow = makeRunRow(payload);
+    H.signatureRows = [{ id: 777 }];
+
+    const { run } = await runOrchestrator(RESUME_INPUTS, { resumeRunId: 'run-1' });
+    const sign = run.steps.find((s) => s.key === 'package.sign')!;
+    expect(sign.status).toBe('failed');
+    expect(sign.error).toBe('signature_snapshot_integrity_failure');
+  });
+
+  it('flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption)', async () => {
+    const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32))];
+    const snap = snapshotFor(leaves);
+    const payload = { payloadDigest: digestForSnapshot(snap), awaitingSince: new Date(0).toISOString(), signedSnapshot: snap };
+
+    // Run row for a DIFFERENT application number than the snapshot was signed for.
+    const row = makeRunRow(payload);
+    row.application_number = 'IND999999';
+    H.runRow = row;
+    H.signatureRows = [{ id: 777 }];
+
+    const { run } = await runOrchestrator(
+      { ...RESUME_INPUTS, applicationNumber: 'IND999999' },
+      { resumeRunId: 'run-1' },
+    );
+    const sign = run.steps.find((s) => s.key === 'package.sign')!;
+    expect(sign.status).toBe('failed');
+    expect(sign.error).toBe('signature_resume_identity_mismatch');
   });
 
   it('legacy runs without a snapshot fall back to re-derive + drift-check', async () => {
