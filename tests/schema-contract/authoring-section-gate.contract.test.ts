@@ -174,7 +174,14 @@ async function contentOf(sectionId: string): Promise<string | null> {
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
-    migrations: ['db/migrations/20260725_authoring_document_loop_tables.sql'],
+    // The section-save handler now writes revision + section + audit in ONE
+    // transaction, so a missing authoring_audit_trail no longer merely drops a
+    // best-effort audit row — its INSERT aborts the transaction and the section
+    // UPDATE rolls back. Provision the audit table the handler writes to.
+    migrations: [
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260725_authoring_audit_trail.sql',
+    ],
   });
   // exec, not the pool shim: the shim prepares a single statement.
   await jdb.pglite.exec(SEED);
