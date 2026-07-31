@@ -184,8 +184,22 @@
   --dur-fast:                100ms;
   --dur-normal:              200ms;
   --dur-slow:                300ms;
+  --dur-slower:              500ms;
   --ease:                    cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring:             cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Tailwind motion aliases — tailwind.config.ts references these names for
+     `transitionDuration.fast/normal/slow/slower` and
+     `transitionTimingFunction.standard/emphasize`. Without them every
+     `duration-fast`/`duration-normal` utility silently ships no animation.
+     Aliased (not renamed) so canonical `--dur-*` / `--ease` remain the
+     single source of truth and both naming conventions resolve. */
+  --motion-duration-fast:    var(--dur-fast);
+  --motion-duration-normal:  var(--dur-normal);
+  --motion-duration-slow:    var(--dur-slow);
+  --motion-duration-slower:  var(--dur-slower);
+  --motion-ease-standard:    var(--ease);
+  --motion-ease-emphasize:   var(--ease-spring);
 
   /* ─── Layout chrome ─── */
   --sidebar-collapsed:       56px;

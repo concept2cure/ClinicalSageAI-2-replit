@@ -8,11 +8,7 @@
 import * as React from 'react';
 import { useAuditTrail } from '../../hooks/useProgramTabs';
 import { Loading, ErrorState, Empty } from '../../tasking/surfaces/state';
-
-function when(raw: string): string {
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? raw : d.toLocaleString();
-}
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 
 export function CommAuditTimeline() {
   const audit = useAuditTrail();
@@ -43,7 +39,13 @@ export function CommAuditTimeline() {
         <tbody>
           {events.map((e) => (
             <tr key={e.id}>
-              <td style={{ color: 'var(--text-300)', whiteSpace: 'nowrap' }}>{when(e.when)}</td>
+              <td style={{ color: 'var(--text-300)', whiteSpace: 'nowrap' }}>
+                {/* GovernedTimestamp: UTC primary + local/tz — audit rows are
+                    UTC on the server; the browser-locale render alone read as
+                    clock drift when an inspector diffed this screen against
+                    the audit table. */}
+                <GovernedTimestamp value={e.when} layout="inline" />
+              </td>
               <td>
                 <div className="k-name">{e.actorName || e.actor}</div>
                 {e.role && <div className="k-holder">{e.role}</div>}

@@ -140,8 +140,14 @@
 }
 
 .Toastify--animate {
+  /* Calm-motion rule (design-system CLAUDE.md): ≤200ms with ease-out. The
+     stock react-toastify bounce family (0.7s + overshoot cubic-beziers in
+     each keyframe below) violates this on every toast. Duration tamed
+     globally here; the individual bounce* keyframes still ship for library
+     compatibility but land far more calmly at 200ms. */
   animation-fill-mode: both;
-  animation-duration: 0.7s;
+  animation-duration: var(--dur-normal, 200ms);
+  animation-timing-function: var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .Toastify__bounce-enter--top-left,

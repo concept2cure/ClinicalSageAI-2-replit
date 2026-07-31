@@ -15,7 +15,7 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { GovernedActionModal } from './GovernedActionModal';
+import { EsignModal } from '../../_shared/components/EsignModal';
 
 export interface Finding {
   sev?: string;
@@ -233,25 +233,27 @@ export interface GovernedActionDialogProps {
   onConfirm?: (result: GovernedActionResult) => void;
 }
 
-/** Governed action dialog — delegates to the canonical GovernedActionModal
-    (reason-for-change + e-signature meaning capture) instead of a bespoke
-    Part 11 dialog.
+/** Governed action dialog — delegates to the shared EsignModal, which supports
+    21 CFR Part 11 compliance (§11.50 meaning + reason-for-change with 8-char
+    floor, §11.100 identity, §11.200 password re-auth). The prior wrapper
+    delegated to a decorative in-repo modal with fabricated hash-chain visuals
+    and 1-char reason acceptance; that modal is retired.
 
-    It no longer toasts "<Action> recorded" on confirm. It has no way to know
-    whether anything was recorded: that depends entirely on what the caller's
-    onConfirm does, and at least one caller's is an empty function. Announcing a
-    governed action completed is the caller's business, because only the caller
-    knows whether it did — and only the caller has the server-issued audit id to
-    name in the announcement. */
+    It still does not toast "<Action> recorded" on confirm — announcing a
+    governed action is the caller's business, because only the caller knows
+    whether it persisted and only the caller has the server-issued audit id
+    to name. `onConfirm` now fires AFTER re-auth succeeds, i.e. it can be
+    trusted as a real intent signal. */
 export function GovernedActionDialog({ open, title, onClose, onConfirm }: GovernedActionDialogProps) {
-  if (!open) return null;
   return (
-    <GovernedActionModal
+    <EsignModal
+      open={open}
       action={title || 'Confirm action'}
-      onCancel={onClose}
-      onConfirm={({ reason, meaning }) => {
+      target={title || 'Governed action'}
+      onClose={onClose}
+      onSign={async ({ meaning, reason }) => {
         onConfirm?.({ reason, signed: !!meaning });
-        onClose();
+        return { meaning, reason, signedAt: new Date().toISOString() };
       }}
     />
   );

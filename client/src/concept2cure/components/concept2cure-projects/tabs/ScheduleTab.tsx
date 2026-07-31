@@ -24,13 +24,17 @@ interface Props {
   project: Project;
 }
 
+// Fallback hex values pin AA-safe darkened variants of the canonical tokens
+// (the earthy palette) so chips remain ≥4.5:1 on cream even when tokens
+// don't resolve. The previous fallbacks — #9aa0a6, #3b82f6, #16a34a —
+// failed WCAG 2.2 AA against the surface background at chip type sizes.
 const STATUS_COLOR: Record<ScheduleStatus, string> = {
-  not_started: 'var(--text-300, #9aa0a6)',
-  in_progress: 'var(--accent, #3b82f6)',
-  at_risk: 'var(--warning, #d97706)',
-  completed: 'var(--success, #16a34a)',
-  slipped: 'var(--danger, #dc2626)',
-  blocked: 'var(--danger, #dc2626)',
+  not_started: 'var(--text-200, #514e46)',
+  in_progress: 'var(--accent-200, #a54a2a)',
+  at_risk: 'var(--warning, #8a5a06)',
+  completed: 'var(--success, #4d6b2d)',
+  slipped: 'var(--danger, #a03028)',
+  blocked: 'var(--danger, #a03028)',
 };
 
 const STATUS_LABEL: Record<ScheduleStatus, string> = {
@@ -43,9 +47,9 @@ const STATUS_LABEL: Record<ScheduleStatus, string> = {
 };
 
 const VERDICT: Record<OverallScheduleStatus, { label: string; color: string }> = {
-  on_track: { label: 'On track', color: 'var(--success, #16a34a)' },
-  at_risk: { label: 'Needs attention', color: 'var(--warning, #d97706)' },
-  off_track: { label: 'Off track', color: 'var(--danger, #dc2626)' },
+  on_track: { label: 'On track', color: 'var(--success, #4d6b2d)' },
+  at_risk: { label: 'Needs attention', color: 'var(--warning, #8a5a06)' },
+  off_track: { label: 'Off track', color: 'var(--danger, #a03028)' },
 };
 
 function fmtDate(iso: string | null): string {
@@ -72,8 +76,12 @@ const card: CSSProperties = {
   background: 'var(--surface-1, transparent)',
 };
 
+// Chip type size bumped 11 → 12 px so status pills clear WCAG 2.2 AA
+// non-text-contrast thresholds and remain readable at glance. The color +
+// border share the same value so a low-vision user gets a visible outline
+// even if forced-colors flips the fill.
 const chip = (color: string): CSSProperties => ({
-  fontSize: '11px',
+  fontSize: '12px',
   fontWeight: 600,
   padding: '2px 8px',
   borderRadius: '999px',
