@@ -52,6 +52,7 @@ import {
   PdevConfirmDialog,
   type ConfirmConfig,
 } from './components/ConfirmDialog';
+import { GovernedConfirmDialog } from '../_shared/components/GovernedConfirmDialog';
 import { PDEV_COMMANDS } from './data/pdevCommands';
 
 const HERE_LABEL: Record<string, string> = {
@@ -486,7 +487,13 @@ export function PdevApp({
       )}
 
       {snapshotConfirm && programId && (
-        <PdevConfirmDialog
+        // First pdev consumer to migrate onto the canonical shared
+        // GovernedConfirmDialog (audit high-value #11). The other four PDEV
+        // sites (FdaStream, Assembly, EvidencePicker, ActivityDetail) still
+        // use PdevConfirmDialog until pdev CSS decouples from the kit shell.
+        // Contract is identical (ConfirmConfig / ConfirmResult), so this is
+        // a drop-in swap.
+        <GovernedConfirmDialog
           open={true}
           {...snapshotConfirm}
           onCancel={() => {
