@@ -351,16 +351,31 @@ export interface PdevContradictionsPayload {
   contradictions: PdevContradiction[];
 }
 
-// ─── AI draft response ──────────────────────────────────────────────────────
+// ─── AI draft response (POST …/activities/:key/ai-draft) ────────────────────
+//
+// Metadata only. The governed drafting service persists the generated text as
+// a versioned, quality-gated artifact in concept2cure_artifacts and returns
+// ONLY the governed record's metadata — never a section-by-section preview of
+// prose. Mirrors server/services/pdev/pdev-ai-drafting.ts → PdevAiDraftResult
+// exactly; drift is a contract bug. The draft body lives in the artifact,
+// reachable via `artifactId` (the activity's Provenance tab lists it) — the
+// workbench must not fabricate a client-side preview the server never produced.
 
 export interface PdevAiDraftResult {
-  /** Quality grade A / B / C from the drafting service. */
-  grade: 'A' | 'B' | 'C' | null;
-  model: string;
-  citations: number;
-  artifactId: string | null;
-  preview: {
-    title: string;
-    sections: Array<{ num: string; label: string; preview: string }>;
-  };
+  /** pdev_program_activities row id promoted to `ai_draft_generated`. */
+  activityStateId: string;
+  /** concept2cure_artifacts id minted by governed-ana-execution. */
+  artifactId: string;
+  /** Registry document code the artifact files against. */
+  documentCode: string;
+  /** eCTD section the artifact maps to ('3.2.S.2', …), or null for a
+   *  working document with no eCTD destination. */
+  ectdSection: string | null;
+  /** Quality-gate verdict from the governed pipeline (e.g. 'A' | 'B' | 'C'
+   *  | 'pending' | 'unknown'). */
+  qualityGrade: string;
+  /** Headline title recorded on the artifact. */
+  title: string;
+  /** Word count of the generated content. */
+  wordCount: number;
 }
