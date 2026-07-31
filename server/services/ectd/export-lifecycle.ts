@@ -128,7 +128,9 @@ export function applyLifecycleDelta(
       // filePath doubles as the xlink:href; for a delete it points at the prior
       // file (same as modified-file). No new bytes ship.
       filePath: leaf.modifiedFile ?? leaf.fileName,
-      checksum: leaf.md5,
+      // EctdLeaf.md5 is optional; a delete ships no new bytes, so fall back to
+      // an empty checksum rather than widening ExportGranule.checksum.
+      checksum: leaf.md5 ?? '',
       operation: 'delete',
       modifiedFile: leaf.modifiedFile,
     });
