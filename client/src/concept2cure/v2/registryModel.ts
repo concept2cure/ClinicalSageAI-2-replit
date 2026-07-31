@@ -63,7 +63,6 @@ export const NAV_GROUP_OF: Record<string, string> = {
   'reg-change': 'both',
   dossier: 'both',
   'ind-checklist': 'biopharma',
-  biopharma: 'biopharma',
   cmc: 'biopharma',
   'csr-workflow': 'biopharma',
   // Regulatory findings are read across device and biopharma alike — the graph
@@ -126,7 +125,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'dossier-map',
   'nda-cockpit',
   'maa-cockpit',
-  'biopharma',
   'ind-checklist',
   'template-library',
   'dossier',
@@ -175,8 +173,8 @@ export const SEGMENTS = [
     primary: true,
     icon: 'atom',
     pathways: ['IND', 'BLA', 'MAA', 'J-NDA'],
-    defaultSurface: 'biopharma',
-    focus: ['ind-checklist', 'biopharma', 'cmc', 'document-authoring', 'pdev', 'biostatistics'],
+    defaultSurface: 'ind-checklist',
+    focus: ['ind-checklist', 'cmc', 'document-authoring', 'pdev', 'biostatistics'],
     ana: 'Biologics IND→BLA, CTD assembly, comparability & immunogenicity.',
   },
   {
@@ -269,7 +267,7 @@ export const READINESS_META = {
   planned: { label: 'Planned', tone: 'idle', blurb: 'Routes exist; surface not yet prioritized.' },
 };
 /** Entitlements sample: module ids this org is NOT licensed for (fixture until /api/module-subscriptions wiring in Phase 6; rail shows lock + upgrade CTA, never a dead button) */
-export const LICENSE_UNLICENSED: string[] = ['labeling', 'risk', 'pdev', 'biopharma'];
+export const LICENSE_UNLICENSED: string[] = ['labeling', 'risk', 'pdev'];
 export const isLicensed = (id: string) => !LICENSE_UNLICENSED.includes(id);
 
 /** AnA modes (intent → engine label, resolved server-side; no vendor names on screen) */
@@ -489,7 +487,6 @@ export const SEGMENT_MODULES = {
         'source-tracer',
         'dossier',
         'document-authoring',
-        'biopharma',
         'cmc',
         'nonclinical',
         'csr-workflow',
