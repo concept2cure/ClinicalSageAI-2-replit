@@ -57,19 +57,47 @@ export function isSafePublicHost(hostname: string): boolean {
   if (host === '::1' || host.startsWith('fc') || host.startsWith('fd') || host.startsWith('fe80')) {
     return false;
   }
-  // IPv4 literal private / reserved ranges.
-  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (m) {
-    const a = Number(m[1]);
-    const b = Number(m[2]);
-    if (a === 0 || a === 10 || a === 127) return false;       // this-net, private, loopback
-    if (a === 169 && b === 254) return false;                 // link-local + metadata
-    if (a === 172 && b >= 16 && b <= 31) return false;        // 172.16.0.0/12
-    if (a === 192 && b === 168) return false;                 // 192.168.0.0/16
-    if (a === 100 && b >= 64 && b <= 127) return false;       // CGNAT 100.64.0.0/10
-    if (a >= 224) return false;                               // multicast / reserved
-  }
+  // IPv4 — plain literal, OR IPv4-mapped IPv6 (::ffff:127.0.0.1, and Node's hex
+  // serialization ::ffff:7f00:1). Without unifying these, a mapped form smuggles
+  // a private/metadata target (e.g. https://[::ffff:169.254.169.254]/) past both
+  // the IPv6 prefix checks and the dotted-IPv4 check.
+  const ipv4 = extractEmbeddedIpv4(host);
+  if (ipv4 && isPrivateIpv4(ipv4[0], ipv4[1])) return false;
+  // Fail closed on any IPv4-mapped form we could not parse to a public address.
+  if (host.startsWith('::ffff:') && !ipv4) return false;
+
   return true;
+}
+
+/** IPv4 first-two-octets test for private / reserved / metadata ranges. */
+function isPrivateIpv4(a: number, b: number): boolean {
+  if (a === 0 || a === 10 || a === 127) return true;        // this-net, private, loopback
+  if (a === 169 && b === 254) return true;                  // link-local + cloud metadata
+  if (a === 172 && b >= 16 && b <= 31) return true;         // 172.16.0.0/12
+  if (a === 192 && b === 168) return true;                  // 192.168.0.0/16
+  if (a === 100 && b >= 64 && b <= 127) return true;        // CGNAT 100.64.0.0/10
+  if (a >= 224) return true;                                // multicast / reserved
+  return false;
+}
+
+/**
+ * Extract an embedded IPv4 from a lowercased, de-bracketed host: a plain dotted
+ * quad, an IPv4-mapped IPv6 in dotted form (::ffff:1.2.3.4), or Node's hex
+ * serialization of the same (::ffff:HHHH:HHHH). Returns null when the host
+ * carries no IPv4 (a real domain, or a genuine public IPv6 which stays allowed).
+ */
+function extractEmbeddedIpv4(host: string): [number, number, number, number] | null {
+  const dotted = host.match(/(?:^|:)(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (dotted) {
+    return [Number(dotted[1]), Number(dotted[2]), Number(dotted[3]), Number(dotted[4])];
+  }
+  const hex = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (hex) {
+    const hi = parseInt(hex[1], 16);
+    const lo = parseInt(hex[2], 16);
+    return [(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff];
+  }
+  return null;
 }
 
 /**
