@@ -81,6 +81,18 @@ import {
  */
 function classifyStepError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
+  // Typed packager failures carry name/errorClass but messages that dodge the
+  // /validation/ regex below (e.g. the unplaceable-leaf ValidationError, "not
+  // submission-grade", "not DTD self-contained", "N broken cross-reference(s)").
+  // Classify by the typed marker first so these are not mislabeled 'unknown'.
+  if (
+    err !== null &&
+    typeof err === 'object' &&
+    ((err as { name?: unknown }).name === 'ValidationError' ||
+      (err as { errorClass?: unknown }).errorClass === 'validation')
+  ) {
+    return 'validation_failed';
+  }
   if (/tenant|organization_id|organizationId.+required/i.test(msg)) return 'tenant_isolation_violation';
   if (/SEQ_QUERY_FAILED|sequence history|sequence query/i.test(msg)) return 'sequence_query_failed';
   if (/gatewayReady|gateway not ready|hardenedScore/i.test(msg)) return 'gateway_not_ready';
@@ -385,9 +397,15 @@ export interface OrchestratorOutputs {
 /**
  * The contract between package.assemble and package.validate. The validator
  * consumes `leaves` + the context fields below; nothing else flows between
- * the two steps. Persisted on `OrchestratorOutputs.assembly` so that a
- * resumed run can re-validate without re-assembling, and so the step's
- * outputHash deterministically reflects what was validated.
+ * the two steps.
+ *
+ * NOT DB-persisted. It lives on `OrchestratorOutputs.assembly` in memory for the
+ * duration of a run; the run record stores only step metadata + a short outputRef
+ * label (`package.assemble:N-leaves`). A resumed run RE-DERIVES this by calling
+ * assembleForValidation again — safe ONLY because assembleRealPackage is
+ * byte-deterministic (epoch PDF timestamps + skipPdfaConversion + deterministic
+ * leaf IDs / index.xml). Do not delete the re-derivation on the assumption a
+ * persisted copy exists — there is none, and resume would then validate nothing.
  */
 export interface AssembledPackage {
   leaves: ECTDLeaf[];
@@ -399,9 +417,10 @@ export interface AssembledPackage {
   /**
    * The generated ICH backbone (index.xml) text for this assembly. Passed to the
    * hardened validator as backboneXml so DTD conformance actually runs (the
-   * stand-in path left it undefined). Persisted (a plain string) so it survives
-   * the run record; the per-leaf byte buffers used for MD5 recompute are held in
-   * memory only within the assembling run and are not part of this JSON shape.
+   * stand-in path left it undefined). Held in memory on the in-flight assembly
+   * (re-derived on resume, like the rest of this shape); the per-leaf byte
+   * buffers used for MD5 recompute are likewise in-memory only and are not part
+   * of this JSON shape.
    */
   backboneXml?: string;
 }
@@ -657,9 +676,28 @@ export const PACKAGE_SIGN_SIGNATURE_MEANING = 'approval' as const;
  * Any change to ANY input flips the digest, which forces re-signing — the
  * "regenerate after sign" invariant (OQ-2).
  */
-export function computeBoundPayloadDigest(params: {
-  assembly: AssembledPackage;
-  validation: HardenedValidationResult;
+/** The validator-outcome components the bound digest binds to. Exactly the
+ *  three fields fed into validatorOutcomeDigest — nothing more — so a resumed
+ *  run can recompute the digest from a persisted snapshot without a full
+ *  HardenedValidationResult (and, critically, without re-querying the DB, whose
+ *  live sequence state could otherwise shift the outcome between sign and
+ *  resume). */
+export interface BoundDigestValidatorOutcome {
+  gatewayReady: boolean;
+  hardenedScore: number;
+  summary: HardenedValidationResult['summary'];
+}
+
+/**
+ * Lower-level digest over the raw components. Both the fresh sign path (via the
+ * AssembledPackage/HardenedValidationResult wrapper below) and the resume path
+ * (via the persisted SignedPackageSnapshot) funnel through this ONE function, so
+ * the digest is computed identically in both — the invariant the drift check
+ * depends on. The concatenation order is load-bearing; do not reorder.
+ */
+export function computeBoundPayloadDigestFromComponents(params: {
+  leaves: ECTDLeaf[];
+  validatorOutcome: BoundDigestValidatorOutcome;
   submissionId: string;
   applicationNumber: string;
   region: RegionCode;
@@ -669,16 +707,16 @@ export function computeBoundPayloadDigest(params: {
 }): string {
   const leafManifestDigest = crypto
     .createHash('sha256')
-    .update(JSON.stringify(params.assembly.leaves))
+    .update(JSON.stringify(params.leaves))
     .digest('hex');
 
   const validatorOutcomeDigest = crypto
     .createHash('sha256')
     .update(
       JSON.stringify({
-        gatewayReady: params.validation.gatewayReady,
-        hardenedScore: params.validation.hardenedScore,
-        summary: params.validation.summary,
+        gatewayReady: params.validatorOutcome.gatewayReady,
+        hardenedScore: params.validatorOutcome.hardenedScore,
+        summary: params.validatorOutcome.summary,
       }),
     )
     .digest('hex');
@@ -709,6 +747,68 @@ export function computeBoundPayloadDigest(params: {
   return h.digest('hex');
 }
 
+export function computeBoundPayloadDigest(params: {
+  assembly: AssembledPackage;
+  validation: HardenedValidationResult;
+  submissionId: string;
+  applicationNumber: string;
+  region: RegionCode;
+  submissionType: string;
+  organizationId: number;
+  backboneXml?: Buffer | string;
+}): string {
+  return computeBoundPayloadDigestFromComponents({
+    leaves: params.assembly.leaves,
+    validatorOutcome: {
+      gatewayReady: params.validation.gatewayReady,
+      hardenedScore: params.validation.hardenedScore,
+      summary: params.validation.summary,
+    },
+    submissionId: params.submissionId,
+    applicationNumber: params.applicationNumber,
+    region: params.region,
+    submissionType: params.submissionType,
+    organizationId: params.organizationId,
+    backboneXml: params.backboneXml,
+  });
+}
+
+/**
+ * Immutable snapshot of the assembled + validated package that a release
+ * signature binds to — the §11.70 "record" the signer approved.
+ *
+ * WHY IT EXISTS: the resume path used to RE-DERIVE the package from source and
+ * recompute the digest to drift-check. That is non-reproducible under useAI
+ * (the AI-refined narratives cannot be regenerated byte-for-byte) and fragile
+ * to input key-order, so a legitimately-signed run would fail on resume with a
+ * false `signature_payload_drift`. Persisting the exact signed package here and
+ * HYDRATING it on resume makes the signature bind to a frozen record instead of
+ * a re-derivation — the correct Part-11 semantics (you release what was signed).
+ *
+ * WHAT IT DOES NOT STORE: the leaf BYTES (real PDFs — potentially large). The
+ * leaf manifest's per-leaf md5 checksums ARE the signed content fingerprint;
+ * byte-level persistence for the eventual transmit step is a separate concern
+ * (blob storage), tracked with the transmit work — see the deploy-boundary
+ * runbook. For deterministically-rendered leaves the bytes can be reproduced;
+ * for useAI leaves the rendered PDFs must be persisted before transmit lands.
+ */
+interface SignedPackageSnapshot {
+  leaves: ECTDLeaf[];
+  backboneXml: string;
+  validatorOutcome: BoundDigestValidatorOutcome;
+  /** Full identity tuple of the signed record — stored so the resume integrity
+   *  recompute is SELF-CONTAINED (computed from the snapshot, not the resume
+   *  call's inputs). submissionId + organizationId complete the tuple that
+   *  applicationNumber/region/submissionType alone did not. */
+  submissionId: string;
+  organizationId: number;
+  applicationNumber: string;
+  sequenceNumber: string;
+  region: RegionCode;
+  submissionType: string;
+  totalSizeBytes: number;
+}
+
 /**
  * Storage shape persisted onto the package.sign step's outputRef so the
  * resume path can re-discover the payload digest and the (eventual)
@@ -720,6 +820,59 @@ interface PackageSignStepPayload {
   signatureId?: number;
   /** ISO timestamp when the step first transitioned to awaiting-signature. */
   awaitingSince: string;
+  /**
+   * The frozen package this digest binds to. Present on runs suspended on/after
+   * the snapshot-persistence change (2026-07): resume HYDRATES it instead of
+   * re-deriving. Absent on runs suspended before it — those fall back to the
+   * legacy re-derive + drift path (see the deploy-boundary runbook; such
+   * in-flight runs are expected to be re-signed after the deploy anyway).
+   */
+  signedSnapshot?: SignedPackageSnapshot;
+}
+
+/** A leaf carries an optional `buffer?: Buffer` of raw file bytes. No current
+ *  assembly path sets it (bytes live in a separate leafBuffers map), but strip
+ *  it defensively: a future path that populated it would otherwise serialize
+ *  whole PDFs into the steps JSONB (bloat) and, worse, change JSON.stringify's
+ *  output for the same manifest. The signed fingerprint is the md5 checksum, not
+ *  the inline bytes. */
+function stripLeafBytes(leaves: ECTDLeaf[]): ECTDLeaf[] {
+  return leaves.map((leaf) => {
+    if (!('buffer' in leaf) || (leaf as { buffer?: unknown }).buffer === undefined) return leaf;
+    const { buffer: _drop, ...rest } = leaf as ECTDLeaf & { buffer?: unknown };
+    return rest as ECTDLeaf;
+  });
+}
+
+/** Freeze the assembled + validated package into the signable snapshot. Called
+ *  at sign-prep, when outputs.assembly and outputs.validation are both known.
+ *  submissionId + organizationId come from the run identity, not the assembly,
+ *  so the snapshot carries the FULL digest identity tuple and resume can verify
+ *  it without trusting the resume call's inputs. */
+function buildSignedSnapshot(
+  assembly: AssembledPackage,
+  validation: HardenedValidationResult,
+  submissionId: string,
+  organizationId: number,
+): SignedPackageSnapshot {
+  return {
+    // Fallback regions (buildDerivedManifest) have no backbone; store '' so the
+    // snapshot shape is total (and the digest omits it — '' is falsy).
+    leaves: stripLeafBytes(assembly.leaves),
+    backboneXml: assembly.backboneXml ?? '',
+    validatorOutcome: {
+      gatewayReady: validation.gatewayReady,
+      hardenedScore: validation.hardenedScore,
+      summary: validation.summary,
+    },
+    submissionId,
+    organizationId,
+    applicationNumber: assembly.applicationNumber,
+    sequenceNumber: assembly.sequenceNumber,
+    region: assembly.region,
+    submissionType: assembly.submissionType,
+    totalSizeBytes: assembly.totalSizeBytes,
+  };
 }
 
 function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | null {
@@ -1512,11 +1665,12 @@ export async function runOrchestrator(
     // load-bearing contract between assemble and validate.
     const sequenceNumber = inputs.sequenceNumber ?? '0000';
     // Per-leaf bytes from the real assembly, kept in memory for the immediately
-    // following validate (the AssembledPackage persists only the backbone string,
-    // not binary buffers). A resumed run re-runs package.assemble and so
-    // repopulates this; it is only empty for the derived-manifest fallback used
-    // by regions the packager cannot build (no real files → MD5 recompute is a
-    // no-op there, and the DTD check is skipped for the same reason).
+    // following validate (the AssembledPackage carries only the backbone string,
+    // not binary buffers, and neither is DB-persisted). A resumed run re-runs
+    // package.assemble and so repopulates this; it is only empty for the
+    // derived-manifest fallback used by regions the packager cannot build (no
+    // real files → MD5 recompute is a no-op there, and the DTD check is skipped
+    // for the same reason).
     let assembledLeafBuffers: Record<string, Buffer> | undefined;
     await runStep('package.assemble', hashOutput(outputs), async () => {
       const { assembled, leafBuffers } = await assembleForValidation(
@@ -1693,11 +1847,23 @@ export async function runOrchestrator(
             region: inputs.region,
             submissionType: inputs.submissionType,
             organizationId: inputs.organizationId,
-            // OQ-5: backbone XML is not yet produced inline; helper handles
-            // the absence by binding the available components only. When the
-            // ZIP builder lands, pass `backboneXml` here.
-            backboneXml: undefined,
+            // OQ-5 (resolved for the real-packager path): the backbone IS now
+            // produced at package.assemble, so bind it — the eCTD index.xml
+            // (navigation backbone) is part of the §11.70 record. Fallback
+            // regions have no backbone (undefined) and the helper omits it, so
+            // this is a no-op there and stays consistent with the snapshot ('').
+            backboneXml: outputs.assembly.backboneXml,
           });
+
+          // Freeze the exact signed package so resume HYDRATES it instead of
+          // re-deriving (which is non-reproducible under useAI). Carries the full
+          // identity tuple so the resume integrity recompute is self-contained.
+          const signedSnapshot = buildSignedSnapshot(
+            outputs.assembly,
+            outputs.validation,
+            inputs.submissionId,
+            inputs.organizationId,
+          );
 
           // OQ-7: tenant-scoped lookup — WHERE organization_id = $1.
           const existing = await findActiveReleaseSignature({
@@ -1713,6 +1879,7 @@ export async function runOrchestrator(
               payloadDigest,
               signatureId: existing.id,
               awaitingSince: new Date().toISOString(),
+              signedSnapshot,
             };
             signStep.status = 'complete';
             signStep.completedAt = new Date().toISOString();
@@ -1734,6 +1901,7 @@ export async function runOrchestrator(
             const awaitingPayload: PackageSignStepPayload = {
               payloadDigest,
               awaitingSince: new Date().toISOString(),
+              signedSnapshot,
             };
             signStep.status = 'awaiting-signature';
             // Leave completedAt unset; this step is non-terminal.
@@ -2234,6 +2402,40 @@ async function resumeOrchestratorRun(
  * No transmit step yet; once package.sign is `complete`, the run rolls up to
  * `complete` (or `partial` if any other step failed).
  */
+/** Fail the package.sign step closed on a resume terminal, persist the audit
+ *  event + run row, and fire the run-completed metric (the fresh path fires it
+ *  at run end; resume terminals must fire it too or the counter/histogram
+ *  undercount every resume-finalized run). Duration is wall-clock from run
+ *  start — it includes the human-signature wait, which is the honest
+ *  time-to-finalize for a suspended run. */
+async function failResumeSignStep(
+  signStep: StepRecord,
+  previousRun: OrchestratorRun,
+  outputs: OrchestratorOutputs,
+  error: string,
+): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
+  signStep.status = 'failed';
+  signStep.error = error;
+  signStep.completedAt = new Date().toISOString();
+  await persistStepEvent(
+    previousRun.runId,
+    previousRun.organizationId,
+    signStep,
+    'fail',
+    previousRun.submissionFk,
+  );
+  previousRun.status = 'failed';
+  previousRun.completedAt = new Date().toISOString();
+  await persistRun(previousRun);
+  recordOrchestratorRunCompleted({
+    submissionType: previousRun.submissionType,
+    region: previousRun.region,
+    status: 'failed',
+    durationMs: Math.max(0, Date.now() - new Date(previousRun.startedAt).getTime()),
+  });
+  return { run: previousRun, outputs };
+}
+
 async function resumeAwaitingSignature(
   inputs: OrchestratorInputs,
   previousRun: OrchestratorRun,
@@ -2246,133 +2448,203 @@ async function resumeAwaitingSignature(
     );
   }
 
-  // Re-derive sync outputs. This includes module3Sections (composeFullModule3)
-  // and csrTables; subsequent helpers below rebuild assembly + validation.
-  const outputs = rederiveSyncOutputsForResume(inputs);
-
-  // Re-run the downstream synchronous side effects up to but NOT including
-  // package.sign — we need outputs.assembly + outputs.validation to recompute
-  // the digest. The m2.* / m1.admin / package.assemble / package.validate
-  // steps on previousRun are already terminal (complete/failed/skipped); we
-  // re-execute the validators in-memory to populate outputs without
-  // re-persisting the step records (they retain their original terminal
-  // status on previousRun.steps).
+  // Resolve the digest to look up the signature by. Two paths:
   //
-  // Building outputs.m2.* etc. requires the original inputs the caller
-  // supplies via OrchestratorInputs.
-  outputs.m23 =
-    outputs.module3Sections.length > 0
-      ? buildM23QualityOverallSummary({
-          module3Sections: outputs.module3Sections,
-          drugSubstanceName: inputs.drugSubstanceName,
-          drugProductName: inputs.drugProductName,
-        })
-      : undefined;
-  outputs.m24 =
-    inputs.nonclinicalStudies.length > 0
-      ? buildM24NonclinicalOverview({
-          nonclinicalStudies: inputs.nonclinicalStudies,
-          drugSubstanceName: inputs.drugSubstanceName,
-          indication: inputs.indication,
-        })
-      : undefined;
-  outputs.m25 =
-    inputs.csrInputs.length > 0
-      ? buildM25ClinicalOverview({
-          csrs: inputs.csrInputs,
-          indication: inputs.indication || '[indication not specified]',
-          investigationalProduct:
-            inputs.drugProductName || inputs.drugSubstanceName || '[product]',
-        })
-      : undefined;
-  outputs.m27 =
-    inputs.csrInputs.length > 0
-      ? buildM27ClinicalSummary({
-          csrs: inputs.csrInputs,
-          indication: inputs.indication || '[indication not specified]',
-          investigationalProduct:
-            inputs.drugProductName || inputs.drugSubstanceName || '[product]',
-        })
-      : undefined;
+  //   (A) HYDRATE — runs signed on/after the snapshot-persistence change carry
+  //       the exact signed package (persistedPayload.signedSnapshot). We
+  //       recompute the digest FROM THAT SNAPSHOT, never re-deriving from
+  //       source. This is the correct §11.70 semantics (release the record that
+  //       was signed) and the fix for useAI (AI narratives cannot be
+  //       reproduced byte-for-byte) and for input key-order fragility. The only
+  //       failure mode is stored-snapshot corruption, which fails closed.
+  //
+  //   (B) LEGACY re-derive — runs suspended BEFORE the change have no snapshot;
+  //       fall back to re-deriving assembly + validation and drift-checking.
+  //       Such in-flight runs are expected to be re-signed post-deploy anyway
+  //       (see docs/runbooks/ectd-signature-payload-deploy-boundary.md); a real
+  //       source change still surfaces as signature_payload_drift.
+  let outputs: OrchestratorOutputs;
+  let recomputedDigest: string;
 
-  // package.assemble + package.validate re-derivation. The re-derived assembly
-  // is byte-deterministic (renderLeafPdf is deterministic + PDF/A conversion is
-  // skipped), so the OQ-5 drift digest — sha256(assembly.leaves) — matches the
-  // originally validated run.
-  const sequenceNumber = inputs.sequenceNumber ?? '0000';
-  const { assembled, leafBuffers } = await assembleForValidation(
-    outputs.module3Sections,
-    inputs,
-    sequenceNumber,
-  );
-  outputs.assembly = assembled;
+  if (persistedPayload.signedSnapshot) {
+    const snap = persistedPayload.signedSnapshot;
+    // module3Sections/csrTables are re-derived only for display continuity in
+    // the returned outputs; they are NOT the signed record and never feed the
+    // digest. Done first so a fail-closed exit still returns populated outputs.
+    outputs = rederiveSyncOutputsForResume(inputs);
 
-  if (!inputs.skipValidation) {
-    const context: HardenedValidationContext = {
-      submissionId: inputs.submissionId,
-      region: outputs.assembly.region as HardenedValidationContext['region'],
-      applicationNumber: outputs.assembly.applicationNumber,
-      sequenceNumber: outputs.assembly.sequenceNumber,
-      submissionType: outputs.assembly.submissionType,
-      totalSizeBytes: outputs.assembly.totalSizeBytes,
-      leafBuffers,
+    // Fail CLOSED (not throw) on a structurally-malformed snapshot: a corrupted
+    // persisted record must surface as signature_snapshot_integrity_failure, not
+    // an uncaught error at digest recompute.
+    const snapshotWellFormed =
+      Array.isArray(snap.leaves) &&
+      snap.validatorOutcome != null &&
+      typeof snap.validatorOutcome === 'object' &&
+      typeof snap.submissionId === 'string' &&
+      typeof snap.organizationId === 'number' &&
+      typeof snap.applicationNumber === 'string' &&
+      typeof snap.region === 'string' &&
+      typeof snap.submissionType === 'string';
+    if (!snapshotWellFormed) {
+      return failResumeSignStep(signStep, previousRun, outputs, 'signature_snapshot_integrity_failure');
+    }
+
+    // The frozen record must be for the submission/tenant being resumed. This is
+    // a caller/run consistency check DISTINCT from snapshot corruption: getRun
+    // already tenant-scopes the run and resumeOrchestratorRun re-checks the org,
+    // but the snapshot carries its OWN full identity, so verify the whole tuple
+    // and label a mismatch clearly (a resume for the wrong submission, not a
+    // corrupted record).
+    if (
+      snap.submissionId !== inputs.submissionId ||
+      snap.organizationId !== inputs.organizationId ||
+      snap.applicationNumber !== inputs.applicationNumber ||
+      snap.region !== inputs.region ||
+      snap.submissionType !== inputs.submissionType
+    ) {
+      return failResumeSignStep(signStep, previousRun, outputs, 'signature_resume_identity_mismatch');
+    }
+
+    // Hydrate the FROZEN signed assembly.
+    outputs.assembly = {
+      leaves: snap.leaves,
+      totalSizeBytes: snap.totalSizeBytes,
+      applicationNumber: snap.applicationNumber,
+      sequenceNumber: snap.sequenceNumber,
+      region: snap.region,
+      submissionType: snap.submissionType,
+      backboneXml: snap.backboneXml,
     };
-    outputs.validation = await validateEctdPackageHardened(
-      outputs.assembly.leaves,
-      context,
-      outputs.assembly.backboneXml,
-    );
-  }
 
-  // OQ-5: drift-detect by recomputing the digest. If validation is missing
-  // (skipValidation=true) we cannot bind to a validator outcome — fail the
-  // step rather than sign a non-validated package.
-  if (!outputs.validation) {
-    signStep.status = 'failed';
-    signStep.error = 'package.sign cannot resume: validation outcome missing (skipValidation set?)';
-    signStep.completedAt = new Date().toISOString();
-    await persistStepEvent(
-      previousRun.runId,
-      previousRun.organizationId,
-      signStep,
-      'fail',
-      previousRun.submissionFk,
-    );
-    previousRun.status = 'failed';
-    previousRun.completedAt = new Date().toISOString();
-    await persistRun(previousRun);
-    return { run: previousRun, outputs };
-  }
+    // Integrity guard: recompute the digest ENTIRELY from the snapshot's own
+    // fields — SELF-CONTAINED (identity from the snapshot, backbone included, so
+    // all of the frozen record is covered, not just leaves+validatorOutcome) —
+    // and require it to equal the signed digest. A mismatch means the persisted
+    // record was corrupted/tampered; fail closed. ('' backbone is falsy → the
+    // helper omits it, matching sign-prep for fallback regions.)
+    recomputedDigest = computeBoundPayloadDigestFromComponents({
+      leaves: snap.leaves,
+      validatorOutcome: snap.validatorOutcome,
+      submissionId: snap.submissionId,
+      applicationNumber: snap.applicationNumber,
+      region: snap.region,
+      submissionType: snap.submissionType,
+      organizationId: snap.organizationId,
+      backboneXml: snap.backboneXml || undefined,
+    });
 
-  const recomputedDigest = computeBoundPayloadDigest({
-    assembly: outputs.assembly,
-    validation: outputs.validation,
-    submissionId: inputs.submissionId,
-    applicationNumber: inputs.applicationNumber,
-    region: inputs.region,
-    submissionType: inputs.submissionType,
-    organizationId: inputs.organizationId,
-  });
+    if (recomputedDigest !== persistedPayload.payloadDigest) {
+      return failResumeSignStep(signStep, previousRun, outputs, 'signature_snapshot_integrity_failure');
+    }
+  } else {
+    // ── (B) LEGACY re-derive path (runs suspended before snapshot support) ──
+    // Re-derive sync outputs. This includes module3Sections (composeFullModule3)
+    // and csrTables; subsequent helpers below rebuild assembly + validation.
+    outputs = rederiveSyncOutputsForResume(inputs);
 
-  if (recomputedDigest !== persistedPayload.payloadDigest) {
-    // Drift — the inputs to the signed payload have changed since the run
-    // was suspended. Per OQ-2 the run cannot recover; the user must
-    // regenerate from the changed upstream step (which produces a fresh
-    // awaiting-signature with a new digest) and re-sign.
-    signStep.status = 'failed';
-    signStep.error = 'signature_payload_drift';
-    signStep.completedAt = new Date().toISOString();
-    await persistStepEvent(
-      previousRun.runId,
-      previousRun.organizationId,
-      signStep,
-      'fail',
-      previousRun.submissionFk,
+    // Re-run the downstream synchronous side effects up to but NOT including
+    // package.sign — we need outputs.assembly + outputs.validation to recompute
+    // the digest. The m2.* / m1.admin / package.assemble / package.validate
+    // steps on previousRun are already terminal (complete/failed/skipped); we
+    // re-execute the validators in-memory to populate outputs without
+    // re-persisting the step records (they retain their original terminal
+    // status on previousRun.steps).
+    //
+    // Building outputs.m2.* etc. requires the original inputs the caller
+    // supplies via OrchestratorInputs.
+    outputs.m23 =
+      outputs.module3Sections.length > 0
+        ? buildM23QualityOverallSummary({
+            module3Sections: outputs.module3Sections,
+            drugSubstanceName: inputs.drugSubstanceName,
+            drugProductName: inputs.drugProductName,
+          })
+        : undefined;
+    outputs.m24 =
+      inputs.nonclinicalStudies.length > 0
+        ? buildM24NonclinicalOverview({
+            nonclinicalStudies: inputs.nonclinicalStudies,
+            drugSubstanceName: inputs.drugSubstanceName,
+            indication: inputs.indication,
+          })
+        : undefined;
+    outputs.m25 =
+      inputs.csrInputs.length > 0
+        ? buildM25ClinicalOverview({
+            csrs: inputs.csrInputs,
+            indication: inputs.indication || '[indication not specified]',
+            investigationalProduct:
+              inputs.drugProductName || inputs.drugSubstanceName || '[product]',
+          })
+        : undefined;
+    outputs.m27 =
+      inputs.csrInputs.length > 0
+        ? buildM27ClinicalSummary({
+            csrs: inputs.csrInputs,
+            indication: inputs.indication || '[indication not specified]',
+            investigationalProduct:
+              inputs.drugProductName || inputs.drugSubstanceName || '[product]',
+          })
+        : undefined;
+
+    // package.assemble + package.validate re-derivation. The re-derived assembly
+    // is byte-deterministic (renderLeafPdf is deterministic + PDF/A conversion is
+    // skipped), so the OQ-5 drift digest — sha256(assembly.leaves) — matches the
+    // originally validated run.
+    const sequenceNumber = inputs.sequenceNumber ?? '0000';
+    const { assembled, leafBuffers } = await assembleForValidation(
+      outputs.module3Sections,
+      inputs,
+      sequenceNumber,
     );
-    previousRun.status = 'failed';
-    previousRun.completedAt = new Date().toISOString();
-    await persistRun(previousRun);
-    return { run: previousRun, outputs };
+    outputs.assembly = assembled;
+
+    if (!inputs.skipValidation) {
+      const context: HardenedValidationContext = {
+        submissionId: inputs.submissionId,
+        region: outputs.assembly.region as HardenedValidationContext['region'],
+        applicationNumber: outputs.assembly.applicationNumber,
+        sequenceNumber: outputs.assembly.sequenceNumber,
+        submissionType: outputs.assembly.submissionType,
+        totalSizeBytes: outputs.assembly.totalSizeBytes,
+        leafBuffers,
+      };
+      outputs.validation = await validateEctdPackageHardened(
+        outputs.assembly.leaves,
+        context,
+        outputs.assembly.backboneXml,
+      );
+    }
+
+    // OQ-5: drift-detect by recomputing the digest. If validation is missing
+    // (skipValidation=true) we cannot bind to a validator outcome — fail the
+    // step rather than sign a non-validated package.
+    if (!outputs.validation) {
+      return failResumeSignStep(
+        signStep,
+        previousRun,
+        outputs,
+        'package.sign cannot resume: validation outcome missing (skipValidation set?)',
+      );
+    }
+
+    recomputedDigest = computeBoundPayloadDigest({
+      assembly: outputs.assembly,
+      validation: outputs.validation,
+      submissionId: inputs.submissionId,
+      applicationNumber: inputs.applicationNumber,
+      region: inputs.region,
+      submissionType: inputs.submissionType,
+      organizationId: inputs.organizationId,
+    });
+
+    if (recomputedDigest !== persistedPayload.payloadDigest) {
+      // Drift — the inputs to the signed payload have changed since the run
+      // was suspended. Per OQ-2 the run cannot recover; the user must
+      // regenerate from the changed upstream step (which produces a fresh
+      // awaiting-signature with a new digest) and re-sign.
+      return failResumeSignStep(signStep, previousRun, outputs, 'signature_payload_drift');
+    }
   }
 
   // No drift — look up the active signature. OQ-7: WHERE organization_id = $1.
@@ -2390,10 +2662,13 @@ async function resumeAwaitingSignature(
   }
 
   // Active signature found → transition step to complete, run rolls up.
+  // Carry the signed snapshot forward so a subsequent resume still hydrates
+  // the frozen record rather than falling back to re-derivation.
   const completePayload: PackageSignStepPayload = {
     payloadDigest: recomputedDigest,
     signatureId: found.id,
     awaitingSince: persistedPayload.awaitingSince,
+    signedSnapshot: persistedPayload.signedSnapshot,
   };
   signStep.status = 'complete';
   signStep.completedAt = new Date().toISOString();
@@ -2418,6 +2693,14 @@ async function resumeAwaitingSignature(
         : 'complete';
   previousRun.completedAt = new Date().toISOString();
   await persistRun(previousRun);
+  // Fire the run-completed metric on this resume terminal — the fresh path's
+  // recorder does not run for a run finalized via signature resume.
+  recordOrchestratorRunCompleted({
+    submissionType: previousRun.submissionType,
+    region: previousRun.region,
+    status: previousRun.status as 'complete' | 'failed' | 'partial',
+    durationMs: Math.max(0, Date.now() - new Date(previousRun.startedAt).getTime()),
+  });
   return { run: previousRun, outputs };
 }
 

@@ -2,7 +2,7 @@
  * PDEV App composer — full Phase 7 (sub-phases 7.0 / 7.1 / 7.2 / 7.3 / 7.4).
  *
  * 3-pane shell with surface routing for all 8 PDEV nav items, governed
- * mutations through <PdevConfirmDialog>, and overlay sheets for
+ * mutations through <GovernedConfirmDialog>, and overlay sheets for
  * Activity detail (6 tabs), AI drafting workbench, evidence picker.
  *
  * Data sources (all routes already live in server/routes/pdev/pdev-routes.ts):
@@ -49,10 +49,9 @@ import { isWorkstreamNav } from './data/nav';
 import type { PdevActivityView } from './data/types';
 import type { PdevWorkstream } from './data/enums';
 import {
-  PdevConfirmDialog,
+  GovernedConfirmDialog,
   type ConfirmConfig,
-} from './components/ConfirmDialog';
-import { GovernedConfirmDialog } from '../_shared/components/GovernedConfirmDialog';
+} from '../_shared/components/GovernedConfirmDialog';
 import { PDEV_COMMANDS } from './data/pdevCommands';
 
 const HERE_LABEL: Record<string, string> = {
@@ -487,12 +486,6 @@ export function PdevApp({
       )}
 
       {snapshotConfirm && programId && (
-        // First pdev consumer to migrate onto the canonical shared
-        // GovernedConfirmDialog (audit high-value #11). The other four PDEV
-        // sites (FdaStream, Assembly, EvidencePicker, ActivityDetail) still
-        // use PdevConfirmDialog until pdev CSS decouples from the kit shell.
-        // Contract is identical (ConfirmConfig / ConfirmResult), so this is
-        // a drop-in swap.
         <GovernedConfirmDialog
           open={true}
           {...snapshotConfirm}

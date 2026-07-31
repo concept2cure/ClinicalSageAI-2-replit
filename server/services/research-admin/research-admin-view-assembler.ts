@@ -20,8 +20,10 @@
  *   no record of that training type at all     → 'n/a' (surface renders '—')
  * The store carries no per-person requiredness model, so an absent record is shown
  * as the honest empty cell ('n/a'), never asserted as a compliance failure. When a
- * person holds multiple records of one type (recertifications), the latest
- * completion governs.
+ * person holds multiple records of one type (recertifications), the record giving
+ * the BEST current standing governs — a still-valid, longer-dated certificate is
+ * never masked by a shorter refresher that has already lapsed. This matches
+ * citi-service.getTrainingMatrix, which surfaces the person's valid coverage.
  *
  * `role` is the roster's CHECK-constrained vocabulary rendered with its standard
  * short label ('PI', 'Co-I', …) — presentation of a real enum, never fabricated;
@@ -31,7 +33,7 @@
  * renders its honest empty state.
  */
 import { pool } from '../../db';
-import { trainingStatus } from '../citi/citi-logic';
+import { trainingStatus, type CitiTrainingStatus } from '../citi/citi-logic';
 
 /**
  * The surface's CITI training columns, in render order, each mapped to its
@@ -94,9 +96,9 @@ export async function assembleOrgResearchAdmin(
   const personnel = personnelRes.rows as PersonnelRow[];
   if (personnel.length === 0) return [];
 
-  // Every live training record for the rendered CITI columns, ascending by
-  // completion so that map-overwrite leaves the LATEST completion governing each
-  // (person, type) cell (a dated record always supersedes an undated assignment).
+  // Every live training record for the rendered CITI columns. The single cell
+  // shown per (person, type) is DERIVED here by best-standing collapse (below),
+  // so the query only needs a stable, deterministic order.
   const trainingRes = await pool.query(
     `SELECT personnel_id, training_type,
             completed_date::text AS completed_date,
@@ -105,24 +107,48 @@ export async function assembleOrgResearchAdmin(
       WHERE organization_id = $1
         AND deleted_at IS NULL
         AND training_type = ANY($2::text[])
-      ORDER BY completed_date ASC NULLS FIRST, expires_date ASC NULLS FIRST, id ASC`,
+      ORDER BY personnel_id ASC, training_type ASC, id ASC`,
     [orgId, [...CITI_COLUMN_TYPES]],
   );
-  const governing = new Map<string, { completed: string | null; expires: string | null }>();
+
+  // Collapse a person's multiple records of one type to the one giving the best
+  // current standing. Rank current < expiring < expired < missing (best first),
+  // computed against `today`; tie-break on the furthest-out expiry (a null
+  // expiry = no recertification clock = furthest of all). This is what stops a
+  // lapsed short refresher from masking a still-valid longer-dated certificate,
+  // and keeps this surface in agreement with citi-service.getTrainingMatrix.
+  const STATUS_RANK: Record<CitiTrainingStatus, number> = {
+    current: 0,
+    expiring: 1,
+    expired: 2,
+    missing: 3,
+  };
+  // True when expiry `a` extends coverage further out than `b` (null = furthest).
+  const laterExpiry = (a: string | null, b: string | null): boolean => {
+    if (a === b) return false;
+    if (a === null) return true;
+    if (b === null) return false;
+    return a > b; // ISO YYYY-MM-DD compares correctly as text
+  };
+
+  const governing = new Map<string, { status: CitiTrainingStatus; expires: string | null }>();
   for (const r of trainingRes.rows as TrainingRow[]) {
-    governing.set(`${r.personnel_id}:${r.training_type}`, {
-      completed: r.completed_date,
-      expires: r.expires_date,
-    });
+    const key = `${r.personnel_id}:${r.training_type}`;
+    const status = trainingStatus(r.completed_date, r.expires_date, today);
+    const prev = governing.get(key);
+    if (
+      prev === undefined ||
+      STATUS_RANK[status] < STATUS_RANK[prev.status] ||
+      (STATUS_RANK[status] === STATUS_RANK[prev.status] && laterExpiry(r.expires_date, prev.expires))
+    ) {
+      governing.set(key, { status, expires: r.expires_date });
+    }
   }
 
   return personnel.map((p) => ({
     id: String(p.id),
     name: p.full_name ?? null,
     role: p.role == null ? null : (ROLE_LABEL[p.role] ?? p.role),
-    cells: CITI_COLUMN_TYPES.map((type) => {
-      const rec = governing.get(`${p.id}:${type}`);
-      return rec ? trainingStatus(rec.completed, rec.expires, today) : 'n/a';
-    }),
+    cells: CITI_COLUMN_TYPES.map((type) => governing.get(`${p.id}:${type}`)?.status ?? 'n/a'),
   }));
 }

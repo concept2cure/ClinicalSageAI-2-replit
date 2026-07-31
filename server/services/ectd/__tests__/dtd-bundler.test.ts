@@ -20,6 +20,16 @@ describe('requiredDtdsForRegion', () => {
     expect(requiredDtdsForRegion('fda')).toEqual([ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd']);
     expect(requiredDtdsForRegion('ema')).toEqual([ICH_BACKBONE_DTD, 'eu-regional.dtd']);
     expect(requiredDtdsForRegion('pmda')).toEqual([ICH_BACKBONE_DTD, 'jp-regional.dtd']);
+    expect(requiredDtdsForRegion('ca')).toEqual([ICH_BACKBONE_DTD, 'ca-regional.dtd']);
+  });
+
+  it('requires eu-regional.dtd for every widened region (they build the EMA backbone)', () => {
+    // These 8 regions route through buildEmaBackbone, whose DOCTYPE is
+    // eu-regional.dtd — so a self-contained package MUST ship it. Under-reporting
+    // (returning only the ICH backbone) is the P0-1 gate bypass this guards.
+    for (const region of ['uk', 'ch', 'au', 'cn', 'br', 'in', 'kr', 'sg'] as const) {
+      expect(requiredDtdsForRegion(region)).toEqual([ICH_BACKBONE_DTD, 'eu-regional.dtd']);
+    }
   });
 });
 
@@ -85,6 +95,22 @@ describe('assessDtdReadiness', () => {
   it('does NOT block staging even when required', () => {
     const r = assessDtdReadiness({ region: 'pmda', present: [], environment: 'staging', requireDtd: true });
     expect(r.cleared).toBe(true);
+  });
+
+  it('blocks a production widened-region (kr) package missing eu-regional.dtd', () => {
+    // Regression guard: kr builds the EMA backbone, so a production package that
+    // ships only the ICH backbone is NOT self-contained. Before the region map
+    // was completed this cleared incorrectly (kr required only the ICH DTD).
+    const r = assessDtdReadiness({
+      region: 'kr',
+      present: [ICH_BACKBONE_DTD],
+      environment: 'production',
+      requireDtd: true,
+    });
+    expect(r.selfContained).toBe(false);
+    expect(r.missing).toEqual(['eu-regional.dtd']);
+    expect(r.cleared).toBe(false);
+    expect(r.blockers[0]).toContain('eu-regional.dtd');
   });
 
   it('matches DTD names case-insensitively', () => {

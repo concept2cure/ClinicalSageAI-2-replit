@@ -63,13 +63,30 @@ DECLARE
   rec           RECORD;
   applied_count INT := 0;
   skipped_drift INT := 0;
-  -- Tables that intentionally hold no tenant-scoped rows, mirroring 0021's own
-  -- allowlist: cross-tenant reference/registry data every tenant reads.
+  forced_count  INT := 0;
+  healed_count  INT := 0;
+  remaining_pol INT := 0;
+  -- Tables that carry a tenant column but must NOT be policied — the canonical
+  -- RLS allowlist. This list MUST equal server/db/rlsAllowlist.ts → RLS_ALLOWLIST
+  -- (the single source of truth) exactly, byte-for-byte with 0021's copy and
+  -- scripts/db/rls-coverage-check.sql; scripts/ci/check-rls-allowlist-sync.mjs
+  -- fails the build on any drift between the four.
+  --
+  -- WHY IT MUST MATCH, NOT approximate (ledger C-44). An EARLIER version of this
+  -- sweep used a hand-written 4-entry list that dropped api_keys, billing_budgets
+  -- and billing_alerts. That silently policied api_keys — which is read PRE-AUTH
+  -- by validateApiKey() (server/services/api-key-service.ts) to resolve which org
+  -- a key belongs to, before any tenant context exists. Under RLS_ENFORCE=on
+  -- (mandatory in production) the tenant_isolation_policy filtered that lookup to
+  -- zero rows, breaking ALL api-key authentication. 0021 exempts these tables for
+  -- exactly that reason; the sweep now honors the same exemption.
   allowlist TEXT[] := ARRAY[
-    'organizations',
     'organization_users',
+    '__drizzle_migrations',
     'stripe_events',
-    'ectd_agency_configs'
+    'billing_budgets',
+    'billing_alerts',
+    'api_keys'
   ];
 BEGIN
   FOR rec IN
@@ -107,6 +124,23 @@ BEGIN
       CONTINUE;
     END IF;
 
+    -- A table may expose more than one tenant column (e.g. organization_id AND
+    -- tenant_id). The FOR-loop's SELECT is a single snapshot whose NOT EXISTS
+    -- guard is evaluated ONCE, before the loop creates anything, so such a table
+    -- is yielded once per column and both rows pass the guard. The first
+    -- iteration attaches the policy; the second then aborts
+    -- 'policy "tenant_isolation_policy" ... already exists' — which broke this
+    -- migration when applied through install-fresh's C2C step (audit_logs).
+    -- Re-check at execution time so a table already handled this run is skipped.
+    IF EXISTS (
+      SELECT 1 FROM pg_policies p
+      WHERE p.schemaname = rec.table_schema
+        AND p.tablename = rec.table_name
+        AND p.policyname = 'tenant_isolation_policy'
+    ) THEN
+      CONTINUE;
+    END IF;
+
     EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', rec.table_schema, rec.table_name);
     EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', rec.table_schema, rec.table_name);
     EXECUTE format($pol$
@@ -130,6 +164,76 @@ BEGIN
     applied_count := applied_count + 1;
   END LOOP;
 
-  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % skipped for non-integer tenant key',
-    applied_count, skipped_drift;
+  -- Self-heal pass (ledger C-44): REMOVE tenant_isolation_policy from any
+  -- allowlisted table that wrongly carries it, restoring the exempt state.
+  --
+  -- WHY THIS EXISTS. An earlier revision of this sweep carried a hand-written
+  -- allowlist that dropped api_keys / billing_budgets / billing_alerts, so it
+  -- POLICIED them. api_keys is read PRE-AUTH by validateApiKey() to resolve which
+  -- org a key belongs to, before any tenant context is set; under RLS_ENFORCE=on
+  -- the policy filtered that lookup to zero rows and broke ALL api-key auth. The
+  -- forward fix (correct allowlist above) stops NEW databases from hitting it, but
+  -- the first loop only ever ADDS a policy — it cannot undo one an earlier run
+  -- already created. Any environment that applied the buggy revision would stay
+  -- broken. This pass heals it: an allowlisted table means "must not be policied",
+  -- so a tenant_isolation_policy on one is unambiguously wrong and safe to drop.
+  -- We touch ONLY our own policy name, never a subsystem's differently-named one.
+  FOR rec IN
+    SELECT p.schemaname, p.tablename
+    FROM pg_policies p
+    WHERE p.schemaname = 'public'
+      AND p.policyname = 'tenant_isolation_policy'
+      AND p.tablename = ANY (allowlist)
+  LOOP
+    EXECUTE format('DROP POLICY tenant_isolation_policy ON %I.%I', rec.schemaname, rec.tablename);
+    healed_count := healed_count + 1;
+    -- If that was the only policy, fully restore the exempt state: NO FORCE and
+    -- DISABLE RLS, so the table is not left as an owner default-deny surprise.
+    SELECT count(*) INTO remaining_pol
+      FROM pg_policies p2
+     WHERE p2.schemaname = rec.schemaname AND p2.tablename = rec.tablename;
+    IF remaining_pol = 0 THEN
+      EXECUTE format('ALTER TABLE %I.%I NO FORCE ROW LEVEL SECURITY', rec.schemaname, rec.tablename);
+      EXECUTE format('ALTER TABLE %I.%I DISABLE ROW LEVEL SECURITY', rec.schemaname, rec.tablename);
+    END IF;
+    RAISE NOTICE '[rls-sweep] HEALED %.% — dropped a tenant_isolation_policy from an allowlisted (must-not-be-policied) table (C-44)',
+      rec.schemaname, rec.tablename;
+  END LOOP;
+
+  -- Second pass (ledger C-43): FORCE row-level security on every table that
+  -- ALREADY carries the tenant_isolation_policy but was left un-FORCED by whatever
+  -- source created it.
+  --
+  -- WHY THIS IS SEPARATE FROM THE LOOP ABOVE. That loop only touches tables the
+  -- policy does not yet exist on (so it never clobbers a subsystem's own). But a
+  -- table can arrive here already carrying tenant_isolation_policy from another
+  -- source that ran ENABLE + CREATE POLICY without FORCE — and the loop above
+  -- then skips it, so the missing FORCE is never added. A policy WITHOUT force is
+  -- silently bypassed for the table OWNER. The boot guard
+  -- (server/db/rlsEnforcement.ts) verifies the runtime role is not a superuser and
+  -- does not hold BYPASSRLS, but NOT that it is a non-owner — so relying on
+  -- "the app never connects as the table owner" is an unproven assumption. FORCE
+  -- closes it unconditionally, at no cost.
+  --
+  -- Only tables that HAVE the policy are forced, so a policy-less RLS table is
+  -- never turned into an owner default-deny surprise. Idempotent: re-running
+  -- forces nothing once every policied table is covered.
+  FOR rec IN
+    SELECT n.nspname AS schema_name, c.relname AS table_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_policies p
+      ON p.schemaname = n.nspname AND p.tablename = c.relname
+     AND p.policyname = 'tenant_isolation_policy'
+    WHERE c.relkind = 'r' AND c.relforcerowsecurity = false
+    GROUP BY n.nspname, c.relname
+  LOOP
+    EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', rec.schema_name, rec.table_name);
+    forced_count := forced_count + 1;
+    RAISE NOTICE '[rls-sweep] FORCED row-level security on %.% (it carried tenant_isolation_policy but not FORCE)',
+      rec.schema_name, rec.table_name;
+  END LOOP;
+
+  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % forced retroactively; % healed off allowlisted tables; % skipped for non-integer tenant key',
+    applied_count, forced_count, healed_count, skipped_drift;
 END $$;

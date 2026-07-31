@@ -1241,20 +1241,30 @@
 .pdev-grade-a { background: var(--success); color: white; }
 .pdev-grade-b { background: var(--accent-100); color: white; }
 .pdev-grade-c { background: var(--warning); color: white; }
-.pdev-aidraft-title {
-  font-family: var(--font-serif); font-size: 18px; font-weight: 500;
-  color: var(--text-100); margin-bottom: 8px;
+/* Governed-draft result panel — metadata only (no fabricated prose preview). */
+.pdev-aidraft-result { display: flex; flex-direction: column; gap: 12px; }
+.pdev-aidraft-result-head {
+  display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: start;
 }
-.pdev-aidraft-section {
-  display: grid; grid-template-columns: 32px 1fr; gap: 8px;
-  padding: 8px 0; border-bottom: 1px dashed var(--border-100);
+.pdev-aidraft-result-title {
+  font-family: var(--font-serif); font-size: 17px; font-weight: 500;
+  color: var(--text-100);
 }
-.pdev-aidraft-section-num { color: var(--text-400); font-size: 11px; }
-.pdev-aidraft-section-label {
-  font-weight: 600; color: var(--text-100); font-size: 13px; margin-bottom: 2px;
+.pdev-aidraft-result-sub {
+  font-size: 12px; color: var(--text-300); line-height: 1.5; margin-top: 2px;
 }
-.pdev-aidraft-section-preview {
+.pdev-aidraft-meta { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.pdev-aidraft-meta-row {
+  display: grid; grid-template-columns: 140px 1fr; gap: 10px; align-items: baseline;
+  padding: 6px 0; border-bottom: 1px dashed var(--border-100);
+}
+.pdev-aidraft-meta-row dt { color: var(--text-400); font-size: 11px; }
+.pdev-aidraft-meta-row dd {
+  margin: 0; color: var(--text-100); font-size: 13px; word-break: break-word;
+}
+.pdev-aidraft-openhint {
   font-size: 12px; color: var(--text-300); line-height: 1.5;
+  padding: 10px 12px; background: var(--bg-050); border-radius: 6px;
 }
 .pdev-sheet-foot {
   display: flex; justify-content: space-between;

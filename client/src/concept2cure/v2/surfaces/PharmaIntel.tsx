@@ -6,7 +6,11 @@ import { EmptyState } from '../dataConnect';
 
 interface PharmaAccProps {
   title: string;
-  icon: string;
+  // Was `string` when accordion headers rendered pictograph glyphs.
+  // Now takes a real icon node from the shared I set, matching every
+  // EmptyState body in this file and closing the design-system
+  // "no emoji" non-negotiable at the callsite.
+  icon: React.ReactNode;
   open: boolean;
   onToggle: () => void;
   badge?: string | number | null;
@@ -58,7 +62,7 @@ export function PharmaIntelPanel({ pid }: PharmaIntelPanelProps) {
   return (
     <div className="dv-dock dv-dock-embed">
       <div className="dv-dock-scroll">
-        <PharmaAcc title="Shadow review" icon={'📋'} open={open === 'shadow'} onToggle={() => setOpen(open === 'shadow' ? null : 'shadow')}>
+        <PharmaAcc title="Shadow review" icon={I.clipboardList} open={open === 'shadow'} onToggle={() => setOpen(open === 'shadow' ? null : 'shadow')}>
           {/* Backend gap: the only shadow endpoint (GET /api/shadow-review,
              register-inline-routes.ts) is org-scoped, per-lens reviewer findings
              for the dedicated Shadow Review surface. It returns no pathway-scoped
@@ -71,7 +75,7 @@ export function PharmaIntelPanel({ pid }: PharmaIntelPanelProps) {
           />
         </PharmaAcc>
 
-        <PharmaAcc title="Biostatistics judgment" icon={'📊'} open={open === 'biostats'} onToggle={() => setOpen(open === 'biostats' ? null : 'biostats')}>
+        <PharmaAcc title="Biostatistics judgment" icon={I.barChart} open={open === 'biostats'} onToggle={() => setOpen(open === 'biostats' ? null : 'biostats')}>
           {/* Backend gap: /api/ana-biostats exposes only POST compute/judge/
              workflow (they compute from a supplied design, not a persisted
              per-pathway judgment) plus the governed-documents read the
@@ -85,7 +89,7 @@ export function PharmaIntelPanel({ pid }: PharmaIntelPanelProps) {
         </PharmaAcc>
 
         {isAtmp && (
-          <PharmaAcc title="ATMP — Gene & Cell Therapy" icon={'🧬'} open={open === 'atmp'} onToggle={() => setOpen(open === 'atmp' ? null : 'atmp')}>
+          <PharmaAcc title="ATMP — Gene & Cell Therapy" icon={I.microscope} open={open === 'atmp'} onToggle={() => setOpen(open === 'atmp' ? null : 'atmp')}>
             {/* Backend gap: /advanced-therapies/framework/:region is a
                region-scoped regulatory-knowledge stub (and /classify is POST) —
                neither is a persisted, product-specific ATMP CMC/clinical/vector
@@ -99,7 +103,7 @@ export function PharmaIntelPanel({ pid }: PharmaIntelPanelProps) {
         )}
 
         {isCmc && (
-          <PharmaAcc title="CMC Module 3 OS" icon={'🔬'} open={open === 'cmcos'} onToggle={() => setOpen(open === 'cmcos' ? null : 'cmcos')}>
+          <PharmaAcc title="CMC Module 3 OS" icon={I.beaker} open={open === 'cmcos'} onToggle={() => setOpen(open === 'cmcos' ? null : 'cmcos')}>
             {/* Backend gap: GET /api/cmc/module3-board returns section approval
                state only (no `stale` / `staleReason`, no contradictions) and
                requires a projectId this pathway-keyed panel does not carry — so
@@ -114,7 +118,7 @@ export function PharmaIntelPanel({ pid }: PharmaIntelPanelProps) {
         )}
 
         {isInd && (
-          <PharmaAcc title="IND assembly (Form 1571 / 1572)" icon={'📝'} open={open === 'ind'} onToggle={() => setOpen(open === 'ind' ? null : 'ind')}>
+          <PharmaAcc title="IND assembly (Form 1571 / 1572)" icon={I.fileText} open={open === 'ind'} onToggle={() => setOpen(open === 'ind' ? null : 'ind')}>
             {/* Backend gap: no read endpoint returns an assembled Form 1571 cover
                sheet + per-investigator 1572 completeness for a pathway.
                /api/ind-master-data exposes org-scoped sponsor / agent /

@@ -974,8 +974,8 @@ export const ZenSignup: React.FC = () => {
 
       <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
         <p className="text-sm text-blue-800">
-          <strong>You're all set.</strong> Start with Deep Research to populate your workspace, or
-          jump straight into document authoring.
+          <strong>Workspace ready.</strong> Start with Deep Research to populate it, or open
+          document authoring directly.
         </p>
       </div>
 

@@ -737,7 +737,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     const pool = getPool();
     const [sectionsRes, contradictionsRes] = await Promise.all([
       pool.query(
-        `SELECT approval_state FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
+        `SELECT approval_state, stale FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
         [orgId, projectId]
       ),
       pool.query(
@@ -747,6 +747,10 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
     ]);
 
     const sections = sectionsRes.rows;
+    // A section that went stale AFTER approval (source changed since sign-off) must
+    // not ship: its approval no longer matches its content. Mirror the readiness
+    // endpoint, which requires staleSections === 0 before export.
+    const staleSections = sections.filter((s: any) => Boolean(s.stale)).length;
     const allApproved = sections.length > 0 && sections.every((s: any) => s.approval_state === 'approved');
     const allowed = canFinalizeExport({
       approvalState: allApproved ? 'approved' : 'draft',
@@ -780,7 +784,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
           hasProvenance: true,
           unresolvedContradictionCount: unresolvedCount,
           criticalContradictionCount: openCritical,
-          isStale: false,
+          isStale: staleSections > 0,
           completenessScore: sections.length > 0 ? approvedCount / sections.length : 0,
         },
         exportState: {
@@ -802,9 +806,12 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
       typeof canonicalGovernedState === 'object' &&
       (canonicalGovernedState as any).derivedFlags?.hasUnresolvedGovernedDecisions === true;
 
-    // Fail-closed convergence: block if EITHER the existing check OR the fabric blocks OR governed decisions are unresolved
-    if (!allowed || fabricBlocks || governedDecisionsBlock) {
-      const errorMsg = governedDecisionsBlock && allowed && !fabricBlocks
+    // Fail-closed convergence: block if the existing check OR the fabric blocks OR
+    // governed decisions are unresolved OR any section went stale after approval.
+    if (!allowed || fabricBlocks || governedDecisionsBlock || staleSections > 0) {
+      const errorMsg = staleSections > 0
+        ? `${staleSections} section(s) went stale after approval and must be re-approved before final export`
+        : governedDecisionsBlock && allowed && !fabricBlocks
         ? `Unresolved governed decisions block final export (${(canonicalGovernedState as any).decisionLifecycle?.unresolvedCount || 0} unresolved, ${(canonicalGovernedState as any).decisionLifecycle?.escalatedCount || 0} escalated)`
         : fabricBlocks && allowed
           ? 'Governed document fabric blocked final export'
@@ -815,6 +822,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
         data: {
           totalSections: sections.length,
           approvedSections: approvedCount,
+          staleSections,
           openCriticalContradictions: openCritical,
           canonicalGovernedState,
         },

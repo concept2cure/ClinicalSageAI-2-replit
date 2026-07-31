@@ -132,6 +132,33 @@ function requireTenant(req: Request, res: Response): number | null {
   return orgId;
 }
 
+/**
+ * The package.sign step's outputRef now carries the full signed-package snapshot
+ * (leaf manifest + backbone XML). Do NOT ship that to the client verbatim — it
+ * is large and exposes internal package structure. Redact it to the fields a
+ * caller needs (status/digest/signature id), leaving every other step's
+ * outputRef untouched.
+ */
+function redactStepOutputRef<T extends { key: string; outputRef?: string }>(step: T): T {
+  if (step.key !== 'package.sign' || !step.outputRef) return step;
+  try {
+    const parsed = JSON.parse(step.outputRef) as {
+      payloadDigest?: unknown;
+      signatureId?: unknown;
+      awaitingSince?: unknown;
+    };
+    if (parsed && typeof parsed === 'object' && typeof parsed.payloadDigest === 'string') {
+      const compact: Record<string, unknown> = { payloadDigest: parsed.payloadDigest };
+      if (typeof parsed.signatureId === 'number') compact.signatureId = parsed.signatureId;
+      if (typeof parsed.awaitingSince === 'string') compact.awaitingSince = parsed.awaitingSince;
+      return { ...step, outputRef: JSON.stringify(compact) };
+    }
+  } catch {
+    /* non-JSON outputRef (e.g. a skipped-reason string) — leave as-is */
+  }
+  return step;
+}
+
 const router = Router();
 
 // ── Validation schemas ──────────────────────────────────────────────────────
@@ -421,13 +448,16 @@ router.post('/runs', async (req: Request, res: Response) => {
     return res.json({
       runId: result.run.runId,
       status: result.run.status,
-      steps: result.run.steps.map(s => ({
-        key: s.key,
-        status: s.status,
-        durationMs: s.durationMs,
-        outputRef: s.outputRef,
-        error: s.error,
-      })),
+      steps: result.run.steps.map(s => {
+        const r = redactStepOutputRef(s);
+        return {
+          key: r.key,
+          status: r.status,
+          durationMs: r.durationMs,
+          outputRef: r.outputRef,
+          error: r.error,
+        };
+      }),
       outputs: {
         m3SectionCount: result.outputs.module3Sections.length,
         csrTableSets: result.outputs.csrTables.length,
@@ -470,7 +500,8 @@ router.get('/runs/:runId', async (req: Request, res: Response) => {
 
   const run = await getRun(String(req.params.runId), organizationId);
   if (!run) return res.status(404).json({ error: 'run_not_found' });
-  return res.json(run);
+  // Redact the sign step's snapshot from the response (see redactStepOutputRef).
+  return res.json({ ...run, steps: run.steps.map(redactStepOutputRef) });
 });
 
 /**

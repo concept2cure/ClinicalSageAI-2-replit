@@ -403,8 +403,14 @@ export function useProjects() {
     },
     onError: error => {
       toast({
-        title: 'Failed to create project',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: 'Could not create project',
+        // Named-object + next-action per the microcopy rule: state what
+        // failed (server-provided message when we have one, or a specific
+        // fallback), then what the user can do about it.
+        description:
+          error instanceof Error
+            ? error.message
+            : 'The create-project request failed before reaching the server. Check the connection and retry.',
         variant: 'destructive',
       });
     },

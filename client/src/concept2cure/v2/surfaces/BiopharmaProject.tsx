@@ -8,7 +8,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLive, useLiveData, useLiveList } from '../dataConnect';
+import { SampleTag, useLiveData, useLiveList, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
@@ -30,10 +30,6 @@ import {
   BIO_PHASES,
   BIO_MODULES,
   BIO_BLA,
-  CSR_PROGRAM,
-  CSR_SECTIONS,
-  RW_TREE,
-  RW_INTEL,
 } from '../fixtures/project3-data';
 import type {
   CsrProgram,
@@ -75,7 +71,35 @@ function GateCell({ ok, k, v }: { ok?: boolean; k: string; v: string }) {
   );
 }
 
-/* ════ Biopharma — BLA / CTD surface ════ */
+/* ════ Biopharma — BLA / CTD surface ════
+
+   ⚠️ BUILD GAP — NOT yet fixture-free (reported, not fabricated).
+
+   Unlike CsrWorkflow and RegulatoryWorkspace below (both now render real,
+   org-scoped data), NONE of this surface's four panels has a backend that
+   returns its display contract, so there is no real data to render and no
+   honest way to retire the fixtures here without first building the routes:
+
+     · Header      BIO_PROGRAM  — no fetch. Closest real route is the programs
+                                  LIST GET /api/biopharma (server/routes/biopharma/
+                                  programs.ts:47), a different shape, not called here.
+     · Phase strip BIO_PHASES   — no fetch, no backend anywhere. There is no
+                                  per-phase lifecycle-progress endpoint.
+     · CTD modules BIO_MODULES  — useLiveList('/api/biopharma/ctd', …) but that
+                                  router (server/routes/biopharma/ctd.ts) exposes
+                                  ONLY GET /structure and GET /build-state/:projectId —
+                                  no root GET and nothing returning the M1–M5
+                                  {code,label,pct,status,docs} summary. The fetch
+                                  404s every mount and always falls back to the fixture.
+     · BLA bench   BIO_BLA      — no read for the per-attribute similarity/
+                                  comparability/immunogenicity tables. /api/biopharma/bla
+                                  (bla-workbench.ts) is POST-compute + GET /assessments
+                                  (metadata list), a different shape.
+
+   Per the GA guardrail, this is STOPPED and reported as a backend build gap
+   rather than fabricated or gutted into permanent empty states. The SampleTag +
+   BIO_* fixtures stay ONLY until a shape-matching org-scoped read exists; a
+   follow-up then removes them exactly as the two surfaces below were done. */
 
 export function BiopharmaProject({ onAsk, onNav }: SurfaceViewProps) {
   const p = BIO_PROGRAM;
@@ -195,10 +219,13 @@ export function BiopharmaProject({ onAsk, onNav }: SurfaceViewProps) {
 
 /* ════ CSR Workflow — ICH E3 surface ════ */
 
-/** GET /api/csr-workflow/board payload (server csr-workflow-routes.ts). */
+/** GET /api/csr-workflow/board payload (server csr-workflow-routes.ts), the
+ *  inner `data` object after the { success, data } envelope is unwrapped. */
 interface CsrBoard {
   program: CsrProgram | null;
   sections: CsrSection[];
+  meta?: Record<string, unknown>;
+  generatedAt?: string;
 }
 
 /**
@@ -426,26 +453,15 @@ function RegulatoryPanel({
 
 export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
   // Live ICH E3 CSR build board (GET /api/csr-workflow/board → { success,
-  // data: { program, sections } }). `useLive` assigns the whole response body to
-  // `.data`, so the payload is at raw.data.data. A null `program` means the org
-  // has no live CSR build job yet — treat that (and any unreachable/malformed
-  // response) as "no live program" and keep the honest CSR_PROGRAM / CSR_SECTIONS
-  // fixture behind the sample pill.
-  const raw = useLive<{ data?: CsrBoard }>('/api/csr-workflow/board', {
-    data: { program: CSR_PROGRAM, sections: CSR_SECTIONS },
-  });
-  const board = raw.data?.data;
-  const valid =
-    !raw.sample &&
-    !!board &&
-    !!board.program &&
-    typeof board.program.title === 'string' &&
-    Number.isFinite(board.program.readiness) &&
-    Array.isArray(board.sections) &&
-    board.sections.length > 0;
-  const p = valid ? board!.program! : CSR_PROGRAM;
-  const sections = valid ? board!.sections : CSR_SECTIONS;
-  const sample = !valid;
+  // data: { program, sections, ... } }). Fixture-free (GA real-data standard):
+  // the route is org-scoped and honest — a null `program` means the org has no
+  // CSR build job yet (the sections still come back as the real ICH E3 catalog,
+  // not started), and any unreachable/failed read is an honest error. No
+  // CSR_PROGRAM / CSR_SECTIONS stand-in, no "Sample data" pill.
+  const boardRes = useLiveData<CsrBoard>('/api/csr-workflow/board');
+  const board = boardRes.data;
+  const program: CsrProgram | null = board?.program ?? null;
+  const sections: CsrSection[] = Array.isArray(board?.sections) ? board!.sections : [];
 
   /* ── Clinical-Regulatory Intelligence Graph (flag-gated) ──
      Read as a SEPARATE fetch from the CSR board rather than widening the board
@@ -496,11 +512,16 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
-      <SampleTag sample={sample} />
       <PageHead
         eyebrow="Project · clinical"
         title="CSR workflow"
-        sub={`${p.title} · ${p.code} · ${p.readiness}% ready`}
+        sub={
+          boardRes.loading
+            ? 'Loading…'
+            : program
+            ? `${program.title} · ${program.code} · ${program.readiness}% ready`
+            : 'ICH E3 · no active CSR build job yet'
+        }
         actions={
           <button className="btn primary" onClick={() => onAsk('Draft CSR §11 efficacy evaluation')}>
             {I.sparkles} Draft section
@@ -508,9 +529,36 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
         }
       />
 
-      {graphOn && coverage && <CoverageStrip coverage={coverage} />}
+      {boardRes.loading ? (
+        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+          Loading CSR workflow…
+        </div>
+      ) : boardRes.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the CSR workflow board"
+          hint="This is your organization's live ICH E3 build state — sign in and retry, or check the csr-workflow service is reachable."
+        />
+      ) : sections.length === 0 ? (
+        <EmptyState
+          icon={I.layers}
+          title="No ICH E3 sections to show"
+          hint="The CSR workflow board returned no sections for this organization yet."
+        />
+      ) : (
+        <>
+          {!program && (
+            <div className="scaf-note" style={{ marginTop: 4, marginBottom: 14, maxWidth: 760 }}>
+              No active CSR build job for this organization yet — the ICH E3 section
+              board below is the canonical structure, not started. Start a CSR build to
+              populate real drafting status and readiness.
+            </div>
+          )}
 
-      <div className="ctable" style={{ maxWidth: graphOn ? 1100 : 760 }}>
+          {graphOn && coverage && <CoverageStrip coverage={coverage} />}
+
+          <div className="ctable" style={{ maxWidth: graphOn ? 1100 : 760 }}>
         <div className="ct-head" style={{ gridTemplateColumns: cols }}>
           <div>§</div><div>ICH E3 section</div><div>Status</div>
           {graphOn && <div className="crl-dim-head">Regulatory outcome</div>}
@@ -578,52 +626,81 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
         />
       )}
 
-      <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
-        §11 Efficacy evaluation is the gating section — open it in the document editor to draft from the SAP and TLF shells with provenance.
-      </div>
+          <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+            §11 Efficacy evaluation is the gating section — open it in the document editor to draft from the SAP and TLF shells with provenance.
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 /* ════ Regulatory Workspace — generic 3-pane substrate (full: true) ════ */
 
-/** GET /api/regulatory-workspace payload (server regulatory-workspace-routes.ts). */
+/** GET /api/regulatory-workspace payload (server regulatory-workspace-routes.ts),
+ *  the inner `data` object after the { success, data } envelope is unwrapped. */
 interface RwPayload {
+  projectId?: number | null;
+  projectName?: string | null;
   tree: RwTreeItem[];
   intel: RwIntelItem[];
 }
 
 export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
   // Live CTD authoring substrate (GET /api/regulatory-workspace → { success,
-  // data: { tree, intel } }). `useLive` puts the whole response body on `.data`,
-  // so the payload is at raw.data.data. Any unreachable/empty/malformed reply
-  // (e.g. an org with no tracked sections → empty tree) falls back to the
-  // RW_TREE / RW_INTEL fixture behind the sample pill. tree and intel move
-  // together under one flag so a live tree is never paired with fixture intel.
-  const raw = useLive<{ data?: RwPayload }>('/api/regulatory-workspace', {
-    data: { tree: RW_TREE, intel: RW_INTEL },
-  });
-  const payload = raw.data?.data;
-  const valid =
-    !raw.sample &&
-    !!payload &&
-    Array.isArray(payload.tree) &&
-    payload.tree.length > 0 &&
-    !!payload.tree[0]?.id &&
-    Array.isArray(payload.intel);
-  const tree: RwTreeItem[] = valid ? payload!.tree : RW_TREE;
-  const intel: RwIntelItem[] = valid ? payload!.intel : RW_INTEL;
-  const sample = !valid;
+  // data: { projectId, projectName, tree, intel } }). Fixture-free (GA real-data
+  // standard): the route is org-scoped and returns an honest-empty shape
+  // (tree:[] / intel:[]) when the org has no project with tracked CTD sections.
+  // No RW_TREE / RW_INTEL stand-in, no "Sample data" pill — real rows, an honest
+  // empty state, or an honest error.
+  const wsRes = useLiveData<RwPayload>('/api/regulatory-workspace');
+  const tree: RwTreeItem[] = Array.isArray(wsRes.data?.tree) ? wsRes.data!.tree : [];
+  const intel: RwIntelItem[] = Array.isArray(wsRes.data?.intel) ? wsRes.data!.intel : [];
 
-  // Init the active section from the first tree row. useState seeds from the
-  // fixture on first paint; when the live tree resolves (its ids differ) and the
-  // current selection is no longer present, re-anchor to the live tree[0].
-  const [active, setActive] = useState<string>(() => RW_TREE[0]?.id ?? 'r1');
+  // Active section anchors to the first real tree row once it loads; re-anchors
+  // if the current selection is no longer present.
+  const [active, setActive] = useState<string>('');
   useEffect(() => {
     if (tree.length > 0 && !tree.some((s) => s.id === active)) {
       setActive(tree[0].id);
     }
   }, [tree, active]);
+
+  // Honest states before the three-pane editor: loading, a failed read, or an
+  // org with no tracked CTD sections yet — never a fixture tree.
+  if (wsRes.loading) {
+    return (
+      <div className="page-inner">
+        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+          Loading regulatory workspace…
+        </div>
+      </div>
+    );
+  }
+  if (wsRes.error) {
+    return (
+      <div className="page-inner">
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the regulatory workspace"
+          hint="This is your organization's tracked CTD section tree — sign in and retry, or check the regulatory-workspace service is reachable."
+        />
+      </div>
+    );
+  }
+  if (tree.length === 0) {
+    return (
+      <div className="page-inner">
+        <EmptyState
+          icon={I.layers}
+          title="No tracked CTD sections yet"
+          hint="This organization has no project with tracked CTD authoring sections. Once sections are created and tracked, the three-pane workspace — section tree, canvas and intelligence — populates from real data."
+        />
+      </div>
+    );
+  }
+
   const sec = tree.find((s) => s.id === active) || tree[0];
 
   return (
@@ -631,8 +708,11 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
       <aside className="ed-tree">
         <div className="ed-tree-h">
           <div className="ed-tree-t">Sections</div>
-          <div className="ed-tree-m">Generic authoring substrate</div>
-          <div style={{ marginTop: 6 }}><SampleTag sample={sample} /></div>
+          <div className="ed-tree-m">
+            {wsRes.data?.projectName
+              ? `Generic authoring substrate · ${wsRes.data.projectName}`
+              : 'Generic authoring substrate'}
+          </div>
         </div>
         <div className="ed-tree-scroll">
           <div className="ed-vol">

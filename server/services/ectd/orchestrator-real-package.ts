@@ -207,6 +207,14 @@ export async function assembleRealPackage(
 
     return { leaves, backboneXml, leafBuffers, totalSizeBytes };
   } finally {
-    await fs.rm(work, { recursive: true, force: true });
+    // Best-effort cleanup. Guard it: if the try body threw (renderLeafPdf /
+    // packageEctdSubmission / JSZip) AND fs.rm also rejects (EPERM/EBUSY — not
+    // ENOENT, which force:true already swallows), an unguarded rm rejection
+    // would REPLACE the primary error and obscure the real root cause.
+    try {
+      await fs.rm(work, { recursive: true, force: true });
+    } catch {
+      // Temp dir left behind (the OS reaps it); never mask the assembly result.
+    }
   }
 }

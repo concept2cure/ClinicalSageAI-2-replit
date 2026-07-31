@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, liveGet, liveMutateOrNull } from '../dataConnect';
+import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
@@ -66,6 +66,10 @@ interface DocDef {
   needsCsr?: boolean;
 }
 
+/** Render contract for the CSR-library panel — a subset of the org-scoped
+ *  GET /api/analytics/dashboard response (server/routes/analytics-routes.ts).
+ *  Every field here is a REAL aggregate of the caller org's csr_reports; no
+ *  field is defaulted to a fabricated value. */
 interface DashboardData {
   totalReports: number;
   recentAdditions: number;
@@ -73,7 +77,6 @@ interface DashboardData {
   averageCompletionRate: number;
   reportsByPhase: Record<string, number>;
   reportsByIndication: Record<string, number>;
-  completionRates: { phase: string; rate: number }[];
 }
 
 /* ── Ported document generators (analytics-routes.ts) ── */
@@ -236,30 +239,11 @@ function useToast(): [string, (m: string) => void] {
   return [msg, fire];
 }
 
-/* ── Sample protocol text ── */
-
-const SAMPLE_PROTOCOL = `Title: A Phase 2 Randomized Study of BX-204 in Advanced Solid Tumors
-Indication: Advanced solid tumors
-Phase: 2
-Sample size: 48 subjects
-Duration: 10 weeks
-Primary endpoint:`;
-
-/* ── CSR analytics fixture ── */
-
-const ANALYTICS_FIXTURE: DashboardData = {
-  totalReports: 1284, recentAdditions: 37, uniqueIndications: 42, averageCompletionRate: 0.71,
-  reportsByPhase: { 'Phase 1': 214, 'Phase 2': 468, 'Phase 3': 402, 'Phase 4': 200 },
-  reportsByIndication: { Oncology: 389, Cardiovascular: 176, Neurology: 144, Immunology: 131, 'Rare disease': 98 },
-  completionRates: [{ phase: 'Phase 1', rate: 0.82 }, { phase: 'Phase 2', rate: 0.74 }, { phase: 'Phase 3', rate: 0.63 }, { phase: 'Phase 4', rate: 0.69 }],
-};
-
 /* ═══ Main surface ═══ */
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk || (() => {});
-  const live = connected();
-  const [text, setText] = useState(SAMPLE_PROTOCOL);
+  const [text, setText] = useState('');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [docType, setDocType] = useState('recommendations');
   const [busy, setBusy] = useState(false);
@@ -314,8 +298,8 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
     <div className="ra">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist -- evidence -- /api/analytics {live ? '-- live' : ''}</div>
-          <h1 className="sp-title">Reporting &amp; analytics <SampleTag sample={!live} /></h1>
+          <div className="sp-eyebrow">Specialist -- evidence -- /api/analytics</div>
+          <h1 className="sp-title">Reporting &amp; analytics</h1>
           <p className="sp-state">Drop in a protocol and AnA analyses it against the CSR intelligence library -- then writes the design recommendations, statistical insights and IND-readiness memo you can act on.</p>
         </div>
       </div>
@@ -382,44 +366,68 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         </div>
       </div>
 
-      <AnalyticsDashboard live={live} />
+      <AnalyticsDashboard />
       {toast && <div className="c2c-toast">{toast}</div>}
     </div>
   );
 }
 
-/* ── CSR analytics aggregates -- GET /api/analytics/dashboard (real shape) ── */
+/* ── CSR intelligence library -- GET /api/analytics/dashboard (org-scoped, real) ──
 
-function AnalyticsDashboard({ live }: { live: boolean }) {
-  const [d, setD] = useState<DashboardData>(ANALYTICS_FIXTURE);
-  const [src, setSrc] = useState<string>(live ? 'loading' : 'fixture');
-  useEffect(() => {
-    if (live) {
-      liveGet<{ data?: DashboardData } | null>('/api/analytics/dashboard', null)
-        .then((res) => {
-          const r = res.sample ? null : res.data;
-          if (r && r.data) { setD(r.data); setSrc('live'); } else setSrc('fixture');
-        });
-    }
-  }, [live]);
-  const phases = Object.entries(d.reportsByPhase || {});
+   Fixture-free (GA real-data standard). The panel renders the caller org's REAL
+   csr_reports aggregates, or an honest loading / empty / error state — never a
+   fabricated "sample" metric. The route is tenant-isolated (403 without org
+   context), so an unauthorized or failed read surfaces as an honest error card,
+   and an org with no indexed reports surfaces as an honest empty card. Every KPI
+   and every bar below is derived from the response; nothing is defaulted to a
+   fabricated value. */
+
+function AnalyticsDashboard() {
+  const { data, loading, error } = useLiveData<DashboardData>('/api/analytics/dashboard');
+
+  const totalReports = data ? Number(data.totalReports) || 0 : 0;
+  const hasReports = totalReports > 0;
+  const phases = data ? Object.entries(data.reportsByPhase || {}) : [];
   const maxPhase = Math.max(1, ...phases.map(([, v]) => v));
-  const inds = Object.entries(d.reportsByIndication || {}).slice(0, 6);
+  const inds = data ? Object.entries(data.reportsByIndication || {}).slice(0, 6) : [];
   const maxInd = Math.max(1, ...inds.map(([, v]) => v));
+
   return (
     <div className="pj-card" style={{ marginTop: 14 }}>
-      <div className="pj-card-h"><span className="t">CSR intelligence library</span><span className="s">{src === 'live' ? '/api/analytics/dashboard' : <span className="sp-sample">sample</span>} -- {d.totalReports} reports</span></div>
+      <div className="pj-card-h">
+        <span className="t">CSR intelligence library</span>
+        <span className="s">/api/analytics/dashboard{hasReports ? ` -- ${totalReports} reports` : ''}</span>
+      </div>
       <div className="pj-card-b">
-        <div className="ra-kpis">
-          <div className="ra-kpi"><div className="ra-kpi-v">{d.totalReports}</div><div className="ra-kpi-l">CSR reports</div></div>
-          <div className="ra-kpi"><div className="ra-kpi-v">{d.uniqueIndications}</div><div className="ra-kpi-l">Indications</div></div>
-          <div className="ra-kpi"><div className="ra-kpi-v">{d.recentAdditions}</div><div className="ra-kpi-l">Added -- 30d</div></div>
-          <div className="ra-kpi"><div className="ra-kpi-v">{Math.round((d.averageCompletionRate || 0) * 100)}%</div><div className="ra-kpi-l">Avg completion</div></div>
-        </div>
-        <div className="ra-charts">
-          <div className="ra-chart"><div className="ra-chart-t">By phase</div>{phases.map(([k, v]) => (<div key={k} className="ra-bar-row"><span className="ra-bar-l">{k}</span><div className="ra-bar-track"><div className="ra-bar-fill" style={{ width: (v / maxPhase * 100) + '%' }} /></div><span className="ra-bar-v">{v}</span></div>))}</div>
-          <div className="ra-chart"><div className="ra-chart-t">Top indications</div>{inds.map(([k, v]) => (<div key={k} className="ra-bar-row"><span className="ra-bar-l">{k}</span><div className="ra-bar-track"><div className="ra-bar-fill alt" style={{ width: (v / maxInd * 100) + '%' }} /></div><span className="ra-bar-v">{v}</span></div>))}</div>
-        </div>
+        {loading ? (
+          <div className="ra-empty"><div className="ra-empty-ic">{I.barChart}</div><div className="ra-empty-t">Loading the CSR library...</div></div>
+        ) : error ? (
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load the CSR library"
+            hint="These aggregates are your organization's CSR reports. The analytics service returned an error or no organization scope -- sign in with an organization and retry."
+          />
+        ) : !hasReports ? (
+          <EmptyState
+            icon={I.barChart}
+            title="No CSR reports in your library yet"
+            hint="Once your organization's clinical study reports are indexed, their phase, indication and completion aggregates appear here. Nothing is shown until then."
+          />
+        ) : (
+          <>
+            <div className="ra-kpis">
+              <div className="ra-kpi"><div className="ra-kpi-v">{totalReports}</div><div className="ra-kpi-l">CSR reports</div></div>
+              <div className="ra-kpi"><div className="ra-kpi-v">{data?.uniqueIndications ?? 0}</div><div className="ra-kpi-l">Indications</div></div>
+              <div className="ra-kpi"><div className="ra-kpi-v">{data?.recentAdditions ?? 0}</div><div className="ra-kpi-l">Added -- 30d</div></div>
+              <div className="ra-kpi"><div className="ra-kpi-v">{Math.round((data?.averageCompletionRate || 0) * 100)}%</div><div className="ra-kpi-l">Avg completion</div></div>
+            </div>
+            <div className="ra-charts">
+              <div className="ra-chart"><div className="ra-chart-t">By phase</div>{phases.length ? phases.map(([k, v]) => (<div key={k} className="ra-bar-row"><span className="ra-bar-l">{k}</span><div className="ra-bar-track"><div className="ra-bar-fill" style={{ width: (v / maxPhase * 100) + '%' }} /></div><span className="ra-bar-v">{v}</span></div>)) : <div className="ra-empty-s">No phase breakdown recorded for these reports.</div>}</div>
+              <div className="ra-chart"><div className="ra-chart-t">Top indications</div>{inds.length ? inds.map(([k, v]) => (<div key={k} className="ra-bar-row"><span className="ra-bar-l">{k}</span><div className="ra-bar-track"><div className="ra-bar-fill alt" style={{ width: (v / maxInd * 100) + '%' }} /></div><span className="ra-bar-v">{v}</span></div>)) : <div className="ra-empty-s">No indication breakdown recorded for these reports.</div>}</div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

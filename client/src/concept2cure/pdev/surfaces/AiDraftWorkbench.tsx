@@ -1,12 +1,19 @@
 /**
- * PDEV AI drafting workbench — 2-pane streaming sheet.
+ * PDEV AI drafting workbench — 2-pane governed-draft sheet.
  *
- * Left pane: context + target document + optional user prompt + evidence
- * sources. Right pane: streaming preview with quality grade + citation
- * count + model attribution. Filing the draft promotes the activity to
- * `ai_draft_generated` via <PdevConfirmDialog>.
+ * Left pane: context + target document + optional user prompt. Right pane:
+ * the governed record the drafting service returns — metadata ONLY (quality
+ * grade, word count, title, document code, target eCTD section, artifact id).
  *
- * Port basis: design-system/ui_kits/pdev/AiDraft.jsx.
+ * Generating a draft persists it as a versioned, quality-gated artifact in
+ * concept2cure_artifacts and promotes the activity to `ai_draft_generated`.
+ * The service returns that record's metadata, NOT a section-by-section preview
+ * of prose — so this surface renders no client-side preview. The draft body
+ * lives in the artifact, opened from the activity's Provenance tab.
+ *
+ * Port basis: design-system/ui_kits/pdev/AiDraft.jsx (the kit's fabricated
+ * `preview.sections[].preview` prose has been retired — it was content the
+ * server never produced).
  */
 
 import * as React from 'react';
@@ -134,39 +141,70 @@ export function PdevAiDraftWorkbench({
           <div className="pdev-aidraft-right">
             {!result && !draft.loading && (
               <div className="pdev-empty">
-                Streaming preview will appear here after Generate.
+                Generate a governed draft to file it against this activity. The
+                draft is persisted as a versioned, quality-gated artifact — its
+                governed record appears here. No preview is fabricated
+                client-side.
               </div>
             )}
             {draft.loading && (
-              <div className="pdev-aidraft-streaming">
-                Streaming from {result?.model ?? 'AnA model'}…
+              <div className="pdev-aidraft-streaming" aria-busy="true">
+                Generating the governed draft…
               </div>
             )}
             {result && (
-              <>
-                <div className="pdev-aidraft-grade">
-                  {result.grade && (
-                    <span
-                      className={`pdev-grade-pill pdev-grade-${result.grade.toLowerCase()}`}
-                    >
-                      Quality gate: {result.grade}
-                    </span>
-                  )}
-                  <span className="mono small">
-                    {result.citations} citations · {result.model}
-                  </span>
-                </div>
-                <div className="pdev-aidraft-title">{result.preview.title}</div>
-                {result.preview.sections.map((s) => (
-                  <div key={s.num} className="pdev-aidraft-section">
-                    <span className="pdev-aidraft-section-num mono">§{s.num}</span>
-                    <div>
-                      <div className="pdev-aidraft-section-label">{s.label}</div>
-                      <div className="pdev-aidraft-section-preview">{s.preview}</div>
+              <div className="pdev-aidraft-result">
+                <div className="pdev-aidraft-result-head">
+                  <PdevIcon name="check" />
+                  <div>
+                    <div className="pdev-aidraft-result-title">
+                      Draft generated
+                    </div>
+                    <div className="pdev-aidraft-result-sub">
+                      Filed as a versioned, quality-gated artifact — it entered
+                      the governed lifecycle. The activity is now AI draft ready.
                     </div>
                   </div>
-                ))}
-              </>
+                </div>
+
+                <div className="pdev-aidraft-grade">
+                  {result.qualityGrade && (
+                    <span
+                      className={`pdev-grade-pill pdev-grade-${result.qualityGrade.toLowerCase()}`}
+                    >
+                      Quality gate: {result.qualityGrade}
+                    </span>
+                  )}
+                  <span className="mono small">{result.wordCount} words</span>
+                </div>
+
+                <dl className="pdev-aidraft-meta">
+                  <div className="pdev-aidraft-meta-row">
+                    <dt>Title</dt>
+                    <dd>{result.title}</dd>
+                  </div>
+                  <div className="pdev-aidraft-meta-row">
+                    <dt>Document code</dt>
+                    <dd className="mono">{result.documentCode}</dd>
+                  </div>
+                  <div className="pdev-aidraft-meta-row">
+                    <dt>Target eCTD section</dt>
+                    <dd className="mono">
+                      {result.ectdSection ??
+                        'Working document — no eCTD destination'}
+                    </dd>
+                  </div>
+                  <div className="pdev-aidraft-meta-row">
+                    <dt>Artifact</dt>
+                    <dd className="mono">{result.artifactId}</dd>
+                  </div>
+                </dl>
+
+                <div className="pdev-aidraft-openhint">
+                  Open the governed artifact from this activity's Provenance tab
+                  to review, version, or route it for approval.
+                </div>
+              </div>
             )}
           </div>
         </div>

@@ -109,17 +109,18 @@ const SignReleaseBodySchema = z.object({
 const router = Router();
 
 /**
- * Deterministically rebuild the bound payload digest from the persisted run.
+ * Read back the bound payload digest the orchestrator persisted on the
+ * package.sign step.
  *
- * We need outputs.assembly and outputs.validation to call
- * computeBoundPayloadDigest. The orchestrator doesn't persist large
- * intermediate blobs; instead we re-derive them from the persisted run
- * shape + the submission identity tuple. This matches the contract the
- * orchestrator's resume path uses (rederiveSyncOutputsForResume +
- * re-run package.validate).
+ * The orchestrator now DOES persist the signed package (leaf manifest +
+ * validator outcome + backbone) in the sign step's outputRef and, on resume,
+ * HYDRATES that frozen snapshot and recomputes the digest from it as an
+ * integrity guard (it no longer re-derives from source — that was the useAI
+ * drift bug). This route therefore just returns the persisted digest; binding
+ * the signature to it is the route's job, and the resume path enforces that the
+ * frozen snapshot still hashes to it.
  *
- * Returns null if the persisted run lacks the required artifacts to
- * recompute (e.g. validation was skipped, or the sign step has no payload).
+ * Returns null if the sign step has no parseable payload digest.
  */
 async function recomputeBoundDigestFromRun(
   run: Awaited<ReturnType<typeof getRun>>,
@@ -134,12 +135,6 @@ async function recomputeBoundDigestFromRun(
     return null;
   }
   if (typeof parsed.payloadDigest !== 'string') return null;
-  // Trust the persisted digest — the orchestrator's resume path will
-  // re-derive + drift-check on the subsequent runOrchestrator(_, { resumeRunId })
-  // call, so we don't need to do a second drift-check here. The signing
-  // route's job is to bind the signature to whatever digest the
-  // orchestrator persisted (and the resume path enforces that it still
-  // matches the live inputs).
   return parsed.payloadDigest;
 }
 
