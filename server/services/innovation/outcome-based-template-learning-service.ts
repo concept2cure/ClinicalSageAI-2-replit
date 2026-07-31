@@ -840,16 +840,23 @@ export class OutcomeBasedTemplateLearningService {
   }
 
   private async resolveProgramId(): Promise<string | undefined> {
+    // Multi-tenant safety (ledger C-47): auto-resolve a default program ONLY when
+    // exactly one exists. "ORDER BY created_at DESC LIMIT 1" returned an arbitrary
+    // tenant's most-recent program to a caller with no program context — a
+    // cross-tenant leak. When more than one program exists the choice is ambiguous,
+    // so return undefined; callers already degrade to an empty program id.
     try {
-      const result = await this.pool.query('SELECT id FROM programs ORDER BY created_at DESC LIMIT 1');
-      if (result.rows.length > 0) return result.rows[0].id;
+      const result = await this.pool.query('SELECT id FROM programs LIMIT 2');
+      if (result.rows.length === 1) return result.rows[0].id;
+      if (result.rows.length > 1) return undefined;
     } catch {
-      // Ignore
+      // table absent / not this shape — try core schema
     }
 
     try {
-      const result = await this.pool.query('SELECT id FROM core.programs ORDER BY created_at DESC LIMIT 1');
-      return result.rows[0]?.id;
+      const result = await this.pool.query('SELECT id FROM core.programs LIMIT 2');
+      if (result.rows.length === 1) return result.rows[0].id;
+      return undefined;
     } catch {
       return undefined;
     }

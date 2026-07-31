@@ -2744,6 +2744,59 @@ C-47.
 
 ---
 
+## C-47 — the application-layer half: cross-tenant reads that RLS alone can't stop *(medium — FIXED 2026-07-31)*
+
+C-46 added defense-in-depth RLS, but the primary isolation for the raw-pool
+subsystems is the query itself. Two app-layer leaks the triage surfaced are closed
+here.
+
+### `core.programs` default-program fallbacks (4 services)
+
+`resolveProgramId()` in four innovation services
+(`outcome-based-template-learning`, `auto-traceability`,
+`evidence-confidence-heatmap`, `regulatory-delta-radar`) resolved a "default
+program" with `SELECT id FROM (core.)programs ORDER BY created_at DESC LIMIT 1` —
+**no org predicate** — so a caller with no program context got an arbitrary
+tenant's most-recent program, and the service then recorded outcomes / built
+traceability against it. Fixed identity-agnostically: auto-resolve a default ONLY
+when **exactly one** program exists (`LIMIT 2` → `rows.length === 1`); more than
+one is ambiguous → `undefined`, and every caller already degrades to an empty
+program id. This preserves single-tenant/demo ergonomics while removing the
+cross-tenant grab — and needs no org-identity mapping, so it is safe to ship now.
+
+### `manufacturing` routes read cross-tenant
+
+`GET /api/manufacturing/overview` issued unconditional platform-wide `COUNT(*)`
+aggregates over `manufacturing.equipment_registry` / `batch_execution_records` /
+`quality_test_results`, and the list/detail endpoints filtered by org only
+`if (orgId)` — where `getOrgId()` read `req.tenantId`, a field the mount
+(`authenticateToken` only) never populates, so `orgId` was always null and every
+query ran UNSCOPED for every caller.
+
+`getOrgId()` now derives the org from `req.user.organizationUuid ??
+req.user.organizationId ?? …` and returns it ONLY when it is a valid uuid (the
+`manufacturing.*` key is uuid). `/overview` is scoped by it and fails **closed**
+to `dataAvailable:false` when no uuid scope resolves — never platform-wide numbers.
+Net effect: a caller whose token carries a uuid org is now fully scoped on every
+manufacturing endpoint; one that does not gets an empty overview (safe) instead of
+cross-tenant counts, and the list endpoints are no worse than before (they were
+already unscoped) and better whenever a uuid org is present.
+
+**Honest blocker, documented not hacked:** `req.user.organizationId` is the
+**integer** canonical org id (`enforceOrgMembership` parses it as an int), while
+`manufacturing.*` and `core.*` key on a **uuid** org, and `organizationUuid` is
+not populated on the `authenticateToken` mount. Fully closing the manufacturing
+list/detail endpoints for tokens that carry only the integer identity — and giving
+the raw-pool subsystems real DB-level enforcement rather than defense-in-depth —
+requires resolving the integer↔uuid org-identity mapping (populate
+`organizationUuid` on the auth path, or map int→uuid) and routing these services
+through a tenant-scoped client that sets `app.current_org_id`. That is the
+uuid/integer identity split already logged as an open architectural question; it is
+a deliberate follow-up, not something to paper over by filtering a uuid column with
+an integer (a no-op) or by silently leaving the reads unscoped.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
