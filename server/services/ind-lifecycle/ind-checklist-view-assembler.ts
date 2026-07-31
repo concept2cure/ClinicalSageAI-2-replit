@@ -20,9 +20,12 @@
  * vocabulary (draft / in-progress / review / approved / finalized) is mapped into the
  * surface's SectionStatus vocabulary; the mapping is deliberately lossy where the real
  * store is coarser (there is no finer per-section status persisted). Sections shown are
- * the ones the org has in its authoring workspace (a coauthor_documents row), scoped to
- * the submission through its leaves when the filing has been assembled, else org-wide —
- * matching the surface's "sections we're tracking", not the full 108-section blueprint.
+ * ONLY the ones actually placed into that submission's filing (its eCTD sequence leaves
+ * referencing a coauthor doc). A submission with no placed leaves yet renders an honest
+ * "no sections placed" empty state — it does NOT fall back to the org's entire authoring
+ * workspace, which would contaminate one submission's readiness with documents authored
+ * for other programs. This matches the surface's "sections we're tracking" for THIS
+ * filing, not the full 108-section blueprint and not an org-wide document dump.
  */
 import { pool } from '../../db';
 import { getSectionByCode } from '../../../services/regulatory/ind-ectd-sections.js';
@@ -105,8 +108,9 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
   if (subs.length === 0) return [];
   const subIds = subs.map((s) => Number(s.id));
 
-  // Real linkage submission → sequence → leaf → coauthor doc, plus the org's authoring
-  // workspace. All bulk (one query each), org-scoped, soft-delete aware.
+  // Real linkage submission → sequence → leaf → coauthor doc. The coauthor_documents read
+  // resolves the docs a leaf references (docById); it is NOT used as an org-wide section
+  // fallback. All bulk (one query each), org-scoped, soft-delete aware.
   const [seqRes, coauthorRes] = await Promise.all([
     pool.query(
       `SELECT id, submission_id FROM ectd_sequences
@@ -135,11 +139,6 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
 
   const seqToSub = new Map<number, number>(seqRows.map((r) => [Number(r.id), Number(r.submission_id)]));
 
-  // Section status the whole org is authoring (fallback when a submission has no leaves
-  // yet — the docs exist in the workspace but haven't been placed into a filing).
-  const orgStatusByCode = new Map<string, { status: string; name: string }>();
-  for (const d of coauthorDocs) put(orgStatusByCode, str(d.module_number), mapStatus(d.status), str(d.module_name));
-
   // Placed sections per submission: leaf.section_code (authoritative) → the referenced
   // coauthor doc's mapped status.
   const placedBySub = new Map<number, Map<string, { status: string; name: string }>>();
@@ -156,8 +155,10 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
 
   return subs.map((s) => {
     const subId = Number(s.id);
-    const placed = placedBySub.get(subId);
-    const statusByCode = placed && placed.size > 0 ? placed : orgStatusByCode;
+    // Only sections actually placed into THIS submission's filing. No org-wide fallback:
+    // a submission with nothing placed yet gets an empty section list (the surface renders
+    // its honest "no sections placed" state) rather than borrowing other programs' docs.
+    const statusByCode = placedBySub.get(subId) ?? new Map<string, { status: string; name: string }>();
 
     const sections = [...statusByCode.entries()]
       .filter(([code]) => !FORM_CODES.has(code))

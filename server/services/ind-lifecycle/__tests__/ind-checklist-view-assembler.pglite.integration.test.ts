@@ -111,14 +111,32 @@ describe('assembleOrgIndChecklists', () => {
     expect(sec['m2.3'].status).toBe('approved');      // approved → approved
   });
 
-  it('falls back to the org authoring workspace when a submission has no leaves yet', async () => {
+  it('renders an honest empty section list (no org-wide fallback) when a submission has no placed leaves', async () => {
+    // Docs exist in the org authoring workspace but none are placed into this filing.
+    // The checklist must NOT borrow those org-wide docs — the submission still appears
+    // (its identity is real) but with zero placed sections and no forms marked done.
     await seedIND(ORG, { withLeaves: false });
     const rows = await assembleOrgIndChecklists(ORG);
     expect(rows).toHaveLength(1);
     const ind = rows[0] as any;
-    const sec = Object.fromEntries(ind.sections.map((x: any) => [x.code, x]));
-    expect(sec['m1.2'].status).toBe('signed');
-    expect(ind.forms.find((f: any) => f.id === 'FDA_1571').done).toBe(true);
+    expect(ind.code).toBe('BX-301');                 // identity is still real
+    expect(ind.sections).toEqual([]);                // nothing placed → honest empty, not org-wide
+    expect(ind.forms.every((f: any) => f.done === false)).toBe(true); // no form completed via fallback
+  });
+
+  it('does not leak one submission\'s org docs into a sibling submission with no leaves', async () => {
+    // Submission A is fully placed; submission B (same org) has no leaves. B must stay
+    // empty — the org-wide document pool must not bleed A's/the workspace's docs into B.
+    await seedIND(ORG);                    // A — with leaves
+    await seedIND(ORG, { withLeaves: false }); // B — no leaves
+    const rows = await assembleOrgIndChecklists(ORG) as any[];
+    expect(rows).toHaveLength(2);
+    // Exactly one has placed sections; the other is honestly empty.
+    const withSections = rows.filter((r) => r.sections.length > 0);
+    const emptyOnes = rows.filter((r) => r.sections.length === 0);
+    expect(withSections).toHaveLength(1);
+    expect(emptyOnes).toHaveLength(1);
+    expect(emptyOnes[0].forms.every((f: any) => f.done === false)).toBe(true);
   });
 
   it('returns [] for an org with no IND submission, and never crosses tenants', async () => {
