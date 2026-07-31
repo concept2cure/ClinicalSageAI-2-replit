@@ -128,6 +128,9 @@ const ECTD_DDL = `
     -- its INSERTs, so this mirror must carry them or the compilation insert fails.
     application_number TEXT,
     sequence_number TEXT,
+    -- 20260730_ectd_compilations_leaf_manifest.sql: immutable per-sequence leaf
+    -- manifest. Same drizzle "lists every mapped column" reason as above.
+    leaf_manifest JSONB,
     compiled_by INTEGER,
     compiled_at TIMESTAMPTZ,
     version TEXT DEFAULT '1.0',
@@ -385,12 +388,61 @@ describe('golden journey — eCTD export to submittable package', () => {
       );
 
       // 6. A successful export records an attributed compilation row for org A.
-      await R.step('the export records an org-scoped compilation row', async () => {
+      await R.step('the export records an org-scoped compilation row with a leaf manifest', async () => {
         const rows = (await jdb.pool.query(
-          `SELECT organization_id, compilation_name, status FROM ectd_compilations WHERE organization_id = 1`,
-        )) as { rows: Array<{ organization_id: number; compilation_name: string; status: string }> };
+          `SELECT organization_id, compilation_name, status, application_number, sequence_number, leaf_manifest
+             FROM ectd_compilations WHERE organization_id = 1`,
+        )) as {
+          rows: Array<{
+            organization_id: number; compilation_name: string; status: string;
+            application_number: string | null; sequence_number: string | null; leaf_manifest: unknown;
+          }>;
+        };
         expect(rows.rows.length).toBeGreaterThan(0);
-        return { compilationRows: rows.rows.length, firstName: rows.rows[0]?.compilation_name };
+        const row = rows.rows[0];
+        // C-31 identity is populated (this path previously left it null).
+        expect(row.sequence_number).toBeTruthy();
+        // The manifest is a non-empty array of leaves, each with the precise
+        // section + href + md5 a lifecycle diff needs.
+        const manifest = row.leaf_manifest as Array<Record<string, unknown>>;
+        expect(Array.isArray(manifest)).toBe(true);
+        expect(manifest.length).toBeGreaterThan(0);
+        expect(manifest[0]).toMatchObject({
+          ctdSection: expect.any(String),
+          href: expect.any(String),
+          md5: expect.any(String),
+        });
+        return {
+          compilationRows: rows.rows.length,
+          sequence: row.sequence_number,
+          manifestLeaves: manifest.length,
+          sampleSection: manifest[0]?.ctdSection,
+        };
+      });
+
+      // 7. A follow-up sequence exported as a LIFECYCLE DELTA against the prior
+      // one — the real cross-sequence path end to end through the DB: the prior
+      // 0000 manifest (stored above) is loaded, the changed leaf becomes a
+      // replace pointing modified-file back at the prior file.
+      await R.step('a follow-up sequence exports as a lifecycle delta (replace + modified-file)', async () => {
+        // Change the authored content so 0001's leaf checksum differs from 0000.
+        await jdb.pool.query(
+          `UPDATE project_sections SET content = content || E'\n\nREV2 amendment addendum.'
+             WHERE organization_id = 1 AND project_id = 1 AND section_code = '3.2.P.1'`,
+        );
+        const pkg = await generateEctdPackage(1, 1, {
+          region: 'FDA',
+          sequenceNumber: '0001',
+          lifecycleAgainstPrior: true,
+        });
+        const zip = await JSZip.loadAsync(pkg.buffer);
+        const index = await zip.file('index.xml')!.async('string');
+        // The changed leaf is a replace that points back at the 0000 copy.
+        const hasReplace = /<leaf operation="replace"[^>]*modified-file="\.\.\/0000\//.test(index);
+        expect(hasReplace).toBe(true);
+        // Snapshot mode marks everything "new"; a delta must not.
+        expect(index).not.toMatch(/<leaf operation="new"[^>]*3-2-P-1/);
+        return { filename: pkg.filename, hasReplace };
       });
 
       R.observations.push(

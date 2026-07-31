@@ -472,6 +472,22 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const refByLeaf = new Map<EctdLeaf, LeafRef>();
   for (const leaf of input.leaves) {
     const sectionDashed = leaf.ctdSection.replace(/\./g, '-');
+
+    // Backbone-only lifecycle delete: when the withdrawn document lives in a
+    // PRIOR sequence, the delete leaf carries no new bytes (empty sourcePath) —
+    // exactly what computeLifecycleOperations emits. Render it as
+    // operation="delete" pointing at the prior file (modified-file, also used as
+    // the xlink:href), but do NOT read a file, write it into this package, or
+    // add a checksum line. A delete that DOES carry a sourcePath falls through
+    // and is packaged normally (some callers ship superseding bytes with it).
+    if (leaf.operation === 'delete' && !leaf.sourcePath) {
+      const fallbackHref = leaf.ctdSection.startsWith('1')
+        ? `${sectionDashed}/${leaf.fileName}`
+        : `m${leaf.ctdSection.charAt(0)}/${sectionDashed}/${leaf.fileName}`;
+      refByLeaf.set(leaf, { href: leaf.modifiedFile ?? fallbackHref, md5: leaf.md5 ?? '' });
+      continue; // no bytes → no prepared entry, no ZIP file, no checksum line
+    }
+
     const raw = await fs.readFile(leaf.sourcePath);
     const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
     grades.push({ fileName: leaf.fileName, isPdf, converted });

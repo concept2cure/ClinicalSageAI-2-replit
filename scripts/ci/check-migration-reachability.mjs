@@ -54,17 +54,69 @@ const BASELINE = path.join(repoRoot, 'scripts', 'ci', 'migration-reachability-ba
 const writeBaseline = process.argv.includes('--write-baseline');
 
 const read = (p) => fs.readFileSync(p, 'utf8');
-const CREATE_TABLE_RE = /CREATE\s+(?:UNLOGGED\s+|TEMP\s+|TEMPORARY\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?(?:public\.)?([a-z0-9_]+)/gi;
-const CREATE_VIEW_RE = /CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?VIEW\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?(?:public\.)?([a-z0-9_]+)/gi;
+// Schema-qualified names must capture BOTH parts. Capturing only the first
+// identifier — as an earlier revision of this guard did — silently records the
+// SCHEMA as the table name: `CREATE TABLE regulatory.submissions` became a table
+// called "regulatory", and `FROM predicate.fda_510k_clearances` a reference to
+// "predicate". Both sides agreed, so nothing looked wrong, while the ~337
+// schema-qualified tables in this repo went completely unchecked — the guard
+// reporting green over a blind spot, which is the exact failure it exists to stop
+// (ledger C-35). `("?)` + backreference keeps a quoted identifier from swallowing
+// the dot.
+const QUALIFIED = String.raw`(?:"?([a-z0-9_]+)"?\s*\.\s*)?"?([a-z0-9_]+)"?`;
+const CREATE_TABLE_RE = new RegExp(
+  String.raw`CREATE\s+(?:UNLOGGED\s+|TEMP\s+|TEMPORARY\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?` + QUALIFIED,
+  'gi',
+);
+const CREATE_VIEW_RE = new RegExp(
+  String.raw`CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?VIEW\s+(?:IF\s+NOT\s+EXISTS\s+)?` + QUALIFIED,
+  'gi',
+);
+
+/**
+ * Canonical table identity. `public.foo` and `foo` are the same relation, so the
+ * public schema is normalized away; any other schema is kept, because
+ * `predicate.runs` and `precedent.runs` are different tables and collapsing them
+ * would let one mask the other.
+ */
+const qualify = (schema, name) => {
+  const s = (schema || '').toLowerCase();
+  const n = name.toLowerCase();
+  return !s || s === 'public' ? n : `${s}.${n}`;
+};
+
+/**
+ * Strip SQL comments before scanning. These files are heavily commented, and the
+ * comments discuss DDL: a header reading `-- (CREATE TABLE IF NOT EXISTS only)`
+ * otherwise registers a table named "only". Worse than the phantom itself, a
+ * commented-out or merely *described* CREATE TABLE would count as a durable
+ * creator and mask a genuinely missing one.
+ */
+const stripSqlComments = (sql) =>
+  sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
 
 const tablesIn = (sql) => {
   const out = new Set();
+  const body = stripSqlComments(sql);
   for (const re of [CREATE_TABLE_RE, CREATE_VIEW_RE]) {
     re.lastIndex = 0;
-    for (const m of sql.matchAll(re)) out.add(m[1].toLowerCase());
+    for (const m of body.matchAll(re)) out.add(qualify(m[1], m[2]));
   }
   return out;
 };
+
+/**
+ * Words that follow FROM/JOIN/INTO/UPDATE in SQL but are not relations, plus the
+ * ones that show up because the reference scan reads whole .ts files — including
+ * English prose in comments and prompt strings ("Update only the …"). A guard
+ * that reports phantoms gets its real findings ignored.
+ */
+const NOT_A_RELATION = new Set([
+  'only', 'lateral', 'unnest', 'select', 'values', 'generate_series', 'jsonb_array_elements',
+  'jsonb_to_recordset', 'json_array_elements', 'json_to_recordset', 'each', 'dual',
+  'information_schema', 'pg_catalog', 'this', 'that', 'them', 'these', 'those', 'their',
+  'here', 'when', 'where', 'which', 'with', 'your', 'both', 'each_row',
+]);
 
 /** Walk a directory for files matching `test`, skipping vendored/archived trees. */
 function walk(dir, test, acc = []) {
@@ -79,6 +131,18 @@ function walk(dir, test, acc = []) {
   }
   return acc;
 }
+
+// The pure parsing helpers are exported so tests can pin them directly
+// (tests/schema-contract/migration-reachability-guard.contract.test.ts, ledger
+// C-35). Everything below runs only when this file is the entry point — importing
+// it must not walk the repo or call process.exit.
+export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION };
+
+const isEntryPoint =
+  process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
+if (!isEntryPoint) {
+  // Imported for its helpers; skip the scan.
+} else {
 
 // ── 1. The durable creator set ──────────────────────────────────────────────
 const journal = fs.existsSync(path.join(repoRoot, 'migrations/meta/_journal.json'))
@@ -133,7 +197,13 @@ for (const abs of walk(path.join(repoRoot, 'server'), (n) => n.endsWith('.ts')))
 }
 
 // ── 2. Tables the server actually queries ───────────────────────────────────
-const REF_RE = /(?:\bFROM|\bJOIN|\bINTO|\bUPDATE)\s+["`]?([a-z][a-z0-9_]{3,})["`]?/gi;
+// Same qualification rule as the creator side — see the note above. A reference to
+// `regulatory.information_requests` must resolve to that table, not to a phantom
+// relation named after its schema.
+const REF_RE = new RegExp(
+  String.raw`(?:\bFROM|\bJOIN|\bINTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?`,
+  'gi',
+);
 const referenced = new Map(); // table -> Set(files)
 for (const abs of walk(
   path.join(repoRoot, 'server'),
@@ -143,7 +213,8 @@ for (const abs of walk(
   const src = read(abs);
   REF_RE.lastIndex = 0;
   for (const m of src.matchAll(REF_RE)) {
-    const t = m[1].toLowerCase();
+    if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
+    const t = qualify(m[1], m[2]);
     if (!referenced.has(t)) referenced.set(t, new Set());
     referenced.get(t).add(rel);
   }
@@ -220,3 +291,5 @@ if (added.length) {
 }
 
 console.log(`${TAG} ✅ no new unreachable table references.`);
+
+} // end entry-point guard

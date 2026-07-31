@@ -1962,6 +1962,302 @@ superuser bypasses RLS even under FORCE).
 correspondence, enhanced cortex, IVDR binder packs, stability v2, artifact compute
 plane, …). Each needs the same per-file verification before wiring; the guard now
 makes the number visible, prevents it growing, and reports progress as it falls.
+**Ratcheted to 45 by C-33 below.**
+
+---
+
+## C-33 — Ratcheting the deploy-dead debt 108 → 46, and the isolation hazard that wiring creates *(high — FIXED 2026-07-30)*
+
+The follow-through on C-32's ratchet, plus the hazard the ratchet itself
+introduces.
+
+### Selection was mechanical, not judged
+
+Every file in the C-32 baseline was screened the same way: **applied TWICE against
+a BLANK Postgres in isolation.** A file that survives that proves three things at
+once — every `CREATE TABLE/INDEX` is idempotent (the second pass is a no-op), the
+file is entirely self-contained (it needs no table, schema or extension it does
+not itself create, so nothing in it can abort a deploy on a missing dependency),
+and its shape is inspectable for the tenant-key check below. Of 63 candidates:
+
+| outcome | n | disposition |
+|---|---|---|
+| clean double-apply, integer or no tenant key | **40** | wired |
+| clean, but **uuid/text** tenant key | 3 | NOT wired — see below |
+| needs a prerequisite a blank DB lacks | 20 | stays baselined |
+
+The 20 exclusions fail only on things a real database has (`organizations`,
+`users`, `concept2cure_artifacts`, the `vector`/`pgcrypto` extensions, the
+`predicate`/`precedent`/`core` schemas). They are probably fine — but "probably
+fine" is exactly how this class of defect got here, so they stay baselined until
+verified against a real base schema rather than wired on an assumption.
+
+### The hazard the wiring creates
+
+`migrations/0021_enable_rls_everywhere.sql` policies every tenant-keyed table —
+but it runs **once**, on install-fresh, over the tables that exist *at that
+moment*. Every table added later by the apply-c2c / deploy-migrate set lands on an
+already-provisioned database where 0021 has long since run and will never revisit
+it, and under `RLS_ENFORCE=on` a table with no RLS is **fully readable across
+tenants**. Wiring 40 files would therefore have provisioned ~27 new tenant-keyed
+tables with no isolation whatsoever — trading a 500 for a cross-tenant leak.
+
+`db/migrations/20260801_tenant_isolation_sweep.sql` closes it: 0021's loop, made
+re-runnable and deploy-safe, wired **last** in `C2C_MIGRATION_FILES` so it sees
+everything the set just created. Two deliberate differences from 0021:
+
+1. **A non-integer tenant key is SKIPPED with a NOTICE, not `RAISE EXCEPTION`.**
+   Aborting is right at install time; mid-deploy it would halt production over
+   pre-existing drift the deploy did not introduce (deploy-migrate stops at the
+   first failure). The table is left exactly as it was and the condition reported.
+2. **It only ADDS a policy where none exists**, so it never clobbers one a
+   subsystem installed for itself — including C-30's parent-scoped doc-scoped
+   policies, which key on a parent row's tenant rather than a local column.
+
+This is also why the three uuid/text-keyed files (`ai_provider_audit_log`,
+`ana_kernel_decision_log`, `conversation_os_durability_phase2`) are NOT wired: the
+sweep would skip them, so wiring would ship tenant tables the integer-keyed RLS
+model cannot police. Same identity-model collision as C-27 / C-29 — a decision,
+not a wiring.
+
+### Proof
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` (8 cases, PGlite):
+the sweep is in the set and is the LAST entry with the batch ahead of it (a sweep
+that runs before the creators policies nothing); the three collision files are
+absent; the whole batch applies **in set order, twice** with no failure; afterwards
+**zero** integer-keyed tenant tables are unpoliced; a table appearing after the
+batch is swept and then genuinely blocks a cross-tenant read (under a `NOSUPERUSER`
+role, since PGlite's default superuser bypasses RLS even under FORCE); and the
+sweep skips a TEXT key without raising, preserves a pre-existing policy's own
+predicate, and skips the allowlist, tenant-less tables and views.
+
+### Result
+
+`ci:migration-reachability` baseline **108 → 45** (64 tables became reachable; 68
+tables across the 42 wired files, some already durable by other paths). 45 remain:
+the 20 prerequisite-dependent files, the 3 identity collisions, and the
+`_consolidated/` tree (C-29 Class 3).
+
+The last two are worth calling out. `20260801_labeling_pi_store.sql` (live writer:
+`labeling-pi-service.ts` behind `POST /api/labeling-pi`) and
+`20260801_program_journey_store.sql` (live writer: `program-journey-service.ts`)
+both landed the same day as this batch, each with a real service and **no
+applier** — fresh instances of the exact class, created *after* C-32 and caught by
+C-32's guard rather than by anyone noticing. The second was caught on a routine
+rebase, minutes after it merged. Both also arrived without the enforced eCTD audit
+header, so they were additionally taking the Lint job — and every downstream guard
+— red.
+
+**Ratcheted to 21 by C-34 below.**
+
+That is the whole argument for the guard in one day: this class is not a backlog
+of historical mistakes being worked off, it is an **ongoing rate**. Wiring the 42
+files matters less than the fact that number 43 now cannot land silently.
+
+---
+
+## C-34 — A blank database was the wrong bar; base-schema fixture takes the debt 45 → 21 *(high — FIXED 2026-07-30)*
+
+C-33 screened candidates by applying them to a **blank** Postgres and left 20 files
+baselined as "needs a prerequisite a blank DB lacks", explicitly refusing to wire
+them on the assumption they would be fine on a real database. That refusal was
+right — but the bar was wrong. A blank database is not the state a deploy
+presents, so the screen was rejecting files for legitimately building on core
+tables. Refusing to wire an unverified file and refusing to *build a real
+verifier* are different things; C-33 did the first and called it done.
+
+### The fixture
+
+`baseSchemaFixture()` builds the state a deploy actually presents:
+
+- the contrib extensions a real cluster has — `pgcrypto`, `pg_trgm`, `uuid-ossp`,
+  `citext` (PGlite ships all four);
+- the named schemas (`predicate`, `precedent`, `core`, `intelligence`,
+  `regulatory`);
+- **the drizzle journal's 290 `CREATE TABLE` blocks** — the base lineage
+  `deploy-migrate`'s `BASE_SCHEMA_SENTINELS` preflight insists on before it will
+  apply anything;
+- then the whole C2C set ahead of the candidate, so ordering dependencies are real
+  (`026_stability_step4` needs `stab_studies` from the already-wired
+  `022_stability_v2`; `20260520_growth_mindset_extensions` needs
+  `intelligence.failure_patterns` from `20260520_ana_failure_learning`).
+
+One detail matters more than it looks: a failed statement leaves the session in an
+aborted transaction, so **every** failure must be followed by `ROLLBACK` or all
+subsequent files fail with a misleading "current transaction is aborted". That is
+exactly what the real applier does between files; a fixture that omits it reports
+one real failure and 19 phantoms.
+
+### Result
+
+**15 of the 20 now verify and are wired.** The whole C2C set (113 files) then
+applies against the fixture **twice with identical results** — proving the batch is
+idempotent — and the sweep leaves **zero** integer-keyed tenant tables unpoliced.
+
+Five stay unwired, each for a **named** reason rather than an unexamined
+"probably fine", and are pinned by a test so a later batch cannot sweep them in on
+momentum:
+
+| file | reason |
+|---|---|
+| `20260207_phase6_6a_fda_clearance_universe` | requires the `vector` extension — PGlite cannot load it, so this harness **cannot verify it at all** |
+| `20260306_precedent_engine` | same |
+| `20260208_phase6_6a_risk_rollups` | needs `predicate.fda_510k_clearances` from the first of those two; blocked behind them |
+| `068_regulatory_schema_alignment` | needs `regulatory.submissions`, which **nothing in the repo creates** — a real missing-creator defect (C-11 class), not a reachability one |
+| `20260125_enhanced_cortex_schema` | its `lumen_knowledge_graph_edges_source_atom_id_fkey` cannot be implemented against the canonical `lumen_data_atoms` key type — a real shape conflict |
+
+The distinction is the point: three are genuine defects that need fixing, and two
+are simply **beyond what this harness can prove**. Wiring an unverifiable file into
+the deploy path is the precise habit this ledger exists to break, so they wait for
+a pgvector-capable harness rather than an assumption.
+
+### Proof
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` grew to 9 cases and
+now runs against the fixture rather than a blank DB — a strictly stronger proof,
+since the slice it applies twice now includes every batch-3 file. It also pins the
+three identity-collision exclusions (C-33) and the five above.
+
+### Running total
+
+`ci:migration-reachability` baseline: **112 → 108 → 45 → 21** across C-32/33/34.
+The 21 remaining are the five above, the three uuid/text identity collisions, and
+the `_consolidated/` tree (C-29 Class 3) — i.e. what is left is no longer
+reachability debt but a short list of specific, named defects and decisions.
+
+---
+
+## C-35 — The reachability guard had its own blind spot: 337 schema-qualified tables went unchecked *(high — FIXED 2026-07-30)*
+
+Found while working the C-34 residual. One remaining baseline entry was a "table"
+called **`regulatory`** — which is a schema, not a table. Pulling that thread found
+the guard from C-32 wrong in two ways, each of which it reported green over. The
+irony is the point: the guard built to stop "green over a gap" had one.
+
+### 1. Schema-qualified names captured the SCHEMA
+
+Both regexes captured only the first identifier:
+
+```
+CREATE TABLE regulatory.submissions      → recorded table "regulatory"
+FROM predicate.fda_510k_clearances       → recorded reference "predicate"
+```
+
+Both sides agreed, so nothing looked broken — and the **~337 schema-qualified
+tables in this repo were never actually checked**. Not a cosmetic defect: a
+false-negative hole covering every `predicate.*`, `precedent.*`, `agent_runtime.*`,
+`ai.*` table. It also risked *masking*, since `predicate.runs` and
+`precedent.runs` would have collapsed to the same identity.
+
+Fixing it moved durably-created tables **1034 → 1292** and immediately surfaced
+**five real findings that had been invisible**: `precedent.regulatory_precedents`
+and four `predicate.*` tables, all backing the live `precedent-engine.ts`. So
+C-34's "21 remaining" was *understating* the debt, not overstating it.
+
+Identity is now normalized: `public.foo` ≡ `foo`, any other schema retained.
+
+### 2. Comments and English prose parsed as SQL
+
+The scan read raw text. A migration header reading
+`-- (CREATE TABLE IF NOT EXISTS only)` registered a table named `only`, and an
+English sentence in a `.ts` prompt string ("Update only the …") registered a
+matching reference — a phantom finding.
+
+The masking direction is the dangerous one: a commented-out or merely *described*
+`CREATE TABLE` counted as a **durable creator**, which would hide a genuinely
+missing one. SQL comments are now stripped before parsing, and a
+`NOT_A_RELATION` set filters keywords (`ONLY`, `LATERAL`, `UNNEST`, …) and common
+prose words that follow `FROM`/`UPDATE`.
+
+### Proof
+
+`tests/schema-contract/migration-reachability-guard.contract.test.ts` (6 cases)
+runs the guard's **real exported helpers** — not a copy — against known input:
+schema-qualified CREATE parsing, public-vs-unqualified normalization,
+non-public schemas staying distinct, quoted / `IF NOT EXISTS` / `UNLOGGED` /
+materialized-view forms, DDL-inside-comments being ignored, and the keyword
+filter. The guard's parsing can no longer regress silently. (The script now gates
+its scan behind an entry-point check so importing it for those helpers does not
+walk the repo or call `process.exit`.)
+
+### Result
+
+Baseline **21 → 25** — the number went **up**, and that is the correct outcome: the
+four net-new entries are real tables that were previously invisible. Honest
+accounting beats a flattering trend line. The corrected 25 are the five
+`predicate.*` / `precedent.*` tables (pgvector-blocked, C-34), the six
+`enhanced_cortex` tables (FK shape conflict, C-34), the three uuid/text identity
+collisions (C-33), and the `_consolidated/` tree (C-29 Class 3).
+
+---
+
+## C-36 — Enhanced cortex was keyed to an atom store that does not exist *(high — FIXED 2026-07-30)*
+
+The largest single item C-34 left baselined, and the first of the residual that
+turned out to be a **defect to fix** rather than a harness limit.
+
+`db/migrations/20260125_enhanced_cortex_schema.sql` creates six tables behind five
+live services — `knowledgeGraphService`, `atomVersionService`, `atomQualityService`,
+`conflictDetectionService`, `enhancedEmbeddingService`. It declares every atom
+foreign key as `UUID`:
+
+```sql
+source_atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE
+```
+
+But the canonical `lumen_data_atoms.id` is **`serial`** — an integer — in both the
+drizzle journal and `shared/schema.ts`. The FK is therefore *unimplementable*, which
+is why the file failed every screen.
+
+The deeper point is that the FK was not the only casualty. The services'
+own SQL joins atoms directly:
+
+```sql
+FROM lumen_data_atoms a LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id
+```
+
+Against `uuid` columns that fails with `operator does not exist: integer = uuid`.
+So even if the tables had somehow been provisioned, **the queries could not have
+run**. The file was written against an imagined uuid-keyed atom store that exists
+nowhere in the repo — the same identity-model family as C-27 / C-29, but here the
+canonical side is unambiguous (journal *and* push surface agree on `serial`), so
+this is a correction, not a decision.
+
+### Fix
+
+Every ATOM-id reference becomes `INTEGER`: `source_atom_id`, `target_atom_id`,
+`atom_id`, `atom_a_id`, `atom_b_id`, `related_atom_ids UUID[]` → `INTEGER[]`, the
+function parameters (`p_atom_id`, `p_source_id`, `p_target_id`, `path_atoms`) and
+`get_enriched_atom`'s `RETURNS TABLE (id …)`, which projects `a.id`.
+
+Each table's own `id UUID PRIMARY KEY DEFAULT gen_random_uuid()` is deliberately
+**untouched** — those are the tables' own identities, not atom references — as is
+`collection_id`, which correctly references `lumen_atom_collections(id)`, a UUID
+table this same file creates.
+
+### Proof
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` gained four cases:
+the canonical `lumen_data_atoms.id` is pinned as `integer` (so a future change on
+either side surfaces here, not at deploy time); no atom-referencing column
+anywhere is a non-integer; the two previously-impossible foreign keys on
+`lumen_knowledge_graph_edges` now exist; and the services' real JOIN typechecks.
+The full C2C set then applies against the base fixture **twice** (110/114, the four
+being pre-existing fixture limits) with zero unpoliced tenant tables.
+
+### Also corrected
+
+C-34 recorded `068_regulatory_schema_alignment` as "needs `regulatory.submissions`,
+which nothing creates — a real missing-creator defect". That was **an artifact of
+the guard bug C-35 fixed**: the file creates only
+`regulatory.information_requests`, and once schema-qualified names parsed
+correctly it became clear no server code references it. It is dead schema, not a
+live gap, and is no longer counted as a defect.
+
+### Result
+
+Baseline **25 → 19**.
 
 ---
 

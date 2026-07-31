@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision the real, org-scoped per-section USPI (PLLR / 21 CFR 201.57) labeling store with a live write path.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (1.14 labeling) — the USPI / prescribing information
+--     that accompanies the application
+--   - Integrity Risk Addressed: labeling content presented without a real, tenant-scoped writer; tenant isolation on regulated label text
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
 -- Labeling / prescribing-information store (REAL, org-scoped, with a write path).
 --
 -- The per-section USPI worklist the v2 LabelingPi surface renders: one row per

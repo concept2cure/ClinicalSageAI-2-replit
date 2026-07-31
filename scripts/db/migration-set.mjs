@@ -410,25 +410,177 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260730_graphrag_knowledge_tables.sql',
   'db/migrations/20260730_licensing_ip_tables.sql',
 
-  // ── Real-store follow-ups from the "retire the blob" tranche (2026-08-01) ──
-  // The labeling-pi and program-journey commits (001ac83d, f8435174) replaced
-  // seed-only c2c_* blobs with REAL org-scoped stores + write paths — but the
-  // creators were merged into db/migrations without being put on any durable
-  // apply path. ci:migration-reachability caught that gap on the follow-on PR.
+  // ── Deploy-dead creators, batch 2 (ledger C-33) ──────────────────────────
+  // Forty more files in the C-32 class: they CREATE tables live server code
+  // queries, and sat on no durable apply path, so those tables existed on no real
+  // database. Selected mechanically from the ci:migration-reachability baseline
+  // and verified the same way — each was applied TWICE against a BLANK Postgres
+  // in isolation and came up clean, which proves three things at once: every
+  // CREATE TABLE/INDEX is idempotent (the re-run is a no-op), the file is
+  // self-contained (it needs no table, schema or extension it does not itself
+  // create — nothing here can abort a deploy on a missing dependency), and it
+  // carries no non-integer tenant key (see the sweep note below).
   //
-  // labeling_pi_sections is written by server/services/labeling/
-  //   labeling-pi-service.ts and read by GET /api/labeling-pi.
-  // program_journeys + program_journey_stages are written by
-  //   server/services/program-journey/program-journey-service.ts and read by
-  //   GET /api/program-journey.
-  //
-  // Both are fully idempotent (CREATE TABLE / INDEX IF NOT EXISTS, no unguarded
-  // DDL, no data statements) and FK-free (repo migration convention), so
-  // ordering only matters for legibility — placed last. Adding them here closes
-  // the "endpoints 500 in production while ci:unbacked-tables reports them
-  // backed" failure mode the same way the ledger C-32 entries above did.
+  // Excluded by that same screen, deliberately:
+  //   • files needing prerequisites a blank DB lacks (organizations/users, the
+  //     `vector`/`pgcrypto` extensions, the predicate/precedent/core schemas) —
+  //     they may well be fine on a real database, but "probably fine" is how this
+  //     class of defect got here; they stay baselined until verified against a
+  //     real base schema.
+  //   • 20260125_ai_provider_audit_log / 20260324_ana_kernel_decision_log /
+  //     20260326_conversation_os_durability_phase2 — uuid/text tenant keys, the
+  //     same identity-model collision as C-27/C-29. Wiring them would provision
+  //     tenant tables the integer-keyed RLS model cannot police. Needs a
+  //     decision, not a wiring.
+  //   • db/migrations/_consolidated/** — ledger C-29 Class 3 (its only creators
+  //     also redefine users/tenants with TEXT keys).
+  'db/migrations/022_stability_v2.sql',
+  'db/migrations/024_stability_step3.sql',
+  'db/migrations/030_stability_results.sql',
+  'db/migrations/20260129_phase5_intelligent_document_system.sql',
+  'db/migrations/20260206_phase5_contradiction_scanner.sql',
+  'db/migrations/20260206_phase5_evidence_fabric.sql',
+  'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
+  'db/migrations/20260223_ivdr_binder_packs.sql',
+  'db/migrations/20260306_chat_tool_runs.sql',
+  'db/migrations/20260317_global_regulatory_compliance.sql',
+  'db/migrations/20260322_regulatory_precedent_intelligence.sql',
+  'db/migrations/20260323_reactive_dependency_layer.sql',
+  'db/migrations/20260324_ai_goal_plan_runs.sql',
+  'db/migrations/20260324_ai_kernel_agent_protocol_events.sql',
+  'db/migrations/20260324_ai_kernel_decision_records.sql',
+  'db/migrations/20260324_ai_kernel_policy_outcomes.sql',
+  'db/migrations/20260325_ai_goal_plan_step_events.sql',
+  'db/migrations/20260325_decision_receipts.sql',
+  'db/migrations/20260326_conversation_os_durability.sql',
+  'db/migrations/20260508_ana_submission_chat_proposals.sql',
+  'db/migrations/20260520_ana_failure_learning.sql',
+  'db/migrations/20260520_document_templates.sql',
+  'db/migrations/20260520_regulatory_intelligence_layer.sql',
+  'db/migrations/20260717_agency_meetings_store.sql',
+  'db/migrations/20260717_design_controls_store.sql',
+  'db/migrations/20260717_evidence_asks_store.sql',
+  'db/migrations/20260717_evidence_objects_store.sql',
+  'db/migrations/20260717_human_factors_store.sql',
+  'db/migrations/20260717_labeling_pi_store.sql',
+  'db/migrations/20260717_maa_module1_store.sql',
+  'db/migrations/20260717_nda_m1_docs_store.sql',
+  'db/migrations/20260717_nda_rtf_store.sql',
+  'db/migrations/20260717_program_journey_store.sql',
+  'db/migrations/20260718_pediatric_orphan_cards.sql',
+  'db/migrations/20260718_smpc_sections_store.sql',
+  'db/migrations/20260724_qms_change_control_store.sql',
+  'db/migrations/20260730_cmc_change_control_store.sql',
+  'db/migrations/20260801_hf_files_store.sql',
+  'db/migrations/20260801_market_access_store.sql',
+  'db/migrations/20260801_reg_change_store.sql',
+  // Landed the same day as this batch, with a live writer (labeling-pi-service.ts
+  // via POST /api/labeling-pi) and no applier — a fresh instance of the very class
+  // C-32's guard exists to catch, caught by that guard. Same screen: idempotent,
+  // self-contained on a blank DB, integer organization_id.
   'db/migrations/20260801_labeling_pi_store.sql',
+  // Same story again, hours later: a real program-journey store with a live
+  // writer (program-journey-service.ts) and no applier, flagged by the guard on
+  // rebase. Same screen: idempotent, self-contained, integer organization_id.
   'db/migrations/20260801_program_journey_store.sql',
+
+  // ── Deploy-dead creators, batch 3 (ledger C-34) ──────────────────────────
+  // The fifteen files C-33 left baselined as "needs a prerequisite a blank DB
+  // lacks". C-33 refused to wire them on the assumption they would be fine on a
+  // real database; C-34 stops assuming and verifies them against a BASE-SCHEMA
+  // FIXTURE instead — the drizzle journal's 290 CREATE TABLE blocks, the contrib
+  // extensions a real cluster has (pgcrypto / pg_trgm / uuid-ossp / citext), the
+  // named schemas, and then the whole C2C set applied ahead of them, i.e. the
+  // state a deploy actually presents. Each was then applied TWICE and checked for
+  // a non-integer tenant key, exactly as batches 1-2 were.
+  //
+  // Order matters here and is the order they were verified in: several depend on
+  // tables the entries ABOVE create (026_stability_step4 needs stab_studies from
+  // 022_stability_v2; 20260520_growth_mindset_extensions needs
+  // intelligence.failure_patterns from 20260520_ana_failure_learning), which is
+  // precisely why they failed the blank-DB screen and pass this one.
+  'db/migrations/026_stability_step4.sql',
+  'db/migrations/081_grdhe_regulatory_mapping_layer.sql',
+  'db/migrations/20260209_phase6_6a_fda_ingest_runs.sql',
+  'db/migrations/20260211_phase6_6d_defense_packets.sql',
+  'db/migrations/20260211_phase6_6e_proof_pack_exports.sql',
+  'db/migrations/20260211_phase7_0a_render_jobs.sql',
+  'db/migrations/20260220_user_intelligence_platform.sql',
+  'db/migrations/20260322_quality_checkpoints.sql',
+  'db/migrations/20260326_artifact_compute_plane.sql',
+  'db/migrations/20260331_communication_center_scaffold.sql',
+  'db/migrations/20260331_regulatory_correspondence_os.sql',
+  'db/migrations/20260401_submission_center_items.sql',
+  'db/migrations/20260508_artifact_citations.sql',
+  'db/migrations/20260520_growth_mindset_extensions.sql',
+  'db/migrations/20260621_weekly_usage_limits.sql',
+
+  // ── C-36: enhanced cortex, unblocked by fixing the identity conflict ─────
+  // Six tables behind five live services (knowledgeGraphService, atomVersion-
+  // Service, atomQualityService, conflictDetectionService, enhancedEmbedding-
+  // Service). C-34 left it baselined because its atom foreign keys were declared
+  // UUID while the canonical lumen_data_atoms.id is `serial` — the FK was
+  // literally unimplementable, and even without it the services' own
+  // `... JOIN lumen_atom_quality_scores q ON a.id = q.atom_id` would have failed
+  // with "operator does not exist: integer = uuid". The file was written against
+  // an imagined uuid-keyed atom store that does not exist on any database.
+  // C-36 converts every ATOM-id reference to INTEGER to match the canonical key
+  // (each table's own `id UUID PRIMARY KEY` is untouched — those are their own
+  // identities, not atom references). Verified against the base fixture: applies
+  // twice, all six tables created, both previously-impossible FKs now present,
+  // and the services' real JOIN typechecks.
+  'db/migrations/20260125_enhanced_cortex_schema.sql',
+  //
+  // Five remain unwired, each for a named reason rather than an unexamined
+  // "probably fine" (they stay in the ci:migration-reachability baseline):
+  //   • 20260207_phase6_6a_fda_clearance_universe, 20260306_precedent_engine —
+  //     require the `vector` extension, which PGlite cannot load, so they CANNOT
+  //     be verified by this harness at all. They may well be correct on a real
+  //     cluster; wiring an unverifiable file into the deploy path is the exact
+  //     habit this ledger exists to break.
+  //   • 20260208_phase6_6a_risk_rollups — needs predicate.fda_510k_clearances
+  //     from the first of those two; blocked behind it.
+  //   • 068_regulatory_schema_alignment — creates only regulatory.information_
+  //     requests, which C-35's schema-qualification fix showed is not referenced
+  //     by server code at all. It is dead schema, not a live gap; the "missing
+  //     regulatory.submissions creator" C-34 recorded here was an artifact of the
+  //     guard bug C-35 fixed. Left unwired because nothing needs it.
+  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and wired above; its
+  //     UUID-vs-serial atom-key conflict was the defect, not an ordering gap.
+
+  // ── unified_documents / workflow_document_versions (ledger C-29, #1239/#1242) ──
+  // Both tables are defined in Drizzle (shared/schema/unified_workflow.ts) but
+  // that module is NOT re-exported by shared/schema.ts, so drizzle-kit push
+  // never creates them on a fresh install; the only raw creator
+  // (db/migrations/_consolidated/…complete_schema.sql) redefines users/tenants
+  // with TEXT keys (the C-29 collision) and lives where the install-fresh
+  // overlay never walks. So this trio is the SOLE durable path to both tables on
+  // every real database — fresh or incremental — exactly the merged-≠-applied
+  // gap this list exists to close. The two ALTERs previously sat in the
+  // ops-audit KNOWN_UNLISTED baseline on the (false) premise that push would
+  // reproduce them; it cannot, so they move onto the durable path here too.
+  //
+  // ORDER MATTERS: _provision creates both tables (integer-keyed, IF NOT EXISTS);
+  // _org_id adds organization_id nullable and backfills it from the parent
+  // document; _org_not_null tightens it to NOT NULL. All idempotent (CREATE
+  // TABLE/INDEX and ADD COLUMN IF NOT EXISTS; backfill guarded on IS NULL;
+  // SET NOT NULL no-ops once set, and every row has a NOT-NULL FK parent so the
+  // backfill leaves none behind). MUST precede the tenant-isolation sweep so the
+  // new integer-org tables come under RLS.
+  'migrations/20260729_unified_documents_provision.sql',
+  'migrations/20260730_workflow_doc_versions_org_id.sql',
+  'migrations/20260731_workflow_doc_versions_org_not_null.sql',
+
+  // ── Tenant isolation for everything the set just created (ledger C-33) ───
+  // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and
+  // policies only the tables that exist at that moment. Every table added by the
+  // set above lands on an already-provisioned database where 0021 has long since
+  // run and will never revisit it — and under RLS_ENFORCE=on a table with no RLS
+  // is fully readable across tenants. This sweep is 0021's loop made re-runnable
+  // and deploy-safe: it only ADDS a policy where none exists (never clobbering a
+  // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
+  // non-integer tenant key with a NOTICE instead of aborting the deploy.
+  'db/migrations/20260801_tenant_isolation_sweep.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

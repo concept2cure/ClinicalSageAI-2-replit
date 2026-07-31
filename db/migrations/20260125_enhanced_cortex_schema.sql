@@ -1,3 +1,28 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision the knowledge-graph, atom-versioning, quality-scoring and
+--          conflict-detection tables the Cortex intelligence services query,
+--          keyed to the canonical integer atom identity (ledger C-36).
+--
+-- eCTD/CTD Context:
+--   - Module(s): all (data atoms carry evidence cited across the dossier)
+--   - Integrity Risk Addressed: evidence provenance and version history with no
+--     storage; atom foreign keys declared against a non-existent uuid atom store,
+--     making the constraints unimplementable and the services' JOINs untypeable
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Atom references MUST match lumen_data_atoms.id (`serial`); a uuid atom key
+--     breaks both the foreign keys and every service JOIN.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
+
 -- ═══════════════════════════════════════════════════════════════════════════
 --                    LUMEN CORTEX ENHANCED SCHEMA
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -15,8 +40,8 @@
 
 CREATE TABLE IF NOT EXISTS lumen_knowledge_graph_edges (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  source_atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  target_atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  source_atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  target_atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
   relationship_type VARCHAR(100) NOT NULL,
   relationship_strength REAL DEFAULT 0.5 CHECK (relationship_strength >= 0 AND relationship_strength <= 1),
   bidirectional BOOLEAN DEFAULT false,
@@ -40,7 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_kg_edges_relationship ON lumen_knowledge_graph_ed
 
 CREATE TABLE IF NOT EXISTS lumen_atom_versions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
   version_number INTEGER NOT NULL,
   content TEXT NOT NULL,
   title TEXT,
@@ -116,7 +141,7 @@ CREATE INDEX IF NOT EXISTS idx_taxonomy_type ON lumen_domain_taxonomy(domain_typ
 
 CREATE TABLE IF NOT EXISTS lumen_atom_quality_scores (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
 
   -- Quality dimensions (0-1 scale)
   completeness_score REAL DEFAULT 0,
@@ -146,7 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_quality_overall ON lumen_atom_quality_scores(over
 
 CREATE TABLE IF NOT EXISTS lumen_atom_citations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
   citation_type VARCHAR(50) NOT NULL, -- 'source', 'reference', 'derived_from', 'supports', 'contradicts'
 
   -- Citation details
@@ -176,8 +201,8 @@ CREATE INDEX IF NOT EXISTS idx_citations_pmid ON lumen_atom_citations(source_pmi
 
 CREATE TABLE IF NOT EXISTS lumen_atom_conflicts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_a_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
-  atom_b_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  atom_a_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  atom_b_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
 
   conflict_type VARCHAR(50) NOT NULL, -- 'contradiction', 'outdated', 'inconsistent', 'duplicate'
   conflict_severity VARCHAR(20) NOT NULL, -- 'low', 'medium', 'high', 'critical'
@@ -216,7 +241,7 @@ CREATE TABLE IF NOT EXISTS lumen_regulatory_timeline (
   impact_assessment TEXT,
 
   -- Relationships
-  related_atom_ids UUID[] DEFAULT '{}',
+  related_atom_ids INTEGER[] DEFAULT '{}',
 
   -- Metadata
   source_url TEXT,
@@ -255,7 +280,7 @@ CREATE TABLE IF NOT EXISTS lumen_atom_collections (
 
 CREATE TABLE IF NOT EXISTS lumen_collection_atoms (
   collection_id UUID NOT NULL REFERENCES lumen_atom_collections(id) ON DELETE CASCADE,
-  atom_id UUID NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
+  atom_id INTEGER NOT NULL REFERENCES lumen_data_atoms(id) ON DELETE CASCADE,
   added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   added_by VARCHAR(255),
   notes TEXT,
@@ -271,7 +296,7 @@ CREATE INDEX IF NOT EXISTS idx_collection_atoms_atom ON lumen_collection_atoms(a
 
 CREATE TABLE IF NOT EXISTS embedding_audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atom_id UUID REFERENCES lumen_data_atoms(id) ON DELETE SET NULL,
+  atom_id INTEGER REFERENCES lumen_data_atoms(id) ON DELETE SET NULL,
   model VARCHAR(100) NOT NULL,
   token_count INTEGER NOT NULL,
   cached BOOLEAN DEFAULT false,
@@ -287,12 +312,12 @@ CREATE INDEX IF NOT EXISTS idx_embed_audit_time ON embedding_audit_log(created_a
 
 -- Function to get atom neighbors in knowledge graph
 CREATE OR REPLACE FUNCTION get_atom_neighbors(
-  p_atom_id UUID,
+  p_atom_id INTEGER,
   p_depth INTEGER DEFAULT 1,
   p_relationship_types TEXT[] DEFAULT NULL
 )
 RETURNS TABLE (
-  atom_id UUID,
+  atom_id INTEGER,
   title TEXT,
   atom_type TEXT,
   relationship_type VARCHAR(100),
@@ -338,12 +363,12 @@ $$ LANGUAGE SQL;
 
 -- Function to find path between two atoms
 CREATE OR REPLACE FUNCTION find_atom_path(
-  p_source_id UUID,
-  p_target_id UUID,
+  p_source_id INTEGER,
+  p_target_id INTEGER,
   p_max_depth INTEGER DEFAULT 5
 )
 RETURNS TABLE (
-  path_atoms UUID[],
+  path_atoms INTEGER[],
   path_relationships TEXT[],
   path_length INTEGER
 ) AS $$
@@ -379,9 +404,10 @@ LIMIT 5;
 $$ LANGUAGE SQL;
 
 -- Function to get atom with quality enrichment
-CREATE OR REPLACE FUNCTION get_enriched_atom(p_atom_id UUID)
+CREATE OR REPLACE FUNCTION get_enriched_atom(p_atom_id INTEGER)
 RETURNS TABLE (
-  id UUID,
+  -- a.id from lumen_data_atoms, whose canonical key is `serial` (C-36).
+  id INTEGER,
   title TEXT,
   content TEXT,
   atom_type TEXT,

@@ -127,7 +127,7 @@ export const rareDiseaseProfile: TherapeuticAreaProfile = {
     {
       ctdSection: '5.3.5.4',
       prefix: true,
-      patterns: ['pediatric', 'extrapolation', 'PK'],
+      patterns: ['pediatric', 'extrapolation', 'pk'],
       description: 'Pediatric extrapolation framework not documented',
       severity: 'major',
       guidanceRef: 'ICH E11(R1)',

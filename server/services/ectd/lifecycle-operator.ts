@@ -35,6 +35,15 @@ export interface PriorLeaf {
   md5: string;
   title?: string;
   sourcePath?: string;
+  /**
+   * The leaf's PUBLISHED path within the prior sequence, backbone-relative
+   * (e.g. `m3/32-body-data/32s-drug-sub/drug-substance.pdf`), optionally with a
+   * `#leafId` fragment. Used to build the ICH `modified-file` pointer for a
+   * superseding op. When absent, the exact prior path can't be reconstructed
+   * from ctdSection/fileName alone, so no pointer is emitted (the op still
+   * carries its operation, but a downstream step must supply modified-file).
+   */
+  href?: string;
 }
 
 /**
@@ -76,22 +85,49 @@ function keyOf(leaf: { leafKey?: string; ctdSection: string; fileName: string })
 }
 
 /**
+ * Build the ICH `modified-file` pointer for a superseding op (replace/append/
+ * delete): the prior leaf's published path, prefixed with the relative traversal
+ * from the NEW sequence's backbone to the prior sequence. Returns undefined when
+ * the prior leaf's published href is unknown (nothing to point at).
+ *
+ * @param prev    the prior-sequence leaf being modified
+ * @param prefix  relative traversal to the prior sequence root, e.g. '../0000/'
+ *                for a grouped submission where sequences are sibling folders.
+ *                Empty → the bare prior href (correct only when both sequences
+ *                resolve against the same backbone root).
+ */
+function modifiedFileFor(prev: PriorLeaf, prefix: string): string | undefined {
+  if (!prev.href) return undefined;
+  const href = prev.href.replace(/^\//, '');
+  if (!prefix) return href;
+  return `${prefix.replace(/\/+$/, '')}/${href}`;
+}
+
+/**
  * Diff a desired (new-sequence) leaf set against the prior sequence and assign
  * each leaf its lifecycle operation.
  *
  * Rules (deterministic):
- *  - in desired, not in prior            → `new`
+ *  - in desired, not in prior            → `new`      (no modified-file)
  *  - in both, checksum equal             → unchanged (omitted; stays in prior seq)
  *  - in both, checksum differs           → `replace` (or `append` if appendOnChange)
  *  - in prior, not in desired            → `delete` (a delete leaf referencing prior)
+ *
+ * Every superseding op (replace / append / delete) carries a `modified-file`
+ * pointer at the prior leaf it acts on — required by ICH so the receiving review
+ * tool knows which previously-submitted file is being replaced, extended, or
+ * withdrawn. The pointer is built from the prior leaf's published `href` plus
+ * `opts.priorSequencePrefix`; if a prior leaf has no known href, that op is
+ * emitted without a pointer (no worse than before) rather than guessed.
  *
  * @throws if two desired leaves share the same identity key (ambiguous lifecycle).
  */
 export function computeLifecycleOperations(
   prior: PriorLeaf[],
   desired: DesiredLeaf[],
-  opts: { includeUnchanged?: boolean } = {}
+  opts: { includeUnchanged?: boolean; priorSequencePrefix?: string } = {}
 ): LifecycleResult {
+  const prefix = opts.priorSequencePrefix ?? '';
   const priorByKey = new Map<string, PriorLeaf>();
   for (const p of prior) priorByKey.set(keyOf(p), p);
 
@@ -121,19 +157,22 @@ export function computeLifecycleOperations(
       if (opts.includeUnchanged) leaves.push({ ...base, md5, operation: 'append' });
       continue;
     }
+    const modifiedFile = modifiedFileFor(prev, prefix);
     if (d.appendOnChange) {
       summary.append++;
-      leaves.push({ ...base, md5, operation: 'append' });
+      leaves.push({ ...base, md5, operation: 'append', ...(modifiedFile ? { modifiedFile } : {}) });
     } else {
       summary.replace++;
-      leaves.push({ ...base, md5, operation: 'replace' });
+      leaves.push({ ...base, md5, operation: 'replace', ...(modifiedFile ? { modifiedFile } : {}) });
     }
   }
 
-  // Anything in prior that the new sequence dropped is a delete.
+  // Anything in prior that the new sequence dropped is a delete — pointing its
+  // modified-file at the prior leaf being withdrawn.
   for (const p of prior) {
     if (seenDesired.has(keyOf(p))) continue;
     summary.delete++;
+    const modifiedFile = modifiedFileFor(p, prefix);
     leaves.push({
       ctdSection: p.ctdSection,
       fileName: p.fileName,
@@ -141,6 +180,7 @@ export function computeLifecycleOperations(
       sourcePath: p.sourcePath ?? '',
       md5: p.md5,
       operation: 'delete',
+      ...(modifiedFile ? { modifiedFile } : {}),
     });
   }
 

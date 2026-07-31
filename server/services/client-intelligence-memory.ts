@@ -28,6 +28,7 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc, sql, asc } from 'drizzle-orm';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
+import { resolveMemoryEntries } from './memory/llm-extraction.js';
 import { ragRetrieve } from './ragRouter.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -349,8 +350,9 @@ async function extractTextFromFile(
 }
 
 /**
- * AI-powered extraction of memory entries from document text.
- * Uses structured prompts to identify knowledge atoms.
+ * Heuristic (regex/keyword) extraction of memory entries from document text.
+ * Deterministic fallback used when governed LLM extraction is unavailable; see
+ * resolveMemoryEntries() for the preferred gateway-routed path.
  */
 function extractMemoryEntriesFromText(
   text: string,
@@ -552,8 +554,16 @@ export async function ingestDocument(
 
     const profileName = profile[0]?.companyName || 'Unknown Client';
 
-    // 4. Extract memory entries from text
-    const extractedEntries = extractMemoryEntriesFromText(text, file.originalname, profileName);
+    // 4. Extract memory entries from text (governed LLM, heuristic fallback)
+    const extractedEntries = await resolveMemoryEntries({
+      kind: 'client',
+      text,
+      fileName: file.originalname,
+      subjectName: profileName,
+      organizationId,
+      userId,
+      heuristic: () => extractMemoryEntriesFromText(text, file.originalname, profileName),
+    });
 
     // 5. Persist memory entries
     if (extractedEntries.length > 0) {
@@ -977,8 +987,16 @@ export async function ingestProjectDocument(
     const proj = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
     const projectName = proj[0]?.name || 'Unknown Project';
 
-    // Extract project-specific memory entries
-    const extractedEntries = extractProjectMemoryEntries(text, file.originalname, projectName);
+    // Extract project-specific memory entries (governed LLM, heuristic fallback)
+    const extractedEntries = await resolveMemoryEntries({
+      kind: 'project',
+      text,
+      fileName: file.originalname,
+      subjectName: projectName,
+      organizationId,
+      userId,
+      heuristic: () => extractProjectMemoryEntries(text, file.originalname, projectName),
+    });
 
     if (extractedEntries.length > 0) {
       await db.insert(projectMemoryEntries as any).values(

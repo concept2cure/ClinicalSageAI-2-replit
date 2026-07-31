@@ -1,17 +1,24 @@
 /**
- * Evidence-ask read — saved corpus-retrieval answer.
+ * Evidence-ask read — the org's latest REAL corpus ask.
  *
- * GET /api/evidence-asks → the org's single saved evidence ask, shaped to
- * exactly the keys the v2 Evidence surface renders
- * ({ pedigree, answer, cites, chunks, suggestions }, with the retrieved source
- * chunks carrying { n, doc, page, sim, snip }). A single ask is returned
- * (ORDER BY id LIMIT 1); JSONB columns rehydrate straight into the display
- * shape. Org scoped; 403 without org context; fails closed to `null` on 42P01
- * so an unprovisioned store never 500s and the surface keeps its honest
- * fixture.
+ * GET /api/evidence-asks → the org's most recent evidence ask, assembled ENTIRELY
+ * from the real, org-scoped AI trace chain (ai_retrieval_runs + ai_retrieval_chunks +
+ * ai_generation_runs — the exact provenance tables POST /api/evidence/ask persists on
+ * every live ask), shaped to the keys the v2 Evidence surface renders ({ question,
+ * askedAt, pedigree, answer, answerRetained, cites, model, chunks[{n,doc,page,sim,
+ * snip}], suggestions }). There is no seed-only blob and no fallback: an org that has
+ * never run an ask returns null and the surface renders its honest empty state.
+ *
+ * Honest fields: the trace chain retains the answer's HASH, not its prose → answer is
+ * null with answerRetained:false (the traced source chunks are the grounded evidence);
+ * cite indices and follow-up suggestions are not part of the provenance chain → []
+ * (never fabricated). See evidence-asks-view-assembler.
+ *
+ * Org scoped; 403 without org context; fails closed to null on 42P01 so an
+ * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { assembleOrgEvidenceAsks } from '../services/evidence/evidence-asks-view-assembler';
 
 const router = Router();
 
@@ -35,26 +42,25 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT id, question, pedigree, answer, cites, chunks, suggestions
-         FROM c2c_evidence_asks
-        WHERE organization_id = $1
-        ORDER BY id
-        LIMIT 1`,
-      [orgId],
-    );
-    if (rows.length === 0) {
-      return res.json({ data: null, meta: { count: 0 } });
+    const asks = await assembleOrgEvidenceAsks(orgId);
+    if (asks.length === 0) {
+      return res.json({ data: null, meta: { count: 0, source: 'ai_retrieval_runs' } });
     }
-    const r = rows[0];
-    const data = {
-      pedigree: r.pedigree,
-      answer: r.answer,
-      cites: Array.isArray(r.cites) ? r.cites : [],
-      chunks: Array.isArray(r.chunks) ? r.chunks : [],
-      suggestions: Array.isArray(r.suggestions) ? r.suggestions : [],
-    };
-    return res.json({ data, meta: { count: 1 } });
+    const latest = asks[0];
+    // `suggestions` are the org's REAL recent questions (distinct, capped) — never
+    // invented prompts. Clicking one re-runs it live against the corpus.
+    const suggestions: string[] = [];
+    const seen = new Set<string>();
+    for (const a of asks) {
+      const qn = (a.question || '').trim();
+      if (qn && !seen.has(qn)) {
+        seen.add(qn);
+        suggestions.push(qn);
+      }
+      if (suggestions.length >= 6) break;
+    }
+    const data = { ...latest, suggestions };
+    return res.json({ data, meta: { count: asks.length, source: 'ai_retrieval_runs' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: null, meta: { count: 0, pendingStore: true } });

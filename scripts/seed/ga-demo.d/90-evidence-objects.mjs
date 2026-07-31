@@ -5,29 +5,34 @@
  * Surface fed by this module:
  *   GET /api/evidence-objects (server/routes/evidence-objects.routes.ts)
  *   → SELECT id, title, evidence_type AS type, evidence_category AS category,
- *            source
- *       FROM c2c_evidence_objects
+ *            COALESCE(source_reference, source_type, '') AS source
+ *       FROM evidence_objects
  *      WHERE organization_id = $org [AND … ILIKE $q]
  *      ORDER BY title
  *   consumed by client/src/concept2cure/pdev/surfaces/EvidencePicker.tsx, which
  *   renders {title} and {type} · {category} · {source} per row.
  *
- * Org col: organization_id (int). PK (organization_id, id); idempotent via
- * ON CONFLICT DO NOTHING.
+ * This writes the REAL, canonical `evidence_objects` graph table
+ * (shared/schema/programs.ts) as PRIMARY — the same store the picker now reads
+ * directly, the attach POST resolves against
+ * (POST /api/pdev/programs/:programId/activities/:activityKey/evidence →
+ *  server/services/pdev/pdev-evidence-attach.ts), and 10+ live services consume.
+ * The seed-only `c2c_evidence_objects` blob is DEPRECATED and no longer written
+ * here (its migration db/migrations/20260717_evidence_objects_store.sql carries
+ * the deprecation header).
+ *
+ * Org col: organization_id (int). PK: id (uuid). Idempotent via ON CONFLICT (id)
+ * DO NOTHING; to_regclass-guarded on the table and its NOT-NULL column shape.
  *
  * `id` is a deterministic UUID so the picker can hand the selected row straight
- * to the already-real attach POST
- * (POST /api/pdev/programs/:programId/activities/:activityKey/evidence →
- *  server/services/pdev/pdev-evidence-attach.ts), which resolves the id against
- * the canonical `evidence_objects` graph (uuid PK, org-scoped). To keep the
- * whole search → select → attach flow honest, this module mirrors each row into
- * `evidence_objects` under the SAME uuid when that table is present — guarded on
- * to_regclass + the NOT-NULL column shape, idempotent by id. If `evidence_objects`
- * is absent the search list still populates; only the attach resolution degrades.
+ * to the attach POST, which resolves the id against the same evidence_objects
+ * rows this module writes.
  *
  * Program-consistent with the demo universe: BX-204 (CGM device), BX-099 (gMG
  * MAA biologic), BX-256 (SLE IND biologic), BX-512 (GIST IND). Evidence kinds
- * span study reports, datasets, literature, and protocols.
+ * span study reports, datasets, literature, and protocols. Program context is
+ * carried in the title / code / source text (the real table's `program_id` is a
+ * nullable link the library does not populate); the picker's `q` search covers it.
  */
 
 async function tableExists(client, table) {
@@ -44,9 +49,10 @@ async function columnSet(client, table) {
   return new Set(rows.map((r) => r.column_name));
 }
 
-/* Deterministic UUID ids so the search store and the evidence graph share keys.
-   sourceType feeds the canonical evidence_objects.source_type (NOT NULL) on the
-   mirror; it is not surfaced by the picker. */
+/* Deterministic UUID ids so search → select → attach shares keys end-to-end.
+   sourceType feeds the canonical evidence_objects.source_type (NOT NULL); the
+   picker derives its "source" display from source_reference (this module's
+   `source`) with source_type as the fallback. */
 const EVIDENCE = [
   {
     id: 'ecf00001-0000-4000-8000-000000000001', code: 'CSR-204-301',
@@ -127,27 +133,29 @@ const EVIDENCE = [
   },
 ];
 
-/* Mirror the same uuid into the canonical evidence_objects graph so the picker's
-   attach step (which validates against evidence_objects) resolves. Guarded on
-   the NOT-NULL column shape; idempotent by id. */
-async function mirrorToEvidenceGraph(client, org) {
+/* The NOT-NULL / display columns this seed writes on the real evidence_objects
+   graph. Guard the write on their presence so an unexpected schema is skipped,
+   not force-inserted. */
+const REQUIRED_COLS = [
+  'id', 'organization_id', 'title', 'evidence_type', 'evidence_category',
+  'source_type', 'source_reference', 'status',
+];
+
+export default async function seed(client, { org }) {
   if (!(await tableExists(client, 'evidence_objects'))) {
-    return { mirrored: 0, note: 'evidence_objects absent — attach resolution not seeded' };
+    console.log('   ⚠ evidence_objects not found — skipping evidence-objects seed');
+    return;
   }
   const cols = await columnSet(client, 'evidence_objects');
-  const required = ['id', 'organization_id', 'title', 'evidence_type', 'evidence_category', 'source_type', 'status'];
-  if (!required.every((c) => cols.has(c))) {
-    return { mirrored: 0, note: 'evidence_objects shape unexpected — mirror skipped' };
+  if (!REQUIRED_COLS.every((c) => cols.has(c))) {
+    console.log('   ⚠ evidence_objects shape unexpected — evidence-objects seed skipped');
+    return;
   }
 
-  let mirrored = 0;
+  let inserted = 0;
+  let existing = 0;
   for (const e of EVIDENCE) {
-    const found = await client.query(
-      'SELECT 1 FROM evidence_objects WHERE id = $1 AND organization_id = $2 LIMIT 1',
-      [e.id, org.id],
-    );
-    if (found.rows[0]) continue;
-    await client.query(
+    const r = await client.query(
       `INSERT INTO evidence_objects
          (id, organization_id, title, code, description,
           evidence_type, evidence_category, source_type, source_reference, status)
@@ -156,39 +164,11 @@ async function mirrorToEvidenceGraph(client, org) {
       [e.id, org.id, e.title, e.code, e.description ?? null,
         e.type, e.category, e.sourceType, e.source],
     );
-    mirrored += 1;
-  }
-  return { mirrored, note: null };
-}
-
-export default async function seed(client, { org }) {
-  if (!(await tableExists(client, 'c2c_evidence_objects'))) {
-    console.log('   ⚠ c2c_evidence_objects not found — skipping');
-    return;
-  }
-
-  let inserted = 0;
-  let existing = 0;
-  for (const e of EVIDENCE) {
-    const r = await client.query(
-      `INSERT INTO c2c_evidence_objects
-         (id, organization_id, title, evidence_type, evidence_category, source, program_code, code, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       ON CONFLICT (organization_id, id) DO NOTHING`,
-      [e.id, org.id, e.title, e.type, e.category, e.source, e.program, e.code, e.description ?? null],
-    );
     const n = r.rowCount ?? 0;
     inserted += n;
     if (n === 0) existing += 1;
   }
 
-  const { mirrored, note } = await mirrorToEvidenceGraph(client, org);
-
   const skippedNote = existing > 0 ? ` (${existing} already present)` : '';
-  console.log(`   ✓ evidence-objects: ${inserted} evidence objects seeded${skippedNote}`);
-  if (note) {
-    console.log(`   ⚠ ${note}`);
-  } else {
-    console.log(`   ✓ evidence-objects: ${mirrored} mirrored into evidence_objects for attach resolution`);
-  }
+  console.log(`   ✓ evidence-objects: ${inserted} evidence objects seeded into evidence_objects${skippedNote}`);
 }

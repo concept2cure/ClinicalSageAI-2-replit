@@ -23,7 +23,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
   name: 'compute_lifecycle_operations',
   description:
-    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You pass the prior leaves and the desired leaves, each with its md5 checksum; you get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged). This is pure computation — nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
+    'Compute the eCTD lifecycle operator (new, replace, append, or delete) for each leaf of a new sequence by diffing it against the prior sequence. You get every leaf with its computed operation plus a summary count (new, replace, append, delete, unchanged), and every replace/append/delete carries an ICH modified-file pointer at the prior leaf it acts on. Two ways to supply the prior state: (a) list prior_leaves by hand, each with its published href, plus prior_sequence_prefix; or (b) give application_number + prior_sequence_number and the prior sequence\'s stored leaf manifest is loaded automatically from your organization\'s compilation history (the prefix is derived for you). Nothing is written. Use it when planning a sequence so the user sees exactly which leaves change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -39,9 +39,22 @@ export const COMPUTE_LIFECYCLE_OPERATIONS: AnaTool = {
             md5: { type: 'string', description: 'Published content checksum.' },
             title: { type: 'string', description: 'Leaf title.' },
             source_path: { type: 'string', description: 'Path of the prior file (used for delete leaves).' },
+            href: { type: 'string', description: 'Published backbone-relative path of the prior leaf in its sequence (e.g. "m3/32-body-data/32s-drug-sub/general.pdf", optionally with a "#leafId" fragment). Used to build the modified-file pointer for a superseding op.' },
           },
           required: ['ctd_section', 'file_name', 'md5'],
         },
+      },
+      prior_sequence_prefix: {
+        type: 'string',
+        description: 'Relative traversal from the NEW sequence\'s backbone to the prior sequence root, e.g. "../0000/" when sequences are sibling folders under the application. Prepended to each prior leaf\'s href to form the cross-sequence modified-file value. Omit for an ungrouped/same-root lifecycle (the bare prior href is used).',
+      },
+      application_number: {
+        type: 'string',
+        description: 'When set together with prior_sequence_number (and prior_leaves is NOT given), the prior sequence\'s published leaf manifest is loaded automatically from that application\'s compilation history — you do not need to list prior leaves by hand. Scoped to your organization.',
+      },
+      prior_sequence_number: {
+        type: 'string',
+        description: 'The prior eCTD sequence to diff against, e.g. "0000". With application_number set (and prior_leaves omitted), the engine loads that sequence\'s stored leaves and derives the "../<seq>/" modified-file prefix automatically.',
       },
       desired_leaves: {
         type: 'array',
@@ -103,6 +116,71 @@ export const GENERATE_STF: AnaTool = {
       },
     },
     required: ['leaves'],
+  },
+};
+
+export const CONVERT_TO_RPS_V4: AnaTool = {
+  name: 'convert_to_rps_v4',
+  description:
+    'Convert a v3.2.2 leaf set into an ICH eCTD v4.0 (HL7 RPS) submission-unit message: one Document + Context-of-Use per leaf, with lifecycle operators mapped (new→create, replace→revise, append→append, delete→remove) and — when prior_sequence_number is given — a relatedContextOfUse pointer at each superseded CoU. You get the RPS message structure (documents + contexts of use) and, with include_xml, the RPS message XML. Pure computation — nothing is written. Use it to preview or produce the v4.0 form of a sequence for a region that has moved (or is piloting) eCTD v4.0.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      leaves: {
+        type: 'array',
+        description: 'The v3.2.2 leaves of THIS sequence.',
+        items: {
+          type: 'object',
+          properties: {
+            ctd_section: { type: 'string', description: 'CTD section code, e.g. "3.2.S.1" or "1.2".' },
+            file_name: { type: 'string', description: 'Leaf file name.' },
+            title: { type: 'string', description: 'Leaf title (also the CoU title).' },
+            md5: { type: 'string', description: 'Optional content checksum (informational here).' },
+            operation: { type: 'string', enum: ['new', 'append', 'replace', 'delete'], description: 'v3.2.2 lifecycle operation; mapped to the RPS operation code.' },
+          },
+          required: ['ctd_section', 'file_name', 'title'],
+        },
+      },
+      application: {
+        type: 'object',
+        description: 'The application the submission belongs to.',
+        properties: {
+          number: { type: 'string', description: 'Application number, e.g. "123456".' },
+          type_code: { type: 'string', description: 'Application-type code (CL1), e.g. "us_application_type_1".' },
+          center: { type: 'string', description: 'Review center: cder | cber | cdrh | …' },
+        },
+        required: ['number', 'type_code', 'center'],
+      },
+      submission: {
+        type: 'object',
+        description: 'The regulatory activity (submission) the unit belongs to.',
+        properties: {
+          type_code: { type: 'string', description: 'Submission-type code (CL12), e.g. "us_submission_type_1".' },
+          number: { type: 'string', description: 'Optional submission id/number.' },
+        },
+        required: ['type_code'],
+      },
+      submission_unit: {
+        type: 'object',
+        description: 'This sequence, as an RPS submission unit.',
+        properties: {
+          id: { type: 'string', description: 'Stable UUID for the submission unit.' },
+          unit_type_code: { type: 'string', description: 'Submission-unit-type code (CL13).' },
+          title: { type: 'string', description: 'Title (≤128 chars).' },
+          sequence_number: { type: 'string', description: 'Four-digit sequence, e.g. "0001".' },
+        },
+        required: ['id', 'unit_type_code', 'title', 'sequence_number'],
+      },
+      prior_sequence_number: {
+        type: 'string',
+        description: 'When this sequence carries lifecycle operations (revise/append/remove), the prior sequence they supersede — used to point each relatedContextOfUse at the earlier CoU.',
+      },
+      include_xml: {
+        type: 'boolean',
+        description: 'Also return the serialized RPS message XML (default false).',
+      },
+    },
+    required: ['leaves', 'application', 'submission', 'submission_unit'],
   },
 };
 

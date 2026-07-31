@@ -254,8 +254,11 @@ const KNOWN_UNLISTED = new Set([
   'migrations/20260716_template_doc_types.sql',
   'migrations/20260727_onboarding_proposal_runs.sql',
   'migrations/20260728_chat_thread_store.sql',
-  'migrations/20260730_workflow_doc_versions_org_id.sql',
-  'migrations/20260731_workflow_doc_versions_org_not_null.sql',
+  // 20260729_unified_documents_provision + its two workflow_document_versions
+  // ALTERs (20260730/20260731) are NOT here: their tables are not on the
+  // drizzle-push surface (shared/schema/unified_workflow.ts is unexported), so
+  // fresh installs do NOT get them via push. They are on the durable applier
+  // (C2C_MIGRATION_FILES) instead — see scripts/db/migration-set.mjs.
   'migrations/20260731c_canonical_documents.sql',
 ]);
 

@@ -6,6 +6,10 @@
  * category, source }. This locks the envelope + display keys, the org scoping,
  * the ILIKE search path, and the 42P01 fail-closed-to-empty behaviour (so the
  * picker degrades to its empty-state, never a crash).
+ *
+ * The route now reads the REAL, canonical `evidence_objects` graph table — NOT
+ * the deprecated seed-only `c2c_evidence_objects` blob — so these assertions
+ * pin the SELECT to the real store and its real searchable columns.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -26,7 +30,9 @@ function appWith(org: number | null) {
   return app;
 }
 
-beforeEach(() => query.mockReset());
+beforeEach(() => {
+  query.mockReset();
+});
 
 const KEYS = ['id', 'title', 'type', 'category', 'source'];
 
@@ -36,26 +42,34 @@ describe('GET /api/evidence-objects', () => {
     expect(res.status).toBe(403);
   });
 
-  it('returns { data } rows shaped to the picker display contract, org-scoped', async () => {
+  it('reads the REAL evidence_objects store, shaped to the picker display contract, org-scoped', async () => {
     const row = Object.fromEntries(KEYS.map((k) => [k, 'x']));
     query.mockResolvedValueOnce({ rows: [row] });
     const res = await request(appWith(7)).get('/api/evidence-objects?programId=abc');
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
     for (const k of KEYS) expect(res.body.data[0]).toHaveProperty(k);
+    // meta pins provenance to the real store.
+    expect(res.body.meta.source).toBe('evidence_objects');
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
-    expect(sql).toContain('c2c_evidence_objects');
+    // Reads the canonical graph, never the deprecated blob.
+    expect(sql).toContain('FROM evidence_objects');
+    expect(sql).not.toContain('c2c_');
     expect(sql).toContain('organization_id = $1');
+    // `source` is derived from the real provenance columns, not a fabricated one.
+    expect(sql).toContain('source_reference');
     // programId is accepted but never a row filter — only the org param binds.
     expect(params).toEqual([7]);
   });
 
-  it('narrows via ILIKE on q while staying org-scoped', async () => {
+  it('narrows via ILIKE on q (over real columns) while staying org-scoped', async () => {
     query.mockResolvedValueOnce({ rows: [] });
     const res = await request(appWith(7)).get('/api/evidence-objects?programId=abc&q=tox');
     expect(res.status).toBe(200);
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('ILIKE');
+    // The blob's program_code search column does not exist on the real table.
+    expect(sql).not.toContain('program_code');
     expect(params).toEqual([7, '%tox%']);
   });
 
@@ -64,5 +78,6 @@ describe('GET /api/evidence-objects', () => {
     const res = await request(appWith(7)).get('/api/evidence-objects');
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(0);
+    expect(res.body.meta.pendingStore).toBe(true);
   });
 });

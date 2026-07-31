@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
-/* ── Inline fixture data (small, kit-identical) ── */
+/* ════ Evidence — live corpus search surface ════
+
+   Fixture-free by construction. Every rendered value is real:
+   • the "Try" chips are the org's REAL recent questions (GET /api/evidence-asks,
+     assembled from the ai_retrieval_runs trace chain — never invented prompts);
+   • an ask runs LIVE against the corpus (POST /api/evidence/ask) and renders the
+     model's real answer, its real citations, and the real retrieved source chunks.
+   An org that has never asked sees an honest empty affordance, not a stand-in. */
 
 interface EvChunk {
   n: number;
@@ -21,81 +28,87 @@ interface EvAnswer {
   cites: number[];
 }
 
-const EV_ANSWER: EvAnswer = {
-  pedigree: 'model_assisted',
-  text: 'For a 14-day wear CGM, FDA precedent requires ISO 10993-11 (systemic toxicity) testing in addition to the -5 and -10 panels used for shorter-wear predicates, and reviewers consistently request an accuracy sub-analysis stratified by age band. Both points should be addressed in §11 (substantial equivalence) and §14 (biocompatibility) before filing.',
-  cites: [1, 2, 3],
-};
-
-const EV_CHUNKS: EvChunk[] = [
-  { n: 1, doc: 'K221847 Decision Summary.pdf', page: 'p. 7', sim: 0.92, snip: '…extended-wear sensors (>10 days) required additional ISO 10993-11 systemic toxicity evaluation beyond the predicate biocompatibility profile…' },
-  { n: 2, doc: 'FDA 2023 CGM guidance.pdf', page: 'p. 14', sim: 0.88, snip: '…accuracy should be characterized across pediatric and adult sub-populations, with MARD reported by age band…' },
-  { n: 3, doc: 'BX-204 Biocompatibility plan v2.docx', page: '§3.2', sim: 0.81, snip: '…cytotoxicity (-5) and sensitization (-10) complete; systemic toxicity (-11) in progress pending 14-day extract…' },
-];
-
-const EV_SUGGEST: string[] = [
-  'What testing does 14-day wear require?',
-  'Find precedent for predictive low alerts',
-  'Summarize open biocompatibility gaps',
-];
-
-/* ── Window globals — cross-surface data providers (gap until backing modules port) ── */
-declare global {
-  interface Window {
-    PedigreeBadge?: React.ComponentType<{ level: string }>;
-  }
+/** Shape returned by POST /api/evidence/ask (see server/routes/evidence-ask.ts). */
+interface AskResponse {
+  answer?: string;
+  sources?: Array<{ id: string; title: string; content: string; score: number }>;
+  citations?: Array<{ id: string; title: string; cited: boolean }>;
 }
 
-/* ════ Evidence — corpus search surface ════ */
+/** Shape returned by GET /api/evidence-asks (the org's latest real ask + history). */
+interface LatestAsk {
+  question?: string;
+  suggestions?: string[];
+}
 
-export function Evidence({ onAsk }: SurfaceViewProps) {
+const SNIP_MAX = 400;
+
+export function Evidence(_props: SurfaceViewProps) {
   const [q, setQ] = useState('');
-  const [run, setRun] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [answer, setAnswer] = useState<EvAnswer | null>(null);
+  const [chunks, setChunks] = useState<EvChunk[]>([]);
+  const [asked, setAsked] = useState<string>('');
 
-  /* live ?? fixture — adopt the org's saved evidence ask only when the store
-     returns the full display shape (a composed answer with a non-empty chunk
-     list), else keep the codebase fixture so the surface is never empty or
-     mislabelled. The fixture is the honest fallback; the pill tells the truth. */
-  const [answer, setAnswer] = useState<EvAnswer>(EV_ANSWER);
-  const [chunks, setChunks] = useState<EvChunk[]>(EV_CHUNKS);
-  const [suggest, setSuggest] = useState<string[]>(EV_SUGGEST);
-  const [sample, setSample] = useState(true);
-
+  /* Load the org's REAL recent questions for the "Try" chips (honest empty when
+     the tenant has never run an ask — no fabricated starter prompts). */
   useEffect(() => {
     let cancelled = false;
-    liveGet<{
-      data?: {
-        pedigree?: string;
-        answer?: string;
-        cites?: number[];
-        chunks?: EvChunk[];
-        suggestions?: string[];
-      } | null;
-    }>('/api/evidence-asks', { data: null }).then((res) => {
+    liveGetOrNull<LatestAsk>('/api/evidence-asks').then((r) => {
       if (cancelled) return;
-      const d = res.data?.data;
-      if (!res.sample && d?.answer && Array.isArray(d.chunks) && d.chunks.length > 0) {
-        setAnswer({ pedigree: d.pedigree || EV_ANSWER.pedigree, text: d.answer, cites: d.cites || EV_ANSWER.cites });
-        setChunks(d.chunks);
-        if (Array.isArray(d.suggestions) && d.suggestions.length > 0) setSuggest(d.suggestions);
-        setSample(false);
-      }
+      const s = r.data?.suggestions;
+      if (Array.isArray(s) && s.length > 0) setRecent(s.filter((x) => typeof x === 'string' && x.trim()));
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const go = (text?: string) => {
-    const v = text || q;
-    if (!v) return;
-    setQ(v);
-    setRun(true);
-  };
+  const go = useCallback(
+    async (text?: string) => {
+      const v = (text || q).trim();
+      if (!v || loading) return;
+      setQ(v);
+      setAsked(v);
+      setLoading(true);
+      setError(null);
+      setAnswer(null);
+      setChunks([]);
+      const res = await liveMutateOrNull<AskResponse>('POST', '/api/evidence/ask', { message: v });
+      const d = res.data;
+      if (!d || res.error) {
+        setError(res.error || 'The corpus search did not complete. Please try again.');
+        setLoading(false);
+        return;
+      }
+      const sources = Array.isArray(d.sources) ? d.sources : [];
+      const cites = Array.isArray(d.citations)
+        ? d.citations
+            .filter((c) => c.cited)
+            .map((c) => parseInt(String(c.id).replace(/^SRC-/, ''), 10))
+            .filter((n) => Number.isFinite(n))
+        : [];
+      setAnswer({ pedigree: 'model_assisted', text: d.answer || '', cites });
+      setChunks(
+        sources.map((s, i) => ({
+          n: i + 1,
+          doc: s.title || 'Untitled source',
+          page: '',
+          sim: typeof s.score === 'number' ? s.score : 0,
+          snip: (s.content || '').slice(0, SNIP_MAX),
+        })),
+      );
+      setLoading(false);
+    },
+    [q, loading],
+  );
+
+  const ran = loading || answer !== null || error !== null;
 
   return (
     <div className="page-inner">
-      <SampleTag sample={sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Project {I.dot} evidence</div>
@@ -118,30 +131,35 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
         <button
           className="btn primary"
           style={{ height: 34 }}
+          disabled={loading || !q.trim()}
           onClick={() => go()}
         >
-          {I.sparkles} Ask
+          {I.sparkles} {loading ? 'Asking…' : 'Ask'}
         </button>
       </div>
 
-      {!run ? (
+      {!ran ? (
         <div style={{ marginTop: 18 }}>
-          <div className="ana-seclbl" style={{ marginBottom: 10 }}>
-            Try
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {suggest.map((s, i) => (
-              <button
-                key={i}
-                className="ana-sugg"
-                style={{ width: 'auto' }}
-                onClick={() => go(s)}
-              >
-                <span className="ico">{I.sparkles}</span>
-                {s}
-              </button>
-            ))}
-          </div>
+          {recent.length > 0 && (
+            <>
+              <div className="ana-seclbl" style={{ marginBottom: 10 }}>
+                Recent asks
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {recent.map((s, i) => (
+                  <button
+                    key={i}
+                    className="ana-sugg"
+                    style={{ width: 'auto' }}
+                    onClick={() => go(s)}
+                  >
+                    <span className="ico">{I.sparkles}</span>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <div className="ev-meta">
             Retrieval: pgvector similarity over S3-backed chunks {I.dot}{' '}
             384-dim embeddings {I.dot} working + project + client memory.
@@ -158,18 +176,37 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
           >
             <div className="gri-result-hdr">
               <span className="t">Answer</span>
-              <PedigreeBadge level={answer.pedigree} />
+              {answer && <PedigreeBadge level={answer.pedigree} />}
             </div>
             <div className="gri-result-body">
-              <div className="gri-result-sum">
-                {answer.text}{' '}
-                <sup className="ev-cite-ref">
-                  {answer.cites.map((c) => `[${c}]`).join('')}
-                </sup>
-              </div>
-              <div className="ev-trace">
-                Traced to {chunks.length} source chunks across 3 documents.
-              </div>
+              {loading ? (
+                <div className="gri-result-sum" style={{ opacity: 0.7 }}>
+                  Searching the corpus for “{asked}”…
+                </div>
+              ) : error ? (
+                <EmptyState
+                  tone="error"
+                  title="Search failed"
+                  hint={error}
+                  icon={I.alertTriangle}
+                />
+              ) : answer ? (
+                <>
+                  <div className="gri-result-sum">
+                    {answer.text}{' '}
+                    {answer.cites.length > 0 && (
+                      <sup className="ev-cite-ref">
+                        {answer.cites.map((c) => `[${c}]`).join('')}
+                      </sup>
+                    )}
+                  </div>
+                  <div className="ev-trace">
+                    {chunks.length > 0
+                      ? `Traced to ${chunks.length} source ${chunks.length === 1 ? 'chunk' : 'chunks'}.`
+                      : 'No source chunks matched — the answer is bounded to retrieved evidence only.'}
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -177,23 +214,32 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
             <div className="ana-seclbl" style={{ marginBottom: 10 }}>
               Sources
             </div>
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: 9 }}
-            >
-              {chunks.map((c) => (
-                <div key={c.n} className="ev-chunk">
-                  <div className="ev-chunk-top">
-                    <span className="ev-chunk-n">{c.n}</span>
-                    <span className="ev-chunk-doc">{c.doc}</span>
-                    <span className="ev-chunk-sim mono">
-                      {c.sim.toFixed(2)}
-                    </span>
+            {chunks.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {chunks.map((c) => (
+                  <div key={c.n} className="ev-chunk">
+                    <div className="ev-chunk-top">
+                      <span className="ev-chunk-n">{c.n}</span>
+                      <span className="ev-chunk-doc">{c.doc}</span>
+                      <span className="ev-chunk-sim mono">
+                        {c.sim.toFixed(2)}
+                      </span>
+                    </div>
+                    {c.page && <div className="ev-chunk-page">{c.page}</div>}
+                    <div className="ev-chunk-snip">{c.snip}</div>
                   </div>
-                  <div className="ev-chunk-page">{c.page}</div>
-                  <div className="ev-chunk-snip">{c.snip}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              !loading &&
+              !error && (
+                <EmptyState
+                  title="No sources retrieved"
+                  hint="Nothing in the corpus cleared the similarity threshold for this question."
+                  icon={I.search}
+                />
+              )
+            )}
           </div>
         </div>
       )}

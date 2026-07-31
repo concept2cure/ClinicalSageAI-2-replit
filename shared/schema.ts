@@ -8280,6 +8280,15 @@ export const ectdCompilations = pgTable(
     // simply contributes no sequence to that history.
     applicationNumber: text('application_number'),
     sequenceNumber: text('sequence_number'),
+    // Immutable per-sequence leaf manifest — the exact set of leaves this
+    // compilation published, each with its precise CTD section, filename,
+    // package-relative href, and MD5 (see server/services/ectd/sequence-manifest.ts).
+    // A LATER sequence reads this to compute its lifecycle (new/replace/append/
+    // delete) and the ICH modified-file pointer against what was actually
+    // published — the mutable ectd_granules rows and the heading-collapsed
+    // index.xml cannot serve as that exact prior state. Nullable: older rows and
+    // metadata-only compilations have none.
+    leafManifest: json('leaf_manifest'),
     // Nullable for the same reason: service-initiated compilations have no
     // interactive user. The one existing writer that set it used a hardcoded 1.
     compiledBy: integer('compiled_by'),

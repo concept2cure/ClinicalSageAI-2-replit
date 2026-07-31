@@ -47,6 +47,7 @@ import {
   buildIchModuleTree,
   type RenderedLeaf,
 } from './submission-gateways/ectd-packager/ich-headings';
+import { buildLeafManifest } from './ectd/sequence-manifest';
 
 // Re-exported so existing importers of the export service keep working.
 export { EctdCompletenessError };
@@ -188,6 +189,7 @@ function generateIndexXml(opts: {
       filePath: string;
       checksum: string;
       operation: string;
+      modifiedFile?: string;
     }>;
   }>;
   generatedAt: string;
@@ -217,9 +219,14 @@ function generateIndexXml(opts: {
         ctdSection: g.granuleId,
         fileName: path.posix.basename(g.filePath),
       });
+      // For a lifecycle op (replace/append/delete) emit modified-file pointing at
+      // the superseded leaf. A delete carries no new bytes — its filePath already
+      // IS that prior pointer (set by applyLifecycleDelta), so xlink:href resolves
+      // to the withdrawn file.
+      const modAttr = g.modifiedFile ? ` modified-file="${escapeXml(g.modifiedFile)}"` : '';
       return {
         leaf: { ctdSection: g.granuleId },
-        xml: `<leaf operation="${escapeXml(g.operation)}" checksum="${g.checksum}" checksum-type="md5" xlink:href="${escapeXml(g.filePath)}" xlink:type="simple" ID="${escapeXml(id)}">
+        xml: `<leaf operation="${escapeXml(g.operation)}"${modAttr} checksum="${g.checksum}" checksum-type="md5" xlink:href="${escapeXml(g.filePath)}" xlink:type="simple" ID="${escapeXml(id)}">
   <title>${escapeXml(g.granuleName)}</title>
 </leaf>`,
       };
@@ -444,6 +451,16 @@ export async function generateEctdPackage(
      * build, with the completeness report attached to stats).
      */
     requireComplete?: boolean;
+    /**
+     * Produce a sequence DELTA against the prior sequence instead of a full
+     * snapshot: changed leaves become replace/append with a modified-file
+     * pointer, unchanged leaves are omitted (they stay referenced from the prior
+     * sequence), and dropped leaves become backbone-only delete leaves. Off by
+     * default — a first sequence (0000) or a snapshot export is unaffected, and
+     * with no prior sequence on record this is a no-op. See
+     * server/services/ectd/export-lifecycle.ts.
+     */
+    lifecycleAgainstPrior?: boolean;
   } = {}
 ): Promise<EctdPackageResult> {
   const region = options.region || 'FDA';
@@ -548,6 +565,7 @@ export async function generateEctdPackage(
       filePath: string;
       checksum: string;
       operation: string;
+      modifiedFile?: string;
     }>;
   }>();
 
@@ -745,6 +763,38 @@ export async function generateEctdPackage(
     });
   }
 
+  // 3b-lifecycle. Optional sequence DELTA. When asked (and a prior sequence
+  // exists for this org+application), diff the full current dossier against what
+  // the prior sequence published: set replace/append/delete + modified-file,
+  // omit unchanged leaves, and drop their bytes from the ZIP + checksum manifest.
+  // Off by default — a first sequence or snapshot export is unchanged. The diff
+  // runs on the shared lifecycle operator (one implementation) against the
+  // immutable prior leaf_manifest.
+  if (options.lifecycleAgainstPrior) {
+    const { loadLatestPriorManifest } = await import('./ectd/prior-sequence-loader');
+    const { applyLifecycleDelta } = await import('./ectd/export-lifecycle');
+    const { computeSequencePrefix } = await import('./ectd/sequence-manifest');
+    const priorSeq = await loadLatestPriorManifest(pool, {
+      organizationId,
+      applicationNumber,
+      currentSequence: sequenceNumber,
+    });
+    if (priorSeq.leaves.length > 0) {
+      const delta = applyLifecycleDelta(
+        moduleGranuleMap,
+        priorSeq.leaves,
+        computeSequencePrefix(priorSeq.priorSequenceNumber),
+      );
+      // Unchanged leaves are not re-shipped: pull their bytes + checksum lines.
+      const removed = new Set(delta.removedFiles);
+      for (const rel of removed) zip.remove(rel);
+      for (let i = packageChecksums.length - 1; i >= 0; i--) {
+        if (removed.has(packageChecksums[i].relPath)) packageChecksums.splice(i, 1);
+      }
+      totalFiles -= removed.size;
+    }
+  }
+
   // 3c. Submission-completeness gate. A submission-grade export must never ship
   // placeholder ("Content Status: PENDING") leaves or an empty dossier — that is
   // a Refuse-to-File / eCTD technical-rejection risk (FDA eCTD Technical
@@ -821,7 +871,23 @@ export async function generateEctdPackage(
   // and the qualification harness re-verifies after reopening the ZIP.
   zip.file('util/index-md5.txt', buildMd5Index(packageChecksums));
 
-  // 8. Record the compilation in the database
+  // 8. Record the compilation in the database, capturing the immutable
+  // per-sequence leaf manifest (every published leaf's precise section, href,
+  // and MD5) so a LATER sequence can diff against exactly what shipped and emit
+  // correct lifecycle operators + modified-file pointers. application_number and
+  // sequence_number are set here too so this path's compilations feed the
+  // sequence-continuity gate (they were previously left null — C-31).
+  const leafManifest = buildLeafManifest(
+    Array.from(moduleGranuleMap.values()).flatMap(m =>
+      m.granules.map(g => ({
+        ctdSection: g.granuleId,
+        href: g.filePath,
+        md5: g.checksum,
+        operation: g.operation,
+        title: g.granuleName,
+      })),
+    ),
+  );
   try {
     if (modules.length > 0) {
       await db
@@ -835,6 +901,9 @@ export async function generateEctdPackage(
           compiledBy: 1,
           compiledAt: new Date(),
           xmlBackbone: indexXml,
+          applicationNumber,
+          sequenceNumber,
+          leafManifest,
           version: '1.0',
         });
     }

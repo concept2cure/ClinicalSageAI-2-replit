@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-31T00:06:41.283Z",
+  "generatedAt": "2026-07-31T03:33:53.469Z",
   "git": {
-    "sha": "657bee672fdb115c32d34dcd262030bc4c479e71",
+    "sha": "1ba032d47ac312da63f9aade99e9891bf6d76365",
     "branch": "claude/ui-design-kit-review-tpsb71"
   },
   "thresholds": {
@@ -10,14 +10,14 @@
   },
   "summary": {
     "duplicateBasenames": 251,
-    "largeFilesByBytes": 30,
-    "largeFilesByLines": 84
+    "largeFilesByBytes": 32,
+    "largeFilesByLines": 86
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 105,
+        "count": 106,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -83,6 +83,7 @@
           "server/services/ind-forms/index.ts",
           "server/services/ind-lifecycle/index.ts",
           "server/services/ind-master-data/index.ts",
+          "server/services/ind/ctd/index.ts",
           "server/services/index.ts",
           "server/services/innovation/index.ts",
           "server/services/intelligence-engine/index.ts",
@@ -128,7 +129,7 @@
       },
       {
         "basename": "types",
-        "count": 50,
+        "count": 51,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -157,6 +158,7 @@
           "server/services/entitlements/types.ts",
           "server/services/global-markets/types.ts",
           "server/services/grdhe/types.ts",
+          "server/services/ind/ctd/types.ts",
           "server/services/intelligence-engine/types.ts",
           "server/services/ivd-knowledge/types.ts",
           "server/services/mdx-submission-planner/types.ts",
@@ -2485,15 +2487,23 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 945535
+        "bytes": 949455
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 834991
+        "bytes": 835632
       },
       {
         "file": "server/routes/concept2cure.ts",
         "bytes": 681751
+      },
+      {
+        "file": "server/services/ind/ctd/authoring-guidance.ts",
+        "bytes": 472707
+      },
+      {
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "bytes": 341341
       },
       {
         "file": "server/statistics-service.ts",
@@ -2549,7 +2559,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 120635
+        "bytes": 120677
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2607,11 +2617,11 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19853
+        "lines": 19862
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18378
+        "lines": 18464
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2624,6 +2634,10 @@
       {
         "file": "server/routes/authoring.router.ts",
         "lines": 6047
+      },
+      {
+        "file": "server/services/ind/ctd/authoring-guidance.ts",
+        "lines": 5560
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2654,6 +2668,10 @@
         "lines": 3246
       },
       {
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "lines": 3099
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
       },
@@ -2671,7 +2689,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2676
+        "lines": 2678
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2875,7 +2893,7 @@
       },
       {
         "file": "server/services/client-intelligence-memory.ts",
-        "lines": 1699
+        "lines": 1717
       },
       {
         "file": "server/routes/fda510k-routes.ts",
@@ -2954,9 +2972,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 405,
-      "largeByBytes": 27,
-      "largeByLines": 73
+      "duplicateGroups": 407,
+      "largeByBytes": 29,
+      "largeByLines": 75
     },
     {
       "owner": "Unassigned (TBD)",

@@ -20,6 +20,27 @@ import { oncologyProfile } from './oncology.js';
 import { rareDiseaseProfile } from './rare-disease.js';
 import { neurologyProfile } from './neurology.js';
 import { immunologyProfile } from './immunology.js';
+import { allergyProfile } from './allergy.js';
+import { cardiologyProfile } from './cardiology.js';
+import { dentalProfile } from './dental.js';
+import { dermatologyProfile } from './dermatology.js';
+import { endocrinologyProfile } from './endocrinology.js';
+import { gastroenterologyProfile } from './gastroenterology.js';
+import { geneCellTherapyProfile } from './gene-cell-therapy.js';
+import { hematologyProfile } from './hematology.js';
+import { infectiousDiseaseProfile } from './infectious-disease.js';
+import { metabolicProfile } from './metabolic.js';
+import { musculoskeletalProfile } from './musculoskeletal.js';
+import { nephrologyProfile } from './nephrology.js';
+import { obstetricsGynecologyProfile } from './obstetrics-gynecology.js';
+import { ophthalmologyProfile } from './ophthalmology.js';
+import { otherProfile } from './other.js';
+import { painProfile } from './pain.js';
+import { psychiatryProfile } from './psychiatry.js';
+import { respiratoryProfile } from './respiratory.js';
+import { transplantProfile } from './transplant.js';
+import { urologyProfile } from './urology.js';
+import { vaccinesProfile } from './vaccines.js';
 import type {
   TherapeuticAreaId,
   TherapeuticAreaProfile,
@@ -53,6 +74,74 @@ const PROFILES: ReadonlyMap<string, TherapeuticAreaProfile> = new Map<
   ['neurodegenerative', neurologyProfile],
   ['immunology', immunologyProfile],
   ['autoimmune', immunologyProfile],
+  ['allergy', allergyProfile],
+  ['allergology', allergyProfile],
+  ['immunotherapy', allergyProfile],
+  ['cardiology', cardiologyProfile],
+  ['cardiovascular', cardiologyProfile],
+  ['cardio', cardiologyProfile],
+  ['dental', dentalProfile],
+  ['oral-health', dentalProfile],
+  ['dentistry', dentalProfile],
+  ['dermatology', dermatologyProfile],
+  ['derm', dermatologyProfile],
+  ['skin', dermatologyProfile],
+  ['endocrinology', endocrinologyProfile],
+  ['endocrine', endocrinologyProfile],
+  ['gastroenterology', gastroenterologyProfile],
+  ['gi', gastroenterologyProfile],
+  ['hepatology', gastroenterologyProfile],
+  ['gene-cell-therapy', geneCellTherapyProfile],
+  ['gene-therapy', geneCellTherapyProfile],
+  ['cell-therapy', geneCellTherapyProfile],
+  ['cgt', geneCellTherapyProfile],
+  ['atmp', geneCellTherapyProfile],
+  ['hematology', hematologyProfile],
+  ['heme', hematologyProfile],
+  ['haematology', hematologyProfile],
+  ['infectious-disease', infectiousDiseaseProfile],
+  ['infection', infectiousDiseaseProfile],
+  ['id', infectiousDiseaseProfile],
+  ['antiviral', infectiousDiseaseProfile],
+  ['antibacterial', infectiousDiseaseProfile],
+  ['metabolic', metabolicProfile],
+  ['metabolism', metabolicProfile],
+  ['diabetes', metabolicProfile],
+  ['obesity', metabolicProfile],
+  ['musculoskeletal', musculoskeletalProfile],
+  ['rheumatology', musculoskeletalProfile],
+  ['msk', musculoskeletalProfile],
+  ['nephrology', nephrologyProfile],
+  ['renal', nephrologyProfile],
+  ['kidney', nephrologyProfile],
+  ['obstetrics-gynecology', obstetricsGynecologyProfile],
+  ['obgyn', obstetricsGynecologyProfile],
+  ['ob-gyn', obstetricsGynecologyProfile],
+  ['womens-health', obstetricsGynecologyProfile],
+  ['ophthalmology', ophthalmologyProfile],
+  ['ophthalmic', ophthalmologyProfile],
+  ['eye', ophthalmologyProfile],
+  ['retina', ophthalmologyProfile],
+  ['other', otherProfile],
+  ['general', otherProfile],
+  ['cross-cutting', otherProfile],
+  ['default', otherProfile],
+  ['pain', painProfile],
+  ['analgesia', painProfile],
+  ['analgesic', painProfile],
+  ['psychiatry', psychiatryProfile],
+  ['psychiatric', psychiatryProfile],
+  ['mental-health', psychiatryProfile],
+  ['respiratory', respiratoryProfile],
+  ['pulmonary', respiratoryProfile],
+  ['pulmonology', respiratoryProfile],
+  ['transplant', transplantProfile],
+  ['transplantation', transplantProfile],
+  ['urology', urologyProfile],
+  ['urologic', urologyProfile],
+  ['vaccines', vaccinesProfile],
+  ['vaccine', vaccinesProfile],
+  ['immunization', vaccinesProfile],
 ]);
 
 /**

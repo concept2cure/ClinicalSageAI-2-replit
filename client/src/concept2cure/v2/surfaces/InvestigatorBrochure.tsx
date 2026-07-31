@@ -4,13 +4,16 @@
  *
  * Registry id: `investigator-brochure`
  *
- * Surfaces the backend IB builder (server/services/authoring/ib-builder) through
- * GET /api/investigator-brochure: the IB section registry with a deterministic
- * per-section verdict (rendered | partial | missing) and the inputs each open
- * section still needs. Fixture-free (useLiveRows): renders the real persisted
- * rows, an honest error state, or an honest empty state. The backend returns the
- * deterministic ICH E6(R2) §7 skeleton (every data-bearing section marked
- * `missing`) when no program is provisioned, so the tree is always real content —
+ * Surfaces GET /api/investigator-brochure: the ICH E6(R2) §7 IB section registry
+ * with a deterministic per-section verdict (rendered | partial | missing) and the
+ * inputs each open section still needs. The backend ASSEMBLES this from the org's
+ * REAL upstream evidence stores (nonclinical_studies, clinical_ops.studies /
+ * clinical_studies, adverse_events / risk_management_plans, cmc_module3_sections)
+ * via server/services/authoring/investigator-brochure-view-assembler — no
+ * `c2c_investigator_brochure` blob, no fixture. Fixture-free (useLiveRows): renders
+ * the real persisted rows, an honest error state, or an honest empty state. A domain
+ * the org has no evidence for is honestly `missing`; an org with no upstream evidence
+ * at all yields the deterministic ICH E6(R2) §7 skeleton — always real content,
  * never fabricated and never a codebase fixture.
  */
 import React from 'react';
@@ -20,8 +23,8 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
 /** The per-section display contract GET /api/investigator-brochure returns
- *  (server/routes/investigator-brochure.routes.ts → IBSectionRow): the real ICH
- *  E6(R2) §7 section registry with a deterministic per-section verdict. */
+ *  (server/services/authoring/investigator-brochure-view-assembler.ts → IBSectionRow):
+ *  the real ICH E6(R2) §7 section registry with a deterministic per-section verdict. */
 interface IBSectionRow {
   number: string;
   title: string;
