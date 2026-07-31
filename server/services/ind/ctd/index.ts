@@ -103,6 +103,18 @@ export function listLifecycleDocumentTypesByFamily(family: LifecycleFamily): Lif
 }
 
 /**
+ * Resolve a canonical document-taxonomy registry id (e.g. "US_NDA", "US_IND_SR")
+ * to the lifecycle document type that carries its deep authoring guidance, so a
+ * taxonomy entry the product already offers surfaces the components + CTD
+ * sections a sponsor authors it from. Returns undefined when no lifecycle type
+ * maps to that registry id.
+ */
+export function getLifecycleDocumentTypeForRegistry(registryId: string): LifecycleDocumentType | undefined {
+  const id = String(registryId ?? '').trim().toUpperCase();
+  return LIFECYCLE_DOCUMENT_TYPES.find((d) => d.registryId === id);
+}
+
+/**
  * Expand a document type's `ctdSectionCodes` (which may be prefixes like "3.2.S"
  * or whole modules like "3") into the concrete CTD guidance entries it pulls
  * from the shared overlay, in code order.

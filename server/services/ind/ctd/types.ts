@@ -132,6 +132,14 @@ export interface LifecycleDocumentType {
   description: string;
   /** Regulatory basis (CFR / statute / FDA guidance / ICH). */
   regulatoryBasis: string[];
+  /**
+   * The canonical document-taxonomy registry id this lifecycle type maps to
+   * (e.g. "US_NDA", "US_IND_SR"), when one exists. Lets a taxonomy entry the
+   * product already offers resolve to this deep authoring guidance. Absent for
+   * types with no standalone taxonomy entry (e.g. meeting briefing packages,
+   * ISS/ISE which are components of an application).
+   */
+  registryId?: string;
   /** Statutory / procedural timing, when applicable (e.g. "15 calendar days"). */
   timing?: string;
   /** Type-specific administrative components (non-CTD). */
