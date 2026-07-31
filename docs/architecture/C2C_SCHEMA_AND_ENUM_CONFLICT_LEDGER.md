@@ -2797,6 +2797,101 @@ an integer (a no-op) or by silently leaving the reads unscoped.
 
 ---
 
+## C-48 — the org-uuid identity split: verified design for unification *(architectural — DESIGN, needs decisions before build)*
+
+The C-47 follow-up ("resolve the integer↔uuid org-identity mapping"), run to ground
+with four investigation agents and a real-DB verification workflow (empirical probe →
+design → 3 adversarial skeptics → completeness critic). This entry is the durable
+record; it deliberately does **not** ship the unification, because the build is a
+multi-stage project gated on product decisions and the adversarial pass found real
+gaps in the first-cut design.
+
+### What was proven, empirically
+
+- **There are two disjoint uuid org spaces, and one `app.current_org_id` cannot
+  serve both.** `public.organizations` has an integer PK `id` **and** a
+  `uuid` column (`shared/schema.ts:147`, minted per-tenant via `gen_random_uuid()`);
+  this uuid is the JWT `organizationUuid` claim and what `app.current_org_id` is set
+  to. `identity.organizations` is a **separate, hand-seeded table of exactly 9 fixed
+  uuids** (`051_gcc_multi_tenant_identity.sql`), disjoint from `public.organizations.uuid`
+  (overlap = 0, and structurally impossible since one side is `gen_random_uuid()`).
+  The COALESCE-family tables (`regulatory_intel.*`, `cortex.*`, `manufacturing.*`,
+  `global_dossier`, `federated_ml.safety_signals`) have **no FK** and freely hold the
+  app's public uuids; the identity-family tables (`core.programs`,
+  `core.program_ownerships`, `ai.*`, `ectd_v4.*`, `innovation.*`, `fhir.*`) are
+  **FK-bound to `identity.organizations(id)`** and reject any public uuid
+  (`Key is not present in table organizations`). So a single GUC set to a public uuid
+  works for the COALESCE family and makes the FK family unpopulatable/invisible; set
+  to a seed uuid, the reverse. `identity.can_access_org()` does **not** even validate
+  membership against `identity.organizations` — it self-equality-checks
+  `current_org_id()` plus an `org_relationships` grant — so the seed table is a legacy
+  **FK anchor, not an identity authority**.
+- **`app.current_org_id` is unreliably populated** (only MFA-minted JWTs carry the
+  uuid; refresh/SSO/enterprise/legacy drop it), so today the non-public uuid RLS is
+  largely **inert** for scoped requests — the keystone gap.
+- **C-46 was correct.** The "policied the wrong column (`org_id` vs `tenant_id`)"
+  flag on `federated_ml.safety_signals` / `global_dossier.dossier_instances` is a
+  **false positive**: neither deployed table has a `tenant_id` column; `org_id` is the
+  sole tenant key and is exactly what C-46 policied. The services referencing
+  `tenant_id` are **dead, schema-drifted code with zero callers** (they also reference
+  half-a-dozen other phantom columns and would fail at runtime).
+
+### Canonical decision (recommended, needs confirmation)
+
+**`public.organizations.uuid` is canonical.** It is the only uuid tied to real
+tenants; `identity.organizations` is a 9-row seed anchor whose helper doesn't gate on
+it. `identity.organizations` should converge onto `public.organizations.uuid`, never
+the reverse.
+
+### Staged plan (with the adversarial gaps folded in)
+
+- **Stage 0 (safe now):** quarantine the dead, schema-drifted cognitive-ecosystem
+  service methods (`federated-learning.service.ts`, `global-dossier.service.ts` — 0
+  callers); enrich `enforceOrgMembership`'s existing cached per-user:org lookup to
+  also select `organizations.uuid` onto `req.tenantContext.organizationUuid`
+  **without** yet feeding it into the GUC for identity-family reads.
+- **Stage 1 (unify the FK parent set):** backfill `identity.organizations(id)` from
+  `public.organizations.uuid` + an `AFTER INSERT` sync trigger. **GAP (adversarial):**
+  `identity.organizations` has `legal_name`/`business_model` (ENUM) `NOT NULL` with no
+  defaults — the backfill/trigger must supply them; and pre-existing seed-keyed CHILD
+  rows in the FK tables are **not** re-keyed by a parent backfill, so environments with
+  seed data need a child re-key step too.
+- **Stage 2 (populate the GUC reliably):** wire `organizations.uuid` through
+  `LazyRequestDbClient`/`withTenantConnection` for **all** scoped paths — safe only
+  **after** Stage 1, else it deny-alls the FK family.
+- **Stage 3 (enforce incrementally):** flip `RLS_ENFORCE=on` per environment after
+  verifying every request path sets a non-empty `app.current_org_id` and the legit
+  cross-org readers (Group B intelligence ingestors, cognitive-audit) + the C-46
+  exemptions run under a privileged/bypass role. Only then tighten the COALESCE
+  policies from `… OR col IS NULL` to strict — doing it earlier re-triggers the C-44
+  context-less-read outage.
+- **Stage 4 (converge/retire):** repoint the five identity FKs to
+  `public.organizations(uuid)`, port `org_relationships` onto public uuids, reduce
+  `identity.organizations` to a synced mirror, retire the 9 seeds.
+
+### Open gaps the adversarial + completeness pass surfaced (must be closed in build)
+
+1. **Nullable-org `IS NULL` leak.** C-46's `OR col IS NULL` arm is correct for
+   `federated_ml.safety_signals` (shared federation signals) but on `core.programs`
+   (`org_id` **nullable**, and insert code omits it → mints NULL rows) it makes NULL-org
+   rows visible to every scoped reader. The write path must stamp `org_id`, and these
+   tables need the `IS NULL` arm removed once populated.
+2. **`public.*` data tables never classified.** The canonical org table's own schema's
+   tenant tables (documents, projects, submissions, …) were audited by the *integer*
+   sweep (0021 / the public sweep) but not reconciled against the uuid track — confirm
+   they are not a third space.
+3. **`identity.users.home_org_id`** and any inbound FK beyond "the five" must be
+   re-keyed; new signups must write the public uuid.
+
+### Decisions for the user (see chat)
+
+Canonical uuid (recommend `public.organizations.uuid`); backfill-first vs
+FK-repoint-first; fate of the 9 seed uuids / any seed-keyed data; single-GUC vs interim
+dual session vars (recommend single); and the `RLS_ENFORCE` rollout + privileged-role
+posture for the legitimate cross-org readers.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
