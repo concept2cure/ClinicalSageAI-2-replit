@@ -2666,13 +2666,81 @@ carve-out. Verified on a from-scratch real-pgvector deploy: `rls-coverage-check`
 returns empty; every other invariant (deploy-smoke, the four-consumer sync guard)
 still holds.
 
-Left open, honestly: the ~80 **uuid**-keyed tenant tables across the non-public
-schemas (`cortex`, `ai`, `compliance`, `manufacturing`, …) remain unpoliced. They
-are not a C-45 regression — the sweep skips non-integer tenant keys as drift by
-design (C-33 note 1), and `rls-coverage-check`'s INT-type filter never flagged them
-— they are the uuid-vs-integer tenant-identity split already logged as an open
-architectural question. Isolating that universe is a separate track from this
-program's integer-identity remediation.
+Flagged here, then run to ground in **C-46**: the **uuid**-keyed tenant tables in
+the non-public schemas. The initial read that "~80 remain unpoliced" turned out to
+be wrong — most non-public schemas already carry uuid-keyed RLS — but a real,
+smaller gap did exist and is closed in C-46.
+
+---
+
+## C-46 — the non-public uuid-keyed tenant tables that no subsystem policied *(medium — FIXED 2026-07-31)*
+
+The C-45 "left open" item, verified and closed. A read/verify triage of **every**
+unpoliced uuid-tenant BASE TABLE (not the assumed ~80 — the real count was **31**,
+because most non-public schemas *do* carry per-subsystem uuid RLS) found a genuine
+cross-tenant gap: 31 uuid-keyed tenant tables with no policy, several
+request-path-exposed. The tenant-identity split is real, but so was the hole.
+
+### The isolate-vs-exempt call, made per subsystem
+
+The public sweep could not touch these (integer-keyed, public-only), and a naïve
+uuid sweep would have repeated the C-44 mistake — several of these subsystems query
+on the **raw pool and never set a session context**, so a strict
+`col = current_setting('app.current_org_id')::uuid` policy would filter their reads
+to **zero** and break them. Each cluster was classified from its actual access
+pattern:
+
+- **POLICY (29)** — tenant-owned: `core.programs`/`program_ownerships`,
+  `manufacturing.*` (5), `regulatory_intel.*` (11, each org holds a *private copy*
+  of the pattern library), `regulatory_harmonization.*` (5, keyed on **`tenant_id`**
+  — `organization_id` there is secondary metadata), the three `cortex` gaps,
+  `compliance.data_residency`, `global_dossier.dossier_instances`, and
+  `federated_ml.safety_signals`.
+- **EXEMPT (2)** — cross-tenant by design, where a per-tenant policy breaks a real
+  reader: `federated_ml.federation_participants` (the FL coordinator aggregates
+  every org's participant per model) and `audit.event_log` (Part 11 immutable,
+  trigger-written with NULL-org system events, read only by cross-org compliance
+  views and a hash-integrity job — no per-tenant reader to isolate).
+
+### The policy shape — context-less-SAFE by design
+
+`db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql` applies the **COALESCE**
+form the platform's other non-public schemas (`cortex`, `innovation`) already use:
+
+```
+USING ( col = COALESCE(NULLIF(current_setting('app.current_org_id', TRUE),'')::uuid, col)
+        OR col IS NULL )
+```
+
+Two properties are load-bearing and were proven on real PostgreSQL as a
+**non-superuser** role: **(1)** a context-less read (the raw-pool services that set
+no GUC) sees **all** rows — the policy does not filter, so the subsystem is not
+broken; the app-level `WHERE col = $caller_org` remains the active isolation and
+the policy is defense-in-depth for any *scoped* reader. **(2)** a scoped read
+(`app.current_org_id` set) sees only its own org plus `col IS NULL` rows, so
+federation-wide signals (`safety_signals`, org NULL by design) stay visible. This
+is why the stricter `identity.can_access_org()` form (used by the schemas that *do*
+set a context) was deliberately not retrofitted here.
+
+### Guard + proof
+
+`deploy-smoke-assert.mjs` gains check **#1c**: every non-public uuid-tenant BASE
+TABLE must be policied or on the two-entry exempt list, failing the build (on a
+real DB) if a future uuid-tenant table lands unpoliced. Verified end-to-end on real
+pgvector: the migration policies exactly 29, leaves the 2 exempt untouched, is
+idempotent (`0 applied` on re-run), `deploy-migrate` applies it (exit 0), and every
+public invariant still holds. `tests/schema-contract/uuid-tenant-isolation.contract.test.ts`
+(9 PGlite cases) pins the wiring, the per-table POLICY/EXEMPT outcomes (including
+`canonical_products` keyed on `tenant_id`, not `organization_id`), and the
+non-breaking-yet-isolating COALESCE behavior on a non-superuser role.
+
+Follow-up, stated honestly: for the raw-pool subsystems (`regulatory_intel`,
+`manufacturing`) the policy is defense-in-depth, not the primary boundary, because
+they set no session context — DB-level *enforcement* there requires migrating those
+services onto a tenant-scoped client that runs `set_config('app.current_org_id', …)`.
+The application-layer half of the gap (`manufacturing`'s cross-tenant `/overview`
+aggregates and the unfiltered `core.programs … LIMIT 1` fallbacks) is addressed in
+C-47.
 
 ---
 

@@ -154,6 +154,37 @@ for (const [label, sql] of CONSUMER_QUERIES) {
   }
 }
 
+// ── 1c. Every NON-PUBLIC uuid-tenant table is policied or explicitly exempt ───
+// The public checks above are integer-keyed and public-only. The non-public
+// schemas use a uuid tenant key; C-46 policied the tenant-owned ones with the
+// context-less-safe COALESCE policy and left two cross-tenant-by-design tables
+// exempt. This asserts no non-public uuid-tenant BASE TABLE is left with NO
+// policy at all (any policy name counts — these schemas use per-subsystem names),
+// so a newly-provisioned uuid-tenant table that nobody policied fails the build.
+const UUID_TENANT_EXEMPT = ['federated_ml.federation_participants', 'audit.event_log'];
+{
+  const { rows } = await client.query(
+    `WITH tt AS (
+       SELECT DISTINCT c.table_schema AS s, c.table_name AS t
+         FROM information_schema.columns c
+         JOIN information_schema.tables tb
+           ON tb.table_schema = c.table_schema AND tb.table_name = c.table_name
+          AND tb.table_type = 'BASE TABLE'
+        WHERE c.table_schema NOT IN ('public','pg_catalog','information_schema')
+          AND c.table_schema NOT LIKE 'pg_%'
+          AND c.column_name IN ('organization_id','org_id','tenant_id')
+          AND c.data_type = 'uuid'
+     )
+     SELECT s || '.' || t AS rel FROM tt
+      WHERE (s || '.' || t) <> ALL ($1)
+        AND NOT EXISTS (SELECT 1 FROM pg_policies p WHERE p.schemaname = tt.s AND p.tablename = tt.t)
+      ORDER BY 1`,
+    [UUID_TENANT_EXEMPT],
+  );
+  if (rows.length === 0) ok('every non-public uuid-tenant table is policied or exempt (C-46)');
+  else fail(`${rows.length} non-public uuid-tenant table(s) unpoliced`, rows.map((r) => r.rel).join(', '));
+}
+
 // ── 4. pgvector actually loaded and the C-37 tables exist ─────────────────────
 {
   const { rows } = await client.query(`SELECT extversion FROM pg_extension WHERE extname='vector'`);

@@ -652,6 +652,18 @@ export const C2C_MIGRATION_FILES = [
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
+
+  // ── Tenant isolation for the NON-PUBLIC uuid-keyed tables (ledger C-46) ──────
+  // The public sweep above is integer-keyed and public-only. The non-public
+  // schemas use a uuid tenant key and were policied per-subsystem; the subsystems
+  // that never added RLS (core.programs, manufacturing.*, regulatory_intel.*,
+  // regulatory_harmonization.*, and gaps in cortex/compliance/global_dossier/
+  // federated_ml) are closed here with the context-less-safe COALESCE policy the
+  // rest of the non-public schemas already use. Explicit (schema, table, column)
+  // list — the tenant key differs per table and two tables are deliberately
+  // exempt (federation_participants, audit.event_log). Order-independent w.r.t.
+  // the public sweep (disjoint schemas); placed alongside it for cohesion.
+  'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
