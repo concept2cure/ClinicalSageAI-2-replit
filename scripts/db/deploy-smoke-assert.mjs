@@ -46,6 +46,13 @@ const TENANT_ALLOWLIST = ['organizations', 'organization_users', 'stripe_events'
 // across the ENTIRE database rather than the 19 readiness tables deploy-migrate
 // already checks — a new tenant table added anywhere that the sweep somehow
 // misses would surface here.
+//
+// The policy-presence NOT EXISTS is SCHEMA-QUALIFIED (p.schemaname = c.table_schema).
+// A tablename-only match silently false-passes: a public table with no policy is
+// masked the moment any OTHER schema has a same-named table that does carry one
+// (this repo has vault.documents, core.programs, … alongside their public twins).
+// That is the exact schema-conflation bug C-35 fixed in the reachability guard;
+// it is not allowed to live on in the assertion that guards isolation.
 {
   const { rows } = await client.query(
     `SELECT DISTINCT c.table_name
@@ -59,13 +66,37 @@ const TENANT_ALLOWLIST = ['organizations', 'organization_users', 'stripe_events'
         AND c.table_name <> ALL ($1)
         AND NOT EXISTS (
           SELECT 1 FROM pg_policies p
-           WHERE p.tablename = c.table_name AND p.policyname = 'tenant_isolation_policy'
+           WHERE p.schemaname = c.table_schema
+             AND p.tablename = c.table_name
+             AND p.policyname = 'tenant_isolation_policy'
         )
       ORDER BY 1`,
     [TENANT_ALLOWLIST],
   );
   if (rows.length === 0) ok('every integer-tenant table carries tenant_isolation_policy');
   else fail(`${rows.length} integer-tenant table(s) unpoliced`, rows.map((r) => r.table_name).join(', '));
+}
+
+// ── 1b. Every policied table is FORCED (the owner-bypass invariant, C-43) ─────
+// A tenant_isolation_policy WITHOUT `FORCE ROW LEVEL SECURITY` is bypassed for the
+// table OWNER. The boot guard (server/db/rlsEnforcement.ts) verifies the runtime
+// role is not a superuser and does not hold BYPASSRLS — but NOT that it is a
+// non-owner. FORCE closes that gap unconditionally, so "policied" is only real
+// isolation when it is also "forced". Checked across ALL schemas, schema-qualified.
+{
+  const { rows } = await client.query(
+    `SELECT n.nspname || '.' || c.relname AS rel
+       FROM pg_class c
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+       JOIN pg_policies p
+         ON p.schemaname = n.nspname AND p.tablename = c.relname
+        AND p.policyname = 'tenant_isolation_policy'
+      WHERE c.relkind = 'r' AND c.relforcerowsecurity = false
+      GROUP BY 1
+      ORDER BY 1`,
+  );
+  if (rows.length === 0) ok('every tenant_isolation_policy table has FORCE row-level security');
+  else fail(`${rows.length} policied table(s) not FORCED (owner-bypass)`, rows.map((r) => r.rel).join(', '));
 }
 
 // ── 2. The identity fixes actually landed (C-36 / C-38) ───────────────────────

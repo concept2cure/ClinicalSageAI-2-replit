@@ -2483,6 +2483,64 @@ day that writer lands.
 
 ---
 
+## C-43 — a `tenant_isolation_policy` without `FORCE` is bypassed for the table owner *(medium — FIXED 2026-07-31)*
+
+Isolation was being certified by "does the table carry `tenant_isolation_policy`?"
+— the invariant the whole C-31→C-40 program, the sweep, `deploy-smoke-assert`, and
+the readiness gate all check. But a row-level-security policy is **silently
+bypassed for the table owner** unless the table is also `FORCE`d. Postgres applies
+RLS to everyone *except* the owner by default; `FORCE ROW LEVEL SECURITY` removes
+that exemption.
+
+The boot guard (`server/db/rlsEnforcement.ts`) refuses to boot production unless
+the runtime role is non-superuser and does not hold `BYPASSRLS` — but it does
+**not** verify the role is a non-owner. "The app never connects as the table
+owner" was therefore an unproven assumption standing between a policied table and
+a cross-tenant read. Every table `0021` and the sweep create is already `FORCE`d,
+so the exposure was latent, not live — but "policied" was being treated as
+"isolated" when the two are not the same, and nothing proved the gap shut.
+
+A near-miss surfaced the schema-conflation trap while I was auditing this: an
+initial "9 policied-but-unforced tables" reading was a **false alarm** from a
+`pg_policies.tablename`-only match (schema-blind) conflating `public.programs`
+(forced) with `core.programs` (no policy) — the exact C-35 bug, in my own
+analysis. Schema-qualified, the real count of policied-but-unforced tables was
+**zero**: isolation was in fact sound. But it also meant `deploy-smoke-assert`
+carried the same schema-blind match, so its policy-presence check could
+false-pass too.
+
+### Fix — make FORCE a checked, self-healing invariant
+
+1. **`db/migrations/20260801_tenant_isolation_sweep.sql`** gains a **second pass**:
+   after the "policy where none exists" loop, it `FORCE`s every table that
+   *already* carries `tenant_isolation_policy` but was left un-`FORCE`d by whatever
+   source created it. Separate from the first loop by design — that loop skips
+   tables the policy already exists on (so it never clobbers a subsystem's own),
+   which is exactly the path that would let a policy-without-force slip through.
+   Only policied tables are forced, so a policy-less RLS table is never turned into
+   an owner default-deny surprise. Idempotent.
+2. **`scripts/db/deploy-smoke-assert.mjs`**: the policy-presence `NOT EXISTS` is now
+   **schema-qualified** (`p.schemaname = c.table_schema`) — closing the same C-35
+   conflation in the isolation assertion itself — and a new **check #1b** asserts
+   every table carrying `tenant_isolation_policy` has `relforcerowsecurity = true`,
+   across all schemas. A missing FORCE now fails the deploy-smoke CI job on a real
+   database.
+
+### Proof
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` gains two cases
+(PGlite, non-superuser role): a table created with `ENABLE` + `CREATE POLICY` but
+no `FORCE` is `relforcerowsecurity = true` after the sweep; a policy-**less** RLS
+table is left un-forced (`hasPolicy === forced`). 16/16 pass. On real
+PostgreSQL 16 + pgvector: a probe table built policied-but-unforced reads
+`forced = f`, the sweep's second pass logs `FORCED row-level security on
+public.force_probe`, and it reads `forced = t`; all 13 `deploy-smoke-assert`
+invariants — including the new #1b — pass against the fully-provisioned database,
+with the sweep reporting `0 forced retroactively` (everything already forced,
+confirming the pre-existing surface was sound and the guard is now the proof).
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

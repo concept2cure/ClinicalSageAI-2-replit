@@ -63,6 +63,7 @@ DECLARE
   rec           RECORD;
   applied_count INT := 0;
   skipped_drift INT := 0;
+  forced_count  INT := 0;
   -- Tables that intentionally hold no tenant-scoped rows, mirroring 0021's own
   -- allowlist: cross-tenant reference/registry data every tenant reads.
   allowlist TEXT[] := ARRAY[
@@ -147,6 +148,40 @@ BEGIN
     applied_count := applied_count + 1;
   END LOOP;
 
-  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % skipped for non-integer tenant key',
-    applied_count, skipped_drift;
+  -- Second pass (ledger C-43): FORCE row-level security on every table that
+  -- ALREADY carries the tenant_isolation_policy but was left un-FORCED by whatever
+  -- source created it.
+  --
+  -- WHY THIS IS SEPARATE FROM THE LOOP ABOVE. That loop only touches tables the
+  -- policy does not yet exist on (so it never clobbers a subsystem's own). But a
+  -- table can arrive here already carrying tenant_isolation_policy from another
+  -- source that ran ENABLE + CREATE POLICY without FORCE — and the loop above
+  -- then skips it, so the missing FORCE is never added. A policy WITHOUT force is
+  -- silently bypassed for the table OWNER. The boot guard
+  -- (server/db/rlsEnforcement.ts) verifies the runtime role is not a superuser and
+  -- does not hold BYPASSRLS, but NOT that it is a non-owner — so relying on
+  -- "the app never connects as the table owner" is an unproven assumption. FORCE
+  -- closes it unconditionally, at no cost.
+  --
+  -- Only tables that HAVE the policy are forced, so a policy-less RLS table is
+  -- never turned into an owner default-deny surprise. Idempotent: re-running
+  -- forces nothing once every policied table is covered.
+  FOR rec IN
+    SELECT n.nspname AS schema_name, c.relname AS table_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_policies p
+      ON p.schemaname = n.nspname AND p.tablename = c.relname
+     AND p.policyname = 'tenant_isolation_policy'
+    WHERE c.relkind = 'r' AND c.relforcerowsecurity = false
+    GROUP BY n.nspname, c.relname
+  LOOP
+    EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', rec.schema_name, rec.table_name);
+    forced_count := forced_count + 1;
+    RAISE NOTICE '[rls-sweep] FORCED row-level security on %.% (it carried tenant_isolation_policy but not FORCE)',
+      rec.schema_name, rec.table_name;
+  END LOOP;
+
+  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % forced retroactively; % skipped for non-integer tenant key',
+    applied_count, forced_count, skipped_drift;
 END $$;

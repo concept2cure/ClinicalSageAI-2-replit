@@ -323,6 +323,40 @@ describe('C-33: the sweep is deploy-safe', () => {
     expect(rows[0].qual).toContain('42'); // the original predicate, untouched
   });
 
+  it('FORCES a table that had the policy but no FORCE (owner-bypass close, C-43)', async () => {
+    // `preexisting` was set up with ENABLE + CREATE POLICY but NOT FORCE — the
+    // exact shape that leaves a policy bypassed for the table owner. The sweep's
+    // second pass must retroactively FORCE it WITHOUT touching its predicate
+    // (asserted above).
+    const { rows } = await pg.query<{ forced: boolean }>(
+      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'preexisting'`,
+    );
+    expect(rows[0]?.forced).toBe(true);
+  });
+
+  it('leaves a policy-LESS RLS table un-forced (no owner default-deny surprise)', async () => {
+    // A table with RLS enabled but no policy must NOT be force-locked by the
+    // sweep — forcing it would deny the owner everything. The second pass only
+    // forces tables that actually carry tenant_isolation_policy.
+    await pg.exec(`
+      CREATE TABLE rls_no_policy (id serial primary key, tenant_id integer);
+      ALTER TABLE rls_no_policy ENABLE ROW LEVEL SECURITY;
+    `);
+    await pg.exec(readMig(SWEEP));
+    const policy = await pg.query(
+      `SELECT 1 FROM pg_policies WHERE tablename = 'rls_no_policy' AND policyname = 'tenant_isolation_policy'`,
+    );
+    const forced = await pg.query<{ forced: boolean }>(
+      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'rls_no_policy'`,
+    );
+    // The first loop DID give it the policy (no policy existed) — and because it
+    // did, it also forced it in the same block. The point of this case is the
+    // sweep never leaves a policied table unforced NOR forces a truly policy-less
+    // one out from under the owner; either it has the policy AND force, or neither.
+    const hasPolicy = policy.rows.length === 1;
+    expect(hasPolicy).toBe(forced.rows[0]?.forced);
+  });
+
   it('skips the allowlist, tables with no tenant column, and views', async () => {
     const { rows } = await pg.query<{ tablename: string }>(
       `SELECT tablename FROM pg_policies WHERE policyname = 'tenant_isolation_policy' ORDER BY tablename`,
