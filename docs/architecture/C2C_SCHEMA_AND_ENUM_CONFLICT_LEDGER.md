@@ -2363,16 +2363,64 @@ artifact on no apply path, using an entirely different uuid CRO model.
 
 ### Two things deliberately NOT done
 
-- **`submissions`** is FK-referenced by the already-wired
-  `20260725_submission_orchestrator_store_port.sql`, but its only creator is
-  *runtime DDL* in `openai-orchestrator.ts`. On a database where the app has never
-  run, that ALTER fails — and `deploy-migrate` stops at the first failure. The
-  file's author documents this as intended ("that failure is the correct signal");
-  flagged here rather than unilaterally redesigned.
+- **`submissions`** — corrected (C-41). An earlier draft of this note claimed the
+  table's "only creator is runtime DDL in `openai-orchestrator.ts`", making the
+  `20260725_submission_orchestrator_store_port.sql` FK a deploy-halt risk. That was
+  wrong: `submissions` IS on the canonical push surface
+  (`shared/schema/submissions.ts:37`, physical name `submissions`) — a multi-line
+  `pgTable(` declaration an earlier single-line grep missed. It is provisioned by
+  `drizzle-kit push` on every install, so the FK is satisfied on every real
+  deploy. Proven: the full install-fresh + deploy-migrate sequence applies all 125
+  C2C files clean (see C-41), and `submissions` is present throughout. The runtime
+  DDL in `openai-orchestrator.ts` is a redundant `CREATE TABLE IF NOT EXISTS`, not
+  the sole creator.
 - **`ana_kernel_decision_log`** now provisions a table nothing writes, so
   `GET /kernel/hash-chain/verify` will answer `valid: true, totalRows: 0`. An
   empty chain reporting "verified" is a weaker signal than a 500; worth a
   follow-up on that endpoint's empty-state semantics.
+
+---
+
+## C-41 — Proving it: the real deploy sequence runs, and CI now runs it *(high — FIXED 2026-07-31)*
+
+Everything from C-31 to C-40 was verified against SQL text or PGlite. Both are
+real, but neither is the thing a deploy actually does. So the whole program was
+run end to end against a **real PostgreSQL 16.13 + pgvector 0.6.0**, in the exact
+production order:
+
+1. `install-fresh` on a blank database → **767 tables, 787 RLS policies**, core
+   routes 5/5, authoring 19/19; only the five documented C-29 collisions skipped.
+2. `deploy-migrate` (the C2C set with its base-schema preflight) → **125/125
+   files applied**, readiness contract green (authoring 19/19, parentage FKs 4/4,
+   `tenant_isolation_policy` 19/19).
+3. `deploy-migrate` a **second** time (every release re-runs it) → 125/125 again,
+   identical — idempotent.
+
+Final state: **929 tables, 915 policies, ZERO integer-tenant tables unpoliced
+across the entire schema** (not just the 19 readiness tables), the two
+enhanced-cortex atom FKs present, and every consumer query that was once a live
+500 — `templates.sections`, `doc_sections.id`, the atom-quality JOIN, the
+sequence-continuity UNION, the maud/ind/literature reads — executing. Every fix in
+the program holds on a real database.
+
+### The gap this closes, permanently
+
+The static guards reason about SQL *text*. None of them RUNS the deploy — which is
+exactly how this class kept recurring. `.github/workflows/ci.yml`'s
+`blank-db-provisioning` job already ran the real sequence against a pgvector
+service (blank → refuse → install-fresh → deploy-migrate → deploy-migrate →
+readiness). C-41 adds `scripts/db/deploy-smoke-assert.mjs` as a final step: it
+asserts, on the database that job just built, the invariants only a real deploy
+can show — no unpoliced tenant table anywhere, the atom FKs, pgvector, and the
+seven once-broken consumer queries. A regression in any of them now fails the
+build on a real database before it can ship, rather than being caught (or not) by
+the next person to read the migration.
+
+`scripts/db/verify-migration-set.mjs` (C-37) remains the lighter local harness;
+its `--seed-base` models the journal only, so it reports the three push-surface /
+gcc-tree tables (`submissions`, `ana_capability_registry`,
+`c2c_project_work_items`) as missing prerequisites — correctly labeled as such,
+not errors. The full sequence above is the authoritative proof.
 
 ---
 
