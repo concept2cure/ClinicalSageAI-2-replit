@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-31T05:32:23.553Z",
+  "generatedAt": "2026-07-31T06:19:25.698Z",
   "git": {
-    "sha": "8d2ecbbc9c1dd6dcbb0eb0078da11350c541c359",
+    "sha": "3083a61248bda684dc8afbb66a22009a3b9e7062",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2511,7 +2511,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 215364
+        "bytes": 218614
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2543,7 +2543,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "bytes": 134906
+        "bytes": 135353
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2637,7 +2637,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6047
+        "lines": 6092
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2669,7 +2669,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3246
+        "lines": 3260
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
