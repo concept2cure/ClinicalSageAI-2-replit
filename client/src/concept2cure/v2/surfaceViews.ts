@@ -24,7 +24,7 @@ import { AnaMemory } from './surfaces/AnaMemory';
 import { AuthoringEngine } from './surfaces/AuthoringEngine';
 import { BatchDraft } from './surfaces/BatchDraft';
 import { BiopharmaJourney } from './surfaces/BiopharmaJourney';
-import { BiopharmaProject, CsrWorkflow, RegulatoryWorkspace } from './surfaces/BiopharmaProject';
+import { CsrWorkflow, RegulatoryWorkspace } from './surfaces/BiopharmaProject';
 import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/BiopharmaSpecialty';
 import { PvCockpit } from './surfaces/PvCockpit';
 import { Biostatistics } from './surfaces/Biostatistics';
@@ -130,7 +130,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'audit-trail': { component: AuditTrail },
   'authoring-engine': { component: AuthoringEngine },
   'batch-draft': { component: BatchDraft, full: true },
-  biopharma: { component: BiopharmaProject },
   biostatistics: { component: Biostatistics },
   'biostat-workbench': { component: BiostatWorkbench },
   'change-assessment': { component: ChangeAssessment },

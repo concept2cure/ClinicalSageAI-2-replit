@@ -1,11 +1,13 @@
 /**
- * assembleOrgDossierMap — END-TO-END against in-process PGlite.
+ * assembleProjectDossierMap — END-TO-END against in-process PGlite.
  *
  * Proves the GA read: real per-section CTD tracking rows (project_sections joined to
  * their parent projects) are rolled up into the DossierMap render contract — one row
  * per module {m,label,pct,tone,sections}, pct a genuine derived readiness (complete =
- * approved/signed/locked), most-advanced-status dedup across projects, archived
- * projects excluded, strict org scope — with no blob and nothing fabricated.
+ * approved/signed/locked), archived projects excluded, strict org scope — with no blob
+ * and nothing fabricated. Crucially it is PROJECT-scoped: readiness is computed from the
+ * one requested project only and NEVER contaminated by sections of the org's other
+ * projects.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -19,7 +21,7 @@ const pool = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
-import { assembleOrgDossierMap } from '../dossier-map-view-assembler';
+import { assembleProjectDossierMap } from '../dossier-map-view-assembler';
 
 const ORG = 7;
 const OTHER = 9;
@@ -44,14 +46,14 @@ async function section(org: number, projectId: number, code: string, module: str
   );
 }
 
-describe('assembleOrgDossierMap', () => {
+describe('assembleProjectDossierMap', () => {
   it('rolls real tracked sections up to the module grain with derived pct/tone', async () => {
     const p = await project(ORG);
     await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'approved');
     await section(ORG, p, 'm2.7', 'M2', 'Clinical Summary', 'drafting');
     await section(ORG, p, 'm3.2.S.1', 'M3', 'General Information', 'not_started');
 
-    const rows = await assembleOrgDossierMap(ORG) as any[];
+    const rows = await assembleProjectDossierMap(ORG, p) as any[];
     expect(rows.map((r) => r.m)).toEqual(['2', '3']);         // only tracked modules, ordered
 
     const m2 = rows[0];
@@ -65,32 +67,54 @@ describe('assembleOrgDossierMap', () => {
     expect(m3.tone).toBe('idle');
   });
 
-  it('dedups a section tracked in multiple projects, keeping the most-advanced status', async () => {
-    const p1 = await project(ORG);
-    const p2 = await project(ORG);
-    await section(ORG, p1, 'm2.5', 'M2', 'Clinical Overview', 'drafting');
-    await section(ORG, p2, 'm2.5', 'M2', 'Clinical Overview', 'signed');   // more advanced wins
+  it('scopes strictly to the requested project — a sibling project never contaminates readiness', async () => {
+    // Same org, same section code (m2.5), two DIFFERENT projects at different maturity.
+    // The requested project's readiness must reflect ONLY its own status — the more-
+    // advanced sibling must not leak in via any org-wide roll-up.
+    const target = await project(ORG);
+    const sibling = await project(ORG);
+    await section(ORG, target, 'm2.5', 'M2', 'Clinical Overview', 'drafting');   // this project
+    await section(ORG, sibling, 'm2.5', 'M2', 'Clinical Overview', 'signed');    // other project
+    await section(ORG, sibling, 'm4.2.1', 'M4', 'Pharmacology', 'approved');     // other project only
 
-    const rows = await assembleOrgDossierMap(ORG) as any[];
+    const rows = await assembleProjectDossierMap(ORG, target) as any[];
+    expect(rows.map((r) => r.m)).toEqual(['2']);              // sibling's M4 never appears
+    expect(rows[0].sections).toEqual(['2.5 Clinical Overview']);
+    expect(rows[0].pct).toBe(0);                              // drafting ≠ complete — NOT the sibling's 'signed'
+    expect(rows[0].tone).toBe('idle');                        // would be 'ok' if org-wide contaminated it
+
+    // And the sibling, read on its own id, is fully complete — proving the scope cuts both ways.
+    const sibRows = await assembleProjectDossierMap(ORG, sibling) as any[];
+    expect(sibRows.map((r) => r.m)).toEqual(['2', '4']);
+    expect(sibRows[0].pct).toBe(100);
+    expect(sibRows[0].tone).toBe('ok');
+  });
+
+  it('dedups a section tracked more than once within the SAME project, keeping the most-advanced status', async () => {
+    const p = await project(ORG);
+    await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'drafting');
+    await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'signed');   // more advanced wins
+
+    const rows = await assembleProjectDossierMap(ORG, p) as any[];
     expect(rows).toHaveLength(1);
     expect(rows[0].sections).toEqual(['2.5 Clinical Overview']);           // one chip, not two
     expect(rows[0].pct).toBe(100);                                          // signed counts complete
     expect(rows[0].tone).toBe('ok');
   });
 
-  it('excludes sections of archived (soft-deleted) projects', async () => {
-    const live = await project(ORG);
+  it('returns [] for an archived (soft-deleted) project even when it has tracked sections', async () => {
     const archived = await project(ORG, 'archived');
-    await section(ORG, live, 'm2.5', 'M2', 'Clinical Overview', 'approved');
     await section(ORG, archived, 'm4.2.1', 'M4', 'Pharmacology', 'approved');
 
-    const rows = await assembleOrgDossierMap(ORG) as any[];
-    expect(rows.map((r) => r.m)).toEqual(['2']);               // archived project's M4 gone
+    expect(await assembleProjectDossierMap(ORG, archived)).toEqual([]);   // archived → nothing
   });
 
-  it('returns [] for an org with no tracked sections, and never crosses tenants', async () => {
+  it('returns [] for a project with no tracked sections, and never crosses tenants', async () => {
     const p = await project(ORG);
     await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'approved');
-    expect(await assembleOrgDossierMap(OTHER)).toEqual([]);
+    // Right project id but wrong org → nothing (double-scoped org + project).
+    expect(await assembleProjectDossierMap(OTHER, p)).toEqual([]);
+    // Empty project id space → nothing.
+    expect(await assembleProjectDossierMap(ORG, 999999)).toEqual([]);
   });
 });

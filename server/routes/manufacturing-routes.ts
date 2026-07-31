@@ -126,12 +126,27 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
+  // The manufacturing.* tables key tenancy on a uuid `org_id`. The authenticated
+  // org identity rides on req.user.organizationId (the same field the working
+  // regulatory_intel routes filter on) / organizationUuid; req.tenantId is the
+  // integer org id and was never populated on this mount, which is why every
+  // query here silently ran UNSCOPED (cross-tenant). Derive the real org, and —
+  // because org_id is uuid — return it ONLY when it is a valid uuid, so a token
+  // carrying an integer org identity fails closed (no rows) rather than
+  // type-erroring or leaking. A non-uuid / absent org means "no tenant scope".
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   function getOrgId(req: Request): string | null {
-    const orgId = (req as any).tenantId ||
-      (req as any).tenantContext?.organizationId ||
+    const raw =
+      (req as any).user?.organizationUuid ??
+      (req as any).user?.organizationId ??
+      (req as any).tenantContext?.organizationUuid ??
+      (req as any).tenantContext?.organizationId ??
+      (req as any).tenantId ??
       null;
-    if (!orgId) {
-      console.warn('[Manufacturing] No tenant context on request — queries will not be org-scoped');
+    const orgId = raw != null ? String(raw) : null;
+    if (!orgId || !UUID_RE.test(orgId)) {
+      console.warn('[Manufacturing] No uuid tenant scope on request — org-scoped queries return empty rather than cross-tenant data');
+      return null;
     }
     return orgId;
   }
@@ -182,7 +197,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   // 1. GET /overview — KPI snapshot
   // ═══════════════════════════════════════════════════════════════════════════
 
-  router.get('/overview', async (_req: Request, res: Response) => {
+  router.get('/overview', async (req: Request, res: Response) => {
     try {
       // Attempt real DB aggregation; report honest zeros/nulls + dataAvailable:false on failure
       let equipmentCount = 0;
@@ -197,16 +212,26 @@ export default function createManufacturingRoutes(pool: Pool): Router {
       let readinessPercent = 0;
       let dataAvailable = true;
 
+      // These KPI aggregates MUST be org-scoped. Unscoped, they returned platform-
+      // wide counts to any authenticated caller — a cross-tenant metadata leak.
+      // With no resolvable uuid tenant scope, report honest zeros rather than
+      // another tenant's (or every tenant's) numbers.
+      const orgId = getOrgId(req);
+      if (!orgId) {
+        dataAvailable = false;
+      }
+
       try {
+        if (!orgId) throw new Error('no-tenant-scope'); // fail closed into the empty-KPI path
         const [eqRes, batchRes, devRes, qualRes] = await Promise.all([
-          pool.query(`SELECT COUNT(*) AS cnt FROM manufacturing.equipment_registry WHERE status != 'DECOMMISSIONED'`),
+          pool.query(`SELECT COUNT(*) AS cnt FROM manufacturing.equipment_registry WHERE status != 'DECOMMISSIONED' AND org_id = $1`, [orgId]),
           pool.query(`SELECT COUNT(*) AS cnt,
                              COUNT(*) FILTER (WHERE status = 'RELEASED') AS released,
                              AVG(EXTRACT(EPOCH FROM (released_at - actual_start)) / 86400.0)
                                FILTER (WHERE released_at IS NOT NULL AND actual_start IS NOT NULL) AS avg_release_days
-                      FROM manufacturing.batch_execution_records`),
-          pool.query(`SELECT COUNT(*) AS cnt FROM manufacturing.batch_execution_records WHERE deviation_count > 0`),
-          pool.query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE disposition = 'PASS') AS passed FROM manufacturing.quality_test_results`),
+                      FROM manufacturing.batch_execution_records WHERE org_id = $1`, [orgId]),
+          pool.query(`SELECT COUNT(*) AS cnt FROM manufacturing.batch_execution_records WHERE deviation_count > 0 AND org_id = $1`, [orgId]),
+          pool.query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE disposition = 'PASS') AS passed FROM manufacturing.quality_test_results WHERE org_id = $1`, [orgId]),
         ]);
 
         equipmentCount = parseInt(eqRes.rows[0].cnt, 10);

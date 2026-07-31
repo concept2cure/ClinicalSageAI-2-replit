@@ -1242,20 +1242,26 @@ export class EvidenceConfidenceHeatmapService {
   }
 
   private async resolveProgramId(): Promise<string | undefined> {
+    // Multi-tenant safety (ledger C-47): only auto-resolve a default program when
+    // exactly one exists. The globally-latest grab returned an arbitrary tenant's
+    // program to a caller with no program context (cross-tenant leak). Ambiguous
+    // (>1) → undefined; callers degrade to an empty program id.
     try {
       const result = await this.pool.query(
-        'SELECT id FROM programs ORDER BY created_at DESC LIMIT 1'
+        'SELECT id FROM programs LIMIT 2'
       );
-      if (result.rows.length > 0) return result.rows[0].id;
+      if (result.rows.length === 1) return result.rows[0].id;
+      if (result.rows.length > 1) return undefined;
     } catch {
-      // Ignore
+      // table absent / not this shape — try core schema
     }
 
     try {
       const result = await this.pool.query(
-        'SELECT id FROM core.programs ORDER BY created_at DESC LIMIT 1'
+        'SELECT id FROM core.programs LIMIT 2'
       );
-      return result.rows[0]?.id;
+      if (result.rows.length === 1) return result.rows[0].id;
+      return undefined;
     } catch {
       return undefined;
     }

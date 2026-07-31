@@ -1,20 +1,20 @@
 // @vitest-environment jsdom
 /**
- * eCTD Co-Author — no fabricated governed actions or results.
+ * eCTD Co-Author — fixture-free contract (GA real-data standard).
  *
- * This surface is fixture-backed: its eCTD tree, artifact and provenance are
- * module constants, not project data. That is tolerable only while it is
- * clearly marked. What is not tolerable — and what these tests pin — is the
- * surface manufacturing regulatory *claims*:
+ * The surface used to render inline fixtures behind a "Sample data" pill: a
+ * hardcoded eCTD tree (ECTD_TREE), a fabricated provenance-traced artifact
+ * (ECTD_ARTIFACT — masthead + per-paragraph source/model/confidence/audit and
+ * invented trial results), a pre-seeded thread reporting a COMPLETED
+ * `attach_sources_to_document` tool call that never ran, and client-side
+ * validation/compliance stand-ins. All retired.
  *
- *   - a pre-seeded thread reporting a COMPLETED `attach_sources_to_document`
- *     tool call that never ran,
- *   - a canned assistant reply to anything the user typed,
- *   - hardcoded eCTD validation findings and an ICH M4 compliance score of 78%
- *     substituted whenever the real endpoint failed, rendered identically to a
- *     genuine server response.
- *
- * A reviewer could not distinguish any of those from live output.
+ * These tests pin the honest states the surface may now render:
+ *   • the eCTD backbone tree + artifact from the org's REAL coauthor documents
+ *     (GET /api/coauthor/documents), the selected document's real content, and
+ *     real validation/compliance from the server routes;
+ *   • honest EMPTY (no documents) and honest ERROR / UNAVAILABLE states;
+ *   • no SampleTag, no fabricated tool call, no retired fixture string.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -28,72 +28,261 @@ import { EctdCoauthor } from '../surfaces/EctdCoauthor';
 const onAsk = vi.fn();
 const props = () => ({ surface: { id: 'ectd-coauthor', label: 'eCTD' } as any, onAsk, onNav: vi.fn(), segment: 'biopharma' });
 
+const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj } as Response);
+const fail = (status: number) => ({ ok: false, status, json: async () => ({ error: 'nope' }) } as Response);
+
+/* A REAL org-scoped documents payload — deliberately NOT the retired fixture,
+   so anything rendered proves the response was adopted rather than a codebase
+   constant. Route shape is { documents: [...], total, message } and each row
+   carries content/status/moduleNumber straight from coauthor_documents. */
+const REAL_DOCS = {
+  documents: [
+    {
+      id: 7001,
+      title: 'Clinical Overview — ZX-9',
+      content: '<h2>2.5.1 Development Rationale</h2><p>ZX-9 is a first-in-class oral agent evaluated in relapsed disease.</p>',
+      status: 'review',
+      moduleNumber: '2.5',
+      moduleName: 'Common Technical Document Summaries',
+      updatedAt: '2026-07-20T00:00:00Z',
+    },
+    {
+      id: 7002,
+      title: 'Drug Product — ZX-9',
+      content: '',
+      status: 'draft',
+      moduleNumber: '3.2.P',
+      moduleName: 'Quality',
+      updatedAt: '2026-07-18T00:00:00Z',
+    },
+    {
+      id: 7003,
+      title: 'Integrated Summary of Safety',
+      content: '<p>ISS narrative for ZX-9.</p>',
+      status: 'approved',
+      moduleNumber: '5.3',
+      moduleName: 'Clinical Study Reports',
+      updatedAt: '2026-07-10T00:00:00Z',
+    },
+  ],
+  total: 3,
+  message: 'Found 3 document(s)',
+};
+
+const EMPTY_DOCS = { documents: [], total: 0, message: 'No co-author documents yet' };
+
+/* REAL server outputs for the two governed checks (route shapes). */
+const REAL_VALIDATION = {
+  success: true,
+  validation: {
+    documentId: 7001,
+    isValid: false,
+    errorCount: 1,
+    warningCount: 1,
+    totalSections: 4,
+    findings: [
+      { type: 'missing-section', severity: 'error', module: '2', sectionId: '2.3', message: 'Required eCTD section 2.3 is missing from Module 2 (Common Technical Document Summaries).' },
+      { type: 'incomplete-section', severity: 'warning', sectionId: '2.5.5', message: 'Section "Overview of Safety" (2.5.5) has status "pending".' },
+    ],
+    validatedAt: '2026-07-31T00:00:00Z',
+  },
+};
+
+const REAL_COMPLIANCE = {
+  success: true,
+  compliance: {
+    documentId: 7001,
+    standard: 'ICH M4',
+    complianceScore: 83,
+    totalChecks: 9,
+    compliantCount: 7,
+    nonCompliantCount: 2,
+    checks: [
+      { ruleId: 'M4-004', description: 'Module 2.5 Clinical Overview or Module 2.7 Clinical Summary present', status: 'compliant', module: '2.5' },
+      { ruleId: 'M4-006', description: 'Module 3.2.P Drug Product present', status: 'compliant', module: '3.2.P' },
+    ],
+    checkedAt: '2026-07-31T00:00:00Z',
+  },
+};
+
+/* Fixture strings that must NEVER appear once the fixtures are gone. */
+const RETIRED = [
+  'Sample data',
+  'Sample artifact',
+  'BX-301',
+  'anti-BCMA',
+  'Relapsed multiple myeloma',
+  'Concept2Cure',
+  '38.6%',
+  'Cytokine release syndrome',
+  'attach_sources_to_document',
+  'run_validation',
+  'Required eCTD section 3.2.P is missing content',
+];
+
+/** Read the value cell of the tree-footer KPI whose label matches. */
+function footRow(label: string): string {
+  const row = Array.from(document.querySelectorAll('.ec-tree-foot-row')).find((el) =>
+    (el.querySelector('span')?.textContent || '').includes(label),
+  );
+  return row?.querySelector('b')?.textContent?.trim() || '';
+}
+
+afterEach(cleanup);
 beforeEach(() => {
   onAsk.mockReset();
   apiRequest.mockReset();
-  // Every backend call fails — the condition that used to produce fixtures.
-  apiRequest.mockRejectedValue(new Error('backend unreachable'));
-  delete (window as any).C2C_API;
 });
-afterEach(cleanup);
 
-describe('EctdCoauthor — no fabricated tool calls', () => {
-  it('starts with no pre-seeded assistant turn claiming completed work', () => {
+describe('EctdCoauthor — real documents render per panel (no fixture)', () => {
+  beforeEach(() => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'POST' && /\/validate$/.test(url)) return ok(REAL_VALIDATION);
+      if (method === 'GET' && /\/compliance$/.test(url)) return ok(REAL_COMPLIANCE);
+      return ok({});
+    });
+  });
+
+  it('renders the REAL eCTD tree + selected document content', async () => {
     render(<EctdCoauthor {...props()} />);
-    const body = document.body.textContent || '';
-    expect(body).not.toMatch(/attach_sources_to_document/);
-    expect(body).not.toMatch(/run_validation/);
-    // The fabricated efficacy claim that reply asserted.
-    expect(body).not.toMatch(/I drafted §2\.5\.4 from the locked BX301-301 dataset/);
+
+    // Tree leaves are the org's real documents, bucketed into ICH M4 modules.
+    expect(await screen.findByText('Drug Product — ZX-9')).toBeTruthy();
+    expect(screen.getByText('Integrated Summary of Safety')).toBeTruthy();
+
+    // The artifact renders the active document's real persisted content.
+    expect(screen.getByText('ZX-9 is a first-in-class oral agent evaluated in relapsed disease.')).toBeTruthy();
+
+    // No provenance pill and no retired fixture content.
+    expect(document.querySelector('.c2c-sample-tag')).toBeNull();
+    for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
+  });
+
+  it('derives tree-footer KPIs from the real rows (not hardcoded)', async () => {
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
+    // 3 real documents; 1 approved (7003); readiness = (1 + 1*0.5)/3 = 50%.
+    expect(footRow('Documents')).toBe('3');
+    expect(footRow('Approved')).toBe('1');
+    expect(footRow('eCTD readiness')).toBe('50%');
+  });
+
+  it('renders REAL server validation findings when Validation is opened', async () => {
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
+    const validationTab = Array.from(document.querySelectorAll('.ec-art-tab'))
+      .find((b) => /validation/i.test(b.textContent || '')) as HTMLElement;
+    fireEvent.click(validationTab);
+
+    // The real finding from the mocked route renders — not a client stand-in.
+    expect(await screen.findByText(/Required eCTD section 2\.3 is missing from Module 2/)).toBeTruthy();
+    expect(document.body.textContent).toMatch(/1 error/);
+    for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
+  });
+
+  it('renders the REAL ICH M4 compliance score when Compliance is opened', async () => {
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
+    const complianceTab = Array.from(document.querySelectorAll('.ec-art-tab'))
+      .find((b) => /compliance/i.test(b.textContent || '')) as HTMLElement;
+    fireEvent.click(complianceTab);
+
+    await waitFor(() => expect(document.querySelector('.ec-cscore-num')?.textContent).toMatch(/83/));
+    expect(screen.getByText('M4-004')).toBeTruthy();
+    // The retired hardcoded 78% score must be gone.
+    expect(document.body.textContent).not.toContain('78%');
   });
 
   it('routes a typed question to AnA instead of answering it inline', async () => {
     render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
     const box = document.querySelector('.ec-composer textarea') as HTMLTextAreaElement;
     fireEvent.change(box, { target: { value: 'Tighten the efficacy paragraph' } });
     fireEvent.click(document.querySelector('.ec-send') as HTMLElement);
 
-    // The question goes to the real AnA surface…
     await waitFor(() => expect(onAsk).toHaveBeenCalledTimes(1));
     expect(onAsk.mock.calls[0][0]).toMatch(/Tighten the efficacy paragraph/);
-
-    // …and no assistant reply is manufactured locally.
+    // No assistant reply is manufactured locally.
     expect(document.querySelector('.ec-msg-ai')).toBeNull();
-    expect(document.body.textContent).not.toMatch(/I’ll draft against the linked evidence/);
+  });
+});
+
+describe('EctdCoauthor — honest empty state', () => {
+  beforeEach(() => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return ok(EMPTY_DOCS);
+      return ok({});
+    });
+  });
+
+  it('shows an EmptyState — never a fixture — when the org has no documents', async () => {
+    render(<EctdCoauthor {...props()} />);
+
+    expect(await screen.findByText('No eCTD documents yet')).toBeTruthy();
+    // KPI count is the honest zero, not a fixture length.
+    expect(footRow('Documents')).toBe('0');
+    expect(document.querySelector('.c2c-sample-tag')).toBeNull();
+    expect(document.querySelector('.ec-tree-children')).toBeNull();
+    for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
+  });
+});
+
+describe('EctdCoauthor — honest error state', () => {
+  beforeEach(() => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return fail(403);
+      return ok({});
+    });
+  });
+
+  it("shows an error EmptyState — never a fixture — when the read fails", async () => {
+    render(<EctdCoauthor {...props()} />);
+
+    expect(await screen.findByText("Couldn't load eCTD documents")).toBeTruthy();
+    expect(document.querySelector('.c2c-sample-tag')).toBeNull();
+    for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
   });
 });
 
 describe('EctdCoauthor — no fabricated validation or compliance results', () => {
   it('reports validation as unavailable rather than inventing findings', async () => {
-    render(<EctdCoauthor {...props()} />);
-    fireEvent.click(screen.getByTitle(/Focus mode/i).parentElement!.querySelector('.ec-topbtn.primary') as HTMLElement);
-
-    await waitFor(() => {
-      expect(document.body.textContent).toMatch(/validation service did not return a result/i);
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'POST' && /\/validate$/.test(url)) return fail(503);
+      return ok({});
     });
-    // The retired hardcoded finding.
-    expect(document.body.textContent).not.toMatch(/Required eCTD section 3\.2\.P is missing content/);
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
+    const validationTab = Array.from(document.querySelectorAll('.ec-art-tab'))
+      .find((b) => /validation/i.test(b.textContent || '')) as HTMLElement;
+    fireEvent.click(validationTab);
+
+    await waitFor(() => expect(document.body.textContent).toMatch(/validation service did not return a result/i));
+    for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
   });
 
   it('reports compliance as unavailable rather than inventing a score', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'GET' && /\/compliance$/.test(url)) return fail(503);
+      return ok({});
+    });
     render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
     const complianceTab = Array.from(document.querySelectorAll('.ec-art-tab'))
-      .find(b => /compliance/i.test(b.textContent || '')) as HTMLElement;
+      .find((b) => /compliance/i.test(b.textContent || '')) as HTMLElement;
     fireEvent.click(complianceTab);
 
-    await waitFor(() => {
-      expect(document.body.textContent).toMatch(/compliance service did not return a result/i);
-    });
-    // The retired hardcoded 78% ICH M4 score and its checks.
-    expect(document.body.textContent).not.toMatch(/78/);
-    expect(document.body.textContent).not.toMatch(/M4-DOC-001/);
-  });
-});
-
-describe('EctdCoauthor — fixture content is labelled', () => {
-  it('marks the fixture-backed artifact with the platform sample pill', () => {
-    render(<EctdCoauthor {...props()} />);
-    expect(document.querySelectorAll('.c2c-sample-tag').length).toBeGreaterThan(0);
-    expect(document.body.textContent).toMatch(/Sample data/);
+    await waitFor(() => expect(document.body.textContent).toMatch(/compliance service did not return a result/i));
+    // The retired hardcoded 78% ICH M4 score must not appear.
+    expect(document.body.textContent).not.toContain('78%');
+    expect(document.querySelector('.ec-cscore-num')).toBeNull();
   });
 });

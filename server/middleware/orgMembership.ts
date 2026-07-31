@@ -40,6 +40,15 @@ const ORG_MEMBERSHIP_CACHE_MAX_ENTRIES = 5_000;
 
 interface OrgMembershipCacheEntry {
   isMember: boolean;
+  // public.organizations.uuid for this org, resolved in the SAME membership
+  // lookup (LEFT JOIN, no extra round-trip). Surfaced onto req.user.organizationUuid
+  // so uuid-keyed subsystems (e.g. manufacturing routes) can org-scope regardless of
+  // which mint path issued the token — the MFA path stamps organizationUuid into the
+  // JWT but refresh/SSO/enterprise/legacy tokens drop it (ledger C-47/C-48 Stage 0).
+  // NOTE: this deliberately populates req.user only — it is NOT wired into
+  // app.current_org_id, which the identity-FK family would deny-all against until the
+  // C-48 unification lands.
+  orgUuid: string | null;
   expiresAt: number;
 }
 
@@ -107,10 +116,15 @@ export type OrgMembershipCheckResult = 'member' | 'revoked' | 'indeterminate';
  * pulls a DB connection at module-load time, and so test suites that mock
  * or omit '../db' degrade to the fail-open path instead of crashing.
  */
+interface OrgMembershipQueryResult {
+  status: OrgMembershipCheckResult;
+  orgUuid: string | null;
+}
+
 async function queryOrgMembership(
   userId: number,
   organizationId: number
-): Promise<OrgMembershipCheckResult> {
+): Promise<OrgMembershipQueryResult> {
   try {
     const [dbModule, schemaModule, drizzle] = await Promise.all([
       import('../db'),
@@ -119,12 +133,13 @@ async function queryOrgMembership(
     ]);
     const db = (dbModule as { db?: any }).db;
     const organizationUsers = (schemaModule as { organizationUsers?: any }).organizationUsers;
+    const organizations = (schemaModule as { organizations?: any }).organizations;
     if (!db || typeof db.select !== 'function' || !organizationUsers) {
       logger.warn(
         'Org membership re-check unavailable (db not initialized) — tenant access will be refused',
         { userId, organizationId }
       );
-      return 'indeterminate';
+      return { status: 'indeterminate', orgUuid: null };
     }
     const rows = await runWithTenantScope(
       {
@@ -133,36 +148,67 @@ async function queryOrgMembership(
         source: 'request',
         caller: 'org-membership-bootstrap',
       },
-      () =>
-        db
-          .select({ role: organizationUsers.role })
-          .from(organizationUsers)
+      () => {
+        // LEFT JOIN organizations so the MEMBERSHIP decision stays governed solely by
+        // the organization_users row (unchanged semantics); organizations.uuid rides
+        // along only when the schema exposes it. Falls back to the membership-only
+        // query if `organizations` is absent (e.g. a partial test schema).
+        const base = db.select(
+          organizations
+            ? { role: organizationUsers.role, orgUuid: organizations.uuid }
+            : { role: organizationUsers.role }
+        );
+        const from = organizations
+          ? base
+              .from(organizationUsers)
+              .leftJoin(
+                organizations,
+                drizzle.eq(organizationUsers.organizationId, organizations.id)
+              )
+          : base.from(organizationUsers);
+        return from
           .where(
             drizzle.and(
               drizzle.eq(organizationUsers.userId, userId),
               drizzle.eq(organizationUsers.organizationId, organizationId)
             )
           )
-          .limit(1)
+          .limit(1);
+      }
     );
-    return rows.length > 0 ? 'member' : 'revoked';
+    if (rows.length === 0) return { status: 'revoked', orgUuid: null };
+    const orgUuid = typeof rows[0]?.orgUuid === 'string' ? rows[0].orgUuid : null;
+    return { status: 'member', orgUuid };
   } catch (error) {
     logger.warn('Org membership re-check failed — tenant access will be refused', {
       userId,
       organizationId,
       error: error instanceof Error ? error.message : String(error),
     });
-    return 'indeterminate';
+    return { status: 'indeterminate', orgUuid: null };
   }
 }
 
-function cacheMembership(key: string, isMember: boolean): void {
+function cacheMembership(key: string, isMember: boolean, orgUuid: string | null = null): void {
   if (orgMembershipCache.size >= ORG_MEMBERSHIP_CACHE_MAX_ENTRIES) {
     // Size cap: evict the oldest entry (Map preserves insertion order).
     const oldest = orgMembershipCache.keys().next().value;
     if (oldest !== undefined) orgMembershipCache.delete(oldest);
   }
-  orgMembershipCache.set(key, { isMember, expiresAt: Date.now() + ORG_MEMBERSHIP_CACHE_TTL_MS });
+  orgMembershipCache.set(key, {
+    isMember,
+    orgUuid,
+    expiresAt: Date.now() + ORG_MEMBERSHIP_CACHE_TTL_MS,
+  });
+}
+
+/** Attach the resolved org uuid to req.user (localized cast — the global
+ *  Express.Request['user'] type does not declare organizationUuid). Never sets
+ *  app.current_org_id; see the cache-entry note. */
+function attachOrgUuid(req: Request, orgUuid: string | null): void {
+  if (req.user && orgUuid) {
+    (req.user as { organizationUuid?: string | null }).organizationUuid = orgUuid;
+  }
 }
 
 function sendMembershipRevoked(res: Response): Response {
@@ -196,6 +242,7 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
   const cached = orgMembershipCache.get(key);
   if (cached && cached.expiresAt > Date.now()) {
     if (cached.isMember) {
+      attachOrgUuid(req, cached.orgUuid);
       next();
       return;
     }
@@ -204,7 +251,7 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
   }
 
   void queryOrgMembership(userId, organizationId)
-    .then(result => {
+    .then(({ status: result, orgUuid }) => {
       if (result === 'indeterminate') {
         // Warning already logged in queryOrgMembership. Not cached, so the next
         // request retries immediately after recovery. Never authorize a tenant
@@ -212,8 +259,9 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
         sendMembershipIndeterminate(res);
         return;
       }
-      cacheMembership(key, result === 'member');
+      cacheMembership(key, result === 'member', orgUuid);
       if (result === 'member') {
+        attachOrgUuid(req, orgUuid);
         next();
         return;
       }
@@ -272,9 +320,9 @@ export async function checkOrgMembership(
   const cached = peekOrgMembership(userId, organizationId);
   if (cached !== null) return cached ? 'member' : 'revoked';
 
-  const result = await queryOrgMembership(userId, organizationId);
+  const { status: result, orgUuid } = await queryOrgMembership(userId, organizationId);
   if (result !== 'indeterminate') {
-    cacheMembership(membershipCacheKey(userId, organizationId), result === 'member');
+    cacheMembership(membershipCacheKey(userId, organizationId), result === 'member', orgUuid);
   }
   return result;
 }

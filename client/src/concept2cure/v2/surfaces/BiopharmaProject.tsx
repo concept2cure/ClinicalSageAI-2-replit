@@ -1,14 +1,19 @@
 /**
  * Biopharma project surfaces -- kit app/Project3.jsx ported.
  *
- * Contains 3 surfaces:
- *   - BiopharmaProject  (registry id `biopharma`)
+ * Contains 2 surfaces:
  *   - CsrWorkflow       (registry id `csr-workflow`)
  *   - RegulatoryWorkspace (registry id `regulatory-workspace`, full: true)
+ *
+ * (The former `biopharma` overview surface was retired 2026-08 — its four panels
+ *  duplicated dedicated real surfaces already in the same nav group: nda-cockpit
+ *  (CTD + BLA), program-journey (lifecycle phases) and ind-checklist / dossier
+ *  (CTD rollup). It had no backend of its own; removing it eliminated its BIO_*
+ *  fixtures rather than building duplicate endpoints.)
  */
 import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveData, useLiveList, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
@@ -24,13 +29,7 @@ import {
   type RegulatoryFindingView,
   type RegulatoryOutcomeView,
 } from '../fixtures/clinical-regulatory-evidence';
-import {
-  STATUS_TONE,
-  BIO_PROGRAM,
-  BIO_PHASES,
-  BIO_MODULES,
-  BIO_BLA,
-} from '../fixtures/project3-data';
+import { STATUS_TONE } from '../fixtures/project3-data';
 import type {
   CsrProgram,
   CsrSection,
@@ -58,166 +57,6 @@ function PageHead({ eyebrow, title, sub, actions }: {
     </div>
   );
 }
-
-function GateCell({ ok, k, v }: { ok?: boolean; k: string; v: string }) {
-  return (
-    <div className="gate-cell" data-ok={ok}>
-      <span className="gate-ico">{ok ? I.check : I.alertTriangle}</span>
-      <div>
-        <div className="gate-k">{k}</div>
-        <div className="gate-v">{v}</div>
-      </div>
-    </div>
-  );
-}
-
-/* ════ Biopharma — BLA / CTD surface ════
-
-   ⚠️ BUILD GAP — NOT yet fixture-free (reported, not fabricated).
-
-   Unlike CsrWorkflow and RegulatoryWorkspace below (both now render real,
-   org-scoped data), NONE of this surface's four panels has a backend that
-   returns its display contract, so there is no real data to render and no
-   honest way to retire the fixtures here without first building the routes:
-
-     · Header      BIO_PROGRAM  — no fetch. Closest real route is the programs
-                                  LIST GET /api/biopharma (server/routes/biopharma/
-                                  programs.ts:47), a different shape, not called here.
-     · Phase strip BIO_PHASES   — no fetch, no backend anywhere. There is no
-                                  per-phase lifecycle-progress endpoint.
-     · CTD modules BIO_MODULES  — useLiveList('/api/biopharma/ctd', …) but that
-                                  router (server/routes/biopharma/ctd.ts) exposes
-                                  ONLY GET /structure and GET /build-state/:projectId —
-                                  no root GET and nothing returning the M1–M5
-                                  {code,label,pct,status,docs} summary. The fetch
-                                  404s every mount and always falls back to the fixture.
-     · BLA bench   BIO_BLA      — no read for the per-attribute similarity/
-                                  comparability/immunogenicity tables. /api/biopharma/bla
-                                  (bla-workbench.ts) is POST-compute + GET /assessments
-                                  (metadata list), a different shape.
-
-   Per the GA guardrail, this is STOPPED and reported as a backend build gap
-   rather than fabricated or gutted into permanent empty states. The SampleTag +
-   BIO_* fixtures stay ONLY until a shape-matching org-scoped read exists; a
-   follow-up then removes them exactly as the two surfaces below were done. */
-
-export function BiopharmaProject({ onAsk, onNav }: SurfaceViewProps) {
-  const p = BIO_PROGRAM;
-  const bla = BIO_BLA;
-  const [tab, setTab] = useState('similarity');
-  const liveModules = useLiveList<(typeof BIO_MODULES)[number]>('/api/biopharma/ctd', BIO_MODULES);
-
-  return (
-    <div className="page-inner">
-      <SampleTag sample={liveModules.sample} />
-      <PageHead
-        eyebrow="Project · submission"
-        title="Biopharma — BLA / CTD"
-        sub={`${p.title} · ${p.code} · ${p.due}`}
-        actions={
-          <>
-            <button className="btn ghost" onClick={() => onAsk('What is gating the BLA filing?')}>
-              {I.sparkles} Ask AnA
-            </button>
-            <button className="btn primary" onClick={() => onNav && onNav('document-authoring')}>
-              {I.layers} Open CTD editor
-            </button>
-          </>
-        }
-      />
-
-      <div className="phases" style={{ gridTemplateColumns: 'repeat(10,1fr)' }}>
-        {BIO_PHASES.map((ph, i) => (
-          <div key={ph.id} className={`phase ${ph.status}`}>
-            <div className="phase-l" style={{ minHeight: 38, fontSize: 10.5 }}>{i + 1}. {ph.label}</div>
-            <div className="phase-bar"><div className="phase-bar-f" style={{ width: ph.pct + '%' }} /></div>
-            <div className="phase-pct">
-              <span>{ph.pct}%</span>
-              <span className="kdot" data-tone={STATUS_TONE[ph.status]} />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="split2" style={{ gridTemplateColumns: '1.1fr 1fr', alignItems: 'start' }}>
-        <div className="sec">
-          <div className="sec-hdr">
-            <div className="sec-title">CTD modules</div>
-            <div className="sec-sub">233 documents</div>
-          </div>
-          <div className="cmc-blueprint" style={{ gridTemplateColumns: 'repeat(2,1fr)' }}>
-            {liveModules.data.map((m) => (
-              <button key={m.code} className="cmc-card" style={{ textAlign: 'left' }} onClick={() => onNav && onNav('document-authoring')}>
-                <div className="cmc-card-top">
-                  <span className="mono cmc-code">{m.code}</span>
-                  <span className={`rd-chip tone-${STATUS_TONE[m.status]}`}>{m.status}</span>
-                </div>
-                <div className="cmc-card-l">{m.label}</div>
-                <div className="cmc-bar"><div className="cmc-bar-f" style={{ width: m.pct + '%' }} /></div>
-                <div className="cmc-card-foot"><span>{m.pct}% mapped</span><span>{m.docs} docs</span></div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="sec">
-          <div className="sec-hdr">
-            <div className="sec-title">BLA biologics workbench</div>
-            <div className="sec-sub">351(a) analytical package</div>
-          </div>
-          <div className="tabs">
-            {([['similarity', 'Analytical similarity'], ['comparability', 'Comparability'], ['immunogenicity', 'Immunogenicity']] as const).map(([x, l]) => (
-              <button key={x} className={`tab${tab === x ? ' on' : ''}`} onClick={() => setTab(x)}>{l}</button>
-            ))}
-          </div>
-          <div className="tab-body">
-            {tab === 'similarity' && (
-              <div className="ctable">
-                <div className="ct-head" style={{ gridTemplateColumns: '1.1fr 1fr 1fr 70px' }}>
-                  <div>Attribute</div><div>Method</div><div>Result</div><div></div>
-                </div>
-                {bla.similarity.map((r, i) => (
-                  <div key={i} className="ct-row" style={{ gridTemplateColumns: '1.1fr 1fr 1fr 70px' }}>
-                    <div className="ct-strong">{r.attr}</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-400)' }}>{r.method}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-300)' }}>{r.result}</div>
-                    <div><span className={`rd-chip tone-${r.verdict}`}>{r.verdict === 'ok' ? 'Pass' : 'Review'}</span></div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {tab === 'comparability' && (
-              <div className="ctable">
-                <div className="ct-head" style={{ gridTemplateColumns: '1fr 1fr 110px' }}>
-                  <div>Change</div><div>Scope</div><div>Verdict</div>
-                </div>
-                {bla.comparability.map((r, i) => (
-                  <div key={i} className="ct-row" style={{ gridTemplateColumns: '1fr 1fr 110px' }}>
-                    <div className="ct-strong">{r.lot}</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-400)' }}>{r.scope}</div>
-                    <div><span className={`rd-chip tone-${r.tone}`}>{r.status}</span></div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {tab === 'immunogenicity' && (
-              <div className="gate-grid">
-                <GateCell ok k="ADA incidence" v={bla.immunogenicity.adaRate} />
-                <GateCell ok k="NAb incidence" v={bla.immunogenicity.nabRate} />
-                <GateCell ok k="Assay" v={bla.immunogenicity.assay} />
-                <GateCell ok k="Clinical impact" v={bla.immunogenicity.impact} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ════ CSR Workflow — ICH E3 surface ════ */
 
 /** GET /api/csr-workflow/board payload (server csr-workflow-routes.ts), the
  *  inner `data` object after the { success, data } envelope is unwrapped. */

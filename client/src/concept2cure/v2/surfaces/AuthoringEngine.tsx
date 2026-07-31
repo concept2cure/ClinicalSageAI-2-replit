@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -19,7 +19,6 @@ interface AeSystem {
   loc: string;
   mod: string;
   t: string;
-  cov: number;
   tmpl: boolean;
   multi: string[];
   sub: string;
@@ -27,14 +26,6 @@ interface AeSystem {
   checks: string[];
 }
 
-interface AeTemplate {
-  id: string;
-  ic: string;
-  t: string;
-  m: string;
-  st: string;
-  learned: string[];
-}
 
 interface AeAutomation {
   id: string;
@@ -56,66 +47,56 @@ const AE_PIPE: AePipeStage[] = [
 ];
 
 const AE_SYSTEMS: AeSystem[] = [
-  { id: 'co25', loc: '2.5', mod: 'Module 2', t: 'Clinical Overview', cov: 74, tmpl: true, multi: ['tables'],
+  { id: 'co25', loc: '2.5', mod: 'Module 2', t: 'Clinical Overview', tmpl: true, multi: ['tables'],
     sub: 'Benefit-risk narrative synthesizing efficacy, safety and clinical pharmacology.',
     guarantees: ['Enforces the ICH M4E §2.5.1–2.5.6 required structure', 'Every efficacy/safety claim grounded to a locked source (no draft cuts)', 'Harmonizes endpoint language with §2.7.3 / §2.7.4 automatically', 'Pulls benefit-risk framing from the approved precedent set'],
     checks: ['Required-section assertion vs the M4E template map', 'Claim ↔ locked-evidence citation check (rejects uncited numbers)', 'Cross-section numeric consistency vs §2.7.3', 'Contradiction scan against the dossier (blocks on CON-####)'] },
-  { id: 'sce273', loc: '2.7.3', mod: 'Module 2', t: 'Summary of Clinical Efficacy', cov: 68, tmpl: true, multi: ['tables', 'figures'],
+  { id: 'sce273', loc: '2.7.3', mod: 'Module 2', t: 'Summary of Clinical Efficacy', tmpl: true, multi: ['tables', 'figures'],
     sub: 'Integrated efficacy summary across the pivotal and supportive studies.',
     guarantees: ['Assembles pooled efficacy tables directly from ADaM', 'Regenerates forest plots and KM curves from the locked datasets', 'Every endpoint traces to its CSR §11 source', 'Subgroup consistency narrated with the supporting figures'],
     checks: ['ADaM → table value-preservation diff', 'Figure ↔ underlying dataset hash match', 'Endpoint definition consistency with the SAP', 'Required subsection completeness'] },
-  { id: 'scs274', loc: '2.7.4', mod: 'Module 2', t: 'Summary of Clinical Safety', cov: 61, tmpl: true, multi: ['tables'],
+  { id: 'scs274', loc: '2.7.4', mod: 'Module 2', t: 'Summary of Clinical Safety', tmpl: true, multi: ['tables'],
     sub: 'Integrated safety summary -- exposure, AEs, labs, deaths, SAEs.',
     guarantees: ['Builds the exposure and AE tables from the pooled safety dataset', 'Applies MedDRA SOC/PT structure deterministically', 'Flags any AE-count divergence from the ISS', 'Death and SAE narratives linked to source ICSRs'],
     checks: ['AE count reconciliation vs ISS (non-AI)', 'MedDRA coding conformance', 'Exposure denominator consistency', 'Required §2.7.4.1–2.7.4.7 presence'] },
-  { id: 'nc26', loc: '2.6', mod: 'Module 2', t: 'Nonclinical Written & Tabulated Summaries', cov: 82, tmpl: true, multi: ['tables'],
+  { id: 'nc26', loc: '2.6', mod: 'Module 2', t: 'Nonclinical Written & Tabulated Summaries', tmpl: true, multi: ['tables'],
     sub: '2.6.1–2.6.7 pharmacology, PK and toxicology written + tabulated summaries.',
     guarantees: ['Generates the tabulated summaries from the study reports', 'Every finding chip links to its source GLP study', 'Carcinogenicity subsection held open until the study locks', 'TTC / impurity logic applied where relevant'],
     checks: ['Study → tabulated-summary value check', 'SEND domain conformance reference', 'Required 2.6.x subsection map', 'Units → controlled terminology mapping'] },
-  { id: 'csr', loc: 'ICH E3', mod: 'Module 5', t: 'Clinical Study Report', cov: 71, tmpl: true, multi: ['tables', 'figures'],
+  { id: 'csr', loc: 'ICH E3', mod: 'Module 5', t: 'Clinical Study Report', tmpl: true, multi: ['tables', 'figures'],
     sub: 'Full ICH E3 CSR from the SAP, TLF shells and the locked database.',
     guarantees: ['14-section ICH E3 structure enforced', 'TLFs generated from ADaM and placed in-text', '§11 efficacy narrated from the pre-specified analyses', 'Protocol-deviation and disposition tables auto-built'],
     checks: ['TLF ↔ dataset reconciliation', 'Section-14 required-table presence', 'Analysis population consistency', 'Cross-reference integrity (in-text ↔ appendix)'] },
-  { id: 'proto', loc: 'ICH M11', mod: 'Module 5', t: 'Clinical Protocol', cov: 88, tmpl: true, multi: ['tables'],
+  { id: 'proto', loc: 'ICH M11', mod: 'Module 5', t: 'Clinical Protocol', tmpl: true, multi: ['tables'],
     sub: 'ICH M11 protocol -- objectives, eligibility, SoA, statistics, risk.',
     guarantees: ['ICH M11 template structure and common-technical content', 'Schedule-of-assessments grid built and validated', 'Objectives ↔ endpoints ↔ estimands kept consistent', 'Deterministic completeness gate before finalize'],
     checks: ['M11 required-section assertion', 'SoA grid internal consistency', 'Estimand ↔ endpoint linkage', '45 CFR 46 / ICH GCP element presence'] },
-  { id: 'cmcs', loc: '3.2.S', mod: 'Module 3', t: 'CMC -- Drug Substance', cov: 79, tmpl: true, multi: ['tables', 'figures'],
+  { id: 'cmcs', loc: '3.2.S', mod: 'Module 3', t: 'CMC -- Drug Substance', tmpl: true, multi: ['tables', 'figures'],
     sub: '3.2.S manufacture, characterization, control and stability.',
     guarantees: ['Specification tables built to ICH Q6A', 'Stability trends charted from the study data', 'Impurity control narrated with ICH Q3A/M7/Q3D logic', 'Comparability tables across lots assembled'],
     checks: ['Spec table ↔ batch-data reconciliation', 'Stability trend numeric check', 'Q6A required-attribute presence', 'Comparability acceptance-criteria assertion'] },
-  { id: 'cmcp', loc: '3.2.P', mod: 'Module 3', t: 'CMC -- Drug Product', cov: 76, tmpl: true, multi: ['tables'],
+  { id: 'cmcp', loc: '3.2.P', mod: 'Module 3', t: 'CMC -- Drug Product', tmpl: true, multi: ['tables'],
     sub: '3.2.P description, development, manufacture, control, stability.',
     guarantees: ['Formulation and process tables from the batch records', 'Dissolution and CQA profiles charted', 'Control strategy narrated to ICH Q14', 'Container-closure section assembled'],
     checks: ['Batch-record ↔ table value check', 'CQA/CPP consistency with the control strategy', 'Q8/Q14 required-element presence', 'Stability commitment completeness'] },
-  { id: 'issise', loc: 'ISS / ISE', mod: 'Module 5', t: 'Integrated Summaries (ISS / ISE)', cov: 44, tmpl: false, multi: ['tables', 'figures'],
+  { id: 'issise', loc: 'ISS / ISE', mod: 'Module 5', t: 'Integrated Summaries (ISS / ISE)', tmpl: false, multi: ['tables', 'figures'],
     sub: 'Integrated safety and efficacy summaries across the program.',
     guarantees: ['Pools across studies with harmonized definitions', 'Rebuilds pooled tables when any contributing study updates', 'Every pooled figure regenerates from the integrated dataset', 'Divergences from individual CSRs surfaced'],
     checks: ['Cross-study pooling reconciliation', 'Definition-harmonization assertion', 'Pooled figure ↔ dataset hash', 'Contributing-study completeness'] },
-  { id: 'uspi', loc: 'M1 · PLLR', mod: 'Module 1', t: 'Prescribing Information (USPI)', cov: 52, tmpl: true, multi: ['tables'],
+  { id: 'uspi', loc: 'M1 · PLLR', mod: 'Module 1', t: 'Prescribing Information (USPI)', tmpl: true, multi: ['tables'],
     sub: 'USPI per PLLR / 21 CFR 201.57 and SPL; EU SmPC variant.',
     guarantees: ['PLLR / 201.57 section order enforced', 'Dosing and AE tables derived from the clinical summaries', 'Highlights ↔ full-PI consistency maintained', 'SPL structured output rendered'],
     checks: ['201.57 required-section assertion', 'Highlights ↔ full-PI consistency check', 'AE table ↔ §2.7.4 reconciliation', 'SPL schema validation'] },
-  { id: 'brief', loc: 'Briefing', mod: 'Lifecycle', t: 'Agency Briefing Book', cov: 60, tmpl: true, multi: ['tables'],
+  { id: 'brief', loc: 'Briefing', mod: 'Lifecycle', t: 'Agency Briefing Book', tmpl: true, multi: ['tables'],
     sub: 'Pre-IND / Type B–C / Pre-NDA-BLA briefing documents with questions.',
     guarantees: ['Meeting-type template applied (FDA / EMA / PMDA)', 'Background assembled from the current dossier', 'Questions framed with position and supporting data', 'Prior-minutes commitments cross-referenced'],
     checks: ['Meeting-type required-section map', 'Question ↔ supporting-data linkage', 'Prior-commitment cross-reference', 'Page/format compliance'] },
-  { id: 'psur', loc: 'PSUR', mod: 'Lifecycle', t: 'PSUR / PBRER', cov: 38, tmpl: true, multi: ['tables'],
+  { id: 'psur', loc: 'PSUR', mod: 'Lifecycle', t: 'PSUR / PBRER', tmpl: true, multi: ['tables'],
     sub: 'Periodic benefit-risk evaluation report on the ICH E2C schedule.',
     guarantees: ['ICH E2C(R2) structure enforced', 'Exposure and cumulative tables from the safety database', 'Signal section linked to the signal-management log', 'Benefit-risk conclusion grounded in the period data'],
     checks: ['E2C required-section assertion', 'Cumulative-count reconciliation', 'Signal-log linkage completeness', 'Data-lock-point consistency'] },
 ];
 
-const AE_TEMPLATES: AeTemplate[] = [
-  { id: 't1', ic: 'fileText', t: 'Concept2Cure CSR template v4', m: 'ICH E3 · applied to 12 documents', st: 'learned',
-    learned: ['Company heading numbering', 'In-text TLF placement rules', 'Standard boilerplate §1–§9', 'Controlled abbreviations list'] },
-  { id: 't2', ic: 'penLine', t: 'Module 2 summary house style', m: 'M4E · applied to 8 documents', st: 'learned',
-    learned: ['Sentence-case headings', 'Benefit-risk phrasing conventions', 'Citation format', 'Table caption style'] },
-  { id: 't3', ic: 'beaker', t: 'CMC Module 3 spec template', m: '3.2.S / 3.2.P · applied to 5 documents', st: 'learned',
-    learned: ['Specification table columns', 'Units & significant figures', 'Method reference format'] },
-  { id: 't4', ic: 'clipboardList', t: 'Protocol template (ICH M11)', m: 'imported 2 days ago', st: 'learning',
-    learned: ['Section structure detected', 'Learning terminology & SoA layout…'] },
-];
 
 const AE_AUTOMATIONS: AeAutomation[] = [
   { id: 'a1', t: 'Tabular summary sync',
@@ -159,7 +140,6 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="ae">
-      <SampleTag sample={true} />
       <div className="reg-head" style={{ marginBottom: 6 }}>
         <div>
           <div className="reg-eyebrow">Biotech & Pharma {I.dot} authoring</div>
@@ -246,9 +226,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
               <button key={s.id} className="ae-sys" data-on={sel === s.id || undefined} onClick={() => setSel(s.id)}>
                 <div className="ae-sys-top"><span className="ae-sys-loc">{s.loc}</span><span className="ae-sys-mod">{s.mod}</span></div>
                 <div className="ae-sys-t">{s.t}</div>
-                <div className="ae-sys-track"><span style={{ width: s.cov + '%' }} /></div>
                 <div className="ae-sys-foot">
-                  <span>{s.cov}% drafted</span>
                   <span className="ae-sys-tags">
                     {s.tmpl && <span className="ae-sys-tag" data-tmpl="">tmpl</span>}
                     {s.multi.map((m) => <span key={m} className="ae-sys-tag">{m}</span>)}
@@ -265,17 +243,11 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
           <div className="scaf-note" style={{ marginBottom: 16 }}>
             Specify the document type and add your template -- AnA learns your terminology, formatting and structure, so drafts arrive in your preferred format from the first pass. Templates render to DOCX and PDF.
           </div>
-          {AE_TEMPLATES.map((t) => (
-            <div key={t.id} className="ae-tmpl">
-              <div className="ae-tmpl-ic">{I[t.ic] || I.fileText}</div>
-              <div className="ae-tmpl-b">
-                <div className="ae-tmpl-t">{t.t}</div>
-                <div className="ae-tmpl-m">{t.m}</div>
-                <div className="ae-tmpl-learned">{t.learned.map((l, i) => <span key={i}>{l}</span>)}</div>
-              </div>
-              <span className={'rd-chip tone-' + (t.st === 'learned' ? 'ok' : 'ai')}>{t.st === 'learned' ? 'Learned' : 'Learning'}</span>
-            </div>
-          ))}
+          <EmptyState
+            title="No templates learned yet"
+            hint="Add a template and AnA learns your terminology, formatting and structure — drafts then arrive in your house style from the first pass. Manage them in the Template Library."
+            icon={I.fileText}
+          />
           <button className="btn primary" style={{ marginTop: 8 }} onClick={() => open('template-library')}>{I.plus} Add a template</button>
         </div>
       )}

@@ -41,6 +41,7 @@
     "report:regulatory-coverage": "tsx scripts/regulatory-coverage-report.ts",
     "fetch:fda-forms": "tsx scripts/fetch-fda-forms.ts",
     "check:compliance-claims": "node scripts/ci/check-compliance-claims.mjs",
+    "check:microcopy": "node scripts/ci/check-microcopy.mjs",
     "ocr:vendor": "node scripts/vendor-tesseract-langdata.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

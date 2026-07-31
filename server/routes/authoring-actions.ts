@@ -226,12 +226,21 @@ router.get('/compare-versions/:projectId/:artifactId', async (req: Request, res:
       return res.status(400).json({ error: 'projectId and artifactId are required' });
     }
 
-    // Fetch artifact versions — try direct version table, fall back to artifact API
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
+    // Fetch artifact versions — try direct version table, fall back to artifact API.
+    // Scope both lookups to the caller's organization so a version id belonging
+    // to another tenant can never be read.
     let versions: any[] | null = null;
     try {
       const { db } = await import('../db.js');
       versions = await db.query.concept2cureArtifactVersions?.findMany?.({
-        where: (v: any, { eq }: any) => eq(v.artifactId, Number(artifactId)),
+        where: (v: any, { and, eq }: any) =>
+          and(
+            eq(v.artifactId, Number(artifactId)),
+            eq(v.organizationId, Number(orgId))
+          ),
         orderBy: (v: any, { desc }: any) => [desc(v.version)],
         limit: 10,
       });
@@ -240,7 +249,12 @@ router.get('/compare-versions/:projectId/:artifactId', async (req: Request, res:
       try {
         const { db } = await import('../db.js');
         const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
-          where: (a: any, { eq }: any) => eq(a.id, Number(artifactId)),
+          where: (a: any, { and, eq }: any) =>
+            and(
+              eq(a.id, Number(artifactId)),
+              eq(a.projectId, Number(projectId)),
+              eq(a.organizationId, Number(orgId))
+            ),
         });
         if (artifact) {
           return res.json({
