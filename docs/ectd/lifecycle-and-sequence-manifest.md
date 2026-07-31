@@ -100,12 +100,19 @@ Manifest entry shape: `{ ctdSection, fileName, href, md5, operation?, title? }`.
    vendored (`assets/ectd-dtd/`). The **delete-leaf** attribute convention above
    is a best reading of the spec and should get a real-validator pass before a
    production lifecycle submission.
-2. **Path-1 (`ectdExportService`) is snapshot-oriented.** It marks every leaf
-   `new` and ships the full current dossier. Turning it into a true
-   sequence-delta producer (omit unchanged, emit deletes) is a product decision
-   that changes submission output; it is intentionally **not** done unilaterally.
-   The lifecycle-correct path today is: compute operations (tool / loader) →
-   `packageEctdSubmission` (path-2), which renders them correctly.
+2. **Path-1 (`ectdExportService`) delta mode is opt-in.** By default it marks
+   every leaf `new` and ships the full current dossier (a snapshot). Pass
+   `generateEctdPackage(..., { lifecycleAgainstPrior: true })` and — when a prior
+   sequence exists for the org+application — it produces a true sequence delta:
+   changed leaves become replace/append with a modified-file pointer, unchanged
+   leaves are omitted (and their bytes dropped from the ZIP + checksum manifest),
+   and dropped leaves become backbone-only delete leaves. The diff runs on the
+   shared operator against the immutable prior `leaf_manifest`
+   (`server/services/ectd/export-lifecycle.ts`). Default is off so existing
+   snapshot exports are unchanged; enabling it changes submission output, so
+   validate against a real eCTD validator before turning it on for a filing.
+   (Path-2 `packageEctdSubmission` renders caller-supplied operations directly
+   and is also lifecycle-complete.)
 3. **The submission-package-orchestrator** validates a *derived* leaf manifest
    (all `new`) that stands in for a real ZIP builder. Wiring the real packager +
    lifecycle into it is the larger integration that closes 1–3 together.
