@@ -17,9 +17,9 @@ import type {
 } from '../data/types';
 import { usePdevFdaFeedbackApply } from '../hooks/usePdevData';
 import {
-  PdevConfirmDialog,
+  GovernedConfirmDialog,
   type ConfirmConfig,
-} from '../components/ConfirmDialog';
+} from '../../_shared/components/GovernedConfirmDialog';
 
 interface FdaStreamProps {
   programId: string;
@@ -194,7 +194,7 @@ export function PdevFdaStreamSurface({
       )}
 
       {pending && (
-        <PdevConfirmDialog
+        <GovernedConfirmDialog
           open={true}
           {...pending.config}
           onCancel={() => {
