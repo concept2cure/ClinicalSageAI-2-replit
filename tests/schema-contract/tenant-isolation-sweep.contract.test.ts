@@ -94,30 +94,34 @@ describe('C-33: the sweep is positioned to see everything the set creates', () =
     expect(batchAt).toBeLessThan(sweepAt);
   });
 
-  it('does NOT wire the three uuid/text-tenant-keyed files (identity collision)', () => {
-    // These would provision tenant tables the integer-keyed RLS model cannot
-    // police; the sweep skips them, so wiring them would ship unisolated tables.
-    for (const excluded of [
+  it('the once-excluded files are now wired, having been RESOLVED not skipped', () => {
+    // C-33 pinned the three uuid/text-tenant files as unwired, and C-34 did the
+    // same for the pgvector trio. Both exclusions were provisional, and both were
+    // since resolved rather than accepted: C-38 reconciled the tenant keys to the
+    // canonical integer identity the code already used, and C-37 replaced the
+    // PGlite harness with a real PostgreSQL + pgvector instead of writing the
+    // files off. This assertion is deliberately INVERTED from its original form —
+    // the earlier version failing is what flagged that the intent had changed.
+    for (const nowWired of [
+      // C-38 — identity reconciled
       'db/migrations/20260125_ai_provider_audit_log.sql',
       'db/migrations/20260324_ana_kernel_decision_log.sql',
       'db/migrations/20260326_conversation_os_durability_phase2.sql',
-    ]) {
-      expect(C2C_MIGRATION_FILES).not.toContain(excluded);
-    }
-  });
-
-  it('does NOT wire the files that remain genuinely unverifiable', () => {
-    // Each is unwired for a NAMED reason, not an unexamined "probably fine".
-    // Pinning them stops a future batch from sweeping them in on momentum: two
-    // require pgvector (which this harness cannot load, so it cannot verify them
-    // AT ALL), and one is blocked behind those two.
-    for (const unwired of [
+      // C-37 — verified on a real pgvector-capable Postgres
       'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
       'db/migrations/20260306_precedent_engine.sql',
       'db/migrations/20260208_phase6_6a_risk_rollups.sql',
     ]) {
-      expect(C2C_MIGRATION_FILES).not.toContain(unwired);
+      expect(C2C_MIGRATION_FILES).toContain(nowWired);
     }
+  });
+
+  it('still refuses the _consolidated tree, which was never merely unwired', () => {
+    // The one exclusion that is NOT provisional: 012_document_authoring_schema
+    // creates a rival `doc_revisions` against the canonical authoring subsystem,
+    // and 001_create_core_tables redefines users/organizations. C-39 extracted
+    // the live tables instead; the tree itself must stay out.
+    expect(C2C_MIGRATION_FILES.filter((f: string) => f.includes('_consolidated/'))).toEqual([]);
   });
 
   it('DOES wire enhanced_cortex, whose identity conflict C-36 resolved', () => {
@@ -190,7 +194,23 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
 
   beforeAll(async () => {
     pg = await baseSchemaFixture();
-    const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START));
+    // PGlite cannot load the `vector` extension, so files that need it are out of
+    // this harness's reach — that limitation is exactly what C-37 addressed by
+    // standing up a real PostgreSQL + pgvector. Their coverage lives there now:
+    // `DATABASE_URL=... node scripts/db/verify-migration-set.mjs --seed-base`
+    // applies the WHOLE set twice against a real cluster. Skipping them here is a
+    // stated boundary of this test, not an unexamined gap.
+    // Named explicitly rather than inferred: risk_rollups does not itself declare
+    // the extension, it reads predicate.fda_510k_clearances from the file that
+    // does, so a "does this file mention vector?" test would miss it and fail.
+    const PGVECTOR_DEPENDENT = new Set([
+      'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
+      'db/migrations/20260306_precedent_engine.sql',
+      'db/migrations/20260208_phase6_6a_risk_rollups.sql', // reads the first file's tables
+    ]);
+    const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START)).filter(
+      (rel: string) => !PGVECTOR_DEPENDENT.has(rel),
+    );
     // Applied TWICE: a deploy re-runs the whole set every time, so a
     // non-idempotent file would break the second deploy, not the first. Any
     // failure is fatal here — every file in this slice was screened to apply
