@@ -25,6 +25,7 @@
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
+import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 import { computeAuditChainSealed, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
@@ -148,7 +149,7 @@ async function resolveTarget(
       case 'blocker': {
         // C-9: match on blocker_id (text business key), not serial PK
         const r = await pool.query(
-          `SELECT id FROM c2c_blockers WHERE blocker_id = $1 AND organization_id = $2 LIMIT 1`,
+          `SELECT id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`,
           [rest, orgId],
         );
         return r.rows.length > 0 ? { exists: true, table: 'c2c_blockers', id: rest } : null;
@@ -375,6 +376,14 @@ export async function writeMutation(
   orgId:      number,
   surface:    string = 'api',
   domain:     string = 'mdx',
+  /**
+   * Optional caller-owned transaction client. When supplied, the governed-action
+   * writes run on THIS client (no own BEGIN/COMMIT/release) so the audit commits
+   * or rolls back ATOMICALLY with the caller's mutation. The caller owns the
+   * transaction lifecycle. When omitted, writeMutation manages its own
+   * transaction (the default, unchanged).
+   */
+  externalClient?: PoolClient,
 ): Promise<ActionResult> {
   const { target, reason, payload = {}, idempotencyKey } = envelope;
 
@@ -391,9 +400,13 @@ export async function writeMutation(
     effectivePayload = gate.enrichedPayload;
   }
 
-  // Idempotency: if a row already exists for this key, return it.
+  // Idempotency: if a row already exists for this key, return it. Read via the
+  // caller's transaction client when one was supplied so the check participates in
+  // the same transaction as the write.
+  const reader: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> } =
+    externalClient ?? pool;
   if (idempotencyKey) {
-    const existing = await pool.query(
+    const existing = await reader.query(
       `SELECT id, audit_row_id, state FROM c2c_ana_actions WHERE idempotency_key = $1 LIMIT 1`,
       [idempotencyKey],
     );
@@ -406,6 +419,25 @@ export async function writeMutation(
         state:       row.state,
       };
     }
+  }
+
+  // Caller-owned transaction: run the governed-action writes on their client so
+  // the audit and the caller's mutation commit or roll back together. No
+  // BEGIN/COMMIT/release here — the caller owns the transaction lifecycle.
+  if (externalClient) {
+    await setTenantContextTx(externalClient, orgId);
+    const { actionId, auditId, sha256Chain } = await recordGovernedAction(externalClient, {
+      orgId,
+      userId,
+      command,
+      target,
+      reason,
+      payload: effectivePayload,
+      domain,
+      surface,
+      idempotencyKey: idempotencyKey ?? null,
+    });
+    return { actionId, auditId, sha256Chain, state: 'executed' };
   }
 
   const client = await pool.connect();

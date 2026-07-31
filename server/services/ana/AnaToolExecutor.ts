@@ -8525,17 +8525,50 @@ registerToolHandler('gateway_configuration_status', async (input, ctx) => {
 // existing governed tools.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('compute_lifecycle_operations', async (input) => {
+registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
   try {
     const { computeLifecycleOperations } = await import('../ectd/lifecycle-operator.js');
-    const prior = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
+    let prior = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
       leafKey: p.leaf_key,
       ctdSection: p.ctd_section,
       fileName: p.file_name,
       md5: p.md5,
       title: p.title,
       sourcePath: p.source_path,
+      // Published path of the prior leaf in its sequence — lets a superseding op
+      // (replace/append/delete) emit the ICH modified-file pointer at it.
+      href: p.href,
     }));
+    let priorSequencePrefix =
+      typeof input.prior_sequence_prefix === 'string' ? input.prior_sequence_prefix : undefined;
+    let autoLoadedPrior = 0;
+
+    // Auto-load the prior sequence from its stored leaf manifest when the caller
+    // gives an application + prior sequence instead of hand-listing prior leaves.
+    // This is the tenant-scoped path: the organization comes from ToolContext,
+    // never from model input, and the prefix defaults to the grouped '../<seq>/'.
+    const priorSeq =
+      typeof input.prior_sequence_number === 'string' ? input.prior_sequence_number.trim() : '';
+    const appNum =
+      typeof input.application_number === 'string' ? input.application_number.trim() : '';
+    if (prior.length === 0 && priorSeq && appNum) {
+      if (!ctx?.organizationId) {
+        return JSON.stringify({
+          error: 'auto-loading a prior sequence requires tenant context (organizationId).',
+        });
+      }
+      const { loadPriorSequenceManifest } = await import('../ectd/prior-sequence-loader.js');
+      const { computeSequencePrefix } = await import('../ectd/sequence-manifest.js');
+      const { getPool } = await import('../../db.js');
+      prior = await loadPriorSequenceManifest(getPool(), {
+        organizationId: ctx.organizationId,
+        applicationNumber: appNum,
+        priorSequenceNumber: priorSeq,
+      });
+      autoLoadedPrior = prior.length;
+      priorSequencePrefix = priorSequencePrefix ?? computeSequencePrefix(priorSeq);
+    }
+
     const desired = (Array.isArray(input.desired_leaves) ? input.desired_leaves : []).map((d: any) => ({
       leafKey: d.leaf_key,
       ctdSection: d.ctd_section,
@@ -8545,11 +8578,64 @@ registerToolHandler('compute_lifecycle_operations', async (input) => {
       sourcePath: d.source_path ?? '',
       appendOnChange: d.append_on_change === true,
     }));
-    const result = computeLifecycleOperations(prior, desired);
-    return JSON.stringify({ ok: true, ...result });
+    const result = computeLifecycleOperations(prior, desired, {
+      // Relative traversal from the new sequence's backbone to the prior
+      // sequence root (e.g. '../0000/') so modified-file resolves cross-sequence.
+      priorSequencePrefix,
+    });
+    return JSON.stringify({ ok: true, autoLoadedPrior, ...result });
   } catch (err) {
     return JSON.stringify({
       error: `compute_lifecycle_operations failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+registerToolHandler('convert_to_rps_v4', async (input) => {
+  try {
+    const { forwardCompatToV4, buildRpsMessage } = await import('../ectd/ectd4/index.js');
+    const app = (input.application ?? {}) as Record<string, any>;
+    const sub = (input.submission ?? {}) as Record<string, any>;
+    const unit = (input.submission_unit ?? {}) as Record<string, any>;
+    const leaves = (Array.isArray(input.leaves) ? input.leaves : []).map((l: any) => ({
+      ctdSection: l.ctd_section,
+      fileName: l.file_name,
+      title: l.title ?? l.file_name,
+      md5: l.md5,
+      operation: (l.operation ?? 'new') as 'new' | 'append' | 'replace' | 'delete',
+      sourcePath: l.source_path ?? '',
+    }));
+
+    const { message, notes } = forwardCompatToV4({
+      application: { number: String(app.number ?? ''), typeCode: String(app.type_code ?? ''), center: app.center },
+      submission: { typeCode: String(sub.type_code ?? ''), ...(sub.number ? { number: String(sub.number) } : {}) },
+      submissionUnit: {
+        id: String(unit.id ?? ''),
+        unitTypeCode: String(unit.unit_type_code ?? ''),
+        title: String(unit.title ?? ''),
+        sequenceNumber: String(unit.sequence_number ?? ''),
+        status: 'active',
+      },
+      leaves: leaves as any,
+      priorSequenceNumber:
+        typeof input.prior_sequence_number === 'string' ? input.prior_sequence_number : undefined,
+    });
+
+    const out: Record<string, unknown> = {
+      ok: true,
+      notes,
+      summary: {
+        documents: message.documents.length,
+        contextsOfUse: message.contextsOfUse.length,
+        lifecycle: message.contextsOfUse.filter((c) => c.operation && c.operation !== 'create').length,
+      },
+      message,
+    };
+    if (input.include_xml === true) out.xml = buildRpsMessage(message);
+    return JSON.stringify(out);
+  } catch (err) {
+    return JSON.stringify({
+      error: `convert_to_rps_v4 failed: ${err instanceof Error ? err.message : String(err)}`,
     });
   }
 });

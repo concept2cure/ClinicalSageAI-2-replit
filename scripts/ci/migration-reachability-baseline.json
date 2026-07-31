@@ -1,0 +1,177 @@
+{
+  "_comment": "Tables the server queries whose ONLY creator is a migration on no durable apply path — they exist on no real database, so those endpoints 500. ci:unbacked-tables cannot see this class: it counts any .sql file as a creator regardless of whether an applier runs it. Anything NEW fails the build. Resolve an entry (put its migration on an applier, or delete the dead reference), then remove it here to ratchet down. Goal: 0.",
+  "_durablePaths": [
+    "migrations/meta/_journal.json (drizzle migrate)",
+    "db/migrations/*_gcc_*.sql (CI psql loop)",
+    "C2C_MIGRATION_FILES (deploy-migrate + apply-c2c)",
+    "AUTHORING_SUBSYSTEM_FILES (same deploy path)",
+    "files install-fresh.mjs names explicitly",
+    "the drizzle push surface (pgTable/pgView in shared/)"
+  ],
+  "count": 19,
+  "tables": {
+    "ai_provider_audit_log": {
+      "createdOnlyBy": [
+        "db/migrations/20260125_ai_provider_audit_log.sql"
+      ],
+      "referencedBy": [
+        "server/services/aiProviderRouter.ts"
+      ]
+    },
+    "ana_kernel_decision_log": {
+      "createdOnlyBy": [
+        "db/migrations/20260324_ana_kernel_decision_log.sql"
+      ],
+      "referencedBy": [
+        "server/src/control-plane/persistent-queries.ts"
+      ]
+    },
+    "cer_jobs": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql"
+      ],
+      "referencedBy": [
+        "server/services/cerGenerator.ts"
+      ]
+    },
+    "conversation_os_accepted_artifact_versions": {
+      "createdOnlyBy": [
+        "db/migrations/20260326_conversation_os_durability_phase2.sql"
+      ],
+      "referencedBy": [
+        "server/services/conversation-os/persistence.ts"
+      ]
+    },
+    "doc_sections": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/012_document_authoring_schema.sql"
+      ],
+      "referencedBy": [
+        "server/services/ana-ri/command-executor.ts"
+      ]
+    },
+    "ind_milestones": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/ind_wizard_schema.sql"
+      ],
+      "referencedBy": [
+        "server/routes/preIndRoutes.ts"
+      ]
+    },
+    "ind_pre_ind_data": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/ind_wizard_schema.sql"
+      ],
+      "referencedBy": [
+        "server/routes/preIndRoutes.ts"
+      ]
+    },
+    "literature_entries": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/20250512_literature_entries.sql"
+      ],
+      "referencedBy": [
+        "server/services/regulatory-programs.service.ts"
+      ]
+    },
+    "maud_algorithms": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/20250512-create-maud-validations-table.sql"
+      ],
+      "referencedBy": [
+        "server/db/maudDb.ts"
+      ]
+    },
+    "maud_validation_requests": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/20250512-create-maud-validations-table.sql"
+      ],
+      "referencedBy": [
+        "server/db/maudDb.ts"
+      ]
+    },
+    "maud_validations": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/20250512-create-maud-validations-table.sql"
+      ],
+      "referencedBy": [
+        "server/db/maudDb.ts"
+      ]
+    },
+    "precedent.regulatory_precedents": {
+      "createdOnlyBy": [
+        "db/migrations/20260306_precedent_engine.sql"
+      ],
+      "referencedBy": [
+        "server/services/intelligence/outcome-precedent-ingestor.ts",
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.fda_510k_clearances": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.fda_product_codes": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.predicate_safety_signals": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "predicate.toxic_predicates": {
+      "createdOnlyBy": [
+        "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql"
+      ],
+      "referencedBy": [
+        "server/services/precedent-engine.ts"
+      ]
+    },
+    "programs": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/001_create_core_tables.sql"
+      ],
+      "referencedBy": [
+        "server/routes/innovation-routes.ts",
+        "server/services/innovation/auto-traceability-service.ts",
+        "server/services/innovation/compliance-guardrails-sdk-service.ts",
+        "server/services/innovation/evidence-confidence-heatmap-service.ts",
+        "server/services/innovation/outcome-based-template-learning-service.ts",
+        "server/services/innovation/regulatory-delta-radar-service.ts"
+      ]
+    },
+    "studies": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/001_create_core_tables.sql"
+      ],
+      "referencedBy": [
+        "server/services/ana-biostats/regulatory-customizer.ts",
+        "server/services/ana-ri/document-templates.ts",
+        "server/services/ivd-knowledge/scientific/clinical-performance.ts",
+        "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts"
+      ]
+    },
+    "templates": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql"
+      ],
+      "referencedBy": [
+        "server/services/cerGenerator.ts",
+        "server/services/lumen-instruction-engine.ts",
+        "server/services/templateService.ts"
+      ]
+    }
+  }
+}

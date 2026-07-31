@@ -3,50 +3,42 @@
  *
  * GET /api/investigator-brochure → the org's IB section tree, each row shaped to
  * exactly the keys the v2 InvestigatorBrochure surface renders ({ number, title,
- * required, status, gaps, description, depth }), plus a { productName,
- * completeness, provisioned } meta.
+ * required, status, gaps, description, depth }), plus a { productName, completeness,
+ * provisioned, source, availability } meta.
  *
- * This route is a thin, honest surface over `server/services/authoring/ib-builder`:
- *   - When the org has a provisioned IB program (a stored IBBuildRequest), it runs
- *     `buildInvestigatorBrochure(..., { templateOnly: true })` — the DETERMINISTIC
- *     path that never needs the AI key — and returns each section's regulatory
- *     verdict ({ status: rendered | partial | missing, gaps }).
- *   - When there is no program (or the store is not provisioned / any error), it
- *     returns the deterministic ICH E6(R2) §7 SKELETON computed from the builder's
- *     exported gap engine (flattenSections + resolveAvailability + detectSectionGaps
- *     + sectionStatus): every data-bearing section is honestly marked `missing`
- *     with the inputs it needs, boilerplate sections `rendered`. No IB prose is
- *     ever fabricated here — only the (real) ICH section registry and honest
- *     per-section status/gap verdicts are exposed.
+ * REAL-STORE ONLY (GA, 2026-08). The IB has no authored instance table — it is
+ * *assembled* from the real upstream evidence the CTD composers already produce.
+ * This route reads that evidence, org-scoped, through
+ * `investigator-brochure-view-assembler.assembleOrgIBSections`, which derives each
+ * IB input domain (product / nonclinical / clinical / safety) from the store where
+ * the org's evidence actually lives — nonclinical_studies, clinical_ops.studies /
+ * clinical_studies, adverse_events / risk_management_plans, cmc_module3_sections —
+ * and runs the deterministic `ib-builder` gap engine for the per-section
+ * rendered/partial/missing verdict.
  *
- * Org scoped; 403 without org context; fails closed to the deterministic skeleton
- * on any error so an unprovisioned store never 500s and never invents content.
+ * The seed-only `c2c_investigator_brochure` blob is RETIRED — this route no longer
+ * reads it, and no fallback fabricates IB content. A domain the org has no real
+ * evidence for is honestly ABSENT (its sections render `missing`); an org with no
+ * upstream evidence at all yields the honest ICH E6(R2) §7 skeleton with
+ * `provisioned=false`.
+ *
+ * Org scoped; 403 without org context. Fails CLOSED to the deterministic skeleton on
+ * any store error (never 500, never fabricates IB content); a missing store (42P01)
+ * is surfaced via `meta.pendingStore`.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
 import {
   flattenSections,
   resolveAvailability,
   detectSectionGaps,
   sectionStatus,
-  buildInvestigatorBrochure,
-  type IBBuildRequest,
-  type IBSectionResult,
 } from '../services/authoring/ib-builder';
+import {
+  assembleOrgIBSections,
+  type IBSectionRow,
+} from '../services/authoring/investigator-brochure-view-assembler';
 
 const router = Router();
-
-/** The per-section display contract the v2 InvestigatorBrochure surface renders. */
-export interface IBSectionRow {
-  number: string;
-  title: string;
-  required: boolean;
-  status: 'rendered' | 'partial' | 'missing';
-  gaps: string[];
-  description: string;
-  /** 0 = top-level IB chapter / front matter, 1 = sub-section (e.g. 4.1). */
-  depth: number;
-}
 
 function getOrgId(req: Request): number | null {
   const r = req as {
@@ -65,10 +57,11 @@ function getOrgId(req: Request): number | null {
 const depthOf = (number: string): number => (number.includes('.') ? 1 : 0);
 
 /**
- * The honest ICH E6(R2) §7 skeleton: the real section registry with a
- * deterministic per-section verdict computed against an all-absent input set.
- * Boilerplate sections render; every data-bearing section is `missing` with the
- * inputs it needs. Uses only the builder's exported (AI-free) gap engine.
+ * The honest ICH E6(R2) §7 skeleton: the real section registry with a deterministic
+ * per-section verdict computed against an all-absent input set. Boilerplate sections
+ * render; every data-bearing section is `missing` with the inputs it needs. Uses only
+ * the builder's exported (AI-free, DB-free) gap engine — so the route can always fail
+ * closed to it WITHOUT touching the store or fabricating IB content.
  */
 function skeletonRows(): IBSectionRow[] {
   const available = resolveAvailability({ product: { productName: '' } });
@@ -86,21 +79,6 @@ function skeletonRows(): IBSectionRow[] {
   });
 }
 
-/** Map a built IB job's section results to the display contract, enriching the
- *  section scope (`description`) + `depth` from the registry. */
-function rowsFromJob(sections: IBSectionResult[]): IBSectionRow[] {
-  const registry = new Map(flattenSections().map((s) => [s.number, s]));
-  return sections.map((r) => ({
-    number: r.number,
-    title: r.title,
-    required: r.required,
-    status: r.status,
-    gaps: r.gaps,
-    description: registry.get(r.number)?.description ?? '',
-    depth: depthOf(r.number),
-  }));
-}
-
 /** Fraction of REQUIRED sections rendered (mirrors the builder's rollup). */
 function completenessOf(rows: IBSectionRow[]): number {
   const required = rows.filter((r) => r.required);
@@ -116,41 +94,17 @@ router.get('/', async (req: Request, res: Response) => {
       .json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT request
-         FROM c2c_investigator_brochure
-        WHERE organization_id = $1
-        ORDER BY id DESC
-        LIMIT 1`,
-      [orgId],
-    );
-    const stored = rows[0]?.request as IBBuildRequest | undefined;
-
-    if (stored && stored.product && stored.product.productName) {
-      // Provisioned IB program — deterministic (template-only) build so the
-      // verdicts are honest with or without the AI key.
-      const job = await buildInvestigatorBrochure({ ...stored, templateOnly: true });
-      const data = rowsFromJob(job.sections);
-      return res.json({
-        data,
-        meta: {
-          count: data.length,
-          productName: job.productName,
-          completeness: job.completeness,
-          provisioned: true,
-        },
-      });
-    }
-
-    // No provisioned program → honest ICH E6(R2) §7 skeleton.
-    const data = skeletonRows();
+    const view = await assembleOrgIBSections(orgId);
     return res.json({
-      data,
+      data: view.rows,
       meta: {
-        count: data.length,
-        productName: null,
-        completeness: completenessOf(data),
-        provisioned: false,
+        count: view.rows.length,
+        productName: view.productName,
+        completeness: view.completeness,
+        provisioned: view.provisioned,
+        source: view.source,
+        sources: view.sources,
+        availability: view.availability,
       },
     });
   } catch (err) {
@@ -164,6 +118,7 @@ router.get('/', async (req: Request, res: Response) => {
         productName: null,
         completeness: completenessOf(data),
         provisioned: false,
+        source: 'nonclinical_studies',
         pendingStore: (err as { code?: string })?.code === '42P01',
       },
     });

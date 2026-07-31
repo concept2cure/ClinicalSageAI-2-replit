@@ -42,7 +42,12 @@ describe.skipIf(!XMLLINT)('eCTD v3.2.2 qualification', () => {
       expect(r.checksum.filesChecked).toBeGreaterThan(0);
       expect(r.checksum.mismatches).toEqual([]);
       // Lifecycle sequence (replace/delete/append) packages + verifies.
-      expect(r.lifecycle.operations).toContain('replace');
+      // Operations are READ from the emitted amendment backbone (not hardcoded),
+      // so this proves the packager actually wrote all three lifecycle operations.
+      expect(r.lifecycle.operations).toEqual(expect.arrayContaining(['replace', 'append', 'delete']));
+      // A superseding operation must reference the leaf it replaces: the m1
+      // replace leaf carries a modified-file pointer at the prior sequence.
+      expect(r.lifecycle.operationsWithModifiedFile).toContain('replace');
       expect(r.lifecycle.nextPackagePassed).toBe(true);
       expect(r.passed).toBe(true);
     } finally {
@@ -79,7 +84,11 @@ describe('eCTD v4.0 qualification', () => {
       // Package checksums + per-document SHA-256 integrity re-verified.
       expect(r.checksum.ok).toBe(true);
       expect(r.notes.some((n) => n.includes('integrity mismatch'))).toBe(false);
-      // Lifecycle revise references prior CoUs and validates.
+      // Lifecycle revise references prior CoUs and validates. Operations are
+      // read from the emitted RPS message; v4 links a revised document to its
+      // predecessor via relatedContextOfUse (its modified-file analogue).
+      expect(r.lifecycle.operations).toContain('revise');
+      expect(r.lifecycle.operationsWithModifiedFile).toContain('revise');
       expect(r.lifecycle.nextPackagePassed).toBe(true);
       expect(r.passed).toBe(true);
     } finally {

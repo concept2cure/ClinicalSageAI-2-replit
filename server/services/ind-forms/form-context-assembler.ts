@@ -53,7 +53,11 @@ export function investigatorToInfo(i: Investigator): InvestigatorInfo {
     name: fullName(i.firstName, i.lastName, i.credentials),
     qualifications: i.cvDocumentRef ?? undefined,
     facilityNameAddress: composeAddress([i.siteName, i.siteAddress]),
+    facilityName: i.siteName ?? undefined,
+    facilityAddress: i.siteAddress ?? undefined,
     irbNameAddress: composeAddress([i.irbName, i.irbAddress]),
+    irbName: i.irbName ?? undefined,
+    irbAddress: i.irbAddress ?? undefined,
     subInvestigators: subs
       .map((s) => (s.credentials ? `${s.name}, ${s.credentials}` : s.name))
       .filter((n) => n.length > 0),

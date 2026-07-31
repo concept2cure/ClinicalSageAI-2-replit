@@ -101,15 +101,23 @@ const OPTIONAL_TABLES = [
  * table tiers above, a subsystem is judged whole/partial/absent together,
  * because a half-provisioned regulated surface is worse than an absent one.
  *
- * Authoring: the eleven tables the four db/migrations/20260725_authoring_* files
- * create. This list is the readiness half of the contract whose provisioning
- * half is scripts/db/authoring-subsystem.mjs (AUTHORING_SUBSYSTEM_TABLES) — keep
- * the two in sync. A PARTIAL subsystem (e.g. the loop tables without their audit
- * and signature companions) always fails readiness: it stands up freeze/e-sign
- * with no Part 11 evidence, which is worse than tables plainly absent. A wholly
+ * Authoring: the tenant-scoped tables the db/migrations/20260725_authoring_* and
+ * 20260730_authoring_subsystem_schema.sql files create. This list is the
+ * readiness half of the contract whose provisioning half is
+ * scripts/db/authoring-subsystem.mjs (AUTHORING_SUBSYSTEM_TABLES) — keep the two
+ * in sync. A PARTIAL subsystem (e.g. the loop tables without their audit and
+ * signature companions) always fails readiness: it stands up freeze/e-sign with
+ * no Part 11 evidence, which is worse than tables plainly absent. A wholly
  * ABSENT subsystem also fails readiness by default (authoring routes would throw
  * against it), unless AUTHORING_SUBSYSTEM_OPTIONAL=true is set to acknowledge a
  * deployment that intentionally does not offer authoring.
+ *
+ * Only the tenant_id-carrying tables appear here, mirroring the provisioning
+ * list: the workflow tables without a local tenant_id (doc_change_requests /
+ * doc_checklist(+items) / doc_exports) are created by the same unit but isolated
+ * by a parent-scoped policy, and are intentionally not part of this tenant-keyed
+ * readiness set (see AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES in the provisioning
+ * half).
  */
 const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_documents',
@@ -128,6 +136,20 @@ const AUTHORING_SUBSYSTEM_TABLES = [
   // opening it. Readiness must surface that instead of letting the first section
   // edit discover it.
   'doc_permissions',
+  // C-30: the eight tenant-scoped workflow tables from
+  // 20260730_authoring_subsystem_schema.sql. Every authoring workflow endpoint
+  // (reviews, audit, AI suggestions, compliance scoring, feedback, comment
+  // activity, exports, template sections) queries one of these; before C-30 the
+  // file was on no durable applier, so a deploy shipped the router onto a schema
+  // missing them and every such endpoint 500'd. Readiness must gate on them.
+  'authoring_comment_activity',
+  'authoring_reviews',
+  'authoring_audit_events',
+  'authoring_ai_suggestions',
+  'authoring_compliance_scores',
+  'authoring_suggestion_feedback',
+  'authoring_exports',
+  'template_sections',
 ];
 
 /**

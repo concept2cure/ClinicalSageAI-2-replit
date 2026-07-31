@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
-/* ── Inline fixture types ── */
+/* ── Render-contract types (the shape GET /api/doc-journey returns) ── */
 
 interface DjStage {
   id: string;
@@ -69,101 +69,6 @@ interface DjDocSnap {
 }
 
 type DjSnap = DjBriefLine | DjOutlineSnap | DjQcCheck | DjAssembleSnap | DjDocSnap;
-
-/* ── Inline fixture data (verbatim from kit doc-journey.jsx) ── */
-
-const DJ_STAGES: DjStage[] = [
-  { id: 'ideate', label: 'Ideation', ic: 'sparkles', when: 'May 28', who: 'AnA + J. Chen', ver: '—', done: true, sub: 'Need identified', kind: 'brief' },
-  { id: 'outline', label: 'Outline', ic: 'list', when: 'May 29', who: 'AnA', ver: 'v0.1', done: true, sub: 'CTD §2.5 template (ICH M4E)', kind: 'outline' },
-  { id: 'draft', label: 'AnA draft', ic: 'penLine', when: 'May 30', who: 'AnA', ver: 'v0.2', done: true, sub: 'Drafted from clinical + safety files', kind: 'draft' },
-  { id: 'revise', label: 'Author revision', ic: 'edit', when: 'Jun 4', who: 'A. Müller', ver: 'v0.4', done: true, sub: 'Human edits · tracked', kind: 'revise' },
-  { id: 'review', label: 'Internal review', ic: 'messageSquare', when: 'Jun 9', who: 'Clinical · Biostat · Reg', ver: 'v0.9', done: true, sub: '3 reviewers · 7 comments resolved', kind: 'review' },
-  { id: 'qc', label: 'QC / preflight', ic: 'shieldCheck', when: 'Jun 12', who: 'AnA', ver: 'v0.9', done: true, sub: 'Consistency + citations validated', kind: 'qc' },
-  { id: 'approve', label: 'Approval · e-sign', ic: 'checkCircle', when: 'Jun 14', who: 'D. Okafor (VP RA)', ver: 'v1.0', done: true, sub: '21 CFR §11 e-signature', kind: 'approve' },
-  { id: 'assemble', label: 'Assemble', ic: 'layers', when: 'Jun 16', who: 'AnA', ver: 'v1.0', done: true, sub: 'eCTD leaf m2.5 · operator "new"', kind: 'assemble' },
-  { id: 'submit', label: 'Submission', ic: 'rocket', when: 'Jun 18', who: 'Reg ops', ver: 'v1.0', done: false, active: true, sub: 'BLA 761xyz · sequence 0000 · FDA ESG', kind: 'submit' },
-];
-
-const DJ_SNAP: Record<string, DjSnap> = {
-  ideate: {
-    mode: 'brief', title: 'Document brief', lines: [
-      ['Document', 'Clinical Overview (CTD Module 2.5)'],
-      ['Program', 'BX-204 (rezatinib) — BLA, accelerated approval'],
-      ['Purpose', 'Integrated benefit-risk summary across the clinical program; the reviewer’s entry point to Module 5.'],
-      ['Trigger', 'AnA flagged §2.5 as a required, not-started leaf gating the BLA content plan.'],
-      ['Owner', 'A. Müller (Clinical) · reviewed by D. Okafor (VP RA)'],
-    ],
-  },
-  outline: {
-    mode: 'outline', title: '2.5  Clinical overview — section skeleton', items: [
-      '2.5.1  Product development rationale',
-      '2.5.2  Overview of biopharmaceutics',
-      '2.5.3  Overview of clinical pharmacology',
-      '2.5.4  Overview of efficacy',
-      '2.5.5  Overview of safety',
-      '2.5.6  Benefits and risks conclusions',
-    ], note: 'Template: ICH M4E(R2). Evidence linked: CSR-201, ISS, ISE, locked ADaM.',
-  },
-  draft: {
-    mode: 'doc', wm: 'DRAFT v0.2', heading: '2.5.4  Overview of efficacy', body: [
-      'In the pivotal study, the objective response rate was approximately 42%, supporting a meaningful clinical benefit in the intended population. [AnA draft — verify against locked CSR-201]',
-      'Responses were durable, with a median duration of response exceeding six months.',
-    ], prov: 'Drafted by AnA from §2.5.1–§2.5.5 + CSR-201. Model-assisted; unverified.',
-  },
-  revise: {
-    mode: 'doc', wm: 'DRAFT v0.4', heading: '2.5.4  Overview of efficacy', body: [
-      'In pivotal study BX204-201, the objective response rate was 42.1% (95% CI 35.8–48.6; n=214), supporting durable clinical benefit.',
-      'The median duration of response was 8.3 months (95% CI 6.1–11.2).',
-    ], prov: 'Edited by A. Müller — figures reconciled to the locked CSR-201 primary analysis.',
-  },
-  review: {
-    mode: 'redline', heading: '2.5.4  Overview of efficacy', redline: [
-      { t: 'In pivotal study BX204-201, the objective response rate was 42.1% (95% CI 35.8–48.6; n=214), per the locked CSR-201 primary analysis (ADaM ADRS, data lock 18 Apr 2026), ', k: 'add' },
-      { t: 'supporting durable clinical benefit.', k: 'keep' },
-    ], comment: { by: 'Biostatistics', body: 'Add the data-lock provenance for the ORR claim.', status: 'resolved' },
-  },
-  qc: {
-    mode: 'qc', heading: '2.5.4 — preflight', checks: [
-      ['Claim → evidence link', 'ok', 'ORR traces to locked ADaM ADRS'],
-      ['Cross-document consistency', 'ok', 'ORR matches §2.7.3 + USPI §14'],
-      ['Citation integrity', 'ok', '12 of 12 references resolve'],
-      ['Open redlines', 'ok', '0 unresolved'],
-      ['Confidence gutter', 'warn', '§2.5.5 safety para below 80% — flagged'],
-    ],
-  },
-  approve: {
-    mode: 'doc', seal: 'APPROVED v1.0', heading: '2.5.4  Overview of efficacy', body: [
-      { sub: '2.5.4.1  Pivotal efficacy — study BX204-201' },
-      'The efficacy of BX-204 was established in BX204-201, a multicenter, single-arm, open-label trial in 214 adult patients with advanced RTK-X–overexpressing solid tumors who had received at least one prior line of systemic therapy. The primary endpoint was objective response rate (ORR) by blinded independent central review (BICR) per RECIST v1.1.',
-      'In the primary analysis (ADaM ADRS; data lock 18 April 2026), the confirmed ORR was 42.1% (95% CI: 35.8, 48.6). Responses were durable: the median duration of response (DoR) was 8.3 months (95% CI: 6.1, 11.2), with 61% of responders maintaining response at six months. Results were consistent across pre-specified subgroups, including prior lines of therapy and tumor histology.',
-      { sub: '2.5.4.2  Supportive efficacy' },
-      'Supportive evidence from the dose-finding study BX204-102 (n=88) demonstrated concordant activity at the recommended Phase 2 dose, with an ORR of 39.8% (95% CI: 29.5, 50.8). The consistency of effect across studies, endpoints, and review methods supports the robustness of the efficacy conclusion under the accelerated-approval framework (21 CFR 601.41).',
-    ], refs: [
-      'BX204-201 Clinical Study Report, §11 (locked 18 Apr 2026).',
-      'Integrated Summary of Efficacy (ISE), Module 2.7.3.',
-      'FDA Guidance for Industry: Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics (2018).',
-    ], prov: 'E-signed by D. Okafor (VP Regulatory Affairs) · 14 Jun 2026 16:04 EDT · 21 CFR §11 · audit AUD-2.5-0091',
-  },
-  assemble: {
-    mode: 'assemble', heading: 'eCTD assembly', lines: [
-      ['Leaf', 'm2/25-clin-over/clinical-overview.pdf'],
-      ['Module', '2.5 Clinical Overview'],
-      ['Operator', 'new'],
-      ['Sequence', '0000 (original BLA)'],
-      ['Format', 'PDF/A-1b · bookmarks + hyperlinks validated'],
-      ['STF', 'not applicable (Module 2 summary)'],
-    ], note: 'Placed into the dossier. eCTD validation: 0 errors, 0 warnings.',
-  },
-  submit: {
-    mode: 'submit', heading: 'Transmission', lines: [
-      ['Submission', 'BLA 761xyz — original'],
-      ['Sequence', '0000'],
-      ['Gateway', 'FDA ESG (AS2) — secure'],
-      ['Status', 'In transit · awaiting ACK1 receipt'],
-      ['Center', 'CBER'],
-    ], note: '§2.5 is part of the assembled sequence now transmitting. ACK1 (receipt) → ACK2 (validation) → ACK3 (Center) will post here.',
-  },
-};
 
 /* ── Sub-component: snapshot renderer ── */
 
@@ -308,120 +213,139 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
   );
 }
 
-/* ════ DocJourney — one document, ideation → submission ════ */
+/* ════ DocJourney — one document's real lifecycle, creation → freeze ════ */
 
-/* live journey row = the stage rail fields plus its content snapshot */
+/* Live journey row = the stage rail fields plus its content snapshot, exactly
+   as GET /api/doc-journey returns them (server doc-journey.routes.ts →
+   doc-journey-view-assembler). Each stage is reconstructed from the real
+   authoring store (authoring_documents + doc_revisions + authoring_comments +
+   frozen_documents); every when/who/ver is a real column value, never
+   fabricated, and a milestone the store never recorded yields no stage. */
 type DjJourneyRow = DjStage & { snap?: DjSnap | null };
 
 export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = () =>
-    onNav ? onNav('document-authoring') : onAsk && onAsk('Open §2.5 Clinical Overview in the editor');
+    onNav ? onNav('document-authoring') : onAsk && onAsk('Open this document in the editor');
 
-  const [active, setActive] = useState('approve');
-  const [stages, setStages] = useState<DjStage[]>(DJ_STAGES);
-  const [snaps, setSnaps] = useState<Record<string, DjSnap>>(DJ_SNAP);
-  const [sample, setSample] = useState(true);
+  /* Real, org-scoped document journey — no fixture fallback. The surface renders
+     the live stages, an honest empty state (the org has authored nothing yet), or
+     an honest error state (the read failed) — never a fabricated stand-in. */
+  const live = useLiveRows<DjJourneyRow>('/api/doc-journey');
+  const stages = live.rows;
 
-  /* live ?? fixture — adopt the org's seeded document journey when the store
-     returns the full stage shape (rail fields + snapshots), else keep the
-     codebase fixture so the journey is never empty. Never fabricates. */
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ data?: DjJourneyRow[] }>('/api/doc-journey', { data: [] }).then((res) => {
-      if (cancelled) return;
-      const list = res.data?.data;
-      if (!res.sample && Array.isArray(list) && list.length > 0 && list[0]?.id && list[0]?.label && list[0]?.kind) {
-        setStages(list.map(({ snap: _snap, ...s }) => s));
-        const map: Record<string, DjSnap> = {};
-        for (const r of list) if (r.snap) map[r.id] = r.snap;
-        setSnaps(map);
-        setActive((cur) => (list.some((s) => s.id === cur) ? cur : list[0].id));
-        setSample(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const [active, setActive] = useState('');
+  // Effective selection: the clicked stage if it still exists, else the current
+  // in-progress (active) stage, else the journey head.
+  const activeId =
+    stages.find((s) => s.id === active)?.id ??
+    stages.find((s) => s.active)?.id ??
+    stages[stages.length - 1]?.id ??
+    '';
+  const stage = stages.find((s) => s.id === activeId) || stages[0];
+  const snap = stage?.snap ?? null;
 
-  const stage = stages.find((s) => s.id === active) || stages[0];
-  const snap = snaps[active];
+  // KPIs derived entirely from the real stages — no hardcoded program claims.
+  const total = stages.length;
   const doneCount = stages.filter((s) => s.done).length;
+  const currentVer = [...stages].reverse().find((s) => s.ver && s.ver !== '—')?.ver ?? '—';
+  const inProgress = stages.find((s) => s.active);
+  const currentStage = inProgress?.label ?? (total > 0 ? 'Complete' : '—');
+  const headWhen = (inProgress ?? stages[stages.length - 1])?.when || '—';
 
   return (
     <div className="reg-wrap dj">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Workspace · authoring <SampleTag sample={sample} /></div>
+          <div className="reg-eyebrow">Workspace · authoring</div>
           <h1 className="reg-title">Document journey</h1>
           <p className="reg-sub">
-            One document, ideation → submission. §2.5 Clinical Overview · BX-204 (rezatinib) BLA — every stage, with the document itself in view.
+            One document’s lifecycle — creation, authoring, review, approval and freeze — reconstructed from its real audit trail, with the document itself in view.
           </p>
         </div>
-        <button className="reg-cta" onClick={() => onAsk && onAsk('Advance §2.5 Clinical Overview to the next stage')}>
+        <button className="reg-cta" onClick={() => onAsk && onAsk('Advance this document to the next stage')}>
           {I.sparkles} Continue with AnA
         </button>
       </div>
 
-      <div className="reg-kpis">
-        <div className="reg-kpi">
-          <div className="reg-kpi-v">{doneCount}/{stages.length}</div>
-          <div className="reg-kpi-l">Stages complete</div>
-        </div>
-        <div className="reg-kpi">
-          <div className="reg-kpi-v">v1.0</div>
-          <div className="reg-kpi-l">Approved · e-signed</div>
-        </div>
-        <div className="reg-kpi" data-tone="ok">
-          <div className="reg-kpi-v">21 days</div>
-          <div className="reg-kpi-l">Ideation → approval</div>
-        </div>
-        <div className="reg-kpi" data-tone="warn">
-          <div className="reg-kpi-v">In transit</div>
-          <div className="reg-kpi-l">BLA seq 0000 · ESG</div>
-        </div>
-      </div>
-
-      <div className="dj-split">
-        <aside className="dj-rail">
-          {stages.map((s, i) => (
-            <button
-              key={s.id}
-              className={'dj-step' + (s.id === active ? ' on' : '')}
-              data-state={s.done ? 'done' : s.active ? 'active' : 'pending'}
-              onClick={() => setActive(s.id)}
-            >
-              <span className="dj-step-rail">
-                <span className="dj-step-dot">{s.done ? I.check : (I[s.ic] || String(i + 1))}</span>
-                {i < stages.length - 1 && <span className="dj-step-line" />}
-              </span>
-              <span className="dj-step-b">
-                <span className="dj-step-top">
-                  <span className="dj-step-l">{s.label}</span>
-                  <span className="dj-step-v">{s.ver}</span>
-                </span>
-                <span className="dj-step-sub">{s.sub}</span>
-                <span className="dj-step-meta">{s.when} · {s.who}</span>
-              </span>
-            </button>
-          ))}
-        </aside>
-
-        <div className="dj-stagepane">
-          <div className="dj-stage-h">
-            <div>
-              <span className="dj-stage-ic">{I[stage.ic] || I.fileText}</span>
-              <span className="dj-stage-t">{stage.label}</span>
-              <span className="dj-stage-v">{stage.ver}</span>
+      {live.loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the document journey…</div>
+      ) : live.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn’t load the document journey"
+          hint="The document lifecycle didn’t respond. This is your organization’s real authoring history — sign in and retry, or check the service is reachable."
+        />
+      ) : live.empty || total === 0 ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No document journey yet"
+          hint={<>Create and author a document to see its lifecycle here — creation, revisions, review comments, approval and freeze are reconstructed from the real audit trail. Start in <span className="mono">Document Authoring</span>.</>}
+        />
+      ) : (
+        <>
+          <div className="reg-kpis">
+            <div className="reg-kpi">
+              <div className="reg-kpi-v">{doneCount}/{total}</div>
+              <div className="reg-kpi-l">Stages recorded</div>
             </div>
-            <div className="dj-stage-acts">
-              <button className="reg-mini">{I.fileText} PDF</button>
-              <button className="reg-mini" onClick={openEditor}>{I.penLine} Open in editor</button>
+            <div className="reg-kpi">
+              <div className="reg-kpi-v">{currentVer}</div>
+              <div className="reg-kpi-l">Current version</div>
+            </div>
+            <div className="reg-kpi" data-tone={inProgress ? 'warn' : 'ok'}>
+              <div className="reg-kpi-v">{currentStage}</div>
+              <div className="reg-kpi-l">Current stage</div>
+            </div>
+            <div className="reg-kpi">
+              <div className="reg-kpi-v">{headWhen}</div>
+              <div className="reg-kpi-l">Last update</div>
             </div>
           </div>
-          {snap && <DJSnapshot snap={snap} />}
-        </div>
-      </div>
+
+          <div className="dj-split">
+            <aside className="dj-rail">
+              {stages.map((s, i) => (
+                <button
+                  key={s.id}
+                  className={'dj-step' + (s.id === activeId ? ' on' : '')}
+                  data-state={s.done ? 'done' : s.active ? 'active' : 'pending'}
+                  onClick={() => setActive(s.id)}
+                >
+                  <span className="dj-step-rail">
+                    <span className="dj-step-dot">{s.done ? I.check : (I[s.ic] || String(i + 1))}</span>
+                    {i < stages.length - 1 && <span className="dj-step-line" />}
+                  </span>
+                  <span className="dj-step-b">
+                    <span className="dj-step-top">
+                      <span className="dj-step-l">{s.label}</span>
+                      <span className="dj-step-v">{s.ver}</span>
+                    </span>
+                    <span className="dj-step-sub">{s.sub}</span>
+                    <span className="dj-step-meta">{s.when}{s.when && s.who ? ' · ' : ''}{s.who}</span>
+                  </span>
+                </button>
+              ))}
+            </aside>
+
+            <div className="dj-stagepane">
+              {stage && (
+                <div className="dj-stage-h">
+                  <div>
+                    <span className="dj-stage-ic">{I[stage.ic] || I.fileText}</span>
+                    <span className="dj-stage-t">{stage.label}</span>
+                    <span className="dj-stage-v">{stage.ver}</span>
+                  </div>
+                  <div className="dj-stage-acts">
+                    <button className="reg-mini" onClick={openEditor}>{I.penLine} Open in editor</button>
+                  </div>
+                </div>
+              )}
+              {snap && <DJSnapshot snap={snap} />}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

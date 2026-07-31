@@ -1,15 +1,14 @@
 /**
- * Wave-3 domain seed — program-journey spine (BX-204 · NDA 212345).
+ * Wave-3 domain seed — program-journey spine (BX-204 · NDA 212345) into the REAL store.
  *
- * One program-journey INSTANCE for the demo org: the pharma segment program
- * BX-204, mirroring the v2 BiopharmaJourney pharma fixture verbatim — filing
- * readiness (88%), the current stage (agency review), the per-stage status
- * overlay, CTD-module readiness, the review clock, three predicted HAQs, the
- * cross-module contradiction and the open blockers. The 9-stage lifecycle
- * catalog stays definitional in the surface; only this per-org instance state
- * is seeded. Read by GET /api/program-journey; the surface adopts it for the
- * pharma segment. to_regclass guarded, org-scoped, idempotent
- * (ON CONFLICT DO NOTHING). Nested arrays/objects stored as JSONB.
+ * One program-journey INSTANCE for the demo org, seeded into the REAL, org-scoped
+ * `program_journeys` + `program_journey_stages` tables (migration
+ * 20260801_program_journey_store.sql) — the exact tables program-journey-service.ts
+ * writes via POST /api/program-journey, and that GET /api/program-journey now reads.
+ * No blob: the per-stage overlay is one REAL row per lifecycle stage. The 9-stage
+ * lifecycle catalog stays definitional in the surface; only per-org instance state
+ * is seeded. to_regclass guarded, org-scoped, idempotent (skips when the org already
+ * has a live journey for the segment), created_by resolved from a real org member.
  */
 const PROGRAMS = [
   {
@@ -56,34 +55,60 @@ const PROGRAMS = [
   },
 ];
 
-export default async function seed(client, { org }) {
-  const t = await client.query(`SELECT to_regclass('public.c2c_program_journey') AS c`);
-  if (!t.rows[0]?.c) {
-    console.log('   ⚠ c2c_program_journey not found — run migrations first, skipping');
-    return;
+export default async function seed(client, { org, admin }) {
+  for (const t of ['program_journeys', 'program_journey_stages']) {
+    const r = await client.query(`SELECT to_regclass($1) AS c`, [`public.${t}`]);
+    if (!r.rows[0]?.c) {
+      console.log(`   ⚠ ${t} not found — run migrations first, skipping program-journey seed`);
+      return;
+    }
   }
+  const u = await client.query(
+    `SELECT user_id FROM organization_users WHERE organization_id = $1 ORDER BY user_id LIMIT 1`,
+    [org.id],
+  );
+  const userId = u.rows[0]?.user_id ?? admin?.id ?? null;
+
   let inserted = 0;
   for (const p of PROGRAMS) {
-    const r = await client.query(
-      `INSERT INTO c2c_program_journey (
+    const existing = await client.query(
+      `SELECT 1 FROM program_journeys WHERE organization_id = $1 AND seg = $2 AND deleted_at IS NULL LIMIT 1`,
+      [org.id, p.seg],
+    );
+    if (existing.rowCount) continue;
+
+    const parent = await client.query(
+      `INSERT INTO program_journeys (
          organization_id, seg, seq, code, name, app, modality, indication, pathway,
-         sponsor, agency, readiness, current_stage,
-         target, overlay, modules, clock, haqs, contra, blockers
+         sponsor, agency, readiness, current_stage, target_label, target_value, target_agency,
+         modules, clock, haqs, contra, blockers, created_by
        ) VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8, $9,
-         $10, $11, $12, $13,
-         $14::jsonb, $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb, $19::jsonb, $20::jsonb
-       )
-       ON CONFLICT (organization_id, seg) DO NOTHING`,
+         $10, $11, $12, $13, $14, $15, $16,
+         $17::jsonb, $18::jsonb, $19::jsonb, $20::jsonb, $21::jsonb, $22
+       ) RETURNING id`,
       [
         org.id, p.seg, p.seq, p.code, p.name, p.app, p.modality, p.indication, p.pathway,
         p.sponsor, p.agency, p.readiness, p.current,
-        JSON.stringify(p.target), JSON.stringify(p.overlay), JSON.stringify(p.modules),
-        JSON.stringify(p.clock), JSON.stringify(p.haqs), JSON.stringify(p.contra),
-        JSON.stringify(p.blockers),
+        p.target?.label ?? null, p.target?.v ?? null, p.target?.agency ?? null,
+        JSON.stringify(p.modules), JSON.stringify(p.clock), JSON.stringify(p.haqs),
+        JSON.stringify(p.contra), JSON.stringify(p.blockers), userId,
       ],
     );
-    inserted += r.rowCount ?? 0;
+    const journeyId = parent.rows[0].id;
+
+    // One REAL row per lifecycle stage (the 9-stage vocabulary), from the overlay.
+    const STAGES = ['discovery', 'preind', 'ind', 'clinical', 'presub', 'assemble', 'review', 'approval', 'lifecycle'];
+    for (const stageId of STAGES) {
+      const entry = p.overlay?.[stageId] ?? ['upcoming', 0];
+      await client.query(
+        `INSERT INTO program_journey_stages (organization_id, journey_id, stage_id, status, pct)
+         VALUES ($1,$2,$3,$4,$5)
+         ON CONFLICT (journey_id, stage_id) DO NOTHING`,
+        [org.id, journeyId, stageId, entry[0], entry[1] ?? 0],
+      );
+    }
+    inserted += 1;
   }
-  console.log(`   ✓ program journey: ${inserted} program(s) seeded`);
+  console.log(`   ✓ program journey: ${inserted} journey(s) seeded into program_journeys (+ 9 stage rows each)`);
 }

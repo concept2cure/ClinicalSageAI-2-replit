@@ -6144,8 +6144,18 @@ export const c2cProjectWorkItems = pgTable(
     projectId: integer('project_id')
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
-    sourceType: text('source_type').notNull(), // 'review_thread' | 'review_task' | 'approval_blocker' | 'requested_changes'
+    // 'review_thread' | 'review_task' | 'approval_blocker' | 'requested_changes'
+    // | 'correspondence' (agency letters/issues, via regulatory-correspondence)
+    sourceType: text('source_type').notNull(),
+    // Integer key of the source row. Together with (source_type, org_id) this is
+    // the upsert/dedup key — see upsertProjectWorkItem.
     sourceId: integer('source_id').notNull(),
+    // Stable reference for sources keyed by a STRING/UUID rather than an integer
+    // (e.g. a correspondence issue id). Those sources previously had to pass
+    // source_id: 0, which collapsed every one of them onto the same dedup key;
+    // source_ref keeps them individually traceable back to the originating
+    // record. Null for integer-keyed sources.
+    sourceRef: text('source_ref'),
     artifactId: integer('artifact_id').references(() => concept2cureArtifacts.id, {
       onDelete: 'cascade',
     }),
@@ -6165,6 +6175,7 @@ export const c2cProjectWorkItems = pgTable(
   table => ({
     projectIdx: index('c2c_pwi_project_idx').on(table.projectId),
     sourceIdx: index('c2c_pwi_source_idx').on(table.sourceType, table.sourceId),
+    sourceRefIdx: index('c2c_pwi_source_ref_idx').on(table.sourceRef),
     artifactIdx: index('c2c_pwi_artifact_idx').on(table.artifactId),
     ownerIdx: index('c2c_pwi_owner_idx').on(table.ownerId),
     statusIdx: index('c2c_pwi_status_idx').on(table.status),
@@ -8262,6 +8273,22 @@ export const ectdCompilations = pgTable(
     xmlBackbone: text('xml_backbone'), // eCTD XML structure
     crossReferences: json('cross_references'), // ICH cross-references
     status: text('status').default('pending').notNull(), // pending, compiling, completed, failed
+    // Which regulatory application + eCTD sequence this compilation targets.
+    // Nullable: a compilation may be run before an application number / sequence
+    // is assigned. Read by ectd-validator-hardening.ts detectSequenceGaps() for
+    // submission-sequence continuity (ledger C-31); a compilation without them
+    // simply contributes no sequence to that history.
+    applicationNumber: text('application_number'),
+    sequenceNumber: text('sequence_number'),
+    // Immutable per-sequence leaf manifest — the exact set of leaves this
+    // compilation published, each with its precise CTD section, filename,
+    // package-relative href, and MD5 (see server/services/ectd/sequence-manifest.ts).
+    // A LATER sequence reads this to compute its lifecycle (new/replace/append/
+    // delete) and the ICH modified-file pointer against what was actually
+    // published — the mutable ectd_granules rows and the heading-collapsed
+    // index.xml cannot serve as that exact prior state. Nullable: older rows and
+    // metadata-only compilations have none.
+    leafManifest: json('leaf_manifest'),
     // Nullable for the same reason: service-initiated compilations have no
     // interactive user. The one existing writer that set it used a hardcoded 1.
     compiledBy: integer('compiled_by'),

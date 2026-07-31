@@ -123,6 +123,14 @@ const ECTD_DDL = `
     xml_backbone TEXT,
     cross_references JSON,
     status TEXT NOT NULL DEFAULT 'pending',
+    -- C-31 (20260730_ectd_compilations_sequence_columns.sql): sequence-continuity
+    -- columns read by detectSequenceGaps. Drizzle lists every mapped column in
+    -- its INSERTs, so this mirror must carry them or the compilation insert fails.
+    application_number TEXT,
+    sequence_number TEXT,
+    -- 20260730_ectd_compilations_leaf_manifest.sql: immutable per-sequence leaf
+    -- manifest. Same drizzle "lists every mapped column" reason as above.
+    leaf_manifest JSONB,
     compiled_by INTEGER,
     compiled_at TIMESTAMPTZ,
     version TEXT DEFAULT '1.0',
@@ -274,8 +282,13 @@ describe('golden journey — eCTD export to submittable package', () => {
         // The non-spec structures the consolidation removed must be gone…
         expect(indexXml).not.toContain('<ectd:submission>');
         expect(indexXml).not.toContain('ectd:m1-administrative');
-        // …replaced by a real ICH module heading carrying the authored m3 leaf.
-        expect(indexXml).toMatch(/<m3>[\s\S]*<leaf /);
+        // …and the legacy flat module block convention must be gone too…
+        expect(indexXml).not.toMatch(/<m3>/);
+        // …replaced by the authoritative ICH v3.2.2 heading hierarchy carrying
+        // the authored m3.2.P leaf nested at its correct depth.
+        expect(indexXml).toMatch(
+          /<m3-quality>[\s\S]*<m3-2-body-of-data>[\s\S]*<m3-2-p-drug-product>[\s\S]*<leaf /,
+        );
         expect(indexXml).toContain('dtd-version="3.2"');
 
         // Leaf IDs are XML ID-typed and must be unique within the backbone — the
@@ -375,12 +388,36 @@ describe('golden journey — eCTD export to submittable package', () => {
       );
 
       // 6. A successful export records an attributed compilation row for org A.
-      await R.step('the export records an org-scoped compilation row', async () => {
+      await R.step('the export records an org-scoped compilation row with a leaf manifest', async () => {
         const rows = (await jdb.pool.query(
-          `SELECT organization_id, compilation_name, status FROM ectd_compilations WHERE organization_id = 1`,
-        )) as { rows: Array<{ organization_id: number; compilation_name: string; status: string }> };
+          `SELECT organization_id, compilation_name, status, application_number, sequence_number, leaf_manifest
+             FROM ectd_compilations WHERE organization_id = 1`,
+        )) as {
+          rows: Array<{
+            organization_id: number; compilation_name: string; status: string;
+            application_number: string | null; sequence_number: string | null; leaf_manifest: unknown;
+          }>;
+        };
         expect(rows.rows.length).toBeGreaterThan(0);
-        return { compilationRows: rows.rows.length, firstName: rows.rows[0]?.compilation_name };
+        const row = rows.rows[0];
+        // C-31 identity is populated (this path previously left it null).
+        expect(row.sequence_number).toBeTruthy();
+        // The manifest is a non-empty array of leaves, each with the precise
+        // section + href + md5 a lifecycle diff needs.
+        const manifest = row.leaf_manifest as Array<Record<string, unknown>>;
+        expect(Array.isArray(manifest)).toBe(true);
+        expect(manifest.length).toBeGreaterThan(0);
+        expect(manifest[0]).toMatchObject({
+          ctdSection: expect.any(String),
+          href: expect.any(String),
+          md5: expect.any(String),
+        });
+        return {
+          compilationRows: rows.rows.length,
+          sequence: row.sequence_number,
+          manifestLeaves: manifest.length,
+          sampleSection: manifest[0]?.ctdSection,
+        };
       });
 
       R.observations.push(

@@ -1,3 +1,12 @@
+-- DEPRECATED (2026-07): the v2 ResearchAdmin surface no longer reads this blob.
+-- GET /api/research-admin is now assembled ENTIRELY from the real, org-scoped
+-- research-compliance roster (research_personnel + personnel_training) — the
+-- tables the roster service and the CITI bulk-import write — see
+-- server/services/research-admin/research-admin-view-assembler.ts and
+-- docs/architecture/C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This table is
+-- retained (non-destructive) but is no longer written by the demo seed nor read
+-- by any route. A later migration may DROP it once no environment references it.
+--
 -- Research-administration CITI training store — the personnel training matrix
 -- backing the v2 ResearchAdmin surface's Training section read. Each row is one
 -- staff member (PI, sub-I, coordinator, biostat, veterinarian, lab tech) with

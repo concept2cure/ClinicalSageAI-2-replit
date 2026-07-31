@@ -153,8 +153,14 @@ export async function createCanonicalTasksForIssue(input: {
     workItemId,
     orgId: input.orgId,
     projectId: input.projectId,
-    sourceType: 'review_task',
+    // Correspondence is its own source, not a review task. Sharing 'review_task'
+    // put agency-letter work on the same (source_type, source_id, org_id) dedup
+    // key as real review tasks — and, with source_id 0, on the same key as every
+    // other correspondence item. source_ref carries the issue id so each row
+    // stays traceable to the letter that produced it.
+    sourceType: 'correspondence',
     sourceId: 0,
+    sourceRef: input.issue.id,
     title: `[${taskType}] ${input.issue.category}`,
     status: 'open',
     priority: input.issue.severity,

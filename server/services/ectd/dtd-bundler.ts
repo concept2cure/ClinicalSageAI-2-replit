@@ -3,9 +3,9 @@
  *
  * The regional packager's backbones reference DTDs by DOCTYPE
  * (e.g. `util/dtd/ich-ectd-3-2.dtd`), but a package is only DTD-validatable
- * when those files actually ship inside it. The licensed DTD files are NOT
- * committed (see `assets/ectd-dtd/README.md`); a maintainer drops them into
- * `assets/ectd-dtd/` or points `ECTD_DTD_DIR` at a directory that holds them.
+ * when those files actually ship inside it. The DTD files are vendored agency
+ * artifacts (see `assets/ectd-dtd/README.md` "Vendoring policy"): committed
+ * once acquired, pinned by checksums, or supplied via `ECTD_DTD_DIR`.
  *
  * This module is the code half of that gap: it lists the vendored DTDs, knows
  * which DTDs each region's backbone references, and evaluates a readiness gate

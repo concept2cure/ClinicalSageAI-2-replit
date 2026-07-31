@@ -24,7 +24,13 @@ import {
   VALIDATION_SUMMARY,
 } from '../data/workbench';
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
-import { useWorkbenchTasks, useWorkbenchTemplates, useWorkbenchValidation } from '../hooks/useWorkbench';
+import {
+  useWorkbenchTasks,
+  useWorkbenchTemplates,
+  useWorkbenchValidation,
+  useUnifiedWork,
+  workNotOnTheBoard,
+} from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
@@ -44,6 +50,11 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
      Falls back to the kit fixture during load and on error so the Kanban
      never renders with empty columns. */
   const live = useWorkbenchTasks();
+  /* The board above reads c2c_project_work_items only. This reports what the
+     other two tracking systems (schedule milestones, tracked filings) hold, so
+     the page stops silently under-reporting the portfolio. */
+  const unified = useUnifiedWork();
+  const offBoard = workNotOnTheBoard(unified.summary);
   const sourceTasks = useSampleRows(live.tasks, TASKS);
   const sourceMetrics = useSampleRows(live.metrics, TASKS_METRICS);
 
@@ -59,6 +70,14 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
           <div className="page-sub">
             Everything assigned across the portfolio — blockers, peer reviews, e-signatures.
           </div>
+          {offBoard > 0 && (
+            <div className="page-sub">
+              {`+${offBoard} not on this board: `}
+              {`${unified.summary?.bySource.schedule ?? 0} schedule milestone(s), `}
+              {`${unified.summary?.bySource.filing ?? 0} tracked filing(s)`}
+              {unified.summary?.blocking ? ` · ${unified.summary.blocking} blocking` : ''}
+            </div>
+          )}
         </div>
         <div className="page-actions">
           <div className="seg small">

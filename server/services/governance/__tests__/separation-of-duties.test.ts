@@ -24,6 +24,17 @@ describe('resolveTargetOwnerId', () => {
     expect(query.mock.calls[0][0]).toContain('c2c_document_sections');
   });
 
+  it('resolves a blocker owner scoped by the REAL org column (org_id, not organization_id)', async () => {
+    query.mockResolvedValue({ rows: [{ owner_user_id: 13 }] });
+    expect(await resolveTargetOwnerId('blocker:BLK-204-1', 2)).toBe(13);
+    const sql = query.mock.calls[0][0] as string;
+    expect(sql).toContain('FROM c2c_blockers');
+    // c2c_blockers has `org_id`, NOT `organization_id` — the wrong name silently
+    // 42703'd and degraded the un-disableable SoD check to allow. Guard it.
+    expect(sql).toMatch(/\borg_id\b/);
+    expect(sql).not.toContain('organization_id');
+  });
+
   it('returns null for an unmodelled target type (degrades, no query)', async () => {
     expect(await resolveTargetOwnerId('submission:sub-1', 2)).toBeNull();
     expect(query).not.toHaveBeenCalled();

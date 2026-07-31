@@ -16,6 +16,7 @@ import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
 const SUBMISSION_TOOLS = [
   'compute_lifecycle_operations',
+  'convert_to_rps_v4',
   'generate_stf',
   'check_ectd_cross_references',
   'classify_submission_document',
@@ -86,6 +87,89 @@ describe('compute_lifecycle_operations (pure)', () => {
     );
     expect(out.ok).toBe(true);
     expect(out.summary).toMatchObject({ new: 1, replace: 1 });
+  });
+
+  it('forwards prior href + prior_sequence_prefix so a replace emits modified-file', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    const out = JSON.parse(
+      await handler({
+        prior_sequence_prefix: '../0000/',
+        prior_leaves: [
+          { ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' },
+        ],
+        desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
+      })
+    );
+    expect(out.ok).toBe(true);
+    const replaced = out.leaves.find((l: any) => l.operation === 'replace');
+    expect(replaced.modifiedFile).toBe('../0000/m3/32-body-data/32s-drug-sub/general.pdf');
+  });
+
+  it('refuses to auto-load a prior sequence without tenant context (org from ToolContext only)', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    // application_number + prior_sequence_number (and no explicit prior_leaves)
+    // triggers the tenant-scoped auto-load path, which must not run org-less.
+    const out = JSON.parse(
+      await handler({
+        application_number: 'IND-123',
+        prior_sequence_number: '0000',
+        desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
+      }),
+    );
+    expect(out.error).toMatch(/tenant context/i);
+  });
+
+  it('does NOT engage auto-load when explicit prior_leaves are supplied (org not required)', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    const out = JSON.parse(
+      await handler({
+        application_number: 'IND-123',
+        prior_sequence_number: '0000',
+        prior_leaves: [{ ctd_section: '2.5', file_name: 'o.pdf', md5: 'a' }],
+        desired_leaves: [{ ctd_section: '2.5', file_name: 'o.pdf', md5: 'b' }],
+      }),
+    );
+    expect(out.ok).toBe(true);
+    expect(out.autoLoadedPrior).toBe(0);
+    expect(out.summary).toMatchObject({ replace: 1 });
+  });
+});
+
+describe('convert_to_rps_v4 (pure)', () => {
+  const baseArgs = (over: Record<string, unknown> = {}) => ({
+    application: { number: '123456', type_code: 'us_application_type_1', center: 'cder' },
+    submission: { type_code: 'us_submission_type_1' },
+    submission_unit: { id: 'su-1', unit_type_code: 'us_submission_unit_type_1', title: 'Seq', sequence_number: '0002' },
+    leaves: [
+      { ctd_section: '1.2', file_name: 'cover.pdf', title: 'Cover', operation: 'replace' },
+      { ctd_section: '3.2.S.1', file_name: 'general.pdf', title: 'General', operation: 'new' },
+    ],
+    ...over,
+  });
+
+  it('maps v3 operations to RPS and emits one document + CoU per leaf', async () => {
+    const handler = getToolHandler('convert_to_rps_v4')!;
+    const out = JSON.parse(await handler(baseArgs()));
+    expect(out.ok).toBe(true);
+    expect(out.summary).toMatchObject({ documents: 2, contextsOfUse: 2, lifecycle: 1 });
+    const revise = out.message.contextsOfUse.find((c: any) => c.operation === 'revise');
+    expect(revise).toBeTruthy();
+    expect(out.message.contextsOfUse.find((c: any) => c.operation === 'create')).toBeTruthy();
+  });
+
+  it('points relatedContextOfUse at the prior sequence for a lifecycle op', async () => {
+    const handler = getToolHandler('convert_to_rps_v4')!;
+    const out = JSON.parse(await handler(baseArgs({ prior_sequence_number: '0001' })));
+    const revise = out.message.contextsOfUse.find((c: any) => c.operation === 'revise');
+    expect(typeof revise.relatedContextOfUseId).toBe('string');
+    expect(revise.relatedContextOfUseId.length).toBeGreaterThan(0);
+  });
+
+  it('returns serialized RPS message XML when include_xml is set', async () => {
+    const handler = getToolHandler('convert_to_rps_v4')!;
+    const out = JSON.parse(await handler(baseArgs({ include_xml: true })));
+    expect(out.xml).toContain('<PORP_IN000001UV');
+    expect(out.xml).toContain('<sequenceNumber value="0002"/>');
   });
 });
 

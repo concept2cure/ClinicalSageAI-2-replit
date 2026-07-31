@@ -125,6 +125,39 @@ Point new work at these when you need a worked example of a rung:
   **independently of the writer's object model**, and round-trips the tabular
   rows back through ExcelJS; a corrupted container and a valid-zip
   that-is-not-a-workbook are both caught.
+- **Tiers 6 → 7 (CSV)** — `tests/export-contract/csv-export.proof.test.ts`.
+  The packager's CSV writer is a **hand-rolled quoter** — the classic home of
+  export bugs. Reopens the real bytes with `csv-parse` (a real RFC-4180 parser,
+  **independent** of the writer) and round-trips a value containing a comma and
+  embedded double-quotes back as a single cell; an unterminated quoted field
+  throws, and stripping the writer's quotes mis-splits the comma value — the exact
+  bug the quoting prevents.
+- **Tiers 6 → 7 (JSON)** — `tests/export-contract/json-export.proof.test.ts`.
+  `JSON.parse` is the writer's own inverse, so independence comes from an **`ajv`
+  JSON-Schema** over the envelope contract (`title`/`content`/`generator`…): a
+  truncated buffer fails to parse and a dropped field fails the schema, proving the
+  contract is enforced, not merely that the bytes are parseable JSON.
+- **Tiers 6 → 7 (HTML)** — `tests/export-contract/html-export.proof.test.ts`.
+  The HTML is built by string concatenation; reopens it with `node-html-parser`
+  (an **independent** DOM) and retrieves the authored title from `<title>` and
+  `<h1>` and the content token from `.content` via DOM queries (never a byte
+  match). A foreign document is rejected by the generator-identity check and
+  stripping the `<h1>` fails the structural title check.
+- **Tiers 6 → 7 (ZIP)** — `tests/export-contract/zip-export.proof.test.ts`.
+  A multi-file deliverable: reopens the archive with `adm-zip` **independently of
+  the `archiver` writer**, **cross-references** `manifest.json`'s `files` against
+  the real entries (no phantom members), then reopens the nested `.html` (DOM) and
+  `.json` (parse) members; a corrupted container fails to reopen and a valid ZIP
+  lacking a manifest is rejected.
+- **Tiers 6 → 7 (AcroForm fill)** — `tests/export-contract/acroform-fill.proof.test.ts`.
+  Not the universal packager: `server/services/forms/fill-official-pdf.ts` fills
+  official fillable PDFs (FDA eSTAR / 1571 / 1572 / 3674 …) by writing values into
+  AcroForm fields with pdf-lib. The proof fills a real form, flattens it, and
+  reopens with `pdf-parse` (pdf.js — **independent** of the pdf-lib writer) to
+  confirm the value is actually **rendered** in the emitted document, not merely
+  set in a form dictionary the writer owns. A tautology guard proves the token is
+  absent from the unfilled template; a mapped-but-missing field throws under
+  `missingFieldPolicy: 'error'` and a value-less key is skipped, never invented.
 
 Each journey/proof writes a machine-readable proof packet under its
 `__reports__/` directory (the JSON is the truth source; the markdown is rendered
@@ -164,10 +197,18 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
 - **Tier 6 (export reopen)** was the thinnest rung: exporters were asserted on
   their in-memory output, and the external-validator tests ran against
   hand-authored fixture directories rather than a real emitted package. It is now
-  closed for the four universal output formats — **eCTD** (backbone XML + MD5
-  integrity), **PDF** (independent pdf.js reopen), **DOCX** (OOXML part reopen),
-  and **XLSX** (OOXML part reopen + round-trip). Remaining exporters (e.g.
-  form-filled AcroForm bundles, ZIP deliverables) should follow the same pattern.
+  closed for **eCTD** (backbone XML + MD5 integrity) and **every implemented format
+  of the universal packager** — **PDF** (independent pdf.js reopen), **DOCX** and
+  **XLSX** (OOXML part reopen + round-trip), **CSV** (RFC-4180 round-trip through
+  `csv-parse`), **JSON** (`ajv` envelope schema), **HTML** (independent DOM parse),
+  and **ZIP** (`adm-zip` reopen + manifest cross-reference + nested-member
+  qualification). The one packager format still without a reopen proof is **XML**,
+  because it is declared but **not implemented** (`packageDeliverable` hits its
+  `default` case and emits nothing) — a gap in the packager, not the proof set.
+  The **official-PDF AcroForm fill** path (`fill-official-pdf.ts`, used for FDA
+  eSTAR/1571/1572/3674 forms) is now covered too (fill → flatten → independent
+  pdf.js reopen of the rendered value). Remaining generators outside these two
+  families should follow the same fill/generate → independent-reopen pattern.
 - **Tier 7 (external qualification)** is real but **scoped**: the eCTD path
   validates the backbone XML with **real libxml2** (`xmllint`) and runs the
   license-free FDA-criteria subset — but not yet the commercial LORENZ agency

@@ -74,6 +74,8 @@ export interface CreateEstarSubmissionInput {
   title?: string | null;
   qSubmissionId?: string | null;
   notes?: string | null;
+  /** Project this filing belongs to — connects tracking to the PM spine. */
+  projectId?: number | null;
 }
 
 /**
@@ -99,6 +101,7 @@ export async function createEstarSubmission(
       status: 'draft',
       reviewGoalDays: entry.reviewGoalDays ?? null,
       qSubmissionId: input.qSubmissionId ?? null,
+      projectId: input.projectId ?? null,
       notes: input.notes ?? null,
       createdBy: ctx.userId,
     })
@@ -117,10 +120,12 @@ export async function createEstarSubmission(
 
 export async function listEstarSubmissions(
   ctx: { organizationId: number },
-  filters: { status?: EstarSubmissionStatus } = {},
+  filters: { status?: EstarSubmissionStatus; projectId?: number } = {},
 ): Promise<EstarSubmissionRow[]> {
   const conds = [eq(estarSubmissions.organizationId, ctx.organizationId)];
   if (filters.status) conds.push(eq(estarSubmissions.status, filters.status));
+  // Project view: "what filings does this project have in flight?"
+  if (filters.projectId !== undefined) conds.push(eq(estarSubmissions.projectId, filters.projectId));
   const rows = await db
     .select()
     .from(estarSubmissions)

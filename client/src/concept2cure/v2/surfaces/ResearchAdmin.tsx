@@ -17,9 +17,12 @@ import '../styles/project-home-v2.css';
    data, an honest EMPTY state, or an honest ERROR state — never a fixture.
 
    - Training is REAL: GET /api/research-admin (server/routes/research-admin.routes.ts)
-     reads the org's CITI training matrix from c2c_research_admin. Re-anchored to
-     useLiveRows; the "Expiring soon" panel is a deterministic projection of the
-     live matrix (no fabricated expiry-days count).
+     assembles the org's CITI training matrix from the real research-compliance
+     roster — research_personnel + personnel_training, the tables the roster
+     service and the CITI bulk-import write (see server/services/research-admin/
+     research-admin-view-assembler.ts). Re-anchored to useLiveRows; the "Expiring
+     soon" panel is a deterministic projection of the live matrix (no fabricated
+     expiry-days count).
    - Committees / Coverage / Grants / Portfolio previously rendered fabricated
      fixtures (PDEV_COMMITTEES / PDEV_COVERAGE / PDEV_GRANTS /
      PDEV_PORTFOLIO_ANALYTICS) with a live voting poll, a billing grid and
@@ -39,10 +42,12 @@ interface SectionDef {
 }
 
 /* Row shape returned by GET /api/research-admin (research-admin.routes.ts):
-   { id, name, role, cells }. `id` is the TEXT personnel id (PK, always present);
-   `name` and `role` are nullable TEXT columns (rendered null-safe, never
-   fabricated); `cells` is the per-module CITI status vector (JSONB, server-
-   coalesced to []), aligned to the CITI_TRAININGS column order. */
+   { id, name, role, cells }. `id` is the roster personnel id (research_personnel
+   PK, serialized; always present); `name`/`role` come from the real roster
+   (rendered null-safe, never fabricated; role arrives as its short display
+   label, e.g. 'PI'); `cells` is the per-module CITI status vector DERIVED
+   server-side from each person's personnel_training completion/expiry dates,
+   aligned to the CITI_TRAININGS column order ('n/a' = no record on file). */
 interface CitiPerson {
   id: string;
   name: string | null;
@@ -61,10 +66,11 @@ const SECTIONS: SectionDef[] = [
 ];
 
 /* Canonical surface config — the CITI training-column catalog. The server
-   returns each person's cells[] in exactly this column order (see
-   research-admin.routes.ts and 20260717_research_admin_store.sql), so the
-   surface owns the column labels while the live rows carry only the per-person
-   status vector. Static catalog of real CITI module names, not org data. */
+   returns each person's cells[] in exactly this column order (CITI_COLUMN_TYPES
+   in server/services/research-admin/research-admin-view-assembler.ts maps each
+   column to its personnel_training.training_type), so the surface owns the
+   column labels while the live rows carry only the per-person status vector.
+   Static catalog of real CITI module names, not org data. */
 const CITI_TRAININGS = [
   'Human Subjects (Biomed)',
   'GCP',

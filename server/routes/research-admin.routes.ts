@@ -1,15 +1,22 @@
 /**
- * Research administration — CITI training-matrix read.
+ * Research administration — CITI training-matrix read for the v2 surface.
  *
- * GET /api/research-admin → the org's study personnel training matrix, each row
+ * GET /api/research-admin → the org's study-personnel training matrix, each row
  * shaped to exactly the keys the v2 ResearchAdmin surface's Training section
- * renders ({ id, name, role, cells[] }). The per-module CITI status vector
- * (cells) rehydrates straight from JSONB, aligned to the surface's training-
- * column order. Org scoped; 403 without org context; fails closed to an empty
- * list on 42P01 so an unprovisioned store never 500s.
+ * renders ({ id, name, role, cells[] }), assembled ENTIRELY from the real,
+ * org-scoped research-compliance roster (research_personnel + personnel_training)
+ * — the same tables the roster service, the CITI bulk-import and AnA's training
+ * tools write. The per-module CITI status vector (cells) is DERIVED live from
+ * each person's real completion/expiry dates, never rehydrated from a blob. There
+ * is no legacy/seed blob and no fallback: an org with no roster returns an empty
+ * list and the surface renders its own honest empty state. See
+ * research-admin-view-assembler.
+ *
+ * Org scoped; 403 without org context; fails to an empty list on 42P01 so an
+ * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { assembleOrgResearchAdmin } from '../services/research-admin/research-admin-view-assembler.js';
 
 const router = Router();
 
@@ -33,20 +40,8 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT id, name, role, cells
-         FROM c2c_research_admin
-        WHERE organization_id = $1
-        ORDER BY seq, id`,
-      [orgId],
-    );
-    const data = rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      role: r.role,
-      cells: r.cells ?? [],
-    }));
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgResearchAdmin(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'personnel_training' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });

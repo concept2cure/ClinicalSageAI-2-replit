@@ -1,3 +1,12 @@
+-- DEPRECATED (2026-08): superseded by the REAL program_journeys +
+-- program_journey_stages store (20260801_program_journey_store.sql), which has
+-- a live write path (program-journey-service.ts via POST /api/program-journey
+-- and POST /api/program-journey/:id/stages/:stageId). GET /api/program-journey
+-- now reads that real, org-scoped store — see docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This blob is retained
+-- (non-destructive) but is no longer written by the demo seed nor read by any
+-- route. A later migration may DROP it once no environment references it.
+--
 -- Program-journey store — the concept-to-submission spine backing the v2
 -- BiopharmaJourney surface's GET read. Each row is ONE program's regulatory
 -- journey (segment-scoped: biotech BX-301 · BLA, pharma BX-204 · NDA) carrying

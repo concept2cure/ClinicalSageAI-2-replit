@@ -76,6 +76,15 @@ CREATE TABLE IF NOT EXISTS fda_510k_initial_data_forms (
 CREATE INDEX IF NOT EXISTS fda_510k_initial_data_forms_project_idx ON fda_510k_initial_data_forms (project_id);
 
 -- ── c2c_investigator_brochure (tenant-scoped) ────────────────────────────────
+-- DEPRECATED (2026-08): this seed-only blob is RETIRED. GET /api/investigator-brochure
+-- no longer reads it — the ICH E6(R2) §7 IB section readiness is now assembled from the
+-- REAL, org-scoped upstream evidence stores (nonclinical_studies, clinical_ops.studies /
+-- clinical_studies, adverse_events / risk_management_plans, cmc_module3_sections) via
+-- server/services/authoring/investigator-brochure-view-assembler.ts. See
+-- docs/architecture/C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. The blob is no longer written
+-- by any demo seed nor read by any route; the table below is RETAINED (non-destructive)
+-- so existing environments keep it, and a later migration may DROP it once no environment
+-- references it. (The other tables in this migration are NOT deprecated.)
 CREATE TABLE IF NOT EXISTS c2c_investigator_brochure (
   id              SERIAL PRIMARY KEY,
   organization_id INTEGER,

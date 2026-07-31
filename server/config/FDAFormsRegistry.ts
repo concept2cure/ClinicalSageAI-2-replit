@@ -19,6 +19,21 @@ export interface FormField {
   validationRule?: string;
 }
 
+/** FDA center that owns a form. */
+export type FdaCenter = 'CDER' | 'CBER' | 'CDRH' | 'CVM' | 'CTP';
+/** Regulated product domain a form applies to. */
+export type ProductDomain = 'drug' | 'biologic' | 'device' | 'combination';
+/** Submission program / pathway a form is used in. */
+export type SubmissionProgram =
+  | 'IND' | 'NDA' | 'ANDA' | 'BLA'
+  | '510k' | 'PMA' | 'DeNovo' | 'Q-Sub' | 'Breakthrough';
+/** Which FDA center / product domain(s) / program(s) a form applies to. */
+export interface FormApplicability {
+  center: FdaCenter;
+  domains: ProductDomain[];
+  programs: SubmissionProgram[];
+}
+
 export interface FDAFormDefinition {
   formId: string;
   formNumber: string;
@@ -47,6 +62,13 @@ export interface FDAFormDefinition {
     effect: 'required' | 'visible' | 'excluded';
     fieldIds: string[];
   }>;
+  /**
+   * FDA center + product domain(s) + submission program(s) this form applies to.
+   * Lets the platform serve the RIGHT forms for a given client's program rather
+   * than the device-centric `category` alone. When omitted, `applicabilityOf()`
+   * derives a sensible default from `category`.
+   */
+  applicability?: FormApplicability;
 }
 
 // Registry of all FDA SMART Forms
@@ -220,12 +242,24 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
       { id: 'sponsor_name', label: 'Applicant/Sponsor', type: 'text', required: true },
       { id: 'drug_name', label: 'Drug/Product', type: 'text', required: true },
       { id: 'study_title', label: 'Study Title', type: 'text', required: false },
+      { id: 'has_disclosable_interest', label: 'A covered clinical investigator has a disclosable financial interest or arrangement', type: 'checkbox', required: false },
       { id: 'disclosure_details', label: 'Disclosure Details', type: 'textarea', required: false, maxLength: 10000 },
       { id: 'disclosure_descriptions_complete', label: 'All disclosures complete', type: 'checkbox', required: true },
       { id: 'authorized_rep_name', label: 'Authorized Representative', type: 'text', required: true },
       { id: 'authorized_rep_title', label: 'Representative Title', type: 'text', required: false },
     ], autoGenerationTrigger: { stage: 5 }, implementationStatus: 'full',
-    conditionalLogic: [{ when: { fieldId: 'investigators[].financial.hasDisclosableInterest', operator: 'equals', value: true }, effect: 'required', fieldIds: ['disclosure_details'] }]
+    // Disclosure detail is required only when a covered investigator actually has a
+    // disclosable interest. Typed and declarative (never an executable expression):
+    // the `when` clause references an in-form field id (has_disclosable_interest,
+    // defined in this form's fields above) so the flat-lookup evaluator in
+    // FDAFormGenerator.validateEditableValues can actually resolve it. NB: a dotted
+    // path like 'investigators[].financial.hasDisclosableInterest' compiles but the
+    // evaluator does values[fieldId], so it never resolves and the rule never fires.
+    conditionalLogic: [{
+      when: { fieldId: 'has_disclosable_interest', operator: 'truthy' },
+      effect: 'required',
+      fieldIds: ['disclosure_details'],
+    }],
   },
 
   // ============ PMA Forms ============
@@ -330,12 +364,16 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
     category: 'Clinical', version: 'unverified', lastUpdated: 'unknown',
     fields: [
       { id: 'investigator_name', label: 'Name of Investigator', type: 'text', required: true },
-      { id: 'investigator_qualifications', label: 'Education, Training, and Experience', type: 'textarea', required: true },
+      // Box 2 qualifications are satisfied by an attachment (CV), not an inline
+      // required field on the official 1572 — mirrors buildForm1572.
+      { id: 'investigator_qualifications', label: 'Education, Training, and Experience', type: 'textarea', required: false },
       { id: 'facility_name', label: 'Facility Name and Address', type: 'textarea', required: true },
       { id: 'clinical_lab_name_address', label: 'Clinical Laboratory Name and Address', type: 'textarea', required: false },
       { id: 'irb_name_address', label: 'IRB Name and Address', type: 'textarea', required: true },
       { id: 'sub_investigators', label: 'Sub-Investigators', type: 'textarea', required: false },
-      { id: 'study_title', label: 'Study Title', type: 'text', required: true },
+      // The official Statement of Investigator has no study-title field; the
+      // study is identified by protocol number(s). Not inline-required.
+      { id: 'study_title', label: 'Study Title', type: 'text', required: false },
       { id: 'protocol_numbers', label: 'Protocol Number(s)', type: 'text', required: false },
     ], dependencies: ['FDA_1571'], autoGenerationTrigger: { stage: 2 }, implementationStatus: 'full'
   },
@@ -581,12 +619,83 @@ export function governedFormDefinition(form: FDAFormDefinition): FDAFormDefiniti
     },
     pdf: form.pdf ?? { officialTemplatePreferred: true, fallbackWatermarkedDraft: true },
     storage: form.storage ?? { format: 'structured-field-map', versioned: true, provenanceRequired: true },
+    applicability: applicabilityOf(form),
   };
 }
 
 // Helper function to get forms by category
 export function getFormsByCategory(category: FDAFormDefinition['category']): FDAFormDefinition[] {
   return Object.values(FDAFormsRegistry).filter(form => form.category === category);
+}
+
+// ---------------------------------------------------------------------------
+// Applicability — which FDA center / product domain / program a form belongs to.
+//
+// The device-centric `category` alone can't answer "which forms apply to THIS
+// client's program" (e.g. an IND drug program vs a 510(k) device program). This
+// models center/domain/program so the platform can serve the right form set.
+// First model — refine per regulatory review; not claimed authoritative.
+// ---------------------------------------------------------------------------
+
+/** Forms whose real applicability differs from the category-derived default. */
+const APPLICABILITY_OVERRIDES: Record<string, FormApplicability> = {
+  // ClinicalTrials.gov certification — applicable across drug/biologic/device submissions.
+  FDA_3674: { center: 'CDER', domains: ['drug', 'biologic', 'device'], programs: ['IND', 'NDA', 'BLA', '510k', 'PMA'] },
+  // Financial interest cert/disclosure (21 CFR 54) — drug/biologic INDs + marketing apps.
+  FDA_3454: { center: 'CDER', domains: ['drug', 'biologic'], programs: ['IND', 'NDA', 'BLA'] },
+  FDA_3455: { center: 'CDER', domains: ['drug', 'biologic'], programs: ['IND', 'NDA', 'BLA'] },
+  // Marketing application cover — NDA/ANDA/BLA (drug + biologic).
+  FDA_356H: { center: 'CDER', domains: ['drug', 'biologic'], programs: ['NDA', 'ANDA', 'BLA'] },
+  // Device certification/disclosure cover — 510(k).
+  FDA_3654: { center: 'CDRH', domains: ['device'], programs: ['510k'] },
+  // Truthful & accurate statement — used broadly.
+  FDA_2891: { center: 'CDER', domains: ['drug', 'biologic', 'device'], programs: ['IND', 'NDA', 'BLA', '510k', 'PMA'] },
+};
+
+function deriveApplicabilityFromCategory(category: FDAFormDefinition['category']): FormApplicability {
+  switch (category) {
+    case '510k': return { center: 'CDRH', domains: ['device'], programs: ['510k'] };
+    case 'PMA': return { center: 'CDRH', domains: ['device'], programs: ['PMA'] };
+    case 'Special': return { center: 'CDRH', domains: ['device'], programs: ['DeNovo', 'Q-Sub', 'Breakthrough'] };
+    case 'Clinical': return { center: 'CDER', domains: ['drug', 'biologic'], programs: ['IND'] };
+    case 'Common':
+    default: return { center: 'CDER', domains: ['drug', 'biologic', 'device'], programs: [] };
+  }
+}
+
+/** A form's applicability: explicit field, else a per-form override, else derived from category. */
+export function applicabilityOf(form: FDAFormDefinition): FormApplicability {
+  return form.applicability ?? APPLICABILITY_OVERRIDES[form.formId] ?? deriveApplicabilityFromCategory(form.category);
+}
+
+/** Forms used in a given submission program (IND, NDA, 510k, …). */
+export function getFormsForProgram(program: SubmissionProgram): FDAFormDefinition[] {
+  return Object.values(FDAFormsRegistry).filter((f) => applicabilityOf(f).programs.includes(program));
+}
+
+/** Forms that apply to a given product domain (drug, biologic, device, combination). */
+export function getFormsForDomain(domain: ProductDomain): FDAFormDefinition[] {
+  return Object.values(FDAFormsRegistry).filter((f) => applicabilityOf(f).domains.includes(domain));
+}
+
+/** Forms owned by a given FDA center. */
+export function getFormsForCenter(center: FdaCenter): FDAFormDefinition[] {
+  return Object.values(FDAFormsRegistry).filter((f) => applicabilityOf(f).center === center);
+}
+
+/** Forms matching ALL supplied criteria (center AND domain AND program). */
+export function getApplicableForms(criteria: {
+  center?: FdaCenter;
+  domain?: ProductDomain;
+  program?: SubmissionProgram;
+}): FDAFormDefinition[] {
+  return Object.values(FDAFormsRegistry).filter((f) => {
+    const a = applicabilityOf(f);
+    if (criteria.center && a.center !== criteria.center) return false;
+    if (criteria.domain && !a.domains.includes(criteria.domain)) return false;
+    if (criteria.program && !a.programs.includes(criteria.program)) return false;
+    return true;
+  });
 }
 
 // Helper function to get forms required for a specific submission type
@@ -651,5 +760,21 @@ export class FDAFormsRegistryClass {
   
   getFormsForStage(stage: number): string[] {
     return getFormsForStage(stage);
+  }
+
+  /** The center/domain/program applicability for a form (explicit, override, or derived). */
+  getApplicability(formId: string): FormApplicability | undefined {
+    const form = this.registry[formId];
+    return form ? applicabilityOf(form) : undefined;
+  }
+
+  /** Governed form definitions applicable to a submission program (IND, NDA, 510k, …). */
+  getFormsForProgram(program: SubmissionProgram): FDAFormDefinition[] {
+    return getFormsForProgram(program).map(governedFormDefinition);
+  }
+
+  /** Governed form definitions matching ALL supplied criteria (center/domain/program). */
+  getApplicableForms(criteria: { center?: FdaCenter; domain?: ProductDomain; program?: SubmissionProgram }): FDAFormDefinition[] {
+    return getApplicableForms(criteria).map(governedFormDefinition);
   }
 }

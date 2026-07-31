@@ -80,6 +80,7 @@ import type {
 import { leafIdSlug, createLeafIdAssigner } from './ectd-packager/leaf-id';
 import { buildMd5Index } from './ectd-packager/md5-index';
 import { escapeXml, studyFolderSlug, commonDir } from './ectd-packager/paths';
+import { buildIchModuleTree, findDroppedLeaves, type RenderedLeaf } from './ectd-packager/ich-headings';
 
 // Re-export the public packager surface (barrel).
 export type { EctdLeaf, FdaApplicantContact, FdaFormLeaf, FdaRegionalAdmin };
@@ -375,17 +376,28 @@ ${m1Leaves}
 function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
-  const grouped: Record<string, EctdLeaf[]> = { m2: [], m3: [], m4: [], m5: [] };
-  for (const leaf of m2to5) {
-    const mod = `m${leaf.ctdSection.charAt(0)}`;
-    if (grouped[mod]) grouped[mod].push(leaf);
+  // Fail loudly on any leaf that maps to no ICH module — otherwise it would be
+  // silently dropped from the backbone (a submission document vanishing without
+  // a trace). Module-1 leaves are already filtered out upstream, so anything
+  // unmappable here is a genuinely out-of-range or malformed CTD section.
+  const dropped = findDroppedLeaves(m2to5);
+  if (dropped.length) {
+    const detail = dropped.map((l) => `${l.ctdSection} (${l.fileName})`).join(', ');
+    throw new ValidationError(
+      `eCTD backbone cannot place ${dropped.length} leaf(s) — no ICH Module 2–5 ` +
+        `heading matches: ${detail}. Assign each a valid CTD section.`,
+      dropped.map((l) => `unplaceable-section:${l.ctdSection}`),
+    );
   }
-  const moduleBlocks = (['m2', 'm3', 'm4', 'm5'] as const).map((m) => {
-    const leaves = grouped[m]
-      .map((l) => leafElement(l, assignId(l), resolve(l)))
-      .join('\n');
-    return `  <${m}>\n${leaves}\n  </${m}>`;
-  }).join('\n');
+  // Render each leaf, then nest it under its authoritative ICH v3.2.2 heading.
+  // Flat <m2>..<m5> is NOT a valid ectd:ectd child — the DTD requires the named
+  // heading tree (m3-quality > m3-2-body-of-data > m3-2-s-drug-substance > leaf).
+  // See ectd-packager/ich-headings.
+  const rendered: RenderedLeaf[] = m2to5.map((l) => ({
+    leaf: l,
+    xml: leafElement(l, assignId(l), resolve(l)),
+  }));
+  const moduleBlocks = buildIchModuleTree(rendered, 2);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
@@ -460,6 +472,22 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const refByLeaf = new Map<EctdLeaf, LeafRef>();
   for (const leaf of input.leaves) {
     const sectionDashed = leaf.ctdSection.replace(/\./g, '-');
+
+    // Backbone-only lifecycle delete: when the withdrawn document lives in a
+    // PRIOR sequence, the delete leaf carries no new bytes (empty sourcePath) —
+    // exactly what computeLifecycleOperations emits. Render it as
+    // operation="delete" pointing at the prior file (modified-file, also used as
+    // the xlink:href), but do NOT read a file, write it into this package, or
+    // add a checksum line. A delete that DOES carry a sourcePath falls through
+    // and is packaged normally (some callers ship superseding bytes with it).
+    if (leaf.operation === 'delete' && !leaf.sourcePath) {
+      const fallbackHref = leaf.ctdSection.startsWith('1')
+        ? `${sectionDashed}/${leaf.fileName}`
+        : `m${leaf.ctdSection.charAt(0)}/${sectionDashed}/${leaf.fileName}`;
+      refByLeaf.set(leaf, { href: leaf.modifiedFile ?? fallbackHref, md5: leaf.md5 ?? '' });
+      continue; // no bytes → no prepared entry, no ZIP file, no checksum line
+    }
+
     const raw = await fs.readFile(leaf.sourcePath);
     const { bytes, md5Override, isPdf, converted } = await finalizeLeafBytes(raw, leaf.fileName);
     grades.push({ fileName: leaf.fileName, isPdf, converted });
@@ -597,7 +625,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
 
   /* Bundle vendored DTDs into util/dtd/ so the package is DTD self-contained
      (the backbones' DOCTYPEs reference util/dtd/*.dtd). The licensed DTD files
-     are not committed — they come from assets/ectd-dtd/ or $ECTD_DTD_DIR — so
+     are vendored per assets/ectd-dtd/README.md (or come from $ECTD_DTD_DIR), so
      this is a no-op when absent. DTDs are package files, so they are checksummed
      into index-md5.txt alongside the leaves. */
   const vendoredDtds = await listVendoredDtds();

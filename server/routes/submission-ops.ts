@@ -20,6 +20,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as fs from 'fs';
+import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import { db, pool } from '../db';
@@ -898,6 +899,32 @@ router.get('/workload', async (req: Request, res: Response) => {
     const projectId = req.query.projectId ? Number(req.query.projectId) : undefined;
     const canonical = await readCanonicalDueSoonAndWorkload({ orgId, projectId });
     res.json({ data: canonical.workload, source: 'c2c_project_work_items' });
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
+  }
+});
+
+/**
+ * GET /api/submission-ops/unified-work[?projectId=]
+ *
+ * The portfolio view across ALL THREE systems that track work independently —
+ * schedule-of-events tasks (project_tasks), review + correspondence work items
+ * (c2c_project_work_items), and tracked filings with their FDA review clock
+ * (estar_submissions). /workload above returns only the second of those, which
+ * is why a milestone slip or an agency hold never appeared beside a review
+ * blocker.
+ *
+ * Read-only and additive: /workload is unchanged, so existing consumers keep
+ * their exact shape. Blockers sort first, then soonest due; `summary` carries
+ * the roll-up by status and by source.
+ */
+router.get('/unified-work', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const raw = req.query.projectId ? Number(req.query.projectId) : undefined;
+    const projectId = Number.isInteger(raw) && (raw as number) > 0 ? raw : undefined;
+    const view = await loadUnifiedWork({ organizationId: orgId, projectId });
+    res.json({ ...view, sources: ['project_tasks', 'c2c_project_work_items', 'estar_submissions'] });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : 'Operation failed' });
   }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -21,10 +21,11 @@ interface LpNegotiation {
   rationale: string;
 }
 
-/* One row per label section — the live read shape (GET /api/labeling-pi). The
-   section number + label are catalog; `st`, `flag`, `content`, and
-   `negotiation` are per-org instance state. `content`/`negotiation` arrive as
-   JSONB and are null for sections without them. */
+/* One row per label section — the live read shape (GET /api/labeling-pi,
+   assembled from the REAL org-scoped labeling_pi_sections store written via
+   POST /api/labeling-pi). The section number + label are catalog; `st`, `flag`,
+   `content`, and `negotiation` are per-org instance state. `content`/
+   `negotiation` arrive as JSONB and are null for sections without them. */
 interface LpRow {
   n: string;
   label: string;
@@ -34,78 +35,8 @@ interface LpRow {
   negotiation: LpNegotiation | null;
 }
 
-/* ── Inline fixture data (kit-identical) ── */
-
+/* Display metadata (fixed regulatory stage ladder — not per-org data). */
 const LP_STAGES = ['Draft', 'FDA labeling review', 'Negotiation', 'Approved'];
-
-/* USPI -- PLLR / 21 CFR 201.57 full prescribing information (17 sections) */
-const LP_SECTIONS: { n: string; label: string; st: string; flag?: string }[] = [
-  { n: 'HL', label: 'Highlights of prescribing information', st: 'review' },
-  { n: 'BW', label: 'Boxed warning', st: 'negotiation', flag: 'agency' },
-  { n: '1', label: 'Indications and usage', st: 'negotiation', flag: 'agency' },
-  { n: '2', label: 'Dosage and administration', st: 'review' },
-  { n: '3', label: 'Dosage forms and strengths', st: 'approved' },
-  { n: '4', label: 'Contraindications', st: 'approved' },
-  { n: '5', label: 'Warnings and precautions', st: 'review' },
-  { n: '6', label: 'Adverse reactions', st: 'review' },
-  { n: '7', label: 'Drug interactions', st: 'draft' },
-  { n: '8', label: 'Use in specific populations', st: 'negotiation', flag: 'agency' },
-  { n: '9', label: 'Drug abuse and dependence', st: 'na' },
-  { n: '10', label: 'Overdosage', st: 'draft' },
-  { n: '11', label: 'Description', st: 'approved' },
-  { n: '12', label: 'Clinical pharmacology', st: 'review' },
-  { n: '13', label: 'Nonclinical toxicology', st: 'draft' },
-  { n: '14', label: 'Clinical studies', st: 'review' },
-  { n: '16', label: 'How supplied / storage and handling', st: 'approved' },
-  { n: '17', label: 'Patient counseling information', st: 'draft' },
-];
-
-/* Rendered content per section (the actual label text) */
-const LP_CONTENT: Record<string, LpContent> = {
-  HL: { heading: 'Highlights of prescribing information', body: [
-    'These highlights do not include all the information needed to use BX-204 safely and effectively. See full prescribing information for BX-204.',
-    'BX-204 (rezatinib) injection, for intravenous use. Initial U.S. Approval: 2026',
-  ], hl: true },
-  BW: { heading: 'Boxed warning -- severe infusion-related reactions', body: [
-    'Severe, life-threatening infusion-related reactions have occurred. Premedicate and monitor. Interrupt or discontinue for severe reactions. (5.1)',
-  ], warn: true },
-  '1': { heading: '1  Indications and usage', body: [
-    'BX-204 is indicated for the treatment of adult patients with advanced RTK-X-overexpressing solid tumors who have received at least one prior line of systemic therapy.',
-    'This indication is approved under accelerated approval based on overall response rate and duration of response. Continued approval may be contingent upon verification and description of clinical benefit in a confirmatory trial.',
-  ] },
-  '8': { heading: '8  Use in specific populations', body: [
-    '8.1 Pregnancy -- Based on its mechanism of action, BX-204 can cause fetal harm. Advise pregnant women of the potential risk to a fetus.',
-    '8.4 Pediatric use -- Safety and effectiveness in pediatric patients have not been established.',
-  ] },
-};
-
-/* The end-of-review labeling negotiation -- sponsor text vs FDA's proposed redline */
-const LP_NEGOTIATION: Record<string, LpNegotiation> = {
-  '1': { round: 'Labeling round 2', cycle: 'FDA -- day 312 of review',
-    sponsor: 'BX-204 is indicated for the treatment of adult patients with advanced RTK-X-overexpressing solid tumors.',
-    agency: 'BX-204 is indicated for the treatment of adult patients with advanced RTK-X-overexpressing solid tumors who have received at least one prior line of systemic therapy.',
-    rationale: 'FDA proposes restricting the indicated population to second-line+ to align with the pivotal trial enrollment (BX204-201). Accepting narrows the indication; countering requires first-line efficacy data.' },
-  BW: { round: 'Labeling round 2', cycle: 'FDA -- day 312 of review',
-    sponsor: '(no boxed warning proposed)',
-    agency: 'BOXED WARNING: Severe, life-threatening infusion-related reactions have occurred...',
-    rationale: 'FDA proposes adding a Boxed Warning based on 4 Grade >=3 infusion reactions in the safety database. AnA assessment: defensible to counter to a §5.1 Warning given the manageable, premedication-responsive profile -- but precedent in this class favors the boxed warning.' },
-  '8': { round: 'Labeling round 1', cycle: 'FDA -- day 286 of review',
-    sponsor: '8.4 Pediatric use -- Safety and effectiveness in pediatric patients have not been established. A pediatric study is planned under the iPSP.',
-    agency: '8.4 Pediatric use -- Safety and effectiveness in pediatric patients have not been established.',
-    rationale: 'FDA proposes removing the forward-looking iPSP sentence from labeling (belongs in the PMR, not the PI). Low-stakes -- accept.' },
-};
-
-/* Combined per-section fixture — the `live ?? fixture` shape for the read.
-   Each row carries the section metadata plus its rendered content and agency
-   negotiation (null where absent), mirroring GET /api/labeling-pi. */
-const LP_ROWS: LpRow[] = LP_SECTIONS.map(s => ({
-  n: s.n,
-  label: s.label,
-  st: s.st,
-  flag: s.flag ?? null,
-  content: LP_CONTENT[s.n] ?? null,
-  negotiation: LP_NEGOTIATION[s.n] ?? null,
-}));
 
 /* ════ Labeling PI -- prescribing information surface ════ */
 
@@ -114,13 +45,14 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
   const [active, setActive] = useState('1');
   const [stage, setStage] = useState('Negotiation');
 
-  /* live ?? fixture — adopt the org's seeded label worklist when the store
-     returns the full section shape ({ n, label, st, flag, content,
-     negotiation }), else keep the codebase fixture so the tree is never empty.
-     Never fabricates; no empty-flash (fixture renders while loading). */
-  const { data: rows, sample } = useLiveList<LpRow>('/api/labeling-pi', LP_ROWS);
+  /* Fixture-free (real-data standard): the org's label worklist is read live
+     from the REAL labeling_pi_sections store (written via POST /api/labeling-pi).
+     Real rows, an honest empty state, or an honest error — never a fixture. */
+  const { rows, loading, error, empty } = useLiveRows<LpRow>('/api/labeling-pi');
 
   const stIdx = LP_STAGES.indexOf(stage);
+  const numberedSections = rows.filter(s => /^\d/.test(s.n)).length;
+  const boxedProposed = rows.filter(s => s.n === 'BW' && s.st !== 'na').length;
   const sec = rows.find(s => s.n === active) || rows[2] || rows[0];
   const content = sec?.content || { heading: (sec?.n ?? active) + '  ' + (sec?.label ?? ''), body: ['Section content is maintained in the structured label and rendered here. Open in the editor to author, or ask AnA to draft from the clinical and safety files.'] };
   const neg = sec?.negotiation ?? null;
@@ -130,7 +62,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
     <div className="reg-wrap lp">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Platform -- authoring <SampleTag sample={sample} /></div>
+          <div className="reg-eyebrow">Platform -- authoring</div>
           <h1 className="reg-title">Labeling -- prescribing information</h1>
           <p className="reg-sub">The label itself -- PLLR / 21 CFR 201.57 (USPI), EU SmPC (QRD), and SPL for submission. The highest-stakes document of the review, negotiated with the agency at end of cycle.</p>
         </div>
@@ -139,9 +71,9 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
 
       <div className="reg-kpis">
         <div className="reg-kpi"><div className="reg-kpi-v">PLLR</div><div className="reg-kpi-l">USPI format -- 21 CFR 201.57</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">17</div><div className="reg-kpi-l">Full PI sections</div></div>
-        <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{agencyOpen}</div><div className="reg-kpi-l">Open agency edits</div></div>
-        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">1</div><div className="reg-kpi-l">Boxed warning proposed</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{loading ? '--' : numberedSections}</div><div className="reg-kpi-l">Full PI sections</div></div>
+        <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{loading ? '--' : agencyOpen}</div><div className="reg-kpi-l">Open agency edits</div></div>
+        <div className="reg-kpi" data-tone={boxedProposed ? 'err' : undefined}><div className="reg-kpi-v">{loading ? '--' : boxedProposed}</div><div className="reg-kpi-l">Boxed warning proposed</div></div>
       </div>
 
       <div className="lp-fmt">
@@ -157,6 +89,22 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
         </div>
       </div>
 
+      {loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the label worklist…</div>
+      ) : error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the label"
+          hint="The org's structured product label (USPI) didn't respond — sign in and retry, or check the service is reachable."
+        />
+      ) : empty ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No label sections yet"
+          hint="Record or author USPI sections (via POST /api/labeling-pi or AnA drafting) and the section tree, rendered label text, and agency negotiation appear here."
+        />
+      ) : (
       <div className="lp-split">
         <aside className="lp-tree">
           <div className="lp-tree-h">Label sections</div>
@@ -210,6 +158,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

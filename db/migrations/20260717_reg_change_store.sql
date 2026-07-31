@@ -1,3 +1,11 @@
+-- DEPRECATED (2026-08): superseded by the REAL reg_change_items store
+-- (20260801_reg_change_store.sql), which has a live write path
+-- (reg-change-service.ts via POST /api/reg-change). GET /api/reg-change now
+-- reads that real, org-scoped store — see docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This blob is retained (non-destructive)
+-- but is no longer written by the demo seed nor read by any route. A later
+-- migration may DROP it once no environment references it.
+--
 -- Regulatory-change intelligence store — the horizon-scan worklist backing the
 -- v2 RegChange surface's GET read. Each row is one regulatory change (FDA
 -- guidance, ISO/IEC standard revision, EU MDR/IVDR/AI-Act change) assessed for

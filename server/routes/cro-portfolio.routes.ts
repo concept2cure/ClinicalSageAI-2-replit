@@ -1,17 +1,20 @@
 /**
- * CRO sponsor-portfolio — multi-sponsor client roster read.
+ * CRO sponsor-portfolio — multi-sponsor client roster read for the v2 surface.
  *
  * GET /api/cro-portfolio → the org's sponsor clients (one row per engagement),
- * shaped to exactly the keys the v2 CroPortfolio surface renders
- * ({ id, name, type, lead, sow, sowNote, studies, subs }, with the nested
- * studies (CroStudy[]) and subs (CroSub[]) rehydrated from JSONB). The surface
- * adopts this via liveGet and falls back to its codebase fixture (with a Sample
- * pill) when the store is empty or unreachable. Org scoped; 403 without org
- * context; fails closed to an empty list on 42P01 so an unprovisioned store
- * never 500s.
+ * each shaped to exactly the keys the v2 CroPortfolio surface renders
+ * ({ id, name, type, lead, sow, sowNote, studies[], subs[] }), assembled ENTIRELY
+ * from the real, org-scoped CRO engagement store (cro_clients + cro_studies +
+ * cro_regulatory_submissions + cro_milestones + cro_team_assignments) — the same
+ * tables the /api/cro CRUD routes write. There is no legacy/seed blob and no
+ * fallback: an org with no clients returns an empty list and the surface renders
+ * its own honest empty state. See cro-portfolio-view-assembler.
+ *
+ * Org scoped; 403 without org context; fails to an empty list on 42P01 so an
+ * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { assembleOrgCroPortfolio } from '../services/cro/cro-portfolio-view-assembler.js';
 
 const router = Router();
 
@@ -35,24 +38,8 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const { rows } = await pool.query(
-      `SELECT id, name, type, lead, sow, sow_note, studies, subs
-         FROM c2c_cro_portfolio
-        WHERE organization_id = $1
-        ORDER BY ord, id`,
-      [orgId],
-    );
-    const data = rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      type: r.type,
-      lead: r.lead,
-      sow: r.sow,
-      sowNote: r.sow_note,
-      studies: Array.isArray(r.studies) ? r.studies : [],
-      subs: Array.isArray(r.subs) ? r.subs : [],
-    }));
-    return res.json({ data, meta: { count: data.length } });
+    const data = await assembleOrgCroPortfolio(orgId);
+    return res.json({ data, meta: { count: data.length, source: 'cro_clients' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });

@@ -29,6 +29,10 @@ import {
   type RegionalLeafRef,
   type RegulatoryRegion,
 } from './ectd-regional-rules.js';
+import {
+  ICH_BACKBONE,
+  allHeadingElements,
+} from '../submission-gateways/ectd-packager/ich-headings.js';
 
 const log = createScopedLogger('ectd-validator-hardening');
 
@@ -95,18 +99,25 @@ export interface DtdFinding {
   filePath?: string;
 }
 
-// ── Reference DTD structure (ICH eCTD 3.2.2) ────────────────────────────────
-// The actual DTD file lives at /vendor/dtd/ich-ectd-3-2.dtd; this is the
-// in-memory shape we use to verify backbone XML conforms structurally.
+// ── Reference DTD structure (ICH eCTD v3.2.2) ───────────────────────────────
+// The authoritative heading catalogue is the SHARED ich-headings module — the
+// same tree both backbone generators emit — so the validator and the emitters
+// can never diverge again. (The licensed ich-ectd-3-2.dtd, when vendored into
+// assets/ectd-dtd/, is additionally enforced by xmllint in the qualification
+// harness; this in-memory check is the always-available structural layer.)
 
-const ICH_ECTD_DTD_ELEMENTS: Record<string, { required: string[]; allowed: string[] }> = {
-  'ectd:ectd': { required: ['admin'], allowed: ['admin', 'm1-administrative', 'm2-summaries', 'm3-quality', 'm4-nonclinical', 'm5-clinical'] },
-  'admin': { required: ['applicant-info'], allowed: ['applicant-info', 'submission-description', 'sequence-info'] },
-  'sequence-info': { required: ['number', 'type'], allowed: ['number', 'type', 'description', 'related-sequence'] },
-  'leaf': { required: ['title', 'xlink:href'], allowed: ['title', 'xlink:href', 'checksum', 'study-id', 'language', 'operation'] },
-  'm5-clinical': { required: [], allowed: ['m5-1', 'm5-2', 'm5-3', 'm5-4'] },
-  'm5-3': { required: [], allowed: ['m5-3-1', 'm5-3-2', 'm5-3-3', 'm5-3-4', 'm5-3-5', 'm5-3-6', 'm5-3-7'] },
-};
+/** Module 1 heading in index.xml (regional content itself lives in the
+ *  regional backbone; the ICH DTD defines this element for m1 references). */
+const ICH_M1_HEADING = 'm1-administrative-information-and-prescribing-information';
+
+/** Every heading element the ICH backbone may contain (m1 + the m2–m5 tree). */
+const ICH_HEADING_CATALOGUE = new Set<string>([ICH_M1_HEADING, ...allHeadingElements()]);
+
+/** The valid direct children of the ectd:ectd root (the module elements). */
+const ICH_ROOT_CHILDREN = new Set<string>([
+  ICH_M1_HEADING,
+  ...ICH_BACKBONE.map((h) => h.element),
+]);
 
 const REQUIRED_LEAF_ATTRIBUTES = ['xlink:href', 'checksum', 'operation'] as const;
 
@@ -233,12 +244,15 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
     });
   }
 
-  if (!/<!DOCTYPE\s+ectd:ectd\s+SYSTEM\s+["']ich-ectd-3-2\.dtd["']/i.test(backboneXml)) {
+  // Accept both a bare filename and a package-relative path (the packager emits
+  // SYSTEM "util/dtd/ich-ectd-3-2.dtd"); what matters is that the referenced
+  // DTD is ich-ectd-3-2.dtd.
+  if (!/<!DOCTYPE\s+ectd:ectd\s+SYSTEM\s+["'][^"']*ich-ectd-3-2\.dtd["']/i.test(backboneXml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_NO_DOCTYPE',
       message: 'DOCTYPE declaration missing or does not reference ich-ectd-3-2.dtd',
-      fix: 'Add <!DOCTYPE ectd:ectd SYSTEM "../util/dtd/ich-ectd-3-2.dtd">',
+      fix: 'Add <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">',
     });
   }
 
@@ -302,23 +316,37 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
     leafIdx++;
   }
 
-  // Element catalogue check — flag elements not in ICH M8 reference
+  // Element catalogue check — every module/heading element must come from the
+  // authoritative ICH v3.2.2 catalogue (the same shared tree the generators
+  // emit). This is what retires the legacy conventions: a flat <m3> block or an
+  // abbreviated <m2-summaries> heading is flagged here, with the authoritative
+  // fix named.
   const elementMatches = backboneXml.matchAll(/<([a-zA-Z0-9:_-]+)[\s>/]/g);
   const seenElements = new Set<string>();
   for (const match of elementMatches) {
     seenElements.add(match[1]);
   }
-  // Spot-check: ensure required top-level structure elements are present somewhere
-  const requiredAtRoot = ICH_ECTD_DTD_ELEMENTS['ectd:ectd'].required;
-  for (const req of requiredAtRoot) {
-    if (!seenElements.has(req)) {
+  for (const el of seenElements) {
+    if (/^m\d/.test(el) && !ICH_HEADING_CATALOGUE.has(el)) {
       findings.push({
-        severity: 'warning',
-        code: 'DTD_MISSING_REQUIRED_CHILD',
-        message: `Backbone is missing required child element <${req}> under <ectd:ectd>`,
-        fix: `Add <${req}> as a child of <ectd:ectd>`,
+        severity: 'error',
+        code: 'DTD_UNKNOWN_ELEMENT',
+        message: `Backbone element <${el}> is not an ICH eCTD v3.2.2 heading element`,
+        fix:
+          'Use the authoritative heading names from the ICH backbone (e.g. m3-quality > ' +
+          'm3-2-body-of-data > m3-2-s-drug-substance) — see ectd-packager/ich-headings',
       });
     }
+  }
+  // The backbone should carry at least one module content element.
+  const hasModuleContent = [...seenElements].some((el) => ICH_ROOT_CHILDREN.has(el));
+  if (seenElements.has('ectd:ectd') && !hasModuleContent) {
+    findings.push({
+      severity: 'warning',
+      code: 'DTD_MISSING_REQUIRED_CHILD',
+      message: 'Backbone contains no module content elements under <ectd:ectd>',
+      fix: 'Add the module heading elements (m1…m5) with their leaf content',
+    });
   }
 
   return findings;
@@ -451,19 +479,62 @@ export async function detectSequenceGaps(
   // as a gateway-blocking finding — NOT be swallowed as "no history",
   // because that would silently re-classify a non-0000 submission as a
   // first-ever submission (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1).
+  // Two sources feed the history, with different durability. ectd_compilations
+  // is the PRIMARY, always-present source (drizzle journal + the C-31 ALTER put
+  // application_number / sequence_number on it). ectd_submissions
+  // (db/migrations/082_ectd_submission_agent.sql) is a SEPARATE lifecycle
+  // subsystem that is itself on no durable apply path — on a deploy that has not
+  // stood it up the table does not exist. A single UNION naming both would throw
+  // 42P01 (undefined_table) when it is absent and — via the catch below —
+  // misreport that provisioning state as a DB OUTAGE, blocking every submission
+  // with "database unreachable" (ledger C-16 recorded exactly this; C-31 fixes
+  // it). So the two are queried separately: the primary must succeed, and the
+  // optional one tolerates ONLY "table does not exist"; any other failure on
+  // EITHER (a real outage, a permission error, a missing column on an unmigrated
+  // primary) still blocks — the "an outage must never be swallowed as no-history"
+  // invariant (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1) is preserved.
+  const UNDEFINED_TABLE = '42P01';
+  const sqlState = (err: unknown): string | undefined =>
+    err && typeof err === 'object' && 'code' in err
+      ? String((err as { code: unknown }).code)
+      : undefined;
+
   let result: { rows: Array<{ sequence_number: string }> };
   try {
-    result = await pool.query(
-      `SELECT DISTINCT sequence_number
-       FROM (
-         SELECT sequence_number FROM ectd_compilations WHERE application_number = $1
-         UNION
-         SELECT sequence_number FROM ectd_submissions WHERE application_number = $1
-       ) seqs
-       WHERE sequence_number ~ '^\\d{4}$'
-       ORDER BY sequence_number ASC`,
+    const primary = await pool.query(
+      `SELECT sequence_number FROM ectd_compilations WHERE application_number = $1`,
       [applicationNumber]
     );
+    const rows = [...(primary.rows || [])];
+
+    // Optional source: fold in ectd_submissions when it exists. A bare
+    // "table does not exist" is the deploy-dead subsystem, not an outage — log it
+    // and carry on with the primary history. Anything else re-throws to the outer
+    // catch and blocks the gate.
+    try {
+      const secondary = await pool.query(
+        `SELECT sequence_number FROM ectd_submissions WHERE application_number = $1`,
+        [applicationNumber]
+      );
+      rows.push(...(secondary.rows || []));
+    } catch (subErr) {
+      if (sqlState(subErr) === UNDEFINED_TABLE) {
+        log.warn('SEQ_SUBMISSIONS_ABSENT — ectd_submissions not provisioned; using ectd_compilations only', {
+          applicationNumber,
+        });
+      } else {
+        throw subErr;
+      }
+    }
+
+    // DISTINCT + 4-digit filter + ascending order, previously done in SQL.
+    const seen = new Set<string>();
+    const deduped = rows
+      .map(r => String((r as { sequence_number: unknown }).sequence_number))
+      .filter(s => /^\d{4}$/.test(s))
+      .filter(s => (seen.has(s) ? false : (seen.add(s), true)))
+      .sort();
+    result = { rows: deduped.map(sequence_number => ({ sequence_number })) };
   } catch (err) {
     // The raw err.message frequently leaks schema-level intel that an
     // unauthenticated caller should not see — table names, role names,

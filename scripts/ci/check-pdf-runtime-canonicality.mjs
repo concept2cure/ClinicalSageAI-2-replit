@@ -70,12 +70,16 @@ const APPROVED = new Set([
   //   pdf-bookmark-generator.ts — builds /Outlines dicts on EXISTING PDFs (eCTD spec).
   //   fill-official-pdf.ts     — fills AcroForm fields of official FDA PDFs.
   //   ind-form-fill-service.ts — fills official FDA 1571/1572/3674 AcroForms.
+  //   ind-form-reconstruct.ts  — re-renders dynamic-XFA 1571/3674 forms that carry
+  //                              NO fillable AcroForm layer; pdf-converter.ts (a
+  //                              DOCX/HTML→PDF converter) cannot reconstruct XFA.
   //   templateExtractor.ts     — READS PDFs (PDFDocument.load) to extract formatting.
   'server/routes/submission-ops.ts',
   'server/services/ectd/leaf-pdf-renderer.ts',
   'server/services/ectd/pdf-bookmark-generator.ts',
   'server/services/forms/fill-official-pdf.ts',
   'server/services/ind-forms/ind-form-fill-service.ts',
+  'server/services/ind-forms/ind-form-reconstruct.ts',
   'server/services/templates/templateExtractor.ts',
 ]);
 

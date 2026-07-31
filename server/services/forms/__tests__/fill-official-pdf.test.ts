@@ -161,14 +161,17 @@ describe('fillOfficialPdf', () => {
     ).rejects.toThrow(/NonExistentField/);
   });
 
-  it('warns and still selects when a dropdown value is not a preset option', async () => {
+  it('skips+warns for an out-of-range dropdown value (never injects an unavailable option)', async () => {
     const result = await fillOfficialPdf(template, FIELD_MAP, {
       studyPhase: 'Phase 4',
     });
-    expect(result.filled).toContain('studyPhase');
+    // An official form must not gain an option it does not offer; the value is
+    // skipped+warned (not reported as filled), matching the radio-group case.
+    expect(result.skipped).toContain('studyPhase');
+    expect(result.filled).not.toContain('studyPhase');
     expect(result.warnings.some((w) => w.includes('Phase 4'))).toBe(true);
     const values = await readBack(result.bytes);
-    expect(values.phase).toEqual(['Phase 4']);
+    expect(values.phase).not.toContain('Phase 4');
   });
 
   it('skips+warns for an invalid radio option (not addable on the fly)', async () => {

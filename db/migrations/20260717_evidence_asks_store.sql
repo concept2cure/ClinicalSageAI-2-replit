@@ -1,3 +1,14 @@
+-- DEPRECATED (2026-08): superseded by the REAL AI trace chain
+-- (20260224_ai_trace_chain.sql — ai_retrieval_runs + ai_retrieval_chunks +
+-- ai_generation_runs), which already has a live write path: POST /api/evidence/ask
+-- (server/routes/evidence-ask.ts) persists a retrieval run, its ranked chunks, and a
+-- generation run on every real corpus ask. GET /api/evidence-asks now assembles the
+-- surface's latest-ask view ENTIRELY from that real, org-scoped chain via
+-- evidence-asks-view-assembler.ts — see docs/architecture/
+-- C2C_BLOB_SURFACE_INTEGRATION_AUDIT.md. This blob is retained (non-destructive) but is
+-- no longer written by the demo seed nor read by any route. A later migration may DROP it
+-- once no environment references it.
+--
 -- Evidence-ask store — saved corpus-retrieval answers backing the v2 Evidence
 -- surface's GET read. Each row is one grounded ask: the natural-language
 -- question, the retrieval pedigree, the composed answer, its numeric citation

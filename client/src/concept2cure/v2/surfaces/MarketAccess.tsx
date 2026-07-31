@@ -1,134 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
-/* -- Inline fixture types -- */
-
-interface CoverageRow {
-  region: string;
-  payer: string;
-  basis: string;
-  code: string;
-  status: string;
-  note: string;
-}
-
-interface DossierSection {
-  n: string;
-  label: string;
-  owner: string;
-  st: string;
-  pct: number;
-  blocker?: boolean;
-}
-
-interface CodingRow {
-  code: string;
-  desc: string;
-  kind: string;
-  status: string;
-  note: string;
-}
-
-/* One org's market-access program record — the read shape of
-   GET /api/market-access (nested display lists rehydrated from JSONB). */
-interface MarketAccessRecord {
+/* One payer/HTA position — the read shape of GET /api/market-access, one row per
+   market × payer position per program from the REAL org-scoped store
+   `market_access_positions` (written via POST /api/market-access). */
+interface PayerPosition {
+  id: string;
   program: string;
-  coverage: CoverageRow[];
-  dossier: DossierSection[];
-  coding: CodingRow[];
+  market: string;
+  payer: string;
+  mechanism: string | null;
+  code: string | null;
+  status: string;
+  decisionDate: string | null;
+  note: string | null;
 }
-
-/* -- Inline fixture data (kit-identical) -- */
-
-const MA_COVERAGE: CoverageRow[] = [
-  { region: 'United States', payer: 'CMS -- Medicare', basis: 'NCD / LCD', code: 'HCPCS E2103', status: 'covered', note: 'Therapeutic CGM covered; DME benefit category.' },
-  { region: 'United States', payer: 'Commercial (UNH · Aetna · Cigna)', basis: 'Medical policy', code: 'CPT 95249', status: 'covered', note: 'Coverage with prior auth; A1c + insulin-use criteria.' },
-  { region: 'United States', payer: 'Medicaid (state)', basis: 'State plan', code: '--', status: 'partial', note: 'Coverage varies by state; 32 of 50 cover therapeutic CGM.' },
-  { region: 'United Kingdom', payer: 'NHS -- NICE', basis: 'HTA appraisal', code: '--', status: 'review', note: 'NICE TA in progress; positioned vs Libre 3 on cost-comparability.' },
-  { region: 'Germany', payer: 'G-BA / GKV', basis: 'NUB / DiGA', code: '--', status: 'review', note: 'Benefit assessment pending; PMCF data supports.' },
-  { region: 'France', payer: 'HAS / CNEDiMTS', basis: 'HTA appraisal', code: '--', status: 'planned', note: 'LPPR listing application planned post-CE.' },
-  { region: 'Japan', payer: 'MHLW / Chuikyo', basis: 'Reimbursement pricing', code: '--', status: 'planned', note: 'C2 functional category sought after Shonin.' },
-];
-
-const MA_DOSSIER: DossierSection[] = [
-  { n: '1', label: 'Executive value proposition', owner: 'HEOR', st: 'complete', pct: 100 },
-  { n: '2', label: 'Disease & unmet-need background', owner: 'Med affairs', st: 'complete', pct: 100 },
-  { n: '3', label: 'Clinical evidence summary (MARD, outcomes)', owner: 'Clinical', st: 'review', pct: 80 },
-  { n: '4', label: 'Economic model -- budget impact', owner: 'HEOR', st: 'draft', pct: 55, blocker: true },
-  { n: '5', label: 'Cost-effectiveness (ICER vs SMBG / Libre 3)', owner: 'HEOR', st: 'draft', pct: 40 },
-  { n: '6', label: 'Comparative effectiveness table', owner: 'HEOR', st: 'review', pct: 75 },
-];
-
-const MA_CODING: CodingRow[] = [
-  { code: 'HCPCS E2103', desc: 'Non-adjunctive CGM receiver/monitor', kind: 'Existing', status: 'mapped', note: 'Therapeutic CGM DME code applies.' },
-  { code: 'CPT 95249', desc: 'CGM patient-owned -- startup/training', kind: 'Existing', status: 'mapped', note: 'Used for patient-owned device setup.' },
-  { code: 'CPT 0XXXT', desc: 'Category III -- predictive-low algorithm', kind: 'New PLA/Cat-III', status: 'pursue', note: 'AnA recommends a Cat-III code application for the predictive feature.' },
-];
 
 /* -- Helpers -- */
 
+/* Pill tone for the stored position vocab (validated server-side):
+   covered | partial | review | planned | denied. */
 function maPill(s: string): string {
   return (
     ({
       covered: 'ok',
-      mapped: 'ok',
-      complete: 'ok',
-      review: 'review',
       partial: 'warn',
-      draft: 'warn',
-      pursue: 'warn',
+      review: 'review',
+      denied: 'warn',
       planned: 'idle',
     } as Record<string, string>)[s] || 'idle'
   );
+}
+
+/* The payer · note · decision sub-line under each market. */
+function posSub(p: PayerPosition): string {
+  return [p.payer, p.note, p.decisionDate ? 'decision ' + p.decisionDate : null]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /* ════ MarketAccess -- market access & reimbursement surface ════ */
 
 export function MarketAccess({ onAsk }: SurfaceViewProps) {
   const [tab, setTab] = useState('coverage');
-  const [coverage, setCoverage] = useState<CoverageRow[]>(MA_COVERAGE);
-  const [dossier, setDossier] = useState<DossierSection[]>(MA_DOSSIER);
-  const [coding, setCoding] = useState<CodingRow[]>(MA_CODING);
-  const [sample, setSample] = useState(true);
   const ask = (q: string) => onAsk && onAsk(q);
 
-  /* live ?? fixture — adopt the org's seeded market-access record when the store
-     returns a program row carrying the full display shape (coverage rows with
-     region/payer + the dossier & coding lists), else keep the codebase fixture
-     so no tab is ever empty. Never fabricates. */
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ data?: MarketAccessRecord[] }>('/api/market-access', { data: [] }).then((res) => {
-      if (cancelled) return;
-      const rec = res.data?.data?.[0];
-      if (
-        !res.sample &&
-        rec &&
-        Array.isArray(rec.coverage) && rec.coverage.length > 0 &&
-        rec.coverage[0]?.region && rec.coverage[0]?.payer &&
-        Array.isArray(rec.dossier) &&
-        Array.isArray(rec.coding)
-      ) {
-        setCoverage(rec.coverage);
-        setDossier(rec.dossier);
-        setCoding(rec.coding);
-        setSample(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  /* Fixture-free (real-data standard): the surface reads the org's REAL payer/HTA
+     position store (market_access_positions, written via POST /api/market-access).
+     Real rows, an honest empty, or an honest error — never a fixture. `rows` is a
+     fresh [] while loading/on error, so the derivations below are null-safe. */
+  const live = useLiveRows<PayerPosition>('/api/market-access');
+  const positions = live.rows;
 
-  const covered = coverage.filter((c) => c.status === 'covered').length;
+  const covered = positions.filter((p) => p.status === 'covered').length;
+  const inReview = positions.filter((p) => p.status === 'review').length;
+  const programs = new Set(positions.map((p) => p.program)).size;
+  /* KPIs are derived from the real rows only — shown as '--' until they load. */
+  const kv = (n: number) => (live.loading || live.error ? '--' : String(n));
   const kpis = [
-    { v: String(coverage.length), l: 'Markets / payers' },
-    { v: String(covered), l: 'Covered', tone: 'ok' },
-    { v: String(coverage.filter((c) => c.status === 'review').length), l: 'In HTA review', tone: 'warn' },
-    { v: '1', l: 'Value dossier' },
+    { v: kv(positions.length), l: 'Markets / payers' },
+    { v: kv(covered), l: 'Covered', tone: 'ok' },
+    { v: kv(inReview), l: 'In HTA review', tone: 'warn' },
+    { v: kv(programs), l: 'Programs' },
   ];
   const tabs: [string, string][] = [
     ['coverage', 'Coverage status'],
@@ -137,11 +73,15 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
     ['strategy', 'Access strategy'],
   ];
 
+  /* Code-centric view of the same real rows: the billing codes in play across
+     the org's payer positions (a projection, not a second store). */
+  const coded = positions.filter((p) => p.code);
+
   return (
     <div className="reg ma">
       <div className="reg-head">
         <div>
-          <div className="reg-kicker">Platform · commercial <SampleTag sample={sample} /></div>
+          <div className="reg-kicker">Platform · commercial</div>
           <h1 className="reg-title">Market access &amp; reimbursement</h1>
           <p className="reg-sub">
             Payer coverage, value dossiers and coding strategy -- the bridge from
@@ -184,48 +124,71 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
 
       {tab === 'coverage' && (
         <div className="reg-panel">
-          <table className="reg-tbl">
-            <thead>
-              <tr>
-                <th>Market / payer</th>
-                <th>Basis</th>
-                <th>Code</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {coverage.map((c, i) => (
-                <tr key={i}>
-                  <td>
-                    <div className="reg-mk">{c.region}</div>
-                    <div className="reg-sub2">
-                      {c.payer} · {c.note}
-                    </div>
-                  </td>
-                  <td>{c.basis}</td>
-                  <td className="mono">{c.code}</td>
-                  <td>
-                    <span className={'reg-pill ' + maPill(c.status)}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="reg-row-act">
-                    <button
-                      className="reg-ask"
-                      onClick={() =>
-                        ask(
-                          `What evidence does ${c.payer} require for CGM coverage?`,
-                        )
-                      }
-                    >
-                      {I.sparkles} Evidence
-                    </button>
-                  </td>
+          {/* Four-state body: loading -> error -> empty -> real */}
+          {live.loading ? (
+            <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
+          ) : live.error ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load payer positions"
+              hint="The market-access store didn't respond. These are your organization's payer/HTA positions — sign in and retry, or check the service is reachable."
+            />
+          ) : live.empty ? (
+            <EmptyState
+              icon={I.globe}
+              title="No payer positions tracked yet"
+              hint={
+                <>
+                  Track your first market × payer position to see coverage status,
+                  HTA reviews and the codes in play. Positions are written via{' '}
+                  <span className="mono">POST /api/market-access</span> — or ask
+                  AnA to plan the access sequence and log them with you.
+                </>
+              }
+            />
+          ) : (
+            <table className="reg-tbl">
+              <thead>
+                <tr>
+                  <th>Market / payer</th>
+                  <th>Basis</th>
+                  <th>Code</th>
+                  <th>Status</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {positions.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <div className="reg-mk">{c.market}</div>
+                      <div className="reg-sub2">{posSub(c)}</div>
+                    </td>
+                    <td>{c.mechanism ?? '--'}</td>
+                    <td className="mono">{c.code ?? '--'}</td>
+                    <td>
+                      <span className={'reg-pill ' + maPill(c.status)}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="reg-row-act">
+                      <button
+                        className="reg-ask"
+                        onClick={() =>
+                          ask(
+                            `What evidence does ${c.payer} require for ${c.program} coverage?`,
+                          )
+                        }
+                      >
+                        {I.sparkles} Evidence
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
@@ -233,8 +196,8 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
         <div className="reg-panel">
           <div className="ma-dossier-h">
             <div>
-              <b>Global value dossier · BX-204</b>
-              <span className="reg-sub2"> AMCP format · payer-ready</span>
+              <b>Global value dossier</b>
+              <span className="reg-sub2"> AMCP dossier format</span>
             </div>
             <button
               className="reg-ask"
@@ -247,77 +210,78 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
               {I.sparkles} Draft section
             </button>
           </div>
-          {dossier.map((s, i) => (
-            <div
-              key={i}
-              className="ma-doc-row"
-              data-blocker={s.blocker || undefined}
-            >
-              <span className="ma-doc-n">{s.n}</span>
-              <div className="ma-doc-b">
-                <div className="ma-doc-l">
-                  {s.label}
-                  {s.blocker && (
-                    <span className="ma-blk">
-                      {I.alertTriangle} gates submission
-                    </span>
-                  )}
-                </div>
-                <div className="ma-doc-track">
-                  <span style={{ width: s.pct + '%' }} />
-                </div>
-              </div>
-              <span className="reg-sub2">{s.owner}</span>
-              <span className={'reg-pill ' + maPill(s.st)}>{s.st}</span>
-            </div>
-          ))}
+          {/* Honest empty: the market-access store holds payer/HTA positions;
+              section-level dossier tracking has no real store yet, and a
+              fabricated section list must never stand in for one. */}
+          <EmptyState
+            icon={I.fileText}
+            title="No value-dossier sections tracked yet"
+            hint="Section-level dossier tracking isn't stored in the market-access position store. Ask AnA to draft a dossier section, or plan the access strategy from your tracked payer positions."
+          />
         </div>
       )}
 
       {tab === 'coding' && (
         <div className="reg-panel">
-          <table className="reg-tbl">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Description</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {coding.map((c, i) => (
-                <tr key={i}>
-                  <td className="mono reg-mk">{c.code}</td>
-                  <td>
-                    {c.desc}
-                    <div className="reg-sub2">{c.note}</div>
-                  </td>
-                  <td>{c.kind}</td>
-                  <td>
-                    <span className={'reg-pill ' + maPill(c.status)}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="reg-row-act">
-                    {c.status === 'pursue' && (
+          {live.loading ? (
+            <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
+          ) : live.error ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load the coding view"
+              hint="The market-access store didn't respond, so the codes in play across your payer positions can't be shown. Sign in and retry, or check the service is reachable."
+            />
+          ) : coded.length === 0 ? (
+            <EmptyState
+              icon={I.creditCard}
+              title="No billing codes on file"
+              hint="None of your tracked payer positions carries a billing code yet. Add the code when you track a position and the coding view builds itself from the same store."
+            />
+          ) : (
+            <table className="reg-tbl">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Position</th>
+                  <th>Basis</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {coded.map((c) => (
+                  <tr key={c.id}>
+                    <td className="mono reg-mk">{c.code}</td>
+                    <td>
+                      {c.market}
+                      <div className="reg-sub2">
+                        {c.payer} · {c.program}
+                      </div>
+                    </td>
+                    <td>{c.mechanism ?? '--'}</td>
+                    <td>
+                      <span className={'reg-pill ' + maPill(c.status)}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="reg-row-act">
                       <button
                         className="reg-ask"
                         onClick={() =>
                           ask(
-                            `Draft a Category III / PLA code application for ${c.desc}`,
+                            `What documentation does ${c.payer} require to bill ${c.code}?`,
                           )
                         }
                       >
-                        {I.sparkles} Application
+                        {I.sparkles} Billing
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
