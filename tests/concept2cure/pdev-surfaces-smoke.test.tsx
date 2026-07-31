@@ -20,7 +20,7 @@ import { render, cleanup } from '@testing-library/react';
 import * as React from 'react';
 
 import { PdevApp } from '../../client/src/concept2cure/pdev/App';
-import { PdevConfirmDialog } from '../../client/src/concept2cure/pdev/components/ConfirmDialog';
+import { GovernedConfirmDialog } from '../../client/src/concept2cure/_shared/components/GovernedConfirmDialog';
 import { PdevRail } from '../../client/src/concept2cure/pdev/shell/Rail';
 import { PdevTopBar } from '../../client/src/concept2cure/pdev/shell/TopBar';
 import { PdevAnaDock } from '../../client/src/concept2cure/pdev/shell/AnaDock';
@@ -105,9 +105,9 @@ describe('PDEV Phase 7 surface smoke tests', () => {
     assertNoReactErrors();
   });
 
-  it('PdevConfirmDialog renders open state', () => {
+  it('GovernedConfirmDialog (PDEV governed-action modal) renders open state', () => {
     render(
-      <PdevConfirmDialog
+      <GovernedConfirmDialog
         open={true}
         action="Change activity state"
         target="cmc.formulation_development · drafting → in_review"
@@ -121,9 +121,9 @@ describe('PDEV Phase 7 surface smoke tests', () => {
     assertNoReactErrors();
   });
 
-  it('PdevConfirmDialog renders nothing when closed', () => {
+  it('GovernedConfirmDialog renders nothing when closed', () => {
     const { container } = render(
-      <PdevConfirmDialog
+      <GovernedConfirmDialog
         open={false}
         action="—"
         target="—"
@@ -131,7 +131,9 @@ describe('PDEV Phase 7 surface smoke tests', () => {
         onConfirm={() => {}}
       />,
     );
-    expect(container.querySelector('.pdev-confirm-backdrop')).toBeNull();
+    // The modal returns null when closed — no backdrop in the DOM.
+    expect(container.querySelector('.c2c-confirm-backdrop')).toBeNull();
+    expect(container.firstChild).toBeNull();
     assertNoReactErrors();
   });
 
