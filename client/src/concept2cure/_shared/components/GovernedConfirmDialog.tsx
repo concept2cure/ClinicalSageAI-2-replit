@@ -1,18 +1,17 @@
 /**
  * <GovernedConfirmDialog> — the canonical shared reason-for-change modal.
  *
- * Promoted from `client/src/concept2cure/pdev/components/ConfirmDialog.tsx`
- * (kit-local twin still in place; see NAMING below) per the audit's
- * high-value item #11 ("every governed mutation should use it; today most
- * kits reinvent modals"). The shared version is icon- and CSS-class-agnostic
- * (inline SVG + inline styles fed by canonical tokens) so it can drop into
- * any kit without dragging pdev icons or pdev-scoped stylesheets along.
+ * Promoted from the retired pdev-local twin per the audit's high-value
+ * item #11 ("every governed mutation should use it; today most kits
+ * reinvent modals"). Icon- and CSS-class-agnostic (inline SVG + inline
+ * styles fed by canonical tokens) so it drops into any kit without
+ * dragging kit-scoped stylesheets along. All five PDEV governed-action
+ * call sites now import from here; the pdev-local ConfirmDialog.tsx has
+ * been deleted.
  *
- * NAMING. The pdev-local twin still owns the basename `ConfirmDialog.tsx` (and
- * the exported name `PdevConfirmDialog`). This file uses `GovernedConfirmDialog`
- * so basename-collision guards in the repo-health scan stay clean until the
- * pdev callers migrate over and the twin can be deleted. New consumers should
- * import from here.
+ * NAMING. Called `GovernedConfirmDialog` (not `ConfirmDialog`) so basename-
+ * collision guards in the repo-health scan stay clean without needing a
+ * baseline ratchet.
  *
  * WHEN TO USE THIS. Any client-side gate that captures a "reason for change"
  * before a governed mutation runs — state transitions, evidence attach/detach,

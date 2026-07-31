@@ -4,7 +4,7 @@
  * Left pane: context + target document + optional user prompt + evidence
  * sources. Right pane: streaming preview with quality grade + citation
  * count + model attribution. Filing the draft promotes the activity to
- * `ai_draft_generated` via <PdevConfirmDialog>.
+ * `ai_draft_generated` via <GovernedConfirmDialog>.
  *
  * Port basis: design-system/ui_kits/pdev/AiDraft.jsx.
  */

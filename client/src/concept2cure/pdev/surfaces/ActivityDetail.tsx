@@ -5,7 +5,7 @@
  * State, Documents tabs read from the workstream payload (registry +
  * per-program state); Evidence/Workflow/Provenance/Audit tabs fetch
  * from their dedicated endpoints. Every mutation routes through
- * <PdevConfirmDialog>.
+ * <GovernedConfirmDialog>.
  *
  * Port basis: design-system/ui_kits/pdev/ActivityDetail.jsx.
  */
@@ -31,9 +31,9 @@ import {
   usePdevWorkflowKickoff,
 } from '../hooks/usePdevData';
 import {
-  PdevConfirmDialog,
+  GovernedConfirmDialog,
   type ConfirmConfig,
-} from '../components/ConfirmDialog';
+} from '../../_shared/components/GovernedConfirmDialog';
 
 type TabId = 'state' | 'documents' | 'evidence' | 'workflow' | 'provenance' | 'audit';
 
@@ -577,7 +577,7 @@ export function PdevActivityDetail({
       </aside>
 
       {pending && (
-        <PdevConfirmDialog
+        <GovernedConfirmDialog
           open={true}
           {...pending.config}
           onCancel={() => {

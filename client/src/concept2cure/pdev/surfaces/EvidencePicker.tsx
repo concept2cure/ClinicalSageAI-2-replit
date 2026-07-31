@@ -2,7 +2,7 @@
  * PDEV Evidence picker — attach an evidence object to an activity.
  *
  * Search + select an evidence object, pick the link type + strength,
- * write a rationale, then route through <PdevConfirmDialog> to attach.
+ * write a rationale, then route through <GovernedConfirmDialog> to attach.
  *
  * Port basis: design-system/ui_kits/pdev/Evidence.jsx.
  *
@@ -25,9 +25,9 @@ import type {
 } from '../data/types';
 import { usePdevEvidenceAttach } from '../hooks/usePdevData';
 import {
-  PdevConfirmDialog,
+  GovernedConfirmDialog,
   type ConfirmConfig,
-} from '../components/ConfirmDialog';
+} from '../../_shared/components/GovernedConfirmDialog';
 
 interface EvidenceObjectRow {
   id: string;
@@ -275,7 +275,7 @@ export function PdevEvidencePicker({
       </aside>
 
       {pending && (
-        <PdevConfirmDialog
+        <GovernedConfirmDialog
           open={true}
           {...pending}
           onCancel={() => {
