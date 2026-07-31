@@ -128,9 +128,9 @@ export function applyLifecycleDelta(
       // filePath doubles as the xlink:href; for a delete it points at the prior
       // file (same as modified-file). No new bytes ship.
       filePath: leaf.modifiedFile ?? leaf.fileName,
-      // No new bytes ship on a delete, so a checksum is definitionally
-      // absent. The record's checksum field is `string` (required) — coerce
-      // an absent md5 to '' rather than smuggling `undefined` through.
+      // EctdLeaf.md5 is optional; a backbone-only delete ships no bytes, so an
+      // empty checksum is correct here — matching regional-packager.ts's
+      // `leaf.md5 ?? ''` idiom for the same field.
       checksum: leaf.md5 ?? '',
       operation: 'delete',
       modifiedFile: leaf.modifiedFile,

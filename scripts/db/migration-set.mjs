@@ -515,6 +515,21 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260520_growth_mindset_extensions.sql',
   'db/migrations/20260621_weekly_usage_limits.sql',
 
+  // ── C-40: reconcile databases that ALREADY have the broken shape ─────────
+  // MUST precede the two corrected migrations below. C-36 and C-38 express their
+  // fixes as CREATE TABLE IF NOT EXISTS — right for a database that lacks the
+  // table, and a NO-OP for one that has it in the uuid shape. At least one real
+  // database is in exactly that state: reports/phase0/db_inventory.txt lists
+  // ai_provider_audit_log, lumen_knowledge_graph_edges and lumen_atom_versions.
+  // Without this step both fixes would ship and change nothing there — the same
+  // "merged, green, never applied" failure, one level deeper.
+  //
+  // It drops such a table ONLY when it is empty (the next migrations recreate it
+  // canonically); a populated one is left untouched with a loud WARNING, because
+  // discarding audit attribution to satisfy a type change is not a decision a
+  // deploy script may make (21 CFR Part 11 §11.10(e)).
+  'db/migrations/20260801_atom_identity_existing_db_reconciliation.sql',
+
   // ── C-36: enhanced cortex, unblocked by fixing the identity conflict ─────
   // Six tables behind five live services (knowledgeGraphService, atomVersion-
   // Service, atomQualityService, conflictDetectionService, enhancedEmbedding-
@@ -533,13 +548,69 @@ export const C2C_MIGRATION_FILES = [
   //
   // Five remain unwired, each for a named reason rather than an unexamined
   // "probably fine" (they stay in the ci:migration-reachability baseline):
-  //   • 20260207_phase6_6a_fda_clearance_universe, 20260306_precedent_engine —
-  //     require the `vector` extension, which PGlite cannot load, so they CANNOT
-  //     be verified by this harness at all. They may well be correct on a real
-  //     cluster; wiring an unverifiable file into the deploy path is the exact
-  //     habit this ledger exists to break.
-  //   • 20260208_phase6_6a_risk_rollups — needs predicate.fda_510k_clearances
-  //     from the first of those two; blocked behind it.
+  // ── C-37: the pgvector trio, verified on a REAL Postgres ─────────────────
+  // C-33/C-34 left these baselined as "unverifiable" because the PGlite harness
+  // cannot load the `vector` extension. That was a limitation of the harness, not
+  // a property of the files — so C-37 replaced the harness rather than accepting
+  // the gap: a real PostgreSQL 16 + pgvector 0.6.0 instance, seeded with the
+  // drizzle journal base schema and the whole C2C set, then each file applied
+  // TWICE. All three come up clean and idempotent.
+  //
+  // Wiring them is consistent with what the deploy path ALREADY assumes: two
+  // files needing `vector` (20260730_fix_atom_embedding_dimension and
+  // 20260730_graphrag_knowledge_tables) are long-standing members of this list,
+  // and 001_gcc_core.sql creates the extension. Each file below also issues its
+  // own CREATE EXTENSION IF NOT EXISTS vector.
+  //
+  // Order is a real dependency: risk_rollups reads predicate.fda_510k_clearances,
+  // which the clearance-universe file creates — which is exactly why it failed
+  // the earlier screen in isolation.
+  //
+  // These tables carry NO tenant column, verified against the live instance: the
+  // FDA 510(k) clearance universe and regulatory precedents are public reference
+  // data every tenant reads, so the isolation sweep correctly leaves them alone.
+  'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
+  'db/migrations/20260306_precedent_engine.sql',
+  'db/migrations/20260208_phase6_6a_risk_rollups.sql',
+
+  // ── C-38: the three identity collisions, reconciled to canonical ─────────
+  // C-33 excluded these because their tenant keys were uuid/text, which the
+  // integer-keyed RLS sweep cannot police — wiring them would have provisioned
+  // tenant tables with no isolation. The right resolution was never "leave them
+  // dead"; it was to reconcile them to the canonical identity, which the code
+  // ALREADY uses:
+  //   • ai_provider_audit_log.organization_id was UUID — canonical organizations.id
+  //     is `serial`. user_id/project_id were UUID too, and canonical users.id /
+  //     projects.id are also `serial`, so a real id would have been REJECTED by
+  //     those columns. All three are now INTEGER.
+  //   • ana_kernel_decision_log.tenant_id was TEXT. Nothing writes the table and
+  //     no query filters on tenant_id (server/src/control-plane/persistent-
+  //     queries.ts issues three aggregate reads), so the conversion is safe and
+  //     is what lets the sweep isolate it.
+  //   • conversation_os_accepted_artifact_versions.organization_id was TEXT, while
+  //     server/routes/conversation-os.ts does `String(authUser.organizationId)` on
+  //     the way in and `Number(ctx.organizationId)` on the way out — the identity
+  //     was always an integer org id; only the column disagreed.
+  // Each verified on a real PostgreSQL 16: applies twice, clean.
+  'db/migrations/20260125_ai_provider_audit_log.sql',
+  'db/migrations/20260324_ana_kernel_decision_log.sql',
+  'db/migrations/20260326_conversation_os_durability_phase2.sql',
+
+  // ── C-39: the _consolidated tree's live tables, extracted ────────────────
+  // C-29 Class 3 quarantined db/migrations/_consolidated wholesale. Auditing it
+  // file by file showed the blanket was too wide (only 001_create_core_tables
+  // redefines users/organizations) but that wiring the rest was still wrong:
+  // 012_document_authoring_schema creates a rival `doc_revisions` against the
+  // canonical authoring subsystem, and programs/literature_entries/maud_* all
+  // carry uuid/text tenant keys the integer RLS sweep cannot police.
+  //
+  // So the ten live tables are EXTRACTED into one canonical migration and the
+  // tree stays quarantined. The extraction also fixes two definition-vs-consumer
+  // mismatches that provisioning alone would not have: `templates` had no
+  // `sections` column though cerGenerator selects it, and `doc_sections` keyed on
+  // `section_id` though command-executor selects `id`. Verified on a real
+  // PostgreSQL 16: applies twice, and every consumer's actual query executes.
+  'db/migrations/20260801_consolidated_tree_reconciliation.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing
