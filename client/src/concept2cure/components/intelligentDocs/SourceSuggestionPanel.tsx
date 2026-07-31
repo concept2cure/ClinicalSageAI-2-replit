@@ -8,6 +8,18 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import {
+  AlertTriangle,
+  Beaker,
+  BookOpen,
+  ClipboardList,
+  FileSearch,
+  FileText,
+  FlaskConical,
+  Folder,
+  Pill,
+  Search,
+} from 'lucide-react';
 import type { SmartClaim, SourceSuggestion, DataBridgeConnection } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,26 +45,33 @@ interface SourceCardProps {
 // Helper Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
-// microcopy-allow: pre-existing Phase 5 intelligent-docs source-type
-// glyphs. This helper is used by the SourceCard header dot only; the
-// component itself is a Phase 5 fixture-driven prototype not yet ported
-// to the shared I icon set. Cleared for a follow-up refactor that swaps
-// this helper's return type from string to React.ReactNode and passes
-// real icons — same shape as the PharmaIntel accordion port in this PR.
-const getSourceIcon = (type: string): string => {
-  // microcopy-allow: see helper header above.
-  const icons: Record<string, string> = {
-    literature: '📚', // microcopy-allow: Phase 5 fixture glyph
-    predicate: '🔍', // microcopy-allow: Phase 5 fixture glyph
-    clinical_data: '🧪', // microcopy-allow: Phase 5 fixture glyph
-    cmc_data: '⚗️',
-    vault: '📁', // microcopy-allow: Phase 5 fixture glyph
-    maude: '⚠️',
-    faers: '💊', // microcopy-allow: Phase 5 fixture glyph
-    regulatory: '📋', // microcopy-allow: Phase 5 fixture glyph
-  };
-  // microcopy-allow: Phase 5 fixture glyph fallback
-  return icons[type] || '📄';
+// Source-type glyphs use lucide-react — the repo's single sanctioned
+// icon library (design-system CI gate). Was a Phase 5 emoji map; ported
+// alongside the shared microcopy gate (PR #1263 + follow-up) to close
+// the design-system "no pictograph emoji" non-negotiable at the leaf.
+// Rendered inline at 16px stroke 1.75 to match the sibling I set.
+const getSourceIcon = (type: string): React.ReactNode => {
+  const cls = 'w-4 h-4';
+  switch (type) {
+    case 'literature':
+      return <BookOpen className={cls} aria-hidden />;
+    case 'predicate':
+      return <Search className={cls} aria-hidden />;
+    case 'clinical_data':
+      return <FlaskConical className={cls} aria-hidden />;
+    case 'cmc_data':
+      return <Beaker className={cls} aria-hidden />;
+    case 'vault':
+      return <Folder className={cls} aria-hidden />;
+    case 'maude':
+      return <AlertTriangle className={cls} aria-hidden />;
+    case 'faers':
+      return <Pill className={cls} aria-hidden />;
+    case 'regulatory':
+      return <ClipboardList className={cls} aria-hidden />;
+    default:
+      return <FileText className={cls} aria-hidden />;
+  }
 };
 
 const getConfidenceColor = (confidence: number): string => {
@@ -74,7 +93,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-lg">{getSourceIcon(suggestion.sourceType)}</span>
+            <span className="text-stone-600 flex-shrink-0">{getSourceIcon(suggestion.sourceType)}</span>
             <span className="text-sm font-medium text-stone-900 line-clamp-1">
               {suggestion.title}
             </span>
@@ -147,8 +166,7 @@ const EmptyState: React.FC<{
 }> = ({ message, suggestion, onAction, actionLabel }) => (
   <div className="text-center py-8">
     <div className="w-12 h-12 mx-auto mb-4 bg-stone-100 rounded-full flex items-center justify-center">
-      {/* microcopy-allow: Phase 5 empty-state glyph; ports with helper above */}
-      <span className="text-base font-medium">🔎</span>
+      <FileSearch className="w-5 h-5 text-stone-500" aria-hidden />
     </div>
     <p className="text-stone-600 mb-2">{message}</p>
     {suggestion && (
