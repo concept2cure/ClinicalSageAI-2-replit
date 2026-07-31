@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-31T04:37:05.134Z",
+  "generatedAt": "2026-07-31T05:32:23.553Z",
   "git": {
-    "sha": "c74b0c80a79dabbde794dd128785aba9600bd652",
+    "sha": "8d2ecbbc9c1dd6dcbb0eb0078da11350c541c359",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,7 +10,7 @@
   },
   "summary": {
     "duplicateBasenames": 251,
-    "largeFilesByBytes": 32,
+    "largeFilesByBytes": 33,
     "largeFilesByLines": 85
   },
   "findings": {
@@ -2554,12 +2554,12 @@
         "bytes": 132966
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 127662
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 131337
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 122626
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 127662
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2612,6 +2612,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
         "bytes": 104369
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 101181
       }
     ],
     "largeFilesByLines": [
@@ -2677,7 +2681,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 2796
+        "lines": 2985
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2704,12 +2708,12 @@
         "lines": 2557
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "lines": 2504
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 2526
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2488
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "lines": 2504
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2974,7 +2978,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 166,
-      "largeByBytes": 0,
+      "largeByBytes": 1,
       "largeByLines": 1
     },
     {

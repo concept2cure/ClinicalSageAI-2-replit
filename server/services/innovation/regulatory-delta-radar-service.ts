@@ -1132,15 +1132,17 @@ export class RegulatoryDeltaRadarService {
 
   private async resolveProgramId(orgId?: string): Promise<string | undefined> {
     if (!orgId) {
-      const fallback = await this.pool.query(
-        'SELECT id FROM programs ORDER BY created_at DESC LIMIT 1'
-      );
-      if (fallback.rows.length > 0) return fallback.rows[0].id;
+      // Multi-tenant safety (ledger C-47): with no org context, only auto-resolve
+      // when exactly one program exists. "ORDER BY created_at DESC LIMIT 1"
+      // returned an arbitrary tenant's program (cross-tenant leak). Ambiguous
+      // (>1) → undefined.
+      const fallback = await this.pool.query('SELECT id FROM programs LIMIT 2');
+      if (fallback.rows.length === 1) return fallback.rows[0].id;
+      if (fallback.rows.length > 1) return undefined;
       try {
-        const coreFallback = await this.pool.query(
-          'SELECT id FROM core.programs ORDER BY created_at DESC LIMIT 1'
-        );
-        return coreFallback.rows[0]?.id;
+        const coreFallback = await this.pool.query('SELECT id FROM core.programs LIMIT 2');
+        if (coreFallback.rows.length === 1) return coreFallback.rows[0].id;
+        return undefined;
       } catch {
         return undefined;
       }

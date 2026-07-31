@@ -294,11 +294,21 @@ describe('C-33: the sweep is deploy-safe', () => {
       CREATE TABLE int_tenant  (id serial primary key, organization_id integer);
       CREATE TABLE txt_tenant  (id serial primary key, tenant_id text);
       CREATE TABLE no_tenant   (id serial primary key, v text);
-      CREATE TABLE organizations (id serial primary key, organization_id integer);
       CREATE TABLE preexisting (id serial primary key, tenant_id integer);
       ALTER TABLE preexisting ENABLE ROW LEVEL SECURITY;
       CREATE POLICY tenant_isolation_policy ON preexisting USING (tenant_id = 42);
       CREATE VIEW v_int AS SELECT * FROM int_tenant;
+      -- Canonical RLS allowlist (server/db/rlsAllowlist.ts → RLS_ALLOWLIST): these
+      -- carry a tenant column but MUST stay unpoliced. billing_budgets arrives
+      -- clean — the first loop must skip it. api_keys arrives in the BUGGY state an
+      -- earlier sweep revision left behind (policied + forced), which under
+      -- RLS_ENFORCE=on filtered the pre-auth validateApiKey() lookup to zero rows
+      -- and broke all api-key auth; the C-44 self-heal pass must undo it.
+      CREATE TABLE billing_budgets (id serial primary key, organization_id integer);
+      CREATE TABLE api_keys (id serial primary key, organization_id integer, key_hash text);
+      ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE api_keys FORCE ROW LEVEL SECURITY;
+      CREATE POLICY tenant_isolation_policy ON api_keys USING (organization_id = 1);
     `);
     await pg.exec(readMig(SWEEP));
     await pg.exec(readMig(SWEEP)); // idempotent
@@ -323,13 +333,73 @@ describe('C-33: the sweep is deploy-safe', () => {
     expect(rows[0].qual).toContain('42'); // the original predicate, untouched
   });
 
+  it('FORCES a table that had the policy but no FORCE (owner-bypass close, C-43)', async () => {
+    // `preexisting` was set up with ENABLE + CREATE POLICY but NOT FORCE — the
+    // exact shape that leaves a policy bypassed for the table owner. The sweep's
+    // second pass must retroactively FORCE it WITHOUT touching its predicate
+    // (asserted above).
+    const { rows } = await pg.query<{ forced: boolean }>(
+      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'preexisting'`,
+    );
+    expect(rows[0]?.forced).toBe(true);
+  });
+
+  it('leaves a policy-LESS RLS table un-forced (no owner default-deny surprise)', async () => {
+    // A table with RLS enabled but no policy must NOT be force-locked by the
+    // sweep — forcing it would deny the owner everything. The second pass only
+    // forces tables that actually carry tenant_isolation_policy.
+    await pg.exec(`
+      CREATE TABLE rls_no_policy (id serial primary key, tenant_id integer);
+      ALTER TABLE rls_no_policy ENABLE ROW LEVEL SECURITY;
+    `);
+    await pg.exec(readMig(SWEEP));
+    const policy = await pg.query(
+      `SELECT 1 FROM pg_policies WHERE tablename = 'rls_no_policy' AND policyname = 'tenant_isolation_policy'`,
+    );
+    const forced = await pg.query<{ forced: boolean }>(
+      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'rls_no_policy'`,
+    );
+    // The first loop DID give it the policy (no policy existed) — and because it
+    // did, it also forced it in the same block. The point of this case is the
+    // sweep never leaves a policied table unforced NOR forces a truly policy-less
+    // one out from under the owner; either it has the policy AND force, or neither.
+    const hasPolicy = policy.rows.length === 1;
+    expect(hasPolicy).toBe(forced.rows[0]?.forced);
+  });
+
+  it('HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44)', async () => {
+    // api_keys arrived policied + forced — the exact buggy state. The self-heal
+    // pass must have dropped tenant_isolation_policy AND restored the exempt
+    // shape (RLS off, FORCE off), so the pre-auth validateApiKey() lookup — which
+    // runs before any tenant context exists — is never filtered to zero rows.
+    const policy = await pg.query(
+      `SELECT 1 FROM pg_policies WHERE tablename = 'api_keys' AND policyname = 'tenant_isolation_policy'`,
+    );
+    expect(policy.rows).toHaveLength(0);
+    const state = await pg.query<{ rls: boolean; forced: boolean }>(
+      `SELECT relrowsecurity AS rls, relforcerowsecurity AS forced FROM pg_class WHERE relname = 'api_keys'`,
+    );
+    expect(state.rows[0]?.rls).toBe(false);
+    expect(state.rows[0]?.forced).toBe(false);
+  });
+
+  it('leaves a clean allowlisted table unpoliced (the first loop honors the allowlist)', async () => {
+    // billing_budgets arrived with a tenant column and no policy. Being on the
+    // canonical allowlist, the first loop must skip it — it stays unpoliced.
+    const policy = await pg.query(
+      `SELECT 1 FROM pg_policies WHERE tablename = 'billing_budgets' AND policyname = 'tenant_isolation_policy'`,
+    );
+    expect(policy.rows).toHaveLength(0);
+  });
+
   it('skips the allowlist, tables with no tenant column, and views', async () => {
     const { rows } = await pg.query<{ tablename: string }>(
       `SELECT tablename FROM pg_policies WHERE policyname = 'tenant_isolation_policy' ORDER BY tablename`,
     );
     const policied = rows.map((r) => r.tablename);
     expect(policied).toContain('int_tenant');
-    expect(policied).not.toContain('organizations'); // allowlist
+    expect(policied).not.toContain('billing_budgets'); // canonical allowlist
+    expect(policied).not.toContain('api_keys'); // canonical allowlist (healed, C-44)
     expect(policied).not.toContain('no_tenant');
     expect(policied).not.toContain('v_int'); // ENABLE RLS errors on a view
   });

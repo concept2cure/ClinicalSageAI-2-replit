@@ -17,7 +17,7 @@
  *
  * Each divergence is a deep-linked bullet showing the two conflicting values
  * and a pointer to the source artifact (title + CTD section). Microcopy is
- * factual (no "Looks good!", no emoji). The strip is a live region so assistive
+ * factual — calm, no cheerleading, no emoji. The strip is a live region so assistive
  * tech announces the verdict.
  *
  * 21 CFR Part 11 honesty contract: a verdict computed over `isSample` /

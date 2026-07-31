@@ -2483,6 +2483,320 @@ day that writer lands.
 
 ---
 
+## C-43 — a `tenant_isolation_policy` without `FORCE` is bypassed for the table owner *(medium — FIXED 2026-07-31)*
+
+Isolation was being certified by "does the table carry `tenant_isolation_policy`?"
+— the invariant the whole C-31→C-40 program, the sweep, `deploy-smoke-assert`, and
+the readiness gate all check. But a row-level-security policy is **silently
+bypassed for the table owner** unless the table is also `FORCE`d. Postgres applies
+RLS to everyone *except* the owner by default; `FORCE ROW LEVEL SECURITY` removes
+that exemption.
+
+The boot guard (`server/db/rlsEnforcement.ts`) refuses to boot production unless
+the runtime role is non-superuser and does not hold `BYPASSRLS` — but it does
+**not** verify the role is a non-owner. "The app never connects as the table
+owner" was therefore an unproven assumption standing between a policied table and
+a cross-tenant read. Every table `0021` and the sweep create is already `FORCE`d,
+so the exposure was latent, not live — but "policied" was being treated as
+"isolated" when the two are not the same, and nothing proved the gap shut.
+
+A near-miss surfaced the schema-conflation trap while I was auditing this: an
+initial "9 policied-but-unforced tables" reading was a **false alarm** from a
+`pg_policies.tablename`-only match (schema-blind) conflating `public.programs`
+(forced) with `core.programs` (no policy) — the exact C-35 bug, in my own
+analysis. Schema-qualified, the real count of policied-but-unforced tables was
+**zero**: isolation was in fact sound. But it also meant `deploy-smoke-assert`
+carried the same schema-blind match, so its policy-presence check could
+false-pass too.
+
+### Fix — make FORCE a checked, self-healing invariant
+
+1. **`db/migrations/20260801_tenant_isolation_sweep.sql`** gains a **second pass**:
+   after the "policy where none exists" loop, it `FORCE`s every table that
+   *already* carries `tenant_isolation_policy` but was left un-`FORCE`d by whatever
+   source created it. Separate from the first loop by design — that loop skips
+   tables the policy already exists on (so it never clobbers a subsystem's own),
+   which is exactly the path that would let a policy-without-force slip through.
+   Only policied tables are forced, so a policy-less RLS table is never turned into
+   an owner default-deny surprise. Idempotent.
+2. **`scripts/db/deploy-smoke-assert.mjs`**: the policy-presence `NOT EXISTS` is now
+   **schema-qualified** (`p.schemaname = c.table_schema`) — closing the same C-35
+   conflation in the isolation assertion itself — and a new **check #1b** asserts
+   every table carrying `tenant_isolation_policy` has `relforcerowsecurity = true`,
+   across all schemas. A missing FORCE now fails the deploy-smoke CI job on a real
+   database.
+
+### Proof
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` gains two cases
+(PGlite, non-superuser role): a table created with `ENABLE` + `CREATE POLICY` but
+no `FORCE` is `relforcerowsecurity = true` after the sweep; a policy-**less** RLS
+table is left un-forced (`hasPolicy === forced`). 16/16 pass. On real
+PostgreSQL 16 + pgvector: a probe table built policied-but-unforced reads
+`forced = f`, the sweep's second pass logs `FORCED row-level security on
+public.force_probe`, and it reads `forced = t`; all 13 `deploy-smoke-assert`
+invariants — including the new #1b — pass against the fully-provisioned database,
+with the sweep reporting `0 forced retroactively` (everything already forced,
+confirming the pre-existing surface was sound and the guard is now the proof).
+
+---
+
+## C-44 — the deploy-time sweep's allowlist diverged from the source of truth and broke api-key auth *(HIGH — FIXED 2026-07-31)*
+
+The most consequential defect this program has surfaced, and it was **self-inflicted
+by C-33**. `server/db/rlsAllowlist.ts` → `RLS_ALLOWLIST` is the documented single
+source of truth for tables that carry a tenant column but must **not** be policied,
+and `scripts/ci/check-rls-allowlist-sync.mjs` keeps `0021` in lock-step with it. But
+the C-33 deploy-time sweep (`20260801_tenant_isolation_sweep.sql`) was written with a
+**hand-authored 4-entry allowlist** — `organizations, organization_users,
+stripe_events, ectd_agency_configs` — that no guard checked against the canonical
+six. It **dropped `api_keys`, `billing_budgets`, `billing_alerts`** (and added two
+tables that have no tenant column at all).
+
+`api_keys` is the load-bearing one. `validateApiKey()`
+(`server/services/api-key-service.ts`) authenticates a request by hashing the
+presented key and looking it up **`FROM api_keys WHERE key_hash = $1`** on the raw
+pool — **before any tenant context exists**, because the whole point of the lookup
+is to *discover* which `organization_id` the key belongs to. `0021` exempts
+`api_keys` for exactly this reason. The sweep, not knowing, applied
+`tenant_isolation_policy` (and `FORCE`) to it.
+
+`server/db/runtime.ts` constructs the shared pool with `options: '-c
+app.rls_enforce=on'` in production (via `buildRlsStartupOptions`), so **every**
+pooled connection — including the raw one that pre-auth lookup rides — runs with
+enforcement live. Under `RLS_ENFORCE=on` (which the boot guard makes mandatory in
+production) the policy's leading `rls_enforce <> 'on'` clause is false, no tenant is
+set, the role is not `app_super_admin` → the row is filtered → `rows.length === 0`
+→ **"API key not found" for every key. All api-key authentication breaks.**
+
+CI could not see it. `rls-coverage-check.sql` allowlists `api_keys` (so it does not
+care whether it is policied); `deploy-smoke-assert` saw it *was* policied and passed.
+Both gates green; the only symptom is a runtime auth outage that appears the moment
+`RLS_ENFORCE=on` — precisely the production configuration this whole program drives
+toward.
+
+### Proof it actually breaks
+
+On real PostgreSQL 16, as a **non-superuser, non-owner** role (the production role
+shape) with `app.rls_enforce=on` and no tenant set — the exact pre-auth condition:
+with the sweep's policy present the `key_hash` lookup returns **0 rows**; after
+dropping it (0021's exemption) the same lookup returns **1**. The auth break is not
+theoretical.
+
+### Fix — one allowlist, guarded across every consumer, and self-healing
+
+1. **The sweep and `deploy-smoke-assert.mjs` now carry the canonical six**
+   (`organization_users, __drizzle_migrations, stripe_events, billing_budgets,
+   billing_alerts, api_keys`), byte-for-byte with `RLS_ALLOWLIST`, `0021`, and
+   `rls-coverage-check.sql`.
+2. **`check-rls-allowlist-sync.mjs` was extended from 2 to 4 consumers** — it now
+   pins `RLS_ALLOWLIST` against `0021`, the deploy-time sweep, `rls-coverage-check.sql`,
+   AND `deploy-smoke-assert.mjs`, failing the build on any drift in any of them. An
+   allowlist that is authoritative for one copy and folklore for three others is not
+   a source of truth; now every copy is checked. (Verified: dropping `api_keys` from
+   any copy fails the guard with the offending file named.)
+3. **A self-heal pass** in the sweep (`C-44`) drops `tenant_isolation_policy` from
+   any allowlisted table that wrongly carries it and restores the exempt shape (RLS
+   off, FORCE off). The forward fix stops *new* databases from hitting the bug, but
+   the first loop only ever *adds* a policy — it cannot undo one an earlier revision
+   already created, so any environment that ran the buggy sweep would stay broken.
+   An allowlisted table means "must not be policied", so a `tenant_isolation_policy`
+   on one is unambiguously wrong and safe to drop; only our own policy name is
+   touched.
+
+### Proof it is fixed
+
+On a **from-scratch** `install-fresh → deploy-migrate → deploy-migrate` against real
+pgvector: `api_keys`, `billing_alerts`, `billing_budgets` end `rls=f, forced=f,
+policied=f`, `0 healed` (the corrected first loop never policies them), and all
+`deploy-smoke` invariants pass. Applied to a database left in the **buggy** state
+(all three policied+forced), the self-heal logs `HEALED public.api_keys …` for each,
+drops the policy count by exactly three, and a re-run heals zero (idempotent).
+`tenant-isolation-sweep.contract.test.ts` adds two PGlite cases — a policied+forced
+`api_keys` is healed to unpoliced/RLS-off, and a clean allowlisted table is left
+unpoliced by the first loop — 18/18 pass. The four-consumer sync guard passes.
+
+---
+
+## C-45 — wiring the deploy-dead files exposed integer-tenant tables the public-only sweep never covers *(medium — RESOLVED 2026-07-31)*
+
+Found while verifying C-44 on a from-scratch deploy: `rls-coverage-check.sql` — the
+CI gate that scans **every** schema — flagged six integer-keyed tenant tables with
+no `tenant_isolation_policy`: `intelligence.ana_interactions`,
+`intelligence.outcome_feature_vectors`, `intelligence.pattern_warnings`,
+`intelligence.risk_predictions`, `intelligence.template_validations`, and
+`precedent.quality_checkpoints`.
+
+This gap is **self-inflicted, from this very program**. C-33/C-34 wired the
+migrations that create these tables (`20260306_precedent_engine`,
+`20260322_quality_checkpoints`, `20260520_regulatory_intelligence_layer`,
+`20260520_ana_failure_learning`) onto the deploy-migrate path. Before that they were
+deploy-dead — the tables never reached a provisioned database, so no coverage gate
+ever saw them. Now they land on every deploy, but both `0021` and the
+`tenant_isolation_sweep` operate on the **`public` schema only**, so nothing
+policies a non-public tenant table. (The CI job that runs `rls-coverage-check` has
+been *skipped*, not passing — `blank-db-provisioning` `needs: lint`, and lint has
+been red on an unrelated base typecheck regression — so the gate had not yet
+actually fired. It would have, the moment lint went green.)
+
+### Why the answer is EXEMPT, not isolate
+
+The api_keys lesson (C-44), applied deliberately rather than by omission. All six
+are read **only** by background jobs (`pattern-maintenance`, `counterfactual-replay`,
+`risk-model`, `calibration`) that import the **raw pool** and never set a tenant
+context — and by **no** route/request path (verified: zero references under
+`server/routes/`). They are cross-tenant **by design**: the failure-pattern library
+and the risk models are maintained/trained across the entire dataset. Attaching
+`tenant_isolation_policy` would, under `RLS_ENFORCE=on`, filter those context-less
+reads to zero rows and silently break the intelligence subsystem — the identical
+mechanism that broke api-key auth — while preventing no leak, because nothing
+user-facing reads them. That is exactly the "cross-tenant by design (admin /
+analytics)" rationale under which `billing_*` and `api_keys` are already exempt.
+
+### Fix
+
+`scripts/db/rls-coverage-check.sql` gains a **schema-qualified** carve-out for the
+six, kept deliberately SEPARATE from the public `RLS_ALLOWLIST` so C-44's
+single-source-of-truth for public tables stays clean (and so the four-consumer sync
+guard keeps reading only the public bare-name array — verified: the guard still
+pins the public six and flags a break in them, untouched by the new array). The
+header documents that if any of these ever gains a request-path reader, the correct
+move is a super-admin-scoped background connection **then** a policy — not a wider
+carve-out. Verified on a from-scratch real-pgvector deploy: `rls-coverage-check`
+returns empty; every other invariant (deploy-smoke, the four-consumer sync guard)
+still holds.
+
+Flagged here, then run to ground in **C-46**: the **uuid**-keyed tenant tables in
+the non-public schemas. The initial read that "~80 remain unpoliced" turned out to
+be wrong — most non-public schemas already carry uuid-keyed RLS — but a real,
+smaller gap did exist and is closed in C-46.
+
+---
+
+## C-46 — the non-public uuid-keyed tenant tables that no subsystem policied *(medium — FIXED 2026-07-31)*
+
+The C-45 "left open" item, verified and closed. A read/verify triage of **every**
+unpoliced uuid-tenant BASE TABLE (not the assumed ~80 — the real count was **31**,
+because most non-public schemas *do* carry per-subsystem uuid RLS) found a genuine
+cross-tenant gap: 31 uuid-keyed tenant tables with no policy, several
+request-path-exposed. The tenant-identity split is real, but so was the hole.
+
+### The isolate-vs-exempt call, made per subsystem
+
+The public sweep could not touch these (integer-keyed, public-only), and a naïve
+uuid sweep would have repeated the C-44 mistake — several of these subsystems query
+on the **raw pool and never set a session context**, so a strict
+`col = current_setting('app.current_org_id')::uuid` policy would filter their reads
+to **zero** and break them. Each cluster was classified from its actual access
+pattern:
+
+- **POLICY (29)** — tenant-owned: `core.programs`/`program_ownerships`,
+  `manufacturing.*` (5), `regulatory_intel.*` (11, each org holds a *private copy*
+  of the pattern library), `regulatory_harmonization.*` (5, keyed on **`tenant_id`**
+  — `organization_id` there is secondary metadata), the three `cortex` gaps,
+  `compliance.data_residency`, `global_dossier.dossier_instances`, and
+  `federated_ml.safety_signals`.
+- **EXEMPT (2)** — cross-tenant by design, where a per-tenant policy breaks a real
+  reader: `federated_ml.federation_participants` (the FL coordinator aggregates
+  every org's participant per model) and `audit.event_log` (Part 11 immutable,
+  trigger-written with NULL-org system events, read only by cross-org compliance
+  views and a hash-integrity job — no per-tenant reader to isolate).
+
+### The policy shape — context-less-SAFE by design
+
+`db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql` applies the **COALESCE**
+form the platform's other non-public schemas (`cortex`, `innovation`) already use:
+
+```
+USING ( col = COALESCE(NULLIF(current_setting('app.current_org_id', TRUE),'')::uuid, col)
+        OR col IS NULL )
+```
+
+Two properties are load-bearing and were proven on real PostgreSQL as a
+**non-superuser** role: **(1)** a context-less read (the raw-pool services that set
+no GUC) sees **all** rows — the policy does not filter, so the subsystem is not
+broken; the app-level `WHERE col = $caller_org` remains the active isolation and
+the policy is defense-in-depth for any *scoped* reader. **(2)** a scoped read
+(`app.current_org_id` set) sees only its own org plus `col IS NULL` rows, so
+federation-wide signals (`safety_signals`, org NULL by design) stay visible. This
+is why the stricter `identity.can_access_org()` form (used by the schemas that *do*
+set a context) was deliberately not retrofitted here.
+
+### Guard + proof
+
+`deploy-smoke-assert.mjs` gains check **#1c**: every non-public uuid-tenant BASE
+TABLE must be policied or on the two-entry exempt list, failing the build (on a
+real DB) if a future uuid-tenant table lands unpoliced. Verified end-to-end on real
+pgvector: the migration policies exactly 29, leaves the 2 exempt untouched, is
+idempotent (`0 applied` on re-run), `deploy-migrate` applies it (exit 0), and every
+public invariant still holds. `tests/schema-contract/uuid-tenant-isolation.contract.test.ts`
+(9 PGlite cases) pins the wiring, the per-table POLICY/EXEMPT outcomes (including
+`canonical_products` keyed on `tenant_id`, not `organization_id`), and the
+non-breaking-yet-isolating COALESCE behavior on a non-superuser role.
+
+Follow-up, stated honestly: for the raw-pool subsystems (`regulatory_intel`,
+`manufacturing`) the policy is defense-in-depth, not the primary boundary, because
+they set no session context — DB-level *enforcement* there requires migrating those
+services onto a tenant-scoped client that runs `set_config('app.current_org_id', …)`.
+The application-layer half of the gap (`manufacturing`'s cross-tenant `/overview`
+aggregates and the unfiltered `core.programs … LIMIT 1` fallbacks) is addressed in
+C-47.
+
+---
+
+## C-47 — the application-layer half: cross-tenant reads that RLS alone can't stop *(medium — FIXED 2026-07-31)*
+
+C-46 added defense-in-depth RLS, but the primary isolation for the raw-pool
+subsystems is the query itself. Two app-layer leaks the triage surfaced are closed
+here.
+
+### `core.programs` default-program fallbacks (4 services)
+
+`resolveProgramId()` in four innovation services
+(`outcome-based-template-learning`, `auto-traceability`,
+`evidence-confidence-heatmap`, `regulatory-delta-radar`) resolved a "default
+program" with `SELECT id FROM (core.)programs ORDER BY created_at DESC LIMIT 1` —
+**no org predicate** — so a caller with no program context got an arbitrary
+tenant's most-recent program, and the service then recorded outcomes / built
+traceability against it. Fixed identity-agnostically: auto-resolve a default ONLY
+when **exactly one** program exists (`LIMIT 2` → `rows.length === 1`); more than
+one is ambiguous → `undefined`, and every caller already degrades to an empty
+program id. This preserves single-tenant/demo ergonomics while removing the
+cross-tenant grab — and needs no org-identity mapping, so it is safe to ship now.
+
+### `manufacturing` routes read cross-tenant
+
+`GET /api/manufacturing/overview` issued unconditional platform-wide `COUNT(*)`
+aggregates over `manufacturing.equipment_registry` / `batch_execution_records` /
+`quality_test_results`, and the list/detail endpoints filtered by org only
+`if (orgId)` — where `getOrgId()` read `req.tenantId`, a field the mount
+(`authenticateToken` only) never populates, so `orgId` was always null and every
+query ran UNSCOPED for every caller.
+
+`getOrgId()` now derives the org from `req.user.organizationUuid ??
+req.user.organizationId ?? …` and returns it ONLY when it is a valid uuid (the
+`manufacturing.*` key is uuid). `/overview` is scoped by it and fails **closed**
+to `dataAvailable:false` when no uuid scope resolves — never platform-wide numbers.
+Net effect: a caller whose token carries a uuid org is now fully scoped on every
+manufacturing endpoint; one that does not gets an empty overview (safe) instead of
+cross-tenant counts, and the list endpoints are no worse than before (they were
+already unscoped) and better whenever a uuid org is present.
+
+**Honest blocker, documented not hacked:** `req.user.organizationId` is the
+**integer** canonical org id (`enforceOrgMembership` parses it as an int), while
+`manufacturing.*` and `core.*` key on a **uuid** org, and `organizationUuid` is
+not populated on the `authenticateToken` mount. Fully closing the manufacturing
+list/detail endpoints for tokens that carry only the integer identity — and giving
+the raw-pool subsystems real DB-level enforcement rather than defense-in-depth —
+requires resolving the integer↔uuid org-identity mapping (populate
+`organizationUuid` on the auth path, or map int→uuid) and routing these services
+through a tenant-scoped client that sets `app.current_org_id`. That is the
+uuid/integer identity split already logged as an open architectural question; it is
+a deliberate follow-up, not something to paper over by filtering a uuid column with
+an integer (a no-op) or by silently leaving the reads unscoped.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

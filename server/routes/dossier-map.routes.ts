@@ -1,21 +1,24 @@
 /**
  * Dossier map — CTD / eCTD module-map read for the v2 DossierMap surface.
  *
- * GET /api/dossier-map → the org's per-module (M1–M5) completeness + readiness map,
- * shaped to exactly the keys the v2 DossierMap grid renders ({ m, label, pct, tone,
- * sections }), assembled ENTIRELY from the real, org-scoped CTD section-tracking store
+ * GET /api/dossier-map?projectId=<id> → ONE project's per-module (M1–M5) completeness +
+ * readiness map, shaped to exactly the keys the v2 DossierMap grid renders ({ m, label,
+ * pct, tone, sections }), assembled ENTIRELY from the real CTD section-tracking store
  * (project_sections + its parent projects) — the same table a tenant populates by
  * creating a regulatory project and working its sections through the authoring workflow.
- * There is no seed-only blob and no fallback: an org with no tracked CTD sections returns
- * an empty list and the surface renders its own honest empty state. See
- * server/services/dossier/dossier-map-view-assembler.ts. Distinct from the artifact
- * roll-up /api/dossier-readiness endpoint.
  *
- * Org scoped; 403 without org context; fails to an empty list on 42P01 so an
- * unprovisioned store never 500s.
+ * This is a project-readiness view, so `projectId` is REQUIRED and the read is scoped to
+ * that single project (within the acting org); it never falls back to an org-wide roll-up
+ * that would mix one program's readiness with another's. There is no seed-only blob: a
+ * project with no tracked CTD sections returns an empty list and the surface renders its
+ * own honest empty state. See server/services/dossier/dossier-map-view-assembler.ts.
+ * Distinct from the artifact roll-up /api/dossier-readiness endpoint.
+ *
+ * Org scoped; 403 without org context; 400 without a valid projectId; fails to an empty
+ * list on 42P01 so an unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { assembleOrgDossierMap } from '../services/dossier/dossier-map-view-assembler.js';
+import { assembleProjectDossierMap } from '../services/dossier/dossier-map-view-assembler.js';
 
 const router = Router();
 
@@ -38,9 +41,19 @@ router.get('/', async (req: Request, res: Response) => {
   if (orgId === null) {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
+  // Project-readiness read: an explicit project id is required. Never fall back to an
+  // org-wide roll-up (that would contaminate one program's readiness with another's).
+  const rawProject = req.query.projectId;
+  const projectId =
+    typeof rawProject === 'string' ? parseInt(rawProject, 10) : Number(rawProject);
+  if (rawProject === undefined || !Number.isInteger(projectId) || projectId <= 0) {
+    return res
+      .status(400)
+      .json({ error: { code: 'PROJECT_REQUIRED', message: 'A projectId query parameter is required.' } });
+  }
   try {
-    const data = await assembleOrgDossierMap(orgId);
-    return res.json({ data, meta: { count: data.length, source: 'project_sections' } });
+    const data = await assembleProjectDossierMap(orgId, projectId);
+    return res.json({ data, meta: { count: data.length, source: 'project_sections', projectId } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });

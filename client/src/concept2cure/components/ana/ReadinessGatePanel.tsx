@@ -15,7 +15,7 @@
  *                    Export / seal is DISABLED — a gate that never ran, or ran
  *                    over sample data, cannot certify a submission.
  *
- * Microcopy is factual (no "All good!", no emoji). The strip is a live region
+ * Microcopy is factual — calm, no cheerleading, no emoji. The strip is a live region
  * so assistive tech announces the verdict. The export/seal button's `disabled`
  * is bound to `!gate.sealable`, so a non-clean verdict can never be sealed.
  *

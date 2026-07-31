@@ -1,8 +1,10 @@
 /**
  * AnA Biostats — Governed Statistical Documents (read/list)
  *
- * Backs the "Governed statistical documents — this project" list on the ui-v2
- * Biostatistics surface
+ * Backs the org-scoped "Governed statistical documents" list on the ui-v2
+ * Biostatistics surface (labeled "org-scoped", not "this project" — the list spans
+ * every persisted statistical_summary artifact for the tenant unless a projectId
+ * filter is supplied)
  * (client/src/concept2cure/v2/surfaces/Biostatistics.tsx → BIOSTAT_PLANS, lines
  * 481-485 / 630-643).
  *

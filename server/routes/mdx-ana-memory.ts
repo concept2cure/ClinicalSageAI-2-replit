@@ -98,6 +98,44 @@ router.get('/ana/memory', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The user-level relational profile AnA maintains about how to work with the
+ * current user (ana_relational_profiles, project_id IS NULL). This is the
+ * read side of the self-developed personality layer whose write side lives in
+ * server/services/ana-ri/relational-profile-service.ts — surfaced read-only so
+ * the AnA memory surface can show it instead of a fabricated stand-in. Returns
+ * the row, or null when AnA hasn't formed notes yet (honest empty, not a 500).
+ */
+router.get('/ana/memory/profile', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
+
+  try {
+    /* organization_id lives in the SQL literal so the tenant-isolation CI gate
+       can verify the scope statically. project_id IS NULL = the user-level
+       profile (how AnA works with this person anywhere). */
+    const { rows } = await pool.query(
+      `SELECT interaction_count, last_interaction_at, profile_summary,
+              tone_calibration, emotional_signals, acknowledged_mistakes
+         FROM ana_relational_profiles
+        WHERE organization_id = $1 AND user_id = $2 AND project_id IS NULL
+        LIMIT 1`,
+      [orgId, userId],
+    );
+    return ok(res, rows[0] ?? null);
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '42P01') {
+      /* ana_relational_profiles not provisioned yet — null rather than 500 so
+         the surface renders its honest empty state. */
+      return ok(res, null);
+    }
+    return serverError(res, log, 'get-relational-profile', err);
+  }
+});
+
 router.post('/ana/memory/:id/verify', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);

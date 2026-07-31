@@ -14,9 +14,9 @@ import { PdevIcon } from '../icons';
 import type { PdevIndAssemblyPayload } from '../data/types';
 import { usePdevCompileInd } from '../hooks/usePdevData';
 import {
-  PdevConfirmDialog,
+  GovernedConfirmDialog,
   type ConfirmConfig,
-} from '../components/ConfirmDialog';
+} from '../../_shared/components/GovernedConfirmDialog';
 
 interface AssemblyProps {
   programId: string;
@@ -207,7 +207,7 @@ export function PdevAssemblySurface({
       </section>
 
       {pending && (
-        <PdevConfirmDialog
+        <GovernedConfirmDialog
           open={true}
           {...pending.config}
           onCancel={() => {

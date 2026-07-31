@@ -1249,7 +1249,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 text:
                   m.text.length > 0
                     ? m.text
-                    : 'Sorry — AnA stopped responding. Please try again.',
+                    // Drop apologetic voice + generic "please try again" per
+                    // the microcopy rule; state what happened, the user
+                    // already sees the composer to retry.
+                    : 'AnA stopped responding before finishing this turn. The prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
                 warnings: [...(m.warnings || []), 'Response timed out'],
@@ -1275,7 +1278,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 text:
                   m.text.length > 0
                     ? m.text
-                    : 'Sorry — AnA is unreachable right now. Please try again.',
+                    : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
               };
