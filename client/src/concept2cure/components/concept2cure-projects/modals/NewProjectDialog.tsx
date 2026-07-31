@@ -95,7 +95,11 @@ export function NewProjectDialog({ onClose, onCreated, onApiCreated }: Props) {
       });
       onCreated(result.id);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Failed to create project. Please try again.');
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : 'The create-project request failed before reaching the server. Check the connection and retry.',
+      );
     } finally {
       setSubmitting(false);
     }

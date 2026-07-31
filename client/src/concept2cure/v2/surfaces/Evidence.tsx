@@ -79,7 +79,7 @@ export function Evidence(_props: SurfaceViewProps) {
       const res = await liveMutateOrNull<AskResponse>('POST', '/api/evidence/ask', { message: v });
       const d = res.data;
       if (!d || res.error) {
-        setError(res.error || 'The corpus search did not complete. Please try again.');
+        setError(res.error || 'The corpus search did not complete — the retrieval service returned no result. Retry, or narrow the query.');
         setLoading(false);
         return;
       }

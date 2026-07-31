@@ -195,9 +195,11 @@ Component Stack: ${errorInfo?.componentStack}
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="text-base font-medium text-stone-900">Something went wrong</h3>
+              <h3 className="text-base font-medium text-stone-900">This surface stopped rendering</h3>
               <p className="text-sm text-stone-600 mt-1">
-                We've logged this error for investigation. Your work has been preserved.
+                Your work in other surfaces is preserved. The reference below identifies
+                this incident in the audit trail — send it to support if a retry does not
+                recover the surface.
               </p>
             </div>
             <div className="px-6 pb-6 space-y-4">
