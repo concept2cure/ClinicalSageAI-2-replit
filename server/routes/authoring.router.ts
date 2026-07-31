@@ -2724,8 +2724,18 @@ Study Design:
     const moduleTemplates = templates[section.module] || templates['M3'];
     const template = moduleTemplates[section.code] || moduleTemplates['default'];
 
+    // HONESTY: this is the hardcoded-template fallback, reached only when no AI
+    // provider produced content. It must NOT masquerade as a model-generated
+    // draft. Returning success:true / "generated successfully" here told the
+    // caller a model wrote a compliance-ready section when in fact it returned a
+    // static skeleton with bracketed placeholders. Flag the degradation and the
+    // source explicitly so the UI can present it as a starting scaffold, not as
+    // generated content. The draft body is still returned so a caller may adopt
+    // the skeleton knowingly.
     res.json({
-      success: true,
+      success: false,
+      degraded: true,
+      source: 'template',
       draft: {
         content: template,
         metadata: {
@@ -2733,9 +2743,12 @@ Study Design:
           region,
           generated_at: new Date().toISOString(),
           model: 'template-based',
+          source: 'template',
+          degraded: true,
         },
       },
-      message: 'Draft template generated successfully',
+      message:
+        'AI generation was unavailable; returned a hardcoded section template (not model-generated).',
     });
   } catch (error) {
     console.error('Error generating AI draft:', error);
@@ -2852,10 +2865,14 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       });
     }
 
-    // Generate compliance score
+    // Heuristic quality/completeness signal — NOT a 21 CFR compliance
+    // determination. It is derived purely from word-count and keyword presence
+    // and cannot prove regulatory compliance; labelling a section "compliant" /
+    // "non_compliant" on that basis overstates what the check establishes. It is
+    // reported as a review signal ('review required' / 'heuristic quality').
     const totalChecks = 10;
     const passedChecks = totalChecks - deficiencies.length;
-    const complianceScore = Math.round((passedChecks / totalChecks) * 100);
+    const qualityScore = Math.round((passedChecks / totalChecks) * 100);
 
     res.json({
       success: true,
@@ -2865,18 +2882,24 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         section_title: section.title,
         scan_type,
         region,
-        compliance_score: complianceScore,
+        // Heuristic quality/completeness signal. `compliance_score` is retained
+        // for backward compatibility with existing readers, but it mirrors the
+        // quality signal and is not a compliance determination.
+        signal_type: 'heuristic_quality',
+        quality_score: qualityScore,
+        compliance_score: qualityScore,
         status:
-          complianceScore >= 80
-            ? 'compliant'
-            : complianceScore >= 60
-            ? 'needs_improvement'
-            : 'non_compliant',
+          qualityScore >= 80
+            ? 'heuristic_ok'
+            : qualityScore >= 60
+            ? 'review_recommended'
+            : 'review_required',
         deficiencies,
         deficiency_count: deficiencies.length,
         scanned_at: new Date().toISOString(),
       },
-      message: 'Deficiency scan completed',
+      message:
+        'Heuristic quality scan completed (word-count/keyword signal, not a compliance determination)',
     });
   } catch (error) {
     console.error('Error scanning for deficiencies:', error);
@@ -2951,6 +2974,20 @@ async function buildDocx(
   signatures?: any[],
   tenantId?: number
 ): Promise<Buffer> {
+  // Evidence-CONDITIONAL compliance language. The export previously asserted, on
+  // every document unconditionally, that it was "21 CFR Part 11 compliant", that
+  // its citations were "verified", and that it carried "legally binding"
+  // signatures — regardless of whether any backing evidence existed. Those
+  // claims are only true when the evidence is actually present: a content
+  // integrity hash for the record, citation content-hashes for verification, and
+  // manifested signatures. When the evidence is absent we state the neutral,
+  // honest position (governed export / verification pending / signatures
+  // pending) rather than overstating what the export proves.
+  const hasIntegrityHash = typeof docHash === 'string' && docHash.length > 0;
+  const hasSignatures = Array.isArray(signatures) && signatures.length > 0;
+  const allCitations = sections.flatMap((s: any) => citationsBySection.get(s.section_id) || []);
+  const citationsVerified =
+    allCitations.length > 0 && allCitations.every((c: any) => !!c.payload_sha256);
   // Lazy load docx library to prevent startup failures
   try {
     const { Document, Packer, Paragraph, HeadingLevel, TextRun, PageBreak, AlignmentType } =
@@ -2963,7 +3000,9 @@ async function buildDocx(
       new Paragraph({
         children: [
           new TextRun({
-            text: '21 CFR PART 11 COMPLIANT DOCUMENT',
+            text: hasIntegrityHash
+              ? '21 CFR PART 11 COMPLIANT DOCUMENT'
+              : 'GOVERNED EXPORT — 21 CFR PART 11 VERIFICATION PENDING',
             bold: true,
             size: 28,
           }),
@@ -3153,12 +3192,14 @@ async function buildDocx(
     children.push(
       new PageBreak(),
       new Paragraph({
-        text: 'COMPLIANCE CERTIFICATION',
+        text: hasIntegrityHash ? 'COMPLIANCE CERTIFICATION' : 'EXPORT SUMMARY',
         heading: HeadingLevel.HEADING_1,
       }),
       new Paragraph({ text: '' }),
       new Paragraph({
-        text: 'This document was generated in compliance with 21 CFR Part 11 requirements for electronic records and electronic signatures.',
+        text: hasIntegrityHash
+          ? 'This document was generated in compliance with 21 CFR Part 11 requirements for electronic records and electronic signatures.'
+          : 'This is a governed export from the authoring store. A 21 CFR Part 11 content-integrity hash is not present for this export, so Part 11 record integrity is pending.',
       }),
       new Paragraph({
         children: [
@@ -3172,10 +3213,14 @@ async function buildDocx(
         text: `Export Timestamp: ${new Date().toISOString()}`,
       }),
       new Paragraph({
-        text: 'All citations and tokens have been resolved and verified.',
+        text: citationsVerified
+          ? 'All citations and tokens have been resolved and verified.'
+          : 'Citation and token verification pending — not every citation carries a content hash.',
       }),
       new Paragraph({
-        text: 'Electronic signatures contained herein are legally binding and equivalent to handwritten signatures.',
+        text: hasSignatures
+          ? 'Electronic signatures contained herein are legally binding and equivalent to handwritten signatures.'
+          : 'No electronic signatures are manifested in this export; signatures pending.',
       }),
       new Paragraph({ text: '' }),
       new Paragraph({
@@ -3219,9 +3264,9 @@ async function buildDocx(
     return buf;
   } catch (error) {
     console.error('Failed to build compliant DOCX document:', error);
-    // Return a simple text buffer as fallback with compliance note
+    // Return a simple text buffer as fallback with an honest, evidence-conditional header
     const text =
-      `21 CFR PART 11 COMPLIANT DOCUMENT\n` +
+      `${hasIntegrityHash ? '21 CFR PART 11 COMPLIANT DOCUMENT' : 'GOVERNED EXPORT — 21 CFR PART 11 VERIFICATION PENDING'}\n` +
       `Document Hash: ${docHash || 'PENDING'}\n\n` +
       `${docMeta.title || 'Module 3 Document'}\n\n` +
       sections
