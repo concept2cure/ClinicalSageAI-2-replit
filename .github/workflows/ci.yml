@@ -674,6 +674,25 @@ jobs:
       - name: Deploy migration is idempotent (every release re-runs it)
         run: node scripts/db/deploy-migrate.mjs
 
+      - name: RLS coverage — every org-keyed table carries the tenant policy
+        # The live two-tenant policy behaviour is proven by
+        # server/db/__tests__/rlsPolicy.integration.test.ts. This is the COVERAGE
+        # half the burndown flagged as environment-blocked: on the fully
+        # provisioned + deploy-migrated schema (install-fresh applies 0021 in
+        # step 6/8; deploy-migrate then adds the C2C set but does NOT re-run
+        # 0021), assert NO org-keyed base table was left without
+        # tenant_isolation_policy. A non-empty result is an unprotected tenant
+        # table — exactly the silent gap a later C2C migration could introduce.
+        run: |
+          set -euo pipefail
+          UNPROTECTED=$(psql "$DATABASE_URL" -tA -f scripts/db/rls-coverage-check.sql)
+          if [[ -n "$UNPROTECTED" ]]; then
+            echo "::error::org-keyed base table(s) missing tenant_isolation_policy after full provisioning + deploy-migrate:"
+            echo "$UNPROTECTED"
+            exit 1
+          fi
+          echo "RLS coverage OK: every non-allowlisted org-keyed base table carries tenant_isolation_policy."
+
       - name: Verify the readiness contract independently
         # deploy-migrate.mjs checks this itself; asserting it again from psql
         # means a regression in the script's own verification cannot hide a

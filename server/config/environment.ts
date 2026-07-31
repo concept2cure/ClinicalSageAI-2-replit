@@ -10,6 +10,7 @@
 
 import { assertRlsEnforcementForProduction } from '../db/rlsEnforcement';
 import { assertAuditSealPostureForProduction } from '../services/audit/auditSealPosture';
+import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
 
 type Environment = 'development' | 'staging' | 'production' | 'test';
 
@@ -288,6 +289,14 @@ assertRlsEnforcementForProduction();
 // acceptable GA posture. Fires on import (same contract as the asserts above).
 // No-op outside production. See server/services/audit/auditSealPosture.ts.
 assertAuditSealPostureForProduction();
+
+// AI-governance boot posture: in production the two AI content-safety gates
+// (AI_PII_ENFORCEMENT, AI_GROUNDEDNESS_ENFORCE) default permissive. This warns
+// loudly (or, opt-in via AI_GOVERNANCE_REQUIRE_ENFORCE=true, fails closed) so a
+// silently-permissive posture is VISIBLE — without changing either gate's
+// runtime behaviour. No-op outside production. See
+// server/startup/ai-governance-posture.ts.
+assertAiGovernancePostureForProduction();
 
 // Export configuration for the current environment
 export const config = {

@@ -68,7 +68,7 @@ Rotate these before any shared or externally reachable deployment.
 | Shadow review | Refuse-to-File findings by reviewer lens | `c2c_shadow_review` (5 lenses, 14 findings) |
 | Labeling | USPI section worklist + agency negotiation | `c2c_labeling_pi` (18 sections) |
 | Protocol dev | Protocol section tree / SoA / risk register | `c2c_protocol_dev` (SELVO-DLBCL-201) |
-| Research admin | CITI training matrix | `c2c_research_admin` (6 personnel) |
+| Research admin | CITI training matrix | `research_personnel` + `personnel_training` (6 personnel; matrix derived live from real dates) |
 
 Each Wave-2/3 surface adopts live data only when the store returns its full
 display shape, else fails closed to the codebase fixture with a "Sample data"

@@ -107,6 +107,23 @@ BEGIN
       CONTINUE;
     END IF;
 
+    -- A table may expose more than one tenant column (e.g. organization_id AND
+    -- tenant_id). The FOR-loop's SELECT is a single snapshot whose NOT EXISTS
+    -- guard is evaluated ONCE, before the loop creates anything, so such a table
+    -- is yielded once per column and both rows pass the guard. The first
+    -- iteration attaches the policy; the second then aborts
+    -- 'policy "tenant_isolation_policy" ... already exists' — which broke this
+    -- migration when applied through install-fresh's C2C step (audit_logs).
+    -- Re-check at execution time so a table already handled this run is skipped.
+    IF EXISTS (
+      SELECT 1 FROM pg_policies p
+      WHERE p.schemaname = rec.table_schema
+        AND p.tablename = rec.table_name
+        AND p.policyname = 'tenant_isolation_policy'
+    ) THEN
+      CONTINUE;
+    END IF;
+
     EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', rec.table_schema, rec.table_name);
     EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', rec.table_schema, rec.table_name);
     EXECUTE format($pol$

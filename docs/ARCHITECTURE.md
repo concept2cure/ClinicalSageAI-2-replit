@@ -6,9 +6,21 @@
 
 ---
 
+> ⚠️ **Current state vs. target state.** The `modules/<domain>/` layout described
+> below is the **target** architecture, not how the code is organized today. The
+> current implementation lives under a flat `server/services/` tree (there is no
+> top-level `modules/` directory). Treat the paths in this guide as the intended
+> destination for incremental refactors — not as a map of the repository as it
+> exists. When reading existing code, look under `server/services/`; when a
+> section here cites `server/services/...` (e.g. GRDHE), that path is real today.
+
+---
+
 ## Module Boundaries
 
-This document defines the authoritative structure for the Concept2Cure.RI platform. **All new code must fit within these boundaries.**
+This document defines the **target** structure for the Concept2Cure.RI platform.
+New domains should move toward these boundaries; see the note above for where the
+code actually lives today.
 
 ---
 

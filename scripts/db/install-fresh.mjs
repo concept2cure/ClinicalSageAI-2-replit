@@ -547,6 +547,13 @@ function report() {
   if (!incomplete.length) {
     console.log('\n✅ Application schema install complete.');
     console.log('   Next:');
+    console.log('   • run `node scripts/db/deploy-migrate.mjs` to apply the out-of-band');
+    console.log('     C2C migration set (the db/migrations/ files NO other path applies —');
+    console.log('     e.g. the clinical-regulatory evidence spine, section tracking, and');
+    console.log('     the governance/resolution tables). This installer does NOT apply');
+    console.log('     that set; without it the routes reading those tables fall back to');
+    console.log('     sample data. (In the AWS pipeline deploy-migrate runs as its own');
+    console.log('     step after this one; a local install must run it by hand.)');
     console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');
     console.log('   • leave SEED_DEMO_USER unset in production (no known-password admin).');
     return 0;
