@@ -8528,7 +8528,11 @@ registerToolHandler('gateway_configuration_status', async (input, ctx) => {
 registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
   try {
     const { computeLifecycleOperations } = await import('../ectd/lifecycle-operator.js');
-    let prior = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
+    // Typed as PriorLeaf[] so the array-literal branch (all-required inferred
+    // props) and the auto-load branch below (loadPriorSequenceManifest returns
+    // PriorLeaf[], whose props are optional) agree — otherwise the reassignment
+    // trips TS2322.
+    let prior: import('../ectd/lifecycle-operator.js').PriorLeaf[] = (Array.isArray(input.prior_leaves) ? input.prior_leaves : []).map((p: any) => ({
       leafKey: p.leaf_key,
       ctdSection: p.ctd_section,
       fileName: p.file_name,
