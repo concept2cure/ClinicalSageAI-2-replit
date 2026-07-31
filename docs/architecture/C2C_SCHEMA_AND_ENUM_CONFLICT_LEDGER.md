@@ -2892,6 +2892,31 @@ posture for the legitimate cross-org readers.
 
 ---
 
+## C-49 — Stage 0: carry the org uuid on every authenticated request *(low — FIXED 2026-07-31)*
+
+The first, decision-independent slice of the C-48 plan, and the piece that completes
+the C-47 manufacturing residual. `req.user.organizationUuid` was populated only by
+the MFA JWT claim, so refresh/SSO/enterprise/legacy tokens left it unset — which is
+why `manufacturing`'s `getOrgId` (C-47), reading `req.user.organizationUuid`, fell
+through to the integer `organizationId`, failed its uuid guard, and returned empty
+for those tokens.
+
+`enforceOrgMembership` (`server/middleware/orgMembership.ts`) already runs one cached
+`organization_users` lookup per user:org per 60s. It now **LEFT JOIN**s
+`organizations` and selects `organizations.uuid` in that same query (no extra
+round-trip, membership decision unchanged — it stays governed solely by the
+`organization_users` row), caches the uuid alongside the membership result, and
+attaches it to `req.user.organizationUuid` on both the cache-hit and cache-miss
+paths. Coverage is now uniform across all token mint paths.
+
+Deliberately scoped: this sets `req.user` **only**. It is NOT wired into
+`app.current_org_id` (which is fed from `req.tenantContext.organizationUuid` /
+`decoded.organizationUuid`, verified) — doing so before the C-48 Stage 1 identity
+backfill would deny-all the `can_access_org` family. Typecheck clean; the 46
+membership/auth tests (incl. the WebSocket `checkOrgMembership` path) pass.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
