@@ -39,8 +39,8 @@ const h = vi.hoisted(() => {
 });
 
 vi.mock('../../db', () => ({
-  pool: { query: (...a: unknown[]) => h.poolQuery(...a), connect: (...a: unknown[]) => h.connect(...a) },
-  getPool: () => ({ query: (...a: unknown[]) => h.poolQuery(...a), connect: (...a: unknown[]) => h.connect(...a) }),
+  pool: { query: (...a: unknown[]) => h.poolQuery(...a), connect: () => h.connect() },
+  getPool: () => ({ query: (...a: unknown[]) => h.poolQuery(...a), connect: () => h.connect() }),
   query: (...a: unknown[]) => h.poolQuery(...a),
   db: {},
 }));

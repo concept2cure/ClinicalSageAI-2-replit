@@ -82,6 +82,22 @@ export interface JourneyDb {
   close: () => Promise<void>;
 }
 
+/**
+ * A node-postgres-shaped `query` over a PGlite instance. Shared by the pool
+ * shim and the pooled client returned from `pool.connect()` so both report the
+ * same `{ rows, rowCount }` shape handlers read (PGlite reports affectedRows: 0
+ * for SELECTs, so prefer rows.length and fall back to affectedRows only for
+ * row-less commands).
+ */
+function mkPglQuery(pglite: { query: (t: string, p?: unknown[]) => Promise<{ rows: unknown[] }> }) {
+  return async (text: string, params?: unknown[]) => {
+    const r = await pglite.query(text, params);
+    const rows = r.rows as unknown[];
+    const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
+    return { rows, rowCount: rows.length > 0 ? rows.length : affected };
+  };
+}
+
 export async function createJourneyDb(options?: {
   /** Override the FK-prerequisite DDL (defaults to JOURNEY_PREREQUISITES). */
   prereqSql?: string;
@@ -108,15 +124,20 @@ export async function createJourneyDb(options?: {
       // node-postgres result shape: handlers check rowCount as well as rows
       // (Journey A found a 404 caused by a rows-only shim — rowCount ?? 0
       // treated every SELECT as empty).
-      query: async (text: string, params?: unknown[]) => {
-        const r = await pglite.query(text, params);
-        const rows = r.rows as unknown[];
-        // PGlite reports affectedRows: 0 for SELECTs, so prefer rows.length
-        // and fall back to affectedRows only for row-less commands (UPDATE
-        // without RETURNING, DELETE, …).
-        const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
-        return { rows, rowCount: rows.length > 0 ? rows.length : affected };
-      },
+      query: mkPglQuery(pglite),
+      // Transactional handlers (authoring section-save / freeze / e-sign) take a
+      // pooled client via pool.connect() and run BEGIN … COMMIT/ROLLBACK on it.
+      // PGlite is a single connection driven sequentially, so the "client"
+      // shares it; its query mirrors the pool shim's node-postgres result shape
+      // and release() is a no-op (there is no pool to return the client to).
+      // BEGIN/COMMIT/ROLLBACK execute directly against PGlite, which supports
+      // them, so the handlers' atomicity is exercised for real.
+      connect: async () => ({
+        query: mkPglQuery(pglite),
+        release: () => {
+          /* no pool to return the shared PGlite connection to */
+        },
+      }),
     },
     close: () => pglite.close(),
   };
