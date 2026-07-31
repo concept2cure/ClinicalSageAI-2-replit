@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-31T00:12:18.566Z",
+  "generatedAt": "2026-07-31T02:47:13.072Z",
   "git": {
-    "sha": "049a8c8d8e241d3496df595ff1e6b4734e0ff3dd",
+    "sha": "f5e376eb81368c3c8b9698147ba67193a8168fb2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2487,7 +2487,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 947421
+        "bytes": 949402
       },
       {
         "file": "shared/schema.ts",
@@ -2559,7 +2559,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 120635
+        "bytes": 120677
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2621,7 +2621,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18415
+        "lines": 18464
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2689,7 +2689,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2676
+        "lines": 2678
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
