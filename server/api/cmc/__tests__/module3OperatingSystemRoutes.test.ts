@@ -160,4 +160,19 @@ describe('module3OperatingSystemRoutes', () => {
     expect(res.status).toBe(409);
     expect(res.body.error).toContain('Critical contradictions');
   });
+
+  it('blocks final export when an approved section went stale afterwards (isStale gate)', async () => {
+    // Every section approved and NO open contradictions — the ONLY blocker is that
+    // one approved section was invalidated after sign-off (stale). Before the fix the
+    // guard SELECTed no `stale` column and hardcoded isStale:false, so this exported
+    // silently, shipping an approval that no longer matched its source.
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'approved', stale: true }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app).post('/api/cmc/module3-os/guard/final-export/proj-1').send({});
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain('stale');
+    expect(res.body.data.staleSections).toBe(1);
+  });
 });
