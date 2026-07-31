@@ -8,7 +8,7 @@ import { execFile } from 'child_process';
 import util from 'util';
 import { db } from '../db';
 import { csrReports } from '../../shared/schema';
-import { eq, like, count, sql, desc } from 'drizzle-orm';
+import { eq, and, like, count, sql, desc } from 'drizzle-orm';
 import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { analyzeText } from '../openai-service';
@@ -21,6 +21,29 @@ const log = createScopedLogger('analytics-routes');
 // shell parsing. Use this for any command that includes user-controlled input.
 const execFilePromise = util.promisify(execFile);
 const router = Router();
+
+/**
+ * Resolve the caller's organization id off the request. The auth/authBoundary
+ * middleware populates one of these on every authenticated request; this mirrors
+ * the org-scoping helper used by the org-scoped project routes
+ * (e.g. design-controls.routes.ts). Returns null when there is no org context —
+ * callers MUST then refuse to read tenant data (403) or scope to nothing, never
+ * fall back to a cross-tenant query. csr_reports is org-scoped tenant data, so
+ * every read of it in this module is scoped by this id.
+ */
+function getOrgId(req: import('express').Request): number | null {
+  const r = req as unknown as {
+    tenantId?: unknown;
+    organizationId?: unknown;
+    tenantContext?: { organizationId?: unknown };
+    user?: { organizationId?: unknown };
+  };
+  const raw =
+    r.tenantId ?? r.organizationId ?? r.tenantContext?.organizationId ?? r.user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
 
 // Defensive cap on text passed to Python analyzers as a CLI argument.
 const MAX_ANALYZER_TEXT_LENGTH = 1_000_000;
@@ -238,7 +261,8 @@ For best results, please use PDF format.`;
     // Find similar CSRs in the database
     const matchingCsrs = await findSimilarCsrs(
       analysisResult.indication || '',
-      analysisResult.phase || ''
+      analysisResult.phase || '',
+      getOrgId(req)
     );
 
     // Build the response
@@ -406,7 +430,8 @@ router.post('/analyze-protocol-text', async (req, res) => {
     // Find similar CSRs in the database
     const matchingCsrs = await findSimilarCsrs(
       analysisResult.indication || '',
-      analysisResult.phase || ''
+      analysisResult.phase || '',
+      getOrgId(req)
     );
 
     // Build the response
@@ -437,15 +462,17 @@ router.post('/analyze-protocol-text', async (req, res) => {
 });
 
 // Helper function to find similar CSRs
-async function findSimilarCsrs(indication: string, phase: string) {
+async function findSimilarCsrs(indication: string, phase: string, orgId: number | null) {
   try {
-    if (!indication) return [];
+    // No org context → no tenant data. Never run an unscoped cross-tenant LIKE.
+    if (!indication || orgId == null) return [];
 
-    // Query the database for CSRs with similar indication and phase
+    // Query the database for CSRs with similar indication and phase — STRICTLY
+    // scoped to the caller's organization (csr_reports is tenant data).
     const reports = await db
       .select()
       .from(csrReports)
-      .where(like(csrReports.indication, `%${indication}%`))
+      .where(and(eq(csrReports.organizationId, orgId), like(csrReports.indication, `%${indication}%`)))
       .limit(5);
 
     // Only real, schema-backed fields are returned. The CSR index stores no
@@ -970,6 +997,15 @@ router.get('/dashboard', async (req, res) => {
   try {
     const { timeFrame, indication, phase } = req.query;
 
+    // Tenant isolation: the dashboard aggregates csr_reports (org-scoped tenant
+    // data), so every query below is scoped to the caller's org. No org context
+    // → refuse rather than aggregate across tenants.
+    const orgId = getOrgId(req);
+    if (orgId === null) {
+      return res.status(403).json({ error: 'Organization context required', code: 'ORG_REQUIRED' });
+    }
+    const orgScope = eq(csrReports.organizationId, orgId);
+
     // Query the database for analytics data based on filters
     const cohortData = await db
       .select({
@@ -978,6 +1014,7 @@ router.get('/dashboard', async (req, res) => {
         phase: csrReports.phase,
       })
       .from(csrReports)
+      .where(orgScope)
       .groupBy(csrReports.indication, csrReports.phase);
 
     // Process the data for the dashboard
@@ -1015,7 +1052,7 @@ router.get('/dashboard', async (req, res) => {
         count: count(),
       })
       .from(csrReports)
-      .where(sql`${csrReports.sponsor} IS NOT NULL`)
+      .where(and(orgScope, sql`${csrReports.sponsor} IS NOT NULL`))
       .groupBy(csrReports.sponsor)
       .orderBy(desc(count()))
       .limit(10);
@@ -1031,6 +1068,7 @@ router.get('/dashboard', async (req, res) => {
         count: count(),
       })
       .from(csrReports)
+      .where(orgScope)
       .groupBy(sql`date_trunc('month', ${csrReports.createdAt})`)
       .orderBy(sql`date_trunc('month', ${csrReports.createdAt})`);
     const monthlyTrends = trendRows.map(r => ({
@@ -1045,7 +1083,7 @@ router.get('/dashboard', async (req, res) => {
         count: count(),
       })
       .from(csrReports)
-      .where(sql`${csrReports.primaryEndpoint} IS NOT NULL`)
+      .where(and(orgScope, sql`${csrReports.primaryEndpoint} IS NOT NULL`))
       .groupBy(csrReports.primaryEndpoint)
       .orderBy(desc(count()))
       .limit(8);
@@ -1063,7 +1101,7 @@ router.get('/dashboard', async (req, res) => {
         count: count(),
       })
       .from(csrReports)
-      .where(sql`${csrReports.phase} IS NOT NULL`)
+      .where(and(orgScope, sql`${csrReports.phase} IS NOT NULL`))
       .groupBy(csrReports.phase, csrReports.status);
 
     const phaseTotals: Record<string, { total: number; completed: number }> = {};
@@ -1091,7 +1129,7 @@ router.get('/dashboard', async (req, res) => {
     const recentRows = await db
       .select({ count: count() })
       .from(csrReports)
-      .where(sql`${csrReports.createdAt} >= now() - interval '30 days'`);
+      .where(and(orgScope, sql`${csrReports.createdAt} >= now() - interval '30 days'`));
     const recentAdditions = Number(recentRows[0]?.count ?? 0);
 
     // No fabricated predictive insights — return empty until real model exists
@@ -1133,6 +1171,14 @@ router.get('/export', async (req, res) => {
   try {
     const { format, type, indication, sponsor, phase, timeFrame } = req.query;
 
+    // Tenant isolation: the export aggregates csr_reports (org-scoped tenant
+    // data). No org context → refuse rather than export across tenants.
+    const orgId = getOrgId(req);
+    if (orgId === null) {
+      return res.status(403).json({ error: 'Organization context required', code: 'ORG_REQUIRED' });
+    }
+    const orgScope = eq(csrReports.organizationId, orgId);
+
     // Determine what data to include based on type
     let reportData: any = {};
 
@@ -1145,6 +1191,7 @@ router.get('/export', async (req, res) => {
           phase: csrReports.phase,
         })
         .from(csrReports)
+        .where(orgScope)
         .groupBy(csrReports.indication, csrReports.phase);
 
       const totalReports = cohortData.reduce((sum, item) => sum + Number(item.count), 0);
@@ -1164,6 +1211,7 @@ router.get('/export', async (req, res) => {
       const statusRows = await db
         .select({ count: count(), status: csrReports.status })
         .from(csrReports)
+        .where(orgScope)
         .groupBy(csrReports.status);
       const approved = statusRows
         .filter(r => r.status === 'approved')
