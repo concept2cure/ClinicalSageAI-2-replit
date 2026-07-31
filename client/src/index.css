@@ -98,22 +98,32 @@
   }
 }
 
-/* ═══ Radix switch role styling ═══ */
+/* ═══ Radix switch role styling ═══
+   Uses canonical earthy tokens (design-system/colors_and_type.css:122-126)
+   so switches match the CEO-signed palette. Previously hardcoded to the
+   generic Tailwind palette (#22c55e / #ef4444 / #16a34a / #dc2626), which
+   bypassed the token surface entirely — the audit called this out as
+   "Radix override colors pin generic Tailwind palette". Fallback hexes
+   are the canonical values (no drift). */
 [role='switch'][aria-checked='true'] {
-  background-color: #22c55e !important;
+  background-color: var(--success, #788c5d) !important;
 }
 [role='switch'][aria-checked='false'] {
-  background-color: #ef4444 !important;
+  background-color: var(--error, #b93a3a) !important;
 }
 [role='switch'][aria-checked='true'] span,
 [role='switch'][aria-checked='false'] span {
   background-color: white !important;
 }
 [role='switch'][aria-checked='true']:hover {
-  background-color: #16a34a !important;
+  /* Slightly darkened success — filter keeps the hover derived from the
+     canonical token rather than a hardcoded second color. */
+  background-color: var(--success, #788c5d) !important;
+  filter: brightness(0.9);
 }
 [role='switch'][aria-checked='false']:hover {
-  background-color: #dc2626 !important;
+  background-color: var(--error, #b93a3a) !important;
+  filter: brightness(0.9);
 }
 
 /* ═══ Radix select / popover fixes ═══ */
