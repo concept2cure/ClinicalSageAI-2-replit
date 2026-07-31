@@ -1,10 +1,29 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision the append-only ANA kernel decision log keyed to the canonical integer tenant.
+--
+-- eCTD/CTD Context:
+--   - Module(s): all (cross-cutting AI/governance evidence)
+--   - Integrity Risk Addressed: runtime governance decisions recorded with a non-integer tenant key the RLS sweep cannot police
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Tenant identity MUST be the canonical INTEGER organizations.id (C-38).
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
 -- AnA 1.0 RI: persistent cross-cutting kernel decision log
 -- Append-only operational evidence for governance/security/observability runtime decisions.
 
 CREATE TABLE IF NOT EXISTS ana_kernel_decision_log (
   id BIGSERIAL PRIMARY KEY,
   request_id TEXT NOT NULL,
-  tenant_id TEXT,
+  tenant_id INTEGER,
   actor_id TEXT,
   method TEXT NOT NULL,
   path TEXT NOT NULL,

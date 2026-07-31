@@ -2261,6 +2261,121 @@ Baseline **25 → 19**.
 
 ---
 
+## C-37 → C-40 — The reachability debt taken to ZERO *(high — FIXED 2026-07-30)*
+
+C-36 left 19 tables, described as "genuinely hard rather than merely unwired":
+pgvector-blocked, identity collisions, and the quarantined `_consolidated` tree.
+Each was resolved. **`ci:migration-reachability` is now 0** — from 112 at C-32.
+
+### C-37 — pgvector: replace the harness, don't accept the gap
+
+Three files were written off as "unverifiable" because PGlite cannot load
+`vector`. That was a property of the *harness*, not the files. So the harness was
+replaced: **a real PostgreSQL 16.13 + pgvector 0.6.0**, seeded with the drizzle
+journal base schema and the full C2C set, each file then applied **twice**. All
+three came up clean and are wired, in dependency order (`risk_rollups` reads
+`predicate.fda_510k_clearances` from the clearance-universe file — which is
+exactly why it failed the earlier isolated screen).
+
+This is consistent with what the deploy path already assumes: two `vector`-needing
+migrations were long-standing members of the set, and `001_gcc_core.sql` creates
+the extension.
+
+`scripts/db/verify-migration-set.mjs` makes that harness reusable — it applies the
+set twice against a real database, separates *missing-prerequisite* failures from
+genuine errors, and fails on any unisolated tenant table.
+
+### C-38 — the identity collisions, reconciled rather than excluded
+
+Three files carried uuid/text tenant keys the integer RLS sweep cannot police.
+The resolution was never "leave them dead"; it was to reconcile them to the
+identity the **code already uses**:
+
+| file | was | evidence it should be integer |
+|---|---|---|
+| `ai_provider_audit_log` | `organization_id`/`user_id`/`project_id` UUID | canonical `organizations.id`, `users.id`, `projects.id` are all `serial` — a real id would have been *rejected* by those columns |
+| `ana_kernel_decision_log` | `tenant_id` TEXT | nothing writes the table and no query filters on it; conversion is what lets the sweep isolate it |
+| `conversation_os_accepted_artifact_versions` | `organization_id` TEXT | `conversation-os.ts` does `String(authUser.organizationId)` in and `Number(ctx.organizationId)` out — the identity was always integer; only the column disagreed |
+
+### C-39 — the `_consolidated` tree: extracted, not imported
+
+C-29 quarantined the tree wholesale as "its only creators also redefine
+users/tenants with TEXT keys". File-by-file that blanket proved too wide — only
+`001_create_core_tables.sql` redefines core identity — but wiring the rest was
+still wrong: `012_document_authoring_schema.sql` creates a rival `doc_revisions`
+against the canonical authoring subsystem (the C-27 defect), and
+`programs`/`literature_entries`/`maud_*` carry non-canonical tenant keys.
+
+So `20260801_consolidated_tree_reconciliation.sql` **extracts** the ten live
+tables (plus two FK parents) with canonical identity, and the tree stays
+quarantined. Extraction also fixed two **definition-vs-consumer mismatches that
+provisioning alone would not have**:
+
+- `cerGenerator.ts` issues `SELECT sections FROM templates` — the `_consolidated`
+  `templates` has no `sections` column at all.
+- `command-executor.ts` issues `SELECT id, code, title FROM doc_sections` — the
+  `_consolidated` `doc_sections` keys on `section_id` and has no `id`.
+
+Verified on real Postgres: applies twice, and **every consumer's actual query
+executes**.
+
+### C-40 — the fix that would have shipped and changed nothing
+
+The sharpest finding, surfaced by an adversarial review pass rather than by the
+harness. C-36 and C-38 express their corrections as `CREATE TABLE IF NOT EXISTS`
+— correct for a database lacking the table, and a **no-op** for one that has it in
+the broken shape. And `reports/phase0/db_inventory.txt` shows at least one real
+database (`neondb`) already carrying `ai_provider_audit_log`,
+`lumen_knowledge_graph_edges` and `lumen_atom_versions`. On that database both
+fixes would have been silent no-ops: uuid columns intact, FKs still impossible,
+services still broken. "Merged, green, never applied" — one level deeper than the
+ledger had yet looked.
+
+`20260801_atom_identity_existing_db_reconciliation.sql` closes it, ordered
+**before** the migrations it unblocks, and drops a mis-shaped table **only when it
+is provably empty** (`NOT EXISTS (SELECT 1 … LIMIT 1)`), letting the next
+migrations recreate it canonically. A populated table is left exactly as it is
+with a loud `WARNING` — `ai_provider_audit_log` is an **audit** table, and
+discarding its attribution to satisfy a type change is precisely what 21 CFR
+Part 11 §11.10(e) forbids. That is a human's reviewed data migration, not a deploy
+script's call.
+
+Proven against a simulated legacy database: two empty tables dropped and recreated
+with integer atom keys plus the two previously-impossible FKs, while the populated
+audit table kept its row.
+
+### Guard precision (also C-39)
+
+Clearing the last entries exposed one more false positive: `studies`, matched from
+FDA-guidance prose ("findings **from studies** completed during the reporting
+period"). A keyword blocklist cannot fix that — `studies` is a plausible table
+name. So the reference scan now filters **context, not words**: it reads only
+quoted segments containing a SQL verb. Verified not to over-filter (817 tables
+still detected; every known-real reference intact).
+
+### Result
+
+`ci:migration-reachability`: **112 → 108 → 45 → 21 → 25 → 19 → 14 → 11 → 0.**
+The baseline file is empty, so any finding is now a regression rather than a
+number to manage. `ci:duplicate-table-ddl` moved 66 → 67 for one benign entry:
+`programs` also appears in `sql/cro_database_schema.sql`, an unapplied design
+artifact on no apply path, using an entirely different uuid CRO model.
+
+### Two things deliberately NOT done
+
+- **`submissions`** is FK-referenced by the already-wired
+  `20260725_submission_orchestrator_store_port.sql`, but its only creator is
+  *runtime DDL* in `openai-orchestrator.ts`. On a database where the app has never
+  run, that ALTER fails — and `deploy-migrate` stops at the first failure. The
+  file's author documents this as intended ("that failure is the correct signal");
+  flagged here rather than unilaterally redesigned.
+- **`ana_kernel_decision_log`** now provisions a table nothing writes, so
+  `GET /kernel/hash-chain/verify` will answer `valid: true, totalRows: 0`. An
+  empty chain reporting "verified" is a weaker signal than a 500; worth a
+  follow-up on that endpoint's empty-state semantics.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

@@ -27,7 +27,7 @@
  * parsing cannot regress without a red test.
  */
 import { describe, it, expect } from 'vitest';
-import { tablesIn, qualify, NOT_A_RELATION } from '../../scripts/ci/check-migration-reachability.mjs';
+import { tablesIn, qualify, NOT_A_RELATION, sqlishSegments } from '../../scripts/ci/check-migration-reachability.mjs';
 
 describe('C-35: table identity is schema-aware', () => {
   it('normalizes public and unqualified names to the same identity', () => {
@@ -86,6 +86,35 @@ describe('C-35: CREATE parsing captures the table, not the schema', () => {
     expect(found.has('real_tbl')).toBe(true);
     expect(found.has('only')).toBe(false);
     expect(found.has('commented_out_tbl')).toBe(false);
+  });
+});
+
+describe('C-39: the reference scan reads SQL, not English', () => {
+  it('ignores prose that merely contains the word FROM', () => {
+    // These are real strings from the codebase. Scanning raw file text registered
+    // a table called `studies` from both — a keyword blocklist cannot fix that,
+    // because `studies` is a perfectly plausible table name.
+    const prose = `
+      const guidance = 'Summary of new nonclinical safety findings from studies completed during the reporting period.';
+      const label = "FDA Guidance: Statistical Guidance on Reporting Results from Studies Evaluating Diagnostic Tests";
+      // Update only the sections that changed.
+    `;
+    expect(sqlishSegments(prose)).toEqual([]);
+  });
+
+  it('still captures genuine queries in every quoting style', () => {
+    const code = [
+      'const a = `SELECT id FROM authoring_documents WHERE tenant_id = $1`;',
+      "const b = 'SELECT sections FROM templates WHERE id = $1';",
+      'const c = `INSERT INTO doc_checklist (doc_id) VALUES ($1)`;',
+      'const d = `UPDATE cer_jobs SET status=$1 WHERE job_id=$2`;',
+    ].join('\n');
+    const segs = sqlishSegments(code);
+    expect(segs).toHaveLength(4);
+    const joined = segs.join(' | ');
+    for (const t of ['authoring_documents', 'templates', 'doc_checklist', 'cer_jobs']) {
+      expect(joined, `lost the query referencing ${t}`).toContain(t);
+    }
   });
 });
 

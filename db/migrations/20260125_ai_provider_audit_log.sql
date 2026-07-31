@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision the AI-provider usage/cost audit log keyed to the canonical integer org identity.
+--
+-- eCTD/CTD Context:
+--   - Module(s): all (cross-cutting AI/governance evidence)
+--   - Integrity Risk Addressed: AI cost/usage attribution recorded against a non-canonical uuid tenant key that no code produces; tenant isolation
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Tenant identity MUST be the canonical INTEGER organizations.id (C-38).
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
 -- ═══════════════════════════════════════════════════════════════════════════
 --                    AI PROVIDER AUDIT LOG MIGRATION
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -30,9 +49,9 @@ CREATE TABLE IF NOT EXISTS ai_provider_audit_log (
   error_message TEXT,
 
   -- Organization tracking
-  organization_id UUID,
-  user_id UUID,
-  project_id UUID,
+  organization_id INTEGER,
+  user_id INTEGER,
+  project_id INTEGER,
 
   -- Request fingerprint for deduplication
   request_hash VARCHAR(64) NOT NULL,
@@ -71,9 +90,16 @@ GROUP BY
   task_type,
   organization_id;
 
+-- Drop the pre-C-38 uuid signature before redefining with the canonical integer
+-- one. CREATE OR REPLACE FUNCTION matches on the ARGUMENT TYPES, so a changed
+-- parameter type creates an OVERLOAD rather than replacing anything: on a
+-- database that already ran the uuid version, both signatures would survive and
+-- a caller could still resolve to the broken one. (Ledger C-38.)
+DROP FUNCTION IF EXISTS get_org_ai_usage(UUID, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE);
+
 -- Create function to get organization's AI usage summary
 CREATE OR REPLACE FUNCTION get_org_ai_usage(
-  p_org_id UUID,
+  p_org_id INTEGER,
   p_start_date TIMESTAMP WITH TIME ZONE DEFAULT NOW() - INTERVAL '30 days',
   p_end_date TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 )
