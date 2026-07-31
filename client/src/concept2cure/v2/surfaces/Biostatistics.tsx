@@ -633,7 +633,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="pj-card" style={{ marginTop: 14 }}>
-        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted' : 'this project'}</span></div>
+        {/* The list is org-scoped (every persisted statistical_summary artifact for the
+            tenant), so the sub-label reads "org-scoped" — not "this project", which would
+            misrepresent an organization/portfolio-wide list as a single project's. */}
+        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · org-scoped' : 'org-scoped'}</span></div>
         <div className="pj-card-b" style={{ padding: 8 }}>
           {govDocs.loading ? (
             <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>

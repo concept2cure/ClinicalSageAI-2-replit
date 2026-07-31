@@ -1,7 +1,14 @@
 /**
- * Assemble the v2 DossierMap surface's render contract from the REAL, org-scoped
- * CTD section-tracking store — project_sections — NOT the seed-only c2c_dossier_map
+ * Assemble the v2 DossierMap surface's render contract from the REAL CTD
+ * section-tracking store — project_sections — NOT the seed-only c2c_dossier_map
  * blob.
+ *
+ * SCOPE: the DossierMap surface is a project-readiness view ("this project's" CTD
+ * dossier), so this assembler REQUIRES an explicit project id and scopes strictly to
+ * that one project (within the caller's org). It never aggregates across the org's
+ * projects — an org-wide roll-up would contaminate one program's filing readiness with
+ * the most-advanced state of a *different* program's sections. A true portfolio roll-up
+ * would be a separate, clearly-labeled view.
  *
  * Data flow:
  *   project_sections (organization_id, project_id, module, section_code, title, status)
@@ -10,16 +17,15 @@
  *       CTD section from the blueprint) and then working it through the authoring
  *       workflow (server/routes/project-sections.ts status transitions). Migration:
  *       db/migrations/20260220_ind_section_tracking.sql (+ 20260725 content columns).
- *   projects (status) — the parent; soft-deleted by status = 'archived', so archived
- *     projects' sections are excluded (the projects table has no deleted_at column;
- *     archive IS the soft delete — server/routes/concept2cure.ts DELETE handler).
+ *   projects (status) — the parent; soft-deleted by status = 'archived', so an archived
+ *     project returns nothing (the projects table has no deleted_at column; archive IS
+ *     the soft delete — server/routes/concept2cure.ts DELETE handler).
  *
  * The surface renders one row per CTD module (M1–M5) shaped { m, label, pct, tone,
  * sections } (client/src/concept2cure/v2/surfaces/DossierMap.tsx). So this assembler
- * rolls the org's real per-section tracking state up to the module grain, aggregated
- * across all the org's non-archived projects and deduped by section_code (keeping the
- * most-advanced status when a section is tracked in more than one project — the same
- * "most advanced wins" rule the IND/NDA assemblers use):
+ * rolls the one project's real per-section tracking state up to the module grain, deduped
+ * by section_code (keeping the most-advanced status if a code is tracked more than once
+ * within the project — the same "most advanced wins" rule the IND/NDA assemblers use):
  *   pct  = complete sections / total sections in the module, rounded — a genuine derived
  *          readiness, never a stored blob number. Complete = approved / signed / locked
  *          (the completion set project-sections.ts's own summary route uses).
@@ -31,8 +37,8 @@
  *          <title>" (leading 'm' stripped so an eCTD code m2.5 reads "2.5 …"), ordered by
  *          code. These are the real tracked sections, not a fabricated scaffold.
  * Only modules that actually have a tracked section are returned — the surface's "modules
- * we're tracking". An org with no CTD project sections returns [] and the surface renders
- * its own honest empty state.
+ * we're tracking". A project with no CTD project sections (or an archived/other-org
+ * project id) returns [] and the surface renders its own honest empty state.
  */
 import { pool } from '../../db';
 
@@ -94,27 +100,34 @@ function toneForPct(pct: number): string {
 interface Section { code: string; status: string; title: string }
 
 /**
- * Assemble the org's CTD module-completeness map. Returns [] when the org has no tracked
- * CTD project sections — the surface renders its honest empty state.
+ * Assemble a single project's CTD module-completeness map. REQUIRES an explicit
+ * projectId — the query is scoped to that one project (within the caller's org) and never
+ * falls back to an org-wide roll-up. Returns [] when the project tracks no CTD sections,
+ * is archived, or does not belong to the org — the surface renders its honest empty state.
  */
-export async function assembleOrgDossierMap(orgId: number): Promise<Record<string, unknown>[]> {
-  // One bulk, org-scoped query: every tracked section for the org, excluding sections that
-  // belong to a soft-deleted (archived) project.
+export async function assembleProjectDossierMap(
+  orgId: number,
+  projectId: number,
+): Promise<Record<string, unknown>[]> {
+  // One bulk, project-scoped query: every tracked section for THIS project (double-scoped
+  // to the caller's org), excluding a soft-deleted (archived) project.
   const { rows } = await pool.query(
     `SELECT ps.section_code, ps.module, ps.title, ps.status
        FROM project_sections ps
        JOIN projects p ON p.id = ps.project_id
       WHERE ps.organization_id = $1
         AND p.organization_id = $1
+        AND ps.project_id = $2
         AND p.status IS DISTINCT FROM 'archived'`,
-    [orgId],
+    [orgId, projectId],
   );
   const sections = rows as Array<{ section_code: string; module: string; title: string; status: string }>;
   if (sections.length === 0) return [];
 
   // Dedup by section_code within each module, keeping the most-advanced status (and its
   // title). One entry per distinct code so the surface's chip keys stay unique and the
-  // percentage counts each section once.
+  // percentage counts each section once. (Within a single project section_code is unique,
+  // so this is defensive — it does NOT merge across projects.)
   const byModule = new Map<string, Map<string, Section>>();
   for (const s of sections) {
     const mod = moduleDigit(str(s.module)) ?? moduleDigit(str(s.section_code));

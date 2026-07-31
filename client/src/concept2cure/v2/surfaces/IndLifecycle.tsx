@@ -331,6 +331,14 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               </div>
 
               <h3>1 -- Module progress</h3>
+              {R.moduleProgress.length === 0 && (
+                <div className="scaf-note" style={{ margin: '4px 0 10px' }}>
+                  No eCTD sections have been placed into this submission's filing yet.
+                  Sections appear here — scoped to this program — once they're added to
+                  the submission's sequence. (Documents in the authoring workspace that
+                  aren't placed into this filing are intentionally not shown.)
+                </div>
+              )}
               <div className="indl-mods">
                 {R.moduleProgress.map((m) => (
                   <div key={m.module} className="indl-mod">
