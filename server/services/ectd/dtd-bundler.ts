@@ -45,9 +45,13 @@ export function resolveDtdDir(env: NodeJS.ProcessEnv = process.env): string {
   return env.ECTD_DTD_DIR || path.resolve(process.cwd(), 'assets/ectd-dtd');
 }
 
-/** The DTD filenames a region's package must contain to be self-contained. */
+/** The DTD filenames a region's package must contain to be self-contained.
+ *  A region without a mapped regional DTD (e.g. an ICH-aligned region that reuses
+ *  the EMA backbone) requires only the ICH backbone DTD — never returns an
+ *  `undefined` entry (which previously crashed assessDtdReadiness). */
 export function requiredDtdsForRegion(region: DtdRegion): string[] {
-  return [ICH_BACKBONE_DTD, REGIONAL_DTD[region]];
+  const regional = REGIONAL_DTD[region];
+  return regional ? [ICH_BACKBONE_DTD, regional] : [ICH_BACKBONE_DTD];
 }
 
 /**

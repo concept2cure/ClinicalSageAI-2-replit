@@ -113,6 +113,14 @@ Manifest entry shape: `{ ctdSection, fileName, href, md5, operation?, title? }`.
    validate against a real eCTD validator before turning it on for a filing.
    (Path-2 `packageEctdSubmission` renders caller-supplied operations directly
    and is also lifecycle-complete.)
-3. **The submission-package-orchestrator** validates a *derived* leaf manifest
-   (all `new`) that stands in for a real ZIP builder. Wiring the real packager +
-   lifecycle into it is the larger integration that closes 1–3 together.
+3. **The submission-package-orchestrator now validates a REAL package.**
+   `package.assemble` renders each Module 3 ComposedSection to a leaf PDF and runs
+   the canonical packager (`server/services/ectd/orchestrator-real-package.ts`,
+   `assembleForValidation`), so `package.validate` runs DTD conformance against the
+   real `index.xml` backbone and recomputes MD5 against the real bytes — not the
+   former derived stand-in. PDF/A conversion is skipped there (`skipPdfaConversion`)
+   for byte-determinism so the OQ-5 sign-path drift check stays stable; PDF/A is
+   still gated on the deliverable path. Regions the packager cannot build a
+   backbone for (Move-7 widened regions) fall back to a derived manifest. The
+   orchestrator validates the *current composition* (all `new`); cross-sequence
+   lifecycle operators come from the export delta path (item 2), not here.
