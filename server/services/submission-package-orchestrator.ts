@@ -81,6 +81,18 @@ import {
  */
 function classifyStepError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
+  // Typed packager failures carry name/errorClass but messages that dodge the
+  // /validation/ regex below (e.g. the unplaceable-leaf ValidationError, "not
+  // submission-grade", "not DTD self-contained", "N broken cross-reference(s)").
+  // Classify by the typed marker first so these are not mislabeled 'unknown'.
+  if (
+    err !== null &&
+    typeof err === 'object' &&
+    ((err as { name?: unknown }).name === 'ValidationError' ||
+      (err as { errorClass?: unknown }).errorClass === 'validation')
+  ) {
+    return 'validation_failed';
+  }
   if (/tenant|organization_id|organizationId.+required/i.test(msg)) return 'tenant_isolation_violation';
   if (/SEQ_QUERY_FAILED|sequence history|sequence query/i.test(msg)) return 'sequence_query_failed';
   if (/gatewayReady|gateway not ready|hardenedScore/i.test(msg)) return 'gateway_not_ready';
@@ -385,9 +397,15 @@ export interface OrchestratorOutputs {
 /**
  * The contract between package.assemble and package.validate. The validator
  * consumes `leaves` + the context fields below; nothing else flows between
- * the two steps. Persisted on `OrchestratorOutputs.assembly` so that a
- * resumed run can re-validate without re-assembling, and so the step's
- * outputHash deterministically reflects what was validated.
+ * the two steps.
+ *
+ * NOT DB-persisted. It lives on `OrchestratorOutputs.assembly` in memory for the
+ * duration of a run; the run record stores only step metadata + a short outputRef
+ * label (`package.assemble:N-leaves`). A resumed run RE-DERIVES this by calling
+ * assembleForValidation again — safe ONLY because assembleRealPackage is
+ * byte-deterministic (epoch PDF timestamps + skipPdfaConversion + deterministic
+ * leaf IDs / index.xml). Do not delete the re-derivation on the assumption a
+ * persisted copy exists — there is none, and resume would then validate nothing.
  */
 export interface AssembledPackage {
   leaves: ECTDLeaf[];
@@ -399,9 +417,10 @@ export interface AssembledPackage {
   /**
    * The generated ICH backbone (index.xml) text for this assembly. Passed to the
    * hardened validator as backboneXml so DTD conformance actually runs (the
-   * stand-in path left it undefined). Persisted (a plain string) so it survives
-   * the run record; the per-leaf byte buffers used for MD5 recompute are held in
-   * memory only within the assembling run and are not part of this JSON shape.
+   * stand-in path left it undefined). Held in memory on the in-flight assembly
+   * (re-derived on resume, like the rest of this shape); the per-leaf byte
+   * buffers used for MD5 recompute are likewise in-memory only and are not part
+   * of this JSON shape.
    */
   backboneXml?: string;
 }
@@ -1512,11 +1531,12 @@ export async function runOrchestrator(
     // load-bearing contract between assemble and validate.
     const sequenceNumber = inputs.sequenceNumber ?? '0000';
     // Per-leaf bytes from the real assembly, kept in memory for the immediately
-    // following validate (the AssembledPackage persists only the backbone string,
-    // not binary buffers). A resumed run re-runs package.assemble and so
-    // repopulates this; it is only empty for the derived-manifest fallback used
-    // by regions the packager cannot build (no real files → MD5 recompute is a
-    // no-op there, and the DTD check is skipped for the same reason).
+    // following validate (the AssembledPackage carries only the backbone string,
+    // not binary buffers, and neither is DB-persisted). A resumed run re-runs
+    // package.assemble and so repopulates this; it is only empty for the
+    // derived-manifest fallback used by regions the packager cannot build (no
+    // real files → MD5 recompute is a no-op there, and the DTD check is skipped
+    // for the same reason).
     let assembledLeafBuffers: Record<string, Buffer> | undefined;
     await runStep('package.assemble', hashOutput(outputs), async () => {
       const { assembled, leafBuffers } = await assembleForValidation(

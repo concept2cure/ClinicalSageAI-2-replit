@@ -19,7 +19,22 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 
-export type DtdRegion = 'fda' | 'ema' | 'pmda' | 'ca';
+/** Every region the canonical packager can build a backbone for. Kept in sync
+ *  with regional-packager.ts backboneByRegion so `region as DtdRegion` at the
+ *  packager's readiness call site is an exact widening, not a lie. */
+export type DtdRegion =
+  | 'fda'
+  | 'ema'
+  | 'pmda'
+  | 'ca'
+  | 'uk'
+  | 'ch'
+  | 'au'
+  | 'cn'
+  | 'br'
+  | 'in'
+  | 'kr'
+  | 'sg';
 
 /** A vendored DTD read from the drop-point directory. */
 export interface VendoredDtd {
@@ -32,12 +47,28 @@ export const ICH_BACKBONE_DTD = 'ich-ectd-3-2.dtd';
 
 /** Region → the regional backbone DTD its m1 references (plus the ICH backbone).
  *  FDA is `us-regional-v3-3.dtd` — the current FDA eCTD Backbone Files
- *  Specification for Module 1 (DTD version 3.3) referenced by buildFdaBackbone. */
+ *  Specification for Module 1 (DTD version 3.3) referenced by buildFdaBackbone.
+ *
+ *  MIRRORS regional-packager.ts backboneByRegion. The eight widened regions
+ *  (uk/ch/au/cn/br/in/kr/sg) all build Module 1 via buildEmaBackbone, whose
+ *  DOCTYPE is `eu-regional.dtd`, so they require THAT regional DTD to be
+ *  self-contained — not merely the ICH backbone. Omitting it (as an
+ *  ICH-backbone-only mapping did) makes assessDtdReadiness clear a production
+ *  package that references a regional DTD it does not actually contain — the
+ *  exact failure the P0-1 self-containment gate exists to prevent. */
 const REGIONAL_DTD: Record<DtdRegion, string> = {
   fda: 'us-regional-v3-3.dtd',
   ema: 'eu-regional.dtd',
   pmda: 'jp-regional.dtd',
   ca: 'ca-regional.dtd',
+  uk: 'eu-regional.dtd',
+  ch: 'eu-regional.dtd',
+  au: 'eu-regional.dtd',
+  cn: 'eu-regional.dtd',
+  br: 'eu-regional.dtd',
+  in: 'eu-regional.dtd',
+  kr: 'eu-regional.dtd',
+  sg: 'eu-regional.dtd',
 };
 
 /** Resolve the DTD drop-point directory (ECTD_DTD_DIR or assets/ectd-dtd). */
