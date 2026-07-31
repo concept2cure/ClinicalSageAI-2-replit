@@ -2541,6 +2541,83 @@ confirming the pre-existing surface was sound and the guard is now the proof).
 
 ---
 
+## C-44 — the deploy-time sweep's allowlist diverged from the source of truth and broke api-key auth *(HIGH — FIXED 2026-07-31)*
+
+The most consequential defect this program has surfaced, and it was **self-inflicted
+by C-33**. `server/db/rlsAllowlist.ts` → `RLS_ALLOWLIST` is the documented single
+source of truth for tables that carry a tenant column but must **not** be policied,
+and `scripts/ci/check-rls-allowlist-sync.mjs` keeps `0021` in lock-step with it. But
+the C-33 deploy-time sweep (`20260801_tenant_isolation_sweep.sql`) was written with a
+**hand-authored 4-entry allowlist** — `organizations, organization_users,
+stripe_events, ectd_agency_configs` — that no guard checked against the canonical
+six. It **dropped `api_keys`, `billing_budgets`, `billing_alerts`** (and added two
+tables that have no tenant column at all).
+
+`api_keys` is the load-bearing one. `validateApiKey()`
+(`server/services/api-key-service.ts`) authenticates a request by hashing the
+presented key and looking it up **`FROM api_keys WHERE key_hash = $1`** on the raw
+pool — **before any tenant context exists**, because the whole point of the lookup
+is to *discover* which `organization_id` the key belongs to. `0021` exempts
+`api_keys` for exactly this reason. The sweep, not knowing, applied
+`tenant_isolation_policy` (and `FORCE`) to it.
+
+`server/db/runtime.ts` constructs the shared pool with `options: '-c
+app.rls_enforce=on'` in production (via `buildRlsStartupOptions`), so **every**
+pooled connection — including the raw one that pre-auth lookup rides — runs with
+enforcement live. Under `RLS_ENFORCE=on` (which the boot guard makes mandatory in
+production) the policy's leading `rls_enforce <> 'on'` clause is false, no tenant is
+set, the role is not `app_super_admin` → the row is filtered → `rows.length === 0`
+→ **"API key not found" for every key. All api-key authentication breaks.**
+
+CI could not see it. `rls-coverage-check.sql` allowlists `api_keys` (so it does not
+care whether it is policied); `deploy-smoke-assert` saw it *was* policied and passed.
+Both gates green; the only symptom is a runtime auth outage that appears the moment
+`RLS_ENFORCE=on` — precisely the production configuration this whole program drives
+toward.
+
+### Proof it actually breaks
+
+On real PostgreSQL 16, as a **non-superuser, non-owner** role (the production role
+shape) with `app.rls_enforce=on` and no tenant set — the exact pre-auth condition:
+with the sweep's policy present the `key_hash` lookup returns **0 rows**; after
+dropping it (0021's exemption) the same lookup returns **1**. The auth break is not
+theoretical.
+
+### Fix — one allowlist, guarded across every consumer, and self-healing
+
+1. **The sweep and `deploy-smoke-assert.mjs` now carry the canonical six**
+   (`organization_users, __drizzle_migrations, stripe_events, billing_budgets,
+   billing_alerts, api_keys`), byte-for-byte with `RLS_ALLOWLIST`, `0021`, and
+   `rls-coverage-check.sql`.
+2. **`check-rls-allowlist-sync.mjs` was extended from 2 to 4 consumers** — it now
+   pins `RLS_ALLOWLIST` against `0021`, the deploy-time sweep, `rls-coverage-check.sql`,
+   AND `deploy-smoke-assert.mjs`, failing the build on any drift in any of them. An
+   allowlist that is authoritative for one copy and folklore for three others is not
+   a source of truth; now every copy is checked. (Verified: dropping `api_keys` from
+   any copy fails the guard with the offending file named.)
+3. **A self-heal pass** in the sweep (`C-44`) drops `tenant_isolation_policy` from
+   any allowlisted table that wrongly carries it and restores the exempt shape (RLS
+   off, FORCE off). The forward fix stops *new* databases from hitting the bug, but
+   the first loop only ever *adds* a policy — it cannot undo one an earlier revision
+   already created, so any environment that ran the buggy sweep would stay broken.
+   An allowlisted table means "must not be policied", so a `tenant_isolation_policy`
+   on one is unambiguously wrong and safe to drop; only our own policy name is
+   touched.
+
+### Proof it is fixed
+
+On a **from-scratch** `install-fresh → deploy-migrate → deploy-migrate` against real
+pgvector: `api_keys`, `billing_alerts`, `billing_budgets` end `rls=f, forced=f,
+policied=f`, `0 healed` (the corrected first loop never policies them), and all
+`deploy-smoke` invariants pass. Applied to a database left in the **buggy** state
+(all three policied+forced), the self-heal logs `HEALED public.api_keys …` for each,
+drops the policy count by exactly three, and a re-run heals zero (idempotent).
+`tenant-isolation-sweep.contract.test.ts` adds two PGlite cases — a policied+forced
+`api_keys` is healed to unpoliced/RLS-off, and a clean allowlisted table is left
+unpoliced by the first loop — 18/18 pass. The four-consumer sync guard passes.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

@@ -38,8 +38,21 @@ const fail = (label, detail) => {
   console.error(`  ✗ ${label}${detail ? ` — ${detail}` : ''}`);
 };
 
-// Tables that intentionally hold no tenant-scoped rows (mirrors the sweep).
-const TENANT_ALLOWLIST = ['organizations', 'organization_users', 'stripe_events', 'ectd_agency_configs'];
+// Tables that carry a tenant column but are deliberately NOT policied — the
+// canonical RLS allowlist (server/db/rlsAllowlist.ts → RLS_ALLOWLIST). This MUST
+// match the sweep, 0021, and rls-coverage-check.sql; ci:rls-allowlist-sync fails
+// the build on drift between the four. Requiring a policy on an allowlisted table
+// would be a false failure here — and, worse, would pressure the sweep back into
+// policing api_keys, the pre-auth lookup whose isolation-under-enforce breaks all
+// api-key authentication (ledger C-44).
+const TENANT_ALLOWLIST = [
+  'organization_users',
+  '__drizzle_migrations',
+  'stripe_events',
+  'billing_budgets',
+  'billing_alerts',
+  'api_keys',
+];
 
 // ── 1. No integer-tenant table is left unisolated (the C-33 sweep invariant) ──
 // This is the leak the whole tenant_isolation_sweep exists to prevent, asserted
