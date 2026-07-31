@@ -167,6 +167,40 @@ describe('computeBoundPayloadDigest refactor', () => {
     expect(viaComponents).toBe(viaWrapper);
   });
 
+  it('full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant)', () => {
+    // Mirror sign-prep EXACTLY: digest via the wrapper with backboneXml:undefined.
+    const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32)), makeLeaf('m3.2.P.1', 'b'.repeat(32))];
+    const assembly = {
+      leaves,
+      totalSizeBytes: 4096,
+      applicationNumber: IDENTITY.applicationNumber,
+      sequenceNumber: '0000',
+      region: 'US' as const,
+      submissionType: 'IND',
+      backboneXml: '<index>real backbone</index>',
+    };
+    const validation = { gatewayReady: VO.gatewayReady, hardenedScore: VO.hardenedScore, summary: VO.summary } as never;
+    const prepDigest = computeBoundPayloadDigest({ assembly, validation, ...IDENTITY, backboneXml: undefined });
+
+    // Persist the snapshot the way the sign step does, then JSON round-trip it
+    // through the steps column (getRun does JSON.parse), then recompute the way
+    // resume does — must equal the prep digest or every new run fails on resume.
+    const persisted = JSON.parse(
+      JSON.stringify({
+        payloadDigest: prepDigest,
+        awaitingSince: new Date(0).toISOString(),
+        signedSnapshot: snapshotFor(leaves),
+      }),
+    );
+    const resumeDigest = computeBoundPayloadDigestFromComponents({
+      leaves: persisted.signedSnapshot.leaves,
+      validatorOutcome: persisted.signedSnapshot.validatorOutcome,
+      ...IDENTITY,
+      // resume also passes NO backboneXml — matching sign-prep's undefined.
+    });
+    expect(resumeDigest).toBe(prepDigest);
+  });
+
   it('depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not', () => {
     const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32))];
     const d1 = computeBoundPayloadDigestFromComponents({ leaves, validatorOutcome: VO, ...IDENTITY });
