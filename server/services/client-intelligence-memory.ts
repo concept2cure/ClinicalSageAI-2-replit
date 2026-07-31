@@ -33,6 +33,7 @@ import {
   extractMemoryEntriesFromText,
   extractProjectMemoryEntries,
 } from './memory/heuristic-extraction.js';
+import { extractTextFromFile } from './memory/document-text-extraction.js';
 import { ragRetrieve } from './ragRouter.js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -268,89 +269,6 @@ export async function getClientProfile(
  */
 function estimateTokens(text: string): number {
   return Math.ceil(text.length * 0.25);
-}
-
-/**
- * Extract text from an uploaded file buffer based on MIME type.
- * Uses available parsers for PDF, DOCX, Excel, CSV, and plain text.
- */
-async function extractTextFromFile(
-  buffer: Buffer,
-  mimeType: string,
-  fileName: string
-): Promise<{ text: string; pageCount?: number }> {
-  try {
-    // Plain text / Markdown
-    if (
-      mimeType === 'text/plain' ||
-      mimeType === 'text/markdown' ||
-      mimeType === 'text/csv' ||
-      fileName.endsWith('.txt') ||
-      fileName.endsWith('.md') ||
-      fileName.endsWith('.csv')
-    ) {
-      const text = buffer.toString('utf-8');
-      return { text };
-    }
-
-    // PDF
-    if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      try {
-        const pdfParse = (await import('pdf-parse')).default;
-        const result = await pdfParse(buffer);
-        return { text: result.text, pageCount: result.numpages };
-      } catch {
-        return { text: `[PDF file: ${fileName} — text extraction unavailable]` };
-      }
-    }
-
-    // DOCX
-    if (
-      mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      fileName.endsWith('.docx')
-    ) {
-      try {
-        const mammoth = await import('mammoth');
-        const result = await mammoth.extractRawText({ buffer });
-        return { text: result.value };
-      } catch {
-        return { text: `[DOCX file: ${fileName} — text extraction unavailable]` };
-      }
-    }
-
-    // XLSX / Excel
-    if (
-      mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      mimeType === 'application/vnd.ms-excel' ||
-      fileName.endsWith('.xlsx') ||
-      fileName.endsWith('.xls')
-    ) {
-      try {
-        const ExcelJS = await import('exceljs');
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(buffer);
-        const textParts: string[] = [];
-        workbook.eachSheet((worksheet) => {
-          textParts.push(`\n--- Sheet: ${worksheet.name} ---\n`);
-          worksheet.eachRow((row) => {
-            const values = row.values as any[];
-            if (Array.isArray(values)) {
-              textParts.push(values.slice(1).map(v => String(v ?? '')).join('\t'));
-            }
-          });
-        });
-        return { text: textParts.join('\n') };
-      } catch {
-        return { text: `[Excel file: ${fileName} — text extraction unavailable]` };
-      }
-    }
-
-    // Fallback
-    return { text: `[File: ${fileName} (${mimeType}) — unsupported format for text extraction]` };
-  } catch (err: any) {
-    console.error(`[ClientIntelligence] Text extraction failed for ${fileName}:`, err.message);
-    return { text: `[File: ${fileName} — extraction error: ${err.message}]` };
-  }
 }
 
 
