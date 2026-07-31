@@ -2618,6 +2618,64 @@ unpoliced by the first loop — 18/18 pass. The four-consumer sync guard passes.
 
 ---
 
+## C-45 — wiring the deploy-dead files exposed integer-tenant tables the public-only sweep never covers *(medium — RESOLVED 2026-07-31)*
+
+Found while verifying C-44 on a from-scratch deploy: `rls-coverage-check.sql` — the
+CI gate that scans **every** schema — flagged six integer-keyed tenant tables with
+no `tenant_isolation_policy`: `intelligence.ana_interactions`,
+`intelligence.outcome_feature_vectors`, `intelligence.pattern_warnings`,
+`intelligence.risk_predictions`, `intelligence.template_validations`, and
+`precedent.quality_checkpoints`.
+
+This gap is **self-inflicted, from this very program**. C-33/C-34 wired the
+migrations that create these tables (`20260306_precedent_engine`,
+`20260322_quality_checkpoints`, `20260520_regulatory_intelligence_layer`,
+`20260520_ana_failure_learning`) onto the deploy-migrate path. Before that they were
+deploy-dead — the tables never reached a provisioned database, so no coverage gate
+ever saw them. Now they land on every deploy, but both `0021` and the
+`tenant_isolation_sweep` operate on the **`public` schema only**, so nothing
+policies a non-public tenant table. (The CI job that runs `rls-coverage-check` has
+been *skipped*, not passing — `blank-db-provisioning` `needs: lint`, and lint has
+been red on an unrelated base typecheck regression — so the gate had not yet
+actually fired. It would have, the moment lint went green.)
+
+### Why the answer is EXEMPT, not isolate
+
+The api_keys lesson (C-44), applied deliberately rather than by omission. All six
+are read **only** by background jobs (`pattern-maintenance`, `counterfactual-replay`,
+`risk-model`, `calibration`) that import the **raw pool** and never set a tenant
+context — and by **no** route/request path (verified: zero references under
+`server/routes/`). They are cross-tenant **by design**: the failure-pattern library
+and the risk models are maintained/trained across the entire dataset. Attaching
+`tenant_isolation_policy` would, under `RLS_ENFORCE=on`, filter those context-less
+reads to zero rows and silently break the intelligence subsystem — the identical
+mechanism that broke api-key auth — while preventing no leak, because nothing
+user-facing reads them. That is exactly the "cross-tenant by design (admin /
+analytics)" rationale under which `billing_*` and `api_keys` are already exempt.
+
+### Fix
+
+`scripts/db/rls-coverage-check.sql` gains a **schema-qualified** carve-out for the
+six, kept deliberately SEPARATE from the public `RLS_ALLOWLIST` so C-44's
+single-source-of-truth for public tables stays clean (and so the four-consumer sync
+guard keeps reading only the public bare-name array — verified: the guard still
+pins the public six and flags a break in them, untouched by the new array). The
+header documents that if any of these ever gains a request-path reader, the correct
+move is a super-admin-scoped background connection **then** a policy — not a wider
+carve-out. Verified on a from-scratch real-pgvector deploy: `rls-coverage-check`
+returns empty; every other invariant (deploy-smoke, the four-consumer sync guard)
+still holds.
+
+Left open, honestly: the ~80 **uuid**-keyed tenant tables across the non-public
+schemas (`cortex`, `ai`, `compliance`, `manufacturing`, …) remain unpoliced. They
+are not a C-45 regression — the sweep skips non-integer tenant keys as drift by
+design (C-33 note 1), and `rls-coverage-check`'s INT-type filter never flagged them
+— they are the uuid-vs-integer tenant-identity split already logged as an open
+architectural question. Isolating that universe is a separate track from this
+program's integer-identity remediation.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
