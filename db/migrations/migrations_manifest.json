@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-30T13:45:35.144Z",
+  "generatedAt": "2026-07-30T23:11:51.565Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 249,
+  "totalMigrations": 257,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -584,7 +584,15 @@
     "20260730_submission_center_tables.sql",
     "20260730_authoring_comments_router_columns.sql",
     "20260730_cmc_change_control_store.sql",
-    "20260731_retire_intelligence_cluster_blobs.sql"
+    "20260731_retire_intelligence_cluster_blobs.sql",
+    "20260730_ectd_compilations_leaf_manifest.sql",
+    "20260730_ectd_compilations_sequence_columns.sql",
+    "20260801_hf_files_store.sql",
+    "20260801_labeling_pi_store.sql",
+    "20260801_market_access_store.sql",
+    "20260801_program_journey_store.sql",
+    "20260801_reg_change_store.sql",
+    "20260801_tenant_isolation_sweep.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

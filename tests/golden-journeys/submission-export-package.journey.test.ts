@@ -420,6 +420,31 @@ describe('golden journey — eCTD export to submittable package', () => {
         };
       });
 
+      // 7. A follow-up sequence exported as a LIFECYCLE DELTA against the prior
+      // one — the real cross-sequence path end to end through the DB: the prior
+      // 0000 manifest (stored above) is loaded, the changed leaf becomes a
+      // replace pointing modified-file back at the prior file.
+      await R.step('a follow-up sequence exports as a lifecycle delta (replace + modified-file)', async () => {
+        // Change the authored content so 0001's leaf checksum differs from 0000.
+        await jdb.pool.query(
+          `UPDATE project_sections SET content = content || E'\n\nREV2 amendment addendum.'
+             WHERE organization_id = 1 AND project_id = 1 AND section_code = '3.2.P.1'`,
+        );
+        const pkg = await generateEctdPackage(1, 1, {
+          region: 'FDA',
+          sequenceNumber: '0001',
+          lifecycleAgainstPrior: true,
+        });
+        const zip = await JSZip.loadAsync(pkg.buffer);
+        const index = await zip.file('index.xml')!.async('string');
+        // The changed leaf is a replace that points back at the 0000 copy.
+        const hasReplace = /<leaf operation="replace"[^>]*modified-file="\.\.\/0000\//.test(index);
+        expect(hasReplace).toBe(true);
+        // Snapshot mode marks everything "new"; a delta must not.
+        expect(index).not.toMatch(/<leaf operation="new"[^>]*3-2-P-1/);
+        return { filename: pkg.filename, hasReplace };
+      });
+
       R.observations.push(
         'Fixed while building this journey: generateEctdPackage queried project_sections by project_id ALONE, with no organization filter (every other content query in the service is org-scoped). Because the export route resolves submissionId from the URL and never verifies the project belongs to the caller, an authenticated org-B user could export org-A\'s authored section content into their own eCTD package — a cross-tenant leak of regulated dossier text. Now scoped by organization_id.',
         'Fixed while building this journey: the leaf PDF renderer embeds a WinAnsi standard font, and page.drawText throws on any glyph Windows-1252 cannot encode. The PENDING-placeholder generator emitted box-drawing characters, so EVERY incomplete-dossier export threw a "WinAnsi cannot encode" 500 before it could reach the completeness gate — and any authored content with Greek letters, arrows, or math operators (ubiquitous in CMC/clinical text) would have crashed the same way. Added a deterministic toWinAnsiSafe pass so the renderer is total over arbitrary Unicode.',

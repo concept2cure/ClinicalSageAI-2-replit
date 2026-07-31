@@ -8,7 +8,7 @@
     "files install-fresh.mjs names explicitly",
     "the drizzle push surface (pgTable/pgView in shared/)"
   ],
-  "count": 25,
+  "count": 19,
   "tables": {
     "ai_provider_audit_log": {
       "createdOnlyBy": [
@@ -50,14 +50,6 @@
         "server/services/ana-ri/command-executor.ts"
       ]
     },
-    "embedding_audit_log": {
-      "createdOnlyBy": [
-        "db/migrations/20260125_enhanced_cortex_schema.sql"
-      ],
-      "referencedBy": [
-        "server/services/enhancedEmbeddingService.ts"
-      ]
-    },
     "ind_milestones": {
       "createdOnlyBy": [
         "db/migrations/_consolidated/ind_wizard_schema.sql"
@@ -80,49 +72,6 @@
       ],
       "referencedBy": [
         "server/services/regulatory-programs.service.ts"
-      ]
-    },
-    "lumen_atom_citations": {
-      "createdOnlyBy": [
-        "db/migrations/20260125_enhanced_cortex_schema.sql"
-      ],
-      "referencedBy": [
-        "server/services/atomQualityService.ts"
-      ]
-    },
-    "lumen_atom_conflicts": {
-      "createdOnlyBy": [
-        "db/migrations/20260125_enhanced_cortex_schema.sql"
-      ],
-      "referencedBy": [
-        "server/services/conflictDetectionService.ts"
-      ]
-    },
-    "lumen_atom_quality_scores": {
-      "createdOnlyBy": [
-        "db/migrations/20260125_enhanced_cortex_schema.sql"
-      ],
-      "referencedBy": [
-        "server/services/atomQualityService.ts",
-        "server/services/conflictDetectionService.ts"
-      ]
-    },
-    "lumen_atom_versions": {
-      "createdOnlyBy": [
-        "db/migrations/20260125_enhanced_cortex_schema.sql"
-      ],
-      "referencedBy": [
-        "server/services/atomVersionService.ts"
-      ]
-    },
-    "lumen_knowledge_graph_edges": {
-      "createdOnlyBy": [
-        "db/migrations/20260125_enhanced_cortex_schema.sql"
-      ],
-      "referencedBy": [
-        "server/routes/cortexQueryRoutes.ts",
-        "server/services/atomQualityService.ts",
-        "server/services/knowledgeGraphService.ts"
       ]
     },
     "maud_algorithms": {

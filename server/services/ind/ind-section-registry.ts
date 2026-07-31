@@ -12,6 +12,8 @@
  * @module server/services/ind/ind-section-registry
  */
 
+import { buildSectionGenerationPrompt } from './ctd/index.js';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface INDSection {
@@ -348,13 +350,24 @@ export function getModuleStatus(artifacts: Array<{ ctdSection?: string; status?:
   return modules;
 }
 
-/** Generate the prompt for a specific section with project context */
+/**
+ * Generate the prompt for a specific section with project context.
+ *
+ * Prefers the canonical CTD authoring-guidance overlay (leaf-level, industry
+ * grade — server/services/ind/ctd) so a deep code such as "3.2.S.4" or "2.7.4"
+ * drafts against its real per-section guidance. Falls back to this registry's
+ * own top-level generationPrompt when no overlay entry resolves, so every
+ * existing code keeps working.
+ */
 export function getGenerationPrompt(code: string, projectContext: {
   productName?: string;
   indication?: string;
   sponsor?: string;
   phase?: string;
 }): string {
+  const deep = buildSectionGenerationPrompt(code, projectContext);
+  if (deep) return deep;
+
   const section = getSectionByCode(code);
   if (!section) return '';
 
@@ -366,5 +379,24 @@ export function getGenerationPrompt(code: string, projectContext: {
 
   return `You are a regulatory affairs expert. ${prompt}\n\nWrite in formal regulatory language suitable for FDA submission. Follow ICH M4 CTD structure. Include section headings and sub-headings as appropriate. Reference: ${section.guidance}.`;
 }
+
+// Re-export the canonical CTD authoring depth so consumers of this registry can
+// reach the leaf-level guidance and the lifecycle document-type set from one
+// import site.
+export {
+  CTD_AUTHORING_GUIDANCE,
+  LIFECYCLE_DOCUMENT_TYPES,
+  getCtdAuthoringGuidance,
+  getCtdGuidanceForModule,
+  getCtdGuidanceForFamily,
+  listCtdGuidanceCodes,
+  listLifecycleDocumentTypes,
+  getLifecycleDocumentType,
+  listLifecycleDocumentTypesByFamily,
+  resolveCtdSectionsForDocType,
+  buildSectionGenerationPrompt,
+  normalizeCtdCode,
+} from './ctd/index.js';
+export type { CtdSection, LifecycleDocumentType, LifecycleComponent } from './ctd/index.js';
 
 export default IND_SECTIONS;

@@ -50,4 +50,34 @@ describe('firecrawl policy + quota helpers', () => {
     });
     expect(res.allowed).toBe(false);
   });
+
+  test('policy fails closed when an enabled tenant has NO allowlist', () => {
+    // Regression guard: an enabled tenant with no domain allowlist must not be
+    // able to scrape an arbitrary public URL (SSRF / exfiltration default-allow).
+    const res = evaluateFirecrawlPolicy({
+      enabled: true,
+      requestedUrl: 'https://example.com/public-page',
+    });
+    expect(res.allowed).toBe(false);
+    expect(res.reason).toBe('allowlist_required');
+  });
+
+  test('policy fails closed on an empty allowlist array', () => {
+    const res = evaluateFirecrawlPolicy({
+      enabled: true,
+      requestedUrl: 'https://example.com/public-page',
+      domainAllowlist: [],
+    });
+    expect(res.allowed).toBe(false);
+    expect(res.reason).toBe('allowlist_required');
+  });
+
+  test('policy still allows an explicitly allowlisted domain', () => {
+    const res = evaluateFirecrawlPolicy({
+      enabled: true,
+      requestedUrl: 'https://clinicaltrials.gov/study/NCT00000000',
+      domainAllowlist: ['clinicaltrials.gov'],
+    });
+    expect(res.allowed).toBe(true);
+  });
 });

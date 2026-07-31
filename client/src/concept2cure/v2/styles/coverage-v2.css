@@ -86,8 +86,11 @@
 .c2c-v2 .dc-820-dot{ width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .c2c-v2 .dc-820-dot.tone-ok{ background:var(--success-muted,var(--success-muted)); color:var(--success); }
 .c2c-v2 .dc-820-dot.tone-err{ background:var(--error-muted); color:var(--error); }
+.c2c-v2 .dc-820-dot.tone-idle{ background:var(--bg-200); color:var(--text-400); }
 .c2c-v2 .dc-820-dot svg{ width:13px; height:13px; }
 .c2c-v2 .dc-820-l{ font-size:13px; color:var(--text-100); flex:1; }
+.c2c-v2 .dc-820-row[data-untracked] .dc-820-l{ color:var(--text-400); }
+.c2c-v2 .dc-820-note{ font-size:11px; color:var(--text-400); font-style:italic; }
 .c2c-v2 .dc-820-ref{ font-size:11px; color:var(--text-400); }
 .c2c-v2 .dc-820-fix{ font-size:11.5px; color:var(--accent-200); background:var(--accent-000); border:0; border-radius:6px; padding:3px 10px; cursor:pointer; }
 

@@ -5,6 +5,7 @@ import { authMiddleware } from '../auth';
 import { getFirecrawlQuotaStatus } from '../integrations/firecrawl/usage';
 import { getPool } from '../db';
 import { evaluateFirecrawlPolicy } from '../integrations/firecrawl/policy';
+import { isFirecrawlEnabled } from '../integrations/firecrawl/guards';
 import { sourceSelectionDecision } from '../services/research-intelligence/sourceSelectionPolicy';
 import { buildRegulatoryEvidenceBriefPackage } from '../services/research-intelligence/buildRegulatoryEvidenceBrief';
 
@@ -53,6 +54,47 @@ router.post('/route', async (req, res) => {
   }
 });
 
+/**
+ * Firecrawl readiness for the /validate preflight: quota, fail-closed enabled
+ * check, and (if a sample URL is given) the domain/allowlist policy. Returns
+ * blockers/warnings the caller merges into the validation payload.
+ */
+async function computeFirecrawlValidation(
+  tenantId: number,
+  sampleUrl: unknown,
+): Promise<{ quota: any; blockers: string[]; warnings: string[]; sampleUrlPolicy?: any }> {
+  const blockers: string[] = [];
+  const warnings: string[] = [];
+
+  const quota = await getFirecrawlQuotaStatus(tenantId);
+  if (!quota.allowed) blockers.push('quota_exhausted');
+
+  const pool = getPool();
+  const settingsRes = await pool.query(
+    `SELECT firecrawl_enabled, firecrawl_domain_allowlist_json, firecrawl_category_policy_json
+       FROM external_tool_settings WHERE tenant_id = $1`,
+    [tenantId],
+  );
+  const settings = settingsRes.rows[0] || {};
+  // Fail closed: only an explicit firecrawl_enabled === true counts as enabled.
+  if (!isFirecrawlEnabled(settings)) blockers.push('admin_disabled');
+
+  let sampleUrlPolicy: any;
+  if (sampleUrl) {
+    sampleUrlPolicy = evaluateFirecrawlPolicy({
+      enabled: isFirecrawlEnabled(settings),
+      requestedUrl: sampleUrl as string,
+      domainAllowlist: settings.firecrawl_domain_allowlist_json || [],
+      categoryPolicy: settings.firecrawl_category_policy_json || {},
+    });
+    if (!sampleUrlPolicy.allowed) blockers.push('policy_blocked');
+  } else {
+    warnings.push('No sampleUrl provided; domain policy was not evaluated.');
+  }
+
+  return { quota, blockers, warnings, sampleUrlPolicy };
+}
+
 router.post('/validate', async (req, res) => {
   const { message, useFirecrawl, sampleUrl } = req.body || {};
   if (!message || typeof message !== 'string') {
@@ -73,30 +115,11 @@ router.post('/validate', async (req, res) => {
   };
 
   if (useFirecrawl) {
-    const quota = await getFirecrawlQuotaStatus(tenantId);
-    validation.quota = quota;
-    if (!quota.allowed) validation.blockers.push('quota_exhausted');
-
-    const pool = getPool();
-    const settingsRes = await pool.query(
-      `SELECT firecrawl_enabled, firecrawl_domain_allowlist_json, firecrawl_category_policy_json
-         FROM external_tool_settings WHERE tenant_id = $1`,
-      [tenantId]
-    );
-    const settings = settingsRes.rows[0] || {};
-    if (settings.firecrawl_enabled === false) validation.blockers.push('admin_disabled');
-    if (sampleUrl) {
-      const policy = evaluateFirecrawlPolicy({
-        enabled: settings.firecrawl_enabled !== false,
-        requestedUrl: sampleUrl,
-        domainAllowlist: settings.firecrawl_domain_allowlist_json || [],
-        categoryPolicy: settings.firecrawl_category_policy_json || {},
-      });
-      validation.sampleUrlPolicy = policy;
-      if (!policy.allowed) validation.blockers.push('policy_blocked');
-    } else {
-      validation.warnings.push('No sampleUrl provided; domain policy was not evaluated.');
-    }
+    const fc = await computeFirecrawlValidation(tenantId, sampleUrl);
+    validation.quota = fc.quota;
+    validation.blockers.push(...fc.blockers);
+    validation.warnings.push(...fc.warnings);
+    if (fc.sampleUrlPolicy) validation.sampleUrlPolicy = fc.sampleUrlPolicy;
   }
 
   try {

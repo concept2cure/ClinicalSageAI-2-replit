@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { liveGetOrNull, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 
-/* -- Inline fixture types -- */
+/* ════ AgencyMeetings — regulator-interaction worklist ════
+
+   Fixture-free by construction (real-data standard). The surface renders the
+   org's REAL agency meetings from GET /api/agency-meetings — each row plus its
+   nested briefing book and minutes rehydrated from the c2c_agency_meetings
+   JSONB columns — or an honest loading / empty / error state. New requests are
+   persisted via POST /api/agency-meetings and the surface adopts the row the
+   server actually wrote. No fixture, no "Sample data" pill, no local stand-in. */
+
+/* -- Render-contract types (shape of GET /api/agency-meetings rows) -- */
 
 interface Meeting {
   id: string;
@@ -66,76 +75,6 @@ type LiveMeeting = Meeting & {
   minutes?: Minutes | null;
 };
 
-/* -- Inline fixture data (kit-identical) -- */
-
-const MTG_LIST: Meeting[] = [
-  {
-    id: 'm1', type: 'Pre-IND', agency: 'FDA · CDER', cat: 'Type B', program: 'BX-204 · IND', status: 'granted',
-    requested: '2026-05-02', granted: '2026-05-20', meets: '2026-07-08', clock: 'WRR due 2026-06-24',
-    format: 'Written responses + teleconference', goal: 'Align on the nonclinical package and Phase 1 design before IND.',
-  },
-  {
-    id: 'm2', type: 'End-of-Phase-2', agency: 'FDA · CDER', cat: 'Type B (EOP2)', program: 'BX-204 · NDA', status: 'requested',
-    requested: '2026-06-10', granted: null, meets: null, clock: 'FDA grant/deny due 2026-06-31',
-    format: 'Face-to-face', goal: 'Agree the Phase 3 pivotal design, endpoints, and the SAP before committing.',
-  },
-  {
-    id: 'm3', type: 'Pre-Submission (Q-Sub)', agency: 'FDA · CDRH', cat: 'Q-Sub', program: 'Aurora CGM · 510(k)', status: 'held',
-    requested: '2026-03-01', granted: '2026-03-18', meets: '2026-04-22', clock: 'Minutes received',
-    format: 'Teleconference', goal: 'Confirm predicate strategy and the human-factors validation plan.',
-  },
-  {
-    id: 'm4', type: 'Scientific Advice', agency: 'EMA · CHMP/SAWP', cat: 'EMA SA', program: 'BX-204 · MAA', status: 'planned',
-    requested: null, granted: null, meets: '2026-09-15 (target)', clock: 'Letter of Intent by 2026-07-20',
-    format: 'SAWP discussion', goal: 'Parallel EU view on the pivotal design + confirmatory evidence.',
-  },
-];
-
-const MTG_BB: Record<string, BriefingBook> = {
-  m1: {
-    title: 'Pre-IND briefing book · BX-204', state: 'In review', ver: 'v0.8', owner: 'J. Chen',
-    sections: [
-      { n: '1', label: 'Product & regulatory history', st: 'approved' },
-      { n: '2', label: 'Nonclinical pharmacology / toxicology summary', st: 'review' },
-      { n: '3', label: 'CMC overview', st: 'review' },
-      { n: '4', label: 'Proposed Phase 1 clinical protocol synopsis', st: 'draft' },
-      { n: '5', label: 'Specific questions to the Agency', st: 'draft', focus: true },
-    ],
-    questions: [
-      { q: 'Does the Agency agree the 13-week GLP tox package supports the proposed Phase 1 starting dose?', area: 'Nonclinical', pos: 'Supported by MABEL + 10x safety factor.' },
-      { q: 'Is the proposed first-in-human dose-escalation scheme (3+3) acceptable?', area: 'Clinical', pos: 'Aligns with precedent in RTK-X inhibitors.' },
-      { q: 'Does the Agency concur the comparability protocol is sufficient for the planned process change?', area: 'CMC', pos: 'Pending the S3.2.S.4 reconciliation.' },
-    ],
-  },
-  m3: {
-    title: 'Pre-Sub briefing book · Aurora CGM', state: 'Final', ver: 'v1.0', owner: 'M. Webb',
-    sections: [
-      { n: '1', label: 'Device description & intended use', st: 'approved' },
-      { n: '2', label: 'Proposed predicate & SE rationale', st: 'approved' },
-      { n: '3', label: 'Human-factors validation plan', st: 'approved' },
-      { n: '4', label: 'Specific questions to the Agency', st: 'approved', focus: true },
-    ],
-    questions: [
-      { q: 'Does CDRH agree K221847 is an appropriate primary predicate?', area: 'Predicate', pos: 'Same intended use; iCGM special controls.' },
-      { q: 'Is the summative human-factors protocol adequate for the use-related risks?', area: 'Human factors', pos: '15 users/group per IEC 62366-1.' },
-    ],
-  },
-};
-
-const MTG_MINUTES: Record<string, Minutes> = {
-  m3: {
-    received: '2026-04-29',
-    agree: [
-      'CDRH concurred K221847 is an acceptable primary predicate.',
-      'Summative HF protocol acceptable with critical-task list expanded to include sensor insertion.',
-    ],
-    commitments: [
-      { c: 'Expand HF critical-task analysis to cover insertion-site errors.', doc: 'Human-factors validation plan', due: 'Before 510(k)', st: 'open' },
-      { c: 'Provide stratified MARD by age band in the clinical performance report.', doc: 'Performance -- clinical', due: 'In submission', st: 'open' },
-    ],
-  },
-};
-
 /* -- Inline shared helpers -- */
 
 function useToast(): [string, (m: string) => void] {
@@ -161,14 +100,36 @@ function MtgStat({ children, tone }: { children: React.ReactNode; tone?: string 
   return <span className={'mtg-stat ' + (tone || '')}>{children}</span>;
 }
 
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Pull a YYYY-MM-DD out of a free-text meets/clock string, returning its epoch
+ *  ms for ordering — null when the field carries no parseable date. */
+function meetEpoch(s: string | null): number | null {
+  if (!s) return null;
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const t = Date.parse(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`);
+  return Number.isFinite(t) ? t : null;
+}
+
+/** "Jul 8" from a free-text date string, built from the matched parts so it is
+ *  timezone-stable — null when there is no date to show. */
+function meetShort(s: string | null): string | null {
+  if (!s) return null;
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return `${MON[parseInt(m[2], 10) - 1]} ${parseInt(m[3], 10)}`;
+}
+
 /* ════ AgencyMeetings -- agency meetings & briefing books surface ════ */
 
 export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
-  const [meetings, setMeetings] = useState<Meeting[]>(() => MTG_LIST.map((r) => ({ ...r })));
-  const [bbMap, setBbMap] = useState<Record<string, BriefingBook>>(MTG_BB);
-  const [minMap, setMinMap] = useState<Record<string, Minutes>>(MTG_MINUTES);
-  const [sample, setSample] = useState(true);
-  const [sel, setSel] = useState('m1');
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [bbMap, setBbMap] = useState<Record<string, BriefingBook>>({});
+  const [minMap, setMinMap] = useState<Record<string, Minutes>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sel, setSel] = useState('');
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
   const m = meetings.find((x) => x.id === sel) || meetings[0];
@@ -182,35 +143,34 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     );
   };
 
-  /* live ?? fixture — adopt the org's seeded agency meetings (and each row's
-     nested briefing book + minutes) when the store returns the full meeting
-     shape, else keep the codebase fixture so the surface is never empty. Never
-     fabricates. Local form-added rows then work off whichever set loaded. */
+  /* Fixture-free read: adopt the org's REAL agency meetings (and each row's
+     nested briefing book + minutes from the c2c_agency_meetings JSONB columns).
+     A failed fetch is an honest error; a successful zero-row load is an honest
+     empty — never a codebase fixture. Local form-added rows are the actual
+     server-persisted rows returned by the POST, not stand-ins. */
   useEffect(() => {
     let cancelled = false;
-    liveGet<{ data?: LiveMeeting[] }>('/api/agency-meetings', { data: [] }).then((res) => {
+    setLoading(true);
+    setError(null);
+    liveGetOrNull<LiveMeeting[]>('/api/agency-meetings').then((res) => {
       if (cancelled) return;
-      const list = res.data?.data;
-      if (
-        !res.sample &&
-        Array.isArray(list) &&
-        list.length > 0 &&
-        list[0]?.id &&
-        list[0]?.type &&
-        list[0]?.status
-      ) {
-        setMeetings(list.map(({ briefingBook: _bb, minutes: _mn, ...row }) => row));
-        const bb: Record<string, BriefingBook> = {};
-        const mn: Record<string, Minutes> = {};
-        for (const r of list) {
-          if (r.briefingBook) bb[r.id] = r.briefingBook;
-          if (r.minutes) mn[r.id] = r.minutes;
-        }
-        setBbMap(bb);
-        setMinMap(mn);
-        setSel((cur) => (list.some((s) => s.id === cur) ? cur : list[0].id));
-        setSample(false);
+      if (res.error) {
+        setError(res.error);
+        setLoading(false);
+        return;
       }
+      const list = Array.isArray(res.data) ? res.data : [];
+      setMeetings(list.map(({ briefingBook: _bb, minutes: _mn, ...row }) => row));
+      const bb: Record<string, BriefingBook> = {};
+      const mn: Record<string, Minutes> = {};
+      for (const r of list) {
+        if (r.briefingBook) bb[r.id] = r.briefingBook;
+        if (r.minutes) mn[r.id] = r.minutes;
+      }
+      setBbMap(bb);
+      setMinMap(mn);
+      if (list.length > 0) setSel((cur) => (list.some((s) => s.id === cur) ? cur : list[0].id));
+      setLoading(false);
     });
     return () => {
       cancelled = true;
@@ -250,66 +210,41 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     ],
   };
 
+  /* Persist the request org-scoped and adopt the row the server actually wrote
+     (its real id/fields). On any failure, add nothing and toast honestly —
+     never claim a save that did not happen, and never insert a local stand-in. */
   const submitMtg = async (v: Record<string, string>) => {
     setForm(false);
-
-    // LIVE — the read adopted the store, so persist the request org-scoped. On
-    // ok, adopt the row the server actually wrote (its real id/fields). On
-    // failure, don't add anything and toast honestly — never claim a save that
-    // did not happen.
-    if (!sample) {
-      try {
-        const res = await apiRequest('POST', '/api/agency-meetings', {
-          type: v.type,
-          agency: v.agency,
-          cat: v.cat || v.type,
-          program: v.program,
-          format: v.format,
-          requested: v.requested || '',
-          goal: v.goal,
-        });
-        if (!res.ok) {
-          fireToast('Could not save meeting request · signed in?');
-          return;
-        }
-        const payload = await res.json().catch(() => null);
-        const row = payload?.data as LiveMeeting | undefined;
-        if (!row || !row.id) {
-          fireToast('Could not save meeting request · signed in?');
-          return;
-        }
-        const { briefingBook: _bb, minutes: _mn, ...meeting } = row;
-        addMeeting(meeting as Meeting);
-        setSel(row.id);
-        fireToast('Meeting request created · ' + row.type);
-      } catch (e) {
-        fireToast(
-          'Could not save meeting request · ' +
-            (e instanceof Error && e.message ? e.message : 'signed in?'),
-        );
+    try {
+      const res = await apiRequest('POST', '/api/agency-meetings', {
+        type: v.type,
+        agency: v.agency,
+        cat: v.cat || v.type,
+        program: v.program,
+        format: v.format,
+        requested: v.requested || '',
+        goal: v.goal,
+      });
+      if (!res.ok) {
+        fireToast('Could not save meeting request · signed in?');
+        return;
       }
-      return;
+      const payload = await res.json().catch(() => null);
+      const row = payload?.data as LiveMeeting | undefined;
+      if (!row || !row.id) {
+        fireToast('Could not save meeting request · signed in?');
+        return;
+      }
+      const { briefingBook: _bb, minutes: _mn, ...meeting } = row;
+      addMeeting(meeting as Meeting);
+      setSel(row.id);
+      fireToast('Meeting request created · ' + row.type);
+    } catch (e) {
+      fireToast(
+        'Could not save meeting request · ' +
+          (e instanceof Error && e.message ? e.message : 'signed in?'),
+      );
     }
-
-    // SAMPLE — backend unreachable; record locally and say so rather than claim
-    // a persisted write.
-    const id = 'm' + Date.now();
-    addMeeting({
-      id,
-      type: v.type,
-      agency: v.agency,
-      cat: v.cat || v.type,
-      program: v.program,
-      status: 'requested',
-      requested: v.requested || '--',
-      granted: null,
-      meets: null,
-      clock: 'FDA grant/deny pending',
-      format: v.format,
-      goal: v.goal,
-    });
-    setSel(id);
-    fireToast('Meeting request created · ' + v.type + ' · local sample only, not persisted');
   };
 
   const bb: BriefingBook | undefined = bbMap[sel];
@@ -317,11 +252,36 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
   const stTone: Record<string, string> = { granted: 'ok', held: 'ok', requested: 'warn', planned: 'idle' };
   const ssTone: Record<string, string> = { approved: 'ok', review: 'warn', draft: 'idle', final: 'ok' };
 
+  /* KPIs derived from the REAL rows only (never hardcoded). The "next" meeting
+     is the soonest-dated one still ahead (falling back to the soonest overall);
+     open questions/commitments roll up the nested briefing books and minutes. */
+  const dated = meetings
+    .map((x) => ({ x, t: meetEpoch(x.meets) }))
+    .filter((d): d is { x: Meeting; t: number } => d.t !== null)
+    .sort((a, b) => a.t - b.t);
+  const nowMs = Date.now();
+  const nextMtg = dated.find((d) => d.t >= nowMs) ?? dated[0];
+  const nextVal = nextMtg ? meetShort(nextMtg.x.meets) ?? '--' : '--';
+  const openQuestions = Object.values(bbMap).reduce(
+    (n, b) => n + (Array.isArray(b.questions) ? b.questions.length : 0),
+    0,
+  );
+  const openCommitments = Object.values(minMap).reduce(
+    (n, mn2) =>
+      n +
+      (Array.isArray(mn2.commitments)
+        ? mn2.commitments.filter((c) => c.st === 'open').length
+        : 0),
+    0,
+  );
+  const ready = !loading && !error;
+  const kv = (n: number | string) => (ready ? String(n) : '--');
+
   return (
     <div className="page-inner reg">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Platform · agency interactions <SampleTag sample={sample} /></div>
+          <div className="reg-eyebrow">Platform · agency interactions</div>
           <h1 className="reg-title">Meetings &amp; briefing books</h1>
           <p className="reg-sub">
             The regulator interactions that gate a program -- Pre-IND, INTERACT,
@@ -351,27 +311,54 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="reg-kpis">
         <div className="reg-kpi">
-          <div className="reg-kpi-v">{meetings.length}</div>
+          <div className="reg-kpi-v">{kv(meetings.length)}</div>
           <div className="reg-kpi-l">Meetings</div>
         </div>
         <div className="reg-kpi">
           <div className="reg-kpi-v" data-tone="warn">
-            Jul 8
+            {ready ? nextVal : '--'}
           </div>
-          <div className="reg-kpi-l">Next -- Pre-IND WRR Jun 24</div>
+          <div className="reg-kpi-l">
+            {ready && nextMtg ? 'Next -- ' + nextMtg.x.type : 'Next meeting'}
+          </div>
         </div>
         <div className="reg-kpi">
-          <div className="reg-kpi-v">5</div>
+          <div className="reg-kpi-v">{kv(openQuestions)}</div>
           <div className="reg-kpi-l">Open questions to agencies</div>
         </div>
         <div className="reg-kpi">
-          <div className="reg-kpi-v" data-tone="warn">
-            2
+          <div className="reg-kpi-v" data-tone={openCommitments > 0 ? 'warn' : undefined}>
+            {kv(openCommitments)}
           </div>
           <div className="reg-kpi-l">Open commitments</div>
         </div>
       </div>
 
+      {loading ? (
+        <div className="reg-sub2" style={{ padding: '18px 14px' }}>
+          Loading agency meetings…
+        </div>
+      ) : error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load agency meetings"
+          hint="The agency-meetings store didn't respond. These are your organization's regulator interactions — sign in and retry, or check the service is reachable."
+        />
+      ) : meetings.length === 0 ? (
+        <EmptyState
+          icon={I.calendar}
+          title="No agency meetings tracked yet"
+          hint={
+            <>
+              Request your first regulator interaction to build its briefing book
+              and track its clock, minutes and commitments. Requests are persisted
+              via <span className="mono">POST /api/agency-meetings</span> — or ask
+              AnA to prepare a Pre-IND package with you.
+            </>
+          }
+        />
+      ) : (
       <div className="mtg-split">
         <div className="mtg-list">
           {meetings.map((x) => (
@@ -520,6 +507,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
           )}
         </div>
       </div>
+      )}
 
       {form && (
         <C2CForm

@@ -514,6 +514,22 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260508_artifact_citations.sql',
   'db/migrations/20260520_growth_mindset_extensions.sql',
   'db/migrations/20260621_weekly_usage_limits.sql',
+
+  // ── C-36: enhanced cortex, unblocked by fixing the identity conflict ─────
+  // Six tables behind five live services (knowledgeGraphService, atomVersion-
+  // Service, atomQualityService, conflictDetectionService, enhancedEmbedding-
+  // Service). C-34 left it baselined because its atom foreign keys were declared
+  // UUID while the canonical lumen_data_atoms.id is `serial` — the FK was
+  // literally unimplementable, and even without it the services' own
+  // `... JOIN lumen_atom_quality_scores q ON a.id = q.atom_id` would have failed
+  // with "operator does not exist: integer = uuid". The file was written against
+  // an imagined uuid-keyed atom store that does not exist on any database.
+  // C-36 converts every ATOM-id reference to INTEGER to match the canonical key
+  // (each table's own `id UUID PRIMARY KEY` is untouched — those are their own
+  // identities, not atom references). Verified against the base fixture: applies
+  // twice, all six tables created, both previously-impossible FKs now present,
+  // and the services' real JOIN typechecks.
+  'db/migrations/20260125_enhanced_cortex_schema.sql',
   //
   // Five remain unwired, each for a named reason rather than an unexamined
   // "probably fine" (they stay in the ci:migration-reachability baseline):
@@ -524,12 +540,36 @@ export const C2C_MIGRATION_FILES = [
   //     habit this ledger exists to break.
   //   • 20260208_phase6_6a_risk_rollups — needs predicate.fda_510k_clearances
   //     from the first of those two; blocked behind it.
-  //   • 068_regulatory_schema_alignment — needs `regulatory.submissions`, which
-  //     NOTHING in the repo creates. A real missing-creator defect (C-11 class),
-  //     not a reachability one.
-  //   • 20260125_enhanced_cortex_schema — its
-  //     lumen_knowledge_graph_edges_source_atom_id_fkey cannot be implemented
-  //     against the canonical lumen_data_atoms key type. A real shape conflict.
+  //   • 068_regulatory_schema_alignment — creates only regulatory.information_
+  //     requests, which C-35's schema-qualification fix showed is not referenced
+  //     by server code at all. It is dead schema, not a live gap; the "missing
+  //     regulatory.submissions creator" C-34 recorded here was an artifact of the
+  //     guard bug C-35 fixed. Left unwired because nothing needs it.
+  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and wired above; its
+  //     UUID-vs-serial atom-key conflict was the defect, not an ordering gap.
+
+  // ── unified_documents / workflow_document_versions (ledger C-29, #1239/#1242) ──
+  // Both tables are defined in Drizzle (shared/schema/unified_workflow.ts) but
+  // that module is NOT re-exported by shared/schema.ts, so drizzle-kit push
+  // never creates them on a fresh install; the only raw creator
+  // (db/migrations/_consolidated/…complete_schema.sql) redefines users/tenants
+  // with TEXT keys (the C-29 collision) and lives where the install-fresh
+  // overlay never walks. So this trio is the SOLE durable path to both tables on
+  // every real database — fresh or incremental — exactly the merged-≠-applied
+  // gap this list exists to close. The two ALTERs previously sat in the
+  // ops-audit KNOWN_UNLISTED baseline on the (false) premise that push would
+  // reproduce them; it cannot, so they move onto the durable path here too.
+  //
+  // ORDER MATTERS: _provision creates both tables (integer-keyed, IF NOT EXISTS);
+  // _org_id adds organization_id nullable and backfills it from the parent
+  // document; _org_not_null tightens it to NOT NULL. All idempotent (CREATE
+  // TABLE/INDEX and ADD COLUMN IF NOT EXISTS; backfill guarded on IS NULL;
+  // SET NOT NULL no-ops once set, and every row has a NOT-NULL FK parent so the
+  // backfill leaves none behind). MUST precede the tenant-isolation sweep so the
+  // new integer-org tables come under RLS.
+  'migrations/20260729_unified_documents_provision.sql',
+  'migrations/20260730_workflow_doc_versions_org_id.sql',
+  'migrations/20260731_workflow_doc_versions_org_not_null.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and

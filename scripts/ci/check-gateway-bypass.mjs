@@ -4,8 +4,14 @@
  *
  * The governed AI gateway (server/services/ai-gateway) is the single point that
  * records model, prompt hash, temperature, seed, and the fallback chain for
- * every AI call. Direct LLM client instantiation (`new OpenAI(...)` /
- * `new Anthropic(...)`) outside the gateway escapes that audit trail.
+ * every AI call. Direct LLM client instantiation outside the gateway escapes
+ * that audit trail. This guard catches both language surfaces:
+ *   - TypeScript/JavaScript: `new OpenAI(...)` / `new Anthropic(...)`
+ *   - Python: `OpenAI(...)`, `openai.OpenAI(...)`, `Anthropic(...)`, the async
+ *     variants, and the cloud SDK clients (AzureOpenAI, AnthropicBedrock,
+ *     AnthropicVertex). Python has no `new` keyword, so the JS regex alone is
+ *     blind to it — a Python agent framework (AutoGen/CrewAI/LangChain) or a
+ *     sidecar script could otherwise open a second, unaudited egress path.
  *
  * This guard fails if a NEW file instantiates a client directly — i.e. one not
  * already in scripts/ci/gateway-bypass-baseline.json. It does not force-migrate
@@ -26,8 +32,19 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const baselinePath = path.join(repoRoot, 'scripts', 'ci', 'gateway-bypass-baseline.json');
 
 const GATEWAY_DIR = 'server/services/ai-gateway/';
-const PATTERN = 'new (OpenAI|Anthropic)[[:space:]]*\\(';
-const SEARCH_PATHS = ['server', 'services', 'workers', 'shared', 'scripts'];
+
+// TS/JS: direct client construction uses `new`.
+const JS_PATTERN = 'new (OpenAI|Anthropic)[[:space:]]*\\(';
+const JS_SEARCH_PATHS = ['server', 'services', 'workers', 'shared', 'scripts'];
+
+// Python: no `new`; a client is constructed by calling the class. Match both the
+// bare (`OpenAI(`) and module-qualified (`openai.OpenAI(`) forms, plus the async
+// and cloud-SDK client classes. Scoped to *.py so the JS/`.mjs` sources (which
+// carry these names only as pattern data) are never matched.
+const PY_CLIENTS =
+  'OpenAI|AsyncOpenAI|AzureOpenAI|AsyncAzureOpenAI|Anthropic|AsyncAnthropic|AnthropicBedrock|AnthropicVertex';
+const PY_PATTERN = `(^|[^A-Za-z0-9_.])(openai\\.|anthropic\\.)?(${PY_CLIENTS})[[:space:]]*\\(`;
+const PY_SEARCH_PATHS = ['*.py'];
 
 // This guard's own source + baseline contain the match pattern as data; they are
 // not real client instantiations, so exclude them from the scan.
@@ -36,23 +53,29 @@ const SELF_EXCLUDE = new Set([
   'scripts/ci/gateway-bypass-baseline.json',
 ]);
 
-function currentBypassFiles() {
-  let out = '';
+function grepFiles(pattern, paths) {
   try {
-    out = execSync(`git grep -lE "${PATTERN}" -- ${SEARCH_PATHS.join(' ')}`, {
+    return execSync(`git grep -lE "${pattern}" -- ${paths.join(' ')}`, {
       cwd: repoRoot,
       encoding: 'utf8',
     });
   } catch (err) {
     // git grep exits 1 when there are no matches — treat as empty.
-    if (err.status === 1) return [];
+    if (err.status === 1) return '';
     throw err;
   }
-  return out
-    .split('\n')
-    .map(l => l.trim())
-    .filter(Boolean)
-    .filter(f => !f.startsWith(GATEWAY_DIR) && !SELF_EXCLUDE.has(f));
+}
+
+function currentBypassFiles() {
+  const out = `${grepFiles(JS_PATTERN, JS_SEARCH_PATHS)}\n${grepFiles(PY_PATTERN, PY_SEARCH_PATHS)}`;
+  const seen = new Set(
+    out
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .filter(f => !f.startsWith(GATEWAY_DIR) && !SELF_EXCLUDE.has(f)),
+  );
+  return [...seen];
 }
 
 const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));

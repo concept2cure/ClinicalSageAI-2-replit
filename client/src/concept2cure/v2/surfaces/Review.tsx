@@ -11,20 +11,29 @@
  * are applied from the authoring workspace (server/routes/authoring.router.ts),
  * PIN-verified and sealed against a frozen document version.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLive } from '../dataConnect';
+import { EmptyState, useLiveData } from '../dataConnect';
+import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
-import {
-  REVIEW_QUEUE,
-  REVIEW_WORKFLOWS,
-  REVIEW_THREAD,
-  STATUS_TONE,
-  ESIGN_MEANINGS,
-} from '../fixtures/review-data';
+import { STATUS_TONE, ESIGN_MEANINGS } from '../fixtures/review-data';
 import '../styles/project-home-v2.css';
+
+/** Sub-headline shared by the surface header and its honest empty/error states. */
+const REVIEW_SUB = 'Review queue, threaded comments, reject-with-reason, delegate a step.';
+
+/**
+ * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
+ * returned as { success, data }. useLiveData unwraps the success envelope, so the
+ * hook's `.data` is this board object directly — real, org-scoped, no fixture.
+ */
+interface ReviewBoardData {
+  queue: ReviewItem[];
+  workflows: Record<string, ReviewWorkflow>;
+  thread: ReviewComment[];
+}
 
 /* ── Inline helpers (kit shared bits) ── */
 
@@ -180,9 +189,15 @@ function ApproveSign({ item, onApproved }: { item: ReviewItem; onApproved?: () =
 /* ════ Review & Approval surface ════ */
 
 export function Review({ onAsk, onNav }: SurfaceViewProps) {
-  const [queue, setQueue] = useState<ReviewItem[]>(() => REVIEW_QUEUE.map((r) => ({ ...r })));
-  const [sel, setSel] = useState(REVIEW_QUEUE[0] ? REVIEW_QUEUE[0].id : 'rv1');
-  const [thread, setThread] = useState<ReviewComment[]>(() => REVIEW_THREAD.map((c) => ({ ...c })));
+  // Real signed-in identity for in-session comment attribution — never a
+  // hardcoded name. A comment the reviewer types here is authored by them.
+  const { user } = useAuth();
+  const meName = user?.displayName || user?.email || 'You';
+  const meRole = (user?.roles && user.roles[0]) || '';
+
+  const [queue, setQueue] = useState<ReviewItem[]>([]);
+  const [sel, setSel] = useState('');
+  const [thread, setThread] = useState<ReviewComment[]>([]);
   const [reply, setReply] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
@@ -191,35 +206,28 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const [delReason, setDelReason] = useState('');
   const [toast, fireToast] = useToast();
 
-  // Live review board — GET /api/review/board → { success, data: { queue,
-  // workflows, thread, meta } }. useLive puts the whole body on `.data`, so the
-  // board is at `.data.data`. Trust live only when the queue shape matches; else
-  // every slice fails closed to its REVIEW_* fixture behind a sample pill.
-  const board = useLive<{
-    data?: { queue?: ReviewItem[]; workflows?: Record<string, ReviewWorkflow>; thread?: ReviewComment[] };
-  }>('/api/review/board', {
-    data: { queue: REVIEW_QUEUE, workflows: REVIEW_WORKFLOWS, thread: REVIEW_THREAD },
-  });
-  const liveBoard = board.data?.data;
-  const queueLive =
-    !board.sample &&
-    Array.isArray(liveBoard?.queue) &&
-    liveBoard!.queue!.length > 0 &&
-    typeof liveBoard!.queue![0]?.id === 'string';
-  const workflows: Record<string, ReviewWorkflow> =
-    queueLive && liveBoard?.workflows ? liveBoard.workflows : REVIEW_WORKFLOWS;
-  const boardSample = !queueLive;
+  // Live, org-scoped review board — GET /api/review/board → { success, data }.
+  // useLiveData unwraps the success envelope, so `board` is the render contract
+  // itself ({ queue, workflows, thread }). There is no fixture: a tenant with
+  // nothing in review renders an honest empty board, and a failed load renders
+  // an honest error — never a fabricated queue behind a "sample" pill.
+  const boardState = useLiveData<ReviewBoardData>('/api/review/board');
+  const board = boardState.data;
+  const workflows: Record<string, ReviewWorkflow> = board?.workflows ?? {};
 
-  // Re-seed the editable queue + thread from the live board once it resolves
-  // (fires only when queueLive flips true, so it never clobbers later edits).
+  // Seed the editable queue + thread from the real board exactly once, the first
+  // time it resolves — so later in-session edits (reply, resolve, delegate) are
+  // never clobbered by the effect re-running.
+  const seededRef = useRef(false);
   useEffect(() => {
-    if (!queueLive || !liveBoard) return;
-    const q = (liveBoard.queue ?? []).map((r) => ({ ...r }));
+    if (seededRef.current || boardState.loading || !board) return;
+    seededRef.current = true;
+    const q = (board.queue ?? []).map((r) => ({ ...r }));
     setQueue(q);
     setSel((prev) => (q.some((r) => r.id === prev) ? prev : q[0] ? q[0].id : prev));
-    setThread((liveBoard.thread ?? []).map((c) => ({ ...c })));
+    setThread((board.thread ?? []).map((c) => ({ ...c })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queueLive]);
+  }, [boardState.loading, board]);
 
   useEffect(() => {
     try {
@@ -233,6 +241,41 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       }
     } catch (_e) { /* noop */ }
   }, [sel, queue]);
+
+  // ── The three honest states, before any row is dereferenced. No fixture ──
+  if (boardState.loading && queue.length === 0) {
+    return (
+      <div className="page-inner">
+        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <EmptyState title="Loading the review board…" icon={I.clock} />
+      </div>
+    );
+  }
+  if (boardState.error && queue.length === 0) {
+    return (
+      <div className="page-inner">
+        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <EmptyState
+          tone="error"
+          title="Couldn't load the review board"
+          hint={boardState.error}
+          icon={I.alertTriangle}
+        />
+      </div>
+    );
+  }
+  if (queue.length === 0) {
+    return (
+      <div className="page-inner">
+        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <EmptyState
+          title="Nothing is in review"
+          hint="When a document for your organization enters an approval workflow, it appears here with its queue, threaded comments and multi-step sign-off."
+          icon={I.shieldCheck}
+        />
+      </div>
+    );
+  }
 
   const item = queue.find((r) => r.id === sel) || queue[0];
   const wf: ReviewWorkflow | null = workflows[item.id] || null;
@@ -252,8 +295,8 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     setItemState(item.id, 'changes-requested');
     setThread((t) => [{
       id: 'rj' + Date.now(),
-      author: 'Jordan Chen',
-      role: 'Reg lead',
+      author: meName,
+      role: meRole,
       when: 'just now',
       state: 'open',
       body: 'Changes requested: ' + reason.trim(),
@@ -271,8 +314,8 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     setDelReason('');
     setThread((t) => [{
       id: 'dg' + Date.now(),
-      author: 'Jordan Chen',
-      role: 'Reg lead',
+      author: meName,
+      role: meRole,
       when: 'just now',
       state: 'open',
       body: 'Delegated "' + (curStep ? curStep.name : 'this approval') + '" to ' + to + (delReason.trim() ? ' — ' + delReason.trim() : ''),
@@ -288,8 +331,8 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     if (!reply.trim()) return;
     setThread((t) => [...t, {
       id: 'rp' + Date.now(),
-      author: 'Jordan Chen',
-      role: 'Reg lead',
+      author: meName,
+      role: meRole,
       when: 'just now',
       state: 'open',
       body: reply.trim(),
@@ -312,7 +355,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       <PageHead
         eyebrow="Project · review"
         title="Review & approval"
-        sub="Review queue, threaded comments, reject-with-reason, delegate a step."
+        sub={REVIEW_SUB}
         actions={
           <button className="btn ghost" onClick={() => onAsk('Summarize open review comments')}>
             {I.sparkles} Ask AnA
@@ -340,7 +383,6 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="split">
         <div className="split-list">
-          {boardSample && <div style={{ padding: '4px 8px' }}><SampleTag sample /></div>}
           {queue.map((r) => (
             <button key={r.id} className="lrow" data-on={sel === r.id || undefined} onClick={() => { setSel(r.id); setRejecting(false); }}>
               <div className="lrow-top">
