@@ -97,7 +97,7 @@ export const neurologyProfile: TherapeuticAreaProfile = {
     {
       ctdSection: '4.2.2',
       prefix: true,
-      patterns: ['BBB', 'CNS distribution', 'CSF', 'brain'],
+      patterns: ['bbb', 'cns distribution', 'csf', 'brain'],
       description: 'Nonclinical PK missing CNS distribution / BBB penetration data',
       severity: 'major',
       guidanceRef: 'ICH M3(R2)',
@@ -105,14 +105,14 @@ export const neurologyProfile: TherapeuticAreaProfile = {
     {
       ctdSection: '5.3.3',
       prefix: true,
-      patterns: ['CSF', 'cerebrospinal', 'sampling'],
+      patterns: ['csf', 'cerebrospinal', 'sampling'],
       description: 'Clinical PK missing CSF sampling for CNS-targeted indication',
       severity: 'minor',
     },
     {
       ctdSection: '11.4',
       prefix: true,
-      patterns: ['cognitive', 'ADAS', 'MMSE', 'CDR'],
+      patterns: ['cognitive', 'adas', 'mmse', 'cdr'],
       description:
         'Cognitive endpoint analysis missing ceiling/floor effect assessment or MID justification',
       severity: 'major',
@@ -120,7 +120,7 @@ export const neurologyProfile: TherapeuticAreaProfile = {
     {
       ctdSection: '12',
       prefix: true,
-      patterns: ['suicidality', 'C-SSRS', 'suicidal ideation'],
+      patterns: ['suicidality', 'c-ssrs', 'suicidal ideation'],
       description: 'Safety analysis missing systematic suicidality monitoring (C-SSRS)',
       severity: 'critical',
       guidanceRef: 'FDA Suicidality Guidance',

@@ -92,7 +92,7 @@ export const immunologyProfile: TherapeuticAreaProfile = {
     {
       ctdSection: '5.3.4',
       prefix: true,
-      patterns: ['immunogenicity', 'ADA', 'anti-drug'],
+      patterns: ['immunogenicity', 'ada', 'anti-drug'],
       description: 'Immunogenicity assessment plan + ADA/NAb assay validation missing',
       severity: 'critical',
       guidanceRef: 'FDA Immunogenicity Assessment Guidance',
@@ -108,7 +108,7 @@ export const immunologyProfile: TherapeuticAreaProfile = {
     {
       ctdSection: '12',
       prefix: true,
-      patterns: ['tuberculosis', 'TB', 'hepatitis', 'opportunistic infection'],
+      patterns: ['tuberculosis', 'tb', 'hepatitis', 'opportunistic infection'],
       description:
         'Safety analysis missing systematic infection screening + monitoring framework',
       severity: 'critical',

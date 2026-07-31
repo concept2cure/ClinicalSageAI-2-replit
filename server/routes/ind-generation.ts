@@ -17,6 +17,13 @@ import {
   getGenerationPrompt,
   getSectionsForSubmissionType,
 } from '../services/ind/ind-section-registry.js';
+import {
+  CTD_AUTHORING_GUIDANCE,
+  getCtdAuthoringGuidance,
+  listLifecycleDocumentTypes,
+  getLifecycleDocumentType,
+  resolveCtdSectionsForDocType,
+} from '../services/ind/ctd/index.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import { getMasterDocumentBuilder } from '../services/docx/masterDocumentBuilder.js';
 
@@ -49,6 +56,68 @@ router.get('/structure', (_req: Request, res: Response) => {
   }));
 
   res.json({ success: true, data: { modules, totalSections: IND_SECTIONS.length } });
+});
+
+// ─── GET /api/ind/lifecycle-types ─────────────────────────────────────────────
+// The full IND→NDA/BLA lifecycle document-type set: Pre-IND/EOP2/Pre-NDA/Pre-BLA
+// meeting packages, IND + amendments, IND safety reports, annual reports/DSUR,
+// NDA, BLA, ISS/ISE, and post-approval supplements.
+
+router.get('/lifecycle-types', (_req: Request, res: Response) => {
+  const types = listLifecycleDocumentTypes().map(dt => ({
+    id: dt.id,
+    label: dt.label,
+    category: dt.category,
+    family: dt.family,
+    agency: dt.agency,
+    description: dt.description,
+    timing: dt.timing ?? null,
+    meetingPackage: dt.meetingPackage ?? false,
+    componentCount: dt.components.length,
+    ctdSectionCount: resolveCtdSectionsForDocType(dt).length,
+    regulatoryBasis: dt.regulatoryBasis,
+  }));
+  res.json({ success: true, data: { types, total: types.length } });
+});
+
+// ─── GET /api/ind/lifecycle-types/:id ─────────────────────────────────────────
+
+router.get('/lifecycle-types/:id', (req: Request, res: Response) => {
+  const dt = getLifecycleDocumentType(String(req.params.id));
+  if (!dt) {
+    return res.status(404).json({ success: false, error: `Unknown lifecycle document type: ${req.params.id}` });
+  }
+  const ctdSections = resolveCtdSectionsForDocType(dt).map(s => ({
+    code: s.code,
+    title: s.title,
+    module: s.module,
+    required: s.requiredFor.includes(dt.family === 'BLA' ? 'BLA' : dt.family === 'NDA' ? 'NDA' : 'IND'),
+    guidance: s.guidance,
+  }));
+  res.json({ success: true, data: { ...dt, ctdSections } });
+});
+
+// ─── GET /api/ind/guidance/:code ──────────────────────────────────────────────
+// Leaf-level CTD authoring guidance for a section code (e.g. "3.2.S.4", "2.7.4").
+
+router.get('/guidance/:code', (req: Request, res: Response) => {
+  const g = getCtdAuthoringGuidance(String(req.params.code));
+  if (!g) {
+    return res.status(404).json({ success: false, error: `No CTD authoring guidance for: ${req.params.code}` });
+  }
+  res.json({ success: true, data: g });
+});
+
+// ─── GET /api/ind/guidance ────────────────────────────────────────────────────
+
+router.get('/guidance', (_req: Request, res: Response) => {
+  const codes = Object.values(CTD_AUTHORING_GUIDANCE).map(g => ({
+    code: g.code,
+    title: g.title,
+    module: g.module,
+    requiredFor: g.requiredFor,
+  }));
+  res.json({ success: true, data: { codes, total: codes.length } });
 });
 
 // ─── GET /api/ind/device-status/:type/:projectId ──────────────────────────────
