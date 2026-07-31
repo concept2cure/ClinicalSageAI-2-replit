@@ -119,6 +119,71 @@ export const GENERATE_STF: AnaTool = {
   },
 };
 
+export const CONVERT_TO_RPS_V4: AnaTool = {
+  name: 'convert_to_rps_v4',
+  description:
+    'Convert a v3.2.2 leaf set into an ICH eCTD v4.0 (HL7 RPS) submission-unit message: one Document + Context-of-Use per leaf, with lifecycle operators mapped (new→create, replace→revise, append→append, delete→remove) and — when prior_sequence_number is given — a relatedContextOfUse pointer at each superseded CoU. You get the RPS message structure (documents + contexts of use) and, with include_xml, the RPS message XML. Pure computation — nothing is written. Use it to preview or produce the v4.0 form of a sequence for a region that has moved (or is piloting) eCTD v4.0.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      leaves: {
+        type: 'array',
+        description: 'The v3.2.2 leaves of THIS sequence.',
+        items: {
+          type: 'object',
+          properties: {
+            ctd_section: { type: 'string', description: 'CTD section code, e.g. "3.2.S.1" or "1.2".' },
+            file_name: { type: 'string', description: 'Leaf file name.' },
+            title: { type: 'string', description: 'Leaf title (also the CoU title).' },
+            md5: { type: 'string', description: 'Optional content checksum (informational here).' },
+            operation: { type: 'string', enum: ['new', 'append', 'replace', 'delete'], description: 'v3.2.2 lifecycle operation; mapped to the RPS operation code.' },
+          },
+          required: ['ctd_section', 'file_name', 'title'],
+        },
+      },
+      application: {
+        type: 'object',
+        description: 'The application the submission belongs to.',
+        properties: {
+          number: { type: 'string', description: 'Application number, e.g. "123456".' },
+          type_code: { type: 'string', description: 'Application-type code (CL1), e.g. "us_application_type_1".' },
+          center: { type: 'string', description: 'Review center: cder | cber | cdrh | …' },
+        },
+        required: ['number', 'type_code', 'center'],
+      },
+      submission: {
+        type: 'object',
+        description: 'The regulatory activity (submission) the unit belongs to.',
+        properties: {
+          type_code: { type: 'string', description: 'Submission-type code (CL12), e.g. "us_submission_type_1".' },
+          number: { type: 'string', description: 'Optional submission id/number.' },
+        },
+        required: ['type_code'],
+      },
+      submission_unit: {
+        type: 'object',
+        description: 'This sequence, as an RPS submission unit.',
+        properties: {
+          id: { type: 'string', description: 'Stable UUID for the submission unit.' },
+          unit_type_code: { type: 'string', description: 'Submission-unit-type code (CL13).' },
+          title: { type: 'string', description: 'Title (≤128 chars).' },
+          sequence_number: { type: 'string', description: 'Four-digit sequence, e.g. "0001".' },
+        },
+        required: ['id', 'unit_type_code', 'title', 'sequence_number'],
+      },
+      prior_sequence_number: {
+        type: 'string',
+        description: 'When this sequence carries lifecycle operations (revise/append/remove), the prior sequence they supersede — used to point each relatedContextOfUse at the earlier CoU.',
+      },
+      include_xml: {
+        type: 'boolean',
+        description: 'Also return the serialized RPS message XML (default false).',
+      },
+    },
+    required: ['leaves', 'application', 'submission', 'submission_unit'],
+  },
+};
+
 export const CHECK_ECTD_CROSS_REFERENCES: AnaTool = {
   name: 'check_ectd_cross_references',
   description:

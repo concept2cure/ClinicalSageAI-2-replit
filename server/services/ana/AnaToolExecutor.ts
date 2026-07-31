@@ -8591,6 +8591,55 @@ registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
   }
 });
 
+registerToolHandler('convert_to_rps_v4', async (input) => {
+  try {
+    const { forwardCompatToV4, buildRpsMessage } = await import('../ectd/ectd4/index.js');
+    const app = (input.application ?? {}) as Record<string, any>;
+    const sub = (input.submission ?? {}) as Record<string, any>;
+    const unit = (input.submission_unit ?? {}) as Record<string, any>;
+    const leaves = (Array.isArray(input.leaves) ? input.leaves : []).map((l: any) => ({
+      ctdSection: l.ctd_section,
+      fileName: l.file_name,
+      title: l.title ?? l.file_name,
+      md5: l.md5,
+      operation: (l.operation ?? 'new') as 'new' | 'append' | 'replace' | 'delete',
+      sourcePath: l.source_path ?? '',
+    }));
+
+    const { message, notes } = forwardCompatToV4({
+      application: { number: String(app.number ?? ''), typeCode: String(app.type_code ?? ''), center: app.center },
+      submission: { typeCode: String(sub.type_code ?? ''), ...(sub.number ? { number: String(sub.number) } : {}) },
+      submissionUnit: {
+        id: String(unit.id ?? ''),
+        unitTypeCode: String(unit.unit_type_code ?? ''),
+        title: String(unit.title ?? ''),
+        sequenceNumber: String(unit.sequence_number ?? ''),
+        status: 'active',
+      },
+      leaves: leaves as any,
+      priorSequenceNumber:
+        typeof input.prior_sequence_number === 'string' ? input.prior_sequence_number : undefined,
+    });
+
+    const out: Record<string, unknown> = {
+      ok: true,
+      notes,
+      summary: {
+        documents: message.documents.length,
+        contextsOfUse: message.contextsOfUse.length,
+        lifecycle: message.contextsOfUse.filter((c) => c.operation && c.operation !== 'create').length,
+      },
+      message,
+    };
+    if (input.include_xml === true) out.xml = buildRpsMessage(message);
+    return JSON.stringify(out);
+  } catch (err) {
+    return JSON.stringify({
+      error: `convert_to_rps_v4 failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 registerToolHandler('generate_stf', async (input) => {
   try {
     const { generateStfFiles } = await import('../ectd/stf-generator.js');
