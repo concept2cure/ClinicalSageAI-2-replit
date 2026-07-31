@@ -406,7 +406,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "description": "Briefing package supporting a Pre-NDA (Type B) meeting to align with FDA on the format, content, and completeness of the planned NDA before submission: the acceptability of the primary efficacy and safety analyses, the integrated summaries of safety and effectiveness, the datasets and their standards, pediatric and post-marketing plans, proposed labeling, and any application-organization or review-facilitation matters. The package draws on the CTD Module 2 summaries and poses numbered questions intended to de-risk the filing and the anticipated review.",
     "regulatoryBasis": [
       "FDA Guidance for Industry: Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products (Dec 2017)",
-      "21 CFR 312.47(b)(2) (end-of-Phase-2 / pre-submission meetings)",
+      "21 CFR 312.47(b)(2) (Other meetings, including pre-NDA / pre-submission meetings)",
       "21 CFR 314.50 (content and format of an NDA)",
       "21 CFR 314.101 (filing / refuse-to-file)",
       "PDUFA VII commitment letter (meeting management and pre-submission activities)",
@@ -947,7 +947,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "required": true,
         "contentType": "narrative",
         "guidance": "Concise orientation to the drug and the sponsor's development strategy for the coming year, per 21 CFR 312.23(a)(3).",
-        "authoringGuidance": "This section gives the FDA reviewer the strategic frame for the whole application: it names the drug and its pharmacologic class and structure, states the broad objectives and planned duration of clinical investigation, and identifies the indication(s) under study. Under 312.23(a)(3)(iv) it must disclose whether the drug has been withdrawn from investigation or marketing in any country for safety or effectiveness reasons, which reviewers treat as a critical safety-signal disclosure. The general investigational plan looks forward roughly one year—rationale, indication, approach to evaluating the drug, the kinds and duration of studies planned, anticipated patient numbers, and any foreseen safety risks based on toxicology or prior human experience. An acceptable section is brief (a few pages), internally consistent with the protocols and IB, and candid about known risks and any prior withdrawals rather than promotional.",
+        "authoringGuidance": "This section gives the FDA reviewer the strategic frame for the whole application: it names the drug and its pharmacologic class and structure, states the broad objectives and planned duration of clinical investigation, and identifies the indication(s) under study. Under 312.23(a)(3)(iii) it must disclose whether the drug has been withdrawn from investigation or marketing in any country for safety or effectiveness reasons, which reviewers treat as a critical safety-signal disclosure. The general investigational plan looks forward roughly one year—rationale, indication, approach to evaluating the drug, the kinds and duration of studies planned, anticipated patient numbers, and any foreseen safety risks based on toxicology or prior human experience. An acceptable section is brief (a few pages), internally consistent with the protocols and IB, and candid about known risks and any prior withdrawals rather than promotional.",
         "keyContentElements": [
           "Name of the drug, active ingredients, pharmacological class, and structural formula",
           "Formulation and route of administration",
@@ -956,10 +956,10 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Rationale for the drug and the general approach to evaluating it",
           "Kinds of clinical trials planned in the next 12 months with estimated patient numbers",
           "Anticipated risks based on toxicology data and any prior human experience",
-          "Disclosure of any country in which the drug was withdrawn for safety or effectiveness (312.23(a)(3)(iv))",
+          "Disclosure of any country in which the drug was withdrawn for safety or effectiveness (312.23(a)(3)(iii))",
           "Statement of how the plan for the coming year fits the overall development program"
         ],
-        "generationPrompt": "Write the Introductory Statement and General Investigational Plan for {{SPONSOR}}'s IND for {{PRODUCT_NAME}} in {{INDICATION}} at {{PHASE}}. Describe the drug's class, structure, formulation and route; state development objectives, the studies planned over the next 12 months with estimated enrollment, anticipated risks from nonclinical and any human data, and disclose any prior safety/effectiveness withdrawal per 21 CFR 312.23(a)(3)(iv). Keep it concise and non-promotional; do not invent study results."
+        "generationPrompt": "Write the Introductory Statement and General Investigational Plan for {{SPONSOR}}'s IND for {{PRODUCT_NAME}} in {{INDICATION}} at {{PHASE}}. Describe the drug's class, structure, formulation and route; state development objectives, the studies planned over the next 12 months with estimated enrollment, anticipated risks from nonclinical and any human data, and disclose any prior safety/effectiveness withdrawal per 21 CFR 312.23(a)(3)(iii). Keep it concise and non-promotional; do not invent study results."
       },
       {
         "code": "IB",
@@ -1601,8 +1601,8 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
     "regulatoryBasis": [
       "21 CFR 312.33 (Annual reports)",
       "21 CFR 312.33(a) (individual study information)",
-      "21 CFR 312.33(b) (summary information — safety, IND changes, phase modifications)",
-      "21 CFR 312.33(c)-(g) (general investigational plan, IB revisions, significant Part 56/manufacturing changes, foreign marketing developments, outstanding business log)",
+      "21 CFR 312.33(b) (summary information — adverse experiences, IND safety reports, deaths, dropouts, drug-action findings, preclinical studies, and manufacturing changes)",
+      "21 CFR 312.33(c)-(g) (general investigational plan, IB revisions, significant Phase 1 protocol modifications, foreign marketing developments, outstanding business log)",
       "21 CFR 312.23(a)(1) (Form FDA 1571 as transmittal)",
       "FDA Guidance: Providing Postmarketing Periodic Safety Reports in the ICH E2C(R2) Format (for context); ICH E2F where DSUR is used to satisfy 312.33"
     ],
@@ -1648,7 +1648,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
         "title": "Summary of Safety Information and Most Frequent/Serious Adverse Experiences",
         "required": true,
         "contentType": "mixed",
-        "guidance": "21 CFR 312.33(b)(1)-(2) (summary of safety information; list of subjects who died or dropped out for adverse experiences)",
+        "guidance": "21 CFR 312.33(b)(1)-(4) (adverse-experience summary; summary of IND safety reports; list of subjects who died; list of subjects who dropped out in association with an adverse experience)",
         "authoringGuidance": "This is the analytical safety heart of the annual report: a narrative of the most frequent and most serious adverse experiences by body system, a summary of all IND safety reports submitted during the year, a list of subjects who died during participation (with cause) and those who dropped out because of adverse experiences, and any information suggesting a significant risk requiring protocol or IB change. Reviewers read it for emerging signals and to confirm that individual expedited reports aggregate into a coherent safety picture. Acceptable sections tie the death/dropout list to the study progress counts and reference the IB updates that resulted. Deficiencies: death/dropout lists that do not reconcile with enrollment, no summary of the year's expedited reports, and failure to state safety-driven protocol or IB changes.",
         "keyContentElements": [
           "Narrative summary of the most frequent and most serious adverse experiences, organized by body system / MedDRA SOC",
@@ -1660,14 +1660,14 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Aggregate exposure context (subjects/person-time) supporting the safety narrative",
           "Reconciliation with individual study disposition counts"
         ],
-        "generationPrompt": "Draft the safety summary (21 CFR 312.33(b)(1)-(2)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Include a body-system narrative of frequent and serious adverse experiences, a summary of all IND safety reports filed during the year, a subject-level death list with causes, a dropout-for-AE list, and any information suggesting significant risk plus resulting protocol/IB changes. Provide table templates with bracketed placeholders; do not fabricate adverse-event data."
+        "generationPrompt": "Draft the safety summary (21 CFR 312.33(b)(1)-(4)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). Include a body-system narrative of frequent and serious adverse experiences, a summary of all IND safety reports filed during the year, a subject-level death list with causes, a dropout-for-AE list, and any information suggesting significant risk plus resulting protocol/IB changes. Provide table templates with bracketed placeholders; do not fabricate adverse-event data."
       },
       {
         "code": "annual.ind_changes",
         "title": "Summary of IND Changes, Phase 1 Protocol Modifications, and General Investigational Plan",
         "required": true,
         "contentType": "narrative",
-        "guidance": "21 CFR 312.33(b)(3) (list of preclinical studies), 312.33(b)(4) (significant manufacturing/microbiological changes), 312.33(b)(5) (Phase 1 protocol modifications), 312.33(c) (general investigational plan for the coming year)",
+        "guidance": "21 CFR 312.33(b)(6) (list of preclinical studies completed or in progress), 312.33(b)(7) (significant manufacturing/microbiological changes), 312.33(e) (significant Phase 1 protocol modifications not previously reported), 312.33(c) (general investigational plan for the coming year)",
         "authoringGuidance": "This section records what changed and what is planned: a list of nonclinical (preclinical) studies completed during the year, significant manufacturing or microbiological changes, any Phase 1 protocol modifications not previously reported under an amendment, and the general investigational plan for the coming year. Reviewers use it to anticipate the program's direction, confirm CMC and nonclinical developments are captured, and check that Phase 1 modifications made without a formal amendment are disclosed here. Acceptable sections are specific about changes and forward-looking about next year's studies. Deficiencies: omitting the coming-year plan, failing to list Phase 1 protocol modifications, and burying significant CMC changes.",
         "keyContentElements": [
           "List of nonclinical (preclinical) studies completed during the reporting period",
@@ -1678,7 +1678,7 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
           "Cross-reference to protocol/CMC/information amendments filed during the period",
           "Impact statements linking changes to safety or program strategy where relevant"
         ],
-        "generationPrompt": "Draft the IND changes and general investigational plan section (21 CFR 312.33(b)(3)-(5), (c)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). List completed nonclinical studies, significant manufacturing/microbiological changes, unreported Phase 1 protocol modifications, and the general investigational plan for the coming year. Cross-reference amendments filed during the period. Use bracketed placeholders for specifics; do not fabricate study details."
+        "generationPrompt": "Draft the IND changes and general investigational plan section (21 CFR 312.33(b)(6), (b)(7), (e), (c)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}, {{PHASE}}). List completed nonclinical studies, significant manufacturing/microbiological changes, unreported Phase 1 protocol modifications, and the general investigational plan for the coming year. Cross-reference amendments filed during the period. Use bracketed placeholders for specifics; do not fabricate study details."
       },
       {
         "code": "annual.ib_revisions",
@@ -1699,20 +1699,19 @@ export const LIFECYCLE_DOCUMENT_TYPES: LifecycleDocumentType[] = [
       },
       {
         "code": "annual.admin",
-        "title": "Significant Part 56 Actions, Foreign Marketing Developments, and Log of Outstanding Business",
+        "title": "Foreign Marketing Developments and Log of Outstanding Business",
         "required": true,
         "contentType": "narrative",
-        "guidance": "21 CFR 312.33(e) (significant IRB/Part 56 actions), 312.33(f) (foreign marketing developments), 312.33(g) (log of outstanding business for which FDA response is requested)",
-        "authoringGuidance": "This administrative closing section reports significant Part 56 actions taken by IRBs (e.g., a study disapproved or a serious continuing-review action), any foreign marketing developments (approvals, withdrawals, or actions taken by a foreign regulatory authority for safety reasons), and a log of any outstanding business for which the sponsor requests an FDA response. Reviewers scan foreign regulatory actions for safety-driven withdrawals or restrictions that bear on the US program, and treat the outstanding-business log as the sponsor's explicit request queue. Acceptable sections are specific about foreign actions and their reasons. Deficiencies: omitting a foreign safety-related withdrawal or restriction, and using the outstanding-business log for items that belong in a formal amendment or meeting request.",
+        "guidance": "21 CFR 312.33(f) (foreign marketing developments), 312.33(g) (log of outstanding business for which FDA response is requested)",
+        "authoringGuidance": "This administrative closing section reports any foreign marketing developments (approvals, withdrawals, or actions taken by a foreign regulatory authority for safety reasons) under 21 CFR 312.33(f), and a log of any outstanding business for which the sponsor requests an FDA response under 312.33(g). (Note: 21 CFR 312.33 has no IRB/Part 56 reporting element — do not assert one.) Reviewers scan foreign regulatory actions for safety-driven withdrawals or restrictions that bear on the US program, and treat the outstanding-business log as the sponsor's explicit request queue. Acceptable sections are specific about foreign actions and their reasons. Deficiencies: omitting a foreign safety-related withdrawal or restriction, and using the outstanding-business log for items that belong in a formal amendment or meeting request.",
         "keyContentElements": [
-          "Significant Part 56 (IRB) actions during the period, including disapprovals or safety-related actions",
           "Foreign marketing developments: approvals, withdrawals, or regulatory actions in other countries",
           "Whether any foreign action was taken for safety reasons and its implications for the US program",
           "Log of outstanding business for which an FDA response is specifically requested",
           "Clear scoping so that items requiring a formal amendment or meeting request are routed appropriately",
           "Dates and jurisdictions for each foreign development"
         ],
-        "generationPrompt": "Draft the administrative closing section (21 CFR 312.33(e)-(g)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}). Cover significant Part 56/IRB actions, foreign marketing developments (approvals, withdrawals, safety-related regulatory actions with jurisdictions and dates), and a log of outstanding business for which FDA response is requested. Use bracketed placeholders; do not fabricate regulatory actions."
+        "generationPrompt": "Draft the administrative closing section (21 CFR 312.33(f)-(g)) for {{SPONSOR}}'s IND Annual Report on {{PRODUCT_NAME}} ({{INDICATION}}). Cover foreign marketing developments (approvals, withdrawals, safety-related regulatory actions with jurisdictions and dates) and a log of outstanding business for which FDA response is requested. Use bracketed placeholders; do not fabricate regulatory actions."
       }
     ],
     "registryId": "US_IND_ANNUAL",
