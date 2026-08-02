@@ -10,6 +10,11 @@ import {
   useModule3Readiness,
   useModule3Sections,
   useApproveModule3Section,
+  useICHComplianceCheck,
+  useContradictions,
+  useCompileModule3,
+  useDetectContradictions,
+  useResolveContradiction,
   cmcQueryKeys,
 } from '../../hooks/useCMC';
 import type { CmcPortfolioRow, CmcModule3Section } from '../../services/cmcService';
@@ -123,9 +128,18 @@ interface OverviewProps {
   onAskAna: (text: string) => void;
 }
 
+// Map an ICH status string to a StatusChip tone.
+function ichTone(status: unknown): 'ok' | 'warn' | 'err' {
+  const s = String(status ?? '').toLowerCase();
+  if (/fail|critical|non-?compliant|gap|block|missing/.test(s)) return 'err';
+  if (/pass|compliant|met|ready|ok/.test(s) && !/non/.test(s)) return 'ok';
+  return 'warn';
+}
+
 export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProps) {
   const portfolio = usePortfolioOverview();
   const readiness = useModule3Readiness(projectId);
+  const ichCheck = useICHComplianceCheck();
 
   const rows = portfolio.data ?? portfolioRows;
   const avgRpi = rows.length
@@ -150,6 +164,15 @@ export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProp
           <div className="bp-meta">{rows.length} submissions · RPI {avgRpi} average</div>
         </div>
         <div className="bp-page-actions">
+          <button
+            className="bp-btn-tert"
+            type="button"
+            disabled={!projectId || ichCheck.isPending}
+            onClick={() => projectId && ichCheck.mutate(projectId)}
+            title="Run the deterministic ICH rule check for this project"
+          >
+            {ichCheck.isPending ? 'Running ICH check…' : 'Run ICH check'}
+          </button>
           <button className="bp-btn-primary" type="button"
                   onClick={() => onAskAna('Run the ICH compliance check and show every gap')}>
             <CmcIcon name="sparkles" /> Ask AnA
@@ -250,8 +273,214 @@ export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProp
         )}
       </div>
 
+      {/* ICH compliance — real deterministic rule check (POST /api/cmc/ich-compliance) */}
+      {projectId && (
+        <div className="bp-card" style={{ marginTop: 14 }}>
+          <div className="bp-card-head">
+            <span>ICH compliance</span>
+            <span className="bp-meta">Rule check across specs · stability · impurities · batches</span>
+          </div>
+          {ichCheck.isPending ? (
+            <Loading label="Running ICH compliance check…" />
+          ) : ichCheck.isError ? (
+            <ErrorState message="Could not run the ICH compliance check." />
+          ) : !ichCheck.data ? (
+            <div style={{ padding: 12 }}>
+              <div className="bp-meta" style={{ marginBottom: 10 }}>
+                Run a deterministic ICH Q1/Q2/Q3/Q6/Q8–Q11 rule check for this project and see
+                every finding with its guideline reference.
+              </div>
+              <button
+                className="bp-btn-tert"
+                type="button"
+                onClick={() => ichCheck.mutate(projectId)}
+              >
+                Run ICH compliance check
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                {ichCheck.data.overallStatus != null && (
+                  <StatusChip
+                    tone={ichTone(ichCheck.data.overallStatus)}
+                    label={String(ichCheck.data.overallStatus)}
+                  />
+                )}
+                {typeof ichCheck.data.score === 'number' && (
+                  <span className="cmc-sec-conv" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    Score {ichCheck.data.score}
+                  </span>
+                )}
+              </div>
+              {(ichCheck.data.guidelines ?? []).length === 0 ? (
+                <Empty>No guideline findings returned.</Empty>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {(ichCheck.data.guidelines ?? []).map((g, i) => (
+                    <div key={i} style={{ borderTop: '1px solid var(--cmc-border, #e5e7eb)', paddingTop: 8 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                        <strong>{g.guideline}</strong>
+                        <StatusChip tone={ichTone(g.status)} label={String(g.status)} />
+                      </div>
+                      {(g.findings ?? []).map((f, j) => (
+                        <div key={j} className="bp-meta" style={{ marginBottom: 2 }}>
+                          • {f.description}
+                          {f.reference ? ` (${f.reference})` : ''}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Governed section approvals for the selected project */}
       {projectId && <SectionApprovals projectId={projectId} />}
+
+      {/* Module 3 build & contradictions — the compile action + the drill-in the
+          readiness rollup only ever counted */}
+      {projectId && <Module3Console projectId={projectId} />}
+    </div>
+  );
+}
+
+function Module3Console({ projectId }: { projectId: string }) {
+  const queryClient = useQueryClient();
+  const contradictions = useContradictions(projectId);
+  const compile = useCompileModule3();
+  const detect = useDetectContradictions();
+  const resolve = useResolveContradiction();
+  const [resolving, setResolving] = React.useState<{ id: string; note: string } | null>(null);
+
+  const refetchAll = React.useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: cmcQueryKeys.module3Readiness(projectId) });
+    void contradictions.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, projectId]);
+
+  const onCompile = async () => {
+    try {
+      await compile.mutateAsync(projectId);
+      refetchAll();
+    } catch {
+      /* surfaced via compile.isError */
+    }
+  };
+  const onDetect = async () => {
+    try {
+      await detect.mutateAsync(projectId);
+      refetchAll();
+    } catch {
+      /* surfaced via detect.isError */
+    }
+  };
+  const onResolve = async () => {
+    if (!resolving || !resolving.note.trim()) return;
+    try {
+      await resolve.mutateAsync({ id: resolving.id, resolutionNote: resolving.note.trim() });
+      setResolving(null);
+      refetchAll();
+    } catch {
+      /* surfaced via resolve.isError */
+    }
+  };
+
+  const rows = contradictions.data ?? [];
+  const open = rows.filter((r) => r.status !== 'resolved');
+
+  return (
+    <div className="bp-card" style={{ marginTop: 14 }}>
+      <div className="bp-card-head">
+        <span>Module 3 build &amp; contradictions</span>
+        <span className="bp-meta">{open.length} open · {rows.length} total</span>
+      </div>
+      <div style={{ padding: 12 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          <button className="bp-btn-tert" type="button" disabled={compile.isPending} onClick={onCompile}>
+            {compile.isPending ? 'Compiling…' : 'Compile Module 3'}
+          </button>
+          <button className="bp-btn-tert" type="button" disabled={detect.isPending} onClick={onDetect}>
+            {detect.isPending ? 'Detecting…' : 'Detect contradictions'}
+          </button>
+        </div>
+        {compile.isError && (
+          <div style={{ marginBottom: 10 }}>
+            <ErrorState message={compile.error?.message ?? 'Compile failed.'} />
+          </div>
+        )}
+        {detect.isError && (
+          <div style={{ marginBottom: 10 }}>
+            <ErrorState message={detect.error?.message ?? 'Detection failed.'} />
+          </div>
+        )}
+
+        {contradictions.isLoading ? (
+          <Loading label="Loading contradictions…" />
+        ) : contradictions.isError ? (
+          <ErrorState message="Could not load contradictions." />
+        ) : rows.length === 0 ? (
+          <Empty>No contradictions recorded. Compile, then detect to check.</Empty>
+        ) : (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {rows.map((c) => (
+              <div key={c.id} style={{ borderTop: '1px solid var(--cmc-border, #e5e7eb)', paddingTop: 8 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                  <StatusChip
+                    tone={c.status === 'resolved' ? 'ok' : /critical|high/i.test(c.severity) ? 'err' : 'warn'}
+                    label={c.status === 'resolved' ? 'resolved' : c.severity}
+                  />
+                  <strong>{c.contradictionType}</strong>
+                  {(c.impactedSections ?? []).map((s, i) => (
+                    <span key={i} className="bp-pill">{s}</span>
+                  ))}
+                </div>
+                <div className="bp-meta" style={{ marginBottom: 6 }}>
+                  {typeof c.details === 'string' ? c.details : JSON.stringify(c.details)}
+                </div>
+                {c.status !== 'resolved' &&
+                  (resolving?.id === c.id ? (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <input
+                        style={{ flex: 1, fontSize: 12, padding: '4px 8px' }}
+                        placeholder="Resolution note (required)"
+                        value={resolving.note}
+                        onChange={(e) => setResolving({ id: c.id, note: e.target.value })}
+                      />
+                      <button
+                        className="bp-btn-tert"
+                        type="button"
+                        disabled={!resolving.note.trim() || resolve.isPending}
+                        onClick={onResolve}
+                      >
+                        {resolve.isPending ? 'Resolving…' : 'Confirm'}
+                      </button>
+                      <button className="bp-btn-tert" type="button" onClick={() => setResolving(null)}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="bp-btn-tert"
+                      type="button"
+                      onClick={() => setResolving({ id: c.id, note: '' })}
+                    >
+                      Resolve…
+                    </button>
+                  ))}
+                {resolve.isError && resolving?.id === c.id && (
+                  <div style={{ marginTop: 6 }}>
+                    <ErrorState message={resolve.error?.message ?? 'Resolve failed.'} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

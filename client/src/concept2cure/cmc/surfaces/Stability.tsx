@@ -9,6 +9,7 @@ import {
   useProjectStability,
   useCreateStabilityProtocol,
   useAddStabilityResult,
+  useProjectShelfLife,
 } from '../../hooks/useCMC';
 import type {
   CmcStabilityRow,
@@ -236,11 +237,121 @@ function AddResultDialog({
   );
 }
 
+// Inline ICH Q1A(R2)·Q1E shelf-life projection for one study — the real
+// deterministic backend (GET /api/cmc/stability/:id/projections) rendered in
+// place, not delegated to an AnA prompt.
+function ShelfLifePanel({ study, onClose }: { study: CmcStabilityRow; onClose: () => void }) {
+  const studyId = (study.id as string) ?? null;
+  const proj = useProjectShelfLife(studyId);
+  const d = proj.data;
+  const name = pick(study, ['study_name', 'study', 'study_id', 'name', 'protocol_name']);
+  return (
+    <div className="bp-card" style={{ marginTop: 16 }}>
+      <div className="bp-card-head">
+        <span>Shelf-life projection · {name || 'study'}</span>
+        <button className="bp-btn-tert" type="button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+      {!studyId ? (
+        <Empty>This study has no id to project against.</Empty>
+      ) : proj.isLoading ? (
+        <Loading label="Projecting shelf life…" />
+      ) : proj.isError ? (
+        <ErrorState message="Could not compute the shelf-life projection." />
+      ) : !d ? (
+        <Empty>No projection returned for this study.</Empty>
+      ) : (
+        <div style={{ padding: '4px 4px 8px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, marginBottom: 14 }}>
+            <div>
+              <div className="bp-meta">Projected shelf life</div>
+              <div style={{ fontSize: 26, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                {d.projectedShelfLife.months} mo
+              </div>
+              <div className="bp-meta">
+                {d.projectedShelfLife.confidence} confidence · {d.projectedShelfLife.basis}
+              </div>
+            </div>
+            <div>
+              <div className="bp-meta">ICH compliance</div>
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: d.ichCompliance.projectedMeets ? '#1f8a5b' : '#c53d54',
+                }}
+              >
+                {d.ichCompliance.projectedMeets ? 'Meets minimum' : 'Below minimum'}
+              </div>
+              <div className="bp-meta">
+                ≥ {d.ichCompliance.minimumRequired} mo · {d.ichCompliance.guideline}
+              </div>
+            </div>
+            <div>
+              <div className="bp-meta">Arrhenius model</div>
+              <div style={{ fontSize: 15, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                ×{d.arrheniusModel.accelerationFactor} @ {d.arrheniusModel.testTemperature}
+              </div>
+              <div className="bp-meta">
+                Ea {d.arrheniusModel.activationEnergy} kJ/mol · ref {d.arrheniusModel.referenceTemperature}
+              </div>
+            </div>
+            <div>
+              <div className="bp-meta">Degradation</div>
+              <div style={{ fontSize: 15, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                {d.degradationProfile.ratePerMonth}%/mo
+              </div>
+              <div className="bp-meta">{d.degradationProfile.mechanism}</div>
+            </div>
+          </div>
+
+          {d.degradationProfile.timePointProjections.length > 0 && (
+            <table className="bp-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Projected purity</th>
+                  <th>Degradation</th>
+                  <th>Within spec</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.degradationProfile.timePointProjections.map((tp) => (
+                  <tr key={tp.month}>
+                    <td style={{ fontVariantNumeric: 'tabular-nums' }}>{tp.month}</td>
+                    <td style={{ fontVariantNumeric: 'tabular-nums' }}>{tp.projectedPurity}%</td>
+                    <td style={{ fontVariantNumeric: 'tabular-nums' }}>{tp.degradation}%</td>
+                    <td style={{ color: tp.withinSpec ? '#1f8a5b' : '#c53d54', fontWeight: 600 }}>
+                      {tp.withinSpec ? 'Yes' : 'No'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {d.recommendations.length > 0 && (
+            <ul style={{ margin: '14px 0 0', paddingLeft: 18 }}>
+              {d.recommendations.map((r, i) => (
+                <li key={i} className="bp-meta" style={{ marginBottom: 4 }}>
+                  {r}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CmcStability({ projectId, onAskAna }: { projectId: string | null; onAskAna: (t: string) => void }) {
   const stability = useProjectStability(projectId);
   const rows = stability.data ?? [];
   const [newStudy, setNewStudy] = React.useState(false);
   const [addResultFor, setAddResultFor] = React.useState<CmcStabilityRow | null>(null);
+  const [projectFor, setProjectFor] = React.useState<CmcStabilityRow | null>(null);
 
   return (
     <div className="bp-surface">
@@ -300,13 +411,23 @@ export function CmcStability({ projectId, onAskAna }: { projectId: string | null
                   <td>{pick(row, ['status', 'state'])}</td>
                   <td style={{ fontVariantNumeric: 'tabular-nums' }}>{existingResults(row).length}</td>
                   <td>
-                    <button
-                      className="bp-btn-tert"
-                      type="button"
-                      onClick={() => setAddResultFor(row)}
-                    >
-                      <CmcIcon name="plus" size={14} /> Add result
-                    </button>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        className="bp-btn-tert"
+                        type="button"
+                        onClick={() => setAddResultFor(row)}
+                      >
+                        <CmcIcon name="plus" size={14} /> Add result
+                      </button>
+                      <button
+                        className="bp-btn-tert"
+                        type="button"
+                        onClick={() => setProjectFor(row)}
+                        title="Project shelf life (ICH Q1A(R2)·Q1E)"
+                      >
+                        Shelf-life
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -314,6 +435,8 @@ export function CmcStability({ projectId, onAskAna }: { projectId: string | null
           </table>
         )}
       </div>
+
+      {projectFor && <ShelfLifePanel study={projectFor} onClose={() => setProjectFor(null)} />}
 
       {newStudy && projectId && (
         <NewStudyDialog projectId={projectId} onClose={() => setNewStudy(false)} />

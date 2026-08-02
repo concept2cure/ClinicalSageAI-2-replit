@@ -23,6 +23,7 @@ import {
   SEGMENT_MODULES,
   SURFACE_ACTIONS,
   getAnaContext,
+  getSegment,
   surfacesByTier,
 } from '../registryModel';
 
@@ -126,6 +127,20 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
   it('client categories carry icons for the rail', () => {
     for (const c of CLIENT_CATEGORIES) {
       expect(c.icon, `icon for ${c.id}`).toBeTruthy();
+    }
+  });
+
+  it('every rail client-category id resolves to a real segment', () => {
+    // Regression guard: the rail writes `segment` from CLIENT_CATEGORIES, and
+    // the TopBar reads it back through getSegment(). If a category id is not a
+    // segment, the TopBar silently falls back to SEGMENTS[0] (medtech) — which
+    // is exactly what happened to "diagnostics" and "health". Keep the two axes
+    // in sync.
+    expect(CLIENT_CATEGORIES.length).toBeGreaterThan(0);
+    for (const c of CLIENT_CATEGORIES) {
+      const seg = getSegment(c.id);
+      expect(seg, `category ${c.id} must be a segment`).toBeDefined();
+      expect(getSurface(seg!.defaultSurface), `${c.id}.defaultSurface`).toBeDefined();
     }
   });
 });

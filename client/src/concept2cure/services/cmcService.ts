@@ -413,6 +413,69 @@ export interface CmcQbdResult {
   [key: string]: unknown;
 }
 
+// ─── Variations / SUPAC classifier (deterministic) ───────────────────────────
+export type CmcDosageFormFamily =
+  | 'immediate_release_oral_solid'
+  | 'modified_release_oral_solid'
+  | 'nonsterile_semisolid'
+  | 'sterile_injectable'
+  | 'biologic'
+  | 'inhalation'
+  | 'transdermal'
+  | 'other';
+
+export type CmcChangeCategory =
+  | 'components_composition'
+  | 'manufacturing_site'
+  | 'scale_up'
+  | 'manufacturing_process'
+  | 'equipment'
+  | 'container_closure'
+  | 'specifications'
+  | 'analytical_method'
+  | 'stability_protocol';
+
+/** Body for POST /api/cmc/variations/classify. */
+export interface VariationClassifyInput {
+  dosageFormFamily: CmcDosageFormFamily;
+  changeCategory: CmcChangeCategory;
+  description?: string;
+  touchesCriticalStep?: boolean;
+  affects?: 'drug_substance' | 'drug_product' | 'both';
+}
+
+/** POST /api/cmc/variations/classify → data. */
+export interface CmcVariationClassification {
+  fdaReportingCategory: string;
+  emaVariationCategory: string;
+  supacTier: string;
+  bioequivalence: string;
+  impactedCtdSections: string[];
+  validationRequirements: string[];
+  estimatedTimelineDays: number;
+  confidence: number;
+  citations: string[];
+  rationale: string[];
+  crossModuleImpact: Array<{
+    module: string;
+    sections: string[];
+    whatToUpdate: string;
+    required: boolean;
+  }>;
+}
+
+/** A row from GET /api/cmc/module3-os/contradictions/:projectId. */
+export interface CmcContradiction {
+  id: string;
+  severity: string;
+  contradictionType: string;
+  details: unknown;
+  impactedSections: string[];
+  requiredReviewers: string[];
+  status: string;
+  updatedAt: string;
+}
+
 // ─── Authoring input shapes — match the live server zod schemas exactly ───────
 // These are the bodies the create/update handlers actually read; the legacy
 // domain types (Specification, StabilityProtocol, BatchRecord) describe a
@@ -804,18 +867,43 @@ class CMCService {
   /**
    * Generate ICH Q1E shelf life projection
    */
-  async projectShelfLife(protocolId: string): Promise<{
-    projectedShelfLife: number;
-    confidence: number;
-    degradationRate: number;
-    recommendation: string;
-    charts: Array<{ condition: string; data: Array<{ timePoint: number; value: number }> }>;
-  }> {
+  async projectShelfLife(studyId: string) {
+    // Real backend: GET /api/cmc/stability/:id/projections — an Arrhenius /
+    // ICH Q1A(R2)·Q1E projection over the study's persisted time-point results
+    // (server/api/cmc/stabilityRoutes.ts). The previous URL
+    // (/stability/protocols/:id/project) resolved to no route, which is why
+    // this call — and any surface that would render it — sat dead.
+    type Projection = {
+      studyId: string;
+      studyName: string;
+      studyType: string;
+      storageCondition: string;
+      arrheniusModel: {
+        activationEnergy: number;
+        referenceTemperature: string;
+        testTemperature: string;
+        accelerationFactor: number;
+      };
+      projectedShelfLife: { months: number; confidence: string; basis: string };
+      ichCompliance: { minimumRequired: number; projectedMeets: boolean; guideline: string };
+      degradationProfile: {
+        ratePerMonth: number;
+        mechanism: string;
+        timePointProjections: Array<{
+          month: number;
+          projectedPurity: number;
+          degradation: number;
+          withinSpec: boolean;
+        }>;
+      };
+      recommendations: string[];
+    };
     try {
-      return await this.request(
+      const body = await this.request<{ success: boolean; data: Projection }>(
         'GET',
-        `${this.baseUrl}/stability/protocols/${protocolId}/project`
+        `${this.baseUrl}/stability/${studyId}/projections`,
       );
+      return body.data;
     } catch (error) {
       console.error('[CMC] Project shelf life failed:', error);
       throw error;
@@ -1007,6 +1095,57 @@ class CMCService {
       { projectId },
     );
     return (res as any)?.data ?? (res as CmcIchCheckResult) ?? null;
+  }
+
+  async classifyVariation(
+    input: VariationClassifyInput,
+  ): Promise<CmcVariationClassification | null> {
+    // Deterministic SUPAC / variations classifier — 21 CFR 314.70, SUPAC-IR/MR/SS,
+    // EC 1234/2008, ICH Q12 (server/services/cmc/supac-classifier).
+    const res = await this.request<
+      { data?: CmcVariationClassification } | CmcVariationClassification
+    >('POST', `${this.baseUrl}/variations/classify`, input);
+    return (res as any)?.data ?? (res as CmcVariationClassification) ?? null;
+  }
+
+  /** Compile Module 3 from the project's canonical source objects (409 if none). */
+  async compileModule3(projectId: string): Promise<unknown> {
+    return this.request(
+      'POST',
+      `${this.baseUrl}/module3-os/compile/${encodeURIComponent(projectId)}`,
+      {},
+    );
+  }
+
+  /** List the project's Module 3 contradictions. */
+  async listContradictions(projectId: string): Promise<CmcContradiction[]> {
+    const data = await this.request<CmcContradiction[]>(
+      'GET',
+      `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Run contradiction detection across the compiled sections. */
+  async detectContradictions(projectId: string): Promise<CmcContradiction[]> {
+    const data = await this.request<CmcContradiction[]>(
+      'POST',
+      `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(projectId)}`,
+      {},
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Resolve a contradiction with a governed resolution note. */
+  async resolveContradiction(
+    id: string,
+    resolutionNote: string,
+  ): Promise<{ id: string; status: string }> {
+    return this.request<{ id: string; status: string }>(
+      'PATCH',
+      `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(id)}/resolve`,
+      { resolutionNote },
+    );
   }
 
   /** Change-impact simulation. Returns the filing path / impact analysis. */

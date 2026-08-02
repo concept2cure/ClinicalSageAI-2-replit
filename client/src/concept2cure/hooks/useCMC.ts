@@ -28,6 +28,9 @@ import cmcService, {
   type CmcBatchRow,
   type CmcIchCheckResult,
   type CmcQbdResult,
+  type VariationClassifyInput,
+  type CmcVariationClassification,
+  type CmcContradiction,
   type SpecificationInput,
   type SpecificationPatch,
   type StabilityStudyInput,
@@ -190,6 +193,40 @@ export function useICHComplianceCheck() {
 export function useChangeImpactSimulation() {
   return useMutation<unknown, Error, Record<string, unknown>>({
     mutationFn: (payload) => cmcService.simulateChangeImpact(payload),
+  });
+}
+
+// Deterministic SUPAC / variations classification (POST /api/cmc/variations/classify).
+export function useVariationClassification() {
+  return useMutation<CmcVariationClassification | null, Error, VariationClassifyInput>({
+    mutationFn: (input) => cmcService.classifyVariation(input),
+  });
+}
+
+// ── Module 3 build & contradictions console ──────────────────────────────────
+export function useContradictions(projectId: string | null) {
+  return useQuery<CmcContradiction[]>({
+    queryKey: [...cmcQueryKeys.all, 'contradictions', projectId ?? ''],
+    queryFn: () => (projectId ? cmcService.listContradictions(projectId) : Promise.resolve([])),
+    enabled: !!projectId,
+  });
+}
+
+export function useCompileModule3() {
+  return useMutation<unknown, Error, string>({
+    mutationFn: (projectId) => cmcService.compileModule3(projectId),
+  });
+}
+
+export function useDetectContradictions() {
+  return useMutation<CmcContradiction[], Error, string>({
+    mutationFn: (projectId) => cmcService.detectContradictions(projectId),
+  });
+}
+
+export function useResolveContradiction() {
+  return useMutation<{ id: string; status: string }, Error, { id: string; resolutionNote: string }>({
+    mutationFn: ({ id, resolutionNote }) => cmcService.resolveContradiction(id, resolutionNote),
   });
 }
 
@@ -433,11 +470,14 @@ export function useAddStabilityResult() {
   });
 }
 
-export function useProjectShelfLife(protocolId: string | null) {
+// Shelf-life projection for a single stability STUDY (the backend route is
+// keyed by study id, not protocol). Wired into the Stability surface so the
+// real ICH Q1A(R2)·Q1E projection renders inline instead of only via an AnA prompt.
+export function useProjectShelfLife(studyId: string | null) {
   return useQuery({
-    queryKey: [...cmcQueryKeys.stabilityProtocol(protocolId || ''), 'projection'],
-    queryFn: () => protocolId ? cmcService.projectShelfLife(protocolId) : null,
-    enabled: !!protocolId,
+    queryKey: [...cmcQueryKeys.stabilityProtocol(studyId || ''), 'projection'],
+    queryFn: () => (studyId ? cmcService.projectShelfLife(studyId) : null),
+    enabled: !!studyId,
     staleTime: 30 * 60 * 1000, // 30 minutes - projections are expensive
   });
 }
