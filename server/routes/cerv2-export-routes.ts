@@ -25,7 +25,7 @@ import {
   renderCombinedDocx,
 } from '../export/renderers';
 import { PassThrough } from 'stream';
-import { mockVault } from '../services/mockVault';
+// mockVault lazy-imported only inside sample routes (never loaded in production)
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 
@@ -472,6 +472,7 @@ router.get('/sample/:docType', async (req: Request, res: Response) => {
       });
     }
 
+    const { mockVault } = await import('../services/mockVault');
     const mockContent = mockVault.getMockEditorJson(docType);
     const pdfBuffer = await renderCombinedPdf(docType, mockContent);
 
@@ -496,6 +497,7 @@ router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
       });
     }
 
+    const { mockVault } = await import('../services/mockVault');
     const mockContent = mockVault.getMockEditorJson(docType);
     const title = sanitizeFilename(`${docType}_sample`);
 
@@ -558,6 +560,7 @@ router.get('/sample/:docType/docx', async (req: Request, res: Response) => {
       });
     }
 
+    const { mockVault } = await import('../services/mockVault');
     const mockContent = mockVault.getMockEditorJson(docType);
     const docxBuffer = await renderCombinedDocx(docType, mockContent);
 
@@ -586,6 +589,7 @@ router.get('/sample/:docType/json', async (req: Request, res: Response) => {
       });
     }
 
+    const { mockVault } = await import('../services/mockVault');
     const mockContent = mockVault.getMockEditorJson(docType);
     const mockDoc = mockVault.list(docType)[0];
 

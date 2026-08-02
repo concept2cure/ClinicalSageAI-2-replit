@@ -36,7 +36,6 @@ import { registerCoreRoutes } from '../bootstrap/register-core-routes';
 import { registerConcept2CureRoutes } from '../bootstrap/register-concept2cure-routes';
 import { registerAiRoutes } from '../bootstrap/register-ai-routes';
 import { registerAdminRoutes } from '../bootstrap/register-admin-routes';
-import { registerIntegrationRoutes } from '../bootstrap/register-integrations-routes';
 import { registerGovernanceRoutes } from '../bootstrap/register-governance-routes';
 import { registerIndLifecycleRoutes } from '../bootstrap/register-ind-lifecycle-routes';
 import { registerPlatformRoutes } from '../bootstrap/register-platform-routes';
@@ -95,7 +94,6 @@ export async function registerPreStartRoutes(
   // Core bootstrap family (templates, AI, CMC, AI assistance, intelligent
   // docs, PM settings, control plane) + Integrations family.
   registerCoreRoutes({ app, pool, aiCircuitBreaker, testRoutesEnabled });
-  registerIntegrationRoutes(app);
 
   // Slot 2 — AnA Cortex / Nano Banana / Predictive / Foresight alias / Biotech RAG.
   await registerInlineAnaIntelligenceRoutes(inlineCtx);

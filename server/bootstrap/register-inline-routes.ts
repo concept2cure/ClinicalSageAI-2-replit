@@ -124,16 +124,6 @@ export async function registerInlineAnaIntelligenceRoutes({
   // Foresight AI feedback alias retired in Phase 8 (past 2026-04-01 Sunset; the
   // Foresight path surfaced fabricated dose confidence intervals). No longer mounted.
 
-  // RAG routes (parallel startup for faster boot).
-  {
-    const ragResults = await Promise.allSettled([import('../routes/biotech-rag.js')]);
-    if (ragResults[0].status === 'fulfilled') {
-      app.use('/api/biotech-rag', ragResults[0].value.default);
-      console.log('✅ Biotech AI Intelligence RAG API routes mounted');
-    } else {
-      console.error('❌ Failed to mount Biotech RAG routes:', ragResults[0].reason);
-    }
-  }
 }
 
 /**

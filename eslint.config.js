@@ -46,7 +46,6 @@ export default [
       'scripts/**',
       'tests/integration/api/vault.test.js',
       'server/events/eventBus.js',
-      'server/routes/fda510k-routes.ts',
     ],
   },
   js.configs.recommended,

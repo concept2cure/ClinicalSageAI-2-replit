@@ -237,14 +237,8 @@ async function mountSubRouters() {
 
   // Project Wizard — removed at 2026-06-30 sunset (510k-project.routes.ts deleted)
 
-  // Production FDA API (from fda510k-routes.ts)
-  try {
-    const fdaApiModule = await import('./fda510k-routes');
-    router.use('/fda', fdaApiModule.default);
-    logger.info('Mounted: /fda (production FDA API)');
-  } catch (error) {
-    logger.error('Failed to mount FDA API routes:', error);
-  }
+  // fda510k-routes.ts removed (past 2026-06-30 sunset; all functionality
+  // consolidated into fda510k-unified.ts and predicate-intelligence.ts)
 
   // eSTAR Integration — removed deprecated alternate 510kEstarRoutes path;
   // active eSTAR endpoint is at /api/510k/estar via 510k-estar-routes.ts
