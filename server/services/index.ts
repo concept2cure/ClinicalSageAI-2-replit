@@ -71,8 +71,6 @@ export { default as reportGeneratorService } from './report-generator-service';
 // DATA SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { default as harvestEngine } from './harvestEngine.js';
-export { default as dataHarvester } from './dataHarvester.js';
 export * from './enhancedFaersService.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════

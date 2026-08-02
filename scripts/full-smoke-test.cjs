@@ -178,7 +178,6 @@ async function main() {
     '/api/lumen-cortex',
     '/api/intelligent-docs',
     '/api/foresight',
-    '/api/biotech-rag',
     '/api/cerv2',
     '/api/medical-devices',
     '/api/fda',

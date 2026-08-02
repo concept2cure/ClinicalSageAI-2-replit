@@ -4,32 +4,11 @@ import express from 'express';
 import { db, pool } from '../db';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { authenticateToken } from '../middleware/auth.js';
 
-const router = express.Router({ mergeParams: true }); // Enable merging params from parent router (for :draftId)
+const router = express.Router({ mergeParams: true });
 
-// --- Authentication/Authorization Middleware ---
-const authMiddleware = (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) => {
-  // For development, we're assuming authentication is handled elsewhere
-  // In a production environment, you would check session, JWT, etc.
-  console.log(`Auth Check for Draft: ${req.params.draftId}`);
-
-  // Placeholder for authentication check
-  // if (!req.user) {
-  //   return res.status(401).json({ success: false, message: 'Authentication required.' });
-  // }
-
-  // Placeholder for authorization check (draft ownership)
-  // const userId = req.user.id;
-  // const draftId = req.params.draftId;
-  // Check if user owns draft...
-
-  // For now, proceed with all requests
-  next();
-};
+router.use(authenticateToken);
 
 // --- Database Interaction Logic ---
 
@@ -272,7 +251,7 @@ const PreIndDataSchema = z.object({
  * GET /api/ind/drafts/:draftId/pre-ind
  * Retrieves the Pre-IND data and associated milestones for a specific draft.
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   const draftId = String(req.params.draftId);
   const userId = (req as any).user?.id; // Type assertion for development - in production use proper typing
 
@@ -309,7 +288,7 @@ router.get('/', authMiddleware, async (req, res) => {
  * PUT /api/ind/drafts/:draftId/pre-ind
  * Creates or updates the Pre-IND data and milestones for a specific draft.
  */
-router.put('/', authMiddleware, async (req, res) => {
+router.put('/', async (req, res) => {
   const draftId = String(req.params.draftId);
   const userId = (req as any).user?.id; // Type assertion for development
   const dataToSave = req.body;

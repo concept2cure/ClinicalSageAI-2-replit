@@ -41,7 +41,6 @@ const APPROVED = new Set([
   'server/services/semanticEmbeddingService.js',
   // Pre-existing direct callers (documented at gate-introduction time,
   // 2026-05-07). Migration target: route through embeddingService.embed().
-  'server/services/biotechRagService.js',
   // LiteratureAggregatorService.ts — deleted 2026-06-12 (510k-orphaned dead
   // code removed per issue #726; was a direct embedding caller).
   // documentIngestionWorkflow.js — deleted 2026-05-07 (was dead + broken

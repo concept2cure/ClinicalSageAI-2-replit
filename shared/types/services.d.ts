@@ -190,35 +190,6 @@ declare module '*/cmcBlueprintService.js' {
   export default cmcBlueprintService;
 }
 
-declare module '*/harvestEngine.js' {
-  export function executeHarvest(
-    submissionId: string,
-    options?: Record<string, unknown>
-  ): Promise<any>;
-  export function getHarvestHistory(
-    submissionId: string,
-    options?: Record<string, unknown>
-  ): Promise<any>;
-  const harvestEngine: {
-    executeHarvest: typeof executeHarvest;
-    getHarvestHistory: typeof getHarvestHistory;
-  };
-  export default harvestEngine;
-}
-
-declare module '*/dataHarvester.js' {
-  export function processDocument(documentId: string, submissionId: string): Promise<any>;
-  export function getHarvestingJobStatus(jobId: string): Promise<any>;
-  export function queueDocumentsForHarvesting(
-    documentIds: string[],
-    submissionId: string
-  ): Promise<any>;
-  export function getHarvestingStats(submissionId: string): Promise<any>;
-  export function searchHarvestableDocuments(filters: any): Promise<any>;
-  const dataHarvester: Record<string, (...args: any[]) => any>;
-  export default dataHarvester;
-}
-
 declare module '*/enhancedFaersService.js' {
   export class EnhancedFAERSClient {
     constructor();

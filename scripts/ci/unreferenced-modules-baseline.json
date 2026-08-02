@@ -114,7 +114,6 @@
     "server/integrations/firecrawl/extract.ts",
     "server/intelligence-service.ts",
     "server/jest.config.js",
-    "server/jobs/periodicReview.js",
     "server/lib/index.ts",
     "server/middleware/auditLogger.js",
     "server/middleware/authAdapter.ts",

@@ -22,11 +22,8 @@ const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '../..');
 // Known existing consumers of @supabase/supabase-js (allowlisted)
 const SUPABASE_ALLOWLIST = new Set([
   'server/services/pdfGenerator.js',
-  'server/services/harvestEngine.js',
   'server/services/indCopilot.js',
   'server/services/esgService.js',
-  'server/services/dataHarvester.js',
-  'server/jobs/periodicReview.js',
   'scripts/test_reference_model.js',
   'scripts/setup_reference_model.js',
   'scripts/migrate_legacy_types.js',

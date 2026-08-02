@@ -19,7 +19,6 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   {
     const regulatoryRouteResults = await Promise.allSettled([
       import('../routes/fda510k-unified.js'),
-      import('../routes/fda510k-routes.js'),
       import('../routes/510k-estar-routes'),
       import('../routes/cerv2-export-routes'),
       import('../routes/cerv2-ai-routes'),
@@ -30,7 +29,6 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
 
     const routeMap = [
       { path: '/api/fda510k-unified', label: 'FDA 510(k) Unified' },
-      { path: '/api/fda510k', label: 'FDA 510(k) Legacy' },
       { path: '/api/510k/estar', label: 'FDA 510(k) eSTAR' },
       { path: '/api/cerv2/export', label: 'CERV2 Export' },
       { path: '/api/cerv2/ai', label: 'CERV2 AI' },

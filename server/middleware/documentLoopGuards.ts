@@ -68,9 +68,9 @@ export function guardDemoContent(req: any, res: any, next: any) {
         signature: sig,
         title: req.body?.title,
       });
-      // Warn but don't block — some legitimate content might match
-      // In strict mode, uncomment the return below:
-      // return res.status(400).json({ error: 'Demo data not allowed in production', code: 'DEMO_DATA_BLOCKED' });
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(400).json({ error: 'Demo data not allowed in production', code: 'DEMO_DATA_BLOCKED' });
+      }
       break;
     }
   }

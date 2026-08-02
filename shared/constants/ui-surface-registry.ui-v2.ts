@@ -271,7 +271,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'evidence',
     icon: 'search',
     uiKit: null,
-    apiPrefixes: ['/api/evidence', '/api/corpus', '/api/biotech-rag'],
+    apiPrefixes: ['/api/evidence', '/api/corpus'],
     anaToolFamilies: ['get_evidence_chain'],
     sharedContract: null,
     discoveryCatalog: null,

@@ -32,29 +32,6 @@ export interface User {
   subscribed: boolean;
 }
 
-// Mock users for development
-export const mockUsers: User[] = [
-  {
-    id: 1,
-    username: 'admin',
-    // Mock fixture only — not an auth credential. Real logins go through
-    // the Drizzle `users` table with bcrypt-hashed password_hash.
-    password: '',
-    email: 'admin@trialsage.ai',
-    role: 'admin',
-    name: 'Admin User',
-    subscribed: true,
-  },
-  {
-    id: 2,
-    username: 'demo',
-    password: '',
-    email: 'demo@trialsage.ai',
-    role: 'user',
-    name: 'Demo User',
-    subscribed: true,
-  },
-];
 
 // Storage interface
 export interface IStorage {
@@ -679,7 +656,7 @@ export interface IStorage {
  * In-memory storage implementation
  */
 export class MemStorage {
-  private users: User[] = [...mockUsers];
+  private users: User[] = [];
   private trials: any[] = [];
   private documents: any[] = [];
   private folders: schema.DocumentFolder[] = [];
