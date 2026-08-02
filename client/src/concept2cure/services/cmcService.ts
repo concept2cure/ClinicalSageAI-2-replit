@@ -506,6 +506,34 @@ export interface CmcControlStrategy {
   generatedAt: string;
 }
 
+/** A row from GET /api/cmc/comparability-studies (org-scoped). */
+export interface CmcComparabilityRow {
+  id: string;
+  title?: string;
+  product?: string;
+  type?: string;
+  status?: string;
+  methods?: string[];
+  outcome?: string | null;
+  owner?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  project_id?: string;
+  [k: string]: unknown;
+}
+
+/** Body for POST /api/cmc/comparability-studies. */
+export interface ComparabilityInput {
+  projectId: string;
+  title: string;
+  type?: string;
+  product?: string;
+  methods?: string[];
+  outcome?: string;
+  owner?: string;
+  status?: string;
+}
+
 // ─── Authoring input shapes — match the live server zod schemas exactly ───────
 // These are the bodies the create/update handlers actually read; the legacy
 // domain types (Specification, StabilityProtocol, BatchRecord) describe a
@@ -1187,6 +1215,25 @@ class CMCService {
       'POST',
       `${this.baseUrl}/control-strategy`,
       { projectId, scope },
+    );
+    return data ?? null;
+  }
+
+  /** List the organization's comparability assessments (§3.2 biologics). */
+  async listComparabilityStudies(): Promise<CmcComparabilityRow[]> {
+    const data = await this.request<CmcComparabilityRow[]>(
+      'GET',
+      `${this.baseUrl}/comparability-studies`,
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Create a comparability assessment for a project. */
+  async createComparabilityStudy(input: ComparabilityInput): Promise<CmcComparabilityRow | null> {
+    const data = await this.request<CmcComparabilityRow>(
+      'POST',
+      `${this.baseUrl}/comparability-studies`,
+      input,
     );
     return data ?? null;
   }

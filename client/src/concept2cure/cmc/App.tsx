@@ -29,6 +29,7 @@ import { CmcStability } from './surfaces/Stability';
 import { CmcBatch } from './surfaces/Batch';
 import { CmcChange } from './surfaces/Change';
 import { CmcBlueprint } from './surfaces/Blueprint';
+import { CmcComparability } from './surfaces/Comparability';
 import { CmcGlobal } from './surfaces/Global';
 import { CmcCopilot } from './surfaces/Copilot';
 import { ProgramSubTabs } from '../_shared/program/ProgramSubTabs';
@@ -140,6 +141,7 @@ export function CmcApp({ activeProjectId, initialNav = 'overview' }: CmcAppProps
     case 'batch':     surface = <CmcBatch projectId={projectId} onAskAna={askAna} />; break;
     case 'change':    surface = <CmcChange />; break;
     case 'blueprint': surface = <CmcBlueprint projectId={projectId} onAskAna={askAna} />; break;
+    case 'comparability': surface = <CmcComparability projectId={projectId} onAskAna={askAna} />; break;
     case 'global':    surface = <CmcGlobal onAskAna={askAna} />; break;
     case 'pathway':   surface = <ProgramSubTabs projectId={projectId} initialTab="audit" />; break;
     case 'copilot':   surface = <CmcCopilot projectId={projectId} />; break;

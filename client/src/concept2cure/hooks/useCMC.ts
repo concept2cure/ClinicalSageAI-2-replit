@@ -32,6 +32,8 @@ import cmcService, {
   type CmcVariationClassification,
   type CmcContradiction,
   type CmcControlStrategy,
+  type CmcComparabilityRow,
+  type ComparabilityInput,
   type SpecificationInput,
   type SpecificationPatch,
   type StabilityStudyInput,
@@ -239,6 +241,24 @@ export function useControlStrategy() {
     { projectId: string; scope?: 'drug_substance' | 'drug_product' | 'both' }
   >({
     mutationFn: ({ projectId, scope }) => cmcService.generateControlStrategy(projectId, scope),
+  });
+}
+
+// Comparability assessments (§3.2 biologics) — org-scoped list + create.
+export function useComparabilityStudies() {
+  return useQuery<CmcComparabilityRow[]>({
+    queryKey: [...cmcQueryKeys.all, 'comparability'],
+    queryFn: () => cmcService.listComparabilityStudies(),
+  });
+}
+
+export function useCreateComparabilityStudy() {
+  const queryClient = useQueryClient();
+  return useMutation<CmcComparabilityRow | null, Error, ComparabilityInput>({
+    mutationFn: (input) => cmcService.createComparabilityStudy(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...cmcQueryKeys.all, 'comparability'] });
+    },
   });
 }
 
