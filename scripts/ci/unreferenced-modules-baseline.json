@@ -1,7 +1,7 @@
 {
   "$comment": "Modules under server/ or client/src/ that nothing in the repository references. This list may only shrink: delete the module, or wire it up, then regenerate with npm run ci:unreferenced-modules:write-baseline. Adding an entry by hand is a regression, not a fix.",
   "generatedBy": "scripts/ci/check-unreferenced-modules.mjs --write-baseline",
-  "count": 185,
+  "count": 184,
   "modules": [
     "client/src/components/ui/TabRow.jsx",
     "client/src/components/ui/alarm.tsx",
@@ -83,7 +83,6 @@
     "server/academic-resource-upload.ts",
     "server/api/cmc/templateService.ts",
     "server/api/ectd/routes.ts",
-    "server/api/gcc/vault/routes.js",
     "server/api/labeling/routes.ts",
     "server/api/neuro-symbolic/routes.ts",
     "server/api/semantic-search.js",

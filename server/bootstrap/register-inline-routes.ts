@@ -764,6 +764,27 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Projects routes:', error);
   }
 
+  // C2C Project Vault — the Vault (DMS) surface read-model, backed by real
+  // c2c_documents + c2c_document_sections data (org-scoped).
+  try {
+    const { default: createProjectVaultRoutes } = await import('../routes/c2c/project-vault');
+    app.use('/api/c2c/project-vault', authMiddleware, createProjectVaultRoutes());
+    console.info('✅ C2C Project Vault routes mounted (/api/c2c/project-vault)');
+  } catch (error) {
+    console.error('❌ Failed to mount C2C Project Vault routes:', error);
+  }
+
+  // Vault document ingestion — the write path into the RAG corpus
+  // (vault.documents). Before this route, no production code ever inserted
+  // into vault.documents; documents could not enter the embedding pipeline.
+  try {
+    const { default: createVaultIngestRoutes } = await import('../routes/vault-ingest');
+    app.use('/api/vault/ingest', authMiddleware, createVaultIngestRoutes());
+    console.info('✅ Vault ingest route mounted (/api/vault/ingest)');
+  } catch (error) {
+    console.error('❌ Failed to mount Vault ingest route:', error);
+  }
+
   // PDEV Evidence Picker library — org-scoped searchable evidence pool read by
   // GET /api/evidence-objects (own sub-prefix, mounted nowhere else). Populates
   // the picker's result list; before this the fetch 404'd to a permanent empty
