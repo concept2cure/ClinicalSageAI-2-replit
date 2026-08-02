@@ -464,6 +464,18 @@ export interface CmcVariationClassification {
   }>;
 }
 
+/** A row from GET /api/cmc/module3-os/contradictions/:projectId. */
+export interface CmcContradiction {
+  id: string;
+  severity: string;
+  contradictionType: string;
+  details: unknown;
+  impactedSections: string[];
+  requiredReviewers: string[];
+  status: string;
+  updatedAt: string;
+}
+
 // ─── Authoring input shapes — match the live server zod schemas exactly ───────
 // These are the bodies the create/update handlers actually read; the legacy
 // domain types (Specification, StabilityProtocol, BatchRecord) describe a
@@ -1094,6 +1106,46 @@ class CMCService {
       { data?: CmcVariationClassification } | CmcVariationClassification
     >('POST', `${this.baseUrl}/variations/classify`, input);
     return (res as any)?.data ?? (res as CmcVariationClassification) ?? null;
+  }
+
+  /** Compile Module 3 from the project's canonical source objects (409 if none). */
+  async compileModule3(projectId: string): Promise<unknown> {
+    return this.request(
+      'POST',
+      `${this.baseUrl}/module3-os/compile/${encodeURIComponent(projectId)}`,
+      {},
+    );
+  }
+
+  /** List the project's Module 3 contradictions. */
+  async listContradictions(projectId: string): Promise<CmcContradiction[]> {
+    const data = await this.request<CmcContradiction[]>(
+      'GET',
+      `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(projectId)}`,
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Run contradiction detection across the compiled sections. */
+  async detectContradictions(projectId: string): Promise<CmcContradiction[]> {
+    const data = await this.request<CmcContradiction[]>(
+      'POST',
+      `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(projectId)}`,
+      {},
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Resolve a contradiction with a governed resolution note. */
+  async resolveContradiction(
+    id: string,
+    resolutionNote: string,
+  ): Promise<{ id: string; status: string }> {
+    return this.request<{ id: string; status: string }>(
+      'PATCH',
+      `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(id)}/resolve`,
+      { resolutionNote },
+    );
   }
 
   /** Change-impact simulation. Returns the filing path / impact analysis. */

@@ -30,6 +30,7 @@ import cmcService, {
   type CmcQbdResult,
   type VariationClassifyInput,
   type CmcVariationClassification,
+  type CmcContradiction,
   type SpecificationInput,
   type SpecificationPatch,
   type StabilityStudyInput,
@@ -199,6 +200,33 @@ export function useChangeImpactSimulation() {
 export function useVariationClassification() {
   return useMutation<CmcVariationClassification | null, Error, VariationClassifyInput>({
     mutationFn: (input) => cmcService.classifyVariation(input),
+  });
+}
+
+// ── Module 3 build & contradictions console ──────────────────────────────────
+export function useContradictions(projectId: string | null) {
+  return useQuery<CmcContradiction[]>({
+    queryKey: [...cmcQueryKeys.all, 'contradictions', projectId ?? ''],
+    queryFn: () => (projectId ? cmcService.listContradictions(projectId) : Promise.resolve([])),
+    enabled: !!projectId,
+  });
+}
+
+export function useCompileModule3() {
+  return useMutation<unknown, Error, string>({
+    mutationFn: (projectId) => cmcService.compileModule3(projectId),
+  });
+}
+
+export function useDetectContradictions() {
+  return useMutation<CmcContradiction[], Error, string>({
+    mutationFn: (projectId) => cmcService.detectContradictions(projectId),
+  });
+}
+
+export function useResolveContradiction() {
+  return useMutation<{ id: string; status: string }, Error, { id: string; resolutionNote: string }>({
+    mutationFn: ({ id, resolutionNote }) => cmcService.resolveContradiction(id, resolutionNote),
   });
 }
 
