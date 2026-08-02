@@ -4,7 +4,7 @@ import { SampleTag, useLiveData, useLiveRows, EmptyState } from '../dataConnect'
 import { apiRequest } from '@/lib/queryClient';
 import { getAuthToken } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { getSurfaceMeta } from '../registryModel';
+import { getSurfaceMeta, SEGMENT_MODULES, CLIENT_CATEGORIES } from '../registryModel';
 import { LIC_ROLES } from '../fixtures/licensing';
 // Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
 // filter taxonomy the server's deriveKind() mirrors; PLATFORM_SERVICES is the
@@ -1192,6 +1192,76 @@ function mapLiveCatalog(payload: unknown): AppGroup[] | null {
   });
 }
 
+type SegmentKey = keyof typeof SEGMENT_MODULES;
+const SEGMENT_KEYS = Object.keys(SEGMENT_MODULES) as SegmentKey[];
+
+function mapLiveCatalogBySegment(
+  payload: unknown,
+  segmentId: string,
+): AppGroup[] | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const modules = (payload as { modules?: unknown }).modules;
+  if (!Array.isArray(modules)) return null;
+  const rows = modules.filter(isLiveModuleEntry);
+  if (rows.length === 0) return null;
+
+  const segKey = segmentId as SegmentKey;
+  const segGroups = SEGMENT_MODULES[segKey];
+  if (!segGroups) return null;
+
+  const byId = new Map<string, LiveModuleEntry>();
+  for (const m of rows) byId.set(m.moduleId, m);
+
+  const toAppRow = (m: LiveModuleEntry): AppRow => ({
+    id: m.moduleId,
+    name: m.name,
+    tier: liveTierLabel(m),
+    on: m.isEnabled,
+    desc: m.description || m.name,
+  });
+
+  const placed = new Set<string>();
+  const result: AppGroup[] = [];
+
+  for (const grp of segGroups) {
+    const apps: AppRow[] = [];
+    for (const id of grp.items) {
+      const m = byId.get(id);
+      if (m) {
+        apps.push(toAppRow(m));
+        placed.add(id);
+      }
+    }
+    if (apps.length > 0) {
+      result.push({
+        group: grp.label,
+        note: `${apps.length} module${apps.length === 1 ? '' : 's'}`,
+        apps,
+      });
+    }
+  }
+
+  const overflow: AppRow[] = [];
+  for (const m of rows) {
+    if (!placed.has(m.moduleId)) overflow.push(toAppRow(m));
+  }
+  if (overflow.length > 0) {
+    overflow.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+    result.push({
+      group: 'Other available',
+      note: `${overflow.length} module${overflow.length === 1 ? '' : 's'} not in this segment's core set`,
+      apps: overflow,
+    });
+  }
+
+  return result;
+}
+
+function segmentLabel(id: string): string {
+  const c = CLIENT_CATEGORIES.find((c) => c.id === id);
+  return c?.label || id.charAt(0).toUpperCase() + id.slice(1);
+}
+
 /** Map GET /license into the fixture display shape, or null on shape mismatch.
     `renewsAt` stays empty — the backend holds no renewal date to report. */
 function mapLiveLicense(payload: unknown): AppLicense | null {
@@ -1220,17 +1290,22 @@ function mapLiveLicense(payload: unknown): AppLicense | null {
   };
 }
 
-export function Apps({ onAsk, onNav }: SurfaceViewProps) {
+export function Apps({ onAsk, onNav, segment: propSegment }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
-  // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
-  // so useLiveData yields the payload directly ({ modules } / the license object).
   const catState = useLiveData<{ modules: LiveModuleEntry[] }>('/api/module-subscriptions/catalog');
   const licState = useLiveData<Record<string, unknown>>('/api/module-subscriptions/license');
-  const liveGroups = useMemo(() => mapLiveCatalog(catState.data), [catState.data]);
   const lic = useMemo(() => mapLiveLicense(licState.data), [licState.data]);
-  // Editable copy for optimistic toggles, seeded once when the live catalog
-  // resolves. liveGroups is a stable reference until the fetch re-runs (useMemo
-  // over the resolved payload), so the seed effect fires once and never loops.
+
+  const initialSeg = SEGMENT_KEYS.includes(propSegment as SegmentKey) ? propSegment : '';
+  const [segFilter, setSegFilter] = useState(initialSeg);
+
+  const liveGroups = useMemo(() => {
+    if (segFilter && SEGMENT_KEYS.includes(segFilter as SegmentKey)) {
+      return mapLiveCatalogBySegment(catState.data, segFilter);
+    }
+    return mapLiveCatalog(catState.data);
+  }, [catState.data, segFilter]);
+
   const [cat, setCat] = useState<AppGroup[]>([]);
   const seededRef = useRef<AppGroup[] | null>(null);
   useEffect(() => {
@@ -1239,8 +1314,6 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       setCat(liveGroups);
     }
   }, [liveGroups]);
-  // Render from the optimistic copy once seeded, else straight from the live map
-  // (avoids a one-frame blank between the fetch resolving and the seed effect).
   const groups = cat.length > 0 ? cat : liveGroups ?? [];
   const [admin, setAdmin] = useState(false);
   const [toast, setToast] = useState('');
@@ -1300,7 +1373,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Workspace -- /api/module-subscriptions"
         title="Apps catalog"
-        sub="Every application -- the destinations you open and work in -- entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
+        sub="Every application -- the destinations you open and work in -- entitlement-aware, organized by client segment. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
           <button
             className="btn ghost"
@@ -1389,6 +1462,24 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
           </a>
         </div>
       )}
+
+      {/* Segment filter */}
+      <div className="seg-filter-bar" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 0 12px', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.55, marginRight: 4 }}>View by segment</span>
+        <button
+          className={`rd-chip${segFilter === '' ? ' tone-ai' : ''}`}
+          style={{ cursor: 'pointer', border: 'none' }}
+          onClick={() => { setSegFilter(''); seededRef.current = null; }}
+        >All</button>
+        {SEGMENT_KEYS.map((k) => (
+          <button
+            key={k}
+            className={`rd-chip${segFilter === k ? ' tone-ai' : ''}`}
+            style={{ cursor: 'pointer', border: 'none' }}
+            onClick={() => { setSegFilter(k); seededRef.current = null; }}
+          >{segmentLabel(k)}</button>
+        ))}
+      </div>
 
       {catState.loading ? (
         <div className="sec">
