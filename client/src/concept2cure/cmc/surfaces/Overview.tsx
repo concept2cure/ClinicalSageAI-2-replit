@@ -10,6 +10,7 @@ import {
   useModule3Readiness,
   useModule3Sections,
   useApproveModule3Section,
+  useICHComplianceCheck,
   cmcQueryKeys,
 } from '../../hooks/useCMC';
 import type { CmcPortfolioRow, CmcModule3Section } from '../../services/cmcService';
@@ -123,9 +124,18 @@ interface OverviewProps {
   onAskAna: (text: string) => void;
 }
 
+// Map an ICH status string to a StatusChip tone.
+function ichTone(status: unknown): 'ok' | 'warn' | 'err' {
+  const s = String(status ?? '').toLowerCase();
+  if (/fail|critical|non-?compliant|gap|block|missing/.test(s)) return 'err';
+  if (/pass|compliant|met|ready|ok/.test(s) && !/non/.test(s)) return 'ok';
+  return 'warn';
+}
+
 export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProps) {
   const portfolio = usePortfolioOverview();
   const readiness = useModule3Readiness(projectId);
+  const ichCheck = useICHComplianceCheck();
 
   const rows = portfolio.data ?? portfolioRows;
   const avgRpi = rows.length
@@ -150,6 +160,15 @@ export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProp
           <div className="bp-meta">{rows.length} submissions · RPI {avgRpi} average</div>
         </div>
         <div className="bp-page-actions">
+          <button
+            className="bp-btn-tert"
+            type="button"
+            disabled={!projectId || ichCheck.isPending}
+            onClick={() => projectId && ichCheck.mutate(projectId)}
+            title="Run the deterministic ICH rule check for this project"
+          >
+            {ichCheck.isPending ? 'Running ICH check…' : 'Run ICH check'}
+          </button>
           <button className="bp-btn-primary" type="button"
                   onClick={() => onAskAna('Run the ICH compliance check and show every gap')}>
             <CmcIcon name="sparkles" /> Ask AnA
@@ -249,6 +268,71 @@ export function CmcOverview({ projectId, portfolioRows, onAskAna }: OverviewProp
           </div>
         )}
       </div>
+
+      {/* ICH compliance — real deterministic rule check (POST /api/cmc/ich-compliance) */}
+      {projectId && (
+        <div className="bp-card" style={{ marginTop: 14 }}>
+          <div className="bp-card-head">
+            <span>ICH compliance</span>
+            <span className="bp-meta">Rule check across specs · stability · impurities · batches</span>
+          </div>
+          {ichCheck.isPending ? (
+            <Loading label="Running ICH compliance check…" />
+          ) : ichCheck.isError ? (
+            <ErrorState message="Could not run the ICH compliance check." />
+          ) : !ichCheck.data ? (
+            <div style={{ padding: 12 }}>
+              <div className="bp-meta" style={{ marginBottom: 10 }}>
+                Run a deterministic ICH Q1/Q2/Q3/Q6/Q8–Q11 rule check for this project and see
+                every finding with its guideline reference.
+              </div>
+              <button
+                className="bp-btn-tert"
+                type="button"
+                onClick={() => ichCheck.mutate(projectId)}
+              >
+                Run ICH compliance check
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                {ichCheck.data.overallStatus != null && (
+                  <StatusChip
+                    tone={ichTone(ichCheck.data.overallStatus)}
+                    label={String(ichCheck.data.overallStatus)}
+                  />
+                )}
+                {typeof ichCheck.data.score === 'number' && (
+                  <span className="cmc-sec-conv" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    Score {ichCheck.data.score}
+                  </span>
+                )}
+              </div>
+              {(ichCheck.data.guidelines ?? []).length === 0 ? (
+                <Empty>No guideline findings returned.</Empty>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {(ichCheck.data.guidelines ?? []).map((g, i) => (
+                    <div key={i} style={{ borderTop: '1px solid var(--cmc-border, #e5e7eb)', paddingTop: 8 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                        <strong>{g.guideline}</strong>
+                        <StatusChip tone={ichTone(g.status)} label={String(g.status)} />
+                      </div>
+                      {(g.findings ?? []).map((f, j) => (
+                        <div key={j} className="bp-meta" style={{ marginBottom: 2 }}>
+                          • {f.description}
+                          {f.reference ? ` (${f.reference})` : ''}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Governed section approvals for the selected project */}
       {projectId && <SectionApprovals projectId={projectId} />}
