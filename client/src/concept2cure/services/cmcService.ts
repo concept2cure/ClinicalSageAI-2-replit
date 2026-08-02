@@ -476,6 +476,36 @@ export interface CmcContradiction {
   updatedAt: string;
 }
 
+/** One control in POST /api/cmc/control-strategy → data.controlElements. */
+export interface CmcControlElement {
+  controlType: string;
+  description: string;
+  targetCqa?: string;
+  acceptanceCriterion?: string;
+  performedBy?: string;
+  ichBasis: string[];
+  justification: string;
+}
+
+/** POST /api/cmc/control-strategy → data (deterministic ICH Q8–Q11 strategy). */
+export interface CmcControlStrategy {
+  projectId: string;
+  scope: string;
+  cqas: Array<{ name?: string; [k: string]: unknown }>;
+  cpps: Array<{ name?: string; [k: string]: unknown }>;
+  controlElements: CmcControlElement[];
+  stabilityMonitoring: {
+    longTermCondition: string;
+    acceleratedCondition: string;
+    testParameters: string[];
+    timePoints: string[];
+    ichBasis: string[];
+  };
+  gaps: string[];
+  citations: string[];
+  generatedAt: string;
+}
+
 // ─── Authoring input shapes — match the live server zod schemas exactly ───────
 // These are the bodies the create/update handlers actually read; the legacy
 // domain types (Specification, StabilityProtocol, BatchRecord) describe a
@@ -1146,6 +1176,19 @@ class CMCService {
       `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(id)}/resolve`,
       { resolutionNote },
     );
+  }
+
+  /** Deterministic ICH Q8/Q9/Q10/Q11 control strategy for a project + scope. */
+  async generateControlStrategy(
+    projectId: string,
+    scope: 'drug_substance' | 'drug_product' | 'both' = 'both',
+  ): Promise<CmcControlStrategy | null> {
+    const data = await this.request<CmcControlStrategy>(
+      'POST',
+      `${this.baseUrl}/control-strategy`,
+      { projectId, scope },
+    );
+    return data ?? null;
   }
 
   /** Change-impact simulation. Returns the filing path / impact analysis. */

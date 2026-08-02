@@ -31,6 +31,7 @@ import cmcService, {
   type VariationClassifyInput,
   type CmcVariationClassification,
   type CmcContradiction,
+  type CmcControlStrategy,
   type SpecificationInput,
   type SpecificationPatch,
   type StabilityStudyInput,
@@ -227,6 +228,17 @@ export function useDetectContradictions() {
 export function useResolveContradiction() {
   return useMutation<{ id: string; status: string }, Error, { id: string; resolutionNote: string }>({
     mutationFn: ({ id, resolutionNote }) => cmcService.resolveContradiction(id, resolutionNote),
+  });
+}
+
+// Deterministic ICH Q8–Q11 control strategy generator (POST /api/cmc/control-strategy).
+export function useControlStrategy() {
+  return useMutation<
+    CmcControlStrategy | null,
+    Error,
+    { projectId: string; scope?: 'drug_substance' | 'drug_product' | 'both' }
+  >({
+    mutationFn: ({ projectId, scope }) => cmcService.generateControlStrategy(projectId, scope),
   });
 }
 
