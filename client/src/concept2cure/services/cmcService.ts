@@ -804,18 +804,43 @@ class CMCService {
   /**
    * Generate ICH Q1E shelf life projection
    */
-  async projectShelfLife(protocolId: string): Promise<{
-    projectedShelfLife: number;
-    confidence: number;
-    degradationRate: number;
-    recommendation: string;
-    charts: Array<{ condition: string; data: Array<{ timePoint: number; value: number }> }>;
-  }> {
+  async projectShelfLife(studyId: string) {
+    // Real backend: GET /api/cmc/stability/:id/projections — an Arrhenius /
+    // ICH Q1A(R2)·Q1E projection over the study's persisted time-point results
+    // (server/api/cmc/stabilityRoutes.ts). The previous URL
+    // (/stability/protocols/:id/project) resolved to no route, which is why
+    // this call — and any surface that would render it — sat dead.
+    type Projection = {
+      studyId: string;
+      studyName: string;
+      studyType: string;
+      storageCondition: string;
+      arrheniusModel: {
+        activationEnergy: number;
+        referenceTemperature: string;
+        testTemperature: string;
+        accelerationFactor: number;
+      };
+      projectedShelfLife: { months: number; confidence: string; basis: string };
+      ichCompliance: { minimumRequired: number; projectedMeets: boolean; guideline: string };
+      degradationProfile: {
+        ratePerMonth: number;
+        mechanism: string;
+        timePointProjections: Array<{
+          month: number;
+          projectedPurity: number;
+          degradation: number;
+          withinSpec: boolean;
+        }>;
+      };
+      recommendations: string[];
+    };
     try {
-      return await this.request(
+      const body = await this.request<{ success: boolean; data: Projection }>(
         'GET',
-        `${this.baseUrl}/stability/protocols/${protocolId}/project`
+        `${this.baseUrl}/stability/${studyId}/projections`,
       );
+      return body.data;
     } catch (error) {
       console.error('[CMC] Project shelf life failed:', error);
       throw error;

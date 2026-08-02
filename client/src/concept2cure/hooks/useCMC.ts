@@ -433,11 +433,14 @@ export function useAddStabilityResult() {
   });
 }
 
-export function useProjectShelfLife(protocolId: string | null) {
+// Shelf-life projection for a single stability STUDY (the backend route is
+// keyed by study id, not protocol). Wired into the Stability surface so the
+// real ICH Q1A(R2)·Q1E projection renders inline instead of only via an AnA prompt.
+export function useProjectShelfLife(studyId: string | null) {
   return useQuery({
-    queryKey: [...cmcQueryKeys.stabilityProtocol(protocolId || ''), 'projection'],
-    queryFn: () => protocolId ? cmcService.projectShelfLife(protocolId) : null,
-    enabled: !!protocolId,
+    queryKey: [...cmcQueryKeys.stabilityProtocol(studyId || ''), 'projection'],
+    queryFn: () => (studyId ? cmcService.projectShelfLife(studyId) : null),
+    enabled: !!studyId,
     staleTime: 30 * 60 * 1000, // 30 minutes - projections are expensive
   });
 }
