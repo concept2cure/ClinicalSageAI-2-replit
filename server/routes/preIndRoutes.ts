@@ -252,8 +252,8 @@ const PreIndDataSchema = z.object({
  * Retrieves the Pre-IND data and associated milestones for a specific draft.
  */
 router.get('/', async (req, res) => {
-  const draftId = String(req.params.draftId);
-  const userId = (req as any).user?.id; // Type assertion for development - in production use proper typing
+  const draftId = String((req.params as Record<string, string>).draftId);
+  const userId = (req as any).user?.id;
 
   try {
     const preIndData = await dbOps.getPreIndData(draftId, userId);
@@ -289,8 +289,8 @@ router.get('/', async (req, res) => {
  * Creates or updates the Pre-IND data and milestones for a specific draft.
  */
 router.put('/', async (req, res) => {
-  const draftId = String(req.params.draftId);
-  const userId = (req as any).user?.id; // Type assertion for development
+  const draftId = String((req.params as Record<string, string>).draftId);
+  const userId = (req as any).user?.id;
   const dataToSave = req.body;
 
   try {
