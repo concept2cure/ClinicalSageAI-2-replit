@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-31T07:05:52.614Z",
+  "generatedAt": "2026-08-02T18:13:40.326Z",
   "git": {
-    "sha": "e3c80c548d6e4ffc2531ac3d0860ce3221cb9f74",
+    "sha": "85616c46f024272405e13de25c83839ac9ead65f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,9 +9,9 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 251,
+    "duplicateBasenames": 249,
     "largeFilesByBytes": 33,
-    "largeFilesByLines": 85
+    "largeFilesByLines": 83
   },
   "findings": {
     "duplicateBasenames": [
@@ -1668,14 +1668,6 @@
         ]
       },
       {
-        "basename": "fda510kservice",
-        "count": 2,
-        "paths": [
-          "client/src/services/FDA510kService.js",
-          "server/services/FDA510kService.ts"
-        ]
-      },
-      {
         "basename": "featureflags",
         "count": 2,
         "paths": [
@@ -1729,14 +1721,6 @@
         "paths": [
           "client/src/types/global.d.ts",
           "server/types/global.d.ts"
-        ]
-      },
-      {
-        "basename": "globalpyramids",
-        "count": 2,
-        "paths": [
-          "client/src/services/regulatory/globalPyramids.ts",
-          "services/regulatory/globalPyramids.ts"
         ]
       },
       {
@@ -2527,7 +2511,7 @@
       },
       {
         "file": "server/storage.ts",
-        "bytes": 142122
+        "bytes": 141585
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2653,7 +2637,7 @@
       },
       {
         "file": "server/storage.ts",
-        "lines": 4415
+        "lines": 4392
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2848,10 +2832,6 @@
         "lines": 1836
       },
       {
-        "file": "server/services/dataHarvester.js",
-        "lines": 1832
-      },
-      {
         "file": "server/services/ana/citation-engine.ts",
         "lines": 1828
       },
@@ -2894,10 +2874,6 @@
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
-      },
-      {
-        "file": "server/routes/fda510k-routes.ts",
-        "lines": 1691
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2965,13 +2941,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 407,
+      "duplicateGroups": 406,
       "largeByBytes": 29,
-      "largeByLines": 74
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 278,
+      "duplicateGroups": 277,
       "largeByBytes": 2,
       "largeByLines": 8
     },
@@ -2989,7 +2965,7 @@
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 39,
+      "duplicateGroups": 37,
       "largeByBytes": 0,
       "largeByLines": 0
     },
