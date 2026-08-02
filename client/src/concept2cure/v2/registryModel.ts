@@ -78,15 +78,12 @@ export const NAV_GROUP_OF: Record<string, string> = {
   licensing: 'admin',
   training: 'admin',
 };
-/** Client-category selector at the top of the rail — drives segment context */
-export const CLIENT_CATEGORIES = [
-  { id: 'medtech', label: 'Medical Device & IVD', icon: 'stethoscope' },
-  { id: 'biotech', label: 'Biotech', icon: 'atom' },
-  { id: 'diagnostics', label: 'Diagnostics', icon: 'microscope' },
-  { id: 'pharma', label: 'Pharma', icon: 'beaker' },
-  { id: 'cro', label: 'CRO / Research', icon: 'network' },
-  { id: 'health', label: 'Health Systems', icon: 'building' },
-];
+// CLIENT_CATEGORIES (the rail's client-type selector) is DERIVED from SEGMENTS
+// further below — declared after the canonical SEGMENTS list so the rail can
+// never again offer a category id that getSegment() cannot resolve. Keeping it
+// as a second hand-authored literal here is exactly what let the rail and the
+// TopBar drift onto two different segment axes. See the derivation just after
+// PRIMARY_SEGMENTS / getSegment.
 /** Core workspace — the same central solution for every client type */
 export const RAIL_CORE = [
   { id: 'projects', label: 'Project management', icon: 'folder' },
@@ -168,6 +165,22 @@ export const SEGMENTS = [
     ana: '510(k)/PMA/De Novo + IVDR; predicate & substantial-equivalence context.',
   },
   {
+    id: 'diagnostics',
+    label: 'In Vitro Diagnostics',
+    primary: true,
+    icon: 'microscope',
+    pathways: ['IVDR', 'CDx', '510(k)', 'De Novo'],
+    defaultSurface: 'device-diagnostics',
+    focus: [
+      'device-diagnostics',
+      'ivd-completeness',
+      'labeling',
+      'precedent-intelligence',
+      'evidence-search',
+    ],
+    ana: 'IVD & companion diagnostics — IVDR classification, analytical & clinical performance, CDx co-development.',
+  },
+  {
     id: 'biotech',
     label: 'Biotech',
     primary: true,
@@ -214,6 +227,22 @@ export const SEGMENTS = [
     ana: 'Multi-sponsor programs, tenant-isolated by organization.',
   },
   {
+    id: 'health',
+    label: 'Health Systems',
+    primary: true,
+    icon: 'building',
+    pathways: ['IIT', 'IRB', 'IND'],
+    defaultSurface: 'protocol-dev',
+    focus: [
+      'protocol-dev',
+      'research-admin',
+      'document-authoring',
+      'ind-checklist',
+      'submission-center',
+    ],
+    ana: 'Health-system & investigator-initiated trials — protocol authoring, IRB/IACUC review, investigator IND.',
+  },
+  {
     id: 'academic',
     label: 'Academic / IIT',
     primary: false,
@@ -246,6 +275,29 @@ export const SEGMENTS = [
 ];
 export const PRIMARY_SEGMENTS = SEGMENTS.filter((s) => s.primary);
 export const getSegment = (id: string) => SEGMENTS.find((s) => s.id === id);
+
+/**
+ * Client-category selector at the top of the rail — the client-type axis of the
+ * canonical SEGMENTS list, carrying rail-specific short labels/icons.
+ *
+ * DERIVED from SEGMENTS, then filtered to ids that actually exist as a segment,
+ * so a rail category can never again resolve to `undefined` in getSegment() and
+ * make the TopBar silently fall back to the first segment. This closes the
+ * regression where selecting "Diagnostics" or "Health Systems" in the rail
+ * displayed the TopBar/context as medtech, because those two ids existed only on
+ * the rail axis and never in SEGMENTS.
+ */
+const RAIL_CATEGORY_META: Record<string, { label: string; icon: string }> = {
+  medtech: { label: 'Medical Device & IVD', icon: 'stethoscope' },
+  biotech: { label: 'Biotech', icon: 'atom' },
+  diagnostics: { label: 'Diagnostics', icon: 'microscope' },
+  pharma: { label: 'Pharma', icon: 'beaker' },
+  cro: { label: 'CRO / Research', icon: 'network' },
+  health: { label: 'Health Systems', icon: 'building' },
+};
+export const CLIENT_CATEGORIES = Object.entries(RAIL_CATEGORY_META)
+  .filter(([id]) => SEGMENTS.some((s) => s.id === id))
+  .map(([id, meta]) => ({ id, ...meta }));
 
 /** Readiness tier display meta (label · tone · blurb) */
 export const READINESS_META = {
