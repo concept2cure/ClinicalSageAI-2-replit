@@ -413,6 +413,57 @@ export interface CmcQbdResult {
   [key: string]: unknown;
 }
 
+// ─── Variations / SUPAC classifier (deterministic) ───────────────────────────
+export type CmcDosageFormFamily =
+  | 'immediate_release_oral_solid'
+  | 'modified_release_oral_solid'
+  | 'nonsterile_semisolid'
+  | 'sterile_injectable'
+  | 'biologic'
+  | 'inhalation'
+  | 'transdermal'
+  | 'other';
+
+export type CmcChangeCategory =
+  | 'components_composition'
+  | 'manufacturing_site'
+  | 'scale_up'
+  | 'manufacturing_process'
+  | 'equipment'
+  | 'container_closure'
+  | 'specifications'
+  | 'analytical_method'
+  | 'stability_protocol';
+
+/** Body for POST /api/cmc/variations/classify. */
+export interface VariationClassifyInput {
+  dosageFormFamily: CmcDosageFormFamily;
+  changeCategory: CmcChangeCategory;
+  description?: string;
+  touchesCriticalStep?: boolean;
+  affects?: 'drug_substance' | 'drug_product' | 'both';
+}
+
+/** POST /api/cmc/variations/classify → data. */
+export interface CmcVariationClassification {
+  fdaReportingCategory: string;
+  emaVariationCategory: string;
+  supacTier: string;
+  bioequivalence: string;
+  impactedCtdSections: string[];
+  validationRequirements: string[];
+  estimatedTimelineDays: number;
+  confidence: number;
+  citations: string[];
+  rationale: string[];
+  crossModuleImpact: Array<{
+    module: string;
+    sections: string[];
+    whatToUpdate: string;
+    required: boolean;
+  }>;
+}
+
 // ─── Authoring input shapes — match the live server zod schemas exactly ───────
 // These are the bodies the create/update handlers actually read; the legacy
 // domain types (Specification, StabilityProtocol, BatchRecord) describe a
@@ -1032,6 +1083,17 @@ class CMCService {
       { projectId },
     );
     return (res as any)?.data ?? (res as CmcIchCheckResult) ?? null;
+  }
+
+  async classifyVariation(
+    input: VariationClassifyInput,
+  ): Promise<CmcVariationClassification | null> {
+    // Deterministic SUPAC / variations classifier — 21 CFR 314.70, SUPAC-IR/MR/SS,
+    // EC 1234/2008, ICH Q12 (server/services/cmc/supac-classifier).
+    const res = await this.request<
+      { data?: CmcVariationClassification } | CmcVariationClassification
+    >('POST', `${this.baseUrl}/variations/classify`, input);
+    return (res as any)?.data ?? (res as CmcVariationClassification) ?? null;
   }
 
   /** Change-impact simulation. Returns the filing path / impact analysis. */

@@ -28,6 +28,8 @@ import cmcService, {
   type CmcBatchRow,
   type CmcIchCheckResult,
   type CmcQbdResult,
+  type VariationClassifyInput,
+  type CmcVariationClassification,
   type SpecificationInput,
   type SpecificationPatch,
   type StabilityStudyInput,
@@ -190,6 +192,13 @@ export function useICHComplianceCheck() {
 export function useChangeImpactSimulation() {
   return useMutation<unknown, Error, Record<string, unknown>>({
     mutationFn: (payload) => cmcService.simulateChangeImpact(payload),
+  });
+}
+
+// Deterministic SUPAC / variations classification (POST /api/cmc/variations/classify).
+export function useVariationClassification() {
+  return useMutation<CmcVariationClassification | null, Error, VariationClassifyInput>({
+    mutationFn: (input) => cmcService.classifyVariation(input),
   });
 }
 
