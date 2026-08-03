@@ -11,7 +11,11 @@
  * styling is theme-neutral inline so it reads in both light and dark shells.
  */
 import { useEffect, useState } from 'react';
-import { getAuthHeaders } from '../../../utils/authToken';
+import { getAuthHeaders, getOrgId } from '../../../utils/authToken';
+import { ApiRequestError } from '@/lib/queryClient';
+import { createReportRun, fetchRenderedReport } from '../../insights/data/api';
+import type { RenderedReport } from '../../insights/data/types';
+import { ReportView } from '../../insights/surface/ReportView';
 
 interface Dossier {
   schemaVersion: string;
@@ -149,6 +153,14 @@ export function LineageDossier({ artifactId, onClose }: LineageDossierProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Governed Report-OS "evidence_trace_report" for this document, shown in a
+  // nested overlay. Reuses the existing Report-OS client API + ReportView.
+  const [reportOpen, setReportOpen] = useState(false);
+  const [report, setReport] = useState<RenderedReport | null>(null);
+  const [reportRunId, setReportRunId] = useState<string | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -197,9 +209,43 @@ export function LineageDossier({ artifactId, onClose }: LineageDossierProps) {
     }
   };
 
+  // Launch the governed evidence-trace report for this document via the existing
+  // Report-OS run API, then render the returned document with <ReportView>. Auth
+  // + org scoping come from apiRequest (same token/org source as the dossier's
+  // own fetches); the org id for the run body is the canonical getOrgId().
+  const generateReport = async () => {
+    setReportOpen(true);
+    setReportLoading(true);
+    setReportError(null);
+    setReport(null);
+    setReportRunId(null);
+    try {
+      const result = await createReportRun({
+        organizationId: Number(getOrgId()),
+        scopeType: 'document',
+        scopeId: artifactId,
+        reportTypeId: 'provenance.evidence_trace_report',
+      });
+      const runId = result.run?.id != null ? String(result.run.id) : null;
+      if (!runId) throw new Error('The report run did not return an id.');
+      setReportRunId(runId);
+      const rendered = await fetchRenderedReport(runId);
+      setReport(rendered);
+    } catch (e) {
+      if (e instanceof ApiRequestError && e.status === 403) {
+        setReportError('Requires the standard plan.');
+      } else {
+        setReportError((e as Error)?.message || 'The governed report could not be generated.');
+      }
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   const s = dossier?.decisionSummary;
 
   return (
+    <>
     <div style={overlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="Lineage dossier">
       <div style={panel} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
@@ -219,6 +265,22 @@ export function LineageDossier({ artifactId, onClose }: LineageDossierProps) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              onClick={generateReport}
+              disabled={reportLoading}
+              style={{
+                padding: '5px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(127,127,127,0.35)',
+                background: 'transparent',
+                color: 'inherit',
+                cursor: reportLoading ? 'default' : 'pointer',
+                font: 'inherit',
+              }}
+            >
+              {reportLoading ? 'Generating…' : 'Generate governed report'}
+            </button>
             <button
               type="button"
               onClick={exportXml}
@@ -390,6 +452,62 @@ export function LineageDossier({ artifactId, onClose }: LineageDossierProps) {
         )}
       </div>
     </div>
+
+    {reportOpen && (
+      <div
+        style={overlay}
+        onClick={() => setReportOpen(false)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Governed evidence trace report"
+      >
+        <div style={panel} onClick={(e) => e.stopPropagation()}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              padding: '16px 20px',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Governed evidence trace report</div>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>
+                {dossier ? dossier.ledger.artifact.title : artifactId}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReportOpen(false)}
+              aria-label="Close report"
+              style={{
+                padding: '5px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(127,127,127,0.35)',
+                background: 'transparent',
+                color: 'inherit',
+                cursor: 'pointer',
+                font: 'inherit',
+              }}
+            >
+              Close
+            </button>
+          </div>
+
+          {reportLoading && (
+            <div style={{ ...sectionStyle, opacity: 0.7 }}>Generating governed report…</div>
+          )}
+          {reportError && <div style={{ ...sectionStyle, color: '#ef4444' }}>{reportError}</div>}
+          {report && (
+            <div style={sectionStyle}>
+              <ReportView report={report} runId={reportRunId ?? undefined} />
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
