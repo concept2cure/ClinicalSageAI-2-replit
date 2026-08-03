@@ -942,6 +942,53 @@ export interface ConsistencyFinding {
 }
 export type NewConsistencyFinding = Omit<ConsistencyFinding, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
 
+// Character-span lineage: which characters of a document came from which Data
+// Room source, and how it was used. Span-grained counterpart to the
+// section-grained authoring_citations, sharing its canonical-source convention
+// (source / referenceId / payloadSha256 -> cre_evidence_sources).
+// Migration: db/migrations/20260803_document_span_lineage.sql.
+export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion';
+export type SpanUsageKind =
+  | 'quoted'
+  | 'paraphrased'
+  | 'summarized'
+  | 'derived'
+  | 'computed'
+  | 'asserted';
+
+export interface DocumentSpanLineage {
+  id: string;
+  // Polymorphic — no single documents table exists.
+  documentTable: string;
+  documentId: string;
+  documentVersion?: string | null;
+  // Half-open [charStart, charEnd).
+  charStart: number;
+  charEnd: number;
+  spanTextSha256: string;
+  provenanceKind: SpanProvenanceKind;
+  // Set when provenanceKind === 'cre_evidence_source'.
+  source?: string | null;
+  referenceId?: string | null;
+  payloadSha256?: string | null;
+  sourceLocator?: string | null;
+  // Set when provenanceKind === 'author_assertion'.
+  assertedBy?: string | null;
+  assertedAt?: Date | null;
+  signatureId?: string | null;
+  usage: SpanUsageKind;
+  confidence?: number | null;
+  organizationId: number;
+  createdBy?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+}
+export type NewDocumentSpanLineage = Omit<
+  DocumentSpanLineage,
+  'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
+>;
+
 // ============================================================================
 // Global exports
 // ============================================================================
