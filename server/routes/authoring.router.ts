@@ -18,6 +18,9 @@ import { createScopedLogger } from '../utils/logger';
 // editing layer over it. This resolves which governed document an authored
 // document belongs to. See server/services/c2c/governed-document-binding.ts.
 import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
+// Span lineage: every span of an authored document must trace to where it came
+// from. See server/services/clinical-regulatory-evidence/span-lineage.service.ts.
+import { recordAuthorSpan } from '../services/clinical-regulatory-evidence/span-lineage.service';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -1606,6 +1609,50 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
         typeof req.body?.changeReason === 'string' ? req.body.changeReason : null,
         { titleChanged: title !== undefined },
       );
+    }
+
+    // Span lineage: record where this content came from.
+    //
+    // The author committed this text to the document under their own identity,
+    // so they are its source of record — `author_assertion` states that
+    // honestly rather than inventing a Data Room citation for prose that has
+    // none. It is deliberately ONE span covering the saved content: this path
+    // knows the author and the text, and nothing yet about which parts were
+    // drafted from sources. Phase 3 subdivides the range as source-backed spans
+    // are detected; until then a single attributed range is the truthful
+    // statement, and it is what lets coverage be measured at all.
+    //
+    // KNOWN LIMITATION, stated rather than hidden: this does not distinguish
+    // text the author typed from text an AI drafted and the author accepted.
+    // Both are content the author committed, which is what an e-signature at
+    // freeze attests to, but they are not the same provenance and a later phase
+    // should separate them.
+    //
+    // Same discipline as the audit write above — after the UPDATE, awaited so a
+    // failure is logged rather than lost, and never fatal: the edit has already
+    // committed and throwing here would report failure for a change that
+    // landed. Capture is Phase 2; refusing to save without lineage is Phase 4,
+    // and that gate belongs before the UPDATE, not here.
+    if (content !== undefined && typeof content === 'string' && content.length > 0) {
+      try {
+        await recordAuthorSpan(tenantId, {
+          documentTable: 'authoring_sections',
+          documentId: sectionId,
+          charStart: 0,
+          charEnd: content.length,
+          spanText: content,
+          assertedBy: updatedByUser,
+          createdBy: updatedByUser,
+        });
+      } catch (err) {
+        // Never silently: a lineage path that fails quietly is how sentence
+        // traceability persisted nothing for as long as it existed.
+        logger.error('Failed to record span lineage for section save', {
+          sectionId,
+          tenantId,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
 
     res.json({
