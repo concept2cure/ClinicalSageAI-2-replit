@@ -534,6 +534,31 @@ export interface ComparabilityInput {
   status?: string;
 }
 
+/** A row from GET /api/cmc/projects/:projectId/drug-substances (§3.2.S). */
+export interface CmcDrugSubstanceRow {
+  id: string;
+  projectId?: string;
+  substanceName?: string;
+  cas?: string | null;
+  molecularFormula?: string | null;
+  molecularWeight?: string | number | null;
+  structure?: string | null;
+  manufacturingRoute?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  [k: string]: unknown;
+}
+
+/** Body for POST /api/cmc/projects/:projectId/drug-substances (casNumber → cas server-side). */
+export interface DrugSubstanceInput {
+  substanceName: string;
+  casNumber?: string;
+  molecularFormula?: string;
+  molecularWeight?: string;
+  structure?: string;
+  manufacturingRoute?: string;
+}
+
 // ─── Authoring input shapes — match the live server zod schemas exactly ───────
 // These are the bodies the create/update handlers actually read; the legacy
 // domain types (Specification, StabilityProtocol, BatchRecord) describe a
@@ -1236,6 +1261,28 @@ class CMCService {
       input,
     );
     return data ?? null;
+  }
+
+  /** List a project's drug substances (§3.2.S). */
+  async listDrugSubstances(projectId: string): Promise<CmcDrugSubstanceRow[]> {
+    const data = await this.request<CmcDrugSubstanceRow[]>(
+      'GET',
+      `${this.baseUrl}/projects/${encodeURIComponent(projectId)}/drug-substances`,
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Create a drug substance under a project (§3.2.S). */
+  async createDrugSubstance(
+    projectId: string,
+    input: DrugSubstanceInput,
+  ): Promise<CmcDrugSubstanceRow | null> {
+    const data = await this.request<CmcDrugSubstanceRow>(
+      'POST',
+      `${this.baseUrl}/projects/${encodeURIComponent(projectId)}/drug-substances`,
+      input,
+    );
+    return data && (data as CmcDrugSubstanceRow).id ? data : null;
   }
 
   /** Change-impact simulation. Returns the filing path / impact analysis. */

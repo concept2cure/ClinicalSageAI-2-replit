@@ -10,6 +10,7 @@ export interface CmcNavItem {
 export const CMC_NAV: CmcNavItem[] = [
   { id: 'overview',  label: 'Module 3 overview',   icon: 'beaker' },
   { id: 'specs',     label: 'Specifications',      icon: 'list' },
+  { id: 'substance', label: 'Drug substance',      icon: 'grid' },
   { id: 'stability', label: 'Stability program',   icon: 'thermometer' },
   { id: 'batch',     label: 'Batch records',       icon: 'box' },
   { id: 'change',    label: 'Change simulator',    icon: 'shuffle' },
@@ -23,6 +24,7 @@ export const CMC_NAV: CmcNavItem[] = [
 export const HERE_LABEL_CMC: Record<string, string> = {
   overview:  'Module 3 overview',
   specs:     'Specifications',
+  substance: 'Drug substance',
   stability: 'Stability program',
   batch:     'Batch records',
   change:    'Change simulator',
@@ -44,6 +46,11 @@ export const CMC_SUGGESTIONS: Record<string, string[]> = {
     'Assess comparability risk for my most recent process change',
     'Which quality attributes and methods must a comparability study cover?',
     'Draft the ICH Q5E comparability conclusion for this change',
+  ],
+  substance: [
+    'What §3.2.S data is still missing for this drug substance?',
+    'Summarize the impurity profile and control for this substance',
+    'Draft the §3.2.S.1 general information section',
   ],
   specs: [
     'Justify the release and shelf-life limits for aggregation',

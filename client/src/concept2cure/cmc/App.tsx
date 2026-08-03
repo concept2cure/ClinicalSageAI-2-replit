@@ -30,6 +30,7 @@ import { CmcBatch } from './surfaces/Batch';
 import { CmcChange } from './surfaces/Change';
 import { CmcBlueprint } from './surfaces/Blueprint';
 import { CmcComparability } from './surfaces/Comparability';
+import { CmcDrugSubstance } from './surfaces/DrugSubstance';
 import { CmcGlobal } from './surfaces/Global';
 import { CmcCopilot } from './surfaces/Copilot';
 import { ProgramSubTabs } from '../_shared/program/ProgramSubTabs';
@@ -137,6 +138,7 @@ export function CmcApp({ activeProjectId, initialNav = 'overview' }: CmcAppProps
       );
       break;
     case 'specs':     surface = <CmcSpecifications projectId={projectId} onAskAna={askAna} />; break;
+    case 'substance': surface = <CmcDrugSubstance projectId={projectId} onAskAna={askAna} />; break;
     case 'stability': surface = <CmcStability projectId={projectId} onAskAna={askAna} />; break;
     case 'batch':     surface = <CmcBatch projectId={projectId} onAskAna={askAna} />; break;
     case 'change':    surface = <CmcChange />; break;

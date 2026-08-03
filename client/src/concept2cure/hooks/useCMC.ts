@@ -34,6 +34,8 @@ import cmcService, {
   type CmcControlStrategy,
   type CmcComparabilityRow,
   type ComparabilityInput,
+  type CmcDrugSubstanceRow,
+  type DrugSubstanceInput,
   type SpecificationInput,
   type SpecificationPatch,
   type StabilityStudyInput,
@@ -258,6 +260,30 @@ export function useCreateComparabilityStudy() {
     mutationFn: (input) => cmcService.createComparabilityStudy(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...cmcQueryKeys.all, 'comparability'] });
+    },
+  });
+}
+
+// Drug substances (§3.2.S) — project-scoped list + create.
+export function useDrugSubstances(projectId: string | null) {
+  return useQuery<CmcDrugSubstanceRow[]>({
+    queryKey: [...cmcQueryKeys.all, 'drug-substances', projectId ?? ''],
+    queryFn: () => (projectId ? cmcService.listDrugSubstances(projectId) : Promise.resolve([])),
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateDrugSubstance(projectId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation<CmcDrugSubstanceRow | null, Error, DrugSubstanceInput>({
+    mutationFn: (input) => {
+      if (!projectId) return Promise.reject(new Error('No project selected'));
+      return cmcService.createDrugSubstance(projectId, input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...cmcQueryKeys.all, 'drug-substances', projectId ?? ''],
+      });
     },
   });
 }
