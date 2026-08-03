@@ -1637,7 +1637,11 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       try {
         await recordAuthorSpan(tenantId, {
           documentTable: 'authoring_sections',
-          documentId: sectionId,
+          // req.params is typed `string | string[]` here, and the lineage row's
+          // document_id is the join key every later read depends on — coercing
+          // it explicitly rather than letting an array stringify itself into
+          // one.
+          documentId: String(sectionId),
           charStart: 0,
           charEnd: content.length,
           spanText: content,
