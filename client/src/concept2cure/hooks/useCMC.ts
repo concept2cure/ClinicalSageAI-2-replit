@@ -31,6 +31,11 @@ import cmcService, {
   type VariationClassifyInput,
   type CmcVariationClassification,
   type CmcContradiction,
+  type CmcControlStrategy,
+  type CmcComparabilityRow,
+  type ComparabilityInput,
+  type CmcDrugSubstanceRow,
+  type DrugSubstanceInput,
   type SpecificationInput,
   type SpecificationPatch,
   type StabilityStudyInput,
@@ -227,6 +232,59 @@ export function useDetectContradictions() {
 export function useResolveContradiction() {
   return useMutation<{ id: string; status: string }, Error, { id: string; resolutionNote: string }>({
     mutationFn: ({ id, resolutionNote }) => cmcService.resolveContradiction(id, resolutionNote),
+  });
+}
+
+// Deterministic ICH Q8–Q11 control strategy generator (POST /api/cmc/control-strategy).
+export function useControlStrategy() {
+  return useMutation<
+    CmcControlStrategy | null,
+    Error,
+    { projectId: string; scope?: 'drug_substance' | 'drug_product' | 'both' }
+  >({
+    mutationFn: ({ projectId, scope }) => cmcService.generateControlStrategy(projectId, scope),
+  });
+}
+
+// Comparability assessments (§3.2 biologics) — org-scoped list + create.
+export function useComparabilityStudies() {
+  return useQuery<CmcComparabilityRow[]>({
+    queryKey: [...cmcQueryKeys.all, 'comparability'],
+    queryFn: () => cmcService.listComparabilityStudies(),
+  });
+}
+
+export function useCreateComparabilityStudy() {
+  const queryClient = useQueryClient();
+  return useMutation<CmcComparabilityRow | null, Error, ComparabilityInput>({
+    mutationFn: (input) => cmcService.createComparabilityStudy(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...cmcQueryKeys.all, 'comparability'] });
+    },
+  });
+}
+
+// Drug substances (§3.2.S) — project-scoped list + create.
+export function useDrugSubstances(projectId: string | null) {
+  return useQuery<CmcDrugSubstanceRow[]>({
+    queryKey: [...cmcQueryKeys.all, 'drug-substances', projectId ?? ''],
+    queryFn: () => (projectId ? cmcService.listDrugSubstances(projectId) : Promise.resolve([])),
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateDrugSubstance(projectId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation<CmcDrugSubstanceRow | null, Error, DrugSubstanceInput>({
+    mutationFn: (input) => {
+      if (!projectId) return Promise.reject(new Error('No project selected'));
+      return cmcService.createDrugSubstance(projectId, input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...cmcQueryKeys.all, 'drug-substances', projectId ?? ''],
+      });
+    },
   });
 }
 

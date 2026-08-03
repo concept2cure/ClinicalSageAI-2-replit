@@ -40,6 +40,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
+import { DocCanvas } from './EditorCanvas';
+import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
@@ -444,6 +446,30 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
     }
   }, [activeSection, dirty, saving, draft, rail, loadHistory, fireToast]);
 
+  /* ── Rich editor (DocCanvas) — gated behind ENABLE_RICH_SECTION_EDITOR
+     (default OFF, so the textarea below is the shipping default). When on, the
+     canvas auto-saves the HTML it emits through the SAME governed, auto-revisioned
+     PATCH the textarea uses. Throwing on failure lets DocCanvas show its error
+     save-state instead of silently implying a save that did not happen. ── */
+  const richEditor = isFeatureEnabled('ENABLE_RICH_SECTION_EDITOR');
+  const saveHtml = useCallback(async (html: string) => {
+    if (!activeSection) return;
+    const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+      content: html,
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+      throw new Error('save failed');
+    }
+    const adopted = (json as { section?: AuthSection })?.section;
+    const persisted = adopted?.content ?? html;
+    setSavedContent(persisted);
+    setDraft(persisted);
+    setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s)));
+    if (rail === 'history') void loadHistory(activeSection.id);
+  }, [activeSection, rail, loadHistory, fireToast]);
+
   /* ── Revert to a prior revision (server snapshots current first) ── */
   const revert = useCallback(async (revId: string) => {
     if (!activeSection) return;
@@ -632,20 +658,32 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
                     {dirty ? ' · unsaved changes' : activeSection.updated_at ? ` · saved ${relTime(activeSection.updated_at)}` : ''}
                   </div>
                 </div>
-                <textarea
-                  className="ed-canvas"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); void save(); } }}
-                  placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
-                  spellCheck
-                  style={{
-                    width: '100%', minHeight: 460, resize: 'vertical', border: '1px solid var(--c2c-line,#e4e7ec)',
-                    borderRadius: 10, padding: '18px 20px', fontSize: 15, lineHeight: 1.7,
-                    fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--c2c-ink,#101828)',
-                    background: 'var(--c2c-surface,#fff)', outline: 'none',
-                  }}
-                />
+                {richEditor ? (
+                  <div style={{ minHeight: 460, border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 10, overflow: 'hidden' }}>
+                    <DocCanvas
+                      key={activeSection.id}
+                      sec={{ id: activeSection.id, num: activeSection.code, title: activeSection.title }}
+                      blocks={[{ p: draft }]}
+                      onAsk={onAsk}
+                      onSave={saveHtml}
+                    />
+                  </div>
+                ) : (
+                  <textarea
+                    className="ed-canvas"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); void save(); } }}
+                    placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
+                    spellCheck
+                    style={{
+                      width: '100%', minHeight: 460, resize: 'vertical', border: '1px solid var(--c2c-line,#e4e7ec)',
+                      borderRadius: 10, padding: '18px 20px', fontSize: 15, lineHeight: 1.7,
+                      fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--c2c-ink,#101828)',
+                      background: 'var(--c2c-surface,#fff)', outline: 'none',
+                    }}
+                  />
+                )}
               </>
             )}
           </div>

@@ -10,10 +10,12 @@ export interface CmcNavItem {
 export const CMC_NAV: CmcNavItem[] = [
   { id: 'overview',  label: 'Module 3 overview',   icon: 'beaker' },
   { id: 'specs',     label: 'Specifications',      icon: 'list' },
+  { id: 'substance', label: 'Drug substance',      icon: 'grid' },
   { id: 'stability', label: 'Stability program',   icon: 'thermometer' },
   { id: 'batch',     label: 'Batch records',       icon: 'box' },
   { id: 'change',    label: 'Change simulator',    icon: 'shuffle' },
   { id: 'blueprint', label: 'Blueprint generator', icon: 'layout' },
+  { id: 'comparability', label: 'Comparability',   icon: 'shield' },
   { id: 'global',    label: 'Global compliance',   icon: 'globe' },
   { id: 'pathway',   label: 'Program records',     icon: 'list' },
   { id: 'copilot',   label: 'CMC copilot',         icon: 'sparkles' },
@@ -22,10 +24,12 @@ export const CMC_NAV: CmcNavItem[] = [
 export const HERE_LABEL_CMC: Record<string, string> = {
   overview:  'Module 3 overview',
   specs:     'Specifications',
+  substance: 'Drug substance',
   stability: 'Stability program',
   batch:     'Batch records',
   change:    'Change simulator',
   blueprint: 'Blueprint generator',
+  comparability: 'Comparability',
   global:    'Global compliance',
   pathway:   'Program records',
   copilot:   'CMC copilot',
@@ -37,6 +41,16 @@ export const CMC_SUGGESTIONS: Record<string, string[]> = {
     'Generate the drug-substance control strategy from current quality data',
     'Run the ICH compliance check and show every gap',
     'What is blocking my shelf-life claim?',
+  ],
+  comparability: [
+    'Assess comparability risk for my most recent process change',
+    'Which quality attributes and methods must a comparability study cover?',
+    'Draft the ICH Q5E comparability conclusion for this change',
+  ],
+  substance: [
+    'What §3.2.S data is still missing for this drug substance?',
+    'Summarize the impurity profile and control for this substance',
+    'Draft the §3.2.S.1 general information section',
   ],
   specs: [
     'Justify the release and shelf-life limits for aggregation',

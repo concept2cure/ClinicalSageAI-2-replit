@@ -60,6 +60,20 @@ export const featureFlags: Record<string, FeatureFlag> = {
     defaultValue: false,
     enabled: false,
   },
+  // Rich section editor — swaps the plain <textarea> in the Document Authoring
+  // surface for the DocCanvas WYSIWYG editor (formatting ribbon, inline AnA
+  // draft, real auto-saving PATCH). Ships DARK: default off keeps the textarea
+  // path exactly as the shipping default. Preview flag pending runtime
+  // verification of the HTML content round-trip against the Part 11 governed
+  // authoring store — do not enable in production until that is confirmed.
+  ENABLE_RICH_SECTION_EDITOR: {
+    id: 'ENABLE_RICH_SECTION_EDITOR',
+    name: 'Rich section editor (DocCanvas)',
+    description:
+      'Swaps the Document Authoring textarea for the DocCanvas WYSIWYG editor. Off by default; the textarea is the shipping default until the HTML round-trip is verified.',
+    defaultValue: false,
+    enabled: false,
+  },
   // AnA Composer — Fast/Balanced/Thorough effort segmented control + an advanced
   // model dropdown. Ships dark; enable per-org once validated.
   ENABLE_MODEL_EFFORT_PICKER: {

@@ -476,6 +476,89 @@ export interface CmcContradiction {
   updatedAt: string;
 }
 
+/** One control in POST /api/cmc/control-strategy → data.controlElements. */
+export interface CmcControlElement {
+  controlType: string;
+  description: string;
+  targetCqa?: string;
+  acceptanceCriterion?: string;
+  performedBy?: string;
+  ichBasis: string[];
+  justification: string;
+}
+
+/** POST /api/cmc/control-strategy → data (deterministic ICH Q8–Q11 strategy). */
+export interface CmcControlStrategy {
+  projectId: string;
+  scope: string;
+  cqas: Array<{ name?: string; [k: string]: unknown }>;
+  cpps: Array<{ name?: string; [k: string]: unknown }>;
+  controlElements: CmcControlElement[];
+  stabilityMonitoring: {
+    longTermCondition: string;
+    acceleratedCondition: string;
+    testParameters: string[];
+    timePoints: string[];
+    ichBasis: string[];
+  };
+  gaps: string[];
+  citations: string[];
+  generatedAt: string;
+}
+
+/** A row from GET /api/cmc/comparability-studies (org-scoped). */
+export interface CmcComparabilityRow {
+  id: string;
+  title?: string;
+  product?: string;
+  type?: string;
+  status?: string;
+  methods?: string[];
+  outcome?: string | null;
+  owner?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  project_id?: string;
+  [k: string]: unknown;
+}
+
+/** Body for POST /api/cmc/comparability-studies. */
+export interface ComparabilityInput {
+  projectId: string;
+  title: string;
+  type?: string;
+  product?: string;
+  methods?: string[];
+  outcome?: string;
+  owner?: string;
+  status?: string;
+}
+
+/** A row from GET /api/cmc/projects/:projectId/drug-substances (§3.2.S). */
+export interface CmcDrugSubstanceRow {
+  id: string;
+  projectId?: string;
+  substanceName?: string;
+  cas?: string | null;
+  molecularFormula?: string | null;
+  molecularWeight?: string | number | null;
+  structure?: string | null;
+  manufacturingRoute?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  [k: string]: unknown;
+}
+
+/** Body for POST /api/cmc/projects/:projectId/drug-substances (casNumber → cas server-side). */
+export interface DrugSubstanceInput {
+  substanceName: string;
+  casNumber?: string;
+  molecularFormula?: string;
+  molecularWeight?: string;
+  structure?: string;
+  manufacturingRoute?: string;
+}
+
 // ─── Authoring input shapes — match the live server zod schemas exactly ───────
 // These are the bodies the create/update handlers actually read; the legacy
 // domain types (Specification, StabilityProtocol, BatchRecord) describe a
@@ -1146,6 +1229,60 @@ class CMCService {
       `${this.baseUrl}/module3-os/contradictions/${encodeURIComponent(id)}/resolve`,
       { resolutionNote },
     );
+  }
+
+  /** Deterministic ICH Q8/Q9/Q10/Q11 control strategy for a project + scope. */
+  async generateControlStrategy(
+    projectId: string,
+    scope: 'drug_substance' | 'drug_product' | 'both' = 'both',
+  ): Promise<CmcControlStrategy | null> {
+    const data = await this.request<CmcControlStrategy>(
+      'POST',
+      `${this.baseUrl}/control-strategy`,
+      { projectId, scope },
+    );
+    return data ?? null;
+  }
+
+  /** List the organization's comparability assessments (§3.2 biologics). */
+  async listComparabilityStudies(): Promise<CmcComparabilityRow[]> {
+    const data = await this.request<CmcComparabilityRow[]>(
+      'GET',
+      `${this.baseUrl}/comparability-studies`,
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Create a comparability assessment for a project. */
+  async createComparabilityStudy(input: ComparabilityInput): Promise<CmcComparabilityRow | null> {
+    const data = await this.request<CmcComparabilityRow>(
+      'POST',
+      `${this.baseUrl}/comparability-studies`,
+      input,
+    );
+    return data ?? null;
+  }
+
+  /** List a project's drug substances (§3.2.S). */
+  async listDrugSubstances(projectId: string): Promise<CmcDrugSubstanceRow[]> {
+    const data = await this.request<CmcDrugSubstanceRow[]>(
+      'GET',
+      `${this.baseUrl}/projects/${encodeURIComponent(projectId)}/drug-substances`,
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
+  /** Create a drug substance under a project (§3.2.S). */
+  async createDrugSubstance(
+    projectId: string,
+    input: DrugSubstanceInput,
+  ): Promise<CmcDrugSubstanceRow | null> {
+    const data = await this.request<CmcDrugSubstanceRow>(
+      'POST',
+      `${this.baseUrl}/projects/${encodeURIComponent(projectId)}/drug-substances`,
+      input,
+    );
+    return data && (data as CmcDrugSubstanceRow).id ? data : null;
   }
 
   /** Change-impact simulation. Returns the filing path / impact analysis. */
