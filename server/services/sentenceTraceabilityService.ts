@@ -25,6 +25,9 @@
 import { pool } from '../db.js';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('sentence-traceability');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -509,10 +512,10 @@ export async function persistTraceLinks(
         await pool.query(
           `INSERT INTO evidence_links (
             id, organization_id, evidence_id, target_type, target_id, target_path,
-            link_type, strength, rationale, is_verified, created_at, updated_at
+            link_type, strength, rationale, is_verified, created_at
           ) VALUES (
             gen_random_uuid(), $1, $2::uuid, 'sentence', $3, $4,
-            $5, $6, $7, $8, NOW(), NOW()
+            $5, $6, $7, $8, NOW()
           ) ON CONFLICT DO NOTHING`,
           [
             organizationId,
@@ -538,8 +541,22 @@ export async function persistTraceLinks(
         );
         stored++;
       } catch (err) {
-        // evidence_id might not be a valid UUID if it's an artifact reference
+        // Most commonly the evidence_id is not a valid UUID (an artifact
+        // reference rather than an evidence_object). That case is expected and
+        // per-row. Anything else — a column that does not exist, a constraint
+        // violation — is a defect that must not be swallowed: counting it
+        // silently is how a persistence path can fail for every row while the
+        // caller still reports success. Traceability that silently stores
+        // nothing is worse than traceability that is absent, because it is
+        // trusted. Count it, but say so.
         errors++;
+        logger.error('Failed to persist sentence trace link', {
+          documentId,
+          organizationId,
+          sentenceIndex: link.sentenceSpan.index,
+          sourceId: source.sourceId,
+          err: err instanceof Error ? err.message : String(err),
+        });
       }
     }
   }
