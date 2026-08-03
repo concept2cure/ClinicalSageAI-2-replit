@@ -381,6 +381,11 @@ export interface AnaChatMessage {
    */
   thinking?: string;
   /**
+   * Steering interjections the human accepted mid-run for this turn (from
+   * `interjected` events). Shown as small "you steered AnA" notes.
+   */
+  interjections?: string[];
+  /**
    * Evidence grounding summary from the server's validateEvidence pipeline.
    * Surfaced as a small chip on the reply: a shield-check icon + "N sources"
    * when grounded, or an alert icon + "N weak" when claims are unsupported.
@@ -574,6 +579,9 @@ export interface UseAnaChatOptions {
   modelOverride?: string | null;
 }
 
+/** Control status of an in-flight AnA run (null when no run is active). */
+export type RunControlStatus = 'running' | 'paused' | 'cancelled' | null;
+
 export interface UseAnaChatReturn {
   messages: AnaChatMessage[];
   isStreaming: boolean;
@@ -588,8 +596,16 @@ export interface UseAnaChatReturn {
     attachments?: MessageAttachment[],
     sendOpts?: { toolsOverride?: string[] },
   ) => Promise<void>;
-  /** Abort the current stream. */
+  /** Abort the current stream (and cancel the run server-side). */
   stop: () => void;
+  /** Control status of the in-flight run (drives the pause/resume UI). */
+  runStatus: RunControlStatus;
+  /** Pause AnA at the next agentic-round boundary. */
+  pause: () => Promise<boolean>;
+  /** Resume a paused run. */
+  resume: () => Promise<boolean>;
+  /** Interject a steering message into the running investigation. */
+  interject: (message: string) => Promise<boolean>;
   /** Reset the conversation (new thread). */
   reset: () => void;
   /** Hydrate the panel with an existing thread's messages. */
@@ -611,10 +627,59 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   // in the same tick would be wrongly no-opped by the stale closure — the
   // "retry wipes the conversation and sends nothing" bug.
   const isStreamingRef = useRef(false);
+  // Opaque id for the in-flight run (from the `run_started` SSE event), used to
+  // pause / interject / cancel it server-side via the control endpoint.
+  const runIdRef = useRef<string | null>(null);
+  // Control status of the in-flight run, driving the composer's pause/resume UI.
+  const [runStatus, setRunStatus] = useState<RunControlStatus>(null);
+
+  /**
+   * Send a mid-run control action for the active run. `pause` holds AnA at the
+   * next agentic-round boundary; `interject` splices a steering message into the
+   * next round; `resume` continues; `cancel` stops the run server-side. Returns
+   * false when there is no active run or the request fails.
+   */
+  const control = useCallback(
+    async (
+      action: 'pause' | 'resume' | 'interject' | 'cancel',
+      message?: string,
+    ): Promise<boolean> => {
+      const runId = runIdRef.current;
+      if (!runId) return false;
+      try {
+        const res = await fetch(
+          `/api/ana-ri/stream/${encodeURIComponent(runId)}/control`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            credentials: 'include',
+            body: JSON.stringify(message !== undefined ? { action, message } : { action }),
+          },
+        );
+        if (!res.ok) return false;
+        // Optimistic local status; the server also echoes control SSE events.
+        if (action === 'pause') setRunStatus('paused');
+        else if (action === 'resume') setRunStatus('running');
+        else if (action === 'cancel') setRunStatus('cancelled');
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
+  const pause = useCallback(() => control('pause'), [control]);
+  const resume = useCallback(() => control('resume'), [control]);
+  const interject = useCallback((message: string) => control('interject', message), [control]);
 
   const stop = useCallback(() => {
+    // Cancel server-side too (the fetch abort alone leaves the server
+    // generating and running the tool loop to completion — the pre-existing
+    // "Stop doesn't stop AnA" gap).
+    if (runIdRef.current) void control('cancel');
     abortRef.current?.abort();
-  }, []);
+  }, [control]);
 
   // Abort any in-flight stream when the hosting panel unmounts — otherwise the
   // fetch keeps the connection (and the server-side generation) alive until
@@ -653,7 +718,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         return;
       }
       const body = (await res.json()) as {
-        messages?: Array<{ role?: string; content?: string }>;
+        messages?: Array<{
+          role?: string;
+          content?: string;
+          metadata?: { reasoning?: string } | null;
+        }>;
       };
       const rows = Array.isArray(body.messages) ? body.messages : [];
       const hydrated: AnaChatMessage[] = rows
@@ -663,11 +732,21 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             typeof m.content === 'string' &&
             m.content.length > 0
         )
-        .map((m, idx) => ({
-          id: `t-${threadId}-${idx}`,
-          role: m.role as 'user' | 'assistant',
-          text: m.content as string,
-        }));
+        .map((m, idx) => {
+          // Rehydrate AnA's persisted reasoning (thought process) so the
+          // "Reasoning" collapsible on the assistant turn survives reload,
+          // matching what streamed live during the original turn.
+          const reasoning =
+            m.role === 'assistant' && typeof m.metadata?.reasoning === 'string'
+              ? m.metadata.reasoning
+              : undefined;
+          return {
+            id: `t-${threadId}-${idx}`,
+            role: m.role as 'user' | 'assistant',
+            text: m.content as string,
+            ...(reasoning ? { thinking: reasoning } : {}),
+          };
+        });
       threadIdRef.current = threadId;
       setMessages(hydrated);
     } catch (err: any) {
@@ -712,6 +791,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       ]);
       isStreamingRef.current = true;
       setIsStreaming(true);
+      // Fresh run: clear any prior run's control id/status until `run_started`.
+      runIdRef.current = null;
+      setRunStatus(null);
 
       const abortCtl = new AbortController();
       abortRef.current = abortCtl;
@@ -947,6 +1029,28 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     : m
                 )
               );
+            } else if (event.type === 'run_started') {
+              // Capture the run id so the user can pause/interject/cancel it.
+              runIdRef.current = typeof event.runId === 'string' ? event.runId : null;
+              setRunStatus('running');
+            } else if (event.type === 'paused') {
+              setRunStatus('paused');
+            } else if (event.type === 'resumed') {
+              setRunStatus('running');
+            } else if (event.type === 'cancelled') {
+              setRunStatus('cancelled');
+            } else if (event.type === 'interjected') {
+              // Surface the accepted steer as a small note on the assistant turn.
+              const msg: string = typeof event.message === 'string' ? event.message : '';
+              if (msg) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, interjections: [...(m.interjections ?? []), msg] }
+                      : m
+                  )
+                );
+              }
             } else if (event.type === 'done') {
               capturedLatencyMs = typeof event.latencyMs === 'number' ? event.latencyMs : undefined;
               capturedProvider = typeof event.provider === 'string' ? event.provider : undefined;
@@ -1295,6 +1399,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           abortRef.current = null;
           isStreamingRef.current = false;
           setIsStreaming(false);
+          // The run is over; clear control id/status so the composer hides the
+          // pause/resume affordances (a stale run id can never be controlled).
+          runIdRef.current = null;
+          setRunStatus(null);
         }
       }
     },
@@ -1319,6 +1427,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     isStreaming,
     send,
     stop,
+    runStatus,
+    pause,
+    resume,
+    interject,
     reset,
     loadThread,
     threadId: threadIdRef.current,

@@ -31,6 +31,7 @@ import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
+import { LineageDossier } from './LineageDossier';
 import { LabelingAuthoringPane, type LabelingDraft } from './LabelingAuthoringPane';
 import { type LabelingMode } from './labelingModes';
 import type { BriefingBookPremortemResult } from './BriefingBookPanel';
@@ -773,6 +774,8 @@ export function Ana({
   // re-opens (showing the latest version) when a *different* draft arrives.
   const [studioClosed, setStudioClosed] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  // Artifact whose lineage & decision dossier is open in the overlay (null = closed).
+  const [dossierArtifactId, setDossierArtifactId] = useState<string | null>(null);
   const [versionIndex, setVersionIndex] = useState(0);
   const lastDraftIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1084,6 +1087,10 @@ export function Ana({
           onIntelligenceAnswer={handleIntelligenceAnswer}
           onIntelligenceAction={handleIntelligenceAction}
           onWarGameRemediate={handleWarGameRemediate}
+          runStatus={chat.runStatus}
+          onPause={chat.pause}
+          onResume={chat.resume}
+          onInterject={chat.interject}
         />
       )}
       {view === 'projects' && (
@@ -1102,6 +1109,7 @@ export function Ana({
   );
 
   return (
+    <>
     <div className={styles.shell} data-collapsed={collapsed ? 'true' : 'false'}>
       <Sidebar
         view={view}
@@ -1150,6 +1158,11 @@ export function Ana({
                   activeVersionIndex={safeVersionIndex}
                   onSelectVersion={setVersionIndex}
                   onDownloadDocx={handleDownloadDocx}
+                  onViewLineage={
+                    activeDocument.artifactId
+                      ? () => setDossierArtifactId(activeDocument.artifactId ?? null)
+                      : undefined
+                  }
                   onClose={() => setStudioClosed(true)}
                   onResolveVerification={handleResolveVerification}
                   onResolveConsistency={handleResolveConsistency}
@@ -1185,5 +1198,12 @@ export function Ana({
         )}
       </main>
     </div>
+    {dossierArtifactId && (
+      <LineageDossier
+        artifactId={dossierArtifactId}
+        onClose={() => setDossierArtifactId(null)}
+      />
+    )}
+    </>
   );
 }

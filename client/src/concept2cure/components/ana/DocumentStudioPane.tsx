@@ -62,6 +62,8 @@ export interface DocumentStudioPaneProps {
   onSelectVersion?: (index: number) => void;
   /** Download the rendered document as a Word file. */
   onDownloadDocx: (draft: DocumentStudioDraft) => void;
+  /** Open the document's lineage & decision dossier (omit to hide the action). */
+  onViewLineage?: () => void;
   /** Collapse the preview pane. */
   onClose: () => void;
   /** Ask AnA to fix an unverified document (missing strings / divergence). */
@@ -187,6 +189,7 @@ export function DocumentStudioPane({
   activeVersionIndex = 0,
   onSelectVersion,
   onDownloadDocx,
+  onViewLineage,
   onClose,
   onResolveVerification,
   concordance,
@@ -258,6 +261,19 @@ export function DocumentStudioPane({
           <span className={styles.studioFormat}>· {format}</span>
         </div>
         <div className={styles.studioActions}>
+          {onViewLineage && (
+            <button
+              type="button"
+              className={styles.studioDownload}
+              onClick={onViewLineage}
+              title="Data & decision lineage, all iterations, XML export"
+            >
+              <span className={styles.ico} aria-hidden="true">
+                <I.shieldCheck size={13} />
+              </span>
+              <span>Lineage</span>
+            </button>
+          )}
           <button
             type="button"
             className={styles.studioDownload}
