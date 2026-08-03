@@ -163,6 +163,134 @@ export function detectSentences(content: string): SentenceSpan[] {
 }
 
 /**
+ * Granularity of a traced span.
+ *
+ *   sentence   the unit detectSentences already produces
+ *   clause     sub-sentence units split at clause boundaries
+ *   word       individual whitespace-delimited tokens
+ *
+ * WHY CLAUSE IS THE USEFUL DEFAULT FOR STORAGE
+ * Regulatory prose routinely carries a sourced fact and an author's reading of
+ * it in one sentence — "The primary endpoint was met (p<0.001), which we
+ * consider clinically meaningful." The first clause traces to a CSR; the second
+ * is the author's judgement and traces to nobody. Attributing the whole
+ * sentence to the CSR would put the source's name behind an opinion it never
+ * expressed. Clause is the finest unit at which provenance is still a
+ * meaningful claim.
+ *
+ * Word granularity exists for RESOLUTION, not for storage. Storing a row per
+ * word would put thousands of rows behind every save of an ordinary section and
+ * say nothing that the covering clause does not already say. resolveSpanAt()
+ * gives per-word answers from clause-grained rows, which is what a reader
+ * clicking a word actually needs.
+ */
+export type SpanGranularity = 'sentence' | 'clause' | 'word';
+
+/**
+ * Clause boundaries: punctuation that separates clauses, and the conjunctions
+ * that introduce a distinct assertion. Deliberately conservative — over-
+ * splitting produces spans too short to carry a claim, which is its own kind of
+ * false precision.
+ */
+const CLAUSE_BOUNDARY =
+  /[,;:]\s+|\s+(?:and|but|whereas|while|which|however|although|because|therefore)\s+/gi;
+
+/** Exact-offset slice of `text` that trims whitespace without losing position. */
+function trimmedSlice(
+  text: string,
+  from: number,
+  to: number,
+): { text: string; start: number; end: number } | null {
+  const raw = text.slice(from, to);
+  const lead = raw.length - raw.trimStart().length;
+  const body = raw.trim();
+  if (!body) return null;
+  return { text: body, start: from + lead, end: from + lead + body.length };
+}
+
+/** Split one sentence into sub-sentence pieces, preserving absolute offsets. */
+function subdivide(sentence: SentenceSpan, granularity: SpanGranularity): SentenceSpan[] {
+  if (granularity === 'sentence') return [sentence];
+
+  const pieces: Array<{ text: string; start: number; end: number }> = [];
+
+  if (granularity === 'word') {
+    for (const m of sentence.text.matchAll(/\S+/g)) {
+      pieces.push({ text: m[0], start: m.index!, end: m.index! + m[0].length });
+    }
+  } else {
+    // Boundaries are consumed by the separator, so a piece begins after it.
+    const cuts: number[] = [0];
+    CLAUSE_BOUNDARY.lastIndex = 0;
+    for (const m of sentence.text.matchAll(CLAUSE_BOUNDARY)) {
+      cuts.push(m.index! + m[0].length);
+    }
+    cuts.push(sentence.text.length);
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const p = trimmedSlice(sentence.text, cuts[i], cuts[i + 1]);
+      if (p) pieces.push(p);
+    }
+  }
+
+  if (pieces.length === 0) return [sentence];
+
+  return pieces.map(p => ({
+    index: 0, // renumbered by the caller across the whole document
+    text: p.text,
+    // Absolute offsets: the sub-span's position inside the sentence plus the
+    // sentence's own start. Everything downstream — click-through, the lineage
+    // row, staleness — is keyed on these being exact.
+    charStart: sentence.charStart + p.start,
+    charEnd: sentence.charStart + p.end,
+    paragraphIndex: sentence.paragraphIndex,
+    contentHash: crypto.createHash('sha256').update(p.text).digest('hex').slice(0, 16),
+  }));
+}
+
+/**
+ * Split content into spans at the requested granularity.
+ *
+ * Built on detectSentences() rather than beside it, so the abbreviation,
+ * decimal and enumerated-list handling that already works is not reimplemented
+ * — sub-sentence splitting happens INSIDE each detected sentence.
+ *
+ * Guarantees, all asserted by tests:
+ *   • content.slice(span.charStart, span.charEnd) === span.text, for every span
+ *   • spans are ordered by charStart and never overlap
+ *   • index is sequential across the document
+ */
+export function detectSpans(
+  content: string,
+  granularity: SpanGranularity = 'clause',
+): SentenceSpan[] {
+  const out: SentenceSpan[] = [];
+  let i = 0;
+  for (const sentence of detectSentences(content)) {
+    for (const span of subdivide(sentence, granularity)) {
+      out.push({ ...span, index: i++ });
+    }
+  }
+  return out;
+}
+
+/**
+ * The span covering a character offset — what a reader clicked.
+ *
+ * This is how word-level questions are answered from clause-level rows: the
+ * click lands on a character, and the covering span is the finest recorded
+ * statement about where that character came from. Returns null for an offset in
+ * no span, which is itself the useful answer — that text has no lineage.
+ */
+export function resolveSpanAt(spans: SentenceSpan[], offset: number): SentenceSpan | null {
+  for (const s of spans) {
+    if (offset >= s.charStart && offset < s.charEnd) return s;
+    // Ordered by charStart, so once a span begins past the offset, none follow.
+    if (s.charStart > offset) break;
+  }
+  return null;
+}
+
+/**
  * Rule-based sentence splitter that handles regulatory text edge cases.
  */
 function splitIntoSentences(text: string): string[] {

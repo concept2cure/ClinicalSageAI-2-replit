@@ -20,7 +20,8 @@ import { createScopedLogger } from '../utils/logger';
 import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
 // Span lineage: every span of an authored document must trace to where it came
 // from. See server/services/clinical-regulatory-evidence/span-lineage.service.ts.
-import { recordAuthorSpan } from '../services/clinical-regulatory-evidence/span-lineage.service';
+import { replaceAuthorSpans } from '../services/clinical-regulatory-evidence/span-lineage.service';
+import { detectSpans } from '../services/sentenceTraceabilityService';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -1611,43 +1612,56 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       );
     }
 
-    // Span lineage: record where this content came from.
+    // Span lineage: record where this content came from, clause by clause.
     //
-    // The author committed this text to the document under their own identity,
-    // so they are its source of record — `author_assertion` states that
-    // honestly rather than inventing a Data Room citation for prose that has
-    // none. It is deliberately ONE span covering the saved content: this path
-    // knows the author and the text, and nothing yet about which parts were
-    // drafted from sources. Phase 3 subdivides the range as source-backed spans
-    // are detected; until then a single attributed range is the truthful
-    // statement, and it is what lets coverage be measured at all.
+    // The author committed this text under their own identity, so they are its
+    // source of record — `author_assertion` states that honestly rather than
+    // inventing a Data Room citation for prose that has none.
+    //
+    // Clause granularity, not sentence and not word. Regulatory prose regularly
+    // carries a sourced fact and the author's reading of it in one sentence;
+    // splitting at clause boundaries lets those carry different provenance,
+    // which attributing the whole sentence could not. Word-level rows would
+    // number in the thousands per save and say nothing the covering clause does
+    // not — resolveSpanAt() answers per-word questions from these rows.
+    //
+    // replaceAuthorSpans states the WHOLE set rather than adding to it. Offsets
+    // describe a specific version of the text: insert a word early on and every
+    // later span silently describes different characters. Retiring the spans
+    // the new text no longer contains is what keeps the lineage true across an
+    // edit, and it is a soft delete so the record of what was asserted survives.
     //
     // KNOWN LIMITATION, stated rather than hidden: this does not distinguish
     // text the author typed from text an AI drafted and the author accepted.
     // Both are content the author committed, which is what an e-signature at
-    // freeze attests to, but they are not the same provenance and a later phase
-    // should separate them.
+    // freeze attests to, but they are not the same provenance and separating
+    // them needs a hook in the AI-draft path, not here.
     //
     // Same discipline as the audit write above — after the UPDATE, awaited so a
     // failure is logged rather than lost, and never fatal: the edit has already
     // committed and throwing here would report failure for a change that
-    // landed. Capture is Phase 2; refusing to save without lineage is Phase 4,
-    // and that gate belongs before the UPDATE, not here.
+    // landed. Refusing to save without lineage is Phase 4, and that gate belongs
+    // BEFORE the UPDATE, not here.
     if (content !== undefined && typeof content === 'string' && content.length > 0) {
       try {
-        await recordAuthorSpan(tenantId, {
-          documentTable: 'authoring_sections',
-          // req.params is typed `string | string[]` here, and the lineage row's
-          // document_id is the join key every later read depends on — coercing
-          // it explicitly rather than letting an array stringify itself into
-          // one.
-          documentId: String(sectionId),
-          charStart: 0,
-          charEnd: content.length,
-          spanText: content,
-          assertedBy: updatedByUser,
-          createdBy: updatedByUser,
-        });
+        const spans = detectSpans(content, 'clause').map(s => ({
+          charStart: s.charStart,
+          charEnd: s.charEnd,
+          spanText: s.text,
+        }));
+        await replaceAuthorSpans(
+          tenantId,
+          {
+            documentTable: 'authoring_sections',
+            // req.params is typed `string | string[]` here, and the lineage
+            // row's document_id is the join key every later read depends on —
+            // coercing it explicitly rather than letting an array stringify
+            // itself into one.
+            documentId: String(sectionId),
+          },
+          spans,
+          { assertedBy: updatedByUser, createdBy: updatedByUser },
+        );
       } catch (err) {
         // Never silently: a lineage path that fails quietly is how sentence
         // traceability persisted nothing for as long as it existed.

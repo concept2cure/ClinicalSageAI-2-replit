@@ -290,6 +290,86 @@ describe('the three reads', () => {
   });
 });
 
+describe('replaceAuthorSpans — surviving an edit', () => {
+  const doc = { ...DOC, documentId: 'sec-replace' };
+
+  it('writes the whole set on first save', async () => {
+    const r = await lineage.replaceAuthorSpans(
+      ORG_A,
+      doc,
+      [
+        { charStart: 0, charEnd: 10, spanText: 'first ten!' },
+        { charStart: 11, charEnd: 20, spanText: 'next nine' },
+      ],
+      { assertedBy: 'user-7' },
+    );
+    expect(r).toEqual({ written: 2, retired: 0 });
+    expect(await lineage.listDocumentSpans(ORG_A, doc)).toHaveLength(2);
+  });
+
+  it('retires spans the edited text no longer contains', async () => {
+    // The author deletes the second clause and lengthens the first. Without
+    // retirement the old [11,20) row survives, resolves cleanly, and describes
+    // characters that are now something else entirely.
+    const r = await lineage.replaceAuthorSpans(
+      ORG_A,
+      doc,
+      [{ charStart: 0, charEnd: 14, spanText: 'first fourteen' }],
+      { assertedBy: 'user-7' },
+    );
+
+    expect(r.written).toBe(1);
+    expect(r.retired).toBe(2); // both prior ranges are gone
+
+    const spans = await lineage.listDocumentSpans(ORG_A, doc);
+    expect(spans).toHaveLength(1);
+    expect(spans[0].charStart).toBe(0);
+    expect(spans[0].charEnd).toBe(14);
+  });
+
+  it('retires by soft delete — the record of what was asserted survives', async () => {
+    // A regulated system does not destroy the fact that something was once
+    // asserted; it stops reporting it as current.
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM document_span_lineage
+        WHERE document_id = 'sec-replace' AND deleted_at IS NOT NULL`,
+    );
+    expect((rows[0] as { n: number }).n).toBe(2);
+  });
+
+  it('leaves source citations alone when the prose is re-saved', async () => {
+    // Saving prose must not silently drop evidence someone attached.
+    const sourceId = await makeSource(ORG_A, 'sha-keep');
+    const d2 = { ...DOC, documentId: 'sec-keepcite' };
+
+    await lineage.recordSourceSpan(ORG_A, {
+      ...d2, charStart: 0, charEnd: 12, spanText: 'cited twelve', sourceId, usage: 'quoted',
+    });
+    await lineage.replaceAuthorSpans(
+      ORG_A,
+      d2,
+      [{ charStart: 20, charEnd: 30, spanText: 'my own bit' }],
+      { assertedBy: 'user-7' },
+    );
+
+    const spans = await lineage.listDocumentSpans(ORG_A, d2);
+    expect(spans.map((s) => s.provenanceKind).sort()).toEqual([
+      'author_assertion',
+      'cre_evidence_source',
+    ]);
+  });
+
+  it('retires everything when the document is emptied', async () => {
+    const d3 = { ...DOC, documentId: 'sec-emptied' };
+    await lineage.replaceAuthorSpans(
+      ORG_A, d3, [{ charStart: 0, charEnd: 5, spanText: 'hello' }], { assertedBy: 'user-7' },
+    );
+    const r = await lineage.replaceAuthorSpans(ORG_A, d3, [], { assertedBy: 'user-7' });
+    expect(r).toEqual({ written: 0, retired: 1 });
+    expect(await lineage.listDocumentSpans(ORG_A, d3)).toEqual([]);
+  });
+});
+
 describe('findUncoveredRanges — what has no lineage yet', () => {
   it('reports the gaps between covered spans', async () => {
     const sourceId = await makeSource(ORG_A, 'sha-cover');

@@ -344,6 +344,71 @@ export async function recordAuthorSpan(
   return { id: inserted.rows[0].id, created: true };
 }
 
+/**
+ * Replace this document's author assertions with exactly the spans given.
+ *
+ * WHY REPLACE RATHER THAN ADD
+ * Offsets are positions in a specific version of the text. Insert a word in the
+ * first paragraph and every span after it now describes different characters
+ * than it did — the rows still resolve, still look healthy, and are wrong.
+ * Recording the new spans without retiring the old ones leaves a document whose
+ * lineage table answers confidently with stale ranges, which is worse than
+ * answering nothing.
+ *
+ * So each save states the whole set: spans present in `spans` are written or
+ * re-resolved, and author assertions for this document that are NOT in the set
+ * are soft-deleted. Soft, because a regulated system keeps the record of what
+ * was once asserted — `deleted_at` retires a row from the reads without
+ * destroying it.
+ *
+ * Source citations are deliberately untouched. They are written by a different
+ * path with its own lifecycle, and a save of the prose must not silently drop
+ * the evidence someone attached to it.
+ */
+export async function replaceAuthorSpans(
+  orgId: number,
+  ref: DocumentRef,
+  spans: Array<{ charStart: number; charEnd: number; spanText: string; usage?: SpanUsage }>,
+  p: { assertedBy: string; signatureId?: string | null; createdBy?: string | null },
+): Promise<{ written: number; retired: number }> {
+  if (!p.assertedBy) {
+    throw new SpanLineageError('assertedBy is required for an author assertion');
+  }
+
+  let written = 0;
+  for (const s of spans) {
+    await recordAuthorSpan(orgId, {
+      ...ref,
+      charStart: s.charStart,
+      charEnd: s.charEnd,
+      spanText: s.spanText,
+      usage: s.usage,
+      assertedBy: p.assertedBy,
+      signatureId: p.signatureId ?? null,
+      createdBy: p.createdBy ?? p.assertedBy,
+    });
+    written++;
+  }
+
+  // Retire author assertions for this document that the new text no longer
+  // contains. Ranges are compared as a set of (start, end) pairs; anything not
+  // in it describes characters that are gone or have moved.
+  const keep = spans.map((s) => `${s.charStart}:${s.charEnd}`);
+  const { rowCount } = await pool.query(
+    `UPDATE document_span_lineage
+        SET deleted_at = NOW(), updated_at = NOW()
+      WHERE organization_id = $1
+        AND document_table = $2
+        AND document_id = $3
+        AND provenance_kind = 'author_assertion'
+        AND deleted_at IS NULL
+        AND (char_start || ':' || char_end) <> ALL($4::text[])`,
+    [orgId, ref.documentTable, ref.documentId, keep.length > 0 ? keep : ['']],
+  );
+
+  return { written, retired: rowCount ?? 0 };
+}
+
 function mapRow(r: any): SpanLineageRow {
   return {
     id: r.id,
