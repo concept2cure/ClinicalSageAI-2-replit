@@ -2,7 +2,7 @@
 // selected project and a generate action wired to the blueprint endpoint.
 
 import * as React from 'react';
-import { useQbdAnalysis, useGenerateBlueprint } from '../../hooks/useCMC';
+import { useQbdAnalysis, useGenerateBlueprint, useControlStrategy } from '../../hooks/useCMC';
 import { Loading, ErrorState, Empty, NoProject, DataTable, ResultView } from './state';
 
 // §3.2 sections that the blueprint generator can compose.
@@ -17,7 +17,9 @@ const SECTIONS: Array<{ key: string; label: string }> = [
 export function CmcBlueprint({ projectId, onAskAna }: { projectId: string | null; onAskAna: (t: string) => void }) {
   const qbd = useQbdAnalysis(projectId);
   const gen = useGenerateBlueprint();
+  const cs = useControlStrategy();
   const [selected, setSelected] = React.useState<string[]>([]);
+  const [csScope, setCsScope] = React.useState<'drug_substance' | 'drug_product' | 'both'>('both');
 
   const toggle = (k: string) =>
     setSelected(prev => (prev.includes(k) ? prev.filter(s => s !== k) : [...prev, k]));
@@ -102,6 +104,87 @@ export function CmcBlueprint({ projectId, onAskAna }: { projectId: string | null
             )}
           </div>
         )}
+      </div>
+
+      {/* Control strategy — deterministic ICH Q8/Q9/Q10/Q11 output built on the
+          CQAs/CPPs above (POST /api/cmc/control-strategy) */}
+      <div className="bp-card" style={{ marginTop: 14 }}>
+        <div className="bp-card-head">
+          <span>Control strategy</span>
+          <span className="bp-meta">Deterministic · ICH Q8/Q9/Q10/Q11</span>
+        </div>
+        <div style={{ padding: 12 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+            <label style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              Scope
+              <select value={csScope} onChange={e => setCsScope(e.target.value as typeof csScope)}>
+                <option value="both">Both</option>
+                <option value="drug_substance">Drug substance (§3.2.S)</option>
+                <option value="drug_product">Drug product (§3.2.P)</option>
+              </select>
+            </label>
+            <button
+              className="bp-btn-tert"
+              type="button"
+              disabled={!projectId || cs.isPending}
+              onClick={() => projectId && cs.mutate({ projectId, scope: csScope })}
+            >
+              {cs.isPending ? 'Generating…' : 'Generate control strategy'}
+            </button>
+          </div>
+          {cs.isError && <ErrorState message={cs.error?.message ?? 'Control-strategy generation failed.'} />}
+          {cs.data && (
+            <div style={{ display: 'grid', gap: 14 }}>
+              {cs.data.controlElements.length > 0 && (
+                <div>
+                  <div className="bp-meta" style={{ marginBottom: 6 }}>
+                    Control elements ({cs.data.controlElements.length})
+                  </div>
+                  <table className="bp-table">
+                    <thead>
+                      <tr><th>Type</th><th>Control</th><th>CQA</th><th>Acceptance</th><th>ICH</th></tr>
+                    </thead>
+                    <tbody>
+                      {cs.data.controlElements.map((ce, i) => (
+                        <tr key={i}>
+                          <td>{ce.controlType.replace(/_/g, ' ')}</td>
+                          <td>{ce.description}</td>
+                          <td>{ce.targetCqa ?? '—'}</td>
+                          <td>{ce.acceptanceCriterion ?? '—'}</td>
+                          <td className="bp-meta">{ce.ichBasis.join(', ')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div>
+                <div className="bp-meta" style={{ marginBottom: 6 }}>Stability monitoring</div>
+                <div className="bp-meta">
+                  Long-term {cs.data.stabilityMonitoring.longTermCondition} · accelerated{' '}
+                  {cs.data.stabilityMonitoring.acceleratedCondition}
+                </div>
+                {cs.data.stabilityMonitoring.testParameters.length > 0 && (
+                  <div className="bp-meta">Parameters: {cs.data.stabilityMonitoring.testParameters.join(', ')}</div>
+                )}
+                {cs.data.stabilityMonitoring.timePoints.length > 0 && (
+                  <div className="bp-meta">Time points: {cs.data.stabilityMonitoring.timePoints.join(', ')}</div>
+                )}
+              </div>
+              {cs.data.gaps.length > 0 && (
+                <div>
+                  <div className="bp-meta" style={{ marginBottom: 6 }}>Open gaps</div>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {cs.data.gaps.map((g, i) => <li key={i} className="bp-meta">{g}</li>)}
+                  </ul>
+                </div>
+              )}
+              {cs.data.citations.length > 0 && (
+                <div className="bp-meta" style={{ fontStyle: 'italic' }}>{cs.data.citations.join(' · ')}</div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
