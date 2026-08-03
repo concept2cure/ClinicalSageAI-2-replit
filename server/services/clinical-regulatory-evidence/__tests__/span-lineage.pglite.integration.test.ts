@@ -370,6 +370,82 @@ describe('replaceAuthorSpans — surviving an edit', () => {
   });
 });
 
+describe('assertLineageCoversContent — the save gate', () => {
+  const doc = { ...DOC, documentId: 'sec-gate' };
+
+  it('passes when the spans cover the content end to end', async () => {
+    await lineage.replaceAuthorSpans(
+      ORG_A,
+      doc,
+      [
+        { charStart: 0, charEnd: 20, spanText: 'a'.repeat(20) },
+        { charStart: 20, charEnd: 45, spanText: 'b'.repeat(25) },
+      ],
+      { assertedBy: 'user-7' },
+    );
+    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 45)).resolves.toBeUndefined();
+  });
+
+  it('throws when the content extends past the last span', async () => {
+    // The save that produced this content did not attribute its tail. Letting
+    // it commit is how a document ends up with provenance for its first half.
+    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 80)).rejects.toThrow(
+      /does not cover the saved content/,
+    );
+  });
+
+  it('names the unattributed ranges so the failure is actionable', async () => {
+    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 80)).rejects.toThrow(/45-80/);
+  });
+
+  it('throws when there is a hole in the middle', async () => {
+    const holed = { ...DOC, documentId: 'sec-hole' };
+    await lineage.replaceAuthorSpans(
+      ORG_A,
+      holed,
+      [
+        { charStart: 0, charEnd: 10, spanText: '0123456789' },
+        { charStart: 30, charEnd: 40, spanText: '0123456789' },
+      ],
+      { assertedBy: 'user-7' },
+    );
+    await expect(lineage.assertLineageCoversContent(ORG_A, holed, 40)).rejects.toThrow(/10-30/);
+  });
+
+  it('throws when a document has no lineage at all', async () => {
+    await expect(
+      lineage.assertLineageCoversContent(ORG_A, { ...DOC, documentId: 'sec-nothing' }, 25),
+    ).rejects.toThrow(/does not cover/);
+  });
+
+  it('passes trivially for empty content', async () => {
+    await expect(
+      lineage.assertLineageCoversContent(ORG_A, { ...DOC, documentId: 'sec-blank' }, 0),
+    ).resolves.toBeUndefined();
+  });
+
+  it('does not count another tenant\'s spans as coverage', async () => {
+    // Otherwise a tenant could satisfy their own gate with rows they cannot see.
+    await expect(lineage.assertLineageCoversContent(ORG_B, doc, 45)).rejects.toThrow(
+      /does not cover/,
+    );
+  });
+
+  it('sees uncommitted rows when run on the same connection as the write', async () => {
+    // This is the property the gate depends on: it runs inside the save's
+    // transaction, so it must observe what that transaction has written but not
+    // yet committed. Verified here against the same executor the route uses.
+    const tx = { ...DOC, documentId: 'sec-tx' };
+    await lineage.replaceAuthorSpans(
+      ORG_A, tx, [{ charStart: 0, charEnd: 12, spanText: 'twelve chars' }], { assertedBy: 'u' },
+      pool as never,
+    );
+    await expect(
+      lineage.assertLineageCoversContent(ORG_A, tx, 12, pool as never),
+    ).resolves.toBeUndefined();
+  });
+});
+
 describe('getSelectionOrigins — the read behind "Data Origins"', () => {
   const doc = { ...DOC, documentId: 'sec-selection' };
   let sourceId: number;

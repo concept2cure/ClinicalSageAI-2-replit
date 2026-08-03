@@ -45,6 +45,25 @@ import { CRE_SOURCE_CITATION } from './source-usage.service';
 
 export class SpanLineageError extends Error {}
 
+/**
+ * Anything that can run a query — the pool, or a client inside a transaction.
+ *
+ * The write paths take one so a caller can enlist lineage in the SAME
+ * transaction as the content it describes. That is what makes "content does not
+ * persist without its lineage" an invariant rather than an intention: written
+ * on the pool, the lineage is a separate commit that can fail on its own and
+ * leave saved text with no provenance.
+ */
+export interface Queryable {
+  query: <R = any>(
+    sql: string,
+    params?: unknown[],
+  ) => Promise<{ rows: R[]; rowCount?: number | null }>;
+}
+
+/** Default executor — the pool, i.e. its own transaction per statement. */
+const defaultExec: Queryable = pool as unknown as Queryable;
+
 /** How a source was used to produce a span. Mirrors the SQL CHECK constraint. */
 export type SpanUsage =
   | 'quoted'
@@ -165,6 +184,7 @@ function spanState(cited: string | null, current: string | null, resolved: boole
 export async function recordSourceSpan(
   orgId: number,
   p: SourceSpanInput,
+  exec: Queryable = defaultExec,
 ): Promise<{ id: string; citedChecksum: string | null; created: boolean }> {
   assertSpan(p.charStart, p.charEnd);
   assertUsage(p.usage);
@@ -179,7 +199,7 @@ export async function recordSourceSpan(
 
   // Verify the source is visible to this tenant BEFORE writing. See header.
   const c = visibleOrgClause(orgId, 2);
-  const source = await pool.query<{ id: number; checksum: string | null }>(
+  const source = await exec.query<{ id: number; checksum: string | null }>(
     `SELECT id, checksum FROM cre_evidence_sources
       WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL LIMIT 1`,
     [sourceId, c.param],
@@ -189,7 +209,7 @@ export async function recordSourceSpan(
   }
   const checksum = source.rows[0].checksum ?? null;
 
-  const existing = await pool.query<{ id: string }>(
+  const existing = await exec.query<{ id: string }>(
     `SELECT id FROM document_span_lineage
       WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
         AND char_start = $4 AND char_end = $5
@@ -208,7 +228,7 @@ export async function recordSourceSpan(
 
   if (existing.rows.length > 0) {
     // Re-resolve to the source's current content identity.
-    await pool.query(
+    await exec.query(
       `UPDATE document_span_lineage
           SET payload_sha256 = $1,
               span_text_sha256 = $2,
@@ -230,7 +250,7 @@ export async function recordSourceSpan(
     return { id: existing.rows[0].id, citedChecksum: checksum, created: false };
   }
 
-  const inserted = await pool.query<{ id: string }>(
+  const inserted = await exec.query<{ id: string }>(
     `INSERT INTO document_span_lineage (
        document_table, document_id, document_version,
        char_start, char_end, span_text_sha256,
@@ -272,6 +292,7 @@ export async function recordSourceSpan(
 export async function recordAuthorSpan(
   orgId: number,
   p: AuthorSpanInput,
+  exec: Queryable = defaultExec,
 ): Promise<{ id: string; created: boolean }> {
   assertSpan(p.charStart, p.charEnd);
   const usage = p.usage ?? 'asserted';
@@ -285,7 +306,7 @@ export async function recordAuthorSpan(
 
   const assertedAt = p.assertedAt ?? new Date();
 
-  const existing = await pool.query<{ id: string }>(
+  const existing = await exec.query<{ id: string }>(
     `SELECT id FROM document_span_lineage
       WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
         AND char_start = $4 AND char_end = $5
@@ -296,7 +317,7 @@ export async function recordAuthorSpan(
   );
 
   if (existing.rows.length > 0) {
-    await pool.query(
+    await exec.query(
       `UPDATE document_span_lineage
           SET span_text_sha256 = $1,
               usage = $2,
@@ -316,7 +337,7 @@ export async function recordAuthorSpan(
     return { id: existing.rows[0].id, created: false };
   }
 
-  const inserted = await pool.query<{ id: string }>(
+  const inserted = await exec.query<{ id: string }>(
     `INSERT INTO document_span_lineage (
        document_table, document_id, document_version,
        char_start, char_end, span_text_sha256,
@@ -370,6 +391,7 @@ export async function replaceAuthorSpans(
   ref: DocumentRef,
   spans: Array<{ charStart: number; charEnd: number; spanText: string; usage?: SpanUsage }>,
   p: { assertedBy: string; signatureId?: string | null; createdBy?: string | null },
+  exec: Queryable = defaultExec,
 ): Promise<{ written: number; retired: number }> {
   if (!p.assertedBy) {
     throw new SpanLineageError('assertedBy is required for an author assertion');
@@ -394,7 +416,7 @@ export async function replaceAuthorSpans(
   // contains. Ranges are compared as a set of (start, end) pairs; anything not
   // in it describes characters that are gone or have moved.
   const keep = spans.map((s) => `${s.charStart}:${s.charEnd}`);
-  const { rowCount } = await pool.query(
+  const { rowCount } = await exec.query(
     `UPDATE document_span_lineage
         SET deleted_at = NOW(), updated_at = NOW()
       WHERE organization_id = $1
@@ -407,6 +429,67 @@ export async function replaceAuthorSpans(
   );
 
   return { written, retired: rowCount ?? 0 };
+}
+
+/**
+ * The save gate: refuse to let content persist without complete lineage.
+ *
+ * Called INSIDE the transaction that writes the content, after the lineage for
+ * that content has been written on the same connection. It re-reads what the
+ * transaction actually contains and throws if any character of the new text is
+ * unaccounted for.
+ *
+ * WHY RE-READ RATHER THAN TRUST THE WRITE
+ * The writer returning without throwing means the statements were accepted, not
+ * that the rows say what they should. A constraint could retire a span the
+ * caller expected to keep, an offset could be computed against different text,
+ * or a future edit to the capture path could quietly stop covering part of the
+ * content. Re-reading inside the transaction asks the database what it is about
+ * to commit, which is the only question that matters.
+ *
+ * Throwing rolls back the content write with it — that is the whole point.
+ * Lineage that is best-effort produces documents whose provenance is missing
+ * exactly where something went wrong, which is the worst place for it to be
+ * missing.
+ */
+export async function assertLineageCoversContent(
+  orgId: number,
+  ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
+  contentLength: number,
+  exec: Queryable = defaultExec,
+): Promise<void> {
+  if (contentLength <= 0) return;
+
+  const { rows } = await exec.query<{ char_start: number; char_end: number }>(
+    `SELECT char_start, char_end FROM document_span_lineage
+      WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
+        AND deleted_at IS NULL
+      ORDER BY char_start ASC`,
+    [orgId, ref.documentTable, ref.documentId],
+  );
+
+  const gaps: Array<{ charStart: number; charEnd: number }> = [];
+  let cursor = 0;
+  for (const r of rows) {
+    const start = Number(r.char_start);
+    const end = Number(r.char_end);
+    if (start > cursor) gaps.push({ charStart: cursor, charEnd: Math.min(start, contentLength) });
+    cursor = Math.max(cursor, end);
+    if (cursor >= contentLength) break;
+  }
+  if (cursor < contentLength) gaps.push({ charStart: cursor, charEnd: contentLength });
+
+  const real = gaps.filter((g) => g.charEnd > g.charStart);
+  if (real.length > 0) {
+    const shown = real
+      .slice(0, 5)
+      .map((g) => `${g.charStart}-${g.charEnd}`)
+      .join(', ');
+    throw new SpanLineageError(
+      `lineage does not cover the saved content: ${real.length} unattributed range(s) ` +
+        `[${shown}${real.length > 5 ? ', …' : ''}] of ${contentLength} characters`,
+    );
+  }
 }
 
 function mapRow(r: any): SpanLineageRow {
@@ -436,8 +519,9 @@ function mapRow(r: any): SpanLineageRow {
 export async function listDocumentSpans(
   orgId: number,
   ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
+  exec: Queryable = defaultExec,
 ): Promise<SpanLineageRow[]> {
-  const { rows } = await pool.query(
+  const { rows } = await exec.query(
     `SELECT l.*, s.checksum AS current_checksum, s.title AS source_title
        FROM document_span_lineage l
        LEFT JOIN cre_evidence_sources s
@@ -476,13 +560,14 @@ export async function listDocumentSpans(
 export async function listSpansCitingSource(
   orgId: number,
   sourceId: number | string,
+  exec: Queryable = defaultExec,
 ): Promise<SpanLineageRow[]> {
   const id = Number(sourceId);
   if (!Number.isInteger(id) || id <= 0) {
     throw new SpanLineageError('sourceId must be a positive integer');
   }
 
-  const { rows } = await pool.query(
+  const { rows } = await exec.query(
     `SELECT * FROM document_span_lineage
       WHERE organization_id = $1
         AND provenance_kind = 'cre_evidence_source'
@@ -502,8 +587,11 @@ export async function listSpansCitingSource(
  * statement about what actually happened, not a guess reconstructed at read
  * time.
  */
-export async function listStaleSpans(orgId: number): Promise<SpanLineageRow[]> {
-  const { rows } = await pool.query(
+export async function listStaleSpans(
+  orgId: number,
+  exec: Queryable = defaultExec,
+): Promise<SpanLineageRow[]> {
+  const { rows } = await exec.query(
     `SELECT l.*, s.checksum AS current_checksum, s.title AS source_title
        FROM document_span_lineage l
        JOIN cre_evidence_sources s

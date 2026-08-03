@@ -276,7 +276,6 @@ export async function registerInlineAiWorkflowRoutes({
   try {
     const dataOriginsModule = await import('../routes/data-origins.routes');
     app.use('/api/data-origins', dataOriginsModule.default);
-    console.log('✅ Data Origins routes mounted (/api/data-origins)');
   } catch (error) {
     console.error('❌ Failed to mount Data Origins routes:', error);
   }

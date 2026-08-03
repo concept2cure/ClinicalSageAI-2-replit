@@ -20,7 +20,10 @@ import { createScopedLogger } from '../utils/logger';
 import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
 // Span lineage: every span of an authored document must trace to where it came
 // from. See server/services/clinical-regulatory-evidence/span-lineage.service.ts.
-import { replaceAuthorSpans } from '../services/clinical-regulatory-evidence/span-lineage.service';
+import {
+  assertLineageCoversContent,
+  replaceAuthorSpans,
+} from '../services/clinical-regulatory-evidence/span-lineage.service';
 import { detectSpans } from '../services/sentenceTraceabilityService';
 
 const logger = createScopedLogger('authoring-router');
@@ -1580,7 +1583,75 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       RETURNING *
     `;
 
-    const result = await pool.query(updateQuery, values);
+    // ── The save gate ─────────────────────────────────────────────────────────
+    // Content and its lineage commit together or not at all.
+    //
+    // Until now capture ran AFTER the update and swallowed its own failures, so
+    // a database hiccup produced saved text with no provenance — and no signal
+    // that it had happened. Provenance that is best-effort goes missing exactly
+    // where something went wrong, which is the worst place for it to be missing.
+    //
+    // So the UPDATE, the lineage write and the coverage check share one
+    // transaction on one connection. If lineage cannot be recorded, or does not
+    // cover the text, the content write rolls back with it and the caller is
+    // told. A refused save is recoverable; a document that quietly lost its
+    // provenance is not.
+    //
+    // The revision and audit-trail writes above deliberately stay outside this
+    // transaction: they are additive records on their own connections, and a
+    // stray revision row after a refused save is a far smaller problem than
+    // content without lineage. Folding them in means threading a client through
+    // both helpers, which is a wider change than this gate needs.
+    const client = await pool.connect();
+    let result: { rows: any[] };
+    try {
+      await client.query('BEGIN');
+      result = await client.query(updateQuery, values);
+
+      if (content !== undefined && typeof content === 'string' && content.length > 0) {
+        const spans = detectSpans(content, 'clause').map(s => ({
+          charStart: s.charStart,
+          charEnd: s.charEnd,
+          spanText: s.text,
+        }));
+        const ref = {
+          documentTable: 'authoring_sections',
+          // req.params is typed `string | string[]`; document_id is the join key
+          // every later read depends on, so coerce rather than let an array
+          // stringify itself into one.
+          documentId: String(sectionId),
+        };
+
+        await replaceAuthorSpans(tenantId, ref, spans, {
+          assertedBy: updatedByUser,
+          createdBy: updatedByUser,
+        }, client);
+
+        // Ask the database what it is about to commit, rather than trusting that
+        // the writer not throwing means the rows say what they should.
+        await assertLineageCoversContent(tenantId, ref, content.length, client);
+      }
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      logger.error('Section save refused — content and lineage rolled back together', {
+        sectionId,
+        tenantId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'LINEAGE_REQUIRED',
+          message:
+            'The section was not saved: its data lineage could not be recorded. ' +
+            'Saving content without provenance is not permitted.',
+        },
+      });
+    } finally {
+      client.release();
+    }
 
     // Part 11 change record: operation, actor, before/after content, a SHA-256
     // of each side, reason, IP, user agent, session.
@@ -1610,67 +1681,6 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
         typeof req.body?.changeReason === 'string' ? req.body.changeReason : null,
         { titleChanged: title !== undefined },
       );
-    }
-
-    // Span lineage: record where this content came from, clause by clause.
-    //
-    // The author committed this text under their own identity, so they are its
-    // source of record — `author_assertion` states that honestly rather than
-    // inventing a Data Room citation for prose that has none.
-    //
-    // Clause granularity, not sentence and not word. Regulatory prose regularly
-    // carries a sourced fact and the author's reading of it in one sentence;
-    // splitting at clause boundaries lets those carry different provenance,
-    // which attributing the whole sentence could not. Word-level rows would
-    // number in the thousands per save and say nothing the covering clause does
-    // not — resolveSpanAt() answers per-word questions from these rows.
-    //
-    // replaceAuthorSpans states the WHOLE set rather than adding to it. Offsets
-    // describe a specific version of the text: insert a word early on and every
-    // later span silently describes different characters. Retiring the spans
-    // the new text no longer contains is what keeps the lineage true across an
-    // edit, and it is a soft delete so the record of what was asserted survives.
-    //
-    // KNOWN LIMITATION, stated rather than hidden: this does not distinguish
-    // text the author typed from text an AI drafted and the author accepted.
-    // Both are content the author committed, which is what an e-signature at
-    // freeze attests to, but they are not the same provenance and separating
-    // them needs a hook in the AI-draft path, not here.
-    //
-    // Same discipline as the audit write above — after the UPDATE, awaited so a
-    // failure is logged rather than lost, and never fatal: the edit has already
-    // committed and throwing here would report failure for a change that
-    // landed. Refusing to save without lineage is Phase 4, and that gate belongs
-    // BEFORE the UPDATE, not here.
-    if (content !== undefined && typeof content === 'string' && content.length > 0) {
-      try {
-        const spans = detectSpans(content, 'clause').map(s => ({
-          charStart: s.charStart,
-          charEnd: s.charEnd,
-          spanText: s.text,
-        }));
-        await replaceAuthorSpans(
-          tenantId,
-          {
-            documentTable: 'authoring_sections',
-            // req.params is typed `string | string[]` here, and the lineage
-            // row's document_id is the join key every later read depends on —
-            // coercing it explicitly rather than letting an array stringify
-            // itself into one.
-            documentId: String(sectionId),
-          },
-          spans,
-          { assertedBy: updatedByUser, createdBy: updatedByUser },
-        );
-      } catch (err) {
-        // Never silently: a lineage path that fails quietly is how sentence
-        // traceability persisted nothing for as long as it existed.
-        logger.error('Failed to record span lineage for section save', {
-          sectionId,
-          tenantId,
-          err: err instanceof Error ? err.message : String(err),
-        });
-      }
     }
 
     res.json({
