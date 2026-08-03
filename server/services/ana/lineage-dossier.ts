@@ -52,7 +52,9 @@ function isMissingTable(err: any): boolean {
 
 function warnUnless42P01(source: string, err: any): void {
   if (!isMissingTable(err)) {
-    console.warn(`[lineage-dossier] ${source} load failed:`, err?.message);
+    // Constant format string with dynamic values passed as a structured arg, so
+    // a value can never inject a format specifier and forge the log line.
+    console.warn('[lineage-dossier] load failed', { source, error: err?.message });
   }
 }
 
