@@ -156,6 +156,34 @@ describe('detectSpans — degenerate input', () => {
   });
 });
 
+describe('detectSpans — hostile input stays linear', () => {
+  it('does not degrade on a long whitespace run that never reaches a conjunction', () => {
+    // Document content is attacker-influenced: anyone who can paste into a
+    // section controls this string. An unbounded `\s+(?:and|but|…)\s+` backtracks
+    // polynomially here and burns the request thread (CodeQL: polynomial regular
+    // expression on uncontrolled data). Bounded quantifiers keep it linear.
+    const hostile = `Start${'\t'.repeat(40_000)}end.`;
+
+    const began = Date.now();
+    const spans = detectSpans(hostile, 'clause');
+    const elapsed = Date.now() - began;
+
+    expect(spans.length).toBeGreaterThan(0);
+    // Generous: the polynomial form takes many seconds on this input, the
+    // bounded form single-digit milliseconds. The margin is for slow CI, not
+    // for a regression to hide in.
+    expect(elapsed).toBeLessThan(2_000);
+  });
+
+  it('still returns exact offsets for that input', () => {
+    // Whatever the splitter does under stress, it must not lie about position.
+    const hostile = `Start${'\t'.repeat(5_000)}end.`;
+    for (const s of detectSpans(hostile, 'clause')) {
+      expect(hostile.slice(s.charStart, s.charEnd)).toBe(s.text);
+    }
+  });
+});
+
 describe('resolveSpanAt — answering word-level questions from clause-level rows', () => {
   const content = FIXTURES.factAndJudgement;
   const spans = detectSpans(content, 'clause');

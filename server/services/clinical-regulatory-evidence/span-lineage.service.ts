@@ -526,6 +526,115 @@ export async function listStaleSpans(orgId: number): Promise<SpanLineageRow[]> {
   });
 }
 
+export interface SelectionOrigins {
+  documentTable: string;
+  documentId: string;
+  selection: { charStart: number; charEnd: number; text?: string };
+  /** Spans overlapping the selection, in document order. */
+  origins: SpanLineageRow[];
+  /** Characters inside the selection with no lineage at all. */
+  uncovered: Array<{ charStart: number; charEnd: number }>;
+  coveragePercent: number;
+  counts: {
+    total: number;
+    fromSources: number;
+    authorAsserted: number;
+    stale: number;
+  };
+  generatedAt: string;
+}
+
+/**
+ * Everything known about where a SELECTED range of a document came from.
+ *
+ * This is the read behind "select text → Data Origins". A selection rarely
+ * lines up with span boundaries — a reader drags across half of one clause and
+ * into the next — so the query is overlap, not containment: any span sharing a
+ * character with the selection is part of the answer.
+ *
+ * Uncovered ranges are reported alongside, because "these three sentences trace
+ * to a CSR" and "these three sentences trace to a CSR and this fourth one
+ * traces to nothing" are different answers, and only the second is honest.
+ */
+export async function getSelectionOrigins(
+  orgId: number,
+  ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
+  charStart: number,
+  charEnd: number,
+  selectionText?: string,
+): Promise<SelectionOrigins> {
+  assertSpan(charStart, charEnd);
+
+  const { rows } = await pool.query(
+    `SELECT l.*, s.checksum AS current_checksum, s.title AS source_title
+       FROM document_span_lineage l
+       LEFT JOIN cre_evidence_sources s
+              ON l.provenance_kind = 'cre_evidence_source'
+             AND s.id = NULLIF(l.reference_id, '')::int
+             AND s.deleted_at IS NULL
+      WHERE l.organization_id = $1
+        AND l.document_table = $2
+        AND l.document_id = $3
+        AND l.deleted_at IS NULL
+        -- Overlap, not containment: half a clause is still that clause's origin.
+        AND l.char_start < $5
+        AND l.char_end > $4
+      ORDER BY l.char_start ASC, l.char_end ASC`,
+    [orgId, ref.documentTable, ref.documentId, charStart, charEnd],
+  );
+
+  const origins = rows.map((r: any) => {
+    const row = mapRow(r);
+    if (row.provenanceKind === 'cre_evidence_source') {
+      row.state = spanState(
+        r.payload_sha256 ?? null,
+        r.current_checksum ?? null,
+        r.current_checksum !== null,
+      );
+      row.sourceTitle = r.source_title ?? null;
+    } else {
+      row.state = 'current';
+    }
+    return row;
+  });
+
+  // Gaps WITHIN the selection — clipped to it, so a reader is told about the
+  // text they actually selected rather than the whole document.
+  const merged = origins
+    .map((o) => ({ start: Math.max(o.charStart, charStart), end: Math.min(o.charEnd, charEnd) }))
+    .sort((a, b) => a.start - b.start);
+
+  const uncovered: Array<{ charStart: number; charEnd: number }> = [];
+  let cursor = charStart;
+  for (const m of merged) {
+    if (m.start > cursor) uncovered.push({ charStart: cursor, charEnd: m.start });
+    cursor = Math.max(cursor, m.end);
+  }
+  if (cursor < charEnd) uncovered.push({ charStart: cursor, charEnd });
+
+  const selectedLength = charEnd - charStart;
+  const uncoveredLength = uncovered.reduce((n, u) => n + (u.charEnd - u.charStart), 0);
+
+  return {
+    documentTable: ref.documentTable,
+    documentId: ref.documentId,
+    selection: { charStart, charEnd, text: selectionText },
+    origins,
+    uncovered,
+    coveragePercent:
+      selectedLength === 0
+        ? 0
+        : Math.round(((selectedLength - uncoveredLength) / selectedLength) * 100),
+    counts: {
+      total: origins.length,
+      fromSources: origins.filter((o) => o.provenanceKind === 'cre_evidence_source').length,
+      authorAsserted: origins.filter((o) => o.provenanceKind === 'author_assertion').length,
+      stale: origins.filter((o) => o.state === 'changed').length,
+    },
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 /**
  * Which characters of this document have no lineage at all.
  *

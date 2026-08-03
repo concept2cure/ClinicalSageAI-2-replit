@@ -191,9 +191,20 @@ export type SpanGranularity = 'sentence' | 'clause' | 'word';
  * that introduce a distinct assertion. Deliberately conservative — over-
  * splitting produces spans too short to carry a claim, which is its own kind of
  * false precision.
+ *
+ * The whitespace runs are BOUNDED rather than `\s+`. Document content is
+ * attacker-influenced — anyone who can paste into a section controls this
+ * string — and `\s+(?:and|but|…)\s+` backtracks polynomially over a long run of
+ * whitespace that never reaches a conjunction, so a paste of many thousands of
+ * tabs would burn CPU on the request thread (CodeQL: polynomial regular
+ * expression on uncontrolled data). A bounded quantifier makes the scan linear.
+ *
+ * 16 is generous for real prose — a newline plus deep indentation is well under
+ * it — and the cost of exceeding it is only that the clause is not split there,
+ * never a wrong offset.
  */
 const CLAUSE_BOUNDARY =
-  /[,;:]\s+|\s+(?:and|but|whereas|while|which|however|although|because|therefore)\s+/gi;
+  /[,;:]\s{1,16}|\s{1,16}(?:and|but|whereas|while|which|however|although|because|therefore)\s{1,16}/gi;
 
 /** Exact-offset slice of `text` that trims whitespace without losing position. */
 function trimmedSlice(

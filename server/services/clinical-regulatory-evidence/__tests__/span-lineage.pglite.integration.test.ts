@@ -370,6 +370,79 @@ describe('replaceAuthorSpans — surviving an edit', () => {
   });
 });
 
+describe('getSelectionOrigins — the read behind "Data Origins"', () => {
+  const doc = { ...DOC, documentId: 'sec-selection' };
+  let sourceId: number;
+
+  it('sets up a document with a cited span and an authored span', async () => {
+    sourceId = await makeSource(ORG_A, 'sha-sel', 'CSR 2021');
+    await lineage.recordSourceSpan(ORG_A, {
+      ...doc, charStart: 0, charEnd: 40, spanText: 'a'.repeat(40), sourceId, usage: 'paraphrased',
+      sourceLocator: 'p.14',
+    });
+    await lineage.recordAuthorSpan(ORG_A, {
+      ...doc, charStart: 40, charEnd: 70, spanText: 'b'.repeat(30), assertedBy: 'user-7',
+    });
+    expect(await lineage.listDocumentSpans(ORG_A, doc)).toHaveLength(2);
+  });
+
+  it('returns spans that OVERLAP the selection, not only those contained by it', async () => {
+    // A reader drags from the middle of one clause into the next. Both are the
+    // origin of what they highlighted; containment would return neither.
+    const r = await lineage.getSelectionOrigins(ORG_A, doc, 20, 50, 'the highlighted text');
+    expect(r.origins).toHaveLength(2);
+    expect(r.counts.fromSources).toBe(1);
+    expect(r.counts.authorAsserted).toBe(1);
+    expect(r.coveragePercent).toBe(100);
+  });
+
+  it('reports gaps clipped to the selection, not to the whole document', async () => {
+    // Selecting past the end of the attributed text must report the untraced
+    // tail — and only the part the reader actually selected.
+    const r = await lineage.getSelectionOrigins(ORG_A, doc, 60, 100);
+    expect(r.uncovered).toEqual([{ charStart: 70, charEnd: 100 }]);
+    expect(r.coveragePercent).toBe(25); // 10 of 40 characters covered
+  });
+
+  it('reports a wholly unattributed selection honestly', async () => {
+    const r = await lineage.getSelectionOrigins(ORG_A, doc, 200, 260);
+    expect(r.origins).toEqual([]);
+    expect(r.uncovered).toEqual([{ charStart: 200, charEnd: 260 }]);
+    expect(r.coveragePercent).toBe(0);
+  });
+
+  it('carries source title, locator and usage through for the panel', async () => {
+    const r = await lineage.getSelectionOrigins(ORG_A, doc, 0, 10);
+    expect(r.origins[0]).toMatchObject({
+      sourceTitle: 'CSR 2021',
+      sourceLocator: 'p.14',
+      usage: 'paraphrased',
+      state: 'current',
+    });
+  });
+
+  it('marks an origin stale when its source has moved', async () => {
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-sel-2' WHERE id = $1`, [
+      sourceId,
+    ]);
+    const r = await lineage.getSelectionOrigins(ORG_A, doc, 0, 10);
+    expect(r.origins[0].state).toBe('changed');
+    expect(r.counts.stale).toBe(1);
+  });
+
+  it('does not answer for another tenant', async () => {
+    const r = await lineage.getSelectionOrigins(ORG_B, doc, 0, 70);
+    expect(r.origins).toEqual([]);
+    expect(r.coveragePercent).toBe(0);
+  });
+
+  it('rejects a collapsed selection', async () => {
+    await expect(lineage.getSelectionOrigins(ORG_A, doc, 5, 5)).rejects.toThrow(
+      /greater than charStart/,
+    );
+  });
+});
+
 describe('findUncoveredRanges — what has no lineage yet', () => {
   it('reports the gaps between covered spans', async () => {
     const sourceId = await makeSource(ORG_A, 'sha-cover');
