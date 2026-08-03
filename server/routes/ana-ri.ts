@@ -45,6 +45,8 @@
  *   GET  /api/ana-ri/commands          → ./ana-ri/utility.ts
  *   GET  /api/ana-ri/decisions         → ./ana-ri/utility.ts
  *   GET  /api/ana-ri/threads/:id/timeline → ./ana-ri/threads.ts
+ *   GET  /api/ana-ri/documents/:artifactId/lineage-dossier      → ./ana-ri/lineage.ts
+ *   GET  /api/ana-ri/documents/:artifactId/lineage-dossier.xml  → ./ana-ri/lineage.ts
  *
  * @module server/routes/ana-ri
  */
@@ -59,6 +61,7 @@ import { mountGenerateExecuteRoutes } from './ana-ri/generate-execute.js';
 import { mountLookupRoutes } from './ana-ri/lookups.js';
 import { mountUtilityRoutes } from './ana-ri/utility.js';
 import { mountThreadRoutes } from './ana-ri/threads.js';
+import { mountLineageRoutes } from './ana-ri/lineage.js';
 
 const router = Router();
 
@@ -73,5 +76,6 @@ mountGenerateExecuteRoutes(router);
 mountLookupRoutes(router);
 mountUtilityRoutes(router);
 mountThreadRoutes(router);
+mountLineageRoutes(router);
 
 export default router;
