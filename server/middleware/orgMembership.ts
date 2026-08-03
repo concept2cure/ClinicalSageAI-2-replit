@@ -148,32 +148,50 @@ async function queryOrgMembership(
         source: 'request',
         caller: 'org-membership-bootstrap',
       },
-      () => {
-        // LEFT JOIN organizations so the MEMBERSHIP decision stays governed solely by
-        // the organization_users row (unchanged semantics); organizations.uuid rides
-        // along only when the schema exposes it. Falls back to the membership-only
-        // query if `organizations` is absent (e.g. a partial test schema).
-        const base = db.select(
-          organizations
-            ? { role: organizationUsers.role, orgUuid: organizations.uuid }
-            : { role: organizationUsers.role }
+      async () => {
+        const where = drizzle.and(
+          drizzle.eq(organizationUsers.userId, userId),
+          drizzle.eq(organizationUsers.organizationId, organizationId)
         );
-        const from = organizations
-          ? base
-              .from(organizationUsers)
-              .leftJoin(
-                organizations,
-                drizzle.eq(organizationUsers.organizationId, organizations.id)
-              )
-          : base.from(organizationUsers);
-        return from
-          .where(
-            drizzle.and(
-              drizzle.eq(organizationUsers.userId, userId),
-              drizzle.eq(organizationUsers.organizationId, organizationId)
+        // The MEMBERSHIP decision is governed SOLELY by the organization_users row.
+        const membershipOnly = () =>
+          db
+            .select({ role: organizationUsers.role })
+            .from(organizationUsers)
+            .where(where)
+            .limit(1);
+        // organizations.uuid rides along via LEFT JOIN as enrichment only — it is
+        // never the membership authority. When `organizations` is not in the schema
+        // at all, skip straight to the membership-only query.
+        if (!organizations) return membershipOnly();
+        // It IS in the schema, so attempt the enriched JOIN. If the JOIN throws at
+        // RUNTIME — e.g. a partial schema whose `organizations` table lacks `uuid`,
+        // which the auth-parity contract's fixture deliberately models — fall back to
+        // the membership-only query rather than letting a DETERMINABLE membership
+        // (member, or revoked when the row is gone) surface as `indeterminate`. A
+        // genuine DB outage re-throws from membershipOnly() and the outer catch maps
+        // it to `indeterminate` (503, fail-closed). NB the surrounding
+        // runWithTenantScope opens no transaction (it is AsyncLocalStorage only), so
+        // the failed JOIN leaves no aborted transaction for the fallback to trip on.
+        try {
+          const enriched = await db
+            .select({ role: organizationUsers.role, orgUuid: organizations.uuid })
+            .from(organizationUsers)
+            .leftJoin(
+              organizations,
+              drizzle.eq(organizationUsers.organizationId, organizations.id)
             )
-          )
-          .limit(1);
+            .where(where)
+            .limit(1);
+          return enriched;
+        } catch (joinErr) {
+          logger.warn('Org membership enrichment JOIN failed; using membership-only decision', {
+            userId,
+            organizationId,
+            error: joinErr instanceof Error ? joinErr.message : String(joinErr),
+          });
+          return membershipOnly();
+        }
       }
     );
     if (rows.length === 0) return { status: 'revoked', orgUuid: null };
