@@ -34,6 +34,7 @@ import { resolveCapabilities } from '../services/entitlements/resolver';
 import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, type RenderInput } from '../services/report-os/render/render';
+import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import {
   evaluateTruthfulness,
@@ -1182,6 +1183,40 @@ router.post('/runs', async (req: Request, res: Response) => {
       // Domain provider is best-effort; the generic report run stands on its own.
     }
 
+    // Document-scoped evidence-trace: source the report body from the EXISTING
+    // per-document lineage dossier (versions/decisions/provenance/reasoning/
+    // data-lineage) mapped into RenderedReport blocks with provenance atoms, and
+    // derive confidence from lineage completeness. Reuses the whole run/seal/
+    // render/finalize pipeline unchanged; the generic project-scope providers do
+    // not apply to a single artifact, so their (spurious) blockers are dropped
+    // for this type. Best-effort — falls back to the generic run if unavailable.
+    let lineageRendered: RenderedReport | undefined;
+    if (reportTypeId === 'provenance.evidence_trace_report' && scopeType === 'document') {
+      try {
+        const [{ buildDocumentLineageDossier }, { dossierToRenderedReport, computeLineageConfidence }] =
+          await Promise.all([
+            import('../services/ana/lineage-dossier.js'),
+            import('../services/report-os/lineage-trace-report.js'),
+          ]);
+        const dossier = await buildDocumentLineageDossier(scopeId, orgId);
+        if (dossier) {
+          computed.confidence = computeLineageConfidence(dossier);
+          computed.blockers = [];
+          computed.criticalBlockers = [];
+          Object.assign(computed.summary, {
+            lineageDocument: dossier.ledger.artifact.artifactId,
+          });
+          lineageRendered = dossierToRenderedReport(dossier, {
+            reportTypeId,
+            reportTypeLabel: type[0].label ?? reportTypeId,
+            status: 'partial',
+          });
+        }
+      } catch {
+        // Dossier unavailable → generic run stands.
+      }
+    }
+
     const [run] = await db
       .insert(reportRuns)
       .values({
@@ -1197,6 +1232,7 @@ router.post('/runs', async (req: Request, res: Response) => {
           scopeLineage: scope.lineage,
           summary: computed.summary,
           criticalBlockers: computed.criticalBlockers,
+          ...(lineageRendered ? { lineageRendered } : {}),
         },
         blockers: computed.blockers,
         confidence: computed.confidence,
@@ -1391,18 +1427,27 @@ function buildRenderedFromRun(
     },
     rules
   );
-  const rendered = renderReport({
-    reportTypeId: run.reportTypeId,
-    reportTypeLabel: reportType?.label || run.reportTypeId,
-    scopeType: run.scopeType,
-    scopeId: run.scopeId,
-    providers,
-    confidence: run.confidence ?? 0,
-    blockers,
-    summary,
-    status: truthfulness.allowedStatus,
-    truthfulness,
-  });
+  // Document-scoped evidence-trace runs store a fully-mapped RenderedReport
+  // (lineage dossier → blocks + provenance atoms) at creation. Reuse it verbatim
+  // and only re-stamp the live truthfulness status, so `buildSealedRecord` seals
+  // the dossier's real provenance atoms instead of the generic renderer's empty
+  // set. All other types fall through to the generic renderer unchanged.
+  const storedLineage = (dependencySummary as { lineageRendered?: RenderedReport })
+    .lineageRendered;
+  const rendered: RenderedReport = storedLineage
+    ? { ...storedLineage, status: truthfulness.allowedStatus, truthfulness }
+    : renderReport({
+        reportTypeId: run.reportTypeId,
+        reportTypeLabel: reportType?.label || run.reportTypeId,
+        scopeType: run.scopeType,
+        scopeId: run.scopeId,
+        providers,
+        confidence: run.confidence ?? 0,
+        blockers,
+        summary,
+        status: truthfulness.allowedStatus,
+        truthfulness,
+      });
   return { rendered, truthfulness };
 }
 
