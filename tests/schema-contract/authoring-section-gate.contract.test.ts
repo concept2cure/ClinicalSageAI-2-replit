@@ -174,7 +174,14 @@ async function contentOf(sectionId: string): Promise<string | null> {
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
-    migrations: ['db/migrations/20260725_authoring_document_loop_tables.sql'],
+    migrations: [
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // The section save writes content and its span lineage in one
+      // transaction and refuses to commit one without the other, so the
+      // lineage table is now a prerequisite for exercising the save path at
+      // all. See db/migrations/20260803_document_span_lineage.sql.
+      'db/migrations/20260803_document_span_lineage.sql',
+    ],
   });
   // exec, not the pool shim: the shim prepares a single statement.
   await jdb.pglite.exec(SEED);

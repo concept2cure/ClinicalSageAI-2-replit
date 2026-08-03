@@ -383,19 +383,19 @@ describe('assertLineageCoversContent — the save gate', () => {
       ],
       { assertedBy: 'user-7' },
     );
-    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 45)).resolves.toBeUndefined();
+    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 'x'.repeat(45))).resolves.toBeUndefined();
   });
 
   it('throws when the content extends past the last span', async () => {
     // The save that produced this content did not attribute its tail. Letting
     // it commit is how a document ends up with provenance for its first half.
-    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 80)).rejects.toThrow(
+    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 'x'.repeat(80))).rejects.toThrow(
       /does not cover the saved content/,
     );
   });
 
   it('names the unattributed ranges so the failure is actionable', async () => {
-    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 80)).rejects.toThrow(/45-80/);
+    await expect(lineage.assertLineageCoversContent(ORG_A, doc, 'x'.repeat(80))).rejects.toThrow(/45-80/);
   });
 
   it('throws when there is a hole in the middle', async () => {
@@ -409,24 +409,67 @@ describe('assertLineageCoversContent — the save gate', () => {
       ],
       { assertedBy: 'user-7' },
     );
-    await expect(lineage.assertLineageCoversContent(ORG_A, holed, 40)).rejects.toThrow(/10-30/);
+    await expect(lineage.assertLineageCoversContent(ORG_A, holed, 'x'.repeat(40))).rejects.toThrow(/10-30/);
   });
 
   it('throws when a document has no lineage at all', async () => {
     await expect(
-      lineage.assertLineageCoversContent(ORG_A, { ...DOC, documentId: 'sec-nothing' }, 25),
+      lineage.assertLineageCoversContent(ORG_A, { ...DOC, documentId: 'sec-nothing' }, 'x'.repeat(25)),
     ).rejects.toThrow(/does not cover/);
   });
 
   it('passes trivially for empty content', async () => {
     await expect(
-      lineage.assertLineageCoversContent(ORG_A, { ...DOC, documentId: 'sec-blank' }, 0),
+      lineage.assertLineageCoversContent(ORG_A, { ...DOC, documentId: 'sec-blank' }, ''),
     ).resolves.toBeUndefined();
+  });
+
+  it('ignores whitespace between spans — the gate must be satisfiable', async () => {
+    // Clause spans are trimmed, so separators belong to no span by design.
+    // Requiring every character to be attributed made the gate unsatisfiable
+    // for any multi-clause text: it refused every real save while a
+    // single-clause document passed. That is not a stricter invariant, it is a
+    // broken one, and it reached CI before the authoring journey caught it.
+    const ws = { ...DOC, documentId: 'sec-ws' };
+    const content = 'First clause, second clause.';
+    // Spans as detectSpans produces them: trimmed, with the space at 13 in
+    // neither.
+    await lineage.replaceAuthorSpans(
+      ORG_A,
+      ws,
+      [
+        { charStart: 0, charEnd: 13, spanText: 'First clause,' },
+        { charStart: 14, charEnd: 28, spanText: 'second clause.' },
+      ],
+      { assertedBy: 'user-7' },
+    );
+    await expect(
+      lineage.assertLineageCoversContent(ORG_A, ws, content),
+    ).resolves.toBeUndefined();
+  });
+
+  it('still fails when the gap contains real characters', async () => {
+    // The whitespace exemption must not become a hole: a gap with content in
+    // it is exactly what the gate exists to catch.
+    const ws = { ...DOC, documentId: 'sec-ws2' };
+    const content = 'First clause, UNTRACED, second clause.';
+    await lineage.replaceAuthorSpans(
+      ORG_A,
+      ws,
+      [
+        { charStart: 0, charEnd: 13, spanText: 'First clause,' },
+        { charStart: 23, charEnd: 37, spanText: 'second clause.' },
+      ],
+      { assertedBy: 'user-7' },
+    );
+    await expect(lineage.assertLineageCoversContent(ORG_A, ws, content)).rejects.toThrow(
+      /13-23/,
+    );
   });
 
   it('does not count another tenant\'s spans as coverage', async () => {
     // Otherwise a tenant could satisfy their own gate with rows they cannot see.
-    await expect(lineage.assertLineageCoversContent(ORG_B, doc, 45)).rejects.toThrow(
+    await expect(lineage.assertLineageCoversContent(ORG_B, doc, 'x'.repeat(45))).rejects.toThrow(
       /does not cover/,
     );
   });
@@ -441,7 +484,7 @@ describe('assertLineageCoversContent — the save gate', () => {
       pool as never,
     );
     await expect(
-      lineage.assertLineageCoversContent(ORG_A, tx, 12, pool as never),
+      lineage.assertLineageCoversContent(ORG_A, tx, 'twelve chars', pool as never),
     ).resolves.toBeUndefined();
   });
 });

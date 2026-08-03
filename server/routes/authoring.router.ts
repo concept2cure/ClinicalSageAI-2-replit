@@ -1629,7 +1629,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
 
         // Ask the database what it is about to commit, rather than trusting that
         // the writer not throwing means the rows say what they should.
-        await assertLineageCoversContent(tenantId, ref, content.length, client);
+        await assertLineageCoversContent(tenantId, ref, content, client);
       }
 
       await client.query('COMMIT');

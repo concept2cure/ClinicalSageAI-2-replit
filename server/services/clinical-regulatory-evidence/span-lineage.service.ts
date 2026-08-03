@@ -455,9 +455,10 @@ export async function replaceAuthorSpans(
 export async function assertLineageCoversContent(
   orgId: number,
   ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
-  contentLength: number,
+  content: string,
   exec: Queryable = defaultExec,
 ): Promise<void> {
+  const contentLength = content.length;
   if (contentLength <= 0) return;
 
   const { rows } = await exec.query<{ char_start: number; char_end: number }>(
@@ -479,7 +480,18 @@ export async function assertLineageCoversContent(
   }
   if (cursor < contentLength) gaps.push({ charStart: cursor, charEnd: contentLength });
 
-  const real = gaps.filter((g) => g.charEnd > g.charStart);
+  // A gap of whitespace is not unattributed content.
+  //
+  // Clause spans are trimmed, so the separators between them — the space after
+  // a comma, the newline between paragraphs — belong to no span by design.
+  // Requiring literally every character to be attributed makes the gate
+  // unsatisfiable for any multi-clause text, which is not a stricter invariant
+  // but a broken one: it would refuse every real save while a single-clause
+  // document passed. What must be accounted for is content that asserts
+  // something, and whitespace asserts nothing.
+  const real = gaps.filter(
+    (g) => g.charEnd > g.charStart && content.slice(g.charStart, g.charEnd).trim().length > 0,
+  );
   if (real.length > 0) {
     const shown = real
       .slice(0, 5)
