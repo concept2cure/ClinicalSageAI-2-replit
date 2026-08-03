@@ -1203,9 +1203,7 @@ router.post('/runs', async (req: Request, res: Response) => {
           computed.confidence = computeLineageConfidence(dossier);
           computed.blockers = [];
           computed.criticalBlockers = [];
-          Object.assign(computed.summary, {
-            lineageDocument: dossier.ledger.artifact.artifactId,
-          });
+          computed.summary.lineageDocument = dossier.ledger.artifact.artifactId;
           lineageRendered = dossierToRenderedReport(dossier, {
             reportTypeId,
             reportTypeLabel: type[0].label ?? reportTypeId,

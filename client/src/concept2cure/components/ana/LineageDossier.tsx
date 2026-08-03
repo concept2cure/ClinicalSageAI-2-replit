@@ -12,7 +12,6 @@
  */
 import { useEffect, useState } from 'react';
 import { getAuthHeaders, getOrgId } from '../../../utils/authToken';
-import { ApiRequestError } from '@/lib/queryClient';
 import { createReportRun, fetchRenderedReport } from '../../insights/data/api';
 import type { RenderedReport } from '../../insights/data/types';
 import { ReportView } from '../../insights/surface/ReportView';
@@ -232,7 +231,10 @@ export function LineageDossier({ artifactId, onClose }: LineageDossierProps) {
       const rendered = await fetchRenderedReport(runId);
       setReport(rendered);
     } catch (e) {
-      if (e instanceof ApiRequestError && e.status === 403) {
+      // apiRequest throws an error carrying the HTTP status; duck-type it rather
+      // than depend on a class import (the alias doesn't re-export the class).
+      const status = (e as { status?: number } | null)?.status;
+      if (status === 403) {
         setReportError('Requires the standard plan.');
       } else {
         setReportError((e as Error)?.message || 'The governed report could not be generated.');
