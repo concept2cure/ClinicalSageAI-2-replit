@@ -390,7 +390,14 @@ export async function replaceAuthorSpans(
   orgId: number,
   ref: DocumentRef,
   spans: Array<{ charStart: number; charEnd: number; spanText: string; usage?: SpanUsage }>,
-  p: { assertedBy: string; signatureId?: string | null; createdBy?: string | null },
+  p: {
+    assertedBy: string;
+    /** When the assertion was made. Defaults to now; a backfill passes the
+     *  moment the text was actually authored, which is the true answer. */
+    assertedAt?: Date;
+    signatureId?: string | null;
+    createdBy?: string | null;
+  },
   exec: Queryable = defaultExec,
 ): Promise<{ written: number; retired: number }> {
   if (!p.assertedBy) {
@@ -406,6 +413,7 @@ export async function replaceAuthorSpans(
       spanText: s.spanText,
       usage: s.usage,
       assertedBy: p.assertedBy,
+      assertedAt: p.assertedAt,
       signatureId: p.signatureId ?? null,
       createdBy: p.createdBy ?? p.assertedBy,
     });
