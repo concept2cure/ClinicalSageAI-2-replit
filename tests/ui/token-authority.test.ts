@@ -54,8 +54,17 @@ const ENTRY = path.join(REPO_ROOT, 'client/src/main.tsx');
 const TOKEN_AUTHORITIES = [
   'design-system/colors_and_type.css',              // canonical: colour, type, spacing, radii, motion
   'client/src/index.css',                           // global alias shim + --shadcn-* bridge
-  'client/src/concept2cure/v2/styles/app-v2.css',   // shell layout metrics (--ana)
-  'client/src/concept2cure/mdx/app.css',            // MDX kit layout metrics
+  'client/src/concept2cure/v2/styles/app-v2.css',   // shell layout metrics (--ana, --rail, --black)
+  // client/src/concept2cure/mdx/app.css was here. It no longer declares tokens
+  // at :root — its layout metrics (--rail-expanded, --tabbar, --ana-expanded,
+  // --ana-seam, --black) moved onto `.mdx-shell` when that sheet was scoped, so
+  // they now apply to the MDX subtree instead of the document. That is strictly
+  // better than an authority: a kit's own metrics were never global concerns,
+  // and while they were global v2 was silently consuming one of them (--black,
+  // via admin-access.css) from a kit it does not own. v2 declares its own now.
+  //
+  // The list shrinking is the improvement, so this is a deliberate removal, not
+  // a relaxation — a fourth file declaring :root tokens should still fail.
 ].sort();
 
 const JS_EXT = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];

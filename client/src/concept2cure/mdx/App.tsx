@@ -344,7 +344,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
 
   return (
     <div
-      className="shell"
+      className="mdx-shell"
       data-collapsed={railCollapsed}
       data-ana-open={anaOpen}
     >

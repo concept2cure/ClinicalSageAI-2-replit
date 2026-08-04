@@ -64,15 +64,49 @@ const SHELL_TREES = {
   pdev: 'client/src/concept2cure/pdev',
 };
 
-/** Class selectors DEFINED (not merely referenced) in a stylesheet. */
+/**
+ * Root classes that confine a rule to one shell's subtree. A selector whose
+ * FIRST compound carries one of these can only ever match inside that shell, so
+ * it cannot collide with another shell no matter what class names follow it.
+ */
+const SHELL_ROOTS = ['mdx-shell', 'pdev-shell', 'c2c-v2', 'qms-shell'];
+
+/**
+ * Class names a stylesheet can apply OUTSIDE its own shell.
+ *
+ * The first version of this collected every class appearing anywhere in a
+ * selector, which is a different question and the wrong one. Under it,
+ * `.mdx-shell .rail` still counted as "defining .rail" — so scoping the whole
+ * MDX sheet moved the number from 281 to 280 and the gate would have reported a
+ * completed fix as no progress. A rule that cannot match outside its shell is
+ * not a collision; only an unscoped selector is.
+ */
 function definedClasses(css) {
   // Strip comments first so a commented-out rule cannot contribute.
   const body = css.replace(/\/\*[\s\S]*?\*\//g, '');
   const found = new Set();
-  // A class in selector position: preceded by start, comma, combinator or brace.
-  const re = /(^|[\s,>+~{}])\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g;
+
+  // Selector lists live before each `{`. Split on commas and judge each one.
+  const RULE = /(^|[};])\s*([^{}@;]+?)\s*\{/g;
   let m;
-  while ((m = re.exec(body)) !== null) found.add(m[2]);
+  while ((m = RULE.exec(body)) !== null) {
+    for (const sel of m[2].split(',')) {
+      const s = sel.trim();
+      if (!s || s.startsWith('@') || /^\d|^from$|^to$/.test(s)) continue; // keyframe stops
+
+      // The first compound: up to the first descendant/child/sibling combinator.
+      const firstCompound = s.split(/[\s>+~]+/)[0] ?? '';
+      const scoped = SHELL_ROOTS.some(
+        (r) => firstCompound === `.${r}` || firstCompound.startsWith(`.${r}.`) ||
+               firstCompound.startsWith(`.${r}[`) || firstCompound.startsWith(`.${r}:`),
+      );
+      if (scoped) continue; // confined to one shell — cannot leak
+
+      const CLS = /\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g;
+      let c;
+      while ((c = CLS.exec(s)) !== null) found.add(c[1]);
+    }
+  }
   return found;
 }
 
