@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { useAuth } from '@/services/portal/authService';
 import { Rail } from './shell/Rail';
 import { TopBar } from './shell/TopBar';
 import { TabBar } from './shell/TabBar';
@@ -85,7 +86,31 @@ function persist(key: string, value: unknown) {
   }
 }
 
-const DEFAULT_USER = { name: 'Jordan Chen', initials: 'JC', role: 'Enterprise · Reg Affairs' };
+/**
+ * The signed-in user, derived the same way the v2 shell derives it
+ * (`v2/Shell.tsx` → `useAuth()`), because this rail is frequently on screen
+ * BESIDE that one: `v2/surfaces/DeviceWorkstream.tsx` renders this whole shell
+ * inside the v2 page for every `device-*` surface. This slot previously held a
+ * hard-coded `{ name: 'Jordan Chen', initials: 'JC', role: 'Enterprise · Reg
+ * Affairs' }`, so a real user met a fictional colleague about 260px to the
+ * right of their own name.
+ *
+ * Falls back to a neutral "Signed in" rather than a person's name — an unknown
+ * identity must never be rendered as though it were someone.
+ */
+function useShellUser() {
+  const { user } = useAuth();
+  return React.useMemo(() => {
+    const name =
+      user?.displayName ||
+      [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+      'Signed in';
+    const initials =
+      ((user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '')) ||
+      name.slice(0, 2).toUpperCase();
+    return { name, initials, role: user?.roles?.[0] ?? '' };
+  }, [user]);
+}
 
 export interface AppProps {
   /** Initial active workstream tab. Overrides the localStorage-persisted value
@@ -114,6 +139,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
   const [anaMode,      setAnaMode]      = React.useState<AnaMode['id']>(() => getStored('mdx.anaMode', 'standard'));
   const [selectedProgram, setSelectedProgram] = React.useState<Program | null>(null);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
+  const shellUser = useShellUser();
 
   /* Single source of truth for the program list. Loading and failures stay
      explicit; live-customer state must never be replaced by kit fixtures. */
@@ -327,7 +353,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         setActiveNav={setActiveNav}
         collapsed={railCollapsed}
         setCollapsed={setRailCollapsed}
-        user={DEFAULT_USER}
+        user={shellUser}
       />
       <main className="main">
         <TopBar

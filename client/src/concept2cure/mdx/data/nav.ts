@@ -75,10 +75,27 @@ export interface AnaMode {
   desc: string;
 }
 
+/**
+ * `model` is an INTENT label, not a vendor model name — matching
+ * v2/registryModel.ts ANA_MODES ("intent → engine label, resolved server-side;
+ * no vendor names on screen"), and the standing rule already written into
+ * shell/AnaRail.tsx: "all UI says 'AnA 1.0' — no raw model names."
+ *
+ * These previously read 'Sonnet 4.5' / 'Opus 4.5' / 'Haiku 4.5'. Nothing in this
+ * kit renders `.model` today — AnaRail and CmdK both display `.label` — so the
+ * names were never on screen. That is exactly what made it worth fixing: it was
+ * a loaded gun, one `{m.model}` away from shipping vendor names into a regulated
+ * UI, in a file whose own sibling comment forbids them.
+ *
+ * NOTE — divergence left alone deliberately: the third mode is `nano-banana`
+ * here and `quick-ask` in v2. The id is persisted in localStorage as
+ * `mdx.anaMode`, so renaming it silently would strand existing users' saved
+ * preference. It should converge when the shells do.
+ */
 export const ANA_MODES: AnaMode[] = [
-  { id: 'standard',      label: 'Standard',      model: 'Sonnet 4.5', desc: 'Chat, reasoning, quick answers' },
-  { id: 'deep-research', label: 'Deep research', model: 'Opus 4.5',   desc: 'Drafting, multi-step analysis, long-form' },
-  { id: 'nano-banana',   label: 'Nano-banana',   model: 'Haiku 4.5',  desc: 'Autocomplete, inline, classification' },
+  { id: 'standard',      label: 'Standard',      model: 'Balanced', desc: 'Chat, reasoning, quick answers' },
+  { id: 'deep-research', label: 'Deep research', model: 'Maximum',  desc: 'Drafting, multi-step analysis, long-form' },
+  { id: 'nano-banana',   label: 'Nano-banana',   model: 'Instant',  desc: 'Autocomplete, inline, classification' },
 ];
 
 export interface AnaTool {
