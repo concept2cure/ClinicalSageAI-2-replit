@@ -4,9 +4,11 @@
  * Locks in three MEDIUM fixes from FORENSIC_CODE_AUDIT_2026-05-29.md:
  *  - digital-twin CQA: synthetic Math.random() predictions can no longer auto-approve
  *    a real-time release (forced to manual review) and are disclosed as synthetic.
- *  - degraded-by-default RAG: biotechRagService routes embeddings through the governed
- *    embedding seam (a real OpenAI/self-hosted embedder), instead of an empty try{}
- *    that pinned it to TF-IDF forever.
+ *  - degraded-by-default RAG: the embedding path routes through the governed
+ *    getEmbeddingProvider() seam (a real OpenAI/self-hosted embedder) with no silent
+ *    TF-IDF fallback. The two services the finding named — biotechRagService.js and the
+ *    in-memory semantic-search-service — were purged as dead code in #1265; the live
+ *    seam (enhancedEmbeddingService) now carries the invariant.
  *  - Part 11 attribution: no hardcoded userRole 'regulatory_specialist', no fabricated
  *    127.0.0.1 IP; real username resolved, role/IP honest (null when unknown).
  *
@@ -34,20 +36,27 @@ describe('MEDIUM · digital-twin CQA cannot auto-release on synthetic values', (
   });
 });
 
-describe('MEDIUM · biotechRagService initializes real embeddings when configured', () => {
-  const src = read('services/biotechRagService.js');
+describe('MEDIUM · embeddings route through the governed provider, never silent TF-IDF', () => {
+  // The FORENSIC_CODE_AUDIT_2026-05-29.md "degraded-by-default RAG" finding named
+  // biotechRagService.js (empty OpenAI-init try{} → always TF-IDF) and the in-memory
+  // semantic-search-service. Both were purged as dead code in #1265. The live embedding
+  // path now runs through enhancedEmbeddingService, which calls the governed
+  // getEmbeddingProvider() seam directly and has NO lexical/TF-IDF fallback to degrade
+  // into — a stronger resolution than the original ALLOW_FALLBACK_EMBEDDINGS gate.
+  const src = read('services/enhancedEmbeddingService.ts');
 
-  it('routes embeddings through the governed seam, never silently TF-IDF', () => {
+  it('routes embeddings through the governed provider seam', () => {
     // Embeddings go through the governed provider (a real OpenAI/self-hosted
-    // embedder) — not a direct, bypassable client, and not the degraded TF-IDF
-    // fallback by default. This preserves the original audit fix while removing
-    // the gateway bypass.
+    // embedder), not a direct, bypassable client.
     expect(src).toContain('getEmbeddingProvider');
     expect(src).toMatch(/getEmbeddingProvider\(\)\.embed\(/);
-    // The tell-tale empty try block must be gone.
+  });
+
+  it('has no silent degraded fallback (no empty try-catch, no TF-IDF path)', () => {
+    // The tell-tale empty try block is gone, and there is no lexical/TF-IDF
+    // fallback for the seam to silently degrade into.
     expect(src).not.toMatch(/try\s*\{\s*\}\s*catch/);
-    // The lexical fallback must stay explicitly gated, not silent.
-    expect(src).toContain('ALLOW_FALLBACK_EMBEDDINGS');
+    expect(src).not.toMatch(/tf-?idf/i);
   });
 });
 

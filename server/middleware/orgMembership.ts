@@ -119,6 +119,20 @@ export type OrgMembershipCheckResult = 'member' | 'revoked' | 'indeterminate';
 interface OrgMembershipQueryResult {
   status: OrgMembershipCheckResult;
   orgUuid: string | null;
+  /**
+   * True when the membership decision stands but the orgUuid enrichment did not
+   * run — the LEFT JOIN threw and the membership-only fallback answered.
+   *
+   * The caller must NOT cache such a result. The membership answer is sound
+   * (organization_users is the sole authority and it was read), but `orgUuid` is
+   * null because enrichment failed, not because the organisation has no uuid.
+   * Cached, that null would be served for the whole TTL, and uuid-keyed routes
+   * would silently fall through to numeric scoping and return no tenant data —
+   * a transient JOIN error turning into minutes of quietly wrong results.
+   * Uncached, the next request re-queries and self-heals the moment the JOIN
+   * works again, which is exactly how `indeterminate` is already handled.
+   */
+  enrichmentDegraded: boolean;
 }
 
 async function queryOrgMembership(
@@ -139,8 +153,11 @@ async function queryOrgMembership(
         'Org membership re-check unavailable (db not initialized) — tenant access will be refused',
         { userId, organizationId }
       );
-      return { status: 'indeterminate', orgUuid: null };
+      return { status: 'indeterminate', orgUuid: null, enrichmentDegraded: false };
     }
+    // Set when the orgUuid LEFT JOIN failed and the membership-only fallback
+    // answered instead. See OrgMembershipQueryResult.enrichmentDegraded.
+    let enrichmentDegraded = false;
     const rows = await runWithTenantScope(
       {
         tenantId: String(organizationId),
@@ -148,44 +165,63 @@ async function queryOrgMembership(
         source: 'request',
         caller: 'org-membership-bootstrap',
       },
-      () => {
-        // LEFT JOIN organizations so the MEMBERSHIP decision stays governed solely by
-        // the organization_users row (unchanged semantics); organizations.uuid rides
-        // along only when the schema exposes it. Falls back to the membership-only
-        // query if `organizations` is absent (e.g. a partial test schema).
-        const base = db.select(
-          organizations
-            ? { role: organizationUsers.role, orgUuid: organizations.uuid }
-            : { role: organizationUsers.role }
+      async () => {
+        const where = drizzle.and(
+          drizzle.eq(organizationUsers.userId, userId),
+          drizzle.eq(organizationUsers.organizationId, organizationId)
         );
-        const from = organizations
-          ? base
-              .from(organizationUsers)
-              .leftJoin(
-                organizations,
-                drizzle.eq(organizationUsers.organizationId, organizations.id)
-              )
-          : base.from(organizationUsers);
-        return from
-          .where(
-            drizzle.and(
-              drizzle.eq(organizationUsers.userId, userId),
-              drizzle.eq(organizationUsers.organizationId, organizationId)
+        // The MEMBERSHIP decision is governed SOLELY by the organization_users row.
+        const membershipOnly = () =>
+          db
+            .select({ role: organizationUsers.role })
+            .from(organizationUsers)
+            .where(where)
+            .limit(1);
+        // organizations.uuid rides along via LEFT JOIN as enrichment only — it is
+        // never the membership authority. When `organizations` is not in the schema
+        // at all, skip straight to the membership-only query.
+        if (!organizations) return membershipOnly();
+        // It IS in the schema, so attempt the enriched JOIN. If the JOIN throws at
+        // RUNTIME — e.g. a partial schema whose `organizations` table lacks `uuid`,
+        // which the auth-parity contract's fixture deliberately models — fall back to
+        // the membership-only query rather than letting a DETERMINABLE membership
+        // (member, or revoked when the row is gone) surface as `indeterminate`. A
+        // genuine DB outage re-throws from membershipOnly() and the outer catch maps
+        // it to `indeterminate` (503, fail-closed). NB the surrounding
+        // runWithTenantScope opens no transaction (it is AsyncLocalStorage only), so
+        // the failed JOIN leaves no aborted transaction for the fallback to trip on.
+        try {
+          const enriched = await db
+            .select({ role: organizationUsers.role, orgUuid: organizations.uuid })
+            .from(organizationUsers)
+            .leftJoin(
+              organizations,
+              drizzle.eq(organizationUsers.organizationId, organizations.id)
             )
-          )
-          .limit(1);
+            .where(where)
+            .limit(1);
+          return enriched;
+        } catch (joinErr) {
+          logger.warn('Org membership enrichment JOIN failed; using membership-only decision', {
+            userId,
+            organizationId,
+            error: joinErr instanceof Error ? joinErr.message : String(joinErr),
+          });
+          enrichmentDegraded = true;
+          return membershipOnly();
+        }
       }
     );
-    if (rows.length === 0) return { status: 'revoked', orgUuid: null };
+    if (rows.length === 0) return { status: 'revoked', orgUuid: null, enrichmentDegraded };
     const orgUuid = typeof rows[0]?.orgUuid === 'string' ? rows[0].orgUuid : null;
-    return { status: 'member', orgUuid };
+    return { status: 'member', orgUuid, enrichmentDegraded };
   } catch (error) {
     logger.warn('Org membership re-check failed — tenant access will be refused', {
       userId,
       organizationId,
       error: error instanceof Error ? error.message : String(error),
     });
-    return { status: 'indeterminate', orgUuid: null };
+    return { status: 'indeterminate', orgUuid: null, enrichmentDegraded: false };
   }
 }
 
@@ -251,7 +287,7 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
   }
 
   void queryOrgMembership(userId, organizationId)
-    .then(({ status: result, orgUuid }) => {
+    .then(({ status: result, orgUuid, enrichmentDegraded }) => {
       if (result === 'indeterminate') {
         // Warning already logged in queryOrgMembership. Not cached, so the next
         // request retries immediately after recovery. Never authorize a tenant
@@ -259,7 +295,14 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
         sendMembershipIndeterminate(res);
         return;
       }
-      cacheMembership(key, result === 'member', orgUuid);
+      // Cache only a COMPLETE answer. When the orgUuid enrichment fell back, the
+      // membership decision is sound but orgUuid is null because the JOIN
+      // failed, not because the org has none — caching that would serve the null
+      // for the whole TTL and silently drop uuid-keyed routes to numeric
+      // scoping, turning a transient error into minutes of empty tenant results.
+      // Skipping the cache costs one query per request until the JOIN recovers,
+      // and self-heals the moment it does.
+      if (!enrichmentDegraded) cacheMembership(key, result === 'member', orgUuid);
       if (result === 'member') {
         attachOrgUuid(req, orgUuid);
         next();

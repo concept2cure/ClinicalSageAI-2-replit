@@ -42,10 +42,21 @@ describe('C-46: the uuid RLS migration is wired and deploy-positioned', () => {
   });
 
   it('sits alongside the public integer sweep (both isolation steps at the end)', () => {
-    const sweep = C2C_MIGRATION_FILES.indexOf('db/migrations/20260801_tenant_isolation_sweep.sql');
-    const uuid = C2C_MIGRATION_FILES.indexOf(UUID_RLS);
-    expect(sweep).toBeGreaterThan(-1);
-    expect(uuid).toBeGreaterThan(sweep); // after the public sweep, near the tail
+    const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+    // Both isolation steps are the FINAL PAIR of the set, after every
+    // table-creating migration. Their mutual order is immaterial — they touch
+    // disjoint schemas (integer/public vs uuid/non-public) and neither creates a
+    // table — so this pins "both at the tail", not a strict order between the
+    // two. The integer sweep is the very last entry (the tenant-isolation-sweep
+    // contract, ledger C-33, requires it so the sweep sees everything the set
+    // creates); the uuid non-public step sits immediately before it. An earlier
+    // revision asserted `uuid > sweep`, which contradicted C-33's "sweep last"
+    // and left the set ungreenable no matter which order was chosen.
+    expect(C2C_MIGRATION_FILES).toContain(UUID_RLS);
+    expect(C2C_MIGRATION_FILES).toContain(SWEEP);
+    const lastTwo = C2C_MIGRATION_FILES.slice(-2);
+    expect(lastTwo).toContain(UUID_RLS);
+    expect(lastTwo).toContain(SWEEP);
   });
 });
 

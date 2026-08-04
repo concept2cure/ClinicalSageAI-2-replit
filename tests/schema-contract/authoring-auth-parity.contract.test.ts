@@ -159,4 +159,40 @@ describe('C2C-SEC-001: authoring router enforces canonical access-token semantic
     expect(after.status).toBe(403);
     expect(after.body?.error?.code).toBe('AUTH_009');
   }, T);
+
+  it('AUTH_009: a degraded-enrichment membership is NOT cached, so revocation is immediate', async () => {
+    // This fixture's `organizations` has no `uuid` column, so the orgUuid LEFT
+    // JOIN throws on every lookup and the membership-only fallback answers. That
+    // answer is sound for MEMBERSHIP but carries orgUuid = null because
+    // enrichment failed — not because the org has no uuid.
+    //
+    // Caching it was wrong twice over. The null would be served for the whole
+    // 60s TTL, dropping uuid-keyed routes to numeric scoping and returning empty
+    // tenant data from a transient JOIN error; and a revocation inside that
+    // window would keep being answered "member" from cache.
+    //
+    // So this case deliberately does NOT invalidate after revoking. It passes
+    // only if the degraded result was never cached in the first place — which is
+    // the fix. The case above still invalidates explicitly, so the two together
+    // distinguish "revocation works" from "revocation works WITHOUT help".
+    invalidateOrgMembershipCache();
+
+    await jdb.pool.query(
+      `INSERT INTO organization_users (user_id, organization_id, role)
+       VALUES ($1, $2, 'member') ON CONFLICT DO NOTHING`,
+      [MEMBER_USER_ID, ORG_ID],
+    );
+    const asMember = await post(await mint(memberClaims()));
+    expect(asMember.status).not.toBe(403);
+
+    await jdb.pool.query(
+      `DELETE FROM organization_users WHERE user_id = $1 AND organization_id = $2`,
+      [MEMBER_USER_ID, ORG_ID],
+    );
+    // No invalidateOrgMembershipCache() here — that is the point.
+
+    const afterRevoke = await post(await mint(memberClaims()));
+    expect(afterRevoke.status).toBe(403);
+    expect(afterRevoke.body?.error?.code).toBe('AUTH_009');
+  }, T);
 });
