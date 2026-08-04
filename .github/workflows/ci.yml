@@ -91,6 +91,19 @@ jobs:
         # with --no-exit-code so the job passed regardless.
         run: npm run ci:unreferenced-modules
 
+      - name: Guardrails — content cannot be saved without its data lineage
+        # Every span of a saved document must trace to where it came from. The
+        # gate that enforces it is a few lines inside a 6,000-line router, so a
+        # refactor, an "optimisation" that drops the transaction, or a bad merge
+        # resolution all remove it in silence — saves keep working, and the loss
+        # only surfaces when someone asks where a sentence came from and the
+        # answer is missing for whatever period the gate was absent.
+        #
+        # This asserts the shape structurally: a transaction around the content
+        # write, the lineage write enlisted in it, and the coverage check
+        # enlisted too. Verified to fail on each of those removed individually.
+        run: npm run ci:lineage-save-gate
+
       - name: Guardrails — no direct Pool construction in runtime code
         # Was enforced nowhere. Its scan list also named ten of server/'s ~35
         # directories, so server/src, server/bootstrap, server/lib and others

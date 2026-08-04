@@ -18,6 +18,13 @@ import { createScopedLogger } from '../utils/logger';
 // editing layer over it. This resolves which governed document an authored
 // document belongs to. See server/services/c2c/governed-document-binding.ts.
 import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
+// Span lineage: every span of an authored document must trace to where it came
+// from. See server/services/clinical-regulatory-evidence/span-lineage.service.ts.
+import {
+  assertLineageCoversContent,
+  replaceAuthorSpans,
+} from '../services/clinical-regulatory-evidence/span-lineage.service';
+import { detectSpans } from '../services/sentenceTraceabilityService';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -1576,7 +1583,75 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       RETURNING *
     `;
 
-    const result = await pool.query(updateQuery, values);
+    // ── The save gate ─────────────────────────────────────────────────────────
+    // Content and its lineage commit together or not at all.
+    //
+    // Until now capture ran AFTER the update and swallowed its own failures, so
+    // a database hiccup produced saved text with no provenance — and no signal
+    // that it had happened. Provenance that is best-effort goes missing exactly
+    // where something went wrong, which is the worst place for it to be missing.
+    //
+    // So the UPDATE, the lineage write and the coverage check share one
+    // transaction on one connection. If lineage cannot be recorded, or does not
+    // cover the text, the content write rolls back with it and the caller is
+    // told. A refused save is recoverable; a document that quietly lost its
+    // provenance is not.
+    //
+    // The revision and audit-trail writes above deliberately stay outside this
+    // transaction: they are additive records on their own connections, and a
+    // stray revision row after a refused save is a far smaller problem than
+    // content without lineage. Folding them in means threading a client through
+    // both helpers, which is a wider change than this gate needs.
+    const client = await pool.connect();
+    let result: { rows: any[] };
+    try {
+      await client.query('BEGIN');
+      result = await client.query(updateQuery, values);
+
+      if (content !== undefined && typeof content === 'string' && content.length > 0) {
+        const spans = detectSpans(content, 'clause').map(s => ({
+          charStart: s.charStart,
+          charEnd: s.charEnd,
+          spanText: s.text,
+        }));
+        const ref = {
+          documentTable: 'authoring_sections',
+          // req.params is typed `string | string[]`; document_id is the join key
+          // every later read depends on, so coerce rather than let an array
+          // stringify itself into one.
+          documentId: String(sectionId),
+        };
+
+        await replaceAuthorSpans(tenantId, ref, spans, {
+          assertedBy: updatedByUser,
+          createdBy: updatedByUser,
+        }, client);
+
+        // Ask the database what it is about to commit, rather than trusting that
+        // the writer not throwing means the rows say what they should.
+        await assertLineageCoversContent(tenantId, ref, content, client);
+      }
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      logger.error('Section save refused — content and lineage rolled back together', {
+        sectionId,
+        tenantId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'LINEAGE_REQUIRED',
+          message:
+            'The section was not saved: its data lineage could not be recorded. ' +
+            'Saving content without provenance is not permitted.',
+        },
+      });
+    } finally {
+      client.release();
+    }
 
     // Part 11 change record: operation, actor, before/after content, a SHA-256
     // of each side, reason, IP, user agent, session.

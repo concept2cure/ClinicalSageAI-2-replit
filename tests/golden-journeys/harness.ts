@@ -117,6 +117,24 @@ export async function createJourneyDb(options?: {
         const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
         return { rows, rowCount: rows.length > 0 ? rows.length : affected };
       },
+      // Handlers that must write several rows atomically take a client and run
+      // BEGIN/COMMIT on it — the authoring save does this so a section's content
+      // and its data lineage commit together. Without connect() here the shim
+      // fails those routes with "pool.connect is not a function", which reads
+      // like a route bug rather than a missing test double.
+      //
+      // PGlite is a single connection, so the "client" is this same shim and
+      // BEGIN/COMMIT/ROLLBACK go through it as ordinary statements. release()
+      // is a no-op because there is no pool to return anything to.
+      connect: async () => ({
+        query: async (text: string, params?: unknown[]) => {
+          const r = await pglite.query(text, params);
+          const rows = r.rows as unknown[];
+          const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
+          return { rows, rowCount: rows.length > 0 ? rows.length : affected };
+        },
+        release: () => {},
+      }),
     },
     close: () => pglite.close(),
   };

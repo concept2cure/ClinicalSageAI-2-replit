@@ -666,6 +666,12 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
                       blocks={[{ p: draft }]}
                       onAsk={onAsk}
                       onSave={saveHtml}
+                      /* The text this section's lineage was recorded against —
+                         the last SAVED content, not the in-flight draft. With
+                         it, "Data Origins" refuses to answer once the canvas
+                         has drifted from what lineage describes, rather than
+                         reporting the provenance of the wrong words. */
+                      lineageCanonicalText={savedContent}
                     />
                   </div>
                 ) : (

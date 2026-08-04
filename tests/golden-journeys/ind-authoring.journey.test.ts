@@ -142,6 +142,10 @@ beforeAll(async () => {
       // The router's own tables (templates/tokens/export_history/…), moved out of
       // retired runtime DDL into this migration by the canonical-spine refactor.
       'db/migrations/20260730_authoring_runtime_ddl.sql',
+      // The section save writes content and its span lineage in one transaction
+      // and refuses to commit one without the other, so this table is now a
+      // prerequisite for the authoring spine, not an optional extra.
+      'db/migrations/20260803_document_span_lineage.sql',
     ],
   });
   h.db = jdb.db;

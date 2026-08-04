@@ -14,6 +14,7 @@ import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
+import type { HumanControlEvent } from '../../services/ana/run-control-registry.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -51,6 +52,14 @@ export interface StreamPostProcessingContext {
   sectionCode: string | undefined;
   /** Tools run this turn, persisted on the assistant message metadata. */
   toolTrace: ToolTraceEntry[];
+  /**
+   * AnA's accumulated extended-thinking / reasoning for the turn. Persisted on
+   * the assistant message metadata so the thought process survives reload and
+   * is auditable (otherwise it is live-only, streamed but never stored).
+   */
+  reasoning?: string;
+  /** Human control actions (pause/resume/interject/cancel) taken this turn. */
+  humanControls?: HumanControlEvent[];
   /** Raw tool output this turn — evidence corpus for the grounding round. */
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
@@ -138,6 +147,8 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     effectiveRole,
     sectionCode,
     toolTrace,
+    reasoning,
+    humanControls,
     toolEvidenceCorpus,
     collectedProvenance,
     collectedDrafts,
@@ -228,7 +239,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       orgId && threadId && fullContent
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
-            buildAssistantMetadata(toolTrace, streamGrounding) as Record<string, unknown> | undefined,
+            buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls) as Record<string, unknown> | undefined,
           )
             .then(() => undefined)
             .catch((e: any) => {

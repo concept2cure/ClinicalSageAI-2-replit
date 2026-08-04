@@ -611,6 +611,19 @@ export const C2C_MIGRATION_FILES = [
   // `section_id` though command-executor selects `id`. Verified on a real
   // PostgreSQL 16: applies twice, and every consumer's actual query executes.
   'db/migrations/20260801_consolidated_tree_reconciliation.sql',
+
+  // ── Character-span lineage (the "every span traces to a source" rule) ───────
+  // The first table able to state (document, char_start, char_end) → source +
+  // how used. Anchored to cre_evidence_sources through the same
+  // source/reference_id/payload_sha256 convention authoring_citations uses, so
+  // the canonical Data Room identity stays the one identity; see the migration
+  // header for why none of the six existing primitives can carry this.
+  //
+  // MUST stay ABOVE 20260801_tenant_isolation_sweep.sql: the sweep policies the
+  // tenant-scoped tables the set has created by the time it runs, and this one
+  // is tenant-scoped (organization_id). Added after the sweep it would be
+  // created but never isolated.
+  'db/migrations/20260803_document_span_lineage.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

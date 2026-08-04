@@ -551,3 +551,10 @@ export * from './estar-registration';
 // review clock) for any catalog key. Service: estar-submission-service.ts;
 // migration: migrations/20260730_estar_submission.sql.
 export * from './estar-submission';
+
+// Document span lineage: which CHARACTERS of a document came from which Data
+// Room source, and how that source was used. The span-grained counterpart to
+// authoring_citations (section-grained), anchored to the same canonical
+// cre_evidence_sources identity via source/reference_id/payload_sha256.
+// Migration: db/migrations/20260803_document_span_lineage.sql.
+export * from './document-span-lineage';

@@ -5,6 +5,8 @@
    ================================================================ */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+// Select any passage, right-click, see where it came from.
+import { DataOriginsMenu } from '../../lineage';
 
 /* ── Interfaces ────────────────────────────────────────────────── */
 
@@ -52,6 +54,13 @@ interface DocCanvasProps {
      state. Without it the canvas caches to localStorage only and says so
      honestly ("Saved on this device") rather than implying server persistence. */
   onSave?: (html: string) => void | Promise<void>;
+  /* The exact text this section's data lineage was recorded against.
+     Supplied so "Data Origins" can REFUSE when the canvas is rendering
+     something else — this editor persists HTML while lineage offsets are
+     recorded against the saved content, and answering from mismatched text
+     would report the provenance of the wrong words. Omitted, the drift check
+     is simply inactive. */
+  lineageCanonicalText?: string;
 }
 
 /* ── Helpers ───────────────────────────────────────────────────── */
@@ -88,7 +97,7 @@ const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
 
 /* ── DocCanvas ─────────────────────────────────────────────────── */
 
-export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, market, onExport, onSave }: DocCanvasProps) {
+export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, market, onExport, onSave, lineageCanonicalText }: DocCanvasProps) {
   const bodyRef  = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveState, setSaveState] = useState<SaveState>(onSave ? 'saved' : 'local');
@@ -271,26 +280,36 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
             </div>
           ) : null}
 
-          <div
-            ref={bodyRef}
-            contentEditable={!isLocked}
-            suppressContentEditableWarning={true}
-            spellCheck={false}
-            onInput={save}
-            onBlur={save}
-            onKeyUp={onSelChange}
-            onClick={onSelChange}
-            data-track={track || undefined}
-            style={{
-              outline:'none',
-              fontSize:14,
-              lineHeight:1.75,
-              color:'var(--text-100)',
-              minHeight: isEmpty ? 0 : 320,
-              fontFamily:'Georgia, "Times New Roman", serif',
-              display: (isEmpty && !isLocked) ? 'none' : 'block',
-            }}
-          />
+          {/* Right-click any selection here for its data origins. Wrapping the
+              body rather than the whole canvas keeps the toolbar and status
+              chrome out of the offset arithmetic. */}
+          <DataOriginsMenu
+            documentTable="authoring_sections"
+            documentId={String((sec && sec.id) || key)}
+            documentTitle={secTitle || undefined}
+            canonicalText={lineageCanonicalText}
+          >
+            <div
+              ref={bodyRef}
+              contentEditable={!isLocked}
+              suppressContentEditableWarning={true}
+              spellCheck={false}
+              onInput={save}
+              onBlur={save}
+              onKeyUp={onSelChange}
+              onClick={onSelChange}
+              data-track={track || undefined}
+              style={{
+                outline:'none',
+                fontSize:14,
+                lineHeight:1.75,
+                color:'var(--text-100)',
+                minHeight: isEmpty ? 0 : 320,
+                fontFamily:'Georgia, "Times New Roman", serif',
+                display: (isEmpty && !isLocked) ? 'none' : 'block',
+              }}
+            />
+          </DataOriginsMenu>
 
           {isLocked && (
             <div style={{marginTop:16,display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'oklch(0.97 0.02 145)',borderRadius:6,border:'1px solid oklch(0.92 0.04 145)'}}>

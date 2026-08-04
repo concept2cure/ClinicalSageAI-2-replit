@@ -41,6 +41,16 @@ export interface ModelTurn {
   toolCalls: ToolCall[];
 }
 
+/**
+ * Round-boundary control hook. Called once before each round begins with the
+ * 1-based number of the round about to start. Returns `'continue'` to proceed
+ * or `'abort'` to stop the loop cleanly between rounds. The caller owns any
+ * pause (awaiting inside the hook) and interjection (side-effect: splicing a
+ * steering message into the next model turn); the loop only needs to honor the
+ * abort. Injected like the other deps so the loop stays pure and testable.
+ */
+export type LoopCheckpoint = (upcomingRound: number) => Promise<'continue' | 'abort'>;
+
 export interface AgenticLoopDeps {
   /**
    * Execute a batch of tool calls for a round and return their results. The
@@ -59,6 +69,12 @@ export interface AgenticLoopDeps {
     round: number,
     includeTools: boolean,
   ) => Promise<ModelTurn>;
+  /**
+   * Optional round-boundary control hook (pause / interject / cancel). When it
+   * returns `'abort'` the loop stops before the round runs. Absent ⇒ the loop
+   * runs uninterrupted exactly as before.
+   */
+  checkpoint?: LoopCheckpoint;
 }
 
 export interface AgenticLoopOptions {
@@ -123,7 +139,11 @@ export function resolveRoundExtension(effort?: LoopEffort | string | null): numb
   return ROUND_EXTENSION_BY_EFFORT[(effort as LoopEffort)] ?? ROUND_EXTENSION_BY_EFFORT.balanced;
 }
 
-export type StoppedReason = 'no_more_tools' | 'max_rounds' | 'duplicate_thrash';
+export type StoppedReason =
+  | 'no_more_tools'
+  | 'max_rounds'
+  | 'duplicate_thrash'
+  | 'cancelled';
 
 export interface AgenticLoopResult {
   /** Number of tool rounds executed. */
@@ -167,6 +187,17 @@ export async function runAgenticToolLoop(
   let extendedRounds = 0;
 
   while (turn.toolCalls.length > 0) {
+    // Round-boundary control: the human can pause (the hook awaits), interject a
+    // steer (side-effect, spliced into the next model turn by the caller), or
+    // cancel. On cancel we stop cleanly here, before spending the round — the
+    // final answer the model already streamed for the prior turn stands.
+    if (deps.checkpoint) {
+      const directive = await deps.checkpoint(round + 1);
+      if (directive === 'abort') {
+        return { rounds: round, toolCallCount, stoppedReason: 'cancelled', extendedRounds };
+      }
+    }
+
     round++;
 
     // Thrash detection (count how often each exact call recurs) and novelty

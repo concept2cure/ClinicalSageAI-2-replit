@@ -86,6 +86,11 @@ import {
   VALID_ROLES,
   VALID_LANGUAGES,
 } from './shared.js';
+import { randomUUID } from 'node:crypto';
+import {
+  runControlRegistry,
+  type HumanControlEvent,
+} from '../../services/ana/run-control-registry.js';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
@@ -99,6 +104,10 @@ const dbPool = {
 /** Register POST /stream on the given router. */
 export function mountStreamRoute(router: Router): void {
 router.post('/stream', async (req: Request, res: Response) => {
+  // Opaque id for this run, emitted to the client as `run_started` so it can
+  // pause / interject / cancel via the control endpoint. Declared out here so
+  // the finally can always deregister it. Assigned once SSE is open.
+  let runId = '';
   try {
     const {
       message,
@@ -199,6 +208,19 @@ router.post('/stream', async (req: Request, res: Response) => {
     res.on('close', stopKeepalive);
     res.on('finish', stopKeepalive);
     req.on('close', stopKeepalive);
+
+    // Register this run for mid-flight human control (pause / interject /
+    // cancel). The client uses the emitted runId to call
+    // POST /api/ana-ri/stream/:runId/control; the agentic loop's checkpoint
+    // (below) honors the control state at each round boundary. A client
+    // disconnect cancels the run so the server stops between rounds rather than
+    // running the whole investigation to completion unseen.
+    runId = `run_${randomUUID()}`;
+    runControlRegistry.register(runId);
+    const cancelRun = () => runControlRegistry.requestCancel(runId);
+    res.on('close', cancelRun);
+    req.on('close', cancelRun);
+    res.write(`data: ${JSON.stringify({ type: 'run_started', runId })}\n\n`);
 
     // Status: orchestrating (planning the response, running route prefetch)
     res.write(
@@ -698,6 +720,19 @@ router.post('/stream', async (req: Request, res: Response) => {
     })();
 
     let fullContent = '';
+    // AnA's extended-thinking / reasoning accumulated across the turn (first
+    // model call + every agentic follow-up round). Streamed live as `thinking`
+    // events AND persisted on the assistant message metadata by post-processing
+    // so the thought process survives reload and is auditable — it was
+    // previously live-only and lost on reload.
+    let fullThinking = '';
+    // Human control actions taken against this run (pause/resume/interject/
+    // cancel), persisted on the assistant metadata so a mid-run redirection is
+    // part of the auditable decision lineage. Populated by the loop checkpoint.
+    const controlEvents: HumanControlEvent[] = [];
+    // A steering interjection queued by the checkpoint, spliced into the next
+    // model turn's user message (same mechanism as the adaptation note).
+    let pendingInterjection = '';
     // Structured record of the tools run this turn (persisted on the assistant
     // message's metadata for cross-turn memory; see tool-trace.ts).
     const toolTrace: ToolTraceEntry[] = [];
@@ -786,6 +821,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       ...(streamTools.length > 0 ? { tools: streamTools } : {}),
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
+        // Cancelled mid-generation → stop emitting (and accumulating) at once.
+        // The underlying model call finishes server-side (the gateway exposes
+        // no abort signal), but the user sees output halt immediately.
+        if (runControlRegistry.isCancelled(runId)) return;
         // Extended-thinking deltas arrive with chunk='' and the thinking
         // text in metadata.thinkingContent. Forward them as a separate
         // SSE event type so the client can render reasoning in a
@@ -793,6 +832,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         if (metadata?.type === 'thinking') {
           const thinkingChunk: string = metadata?.thinkingContent || '';
           if (thinkingChunk) {
+            fullThinking += thinkingChunk;
             res.write(
               `data: ${JSON.stringify({ type: 'thinking', content: thinkingChunk })}\n\n`
             );
@@ -1018,12 +1058,17 @@ router.post('/stream', async (req: Request, res: Response) => {
         // instead of retrying the identical call.
         const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
         pendingAdaptationNote = '';
+        // A human interjection queued at the round boundary rides the same user
+        // turn as the tool results so the model course-corrects toward the steer
+        // on this round. `pendingInterjection` already carries its own label.
+        const interjectionSuffix = pendingInterjection;
+        pendingInterjection = '';
         loopMessages.push({
           role: 'user',
           content:
             results
               .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
-              .join('\n\n') + adaptationSuffix,
+              .join('\n\n') + adaptationSuffix + interjectionSuffix,
         });
 
         // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
@@ -1058,9 +1103,11 @@ router.post('/stream', async (req: Request, res: Response) => {
           ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
           stream: true,
           onStream: (chunk: string, metadata?: any) => {
+            if (runControlRegistry.isCancelled(runId)) return;
             if (metadata?.type === 'thinking') {
               const thinkingChunk: string = metadata?.thinkingContent || '';
               if (thinkingChunk) {
+                fullThinking += thinkingChunk;
                 res.write(`data: ${JSON.stringify({ type: 'thinking', content: thinkingChunk })}\n\n`);
               }
               return;
@@ -1080,9 +1127,73 @@ router.post('/stream', async (req: Request, res: Response) => {
         return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
       };
 
+      // Round-boundary human control. Consulted by the loop before each round:
+      // hold while paused, splice queued interjections into the next model turn,
+      // and abort on cancel. Every action is recorded onto controlEvents so the
+      // redirection is part of the turn's auditable decision lineage.
+      let pauseAnnounced = false;
+      const emitControl = (obj: Record<string, unknown>) => {
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
+      };
+      const recordControl = (
+        action: HumanControlEvent['action'],
+        round: number,
+        message?: string,
+      ) => {
+        controlEvents.push({ action, message, round, at: new Date().toISOString() });
+      };
+      const checkpoint = async (upcomingRound: number): Promise<'continue' | 'abort'> => {
+        if (runControlRegistry.isCancelled(runId)) {
+          emitControl({ type: 'cancelled', round: upcomingRound });
+          recordControl('cancel', upcomingRound);
+          return 'abort';
+        }
+
+        // Pause: hold at the round boundary until resumed / cancelled, with a
+        // safety timeout so an abandoned pause can never hang the request.
+        const PAUSE_POLL_MS = 200;
+        const MAX_PAUSE_MS = 10 * 60 * 1000;
+        const pauseStart = Date.now();
+        while (runControlRegistry.getStatus(runId) === 'paused') {
+          if (!pauseAnnounced) {
+            emitControl({ type: 'paused', round: upcomingRound });
+            recordControl('pause', upcomingRound);
+            pauseAnnounced = true;
+          }
+          if (res.writableEnded) {
+            runControlRegistry.requestCancel(runId);
+            break;
+          }
+          if (Date.now() - pauseStart > MAX_PAUSE_MS) {
+            runControlRegistry.requestResume(runId);
+            break;
+          }
+          await new Promise((r) => setTimeout(r, PAUSE_POLL_MS));
+        }
+        if (pauseAnnounced && runControlRegistry.getStatus(runId) === 'running') {
+          emitControl({ type: 'resumed', round: upcomingRound });
+          recordControl('resume', upcomingRound);
+          pauseAnnounced = false;
+        }
+
+        // Interjections: splice each queued steer into the next model turn.
+        for (const inj of runControlRegistry.consumeInterjections(runId)) {
+          pendingInterjection += `\n\n[User interjection]: ${inj}`;
+          emitControl({ type: 'interjected', round: upcomingRound, message: inj });
+          recordControl('interject', upcomingRound, inj);
+        }
+
+        if (runControlRegistry.isCancelled(runId)) {
+          emitControl({ type: 'cancelled', round: upcomingRound });
+          recordControl('cancel', upcomingRound);
+          return 'abort';
+        }
+        return 'continue';
+      };
+
       await runAgenticToolLoop(
         { text: fullContent, toolCalls: streamToolUses.map(toToolCall) },
-        { executeTools, callModel },
+        { executeTools, callModel, checkpoint },
         // Effort-scaled agentic depth: Thorough can chase a multi-tool
         // investigation all the way down; Balanced clears the old flat cap of 5.
         // The ceiling is soft — a loop still discovering novel ground earns up
@@ -1188,6 +1299,8 @@ router.post('/stream', async (req: Request, res: Response) => {
       effectiveRole,
       sectionCode,
       toolTrace,
+      reasoning: fullThinking,
+      humanControls: controlEvents,
       toolEvidenceCorpus,
       collectedProvenance,
       collectedDrafts,
@@ -1209,6 +1322,66 @@ router.post('/stream', async (req: Request, res: Response) => {
     } else {
       sendError(res, 500, 'Internal server error');
     }
+  } finally {
+    // Control state is only needed while the run is live; drop it once the
+    // handler returns (post-processing already holds the collected controlEvents
+    // by reference, so this never races their persistence).
+    if (runId) runControlRegistry.deregister(runId);
   }
+});
+
+/**
+ * POST /api/ana-ri/stream/:runId/control
+ *
+ * Mid-run human control for an in-flight streaming turn: pause / resume /
+ * interject a steer / cancel. The `runId` is the unguessable id the stream
+ * emitted to the owning client as `run_started` (a bearer capability — only the
+ * client that opened the stream holds it). The stream's round-boundary
+ * checkpoint applies the requested control on the next round.
+ *
+ * Body: { action: 'pause' | 'resume' | 'interject' | 'cancel', message?: string }
+ */
+router.post('/stream/:runId/control', (req: Request, res: Response) => {
+  const runId = String(req.params.runId);
+  const action = String(req.body?.action || '');
+  const message = typeof req.body?.message === 'string' ? req.body.message : undefined;
+
+  if (!runControlRegistry.has(runId)) {
+    // 404 also covers the multi-instance case: control that lands on an instance
+    // not running this stream simply reports the run as unknown here.
+    return res
+      .status(404)
+      .json({ ok: false, error: 'Run not found or already finished' });
+  }
+
+  let ok = false;
+  switch (action) {
+    case 'pause':
+      ok = runControlRegistry.requestPause(runId);
+      break;
+    case 'resume':
+      ok = runControlRegistry.requestResume(runId);
+      break;
+    case 'cancel':
+      ok = runControlRegistry.requestCancel(runId);
+      break;
+    case 'interject':
+      if (!message || !message.trim()) {
+        return res
+          .status(400)
+          .json({ ok: false, error: 'interject requires a non-empty message' });
+      }
+      ok = runControlRegistry.requestInterject(runId, message);
+      break;
+    default:
+      return res
+        .status(400)
+        .json({ ok: false, error: `Unknown control action: ${action}` });
+  }
+
+  const snapshot = runControlRegistry.snapshot(runId);
+  return res
+    .status(ok ? 200 : 409)
+    .json({ ok, runId, action, status: snapshot?.status ?? null });
 });
 }

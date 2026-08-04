@@ -271,6 +271,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Authoring Actions routes:', error);
   }
 
+  // Data Origins — "where did this text come from" for a selected range,
+  // backing the select → right-click → Data Origins interaction.
+  try {
+    const dataOriginsModule = await import('../routes/data-origins.routes');
+    app.use('/api/data-origins', dataOriginsModule.default);
+  } catch (error) {
+    console.error('❌ Failed to mount Data Origins routes:', error);
+  }
+
   // C2C universal mutation primitives (Mutation Primitives brief — Day 2).
   // Mounts all six governed-action endpoints + six reverse counterparts.
   try {

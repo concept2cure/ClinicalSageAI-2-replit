@@ -20,7 +20,8 @@ import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
 import { IntelligenceQuestionWidget } from './IntelligenceQuestionWidget';
 import { WarGameReport } from './WarGameReport';
 import { AnaReportCanvas } from './AnaReportCanvas';
-import type { MessageAttachment } from './useAnaChat';
+import { AnaRunControls } from './AnaRunControls';
+import type { MessageAttachment, RunControlStatus } from './useAnaChat';
 import type { PendingSignoff } from './useGovernedAction';
 import styles from './styles.module.css';
 
@@ -110,6 +111,11 @@ export interface ChatViewProps {
   onIntelligenceAction?: (actionType: string) => void;
   /** Called when the user clicks "Remediate" on a war game finding. */
   onWarGameRemediate?: (findingId: string, findingTitle: string) => void;
+  /** Live-run control status + handlers (pause / resume / interject). */
+  runStatus?: RunControlStatus;
+  onPause?: () => void;
+  onResume?: () => void;
+  onInterject?: (message: string) => void;
 }
 
 export function ChatView({
@@ -135,6 +141,10 @@ export function ChatView({
   onIntelligenceAnswer,
   onIntelligenceAction,
   onWarGameRemediate,
+  runStatus,
+  onPause,
+  onResume,
+  onInterject,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -263,6 +273,14 @@ export function ChatView({
             <I.down size={14} />
             New messages
           </button>
+        )}
+        {runStatus && onPause && onResume && onInterject && (
+          <AnaRunControls
+            status={runStatus}
+            onPause={onPause}
+            onResume={onResume}
+            onInterject={onInterject}
+          />
         )}
         <Composer
           value={draft}

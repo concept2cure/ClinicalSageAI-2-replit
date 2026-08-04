@@ -15,6 +15,8 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
+import type { HumanControlEvent } from './run-control-registry.js';
+
 export interface ToolTraceEntry {
   tool: string;
   /** Human-readable step label (from describeToolPlan). */
@@ -157,17 +159,37 @@ export interface GroundingSummary {
 export interface AssistantMessageMetadata {
   toolTrace?: ToolTraceEntry[];
   grounding?: GroundingSummary;
+  /**
+   * AnA's extended-thinking / reasoning for the turn. Streamed live to the
+   * client as `thinking` events and persisted here so the thought process
+   * survives reload and becomes part of the auditable turn record (it is
+   * otherwise live-only and lost). Rendered by the client's "Reasoning"
+   * collapsible on rehydration.
+   */
+  reasoning?: string;
+  /**
+   * Human control actions taken against this turn's in-flight run (pause /
+   * resume / interject / cancel). Persisted so a mid-run redirection is part of
+   * the auditable decision lineage and shows in the document dossier.
+   */
+  humanControls?: HumanControlEvent[];
 }
 
+/** Cap on persisted reasoning so a pathological turn can't bloat a message row. */
+const MAX_PERSISTED_REASONING_CHARS = 24_000;
+
 /**
- * Build the assistant message's hidden metadata from the turn's tool-trace and
- * grounding verdict. Returns undefined when there is nothing worth storing, so
- * callers persist `null` rather than an empty object. The grounding verdict is
- * only stored when claims were actually checked (`checked > 0`).
+ * Build the assistant message's hidden metadata from the turn's tool-trace,
+ * grounding verdict, and reasoning. Returns undefined when there is nothing
+ * worth storing, so callers persist `null` rather than an empty object. The
+ * grounding verdict is only stored when claims were actually checked
+ * (`checked > 0`); reasoning is stored only when non-empty and is capped.
  */
 export function buildAssistantMetadata(
   toolTrace: ToolTraceEntry[],
   grounding: GroundingSummary | null,
+  reasoning?: string | null,
+  humanControls?: HumanControlEvent[] | null,
 ): AssistantMessageMetadata | undefined {
   const meta: AssistantMessageMetadata = {};
   if (toolTrace.length > 0) meta.toolTrace = toolTrace;
@@ -178,5 +200,13 @@ export function buildAssistantMetadata(
       unsupported: grounding.unsupported,
     };
   }
+  const trimmedReasoning = typeof reasoning === 'string' ? reasoning.trim() : '';
+  if (trimmedReasoning) {
+    meta.reasoning =
+      trimmedReasoning.length > MAX_PERSISTED_REASONING_CHARS
+        ? `${trimmedReasoning.slice(0, MAX_PERSISTED_REASONING_CHARS)}…`
+        : trimmedReasoning;
+  }
+  if (humanControls && humanControls.length > 0) meta.humanControls = humanControls;
   return Object.keys(meta).length > 0 ? meta : undefined;
 }
