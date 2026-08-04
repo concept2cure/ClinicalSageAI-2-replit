@@ -21,6 +21,7 @@
 
 import PDFDocument from 'pdfkit';
 
+import { makeDeterministic } from '../pdf-converter';
 import type { SelectionOrigins, SpanLineageRow } from './span-lineage.service';
 
 const INK = '#111827';
@@ -78,9 +79,20 @@ export interface DataOriginsPdfMeta {
 /**
  * Render the report. Returns the finished PDF bytes.
  *
- * Deterministic apart from the generation timestamp, which the caller supplies
- * via the report itself — two renders of the same report differ only where the
- * report does.
+ * DETERMINISM
+ * The bytes go out through `makeDeterministic()` from the canonical converter
+ * (server/services/pdf-converter.ts), which strips the fields pdfkit varies on
+ * every run — CreationDate, ModDate, the Producer build string, the document
+ * /ID. Without that, two exports of the SAME report differ, and the SHA-256 of
+ * a provenance report that changes every time it is printed cannot be bound to
+ * anything. A traceability artefact whose own hash is unstable is the exact
+ * failure this module exists to argue against.
+ *
+ * This service generates directly rather than converting a DOCX, so it cannot
+ * call convertDocxToPdf() — it borrows the determinism step alone, which is the
+ * part of that contract that applies. Two renders of the same report now differ
+ * only where the report itself does: the generation timestamp the caller
+ * supplies on `report.generatedAt`.
  */
 export function renderDataOriginsPdf(
   report: SelectionOrigins,
@@ -251,5 +263,5 @@ export function renderDataOriginsPdf(
   }
 
   doc.end();
-  return done;
+  return done.then(makeDeterministic);
 }

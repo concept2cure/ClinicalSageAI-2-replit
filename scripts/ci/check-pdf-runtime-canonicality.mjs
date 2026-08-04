@@ -81,6 +81,14 @@ const APPROVED = new Set([
   'server/services/ind-forms/ind-form-fill-service.ts',
   'server/services/ind-forms/ind-form-reconstruct.ts',
   'server/services/templates/templateExtractor.ts',
+  // Data Origins report (landed 2026-08-04). Renders a provenance report for a
+  // selected passage — there is no DOCX source for pdf-converter.ts to convert,
+  // it is composed from lineage rows directly. It does NOT skip the part of that
+  // contract which applies: the finished bytes go through the converter's own
+  // makeDeterministic(), so the same report always hashes the same. A provenance
+  // artefact whose hash changed on every print would be the one document in the
+  // platform least able to afford it.
+  'server/services/clinical-regulatory-evidence/data-origins-pdf.ts',
 ]);
 
 const PDF_LIB_IMPORT = /from\s+['"](pdfkit|pdf-lib)['"]/;
