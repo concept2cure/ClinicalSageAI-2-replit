@@ -208,6 +208,9 @@ jobs:
       - name: Guardrails — PDF runtime canonicality (approved entry points only)
         run: npm run ci:check-pdf-runtime
 
+      - name: Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
+        run: npm run ci:check-shell-css-collisions
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 
