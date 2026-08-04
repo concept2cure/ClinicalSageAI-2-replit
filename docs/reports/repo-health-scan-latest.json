@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-04T02:06:12.426Z",
+  "generatedAt": "2026-08-04T02:40:12.973Z",
   "git": {
-    "sha": "2a635155718af2454c426dc92631103a5c9f43ad",
-    "branch": "claude/fix-base-ci-ceryhv"
+    "sha": "aa71ab2342bbef0edf98ba3eff9f6a442342de6c",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2945,14 +2945,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

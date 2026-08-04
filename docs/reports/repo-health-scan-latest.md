@@ -1,18 +1,14 @@
 # Repo Health Scan
 
-Generated: 2026-08-04T02:06:12.426Z
-Branch: claude/fix-base-ci-ceryhv
-SHA: 2a635155718af2454c426dc92631103a5c9f43ad
+Generated: 2026-08-04T02:40:12.973Z
+Branch: concept2cure-v2
+SHA: aa71ab2342bbef0edf98ba3eff9f6a442342de6c
 
 ## Summary
 
 - Duplicate basenames: 250
 - Files over byte threshold: 33
 - Files over line threshold: 83
-- Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: 0
-- Delta files over byte threshold: 0
-- Delta files over line threshold: 0
 
 ## Owner Summary
 
