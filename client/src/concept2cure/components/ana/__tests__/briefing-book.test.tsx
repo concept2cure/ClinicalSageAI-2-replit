@@ -5,9 +5,14 @@
  * Client surfaces:
  *   - BriefingBookPanel        — the "anticipated FDA pushback" trust-strip.
  *   - mapBriefingPremortem     — SSE tool-result → BriefingBookPremortemResult.
- *   - DocumentStudioPane wiring — the panel renders inside the studio.
- *   - flag-gating               — ENABLE_ANA_DOCUMENT_STUDIO (default false).
- *   - honesty guard             — anticipated≠actual; sample non-exportable.
+ *   - flag-gating              — ENABLE_ANA_DOCUMENT_STUDIO (default false).
+ *   - honesty guard            — anticipated≠actual; sample non-exportable.
+ *
+ * A `DocumentStudioPane — briefing-book wiring` block used to sit between the
+ * panel and the parser, asserting that the panel rendered inside the studio.
+ * `DocumentStudioPane` was deleted as unreachable code — nothing in the client
+ * imported it from an entry point the browser could load — so the wiring it
+ * checked no longer exists. Everything else here is live and unchanged.
  *
  * Plain DOM assertions (no jest-dom) to match the sibling tests in this dir.
  */
@@ -15,7 +20,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { BriefingBookPanel, type BriefingBookPremortemResult } from '../BriefingBookPanel';
-import { DocumentStudioPane } from '../DocumentStudioPane';
 import { mapBriefingPremortem } from '../useAnaChat';
 import { isFeatureEnabled, setFeatureEnabled } from '@/flags/featureFlags';
 
@@ -104,27 +108,6 @@ describe('BriefingBookPanel — rendering', () => {
   it('frames the overall risk as anticipated, never an actual position', () => {
     render(<BriefingBookPanel premortem={liveAssessed} />);
     expect(screen.getByText(/Critical anticipated risk/)).toBeTruthy();
-  });
-});
-
-describe('DocumentStudioPane — briefing-book wiring', () => {
-  const draft = { title: 'EOP2 Briefing Book', content: '# Heading\n\nBody.', documentType: 'briefing-book' };
-
-  it('renders the briefing pre-mortem panel when provided', () => {
-    render(
-      <DocumentStudioPane
-        draft={draft}
-        briefingPremortem={liveAssessed}
-        onDownloadDocx={() => {}}
-        onClose={() => {}}
-      />,
-    );
-    expect(screen.getByText('Anticipated FDA pushback')).toBeTruthy();
-  });
-
-  it('omits the panel when no briefing pre-mortem is present', () => {
-    render(<DocumentStudioPane draft={draft} onDownloadDocx={() => {}} onClose={() => {}} />);
-    expect(screen.queryByText('Anticipated FDA pushback')).toBeNull();
   });
 });
 
