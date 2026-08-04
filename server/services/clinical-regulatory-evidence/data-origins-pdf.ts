@@ -77,22 +77,50 @@ export interface DataOriginsPdfMeta {
 }
 
 /**
+ * The document date, fixed from the report's own content.
+ *
+ * `report.generatedAt` is supplied by the caller and already printed on page 1,
+ * so binding the PDF's CreationDate to it makes the bytes a pure function of
+ * the report: the same report always produces the same file, a report generated
+ * at a different moment correctly produces a different one.
+ *
+ * The fallback is the epoch, deliberately, and NOT `new Date()`. A clock-based
+ * fallback would silently reintroduce non-determinism on exactly the path least
+ * likely to be exercised — a report with a missing or malformed timestamp.
+ */
+function documentDate(generatedAt: unknown): Date {
+  const t = typeof generatedAt === 'string' ? Date.parse(generatedAt) : NaN;
+  return Number.isFinite(t) ? new Date(t) : new Date(0);
+}
+
+/**
  * Render the report. Returns the finished PDF bytes.
  *
- * DETERMINISM
- * The bytes go out through `makeDeterministic()` from the canonical converter
- * (server/services/pdf-converter.ts), which strips the fields pdfkit varies on
- * every run — CreationDate, ModDate, the Producer build string, the document
- * /ID. Without that, two exports of the SAME report differ, and the SHA-256 of
- * a provenance report that changes every time it is printed cannot be bound to
- * anything. A traceability artefact whose own hash is unstable is the exact
- * failure this module exists to argue against.
+ * DETERMINISM — why it is set here rather than stripped afterwards
+ * A provenance report whose own SHA-256 changes every time it is printed cannot
+ * be filed, cited, or bound to an audit chain. Of everything this platform
+ * emits, it is the one document least able to afford an unstable hash.
  *
- * This service generates directly rather than converting a DOCX, so it cannot
- * call convertDocxToPdf() — it borrows the determinism step alone, which is the
- * part of that contract that applies. Two renders of the same report now differ
- * only where the report itself does: the generation timestamp the caller
- * supplies on `report.generatedAt`.
+ * The first attempt relied on `makeDeterministic()` from the canonical
+ * converter, which rewrites `/CreationDate (D:…)` and `/ModDate (D:…)` in
+ * place. That works for LibreOffice and Puppeteer, which write those values
+ * inline. pdfkit does not: it emits them as INDIRECT objects —
+ *
+ *     17 0 obj
+ *     (D:20260804142510Z)
+ *     endobj
+ *     14 0 obj
+ *     << /Producer 15 0 R /Creator 16 0 R /CreationDate 17 0 R >>
+ *     endobj
+ *
+ * so the pattern never matches and the timestamp survives. The failure was
+ * invisible locally, where two renders land in the same second, and only showed
+ * up on a loaded CI runner that straddled a second boundary. `makeDeterministic`
+ * had appeared to work because it DOES normalise the trailer /ID.
+ *
+ * Setting the date at construction removes the whole class of problem: there is
+ * no varying value to rewrite. `makeDeterministic()` is still applied, for the
+ * /ID that pdfkit genuinely randomises per render.
  */
 export function renderDataOriginsPdf(
   report: SelectionOrigins,
@@ -101,7 +129,13 @@ export function renderDataOriginsPdf(
   // pdfkit ships no type definitions, so the constructor and the drawing API
   // are reached through `any` — the same pattern documentExportService and
   // cerGenerator already use for this dependency. Kept to one place here.
-  const doc: any = new (PDFDocument as any)({ size: 'LETTER', margin: 54, bufferPages: true });
+  const stamp = documentDate(report.generatedAt);
+  const doc: any = new (PDFDocument as any)({
+    size: 'LETTER',
+    margin: 54,
+    bufferPages: true,
+    info: { CreationDate: stamp, ModDate: stamp },
+  });
 
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
