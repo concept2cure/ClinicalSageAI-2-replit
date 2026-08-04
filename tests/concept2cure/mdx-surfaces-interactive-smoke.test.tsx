@@ -29,10 +29,8 @@ import * as React from 'react';
 
 import { AnalyticsSurface }   from '../../client/src/concept2cure/mdx/surfaces/AnalyticsSurface';
 import { PostmarketSurface }  from '../../client/src/concept2cure/mdx/surfaces/PostmarketSurface';
-import { MemorySurface }      from '../../client/src/concept2cure/mdx/surfaces/MemorySurface';
 import { EngineeringSurface } from '../../client/src/concept2cure/mdx/surfaces/EngineeringSurface';
 import { UdiSurface }         from '../../client/src/concept2cure/mdx/surfaces/UdiSurface';
-import { AdminSurface }       from '../../client/src/concept2cure/mdx/surfaces/AdminSurface';
 import { PathwayPanes }       from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
 
 import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
@@ -121,11 +119,7 @@ describe('MDX rich-surface interactive smoke', () => {
     expect(clicked).toBeGreaterThan(5);
   });
 
-  it('Memory: every category/importance/unverified toggle is handler-safe', () => {
-    const { container } = wrap(<MemorySurface onAskAna={askAna} />);
-    const { clicked } = clickEveryButton(container);
-    expect(clicked).toBeGreaterThan(10);
-  });
+  // No MemorySurface case: the kit's AnA Memory surface was retired — v2 `ana-memory` reads the same /api/mdx/ana/memory endpoint and is write-capable, so two of them was one duplicate too many.
 
   it('Engineering: every risk-matrix cell click is handler-safe', () => {
     const { container } = wrap(
@@ -141,11 +135,7 @@ describe('MDX rich-surface interactive smoke', () => {
     expect(clicked).toBeGreaterThan(5);
   });
 
-  it('Admin: every tab/role/state filter across 715 lines is handler-safe', () => {
-    const { container } = wrap(<AdminSurface onAskAna={askAna} />);
-    const { clicked } = clickEveryButton(container);
-    expect(clicked).toBeGreaterThan(10);
-  });
+  // No AdminSurface case: the kit's admin surface was never imported by its own app and is deleted; admin is product-level (v2 `admin-console`).
 });
 
 describe('MDX Files tab — root structure', () => {
