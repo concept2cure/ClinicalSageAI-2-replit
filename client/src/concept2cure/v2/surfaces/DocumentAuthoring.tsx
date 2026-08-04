@@ -12,8 +12,12 @@
  * tables authoring_documents / authoring_sections / doc_revisions /
  * authoring_comments / authoring_citations):
  *
- *   • tree     — GET /api/authoring/docs?module=&status= → documents, and per
- *                selected document GET /api/authoring/docs/:docId/sections.
+ *   • tree     — the project's governed filing outline from
+ *                GET /api/c2c/documents/:id/outline (rule-pack sections merged
+ *                with live status), bound to the authored sections that hold
+ *                the text by code. GET /api/authoring/docs?status= lists the
+ *                documents, and GET /api/authoring/docs/:docId/sections their
+ *                sections.
  *   • canvas   — the selected section's `content` is edited in place and saved
  *                with PATCH /api/authoring/sections/:sectionId. The server
  *                snapshots the prior content into doc_revisions on every
@@ -41,6 +45,7 @@ import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { DocCanvas } from './EditorCanvas';
+import { useFilingOutline, findSectionForNode } from '../useFilingOutline';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 
@@ -202,14 +207,30 @@ function relTime(iso: string | null | undefined): string {
   return 'just now';
 }
 
-const MODULES = ['M1', 'M2', 'M3', 'M4', 'M5'];
 const STATUSES = ['draft', 'in_review', 'approved'];
 
 /* ════ Document Authoring surface ════ */
 
 export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
+  // `module` is no longer a filter the user drives — the filing outline is. It
+  // survives only as the value AuthoringCreateExport needs when creating a new
+  // document, and it now follows the selected section instead of a dropdown
+  // that defaulted every filing type to "M3".
   const [module, setModule] = useState('M3');
   const [status, setStatus] = useState('draft');
+
+  /* ── The project's governed filing outline ──
+     The tree this canvas navigates by. A project's structure is fixed at
+     creation: the wizard writes program_type + primary_agency, and
+     scaffoldProjectDocuments() inserts the matching rule pack's whole section
+     tree. A BLA is 71 nested sections, a 510(k) is A/B/C/D/E, a CER is A0–A8.
+     Until now none of it reached here — the canvas showed a Module × status
+     dropdown pair, defaulted to M3, identical for every filing type. */
+  const projectIdForOutline = (() => {
+    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+    return p && typeof p.id === 'string' ? p.id : null;
+  })();
+  const filing = useFilingOutline(projectIdForOutline);
 
   // Documents for the current filter.
   const [docs, setDocs] = useState<AuthDoc[]>([]);
@@ -258,8 +279,12 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
     // org-wide, so the editor still works with no project open.
     const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
     const programId = proj && typeof proj.id === 'string' ? proj.id : null;
+    // No `module` filter. Every filter on this route is optional server-side,
+    // and pinning one hid the rest of the dossier behind a dropdown — the
+    // outline is what selects a section now, so the document list must span
+    // all modules for it to select into.
     const url =
-      `/api/authoring/docs?module=${encodeURIComponent(module)}&status=${encodeURIComponent(status)}` +
+      `/api/authoring/docs?status=${encodeURIComponent(status)}` +
       (programId ? `&programId=${encodeURIComponent(programId)}` : '');
     const { ok, body } = await readJson<{ documents?: AuthDoc[] }>(url);
     if (!ok || !body) { setDocsState('error'); setDocs([]); return; }
@@ -268,7 +293,7 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
     setDocsState('ready');
     // Keep the active doc if it survives the new filter; else pick the first.
     setActiveDocId((cur) => (cur && list.some((d) => d.id === cur) ? cur : list[0]?.id ?? null));
-  }, [module, status]);
+  }, [status]);
 
   useEffect(() => { void loadDocs(); }, [loadDocs]);
 
@@ -518,17 +543,85 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
       {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
-          <div className="ed-tree-t">Document tree</div>
-          <div className="ed-tree-m">{docs.length} document{docs.length === 1 ? '' : 's'} · {module} · {status.replace('_', ' ')}</div>
+          <div className="ed-tree-t">
+            {filing.document ? filing.document.title : 'Document tree'}
+          </div>
+          <div className="ed-tree-m">
+            {filing.document
+              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${filing.flat.length} sections`
+              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace('_', ' ')}`}
+          </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-            <select className="c2c-input" style={{ height: 28, flex: 1 }} value={module} onChange={(e) => setModule(e.target.value)}>
-              {MODULES.map((m) => <option key={m} value={m}>Module {m.slice(1)}</option>)}
-            </select>
+            {/* The Module select is gone. It defaulted every filing type to
+                "M3" and hid the rest of the dossier behind a dropdown; the
+                filing outline below is the navigation now. Status stays — it
+                is a view filter, not a definition of the tree. */}
             <select className="c2c-input" style={{ height: 28, flex: 1 }} value={status} onChange={(e) => setStatus(e.target.value)}>
               {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
             </select>
           </div>
         </div>
+
+        {/* ── The governed filing outline, when this project has one ──
+            Derived from (doc_type × agency) via c2c_rule_packs, so a BLA shows
+            its 71 nested sections and a 510(k) shows A/B/C/D/E. Nodes bind to
+            the authored section that holds the text by code. */}
+        {filing.tree.length > 0 && (
+          <div className="ed-tree-scroll" style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}>
+            {filing.flat.map((node) => {
+              const bound = findSectionForNode(sections, node.key);
+              const isActive = bound != null && bound.id === activeSectionId;
+              return (
+                <button
+                  key={node.key}
+                  className="ed-tree-row"
+                  data-active={isActive || undefined}
+                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound ? 1 : 0.62 }}
+                  title={
+                    bound
+                      ? `${node.label} — open`
+                      : `${node.label} — not started in this document yet`
+                  }
+                  onClick={() => {
+                    if (bound) {
+                      setActiveSectionId(bound.id);
+                      // Keep the create/export module in step with where the
+                      // author actually is, instead of a stale dropdown value.
+                      const m = /^(\d)/.exec(node.key)?.[1];
+                      if (m) setModule(`M${m}`);
+                    } else {
+                      fireToast(`${node.key} ${node.label} — no draft yet in this document.`);
+                    }
+                  }}
+                >
+                  <span className="ed-num">{node.key}</span>
+                  <span className="ed-lbl" style={{ fontWeight: node.depth === 0 ? 600 : 400 }}>
+                    {node.label}
+                  </span>
+                  {node.mandatory && !bound && (
+                    <span className="rd-chip tone-dim" style={{ marginLeft: 'auto' }} title="Required by the rule pack">
+                      required
+                    </span>
+                  )}
+                  {node.has_content && <span className="ed-dot" data-s="ok" title={node.status} />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Why there is no outline, said plainly rather than as a blank pane.
+            A project with no governed document is usually not a fault: program
+            types ivd/device/ide/biologic/anda have no rule pack, and the
+            scaffolder skips them deliberately. */}
+        {filing.reason === 'no-governed-document' && (
+          <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
+            This project has no governed filing document, so there is no section
+            outline to show. Projects created before scaffolding — and program
+            types with no rule pack — fall here.
+          </div>
+        )}
+
         <div className="ed-tree-scroll">
           {docsState === 'loading' ? (
             <div className="scaf-note" style={{ padding: 16 }}>Loading documents…</div>
@@ -537,7 +630,7 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
               hint="GET /api/authoring/docs didn’t respond. Sign in to your tenant and retry." />
           ) : docs.length === 0 ? (
             <EmptyState icon={I.fileText} title="No documents here"
-              hint={`No ${status.replace('_', ' ')} documents in Module ${module.slice(1)}. Switch the module or status filter above.`} />
+              hint={`No ${status.replace('_', ' ')} documents in this project. Switch the status filter above.`} />
           ) : (
             docs.map((d) => {
               const open = d.id === activeDocId;
