@@ -22,14 +22,6 @@ import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
-// Lazy, matching PdevRoute below. MdxRoute statically imports four stylesheets
-// (app.css, pathway-tabs.css, files-tree.css, drafter.css — 4,683 lines), and
-// app.css is UNSCOPED: global `*`, `html, body, #root`, `body`, `button`,
-// `input, textarea`, `svg` resets plus a `:root` token block, and 264 class
-// names it shares with the v2 shell. As a static import that shipped in the
-// entry graph of every session, for every client type, whether or not a device
-// surface was ever opened. Lazy confines it to the chunk that needs it.
-const MdxRoute = lazy(() => import('../mdx/MdxRoute'));
 import { isFeatureEnabled } from '@/flags/featureFlags';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
@@ -50,12 +42,6 @@ import {
 // Phase 7: the legacy ZenApp shell is deleted; the v2 shell IS the product.
 // Lazy so auth entry pages never download the app chunk (or its stylesheet).
 const V2App = lazy(() => import('../v2/V2App'));
-
-// PDEV kit — Phase 7 Pharmaceutical Development workstream. Mirrors the MDX
-// module pattern: its own top-level route so the kit's Rail/TopBar/AnaDock own
-// the whole viewport, kept out of the v2 shell to avoid a double-rail. Gated
-// on `ENABLE_PDEV_SURFACE` at render time — off ↔ redirects back to the shell.
-const PdevRoute = lazy(() => import('../pdev/PdevRoute'));
 
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
@@ -166,8 +152,9 @@ export const ZenRouter: React.FC = () => {
   // shell must persist across in-app navigations. Rendering it inside the
   // location-keyed <Switch>/<AnimatePresence> below would remount the whole
   // shell on every nav (dropping palette/AnA/scroll state and replaying the
-  // enter animation). Auth entry routes and the standalone MDX module keep
-  // the legacy transition switch.
+  // enter animation). Auth entry routes keep the legacy transition switch, as
+  // do the two retired kit paths — they must fall through to the Switch for
+  // their redirects to fire, after which the shell owns the location again.
   const uiV2AuthRoute =
     /^\/(concept2cure\/)?(login|signup|password-reset)(\/|\?|$)/.test(location);
   const uiV2Owns =
@@ -229,41 +216,24 @@ export const ZenRouter: React.FC = () => {
           <Route path="/billing/success">{() => <Redirect to="/concept2cure" />}</Route>
           <Route path="/billing/canceled">{() => <Redirect to="/concept2cure" />}</Route>
 
-          {/* MDX (Medical Device & Diagnostic) module — Phase 2 design-system
-              port. Mounted before the ZenApp catch-all so this surface is
-              reachable while the legacy ZenApp continues to handle home,
-              project detail, and other surfaces. */}
+          {/* The device & diagnostics kit no longer mounts as its own route.
+              It was a second application here — its own Rail, TopBar and AnA
+              composer — and the same component was ALSO rendered inside the v2
+              shell, which stacked two of each on five surfaces. Its seventeen
+              destinations are now v2 surfaces (`v2/surfaces/DeviceSurfaces`),
+              reached through the one shell like every other surface.
+              `/concept2cure/mdx` redirects so existing links still land. */}
           <Route path="/concept2cure/mdx">
-            {() => (
-              <ProtectedRoute>
-                <PageTransition>
-                  <Suspense fallback={<ZenLoadingScreen />}>
-                    <MdxRoute />
-                  </Suspense>
-                </PageTransition>
-              </ProtectedRoute>
-            )}
+            {() => <Redirect to="/concept2cure?surface=device-workstream" />}
           </Route>
 
-          {/* PDEV (Pharmaceutical Development) module — Phase 7 design-system
-              port. Same mount pattern as MDX: the kit owns its own Rail /
-              TopBar / AnaDock, so keep it out of the v2 shell (double-rail
-              otherwise). Gated on ENABLE_PDEV_SURFACE — flag off redirects
-              back to the shell home. */}
+          {/* The pharmaceutical-development kit is no longer a route either.
+              Its v2 surface used to be a stub that navigated here, unmounting
+              the shell to reach a second application. Its eight destinations
+              are v2 surfaces now (`v2/surfaces/PdevSurfaces`). The path
+              redirects so existing links still land. */}
           <Route path="/concept2cure/pdev">
-            {() =>
-              isFeatureEnabled('ENABLE_PDEV_SURFACE') ? (
-                <ProtectedRoute>
-                  <PageTransition>
-                    <Suspense fallback={<ZenLoadingScreen />}>
-                      <PdevRoute />
-                    </Suspense>
-                  </PageTransition>
-                </ProtectedRoute>
-              ) : (
-                <Redirect to="/concept2cure" />
-              )
-            }
+            {() => <Redirect to="/concept2cure?surface=pdev" />}
           </Route>
 
           {/* App routes — /, /concept2cure and every surface/project deep link —

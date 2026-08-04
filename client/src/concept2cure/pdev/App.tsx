@@ -24,9 +24,7 @@
 import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { useAnaChat } from '../components/ana/useAnaChat';
-import { PdevRail } from './shell/Rail';
-import { PdevTopBar } from './shell/TopBar';
-import { PdevAnaDock, type PdevAnaDockMessage } from './shell/AnaDock';
+import type { PdevAnaDockMessage } from './shell/AnaDock';
 import { PdevOverview } from './surfaces/Overview';
 import { PdevWorkstreamSurface } from './surfaces/Workstream';
 import { PdevActivityDetail } from './surfaces/ActivityDetail';
@@ -82,8 +80,10 @@ interface IndProgramListPayload {
 }
 
 export interface PdevAppProps {
-  /** Initial nav id from a deep-link. */
-  initialNav?: string;
+  /** Which surface to render — the shell's surface id, supplied by the registry. */
+  nav: string;
+  /** Navigate to another surface id. The shell owns navigation. */
+  onNav: (id: string) => void;
   initialProgramId?: string | null;
   /** AnA gateway adapter. The dock collects prompts; routing them to
    *  the real chat surface is the host app's responsibility. */
@@ -94,7 +94,8 @@ export interface PdevAppProps {
 }
 
 export function PdevApp({
-  initialNav,
+  nav,
+  onNav,
   initialProgramId,
   onAskAna,
 }: PdevAppProps) {
@@ -125,9 +126,12 @@ export function PdevApp({
   }, [programId, indPrograms]);
 
   // ── Navigation + sheet state ──────────────────────────────────────
-  const [activeNav, setActiveNav] = React.useState<string>(initialNav ?? 'overview');
-  const [collapsed, setCollapsed] = React.useState(false);
-  const [anaOpen, setAnaOpen] = React.useState(true);
+  // `activeNav` is the shell's surface id, not state this module keeps, and
+  // rail-collapse / AnA-open are gone with the rail and the dock. The v2 shell
+  // owns all three; a second copy here is what let this module draw a second
+  // rail beside the shell's and run a second AnA conversation.
+  const activeNav = nav;
+  const setActiveNav = React.useCallback((id: string) => onNav(id), [onNav]);
   const [activeActivity, setActiveActivity] =
     React.useState<PdevActivityView | null>(null);
   const [aiDraftFor, setAiDraftFor] = React.useState<{
@@ -195,7 +199,8 @@ export function PdevApp({
       } else {
         void anaChat.send(text);
       }
-      setAnaOpen(true);
+      // No `setAnaOpen` — the shell's AnA rail is the only one, and it opens
+      // itself when a prompt arrives.
     },
     [onAskAna, anaChat, programCodeForAna, activityKeyForAna],
   );
@@ -380,55 +385,10 @@ export function PdevApp({
     );
   }
 
+  // The canvas only. Sheets below are modals over it, not chrome, so they stay.
   return (
-    <div
-      className="pdev-shell"
-      data-collapsed={collapsed || undefined}
-      data-ana-open={anaOpen || undefined}
-    >
-      <PdevRail
-        activeNav={activeNav}
-        setActiveNav={(id) => {
-          setActiveNav(id);
-          setActiveActivity(null);
-        }}
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        program={program.view?.program ?? null}
-        programs={indPrograms.map((p) => ({
-          id: p.id,
-          code: p.code,
-          productName: p.productName || p.name,
-        }))}
-        switchProgram={(id) => {
-          setProgramId(id);
-          setActiveActivity(null);
-        }}
-      />
-      <main className="pdev-main">
-        <PdevTopBar
-          hereLabel={HERE_LABEL[activeNav] ?? 'PDEV'}
-          program={program.view?.program ?? null}
-          onOpenPalette={() => askAna('Open command palette')}
-        />
-        <div className="pdev-page">
-          <div className="pdev-page-inner">{surface}</div>
-        </div>
-      </main>
-      <PdevAnaDock
-        open={anaOpen}
-        setOpen={setAnaOpen}
-        program={program.view?.program ?? null}
-        readinessScore={effectiveReadiness}
-        topBlocker={topBlocker}
-        activeNav={activeNav}
-        activity={activeActivity}
-        onSend={askAna}
-        isStreaming={!onAskAna && anaChat.isStreaming}
-        messages={dockMessages}
-        projectId={projectIdForProgram != null ? String(projectIdForProgram) : undefined}
-        commands={PDEV_COMMANDS}
-      />
+    <>
+      {surface}
 
       {activeActivity && programId && (
         <PdevActivityDetail
@@ -497,6 +457,6 @@ export function PdevApp({
           submitError={snapshotError}
         />
       )}
-    </div>
+    </>
   );
 }

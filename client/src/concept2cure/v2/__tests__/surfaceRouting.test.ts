@@ -21,7 +21,11 @@ describe('surfaceIdFromLocation', () => {
 
   it('resolves deep-link aliases to their canonical surfaces', () => {
     expect(surfaceIdFromLocation('/concept2cure/task-board')).toBe('tasks');
-    expect(surfaceIdFromLocation('/concept2cure/device-submission')).toBe('document-authoring');
+    // `device-submission` used to alias to `document-authoring` while
+    // SURFACE_VIEWS routed the same id to the device kit — the registry and the
+    // deep-link table disagreeing about what one id means. It is a real surface
+    // (the kit's submission-ops package view) and resolves to itself.
+    expect(surfaceIdFromLocation('/concept2cure/device-submission')).toBe('device-submission');
     expect(surfaceIdFromLocation('/concept2cure/ind-lifecycle')).toBe('ind-checklist');
     for (const target of ['tasks', 'document-authoring', 'ind-checklist']) {
       expect(getSurface(target), target).toBeDefined();

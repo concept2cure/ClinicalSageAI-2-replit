@@ -113,9 +113,10 @@ export const RAIL_QUICK = [
 ];
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */
 export const NAV_HIDDEN: ReadonlySet<string> = new Set([
-  'device-510k',
-  'device-cer',
-  'device-diagnostics',
+  // The device surfaces used to be hidden here because all five were aliases
+  // for one component that rendered the whole kit application — listing them
+  // separately in the rail would have shown five entries that opened the same
+  // screen. They are real, distinct surfaces now, so they are navigable.
   'ectd-coauthor',
   'csr-workflow',
   'filings-catalog',
@@ -482,7 +483,9 @@ export const SEGMENT_MODULES = {
       items: [
         'device-workstream',
         'device-510k',
+        'device-pma',
         'device-cer',
+        'device-presub',
         'labeling',
         'inconsistency',
         'source-tracer',
@@ -492,15 +495,24 @@ export const SEGMENT_MODULES = {
     },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
+      items: [
+        'vault',
+        'device-vault',
+        'device-clinical-studies',
+        'device-engineering',
+        'device-software',
+        'evidence-search',
+        'artifacts-center',
+        'decision-lineage',
+      ],
     },
-    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
-    { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
+    { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
   diagnostics: [
     {
@@ -510,6 +522,8 @@ export const SEGMENT_MODULES = {
         'ivd-completeness',
         'device-cer',
         'device-510k',
+        'device-presub',
+        'device-clinical-studies',
         'labeling',
         'inconsistency',
         'source-tracer',
@@ -1095,7 +1109,10 @@ export const ESIGN_MEANINGS = [
  * governed editor (eSTAR pathway) · ind-lifecycle → deliverable-first IND view. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
   'task-board': 'tasks',
-  'device-submission': 'document-authoring',
+  // No `device-submission` alias. It pointed at `document-authoring` while
+  // SURFACE_VIEWS routed the same id to the device kit — the registry and the
+  // deep-link table disagreeing about what one id means. `device-submission` is
+  // the kit's submission-ops package view and resolves to itself.
   'ind-lifecycle': 'ind-checklist',
 };
 

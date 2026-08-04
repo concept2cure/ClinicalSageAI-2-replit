@@ -41,7 +41,7 @@ import { CodebaseCoverage } from './surfaces/Coverage';
 import { DecisionLineage } from './surfaces/DecisionLineage';
 import { DeepResearch } from './surfaces/DeepResearch';
 import { DesignControls } from './surfaces/DesignControls';
-import { DeviceWorkstream } from './surfaces/DeviceWorkstream';
+import { DeviceSurfaces } from './surfaces/DeviceSurfaces';
 import { DispatchReadiness } from './surfaces/DispatchReadiness';
 import { DocJourney } from './surfaces/DocJourney';
 import { DocumentAuthoring } from './surfaces/DocumentAuthoring';
@@ -71,7 +71,7 @@ import { Nonclinical } from './surfaces/Nonclinical';
 import { Onboarding } from './surfaces/Onboarding';
 import { OnboardingIngest } from './surfaces/OnboardingIngest';
 import { Orchestration } from './surfaces/Orchestration';
-import { PdevRedirect } from './surfaces/PdevRedirect';
+import { PdevSurfaces } from './surfaces/PdevSurfaces';
 import { PrecedentEngine } from './surfaces/PrecedentEngine';
 import { ProtocolWorkspace } from './surfaces/ProtocolDev';
 import { ProjectHome } from './surfaces/ProjectHome';
@@ -150,11 +150,28 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'decision-lineage': { component: DecisionLineage, full: true },
   'deep-research': { component: DeepResearch },
   'design-controls': { component: DesignControls },
-  'device-510k': { component: DeviceWorkstream, full: true, hideAna: true },
-  'device-cer': { component: DeviceWorkstream, full: true, hideAna: true },
-  'device-diagnostics': { component: DeviceWorkstream, full: true, hideAna: true },
-  'device-submission': { component: DeviceWorkstream, full: true, hideAna: true },
-  'device-workstream': { component: DeviceWorkstream, full: true, hideAna: true },
+  // ── Device & diagnostics ──
+  // One entry per surface, each rendering only its own canvas. These used to be
+  // five aliases for the whole MDX application, which drew a second Rail,
+  // TopBar and AnA composer inside this shell; `hideAna: true` was what let it
+  // bring its own conversation. Both are gone — the shell owns the chrome and
+  // owns the conversation, so none of these sets `hideAna`.
+  'device-510k': { component: DeviceSurfaces['device-510k'], full: true },
+  'device-analytics': { component: DeviceSurfaces['device-analytics'], full: true },
+  'device-cer': { component: DeviceSurfaces['device-cer'], full: true },
+  'device-clinical-studies': { component: DeviceSurfaces['device-clinical-studies'], full: true },
+  'device-diagnostics': { component: DeviceSurfaces['device-diagnostics'], full: true },
+  'device-engineering': { component: DeviceSurfaces['device-engineering'], full: true },
+  'device-pma': { component: DeviceSurfaces['device-pma'], full: true },
+  'device-postmarket': { component: DeviceSurfaces['device-postmarket'], full: true },
+  'device-presub': { component: DeviceSurfaces['device-presub'], full: true },
+  'device-software': { component: DeviceSurfaces['device-software'], full: true },
+  'device-submission': { component: DeviceSurfaces['device-submission'], full: true },
+  'device-tasks': { component: DeviceSurfaces['device-tasks'], full: true },
+  'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
+  'device-validation': { component: DeviceSurfaces['device-validation'], full: true },
+  'device-vault': { component: DeviceSurfaces['device-vault'], full: true },
+  'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },
   'document-authoring': { component: DocumentAuthoring, full: true, hideAna: true },
@@ -192,9 +209,19 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   orchestration: { component: Orchestration },
   orphan: { component: Orphan },
   // The PDEV Phase 7 kit mounts as a top-level route in ZenRouter (mirrors
-  // MDX). When the v2 rail selects `pdev`, PdevRedirect kicks the URL over to
-  // /concept2cure/pdev where the kit's own shell takes over.
-  pdev: { component: PdevRedirect },
+  // ── Pharmaceutical development ──
+  // These were one entry, `PdevRedirect`, whose only job was to navigate the
+  // browser OUT of this shell to a route where the kit drew its own Rail,
+  // TopBar and AnA dock. The kit contributes surfaces now; the shell keeps the
+  // chrome and the conversation.
+  pdev: { component: PdevSurfaces['pdev'], full: true },
+  'pdev-clinical': { component: PdevSurfaces['pdev-clinical'], full: true },
+  'pdev-cmc': { component: PdevSurfaces['pdev-cmc'], full: true },
+  'pdev-contradictions': { component: PdevSurfaces['pdev-contradictions'], full: true },
+  'pdev-fda-interactions': { component: PdevSurfaces['pdev-fda-interactions'], full: true },
+  'pdev-ind-assembly': { component: PdevSurfaces['pdev-ind-assembly'], full: true },
+  'pdev-nonclinical': { component: PdevSurfaces['pdev-nonclinical'], full: true },
+  'pdev-regulatory': { component: PdevSurfaces['pdev-regulatory'], full: true },
   pediatric: { component: Pediatric },
   pharmacovigilance: { component: Pharmacovigilance },
   'pv-cockpit': { component: PvCockpit },

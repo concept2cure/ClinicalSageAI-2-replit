@@ -47,21 +47,24 @@ function hasStaticImport(src: string, spec: string): boolean {
   return re.test(src);
 }
 
+/*
+ * The mount points moved when the kits stopped being shells. Neither is a route
+ * any more — both are surface adapters in the v2 registry, which `V2App`
+ * imports at module scope. That makes the lazy boundary MORE load-bearing than
+ * when they were routes: a static import here lands the kit in the entry chunk
+ * of every session, for every client type, including ones that never open a
+ * device or development surface.
+ */
 const MOUNTS: Array<{ file: string; kit: string; why: string }> = [
   {
-    file: 'client/src/concept2cure/router/ZenRouter.tsx',
-    kit: 'mdx/MdxRoute',
-    why: 'the standalone /concept2cure/mdx route',
+    file: 'client/src/concept2cure/v2/surfaces/DeviceSurfaces.tsx',
+    kit: 'mdx/MdxSurfaceHost',
+    why: 'sixteen device-* surfaces, reached from surfaceViews at V2App module scope',
   },
   {
-    file: 'client/src/concept2cure/v2/surfaces/DeviceWorkstream.tsx',
-    kit: 'mdx/MdxRoute',
-    why: 'the five device-* surfaces, reached from surfaceViews at V2App module scope',
-  },
-  {
-    file: 'client/src/concept2cure/router/ZenRouter.tsx',
+    file: 'client/src/concept2cure/v2/surfaces/PdevSurfaces.tsx',
     kit: 'pdev/PdevRoute',
-    why: 'the /concept2cure/pdev route',
+    why: 'eight pdev-* surfaces, reached from surfaceViews at V2App module scope',
   },
 ];
 
