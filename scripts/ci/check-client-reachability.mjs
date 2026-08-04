@@ -51,8 +51,32 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CLIENT_SRC = path.join(repoRoot, 'client/src');
-const ENTRY = path.join(CLIENT_SRC, 'main.tsx');
 const BASELINE_FILE = path.join(repoRoot, 'scripts/ci/client-reachability-baseline.json');
+
+/**
+ * Roots of the reachability walk.
+ *
+ * `main.tsx` is the browser entry and the reason this gate can be exact. It is
+ * NOT the only way a client file legitimately runs, and treating it as the only
+ * root cost a red CI: `client/src/setupTests.js` is named by
+ * `client/jest.config.js` in `setupFilesAfterEach`, is imported by nothing, and
+ * was therefore reported unreachable and deleted. Jest then refused to start —
+ * "Module <rootDir>/src/setupTests.js in the setupFilesAfterEnv option was not
+ * found" — which failed `npm test` before a single test ran, taking both the
+ * Test and Integration Tests jobs down with it.
+ *
+ * The lesson generalises: a harness entry point is referenced by CONFIGURATION,
+ * not by an import, so an import-graph walk cannot see it. Anything in that
+ * position belongs here, with a note saying who reaches it and how — the same
+ * standard this gate's own failure message demands of everyone else.
+ */
+const ENTRY_POINTS = [
+  // The browser. One <script> in client/index.html.
+  path.join(CLIENT_SRC, 'main.tsx'),
+  // Jest. Named by client/jest.config.js → setupFilesAfterEnv.
+  path.join(CLIENT_SRC, 'setupTests.js'),
+];
+const ENTRY = ENTRY_POINTS[0];
 
 /** Mirrors tsconfig paths + vite resolve.alias. */
 const ALIASES = [
@@ -142,14 +166,21 @@ function allClientSources() {
   return out;
 }
 
-if (!fs.existsSync(ENTRY)) {
-  console.error(`[ci:client-reachability] FAIL — entry point missing: ${path.relative(repoRoot, ENTRY)}`);
-  process.exit(1);
+// A missing entry point is a hard failure, not an empty walk that would report
+// the whole client as dead. This is what would have caught the deletion of
+// setupTests.js on the commit that made it, instead of one job later.
+for (const e of ENTRY_POINTS) {
+  if (!fs.existsSync(e)) {
+    console.error(`[ci:client-reachability] FAIL — entry point missing: ${path.relative(repoRoot, e)}`);
+    console.error('  Something a harness reaches by CONFIGURATION was deleted. Restore it, or');
+    console.error('  remove it from ENTRY_POINTS and from whatever config names it.');
+    process.exit(1);
+  }
 }
 
-// BFS the import graph from the browser entry point.
+// BFS the import graph from every entry point.
 const reachable = new Set();
-const queue = [ENTRY];
+const queue = [...ENTRY_POINTS];
 while (queue.length > 0) {
   const file = queue.pop();
   if (reachable.has(file)) continue;
