@@ -122,23 +122,43 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   const openProgram = React.useCallback(
     (prog: Program) => {
       if (typeof window !== 'undefined') {
-        window.C2C_PROJECT = { ...(window.C2C_PROJECT ?? {}), id: String(prog.id), title: prog.title };
+        // REPLACE, never merge. Spreading the previous value kept `code`, `ws`,
+        // `status` and `product` from whatever project was open before, and
+        // ProjectHome prefers those over the row it fetches — so opening a
+        // device program after any other project rendered its Project Home with
+        // the PREVIOUS project's submission-type, client-type and status chips.
+        // v2/surfaces/Projects.tsx:389 replaces the whole object; this now
+        // matches it, and omits keys it cannot honestly supply rather than
+        // inheriting stale ones.
+        window.C2C_PROJECT = { id: String(prog.id), title: prog.title };
       }
       onNav('project-home');
     },
     [onNav],
   );
 
-  /** The authoring shell is the one editor; the shell owns the layout swap. */
-  const openEditor = React.useCallback((docType: string) => onNav(`document-authoring#${docType}`), [onNav]);
+  /**
+   * Open the one editor.
+   *
+   * Plain navigation, deliberately. An earlier version sent
+   * `document-authoring#<docType>`, which reads as though the editor opens on
+   * that document type — it does not. wouter navigates with `history.pushState`
+   * and reads `location.pathname`, so the browser strips the fragment before
+   * the router sees it, and `DocumentAuthoring` reads no hash anyway. The
+   * editor opened on its default either way; only the code claimed otherwise.
+   *
+   * Per-doc-type entry needs `DocumentAuthoring` to accept and honour a type,
+   * which is a change to that surface rather than a string appended here.
+   */
+  const openEditor = React.useCallback(() => onNav('document-authoring'), [onNav]);
 
   let surface: React.ReactNode;
   switch (nav) {
     case 'device-510k':
-      surface = <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={() => openEditor('k510')} />;
+      surface = <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
       break;
     case 'device-pma':
-      surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={() => openEditor('pma')} />;
+      surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
       break;
     case 'device-cer':
       surface = <CerSurface program={programForContext} onAskAna={onAsk} />;
@@ -148,7 +168,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
         <IvdSurface
           program={programForContext}
           onAskAna={onAsk}
-          onOpenEditor={() => openEditor('device-diagnostics-workbench')}
+          onOpenEditor={openEditor}
         />
       );
       break;

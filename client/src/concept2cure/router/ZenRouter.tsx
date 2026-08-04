@@ -157,11 +157,12 @@ export const ZenRouter: React.FC = () => {
   // their redirects to fire, after which the shell owns the location again.
   const uiV2AuthRoute =
     /^\/(concept2cure\/)?(login|signup|password-reset)(\/|\?|$)/.test(location);
+  // `/concept2cure/mdx` and `/concept2cure/pdev` used to be excluded here so
+  // they could fall through to the Switch and mount a second application. Both
+  // are ordinary shell surfaces now, so the shell owns them like every other
+  // path — `pdev` resolves directly, `mdx` through DEEP_LINK_ALIASES.
   const uiV2Owns =
-    !uiV2AuthRoute &&
-    !location.startsWith('/concept2cure/mdx') &&
-    !location.startsWith('/concept2cure/pdev') &&
-    (location === '/' || location.startsWith('/concept2cure'));
+    !uiV2AuthRoute && (location === '/' || location.startsWith('/concept2cure'));
   if (uiV2Owns) {
     return (
       <PortalAuthProvider>
@@ -215,26 +216,6 @@ export const ZenRouter: React.FC = () => {
           <Route path="/billing">{() => <Redirect to="/concept2cure" />}</Route>
           <Route path="/billing/success">{() => <Redirect to="/concept2cure" />}</Route>
           <Route path="/billing/canceled">{() => <Redirect to="/concept2cure" />}</Route>
-
-          {/* The device & diagnostics kit no longer mounts as its own route.
-              It was a second application here — its own Rail, TopBar and AnA
-              composer — and the same component was ALSO rendered inside the v2
-              shell, which stacked two of each on five surfaces. Its seventeen
-              destinations are now v2 surfaces (`v2/surfaces/DeviceSurfaces`),
-              reached through the one shell like every other surface.
-              `/concept2cure/mdx` redirects so existing links still land. */}
-          <Route path="/concept2cure/mdx">
-            {() => <Redirect to="/concept2cure?surface=device-workstream" />}
-          </Route>
-
-          {/* The pharmaceutical-development kit is no longer a route either.
-              Its v2 surface used to be a stub that navigated here, unmounting
-              the shell to reach a second application. Its eight destinations
-              are v2 surfaces now (`v2/surfaces/PdevSurfaces`). The path
-              redirects so existing links still land. */}
-          <Route path="/concept2cure/pdev">
-            {() => <Redirect to="/concept2cure?surface=pdev" />}
-          </Route>
 
           {/* App routes — /, /concept2cure and every surface/project deep link —
               are owned by the ui-v2 fast path above this Switch (the shell must

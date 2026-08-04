@@ -41,3 +41,29 @@ describe('surfaceIdFromLocation', () => {
     expect(surfaceIdFromLocation('/somewhere-else')).toBe('home');
   });
 });
+
+describe('the retired kit paths still land somewhere real', () => {
+  // `/concept2cure/mdx` and `/concept2cure/pdev` were top-level routes when the
+  // kits were separate applications. Links and bookmarks still point at them.
+  //
+  // The first attempt redirected to `/concept2cure?surface=device-workstream`,
+  // with a comment saying "so existing links still land". Nothing reads
+  // `?surface=` — and wouter hands this function `location.pathname`, which has
+  // no query string at all — so both landed on home. A redirect that silently
+  // goes to the wrong place is worse than no redirect, because it looks handled.
+  it('/concept2cure/mdx resolves to the kit entry surface', () => {
+    expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('device-workstream');
+  });
+
+  it('/concept2cure/pdev resolves to itself — it is a real surface id now', () => {
+    expect(surfaceIdFromLocation('/concept2cure/pdev')).toBe('pdev');
+  });
+
+  it('neither falls through to home', () => {
+    // The exact failure being guarded. If an alias is dropped or the shell stops
+    // owning these paths, this is what breaks first.
+    expect(surfaceIdFromLocation('/concept2cure/mdx')).not.toBe('home');
+    expect(surfaceIdFromLocation('/concept2cure/pdev')).not.toBe('home');
+  });
+});
+

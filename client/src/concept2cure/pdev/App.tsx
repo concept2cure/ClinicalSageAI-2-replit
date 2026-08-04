@@ -24,7 +24,6 @@
 import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { useAnaChat } from '../components/ana/useAnaChat';
-import type { PdevAnaDockMessage } from './shell/AnaDock';
 import { PdevOverview } from './surfaces/Overview';
 import { PdevWorkstreamSurface } from './surfaces/Workstream';
 import { PdevActivityDetail } from './surfaces/ActivityDetail';
@@ -50,7 +49,7 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../_shared/components/GovernedConfirmDialog';
-import { PDEV_COMMANDS } from './data/pdevCommands';
+import {  } from './data/pdevCommands';
 
 const HERE_LABEL: Record<string, string> = {
   overview: 'Program dashboard',
@@ -112,10 +111,22 @@ export function PdevApp({
   const [programId, setProgramId] = React.useState<string | null>(
     initialProgramId ?? null,
   );
+  /**
+   * Follow the shell's project selection.
+   *
+   * The kit's rail carried a program switcher; it went with the rail, and for a
+   * while nothing replaced it — this module pinned itself to `indPrograms[0]`
+   * and ignored the project every other v2 surface was showing. `window.C2C_PROJECT`
+   * is that shared selection (see v2/surfaces/ProjectHome.tsx), so PDEV now
+   * follows it when it names an IND program this org has, and falls back to the
+   * first only when it does not.
+   */
   React.useEffect(() => {
-    if (programId === null && indPrograms.length > 0) {
-      setProgramId(indPrograms[0].id);
-    }
+    if (indPrograms.length === 0) return;
+    const selected = typeof window !== 'undefined' ? window.C2C_PROJECT?.id : undefined;
+    const match = selected ? indPrograms.find((p) => String(p.id) === String(selected)) : undefined;
+    const next = match?.id ?? (programId === null ? indPrograms[0].id : null);
+    if (next && next !== programId) setProgramId(next);
   }, [programId, indPrograms]);
 
   const projectIdForProgram = React.useMemo(() => {
@@ -205,19 +216,6 @@ export function PdevApp({
     [onAskAna, anaChat, programCodeForAna, activityKeyForAna],
   );
 
-  // Adapt useAnaChat messages to the dock's transcript shape. Skipped when
-  // the host owns AnA (onAskAna present) — then the host renders history.
-  const dockMessages: PdevAnaDockMessage[] = React.useMemo(() => {
-    if (onAskAna) return [];
-    return anaChat.messages.map((m) => ({
-      role: m.role === 'assistant' ? ('ana' as const) : ('user' as const),
-      body: m.text || (m.streaming ? m.statusPhase || 'Routing…' : ''),
-      when: m.sentAt
-        ? new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-        : 'just now',
-      streaming: m.streaming,
-    }));
-  }, [onAskAna, anaChat.messages]);
 
   // Refresh data after a mutation completes (state change, evidence
   // attach/detach, workflow decisions, FDA rollups, compile, etc.).

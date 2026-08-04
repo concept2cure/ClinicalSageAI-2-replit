@@ -1114,6 +1114,11 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   // deep-link table disagreeing about what one id means. `device-submission` is
   // the kit's submission-ops package view and resolves to itself.
   'ind-lifecycle': 'ind-checklist',
+  // `/concept2cure/mdx` was the device kit's own route before it became
+  // surfaces. Existing links and bookmarks still point at it, so the segment
+  // resolves to the kit's entry surface rather than silently falling through to
+  // home. `pdev` needs no alias — it is a real registered surface id now.
+  mdx: 'device-workstream',
 };
 
 /** Registry meta lookup with the kit's fallback shape. */
