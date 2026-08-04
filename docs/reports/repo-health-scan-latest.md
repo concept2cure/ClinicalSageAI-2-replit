@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-08-04T02:40:12.973Z
+Generated: 2026-08-04T02:49:43.272Z
 Branch: concept2cure-v2
-SHA: aa71ab2342bbef0edf98ba3eff9f6a442342de6c
+SHA: 065bf64b491ee88ce48ed1e421337963e54685a2
 
 ## Summary
 
@@ -14,7 +14,7 @@ SHA: aa71ab2342bbef0edf98ba3eff9f6a442342de6c
 
 - Backend Platform (server/routes + server/services owners): duplicateGroups=407, largeByBytes=29, largeByLines=72
 - Unassigned (TBD): duplicateGroups=277, largeByBytes=2, largeByLines=8
-- Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=167, largeByBytes=1, largeByLines=1
+- Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=168, largeByBytes=1, largeByLines=1
 - Shared Contracts (shared/schema + shared/types owners): duplicateGroups=69, largeByBytes=1, largeByLines=2
 - Frontend Platform (client/src maintainers): duplicateGroups=37, largeByBytes=0, largeByLines=0
 - Developer Experience (scripts maintainers): duplicateGroups=3, largeByBytes=0, largeByLines=0
