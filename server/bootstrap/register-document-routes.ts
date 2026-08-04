@@ -382,16 +382,14 @@ export async function registerDocumentRoutes({
     }
   }
 
-  // ── Collaboration Center (510(k) activity tracking) ──
-  if (EXPERIMENTAL_ROUTES_ENABLED) {
-    try {
-      const collaborationModule = await import('../routes/collaboration');
-      app.use('/api/collaboration', collaborationModule.default);
-      console.log('✅ Collaboration Center API routes mounted (510(k) team activity tracking)');
-    } catch (error) {
-      console.error('❌ Failed to mount Collaboration Center routes:', error);
-    }
-  }
+  // Collaboration Center: removed. `GET /api/collaboration/team` and
+  // `/activities` selected `.from(users).limit(N)` with NO organization filter,
+  // returning every user in the database — name, email, title, department,
+  // last-login — across every tenant. Nothing called either: the one UI that
+  // names them (v2/surfaces/CollabLauncher.tsx) is deliberately fixture-backed,
+  // because live rows are keyed by numeric user id while its pickers key on
+  // short-ids. A cross-tenant read with no caller is deleted, not scoped.
+
 
   // ── CERV2 Sections + Versions ──
   try {
@@ -446,14 +444,11 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Trial Corpus routes:', error);
   }
 
-  // ── Content Atoms ──
-  try {
-    const atomsModule = await import('../routes/atoms.js');
-    app.use('/api/atoms', atomsModule.default);
-    console.log('✅ Content Atoms API routes mounted');
-  } catch (error) {
-    console.error('❌ Failed to mount Atoms routes:', error);
-  }
+  // Content Atoms: removed. The router aliased `leaves` — the eCTD leaf table
+  // read by submission-orchestrator — and exposed full CRUD including DELETE
+  // over it. It was tenant-scoped, so not a disclosure, but it was an unused
+  // write surface onto submission content. No caller anywhere.
+
 
   // ── Workflow API ──
   try {
