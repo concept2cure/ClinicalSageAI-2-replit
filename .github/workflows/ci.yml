@@ -211,6 +211,12 @@ jobs:
       - name: Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
         run: npm run ci:check-shell-css-collisions
 
+      - name: Guardrails — phantom design tokens (ratchet, may only shrink)
+        run: npm run ci:check-phantom-tokens
+
+      - name: Guardrails — client reachability from main.tsx (ratchet, may only shrink)
+        run: npm run ci:check-client-reachability
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 

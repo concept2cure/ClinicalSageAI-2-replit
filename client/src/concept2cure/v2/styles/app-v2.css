@@ -1172,7 +1172,12 @@
 
 /* floating launcher — present on every surface */
 .c2c-v2 .cl-fab-wrap{position:fixed;right:22px;bottom:22px;z-index:70;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
-.c2c-v2.shell[data-ana-open="true"] .cl-fab-wrap{right:calc(var(--ana-w,400px) + 22px);}
+/* --ana is the dock column width (see the grid at .c2c-v2.shell). This read
+   --ana-w, which is defined nowhere in the repo, so it always fell back to
+   400px against a 380px dock and parked the launcher 20px inside the page
+   instead of flush against it. Using the real token also means the FAB now
+   tracks the dock if that width ever changes. */
+.c2c-v2.shell[data-ana-open="true"] .cl-fab-wrap{right:calc(var(--ana) + 22px);}
 .c2c-v2 .cl-fab{width:50px;height:50px;border-radius:50%;background:var(--accent-100);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--v2-shadow-lg);transition:transform .16s ease,background .16s ease;}
 .c2c-v2 .cl-fab .ico{font-size:21px;}
 .c2c-v2 .cl-fab:hover{background:var(--accent-200);transform:translateY(-1px);}
@@ -2614,3 +2619,4 @@
 .c2c-v2 .esign-field input:focus, .c2c-v2 .esign-field select:focus{border-color:var(--accent-100);}
 .c2c-v2 .esign-manifest{font-size:11px;color:var(--text-400);line-height:1.5;background:var(--bg-100);border-radius:var(--radius-md);padding:10px 12px;}
 .c2c-v2 .esign-f{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border);}
+

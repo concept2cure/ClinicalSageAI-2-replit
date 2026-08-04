@@ -96,6 +96,8 @@
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",
     "ci:check-pdf-runtime": "node scripts/ci/check-pdf-runtime-canonicality.mjs",
     "ci:check-shell-css-collisions": "node scripts/ci/check-shell-css-collisions.mjs",
+    "ci:check-phantom-tokens": "node scripts/ci/check-phantom-tokens.mjs",
+    "ci:check-client-reachability": "node scripts/ci/check-client-reachability.mjs",
     "ci:check-embedding-runtime": "node scripts/ci/check-embedding-runtime-canonicality.mjs",
     "ci:jwt-verify-pinned": "node scripts/ci/check-jwt-verify-pinned.mjs",
     "ci:saml-fail-closed": "node scripts/ci/check-saml-fail-closed.mjs",
