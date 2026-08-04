@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-02T18:13:40.326Z",
+  "generatedAt": "2026-08-04T02:06:12.426Z",
   "git": {
-    "sha": "85616c46f024272405e13de25c83839ac9ead65f",
-    "branch": "concept2cure-v2"
+    "sha": "2a635155718af2454c426dc92631103a5c9f43ad",
+    "branch": "claude/fix-base-ci-ceryhv"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 249,
+    "duplicateBasenames": 250,
     "largeFilesByBytes": 33,
     "largeFilesByLines": 83
   },
@@ -1433,6 +1433,14 @@
         "paths": [
           "client/src/components/ui/collapsible.jsx",
           "client/src/components/ui/collapsible.tsx"
+        ]
+      },
+      {
+        "basename": "comparability",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/cmc/surfaces/Comparability.tsx",
+          "server/services/biologics/comparability.ts"
         ]
       },
       {
@@ -2937,11 +2945,18 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 406,
+      "duplicateGroups": 407,
       "largeByBytes": 29,
       "largeByLines": 72
     },
@@ -2953,7 +2968,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 166,
+      "duplicateGroups": 167,
       "largeByBytes": 1,
       "largeByLines": 1
     },

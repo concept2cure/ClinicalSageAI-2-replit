@@ -642,6 +642,20 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260730_workflow_doc_versions_org_id.sql',
   'migrations/20260731_workflow_doc_versions_org_not_null.sql',
 
+  // ── Tenant isolation for the NON-PUBLIC uuid-keyed tables (ledger C-46) ──────
+  // The public sweep below is integer-keyed and public-only. The non-public
+  // schemas use a uuid tenant key and were policied per-subsystem; the subsystems
+  // that never added RLS (core.programs, manufacturing.*, regulatory_intel.*,
+  // regulatory_harmonization.*, and gaps in cortex/compliance/global_dossier/
+  // federated_ml) are closed here with the context-less-safe COALESCE policy the
+  // rest of the non-public schemas already use. Explicit (schema, table, column)
+  // list — the tenant key differs per table and two tables are deliberately
+  // exempt (federation_participants, audit.event_log). Order-independent w.r.t.
+  // the public sweep (disjoint schemas); ordered BEFORE it so the integer-keyed
+  // sweep stays the final entry — ledger C-33 requires the sweep to run last
+  // (asserted by tenant-isolation-sweep.contract.test.ts).
+  'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
+
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and
   // policies only the tables that exist at that moment. Every table added by the
@@ -652,18 +666,6 @@ export const C2C_MIGRATION_FILES = [
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
-
-  // ── Tenant isolation for the NON-PUBLIC uuid-keyed tables (ledger C-46) ──────
-  // The public sweep above is integer-keyed and public-only. The non-public
-  // schemas use a uuid tenant key and were policied per-subsystem; the subsystems
-  // that never added RLS (core.programs, manufacturing.*, regulatory_intel.*,
-  // regulatory_harmonization.*, and gaps in cortex/compliance/global_dossier/
-  // federated_ml) are closed here with the context-less-safe COALESCE policy the
-  // rest of the non-public schemas already use. Explicit (schema, table, column)
-  // list — the tenant key differs per table and two tables are deliberately
-  // exempt (federation_participants, audit.event_log). Order-independent w.r.t.
-  // the public sweep (disjoint schemas); placed alongside it for cohesion.
-  'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
