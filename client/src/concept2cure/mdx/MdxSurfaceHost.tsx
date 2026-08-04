@@ -105,8 +105,17 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       if (match) return match;
     }
     const anchor = PATHWAY_ANCHOR[nav];
-    if (anchor) return programs.find((p) => p.pathway === anchor) ?? programs[0] ?? null;
-    return null;
+    if (!anchor) return null;
+    const match = programs.find((p) => p.pathway === anchor);
+    if (match) return match;
+    // No `?? programs[0]`. An earlier version fell back to the first program of
+    // ANY pathway, so an org with no PMA opened the PMA surface showing a
+    // 510(k) program's modules and trial metrics — the wrong dossier under the
+    // right heading. Only `device-software` may borrow another program, because
+    // the software lifecycle is genuinely cross-pathway and its own comment in
+    // PATHWAY_ANCHOR says so; every other surface reports nothing rather than
+    // something false.
+    return nav === 'device-software' ? programs[0] ?? null : null;
   }, [programs, nav]);
 
   /** Hand a program off to the shell's project home — there is only one. */
@@ -179,12 +188,40 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     case 'device-workstream':
     default:
       // The portfolio. Loading and failure are stated rather than rendered as
-      // an empty portfolio, which would read as "you have no programs".
-      if (liveProgramsResult.loading) return <div role="status">Loading device programs…</div>;
-      if (liveProgramsResult.error) {
-        return <div role="alert">Device program data is unavailable. {liveProgramsResult.error}</div>;
-      }
-      surface = <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />;
+      // an empty portfolio, which would read as "you have no programs". Both
+      // are assigned rather than returned early, so they go through the same
+      // wrapper as everything else — an early return here would escape the
+      // scope root and render the status text unstyled.
+      surface = liveProgramsResult.loading ? (
+        <div role="status">Loading device programs…</div>
+      ) : liveProgramsResult.error ? (
+        <div role="alert">Device program data is unavailable. {liveProgramsResult.error}</div>
+      ) : (
+        <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />
+      );
       break;
   }
+
+  /*
+   * The scope root. Not optional, and not decoration.
+   *
+   * Every rule in app.css, pathway-tabs.css, files-tree.css and drafter.css is
+   * scoped under `.mdx-shell` — 845 of app.css's 846 rules, and 100% of the
+   * other three. The class is what makes any of the kit's styling apply, and it
+   * also carries the custom-property block those rules read. Without an element
+   * carrying it, the surfaces render as unstyled markup with no tokens.
+   *
+   * `data-surface` drops the shell LAYOUT the same class used to carry — a
+   * three-column grid at 100vh, which would put the canvas in the rail slot of
+   * a shell that no longer exists. `.page` / `.page-inner` are the kit's
+   * content measure (max-width 1280, 24/64px padding), which every surface was
+   * designed against; they are not chrome.
+   */
+  return (
+    <div className="mdx-shell" data-surface="true">
+      <div className="page">
+        <div className="page-inner">{surface}</div>
+      </div>
+    </div>
+  );
 }

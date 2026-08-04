@@ -2589,3 +2589,91 @@
   font-size: 11px; color: var(--text-400); white-space: nowrap;
 }
 .mdx-shell .crz-row-due.overdue { color: var(--error); }
+
+/* ─── AnA draft banner ───
+   Wrongly deleted with the AnA RAIL's styling and restored from f032b03^. The
+   `.ana-*` prefix made it look like rail chrome; it is not. `AnaDraftBanner`
+   renders inside a SURFACE — K510Surface.tsx:437, whenever a section has a
+   pending AnA draft — and its rules were scoped to `.mdx-shell`, not to
+   `.ana-rail`, so they applied at that call site and stopped applying when the
+   rail's rules went. Ten elements were left unstyled: the banner, its status
+   dot, label, summary, both buttons and the error row. */
+.mdx-shell .ana-draft-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: var(--accent-000);
+  border: 1px solid var(--accent-100);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--text-200);
+  transition: background var(--dur) var(--ease);
+}
+.mdx-shell .ana-draft-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mdx-shell .ana-draft-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-100);
+  flex-shrink: 0;
+}
+.mdx-shell .ana-draft-label { font-weight: 500; color: var(--accent-200); }
+.mdx-shell .ana-draft-summary {
+  color: var(--text-300);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.mdx-shell .ana-draft-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.mdx-shell .ana-draft-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.mdx-shell .ana-draft-btn.ghost {
+  background: transparent;
+  color: var(--text-300);
+  border-color: var(--bg-300);
+}
+.mdx-shell .ana-draft-btn.ghost:hover { color: var(--text-200); border-color: var(--text-500); }
+.mdx-shell .ana-draft-btn.primary {
+  background: var(--accent-100);
+  color: var(--text-000);
+  border-color: var(--accent-100);
+}
+.mdx-shell .ana-draft-btn.primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
+.mdx-shell .ana-draft-btn[disabled] { opacity: 0.6; cursor: progress; }
+.mdx-shell .ana-draft-btn .ana-draft-arrow svg { width: 12px; height: 12px; vertical-align: middle; }
+.mdx-shell .ana-draft-error {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--error-text, #b91c1c);
+  margin-top: 4px;
+}
+.mdx-shell .ana-draft-banner,
+.mdx-shell .ana-draft-btn { transition: none; }
