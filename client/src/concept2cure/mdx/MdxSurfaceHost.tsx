@@ -123,43 +123,59 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   /** The authoring shell is the one editor; the shell owns the layout swap. */
   const openEditor = React.useCallback((docType: string) => onNav(`document-authoring#${docType}`), [onNav]);
 
+  let surface: React.ReactNode;
   switch (nav) {
     case 'device-510k':
-      return <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={() => openEditor('k510')} />;
+      surface = <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={() => openEditor('k510')} />;
+      break;
     case 'device-pma':
-      return <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={() => openEditor('pma')} />;
+      surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={() => openEditor('pma')} />;
+      break;
     case 'device-cer':
-      return <CerSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <CerSurface program={programForContext} onAskAna={onAsk} />;
+      break;
     case 'device-diagnostics':
-      return (
+      surface = (
         <IvdSurface
           program={programForContext}
           onAskAna={onAsk}
           onOpenEditor={() => openEditor('device-diagnostics-workbench')}
         />
       );
+      break;
     case 'device-clinical-studies':
-      return <ClinicalStudiesSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <ClinicalStudiesSurface program={programForContext} onAskAna={onAsk} />;
+      break;
     case 'device-software':
-      return <SoftwareSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <SoftwareSurface program={programForContext} onAskAna={onAsk} />;
+      break;
     case 'device-engineering':
-      return <EngineeringSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} />;
+      break;
     case 'device-udi':
-      return <UdiSurface onAskAna={onAsk} />;
+      surface = <UdiSurface onAskAna={onAsk} />;
+      break;
     case 'device-postmarket':
-      return <PostmarketSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <PostmarketSurface program={programForContext} onAskAna={onAsk} />;
+      break;
     case 'device-presub':
-      return <PreSubManager onAskAna={onAsk} />;
+      surface = <PreSubManager onAskAna={onAsk} />;
+      break;
     case 'device-vault':
-      return <VaultSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <VaultSurface program={programForContext} onAskAna={onAsk} />;
+      break;
     case 'device-tasks':
-      return <TasksSurface onAskAna={onAsk} />;
+      surface = <TasksSurface onAskAna={onAsk} />;
+      break;
     case 'device-validation':
-      return <ValidationSurface onAskAna={onAsk} />;
+      surface = <ValidationSurface onAskAna={onAsk} />;
+      break;
     case 'device-submission':
-      return <SubmissionsSurface onAskAna={onAsk} />;
+      surface = <SubmissionsSurface onAskAna={onAsk} />;
+      break;
     case 'device-analytics':
-      return <AnalyticsSurface onAskAna={onAsk} />;
+      surface = <AnalyticsSurface onAskAna={onAsk} />;
+      break;
     case 'device-workstream':
     default:
       // The portfolio. Loading and failure are stated rather than rendered as
@@ -168,6 +184,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       if (liveProgramsResult.error) {
         return <div role="alert">Device program data is unavailable. {liveProgramsResult.error}</div>;
       }
-      return <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />;
+      surface = <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />;
+      break;
   }
 }

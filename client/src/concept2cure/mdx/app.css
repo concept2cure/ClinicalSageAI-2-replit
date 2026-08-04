@@ -66,22 +66,23 @@
 .mdx-shell[data-ana-open="false"] { grid-template-columns: var(--rail-expanded) 1fr var(--ana-seam); }
 .mdx-shell[data-collapsed="true"][data-ana-open="false"] { grid-template-columns: var(--rail-collapsed) 1fr var(--ana-seam); }
 
-/* ─── Embedded in the host shell ───
-   The host draws the rail and the topbar, so this app contributes its canvas
-   and its AnA rail only. The rail COLUMN collapses to zero rather than the
-   track list being redefined, because ~40 rules below place themselves with
-   `grid-column: 2` / `grid-column: 3` and would all have to move otherwise.
-   Height goes to 100% because the shell is now a child of the host's page area
-   rather than the viewport; 100vh here would push the canvas down past the
-   host's own topbar and produce a scrollbar on every device surface.
-   These sit AFTER the rules above so they win the ties at equal specificity. */
-.mdx-shell[data-embedded="true"] {
-  grid-template-columns: 0 1fr var(--ana-expanded);
+/* ─── Rendered as a surface inside the host shell ───
+   `.mdx-shell` is the SCOPE for all 1,012 rules below, and it is also the shell
+   grid. As a surface only the first job applies: the host draws the rail, the
+   topbar and the AnA rail, so the three-column grid at 100vh would put the
+   canvas in the rail slot and overflow the host's page area. This keeps the
+   scope and drops the layout. */
+.mdx-shell[data-surface="true"] {
+  display: block;
   height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
-.mdx-shell[data-embedded="true"][data-ana-open="false"] {
-  grid-template-columns: 0 1fr var(--ana-seam);
+.mdx-shell[data-surface="true"] > .page {
+  height: 100%;
+  overflow-y: auto;
 }
+
 
 /* ════════════════════════════════════════════════════════════
    Rail (left)

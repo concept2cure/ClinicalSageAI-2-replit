@@ -385,10 +385,22 @@ export function PdevApp({
     );
   }
 
-  // The canvas only. Sheets below are modals over it, not chrome, so they stay.
+  /*
+   * `.pdev-shell` is the scope every rule in app.css hangs off, so the class
+   * survives even though the shell does not — without it these surfaces render
+   * as unstyled markup. `data-surface` drops the shell's grid: the host draws
+   * the rail, the topbar and the AnA rail now.
+   *
+   * `.pdev-page` / `.pdev-page-inner` are the kit's content measure (max-width
+   * 1400, 20/28px padding), not chrome, so they stay too.
+   *
+   * Sheets render as siblings of the page — they are modals over the canvas.
+   */
   return (
-    <>
-      {surface}
+    <div className="pdev-shell" data-surface="true">
+      <div className="pdev-page">
+        <div className="pdev-page-inner">{surface}</div>
+      </div>
 
       {activeActivity && programId && (
         <PdevActivityDetail
@@ -457,6 +469,6 @@ export function PdevApp({
           submitError={snapshotError}
         />
       )}
-    </>
+    </div>
   );
 }
