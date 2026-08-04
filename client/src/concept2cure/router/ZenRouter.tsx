@@ -22,7 +22,14 @@ import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
-import MdxRoute from '../mdx/MdxRoute';
+// Lazy, matching PdevRoute below. MdxRoute statically imports four stylesheets
+// (app.css, pathway-tabs.css, files-tree.css, drafter.css — 4,683 lines), and
+// app.css is UNSCOPED: global `*`, `html, body, #root`, `body`, `button`,
+// `input, textarea`, `svg` resets plus a `:root` token block, and 264 class
+// names it shares with the v2 shell. As a static import that shipped in the
+// entry graph of every session, for every client type, whether or not a device
+// surface was ever opened. Lazy confines it to the chunk that needs it.
+const MdxRoute = lazy(() => import('../mdx/MdxRoute'));
 import { isFeatureEnabled } from '@/flags/featureFlags';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
@@ -230,7 +237,9 @@ export const ZenRouter: React.FC = () => {
             {() => (
               <ProtectedRoute>
                 <PageTransition>
-                  <MdxRoute />
+                  <Suspense fallback={<ZenLoadingScreen />}>
+                    <MdxRoute />
+                  </Suspense>
                 </PageTransition>
               </ProtectedRoute>
             )}

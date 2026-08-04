@@ -16,8 +16,27 @@
  * the identical hash-to-nav vocabulary the kit defined.
  */
 import React from 'react';
-import MdxRoute from '../../mdx/MdxRoute';
 import type { SurfaceViewProps } from '../surfaceViews';
+
+/**
+ * Lazy on purpose. MdxRoute statically imports four stylesheets — app.css,
+ * pathway-tabs.css, files-tree.css, drafter.css, 4,683 lines — and app.css is
+ * unscoped: global `*`, `html, body, #root`, `body`, `button`,
+ * `input, textarea` and `svg` resets, a `:root` token block, and 264 class
+ * names it shares with the v2 shell.
+ *
+ * Because this module is reached statically from surfaceViews.ts, which V2App
+ * imports at module scope, that CSS landed in the entry graph and applied to
+ * EVERY session for EVERY client type — a pharma user who never opens a device
+ * surface was still getting the MDX kit's body font and box-sizing. Deferring
+ * the import confines it to the chunk that actually needs it, which is also
+ * what PdevRoute already does.
+ *
+ * This does not fix the collisions while a device surface is open; scoping
+ * app.css to `.mdx-shell` is the fix for that. It removes the blast radius from
+ * every other surface in the product.
+ */
+const MdxRoute = React.lazy(() => import('../../mdx/MdxRoute'));
 
 /** Device surface id → the MDX app's initialNav (kit's MDX_SURFACE_HASH). */
 export const MDX_SURFACE_HASH: Record<string, string> = {
@@ -35,5 +54,15 @@ export function resolveDeviceWorkstreamSurface(surfaceId?: string): string {
 
 export function DeviceWorkstream({ surface }: SurfaceViewProps) {
   const hash = resolveDeviceWorkstreamSurface(surface?.id);
-  return <MdxRoute initialNav={hash} />;
+  return (
+    <React.Suspense
+      fallback={
+        <div className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>
+          Loading device workstream…
+        </div>
+      }
+    >
+      <MdxRoute initialNav={hash} />
+    </React.Suspense>
+  );
 }

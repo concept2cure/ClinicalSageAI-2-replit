@@ -30,6 +30,14 @@
   --ana: 380px;
   --ana-seam: 32px;
 
+  /* Fixed near-black for shadow tinting. Declared here because the shell USES it
+     (admin-access.css) while the only other declaration in the app graph is
+     mdx/app.css — so v2 was borrowing a token from the MDX kit and rendering
+     pure #000 through the fallback whenever that kit was not loaded. Not
+     --text-100: that inverts to #faf9f5 in dark mode, and a shadow must stay
+     dark in both. */
+  --black: #141413;
+
   /* kit elevation — canonical --shadow-* are Claude-flat (0-alpha); the kit
      menus/modals carry their own warm shadows (≤ .14 alpha, per kit README) */
   --v2-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / .04);
