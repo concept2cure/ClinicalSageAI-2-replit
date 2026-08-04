@@ -45,26 +45,6 @@
 .mdx-shell svg { display: block; }
 
 /* ─── Shell grid ─── */
-.mdx-shell {
-  display: grid;
-  grid-template-columns: var(--rail-expanded) 1fr var(--ana-expanded);
-  height: 100vh; width: 100%;
-  background: var(--bg-000); color: var(--text-100);
-
-  /* Re-homed from the kit's old global `body` rule when this sheet was scoped.
-     These are not resets — they are the kit's typography, and every surface
-     below inherits them. Dropping them with the rest of the document-level
-     selectors would have left MDX rendering at the host's font and size. The
-     `margin: 0` that sat alongside them is gone on purpose: it applied to the
-     document body, and this is a div. */
-  font-family: var(--font-sans);
-  font-size: 13px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-.mdx-shell[data-collapsed="true"] { grid-template-columns: var(--rail-collapsed) 1fr var(--ana-expanded); }
-.mdx-shell[data-ana-open="false"] { grid-template-columns: var(--rail-expanded) 1fr var(--ana-seam); }
-.mdx-shell[data-collapsed="true"][data-ana-open="false"] { grid-template-columns: var(--rail-collapsed) 1fr var(--ana-seam); }
 
 /* ─── Rendered as a surface inside the host shell ───
    `.mdx-shell` is the SCOPE for all 1,012 rules below, and it is also the shell
@@ -87,194 +67,19 @@
 /* ════════════════════════════════════════════════════════════
    Rail (left)
    ════════════════════════════════════════════════════════════ */
-.mdx-shell .rail {
-  grid-column: 1; display: flex; flex-direction: column;
-  background: var(--bg-100); border-right: 1px solid var(--border);
-  overflow: hidden;
-}
-.mdx-shell .rail-top {
-  display: flex; align-items: center; justify-content: space-between;
-  height: var(--topbar); padding: 0 12px; border-bottom: 1px solid var(--border);
-}
-.mdx-shell .rail-logo { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.mdx-shell .rail-logo img { width: 24px; height: 24px; flex-shrink: 0; }
-.mdx-shell .rail-logo-text {
-  font-weight: 600; font-size: 13px; color: var(--text-100);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.mdx-shell .rail-logo-text span { color: var(--accent-100); font-weight: 500; }
-.mdx-shell[data-collapsed="true"] .rail-logo-text { display: none; }
-
-.mdx-shell .rail-collapse {
-  width: 26px; height: 26px; border-radius: var(--radius-md);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-300); flex-shrink: 0;
-}
-.mdx-shell .rail-collapse:hover { background: var(--bg-200); color: var(--text-100); }
-
-.mdx-shell .rail-section {
-  padding: 12px 16px 6px; font-size: 10px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-400);
-}
-.mdx-shell[data-collapsed="true"] .rail-section { opacity: 0; height: 8px; padding: 0; }
-
-.mdx-shell .rail-nav {
-  display: flex; flex-direction: column; gap: 1px; padding: 0 8px;
-  overflow-y: auto;
-}
-.mdx-shell .nav-item {
-  display: flex; align-items: center; gap: 10px;
-  height: 30px; padding: 0 8px; border-radius: var(--radius-md);
-  color: var(--text-200); font-size: 13px; transition: background var(--dur) var(--ease);
-  white-space: nowrap; overflow: hidden;
-}
-.mdx-shell .nav-item .ico { width: 16px; height: 16px; flex-shrink: 0; color: var(--text-400); }
-.mdx-shell .nav-item .lbl { overflow: hidden; text-overflow: ellipsis; }
-.mdx-shell .nav-item:hover { background: var(--bg-200); color: var(--text-100); }
-.mdx-shell .nav-item:hover .ico { color: var(--text-200); }
-.mdx-shell .nav-item[aria-current] {
-  background: var(--accent-000); color: var(--accent-200); font-weight: 500;
-}
-.mdx-shell .nav-item[aria-current] .ico { color: var(--accent-200); }
-.mdx-shell[data-collapsed="true"] .nav-item { padding: 0; justify-content: center; }
-.mdx-shell[data-collapsed="true"] .nav-item .lbl { display: none; }
-
-.mdx-shell .rail-spacer { flex: 1; }
-.mdx-shell .rail-account {
-  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-  border-top: 1px solid var(--border); min-width: 0;
-}
-.mdx-shell .rail-account:hover { background: var(--bg-200); }
-.mdx-shell .avatar {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--accent-100); color: var(--text-000);
-  font-size: 10px; font-weight: 600;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.mdx-shell .who { flex: 1; min-width: 0; }
-.mdx-shell .who .name { font-size: 12px; color: var(--text-100); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mdx-shell .who .plan { font-size: 10px; color: var(--text-400); }
-.mdx-shell .rail-account .chev { color: var(--text-400); flex-shrink: 0; }
-.mdx-shell[data-collapsed="true"] .who,
-.mdx-shell[data-collapsed="true"] .rail-account .chev { display: none; }
 
 /* ════════════════════════════════════════════════════════════
    Main column (center)
    ════════════════════════════════════════════════════════════ */
-.mdx-shell .main {
-  grid-column: 2; display: flex; flex-direction: column;
-  min-width: 0; background: var(--bg-000);
-}
 
 /* TopBar ───────────────────────────────────────────────────── */
-.mdx-shell .topbar {
-  height: var(--topbar); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 12px; padding: 0 16px;
-  background: var(--bg-000); flex-shrink: 0;
-}
-.mdx-shell .crumbs { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-400); }
-.mdx-shell .crumbs .sep { color: var(--text-500); }
-.mdx-shell .crumbs .here { color: var(--text-100); font-weight: 500; }
-.mdx-shell .tb-spacer { flex: 1; }
-.mdx-shell .tb-pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  height: 28px; padding: 0 10px; border: 1px solid var(--border);
-  border-radius: var(--radius-md); font-size: 12px; color: var(--text-200);
-  background: var(--bg-050);
-}
-.mdx-shell .tb-pill:hover { background: var(--bg-100); border-color: var(--border-strong); }
-.mdx-shell .tb-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-100); }
-
-.mdx-shell .tb-actions { display: flex; align-items: center; gap: 4px; }
-.mdx-shell .tb-btn {
-  width: 28px; height: 28px; border-radius: var(--radius-md);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-400);
-}
-.mdx-shell .tb-btn:hover { background: var(--bg-100); color: var(--text-100); }
 
 /* ── Notifications bell + dropdown ────────────────────────────────────
    A real control: the badge reflects the live unread count and the
    panel lists governed notifications. Critical severity reads red, not
    the same grey as an informational one. */
-.mdx-shell .tb-notif { position: relative; }
-.mdx-shell .tb-notif .tb-btn { position: relative; }
-.mdx-shell .tb-notif-badge {
-  position: absolute; top: -2px; right: -2px;
-  min-width: 15px; height: 15px; padding: 0 3px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 600; line-height: 1;
-  color: #fff; background: var(--error, #d92d20);
-  border-radius: 8px; border: 1.5px solid var(--bg-000);
-}
-.mdx-shell .tb-notif-panel {
-  position: absolute; top: calc(100% + 6px); right: 0;
-  width: 340px; max-height: 460px; overflow: auto;
-  background: var(--bg-000);
-  border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
-  z-index: 50;
-}
-.mdx-shell .tb-notif-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 12px; border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; background: var(--bg-000);
-}
-.mdx-shell .tb-notif-title { font-size: 13px; font-weight: 600; color: var(--text-100); }
-.mdx-shell .tb-notif-allread {
-  font-size: 11px; color: var(--text-300);
-  transition: color var(--dur) ease-out;
-}
-.mdx-shell .tb-notif-allread:hover { color: var(--accent-100); }
-.mdx-shell .tb-notif-list { list-style: none; margin: 0; padding: 4px; }
-.mdx-shell .tb-notif-row {
-  display: flex; align-items: flex-start; gap: 8px;
-  padding: 8px; border-radius: var(--radius-md);
-}
-.mdx-shell .tb-notif-row.unread { background: var(--bg-050); }
-.mdx-shell .tb-notif-dot {
-  width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
-  background: var(--text-400);
-}
-.mdx-shell .tb-notif-dot.sev-warning { background: var(--warning, #f79009); }
-.mdx-shell .tb-notif-dot.sev-critical { background: var(--error, #d92d20); }
-.mdx-shell .tb-notif-body { flex: 1; min-width: 0; }
-.mdx-shell .tb-notif-row-title { font-size: 12px; color: var(--text-100); }
-.mdx-shell .tb-notif-row-text { font-size: 11px; color: var(--text-400); margin-top: 2px; line-height: 1.4; }
-.mdx-shell .tb-notif-read {
-  width: 22px; height: 22px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-400); border-radius: var(--radius-sm);
-}
-.mdx-shell .tb-notif-read:hover { background: var(--bg-200); color: var(--text-100); }
 
 /* Tab bar ──────────────────────────────────────────────────── */
-.mdx-shell .tabbar {
-  height: var(--tabbar); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 0; padding: 0 12px;
-  background: var(--bg-000); flex-shrink: 0; overflow-x: auto;
-}
-.mdx-shell .tab {
-  display: flex; align-items: center; gap: 6px;
-  height: var(--tabbar); padding: 0 12px; font-size: 12px;
-  color: var(--text-300); white-space: nowrap;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.mdx-shell .tab .ico { color: var(--text-400); }
-.mdx-shell .tab:hover { color: var(--text-100); }
-.mdx-shell .tab:hover .ico { color: var(--text-200); }
-.mdx-shell .tab[aria-current] {
-  color: var(--text-100); font-weight: 500;
-  border-bottom-color: var(--accent-100);
-}
-.mdx-shell .tab[aria-current] .ico { color: var(--accent-100); }
-.mdx-shell .tab .count {
-  display: inline-block; padding: 1px 6px; border-radius: 99px;
-  background: var(--bg-200); color: var(--text-300);
-  font-size: 10px; font-variant-numeric: tabular-nums;
-}
-.mdx-shell .tab[aria-current] .count { background: var(--accent-000); color: var(--accent-200); }
 
 /* Page content ─────────────────────────────────────────────── */
 .mdx-shell .page { flex: 1; overflow-y: auto; }
@@ -824,295 +629,27 @@
    ════════════════════════════════════════════════════════════ */
 
 /* ───── Seam (collapsed) ───── */
-.mdx-shell .ana-seam {
-  grid-column: 3;
-  display: flex; align-items: stretch; justify-content: center;
-  background: var(--bg-050);
-  border-left: 1px solid var(--border);
-}
-.mdx-shell .ana-seam-btn {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 10px; padding: 0;
-  color: var(--text-400);
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-  writing-mode: vertical-rl;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-.mdx-shell .ana-seam-btn:hover { background: var(--bg-100); color: var(--text-200); }
-.mdx-shell .ana-seam-mark {
-  writing-mode: horizontal-tb;
-  color: var(--accent-100);
-  font-size: 14px; line-height: 1;
-  margin-bottom: 2px;
-}
-.mdx-shell .ana-seam-label {
-  font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
-  text-transform: none;
-}
 /* When collapsed, hide the open-state rail entirely. */
-.mdx-shell[data-ana-open="false"] .ana-rail { display: none; }
-.mdx-shell[data-ana-open="true"]  .ana-seam { display: none; }
 
 /* ───── Rail (open) ───── */
-.mdx-shell .ana-rail {
-  grid-column: 3;
-  display: flex; flex-direction: column;
-  background: var(--bg-050); border-left: 1px solid var(--border);
-  overflow: hidden;
-}
-.mdx-shell .ana-rail-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  height: var(--topbar); padding: 0 12px 0 14px; border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.mdx-shell .ana-id { display: flex; align-items: center; gap: 10px; }
-.mdx-shell .ana-id-mark {
-  color: var(--accent-100); font-size: 15px; line-height: 1;
-  width: 22px; height: 22px; border-radius: var(--radius-md);
-  background: var(--accent-000);
-  display: flex; align-items: center; justify-content: center;
-}
-.mdx-shell .ana-id-text { display: flex; flex-direction: column; gap: 1px; }
-.mdx-shell .ana-id-name { font-size: 13px; font-weight: 600; color: var(--text-100); letter-spacing: -0.005em; }
-.mdx-shell .ana-id-model { font-size: 10px; color: var(--text-400); font-weight: 500; font-variant-numeric: tabular-nums; }
-.mdx-shell .ana-rail-actions { display: flex; gap: 4px; }
 
 /* Mode row — user picks intent, resolves to a Claude model server-side. */
-.mdx-shell .ana-mode-row {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 4px; padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  background: var(--bg-000);
-}
-.mdx-shell .ana-mode-btn {
-  display: flex; flex-direction: column; gap: 1px;
-  padding: 8px 6px;
-  border: 1px solid var(--border); border-radius: var(--radius-md);
-  background: var(--bg-000);
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-  text-align: center;
-  cursor: pointer;
-}
-.mdx-shell .ana-mode-btn .lbl { font-size: 11px; font-weight: 500; color: var(--text-200); }
-.mdx-shell .ana-mode-btn .sub { font-size: 9px; color: var(--text-400); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-.mdx-shell .ana-mode-btn:hover { background: var(--bg-050); border-color: var(--border-strong); }
-.mdx-shell .ana-mode-btn.on { background: var(--accent-000); border-color: var(--accent-muted); }
-.mdx-shell .ana-mode-btn.on .lbl { color: var(--accent-200); font-weight: 600; }
-.mdx-shell .ana-mode-btn.on .sub { color: var(--accent-200); opacity: 0.75; }
 
 /* Body */
-.mdx-shell .ana-rail-body {
-  flex: 1; overflow-y: auto; padding: 14px 12px;
-  display: flex; flex-direction: column; gap: 10px;
-}
-.mdx-shell .ana-context {
-  background: var(--accent-000); border: 1px solid var(--accent-muted);
-  border-radius: var(--radius-md); padding: 10px 12px;
-}
-.mdx-shell .ana-context .lbl { font-size: 10px; color: var(--accent-200); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.mdx-shell .ana-context .val { font-size: 12px; color: var(--text-100); margin-top: 4px; line-height: 1.4; font-weight: 500; }
-.mdx-shell .ana-context .sub { font-size: 11px; color: var(--text-300); margin-top: 2px; }
-
-.mdx-shell .ana-section-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--text-400); font-weight: 600;
-  padding: 4px 2px;
-}
-
-.mdx-shell .ana-suggestion {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 12px; background: var(--bg-000);
-  border: 1px solid var(--border); border-radius: var(--radius-md);
-  font-size: 12px; color: var(--text-200); text-align: left;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-  cursor: pointer;
-}
-.mdx-shell .ana-suggestion:hover { border-color: var(--accent-muted); background: var(--accent-000); color: var(--accent-200); }
-.mdx-shell .ana-suggestion .ico { color: var(--text-400); flex-shrink: 0; }
-.mdx-shell .ana-suggestion:hover .ico { color: var(--accent-200); }
-
-.mdx-shell .ana-empty {
-  font-size: 12px; color: var(--text-400); line-height: 1.5;
-  padding: 8px 12px; border-radius: var(--radius-md);
-  background: var(--bg-000); border: 1px dashed var(--border);
-}
 
 /* Thread */
-.mdx-shell .ana-msg { font-size: 12px; line-height: 1.55; color: var(--text-200); }
-.mdx-shell .ana-msg .who {
-  font-size: 10px; color: var(--text-400); font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px;
-}
-.mdx-shell .ana-msg .body {
-  padding: 10px 12px; background: var(--bg-000);
-  border: 1px solid var(--border); border-radius: var(--radius-md);
-}
-.mdx-shell .ana-msg.user .body { background: var(--accent-000); border-color: var(--accent-muted); color: var(--accent-200); }
 
 /* Composer */
-.mdx-shell .ana-rail-foot {
-  border-top: 1px solid var(--border); padding: 10px 12px 8px;
-  background: var(--bg-050); flex-shrink: 0;
-}
-.mdx-shell .ana-composer {
-  display: flex; align-items: flex-end; gap: 6px;
-  background: var(--bg-000); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 8px;
-  transition: border-color var(--dur) var(--ease);
-}
-.mdx-shell .ana-composer:focus-within { border-color: var(--accent-muted); box-shadow: 0 0 0 3px var(--accent-000); }
-.mdx-shell .ana-composer textarea {
-  flex: 1; resize: none; min-height: 20px; max-height: 120px;
-  font-size: 12px; line-height: 1.5; color: var(--text-100);
-  border: 0; background: transparent; outline: none;
-  font-family: inherit;
-}
-.mdx-shell .ana-composer textarea::placeholder { color: var(--text-400); }
-.mdx-shell .ana-send {
-  width: 26px; height: 26px; border-radius: var(--radius-md);
-  background: var(--accent-100); color: var(--text-000);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  border: none; cursor: pointer;
-}
-.mdx-shell .ana-send:hover { background: var(--accent-200); }
-.mdx-shell .ana-send:disabled { background: var(--bg-200); color: var(--text-400); cursor: default; }
-.mdx-shell .ana-foot-meta {
-  margin-top: 6px;
-  font-size: 10px; color: var(--text-400); text-align: right;
-  letter-spacing: 0.02em;
-}
 
 /* ════════════════════════════════════════════════════════════
    ⌘K command palette
    ════════════════════════════════════════════════════════════ */
-.mdx-shell .cmdk-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(20, 20, 19, 0.35);
-  backdrop-filter: blur(2px);
-  display: flex; align-items: flex-start; justify-content: center;
-  padding-top: 12vh;
-  z-index: 100;
-  animation: cmdk-fade 120ms var(--ease);
-}
 @keyframes cmdk-fade { from { opacity: 0; } to { opacity: 1; } }
-.mdx-shell .cmdk {
-  width: min(640px, calc(100vw - 48px));
-  background: var(--bg-000);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 24px 48px -12px rgba(20, 20, 19, 0.25), 0 0 0 1px var(--border);
-  overflow: hidden;
-  display: flex; flex-direction: column;
-  max-height: 70vh;
-  animation: cmdk-rise 120ms var(--ease);
-}
 @keyframes cmdk-rise { from { transform: translateY(4px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.mdx-shell .cmdk-input-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-}
-.mdx-shell .cmdk-leading { color: var(--text-400); display: flex; }
-.mdx-shell .cmdk-input {
-  flex: 1; border: 0; background: transparent; outline: none;
-  font-size: 14px; color: var(--text-100); font-family: inherit;
-}
-.mdx-shell .cmdk-input::placeholder { color: var(--text-400); }
-.mdx-shell .cmdk-mode-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 9px; border-radius: 99px;
-  background: var(--accent-000); color: var(--accent-200);
-  font-size: 11px; font-weight: 500;
-  border: 1px solid var(--accent-muted);
-}
-.mdx-shell .cmdk-mode-chip .dot { width: 6px; height: 6px; border-radius: 99px; background: var(--accent-100); }
-
-.mdx-shell .cmdk-context {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 14px;
-  background: var(--bg-050);
-  border-bottom: 1px solid var(--border);
-  font-size: 11px;
-}
-.mdx-shell .cmdk-context .lbl {
-  color: var(--text-400); font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.05em; font-size: 10px;
-}
-.mdx-shell .cmdk-context .val { color: var(--text-200); }
-
-.mdx-shell .cmdk-list { flex: 1; overflow-y: auto; padding: 6px; }
-.mdx-shell .cmdk-item {
-  width: 100%;
-  display: grid; grid-template-columns: 24px 1fr auto;
-  align-items: center; gap: 10px;
-  padding: 9px 10px; border-radius: var(--radius-md);
-  text-align: left; cursor: pointer;
-  border: 0; background: transparent;
-  transition: background var(--dur) var(--ease);
-}
-.mdx-shell .cmdk-item:hover,
-.mdx-shell .cmdk-item.on { background: var(--bg-100); }
-.mdx-shell .cmdk-item.on { outline: 1px solid var(--border-strong); }
-.mdx-shell .cmdk-kind { display: flex; color: var(--text-400); width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: var(--radius-sm); background: var(--bg-050); }
-.mdx-shell .cmdk-kind[data-kind="ask"],
-.mdx-shell .cmdk-kind[data-kind="suggest"] { color: var(--accent-100); background: var(--accent-000); }
-.mdx-shell .cmdk-kind[data-kind="tool"] { color: var(--ai); background: var(--ai-muted); }
-.mdx-shell .cmdk-kind[data-kind="nav"] { color: var(--text-200); }
-.mdx-shell .cmdk-kind[data-kind="hint"] { opacity: 0.6; }
-.mdx-shell .cmdk-label { font-size: 13px; color: var(--text-100); font-weight: 500; }
-.mdx-shell .cmdk-hint { font-size: 11px; color: var(--text-400); }
-
-.mdx-shell .cmdk-foot {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--border);
-  background: var(--bg-050);
-  font-size: 10px; color: var(--text-400);
-}
-.mdx-shell .cmdk-foot kbd {
-  display: inline-block; padding: 1px 5px; margin: 0 2px;
-  background: var(--bg-000); border: 1px solid var(--border);
-  border-radius: 3px; font-size: 10px;
-  font-family: ui-monospace, SFMono-Regular, monospace;
-  color: var(--text-300);
-}
-.mdx-shell .cmdk-foot-spacer { flex: 1; }
-.mdx-shell .cmdk-mode-btn {
-  border: 0; background: transparent; cursor: pointer;
-  padding: 2px 6px; border-radius: var(--radius-sm);
-  font-size: 10px; color: var(--text-300);
-  font-family: inherit;
-}
-.mdx-shell .cmdk-mode-btn:hover { background: var(--bg-100); color: var(--text-100); }
-.mdx-shell .cmdk-mode-btn.on { background: var(--accent-000); color: var(--accent-200); font-weight: 500; }
 
 /* ════════════════════════════════════════════════════════════
    TopBar ⌘K trigger (replaces the old search icon)
    ════════════════════════════════════════════════════════════ */
-.mdx-shell .tb-cmdk {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 5px 8px 5px 10px;
-  background: var(--bg-050); border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  font-size: 12px; color: var(--text-300);
-  cursor: pointer;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-  min-width: 220px; justify-content: flex-start;
-  margin-right: 4px;
-}
-.mdx-shell .tb-cmdk:hover { border-color: var(--border-strong); background: var(--bg-000); color: var(--text-100); }
-.mdx-shell .tb-cmdk .ico { display: flex; color: var(--text-400); }
-.mdx-shell .tb-cmdk .lbl { flex: 1; text-align: left; }
-.mdx-shell .tb-cmdk .kbd {
-  padding: 1px 6px; border-radius: 3px;
-  background: var(--bg-000); border: 1px solid var(--border);
-  font-size: 10px; color: var(--text-400);
-  font-family: ui-monospace, SFMono-Regular, monospace;
-}
 
 /* ════════════════════════════════════════════════════════════
    Inline "Ask AnA" chip (hover-revealed affordance on rows)
@@ -1842,86 +1379,7 @@
    Single-row layout: meta + actions. Reuses existing tokens; the
    only colored element is the Accept button (Claude orange).
    ─────────────────────────────────────────────────────────────────── */
-.mdx-shell .ana-draft-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  margin: 8px 0;
-  background: var(--accent-000);
-  border: 1px solid var(--accent-100);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  color: var(--text-200);
-  transition: background var(--dur) var(--ease);
-}
-.mdx-shell .ana-draft-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.mdx-shell .ana-draft-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent-100);
-  flex-shrink: 0;
-}
-.mdx-shell .ana-draft-label { font-weight: 500; color: var(--accent-200); }
-.mdx-shell .ana-draft-summary {
-  color: var(--text-300);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-.mdx-shell .ana-draft-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.mdx-shell .ana-draft-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition:
-    background var(--dur) var(--ease),
-    color var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
-}
-.mdx-shell .ana-draft-btn.ghost {
-  background: transparent;
-  color: var(--text-300);
-  border-color: var(--bg-300);
-}
-.mdx-shell .ana-draft-btn.ghost:hover { color: var(--text-200); border-color: var(--text-500); }
-.mdx-shell .ana-draft-btn.primary {
-  background: var(--accent-100);
-  color: var(--text-000);
-  border-color: var(--accent-100);
-}
-.mdx-shell .ana-draft-btn.primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
-.mdx-shell .ana-draft-btn[disabled] { opacity: 0.6; cursor: progress; }
-.mdx-shell .ana-draft-btn .ana-draft-arrow svg { width: 12px; height: 12px; vertical-align: middle; }
-.mdx-shell .ana-draft-error {
-  flex-basis: 100%;
-  font-size: 12px;
-  color: var(--error-text, #b91c1c);
-  margin-top: 4px;
-}
 @media (prefers-reduced-motion: reduce) {
-  .mdx-shell .ana-draft-banner,
-.mdx-shell .ana-draft-btn { transition: none; }
 }
 
 
@@ -3073,22 +2531,6 @@
 /* Sample-mode toggle. Muted when off so it reads as a developer
    affordance; unmistakable when on, because the cost of a user not
    realising they are looking at example data is a misread submission. */
-.mdx-shell .tb-sample {
-  display: flex; align-items: center; gap: 6px;
-  height: 26px; padding: 0 10px; margin-right: 8px;
-  font-size: 11px; font-weight: 500;
-  color: var(--text-400);
-  border: 1px solid var(--border); border-radius: var(--radius-md);
-  transition: color var(--dur) ease-out, background var(--dur) ease-out,
-              border-color var(--dur) ease-out;
-}
-.mdx-shell .tb-sample svg { width: 13px; height: 13px; }
-.mdx-shell .tb-sample:hover { color: var(--text-200); background: var(--bg-200); }
-.mdx-shell .tb-sample.on {
-  color: var(--warning, var(--text-100));
-  background: var(--warning-muted, var(--bg-200));
-  border-color: var(--warning, var(--border-strong));
-}
 
 /* ════════════════════════════════════════════════════════════
    CLIENT REVIEW ROOM (MDX-CLIENT-01)

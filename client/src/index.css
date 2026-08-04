@@ -35,6 +35,14 @@
   --accent-100: var(--accent-main-100);
   --accent-200: var(--accent-main-200);
 
+  /* Shadow base for the kits' warm elevation. Canonical --shadow-* are
+     Claude-flat (0-alpha); the kit menus and modals mix their own shadow from a
+     near-black at low alpha. NOT --text-100: that inverts to #faf9f5 in dark
+     mode and a shadow has to stay dark in both. Both v2 and the device kit read
+     it, so it is declared once here rather than twice in stylesheets that can
+     load independently and disagree. */
+  --black: #141413;
+
   --dur: var(--dur-normal);
 
   --border-light: var(--border-subtle, var(--border));
