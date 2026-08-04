@@ -128,9 +128,34 @@ export interface AppProps {
    *  fixtures carry only device/program ids (not project ids), so this must be
    *  supplied by the host; when absent, uploads stay org-scoped. */
   projectId?: string;
+  /**
+   * Mounted inside a host shell that already draws a rail and a topbar.
+   *
+   * Five v2 surfaces (device-510k, device-cer, device-diagnostics,
+   * device-submission, device-workstream) render this app through
+   * `v2/surfaces/DeviceWorkstream`, i.e. INSIDE `.c2c-v2 .shell` — which draws
+   * its own `<Rail>` and `<TopBar>` unconditionally. Both shells were drawing
+   * both, so those surfaces shipped with two rails and two topbars stacked.
+   * ZenRouter's PDEV route already names this hazard: "the kit owns its own
+   * Rail / TopBar / AnaDock, so keep it out of the v2 shell (double-rail…)".
+   * The MDX path never got the same treatment.
+   *
+   * When embedded, the host owns the chrome and this app contributes only its
+   * canvas. The AnA rail STAYS: `surfaceViews` marks these surfaces
+   * `hideAna: true`, which is documented as "the surface carries its own".
+   *
+   * The cost, stated rather than discovered later: the MDX rail reaches 15
+   * destinations and the TabBar only 5, so from an embedded surface the other
+   * ten (vault, software, validation, analytics, clinical-studies, pma, …) are
+   * no longer one click away. They remain reachable at the standalone
+   * `/concept2cure/mdx` route, which is not embedded and keeps the full rail.
+   * Routing them through the v2 rail is the real convergence and is separate
+   * work — it needs v2 IA decisions, not a prop.
+   */
+  embedded?: boolean;
 }
 
-export function App({ initialNav, projectName, onOpenAuthoring, projectId }: AppProps = {}) {
+export function App({ initialNav, projectName, onOpenAuthoring, projectId, embedded }: AppProps = {}) {
   const [activeNav,    setActiveNav]    = React.useState<string>(() =>
     resolveMdxSurfaceId(initialNav ?? getStored('mdx.activeNav', 'overview')),
   );
@@ -345,22 +370,34 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
   return (
     <div
       className="mdx-shell"
-      data-collapsed={railCollapsed}
+      data-embedded={embedded || undefined}
+      // No rail to collapse when the host draws it, and leaving the attribute
+      // on would let `[data-collapsed="true"]` fight the embedded grid rule at
+      // equal specificity.
+      data-collapsed={embedded ? undefined : railCollapsed}
       data-ana-open={anaOpen}
     >
-      <Rail
-        activeNav={activeNav}
-        setActiveNav={setActiveNav}
-        collapsed={railCollapsed}
-        setCollapsed={setRailCollapsed}
-        user={shellUser}
-      />
-      <main className="main">
-        <TopBar
-          hereLabel={hereLabel}
-          program={programForContext}
-          onOpenPalette={() => setCmdkOpen(true)}
+      {!embedded && (
+        <Rail
+          activeNav={activeNav}
+          setActiveNav={setActiveNav}
+          collapsed={railCollapsed}
+          setCollapsed={setRailCollapsed}
+          user={shellUser}
         />
+      )}
+      <main className="main">
+        {/* The host's topbar already carries breadcrumbs and the palette. */}
+        {!embedded && (
+          <TopBar
+            hereLabel={hereLabel}
+            program={programForContext}
+            onOpenPalette={() => setCmdkOpen(true)}
+          />
+        )}
+        {/* Kept when embedded: these are workstream tabs, not shell chrome, and
+            they are the only in-canvas navigation left once the rail is the
+            host's. */}
         <TabBar activeNav={activeNav} setActiveNav={setActiveNav} programs={programs} />
         <div className="page" data-screen-label={`MDX · ${hereLabel}`}>
           <div className="page-inner">{surface}</div>

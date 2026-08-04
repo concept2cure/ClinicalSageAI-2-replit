@@ -27,15 +27,19 @@ export interface MdxRouteProps {
   /** Active project id from the host, forwarded so AnA chat uploads scope into
    *  that project's memory. */
   projectId?: string;
+  /** Set when the host shell already draws a rail and a topbar, so this kit
+   *  does not draw a second pair. See `AppProps.embedded`. */
+  embedded?: boolean;
 }
 
-export default function MdxRoute({ initialNav, projectName, onOpenAuthoring, projectId }: MdxRouteProps = {}) {
+export default function MdxRoute({ initialNav, projectName, onOpenAuthoring, projectId, embedded }: MdxRouteProps = {}) {
   return (
     <App
       initialNav={initialNav}
       projectName={projectName}
       onOpenAuthoring={onOpenAuthoring}
       projectId={projectId}
+      embedded={embedded}
     />
   );
 }

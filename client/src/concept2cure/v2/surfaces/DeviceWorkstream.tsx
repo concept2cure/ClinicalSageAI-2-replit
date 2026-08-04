@@ -32,9 +32,9 @@ import type { SurfaceViewProps } from '../surfaceViews';
  * the import confines it to the chunk that actually needs it, which is also
  * what PdevRoute already does.
  *
- * This does not fix the collisions while a device surface is open; scoping
- * app.css to `.mdx-shell` is the fix for that. It removes the blast radius from
- * every other surface in the product.
+ * app.css has since been scoped to `.mdx-shell`, so the collisions are closed
+ * too; the lazy boundary stays because the 4,683 lines still do not belong in
+ * the entry graph of a session that never opens a device surface.
  */
 const MdxRoute = React.lazy(() => import('../../mdx/MdxRoute'));
 
@@ -62,7 +62,11 @@ export function DeviceWorkstream({ surface }: SurfaceViewProps) {
         </div>
       }
     >
-      <MdxRoute initialNav={hash} />
+      {/* embedded: this renders INSIDE `.c2c-v2 .shell`, which already draws a
+          Rail and a TopBar. Without it the surface stacks two of each — the
+          double-rail hazard ZenRouter's PDEV route calls out and avoids by
+          mounting outside the v2 shell. */}
+      <MdxRoute initialNav={hash} embedded />
     </React.Suspense>
   );
 }

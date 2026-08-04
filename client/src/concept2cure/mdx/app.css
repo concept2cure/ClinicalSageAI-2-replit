@@ -66,6 +66,23 @@
 .mdx-shell[data-ana-open="false"] { grid-template-columns: var(--rail-expanded) 1fr var(--ana-seam); }
 .mdx-shell[data-collapsed="true"][data-ana-open="false"] { grid-template-columns: var(--rail-collapsed) 1fr var(--ana-seam); }
 
+/* ─── Embedded in the host shell ───
+   The host draws the rail and the topbar, so this app contributes its canvas
+   and its AnA rail only. The rail COLUMN collapses to zero rather than the
+   track list being redefined, because ~40 rules below place themselves with
+   `grid-column: 2` / `grid-column: 3` and would all have to move otherwise.
+   Height goes to 100% because the shell is now a child of the host's page area
+   rather than the viewport; 100vh here would push the canvas down past the
+   host's own topbar and produce a scrollbar on every device surface.
+   These sit AFTER the rules above so they win the ties at equal specificity. */
+.mdx-shell[data-embedded="true"] {
+  grid-template-columns: 0 1fr var(--ana-expanded);
+  height: 100%;
+}
+.mdx-shell[data-embedded="true"][data-ana-open="false"] {
+  grid-template-columns: 0 1fr var(--ana-seam);
+}
+
 /* ════════════════════════════════════════════════════════════
    Rail (left)
    ════════════════════════════════════════════════════════════ */
