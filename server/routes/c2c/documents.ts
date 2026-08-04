@@ -31,6 +31,34 @@
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { writeMutation, recordGovernedAction } from './actions.js';
+import { detectSpans } from '../../services/sentenceTraceabilityService.js';
+import {
+  replaceAuthorSpans,
+  assertLineageCoversContent,
+} from '../../services/clinical-regulatory-evidence/span-lineage.service.js';
+
+/**
+ * The canonical plain text of a c2c section, for lineage purposes.
+ *
+ * `c2c_document_sections.content` is jsonb — `{ paragraphs: [{ id, text, … }] }`
+ * — while span lineage addresses half-open character ranges over a string. This
+ * is the one function that decides how that jsonb becomes those characters, and
+ * it MUST be the only one: spans are recorded against the string it returns and
+ * later verified against the string it returns, so any second serialisation
+ * would silently shift every offset and make provenance point at the wrong words.
+ *
+ * Paragraphs are joined with a blank line, which is how the editor renders them.
+ * Non-string or absent text contributes nothing rather than "undefined".
+ */
+export function sectionPlainText(content: unknown): string {
+  if (!content || typeof content !== 'object') return '';
+  const paras = (content as { paragraphs?: unknown }).paragraphs;
+  if (!Array.isArray(paras)) return '';
+  return paras
+    .map((p) => (p && typeof p === 'object' ? (p as { text?: unknown }).text : undefined))
+    .filter((t): t is string => typeof t === 'string')
+    .join('\n\n');
+}
 
 const router = Router();
 
@@ -511,6 +539,46 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         surface: 'api',
       });
 
+      // ── Lineage gate ───────────────────────────────────────────────────────
+      //
+      // The same invariant PATCH /api/authoring/sections/:sectionId enforces:
+      // content and its provenance commit together or neither does. Until now
+      // this route had no gate at all, so the governed store — the system of
+      // record for a regulatory filing — was the one write path where text could
+      // land with nothing recorded about where it came from. Anything reading
+      // lineage would report full coverage of the spans it happened to have and
+      // say nothing about the rest, which is worse than reporting none.
+      //
+      // Inside the existing transaction on purpose: a refused save must leave no
+      // section row behind.
+      if (content !== undefined) {
+        const plain = sectionPlainText(content);
+        if (plain.trim().length > 0) {
+          const ref = {
+            documentTable: 'c2c_document_sections',
+            // bigserial id -> the lineage table's text document_id.
+            documentId: String(row.id),
+          };
+          const spans = detectSpans(plain, 'clause').map((s) => ({
+            charStart: s.charStart,
+            charEnd: s.charEnd,
+            spanText: s.text,
+          }));
+
+          await replaceAuthorSpans(
+            orgId,
+            ref,
+            spans,
+            { assertedBy: String(userId), createdBy: String(userId) },
+            client,
+          );
+
+          // Ask the database what it is about to commit rather than trusting
+          // that the writer not throwing means the rows say what they should.
+          await assertLineageCoversContent(orgId, ref, plain, client);
+        }
+      }
+
       await client.query('COMMIT');
 
       return res.json(row);
@@ -522,6 +590,18 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
     }
   } catch (err: unknown) {
     console.error('[c2c/documents] PATCH /:id/sections/:key', err);
+    // Distinguish a refused save from a generic fault, so the editor can say
+    // why. A 500 that reads INTERNAL_ERROR when the real answer is "this text
+    // has no recorded provenance" trains people to retry rather than fix it.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/lineage/i.test(msg)) {
+      return res.status(500).json({
+        error: 'LINEAGE_REQUIRED',
+        message:
+          'The section was not saved: its data lineage could not be recorded. ' +
+          'Saving content without provenance is not permitted.',
+      });
+    }
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
