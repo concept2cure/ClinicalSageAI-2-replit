@@ -23,7 +23,6 @@ import { cleanup, render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AuthProvider } from '@/services/portal/authService';
-import { ProjectProvider } from '../../context/ProjectContext';
 
 // Force the live-adopted branch: every read hook reports sample:false and hands
 // back the fixture the surface passed in (its own display shape). liveGet is
@@ -60,7 +59,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
-        <ProjectProvider>{children}</ProjectProvider>
+        {children}
       </AuthProvider>
     </QueryClientProvider>
   );

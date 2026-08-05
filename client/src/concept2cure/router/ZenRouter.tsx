@@ -26,7 +26,6 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
 // API ship here; route registrations are added back when the designed UI lands.
-import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
   useAuth as usePortalAuth,
@@ -43,13 +42,24 @@ import {
 // Lazy so auth entry pages never download the app chunk (or its stylesheet).
 const V2App = lazy(() => import('../v2/V2App'));
 
+/* `<ProjectProvider>` used to wrap this. It was an 863-line reducer holding
+   activeProjectId / activeConversationId / activeArtifactId and persisting to
+   localStorage['concept2cure_state'] — and `useProject`, its only way out, had
+   ZERO consumers: two mentions in the whole repository, both inside its own
+   file. So `activeProjectId` was null for every session no matter what the
+   user opened, and the provider's one remaining effect was a mount-time write
+   of {"projects":[],"conversations":[],"artifacts":[]} that nothing read.
+
+   `window.C2C_PROJECT` is the live selection — it carries the real
+   `regulatory_programs` UUID and is read by 14+ non-test files. Wiring this up
+   instead of deleting it would have meant migrating all of them off a working,
+   DB-backed channel onto a browser-minted UUID space (ProjectContext.tsx:337
+   minted its own). */
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
-    <ProjectProvider>
-      <Suspense fallback={<ZenLoadingScreen />}>
-        <V2App />
-      </Suspense>
-    </ProjectProvider>
+    <Suspense fallback={<ZenLoadingScreen />}>
+      <V2App />
+    </Suspense>
   </ProtectedRoute>
 );
 
