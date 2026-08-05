@@ -39,6 +39,44 @@ import './styles/app-v2.css';
 // surface has them, matching the kit's index.html global load.
 import './styles/journey-v2.css';
 import './styles/coverage-v2.css';
+/*
+ * Six more family sheets that were written, scoped, and imported by NOTHING.
+ *
+ * `scripts/ci/check-orphaned-stylesheets.mjs` found them: a stylesheet no file
+ * imports is never handed to the bundler, so it cannot style anything on any
+ * surface. These six carry the layout for surfaces that ship today, and the
+ * consequences were visible:
+ *
+ *   authoring-v2   `.ed{display:grid;grid-template-columns:220px minmax(420px,1fr)}`
+ *                  is the DOCUMENT EDITOR's root. `.ed-tree` and `.ed-doc` ship
+ *                  from elsewhere, but the container that puts them side by
+ *                  side did not — so the tree and the canvas stacked vertically.
+ *   research-v2    `.pd-*` / `.pg-*` — ProtocolDev, ResearchAdmin,
+ *                  InvestigatorBrochure, MaaCockpit, SmpcLabeling.
+ *   misc-surfaces  `.pdev-toast` and 350 more — Vault, RegChange, Evidence,
+ *                  AdminSurfaces, CommunicationCenter, DesignControls.
+ *   device-v2      `.dv-*` — HumanFactors.
+ *   pathway-core / pathway-panels   `.aa-*`, `.ap-*`, `.aud-*`, `.dd-*`.
+ *
+ * They load here rather than per-surface because each spans several surfaces,
+ * which is the same reason journey-v2 and coverage-v2 load here.
+ *
+ * Safe to import as-is: every one is already wrapped in `.c2c-v2 { … }` via CSS
+ * nesting. I first measured them as "96-100% unscoped" and said so — that was
+ * wrong, and wrong in the dangerous direction: the check read selectors line by
+ * line and never saw the enclosing block, which is exactly the mistake that
+ * would have justified rewriting 1,600 rules that needed no rewriting.
+ *
+ * `editor-core.css` and `editor-panels.css` are still orphaned and are NOT here
+ * — they carry no `.c2c-v2` wrapper, so importing them would bleed. They need
+ * scoping first.
+ */
+import './styles/authoring-v2.css';
+import './styles/research-v2.css';
+import './styles/misc-surfaces-v2.css';
+import './styles/device-v2.css';
+import './styles/pathway-core-v2.css';
+import './styles/pathway-panels-v2.css';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 

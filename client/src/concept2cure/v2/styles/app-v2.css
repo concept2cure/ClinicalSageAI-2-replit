@@ -1294,6 +1294,29 @@
 .c2c-v2 .cl-toast-ic{width:18px;height:18px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;}
 .c2c-v2 .cl-toast-t b{font-weight:700;}
 .c2c-v2 .cl-toast-go{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.14);color:var(--bg-000);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;}
+
+/* The confirmation toast six surfaces raise after an action.
+
+   `Risk.tsx:426`, `Labeling.tsx:438`, `HumanFactors.tsx:259`,
+   `DesignControls.tsx:295`, `CommunicationCenter.tsx:839` and
+   `AdminSurfaces.tsx:1524` all render `.pdev-toast`, and its ONLY definition
+   was `v2/styles/misc-surfaces-v2.css:110` — a stylesheet no file imports, so
+   never handed to the bundler and absent from every built asset. Ten other
+   toast classes ship and work (.cl-toast, .de-toast, .sn-toast, …); this one
+   did not. On all six surfaces the confirmation rendered as a bare line of
+   body text at the bottom of the document flow instead of a floating pill.
+
+   The rules are copied from that orphan with ONE deliberate change: z-index
+   1300 becomes 90, matching `.cl-toast` directly above — the shell's own
+   bottom-centre toast, same position, same fill. 1300 is a kit value from a
+   stacking scale that no longer exists; the shell's overlays run 40–90 and its
+   modals 200–1000, so 1300 put a transient confirmation above every dialog
+   and e-signature modal in the product.
+
+   Only these two rules are lifted. `misc-surfaces-v2.css` is 348 of 349 rules
+   UNSCOPED, so importing it wholesale would bleed across the shell. */
+.c2c-v2 .pdev-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--text-100);color:var(--bg-000);font-size:13px;font-weight:600;padding:11px 18px;border-radius:10px;display:flex;align-items:center;gap:8px;z-index:90;box-shadow:0 8px 28px rgba(0,0,0,.24);}
+.c2c-v2 .pdev-toast svg{width:15px;height:15px;}
 .c2c-v2 .cl-toast-go:hover{background:rgba(255,255,255,.24);}
 .c2c-v2 .cl-toast-go .ico{font-size:13px;}
 @media(max-width:600px){.c2c-v2 .cl-frow, .c2c-v2 .cl-frow:has(.cl-field:nth-child(3)){grid-template-columns:1fr;}}
