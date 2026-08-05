@@ -63,25 +63,53 @@ const ALLOWLIST = {
     'enough — the tests/** globs cover .ts/.tsx only. Needs porting, not a rename.',
 };
 
-/** Translate one glob to a RegExp. Handles `**` (any depth) and `*` (one segment). */
-function globToRe(glob) {
-  let out = '';
-  for (let i = 0; i < glob.length; i++) {
-    const c = glob[i];
-    if (c === '*') {
-      if (glob[i + 1] === '*') {
-        // `**/` matches zero or more path segments; a bare `**` matches anything.
-        if (glob[i + 2] === '/') { out += '(?:[^/]+/)*'; i += 2; } else { out += '.*'; i += 1; }
-      } else {
-        out += '[^/]*';
-      }
-    } else if ('.+?^${}()|[]\\'.includes(c)) {
-      out += '\\' + c;
-    } else {
-      out += c;
-    }
+/**
+ * Match one path segment against a pattern that may contain `*`.
+ *
+ * Deliberately a character walk rather than a built RegExp. `new RegExp(glob)`
+ * is a non-literal regex — Semgrep's `detect-non-literal-regexp` flags it, and
+ * the objection is reasonable even though the globs here come from this repo's
+ * own vitest config rather than from a request: a guard that constructs
+ * patterns at runtime is a guard whose own behaviour depends on data. This
+ * version cannot backtrack catastrophically. It is the classic linear wildcard
+ * matcher: remember the last `*` and the input position it started at, and on a
+ * mismatch resume from one character further along.
+ *
+ * Also avoids taking a glob library as a dependency. picomatch, minimatch and
+ * micromatch are all present in node_modules, but only transitively — a CI
+ * guard that breaks when someone else's dependency tree shifts is worse than
+ * twenty lines of matching.
+ */
+function segMatch(pat, s) {
+  let pi = 0;
+  let si = 0;
+  let star = -1;
+  let mark = 0;
+  while (si < s.length) {
+    if (pi < pat.length && pat[pi] === s[si]) { pi++; si++; }
+    else if (pi < pat.length && pat[pi] === '*') { star = pi++; mark = si; }
+    else if (star >= 0) { pi = star + 1; si = ++mark; }
+    else return false;
   }
-  return new RegExp(`^${out}$`);
+  while (pi < pat.length && pat[pi] === '*') pi++;
+  return pi === pat.length;
+}
+
+/** Match a `/`-separated path against a glob. `**` spans any number of segments. */
+function globMatch(glob, filePath) {
+  const g = glob.split('/');
+  const p = filePath.split('/');
+  const walk = (gi, pi) => {
+    if (gi === g.length) return pi === p.length;
+    if (g[gi] === '**') {
+      // Zero or more segments, so `a/**/b.ts` matches `a/b.ts` too.
+      for (let k = pi; k <= p.length; k++) if (walk(gi + 1, k)) return true;
+      return false;
+    }
+    if (pi >= p.length) return false;
+    return segMatch(g[gi], p[pi]) && walk(gi + 1, pi + 1);
+  };
+  return walk(0, 0);
 }
 
 /** Pull the `include:` array out of vitest.config.ts as written. */
@@ -124,21 +152,21 @@ function* walk(dir) {
 
 const includes = readVitestIncludes();
 const extras = readExtraRunnerGlobs();
-const matchers = [...includes, ...extras].map(globToRe);
+const globs = [...includes, ...extras];
 // tests/e2e is excluded from vitest by config and driven by its own script.
-const excluded = [/^tests\/e2e\//];
+const excluded = ['tests/e2e/'];
 
 const found = [];
 for (const root of ROOTS) {
   for (const abs of walk(path.join(REPO, root))) {
     const rel = path.relative(REPO, abs).split(path.sep).join('/');
     if (!/\.(test|spec)\.(m?[jt]sx?)$/.test(rel)) continue;
-    if (excluded.some((re) => re.test(rel))) continue;
+    if (excluded.some((prefix) => rel.startsWith(prefix))) continue;
     found.push(rel);
   }
 }
 
-const unrun = found.filter((rel) => !matchers.some((re) => re.test(rel)));
+const unrun = found.filter((rel) => !globs.some((g) => globMatch(g, rel)));
 const allowed = Object.keys(ALLOWLIST);
 
 const unexpected = unrun.filter((f) => !allowed.includes(f));

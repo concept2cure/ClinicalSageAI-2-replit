@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import '../styles/project-home-v2.css';
 
@@ -462,24 +463,23 @@ const BiostatDocs = (() => {
 })();
 
 /* ─── Tiny markdown -> HTML for the document canvas ─── */
-function mdToHtml(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (s: string) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  const lines = md.split('\n'); let html = ''; let i = 0;
-  while (i < lines.length) {
-    const ln = lines[i];
-    if (/^#{1,6}\s/.test(ln)) { const lv = ln.match(/^#+/)![0].length; html += `<h${lv}>${inline(ln.replace(/^#+\s/, ''))}</h${lv}>`; i++; continue; }
-    if (/^---\s*$/.test(ln)) { html += '<hr/>'; i++; continue; }
-    if (/^\|/.test(ln)) { const rows: string[] = []; while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; }
-      const cells = (r: string) => r.split('|').slice(1, -1).map(c => c.trim());
-      let t = '<table><thead><tr>'; cells(rows[0]).forEach(c => t += `<th>${inline(c)}</th>`); t += '</tr></thead><tbody>';
-      for (let r = 2; r < rows.length; r++) { t += '<tr>'; cells(rows[r]).forEach(c => t += `<td>${inline(c)}</td>`); t += '</tr>'; } t += '</tbody></table>'; html += t; continue; }
-    if (/^[-*]\s/.test(ln)) { let ul = '<ul>'; while (i < lines.length && /^[-*]\s/.test(lines[i])) { ul += `<li>${inline(lines[i].replace(/^[-*]\s/, ''))}</li>`; i++; } ul += '</ul>'; html += ul; continue; }
-    if (ln.trim() === '') { i++; continue; }
-    html += `<p>${inline(ln)}</p>`; i++;
-  }
-  return html;
-}
+/* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
+   codebase's one audited markdown-to-HTML path -- see
+   components/ana/renderSafeMarkdown.ts.
+
+   This file used to carry its own 13-line `mdToHtml`: a regex approximation of
+   markdown whose first act was a hand-rolled `&`/`<`/`>` escape. Two other
+   surfaces carried the same function, two of the three byte-identical. Three
+   copies of an escaper feeding three `dangerouslySetInnerHTML` sinks is three
+   places to get HTML escaping right and three places for one to drift, in a
+   product where the text being rendered is a document the user wrote or
+   uploaded.
+
+   The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
+   markdown parser and then reduces the result to an explicit tag/attribute
+   allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
+   removed rather than depended upon never to arrive -- and it is already
+   covered by its own tests, which the hand-rolled copies never were. */
 
 /* ── Design presets (deterministic engine inputs — not stored data) ── */
 
@@ -535,7 +535,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const reg = useMemo(() => regCustom(input), [input]);
   const docDef = BiostatDocs.byId(docType);
   const md = useMemo(() => { try { return res && jud && docDef ? docDef.gen(input, res, jud, dom, reg) : ''; } catch (e: unknown) { return '# Error\n\n' + (e instanceof Error ? e.message : String(e)); } }, [input, res, jud, dom, reg, docType, docDef]);
-  const html = useMemo(() => mdToHtml(md), [md]);
+  const html = useMemo(() => renderSafeMarkdown(md), [md]);
 
   const isDiag = input.clientTrack === 'diagnostics_ivd';
   const isSurv = input.endpointType === 'time_to_event';

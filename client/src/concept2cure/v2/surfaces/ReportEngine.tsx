@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import '../styles/project-home-v2.css';
@@ -216,21 +217,23 @@ function parseProtocol(text: string): ParsedProtocol {
 
 /* ── Tiny markdown -> HTML ── */
 
-function mdToHtml(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (s: string) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  const lines = md.split('\n'); let html = ''; let i = 0;
-  while (i < lines.length) {
-    const l = lines[i];
-    if (/^#{1,6}\s/.test(l)) { const n = (l.match(/^(#+)/) || ['', '#'])[1].length; html += `<h${n}>${inline(l.replace(/^#+\s*/, ''))}</h${n}>`; }
-    else if (/^---/.test(l)) html += '<hr/>';
-    else if (/^\s*-\s/.test(l)) { html += '<ul>'; while (i < lines.length && /^\s*-\s/.test(lines[i])) { html += `<li>${inline(lines[i].replace(/^\s*-\s*/, ''))}</li>`; i++; } html += '</ul>'; continue; }
-    else if (/^\s*\d+\.\s/.test(l)) { html += '<ol>'; while (i < lines.length && /^\s*\d+\.\s/.test(lines[i])) { html += `<li>${inline(lines[i].replace(/^\s*\d+\.\s*/, ''))}</li>`; i++; } html += '</ol>'; continue; }
-    else if (l.trim()) html += `<p>${inline(l)}</p>`;
-    i++;
-  }
-  return html;
-}
+/* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
+   codebase's one audited markdown-to-HTML path -- see
+   components/ana/renderSafeMarkdown.ts.
+
+   This file used to carry its own 13-line `mdToHtml`: a regex approximation of
+   markdown whose first act was a hand-rolled `&`/`<`/`>` escape. Two other
+   surfaces carried the same function, two of the three byte-identical. Three
+   copies of an escaper feeding three `dangerouslySetInnerHTML` sinks is three
+   places to get HTML escaping right and three places for one to drift, in a
+   product where the text being rendered is a document the user wrote or
+   uploaded.
+
+   The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
+   markdown parser and then reduces the result to an explicit tag/attribute
+   allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
+   removed rather than depended upon never to arrive -- and it is already
+   covered by its own tests, which the hand-rolled copies never were. */
 
 /* ── Inline toast helper ── */
 
@@ -286,7 +289,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       : docType === 'statistical' ? genStatisticalInsights(a)
         : genIndReadiness(a);
   }, [analysis, docType, docDef]);
-  const html = useMemo(() => analysis ? mdToHtml(md) : '', [md, analysis]);
+  const html = useMemo(() => analysis ? renderSafeMarkdown(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;
 
   /*
