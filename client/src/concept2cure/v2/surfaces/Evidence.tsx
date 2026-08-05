@@ -123,7 +123,7 @@ export function Evidence(_props: SurfaceViewProps) {
       <div className="ev-search">
         <span className="ico">{I.search}</span>
         <input
-          placeholder="Ask a question about your evidence…"
+          aria-label="Ask a question about your evidence" placeholder="Ask a question about your evidence…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && go()}

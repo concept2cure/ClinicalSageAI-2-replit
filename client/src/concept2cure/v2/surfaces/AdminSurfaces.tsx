@@ -293,6 +293,7 @@ export function Setup({ onAsk }: SurfaceViewProps) {
               </div>
               <div className="txw-row-r">
                 <input
+                  aria-label="Governance field value"
                   className="txw-gov-field"
                   style={{
                     fontSize: 13,

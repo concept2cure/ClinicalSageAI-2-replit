@@ -324,8 +324,8 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose }: {
         {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} />)}
       </div>
       <div className="rbm-ana-composer">
-        <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} placeholder={`Ask AnA about ${study}...`} />
-        <button className="rbm-ana-send" disabled={!draft.trim()} onClick={() => ask(draft.trim())}>{I.zap}</button>
+        <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} aria-label="Ask AnA about this study" placeholder={`Ask AnA about ${study}...`} />
+        <button className="rbm-ana-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={() => ask(draft.trim())}>{I.zap}</button>
       </div>
     </aside>
   );

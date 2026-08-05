@@ -407,10 +407,10 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
           <div className="ct-composer-wrap">
             <div className="ct-composer">
               <button className="ct-comp-attach" title="Attach a document for AnA to use">{I.paperclip}</button>
-              <textarea rows={1} placeholder="Reply to AnA -- ask, or request a draft..." value={draft}
+              <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA -- ask, or request a draft..." value={draft}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
-              <button className="ct-comp-send" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
+              <button className="ct-comp-send" aria-label="Send message to AnA" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
             </div>
             <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>

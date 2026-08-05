@@ -404,7 +404,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
           {I.upload || I.plus} Upload a form
         </button>
         <input
-          ref={fileRef} type="file" accept=".docx,.pdf" style={{ display: 'none' }}
+          ref={fileRef} type="file" aria-label="Upload a template document" accept=".docx,.pdf" style={{ display: 'none' }}
           onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
         />
       </div>

@@ -146,7 +146,7 @@ export function CodebaseCoverage({
         </div>
         <input
           className="cv-search"
-          placeholder="Filter by capability, id, endpoint…"
+          aria-label="Filter capabilities" placeholder="Filter by capability, id, endpoint…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />

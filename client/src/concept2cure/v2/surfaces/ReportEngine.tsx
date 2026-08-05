@@ -364,7 +364,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card ra-input">
           <div className="pj-card-h"><span className="t">Protocol</span><span className="s">paste or edit</span></div>
           <div className="pj-card-b">
-            <textarea className="ra-ta" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis -- title, indication, phase, sample size, duration, primary endpoint..." />
+            <textarea className="ra-ta" aria-label="Protocol synopsis" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis -- title, indication, phase, sample size, duration, primary endpoint..." />
             <div className="ra-actions">
               <button className="sp-primary" onClick={analyze} disabled={busy}>{I.sparkles} {busy ? 'Analyzing...' : 'Analyze protocol'}</button>
               {analysis && (

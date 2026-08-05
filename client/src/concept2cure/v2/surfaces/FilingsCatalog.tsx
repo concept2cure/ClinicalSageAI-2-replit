@@ -183,7 +183,7 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
         <div className="fc-sub">Search {total} filing types, or browse by area. Each opens its build workflow.</div>
         <div className="fc-search">
           <span className="fc-search-ic">{I.search}</span>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, authority, or pathway -- CSR, 510(k), EMA..." autoFocus />
+          <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search filings" placeholder="Search by name, authority, or pathway -- CSR, 510(k), EMA..." autoFocus />
           {q && <button className="fc-search-x" onClick={() => setQ('')}>{I.close}</button>}
         </div>
       </div>

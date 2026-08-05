@@ -149,8 +149,8 @@ export function PvCockpit(_props: SurfaceViewProps) {
           <div className="pj-card-h"><span className="t">Disproportionality screener</span><span className="s">PRR · ROR · EBGM</span></div>
           <div className="pj-card-b">
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input className="c2c-input" style={{ height: 30, flex: 1 }} placeholder="Drug" value={scr.drug} onChange={(e) => setScr({ ...scr, drug: e.target.value })} />
-              <input className="c2c-input" style={{ height: 30, flex: 1 }} placeholder="Event (PT)" value={scr.event} onChange={(e) => setScr({ ...scr, event: e.target.value })} />
+              <input className="c2c-input" style={{ height: 30, flex: 1 }} aria-label="Drug name" placeholder="Drug" value={scr.drug} onChange={(e) => setScr({ ...scr, drug: e.target.value })} />
+              <input className="c2c-input" style={{ height: 30, flex: 1 }} aria-label="Adverse event (preferred term)" placeholder="Event (PT)" value={scr.event} onChange={(e) => setScr({ ...scr, event: e.target.value })} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
               <label style={{ fontSize: 12 }}>a · drug + event<input className="c2c-input" style={{ height: 30 }} inputMode="numeric" value={scr.a} onChange={(e) => setScr({ ...scr, a: e.target.value.replace(/\D/g, '') })} /></label>

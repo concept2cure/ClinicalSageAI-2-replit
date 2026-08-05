@@ -265,7 +265,7 @@ export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
       <div className="ev-search cap-filter">
         <span className="ico">{I.search}</span>
         <input
-          placeholder="Filter domains and tools…"
+          aria-label="Filter domains and tools" placeholder="Filter domains and tools…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

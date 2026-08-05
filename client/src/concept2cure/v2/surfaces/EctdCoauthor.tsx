@@ -369,7 +369,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
       {/* eCTD tree */}
       <aside className="ec-tree">
         <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1--5</span></div>
-        <div className="ec-tree-search">{I.search}<input placeholder="Find section..." onChange={() => { /* noop */ }} /></div>
+        <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." onChange={() => { /* noop */ }} /></div>
         {loading ? (
           <div className="ec-empty">Loading eCTD documents…</div>
         ) : error ? (
@@ -445,11 +445,11 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
         </div>
         <div className="ec-intel-foot">
           <div className="ec-composer">
-            <textarea rows={1} placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
+            <textarea rows={1} aria-label="Filter capabilities" placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
               onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <div className="ec-composer-row">
               <span className="ec-chip">{I.paperclip || I.plus} Sources</span>
-              <button className="ec-send" disabled={!draft.trim() || anaChat.isStreaming} onClick={send}>{I.arrowUp || I.arrowRight || '→'}</button>
+              <button className="ec-send" aria-label="Send message to AnA" disabled={!draft.trim() || anaChat.isStreaming} onClick={send}>{I.arrowUp || I.arrowRight || '→'}</button>
             </div>
           </div>
         </div>

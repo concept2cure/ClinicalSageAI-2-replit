@@ -483,7 +483,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                   <input
                     className="ob-in"
-                    placeholder="e.g. Bright Biosciences"
+                    aria-label="Organization name" placeholder="e.g. Bright Biosciences"
                     value={org.name}
                     onChange={(e) =>
                       setOrg({ ...org, name: e.target.value })
