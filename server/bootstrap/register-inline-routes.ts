@@ -77,6 +77,22 @@ import fdaFormsRoutes from '../routes/fda-forms.routes';
 import fieldSyncRoutes from '../routes/fieldSync.routes';
 import contentAssemblyRoutes from '../routes/contentAssembly.routes';
 import { createMiscInlineRoutes } from '../routes/misc-inline-routes';
+import licenseRoutes from '../routes/license-routes.js';
+import moduleSubscriptions from '../routes/module-subscriptions.js';
+import licensing from '../routes/licensing.js';
+import billing from '../routes/billing.js';
+import deepResearch from '../routes/deep-research.js';
+import intelligentReports from '../routes/intelligent-reports.js';
+import safetyNarrative from '../routes/safety-narrative.js';
+import statisticalDefensibility from '../routes/statistical-defensibility.js';
+import conversationHealth from '../routes/conversation-health.js';
+import billingDashboard from '../routes/billing-dashboard.js';
+import reportOs from '../routes/report-os.js';
+import deviceCockpit from '../routes/device-cockpit.js';
+import globalMarkets from '../routes/global-markets.js';
+import workspaceConfig from '../routes/workspace-config.routes.js';
+import reportOsInsights from '../routes/report-os-insights.js';
+
 
 export interface InlineRouteContext {
   app: Express;
@@ -133,56 +149,61 @@ export async function registerInlineAnaIntelligenceRoutes({
 export async function registerInlineLitCommerceRoutes({
   app,
 }: InlineRouteContext): Promise<void> {
-  const litIntConfig = [
-    { path: '/', mod: '../routes/license-routes.js', name: 'License Management' },
-    {
-      path: '/api/module-subscriptions',
-      mod: '../routes/module-subscriptions.js',
-      name: 'Module Subscriptions',
-    },
-    {
-      path: '/api/licensing',
-      mod: '../routes/licensing.js',
-      name: 'Intelligent Licensing & EULA',
-    },
-    { path: '/api/billing', mod: '../routes/billing.js', name: 'Billing' },
-    { path: '/api/deep-research', mod: '../routes/deep-research.js', name: 'Deep Research' },
-    {
-      path: '/api/intelligent-reports',
-      mod: '../routes/intelligent-reports.js',
-      name: 'Intelligent Reports',
-    },
-    {
-      path: '/api/safety-narratives',
-      mod: '../routes/safety-narrative.js',
-      name: 'Safety Narrative',
-    },
+  /*
+   * Static imports, deliberately — and this is not a style preference.
+   *
+   * These fifteen were loaded as `litIntConfig.map(c => import(c.mod))`, a
+   * dynamic import with a VARIABLE specifier. esbuild cannot resolve that at
+   * build time, so it bundled none of them: `node scripts/build-server.mjs`
+   * followed by esbuild's own metafile reports 15/15 absent from dist/index.js.
+   * At runtime the specifier '../routes/billing.js' then resolves relative to
+   * dist/, where nothing exists, and the import rejects.
+   *
+   * `Promise.allSettled` swallowed that into a console.error and the server
+   * started normally — so `npm run start` came up healthy with the entire
+   * commercial layer (licensing, module subscriptions, billing, billing
+   * dashboard) and a large part of the product (report-os, deep research,
+   * intelligent reports, device cockpit, global markets, safety narratives)
+   * simply not mounted. Every request to them 404s.
+   *
+   * The literal-specifier dynamic imports elsewhere in this file are fine:
+   * esbuild resolves those statically. Only the variable form is invisible to
+   * it, which is exactly why this failed silently for so long — the code reads
+   * identically to the working cases three functions away.
+   */
+  const litIntRoutes: ReadonlyArray<{ path: string; router: unknown; name: string }> = [
+    { path: '/', router: licenseRoutes, name: 'License Management' },
+    { path: '/api/module-subscriptions', router: moduleSubscriptions, name: 'Module Subscriptions' },
+    { path: '/api/licensing', router: licensing, name: 'Intelligent Licensing & EULA' },
+    { path: '/api/billing', router: billing, name: 'Billing' },
+    { path: '/api/deep-research', router: deepResearch, name: 'Deep Research' },
+    { path: '/api/intelligent-reports', router: intelligentReports, name: 'Intelligent Reports' },
+    { path: '/api/safety-narratives', router: safetyNarrative, name: 'Safety Narrative' },
     {
       path: '/api/statistical-defensibility',
-      mod: '../routes/statistical-defensibility.js',
+      router: statisticalDefensibility,
       name: 'Statistical Defensibility',
     },
-    {
-      path: '/api/conversation-health',
-      mod: '../routes/conversation-health.js',
-      name: 'Conversation Health',
-    },
-    { path: '/api/billing', mod: '../routes/billing-dashboard.js', name: 'Billing Dashboard' },
-    { path: '/api/report-os', mod: '../routes/report-os.js', name: 'Report OS' },
-    { path: '/api/device-cockpit', mod: '../routes/device-cockpit.js', name: 'Device Cockpit' },
-    { path: '/api/global-markets', mod: '../routes/global-markets.js', name: 'Global Markets' },
-    { path: '/api/workspace', mod: '../routes/workspace-config.routes.js', name: 'Workspace Config' },
-    { path: '/api/insights', mod: '../routes/report-os-insights.js', name: 'Insights' },
-  ] as const;
-  const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));
-  litIntResults.forEach((r, i) => {
-    if (r.status === 'fulfilled') {
-      app.use(litIntConfig[i].path, r.value.default);
-      console.log(`✅ ${litIntConfig[i].name} routes mounted successfully`);
-    } else {
-      console.error(`❌ Failed to mount ${litIntConfig[i].name} routes:`, r.reason);
+    { path: '/api/conversation-health', router: conversationHealth, name: 'Conversation Health' },
+    { path: '/api/billing', router: billingDashboard, name: 'Billing Dashboard' },
+    { path: '/api/report-os', router: reportOs, name: 'Report OS' },
+    { path: '/api/device-cockpit', router: deviceCockpit, name: 'Device Cockpit' },
+    { path: '/api/global-markets', router: globalMarkets, name: 'Global Markets' },
+    { path: '/api/workspace', router: workspaceConfig, name: 'Workspace Config' },
+    { path: '/api/insights', router: reportOsInsights, name: 'Insights' },
+  ];
+
+  for (const entry of litIntRoutes) {
+    if (!entry.router) {
+      // A module that resolved but exported no default is the same outcome as
+      // one that never loaded, and used to be reported the same way. Keep it
+      // loud rather than mounting `undefined`.
+      console.error(`❌ ${entry.name} has no default export — not mounted`);
+      continue;
     }
-  });
+    app.use(entry.path, entry.router as never);
+    console.log(`✅ ${entry.name} routes mounted successfully`);
+  }
 
   // Stability routes.
   try {
