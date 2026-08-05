@@ -354,6 +354,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         <input
           ref={fileRef}
           type="file"
+          aria-label="Attach files to this project"
           multiple
           hidden
           onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}
@@ -589,10 +590,10 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
         <div className="pj-msg ana"><span className="pj-msg-av">{I.sparkles}</span><div className="pj-msg-b">{intro}</div></div>
       </div>
       <div className="pj-composer">
-        <textarea rows={2} placeholder={'Message AnA about ' + productName + '…'} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); openThread(); } }} />
+        <textarea rows={2} aria-label="Message AnA about this project" placeholder={'Message AnA about ' + productName + '…'} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); openThread(); } }} />
         <div className="pj-composer-row">
           <span className="sp" />
-          <button className="pj-comp-send" disabled={!draft.trim()} onClick={openThread}>{I.arrowUp}</button>
+          <button className="pj-comp-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={openThread}>{I.arrowUp}</button>
         </div>
       </div>
     </div>

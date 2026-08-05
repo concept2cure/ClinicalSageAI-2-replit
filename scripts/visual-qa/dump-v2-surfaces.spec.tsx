@@ -55,6 +55,7 @@ import path from 'node:path';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', () => ({ apiRequest }));
 
+import { bodyFor } from './api-fixtures.mjs';
 import { AuthProvider } from '../../client/src/services/portal/authService';
 import { SURFACE_VIEWS } from '../../client/src/concept2cure/v2/surfaceViews';
 
@@ -74,25 +75,27 @@ const ALREADY_COVERED = new Set<string>([
   'pdev-regulatory', 'pdev-ind-assembly', 'pdev-contradictions', 'pdev-fda-interactions',
 ]);
 
-/** Every request resolves to an empty-but-well-formed envelope. */
-const emptyBody = () => ({ data: [] });
+
 
 beforeEach(() => {
   cleanup();
   fs.mkdirSync(OUT, { recursive: true });
   apiRequest.mockReset();
-  apiRequest.mockImplementation(async () => ({
+  apiRequest.mockImplementation(async (_m: string, url: string) => ({
     ok: true,
     status: 200,
-    json: async () => emptyBody(),
-    text: async () => JSON.stringify(emptyBody()),
+    json: async () => bodyFor(String(url)),
+    text: async () => JSON.stringify(bodyFor(String(url))),
   }));
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response(JSON.stringify(emptyBody()), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    })),
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+      return new Response(JSON.stringify(bodyFor(url)), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }),
   );
   // Runtime channels the shell populates before a surface mounts.
   (window as unknown as Record<string, unknown>).C2C_PROJECT = { id: 'proj-vqa', code: 'BX204' };

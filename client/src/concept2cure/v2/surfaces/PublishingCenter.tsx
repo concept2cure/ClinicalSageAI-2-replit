@@ -181,12 +181,13 @@ export function PublishingCenter(_props: SurfaceViewProps) {
             <>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
                 <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Code list</label>
-                <select className="c2c-input" style={{ height: 30, minWidth: 260 }} value={selectedList} onChange={(e) => setSelectedList(e.target.value)}>
+                <select aria-label="Controlled vocabulary list" className="c2c-input" style={{ height: 30, minWidth: 260 }} value={selectedList} onChange={(e) => setSelectedList(e.target.value)}>
                   {(listing?.v4 ?? []).map((l) => (
                     <option key={l.id} value={l.id}>{V4_LABELS[l.id] ?? l.id} ({l.codeCount})</option>
                   ))}
                 </select>
                 <input
+                  aria-label="Filter codes"
                   className="c2c-input" style={{ height: 30, marginLeft: 'auto', minWidth: 200 }}
                   placeholder="Filter codes…" value={filter} onChange={(e) => setFilter(e.target.value)}
                 />

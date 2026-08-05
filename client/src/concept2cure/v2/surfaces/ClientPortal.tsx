@@ -147,7 +147,13 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
             <div key={p.id} className="cp-card">
               <div className="cp-card-top">
                 <span className="rd-chip tone-ai">{p.pathway}</span>
-                <span className={`rd-chip tone-${CP_T[p.status]}`}>{p.status}</span>
+                {/* `|| 'ai'` — the same fallback the deliverables row at :174
+                    already has. CP_T only maps a few statuses; projects.status
+                    legitimately carries on-hold, completed and archived
+                    (shared/schema.ts), and without a fallback those render as
+                    `tone-undefined`, which matches no rule and ships an
+                    unstyled chip. */}
+                <span className={`rd-chip tone-${CP_T[p.status] || 'ai'}`}>{p.status}</span>
               </div>
               <div className="cp-card-t">{p.title}</div>
               <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
