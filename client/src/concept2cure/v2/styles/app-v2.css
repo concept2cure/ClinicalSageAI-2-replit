@@ -917,6 +917,21 @@
 .c2c-v2 .tb-cmdk .kbd{font-family:var(--font-mono);font-size:10px;padding:1px 5px;border:1px solid var(--border);border-radius:4px;color:var(--text-400);}
 .c2c-v2 .tb-btn{width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-400);font-size:17px;}
 .c2c-v2 .tb-btn:hover{background:var(--bg-200);color:var(--text-100);}
+/* Engaged state for a .tb-btn that toggles something.
+
+   It had none, and two shipping filters relied on it. `K510Surface.tsx:200`
+   and `CerSurface.tsx:112` each render a funnel button that filters a list
+   ("selected only" / "included only") and appended a state class that no rule
+   anywhere styled — at HEAD or on the base branch. Pressing the filter changed
+   the list and left the button that did it looking exactly as before, so the
+   only way to tell whether the filter was on was to hover for the tooltip.
+
+   Values are the shell's existing engaged-state language, not a new one:
+   `--accent-000` fill with `--accent-200` text, as .tb-tog.on, .tb-chip.on,
+   .cl-tog.on and .tb-dep-opt.on all use. Those carry a border too; .tb-btn has
+   none, so it takes the fill and the text colour only. */
+.c2c-v2 .tb-btn.on{background:var(--accent-000);color:var(--accent-200);}
+.c2c-v2 .tb-btn.on:hover{background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .rail-logo[data-on="true"]{background:var(--bg-200);}
 .c2c-v2 .tb-org{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 6px;border-radius:var(--radius-lg);transition:background var(--dur);}
 .c2c-v2 .tb-org:hover{background:var(--bg-100);}

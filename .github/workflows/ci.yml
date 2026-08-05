@@ -223,6 +223,12 @@ jobs:
       - name: Guardrails — every local import in every test file resolves
         run: npm run ci:check-test-imports
 
+      # A stylesheet nothing imports is never handed to the bundler, so it
+      # styles nothing on any surface. Ratchet at the measured 17; may only
+      # shrink, by deleting a dead sheet or restoring a missing import.
+      - name: Guardrails — orphaned stylesheets (ratchet, may only shrink)
+        run: npm run ci:check-orphaned-stylesheets
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 
