@@ -217,6 +217,12 @@ jobs:
       - name: Guardrails — client reachability from main.tsx (ratchet, may only shrink)
         run: npm run ci:check-client-reachability
 
+      # tsconfig's include does not cover tests/, so `tsc --noEmit` has never
+      # looked at a test file. This is the piece of that coverage that matters:
+      # a test importing a module that no longer exists cannot run at all.
+      - name: Guardrails — every local import in every test file resolves
+        run: npm run ci:check-test-imports
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 
