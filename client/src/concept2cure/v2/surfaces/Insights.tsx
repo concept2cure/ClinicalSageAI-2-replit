@@ -273,8 +273,14 @@ function roPresetsForSeg(seg: string): Preset[] {
   return RO_PRESETS[seg] || RO_PRESETS.pharma;
 }
 
-/* ── Guardrail ── */
-const RO_GUARDRAIL = 'AnA narrates and explains report outputs; it never originates a metric, score, or probability -- those come only from deterministic providers and disclosed models.';
+/* ── Guardrail ──
+   The old text read "AnA narrates and explains report outputs…". Two things
+   were wrong with it. AnA is not what answers here — `roRouteReply` is a
+   deterministic intent router that composes its text from the constants in this
+   file — and "narrates and explains" describes a language model doing work that
+   a `switch` is doing. The half that was true, and the half that matters, is
+   that no metric on this surface originates here. */
+const RO_GUARDRAIL = 'This pane routes your request to a governed report type and runs it -- it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
 
 /* ── Resolve type from free text ── */
 function roResolveType(utterance: string, seg: string): ReportType | null {
@@ -336,7 +342,20 @@ function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
   return programs.map(p => ({ code: p.code ?? String(p.projectId), indication: p.indication, readiness: p.readiness }));
 }
 
-/* ── Suggest for client (seeded by the live flagship program) ── */
+/* ── Suggest for client (seeded by the live flagship program) ──
+   The program facts here ARE live — code, filing, readiness and PDUFA date come
+   from the governed overview read-model. The preset does not: it is
+   `roPresetsForSeg(seg)[0]`, the first entry of a static per-segment array in
+   this file.
+
+   The old copy did not say that. It said "Based on that and where each program
+   sits, I'd start with the <preset>" — asserting that the recommendation
+   followed from the readiness figure it had just quoted. It did not follow from
+   anything; `[0]` never reads `p`. A sentence claiming a judgement that provably
+   did not happen is worse than no sentence, because the reader has no way to
+   tell it apart from one that did. The live facts are still stated, and the
+   preset is now offered as what it is: the standard starting pack for the
+   segment. */
 function roSuggestForClient(p: ProgramCtx, seg: string) {
   const preset = roPresetsForSeg(seg)[0];
   const rBit = p.readiness == null
@@ -344,8 +363,8 @@ function roSuggestForClient(p: ProgramCtx, seg: string) {
     : `${p.code} is ${p.readiness}% ready`;
   const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
   return {
-    headline: 'I can build any report or dashboard you need -- just ask.',
-    body: `Looking across your portfolio, ${rBit}${pduBit}. Based on that and where each program sits, I'd start with the ${preset.label}.`,
+    headline: 'Build any governed report or dashboard -- describe what you need.',
+    body: `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} -- it is not picked from the readiness figure above.`,
     preset,
     prompts: [
       `Build the ${preset.label}`,
@@ -396,7 +415,7 @@ interface RenderedReport {
 }
 
 
-/* ── AnA conversational brain ── */
+/* ── Intent router ── */
 interface ThreadMsg {
   role: 'user' | 'ana';
   text: string;
@@ -430,13 +449,28 @@ interface DashboardData {
   program?: ProgramCtx;
 }
 
-function roAnaReply(utterance: string, seg: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; report?: RenderedReport | null }): AnaReply {
+/**
+ * Route an utterance to a governed report type, a dashboard, or a clarifying
+ * question — deterministically, from the constants in this file.
+ *
+ * This was `roAnaReply`, and the name was the problem in miniature: nothing here
+ * is AnA. There is no model call, no retrieval and no reasoning — `roRouteIntent`
+ * scores the utterance against a fixed vocabulary, `roDecide` checks entitlement,
+ * and the returned `text` is a template. What it produces IS trustworthy, and
+ * more trustworthy than a model would be for this job: it refuses to show an
+ * estimated result on an unentitled plan, and when it resolves a type it runs
+ * the REAL governed report (POST /api/report-os/runs). None of that needed to be
+ * dressed as an assistant talking, and dressing it that way meant a user reading
+ * "I will not show an estimated result" credited a judgement to AnA that a
+ * `switch` had made. The routing is unchanged; the first person is gone.
+ */
+function roRouteReply(utterance: string, seg: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; report?: RenderedReport | null }): AnaReply {
   const c = ctx;
   const route = roRouteIntent(utterance);
   const name = route.matched ? route.name! : (route.candidates && route.candidates[0]) || 'generate_report';
   const p = ctx.program;
   function cap(s: string) { return (RO_TIERS.find(t => t.id === s) || { label: s }).label; }
-  const lockMsg = (feature: string, typeLabel: string): AnaReply => ({ tool: name, text: `I can set up "${typeLabel}", but it needs the ${cap(RO_FEATURE_TIER[feature])} plan -- it is a ${RO_FEATURE_LABEL[feature]} capability. I will not show an estimated result on a plan that has not unlocked the governed model. Here is what it includes and how to unlock it.`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
+  const lockMsg = (feature: string, typeLabel: string): AnaReply => ({ tool: name, text: `"${typeLabel}" needs the ${cap(RO_FEATURE_TIER[feature])} plan -- it is a ${RO_FEATURE_LABEL[feature]} capability. No estimated result is shown on a plan that has not unlocked the governed model. What it includes, and how to unlock it:`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
   const entitledFor = (t: ReportType) => roDecide(t.typeId, t.family, tier);
 
   if (name === 'portfolio_readiness') {
@@ -445,35 +479,35 @@ function roAnaReply(utterance: string, seg: string, tier: string, ctx: { program
     // Live, enterprise-gated rollup — programs is null when the org isn't
     // entitled or has none; show an honest empty, never a fabricated board.
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
-    if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but I don't see any governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
-    return { tool: name, text: `Here is readiness across your ${rows.length} program${rows.length > 1 ? 's' : ''}. The numbers are the governed readiness scores -- I am ranking and framing them, not recomputing them.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows }, report: null };
+    if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but there are no governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
+    return { tool: name, text: `Readiness across your ${rows.length} program${rows.length > 1 ? 's' : ''}. The numbers are the governed readiness scores, ranked -- not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows }, report: null };
   }
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
-    if (markets.length < 2) return { tool: name, question: true, text: `Which markets should I compare for ${p.code}? Pick at least two.`, chips: [['FDA vs EMA', `Compare FDA and EMA for ${p.code}`], ['FDA vs EMA vs PMDA', `Compare FDA, EMA and PMDA for ${p.code}`], ['FDA vs NMPA', `Compare FDA and NMPA for ${p.code}`]], report: null, dashboard: null };
-    return { tool: name, text: `Comparing ${markets.join(', ')} for ${p.code}. Where I do not yet have a governed value for a market I will show it as missing rather than estimate it.`, dashboard: { kind: 'compare', label: `Regional comparison -- ${p.code}`, why: markets.join(' -- '), markets, program: p }, report: null };
+    if (markets.length < 2) return { tool: name, question: true, text: `Which markets should be compared for ${p.code}? Pick at least two.`, chips: [['FDA vs EMA', `Compare FDA and EMA for ${p.code}`], ['FDA vs EMA vs PMDA', `Compare FDA, EMA and PMDA for ${p.code}`], ['FDA vs NMPA', `Compare FDA and NMPA for ${p.code}`]], report: null, dashboard: null };
+    return { tool: name, text: `Comparing ${markets.join(', ')} for ${p.code}. A market with no governed value yet shows as missing rather than estimated.`, dashboard: { kind: 'compare', label: `Regional comparison -- ${p.code}`, why: markets.join(' -- '), markets, program: p }, report: null };
   }
   if (name === 'explain_blockers') {
     const rep = c.report;
-    if (!rep) return { tool: name, question: true, text: 'Which report should I explain? Generate or open one and I will walk through what is holding it from final.', chips: [['Executive Readiness Digest', `Generate the executive readiness digest for ${p.code}`]], report: null, dashboard: null };
+    if (!rep) return { tool: name, question: true, text: 'Which report? Generate or open one and its blockers are listed here, straight from the server’s truthfulness gate.', chips: [['Executive Readiness Digest', `Generate the executive readiness digest for ${p.code}`]], report: null, dashboard: null };
     const reasons = (rep.truthfulness && rep.truthfulness.reasons) || [];
-    return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} because: ${reasons.join('; ')}. Clear those and it can promote toward final -- I will narrate each blocker, but the status gate is deterministic.`, report: rep, dashboard: null };
+    return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} because: ${reasons.join('; ')}. Those are the gate's own reasons, verbatim. Clear them and it can promote toward final; the status gate is deterministic.`, report: rep, dashboard: null };
   }
   if (name === 'get_prediction') {
     const isPre = /crl|rtf|reject|refuse/.test((utterance || '').toLowerCase());
     const t = RO_TYPES.find(x => x.typeId === (isPre ? 'prediction.crl_rtf_premortem' : 'prediction.regulatory_forecast'))!;
     const dec = entitledFor(t);
     if (!dec.entitled) return lockMsg(dec.feature, t.label);
-    return { tool: name, text: `Running the ${t.label} for ${p.code}. It is advisory -- the model is not validated, so every projected value carries a disclosure and I present it as partial, never final.`, report: null, reportType: t, dashboard: null };
+    return { tool: name, text: `Running the ${t.label} for ${p.code}. It is advisory -- the model is not validated, so every projected value carries a disclosure and the result is held at partial, never final.`, report: null, reportType: t, dashboard: null };
   }
   const resolved = roResolveType(utterance, seg);
   if (name === 'list_report_types' || !resolved) {
     const cands = roFilterForSegment(RO_TYPES, seg).slice(0, 6);
-    return { tool: 'list_report_types', question: true, text: `Tell me what you want to see and I will build it. For ${p.code}${p.filing ? ` (${p.filing})` : ''} I can run any of these -- or describe the question in your own words and I will pick the right governed report.`, chips: cands.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]), report: null, dashboard: null };
+    return { tool: 'list_report_types', question: true, text: `For ${p.code}${p.filing ? ` (${p.filing})` : ''}, any of these can be run -- or describe what you need in your own words and it is matched to the closest governed report type.`, chips: cands.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]), report: null, dashboard: null };
   }
   const dec = entitledFor(resolved);
   if (!dec.entitled) return lockMsg(dec.feature, resolved.label);
-  return { tool: 'generate_report', text: `Running the ${resolved.label} for ${p.code} against the governed record. Every value is provenance-linked to its governed source -- I assemble and explain it, I do not originate any number.`, report: null, reportType: resolved, dashboard: null };
+  return { tool: 'generate_report', text: `Running the ${resolved.label} for ${p.code} against the governed record. Every value is provenance-linked to its governed source; none is originated here.`, report: null, reportType: resolved, dashboard: null };
 }
 
 /* ── Inline helpers ── */
@@ -620,8 +654,8 @@ function ROBlock({ block }: { block: ROBlockData }) {
    this screen never draws — invisible here, and waiting for the user, opened,
    on the next surface that did draw one.
    It is deleted rather than rewired to this surface's own pane, for two
-   reasons. The pane is not an assistant: `rc-ana` routes through `roAnaReply`,
-   a client-side intent router that composes its text from local constants, so
+   reasons. The pane is not an assistant: it routes through `roRouteReply`, a
+   client-side intent router that composes its text from local constants, so
    pointing a real question at it would turn a dead affordance into a fabricated
    assistant reply on a governed reporting surface. And the button asked for
    what the report already states — its exact words were "…and what would move
@@ -706,7 +740,9 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
   const types = (dashboard.types || []).map(id => RO_TYPES.find(t => t.typeId === id)).filter(Boolean) as ReportType[];
   return (
     <div className="ro-dash">
-      <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Best-practice pack -- AnA-curated</div><h2 className="ro-rep-title">{dashboard.label}</h2><p className="ro-dash-why">{dashboard.why}</p></div></div>
+      {/* "AnA-curated" claimed a curator. The pack is RO_PRESETS[segment], a
+          literal in this file — standard is what it is. */}
+      <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Standard pack</div><h2 className="ro-rep-title">{dashboard.label}</h2><p className="ro-dash-why">{dashboard.why}</p></div></div>
       <div className="ro-pack-grid">
         {types.map(t => {
           const dec = roDecide(t.typeId, t.family, tier);
@@ -841,10 +877,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     if (!text || busy || !program || !data) return;
     setThread(t => [...t, { role: 'user', text }]);
     setDraft('');
-    // The conversational brain (roAnaReply) still routes intent, chips and the
-    // entitlement lock; when it resolves a report to run, generation now goes to
-    // the REAL backend via runReport instead of a client-built preview.
-    const reply = roAnaReply(text, seg, tier, { program, portfolio: data.portfolio, report });
+    // roRouteReply resolves intent, chips and the entitlement lock — all
+    // deterministic. When it resolves a report type, generation goes to the REAL
+    // backend via runReport, not to a client-built preview.
+    const reply = roRouteReply(text, seg, tier, { program, portfolio: data.portfolio, report });
     setThread(t => [...t, { role: 'ana', text: reply.text, chips: reply.chips, locked: reply.locked, question: reply.question, tool: reply.tool }]);
     if (reply.reportType) {
       await runReport(reply.reportType);
@@ -856,8 +892,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     }
   };
 
-  /* The best-practice "pack" is an AnA-curated set of governed report TYPES (no
-     server bulk-run endpoint exists); each tile runs its real report on click. */
+  /* The best-practice "pack" is a static, per-segment set of governed report
+     TYPES from RO_PRESETS in this file — nothing curates it at runtime (and no
+     server bulk-run endpoint exists). Each tile runs its real report on click. */
   const buildPreset = (preset: Preset) => {
     if (!preset) return;
     setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile runs a governed report against the live record -- pick any one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
@@ -931,7 +968,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           <EmptyState
             icon={I.barChart || I.fileText}
             title="No program readiness yet"
-            hint="Once a program with a governed readiness run exists in your organization, AnA opens the reporting canvas here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated."
+            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated."
           />
         </div>
       </div>
@@ -941,16 +978,31 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
 
   return (
     <div className="rc">
-      {/* -- Left: AnA intelligence / conversation -- */}
+      {/* -- Left: report routing pane --
+           This column called itself "AnA -- Reporting analyst" and spoke in the
+           first person, while what answered was `roRouteReply`: a deterministic
+           matcher over the constants in this file. A user cannot tell a
+           template apart from a model by reading it, so the name and the voice
+           were the whole of the claim, and the claim was false.
+
+           The pane keeps its behaviour — it is the right mechanism for "pick a
+           governed report type and run it", and more trustworthy for that job
+           than a model would be. It no longer wears AnA's name to do it.
+
+           The `rc-ana*` class names stay: they are internal selectors carried by
+           insights-v2.css, renaming them would be churn across a stylesheet for
+           no user-visible gain, and the cross-shell CSS collision guard counts
+           them. -- */}
       <div className="rc-ana">
         <div className="rc-ana-head">
-          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">AnA -- Reporting analyst</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' -- ')}</div></div></div>
+          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' -- ')}</div></div></div>
         </div>
 
         <div className="rc-ana-scroll" ref={scrollRef}>
-          {/* Proactive, context-aware opener */}
+          {/* Opener. The program facts below are live; the preset is a static
+              per-segment default, and says so. */}
           <div className="rc-opener">
-            <div className="rc-op-head"><span className="rc-ana-mark sm">*</span><span>AnA suggests</span></div>
+            <div className="rc-op-head"><span className="rc-ana-mark sm">*</span><span>Where to start</span></div>
             <div className="rc-op-headline">{suggest.headline}</div>
             <div className="rc-op-body">{suggest.body}</div>
             <button className="rc-preset-btn" onClick={() => buildPreset(suggest.preset)}>{I.sparkles} Build the {suggest.preset.label} {I.right}</button>
@@ -970,7 +1022,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                 {m.locked && (
                   <div className="rc-lock">
                     <div className="rc-lock-h">{I.lock || I.shield} {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label} plan unlocks {m.locked.typeLabel}</div>
-                    <div className="rc-lock-s">{RO_FEATURE_LABEL[m.locked.feature]} is a paid capability. I will not show an estimated result on a plan that has not unlocked the governed model.</div>
+                    <div className="rc-lock-s">{RO_FEATURE_LABEL[m.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
                     <div className="rc-lock-acts">
                       <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
                       <button className="rc-chip" onClick={() => setTierOverride(m.locked!.requiredTier)}>Preview on {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label}</button>
@@ -991,7 +1043,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
           </div>
           <div className="rc-input">
-            <textarea rows={1} value={draft} placeholder={`Ask AnA for a report or dashboard for ${p.code}...`}
+            <textarea rows={1} value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
               onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <button className="rc-send" disabled={!draft.trim() || busy} onClick={() => send()} aria-label="Send">{I.arrowUp || I.right}</button>
@@ -1007,8 +1059,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           : (
             <div className="rc-empty">
               <div className="rc-empty-mark">*</div>
-              <h2 className="rc-empty-h">AnA builds the report -- you steer it.</h2>
-              <p className="rc-empty-s">Ask for anything on the left, or start from a best-practice pack AnA suggests for {p.code} based on your whole portfolio. Every value is provenance-linked to a governed source; nothing is estimated.</p>
+              {/* "AnA builds the report" and "a pack AnA suggests … based on
+                  your whole portfolio" were the same two claims as the opener:
+                  a persona for a template matcher, and a portfolio-derived
+                  recommendation for `roPresetsForSeg(seg)`, which reads neither
+                  the portfolio nor the program. */}
+              <h2 className="rc-empty-h">Governed reports, built to order.</h2>
+              <p className="rc-empty-s">Describe what you need on the left, or start from one of the standard packs for {p.code}. Every value is provenance-linked to a governed source; nothing is estimated.</p>
               <div className="rc-empty-presets">
                 {roPresetsForSeg(seg).map(pr => (
                   <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>

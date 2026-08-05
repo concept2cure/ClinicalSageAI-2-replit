@@ -296,10 +296,13 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'investigator-brochure': { component: InvestigatorBrochure },
   // Keeps the column for its own reporting pane, and the one button that handed
   // a question to the shell rail is gone (see Insights.tsx). It is NOT wired to
-  // that pane instead: `rc-ana` runs `roAnaReply`, a client-side intent router
+  // that pane instead: the pane runs `roRouteReply`, a client-side intent router
   // that returns composed text, so routing a real question there would have
   // turned a dead affordance into a fabricated assistant reply on a governed
-  // reporting surface. Until `rc-ana` runs a real `useAnaChat` this surface
+  // reporting surface. The pane no longer presents as AnA either -- it is
+  // labelled "Report builder" and speaks declaratively, because a template
+  // wearing the assistant's name is indistinguishable from the assistant to
+  // the person reading it. Until it runs a real `useAnaChat` this surface
   // answers only the report-generation intents it can actually satisfy.
   insights: { component: InsightsCanvas, full: true, ownsConversation: true },
   'intelligence-catalog': { component: CapabilityIndex },

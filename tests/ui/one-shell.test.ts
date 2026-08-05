@@ -224,7 +224,7 @@ describe('one shell', () => {
      *   document-authoring / ectd-coauthor   kept the flag and grew their own
      *                    docks (see ALLOWED above).
      *   insights         kept the flag; the one offending button is deleted
-     *                    rather than pointed at `roAnaReply`, which composes
+     *                    rather than pointed at `roRouteReply`, which composes
      *                    text locally and would have made up an answer.
      *
      * Two doors, both now shut in V2App: `ask()` no longer writes into a rail

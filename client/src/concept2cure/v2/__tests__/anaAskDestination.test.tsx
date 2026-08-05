@@ -234,7 +234,7 @@ describe('insights — no button hands a question to a rail it hides', () => {
     // The button asked for the report's blockers, which the `.ro-truth` band
     // already states from the server's own truthfulness gate. It went to a rail
     // this surface does not draw, so it is deleted rather than rewired to
-    // `roAnaReply`, which would have composed an answer locally.
+    // `roRouteReply`, which would have composed an answer locally.
     expect(screen.queryByText(/Ask AnA about this report/)).toBeNull();
   });
 });
