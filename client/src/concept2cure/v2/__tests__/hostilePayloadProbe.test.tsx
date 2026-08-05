@@ -167,8 +167,17 @@ describe('every surface survives a response it did not expect', () => {
               </AuthProvider>
             </QueryClientProvider>,
           );
-          // Wait for the tree to commit something, then let post-load effects
-          // run — the crash arrives WITH the data, not before it.
+          // Wait for the tree to commit something, then wait for it to STOP
+          // changing. The fixed 30ms this used to sleep for was a guess, and it
+          // was wrong: four surfaces crashed later than that and the probe
+          // recorded them as passing. It passed locally and failed in CI, on
+          // timing alone — the same wrong-moment blind spot this file exists to
+          // catch, in the instrument itself.
+          //
+          // Quiescence is the honest condition. A crash cannot arrive after the
+          // DOM has been identical for three consecutive samples AND no further
+          // request is outstanding, because there is nothing left running to
+          // produce one.
           await waitFor(
             () =>
               expect(
@@ -177,7 +186,48 @@ describe('every surface survives a response it did not expect', () => {
               ).toBeTruthy(),
             { timeout: 4000 },
           );
-          await new Promise((r) => setTimeout(r, 30));
+          //
+          // A LOADING placeholder does not count as settled, and this is the
+          // trap that made the old version report green on genuinely broken
+          // surfaces. Every device surface is wrapped in React.lazy + Suspense
+          // (DeviceSurfaces.tsx), so the first thing committed is the
+          // "Loading device workstream…" fallback. That fallback is STABLE — it
+          // does not change while the chunk loads — so a stability check alone
+          // happily concludes on it and never sees the real surface mount, let
+          // alone crash. Proven, not assumed: restoring a known-crashing hook
+          // still produced a green probe.
+          //
+          // So a container whose only substantive content is a role="status"
+          // node is treated as still loading, and there is a floor on how early
+          // "stable" may be believed.
+          const isPlaceholder = () => {
+            const status = container.querySelector('[role="status"]');
+            if (!status) return false;
+            const rest = (container.textContent ?? '')
+              .replace(status.textContent ?? '', '')
+              .trim();
+            return rest.length === 0;
+          };
+          const mockCalls = () =>
+            (globalThis.fetch as unknown as { mock?: { calls: unknown[] } }).mock?.calls.length ??
+            0;
+
+          let stable = 0;
+          let last = container.innerHTML;
+          let lastCalls = mockCalls();
+          for (let i = 0; i < 80; i++) {
+            if (err) break; // already dead; no point waiting for calm
+            await new Promise((r) => setTimeout(r, 25));
+            const now = container.innerHTML;
+            const calls = mockCalls();
+            stable = now === last && calls === lastCalls ? stable + 1 : 0;
+            last = now;
+            lastCalls = calls;
+            // i >= 12 is the floor (~300ms): long enough for a lazy chunk to
+            // resolve and its surface to mount, so "nothing changed" means
+            // finished rather than not-started-yet.
+            if (stable >= 3 && i >= 12 && !isPlaceholder()) break;
+          }
         } catch (e) {
           err = err || String((e as Error)?.message ?? e);
         }

@@ -141,5 +141,11 @@ export function readyData<T>(state: DataState<T>): T | null {
  * ambiguity this module exists to remove.
  */
 export function readyRows<T>(state: DataState<T[]>): T[] {
-  return state.status === 'ready' ? state.data : [];
+  // The Array.isArray check makes the `T[]` return type true rather than
+  // nearly true. A hook that marked a non-array payload 'ready' used to hand
+  // that value straight to a caller's `.find`, which threw. Callers should
+  // report the shape failure upstream (toRowsState does) — this is the net
+  // under that, not a substitute for it, because returning [] here would
+  // otherwise turn a broken read into a silent empty list.
+  return state.status === 'ready' && Array.isArray(state.data) ? state.data : [];
 }

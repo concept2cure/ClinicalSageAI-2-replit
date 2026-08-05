@@ -27,6 +27,7 @@
 
 import { useFetchJson } from './useFetchJson';
 import { toDataState, type DataState } from '../lib/dataState';
+import { toRowsState } from '../lib/payloadShape';
 
 /* ─── Client-side registry types (mirror of the server registry) ──── */
 
@@ -211,7 +212,13 @@ export function useStudyArchetypes(query: ArchetypeQuery): UseStudyArchetypesRes
   const { data, loading, error, refresh } = useFetchJson<ArchetypesPayload>(url);
 
   return {
-    archetypes: toDataState(data?.data ?? null, loading, error, {
+    // toRowsState, not toDataState: the latter marks any non-null payload
+    // 'ready', so a 200 carrying `{ data: {} }` was handed to readyRows() as
+    // though it were a list and threw on the next `.find`. Present-but-not-a-
+    // list is a shape failure and is reported as one; an empty list stays a
+    // real answer.
+    archetypes: toRowsState<Archetype>(data?.data, loading, error, {
+      source: url ?? '/api/mdx/study-archetypes',
       idleReason: 'Resolving the project context to select applicable study designs…',
     }),
     registryVersion: data?.meta?.registryVersion ?? null,
