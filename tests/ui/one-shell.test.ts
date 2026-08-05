@@ -198,7 +198,6 @@ describe('one shell', () => {
      */
     const KNOWN = [
       'admin-console',
-      'client-portal',
       'csr-workflow',
       'document-authoring',
       'ectd-coauthor',

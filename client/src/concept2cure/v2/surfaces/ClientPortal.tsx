@@ -40,7 +40,7 @@ function ago(v: string): string {
   return `${Math.round(days / 7)} wk ago`;
 }
 
-export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
+export function ClientPortal({ onNav }: SurfaceViewProps) {
   const [ctxOpen, setCtxOpen] = useState(true);
   // Forward ?clientWorkspaceId= so CRO staff can preview a specific client, and
   // a multi-workspace client can pick one. The backend still authorizes it
@@ -63,9 +63,6 @@ export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
     const notShared = !!error && /\b40[13]\b/.test(error);
     return (
       <div className="cp">
-        <header className="cp-top">
-          <div className="cp-brand"><b>Concept2Cure<span>.RI</span></b><span className="cp-tag">Client workspace</span></div>
-        </header>
         <div className="cp-body">
           {loading ? (
             <EmptyState
@@ -106,26 +103,36 @@ export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
         </div>
       )}
 
-      <header className="cp-top">
-        <div className="cp-brand"><b>Concept2Cure<span>.RI</span></b><span className="cp-tag">Client workspace</span></div>
-        <div className="cp-top-r">
-          <span className="cp-org">{cp.cro ? <>{cp.cro} {'→'} </> : null}{cp.client}</span>
-          <span className="avatar" style={{ width: 28, height: 28 }}>
-            {cp.user.split(' ').map(x => x[0]).join('').slice(0, 2)}
-          </span>
-        </div>
-      </header>
+      {/* No `cp-top` header.
 
+          It drew a sticky 54px bar with the product wordmark, a "Client
+          workspace" tag, the CRO→client pair and an avatar — beneath the
+          shell's own 48px TopBar, which already carries a breadcrumb, an org
+          switcher and the same person's avatar. `hideAna: true` zeroes the AnA
+          column only; `V2App.tsx:244,253` render the Rail and TopBar
+          unconditionally. So this surface showed two top bars, two avatars for
+          one user and the wordmark twice, on a screen whose own copy calls
+          itself "the read-only portal your client sees — no internal tools".
+
+          The one thing `cp-top` carried that nothing else did is `cp.client`.
+          It moves to the hero eyebrow below. */}
       <div className="cp-body">
         <div className="cp-hero">
           <div>
-            <div className="ph-eyebrow">Welcome{cp.user ? `, ${cp.user.split(' ').slice(-1)[0]}` : ''}</div>
+            <div className="ph-eyebrow">
+              Welcome{cp.user ? `, ${cp.user.split(' ').slice(-1)[0]}` : ''}
+              {cp.client ? ` · ${cp.client}` : ''}
+            </div>
             <h1 className="ph-title" style={{ fontSize: 26 }}>
               Your programs{cp.cro ? ` with ${cp.cro}` : ''}
             </h1>
             <div className="ph-sub">A read-only view of everything your regulatory partner is building for you — status, shared deliverables, and what needs your input.</div>
           </div>
-          <button className="btn primary" onClick={() => onAsk('Ask a question')}>{I.sparkles} Ask a question</button>
+          {/* No "Ask a question" button. It passed its own LABEL as the
+              question — `onAsk('Ask a question')` — into a rail this surface
+              does not draw, so the literal string "Ask a question" was sent to
+              the assistant and the answer appeared later on some other screen.
+              A client portal has no assistant by design (surfaceViews.ts:140). */}
         </div>
 
         {cp.programs.length === 0 && (
