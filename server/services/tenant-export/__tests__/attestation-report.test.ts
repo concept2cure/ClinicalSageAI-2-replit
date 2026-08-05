@@ -1,6 +1,6 @@
 /**
- * Attestation report tests — verifies INTACT/BROKEN/EMPTY classification
- * and HMAC signature roundtrip.
+ * Attestation report tests — verifies INTACT/BROKEN/EMPTY/UNVERIFIABLE
+ * classification and HMAC signature roundtrip.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -110,6 +110,107 @@ describe('generateAttestation', () => {
     const report = await generateAttestation(c, ORG.id);
     const tampered = { ...report, totalEntries: 99999 };
     expect(verifyAttestationSignature(tampered)).toBe(false);
+  });
+
+  /*
+   * The UNVERIFIABLE cases.
+   *
+   * These are the ones that were wrong. An unhashed trail produced zero broken
+   * links and went out signed as INTACT — a claim about tamper-evidence with no
+   * evidence behind it, in the document a customer hands an inspector.
+   *
+   * It failed silently in two independent ways, which is why no existing test
+   * caught it: with every record_hash NULL, `prevHash` stays null so the
+   * `expectedPrev !== null` guard never fires, and every `previous_hash` is null
+   * so the second guard never fires either. Both had to be wrong for the bug to
+   * exist, and either one alone would have hidden it.
+   */
+  it('returns UNVERIFIABLE, NOT INTACT, when no entry carries a hash', async () => {
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        [
+          'audit_events',
+          [
+            { id: 'a', sequence_number: 1, record_hash: null, previous_hash: null, timestamp: '2026-01-01T00:00:00Z' },
+            { id: 'b', sequence_number: 2, record_hash: null, previous_hash: null, timestamp: '2026-01-02T00:00:00Z' },
+          ],
+        ],
+      ]),
+    );
+    const report = await generateAttestation(c, ORG.id);
+
+    expect(report.attestation, 'an unhashed trail was attested as intact').toBe('UNVERIFIABLE');
+    expect(report.totalEntries).toBe(2);
+    expect(report.hashedEntries).toBe(0);
+    expect(report.unhashedEntries).toBe(2);
+    // The reader must be told why, not just handed a verdict.
+    expect(report.unverifiableReason).toContain('cannot be attested');
+  });
+
+  it('returns UNVERIFIABLE when the trail is only PARTIALLY hashed', async () => {
+    // The later links can be checked; the earlier span cannot be attested at
+    // all. "INTACT" over a partially-covered trail is the same overclaim.
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        [
+          'audit_events',
+          [
+            { id: 'a', sequence_number: 1, record_hash: null, previous_hash: null, timestamp: '2026-01-01T00:00:00Z' },
+            { id: 'b', sequence_number: 2, record_hash: 'h2', previous_hash: null, timestamp: '2026-01-02T00:00:00Z' },
+            { id: 'c', sequence_number: 3, record_hash: 'h3', previous_hash: 'h2', timestamp: '2026-01-03T00:00:00Z' },
+          ],
+        ],
+      ]),
+    );
+    const report = await generateAttestation(c, ORG.id);
+
+    expect(report.attestation).toBe('UNVERIFIABLE');
+    expect(report.hashedEntries).toBe(2);
+    expect(report.unhashedEntries).toBe(1);
+    // The split is reported so a reader can judge rather than trust.
+    expect(report.unverifiableReason).toContain('1 of 3');
+  });
+
+  it('EMPTY and UNVERIFIABLE are not the same claim', async () => {
+    // EMPTY says something true about the TENANT: no audit history exists.
+    // UNVERIFIABLE says something about this REPORT: a history exists and it
+    // could not be checked. Collapsing them would re-hide the bug.
+    const empty = await generateAttestation(
+      client(new Map<string, any[]>([['organizations', [ORG]], ['audit_events', []]])),
+      ORG.id,
+    );
+    const unhashed = await generateAttestation(
+      client(
+        new Map<string, any[]>([
+          ['organizations', [ORG]],
+          ['audit_events', [{ id: 'a', sequence_number: 1, record_hash: null, previous_hash: null, timestamp: '2026-01-01T00:00:00Z' }]],
+        ]),
+      ),
+      ORG.id,
+    );
+    expect(empty.attestation).toBe('EMPTY');
+    expect(unhashed.attestation).toBe('UNVERIFIABLE');
+  });
+
+  it('the UNVERIFIABLE verdict is inside the signed body, not bolted on after', async () => {
+    // A verdict outside the signature could be edited to INTACT in transit
+    // without breaking verification — which would defeat the whole fix.
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        ['audit_events', [{ id: 'a', sequence_number: 1, record_hash: null, previous_hash: null, timestamp: '2026-01-01T00:00:00Z' }]],
+      ]),
+    );
+    const report = await generateAttestation(c, ORG.id);
+    expect(verifyAttestationSignature(report)).toBe(true);
+
+    const forged = { ...report, attestation: 'INTACT' as const };
+    expect(
+      verifyAttestationSignature(forged as typeof report),
+      'the verdict could be rewritten to INTACT without breaking the signature',
+    ).toBe(false);
   });
 
   it('throws TenantNotFound when org does not exist', async () => {
