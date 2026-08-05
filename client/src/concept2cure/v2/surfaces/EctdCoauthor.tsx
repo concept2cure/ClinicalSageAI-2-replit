@@ -42,7 +42,7 @@ import { I } from '../icons';
 import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 import { useAnaChat } from '../../components/ana/useAnaChat';
-import { GovernedActionSignoff } from '../../components/ana/GovernedActionSignoff';
+import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -166,29 +166,12 @@ function runComplianceAction(docId: number): Promise<ComplianceResult | null> {
  *  here because a §11.50 gate that has nowhere to draw is a gate that silently
  *  does not exist — the exact failure this surface is being fixed for. */
 function EctdSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
-  const [outcomes, setOutcomes] = useState<Record<number, string>>({});
-  const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-      {signoffs.map((s, i) => {
-        if (dismissed[i]) return null;
-        if (outcomes[i]) {
-          return (
-            <div key={`${s.command}-${i}`} className="ec-empty" role="status">
-              {I.check} {outcomes[i]}
-            </div>
-          );
-        }
-        return (
-          <GovernedActionSignoff
-            key={`${s.command}-${i}`}
-            signoff={s}
-            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
-            onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
-          />
-        );
-      })}
-    </div>
+    <SignoffList
+      signoffs={signoffs}
+      style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}
+      doneClassName="ec-empty"
+    />
   );
 }
 

@@ -61,7 +61,7 @@ import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat } from '../../components/ana/useAnaChat';
-import { GovernedActionSignoff } from '../../components/ana/GovernedActionSignoff';
+import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest } from '@/lib/queryClient';
@@ -239,29 +239,12 @@ const STATUSES = ['draft', 'in_review', 'approved'];
  *  from the editor's pane, each resolving through GovernedActionSignoff
  *  (POST /api/ana-ri/governed-action) to the server's confirmation. */
 function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
-  const [outcomes, setOutcomes] = useState<Record<number, string>>({});
-  const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
   return (
-    <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
-      {signoffs.map((s, i) => {
-        if (dismissed[i]) return null;
-        if (outcomes[i]) {
-          return (
-            <div key={`${s.command}-${i}`} className="cmt-body" role="status">
-              {I.check} {outcomes[i]}
-            </div>
-          );
-        }
-        return (
-          <GovernedActionSignoff
-            key={`${s.command}-${i}`}
-            signoff={s}
-            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
-            onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
-          />
-        );
-      })}
-    </div>
+    <SignoffList
+      signoffs={signoffs}
+      style={{ display: 'grid', gap: 8, marginTop: 8 }}
+      doneClassName="cmt-body"
+    />
   );
 }
 

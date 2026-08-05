@@ -27,7 +27,7 @@ import {
 import { I } from './icons';
 import { SampleTag, connected } from './dataConnect';
 import type { OnboardingWelcome } from './onboardingWelcome';
-import { GovernedActionSignoff } from '../components/ana/GovernedActionSignoff';
+import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
 import {
@@ -372,29 +372,12 @@ export function TopBar({
     confirmation, or is dismissed. No fabricated audit/hash — the outcome is the
     server's, never invented. */
 function RailSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
-  const [outcomes, setOutcomes] = React.useState<Record<number, string>>({});
-  const [dismissed, setDismissed] = React.useState<Record<number, boolean>>({});
   return (
-    <div className="ana-msg-signoffs">
-      {signoffs.map((s, i) => {
-        if (dismissed[i]) return null;
-        if (outcomes[i]) {
-          return (
-            <div key={`${s.command}-${i}`} className="ana-signoff-done" role="status">
-              {I.check} {outcomes[i]}
-            </div>
-          );
-        }
-        return (
-          <GovernedActionSignoff
-            key={`${s.command}-${i}`}
-            signoff={s}
-            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
-            onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
-          />
-        );
-      })}
-    </div>
+    <SignoffList
+      signoffs={signoffs}
+      className="ana-msg-signoffs"
+      doneClassName="ana-signoff-done"
+    />
   );
 }
 

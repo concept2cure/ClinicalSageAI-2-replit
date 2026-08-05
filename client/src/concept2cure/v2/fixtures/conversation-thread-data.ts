@@ -2,6 +2,14 @@
    Contains thread scenarios, artifact builders, and the live responder stub.
    No JSX — all data and functions return plain objects. */
 
+/* Type-only, so this module still has no runtime dependency on the chat hook or
+   the governed-action hook — both imports are erased at compile time. They are
+   the REAL types rather than structural mirrors on purpose: a mirror of
+   `PendingSignoff` is a second definition of what a Part 11 signature carries,
+   free to drift from the one `GovernedActionSignoff` actually consumes. */
+import type { AnaChatAction } from '../../components/ana/useAnaChat';
+import type { PendingSignoff } from '../../components/ana/useGovernedAction';
+
 /* ---- Types ---- */
 
 export interface CtToolCall {
@@ -41,6 +49,20 @@ export interface CtTurn {
   grounding?: CtGrounding[];
   artifactRef?: { id: string; type: string } | null;
   doc?: any;
+  /**
+   * Governed actions the turn executed, and signatures it is WAITING for.
+   *
+   * These were dropped. `toTurn` mapped text, thinking and grounding and
+   * discarded `executedActions` and `pendingSignoffs`, so a turn that needed a
+   * 21 CFR 11.50 signature rendered as an ordinary answer with no prompt — the
+   * mutation waiting on a signature nobody was asked for.
+   *
+   * That was survivable while `conversation-thread` was reached only by the
+   * Home composer. It is not now: `ownsConversation` surfaces hand ⌘K questions
+   * here, so this is a destination for asks that can carry governed actions.
+   */
+  executedActions?: AnaChatAction[];
+  pendingSignoffs?: PendingSignoff[];
 }
 
 export interface CtArtRow {

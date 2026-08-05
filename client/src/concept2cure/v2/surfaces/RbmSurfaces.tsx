@@ -5,7 +5,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { GovernedActionSignoff } from '../../components/ana/GovernedActionSignoff';
+import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../../components/ana/useAnaChat';
 import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
@@ -259,29 +259,12 @@ export interface RbmAnaMessage {
     each resolving through GovernedActionSignoff (POST /api/ana-ri/governed-action)
     to the server's confirmation — never a fabricated result. */
 function RbmSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
-  const [outcomes, setOutcomes] = useState<Record<number, string>>({});
-  const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
   return (
-    <div className="rbm-ana-signoffs">
-      {signoffs.map((s, i) => {
-        if (dismissed[i]) return null;
-        if (outcomes[i]) {
-          return (
-            <div key={`${s.command}-${i}`} className="rbm-ana-signoff-done" role="status">
-              {I.check} {outcomes[i]}
-            </div>
-          );
-        }
-        return (
-          <GovernedActionSignoff
-            key={`${s.command}-${i}`}
-            signoff={s}
-            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
-            onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
-          />
-        );
-      })}
-    </div>
+    <SignoffList
+      signoffs={signoffs}
+      className="rbm-ana-signoffs"
+      doneClassName="rbm-ana-signoff-done"
+    />
   );
 }
 
