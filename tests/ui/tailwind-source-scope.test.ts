@@ -25,8 +25,8 @@
  * The same scan produced `.bg-gray-200`, `.text-gray-500` and `.bg-black/20`,
  * none of which any client file asks for. Nearly all of this product's colour
  * comes from `design-system/` custom properties rather than Tailwind's palette
- * — the exception is the four files that render OUTSIDE the v2 shell, pinned by
- * the third test below.
+ * — the exception is the four files that render OUTSIDE the v2 shell, which is
+ * what the third test below is about.
  *
  * Scoping detection to the client removed 200 selectors and 13,991 bytes
  * (10.2%) from the entry stylesheet, and added none. Every one of the 200 was
@@ -86,77 +86,52 @@ describe('tailwind source scope', () => {
       .toEqual([]);
   });
 
-  it('no NEW client file depends on the palette the dead config would have remapped', () => {
+  it('the theme is loaded, so the palette is the one the config declares', () => {
     /*
-     * A RATCHET over a live conformance gap.
+     * `@config` is REQUIRED, and its absence is silent.
      *
-     * `tailwind.config.ts` remaps fifteen colour families to an "Anthropic
-     * warm" palette across 115 hex values, and under v4 that remapping is
-     * inert — `.bg-black/20` compiles to `#0003`, Tailwind's stock black, not
-     * the config's `#141413`.
+     * Tailwind v4 does not read a JS config without it — not the `content`
+     * array and not the THEME. `tailwind.config.ts` remaps fifteen colour
+     * families to an "Anthropic warm" palette across 115 hex values, and for
+     * the whole life of the v4 upgrade none of it applied: `.bg-black/20`
+     * compiled to `#0003`, Tailwind's stock black, against the config's
+     * `#141413`.
      *
-     * I first recorded the blast radius as zero. That was wrong, and the way it
-     * was wrong is worth keeping: `git grep -E` does not honour `\b` the way I
-     * assumed, so the search returned nothing and I wrote "measured, zero
-     * occurrences" into two files. A proper walk — this one — finds 31 distinct
-     * utilities across four files, and they are exactly the surfaces that render
-     * OUTSIDE the v2 shell, so outside the custom properties everything else
-     * uses.
+     * That was not harmless. Four files render OUTSIDE the v2 shell and use
+     * ZERO design-system custom properties — `ZenLogin`, `ZenSignup`,
+     * `ZenAuthLayout` and the error boundary are styled entirely in Tailwind
+     * utilities, saturated with `stone-*`, which only makes sense against the
+     * warm remap. They were authored for this palette and were silently
+     * rendering in another one. The signup screen's `bg-blue-50` /
+     * `bg-green-100` were stock cool blue and stock emerald instead of the
+     * brand's blue and earthy green.
      *
-     * Most of the gap is invisible: v4's stock `stone`/`slate` are already warm
-     * and land within a hair of the config (`stone-50` is oklch(98.5% .001
-     * 106.423) against the config's `#faf9f5`). What is visible is blue and
-     * green — the config maps blue→Anthropic blue and emerald/green→earthy
-     * green, and the signup and login screens render `bg-blue-50`,
-     * `text-blue-600`, `bg-green-100`, `bg-emerald-50` and friends in Tailwind's
-     * stock cool palette today.
-     *
-     * Fixing that means adding `@config` and re-QAing every colour, which is its
-     * own PR. Until then this holds the line: no NEW file may join the list, and
-     * emptying an entry means deleting it from KNOWN.
+     * The failure mode is that nothing anywhere errors when `@config` goes
+     * missing. The colours just quietly become someone else's.
      */
-    const KNOWN = [
-      'client/src/components/ui/error-boundary.jsx',
-      'client/src/concept2cure/auth/ZenAuthLayout.tsx',
-      'client/src/concept2cure/auth/ZenLogin.tsx',
-      'client/src/concept2cure/auth/ZenSignup.tsx',
-    ];
-    const FAMILIES = [
-      'slate', 'gray', 'zinc', 'neutral', 'stone',
-      'blue', 'indigo', 'violet', 'purple', 'sky', 'cyan',
-      'green', 'emerald', 'teal', 'terracotta',
-    ];
-    const UTILITY = new RegExp(
-      String.raw`\b(?:text|bg|border|ring|from|via|to|divide|outline|decoration|fill|stroke|accent|caret|placeholder)-(?:${FAMILIES.join('|')})-\d{2,3}\b`,
-    );
-
-    const hits: string[] = [];
-    const walk = (dir: string) => {
-      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-        const p = path.join(dir, e.name);
-        if (e.isDirectory()) {
-          if (e.name === 'node_modules' || e.name === '__tests__') continue;
-          walk(p);
-        } else if (/\.(tsx?|jsx?)$/.test(e.name)) {
-          if (UTILITY.test(fs.readFileSync(p, 'utf8'))) hits.push(path.relative(REPO, p));
-        }
-      }
-    };
-    walk(path.join(REPO, 'client/src'));
-    hits.sort();
+    const css = read(ENTRY);
+    const config = /@config\s+["']([^"']+)["']/.exec(css);
 
     expect(
-      hits.filter((f) => !KNOWN.includes(f)),
-      'a NEW client file uses a Tailwind palette utility that tailwind.config.ts ' +
-        'remaps — but v4 never reads that config, so it renders in the stock ' +
-        'palette. Use a design-system custom property instead, or take the ' +
-        '`@config` decision.',
-    ).toEqual([]);
+      config,
+      'client/src/index.css has no `@config`. Without it Tailwind v4 ignores ' +
+        'tailwind.config.ts entirely — the theme silently reverts to stock, and ' +
+        'the auth screens render in a palette nobody chose.',
+    ).toBeTruthy();
 
-    const cleared = KNOWN.filter((f) => !hits.includes(f));
+    const target = path.resolve(path.dirname(path.join(REPO, ENTRY)), config![1]);
+    expect(fs.existsSync(target), `@config points at a file that does not exist: ${config![1]}`)
+      .toBe(true);
+
+    // …and the config it points at still carries a theme worth loading. A
+    // config emptied to `{}` would satisfy the directive and mean nothing.
+    const theme = fs.readFileSync(target, 'utf8');
     expect(
-      cleared,
-      `these no longer use the remapped palette — delete them from KNOWN: ${cleared.join(', ')}`,
-    ).toEqual([]);
+      (theme.match(/#[0-9a-fA-F]{6}/g) ?? []).length,
+      'the loaded config declares almost no colours — has the theme been ' +
+        'emptied? If the palette moved to design-system custom properties, ' +
+        'delete the config and this test together rather than leaving both inert.',
+    ).toBeGreaterThan(50);
   });
+
 });

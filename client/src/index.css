@@ -51,34 +51,42 @@
    upgrade — v4 does not read a JS config without an explicit `@config`, so
    anyone reading that file has had a false model of what gets scanned.
 
-   NOT fixed here, deliberately: the same rule means `tailwind.config.ts`'s
-   theme — 115 hex values remapping fifteen colour families to "Anthropic warm"
-   — is also inert. `.bg-black/20` compiles to `#0003`, Tailwind's stock black,
-   not the config's `#141413`.
+   ── The theme, and why `@config` is now here ──────────────────────────────
+   v4 also stops reading the config's THEME without `@config`, and that theme is
+   115 hex values remapping fifteen colour families to "Anthropic warm". It was
+   inert: `.bg-black/20` compiled to `#0003`, Tailwind's stock black, not the
+   config's `#141413`.
 
-   The blast radius is small but NOT nil, and the first measurement said nil:
-   `git grep -E` does not honour `\b` the way I assumed, so a search for palette
-   utilities under client/src returned zero and I wrote that down as fact. A
-   proper walk finds 31 distinct utilities across four files — the three auth
-   entry pages and the error boundary, i.e. everything that renders OUTSIDE the
-   v2 shell and therefore outside the design-system custom properties the rest
-   of the product runs on.
+   The first measurement of the blast radius said nil, and that was wrong —
+   `git grep -E` does not honour `\b` as I assumed, so a search for palette
+   utilities under client/src returned zero and I wrote it down as fact. A
+   proper walk finds 31 distinct utilities across four files: the three auth
+   entry pages and the error boundary. They are precisely the surfaces that
+   render OUTSIDE the v2 shell, and they use ZERO design-system custom
+   properties — they are styled entirely in Tailwind utilities, saturated with
+   `stone-*`, which only makes sense against the warm remap. They were authored
+   for this palette, and the v4 migration silently substituted another one.
 
-   Most of it does not matter: v4's stock `stone`/`slate` are already warm and
-   land within a hair of the config's values (`stone-50` oklch(98.5% .001
-   106.423) vs `#faf9f5`; `stone-800` vs `#2d2d2a`). What does matter is that
-   the config maps blue→Anthropic blue and emerald/green→earthy green, and
-   `ZenSignup.tsx` and `ZenLogin.tsx` use `bg-blue-50`, `text-blue-600/800`,
-   `bg-green-100`, `text-green-600/700`, `bg-emerald-50` and `text-emerald-600`
-   — all of which render in Tailwind's stock cool blue and stock emerald today.
+   So `@config` is added, and both risks were checked by building rather than by
+   reasoning:
 
-   That is a real conformance gap on the signup and login screens, and fixing it
-   means adding `@config` and re-QAing the palette, which wants its own PR
-   rather than a ride on this one. tests/ui/tailwind-source-scope.test.ts keeps
-   the count from growing meanwhile. */
+     · source scoping SURVIVES it. `source(none)` + the two `@source` lines
+       still win, and the `.\[ci\:…\]` rules stay out of the bundle. (The
+       config's own `content` array happens to name the same two globs, so
+       there was nothing to fight over.)
+     · the palette actually lands. `bg-stone-50` is now `#faf9f5` not stock
+       oklch; `bg-blue-50` `#edf3f8` (Anthropic blue) not stock cool blue;
+       `text-emerald-600` `#647746` and `bg-green-100` `#e4ebd8` (earthy green)
+       not stock emerald. Zero stock `--color-*-NNN: oklch(…)` tokens remain.
+
+   Cost: the entry stylesheet goes 123,298 → 140,690 bytes, because utilities
+   now compile to the config's literals. That is the price of the signup and
+   login screens rendering in the palette they were designed against instead of
+   Tailwind's defaults. */
 @import "tailwindcss" source(none);
 @source "../index.html";
 @source "./**/*.{js,jsx,ts,tsx}";
+@config "../../tailwind.config.ts";
 
 /* ─── Global token-name shim ──────────────────────────────────────
    Canonical names the brand accent --accent-main-{000,100,200} and the
