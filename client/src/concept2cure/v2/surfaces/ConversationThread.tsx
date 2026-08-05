@@ -3,7 +3,7 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
-import type { SurfaceViewProps } from '../surfaceViews';
+import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
@@ -259,7 +259,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav }: SurfaceViewProps) {
+export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation; the default is a fresh conversation.
   const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };

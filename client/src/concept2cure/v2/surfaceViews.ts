@@ -178,7 +178,6 @@ export type SurfaceView =
  * grow to cover a NEW surface without that assertion being edited too — which
  * is the review moment the guard exists to create.
  */
-type OwnedComponent = React.ComponentType<OwnedSurfaceViewProps>;
 
 /* Kit load order (app/index.html) is the port order; flags mirror the kit's
    window.SURFACE_VIEWS registrations exactly. */
@@ -216,13 +215,13 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // Owns its conversation by having none: an external client reads their
   // workspace here and AnA is deliberately absent. That is a discharge of the
   // obligation, not an evasion of it — there is no Ask affordance to strand.
-  'client-portal': { component: ClientPortal as OwnedComponent, full: true, ownsConversation: true },
+  'client-portal': { component: ClientPortal, full: true, ownsConversation: true },
   cmc: { component: CmcModule },
   'communication-center': { component: CommunicationCenter },
   // THE surface that owns the shell's conversation. `window.C2C_CONVO =
   // { id:'new', seed }` + navigate here is the protocol Home, ProjectHome and
   // now the shell's own `ask()` use when there is no rail to answer in.
-  'conversation-thread': { component: ConversationThread as OwnedComponent, ownsConversation: true },
+  'conversation-thread': { component: ConversationThread, ownsConversation: true },
   coverage: { component: CodebaseCoverage },
   // No `full`, no `ownsConversation` — the AnA rail stays open on the CRL library,
   // because the point of looking at a letter is being able to ask about it.
@@ -356,7 +355,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // its own `useAnaChat` and renders the real Part 11 sign-offs through
   // GovernedActionSignoff (RbmSurfaces.tsx:276) — proof that a surface holding
   // this flag can still present a §11.50 gate without the shell's rail.
-  rbm: { component: Rbm as OwnedComponent, ownsConversation: true },
+  rbm: { component: Rbm, ownsConversation: true },
   'reg-change': { component: RegChange },
   registrations: { component: Registrations },
   'regulatory-workspace': { component: RegulatoryWorkspace, full: true },

@@ -281,35 +281,42 @@ describe('one shell', () => {
     ).toEqual([]);
   });
 
-  it('the unused-onAsk widening is spent only on the three components that predate the guard', () => {
+  it('no surface bypasses the ownsConversation union with a cast', () => {
     /*
      * `SurfaceView` is a discriminated union: `ownsConversation: true` narrows
      * `component` to `ComponentType<OwnedSurfaceViewProps>`, which has no
-     * `onAsk` — so the mistake above is a compile error at the registration
-     * site, the one place where the flag and the component are both visible.
+     * `onAsk` — so handing a question to a rail the surface does not draw is a
+     * compile error at the registration site, the one place where the flag and
+     * the component are both visible.
      *
-     * Assignability can see what a component DECLARES, not what it uses. Three
-     * components declare the full `SurfaceViewProps` and never read `onAsk`,
-     * so the union rejects them and they are widened with `as OwnedComponent`.
-     * That cast is the only hole in the guard, and it is pinned here: adding a
-     * fourth means editing this list, which is the review the guard exists to
-     * force. Each is closed by narrowing its own props — see the comment on
-     * `OwnedComponent` in surfaceViews.ts for the exact one-line edit.
+     * Assignability sees what a component DECLARES, not what it uses. Three
+     * components declared the full `SurfaceViewProps` and never read `onAsk`,
+     * so the union rejected them and they were widened with `as OwnedComponent`
+     * — the guard's only hole, recorded here as a shrink-only list.
+     *
+     * The list is now EMPTY, and the assertion is correspondingly stronger:
+     * every one was closed by narrowing its own props instead. `Rbm` was the
+     * instructive one — it destructured `onAsk` and never read it, passing its
+     * OWN `askAna` down under the same prop name. That is exactly the shape the
+     * union exists to forbid: a surface holding the handle that writes into a
+     * rail it hides.
+     *
+     * A cast reappearing here is not a style violation. It is the guard being
+     * switched off for one surface, silently, at the only site that could have
+     * caught the bug.
      */
-    const LEGACY = ['client-portal', 'conversation-thread', 'rbm'];
-
     const views = read('client/src/concept2cure/v2/surfaceViews.ts');
     const widened: string[] = [];
     for (const m of views.matchAll(/^\s*'?([a-z0-9-]+)'?:\s*\{([^}]*)\},?\s*$/gm)) {
       const [, id, body] = m;
-      if (/\bas\s+OwnedComponent\b/.test(body)) widened.push(id);
+      if (/\bas\s+Owned(Component|SurfaceViewProps)\b/.test(body)) widened.push(id);
     }
 
     expect(
       widened.sort(),
-      'a surface is bypassing the SurfaceView union with `as OwnedComponent`. Narrow that ' +
-        "component's props to OwnedSurfaceViewProps instead, or record it here with the " +
-        'reason it cannot be narrowed yet.',
-    ).toEqual(LEGACY);
+      'a surface is bypassing the ownsConversation union with a cast. Narrow that ' +
+        "component's props to OwnedSurfaceViewProps instead — it is a one-line change to " +
+        'the component signature, and the cast turns the guard off for that surface.',
+    ).toEqual([]);
   });
 });

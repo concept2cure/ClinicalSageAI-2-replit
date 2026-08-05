@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import type { SurfaceViewProps } from '../surfaceViews';
+import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/auth-entry.css';
 
 /* ════ ClientPortal — the read-only view a CRO's client sees ════
@@ -40,7 +40,7 @@ function ago(v: string): string {
   return `${Math.round(days / 7)} wk ago`;
 }
 
-export function ClientPortal({ onNav }: SurfaceViewProps) {
+export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
   const [ctxOpen, setCtxOpen] = useState(true);
   // Forward ?clientWorkspaceId= so CRO staff can preview a specific client, and
   // a multi-workspace client can pick one. The backend still authorizes it
