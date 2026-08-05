@@ -37,7 +37,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/ac3f78ab-3333-5b63-a6cd-1b4e9abe8f98/scratchpad/pw/node_modules/playwright-core/index.mjs';
+import { launchChromium } from './playwright.mjs';
+import { assertCaptureIsFresh } from './capture-freshness.mjs';
 
 const TAG = '[visual-qa]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -136,12 +137,11 @@ if (files.length === 0) {
   process.exit(1);
 }
 
+assertCaptureIsFresh(TAG, MARKUP, REPO);
+
 fs.mkdirSync(SHOTS, { recursive: true });
 
-const browser = await chromium.launch({
-  executablePath: '/opt/pw-browsers/chromium',
-  args: ['--no-sandbox', '--allow-file-access-from-files'],
-});
+const browser = await launchChromium({ args: ['--no-sandbox', '--allow-file-access-from-files'] });
 const ctx = await browser.newContext({ viewport: VIEWPORT });
 
 /*

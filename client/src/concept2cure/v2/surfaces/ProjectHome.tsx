@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, type DataState } from '../dataConnect';
+import { EmptyState, useLiveData, hasKeys, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
@@ -285,6 +285,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const state = useLiveData<{ sources: SourceRow[] }>(
     pid ? `/api/c2c/projects/${pid}/sources` : null,
     [pid, reloadKey],
+    hasKeys<{ sources: SourceRow[] }>('sources'),
   );
 
   // Sections in this project drafted from a source that has since changed. Read
@@ -307,20 +308,25 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     if (settled) setReloadKey(k => k + 1);
   }, [settled]);
 
-  const rows = (state.data?.sources ?? []).filter(s =>
+  const sources = state.data?.sources ?? [];
+  const rows = sources.filter(s =>
     q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
   );
-  const total = state.data?.sources.length ?? 0;
-  const readable = (state.data?.sources ?? []).filter(s => s.extractionStatus === 'extracted').length;
+  const total = sources.length;
+  const readable = sources.filter(s => s.extractionStatus === 'extracted').length;
 
   return (
     <section className="pj-sec">
       <div className="pj-sec-h">
         <h2>Data room</h2>
         <span className="sec-sub">
-          {total > 0
-            ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable — what this project's documents are written from`
-            : "the sources this project's documents are written from"}
+          {/* A failed read must not read as "no sources". Someone who just
+              dropped a file in here would take an empty list as data loss. */}
+          {state.error
+            ? "couldn't load this project's sources — the list below is incomplete"
+            : total > 0
+              ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable — what this project's documents are written from`
+              : "the sources this project's documents are written from"}
         </span>
       </div>
 

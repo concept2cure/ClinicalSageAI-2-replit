@@ -83,13 +83,24 @@ export function auditA11y(root, doc) {
   // SC 3.3.2 — a placeholder is not a label. It is not exposed as the
   // accessible name by every AT, and it disappears the moment the user types,
   // so the field's purpose vanishes exactly when it might need re-checking.
+  //
+  // The `for` targets are collected once and compared as ATTRIBUTE VALUES. The
+  // obvious alternative — `querySelector(\`label[for="${id}"]\`)` — requires
+  // escaping the id into CSS selector syntax, and the version of that written
+  // here escaped quotes but not backslashes, so an id containing `\"` would have
+  // terminated the attribute string early. (CodeQL js/incomplete-sanitization,
+  // alert 2637.) `CSS.escape` is absent in some jsdom versions, so the fix is
+  // not to escape better but to stop building a selector from data at all:
+  // string equality on the attribute needs no escaping and cannot be got wrong.
+  const labelledIds = new Set(
+    [...root.querySelectorAll('label[for]')].map((l) => l.getAttribute('for')),
+  );
   for (const el of root.querySelectorAll('input, select, textarea')) {
     const type = (el.getAttribute('type') ?? '').toLowerCase();
     if (['hidden', 'submit', 'button', 'reset', 'image'].includes(type)) continue;
     if (el.getAttribute('aria-hidden') === 'true') continue;
     const id = el.getAttribute('id');
-    // CSS.escape is absent in some jsdom versions; the ids here are simple.
-    const hasFor = id ? !!root.querySelector(`label[for="${id.replace(/"/g, '\\"')}"]`) : false;
+    const hasFor = id != null && labelledIds.has(id);
     if (hasFor || el.closest('label') || accName(el)) continue;
     add(
       '3.3.2 form field has no label',
@@ -152,6 +163,7 @@ export const SELF_CHECK_HTML = `
   <img src="b.png" alt="">
   <input type="text">
   <label for="ok">Named</label><input id="ok" type="text">
+  <label for='odd\\"id'>Named the hard way</label><input id='odd\\"id' type="text">
   <div tabindex="3"></div>
   <span id="dup"></span><span id="dup"></span>
   <h2>a</h2><h4>b</h4>
@@ -166,5 +178,11 @@ export const SELF_CHECK_EXPECTED = [
   '2.4.3 positive tabindex',
 ];
 
-/** The correct forms above; a finding whose html matches any of these is a bug. */
-export const SELF_CHECK_MUST_NOT_FLAG = [/aria-label="Close"/, /alt=""/, /id="ok"/];
+/**
+ * The correct forms above; a finding whose html matches any of these is a bug.
+ *
+ * The `odd\"id` case is the regression for alert 2637: an id carrying both a
+ * backslash and a quote IS correctly labelled, and a selector built by string
+ * interpolation would fail to find its label and report a false violation.
+ */
+export const SELF_CHECK_MUST_NOT_FLAG = [/aria-label="Close"/, /alt=""/, /id="ok"/, /odd/];

@@ -47,110 +47,37 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/ac3f78ab-3333-5b63-a6cd-1b4e9abe8f98/scratchpad/pw/node_modules/playwright-core/index.mjs';
+import { launchChromium } from './playwright.mjs';
+import { assertCaptureIsFresh } from './capture-freshness.mjs';
+import {
+  auditA11y,
+  SELF_CHECK_HTML,
+  SELF_CHECK_EXPECTED,
+  SELF_CHECK_MUST_NOT_FLAG,
+} from './a11y-rules.mjs';
 
 const TAG = '[visual-qa:a11y]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MARKUP = path.join(REPO, '.visual-qa/markup');
 
-const AUDIT = () => {
-  const root = document.querySelector('.c2c-v2');
-  const findings = [];
-  const add = (rule, el, detail) =>
-    findings.push({
-      rule,
-      detail,
-      selector:
-        el.tagName.toLowerCase() +
-        (typeof el.className === 'string' && el.className.trim()
-          ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.')
-          : ''),
-      html: el.outerHTML.slice(0, 120),
-    });
-
-  /** Accessible name, computed the way an AT would resolve the common cases. */
-  const accName = (el) => {
-    const labelledby = el.getAttribute('aria-labelledby');
-    if (labelledby) {
-      const t = labelledby
-        .split(/\s+/)
-        .map((id) => document.getElementById(id)?.textContent?.trim() ?? '')
-        .join(' ')
-        .trim();
-      if (t) return t;
-    }
-    const label = el.getAttribute('aria-label')?.trim();
-    if (label) return label;
-    const text = el.textContent?.trim();
-    if (text) return text;
-    const title = el.getAttribute('title')?.trim();
-    if (title) return title;
-    // An icon button is named if its SVG carries <title> or aria-label.
-    const svgTitle = el.querySelector('svg > title')?.textContent?.trim();
-    if (svgTitle) return svgTitle;
-    const svgLabel = el.querySelector('svg[aria-label]')?.getAttribute('aria-label')?.trim();
-    if (svgLabel) return svgLabel;
-    if (el.tagName === 'INPUT') {
-      const v = el.getAttribute('value')?.trim();
-      if (v && ['submit', 'button', 'reset'].includes(el.getAttribute('type') ?? '')) return v;
-    }
-    return '';
-  };
-
-  // 4.1.2 — controls with no accessible name.
-  for (const el of root.querySelectorAll('button, a[href], [role="button"], [role="link"], [role="tab"], [role="radio"], [role="checkbox"], [role="menuitem"]')) {
-    if (el.getAttribute('aria-hidden') === 'true') continue;
-    if (!accName(el)) add('4.1.2 control has no accessible name', el, el.tagName.toLowerCase());
-  }
-
-  // 3.3.2 — form fields with no label.
-  for (const el of root.querySelectorAll('input, select, textarea')) {
-    const type = (el.getAttribute('type') ?? '').toLowerCase();
-    if (['hidden', 'submit', 'button', 'reset', 'image'].includes(type)) continue;
-    if (el.getAttribute('aria-hidden') === 'true') continue;
-    const id = el.getAttribute('id');
-    const hasFor = id ? !!root.querySelector(`label[for="${CSS.escape(id)}"]`) : false;
-    const wrapped = !!el.closest('label');
-    if (hasFor || wrapped || accName(el)) continue;
-    add(
-      '3.3.2 form field has no label',
-      el,
-      el.getAttribute('placeholder') ? 'placeholder only — a placeholder is not a label' : 'no label, no aria-label',
-    );
-  }
-
-  // 1.1.1 — images with alt entirely absent (alt="" is correct for decoration).
-  for (const el of root.querySelectorAll('img')) {
-    if (!el.hasAttribute('alt')) add('1.1.1 img has no alt attribute', el, el.getAttribute('src') ?? '');
-  }
-
-  // 1.3.1 — skipped heading levels.
-  const levels = [...root.querySelectorAll('h1,h2,h3,h4,h5,h6')].map((el) => ({
-    el, n: Number(el.tagName[1]),
-  }));
-  for (let i = 1; i < levels.length; i++) {
-    const jump = levels[i].n - levels[i - 1].n;
-    if (jump > 1) {
-      add('1.3.1 heading level skipped', levels[i].el, `h${levels[i - 1].n} -> h${levels[i].n}`);
-    }
-  }
-
-  // 4.1.1 — duplicate ids break every aria-*by reference that resolves by id.
-  const seen = new Map();
-  for (const el of root.querySelectorAll('[id]')) {
-    const id = el.getAttribute('id');
-    if (seen.has(id)) add('4.1.1 duplicate id', el, `#${id}`);
-    else seen.set(id, el);
-  }
-
-  // 2.4.3 — a positive tabindex reorders the WHOLE page, not just its subtree.
-  for (const el of root.querySelectorAll('[tabindex]')) {
-    const t = Number(el.getAttribute('tabindex'));
-    if (Number.isFinite(t) && t > 0) add('2.4.3 positive tabindex', el, `tabindex=${t}`);
-  }
-
-  return findings;
-};
+/*
+ * The rules are NOT redefined here.
+ *
+ * This file used to carry its own full copy of the audit, and the two had
+ * already drifted — a different escaping strategy for the label lookup, a
+ * different html truncation length, a Map where the other used a Set. That is
+ * precisely the failure `a11y-rules.mjs` was extracted to prevent, and a rule
+ * that disagrees with the CI ratchet is worse than no rule: the two runs argue
+ * and a reader has no way to know which one is the product's real state.
+ *
+ * The shared function cannot simply be called from here. `page.evaluate`
+ * serializes the function it is handed and runs it inside the browser, where
+ * this module's imports do not exist. So the shared function's SOURCE is
+ * injected once per context and invoked by name — one definition, two runtimes.
+ */
+const AUDIT = () =>
+  // eslint-disable-next-line no-undef -- installed by ctx.addInitScript below
+  window.__auditA11y(document.querySelector('.c2c-v2') || document.body, document);
 
 const files = fs.existsSync(MARKUP)
   ? fs.readdirSync(MARKUP).filter((f) => f.endsWith('.html')).sort()
@@ -160,39 +87,24 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+assertCaptureIsFresh(TAG, MARKUP, REPO);
+
+const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+await ctx.addInitScript({ content: `window.__auditA11y = ${auditA11y.toString()};` });
 
 // Prove the audit detects what it claims to, and does NOT flag the correct forms.
+// Same markup and same expectations as the CI ratchet, from the same module.
 {
   const p = await ctx.newPage();
-  await p.setContent(
-    `<div class="c2c-v2">
-       <button></button>
-       <button aria-label="Close">x</button>
-       <img src="a.png">
-       <img src="b.png" alt="">
-       <input type="text">
-       <label for="ok">Named</label><input id="ok" type="text">
-       <div tabindex="3"></div>
-       <h2>a</h2><h4>b</h4>
-     </div>`,
-    { waitUntil: 'load' },
-  );
+  await p.setContent(`<div class="c2c-v2">${SELF_CHECK_HTML}</div>`, { waitUntil: 'load' });
   const probe = await p.evaluate(AUDIT);
   await p.close();
   const rules = probe.map((f) => f.rule);
-  const expected = [
-    '4.1.2 control has no accessible name',
-    '3.3.2 form field has no label',
-    '1.1.1 img has no alt attribute',
-    '1.3.1 heading level skipped',
-    '2.4.3 positive tabindex',
-  ];
-  const missing = expected.filter((e) => !rules.includes(e));
-  // The false-positive half matters more: a labelled input, an aria-labelled
-  // button and a decorative alt="" must NOT be reported.
-  const falsePositives = probe.filter((f) => /aria-label="Close"|alt=""|id="ok"/.test(f.html));
+  const missing = SELF_CHECK_EXPECTED.filter((e) => !rules.includes(e));
+  // The false-positive half matters more: a tool that flags correct markup
+  // teaches people to ignore it, and then it protects nothing.
+  const falsePositives = probe.filter((f) => SELF_CHECK_MUST_NOT_FLAG.some((re) => re.test(f.html)));
   if (missing.length || falsePositives.length) {
     console.error(`${TAG} SELF-CHECK FAILED — the audit does not measure what it claims.`);
     if (missing.length) console.error(`${TAG}   did not detect: ${missing.join(', ')}`);
@@ -202,7 +114,10 @@ const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     await browser.close();
     process.exit(2);
   }
-  console.log(`${TAG} self-check OK — detects all 5 seeded failures, flags none of the 3 correct forms.`);
+  console.log(
+    `${TAG} self-check OK — detects all ${SELF_CHECK_EXPECTED.length} seeded failures, ` +
+      `flags none of the ${SELF_CHECK_MUST_NOT_FLAG.length} correct forms.`,
+  );
 }
 
 const byRule = new Map();

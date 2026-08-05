@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -86,7 +86,15 @@ function fmtWhen(iso: string | null): string {
 
 export function SourceTracer({ onAsk }: SurfaceViewProps) {
   const ask = onAsk || (() => {});
-  const st = useLiveData<{ sections: StSection[] }>('/api/source-tracer/sections');
+  // Guarded so a payload that is not `{ sections }` reaches the error branch
+  // below rather than the `?? []` fallback. Without it, a wrong shape renders as
+  // "no sections yet" — an empty state that is not true, on a surface whose
+  // entire job is telling the user where text came from.
+  const st = useLiveData<{ sections: StSection[] }>(
+    '/api/source-tracer/sections',
+    ['/api/source-tracer/sections'],
+    hasKeys<{ sections: StSection[] }>('sections'),
+  );
   const sections = st.data?.sections ?? [];
 
   const [selId, setSel] = useState<string | null>(null);

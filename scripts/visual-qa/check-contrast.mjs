@@ -40,7 +40,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/ac3f78ab-3333-5b63-a6cd-1b4e9abe8f98/scratchpad/pw/node_modules/playwright-core/index.mjs';
+import { launchChromium } from './playwright.mjs';
+import { assertCaptureIsFresh } from './capture-freshness.mjs';
 
 const TAG = '[visual-qa:contrast]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -166,7 +167,9 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+assertCaptureIsFresh(TAG, MARKUP, REPO);
+
+const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 
 // Prove the measurement before trusting it: known-black on known-white is 21:1.
