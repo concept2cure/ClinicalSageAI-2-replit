@@ -28,8 +28,11 @@
  *     from retrieval until a human resolves it.
  *   · Four honest states — loading, error, empty corpus, results. No fixture.
  *
- * The AnA rail stays open here (no `hideAna` in surfaceViews) because the point
- * of looking at a letter is being able to ask about it.
+ * The AnA rail stays open here: `crl-library` is registered without
+ * `ownsConversation`, which keeps it on the SurfaceView union's plain arm — the
+ * one whose `component` is `ComponentType<SurfaceViewProps>` — so this surface
+ * is handed the shell's `onAsk` and the shell draws the rail that answers it.
+ * The point of looking at a letter is being able to ask about it.
  */
 import React, { useMemo, useState } from 'react';
 

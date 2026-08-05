@@ -108,11 +108,12 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
           It drew a sticky 54px bar with the product wordmark, a "Client
           workspace" tag, the CRO→client pair and an avatar — beneath the
           shell's own 48px TopBar, which already carries a breadcrumb, an org
-          switcher and the same person's avatar. `hideAna: true` zeroes the AnA
-          column only; `V2App.tsx:244,253` render the Rail and TopBar
-          unconditionally. So this surface showed two top bars, two avatars for
-          one user and the wordmark twice, on a screen whose own copy calls
-          itself "the read-only portal your client sees — no internal tools".
+          switcher and the same person's avatar. `client-portal` is registered
+          `ownsConversation: true`, and that zeroes the AnA column ONLY — V2App
+          renders `<Rail>` and `<TopBar>` outside that condition, on every
+          surface. So this surface showed two top bars, two avatars for one user
+          and the wordmark twice, on a screen whose own copy calls itself "the
+          read-only portal your client sees — no internal tools".
 
           The one thing `cp-top` carried that nothing else did is `cp.client`.
           It moves to the hero eyebrow below. */}

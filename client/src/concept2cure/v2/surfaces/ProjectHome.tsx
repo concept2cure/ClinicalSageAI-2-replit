@@ -553,10 +553,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
    of what you typed plus a canned assistant line — "Open the full thread and
    I'll work that against this project's governed dossier" — written in AnA's
    voice, under a header reading "AnA · co-author", beside the shell's real AnA
-   rail (project-home does not set `hideAna`, so both composers are on screen
-   at once). Two composers, and the one you are looking at answers you with a
-   string literal. The file's own comment called it a "mock ACTION … flagged
-   for the actions pass" and it shipped anyway.
+   rail (`project-home` is registered without `ownsConversation`, so the shell
+   draws its rail here and both composers are on screen at once). Two composers,
+   and the one you are looking at answers you with a string literal. The file's
+   own comment called it a "mock ACTION … flagged for the actions pass" and it
+   shipped anyway.
 
    Nothing here answers now. Typing and pressing ⏎ does exactly what the "Open
    full thread" button does: seeds `window.C2C_CONVO` and navigates, so the

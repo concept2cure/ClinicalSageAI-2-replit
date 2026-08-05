@@ -25,9 +25,10 @@ import '../styles/admin-access.css';
  * audit entry.
  *
  * ── Why this surface does NOT hide the AnA rail ──────────────────────────────
- * It used to. `admin-console` was registered `hideAna: true`, which stops the
- * shell rendering the rail — while all seven of the hand-offs below still
- * called `onAsk`. That is worse here than anywhere else in the product: a
+ * It used to. `admin-console` claimed the rail's column — the flag then spelled
+ * `hideAna`, now `ownsConversation` — which stops the shell rendering
+ * the rail, while all seven of the hand-offs below still called `onAsk`. That
+ * combination is worse here than anywhere else in the product: a
  * governed command comes back from ANA as a `pendingSignoff`, and the §11.50
  * e-signature prompt is drawn BY the rail (V2App `adaptChatMessage` → AnaRail →
  * GovernedActionSignoff). Hiding the rail did not defer the signature gate, it

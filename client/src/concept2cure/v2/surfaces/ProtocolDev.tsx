@@ -6,15 +6,9 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
-import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
-import {
-  VERIFICATION_LABEL,
-  withDenominator,
-  type DesignEvidencePanelView,
-} from '../fixtures/clinical-regulatory-evidence';
 
 const Ic = PG.Ic;
 
@@ -43,14 +37,6 @@ interface DocumentTabProps { doc: any; sec: any; onGenerate: ((s: any) => void) 
 interface ListTabProps { doc: any; onAdd: () => void }
 interface DocOnlyProps { doc: any }
 interface ConsentTabProps { doc: any; onToggle?: () => void }
-interface PIAccProps { id: string; title: string; badge?: any; open: boolean; onToggle: () => void; children?: React.ReactNode }
-/**
- * The intel dock's props. It is NOT a registered surface — it is exported and
- * hung on `window.ProtocolIntelPanel`, which nothing in the repository reads —
- * so it keeps the loose optional-`onAsk` shape it was written with. See the
- * note at the bridge exports at the foot of this file.
- */
-interface WorkspaceProps { onAsk?: (msg: string) => void }
 
 /* ---- Helpers ---- */
 export function PaneHead({ title, sub, action, onAction }: PaneHeadProps) {
@@ -95,19 +81,23 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
     </div>);
 }
 
-/* ---- Document tab ---- */
+/* ---- Document tab ----
+
+   Read-only, and the only render this tab has ever produced.
+
+   It used to open with `const DocCanvas = (window as any).DocCanvas` and, when
+   that global was truthy, render an editable canvas instead of the prose below.
+   Nothing in the repository ever assigned `window.DocCanvas` — measured across
+   the whole tree, one read and zero writes — so the branch could not be taken
+   and the static render was always what shipped. The branch is gone rather than
+   fixed, because there was nothing to fix it to.
+
+   The live `DocCanvas` is a different thing that happens to share the name: a
+   real React component exported from `surfaces/EditorCanvas.tsx` and rendered by
+   `DocumentAuthoring` behind ENABLE_RICH_SECTION_EDITOR. It reaches its host by
+   `import`, not by `window`, and was never reachable from this surface. */
 export function DocumentTab({ doc, sec, onGenerate }: DocumentTabProps) {
   const blocks = doc.content[sec.id];
-  const DocCanvas = (window as any).DocCanvas;
-  if (DocCanvas) {
-    return (
-      <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <DocCanvas sec={{ id: sec.id, num: sec.num || sec.number, title: sec.title, status: sec.status, guidance: sec.ref || sec.guidance }}
-          blocks={blocks} code={doc.code || 'ICH M11'} context={doc.shortTitle}
-          onAsk={onGenerate ? (_prompt: string) => onGenerate(sec) : null}
-          storageKey={'pd::' + (doc.id || 'pdev') + '::' + sec.id} />
-      </div>);
-  }
   return (
     <div className="pd-doc">
       <div className="pd-doc-head">
@@ -402,8 +392,8 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
    (which zeroes its automatic minimum size, so the work column shrinks rather
    than overflowing) and `.pd-pane` is capped at 920px anyway. And there is
    nothing in-place for an answer to be written into: the document body here is
-   read-only — DocumentTab reaches for `window.DocCanvas`, assigned nowhere in
-   the repository, and falls through to a static render.
+   read-only — DocumentTab renders static prose, and this surface carries no
+   editor at all.
 
    Props are the full `SurfaceViewProps` rather than the old optional-only
    `WorkspaceProps`. That shape was a weak type — every property optional — so
@@ -506,11 +496,11 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
         <div className="pd-head-r">
           {/* Was "Autosaved · v{version}". The register forms on this surface do
               persist (POST /api/protocol-{risks,milestones,amendments,deviations}),
-              but the section content does not: DocumentTab reaches for
-              window.DocCanvas, a global that is assigned nowhere in the
-              repository, and falls through to a static render. So the document
-              body is read-only and nothing about it is autosaved. The version is
-              still worth showing — it is real, from GET /api/protocol-dev. */}
+              but the section content does not: DocumentTab renders static prose
+              and there is no editor on this surface to save from. So the
+              document body is read-only and nothing about it is autosaved. The
+              version is still worth showing — it is real, from GET
+              /api/protocol-dev. */}
           <span className="pd-autosave">{'v' + (doc.version || '—') + (doc.updated ? ' · updated ' + doc.updated : '')}</span>
           <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk('Review ' + doc.shortTitle + ' for completeness and list what blocks finalization.')}>Ask AnA</PG.Btn>
           <PG.Btn icon="fileText" variant="outline" onClick={() => govAct({ title: 'Export protocol', intent: 'Render the assembled protocol to DOCX / PDF.', esign: false })}>Export</PG.Btn>
@@ -543,344 +533,21 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
     </div>);
 }
 
-/* ---- Intel accordion + panel ---- */
-export function PIAcc({ id, title, badge, open, onToggle, children }: PIAccProps) {
-  return (
-    <div className="pi-acc" data-open={open || undefined}>
-      <button className="pi-acc-h" onClick={onToggle}>
-        <span className="pi-acc-mk"><Ic n="right" s={13} /></span><span className="pi-acc-t">{title}</span>
-        {badge != null && <span className="pi-acc-b">{badge}</span>}
-      </button>
-      {open && <div className="pi-acc-body">{children}</div>}
-    </div>);
-}
-
-export function ProtocolIntelPanel({ onAsk }: WorkspaceProps) {
-  // Same real protocol document as the workspace (GET /api/protocol-dev, the
-  // c2c_protocol_dev store via pool). Honest loading / empty / error — never a
-  // fixture.
-  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev');
-  if (loading) {
-    return <div className="pi-dock"><div className="scaf-note" style={{ margin: 12 }}>Loading…</div></div>;
-  }
-  if (error) {
-    return (
-      <div className="pi-dock">
-        <EmptyState tone="error" icon={I.alertTriangle}
-          title="Couldn't load the protocol"
-          hint="The protocol store didn't respond. Sign in and retry, or check that the service is reachable." />
-      </div>);
-  }
-  const doc = rows[0];
-  if (empty || !doc) {
-    return (
-      <div className="pi-dock">
-        <EmptyState icon={I.fileText}
-          title="No protocol in development yet"
-          hint="Start a protocol to see finalization readiness, objectives, eligibility, risks, and milestones here." />
-      </div>);
-  }
-  return <ProtocolIntelDock doc={doc} onAsk={onAsk} />;
-}
-
-function ProtocolIntelDock({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: string) => void }) {
-  const [open, setOpen] = useState<string | null>('readiness');
-  const tog = (k: string) => setOpen(open === k ? null : k);
-  const ask = (m: string) => onAsk && onAsk(m);
-  const reqTotal = doc.sections.filter((s: any) => s.required).length;
-  const reqDone  = doc.sections.filter((s: any) => s.required && s.status === 'complete').length;
-  const ready    = !doc.completenessFindings.some((f: any) => ['critical', 'blocking'].includes(f.sev));
-  const objGroups = ['primary', 'secondary', 'exploratory'];
-  const topRisks = [...doc.risks].sort((a: any, b: any) => (b.l * b.i) - (a.l * a.i)).slice(0, 4);
-  const riskTone = (l: number, i: number) => { const s = l * i; return s >= 15 ? 'err' : s >= 8 ? 'warn' : s >= 4 ? 'ai' : 'ok'; };
-  const msNext = doc.milestones.filter((m: any) => m.status !== 'done').slice(0, 4);
-  return (
-    <div className="pi-dock">
-      <PIAcc id="readiness" title="Finalization readiness" badge={doc.completeness + '%'} open={open === 'readiness'} onToggle={() => tog('readiness')}>
-        <PG.CompletenessGate pct={doc.completeness} complete={reqDone} total={reqTotal} findings={doc.completenessFindings} ready={ready} readyLabel="Finalization readiness" />
-      </PIAcc>
-      <PIAcc id="objectives" title="Objectives & endpoints" badge={doc.objectives.length} open={open === 'objectives'} onToggle={() => tog('objectives')}>
-        {objGroups.map(g => { const items = doc.objectives.filter((o: any) => o.type === g); if (!items.length) return null;
-          return (<div key={g} className="pi-grp"><div className="pi-grp-h">{g}</div>
-            {items.map((o: any) => (<div key={o.id} className="pi-row">
-              <p className="pi-row-t">{o.text}</p><p className="pi-row-s">{'Endpoint · ' + o.endpoint}</p></div>))}</div>); })}
-      </PIAcc>
-      <PIAcc id="eligibility" title="Eligibility" badge={doc.eligibility.inclusion.length + doc.eligibility.exclusion.length} open={open === 'eligibility'} onToggle={() => tog('eligibility')}>
-        <div className="pi-elig">
-          <div className="pi-elig-col">
-            <div className="pi-elig-h" data-tone="ok">Inclusion <span>{doc.eligibility.inclusion.length}</span></div>
-            {doc.eligibility.inclusion.map((c: any) => <div key={c.id} className="pi-elig-row">{c.text}</div>)}
-          </div>
-          <div className="pi-elig-col">
-            <div className="pi-elig-h" data-tone="err">Exclusion <span>{doc.eligibility.exclusion.length}</span></div>
-            {doc.eligibility.exclusion.map((c: any) => <div key={c.id} className="pi-elig-row">{c.text}</div>)}
-          </div>
-        </div>
-      </PIAcc>
-      <PIAcc id="risks" title="Risk register" badge={doc.risks.length} open={open === 'risks'} onToggle={() => tog('risks')}>
-        {topRisks.map((r: any) => (<div key={r.id} className="pi-risk">
-          <span className="pi-risk-score" data-tone={riskTone(r.l, r.i)}>{r.l * r.i}</span>
-          <div className="pi-risk-body"><p className="pi-row-t">{r.hazard}</p>
-            <p className="pi-row-s">{r.cat + ' · L' + r.l + '×I' + r.i + (r.status ? ' · ' + r.status : '')}</p></div>
-        </div>))}
-      </PIAcc>
-      <PIAcc id="milestones" title="Milestones" badge={msNext.length + ' upcoming'} open={open === 'milestones'} onToggle={() => tog('milestones')}>
-        {msNext.map((m: any) => (<div key={m.id} className="pi-ms">
-          <span className="pi-ms-dot" data-urg={m.urgency} /><span className="pi-ms-l">{m.label}</span><span className="pi-ms-d">{m.date}</span>
-        </div>))}
-      </PIAcc>
-      <DesignEvidenceAccordions designNodeId={doc.id != null ? String(doc.id) : null} onAsk={onAsk} />
-      <button className="pi-ask" onClick={() => ask('Review the protocol for finalization gaps and draft the missing required sections.')}>
-        <Ic n="sparkles" s={13} />Ask AnA to close gaps
-      </button>
-    </div>);
-}
-
-/**
- * The seven §13 evidence accordions, appended to the existing intel dock under
- * an "Evidence" divider. The existing five accordions, the outline, the SoA grid
- * and the register forms are untouched.
- *
- * ONE fetch (`design-evidence?designNodeId=`) answers all seven questions, so
- * the dock can never show supporting evidence that has arrived beside
- * contradictions that have not — a half-loaded evidence picture reads as a
- * one-sided one.
- *
- * Flag off ⇒ renders nothing at all, and the dock is byte-identical to before.
- */
-function DesignEvidenceAccordions({
-  designNodeId,
-  onAsk,
-}: {
-  designNodeId: string | null;
-  onAsk?: (msg: string) => void;
-}) {
-  const [open, setOpen] = useState<string | null>(null);
-  const graphOn = isClinicalRegulatoryGraphEnabled();
-  const path =
-    graphOn && designNodeId
-      ? `/api/clinical-regulatory-evidence/design-evidence?designNodeId=${encodeURIComponent(designNodeId)}`
-      : null;
-  const res = useLiveData<DesignEvidencePanelView>(path);
-
-  if (!graphOn) return null;
-
-  const tog = (k: string) => setOpen(open === k ? null : k);
-  const d = res.data;
-  const cov = d?.coverage ?? null;
-
-  /** Honest per-accordion empty text — never a blank body that reads as "none". */
-  const none = (what: string) => <div className="crl-ev-empty">No {what} in the evidence graph yet.</div>;
-
-  return (
-    <>
-      <div className="crl-ev-divider">
-        <span>Evidence</span>
-      </div>
-
-      {res.error && (
-        <div className="crl-ev-empty">
-          Couldn&apos;t reach the evidence graph. Nothing is shown from a cached sample.
-        </div>
-      )}
-
-      <PIAcc
-        id="ev-comparable"
-        title="Comparable studies"
-        badge={d?.comparableStudies.length ?? 0}
-        open={open === 'ev-comparable'}
-        onToggle={() => tog('ev-comparable')}
-      >
-        {!d || d.comparableStudies.length === 0
-          ? none('comparable studies')
-          : (() => {
-              const usable = d.comparableStudies.filter((s) => s.machineReadable).length;
-              return (
-                <>
-                  {d.comparableStudies.slice(0, 6).map((s, i) => (
-                    <div key={s.nctId ?? s.sponsorStudyId ?? i} className="pi-row">
-                      <p className="pi-row-t">
-                        {s.nctId ?? s.sponsorStudyId ?? 'unidentified study'}
-                        {s.phase ? ` · ${s.phase}` : ''}
-                        {s.indication ? ` · ${s.indication}` : ''}
-                      </p>
-                      <p className="pi-row-s">
-                        {s.designSummary}
-                        {s.machineReadable ? '' : ' · not machine-readable — excluded from every prior'}
-                      </p>
-                    </div>
-                  ))}
-                  <div className="crl-ev-empty">
-                    {withDenominator(usable, d.comparableStudies.length)} carry a machine-readable
-                    effect with uncertainty. The rest are listed but excluded from any prior.
-                  </div>
-                </>
-              );
-            })()}
-      </PIAcc>
-
-      <PIAcc
-        id="ev-observed"
-        title="Observed results"
-        badge={d?.observations.length ?? 0}
-        open={open === 'ev-observed'}
-        onToggle={() => tog('ev-observed')}
-      >
-        {!d || d.observations.length === 0 ? (
-          none('structured observations')
-        ) : (
-          <>
-            {d.pooled && (
-              <div className="pi-row">
-                <p className="pi-row-t">
-                  {d.pooled.measure} {d.pooled.value} (95% CI {d.pooled.ci[0]}–{d.pooled.ci[1]})
-                </p>
-                <p className="pi-row-s">Pooled n {d.pooled.n}</p>
-              </div>
-            )}
-            <div className="crl-ev-empty">
-              Benefit direction normalised; the transformation is recorded on each observation.
-            </div>
-          </>
-        )}
-      </PIAcc>
-
-      <PIAcc
-        id="ev-objections"
-        title="FDA objections"
-        badge={d?.findings.length ?? 0}
-        open={open === 'ev-objections'}
-        onToggle={() => tog('ev-objections')}
-      >
-        {!d || d.findings.length === 0
-          ? none('FDA findings mapped to this design node')
-          : d.findings.slice(0, 6).map((f) => (
-              <div key={f.findingId} className="pi-row">
-                <p className="pi-row-t">{f.finding}</p>
-                <p className="pi-row-s">
-                  {f.source.applicationType} {f.source.applicationNumber}
-                  {f.source.page != null ? ` · p. ${f.source.page}` : ''} ·{' '}
-                  {f.epistemicStatus === 'explicit' ? 'explicit' : 'inferred'} ·{' '}
-                  {VERIFICATION_LABEL[f.verification]}
-                </p>
-              </div>
-            ))}
-      </PIAcc>
-
-      <PIAcc
-        id="ev-stress"
-        title="Stress tests"
-        badge={d ? `${d.stressScenarios.length} selected` : 0}
-        open={open === 'ev-stress'}
-        onToggle={() => tog('ev-stress')}
-      >
-        {!d || d.stressScenarios.length === 0 ? (
-          none('selected stress scenarios')
-        ) : (
-          <>
-            {d.stressScenarios.map((s) => (
-              <div key={s.scenarioId} className="pi-row">
-                <p className="pi-row-t">{s.label}</p>
-                <p className="pi-row-s">
-                  {s.parameterSource === 'none' ? 'No numeric parameter — scenario only' : s.parameterNote}
-                </p>
-              </div>
-            ))}
-            <div className="crl-ev-empty">
-              Scenarios are selected by CRL pattern. The letters justify why each matters; they do
-              not supply the numbers.
-            </div>
-          </>
-        )}
-      </PIAcc>
-
-      <PIAcc
-        id="ev-assumptions"
-        title="Assumptions"
-        badge={d?.assumptions.length ?? 0}
-        open={open === 'ev-assumptions'}
-        onToggle={() => tog('ev-assumptions')}
-      >
-        {!d || d.assumptions.length === 0
-          ? none('recorded assumptions')
-          : d.assumptions.map((a, i) => (
-              <div key={i} className="pi-row">
-                <p className="pi-row-t">
-                  {a.label} · {a.value}
-                </p>
-                <p className="pi-row-s">Source: {a.source}</p>
-              </div>
-            ))}
-      </PIAcc>
-
-      <PIAcc
-        id="ev-contradictions"
-        title="Contradictory evidence"
-        badge={d?.contradictions.length ?? 0}
-        open={open === 'ev-contradictions'}
-        onToggle={() => tog('ev-contradictions')}
-      >
-        {/* Retrieved separately and shown separately — never averaged into support. */}
-        {!d || d.contradictions.length === 0
-          ? none('contradictory evidence')
-          : d.contradictions.map((c, i) => (
-              <div key={i} className="pi-row">
-                <p className="pi-row-t">{c.text}</p>
-                {c.source && (
-                  <p className="pi-row-s">
-                    {c.source.applicationType} {c.source.applicationNumber}
-                    {c.source.page != null ? ` · p. ${c.source.page}` : ''}
-                  </p>
-                )}
-              </div>
-            ))}
-      </PIAcc>
-
-      <PIAcc
-        id="ev-sources"
-        title="Sources"
-        badge={cov ? `${cov.cited} cited` : 0}
-        open={open === 'ev-sources'}
-        onToggle={() => tog('ev-sources')}
-      >
-        {!cov ? (
-          none('coverage')
-        ) : (
-          <div className="crl-ev-empty">
-            {cov.scanned} scanned · {withDenominator(cov.eligible, cov.scanned)} eligible ·{' '}
-            {withDenominator(cov.structured, cov.eligible)} structured ·{' '}
-            {withDenominator(cov.verified, cov.structured)} verified · {cov.cited} cited.
-            {cov.exclusionNote ? ` ${cov.exclusionNote}` : ''}
-          </div>
-        )}
-      </PIAcc>
-
-      <button
-        className="crl-trace-btn"
-        onClick={() =>
-          onAsk &&
-          onAsk(
-            'Trace this recommendation: show the sources, transformations, calculations, assumptions and contradictions behind it.',
-          )
-        }
-      >
-        <Ic n="sparkles" s={13} />Trace this recommendation
-      </button>
-    </>
-  );
-}
-
 /* ---- Bridge exports ----
 
-   NOT AUDITED HERE, and worth saying so plainly: `ProtocolIntelPanel` is
-   imported by nothing and read off `window` by nothing, so the dock below it —
-   including its own "Ask AnA" and "Trace this recommendation" buttons — is
-   unreachable UI. It is left intact because deleting a component is a separate
-   decision from fixing where a question goes, but it is dead, and its `onAsk`
-   calls describe an affordance no user can press. Same for `window.DocCanvas`,
-   which DocumentTab still tests for (see the note there) and which is assigned
-   nowhere in the repository. */
+   The kit's module-scope globals, kept because something still depends on them:
+   `SURFACE_VIEWS` is the registry object the kit merges into, and this file's
+   `PDEV_nextMajor` write is the import-time side effect that
+   tests/ui/surface-registry-coverage.test.ts cites as its reason for parsing
+   surfaceViews.ts rather than importing it.
+
+   `window.ProtocolIntelPanel` used to be assigned here too, and the note in its
+   place said the panel was "imported by nothing and read off `window` by
+   nothing … unreachable UI", left intact because deleting a component was a
+   separate decision. That decision is now made: the panel, its dock, and the
+   seven study-design evidence accordions hung off it are deleted, so the
+   assignment has nothing to publish and the `.pi-*` rules that dressed it are
+   gone from styles/research-v2.css. */
 (window as any).PDEV_nextMajor = pdevNextMajor;
 (window as any).ProtocolWorkspace = ProtocolWorkspace;
-(window as any).ProtocolIntelPanel = ProtocolIntelPanel;
 (window as any).SURFACE_VIEWS = (window as any).SURFACE_VIEWS || {};

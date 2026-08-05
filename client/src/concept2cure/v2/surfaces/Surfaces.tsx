@@ -60,8 +60,9 @@ export function Home({
      * Seed the thread, do not `onAsk`.
      *
      * `onAsk` pushes into the SHELL's conversation and opens the shell's AnA
-     * rail — but `conversation-thread` is registered `hideAna: true`, so the
-     * rail this question was sent to is the one surface that never draws it.
+     * rail — but the destination, `conversation-thread`, is registered
+     * `ownsConversation: true`, so the rail this question was sent to is the
+     * one surface that never draws it.
      * And `ConversationThread` runs its own `useAnaChat` keyed off
      * `window.C2C_CONVO`, which nothing here was writing. Net effect: you typed
      * a question into the product's front door, landed on an EMPTY
