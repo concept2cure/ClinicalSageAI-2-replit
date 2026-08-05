@@ -17,7 +17,6 @@ export const CMC_CONVERGENCE_MAP: CmcConvergenceEntry[] = [
   { path: 'server/api/cmc/blueprintRoutes.ts', state: 'duplicate', owner: 'legacy-cmc', notes: 'Narrative generation overlaps deterministic composer outputs.' },
   { path: 'server/api/cmc/documentRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Document lifecycle partially overlaps governed section versions.' },
   { path: 'server/api/cmc/specificationRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Canonical data source for specs but not yet unified service façade.' },
-  { path: 'server/api/cmc/stabilityRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Canonical data source for stability.' },
   { path: 'server/api/cmc/batchRecordRoutes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Canonical data source for batch.' },
   { path: 'server/api/cmc/routes.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Aggregator with mixed responsibilities.' },
   { path: 'server/routes/cmc-dashboard.ts', state: 'transitional', owner: 'legacy-cmc', notes: 'Dashboard projection to move onto module3-os readiness APIs.' },

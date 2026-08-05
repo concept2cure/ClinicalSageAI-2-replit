@@ -1,17 +1,6 @@
 {
   "$comment": "Stylesheets under client/src that no source file imports. A stylesheet nobody imports is never handed to the bundler, so it styles nothing on any surface. This list may only SHRINK — by deleting a dead sheet, or by restoring a missing import on a live one. Regenerate with --write-baseline ONLY after removing entries.",
-  "count": 10,
-  "lines": 5354,
-  "stylesheets": [
-    "client/src/concept2cure/_shared/program/ProgramSubTabs.css",
-    "client/src/concept2cure/authoring/app.css",
-    "client/src/concept2cure/components/claude-ectd-coauthor/styles.module.css",
-    "client/src/concept2cure/components/concept2cure-home/styles.module.css",
-    "client/src/concept2cure/projects/project.css",
-    "client/src/concept2cure/v2/styles/editor-core.css",
-    "client/src/concept2cure/v2/styles/editor-panels.css",
-    "client/src/styles/document-preview.css",
-    "client/src/styles/tour-animations.css",
-    "client/src/toast.css"
-  ]
+  "count": 0,
+  "lines": 0,
+  "stylesheets": []
 }

@@ -1,7 +1,10 @@
 /**
- * ui-v2 surface additions — the 48 surfaces the Concept2Cure.RI design kit
- * (design_handoff_c2c_v2_ui_replacement) adds on top of the 33 canonical
- * surfaces. Split out of ui-surface-registry.ts (kept both files under the
+ * ui-v2 surface additions — the surfaces the Concept2Cure.RI design kit
+ * (design_handoff_c2c_v2_ui_replacement) adds on top of the canonical set in
+ * ui-surface-registry.ts. (The count is deliberately not written down here: it
+ * said "48 on top of 33" long after both halves had grown past those numbers,
+ * and a stale count in a header is a small lie that costs a reader a grep.)
+ * Split out of ui-surface-registry.ts (kept both files under the
  * repo-health 1,500-line gate); the main file spreads UI_V2_SURFACES into
  * UI_SURFACES so every consumer and selector is unchanged.
  *
@@ -84,6 +87,30 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Canonical taxonomy of 113 filing types across pharma/biotech, device, IVD, cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER).',
+  },
+  {
+    // Routable but unregistered until now. `/concept2cure/client-portal` is
+    // where auth/redirectUtils.ts sends a `client_user` / `client_admin` after
+    // login (CLIENT_FALLBACK), and `surfaceIdFromLocation` carries the segment
+    // through unaliased — so `getSurface('client-portal')` returned undefined
+    // and V2App's fallback ctxSurface labelled the whole screen "Home". Every
+    // external client landed on a breadcrumb reading
+    // "Concept2Cure.RI › Biotech & Pharma › Home".
+    id: 'client-portal',
+    label: 'Client portal (external view)',
+    navTier: 'global',
+    layoutMode: 'client-portal',
+    group: 'workspace',
+    icon: 'building',
+    uiKit: 'home',
+    apiPrefixes: ['/api/client-portal'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The read-only workspace a CRO/sponsor shares with its external client. Fixture-free: every value comes from GET /api/client-portal/overview (mounted in register-tenant-routes.ts, tested in server/routes/__tests__/client-portal.test.ts), which resolves the caller\'s client workspace server-side from the verified JWT and returns only that workspace\'s programs, shared deliverables and updates. Renders without the internal AnA rail — a client sees their partner\'s shared view, not the internal assistant.',
   },
 
   // ─── ui-v2 additions: project ─────────────────────────────────────────────
@@ -878,6 +905,164 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'kit-only',
     compliance: [PART11, A11Y, TONE],
     notes: 'IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies.',
+  },
+
+  /* ── PDEV → IND sub-surfaces ───────────────────────────────────────────────
+   *
+   * `pdev` was registered; its seven destinations were not. All seven ship as
+   * SURFACE_VIEWS entries (surfaceViews.ts) rendering PdevSurfaces, and none is
+   * a DEEP_LINK_ALIAS — so `surfaceIdFromLocation` handed V2App an id that
+   * `getSurface` could not resolve, and the fallback ctxSurface labelled every
+   * one of them "Home". Four are reached by a click today (the Overview's
+   * workstream cards call `onSelectWorkstream` → `pdev-cmc` /
+   * `pdev-nonclinical` / `pdev-clinical` / `pdev-regulatory`, PdevSurfaces.tsx
+   * maps the kit's nav vocabulary back to surface ids); the other three had no
+   * in-app entry point at all once the kit's own rail was removed, because ⌘K
+   * ranks off THIS registry (Shell.tsx CmdK → UI_SURFACES) and they were absent
+   * from it. Registering them is what makes them reachable.
+   *
+   * Family shape mirrors the device-* family: shared `layoutMode` (the kit host
+   * they all mount), shared `group`/`uiKit`, distinct label/icon/prefixes.
+   *
+   * readiness `routes-ready` is claimed, not assumed. /api/pdev is mounted
+   * unconditionally and auth-gated (register-regulatory-routes.ts — no feature
+   * flag, unlike crl-library's ENABLE_CLINICAL_REGULATORY_GRAPH); every route
+   * below was read in server/routes/pdev/pdev-routes.ts; the services behind
+   * them carry nine dedicated suites in server/services/pdev/__tests__/ plus a
+   * pglite integration test for the view assembler; and the client binds them
+   * live in pdev/hooks/usePdevData.ts with no fixture fallback
+   * (v2/__tests__/pdevIndNoFixtures.test.tsx). The parent `pdev` entry in
+   * ui-surface-registry.ts still reads `kit-only` with a note about a prototype
+   * in ui_kits/pdev; that is now stale but is a claim about the Overview
+   * surface, so it is left for a separate, evidenced pass rather than flipped
+   * here as a side effect.
+   *
+   * anaToolFamilies are the real tool names from PDEV_COMMAND_METADATA
+   * (server/services/ana-ri/pdev-command-handlers.ts), which command-executor.ts
+   * spreads into the live ANA tool table — not aspirational names.
+   */
+  {
+    id: 'pdev-cmc',
+    label: 'PDEV CMC workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'beaker',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The CMC slice of the closed-enum PDEV → IND activity registry: each activity with its state, evidence links and provenance, drilled from GET /api/pdev/programs/:id/workstreams/cmc. State changes go through the existing auditService hash chain. Distinct from the `cmc` surface (CTD Module 3 authoring) — this is IND-readiness activity tracking, not the dossier section.',
+  },
+  {
+    id: 'pdev-nonclinical',
+    label: 'PDEV nonclinical workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'microscope',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The nonclinical slice of the PDEV → IND activity registry, drilled from GET /api/pdev/programs/:id/workstreams/nonclinical. Distinct from the `nonclinical` surface (CTD Module 4 / SEND authoring) — this tracks IND-enabling activity state, evidence and provenance.',
+  },
+  {
+    id: 'pdev-clinical',
+    label: 'PDEV clinical workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'stethoscope',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The clinical slice of the PDEV → IND activity registry, drilled from GET /api/pdev/programs/:id/workstreams/clinical. Distinct from `clinical-ops` (studies, sites, DSMB, deviations) — this tracks the IND-readiness activities and their evidence.',
+  },
+  {
+    id: 'pdev-regulatory',
+    label: 'PDEV regulatory workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'shieldCheck',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The regulatory slice of the PDEV → IND activity registry, drilled from GET /api/pdev/programs/:id/workstreams/regulatory. Activity state, attached evidence and the provenance trace behind each item.',
+  },
+  {
+    id: 'pdev-ind-assembly',
+    label: 'IND assembly readiness',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'rocket',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs'],
+    anaToolFamilies: ['pdev.program.ind_assembly', 'pdev.ind_assembly.compile'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile and ectd-publishing own that.',
+  },
+  {
+    id: 'pdev-contradictions',
+    label: 'Contradictions registry',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'alertTriangle',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs'],
+    anaToolFamilies: ['pdev.program.contradictions'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Read-side adapter over the existing contradiction engine, scoped to a PDEV program (GET /api/pdev/programs/:id/contradictions). Not a second engine — the same findings the `inconsistency` surface reads, framed against the IND program. Had no in-app entry point before this entry: the kit rail that used to link it was removed in the one-shell convergence.',
+  },
+  {
+    id: 'pdev-fda-interactions',
+    label: 'FDA interactions',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'messageSquare',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs'],
+    anaToolFamilies: [
+      'pdev.program.fda_interactions',
+      'pdev.fda_feedback.proposals',
+      'pdev.fda_feedback.apply',
+    ],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Chronological FDA touchpoint stream for one IND program (q_submissions family + fda_communications) via GET /api/pdev/programs/:id/fda-interactions, with AnA-derived feedback proposals and a governed apply (POST .../fda-feedback/apply). Program-scoped and IND-specific; `agency-meetings` is the cross-program meeting manager.',
   },
 
   // ─── ui-v2 additions: specialist ─────────────────────────────────────────────
