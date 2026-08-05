@@ -296,18 +296,23 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   for (const r of rows) bySeg[r.seg] = r;
   const rec = bySeg[seg] ?? rows[0];
   const prog = rec;
-  const overlay = rec.overlay;
+  // A record can arrive well-formed but with its per-program status columns
+  // absent -- a nullable column, a narrowed SELECT, a row provisioned before
+  // status was tracked. Each collection falls back to its empty form so the
+  // lifecycle arc still renders; the per-stage `?? ['upcoming', 0]` below
+  // already covers a stage the overlay has no entry for.
+  const overlay = rec.overlay ?? {};
   const stages: PjStageWithOverlay[] = PJ_STAGES.map((s) => {
     const ov = overlay[s.id] ?? ['upcoming', 0];
     return { ...s, st: ov[0], pct: ov[1] };
   });
   const stage = stages.find((s) => s.id === (sel ?? rec.current)) || stages[0];
 
-  const mods = rec.modules;
-  const clock = rec.clock;
-  const haqs = rec.haqs;
-  const contra = rec.contra;
-  const blockers = rec.blockers;
+  const mods = rec.modules ?? [];
+  const clock = rec.clock ?? [];
+  const haqs = rec.haqs ?? [];
+  const contra = rec.contra; // single record, not a list -- its card body is guarded below
+  const blockers = rec.blockers ?? [];
   const doneCount = stages.filter((s) => s.st === 'done').length;
 
   return (
@@ -343,12 +348,19 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </div>
         <div className="pj-prog-right">
-          <div className="pj-target">
-            <div className="l">{prog.target.label}</div>
-            <div className="v">{prog.target.v}</div>
-            <div className="agency">{prog.target.agency}</div>
-          </div>
-          <Ring pct={prog.readiness} />
+          {/* No agreed filing target on the record yet -- show nothing rather
+              than an empty target block asserting a date we don't have. */}
+          {prog.target && (
+            <div className="pj-target">
+              <div className="l">{prog.target.label}</div>
+              <div className="v">{prog.target.v}</div>
+              <div className="agency">{prog.target.agency}</div>
+            </div>
+          )}
+          {/* Readiness absent -> no ring. Passing undefined through renders a
+              NaN dash offset and a bare "%", which reads as a score we don't have.
+              typeof, not truthiness: 0% ready is a real readiness. */}
+          {typeof prog.readiness === 'number' && <Ring pct={prog.readiness} />}
         </div>
       </div>
 
@@ -481,14 +493,18 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Cross-module contradiction</span></div>
             <div className="pj-card-b">
-              <div className="pj-con">
-                <span className="ico">{I.alertTriangle}</span>
-                <div>
-                  <div className="pj-con-t">{contra.t}</div>
-                  <div className="pj-con-d">{contra.d}</div>
-                  <span className="pj-con-tag">{contra.tag}</span>
+              {/* No contradiction recorded for this program -- the card stays,
+                  its body empty, like the list cards above. */}
+              {contra && (
+                <div className="pj-con">
+                  <span className="ico">{I.alertTriangle}</span>
+                  <div>
+                    <div className="pj-con-t">{contra.t}</div>
+                    <div className="pj-con-d">{contra.d}</div>
+                    <span className="pj-con-tag">{contra.tag}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
