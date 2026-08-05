@@ -89,7 +89,13 @@ function deriveTone(stage: Submission['stage'], status: Submission['status']): S
 function adaptPackage(p: ServerPackage): Submission {
   const status = deriveStatus(p.status, p.metadata);
   const stage  = deriveStage(p.status, p.metadata);
-  const pathway = (FAMILY_TO_SUBMISSION_PATHWAY[p.packageFamily.toLowerCase()] ?? p.packageFamily) as Submission['pathway'];
+  /* `packageFamily` is declared `string`, and the shape guard on the list only
+     proves the envelope is a list of objects — a package row that predates the
+     family column, or comes back from a narrowed SELECT, carries none, and the
+     lookup below dereferenced it and took the whole submission centre down on
+     an otherwise well-formed 200. No family means no pathway to claim. */
+  const family = typeof p.packageFamily === 'string' ? p.packageFamily : '';
+  const pathway = (FAMILY_TO_SUBMISSION_PATHWAY[family.toLowerCase()] ?? family) as Submission['pathway'];
   const code = (p.metadata && typeof p.metadata.programCode === 'string'
     ? (p.metadata.programCode as string)
     : null) ?? `pkg-${p.id}`;
@@ -110,7 +116,10 @@ function adaptPackage(p: ServerPackage): Submission {
     stage,
     status,
     title:    p.title,
-    target:   pathway.startsWith('EU') ? 'NB · TÜV' : 'FDA · ESG',
+    /* The receiving authority follows from the family; with no family there is
+       nothing to derive it from, so it is left unstated the way formatTarget
+       leaves an absent target date. */
+    target:   family ? (pathway.startsWith('EU') ? 'NB · TÜV' : 'FDA · ESG') : '—',
     bytes,
     files:    fileCount,
     cover:    p.metadata?.cover === 'signed' ? 'signed' : 'draft',

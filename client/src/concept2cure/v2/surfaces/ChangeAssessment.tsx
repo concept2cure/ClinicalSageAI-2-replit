@@ -47,9 +47,13 @@ interface ChangeItem {
   area: string;
   raised: string;
   owner: string;
-  fda: ChangeDecisionData;
-  eu: ChangeDecisionData;
-  doc: ChangeDoc;
+  /* The two determinations and the generated document are per-row nullable on
+     change_assessments: a change assessed for one jurisdiction only, or one
+     raised but not yet run through a decision tree, arrives without them. The
+     `?.` reads below are that, not defensiveness. */
+  fda?: ChangeDecisionData;
+  eu?: ChangeDecisionData;
+  doc?: ChangeDoc;
 }
 
 /* Outcome → tone/icon map: canonical rendering config for the determination
@@ -182,9 +186,14 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
               <span className={`reg-st ${item.doc?.status}`}>{item.doc?.status}</span>
             </div>
 
+            {/* A jurisdiction with no determination on the row renders no card
+                at all -- an empty decision tree with a blank verdict would
+                assert an assessment that was never made. Same reading of the
+                data as the jurisdictions KPI above, which counts `c.fda`/`c.eu`
+                only where they are present. */}
             <div className="chg-decisions">
-              <ChangeDecision title="FDA -- 21 CFR 807 / 2017 guidance" flag="US" dec={item.fda} />
-              <ChangeDecision title="EU MDR -- MDCG 2020-3" flag="EU" dec={item.eu} />
+              {item.fda && <ChangeDecision title="FDA -- 21 CFR 807 / 2017 guidance" flag="US" dec={item.fda} />}
+              {item.eu && <ChangeDecision title="EU MDR -- MDCG 2020-3" flag="EU" dec={item.eu} />}
             </div>
 
             <div className="chg-doc">

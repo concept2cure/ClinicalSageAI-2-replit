@@ -675,13 +675,25 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
                   >
                     <div>
                       <div className="ctable-strong">{a.label}</div>
+                      {/* An archetype's list columns are declared arrays, but a
+                          registry row that arrives without them — a narrowed
+                          projection, a row written before a column existed —
+                          leaves them undefined, and counting a list that is not
+                          there crashed this surface on a response the shape
+                          guards passed. Each count is stated only when its list
+                          is; a count is a claim, and 0 is the wrong one. */}
                       <div style={{ color: 'var(--text-400)', fontSize: 12 }}>
-                        {a.designQuestions.length} design questions · {a.requiredSections.length} required sections
+                        {[
+                          a.designQuestions && `${a.designQuestions.length} design questions`,
+                          a.requiredSections && `${a.requiredSections.length} required sections`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </div>
                     </div>
                     <div>{a.domain === 'ivd' ? 'IVD' : 'Device'}</div>
-                    <div className="mono small-mono">{a.endpoints.length}</div>
-                    <div style={{ fontSize: 12 }}>{a.filingMappings[0] ?? '—'}</div>
+                    <div className="mono small-mono">{a.endpoints?.length ?? '—'}</div>
+                    <div style={{ fontSize: 12 }}>{a.filingMappings?.[0] ?? '—'}</div>
                   </button>
                 ))}
               </div>
@@ -694,12 +706,17 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
         <section className="section">
           <div className="section-head">
             <h2>{selectedArchetype.label} — design requirements</h2>
-            <span className="section-sub">
-              Applies to{' '}
-              {selectedArchetype.applicability
-                .map((s) => SPECIALIZATION_LABEL[s])
-                .join(' · ')}
-            </span>
+            {/* Same absent-column case as the row above, one click further in:
+                a selected row that carries no applicability list has nothing to
+                say here, and said it by throwing. */}
+            {selectedArchetype.applicability && (
+              <span className="section-sub">
+                Applies to{' '}
+                {selectedArchetype.applicability
+                  .map((s) => SPECIALIZATION_LABEL[s])
+                  .join(' · ')}
+              </span>
+            )}
           </div>
           <div
             style={{
@@ -740,7 +757,11 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
 const ARCHETYPE_GRID = '1.8fr 90px 90px 1.4fr';
 
 /** One facet card of the selected archetype's design requirements. */
-function ArchetypeFacet({ title, items }: { title: string; items: string[] }) {
+function ArchetypeFacet({ title, items }: { title: string; items?: string[] }) {
+  /* A facet whose list is absent renders nothing at all — an empty card would
+     assert "no required sections", which is a different statement from "the row
+     did not carry them". An empty ARRAY still renders, and still means empty. */
+  if (!items) return null;
   return (
     <div className="metric-card" style={{ alignItems: 'stretch' }}>
       <div className="metric-label">{title}</div>

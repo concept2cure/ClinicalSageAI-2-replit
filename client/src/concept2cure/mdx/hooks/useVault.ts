@@ -78,9 +78,14 @@ function toWhen(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
 }
 
-/** Stable folder id from the server's family bucket ('Module 2' → 'module-2'). */
-function familyId(family: string): string {
-  return family.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+/** Stable folder id from the server's family bucket ('Module 2' → 'module-2').
+ *  Empty when the row has no family. `family` is declared `string`, but the
+ *  artifact column is nullable and a row that arrives without it took the whole
+ *  vault down here on a response whose envelope was perfectly well-formed — the
+ *  shape guards upstream see a list of objects and let it through. An artifact
+ *  with no family belongs to no folder; it is not a crash. */
+function familyId(family: string | null | undefined): string {
+  return (family ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 /**
@@ -117,7 +122,9 @@ export function selectVaultFiles(
  *  'Module 2', 'working-files' → 'Working files'). */
 export function deriveVaultFolders(files: VaultFile[]): VaultFolder[] {
   const buckets = new Map<string, number>();
-  for (const f of files) buckets.set(f.folder, (buckets.get(f.folder) ?? 0) + 1);
+  /* Files whose family was absent carry no folder id; they stay in the root
+     bucket rather than collecting under an unnamed folder in the rail. */
+  for (const f of files) if (f.folder) buckets.set(f.folder, (buckets.get(f.folder) ?? 0) + 1);
   const folders: VaultFolder[] = [
     { id: 'root', label: 'All artifacts', count: files.length, parent: null, active: true },
   ];
