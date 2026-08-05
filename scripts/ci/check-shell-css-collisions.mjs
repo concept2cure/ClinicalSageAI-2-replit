@@ -87,7 +87,15 @@ function definedClasses(css) {
   const found = new Set();
 
   // Selector lists live before each `{`. Split on commas and judge each one.
-  const RULE = /(^|[};])\s*([^{}@;]+?)\s*\{/g;
+  //
+  // The bounding `\s*` groups the first version had — `(^|[};])\s*([^{}@;]+?)\s*\{`
+  // — are ambiguous with the `[^{}@;]+?` between them, since that class matches
+  // whitespace too. A run of spaces could be split between the three in
+  // quadratically many ways, which is the shape a polynomial-backtracking
+  // scanner flags. The trimming they were there for is done by `.trim()` on the
+  // next line anyway, so they are simply gone: one greedy class, no ambiguity,
+  // identical output. (Verified: the collision count is unchanged at 23.)
+  const RULE = /(^|[};])([^{}@;]+)\{/g;
   let m;
   while ((m = RULE.exec(body)) !== null) {
     for (const sel of m[2].split(',')) {

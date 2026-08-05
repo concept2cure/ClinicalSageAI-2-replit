@@ -154,7 +154,7 @@ describe('PDEV program dashboard renders real org data (no fixture)', () => {
       return { ok: false, status: 404, body: { data: null } };
     };
 
-    render(<PdevApp nav="overview" onNav={() => {}} />);
+    render(<PdevApp nav="overview" onNav={() => {}} onAskAna={() => {}} />);
 
     // The Overview surface has painted from the real read.
     expect(await screen.findByText('Workstream rollup')).toBeTruthy();
@@ -186,7 +186,7 @@ describe('PDEV program dashboard — honest empty & error, not a seed/cached sam
       return { ok: false, status: 404, body: { data: null } };
     };
 
-    render(<PdevApp nav="overview" onNav={() => {}} />);
+    render(<PdevApp nav="overview" onNav={() => {}} onAskAna={() => {}} />);
 
     expect(await screen.findByText('No IND programs yet')).toBeTruthy();
     // No fabricated program leaks in as a fallback.
@@ -202,7 +202,7 @@ describe('PDEV program dashboard — honest empty & error, not a seed/cached sam
       return { ok: false, status: 404, body: { data: null } };
     };
 
-    render(<PdevApp nav="overview" onNav={() => {}} />);
+    render(<PdevApp nav="overview" onNav={() => {}} onAskAna={() => {}} />);
 
     expect(await screen.findByText(/Couldn.t load this program/)).toBeTruthy();
     // No fabricated program is shown as a fallback for the failed read.

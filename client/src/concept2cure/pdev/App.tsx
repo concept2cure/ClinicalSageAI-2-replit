@@ -23,7 +23,6 @@
 
 import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import { useAnaChat } from '../components/ana/useAnaChat';
 import { PdevOverview } from './surfaces/Overview';
 import { PdevWorkstreamSurface } from './surfaces/Workstream';
 import { PdevActivityDetail } from './surfaces/ActivityDetail';
@@ -49,7 +48,6 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../_shared/components/GovernedConfirmDialog';
-import {  } from './data/pdevCommands';
 
 const HERE_LABEL: Record<string, string> = {
   overview: 'Program dashboard',
@@ -84,9 +82,14 @@ export interface PdevAppProps {
   /** Navigate to another surface id. The shell owns navigation. */
   onNav: (id: string) => void;
   initialProgramId?: string | null;
-  /** AnA gateway adapter. The dock collects prompts; routing them to
-   *  the real chat surface is the host app's responsibility. */
-  onAskAna?: (
+  /**
+   * Hand a prompt to the shell's one conversation. REQUIRED — not optional.
+   *
+   * It was optional, with a local `useAnaChat` fallback behind it. That made
+   * the second conversation one dropped prop away, so the type now says what
+   * the architecture says: this kit collects prompts, the shell answers them.
+   */
+  onAskAna: (
     text: string,
     context: { programCode: string | null; activityKey: string | null },
   ) => void;
@@ -179,41 +182,33 @@ export function PdevApp({
   );
 
   // ── AnA bridge ────────────────────────────────────────────────────
-  // When the host doesn't override onAskAna, route through a local
-  // useAnaChat instance against /api/ana-ri/stream. The PDEV workstream,
-  // active program code, and active activity go into module_context so
-  // the orchestrator can ground its response. Streaming history surfaces
-  // in the AnA conversation panel (Phase 8) — the dock here only collects
-  // the prompt.
+  // `onAskAna` is REQUIRED, and hands the prompt to the shell's one
+  // conversation. There is no local fallback.
+  //
+  // There was one: a second `useAnaChat` instance, with its own module_context,
+  // reached whenever `onAskAna` was absent. When this kit had its own AnA dock
+  // that made sense. It has not since the convergence — `PdevSurfaces.tsx:78`
+  // always supplies `onAskAna`, nothing renders `anaChat.messages`, and
+  // `useAnaChat` opens no thread on mount, so the instance was inert. Inert is
+  // not harmless: it was a live second conversation sitting behind a single
+  // `if (onAskAna)`, and one dropped prop would have re-forked the thread
+  // silently, which is the exact failure this branch exists to make impossible.
+  //
+  // `tests/ui/one-shell.test.ts` now asserts that `useAnaChat` is instantiated
+  // only by the shell and by the two surfaces that own a named conversation.
   const programCodeForAna = program.view?.program.code ?? null;
   const activityKeyForAna = activeActivity?.registry.key ?? null;
-  const anaChat = useAnaChat({
-    projectId: programId,
-    projectName: programCodeForAna,
-    screenName: `PDEV · ${activeNav}`,
-    submissionType: 'IND',
-    moduleContext: {
-      workstream: 'pdev',
-      activeNav,
-      programCode: programCodeForAna,
-      activityKey: activityKeyForAna,
-    },
-  });
   const askAna = React.useCallback(
     (text: string) => {
       if (!text) return;
-      if (onAskAna) {
-        onAskAna(text, {
-          programCode: programCodeForAna,
-          activityKey: activityKeyForAna,
-        });
-      } else {
-        void anaChat.send(text);
-      }
+      onAskAna(text, {
+        programCode: programCodeForAna,
+        activityKey: activityKeyForAna,
+      });
       // No `setAnaOpen` — the shell's AnA rail is the only one, and it opens
       // itself when a prompt arrives.
     },
-    [onAskAna, anaChat, programCodeForAna, activityKeyForAna],
+    [onAskAna, programCodeForAna, activityKeyForAna],
   );
 
 
