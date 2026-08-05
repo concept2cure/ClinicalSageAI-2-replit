@@ -284,7 +284,16 @@ describe('a guarded surface reports instead of crashing', () => {
     };
     const { container } = renderSurface();
 
-    await waitFor(() => expect(container.querySelector('.c2c-empty-state.tone-error')).toBeNull());
-    expect(container.textContent).toContain('Biopharmaceutic Studies');
+    // Wait for the CONTENT, not for the absence of an error.
+    //
+    // The first version of this waited for `.tone-error` to be null, which is
+    // trivially true while the surface is still showing "Loading the document
+    // spine…" — so it asserted mid-load and failed in CI on timing alone. That
+    // is the same wrong-moment mistake this whole file is about: a check that
+    // runs before the data arrives cannot see anything the data causes.
+    await waitFor(() => expect(container.textContent).toContain('Biopharmaceutic Studies'), {
+      timeout: 8000,
+    });
+    expect(container.querySelector('.c2c-empty-state.tone-error')).toBeNull();
   });
 });

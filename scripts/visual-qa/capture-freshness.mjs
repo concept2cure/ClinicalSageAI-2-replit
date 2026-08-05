@@ -97,6 +97,8 @@ export function assertCaptureIsFresh(tag, markupDir, repoRoot) {
     `${tag}   the source is ${mins(newest - captured)} minute(s) ahead of the capture, so this`,
   );
   console.error(`${tag}   run would describe code that no longer exists.`);
-  console.error(`${tag}   Re-run the capture spec, then this script.`);
+  console.error(`${tag}`);
+  console.error(`${tag}   Refresh it:  npm run visual-qa:capture`);
+  console.error(`${tag}   Or run the whole suite in order:  npm run visual-qa`);
   process.exit(2);
 }

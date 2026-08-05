@@ -178,7 +178,12 @@
     "beta:proof": "node scripts/run-beta-founder-proof.mjs",
     "test:e2e:smoke": "node scripts/run-e2e-smoke.mjs",
     "validate:ui-kits": "node scripts/validate-ui-kits.mjs",
-    "ci:ui-kits": "node scripts/validate-ui-kits.mjs --strict"
+    "ci:ui-kits": "node scripts/validate-ui-kits.mjs --strict",
+    "visual-qa": "npm run visual-qa:capture && npm run visual-qa:styling && npm run visual-qa:a11y && npm run visual-qa:contrast",
+    "visual-qa:capture": "vitest run scripts/visual-qa/dump-surface-markup.spec.tsx scripts/visual-qa/dump-v2-surfaces.spec.tsx",
+    "visual-qa:styling": "node scripts/visual-qa/check-surface-styling.mjs",
+    "visual-qa:a11y": "node scripts/visual-qa/check-a11y-semantics.mjs",
+    "visual-qa:contrast": "node scripts/visual-qa/check-contrast.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
