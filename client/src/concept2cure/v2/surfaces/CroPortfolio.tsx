@@ -38,7 +38,12 @@ const SOW_TONE: Record<string, string> = {
    cro_team_assignments — the tables the /api/cro CRUD routes write; see
    server/services/cro/cro-portfolio-view-assembler.ts). lead / sowNote /
    phase / gate / due are honest-null where the store has no fact — rendered
-   null-safe, never fabricated. */
+   null-safe, never fabricated.
+
+   sow / studies / subs are the three the render DEREFERENCES (.replace,
+   .length, .map) rather than just printing, so they are declared optional: a
+   sponsor row that arrives without them — narrowed projection, older
+   assembler, half-migrated client — must not take the whole console down. */
 
 interface CroStudy {
   code: string;
@@ -62,10 +67,10 @@ interface CroSponsor {
   name: string;
   type: string;
   lead: string | null;
-  sow: string;
+  sow?: string;
   sowNote: string | null;
-  studies: CroStudy[];
-  subs: CroSub[];
+  studies?: CroStudy[];
+  subs?: CroSub[];
 }
 
 /* ── CRO Sponsor Portfolio ── */
@@ -79,8 +84,14 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
 
   const sel = sponsors.find((s) => s.id === selId) ?? sponsors[0];
 
-  const allSubs = sponsors.flatMap((s) => s.subs);
-  const allStudies = sponsors.flatMap((s) => s.studies);
+  /* A sponsor with no `subs` / `studies` at all used to flatMap to a list of
+     undefined rows, and the very next filter read `.state` off one of them. */
+  const allSubs = sponsors.flatMap((s) => s.subs ?? []);
+  const allStudies = sponsors.flatMap((s) => s.studies ?? []);
+  /* Same for the selected sponsor's two tables, which count and map their lists
+     — absent lists render as the tables' existing "none recorded yet" rows. */
+  const selStudies = sel?.studies ?? [];
+  const selSubs = sel?.subs ?? [];
   const pipe = CRO_LIFECYCLE.map((st) => ({
     ...st,
     n: allSubs.filter((x) => x.state === st.k).length,
@@ -197,6 +208,10 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
               </div>
               {sponsors.map((s) => {
                 const t = CRO_TYPE[s.type] || CRO_TYPE.biotech;
+                /* Counted, not printed — a row whose child lists never came
+                   back has nothing to count rather than no row. */
+                const nStudies = (s.studies ?? []).length;
+                const nSubs = (s.subs ?? []).length;
                 return (
                   <button
                     key={s.id}
@@ -210,21 +225,24 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
                     </div>
                     <div className="cro-spn-meta">
                       <span>
-                        {s.studies.length}{' '}
-                        {s.studies.length === 1 ? 'study' : 'studies'}
+                        {nStudies} {nStudies === 1 ? 'study' : 'studies'}
                       </span>
                       <span className="cro-dot">-</span>
                       <span>
-                        {s.subs.length}{' '}
-                        {s.subs.length === 1 ? 'submission' : 'submissions'}
+                        {nSubs} {nSubs === 1 ? 'submission' : 'submissions'}
                       </span>
                       <span style={{ flex: 1 }} />
-                      <span
-                        className={`cro-sow tone-${SOW_TONE[s.sow] || 'idle'}`}
-                        title={s.sowNote ?? undefined}
-                      >
-                        {s.sow.replace('-', ' ')}
-                      </span>
+                      {/* No SOW status on the row -> no chip. The chip's tone
+                          and label are both the status; an empty one reads as
+                          an engagement state the sponsor does not have. */}
+                      {s.sow && (
+                        <span
+                          className={`cro-sow tone-${SOW_TONE[s.sow] || 'idle'}`}
+                          title={s.sowNote ?? undefined}
+                        >
+                          {s.sow.replace('-', ' ')}
+                        </span>
+                      )}
                     </div>
                   </button>
                 );
@@ -252,17 +270,23 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
                 </button>
               </div>
 
-              <div
-                className={`cro-sow-banner tone-${SOW_TONE[sel.sow] || 'idle'}`}
-              >
-                <span className="ico">
-                  {sel.sow === 'on-track' ? I.check : I.alertTriangle}
-                </span>
-                <span>
-                  <strong>SOW - {sel.sow.replace('-', ' ')}</strong>
-                  {sel.sowNote ? <> — {sel.sowNote}</> : null}
-                </span>
-              </div>
+              {/* Every part of this banner — tone, icon, label — states the
+                  SOW status, and the icon states it as a warning by default.
+                  A sponsor that arrived without one has no status to state, so
+                  the banner is omitted rather than shown asserting risk. */}
+              {sel.sow && (
+                <div
+                  className={`cro-sow-banner tone-${SOW_TONE[sel.sow] || 'idle'}`}
+                >
+                  <span className="ico">
+                    {sel.sow === 'on-track' ? I.check : I.alertTriangle}
+                  </span>
+                  <span>
+                    <strong>SOW - {sel.sow.replace('-', ' ')}</strong>
+                    {sel.sowNote ? <> — {sel.sowNote}</> : null}
+                  </span>
+                </div>
+              )}
 
               <div className="cro-sec-l">
                 Studies <span>cro_studies</span>
@@ -277,7 +301,7 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
                   <div>Status</div>
                   <div>Enrolled</div>
                 </div>
-                {sel.studies.length === 0 && (
+                {selStudies.length === 0 && (
                   <div
                     className="ct-row"
                     style={{ gridTemplateColumns: '1fr', cursor: 'default' }}
@@ -287,7 +311,7 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
                     </div>
                   </div>
                 )}
-                {sel.studies.map((st, i) => (
+                {selStudies.map((st, i) => (
                   <div
                     key={i}
                     className="ct-row"
@@ -340,7 +364,7 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
                   <div>Dispatch gate</div>
                   <div>Target</div>
                 </div>
-                {sel.subs.length === 0 && (
+                {selSubs.length === 0 && (
                   <div
                     className="ct-row"
                     style={{ gridTemplateColumns: '1fr', cursor: 'default' }}
@@ -350,7 +374,7 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
                     </div>
                   </div>
                 )}
-                {sel.subs.map((sb, i) => {
+                {selSubs.map((sb, i) => {
                   const lc =
                     CRO_LIFECYCLE.find((x) => x.k === sb.state) ||
                     CRO_LIFECYCLE[0];

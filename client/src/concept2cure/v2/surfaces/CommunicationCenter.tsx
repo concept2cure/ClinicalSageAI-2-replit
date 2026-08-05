@@ -511,9 +511,15 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                       {c.responseRequired && (
                         <span className="rd-chip tone-err">response required</span>
                       )}
-                      <span className={'rd-chip tone-' + (CC_CLOSURE[c.closureStatus] || 'idle')}>
-                        {c.closureStatus.replace(/_/g, ' ')}
-                      </span>
+                      {/* closureStatus is nullable on the register (a row logged
+                          before the closure workflow existed carries none), so the
+                          chip is omitted rather than asserting a state — same as
+                          the responseRequired chip above it. */}
+                      {c.closureStatus && (
+                        <span className={'rd-chip tone-' + (CC_CLOSURE[c.closureStatus] || 'idle')}>
+                          {c.closureStatus.replace(/_/g, ' ')}
+                        </span>
+                      )}
                     </div>
                     <div className="cc-comm-meta mono">
                       {c.sourceChannel} · received {c.receivedDate}
@@ -522,11 +528,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                           c.dueDate +
                           (daysTo(c.dueDate) != null ? ' (' + daysTo(c.dueDate) + 'd)' : '')
                         : ''}
-                      {c.linkedSectionCodes.length
+                      {/* linkedSectionCodes / extractedIssues are absent, not [],
+                          on rows the list read narrows or that predate the
+                          columns — the length reads have to survive that. */}
+                      {c.linkedSectionCodes?.length
                         ? ' · §' + c.linkedSectionCodes.join(' §')
                         : ''}
                     </div>
-                    {c.extractedIssues.length > 0 && (
+                    {c.extractedIssues && c.extractedIssues.length > 0 && (
                       <ul className="cc-comm-issues">
                         {c.extractedIssues.map((iss, i) => (
                           <li key={i}>{iss}</li>
