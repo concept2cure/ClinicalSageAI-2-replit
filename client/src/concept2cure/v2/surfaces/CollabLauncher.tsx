@@ -168,8 +168,52 @@ export const C2C = {
     ctx = { ...ctx, ...patch };
     emit();
   },
+  /**
+   * The launcher's context, reconciled against the shell's own state on read.
+   *
+   * `ctx` above is module-level and was written in exactly one place —
+   * `Projects.tsx:390`, when you open a project from the Projects list.
+   * `setSurface`'s comment claims "App calls this on every navigation"; App
+   * does not, and never did. So `ctx.surfaceId` stayed `'home'` no matter where
+   * you were, and `ctx.project` stayed at its initialiser, `TB_PROJECTS[0].id`
+   * — the FIXTURE `bx204` / "BX-204 — NDA 212345".
+   *
+   * The result was a modal that opened on the CMC module with BX-301 selected
+   * and said "From: Home", stamping the task against BX-204. Two of the four
+   * fields the form displays were wrong on every surface except one.
+   *
+   * `window.C2C_PROJECT` is the shell's single source of truth for the open
+   * project (V2App writes it; Projects, MdxSurfaceHost and ProjectHome all read
+   * it) and `window.location.pathname` is where the shell actually is. Reading
+   * them here means the launcher cannot drift from the shell, because it no
+   * longer keeps its own copy to drift with — `setSurface` / `setContext` still
+   * work and still win, they are just no longer the only writer.
+   */
   getContext(): C2CContext {
-    return ctx;
+    const live: C2CContext = { ...ctx };
+
+    try {
+      const proj = (window as any).C2C_PROJECT as { id?: string } | undefined;
+      if (proj?.id) live.project = String(proj.id);
+    } catch (_e) { /* no window / no selection — keep whatever ctx holds */ }
+
+    // Only adopt the URL's surface when nothing has refined the context for a
+    // specific entity; a surface that called setContext({ entityLabel }) is
+    // being more precise than the path is, and should not be overwritten.
+    if (!ctx.entityId && !ctx.entityLabel) {
+      try {
+        const id = (window.location.pathname.split('/').filter(Boolean).pop() || '').toLowerCase();
+        if (id && SURFACE_CTX[id]) {
+          const d = SURFACE_CTX[id];
+          live.surfaceId = id;
+          live.surfaceLabel = id;
+          live.entityType = d.et;
+          live.moduleType = d.mod;
+        }
+      } catch (_e) { /* no location — keep ctx */ }
+    }
+
+    return live;
   },
   surfaceNoun(id: string): string {
     return (SURFACE_CTX[id] || SURFACE_CTX.home).noun;

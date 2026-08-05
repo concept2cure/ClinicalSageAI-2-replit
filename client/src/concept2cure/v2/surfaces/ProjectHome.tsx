@@ -547,37 +547,34 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
 }
 
 /* ════ Inline conversation composer ════
-   NOTE (mock ACTION — flagged for the actions pass): the inline reply below is a
-   LOCAL preview. There is no inline AnA endpoint wired on this surface — the real,
-   grounded AnA run happens in the conversation-thread surface (opened via the
-   button / send). The reply is a routing prompt only; it does not assert any
-   drafting, reconciliation, or provenance event that has not occurred. */
+   An ENTRY POINT to the one conversation, not a conversation of its own.
 
-interface InlineMsg { role: 'user' | 'ana'; text: string; }
+   It used to be both, and that was the defect. `send()` appended a local echo
+   of what you typed plus a canned assistant line — "Open the full thread and
+   I'll work that against this project's governed dossier" — written in AnA's
+   voice, under a header reading "AnA · co-author", beside the shell's real AnA
+   rail (project-home does not set `hideAna`, so both composers are on screen
+   at once). Two composers, and the one you are looking at answers you with a
+   string literal. The file's own comment called it a "mock ACTION … flagged
+   for the actions pass" and it shipped anyway.
+
+   Nothing here answers now. Typing and pressing ⏎ does exactly what the "Open
+   full thread" button does: seeds `window.C2C_CONVO` and navigates, so the
+   question is answered by the real streaming assistant in the surface built to
+   show it. The one remaining message is the standing intro — framing, not a
+   reply, and it says nothing about what has been done. */
 
 function ConversationComposer({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
   const [draft, setDraft] = useState('');
-  const convoRef = useRef<HTMLDivElement>(null);
-  const [msgs, setMsgs] = useState<InlineMsg[]>(() => [
-    { role: 'ana', text: "I'm your co-author on " + productName + ", bound to this project's governed dossier. Ask me to draft, reconcile, or review a section and I'll open the full thread with every step grounded to its source." },
-  ]);
 
-  useEffect(() => {
-    if (convoRef.current) convoRef.current.scrollTop = convoRef.current.scrollHeight;
-  }, [msgs]);
+  const intro =
+    "I'm your co-author on " + productName + ", bound to this project's governed dossier. " +
+    "Ask me to draft, reconcile, or review a section and I'll open the full thread with " +
+    'every step grounded to its source.';
 
   const openThread = () => {
     window.C2C_CONVO = { id: 'new', seed: draft.trim() || '' };
     onNav('conversation-thread');
-  };
-
-  // Local echo + a routing prompt (no fabricated answer/facts). The real run is
-  // in the conversation thread — this is a preview affordance only.
-  const send = () => {
-    const t = draft.trim();
-    if (!t) return;
-    setMsgs(m => [...m, { role: 'user', text: t }, { role: 'ana', text: "Open the full thread and I'll work that against this project's governed dossier, grounding each step to its source." }]);
-    setDraft('');
   };
 
   return (
@@ -587,14 +584,14 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
         <div className="pj-convo-id"><span className="pj-convo-t">AnA · co-author</span><span className="pj-convo-ctx">{productName} · governed dossier</span></div>
         <button className="pj-convo-open" onClick={openThread}>Open full thread {I.arrowRight}</button>
       </div>
-      <div className="pj-convo-scroll" ref={convoRef}>
-        {msgs.map((m, i) => (<div key={i} className={'pj-msg ' + m.role}>{m.role === 'ana' && <span className="pj-msg-av">{I.sparkles}</span>}<div className="pj-msg-b">{m.text}</div></div>))}
+      <div className="pj-convo-scroll">
+        <div className="pj-msg ana"><span className="pj-msg-av">{I.sparkles}</span><div className="pj-msg-b">{intro}</div></div>
       </div>
       <div className="pj-composer">
-        <textarea rows={2} placeholder={'Message AnA about ' + productName + '…'} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
+        <textarea rows={2} placeholder={'Message AnA about ' + productName + '…'} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); openThread(); } }} />
         <div className="pj-composer-row">
           <span className="sp" />
-          <button className="pj-comp-send" disabled={!draft.trim()} onClick={send}>{I.arrowUp}</button>
+          <button className="pj-comp-send" disabled={!draft.trim()} onClick={openThread}>{I.arrowUp}</button>
         </div>
       </div>
     </div>

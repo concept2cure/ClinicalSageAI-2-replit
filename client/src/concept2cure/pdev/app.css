@@ -26,6 +26,13 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
+  /* `min-height: 100vh` below is the SHELL's height, and it has to be undone
+     here or the surface is taller than the slot it sits in. The v2 page area is
+     `100vh - var(--topbar)` (48px), so leaving 100vh made all eight PDEV
+     surfaces overflow by exactly the topbar's height — 48px of phantom scroll,
+     with the bottom of the canvas clipped by the `overflow: hidden` above. The
+     device kit never had this because mdx/app.css sets no min-height. */
+  min-height: 0;
 }
 .pdev-shell[data-surface="true"] > .pdev-page { height: 100%; overflow-y: auto; }
 
