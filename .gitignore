@@ -109,3 +109,11 @@ qualification-reports/
 # Visual-QA working artifacts: captured surface markup, screenshots.
 # Regenerate with scripts/visual-qa/ — never committed.
 .visual-qa/
+
+# Throwaway reproduction probes. Diagnosing a surface crash means mounting it
+# under a scratch vitest config, and vitest cannot load a config from outside
+# the project root — so both land here. They are transient by construction and
+# must never be committed; ignoring the pattern is what stops a half-finished
+# probe from riding along in someone else's commit.
+probe.config.ts
+scripts/visual-qa/probe-*.spec.tsx
