@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-04T02:06:12.426Z",
+  "generatedAt": "2026-08-04T02:49:43.272Z",
   "git": {
-    "sha": "2a635155718af2454c426dc92631103a5c9f43ad",
-    "branch": "claude/fix-base-ci-ceryhv"
+    "sha": "065bf64b491ee88ce48ed1e421337963e54685a2",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 106,
+        "count": 107,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -36,6 +36,7 @@
           "client/src/concept2cure/components/concept2cure-projects/index.ts",
           "client/src/concept2cure/insights/charts/index.ts",
           "client/src/concept2cure/insights/surface/index.ts",
+          "client/src/concept2cure/lineage/index.ts",
           "client/src/concept2cure/types/index.ts",
           "client/src/i18n/index.ts",
           "server/api/cmc/index.js",
@@ -2498,12 +2499,12 @@
         "bytes": 341829
       },
       {
-        "file": "server/statistics-service.ts",
-        "bytes": 220035
+        "file": "server/routes/authoring.router.ts",
+        "bytes": 222053
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "bytes": 218614
+        "file": "server/statistics-service.ts",
+        "bytes": 220035
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2629,7 +2630,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6092
+        "lines": 6167
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2780,6 +2781,10 @@
         "lines": 2005
       },
       {
+        "file": "server/routes/report-os.ts",
+        "lines": 2005
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2003
       },
@@ -2790,10 +2795,6 @@
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 1981
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "lines": 1962
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2945,14 +2946,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
@@ -2968,7 +2962,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 167,
+      "duplicateGroups": 168,
       "largeByBytes": 1,
       "largeByLines": 1
     },
