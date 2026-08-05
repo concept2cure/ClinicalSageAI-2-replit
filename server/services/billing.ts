@@ -13,6 +13,35 @@
 import Stripe from 'stripe';
 import { pool } from '../db.js';
 
+/**
+ * The amount to charge per billing interval, in cents.
+ *
+ * ── The bug this exists to make impossible ────────────────────────────────────
+ * Both checkout paths computed a MONTHLY figure, applied the annual discount to
+ * it, and handed the result to Stripe with `recurring: { interval: 'year' }`.
+ * An annual subscriber was therefore charged one discounted month, once a year:
+ * for a $499/seat tier with a 15% annual discount that is $424.15/yr against
+ * $5,089.80 intended — 91.7% of the revenue, silently.
+ *
+ * It reads correctly at every individual line, which is why it survived. The
+ * error is only visible where the amount meets the interval, and those were
+ * forty lines apart in two different functions.
+ *
+ * Extracted and exported so the arithmetic can be asserted directly, in cents,
+ * without a Stripe client — an integration test would not have caught this
+ * either, since Stripe accepts any amount you give it.
+ */
+export function amountForInterval(
+  monthlyAmountCents: number,
+  billingCycle: 'monthly' | 'annual',
+  annualDiscountPct: number,
+): number {
+  if (billingCycle !== 'annual') return monthlyAmountCents;
+  // × 12 FIRST: the discount applies to a year of service, not to one month.
+  return Math.round(monthlyAmountCents * 12 * (1 - annualDiscountPct / 100));
+}
+
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // STRIPE CLIENT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -337,6 +366,14 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
     throw new Error(`Invalid tier '${tier}' for industry '${industryMode}'`);
   }
 
+    // Enterprise is custom-priced (perUserMonthly: 0), so a self-serve checkout
+  // for it would create a real subscription at $0/month — which the webhook then
+  // promotes to tier 'enterprise'. The DTC path already refuses this; the
+  // per-seat path did not.
+  if (tierPricing.perUserMonthly === 0) {
+    throw new Error(`${tier} tier requires custom pricing — contact sales`);
+  }
+
   // Calculate per-user price with bundle discounts
   const seatCount = seats || 1;
   let perUserAmount = tierPricing.perUserMonthly;
@@ -351,10 +388,8 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
   // Total = per-user × seats
   let unitAmount = perUserAmount * seatCount;
 
-  // Apply annual discount (on top of bundle discount)
-  if (billingCycle === 'annual') {
-    unitAmount = Math.round(unitAmount * (1 - tierPricing.annualDiscountPct / 100));
-  }
+  // Annual: a YEAR of service, discounted — see amountForInterval.
+  unitAmount = amountForInterval(unitAmount, billingCycle, tierPricing.annualDiscountPct);
 
   // Ensure Stripe customer exists
   let customerId = org.stripe_customer_id;
@@ -488,10 +523,7 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
   }
 
   // Calculate price
-  let unitAmount = dtcTier.baseMonthly;
-  if (billingCycle === 'annual') {
-    unitAmount = Math.round(unitAmount * (1 - dtcTier.annualDiscountPct / 100));
-  }
+  const unitAmount = amountForInterval(dtcTier.baseMonthly, billingCycle, dtcTier.annualDiscountPct);
 
   const productId = await getOrCreateProduct(stripe, tier, 'dtc');
   const price = await stripe.prices.create({
