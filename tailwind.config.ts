@@ -72,6 +72,19 @@ const earthyGreen = {
 
 export default {
   darkMode: ['class'],
+  /*
+   * DEAD under Tailwind v4 — kept only so the shape of this file still parses.
+   *
+   * v4 does not read a JS config unless the CSS says `@config`, and
+   * client/src/index.css does not. Source detection is declared there instead,
+   * with `@import "tailwindcss" source(none)` plus explicit `@source` globs
+   * that say the same thing this array says.
+   *
+   * The theme below is inert for the same reason. It is not deleted because
+   * four files that render outside the v2 shell still use utilities it would
+   * remap; see tests/ui/tailwind-source-scope.test.ts, which pins that set and
+   * explains what adopting `@config` would cost.
+   */
   content: ['./client/index.html', './client/src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     // Override default color palette with Anthropic warm equivalents
