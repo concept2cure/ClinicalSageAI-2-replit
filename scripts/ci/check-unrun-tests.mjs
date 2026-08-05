@@ -49,18 +49,24 @@ const SKIP_DIRS = new Set(['node_modules', 'dist', '_archive', '_deprecated', '.
  * defect that has been looked at and deliberately left, NOT a file that is fine.
  */
 const ALLOWLIST = {
-  'server/test/assemblyLine.test.ts':
-    'Lives in server/test/, not server/**/__tests__/. Requires a real AI provider: ' +
-    'without a key the gateway answers "## AnA Response (Demo Mode)" and the ' +
-    'assertions on generated text fail. Needs to become a mocked unit test or ' +
-    'move to an integration job that has credentials.',
-  'server/test/test-assembly.routes.test.ts':
-    'Same directory and same reason as assemblyLine.test.ts — asserts on real ' +
-    'model output that Demo Mode does not produce.',
-  'tests/integration/api/vault.test.js':
-    'Contains JSX in a .js file, so esbuild cannot even parse it ' +
-    '("Failed to parse source for import analysis"). Renaming to .jsx is not ' +
-    'enough — the tests/** globs cover .ts/.tsx only. Needs porting, not a rename.',
+  // EMPTY, and that is the point.
+  //
+  // It held three entries. Two — server/test/assemblyLine.test.ts and
+  // server/test/test-assembly.routes.test.ts — were live tests of live code
+  // (server/services/AssemblyLine.ts, server/routes/test-assembly.ts) sitting in
+  // a directory no include glob covers. They are now under server/__tests__/
+  // with the AI gateway mocked, because their real defect was asserting on
+  // polish()'s FALLBACK text while letting the live gateway run: without a
+  // provider key it answers "## AnA Response (Demo Mode)…", a success with
+  // content, so the fallback never fires and the assertion could not pass.
+  //
+  // The third — tests/integration/api/vault.test.js — was deleted. It is a Jest
+  // test in a Vitest repo that dynamically imports server/routes/vaultApi.js,
+  // which does not exist, mounted at /api/vault, which nothing serves. Subject
+  // gone, so the test goes with it.
+  //
+  // Adding an entry here is a decision to ship a test that cannot run. Write
+  // down why, and expect to be asked.
 };
 
 /**
