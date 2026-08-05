@@ -48,7 +48,10 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
     if (firstId) setOpen((o) => o ?? firstId);
   }, [firstId]);
 
-  const affecting = changes.filter(c => c.affects.length).length;
+  /* `affects` is a nullable impact list — a change recorded before its portfolio
+     assessment ran has no row at all, so the KPI counts it as affecting nothing
+     rather than throwing on the whole worklist. */
+  const affecting = changes.filter(c => (c.affects ?? []).length).length;
   const actionReq = changes.filter(c => c.sev === 'high').length;
   const inForce = changes.filter(c => c.live).length;
   const ask = onAsk;
@@ -98,7 +101,9 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
                 <div className="rci-body">
                   <p className="rci-summary">{c.summary}</p>
                   <div className="rci-impact-h">{I.network} Portfolio impact</div>
-                  {c.affects.map((a, i) => (
+                  {/* Same absent impact list as the KPI above: an unassessed
+                      change renders the heading and no impact rows. */}
+                  {(c.affects ?? []).map((a, i) => (
                     <div key={i} className="rci-impact">
                       <div className="rci-imp-dev">{a.dev}<span className="rci-imp-sub">{a.sub}</span></div>
                       <div className="rci-imp-what">{a.what}</div>
