@@ -1876,12 +1876,29 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const revoke = async (id: number) => {
-    const reason =
-      typeof window !== 'undefined' && window.prompt
-        ? window.prompt(
-            'Reason for revoking this grant (min 3 chars, recorded in the audit trail):',
-          )
-        : '';
+    /*
+     * The reason is a Part 11 audit-trail entry, so it is required — but the
+     * "no prompt available" branch used to be indistinguishable from "you typed
+     * nothing". It yielded `''`, which is not `null`, so it fell through to the
+     * min-length check and told the user "A reason (min 3 chars) is required"
+     * on a screen with no way to supply one. Chrome suppresses repeated
+     * prompts, and embedded/webview browsers can disable them outright, so that
+     * state is reachable — and it blamed the user for the environment.
+     *
+     * Now it says what actually happened. Capturing a regulated reason through
+     * a native prompt is the deeper problem (unstyled, unlocalisable, blocking,
+     * suppressible); this is honest until an in-product reason dialog exists.
+     */
+    const canPrompt = typeof window !== 'undefined' && typeof window.prompt === 'function';
+    if (!canPrompt) {
+      fireToast('This browser blocks the reason prompt — revoke from a window that allows it');
+      return;
+    }
+    // Replace with an in-product reason dialog — not by dropping the reason.
+    // eslint-disable-next-line no-alert
+    const reason = window.prompt(
+      'Reason for revoking this grant (min 3 chars, recorded in the audit trail):',
+    );
     if (reason == null) return; // cancelled
     if (reason.trim().length < 3) {
       fireToast('A reason (min 3 chars) is required to revoke');
