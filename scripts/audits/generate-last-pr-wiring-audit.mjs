@@ -35,17 +35,45 @@ export function parseArgs(argv) {
   return opts;
 }
 
+/**
+ * The merge commits that carry a PR number, newest first.
+ *
+ * This used to grep for `Merge pull request #`, GitHub's default merge subject.
+ * This repository has never produced one: its merges are written by hand —
+ * "Merge PR #1252: close IPv4-mapped IPv6 SSRF bypass…", "UI audit fixes (#1246)",
+ * "merge: origin/concept2cure-v2 (#1269 span lineage)…". Measured on the current
+ * history: 0 commits match `Merge pull request #`, against 10+ real
+ * PR-carrying merges.
+ *
+ * So `getMergedPrs` always returned [], `main` always threw "No merged pull
+ * requests found with the expected merge-commit pattern", and
+ * `audit:last-20-prs:plan:strict` has been failing for a reason that has
+ * nothing to do with any diff it was asked to audit. The check was red on
+ * arrival and stayed red, which is the failure mode where a gate stops being
+ * read at all.
+ *
+ * Now: take real merge commits (`--merges` guarantees a second parent, which
+ * `collectPrMetrics` needs for `sha^2`) and keep the ones naming a PR. A merge
+ * with no `#N` — "Merge remote-tracking branch 'origin/concept2cure-v2'" — is a
+ * branch sync, not a PR, and is correctly skipped.
+ */
 function getMergedPrs(limit) {
-  const raw = run(`git log --merges --oneline --grep='Merge pull request #' -n ${limit}`);
+  // Over-fetch, because branch-sync merges are filtered out below and would
+  // otherwise eat into the requested limit.
+  const raw = run(`git log --merges --oneline -n ${Number(limit) * 4}`);
   if (!raw) return [];
 
-  return raw.split('\n').map((line) => {
-    const sha = line.split(' ')[0];
-    const match = line.match(/#(\d+)/);
-    const pr = match ? Number(match[1]) : null;
-    const branch = line.includes(' from ') ? line.split(' from ')[1] : 'unknown';
-    return { sha, pr, branch, line };
-  });
+  return raw
+    .split('\n')
+    .map((line) => {
+      const sha = line.split(' ')[0];
+      const match = line.match(/#(\d+)/);
+      const pr = match ? Number(match[1]) : null;
+      const branch = line.includes(' from ') ? line.split(' from ')[1] : 'unknown';
+      return { sha, pr, branch, line };
+    })
+    .filter((item) => item.pr !== null)
+    .slice(0, Number(limit));
 }
 
 function safeList(cmd) {
@@ -103,11 +131,11 @@ export function buildReport({ date, limit, results }) {
   return `# Last ${limit} PR Wiring Audit (${date})
 
 ## Scope
-- Audits the latest **${limit} merged pull requests** reachable from \`HEAD\` using merge commits matching \`Merge pull request #...\`.
+- Audits the latest **${limit} merged pull requests** reachable from \`HEAD\`: merge commits whose subject names a PR number. This repository writes its own merge subjects rather than using GitHub's \`Merge pull request #N from ...\` default, so matching on that default finds nothing.
 - Evaluates structural merge/wiring signals: PR-side commit lineage, changed-file presence at current \`HEAD\`, test-file involvement, and downstream touches.
 
 ## Method
-1. Enumerate PR merges: \`git log --merges --oneline --grep='Merge pull request #' -n ${limit}\`.
+1. Enumerate PR merges: \`git log --merges --oneline\`, keeping those whose subject contains \`#<number>\` (a merge without one is a branch sync, not a PR).
 2. For each merge commit, collect:
    - PR branch commit count (\`git rev-list --count <merge>^1..<merge>^2\`),
    - changed files (\`git diff --name-only <merge>^1 <merge>\`),
