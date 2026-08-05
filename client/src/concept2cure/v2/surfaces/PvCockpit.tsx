@@ -34,7 +34,9 @@ interface Overview {
   upcomingDeadlines: any[];
 }
 interface Disproportion { prr: number; ror: number; rorCi: { lower: number; upper: number }; chiSquared: number; ebgm: number; eb05: number; signalDetected: boolean; }
-interface ComplianceRow { region: string; totalEvents: number; overdueCount: number; complianceStatus: string; }
+// region/complianceStatus are optional because the wire genuinely omits them on
+// partially-populated rows; the render guards them rather than trusting the type.
+interface ComplianceRow { region?: string; totalEvents: number; overdueCount: number; complianceStatus?: string; }
 interface DeadlineResult { deadline: string; expeditedReport: boolean; daysRemaining: number; region: string; eventType: string; seriousnessCriteria: string; }
 
 function useToast(): [string, (m: string) => void] {
@@ -201,10 +203,16 @@ export function PvCockpit(_props: SurfaceViewProps) {
         <div className="pj-card-b" style={{ padding: 0 }}>
           {matrix.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No compliance data yet" hint="Per-region adverse-event reporting compliance appears here once events are logged." /></div>
             : <table className="reg-tbl"><thead><tr><th>Region</th><th>Events</th><th>Overdue</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
-              <tbody>{matrix.map((r) => (
-                <tr key={r.region}>
-                  <td style={{ fontWeight: 600 }}>{r.region.replace(/_/g, ' ')}</td><td>{r.totalEvents}</td><td>{r.overdueCount}</td>
-                  <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (r.complianceStatus === 'compliant' ? 'ok' : 'err')}>{r.complianceStatus.replace(/_/g, ' ')}</span></td>
+              {/* A compliance row can arrive with `region` or `complianceStatus` unset — a
+                  region with no events yet, or a row written before the status column was
+                  backfilled. Both were dereferenced straight into .replace(), so one null
+                  column took the whole cockpit down; the row still carries its counts, so
+                  render those and leave the absent cell empty rather than assert a status
+                  (an unset status is not "non-compliant"). */}
+              <tbody>{matrix.map((r, i) => (
+                <tr key={r.region ?? i}>
+                  <td style={{ fontWeight: 600 }}>{r.region?.replace(/_/g, ' ')}</td><td>{r.totalEvents}</td><td>{r.overdueCount}</td>
+                  <td style={{ textAlign: 'right' }}>{r.complianceStatus && <span className={'rd-chip tone-' + (r.complianceStatus === 'compliant' ? 'ok' : 'err')}>{r.complianceStatus.replace(/_/g, ' ')}</span>}</td>
                 </tr>))}</tbody></table>}
         </div>
       </div>

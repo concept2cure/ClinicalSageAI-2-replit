@@ -29,6 +29,24 @@ const TABS = [
   { id: 'consent',     label: 'Consent',                 icon: 'scroll' },
 ];
 
+/* ---- Absent collections ----
+
+   `PdevDoc` types every register (`sections`, `risks`, `budget`, …) as required,
+   but the document is assembled from protocol_documents plus a dozen optional
+   child tables (pdev-view-assembler), and each register is its own JSONB column.
+   A protocol authored before a register existed, or one the assembler found no
+   child rows for, arrives with that key null — the envelope is a perfectly good
+   list of objects, so no boundary guard sees anything wrong, and the first
+   `.map`/`.filter`/`.reduce` on it throws through SurfaceBoundary and takes the
+   whole protocol off screen over one column.
+
+   So every register is normalised to an empty collection at the single point
+   where the tab reads it off `doc` — most tabs already alias it to a local for
+   other reasons. An empty register renders as an empty register, which is the
+   truth. Leaf fields are left alone: an absent `o.text` or `r.hazard` renders as
+   nothing, which is also the truth, and only the few that are dereferenced
+   (`.toLocaleString()`, an index built from them) are guarded below. */
+
 /* ---- Interfaces ---- */
 interface PaneHeadProps { title: string; sub?: string; action?: string; onAction?: () => void }
 interface KVProps { k: string; v: string }
@@ -53,19 +71,22 @@ export function KV({ k, v }: KVProps) {
 
 /* ---- Outline ---- */
 export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
+  // Both are read as arrays six times between here and the gate; a protocol with
+  // neither is a real row, not a broken one.
+  const sections = doc.sections || [];
+  const findings = doc.completenessFindings || [];
   const counts = useMemo(() => ({
-    complete: doc.sections.filter((s: any) => s.status === 'complete').length,
-    total: doc.sections.length,
-    reqTotal: doc.sections.filter((s: any) => s.required).length,
-    reqComplete: doc.sections.filter((s: any) => s.required && s.status === 'complete').length,
+    complete: sections.filter((s: any) => s.status === 'complete').length,
+    total: sections.length,
+    reqTotal: sections.filter((s: any) => s.required).length,
+    reqComplete: sections.filter((s: any) => s.required && s.status === 'complete').length,
   }), [doc]);
-  const findings = doc.completenessFindings;
   const ready = !findings.some((f: any) => ['critical', 'blocking'].includes(f.sev));
   return (
     <div className="pd-outline">
       <div className="pd-outline-h"><span>Sections</span><span className="pd-outline-c">{counts.complete}/{counts.total}</span></div>
       <div className="pd-tree">
-        {doc.sections.map((s: any) => (
+        {sections.map((s: any) => (
           <button key={s.id} className={'pd-tree-row' + (activeSec === s.id ? ' on' : '')} onClick={() => onSec(s)}>
             <span className="pd-tree-dot" data-status={s.status} />
             <span className="pd-tree-num">{s.num}</span>
@@ -97,7 +118,9 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
    `DocumentAuthoring` behind ENABLE_RICH_SECTION_EDITOR. It reaches its host by
    `import`, not by `window`, and was never reachable from this surface. */
 export function DocumentTab({ doc, sec, onGenerate }: DocumentTabProps) {
-  const blocks = doc.content[sec.id];
+  // `content` is absent on a protocol whose sections exist but whose body has
+  // never been drafted; the not-started branch below is already that state.
+  const blocks = doc.content?.[sec.id];
   return (
     <div className="pd-doc">
       <div className="pd-doc-head">
@@ -116,11 +139,12 @@ export function DocumentTab({ doc, sec, onGenerate }: DocumentTabProps) {
 /* ---- Objectives ---- */
 export function ObjectivesTab({ doc, onAdd }: ListTabProps) {
   const groups = ['primary', 'secondary', 'exploratory'];
+  const objectives = doc.objectives || []; // absent until the first objective is registered
   return (
     <div className="pd-pane">
-      <PaneHead title="Objectives & endpoints" sub={doc.objectives.length + ' defined'} action="Add objective" onAction={onAdd} />
+      <PaneHead title="Objectives & endpoints" sub={objectives.length + ' defined'} action="Add objective" onAction={onAdd} />
       {groups.map(g => {
-        const items = doc.objectives.filter((o: any) => o.type === g); if (!items.length) return null;
+        const items = objectives.filter((o: any) => o.type === g); if (!items.length) return null;
         return (<div key={g} className="pd-obj-group"><div className="pd-obj-gh">{g}</div>
           {items.map((o: any) => (<div key={o.id} className="pd-obj">
             <div className="pd-obj-t">{o.text}</div>
@@ -139,47 +163,56 @@ export function EligibilityTab({ doc, onAdd }: ListTabProps) {
         <span className="pd-elig-mk" data-tone={tone}>{tone === 'ok' ? '✓' : '✕'}</span><span>{c.text}</span>
       </div>))}
     </div>);
+  // The two arms are separate child tables, so either can be absent on its own —
+  // and so can the whole `eligibility` object before any criterion is written.
+  const elig = doc.eligibility || {};
+  const inclusion = elig.inclusion || [];
+  const exclusion = elig.exclusion || [];
   return (
     <div className="pd-pane">
-      <PaneHead title="Eligibility criteria" sub={(doc.eligibility.inclusion.length + doc.eligibility.exclusion.length) + ' criteria'} action="Add criterion" onAction={onAdd} />
-      <div className="pd-elig">{col('Inclusion', doc.eligibility.inclusion, 'ok')}{col('Exclusion', doc.eligibility.exclusion, 'err')}</div>
+      <PaneHead title="Eligibility criteria" sub={(inclusion.length + exclusion.length) + ' criteria'} action="Add criterion" onAction={onAdd} />
+      <div className="pd-elig">{col('Inclusion', inclusion, 'ok')}{col('Exclusion', exclusion, 'err')}</div>
     </div>);
 }
 
 /* ---- Schedule of assessments ---- */
 export function SoaTab({ doc }: DocOnlyProps) {
-  const soa = doc.soa;
+  // The whole SoA, and each of its three parts, is absent until a schedule is
+  // built — an empty grid is the honest render of a protocol that has no visits.
+  const soa = doc.soa || {};
+  const assessments = soa.assessments || [];
+  const visits = soa.visits || [];
   const [cells, setCells] = useState<Record<string, Set<string>>>(() => {
-    const m: Record<string, Set<string>> = {};
-    soa.assessments.forEach((a: any) => { m[a.id] = new Set(soa.cells[a.id] || []); }); return m;
+    const m: Record<string, Set<string>> = {}; const seeded = soa.cells || {};
+    assessments.forEach((a: any) => { m[a.id] = new Set(seeded[a.id] || []); }); return m;
   });
   const toggle = (aid: string, vid: string) => setCells(prev => {
     const n = { ...prev }; const s = new Set(n[aid]); s.has(vid) ? s.delete(vid) : s.add(vid); n[aid] = s; return n;
   });
-  const visitTotal = (vid: string) => soa.assessments.reduce((acc: number, a: any) => acc + (cells[a.id].has(vid) ? 1 : 0), 0);
+  const visitTotal = (vid: string) => assessments.reduce((acc: number, a: any) => acc + (cells[a.id].has(vid) ? 1 : 0), 0);
   return (
     <div className="pd-pane">
-      <PaneHead title="Schedule of assessments" sub={soa.assessments.length + ' assessments × ' + soa.visits.length + ' visits'} />
+      <PaneHead title="Schedule of assessments" sub={assessments.length + ' assessments × ' + visits.length + ' visits'} />
       <div className="pd-soa-wrap">
         <table className="pd-soa">
           <thead><tr>
             <th className="pd-soa-cnr">Assessment</th>
-            {soa.visits.map((v: any) => (<th key={v.id} className="pd-soa-vh">
+            {visits.map((v: any) => (<th key={v.id} className="pd-soa-vh">
               <span className="pd-soa-vl">{v.label}</span><span className="pd-soa-vd">{v.day}</span>
               {v.window && <span className="pd-soa-vw">{v.window}</span>}
             </th>))}
           </tr></thead>
-          <tbody>{soa.assessments.map((a: any) => (
+          <tbody>{assessments.map((a: any) => (
             <tr key={a.id}>
               <th className="pd-soa-rh"><span className="pd-soa-rl">{a.label}</span><span className="pd-soa-rc">{a.cat}</span></th>
-              {soa.visits.map((v: any) => { const on = cells[a.id].has(v.id); return (
+              {visits.map((v: any) => { const on = cells[a.id].has(v.id); return (
                 <td key={v.id} className={'pd-soa-cell' + (on ? ' on' : '')} onClick={() => toggle(a.id, v.id)} role="checkbox" aria-checked={on} title={a.label + ' · ' + v.label}>
                   {on ? <span className="pd-soa-x">{'✕'}</span> : null}
                 </td>); })}
             </tr>))}</tbody>
           <tfoot><tr>
             <th className="pd-soa-rh foot">Per-visit total</th>
-            {soa.visits.map((v: any) => <td key={v.id} className={'pd-soa-tot' + (visitTotal(v.id) < 3 ? ' low' : '')}>{visitTotal(v.id)}</td>)}
+            {visits.map((v: any) => <td key={v.id} className={'pd-soa-tot' + (visitTotal(v.id) < 3 ? ' low' : '')}>{visitTotal(v.id)}</td>)}
           </tr></tfoot>
         </table>
       </div>
@@ -189,11 +222,14 @@ export function SoaTab({ doc }: DocOnlyProps) {
 
 /* ---- Risk register ---- */
 export function RiskTab({ doc, onAdd }: ListTabProps) {
-  const risks = doc.risks;
+  const risks = doc.risks || []; // absent until the first risk is registered
   const grid = useMemo(() => {
     const g: Record<string, any[]> = {};
     for (let l = 5; l >= 1; l--) for (let i = 1; i <= 5; i++) g[l + '-' + i] = [];
-    risks.forEach((r: any) => g[r.l + '-' + r.i].push(r)); return g;
+    // A risk scored on neither axis addresses no cell of a 5×5 heat map, so it
+    // is left off the map rather than plotted somewhere it does not belong. It
+    // still appears in the list beside it, which is where it can be scored.
+    risks.forEach((r: any) => { const cell = g[r.l + '-' + r.i]; if (cell) cell.push(r); }); return g;
   }, [risks]);
   const cellTone = (l: number, i: number) => { const s = l * i; return s >= 15 ? 'err' : s >= 8 ? 'warn' : s >= 4 ? 'ai' : 'ok'; };
   const [sel, setSel] = useState<any>(null);
@@ -230,7 +266,7 @@ export function RiskTab({ doc, onAdd }: ListTabProps) {
 
 /* ---- Milestones ---- */
 export function MilestonesTab({ doc, onAdd }: ListTabProps) {
-  const ms = doc.milestones;
+  const ms = doc.milestones || []; // absent until the first milestone is registered
   const URG: Record<string, { l: string; t: string }> = { done: { l: 'Complete', t: 'ok' }, due_30: { l: 'Due ≤30d', t: 'warn' }, due_90: { l: 'Due ≤90d', t: 'ai' }, upcoming: { l: 'Upcoming', t: 'idle' } };
   return (
     <div className="pd-pane">
@@ -251,41 +287,57 @@ export function MilestonesTab({ doc, onAdd }: ListTabProps) {
 
 /* ---- Budget ---- */
 export function BudgetTab({ doc }: DocOnlyProps) {
-  const b = doc.budget; const p = b.params;
-  const perSubjectDirect = b.items.reduce((a: number, i: any) => a + i.perSubject, 0);
+  // The budget is one column with two halves that go absent independently: the
+  // line items and the feasibility parameters. Either is missing on a protocol
+  // nobody has costed yet.
+  const b = doc.budget || {}; const p = b.params || {}; const items = b.items || [];
+  // An un-costed line contributes nothing to the roll-up rather than turning
+  // every total below it into NaN — the sum is of what the register holds.
+  const perSubjectDirect = items.reduce((a: number, i: any) => a + (i.perSubject || 0), 0);
+  // F&A, and every total downstream of it, is uncomputable without the rate —
+  // those rows are omitted rather than printed as "$NaN".
+  const rated = p.faRate != null;
   const fa = Math.round(perSubjectDirect * p.faRate);
   const totalPerSubject = perSubjectDirect + fa;
   const totalCost = totalPerSubject * p.enrollment;
   const sponsorRev = p.sponsorPerSubject * p.enrollment;
   const margin = sponsorRev - totalCost;
   const funded = margin >= 0;
-  const cats = useMemo(() => { const m: Record<string, number> = {}; b.items.forEach((i: any) => { m[i.cat] = (m[i.cat] || 0) + i.perSubject; }); return m; }, [b]);
+  // Without both sides of the contract there is no margin to compute, and
+  // "Under-funded" is a verdict this screen would be inventing.
+  const priced = rated && p.sponsorPerSubject != null && p.enrollment != null;
+  const cats = useMemo(() => { const m: Record<string, number> = {}; items.forEach((i: any) => { m[i.cat] = (m[i.cat] || 0) + (i.perSubject || 0); }); return m; }, [b]);
   return (
     <div className="pd-pane">
-      <PaneHead title="Budget & feasibility" sub={p.enrollment + ' subjects'} />
+      <PaneHead title="Budget & feasibility" sub={p.enrollment != null ? p.enrollment + ' subjects' : undefined} />
       <div className="pd-budget">
         <div className="pd-budget-items">
           <table className="pd-bg-table">
             <thead><tr><th>Category</th><th>Line item</th><th className="r">Per subject</th></tr></thead>
-            <tbody>{b.items.map((i: any) => (
-              <tr key={i.id}><td><span className="pd-chip">{i.cat}</span></td><td>{i.label}</td><td className="r pg-mono">{'$' + i.perSubject.toLocaleString()}</td></tr>
+            {/* An un-costed line still belongs in the table; its cost column stays blank. */}
+            <tbody>{items.map((i: any) => (
+              <tr key={i.id}><td><span className="pd-chip">{i.cat}</span></td><td>{i.label}</td><td className="r pg-mono">{i.perSubject != null ? '$' + i.perSubject.toLocaleString() : ''}</td></tr>
             ))}</tbody>
             <tfoot>
               <tr><td colSpan={2}>Direct cost per subject</td><td className="r pg-mono">{'$' + perSubjectDirect.toLocaleString()}</td></tr>
-              <tr><td colSpan={2}>{'F&A (' + Math.round(p.faRate * 100) + '%)'}</td><td className="r pg-mono">{'$' + fa.toLocaleString()}</td></tr>
-              <tr className="pd-bg-total"><td colSpan={2}>Total per subject</td><td className="r pg-mono">{'$' + totalPerSubject.toLocaleString()}</td></tr>
+              {rated && (<>
+                <tr><td colSpan={2}>{'F&A (' + Math.round(p.faRate * 100) + '%)'}</td><td className="r pg-mono">{'$' + fa.toLocaleString()}</td></tr>
+                <tr className="pd-bg-total"><td colSpan={2}>Total per subject</td><td className="r pg-mono">{'$' + totalPerSubject.toLocaleString()}</td></tr>
+              </>)}
             </tfoot>
           </table>
         </div>
         <div className="pd-budget-summary">
-          <div className="pd-feas" data-funded={funded}>
-            <div className="pd-feas-verdict">{funded ? 'Funded' : 'Under-funded'}</div>
-            <div className="pd-feas-margin">{(margin < 0 ? '−$' : '$') + Math.abs(margin).toLocaleString()}</div>
-            <div className="pd-feas-sub">{'projected margin across ' + p.enrollment + ' subjects'}</div>
-          </div>
-          <KV k="Total study cost" v={'$' + totalCost.toLocaleString()} />
-          <KV k="Sponsor revenue" v={'$' + sponsorRev.toLocaleString()} />
-          <KV k="Sponsor $/subject" v={'$' + p.sponsorPerSubject.toLocaleString()} />
+          {priced && (<>
+            <div className="pd-feas" data-funded={funded}>
+              <div className="pd-feas-verdict">{funded ? 'Funded' : 'Under-funded'}</div>
+              <div className="pd-feas-margin">{(margin < 0 ? '−$' : '$') + Math.abs(margin).toLocaleString()}</div>
+              <div className="pd-feas-sub">{'projected margin across ' + p.enrollment + ' subjects'}</div>
+            </div>
+            <KV k="Total study cost" v={'$' + totalCost.toLocaleString()} />
+            <KV k="Sponsor revenue" v={'$' + sponsorRev.toLocaleString()} />
+            <KV k="Sponsor $/subject" v={'$' + p.sponsorPerSubject.toLocaleString()} />
+          </>)}
           <div className="pd-cat-bars">{Object.entries(cats).map(([c, v]) => (
             <div key={c} className="pd-cat-bar"><span className="pd-cat-l">{c}</span>
               <span className="pd-cat-track"><span className="pd-cat-fill" style={{ width: Math.round(v / perSubjectDirect * 100) + '%' }} /></span>
@@ -297,10 +349,11 @@ export function BudgetTab({ doc }: DocOnlyProps) {
 
 /* ---- Amendments ---- */
 export function AmendmentsTab({ doc, onAdd }: ListTabProps) {
+  const amendments = doc.amendments || []; // absent on a protocol never amended
   return (
     <div className="pd-pane">
-      <PaneHead title="Amendments" sub={doc.amendments.length + ' amendments'} action="New amendment" onAction={onAdd} />
-      {doc.amendments.map((a: any) => (
+      <PaneHead title="Amendments" sub={amendments.length + ' amendments'} action="New amendment" onAction={onAdd} />
+      {amendments.map((a: any) => (
         <div key={a.id} className="pd-card">
           <div className="pd-card-h">
             <span className="pd-card-t">{a.num}</span><span className="pd-chip">{a.path}</span>
@@ -308,7 +361,9 @@ export function AmendmentsTab({ doc, onAdd }: ListTabProps) {
             <PG.StatusBadge status={a.status} />
           </div>
           <div className="pd-card-sum">{a.summary}</div>
-          <div className="pd-changeset">{a.changes.map((c: any, i: number) => (
+          {/* The changeset is its own child table — an amendment recorded before
+              its diff was itemised carries a summary and no changes. */}
+          <div className="pd-changeset">{(a.changes || []).map((c: any, i: number) => (
             <div key={i} className="pd-change"><span className="pd-change-sec">{c.sec}</span><span className="pd-change-from">{c.from}</span>
               <span className="pd-change-arrow">{'→'}</span><span className="pd-change-to">{c.to}</span></div>))}</div>
         </div>))}
@@ -317,10 +372,11 @@ export function AmendmentsTab({ doc, onAdd }: ListTabProps) {
 
 /* ---- Deviations & CAPA ---- */
 export function DeviationsTab({ doc, onAdd }: ListTabProps) {
+  const deviations = doc.deviations || []; // absent until the first deviation is reported
   return (
     <div className="pd-pane">
-      <PaneHead title="Deviations & CAPA" sub={doc.deviations.length + ' deviations'} action="Report deviation" onAction={onAdd} />
-      {doc.deviations.map((d: any) => (
+      <PaneHead title="Deviations & CAPA" sub={deviations.length + ' deviations'} action="Report deviation" onAction={onAdd} />
+      {deviations.map((d: any) => (
         <div key={d.id} className="pd-card">
           <div className="pd-card-h">
             <span className="pg-badge" data-tone={d.sev === 'major' ? 'err' : 'warn'}>{PG.labelize(d.sev)}</span>
@@ -329,8 +385,10 @@ export function DeviationsTab({ doc, onAdd }: ListTabProps) {
             <PG.StatusBadge status={d.status} />
           </div>
           <div className="pd-card-sum"><span className="pd-chip">{d.cat}</span></div>
+          {/* CAPA is a child register of the deviation: a deviation logged before
+              any corrective action was agreed has none. */}
           <div className="pd-capa"><div className="pd-capa-h">CAPA actions</div>
-            {d.capa.map((c: any) => (<div key={c.id} className="pd-capa-row">
+            {(d.capa || []).map((c: any) => (<div key={c.id} className="pd-capa-row">
               <span className="pd-capa-dot" data-status={c.status} /><span>{c.action}</span><PG.StatusBadge status={c.status} />
             </div>))}</div>
         </div>))}
@@ -339,12 +397,16 @@ export function DeviationsTab({ doc, onAdd }: ListTabProps) {
 
 /* ---- Reviews ---- */
 export function ReviewsTab({ doc }: DocOnlyProps) {
-  const allComments = doc.reviews.flatMap((r: any) => r.comments);
+  // Absent on an unreviewed protocol; and a reviewer assigned but not yet
+  // returned has no `comments` — flatMap would fold that undefined straight
+  // into the list and the filter below would dereference it.
+  const reviews = doc.reviews || [];
+  const allComments = reviews.flatMap((r: any) => r.comments || []);
   const blocking = allComments.filter((c: any) => c.sev === 'blocking' && !c.resolved).length;
   return (
     <div className="pd-pane">
-      <PaneHead title="Review & comments" sub={doc.reviews.length + ' reviewers · ' + blocking + ' blocking open'} />
-      <div className="pd-review-sum">{doc.reviews.map((r: any) => (
+      <PaneHead title="Review & comments" sub={reviews.length + ' reviewers · ' + blocking + ' blocking open'} />
+      <div className="pd-review-sum">{reviews.map((r: any) => (
         <div key={r.id} className="pd-reviewer"><span className="pd-rv-name">{r.reviewer}</span><PG.StatusBadge status={r.status} /></div>))}</div>
       {allComments.length ? (
         <div className="pd-comments">{allComments.map((c: any) => (
@@ -361,17 +423,20 @@ export function ReviewsTab({ doc }: DocOnlyProps) {
 
 /* ---- Consent ---- */
 export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
-  const present = doc.consent.filter((c: any) => c.present).length;
-  const pct = Math.round(present / doc.consent.length * 100);
+  // Absent until the consent checklist is instantiated; with no elements there
+  // is no percentage to report, so the meter reads 0 rather than NaN.
+  const consent = doc.consent || [];
+  const present = consent.filter((c: any) => c.present).length;
+  const pct = consent.length ? Math.round(present / consent.length * 100) : 0;
   return (
     <div className="pd-pane">
-      <PaneHead title="Informed consent" sub={present + ' of ' + doc.consent.length + ' required elements present'} />
+      <PaneHead title="Informed consent" sub={present + ' of ' + consent.length + ' required elements present'} />
       <div className="pd-consent-meter">
         <div className="pd-consent-bar"><div className="pd-consent-fill" style={{ width: pct + '%' }} /></div>
         <span className="pd-consent-pct">{pct + '% complete'}</span>
         <PG.Citation basis="45 CFR 46.116 — General requirements for informed consent" />
       </div>
-      <div className="pd-consent-list">{doc.consent.map((c: any) => (
+      <div className="pd-consent-list">{consent.map((c: any) => (
         <label key={c.id} className={'pd-consent-row' + (c.present ? '' : ' missing')}>
           <span className="pd-consent-ck" data-on={c.present}>{c.present ? '✓' : ''}</span><span>{c.el}</span>
         </label>))}</div>
@@ -455,7 +520,13 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
     if (!canWrite) { fireToast('This protocol row has no numeric document id — register writes need the governed store.'); return; }
     setReg(kind);
   };
-  const sec = doc.sections.find((s: any) => s.id === activeSec) || doc.sections[0];
+  // A protocol row whose `sections` column is null is a well-formed row of a
+  // well-formed list — nothing upstream of here sees anything wrong with it, so
+  // this was the read that took the whole surface down. The `sec ?` branch in
+  // the tab body below has always drawn the no-sections state; it just never
+  // got the chance.
+  const sections = doc.sections || [];
+  const sec = sections.find((s: any) => s.id === activeSec) || sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
   const generate = (s: any) => onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
   // Every action routed through here opened a 21 CFR Part 11 e-signature
