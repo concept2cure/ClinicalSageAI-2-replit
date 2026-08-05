@@ -22,7 +22,6 @@
  */
 
 import * as React from 'react';
-import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { PdevOverview } from './surfaces/Overview';
 import { PdevWorkstreamSurface } from './surfaces/Workstream';
 import { PdevActivityDetail } from './surfaces/ActivityDetail';
@@ -36,6 +35,7 @@ import {
   usePdevFdaInteractions,
   usePdevFdaProposals,
   usePdevIndAssembly,
+  usePdevIndPrograms,
   usePdevProgram,
   usePdevReadiness,
   usePdevReadinessSnapshot,
@@ -61,20 +61,6 @@ const HERE_LABEL: Record<string, string> = {
 };
 
 const READINESS_THRESHOLD_DEFAULT = 85;
-
-interface IndProgramRow {
-  id: string;
-  code: string;
-  productName: string;
-  name: string;
-  programType: string;
-  status: string;
-  metadata?: Record<string, unknown> | null;
-}
-
-interface IndProgramListPayload {
-  data: IndProgramRow[];
-}
 
 export interface PdevAppProps {
   /** Which surface to render — the shell's surface id, supplied by the registry. */
@@ -102,15 +88,16 @@ export function PdevApp({
   onAskAna,
 }: PdevAppProps) {
   // ── IND program list ──────────────────────────────────────────────
-  const { data: programsList, loading: programsLoading } =
-    useFetchJson<IndProgramListPayload>('/api/regulatory-programs');
-  const indPrograms = React.useMemo(
-    () =>
-      (programsList?.data ?? []).filter(
-        (p) => p.programType === 'IND' && p.status !== 'archived',
-      ),
-    [programsList],
-  );
+  // This was an inline `(programsList?.data ?? []).filter(...)`. A single route
+  // answering `{ data: {} }` instead of `{ data: [...] }` made that `?? []` a
+  // no-op — the object is not nullish — and `.filter` threw during render,
+  // taking every PDEV surface down with it. The hook decides whether the body
+  // is a list before anyone iterates it, and says so when it is not.
+  const {
+    programs: indPrograms,
+    loading: programsLoading,
+    error: programsError,
+  } = usePdevIndPrograms();
   const [programId, setProgramId] = React.useState<string | null>(
     initialProgramId ?? null,
   );
@@ -261,14 +248,21 @@ export function PdevApp({
   };
 
   // ── Render: choose surface ───────────────────────────────────────
+  /* A load that failed says so. The alternative — the empty state below, or a
+     spinner that never resolves — tells the user there is nothing here, which
+     is a claim about their program rather than about the request. */
+  const loadFailed = (detail: string, heading = "Couldn't load this program") => (
+    <div className="pdev-page-error">
+      <h2>{heading}</h2>
+      <p className="pdev-page-error-detail">{detail}</p>
+    </div>
+  );
+
   let surface: React.ReactNode;
-  if (program.error) {
-    surface = (
-      <div className="pdev-page-error">
-        <h2>Couldn't load this program</h2>
-        <p className="pdev-page-error-detail">{program.error}</p>
-      </div>
-    );
+  if (programsError) {
+    surface = loadFailed(programsError, "Couldn't load IND programs");
+  } else if (program.error) {
+    surface = loadFailed(program.error);
   } else if (!programId && !programsLoading && indPrograms.length === 0) {
     surface = (
       <div className="pdev-empty-state">
@@ -298,7 +292,9 @@ export function PdevApp({
       />
     );
   } else if (workstreamId) {
-    if (workstream.loading || !workstream.payload) {
+    if (workstream.error) {
+      surface = loadFailed(workstream.error, `Couldn't load ${workstreamId}`);
+    } else if (workstream.loading || !workstream.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading {workstreamId}…</p>
@@ -316,7 +312,9 @@ export function PdevApp({
       );
     }
   } else if (activeNav === 'ind_assembly') {
-    if (assembly.loading || !assembly.payload) {
+    if (assembly.error) {
+      surface = loadFailed(assembly.error, "Couldn't load IND assembly");
+    } else if (assembly.loading || !assembly.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading IND assembly…</p>
@@ -335,7 +333,12 @@ export function PdevApp({
       );
     }
   } else if (activeNav === 'fda_interactions') {
-    if (fdaStream.loading || !fdaStream.payload) {
+    if (fdaStream.error || fdaProposals.error) {
+      surface = loadFailed(
+        fdaStream.error ?? fdaProposals.error ?? '',
+        "Couldn't load FDA interactions",
+      );
+    } else if (fdaStream.loading || !fdaStream.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading FDA interactions…</p>
@@ -354,7 +357,9 @@ export function PdevApp({
       );
     }
   } else if (activeNav === 'contradictions') {
-    if (contradictions.loading || !contradictions.payload) {
+    if (contradictions.error) {
+      surface = loadFailed(contradictions.error, "Couldn't load contradictions");
+    } else if (contradictions.loading || !contradictions.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading contradictions…</p>

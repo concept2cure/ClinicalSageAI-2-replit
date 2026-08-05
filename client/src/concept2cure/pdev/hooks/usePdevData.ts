@@ -14,6 +14,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useFetchJson } from '../../mdx/hooks/useFetchJson';
 import type { PdevActivityState, PdevWorkstream } from '../data/enums';
 import type {
+  PdevActivityView,
   PdevAiDraftResult,
   PdevContradiction,
   PdevContradictionsPayload,
@@ -28,6 +29,7 @@ import type {
   PdevProgramView,
   PdevProvenancePayload,
   PdevReadinessReport,
+  PdevReadinessSnapshotRow,
   PdevRegistryPayload,
   PdevWorkstreamRollup,
   PdevWorkflowPayload,
