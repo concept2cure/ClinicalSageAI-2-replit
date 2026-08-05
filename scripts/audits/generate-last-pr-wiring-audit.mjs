@@ -1,10 +1,31 @@
 #!/usr/bin/env node
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-function run(cmd) {
-  return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+/**
+ * Run git with an argv array. No shell, ever.
+ *
+ * This was `execSync(cmd)` on a built command STRING, and one of those strings
+ * interpolated filenames straight out of `git diff --name-only`, quoted by hand:
+ *
+ *     const escaped = files.map((f) => `"${f.replace(/"/g, '\\"')}"`).join(' ');
+ *     run(`git rev-list --count ${sha}..HEAD -- ${escaped}`);
+ *
+ * That escape handles `"` and not `\`. A path containing `\"` therefore emits a
+ * literal backslash followed by an unescaped quote, which closes the quoting and
+ * hands the remainder of the filename to the shell — inside a job that runs on
+ * pull requests, over filenames the pull request itself controls. CodeQL flagged
+ * it as `js/incomplete-sanitization`; the shell is the actual problem and the
+ * escape was only the symptom.
+ *
+ * `execFileSync` passes argv directly to the process, so quoting does not exist
+ * as a concept here and no amount of punctuation in a filename can become a
+ * command. The escaping helper is gone rather than fixed, because a correct
+ * hand-rolled shell escape is not worth maintaining when the shell is optional.
+ */
+function git(args) {
+  return execFileSync('git', args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
 }
 
 export function parseArgs(argv) {
@@ -60,7 +81,7 @@ export function parseArgs(argv) {
 function getMergedPrs(limit) {
   // Over-fetch, because branch-sync merges are filtered out below and would
   // otherwise eat into the requested limit.
-  const raw = run(`git log --merges --oneline -n ${Number(limit) * 4}`);
+  const raw = git(['log', '--merges', '--oneline', '-n', String(Number(limit) * 4)]);
   if (!raw) return [];
 
   return raw
@@ -76,15 +97,15 @@ function getMergedPrs(limit) {
     .slice(0, Number(limit));
 }
 
-function safeList(cmd) {
-  const out = run(cmd);
+function safeList(args) {
+  const out = git(args);
   return out ? out.split('\n').filter(Boolean) : [];
 }
 
 function collectPrMetrics(item) {
   const { sha } = item;
-  const files = safeList(`git diff --name-only ${sha}^1 ${sha}`);
-  const prSideCommitCount = Number(run(`git rev-list --count ${sha}^1..${sha}^2`));
+  const files = safeList(['diff', '--name-only', `${sha}^1`, sha]);
+  const prSideCommitCount = Number(git(['rev-list', '--count', `${sha}^1..${sha}^2`]));
   const missingFiles = files.filter((file) => !existsSync(file)).length;
   const testsChanged = files.filter((file) => {
     const name = path.basename(file).toLowerCase();
@@ -94,8 +115,11 @@ function collectPrMetrics(item) {
   const limitedFiles = files.slice(0, 20);
   let downstreamTouches = 0;
   if (limitedFiles.length > 0) {
-    const escaped = limitedFiles.map((file) => `"${file.replace(/"/g, '\\"')}"`).join(' ');
-    downstreamTouches = Number(run(`git rev-list --count ${sha}..HEAD -- ${escaped}`));
+    // `--` then the paths as separate argv entries: a filename is data, never
+    // syntax, so nothing in it needs escaping.
+    downstreamTouches = Number(
+      git(['rev-list', '--count', `${sha}..HEAD`, '--', ...limitedFiles]),
+    );
   }
 
   const wiringAssessment =
