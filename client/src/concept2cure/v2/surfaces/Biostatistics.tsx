@@ -527,7 +527,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   // an honest empty state, or an honest failed-load state — never a fixture.
   const govDocs = useLiveRows<BiostatPlan>('/api/ana-biostats/governed-documents');
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
-  const usePreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
+  const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
   const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch (_e) { return null; } }, [input]);
   const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch (_e) { return null; } }, [input, res]);
@@ -677,7 +677,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Study design</span><span className="s">document rewrites live</span></div>
             <div className="pj-card-b" style={{ padding: 12 }}>
-              <div className="bs-presets">{Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => usePreset(k)}>{p.label}</button>)}</div>
+              <div className="bs-presets">{Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}</div>
               <div className="bs-fields">
                 <label className="bs-f"><span>Track</span><select value={input.clientTrack} onChange={(e) => set('clientTrack', e.target.value)}>{['biotech_pharma', 'medical_device', 'diagnostics_ivd'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' / ')}</option>)}</select></label>
                 <label className="bs-f"><span>Agency</span><select value={input.regulatoryBody} onChange={(e) => set('regulatoryBody', e.target.value)}>{['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'].map((x) => <option key={x}>{x}</option>)}</select></label>

@@ -251,7 +251,6 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         : live.rows,
     );
     if (live.rows[0]) setSel((cur) => cur || live.rows[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live.loading, live.rows]);
   const [tab, setTab] = useState('preview');
   const [uploading, setUploading] = useState(false);

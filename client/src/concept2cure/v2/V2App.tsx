@@ -210,7 +210,6 @@ export function V2App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefs.anaOpen, ownsConversation]);
 
   const surface: UiSurface | undefined = activeId === 'home' ? undefined : getSurface(activeId);

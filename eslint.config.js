@@ -25,13 +25,22 @@ export default [
     //   rather than block CI on legacy debt. The fda510k-routes file
     //   header marks itself @deprecated with a 2026-06-30 sunset, at
     //   which point this entry can come out.
-    // - client/src/ is currently excluded because the UI is going
-    //   through a separate styling/refactor pass. Re-enable once that
-    //   lands.
+    // - client/src/ is excluded because the legacy UI is going through
+    //   a separate styling/refactor pass. Re-enable once that lands.
+    //   The exception is client/src/concept2cure/v2/**, which is
+    //   un-ignored below: v2 is the app's one and only shell (see
+    //   tests/ui/one-shell.test.ts, which fails if a second one
+    //   appears), so leaving it under the blanket client/src/** ignore
+    //   meant the lint gate never inspected the shipping product UI.
+    //   The negation must come after the broad pattern — flat-config
+    //   ignores are evaluated in order, last match wins.
     ignores: [
       '.claude/**',
       'client/public/**',
-      'client/src/**',
+      'client/src/*',
+      '!client/src/concept2cure/',
+      'client/src/concept2cure/*',
+      '!client/src/concept2cure/v2/',
       'design-system/**',
       'server/frontend/**',
       'dist/**',

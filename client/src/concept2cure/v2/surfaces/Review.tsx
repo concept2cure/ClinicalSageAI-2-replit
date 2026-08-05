@@ -226,7 +226,6 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     setQueue(q);
     setSel((prev) => (q.some((r) => r.id === prev) ? prev : q[0] ? q[0].id : prev));
     setThread((board.thread ?? []).map((c) => ({ ...c })));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardState.loading, board]);
 
   useEffect(() => {
