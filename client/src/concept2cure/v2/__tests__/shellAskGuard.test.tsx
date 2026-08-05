@@ -115,7 +115,14 @@ async function askThroughPalette(question: string) {
   fireEvent.keyDown(window, { key: 'k', metaKey: true });
   const input = await screen.findByPlaceholderText(/Search surfaces/);
   fireEvent.change(input, { target: { value: question } });
-  fireEvent.click(await screen.findByText(new RegExp(`Ask AnA: "${question}"`)));
+  // A predicate, not `new RegExp(question)`. Semgrep's detect-non-literal-regexp
+  // flagged that correctly in shape even though `question` is a test literal:
+  // building a pattern from a variable means any character in it is syntax, so
+  // a question containing `(` or `*` would either throw or match something else
+  // entirely. Substring matching is what was meant, and it needs no regex.
+  fireEvent.click(
+    await screen.findByText((content) => content.includes(`Ask AnA: "${question}"`)),
+  );
 }
 
 describe('the shell rail is drawn only where it can be seen', () => {
