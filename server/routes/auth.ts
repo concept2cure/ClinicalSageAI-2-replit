@@ -856,7 +856,13 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     const result = await db.transaction(async tx => {
       const [org] = await tx
         .insert(organizations)
-        .values({ name: companyName, slug, industryMode, stripeCustomerId })
+        // `tier` is set EXPLICITLY. The column default is 'standard'
+        // (shared/schema.ts) — the $499/mo tier — so omitting it here granted
+        // every self-serve signup a paid tier permanently and for nothing.
+        // Fixed here rather than by changing the column default: that is a
+        // migration against existing rows, and it wants the same sign-off as
+        // the other held migrations.
+        .values({ name: companyName, slug, industryMode, stripeCustomerId, tier: 'free' })
         .returning();
 
       const passwordHash = await bcrypt.hash(password, 12);
