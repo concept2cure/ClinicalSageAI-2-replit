@@ -100,6 +100,7 @@
     "ci:check-client-reachability": "node scripts/ci/check-client-reachability.mjs",
     "ci:check-test-imports": "node scripts/ci/check-test-imports.mjs",
     "ci:check-orphaned-stylesheets": "node scripts/ci/check-orphaned-stylesheets.mjs",
+    "ci:check-unrun-tests": "node scripts/ci/check-unrun-tests.mjs",
     "ci:check-embedding-runtime": "node scripts/ci/check-embedding-runtime-canonicality.mjs",
     "ci:jwt-verify-pinned": "node scripts/ci/check-jwt-verify-pinned.mjs",
     "ci:saml-fail-closed": "node scripts/ci/check-saml-fail-closed.mjs",

@@ -1,3 +1,13 @@
+// @vitest-environment jsdom
+//
+// This file had never run. Two things kept it invisible: the vitest include
+// globs list `.test.ts` and `.test.tsx` under a client `__tests__` directory
+// but not `.test.jsx`, and even once reached it threw `document is not
+// defined` because it renders React without declaring a DOM environment.
+//
+// It is not dead weight — `FileContext` is live, imported by
+// `client/src/main.tsx`. So this was coverage of shipping code that reported
+// nothing in either direction: it could not pass and it could not fail.
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FileContextProvider, FileContext } from '../contexts/FileContext';
@@ -59,8 +69,10 @@ describe('FileContext', () => {
     const fileCount = screen.getByTestId('file-count');
     expect(fileCount.textContent).toBe('1');
 
+    // Plain DOM assertions, no jest-dom — the convention the sibling client
+    // tests state explicitly. getByTestId already throws when absent.
     const fileItem = screen.getByTestId('file-item-test-file-1');
-    expect(fileItem).toBeInTheDocument();
+    expect(fileItem).toBeTruthy();
     expect(fileItem.textContent).toBe('Test File 1 (pdf)');
   });
 
@@ -88,6 +100,6 @@ describe('FileContext', () => {
     expect(fileCount.textContent).toBe('0');
 
     // File item should not be in the document anymore
-    expect(screen.queryByTestId('file-item-test-file-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('file-item-test-file-1')).toBeNull();
   });
 });

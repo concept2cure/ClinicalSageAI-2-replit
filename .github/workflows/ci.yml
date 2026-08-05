@@ -229,6 +229,13 @@ jobs:
       - name: Guardrails — orphaned stylesheets (ratchet, may only shrink)
         run: npm run ci:check-orphaned-stylesheets
 
+      # A test file whose name matches no include glob is not reported as
+      # skipped — it is not reported at all, so the suite goes green and the
+      # file looks like coverage indefinitely. client/src/__tests__/
+      # FileContext.test.jsx had never run once, covering live code.
+      - name: Guardrails — every test file is reachable by a runner
+        run: npm run ci:check-unrun-tests
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 
