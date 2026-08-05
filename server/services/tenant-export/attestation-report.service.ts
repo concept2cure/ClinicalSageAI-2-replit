@@ -13,6 +13,33 @@
  * Compliance: 21 CFR Part 11 §11.10(e) — audit trail must be tamper-
  * evident; the customer can request this report on demand per the BETA
  * customer-onboarding runbook.
+ *
+ * ── What UNVERIFIABLE will mean after the chain is switched on ────────────────
+ * Today every row reports UNVERIFIABLE because no row carries a hash. The
+ * columns exist — drizzle creates them from shared/schema.ts — but the trigger
+ * that fills them lives in db/migrations/20260222_audit_events_hash_chain.sql,
+ * which is not in C2C_MIGRATION_FILES, so it has never run.
+ *
+ * That trigger is real and works: BEFORE INSERT, it assigns a per-org
+ * sequence_number and a SHA-256 record_hash over the previous hash plus the
+ * event's fields. Applying it starts a chain.
+ *
+ * It starts one. It does not create one retroactively, and this is the part
+ * worth knowing before someone treats the migration as a fix: rows written
+ * before cutover have no hash and cannot honestly be given one. Computing
+ * hashes over historical records after the fact produces a chain that is
+ * self-consistent and proves nothing about the period it claims to cover —
+ * which is the opposite of what a tamper-evidence control is for.
+ *
+ * So the honest end state is permanent: this report will say UNVERIFIABLE with
+ * `hashedEntries` / `unhashedEntries` splitting at the cutover, for the life of
+ * the tenant's history. That is not a defect to be tuned away. A tenant whose
+ * audit trail predates the chain has a period nobody can attest to, and the
+ * report should keep saying so rather than average it into a verdict.
+ *
+ * A backfill would make this report say INTACT. It would also be the single
+ * most misleading thing this codebase could do, so it needs a compliance
+ * decision and not an engineering one.
  */
 
 import crypto from 'crypto';
