@@ -40,14 +40,32 @@ import path from 'node:path';
 
 import { sandboxEnv, SANDBOX_PASSTHROUGH } from '../sandboxEnv';
 
-const PLANTED = {
-  DATABASE_URL: 'postgres://planted-user:planted-password@db.internal:5432/prod',
-  AUDIT_HMAC_SECRET: 'planted-audit-hmac-secret',
-  AUDIT_ATTESTATION_KEY: 'planted-attestation-key',
-  STRIPE_SECRET_KEY: 'sk_live_planted',
-  ANTHROPIC_API_KEY: 'sk-ant-planted',
-  OPENAI_API_KEY: 'sk-planted',
-};
+/*
+ * The planted values are built at runtime rather than written as literals, and
+ * deliberately do not look like credentials.
+ *
+ * The obvious way to write this test is `STRIPE_SECRET_KEY: 'sk_live_…'` and a
+ * `postgres://user:password@host` URL, because realism feels like rigour. It is
+ * not: a static analyser reads those as hardcoded credentials and files real
+ * alerts against the file, and a scanner cannot tell a decoy from the thing it
+ * imitates. I know because I wrote it that way first and CodeQL's high-severity
+ * count went from 2 to 4 on the commit.
+ *
+ * Nothing is lost. What this test needs is a value present in `process.env` and
+ * absent from the child's — the shape of the string is irrelevant to that, and
+ * a unique marker is easier to assert on than a plausible-looking secret.
+ */
+const MARKER = 'canary-value-that-must-not-escape';
+const PLANTED: Record<string, string> = Object.fromEntries(
+  [
+    'DATABASE_URL',
+    'AUDIT_HMAC_SECRET',
+    'AUDIT_ATTESTATION_KEY',
+    'STRIPE_SECRET_KEY',
+    'ANTHROPIC_API_KEY',
+    'OPENAI_API_KEY',
+  ].map((name) => [name, `${MARKER}-${name.toLowerCase()}`]),
+);
 
 describe('sandboxEnv', () => {
   beforeEach(() => {

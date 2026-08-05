@@ -98,15 +98,23 @@ export function selectVaultFiles(
 ): VaultFile[] | null {
   const rows = payload?.data;
   if (!Array.isArray(rows)) return null;
-  return rows.map((r) => ({
-    id: r.artifactId || String(r.id),
+  return rows.map((r, i) => ({
+    // `String(r.id)` on an absent id yields the literal string "undefined", so
+    // every identity-less row collides on one key — React then drops or
+    // duplicates rendered rows, and in a document vault a silently missing row
+    // is the worst outcome available. A per-row synthetic id keeps every row
+    // visible and distinct; it is not persisted anywhere.
+    id: r.artifactId || (r.id != null ? String(r.id) : `unidentified-${i}`),
     name: r.title,
     kind: r.category || r.type,
     type: (r.type || '').toLowerCase(),
     size: '—',
     prog: r.ctdSection ? `CTD ${r.ctdSection}` : r.family,
     folder: familyId(r.family),
-    ver: `v${r.version}`,
+    // "vundefined" is a version label that asserts a version the row does not
+    // have. '—' is this file's existing idiom for a value it cannot supply
+    // (see `size` above, and `note` in selectVaultVersions).
+    ver: r.version != null ? `v${r.version}` : '—',
     versions: r.version,
     status: toStatus(r.status, r.lockedAt),
     updated: toWhen(r.updatedAt),
@@ -159,7 +167,7 @@ export function selectVaultVersions(
   const rows = payload?.data;
   if (!Array.isArray(rows)) return null;
   return rows.map((r, i) => ({
-    v: `v${r.version_number}`,
+    v: r.version_number != null ? `v${r.version_number}` : '—',
     when: toWhen(r.created_at),
     author: r.created_by_id != null ? `User #${r.created_by_id}` : 'system',
     note: r.change_summary || (r.content_hash ? `Content hash ${r.content_hash.slice(0, 8)}…` : '—'),
