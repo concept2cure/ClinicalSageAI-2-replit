@@ -58,6 +58,18 @@ vi.mock('../../components/ana/useAnaChat', () => ({
 }));
 
 import { ConversationThread } from '../surfaces/ConversationThread';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
+
+/* `ownsConversation: true` narrows the component to `OwnedSurfaceViewProps` —
+   everything a surface gets EXCEPT the shell's `onAsk`. Spelling the type out
+   rather than passing a bare `onNav` keeps this test honest against the
+   registry contract: if the props a surface receives change, this stops
+   compiling instead of drifting. */
+const OWNED_PROPS: OwnedSurfaceViewProps = {
+  surface: { id: 'conversation-thread', label: 'Conversation' } as OwnedSurfaceViewProps['surface'],
+  segment: 'biotech',
+  onNav: () => {},
+};
 
 /** A turn the server blocked pending a high-impact §11.50 e-signature. */
 const BLOCKED_TURN: AnaChatMessage = {
@@ -94,7 +106,7 @@ afterEach(() => {
 describe('ConversationThread — 21 CFR Part 11 signature gate', () => {
   it('draws the signature prompt for a turn the server blocked pending sign-off', () => {
     chatMessages.current = [USER_TURN, BLOCKED_TURN];
-    render(<ConversationThread onNav={() => {}} />);
+    render(<ConversationThread {...OWNED_PROPS} />);
 
     // The dialog itself — GovernedActionSignoff renders role="dialog".
     const dialog = screen.getByRole('dialog');
@@ -121,7 +133,7 @@ describe('ConversationThread — 21 CFR Part 11 signature gate', () => {
 
   it('draws no prompt for an ordinary answer', () => {
     chatMessages.current = [USER_TURN, PLAIN_TURN];
-    render(<ConversationThread onNav={() => {}} />);
+    render(<ConversationThread {...OWNED_PROPS} />);
 
     expect(screen.getByText(PLAIN_TURN.text!)).toBeTruthy();
     expect(screen.queryByRole('dialog')).toBeNull();
