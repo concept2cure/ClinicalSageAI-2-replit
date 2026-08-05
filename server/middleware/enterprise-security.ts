@@ -881,9 +881,39 @@ function auditSecurityEvent(req: Request, action: string, details: Record<string
   })();
 }
 
+/**
+ * Paths that carry their own, stronger verification and must not be subjected
+ * to the origin check below.
+ *
+ * Currently one entry. Stripe posts webhooks server-to-server with no Origin,
+ * no Referer and no Bearer token, so this middleware 403s them before the
+ * handler runs — meaning the signature is never checked and the event is
+ * silently lost. An HMAC over the exact payload under a shared secret is a
+ * strictly stronger claim than "the Origin header looks familiar", so exempting
+ * it removes nothing.
+ *
+ * Matched as an exact path or as a directory prefix. Bare `startsWith` is
+ * deliberately avoided: it would let `/api/billing/webhooksevil` through, and
+ * an exempt list that can be extended by appending characters is not a list.
+ *
+ * The same reasoning, and the same entry, already exist in
+ * `server/middleware/csrf.ts` — a token-based implementation that nothing
+ * imports. See the note at the bottom of this function.
+ */
+const CSRF_EXEMPT_PATHS = ['/api/billing/webhooks'];
+
+function isCsrfExempt(path: string): boolean {
+  return CSRF_EXEMPT_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
   // Only check state-changing methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+
+  // Signature-verified endpoints — see CSRF_EXEMPT_PATHS.
+  if (isCsrfExempt(req.path)) {
     return next();
   }
 
