@@ -129,7 +129,12 @@ function ClientReviewRow({ task }: { task: ClientReviewTask }) {
           {task.filingType && <span>{task.filingType}</span>}
           {task.market && <span>{task.market}</span>}
           {task.lifecyclePhase && <span>{task.lifecyclePhase.replace(/_/g, ' ')}</span>}
-          <span>{task.status.replace(/-/g, ' ')}</span>
+          {/* Guarded like its neighbour above. `status` is declared `string` and
+              nothing normalizes it, so the declaration is a promise the payload
+              keeps or does not — a null column crashes the whole workstream on
+              an otherwise WELL-FORMED response. The shape guards upstream cannot
+              catch this: the envelope is correct and only a field is missing. */}
+          {task.status && <span>{task.status.replace(/-/g, ' ')}</span>}
         </span>
       </span>
       {due && <span className={`crz-row-due${due.overdue ? ' overdue' : ''}`}>{due.text}</span>}

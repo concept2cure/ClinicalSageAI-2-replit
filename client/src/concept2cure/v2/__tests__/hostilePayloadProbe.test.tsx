@@ -63,6 +63,20 @@ const PAYLOADS: ReadonlyArray<readonly [string, unknown]> = [
   ['a 200 carrying an error body', { error: 'Something went wrong' }],
   ['a bare array', []],
   ['a JSON scalar', 'unexpected'],
+  /*
+   * Rows present, fields absent — a different bug class from the six above.
+   *
+   * Those all malform the ENVELOPE, so a shape guard at the boundary catches
+   * them and the rows never render. This one is well-formed at every level the
+   * guards inspect: a list, of objects. It is the individual FIELDS that are
+   * missing, which is what a nullable column, a narrowed SELECT, or a partially
+   * migrated row actually looks like.
+   *
+   * That class is invisible to everything else here, and it is real: a client
+   * review row whose `status` was null crashed the whole device workstream on an
+   * otherwise perfect response, one line below a sibling field that WAS guarded.
+   */
+  ['rows present but their fields absent', { data: [{}, {}] }],
 ];
 
 let body: unknown = { data: [] };
