@@ -197,7 +197,15 @@ describe('EctdCoauthor — real documents render per panel (no fixture)', () => 
     expect(document.body.textContent).not.toContain('78%');
   });
 
-  it('routes a typed question to AnA instead of answering it inline', async () => {
+  /*
+   * This test used to assert the defect: that the pane forwarded the question
+   * to the shell's `onAsk` and showed nothing. The surface is registered
+   * `ownsConversation: true`, so that rail is never drawn here — the question
+   * went into a hidden column and, because `ask()` persists `anaOpen`, turned
+   * up later on the next surface that did draw one. The pane runs its own
+   * `useAnaChat` now and answers where it was asked.
+   */
+  it('answers in its own pane and never writes to the rail this screen hides', async () => {
     render(<EctdCoauthor {...props()} />);
     await screen.findByText('Drug Product — ZX-9');
 
@@ -205,10 +213,13 @@ describe('EctdCoauthor — real documents render per panel (no fixture)', () => 
     fireEvent.change(box, { target: { value: 'Tighten the efficacy paragraph' } });
     fireEvent.click(document.querySelector('.ec-send') as HTMLElement);
 
-    await waitFor(() => expect(onAsk).toHaveBeenCalledTimes(1));
-    expect(onAsk.mock.calls[0][0]).toMatch(/Tighten the efficacy paragraph/);
-    // No assistant reply is manufactured locally.
-    expect(document.querySelector('.ec-msg-ai')).toBeNull();
+    // The turn lands in THIS pane, visibly, with AnA answering beneath it.
+    await waitFor(() =>
+      expect(document.querySelector('.ec-msg-user')?.textContent).toMatch(/Tighten the efficacy paragraph/),
+    );
+    expect(document.querySelector('.ec-msg-ai')).not.toBeNull();
+    // And nothing is handed to the shell's conversation.
+    expect(onAsk).not.toHaveBeenCalled();
   });
 });
 

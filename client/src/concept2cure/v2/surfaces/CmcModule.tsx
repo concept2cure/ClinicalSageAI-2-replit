@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -759,6 +759,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
   const [markets, setMarkets] = useState(['fda', 'ema']);
   const [desc, setDesc] = useState('');
   const [result, setResult] = useState<CmcChangeResult | null>(null);
+  const [toast, fireToast] = useToast();
   const toggle = (id: string) => setMarkets((m) => m.includes(id) ? m.filter((x) => x !== id) : [...m, id]);
   const ct = CMC_CHANGE_TYPES.find((c) => c.id === type)!;
   const simulate = () => { if (!desc.trim() || !markets.length) return; setResult({ type: ct, markets: [...markets], desc: desc.trim(), paths: markets.map((m) => ({ m, label: CMC_MARKETS.find((x) => x[0] === m)![1], path: filingPath(type, ct.risk, m) })) }); };
@@ -776,6 +777,63 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
     r.paths.forEach((p) => { s += `| ${p.label} | ${p.path[0]} | ${p.path[1]} |\n`; });
     s += `\n## 4. Comparability Requirement\n\n${compBy}\n\n## 5. Supporting Data Expected\n\n- Side-by-side release testing (pre/post change) against the approved specification\n- Stability commitment on the first post-change ${r.type.risk === 'low' ? 'batch' : 'batches'} (ICH Q1A)\n- Updated §3.2.S / §3.2.P sections and, where applicable, method (re)validation\n\n## 6. Recommendation\n\n${rec}\n\n---\n*Generated from the CMC change model (SUPAC / ICH Q12 rules). Route through change control and e-signature before implementation.*\n`;
     return s;
+  };
+
+  /*
+   * "Open in editor" — a real handoff. See the long note on the same handler in
+   * Biostatistics.tsx. This inline onClick wrote {title, md} into
+   * localStorage['c2c_biostat_doc'] and navigated; nothing has ever read that
+   * key, so the assessment did not travel and the editor opened on whatever it
+   * would have opened on anyway.
+   *
+   * The payload is CONTENT, not an id, so it is created rather than referenced:
+   * POST the document, POST the section holding the memo, then navigate. On any
+   * failure we stay put with the assessment still on screen and say why.
+   */
+  const openingRef = useRef(false);
+  const [opening, setOpening] = useState(false);
+  const openEditor = async (r: CmcChangeResult) => {
+    if (openingRef.current) return; // a second click must not create a second document
+    const title = 'Regulatory Change Impact Assessment';
+    openingRef.current = true; setOpening(true);
+    try {
+      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+      const programId = proj && typeof proj.id === 'string' ? proj.id : null;
+      const dRes = await apiRequest('POST', '/api/authoring/docs', {
+        // A CMC change assessment is quality documentation — Module 3.
+        title, module: 'M3',
+        ...(programId ? { client_program_id: programId } : {}),
+      });
+      const dJson = await dRes.json().catch(() => null) as { document?: { id?: unknown }; error?: string } | null;
+      if (!dRes.ok || !dJson?.document?.id) {
+        fireToast(dRes.status === 401
+          ? 'Not opened — your session isn’t authenticated. Nothing was saved; the assessment is still here.'
+          : 'Couldn’t create the document — ' + (dJson?.error ?? 'HTTP ' + dRes.status) + '. Nothing was saved; the assessment is still here.');
+        return;
+      }
+      const docId = String(dJson.document.id);
+      const sRes = await apiRequest('POST', '/api/authoring/sections', {
+        doc_id: docId,
+        // Not a CTD number on purpose — the editor binds outline nodes by exact
+        // code match, and the filing position depends on the change, not on this
+        // simulator.
+        code: 'regulatory_change_impact_assessment',
+        title, content: memoMd(r),
+      });
+      const sJson = await sRes.json().catch(() => null) as { section?: { id?: unknown }; error?: string } | null;
+      if (!sRes.ok || !sJson?.section?.id) {
+        fireToast('The document was created but its text didn’t save — ' + (sJson?.error ?? 'HTTP ' + sRes.status) + '. Staying here so you don’t lose it.');
+        return;
+      }
+      // Saved. With no navigator wired, say where the work went rather than
+      // doing nothing visible — the silent no-op is the defect being removed.
+      if (nav) nav('document-authoring');
+      else fireToast('Saved to the authoring store as “' + title + '” — open Document authoring to edit it.');
+    } catch (e) {
+      fireToast('Couldn’t open in the editor — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+    } finally {
+      openingRef.current = false; setOpening(false);
+    }
   };
 
   return (
@@ -805,7 +863,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
               <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC -- ICH Q12 -- draft</span></div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="bs-da" onClick={() => ask('Refine the change-control assessment and draft the comparability protocol for: ' + result.desc)}>{I.sparkles} Refine with AnA</button>
-                <button className="bs-da primary" onClick={() => { try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: 'Regulatory Change Impact Assessment', md: memoMd(result) })); } catch (_e) { /* noop */ } nav && nav('document-authoring'); }}>{I.penLine} Open in editor</button>
+                <button className="bs-da primary" onClick={() => void openEditor(result)} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
               </div>
             </div>
             <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: mdToHtml(memoMd(result)) }} /></div>
@@ -813,6 +871,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
           <CmPush label={'Change-control package -- ' + result.type.label} nav={nav} bar />
         </div>
       )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

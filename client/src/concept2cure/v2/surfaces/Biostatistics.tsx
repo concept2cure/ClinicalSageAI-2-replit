@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -543,21 +544,92 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const n = res ? (res.adjustedTotal || res.sampleSize.total) : 0;
 
   /*
-   * No toast. It used to say "<name> -> opened in editor", and that was false.
+   * "Open in editor" — a real handoff, at last.
    *
-   * The line before it writes `{title, md}` into localStorage['c2c_biostat_doc'],
-   * and NOTHING in this repository has ever read that key — no getItem, in any
-   * file, in any commit. So the navigation happens and the editor opens on
-   * whatever it would have opened on anyway; the named document does not
-   * travel. Announcing success for an outcome that did not occur is the one
-   * thing this product's own comments forbid (Rbm.tsx:96, AdminAccess.tsx:47).
+   * WHAT IT USED TO BE. `localStorage.setItem('c2c_biostat_doc', {title, md})`
+   * followed by a navigation. Nothing in this repository has ever read that key
+   * — no getItem, in any file, in any commit — so the editor opened on whatever
+   * it would have opened on anyway and the named document never travelled. Two
+   * surfaces also fired "opened in editor" toasts for that non-event; those were
+   * deleted in f018695, leaving a button that navigated and claimed nothing.
    *
-   * The dead write stays for now: honouring it means POSTing a document and a
-   * section before navigating, because the payload is CONTENT, not an id — a
-   * real handoff, not a reconnection. Until that exists the button navigates
-   * and claims nothing.
+   * WHY IT COULD NOT BE "RECONNECTED". The payload is CONTENT — a title and a
+   * markdown body — not an identifier. There is no row to point at, so honouring
+   * the intent means CREATING one: POST the document, POST the section that
+   * holds the prose, and only then navigate. That is what happens below, through
+   * the same two endpoints AuthoringCreateExport's createDoc/createSection
+   * already use (the governed authoring store: tenant-scoped, JWT-attributed,
+   * and the section create writes a genesis revision plus a Part 11 audit row
+   * server-side).
+   *
+   * WHY NO RUNTIME CHANNEL. The editor does not need to be told which document
+   * to open. DocumentAuthoring mounts fresh on navigation (V2App keys the body
+   * by surface id), its loadDocs lists `status=draft` scoped to
+   * window.C2C_PROJECT — and GET /api/authoring/docs orders by
+   * `d.updated_at DESC` — then it selects the first row and that row's first
+   * section. A document created a moment ago IS the most recently updated draft,
+   * and the create below sets the same project scope, so the editor lands on it.
+   * Writing a window.C2C_DOC that nothing reads would repeat the exact defect
+   * this replaces.
+   *
+   * FAILURE. Nothing is announced that did not happen and nothing is lost. If
+   * the document create fails we do NOT navigate — the draft stays on screen
+   * with an honest reason. If the document is created but its text fails to
+   * save, we do not navigate either: leaving for an editor that would show an
+   * empty document is the same silent loss wearing a different hat.
    */
-  const openEditor = () => { try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: docDef?.label, md })); } catch (_e) { /* noop */ } onNav && onNav('document-authoring'); };
+  const openingRef = useRef(false);
+  const [opening, setOpening] = useState(false);
+  const openEditor = async () => {
+    if (openingRef.current) return; // a second click must not create a second document
+    const title = docDef?.label || 'Statistical document';
+    if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.'); return; }
+    openingRef.current = true; setOpening(true);
+    try {
+      // Same project scope the editor filters on, read from the same runtime
+      // channel every project-aware surface uses.
+      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+      const programId = proj && typeof proj.id === 'string' ? proj.id : null;
+      const dRes = await apiRequest('POST', '/api/authoring/docs', {
+        title,
+        // Statistical documentation files under Module 5. The server defaults to
+        // M3 when this is omitted, which would be wrong for every document here.
+        module: 'M5',
+        ...(programId ? { client_program_id: programId } : {}),
+      });
+      const dJson = await dRes.json().catch(() => null) as { document?: { id?: unknown }; error?: string } | null;
+      if (!dRes.ok || !dJson?.document?.id) {
+        fireToast(dRes.status === 401
+          ? 'Not opened — your session isn’t authenticated. Nothing was saved; the document is still here.'
+          : 'Couldn’t create the document — ' + (dJson?.error ?? 'HTTP ' + dRes.status) + '. Nothing was saved; the document is still here.');
+        return;
+      }
+      const docId = String(dJson.document.id);
+      const sRes = await apiRequest('POST', '/api/authoring/sections', {
+        doc_id: docId,
+        // Deliberately NOT a CTD number. The editor binds outline nodes to
+        // sections by exact code match (findSectionForNode in useFilingOutline),
+        // so a numeric code would assert a filing position this surface cannot
+        // know.
+        code: docDef?.id || 'statistical_document',
+        title,
+        content: md,
+      });
+      const sJson = await sRes.json().catch(() => null) as { section?: { id?: unknown }; error?: string } | null;
+      if (!sRes.ok || !sJson?.section?.id) {
+        fireToast('The document was created but its text didn’t save — ' + (sJson?.error ?? 'HTTP ' + sRes.status) + '. Staying here so you don’t lose it.');
+        return;
+      }
+      // Saved. With no navigator wired, say where the work went rather than
+      // doing nothing visible — the silent no-op is the defect being removed.
+      if (onNav) onNav('document-authoring');
+      else fireToast('Saved to the authoring store as “' + title + '” — open Document authoring to edit it.');
+    } catch (e) {
+      fireToast('Couldn’t open in the editor — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+    } finally {
+      openingRef.current = false; setOpening(false);
+    }
+  };
   const attach = () => { fireToast((docDef?.label || 'Document') + ' attached to dossier'); ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section'); };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
@@ -579,7 +651,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
           body={<>Everything below is written, not just calculated -- the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
           reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section -- better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
-          action={{ label: 'Open in document editor', onClick: openEditor, alt: { label: 'Attach to dossier', onClick: attach } }}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Attach to dossier', onClick: attach } }}
           secondary="Or pick a different document and adjust the design on the left."
         />
       )}
@@ -638,7 +710,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
             <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{live ? '/api/ana-biostats' : 'Deterministic engine'} -- v1.0.0 -- draft</span></div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
-              <button className="bs-da primary" onClick={openEditor}>{I.penLine} Open in editor</button>
+              <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
             </div>
           </div>
           <div className="bs-doc-page">

@@ -3,7 +3,7 @@ import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { getOrgId } from '@/utils/authToken';
-import type { SurfaceViewProps } from '../surfaceViews';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
 
@@ -614,8 +614,21 @@ function ROBlock({ block }: { block: ROBlockData }) {
   }
 }
 
-/* ── ROReport ── */
-function ROReport({ report, onAsk, onExport, compact }: { report: RenderedReport; onAsk: (t: string) => void; onExport: (r: RenderedReport) => void; compact?: boolean }) {
+/* ── ROReport ──
+   No "Ask AnA about this report" button. It called the SHELL's `onAsk` on a
+   surface registered `ownsConversation: true`, so the question went into a rail
+   this screen never draws — invisible here, and waiting for the user, opened,
+   on the next surface that did draw one.
+   It is deleted rather than rewired to this surface's own pane, for two
+   reasons. The pane is not an assistant: `rc-ana` routes through `roAnaReply`,
+   a client-side intent router that composes its text from local constants, so
+   pointing a real question at it would turn a dead affordance into a fabricated
+   assistant reply on a governed reporting surface. And the button asked for
+   what the report already states — its exact words were "…and what would move
+   it to final", which is the `truthfulness.reasons` list rendered by the
+   `.ro-truth` band a few lines below, straight from the server's gate. Nothing
+   was lost by removing it; something would have been invented by keeping it. */
+function ROReport({ report, onExport, compact }: { report: RenderedReport; onExport: (r: RenderedReport) => void; compact?: boolean }) {
   if (!report) return null;
   const fam = RO_FAMILY[(RO_TYPES.find(t => t.typeId === report.reportTypeId) || { family: '' }).family] || {};
   const stTone = report.status === 'final' ? 'ok' : report.status === 'partial' ? 'warn' : 'idle';
@@ -642,7 +655,6 @@ function ROReport({ report, onAsk, onExport, compact }: { report: RenderedReport
       {!compact && (
         <div className="ro-rep-actions">
           <button className="sp-primary" onClick={() => onExport && onExport(report)}>{I.download || I.fileText} Export report</button>
-          <button className="sp-ask" onClick={() => onAsk && onAsk(`Explain the ${report.reportTypeLabel} for ${report.scopeType} ${report.scopeId} and what would move it to final.`)}>{I.sparkles} Ask AnA about this report</button>
         </div>
       )}
     </div>
@@ -650,7 +662,9 @@ function ROReport({ report, onAsk, onExport, compact }: { report: RenderedReport
 }
 
 /* ── RODashboard ── */
-function RODashboard({ dashboard, tier, onRun, onAsk }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; onAsk: (t: string) => void }) {
+/* `onAsk` is gone from here too — it was declared, threaded down from the
+   canvas and never called once in the whole component. */
+function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -723,9 +737,8 @@ function RODashboard({ dashboard, tier, onRun, onAsk }: { dashboard: DashboardDa
 
 /* ════ Insights -- AnA Reporting Canvas ════ */
 
-export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
+export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const seg = segment || 'pharma';
-  const ask = onAsk;
 
   // Live canvas bootstrap — the org's REAL subscription tier, flagship program
   // readiness (computeInitialRun) and portfolio rollup (server
@@ -989,8 +1002,8 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
 
       {/* -- Right: the report / dashboard artifact -- */}
       <div className="rc-canvas" ref={canvasRef}>
-        {report ? <ROReport report={report} onAsk={ask} onExport={exportRep} />
-          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} onAsk={ask} />
+        {report ? <ROReport report={report} onExport={exportRep} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} />
           : (
             <div className="rc-empty">
               <div className="rc-empty-mark">*</div>

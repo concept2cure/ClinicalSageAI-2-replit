@@ -8,6 +8,7 @@ import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
+import type { SurfaceViewProps } from '../surfaceViews';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
   VERIFICATION_LABEL,
@@ -43,6 +44,12 @@ interface ListTabProps { doc: any; onAdd: () => void }
 interface DocOnlyProps { doc: any }
 interface ConsentTabProps { doc: any; onToggle?: () => void }
 interface PIAccProps { id: string; title: string; badge?: any; open: boolean; onToggle: () => void; children?: React.ReactNode }
+/**
+ * The intel dock's props. It is NOT a registered surface — it is exported and
+ * hung on `window.ProtocolIntelPanel`, which nothing in the repository reads —
+ * so it keeps the loose optional-`onAsk` shape it was written with. See the
+ * note at the bridge exports at the foot of this file.
+ */
 interface WorkspaceProps { onAsk?: (msg: string) => void }
 
 /* ---- Helpers ---- */
@@ -381,8 +388,29 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
     </div>);
 }
 
-/* ---- Main workspace ---- */
-export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
+/* ---- Main workspace ----
+
+   Registered as `protocol-dev` with NO `ownsConversation`, so the shell draws
+   its AnA rail beside this surface and `onAsk` lands somewhere the user can
+   see. It used to hide that rail while calling `onAsk` from the header "Ask
+   AnA" button and from every section's Generate — the question went into a
+   column this screen never rendered, and `ask()` persisted the rail open for
+   whichever surface came next.
+
+   The rail is affordable here in a way it is not in the authoring editor:
+   `.pd-grid` is two tracks (`268px 1fr`), `.pd-work` sets `overflow-y:auto`
+   (which zeroes its automatic minimum size, so the work column shrinks rather
+   than overflowing) and `.pd-pane` is capped at 920px anyway. And there is
+   nothing in-place for an answer to be written into: the document body here is
+   read-only — DocumentTab reaches for `window.DocCanvas`, assigned nowhere in
+   the repository, and falls through to a static render.
+
+   Props are the full `SurfaceViewProps` rather than the old optional-only
+   `WorkspaceProps`. That shape was a weak type — every property optional — so
+   the registry could accept it without ever checking the props it actually
+   receives. `onAsk` is required and non-null now, which is what the surface has
+   always been handed. */
+export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
   // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
   // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
   // the real c2c_protocol_dev table via pool, org-scoped, JSONB rehydrated).
@@ -415,7 +443,7 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
 }
 
 /* ---- Workspace body — a real, loaded protocol document ---- */
-function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk?: (msg: string) => void; onChanged?: () => void }) {
+function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: (msg: string) => void; onChanged?: () => void }) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   const [gov, setGov] = useState<any>(null);
@@ -439,7 +467,7 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk?:
   };
   const sec = doc.sections.find((s: any) => s.id === activeSec) || doc.sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
-  const generate = (s: any) => onAsk && onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
+  const generate = (s: any) => onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
   // Every action routed through here opened a 21 CFR Part 11 e-signature
   // dialog whose onConfirm below is `() => {}`, and the dialog then toasted
   // "<Action> recorded · AUD-9100" from a client-side counter. Nothing was
@@ -484,7 +512,7 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk?:
               body is read-only and nothing about it is autosaved. The version is
               still worth showing — it is real, from GET /api/protocol-dev. */}
           <span className="pd-autosave">{'v' + (doc.version || '—') + (doc.updated ? ' · updated ' + doc.updated : '')}</span>
-          <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk && onAsk('Review ' + doc.shortTitle + ' for completeness and list what blocks finalization.')}>Ask AnA</PG.Btn>
+          <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk('Review ' + doc.shortTitle + ' for completeness and list what blocks finalization.')}>Ask AnA</PG.Btn>
           <PG.Btn icon="fileText" variant="outline" onClick={() => govAct({ title: 'Export protocol', intent: 'Render the assembled protocol to DOCX / PDF.', esign: false })}>Export</PG.Btn>
         </div>
       </div>
@@ -842,7 +870,16 @@ function DesignEvidenceAccordions({
   );
 }
 
-/* ---- Bridge exports ---- */
+/* ---- Bridge exports ----
+
+   NOT AUDITED HERE, and worth saying so plainly: `ProtocolIntelPanel` is
+   imported by nothing and read off `window` by nothing, so the dock below it —
+   including its own "Ask AnA" and "Trace this recommendation" buttons — is
+   unreachable UI. It is left intact because deleting a component is a separate
+   decision from fixing where a question goes, but it is dead, and its `onAsk`
+   calls describe an affordance no user can press. Same for `window.DocCanvas`,
+   which DocumentTab still tests for (see the note there) and which is assigned
+   nowhere in the repository. */
 (window as any).PDEV_nextMajor = pdevNextMajor;
 (window as any).ProtocolWorkspace = ProtocolWorkspace;
 (window as any).ProtocolIntelPanel = ProtocolIntelPanel;

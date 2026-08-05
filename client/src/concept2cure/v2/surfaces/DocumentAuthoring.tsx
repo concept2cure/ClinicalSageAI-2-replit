@@ -1,11 +1,11 @@
 /**
  * Document Authoring — the editable regulatory-document canvas.
  *
- * Registry id: `document-authoring` (full: true, hideAna: true)
+ * Registry id: `document-authoring` (full: true, ownsConversation: true)
  *
  * Full-bleed 3-pane editor: document tree (left), editable content canvas
- * (center), and a review rail (right) that flips between the section's
- * revision history and its comment thread.
+ * (center), and a review rail (right) that flips between AnA, the section's
+ * revision history, its comment thread and the sources it is drafted from.
  *
  * REAL WIRING (regulated GA product): this surface is driven end-to-end by the
  * governed authoring store at `/api/authoring` (server/routes/authoring.router.ts,
@@ -33,13 +33,37 @@
  * honest failed-load — never a fixture. Writes are awaited; a success toast
  * fires only after the server confirms, and on failure nothing local is
  * mutated. Author attribution shown in history/comments is the server's
- * (JWT-sourced created_by), never guessed. "Draft with AnA" hands off to the
- * real assistant (onAsk) rather than injecting fabricated content.
+ * (JWT-sourced created_by), never guessed. "Draft with AnA" streams from the
+ * real assistant rather than injecting fabricated content.
+ *
+ * ── Where "Draft with AnA" used to go ────────────────────────────────────────
+ * Nowhere. This surface is registered `ownsConversation: true` (was
+ * `hideAna: true`), so the shell does not draw its AnA rail here — and the
+ * editor cannot give that column back: `.ed` is `220px minmax(420px,1fr)` and
+ * gains a third 300px track whenever a rail mode is open, a hard 940px minimum
+ * that with the shell's 380px rail needs 1376px before the doc column reaches
+ * its own floor. Yet three affordances — "Draft with AnA", DocCanvas's
+ * §-drafting and cite-this-claim, and "Ask what changed" on a drifted source —
+ * called the shell's `onAsk`. The question went into the rail this screen never
+ * renders, `ask()` persisted `anaOpen: true`, and the answer appeared later on
+ * whichever surface next drew a rail.
+ *
+ * The editor answers in place now. The right rail gains a fourth mode beside
+ * history / comments / sources, backed by this surface's own named
+ * conversation (`useAnaChat`, screen `document-authoring`) and grounded on the
+ * open document and section via `authoringContext`. Every ask on this surface
+ * opens that pane, so the request and its answer are visible beside the text
+ * they are about — and a governed command comes back as the real §11.50
+ * sign-off instead of disappearing.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
-import type { SurfaceViewProps } from '../surfaceViews';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { useAnaChat } from '../../components/ana/useAnaChat';
+import { GovernedActionSignoff } from '../../components/ana/GovernedActionSignoff';
+import type { PendingSignoff } from '../../components/ana/useGovernedAction';
+import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringCollab } from './AuthoringCollab';
@@ -211,7 +235,37 @@ const STATUSES = ['draft', 'in_review', 'approved'];
 
 /* ════ Document Authoring surface ════ */
 
-export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
+/** The REAL Part 11 sign-off prompts AnA returned for governed commands issued
+ *  from the editor's pane, each resolving through GovernedActionSignoff
+ *  (POST /api/ana-ri/governed-action) to the server's confirmation. */
+function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
+  const [outcomes, setOutcomes] = useState<Record<number, string>>({});
+  const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
+  return (
+    <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+      {signoffs.map((s, i) => {
+        if (dismissed[i]) return null;
+        if (outcomes[i]) {
+          return (
+            <div key={`${s.command}-${i}`} className="cmt-body" role="status">
+              {I.check} {outcomes[i]}
+            </div>
+          );
+        }
+        return (
+          <GovernedActionSignoff
+            key={`${s.command}-${i}`}
+            signoff={s}
+            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
+            onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
   // `module` is no longer a filter the user drives — the filing outline is. It
   // survives only as the value AuthoringCreateExport needs when creating a new
   // document, and it now follows the selected section instead of a dropdown
@@ -247,8 +301,8 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
   const [savedContent, setSavedContent] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Right rail: revision history, comments, or the section's sources.
-  const [rail, setRail] = useState<'history' | 'comments' | 'sources' | null>(null);
+  // Right rail: AnA, revision history, comments, or the section's sources.
+  const [rail, setRail] = useState<'ana' | 'history' | 'comments' | 'sources' | null>(null);
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -269,6 +323,74 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
   const activeDoc = docs.find((d) => d.id === activeDocId) ?? null;
   const activeSection = sections.find((s) => s.id === activeSectionId) ?? null;
   const dirty = activeSection != null && draft !== savedContent;
+
+  /* ── The editor's own conversation ──
+     Grounded on what is open: `authoringContext` is the contract the server's
+     orchestrator uses to resolve project / document / section instead of
+     guessing from the message text, so "tighten this" means this section. */
+  const [anaDraft, setAnaDraft] = useState('');
+  const anaScrollRef = useRef<HTMLDivElement>(null);
+  const authoringContext = useMemo<AuthoringContextPack | null>(
+    () =>
+      projectIdForOutline
+        ? {
+            projectId: projectIdForOutline,
+            workflowStage: 'section-workspace',
+            artifactId: activeDocId ?? undefined,
+            artifactStatus: activeDoc?.status ?? undefined,
+            moduleCode: activeDoc?.module ?? undefined,
+            sectionCode: activeSection?.code ?? undefined,
+            sectionTitle: activeSection?.title ?? undefined,
+          }
+        : null,
+    [
+      projectIdForOutline,
+      activeDocId,
+      activeDoc?.status,
+      activeDoc?.module,
+      activeSection?.code,
+      activeSection?.title,
+    ],
+  );
+  /* With no project open there is no AuthoringContextPack to build (it requires
+     a projectId), so the document/section identity still travels as module
+     context rather than being dropped. */
+  const moduleContext = useMemo(
+    () => ({
+      surface: 'document-authoring',
+      documentId: activeDocId,
+      documentTitle: activeDoc?.title ?? null,
+      sectionId: activeSectionId,
+      sectionCode: activeSection?.code ?? null,
+      sectionTitle: activeSection?.title ?? null,
+    }),
+    [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title],
+  );
+  const ana = useAnaChat({
+    screenName: 'document-authoring',
+    projectId: projectIdForOutline,
+    authoringContext,
+    moduleContext,
+  });
+
+  /* Every ask on this surface goes here. It OPENS the pane first — the whole
+     defect was a question with no visible destination, so a silent send would
+     only move the silence. */
+  const askAna = useCallback(
+    (text: string) => {
+      const clean = (text ?? '').trim();
+      if (!clean) return;
+      setRail('ana');
+      void ana.send(clean);
+    },
+    [ana],
+  );
+
+  useEffect(() => {
+    if (rail !== 'ana') return;
+    const el = anaScrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [rail, ana.messages.length, ana.isStreaming]);
 
   /* ── Load documents for the current module/status ── */
   const loadDocs = useCallback(async () => {
@@ -699,6 +821,9 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
                 if (activeDocId) void loadSections(activeDocId).then(() => setActiveSectionId(s.id));
               }}
             />
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'ana' ? null : 'ana')} data-active={rail === 'ana' || undefined}>
+              {I.sparkles} AnA{ana.messages.length > 0 ? ' ' + ana.messages.length : ''}
+            </button>
             <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'comments' ? null : 'comments')} data-active={rail === 'comments' || undefined}>
               {I.checkCircle} Comments{activeSection && num(activeSection.comment_count) > 0 ? ' ' + num(activeSection.comment_count) : ''}
             </button>
@@ -711,7 +836,7 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
             <button className="btn primary" style={{ height: 30 }} onClick={save} disabled={!dirty || saving}>
               {I.check} {saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => onAsk(draftPrompt)}>
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => askAna(draftPrompt)}>
               {I.sparkles} Draft with AnA
             </button>
             {activeDoc && (
@@ -757,7 +882,7 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
                       key={activeSection.id}
                       sec={{ id: activeSection.id, num: activeSection.code, title: activeSection.title }}
                       blocks={[{ p: draft }]}
-                      onAsk={onAsk}
+                      onAsk={askAna}
                       onSave={saveHtml}
                       /* The text this section's lineage was recorded against —
                          the last SAVED content, not the in-flight draft. With
@@ -788,6 +913,100 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
           </div>
         </div>
       </section>
+
+      {/* ── Right: AnA — this surface's own conversation ──
+          The editor holds the AnA rail's column (see the header note), so this
+          is where an ask on this surface is answered. Real streamed turns from
+          /api/ana-ri/stream grounded on the open document and section; nothing
+          is composed locally, and a governed command renders its real §11.50
+          sign-off here rather than in a rail this screen does not draw. */}
+      {rail === 'ana' && (
+        <aside className="ed-comments" aria-label="AnA — document authoring">
+          <div className="ed-comments-h">
+            AnA{activeSection ? ` · ${activeSection.code}` : activeDoc ? ` · ${activeDoc.title}` : ''}
+          </div>
+          <div
+            ref={anaScrollRef}
+            style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 12px', display: 'grid', gap: 12, alignContent: 'start' }}
+          >
+            {ana.messages.length === 0 ? (
+              <EmptyState
+                icon={I.sparkles}
+                title="Ask AnA about this section"
+                hint={
+                  activeSection
+                    ? `Draft, tighten or cite ${activeSection.code}. AnA answers here, grounded on the saved document — it proposes; you accept and save, and every save records an auditable revision.`
+                    : 'Select a section, then ask AnA to draft, tighten or cite it. AnA answers here, grounded on the saved document.'
+                }
+              />
+            ) : (
+              ana.messages.map((m, i) =>
+                m.role === 'user' ? (
+                  <div key={i} className="cmt">
+                    <div className="cmt-meta"><b>You</b></div>
+                    <div className="cmt-body">{m.text}</div>
+                  </div>
+                ) : (
+                  <div key={i} className="cmt">
+                    <div className="cmt-meta"><b>AnA</b></div>
+                    {/* Until the first token lands the server's status phase
+                        stands in — never an invented sentence. */}
+                    <div className="cmt-body" style={{ whiteSpace: 'pre-wrap' }}>
+                      {m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}
+                    </div>
+                    {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                        {m.executedActions.map((a, ai) => (
+                          <span key={ai} className="rd-chip tone-ok" title={a.error || a.label}>{a.label}</span>
+                        ))}
+                      </div>
+                    )}
+                    {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
+                      <AuthoringSignoffs signoffs={m.pendingSignoffs} />
+                    )}
+                  </div>
+                ),
+              )
+            )}
+          </div>
+          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--c2c-line,#e4e7ec)' }}>
+            <textarea
+              className="c2c-input"
+              value={anaDraft}
+              onChange={(e) => setAnaDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  const t = anaDraft.trim();
+                  if (!t || ana.isStreaming) return;
+                  setAnaDraft('');
+                  askAna(t);
+                }
+              }}
+              placeholder={activeSection ? `Ask about ${activeSection.code}…` : 'Ask AnA…'}
+              style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <span style={{ fontSize: 11, opacity: 0.7 }}>
+                {I.lock} AnA proposes; you accept and save.
+              </span>
+              <button
+                className="btn primary"
+                style={{ height: 28 }}
+                disabled={!anaDraft.trim() || ana.isStreaming}
+                onClick={() => {
+                  const t = anaDraft.trim();
+                  if (!t) return;
+                  setAnaDraft('');
+                  askAna(t);
+                }}
+              >
+                {ana.isStreaming ? 'Answering…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        </aside>
+      )}
 
       {/* ── Right: history / comments rail ── */}
       {rail === 'history' && (
@@ -906,7 +1125,7 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
                             </button>
                           )}
                           {s.state === 'changed' && (
-                            <button className="nda-open" onClick={() => onAsk(
+                            <button className="nda-open" onClick={() => askAna(
                               `The source "${s.source?.title ?? 'this document'}" changed after section ${activeSection.code} was drafted from it. Read the current source and tell me what in this section no longer matches. Do not rewrite it yet.`,
                             )}>
                               {I.sparkles} Ask what changed

@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { apiRequest } from '@/lib/queryClient';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import '../styles/project-home-v2.css';
 
@@ -288,12 +289,64 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const html = useMemo(() => analysis ? mdToHtml(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;
 
-  // No toast — see the note on the same handler in Biostatistics.tsx. Nothing
-  // reads `c2c_biostat_doc`, so "opened in editor" announced a handoff that
-  // does not happen. The navigation is real; the named document is not.
-  const openEditor = () => {
-    try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: docDef?.label, md })); } catch (_e) { /* noop */ }
-    onNav && onNav('document-authoring');
+  /*
+   * "Open in editor" — a real handoff. See the long note on the same handler in
+   * Biostatistics.tsx for the full reasoning; in short: this wrote {title, md}
+   * to localStorage['c2c_biostat_doc'], a key with no reader in any file in any
+   * commit, so the analysis never travelled and the editor opened on whatever it
+   * would have opened on anyway.
+   *
+   * The payload is CONTENT, not an id, so honouring it means creating the row:
+   * POST the document, POST the section holding the prose, then navigate. Both
+   * writes are awaited; a failure keeps you here with the analysis on screen and
+   * an honest reason, because navigating away from work that was not saved is
+   * the same defect this replaces.
+   */
+  const openingRef = useRef(false);
+  const [opening, setOpening] = useState(false);
+  const openEditor = async () => {
+    if (openingRef.current) return; // a second click must not create a second document
+    const title = docDef?.label || 'Protocol analysis';
+    if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.'); return; }
+    openingRef.current = true; setOpening(true);
+    try {
+      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+      const programId = proj && typeof proj.id === 'string' ? proj.id : null;
+      const dRes = await apiRequest('POST', '/api/authoring/docs', {
+        // Protocol-derived analysis documents file under Module 5; the server
+        // defaults to M3 when this is omitted, which would be wrong here.
+        title, module: 'M5',
+        ...(programId ? { client_program_id: programId } : {}),
+      });
+      const dJson = await dRes.json().catch(() => null) as { document?: { id?: unknown }; error?: string } | null;
+      if (!dRes.ok || !dJson?.document?.id) {
+        fireToast(dRes.status === 401
+          ? 'Not opened — your session isn’t authenticated. Nothing was saved; the analysis is still here.'
+          : 'Couldn’t create the document — ' + (dJson?.error ?? 'HTTP ' + dRes.status) + '. Nothing was saved; the analysis is still here.');
+        return;
+      }
+      const docId = String(dJson.document.id);
+      const sRes = await apiRequest('POST', '/api/authoring/sections', {
+        doc_id: docId,
+        // Not a CTD number on purpose — the editor binds outline nodes by exact
+        // code match, and this surface cannot know the filing position.
+        code: docDef?.id || 'protocol_analysis',
+        title, content: md,
+      });
+      const sJson = await sRes.json().catch(() => null) as { section?: { id?: unknown }; error?: string } | null;
+      if (!sRes.ok || !sJson?.section?.id) {
+        fireToast('The document was created but its text didn’t save — ' + (sJson?.error ?? 'HTTP ' + sRes.status) + '. Staying here so you don’t lose it.');
+        return;
+      }
+      // Saved. With no navigator wired, say where the work went rather than
+      // doing nothing visible — the silent no-op is the defect being removed.
+      if (onNav) onNav('document-authoring');
+      else fireToast('Saved to the authoring store as “' + title + '” — open Document authoring to edit it.');
+    } catch (e) {
+      fireToast('Couldn’t open in the editor — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+    } finally {
+      openingRef.current = false; setOpening(false);
+    }
   };
 
   return (
@@ -313,7 +366,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
           headline={<>I read the {a.phase && a.phase !== 'Unknown' ? <>Phase {a.phase} </> : null}{a.indication && a.indication !== 'Unspecified' ? <>{a.indication.toLowerCase()} </> : null}protocol and drafted your <b>{docDef?.label}</b> -- {a.risk_factors.length ? <><b>{a.risk_factors.length} design {a.risk_factors.length === 1 ? 'risk' : 'risks'}</b> to address</> : <>the design looks sound on the parameters I could read</>}.</>}
           body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below -- power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text -- add it and the power analysis will fill in.</>}</>}
           reassure="Everything is drafted as a real document, not a chart -- read it, adjust, and send it to the editor."
-          action={{ label: 'Open in document editor', onClick: openEditor, alt: { label: 'Re-analyze', onClick: analyze } }}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Re-analyze', onClick: analyze } }}
           secondary="Or switch documents and re-run below."
         />
       ) : (
@@ -358,7 +411,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
               <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{analysis.source === 'live' ? '/api/analytics' : 'Ported generator -- offline'} -- draft</span></div>
               <div className="bs-doc-bar-a">
                 <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ' for this protocol')}>{I.sparkles} Refine</button>
-                <button className="bs-da primary" onClick={openEditor}>{I.penLine} Open in editor</button>
+                <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
               </div>
             </div>
             <div className="bs-doc-page"><div className="bs-doc-render" dangerouslySetInnerHTML={{ __html: html }} /></div>

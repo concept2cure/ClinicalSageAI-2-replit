@@ -23,6 +23,25 @@ import '../styles/admin-access.css';
  * forbids. KPI counts are derived from the real rows. Governed mutations route
  * through AnA (onAsk) so every change captures a reason and emits a Part 11
  * audit entry.
+ *
+ * ── Why this surface does NOT hide the AnA rail ──────────────────────────────
+ * It used to. `admin-console` was registered `hideAna: true`, which stops the
+ * shell rendering the rail — while all seven of the hand-offs below still
+ * called `onAsk`. That is worse here than anywhere else in the product: a
+ * governed command comes back from ANA as a `pendingSignoff`, and the §11.50
+ * e-signature prompt is drawn BY the rail (V2App `adaptChatMessage` → AnaRail →
+ * GovernedActionSignoff). Hiding the rail did not defer the signature gate, it
+ * hid it — "Invite member", "Grant access", "Rotate API key" and "Change
+ * setting" all appeared to do nothing, and the prompt to sign for them
+ * reappeared later on whatever surface the admin opened next, because `ask()`
+ * persisted `anaOpen` on its way past.
+ *
+ * A rail-hiding surface CAN present its own §11.50 gate — `rbm` does, through
+ * its study-scoped dock (RbmSurfaces.tsx:276). This surface does not need to:
+ * it is an ordinary admin page, not an editor. `.adm-members-layout` is
+ * `minmax(0,1fr) 320px` with a single-column fallback at 1100px and
+ * `.adm-access { min-width: 0 }`, so it gives the rail's 380px back by
+ * shrinking. The rail is where these actions belong, and it is there now.
  */
 
 interface Kpi { label: string; metric: string; unit?: string; meta: string; tone?: string }
