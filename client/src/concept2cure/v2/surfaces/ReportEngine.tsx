@@ -3,7 +3,7 @@ import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { apiRequest } from '@/lib/queryClient';
+import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import '../styles/project-home-v2.css';
 
@@ -310,40 +310,16 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
     if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.'); return; }
     openingRef.current = true; setOpening(true);
     try {
-      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-      const programId = proj && typeof proj.id === 'string' ? proj.id : null;
-      const dRes = await apiRequest('POST', '/api/authoring/docs', {
-        // Protocol-derived analysis documents file under Module 5; the server
-        // defaults to M3 when this is omitted, which would be wrong here.
-        title, module: 'M5',
-        ...(programId ? { client_program_id: programId } : {}),
+      // Protocol-derived analysis files under Module 5; the server would
+      // default to M3.
+      const r = await saveToAuthoring({
+        title, module: 'M5', code: docDef?.id || 'protocol_analysis',
+        content: md, subject: 'the analysis',
       });
-      const dJson = await dRes.json().catch(() => null) as { document?: { id?: unknown }; error?: string } | null;
-      if (!dRes.ok || !dJson?.document?.id) {
-        fireToast(dRes.status === 401
-          ? 'Not opened — your session isn’t authenticated. Nothing was saved; the analysis is still here.'
-          : 'Couldn’t create the document — ' + (dJson?.error ?? 'HTTP ' + dRes.status) + '. Nothing was saved; the analysis is still here.');
-        return;
-      }
-      const docId = String(dJson.document.id);
-      const sRes = await apiRequest('POST', '/api/authoring/sections', {
-        doc_id: docId,
-        // Not a CTD number on purpose — the editor binds outline nodes by exact
-        // code match, and this surface cannot know the filing position.
-        code: docDef?.id || 'protocol_analysis',
-        title, content: md,
-      });
-      const sJson = await sRes.json().catch(() => null) as { section?: { id?: unknown }; error?: string } | null;
-      if (!sRes.ok || !sJson?.section?.id) {
-        fireToast('The document was created but its text didn’t save — ' + (sJson?.error ?? 'HTTP ' + sRes.status) + '. Staying here so you don’t lose it.');
-        return;
-      }
-      // Saved. With no navigator wired, say where the work went rather than
-      // doing nothing visible — the silent no-op is the defect being removed.
+      // Navigate only on a clean write — see authoringHandoff.
+      if (!r.ok) { fireToast(r.message); return; }
       if (onNav) onNav('document-authoring');
-      else fireToast('Saved to the authoring store as “' + title + '” — open Document authoring to edit it.');
-    } catch (e) {
-      fireToast('Couldn’t open in the editor — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      else fireToast(r.message);
     } finally {
       openingRef.current = false; setOpening(false);
     }

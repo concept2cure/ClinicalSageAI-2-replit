@@ -6,6 +6,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { saveToAuthoring } from '../authoringHandoff';
 import {
   specRowsFromApi,
   specCreateBody,
@@ -797,40 +798,15 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
     const title = 'Regulatory Change Impact Assessment';
     openingRef.current = true; setOpening(true);
     try {
-      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-      const programId = proj && typeof proj.id === 'string' ? proj.id : null;
-      const dRes = await apiRequest('POST', '/api/authoring/docs', {
-        // A CMC change assessment is quality documentation — Module 3.
-        title, module: 'M3',
-        ...(programId ? { client_program_id: programId } : {}),
+      // A CMC change assessment is quality documentation — Module 3.
+      const res = await saveToAuthoring({
+        title, module: 'M3', code: 'regulatory_change_impact_assessment',
+        content: memoMd(r), subject: 'the assessment',
       });
-      const dJson = await dRes.json().catch(() => null) as { document?: { id?: unknown }; error?: string } | null;
-      if (!dRes.ok || !dJson?.document?.id) {
-        fireToast(dRes.status === 401
-          ? 'Not opened — your session isn’t authenticated. Nothing was saved; the assessment is still here.'
-          : 'Couldn’t create the document — ' + (dJson?.error ?? 'HTTP ' + dRes.status) + '. Nothing was saved; the assessment is still here.');
-        return;
-      }
-      const docId = String(dJson.document.id);
-      const sRes = await apiRequest('POST', '/api/authoring/sections', {
-        doc_id: docId,
-        // Not a CTD number on purpose — the editor binds outline nodes by exact
-        // code match, and the filing position depends on the change, not on this
-        // simulator.
-        code: 'regulatory_change_impact_assessment',
-        title, content: memoMd(r),
-      });
-      const sJson = await sRes.json().catch(() => null) as { section?: { id?: unknown }; error?: string } | null;
-      if (!sRes.ok || !sJson?.section?.id) {
-        fireToast('The document was created but its text didn’t save — ' + (sJson?.error ?? 'HTTP ' + sRes.status) + '. Staying here so you don’t lose it.');
-        return;
-      }
-      // Saved. With no navigator wired, say where the work went rather than
-      // doing nothing visible — the silent no-op is the defect being removed.
+      // Navigate only on a clean write — see authoringHandoff.
+      if (!res.ok) { fireToast(res.message); return; }
       if (nav) nav('document-authoring');
-      else fireToast('Saved to the authoring store as “' + title + '” — open Document authoring to edit it.');
-    } catch (e) {
-      fireToast('Couldn’t open in the editor — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      else fireToast(res.message);
     } finally {
       openingRef.current = false; setOpening(false);
     }

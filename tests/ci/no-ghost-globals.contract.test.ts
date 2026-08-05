@@ -195,23 +195,55 @@ describe('eliminated storage notes stay eliminated', () => {
 
 describe('the "Open in editor" buttons hand off through the governed store', () => {
   /*
-   * The reverse regression this guards: deleting the two POSTs and keeping the
-   * navigation gives back a button that changes screens and saves nothing. Each
+   * The reverse regression this guards: deleting the POSTs and keeping the
+   * navigation gives back a button that changes screens and saves nothing. A
    * surface must create the document AND the section that holds its markdown —
    * a document with no section is an empty file with a title.
+   *
+   * This used to grep each surface for the two URL literals. That check was
+   * tied to the duplication rather than to the property: the sequence lived
+   * three times, so it asserted the strings appeared three times. Now that it
+   * lives once in `authoringHandoff.ts`, the same assertion would demand the
+   * copies be put back.
+   *
+   * So it is split. The URLs are checked where they are; the surfaces are
+   * checked for the thing that actually protects the user's work — that they
+   * route through the shared handoff and do NOT navigate unless it succeeded.
+   * `authoringHandoff.spec.ts` covers the failure semantics behaviourally, with
+   * a mocked transport, which is a stronger check than any source scan.
    */
+  const HANDOFF = 'client/src/concept2cure/v2/authoringHandoff.ts';
   const senders = [
     'client/src/concept2cure/v2/surfaces/Biostatistics.tsx',
     'client/src/concept2cure/v2/surfaces/ReportEngine.tsx',
     'client/src/concept2cure/v2/surfaces/CmcModule.tsx',
   ];
 
-  it.each(senders)('%s POSTs a document and a section before navigating', (file) => {
-    const code = codeOf(path.join(REPO_ROOT, file));
-    expect(code, `${file} navigates to the editor without creating a document`)
+  it('the shared handoff POSTs a document and a section', () => {
+    const code = codeOf(path.join(REPO_ROOT, HANDOFF));
+    expect(code, 'the handoff navigates to the editor without creating a document')
       .toMatch(/'\/api\/authoring\/docs'/);
-    expect(code, `${file} creates a document but never a section to hold the text`)
+    expect(code, 'the handoff creates a document but never a section to hold the text')
       .toMatch(/'\/api\/authoring\/sections'/);
+  });
+
+  it.each(senders)('%s hands off through saveToAuthoring', (file) => {
+    const code = codeOf(path.join(REPO_ROOT, file));
+    expect(code, `${file} no longer routes its "Open in editor" through the governed handoff`)
+      .toMatch(/\bsaveToAuthoring\s*\(/);
+  });
+
+  it.each(senders)('%s does not navigate when the handoff failed', (file) => {
+    const code = codeOf(path.join(REPO_ROOT, file));
+    // The early return on a failed handoff. Without it the surface would send
+    // the user to an editor holding a document whose text never saved — the
+    // exact way work gets lost, and the reason the result is a union rather
+    // than a thrown error.
+    expect(
+      code,
+      `${file} calls saveToAuthoring but has no early return on failure — ` +
+        'it can navigate away from unsaved work',
+    ).toMatch(/if\s*\(\s*!\s*\w+\.ok\s*\)/);
   });
 });
 

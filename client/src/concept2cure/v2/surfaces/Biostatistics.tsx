@@ -3,7 +3,7 @@ import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { apiRequest } from '@/lib/queryClient';
+import { saveToAuthoring } from '../authoringHandoff';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -586,46 +586,18 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.'); return; }
     openingRef.current = true; setOpening(true);
     try {
-      // Same project scope the editor filters on, read from the same runtime
-      // channel every project-aware surface uses.
-      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-      const programId = proj && typeof proj.id === 'string' ? proj.id : null;
-      const dRes = await apiRequest('POST', '/api/authoring/docs', {
-        title,
-        // Statistical documentation files under Module 5. The server defaults to
-        // M3 when this is omitted, which would be wrong for every document here.
-        module: 'M5',
-        ...(programId ? { client_program_id: programId } : {}),
+      // Statistical documentation files under Module 5; the server would
+      // default to M3.
+      const r = await saveToAuthoring({
+        title, module: 'M5', code: docDef?.id || 'statistical_document',
+        content: md, subject: 'the document',
       });
-      const dJson = await dRes.json().catch(() => null) as { document?: { id?: unknown }; error?: string } | null;
-      if (!dRes.ok || !dJson?.document?.id) {
-        fireToast(dRes.status === 401
-          ? 'Not opened — your session isn’t authenticated. Nothing was saved; the document is still here.'
-          : 'Couldn’t create the document — ' + (dJson?.error ?? 'HTTP ' + dRes.status) + '. Nothing was saved; the document is still here.');
-        return;
-      }
-      const docId = String(dJson.document.id);
-      const sRes = await apiRequest('POST', '/api/authoring/sections', {
-        doc_id: docId,
-        // Deliberately NOT a CTD number. The editor binds outline nodes to
-        // sections by exact code match (findSectionForNode in useFilingOutline),
-        // so a numeric code would assert a filing position this surface cannot
-        // know.
-        code: docDef?.id || 'statistical_document',
-        title,
-        content: md,
-      });
-      const sJson = await sRes.json().catch(() => null) as { section?: { id?: unknown }; error?: string } | null;
-      if (!sRes.ok || !sJson?.section?.id) {
-        fireToast('The document was created but its text didn’t save — ' + (sJson?.error ?? 'HTTP ' + sRes.status) + '. Staying here so you don’t lose it.');
-        return;
-      }
-      // Saved. With no navigator wired, say where the work went rather than
-      // doing nothing visible — the silent no-op is the defect being removed.
+      // Navigate only on a clean write. On a half-failure the document exists
+      // but is empty, so going there would show the user an editor without
+      // their work — stay put and say so.
+      if (!r.ok) { fireToast(r.message); return; }
       if (onNav) onNav('document-authoring');
-      else fireToast('Saved to the authoring store as “' + title + '” — open Document authoring to edit it.');
-    } catch (e) {
-      fireToast('Couldn’t open in the editor — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      else fireToast(r.message);
     } finally {
       openingRef.current = false; setOpening(false);
     }
