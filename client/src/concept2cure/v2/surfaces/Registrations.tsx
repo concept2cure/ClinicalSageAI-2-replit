@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { useLive, useLiveData, EmptyState } from '../dataConnect';
+import { useLiveData, useLiveRows, isRowsWith, hasKeys, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -73,6 +73,21 @@ interface GridResponse {
   registrations: RimRegistration[];
   summary?: unknown;
 }
+
+/* `grid.data?.registrations ?? []` READS as guarded and isn't: the `?.` covers
+   the container, not the member. A 200 that isn't this grid — `{ data: [] }`
+   unwrapping to a bare `[]`, an envelope that lost its payload, a proxy's login
+   page — left `registrations` undefined, the `??` swallowed it, and the surface
+   confidently reported "No market registrations yet" for an organization whose
+   grid it had never actually read. Requiring the row array here sends that body
+   to the "couldn't load the registration grid" panel below, which is the only
+   one of the two states that is true. Row keys are the ones the RIM query
+   actually selects (product_name is not among them — it stays optional). */
+const isGridResponse = (v: unknown): v is GridResponse =>
+  hasKeys<GridResponse>('registrations')(v) &&
+  isRowsWith<RimRegistration>('id', 'product_id', 'country', 'market_status')(
+    (v as GridResponse).registrations,
+  );
 
 /* No fabricated dossiers: the RIM grid does not carry per-registration document
    sets, so the design's expandable dossier stays dormant (rows render
@@ -165,11 +180,21 @@ function RegRow({ r, prod, onAsk }: RegRowProps) {
 
 export function Registrations({ onAsk }: SurfaceViewProps) {
   const [tab, setTab] = useState('reg');
-  const grid = useLiveData<GridResponse>('/api/rim/registrations');
-  const standards = useLive<DataStandard[]>(
+  const grid = useLiveData<GridResponse>('/api/rim/registrations', ['/api/rim/registrations'], isGridResponse);
+  /* The chips used to render `(standards.data || REG_STANDARDS_FALLBACK).map`.
+     `useLive` hands back the parsed body cast to DataStandard[] without looking
+     at it, and `||` only fires on null/undefined — so a 200 carrying `{}`,
+     `{ data: … }`, an error body or a JSON string was truthy, walked past the
+     fallback, and `.map` threw inside render on six of seven skewed bodies.
+     `useLiveRows` unwraps the envelope and the row guard rejects anything that
+     isn't a list of standards, so a wrong-shaped 200 reaches the same honest
+     shipped-in-code fallback as an unreachable backend. */
+  const standards = useLiveRows<DataStandard>(
     '/api/registrations/data-standards',
-    REG_STANDARDS_FALLBACK,
+    ['/api/registrations/data-standards'],
+    isRowsWith<DataStandard>('id', 'label', 'status'),
   );
+  const standardsRows = standards.rows.length ? standards.rows : REG_STANDARDS_FALLBACK;
 
   const regs = grid.data?.registrations ?? [];
   const noRows = !grid.loading && !grid.error && regs.length === 0;
@@ -245,7 +270,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
           )}
           <div className="reg-standards">
             <span className="reg-std-l">Submission data standards</span>
-            {(standards.data || REG_STANDARDS_FALLBACK).map((s) => (
+            {standardsRows.map((s) => (
               <span
                 key={s.id}
                 className={'reg-std ' + (s.status === 'shipped' ? 'ok' : 'gap')}
