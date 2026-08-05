@@ -123,13 +123,13 @@ export interface UseWorkbenchTasksResult {
   error: string | null;
 }
 
+const WORKLOAD_PATH = '/api/submission-ops/workload';
+
 /**
  * Fetch the cross-program task list from /api/submission-ops/workload
  * (returns c2c_project_work_items rows) and adapt each row into the
  * kit's Task shape (Kanban). Derives 4 KPI cards from the same list.
  */
-const WORKLOAD_PATH = '/api/submission-ops/workload';
-
 export function useWorkbenchTasks(): UseWorkbenchTasksResult {
   const { data, loading, error } = useFetchJson<WorkloadPayload>(WORKLOAD_PATH);
   /*
@@ -281,6 +281,8 @@ export interface UseWorkbenchValidationResult {
   error:    string | null;
 }
 
+const BLOCKERS_PATH = '/api/submission-ops/blockers';
+
 /**
  * Fetch cross-program blockers from /api/submission-ops/blockers and
  * join with the live program list (passed in by the caller — usually
@@ -288,8 +290,6 @@ export interface UseWorkbenchValidationResult {
  * matrix and 4 summary KPI cards. Pure-derivation hook on top of one
  * fetch + the supplied program array.
  */
-const BLOCKERS_PATH = '/api/submission-ops/blockers';
-
 export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidationResult {
   const { data, loading, error } = useFetchJson<BlockersPayload>(BLOCKERS_PATH);
   /* `data.data ?? data.blockers ?? data.rows ?? []` again — `{ data: {} }` is a

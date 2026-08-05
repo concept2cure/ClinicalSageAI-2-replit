@@ -329,6 +329,12 @@ export function PdevActivityDetail({
               {evidence.loading && !evidence.payload && (
                 <div className="pdev-empty">Loading evidence…</div>
               )}
+              {/* A read that failed reported nothing at all here — the tab just
+                  went blank, which reads as "no evidence" and is a claim about
+                  the activity rather than about the request. */}
+              {evidence.error && (
+                <div className="pdev-empty">Couldn't load evidence — {evidence.error}</div>
+              )}
               {evidence.payload?.links.length === 0 && (
                 <div className="pdev-empty">No evidence attached yet.</div>
               )}
@@ -382,6 +388,9 @@ export function PdevActivityDetail({
             <>
               {workflow.loading && !workflow.payload && (
                 <div className="pdev-empty">Loading workflow…</div>
+              )}
+              {workflow.error && (
+                <div className="pdev-empty">Couldn't load workflow — {workflow.error}</div>
               )}
               {workflow.payload && !workflow.payload.run && (
                 <>
@@ -507,6 +516,9 @@ export function PdevActivityDetail({
               {provenance.loading && !provenance.payload && (
                 <div className="pdev-empty">Loading provenance…</div>
               )}
+              {provenance.error && (
+                <div className="pdev-empty">Couldn't load provenance — {provenance.error}</div>
+              )}
               {provenance.payload && (
                 <>
                   <div className="pdev-prov-counts">
@@ -579,6 +591,9 @@ export function PdevActivityDetail({
             <>
               {provenance.loading && !provenance.payload && (
                 <div className="pdev-empty">Loading audit…</div>
+              )}
+              {provenance.error && (
+                <div className="pdev-empty">Couldn't load audit — {provenance.error}</div>
               )}
               {provenance.payload?.audit.length === 0 && (
                 <div className="pdev-empty">No audit events yet.</div>

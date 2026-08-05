@@ -16,7 +16,8 @@
  */
 
 import { useFetchJson } from './useFetchJson';
-import { toDataState, type DataState } from '../lib/dataState';
+import { type DataState } from '../lib/dataState';
+import { isRecord, shapeMismatch, toRowsState } from '../lib/payloadShape';
 import type {
   PV_CAPAS,
   PV_METRICS,
@@ -52,21 +53,33 @@ export interface UsePostmarketResult {
   refresh: () => void;
 }
 
-export function usePostmarket(): UsePostmarketResult {
-  const { data, loading, error, refresh } =
-    useFetchJson<PostmarketPayload>('/api/mdx/postmarket');
+const PATH = '/api/mdx/postmarket';
 
-  const state = <T,>(rows: T | undefined): DataState<T> =>
-    toDataState(rows ?? null, loading, error);
+export function usePostmarket(): UsePostmarketResult {
+  const { data, loading, error, refresh } = useFetchJson<PostmarketPayload>(PATH);
+
+  /*
+   * `data?.data.metrics` — the `?.` stopped at the envelope, so a 200 that isn't
+   * `{ data: { … } }` made `.metrics` a read off `undefined` and threw during
+   * render. On the vigilance surface that is the worst place to lose the
+   * distinction: the user needs "we couldn't load your signals" and got "this
+   * surface is broken", which reads as a bug in the page rather than a gap in
+   * the safety feed.
+   */
+  const panels = isRecord(data) && isRecord(data.data) ? data.data : null;
+  const failed = error ?? (data != null && panels === null ? shapeMismatch(PATH) : null);
+
+  const state = <T,>(rows: unknown): DataState<T[]> =>
+    toRowsState<T>(rows, loading, failed, { source: PATH });
 
   return {
-    metrics: state(data?.data.metrics),
-    signals: state(data?.data.signals),
-    capas: state(data?.data.capas),
-    pmsPlan: state(data?.data.pmsPlan),
-    trends: state(data?.data.trends),
+    metrics: state<MetricsRow>(panels?.metrics),
+    signals: state<SignalRow>(panels?.signals),
+    capas: state<CapaRow>(panels?.capas),
+    pmsPlan: state<PmsRow>(panels?.pmsPlan),
+    trends: state<TrendRow>(panels?.trends),
     loading,
-    error,
+    error: failed,
     refresh,
   };
 }

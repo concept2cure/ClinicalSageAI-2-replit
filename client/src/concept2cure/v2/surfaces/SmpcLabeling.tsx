@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -38,6 +38,32 @@ interface SmpcReadiness {
   outstanding: string[];
 }
 
+/**
+ * A 200 is only evidence that something came back. `{ data: [] }` from a list
+ * route unwraps to a bare `[]`, which is TRUTHY — it sailed past the `!readiness`
+ * empty-state branch below and then `readiness.outstanding.length` threw during
+ * render, so the boundary told the user the app was broken instead of the true
+ * "we couldn't load this". The same held for `{}`, a 200 error body, and a JSON
+ * scalar: none of them are a readiness rollup, and none of them are null either.
+ *
+ * `sections` and `outstanding` must be arrays rather than merely present:
+ * buildSmpcReadiness computes both unconditionally, so a null there is not the
+ * "nothing selected yet" case `hasKeys` protects — it is a body that isn't a
+ * readiness rollup, and `.map` / `.length` on it crashes just the same.
+ */
+const isSmpcReadiness: ShapeGuard<SmpcReadiness> = (value): value is SmpcReadiness => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    Array.isArray(v.sections) &&
+    Array.isArray(v.outstanding) &&
+    'finalRequired' in v &&
+    'totalRequired' in v &&
+    'completenessPct' in v &&
+    'ready' in v
+  );
+};
+
 const STATUS_TONE: Record<SmpcStatus, string> = { final: 'ok', review: 'warn', draft: 'idle', missing: 'err' };
 const STATUS_LABEL: Record<SmpcStatus, string> = { final: 'final', review: 'review', draft: 'draft', missing: 'missing' };
 const NEXT_STATUS: Record<SmpcStatus, SmpcStatus> = { missing: 'draft', draft: 'review', review: 'final', final: 'missing' };
@@ -52,7 +78,13 @@ export function SmpcLabeling({ onAsk }: SurfaceViewProps) {
   // all-missing QRD skeleton, so a real object is normally present; a null
   // payload or a failed load (e.g. 403 without org) are surfaced honestly —
   // never a fixture. Refetches when refreshKey bumps after a section advance.
-  const { data: readiness, loading, error } = useLiveData<SmpcReadiness>('/api/labeling-smpc', [refreshKey]);
+  // The guard sends a 200 that isn't a readiness rollup into the error branch
+  // below instead of handing it back cast to SmpcReadiness (see isSmpcReadiness).
+  const { data: readiness, loading, error } = useLiveData<SmpcReadiness>(
+    '/api/labeling-smpc',
+    [refreshKey],
+    isSmpcReadiness,
+  );
 
   // Real, persisted action: POST /api/labeling-smpc upserts the section status
   // in c2c_smpc_sections and returns refreshed readiness; on success we refetch.

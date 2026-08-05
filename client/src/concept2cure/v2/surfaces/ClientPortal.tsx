@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
 import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/auth-entry.css';
 
@@ -21,6 +21,28 @@ interface CpUpdate { who: string; what: string; when: string }
 interface CpData {
   client: string; cro: string; user: string; mode?: 'client' | 'preview';
   programs: CpProgram[]; deliverables: CpDeliverable[]; updates: CpUpdate[];
+}
+
+/* The overview's three lists ARE this surface: `cp.programs.length`,
+   `cp.deliverables.map(...)` and `cp.updates.length` all run unconditionally once
+   the fetch reports done, so they are what a 200 has to prove it carries.
+
+   What got through before: the overview route answering `{ data: [] }` — an
+   envelope that lost its object — unwraps to a bare `[]`, and `[]` is TRUTHY, so
+   it walked past `if (loading || !cp)` and `cp.programs.length` threw during
+   render. The client was then told their portal was broken by the boundary,
+   instead of the "We couldn't load your workspace" panel this file already draws
+   thirty lines below. `{}`, a 200 carrying `{ error }`, a bare array and a JSON
+   scalar all landed the same way — six of the seven skews in the probe.
+
+   `hasKeys` alone would not close it: it checks presence, so `programs: null`
+   still passes and still throws on `.length`. A null list is not the
+   "nothing selected yet" case that presence-checking exists to protect — this
+   surface has nothing to render without the arrays — so the arrays are required
+   here, and anything else lands in the error branch as the failed load it is. */
+function isCpOverview(v: unknown): v is CpData {
+  if (!hasKeys<CpData>('programs', 'deliverables', 'updates')(v)) return false;
+  return Array.isArray(v.programs) && Array.isArray(v.deliverables) && Array.isArray(v.updates);
 }
 
 const CP_T: Record<string, string> = { shared: 'ai', review: 'warn', approved: 'ok', active: 'ai', final: 'ok', released: 'ok', signed: 'ok' };
@@ -54,13 +76,18 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
     wsId && /^\d+$/.test(wsId)
       ? `/api/client-portal/overview?clientWorkspaceId=${wsId}`
       : '/api/client-portal/overview';
-  const { data: cp, loading, error } = useLiveData<CpData>(path);
+  const { data: cp, loading, error } = useLiveData<CpData>(path, [path], isCpOverview);
 
   // Loading / unavailable — render the branded shell with an honest state, never
   // a fabricated workspace. A 401/403 means this portal isn't shared with the
   // caller's account; anything else is a genuine load failure.
   if (loading || !cp) {
-    const notShared = !!error && /\b40[13]\b/.test(error);
+    // Match the status where liveGetOrNull writes it — at the front of
+    // `HTTP 401 <path>` — not anywhere in the string. The old `\b40[13]\b` also
+    // matched the PATH, so `?clientWorkspaceId=403` turned any failure on that
+    // workspace, shape rejection included, into "isn't shared with your account":
+    // a specific accusation about permissions built out of a workspace id.
+    const notShared = !!error && /^HTTP 40[13]\b/.test(error);
     return (
       <div className="cp">
         <div className="cp-body">
