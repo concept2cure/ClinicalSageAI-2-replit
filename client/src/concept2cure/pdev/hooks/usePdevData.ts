@@ -85,7 +85,16 @@ function adaptReadiness(
   server: ServerReadinessPayload | null,
   programId: string | null,
 ): PdevReadinessReport | null {
-  if (!server) return null;
+  // Null-checked AND shape-checked. `if (!server) return null` alone left
+  // `server.overall.readinessScore` to throw on any 200 whose body is not
+  // exactly the expected object — and the throw happens during render, so the
+  // whole PDEV surface comes down and shows nothing at all instead of the
+  // `pdev-page-error` branch App.tsx already has for precisely this.
+  //
+  // Third instance of the same pattern in the converged kits (see
+  // mdx/hooks/usePresub.ts, twice). An adapter that trusts the server's shape
+  // turns a bad payload into a blank screen with no message.
+  if (!server || typeof server !== 'object' || !server.overall) return null;
   return {
     programId: programId ?? '',
     overall: {
@@ -95,7 +104,7 @@ function adaptReadiness(
       blockingActivities: server.overall.blockingActivities,
       blockingResolved: server.overall.blockingResolved,
     },
-    byWorkstream: server.workstreams,
+    byWorkstream: Array.isArray(server.workstreams) ? server.workstreams : [],
     computedAt: new Date().toISOString(),
   };
 }
@@ -290,7 +299,8 @@ const IND_READINESS_THRESHOLD = 85;
 function adaptIndAssembly(
   server: ServerIndAssemblyPayload | null,
 ): PdevIndAssemblyPayload | null {
-  if (!server) return null;
+  // Shape-checked, not just null-checked — see adaptReadiness above.
+  if (!server || typeof server !== 'object' || !Array.isArray(server.modules)) return null;
   return {
     overallReadiness: server.overallReadiness,
     threshold: IND_READINESS_THRESHOLD,
@@ -367,7 +377,8 @@ function deriveStatus(item: ServerFdaInteractionItem): PdevFdaInteraction['statu
 function adaptFdaInteractions(
   server: ServerFdaStreamPayload | null,
 ): PdevFdaStreamPayload | null {
-  if (!server) return null;
+  // Shape-checked, not just null-checked — see adaptReadiness above.
+  if (!server || typeof server !== 'object' || !Array.isArray(server.items)) return null;
   return {
     interactions: server.items.map((item) => ({
       id: `${item.kind}:${item.sourceId}`,

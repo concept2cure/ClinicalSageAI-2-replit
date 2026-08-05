@@ -48,15 +48,72 @@ const PDEV_NAVS = [
   'regulatory', 'ind_assembly', 'contradictions', 'fda_interactions',
 ] as const;
 
+/**
+ * A URL-aware mock, because an all-empty one makes half the run vacuous.
+ *
+ * The first version resolved every request to `{ data: [] }`. That is correct
+ * for the device surfaces — they each reach their own empty state, which is
+ * still styled markup worth checking. It was NOT correct for PDEV: `App.tsx`
+ * gates the entire kit on `/api/regulatory-programs` returning at least one row
+ * with `programType: 'IND'`, so all eight PDEV navs rendered the identical
+ * six-element "No IND programs yet" card. Eight rows of a passing table, all
+ * measuring the same empty state, is a check that looks like coverage and is not.
+ *
+ * So the program list is seeded with one IND row, which lets PDEV get past the
+ * gate and draw its real chrome. Everything downstream still resolves empty, so
+ * the surfaces show their own honest empty states inside a real layout — which
+ * is the thing under test. Seeding a whole fake program tree would be inventing
+ * a product state to photograph.
+ *
+ * Shapes are taken from the code that consumes them (IndProgramRow in
+ * pdev/App.tsx:65, the `{ data: … }` envelope in usePdevData.ts), not guessed.
+ */
+function respond(url: string): unknown {
+  if (url.includes('/api/regulatory-programs')) {
+    return {
+      data: [
+        {
+          id: 'prog-vqa-1',
+          code: 'BX204',
+          productName: 'Bexarotene-204',
+          name: 'BX204 IND',
+          programType: 'IND',
+          status: 'active',
+          metadata: null,
+        },
+      ],
+    };
+  }
+  return { data: [] };
+}
+
+/**
+ * The program view 404s rather than returning an invented `{ data: null }` 200.
+ * A row that exists in regulatory-programs but has no PDEV record yet is a real
+ * state, and it drives App.tsx's real `pdev-page-error` branch — styled markup
+ * worth measuring. Inventing a 200 with a null body would be photographing a
+ * server response no server produces.
+ */
+const NOT_FOUND = (url: string) => /\/api\/pdev\/programs\/[^/]+$/.test(url);
+
 beforeEach(() => {
   cleanup();
   fs.mkdirSync(OUT, { recursive: true });
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response(JSON.stringify({ data: [] }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    })),
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+      if (NOT_FOUND(url)) {
+        return new Response(JSON.stringify({ error: 'No PDEV record for this program yet' }), {
+          status: 404,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify(respond(url)), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }),
   );
   try { window.localStorage.clear(); } catch { /* ignore */ }
 });
@@ -92,11 +149,19 @@ async function settled(container: HTMLElement, name: string) {
     () => {
       const busy = container.querySelector('[aria-busy="true"]');
       const loading = /Loading[^]{0,40}…/.test(container.textContent ?? '');
+      // Non-empty is part of "settled". Without it a surface that CRASHES
+      // counts as settled: the error unmounts the tree, so the container has no
+      // aria-busy and no "Loading" text, and the check waves it through with
+      // zero bytes. That is how `device-presub`'s crash reached the styling
+      // report as a quiet 0 instead of a failed capture.
+      const drew = (container.innerHTML ?? '').trim().length > 0;
       expect(
-        busy === null && !loading,
-        `${name} never left its loading state — every fetch resolves empty, so it ` +
-          'should reach an empty state. Capturing the spinner would make the ' +
-          'styling check meaningless for this surface.',
+        busy === null && !loading && drew,
+        `${name} did not settle into rendered markup ` +
+          `(busy=${busy !== null} loading=${loading} drew=${drew}). ` +
+          'A surface that threw leaves an empty container, which is not the ' +
+          'same as an empty state — capturing it would make the styling check ' +
+          'meaningless for this surface.',
       ).toBe(true);
     },
     { timeout: 8000 },
