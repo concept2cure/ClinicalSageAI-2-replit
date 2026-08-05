@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import type { ComputeIntent, ComputeOutput } from './types';
+import { sandboxEnv } from './sandboxEnv';
 
 function sanitizeHtml(content: string): string {
   return content
@@ -47,11 +48,13 @@ async function runDocxPythonIsolated(intent: ComputeIntent): Promise<ComputeOutp
   await new Promise<void>((resolve, reject) => {
     const proc = spawn('python3', [runtimeScript, inputPath], {
       cwd: workdir,
-      env: {
-        ...process.env,
+      // Deliberately NOT the whole server environment: this runtime exec()s
+      // AnA-authored code, so the server's secrets must not be reachable from
+      // it. The allowlist and the reasoning live in sandboxEnv.ts.
+      env: sandboxEnv({
         ARTIFACT_COMPUTE_NO_NETWORK: '1',
         ARTIFACT_COMPUTE_WORKDIR: workdir,
-      },
+      }),
       stdio: 'pipe',
     });
 
