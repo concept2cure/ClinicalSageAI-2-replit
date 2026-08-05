@@ -1546,7 +1546,9 @@ interface ArtifactRow {
   id: string;
   name: string;
   kind: string;
-  fmt: string;
+  /* Derived from the row's category server-side, so a row whose category never
+     got backfilled arrives without one — nullable like `model`, not a contract. */
+  fmt: string | null;
   size: string;
   model: string | null;
   when: string;
@@ -1600,8 +1602,11 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
           <div></div>
         </div>
         {rows.map((a) => {
-          const f = ARTIFACT_FMT[a.fmt] || {
-            label: a.fmt.toUpperCase(),
+          // A row with no `fmt` misses ARTIFACT_FMT and used to fall through to
+          // `a.fmt.toUpperCase()` on the absent value, taking the whole gallery
+          // down with it. No format means no label to show for it.
+          const f = (a.fmt && ARTIFACT_FMT[a.fmt]) || {
+            label: a.fmt ? a.fmt.toUpperCase() : '',
             tone: 'idle',
             action: 'Download',
           };
@@ -1623,9 +1628,13 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
                 <span className="art-kind">{a.kind}</span>
               </div>
               <div>
-                <span className="art-fmt" data-tone={f.tone}>
-                  {f.label}
-                </span>
+                {/* No format on the row -> no badge, rather than an empty pill
+                    that reads as a format the artifact does not have. */}
+                {f.label && (
+                  <span className="art-fmt" data-tone={f.tone}>
+                    {f.label}
+                  </span>
+                )}
               </div>
               <div className="mono" style={{ fontSize: 11 }}>
                 {a.prog}
