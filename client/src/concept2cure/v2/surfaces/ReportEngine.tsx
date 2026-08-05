@@ -288,9 +288,11 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const html = useMemo(() => analysis ? mdToHtml(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;
 
+  // No toast — see the note on the same handler in Biostatistics.tsx. Nothing
+  // reads `c2c_biostat_doc`, so "opened in editor" announced a handoff that
+  // does not happen. The navigation is real; the named document is not.
   const openEditor = () => {
     try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: docDef?.label, md })); } catch (_e) { /* noop */ }
-    fireToast((docDef?.label || 'Document') + ' -- opened in editor');
     onNav && onNav('document-authoring');
   };
 

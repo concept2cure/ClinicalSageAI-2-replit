@@ -277,9 +277,9 @@ function SummaryBody({
 
 export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
-  const open = (id: string) => {
-    try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
-  };
+  /* Was a dead write to `c2c_open_surface`, a key with no reader — so every
+     Module 4 placement row was a button that did nothing. */
+  const open = (id: string) => onNav(id);
   const liveStudies = useLiveRows<NcStudy>('/api/nonclinical/studies');
   // `useLiveRows` synthesizes a FRESH [] every render whenever it has no array
   // to return (while loading AND on a failed load); feed the optimistic-row

@@ -542,7 +542,22 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const isNI = input.studyType === 'non_inferiority';
   const n = res ? (res.adjustedTotal || res.sampleSize.total) : 0;
 
-  const openEditor = () => { try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: docDef?.label, md })); } catch (_e) { /* noop */ } fireToast((docDef?.label || 'Document') + ' -> opened in editor'); onNav && onNav('document-authoring'); };
+  /*
+   * No toast. It used to say "<name> -> opened in editor", and that was false.
+   *
+   * The line before it writes `{title, md}` into localStorage['c2c_biostat_doc'],
+   * and NOTHING in this repository has ever read that key — no getItem, in any
+   * file, in any commit. So the navigation happens and the editor opens on
+   * whatever it would have opened on anyway; the named document does not
+   * travel. Announcing success for an outcome that did not occur is the one
+   * thing this product's own comments forbid (Rbm.tsx:96, AdminAccess.tsx:47).
+   *
+   * The dead write stays for now: honouring it means POSTing a document and a
+   * section before navigating, because the payload is CONTENT, not an id — a
+   * real handoff, not a reconnection. Until that exists the button navigates
+   * and claims nothing.
+   */
+  const openEditor = () => { try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: docDef?.label, md })); } catch (_e) { /* noop */ } onNav && onNav('document-authoring'); };
   const attach = () => { fireToast((docDef?.label || 'Document') + ' attached to dossier'); ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section'); };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';

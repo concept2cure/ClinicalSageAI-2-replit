@@ -306,7 +306,6 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
           <div className="sn-hand">
             <button className="sn-hb" onClick={() => {
-              try { localStorage.setItem('c2c_open_surface', 'submission-center'); } catch (_e) { /* noop */ }
               onNav('submission-center');
               ask('Transmit ' + sel.id + ' as an E2B(R3) ICSR to the FDA gateway.');
             }}>

@@ -149,7 +149,7 @@ function signForm(target: string): C2CFormConfig {
 }
 
 /* ── Cross-surface navigation helpers ── */
-function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ } onNav && onNav(id); }
+function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { onNav && onNav(id); }
 function cmcCtx(label: string) { try { if ((window as any).C2C) (window as any).C2C.setContext({ entityType: 'cmc', entityId: label, entityLabel: label }); } catch (_e) { /* noop */ } }
 function cmcTask(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('task'); } catch (_e) { /* noop */ } }
 function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('collab'); } catch (_e) { /* noop */ } }

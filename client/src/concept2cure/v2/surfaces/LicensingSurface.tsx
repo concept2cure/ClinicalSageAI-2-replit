@@ -439,11 +439,6 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <button
           className="lic-usage-cta"
           onClick={() => {
-            try {
-              localStorage.setItem('c2c_open_surface', 'usage');
-            } catch (_e) {
-              /* noop */
-            }
             onNav && onNav('usage');
           }}
         >

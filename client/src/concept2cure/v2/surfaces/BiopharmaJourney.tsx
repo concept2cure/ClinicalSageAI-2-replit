@@ -253,7 +253,6 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
 
   const ask = onAsk;
   const open = (id: string) => {
-    try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     onNav(id);
   };
   const setSeg = (v: string) => {

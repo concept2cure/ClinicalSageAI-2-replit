@@ -1825,11 +1825,6 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   const [revokeError, setRevokeError] = useState<string | null>(null);
   const [toast, fireToast] = useToast();
   const nav = (id: string) => {
-    try {
-      localStorage.setItem('c2c_open_surface', id);
-    } catch (_e) {
-      /* noop */
-    }
     onNav && onNav(id);
   };
 

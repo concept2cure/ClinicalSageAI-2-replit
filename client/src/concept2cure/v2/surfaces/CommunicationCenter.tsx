@@ -181,11 +181,6 @@ function StateGuard({
 
 export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const nav = (id: string) => {
-    try {
-      localStorage.setItem('c2c_open_surface', id);
-    } catch {
-      /* noop */
-    }
     onNav(id);
   };
 

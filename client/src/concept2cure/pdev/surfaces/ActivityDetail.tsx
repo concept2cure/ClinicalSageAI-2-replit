@@ -148,7 +148,30 @@ export function PdevActivityDetail({
   };
 
   return (
-    <div className="pdev-sheet-backdrop" onClick={onClose} role="presentation">
+    <div
+      className="pdev-sheet-backdrop"
+      /*
+       * Only a click ON THE BACKDROP closes the sheet.
+       *
+       * It used to be a bare `onClick={onClose}`, and the `<aside>` below
+       * stops propagation, so that looked complete. It was not:
+       * `GovernedConfirmDialog` renders at the bottom of this component as a
+       * SIBLING of the aside — still inside this div — and it stops
+       * `onMouseDown` only, never `onClick`. Its Confirm button is an
+       * `onClick`.
+       *
+       * So pressing Confirm on the Part 11 e-signature dialog bubbled the
+       * click straight up to here and dismissed the whole activity sheet at
+       * the moment the governed mutation fired. The mutation ran; the user
+       * was returned to the list and never saw whether it succeeded, failed,
+       * or what it produced.
+       */
+      onClick={(e) => {
+        if (e.target !== e.currentTarget) return;
+        onClose();
+      }}
+      role="presentation"
+    >
       <aside
         className="pdev-sheet"
         onClick={(e) => e.stopPropagation()}

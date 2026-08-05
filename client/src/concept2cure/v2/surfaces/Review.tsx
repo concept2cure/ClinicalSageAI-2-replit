@@ -286,7 +286,6 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const openEditor = () => {
-    try { localStorage.setItem('c2c_open_surface', 'document-authoring'); } catch (_e) { /* noop */ }
     onNav('document-authoring');
   };
 

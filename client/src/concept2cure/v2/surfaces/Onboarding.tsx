@@ -164,7 +164,7 @@ export interface ActivationOutcome {
    activation endpoints and reports per-step results honestly — see the
    comment at that function for exactly what is and is not wired. */
 
-export function Onboarding({ onAsk }: SurfaceViewProps) {
+export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
   const [step, setStep] = useState(0);
   const [org, setOrg] = useState({ name: '', archetype: 'virtual_biotech' });
   const [model, setModel] = useState('dtc');
@@ -190,11 +190,11 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
   const roles: Array<{ id: string; label: string }> = LIC_ROLES;
   const tierLevel: Record<string, number> = LIC_TIER_LEVEL;
 
-  const onNav = (id: string) => {
-    try {
-      localStorage.setItem('c2c_open_surface', id);
-    } catch (_e) { /* noop */ }
-  };
+  /* `onNav` comes from the shell (V2App passes it to every surface). A local
+     one used to SHADOW it here, and its entire body was
+     `localStorage.setItem('c2c_open_surface', id)` — a key nothing has ever
+     read. So "Create your first project" and "Open admin console" were buttons
+     that did nothing at all when clicked. */
 
   const STEPS = [
     'Organization',

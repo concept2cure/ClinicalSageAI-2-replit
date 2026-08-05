@@ -196,7 +196,7 @@ function Panel<T>({
    both pointing to this component). The `surface.id` prop selects the
    initial tab. */
 
-export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
+export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
   const initTab =
     surface && surface.id === 'billing' ? 'billing' : 'usage';
   const [tab, setTab] = useState(initTab);
@@ -213,11 +213,9 @@ export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
   // null while the snapshot is loading or unavailable (no fabricated tier).
   const tier = snap ? snap.plan : null;
 
-  const nav = (id: string) => {
-    try {
-      localStorage.setItem('c2c_open_surface', id);
-    } catch (_e) { /* noop */ }
-  };
+  /* Was a dead write to `c2c_open_surface`, a key with no reader — so "View
+     all plans" did nothing. The shell's `onNav` is what navigates. */
+  const nav = (id: string) => onNav(id);
 
   return (
     <div className="sp" style={{ maxWidth: 1000 }}>
