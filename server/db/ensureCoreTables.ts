@@ -40,13 +40,22 @@ const IMPORTANT_TABLES = [
   'audit_logs',
   'activity_feed',
   'organization_users',
-  'auth_users',
-  'auth_refresh_tokens',
-  'roles',
+  // Server-side RBAC and token revocation. Both are read on the request path
+  // (server/middleware/requirePlatformAdmin.ts, requireBusinessAdmin.ts, and
+  // the revocation check in server/lib/startup-invariants.ts), and both are
+  // security-critical for readiness — see SECURITY_CRITICAL_TABLES in
+  // server/startup/services.ts. A table absent from this list can never appear
+  // in missingImportant, so that gate would silently not cover them.
+  'platform_role_grants',
+  'revoked_tokens',
+  // auth_users / auth_refresh_tokens / roles / permissions / user_roles were
+  // listed here and are deliberately gone. Nothing creates them — their only
+  // DDL sits in the quarantined db/migrations/_consolidated tree — and nothing
+  // queries them. Keeping them meant every correctly provisioned database
+  // logged five permanent "important tables missing" warnings, which is how a
+  // diagnostic stops being read.
   'workflow_runs',
   'step_runs',
-  'permissions',
-  'user_roles',
   'organization_settings',
   'document_templates',
   'lumen_data_atoms',
