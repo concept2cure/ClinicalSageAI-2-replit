@@ -248,6 +248,18 @@ export function createAuthBoundary(options: AuthBoundaryOptions = {}): RequestHa
     // Warn mode: run the same authenticator, but swallow its rejection —
     // log a structured warning (once per method+path per process) and let
     // the request continue to whatever per-route guards exist today.
+    //
+    // On SUCCESS, warn mode must install the tenant execution context exactly
+    // like enforce mode does — the mode only governs how an auth FAILURE is
+    // handled (reject vs warn-and-pass), never what a successfully authenticated
+    // request receives. Previously the success path called `next` directly,
+    // dropping the runWithTenantScope wrap; with RLS_ENFORCE=on that left every
+    // authenticated request's pooled query without a tenant scope, so it failed
+    // closed ([tenant-rls] FAIL-CLOSED) and returned 500 — the exact symptom
+    // seen wherever the boundary defaults to warn (any non-production env) while
+    // RLS enforcement is on, e.g. the RLS rollout window. When RLS is off,
+    // establishTenantContext is a no-op that just calls next(), so warn-mode
+    // behaviour is unchanged in the common dev case.
     const captureRes = {
       status(statusCode: number) {
         return {
@@ -267,6 +279,8 @@ export function createAuthBoundary(options: AuthBoundaryOptions = {}): RequestHa
       },
     };
 
-    return authenticate(req, captureRes as unknown as Response, next);
+    return authenticate(req, captureRes as unknown as Response, () =>
+      establishTenantContext(req, res, next)
+    );
   };
 }
