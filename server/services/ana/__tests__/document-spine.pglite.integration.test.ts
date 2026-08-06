@@ -71,6 +71,25 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifact_versions (
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT c2c_artifact_unique_version UNIQUE (artifact_id, version)
 );
+CREATE TABLE IF NOT EXISTS concept2cure_provenance_events (
+  id                  SERIAL PRIMARY KEY,
+  event_id            TEXT NOT NULL UNIQUE,
+  artifact_id         INTEGER NOT NULL,
+  artifact_version_id INTEGER,
+  organization_id     INTEGER NOT NULL,
+  event_type          TEXT NOT NULL,
+  event_action        TEXT NOT NULL,
+  actor_id            INTEGER,
+  actor_name          TEXT,
+  actor_email         TEXT,
+  details             JSONB NOT NULL DEFAULT '{}',
+  source_artifact_id  INTEGER,
+  source_description  TEXT,
+  backend_route       TEXT,
+  backend_service     TEXT,
+  ip_address          VARCHAR(45),
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY, tenant_id INTEGER, user_id INTEGER, action TEXT, table_name TEXT,
   record_id TEXT, actor_id INTEGER, target TEXT, target_type TEXT, target_id TEXT, reason TEXT,
