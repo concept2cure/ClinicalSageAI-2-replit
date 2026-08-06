@@ -7853,26 +7853,47 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
     if (own.rows.length === 0) {
       return JSON.stringify({ error: 'Q-Sub not found in this organization.' });
     }
-    const { rows } = await pool.query(
-      `INSERT INTO q_sub_section_bodies (
-         q_submission_id, organization_id, section_key, content,
-         draft_source, drafted_at, drafted_summary
-       ) VALUES ($1, $2, $3, $4, 'ana', NOW(), NULLIF($5, ''))
-       ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
-         content         = EXCLUDED.content,
-         draft_source    = 'ana',
-         drafted_at      = NOW(),
-         drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
-         accepted_at     = NULL,
-         accepted_by     = NULL,
-         updated_at      = NOW()
-       RETURNING id, section_key, draft_source, drafted_at`,
-      [qSubId, ctx.organizationId, sectionKey, content, note],
-    );
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
-    });
+    // Authored regulatory prose: content and its author lineage commit together
+    // in one transaction (same gate as the human PUT route), so an AnA-drafted
+    // section body is never persisted without provenance.
+    const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(
+        `INSERT INTO q_sub_section_bodies (
+           q_submission_id, organization_id, section_key, content,
+           draft_source, drafted_at, drafted_summary
+         ) VALUES ($1, $2, $3, $4, 'ana', NOW(), NULLIF($5, ''))
+         ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
+           content         = EXCLUDED.content,
+           draft_source    = 'ana',
+           drafted_at      = NOW(),
+           drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
+           accepted_at     = NULL,
+           accepted_by     = NULL,
+           updated_at      = NOW()
+         RETURNING id, section_key, draft_source, drafted_at`,
+        [qSubId, ctx.organizationId, sectionKey, content, note],
+      );
+      await enforceAuthorLineage(
+        client,
+        ctx.organizationId,
+        { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
+        content,
+        String(ctx.userId ?? 'system'),
+      );
+      await client.query('COMMIT');
+      return JSON.stringify({
+        ok: true, ...rows[0],
+        message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
+      });
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw txErr;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     return JSON.stringify({
       error: `write_q_sub_section failed: ${err instanceof Error ? err.message : String(err)}`,

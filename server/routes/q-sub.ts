@@ -21,6 +21,7 @@ import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth';
 import { createScopedLogger } from '../utils/logger';
 import { pool } from '../db';
+import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
 import {
   ok,
   created,
@@ -214,26 +215,48 @@ router.put('/:id/sections/:sectionKey', async (req: Request, res: Response) => {
     const detail = await getQSubDetail(orgId, qSubId);
     if (!detail) return notFoundInTenant(res, 'Q-Sub');
 
-    const { pool } = await import('../db');
     const draftSource = parsed.data.draft_source ?? 'human';
     const draftedAt = draftSource === 'ana' ? new Date() : null;
-    const { rows } = await pool.query(
-      `INSERT INTO q_sub_section_bodies (
-         q_submission_id, organization_id, section_key, content,
-         draft_source, drafted_at, drafted_summary
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
-         content         = EXCLUDED.content,
-         draft_source    = EXCLUDED.draft_source,
-         drafted_at      = COALESCE(EXCLUDED.drafted_at, q_sub_section_bodies.drafted_at),
-         drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
-         accepted_at     = NULL,
-         accepted_by     = NULL,
-         updated_at      = NOW()
-       RETURNING *`,
-      [qSubId, orgId, sectionKey, parsed.data.content, draftSource, draftedAt, parsed.data.drafted_summary ?? null],
-    );
-    return ok(res, rows[0]);
+    const actor = String(getUserId(req) ?? 'system');
+
+    // The section body is authored regulatory prose — content and its author
+    // lineage commit together in one transaction, or not at all (the same gate
+    // the authoring/protocol/biosketch writers use). A lineage failure rolls
+    // the upsert back rather than persisting prose with no provenance.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(
+        `INSERT INTO q_sub_section_bodies (
+           q_submission_id, organization_id, section_key, content,
+           draft_source, drafted_at, drafted_summary
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
+           content         = EXCLUDED.content,
+           draft_source    = EXCLUDED.draft_source,
+           drafted_at      = COALESCE(EXCLUDED.drafted_at, q_sub_section_bodies.drafted_at),
+           drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
+           accepted_at     = NULL,
+           accepted_by     = NULL,
+           updated_at      = NOW()
+         RETURNING *`,
+        [qSubId, orgId, sectionKey, parsed.data.content, draftSource, draftedAt, parsed.data.drafted_summary ?? null],
+      );
+      await enforceAuthorLineage(
+        client,
+        orgId,
+        { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
+        parsed.data.content,
+        actor,
+      );
+      await client.query('COMMIT');
+      return ok(res, rows[0]);
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw txErr;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     return serverError(res, log, 'upsert-section', err);
   }

@@ -72,6 +72,10 @@ const GUARDED = [
       'server/services/ana/AnaToolExecutor.ts', // update_biosketch_section tool opens the transaction
     ],
   },
+  {
+    file: 'server/routes/q-sub.ts',
+    why: 'PUT /:id/sections/:sectionKey writes device Q-Sub section prose (q_sub_section_bodies.content)',
+  },
 ];
 
 /**
