@@ -35,9 +35,7 @@ const ROOT = process.cwd();
 // list may only shrink. Each entry is technical debt tracked toward uniform
 // provenance across every artifact producer.
 const BASELINE = new Set([
-  'server/routes/chat/upload.ts',
   'server/routes/global-compliance.ts',
-  'server/routes/ind-forms.routes.ts',
   'server/services/ana/submission-chat-apply-rewrite.ts',
   'server/services/autoExtractionPipeline.ts',
 ]);

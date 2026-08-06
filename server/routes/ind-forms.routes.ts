@@ -62,6 +62,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { projects, concept2cureArtifacts } from '@shared/schema';
 import auditService from '../services/auditService';
+import { recordArtifactProvenanceDrizzle } from '../services/provenance/artifact-provenance';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
@@ -271,7 +272,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     const artifactId = `artifact_indform_${formId.replace(/^FDA_/, '').toLowerCase()}_${crypto.randomUUID()}`;
     const ready = built.missingRequired.length === 0;
 
-    await db.insert(concept2cureArtifacts).values({
+    const formIns = await db.insert(concept2cureArtifacts).values({
       artifactId,
       projectId,
       organizationId: ctx.organizationId,
@@ -290,7 +291,25 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
         ready,
         missingRequired: built.missingRequired,
       },
-    });
+    }).returning({ id: concept2cureArtifacts.id });
+
+    // Uniform provenance: a generated FDA form artifact is a 'generation' event.
+    // Best-effort: the insert above is not in a transaction.
+    try {
+      if (typeof formIns[0]?.id === 'number') {
+        await recordArtifactProvenanceDrizzle(db, {
+          artifactId: formIns[0].id,
+          organizationId: ctx.organizationId,
+          eventType: 'generation',
+          eventAction: 'form_build',
+          actorId: ctx.userId,
+          details: { formId, ready },
+          backendService: 'routes/ind-forms',
+        });
+      }
+    } catch (provErr) {
+      logger.warn('ind-form provenance event failed', { err: provErr instanceof Error ? provErr.message : String(provErr) });
+    }
 
     // Part 11 audit event for the governed creation. Best-effort: the artifact
     // row already carries provenance (createdById, contentHash, timestamps), so a
@@ -391,7 +410,7 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
     if (rows.length > 0) {
       await db.transaction(async (tx) => {
         for (const r of rows) {
-          await tx.insert(concept2cureArtifacts).values({
+          const formTxIns = await tx.insert(concept2cureArtifacts).values({
             artifactId: r.artifactId,
             projectId,
             organizationId: ctx.organizationId,
@@ -412,7 +431,23 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
               investigatorIndex: r.idx,
               investigatorName: r.investigatorName,
             },
-          });
+          }).returning({ id: concept2cureArtifacts.id });
+          // Uniform provenance: 'generation' per investigator form, in the tx.
+          try {
+            if (typeof formTxIns[0]?.id === 'number') {
+              await recordArtifactProvenanceDrizzle(tx, {
+                artifactId: formTxIns[0].id,
+                organizationId: ctx.organizationId,
+                eventType: 'generation',
+                eventAction: 'form_build',
+                actorId: ctx.userId,
+                details: { formId, investigatorName: r.investigatorName, ready: r.ready },
+                backendService: 'routes/ind-forms',
+              });
+            }
+          } catch (provErr) {
+            logger.warn('ind-form (investigator) provenance event failed', { err: provErr instanceof Error ? provErr.message : String(provErr) });
+          }
         }
       });
     }

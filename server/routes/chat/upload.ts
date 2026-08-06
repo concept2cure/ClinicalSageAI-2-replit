@@ -18,6 +18,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { pool } from '../../db.js';
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService.js';
+import { recordArtifactProvenance } from '../../services/provenance/artifact-provenance';
 import { sha256, sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyFileSignature } from '../../utils/fileSignature';
@@ -277,10 +278,11 @@ export const uploadHandler = async (req: Request, res: Response) => {
 
       try {
         const contentHash = sha256(boundedContent);
-        await pool.query(
+        const uploadIns = await pool.query<{ id: number }>(
           `INSERT INTO concept2cure_artifacts
              (organization_id, project_id, artifact_id, type, category, title, content, content_hash, version, metadata, created_by_id)
-           VALUES ($1, $2, $3, 'source_document', 'source', $4, $5, $6, 1, $7, $8)`,
+           VALUES ($1, $2, $3, 'source_document', 'source', $4, $5, $6, 1, $7, $8)
+           RETURNING id`,
           [
             numericOrgId,
             numericProjectId,
@@ -313,6 +315,20 @@ export const uploadHandler = async (req: Request, res: Response) => {
           ]
         );
         artifactId = artId;
+        // Uniform provenance: an uploaded source document is a 'source_input'
+        // event. Best-effort — inside the existing artifact-persist try, a
+        // provenance hiccup must not fail the upload.
+        try {
+          await recordArtifactProvenance(pool, {
+            artifactId: uploadIns.rows[0].id,
+            organizationId: numericOrgId,
+            eventType: 'source_input',
+            eventAction: 'upload',
+            actorId: typeof userId === 'number' ? userId : null,
+            details: { uploadSource: 'chat', fileId, mimeType, fileSize },
+            backendService: 'routes/chat/upload',
+          });
+        } catch { /* upload provenance is best-effort */ }
       } catch (artErr: any) {
         // Log the raw cause through the scoped logger (redacted by
         // SENSITIVE_KEYS) — never echo it back to the client.
