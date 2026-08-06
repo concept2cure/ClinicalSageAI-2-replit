@@ -22,6 +22,11 @@
  */
 import { sweepExpiredProposals } from './submission-chat-proposal-store.js';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
+import {
+  recordBackgroundJobRun,
+  registerBackgroundJob,
+  BACKGROUND_JOB,
+} from '../background-jobs-metrics';
 
 const DEFAULT_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 const STARTUP_DELAY_MS = 5 * 60 * 1000;     // 5 min before first tick
@@ -53,12 +58,17 @@ async function tick(): Promise<void> {
       sweepExpiredProposals()
     );
     lastTick = { at: new Date(), expired: result.expired };
+    recordBackgroundJobRun(BACKGROUND_JOB.SUBMISSION_CHAT_SWEEP, {
+      ok: true,
+      processed: result.expired,
+    });
     if (result.expired > 0) {
       console.log(
         `[submission-chat-sweep] expired ${result.expired} proposal${result.expired === 1 ? '' : 's'}`
       );
     }
   } catch (err: any) {
+    recordBackgroundJobRun(BACKGROUND_JOB.SUBMISSION_CHAT_SWEEP, { ok: false, error: err });
     console.warn(
       '[submission-chat-sweep] tick failed (will retry next interval):',
       err?.message || err
@@ -75,6 +85,9 @@ export function startSubmissionChatSweepScheduler(): boolean {
   if (timer || startupTimer) return false;
   if (isDisabled()) return false;
   const intervalMs = readIntervalMs();
+  // Pre-register so the heartbeat exists (never-run state) from scheduler start,
+  // letting ops distinguish "wedged since boot" from "not scheduled".
+  registerBackgroundJob(BACKGROUND_JOB.SUBMISSION_CHAT_SWEEP);
 
   startupTimer = setTimeout(() => {
     startupTimer = null;

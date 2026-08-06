@@ -23,6 +23,11 @@
 
 import { Pool } from 'pg';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
+import {
+  recordBackgroundJobRun,
+  registerBackgroundJob,
+  BACKGROUND_JOB,
+} from '../background-jobs-metrics';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -123,6 +128,10 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     // wedging the monitor — every later cycle saw "check in progress".)
     if (!_pool) {
       _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
+      recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, {
+        ok: false,
+        error: 'database pool unavailable',
+      });
       return _status;
     }
 
@@ -132,7 +141,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     // so the pooled queries are neither rejected as unscoped nor RLS-filtered
     // under RLS_ENFORCE=on; without it this 21 CFR Part 11 §11.10(e) monitor
     // silently never runs in production (the query fails closed every cycle).
-    return await runWithSystemTenantScope('audit:chain-integrity-monitor', async () => {
+    const outcome = await runWithSystemTenantScope('audit:chain-integrity-monitor', async () => {
       const { rows } = await _pool!.query(
         `SELECT id, organization_id, sequence_number, record_hash, previous_hash
          FROM audit_events
@@ -187,9 +196,19 @@ async function runCheck(): Promise<ChainMonitorStatus> {
 
       return _status;
     });
+    // The JOB ran successfully iff the scan completed (status healthy|broken);
+    // 'broken' is a data-integrity alarm, not a liveness failure — the monitor
+    // did its work. A thrown error (status 'error') is the liveness failure and
+    // is recorded in the catch below.
+    recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, {
+      ok: outcome.status !== 'error',
+      processed: outcome.totalEntries,
+    });
+    return outcome;
   } catch (err: any) {
     console.error('[ChainMonitor] Check failed:', err.message);
     _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
+    recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, { ok: false, error: err?.message });
     return _status;
   } finally {
     _checkInProgress = false;
@@ -210,6 +229,7 @@ export function startChainMonitor(pool: Pool, intervalMs: number = DEFAULT_INTER
 
   _pool = pool;
   _status.intervalMs = intervalMs;
+  registerBackgroundJob(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR);
 
   console.log(`[ChainMonitor] Starting audit chain integrity monitor (interval: ${intervalMs / 1000}s)`);
 

@@ -18,6 +18,11 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { runProactiveDigest } from '../digest/proactive-digest.js';
 import { parseDigestPreferences } from '../digest/digest-preferences.js';
 import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore';
+import {
+  recordBackgroundJobRun,
+  registerBackgroundJob,
+  BACKGROUND_JOB,
+} from '../background-jobs-metrics';
 
 const log = createScopedLogger('scheduled-jobs');
 
@@ -264,6 +269,7 @@ export async function initScheduledJobs(redisUrl?: string): Promise<void> {
         backoff: { type: 'exponential', delay: 30_000 },
       },
     });
+    registerBackgroundJob(BACKGROUND_JOB.SCHEDULED_JOBS);
 
     // Process jobs
     schedulerQueue.process(async (job) => {
@@ -272,6 +278,10 @@ export async function initScheduledJobs(redisUrl?: string): Promise<void> {
 
       if (!handler) {
         log.error(`No handler registered for job type: ${config.type}`);
+        recordBackgroundJobRun(BACKGROUND_JOB.SCHEDULED_JOBS, {
+          ok: false,
+          error: `unknown job type: ${config.type}`,
+        });
         throw new Error(`Unknown job type: ${config.type}`);
       }
 
@@ -295,6 +305,14 @@ export async function initScheduledJobs(redisUrl?: string): Promise<void> {
       log.info(
         `Scheduled job ${config.name} completed: ${result.itemsProcessed} processed, ${result.itemsFlagged} flagged in ${result.durationMs}ms`,
       );
+      // Handlers report failure via result.status rather than throwing, so the
+      // heartbeat reads the result. 'failed' marks the tick down without
+      // aborting the queue.
+      recordBackgroundJobRun(BACKGROUND_JOB.SCHEDULED_JOBS, {
+        ok: result.status !== 'failed',
+        processed: result.itemsProcessed,
+        error: result.error,
+      });
       return result;
     });
 

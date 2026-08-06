@@ -12,6 +12,11 @@ import { AISentinel } from './sentinel';
 import { emitRuleEvent } from '../rules-engine';
 import { createScopedLogger } from '../../utils/logger.js';
 import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore';
+import {
+  recordBackgroundJobRun,
+  registerBackgroundJob,
+  BACKGROUND_JOB,
+} from '../background-jobs-metrics';
 const log = createScopedLogger('sentinel-scheduler');
 
 export class SentinelScheduler {
@@ -34,6 +39,7 @@ export class SentinelScheduler {
   async start(): Promise<void> {
     if (this.running) return;
     this.running = true;
+    registerBackgroundJob(BACKGROUND_JOB.SENTINEL_SCAN);
 
     log.debug('[SentinelScheduler] Starting background scanner...');
 
@@ -119,6 +125,13 @@ export class SentinelScheduler {
         },
         () => this.runScanInner(organizationId)
       );
+      // Single aggregate heartbeat across orgs: "the scanner is alive and a scan
+      // completed". Per-org detail stays in logs; a per-org metric label would
+      // add unbounded cardinality for no ops benefit here.
+      recordBackgroundJobRun(BACKGROUND_JOB.SENTINEL_SCAN, { ok: true });
+    } catch (err) {
+      recordBackgroundJobRun(BACKGROUND_JOB.SENTINEL_SCAN, { ok: false, error: err });
+      throw err;
     } finally {
       this.scanning.delete(organizationId);
     }
