@@ -68,10 +68,17 @@ describe('resolution quirk 1 — .js specifiers naming .ts files', () => {
   });
 });
 
-describe('resolution quirk 2 — routers mounted from a manifest of path strings', () => {
-  // server/bootstrap/register-advanced-platform-routes.ts mounts these by
-  // string, e.g. { path: '/api', mod: '../routes/chat-actions' }. No `import`
-  // keyword appears anywhere near them.
+describe('resolution quirk 2 — routers mounted from a manifest of thunks', () => {
+  // server/bootstrap/register-advanced-platform-routes.ts mounts these from a
+  // config manifest whose entries carry a loader thunk, e.g.
+  // { path: '/api', load: () => import('../routes/chat-actions') }.
+  //
+  // These used to use a bare string ({ mod: '../routes/chat-actions' }) with no
+  // `import` keyword, which is why this quirk existed: the module was invisible
+  // to the import-based unreferenced-modules checker. They were converted to
+  // literal-import thunks so esbuild can bundle them for production (fix: bundle
+  // the ~127 route mounts esbuild was silently dropping in prod), which also
+  // makes the reference visible. The assertion now pins the thunk form.
   const manifestMounted = [
     'server/routes/chat-actions.ts',
     'server/routes/workspace-summary.ts',
@@ -82,8 +89,8 @@ describe('resolution quirk 2 — routers mounted from a manifest of path strings
       path.join(REPO_ROOT, 'server/bootstrap/register-advanced-platform-routes.ts'),
       'utf8',
     );
-    expect(src).toMatch(/mod:\s*'\.\.\/routes\/chat-actions'/);
-    expect(src).toMatch(/mod:\s*'\.\.\/routes\/workspace-summary'/);
+    expect(src).toMatch(/load:\s*\(\)\s*=>\s*import\('\.\.\/routes\/chat-actions'\)/);
+    expect(src).toMatch(/load:\s*\(\)\s*=>\s*import\('\.\.\/routes\/workspace-summary'\)/);
   });
 
   it.each(manifestMounted)('does not call %s dead', (mod) => {
