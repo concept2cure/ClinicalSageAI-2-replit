@@ -11,6 +11,7 @@ import { Pool } from 'pg';
 import { AISentinel } from './sentinel';
 import { emitRuleEvent } from '../rules-engine';
 import { createScopedLogger } from '../../utils/logger.js';
+import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore';
 const log = createScopedLogger('sentinel-scheduler');
 
 export class SentinelScheduler {
@@ -37,9 +38,11 @@ export class SentinelScheduler {
     log.debug('[SentinelScheduler] Starting background scanner...');
 
     try {
-      // Get all active organizations
-      const orgs = await this.pool.query(
-        `SELECT id FROM organizations WHERE status = 'active' LIMIT 100`
+      // Get all active organizations. Enumerating the estate belongs to no
+      // single tenant, so it runs in a system scope — otherwise this pooled read
+      // fails closed under RLS_ENFORCE=on and the scheduler never starts.
+      const orgs = await runWithSystemTenantScope('sentinel:enumerate-orgs', () =>
+        this.pool.query(`SELECT id FROM organizations WHERE status = 'active' LIMIT 100`)
       );
 
       for (const org of orgs.rows) {
@@ -101,7 +104,21 @@ export class SentinelScheduler {
     }
     this.scanning.add(organizationId);
     try {
-      await this.runScanInner(organizationId);
+      // A per-org scan reads and writes that org's data, so it runs in that
+      // org's tenant scope (least privilege — not a super-admin/system scope).
+      // Under RLS_ENFORCE=on this is what lets the scan's pooled queries and the
+      // rule-event writes see exactly org `organizationId`'s rows instead of
+      // failing closed.
+      await runWithTenantScope(
+        {
+          tenantId: String(organizationId),
+          orgUuid: null,
+          role: null,
+          source: 'job',
+          caller: 'sentinel-scan',
+        },
+        () => this.runScanInner(organizationId)
+      );
     } finally {
       this.scanning.delete(organizationId);
     }

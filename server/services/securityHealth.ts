@@ -46,6 +46,7 @@ import type { Pool } from 'pg';
 import { createScopedLogger } from '../utils/logger';
 import { scanBuffer } from '../utils/virusScan';
 import { isJwtRotationInProgress } from '../utils/jwtVerify';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const log = createScopedLogger('security-health');
 
@@ -454,15 +455,25 @@ async function checkCerReportMigration(): Promise<SecurityCheckResult> {
 // ---------------------------------------------------------------------------
 
 export async function runSecurityHealthChecks(pool: Pool): Promise<SecurityHealthReport> {
-  const results = await Promise.all([
-    checkJwtSecretStrength(),
-    checkJwtRotation(),
-    checkCspMiddleware(),
-    checkClamavConnectivity(),
-    checkAuditChainIntegrity(pool),
-    checkAuditEventCoverage(pool),
-    checkCerReportMigration(),
-  ]);
+  // The audit checks (chain integrity, event coverage) read audit.tamper_proof_log
+  // and audit_events estate-wide — there is no single tenant to attribute a
+  // system security self-test to. Under RLS_ENFORCE=on those pooled reads would
+  // otherwise fail closed ([tenant-rls] FAIL-CLOSED), turning a critical
+  // self-test check into an error. Since this runs at boot (runSecuritySelfTest)
+  // and a failing critical check blocks production start, that would make a
+  // correctly provisioned, RLS-enforcing database unbootable. Declare a system
+  // scope for the whole check set.
+  const results = await runWithSystemTenantScope('security-self-test', async () =>
+    Promise.all([
+      checkJwtSecretStrength(),
+      checkJwtRotation(),
+      checkCspMiddleware(),
+      checkClamavConnectivity(),
+      checkAuditChainIntegrity(pool),
+      checkAuditEventCoverage(pool),
+      checkCerReportMigration(),
+    ]),
+  );
 
   const hasFailCritical = results.some(r => r.status === 'fail' && r.critical);
   const hasAnyFail = results.some(r => r.status === 'fail');

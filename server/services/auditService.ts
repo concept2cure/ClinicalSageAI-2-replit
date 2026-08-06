@@ -145,7 +145,16 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
     tamperProofLog = getTamperProofAuditLog(pool);
 
     if (!initPromise) {
-      initPromise = tamperProofLog.initialize().catch(err => {
+      // initialize() runs CREATE TABLE / index DDL on the estate-wide
+      // audit.tamper_proof_log — no tenant owns it. First use can be an
+      // unscoped context (module load, a background emitter), where under
+      // RLS_ENFORCE=on the pooled DDL would fail closed and leave the audit
+      // subsystem uninitialized (observed as this exact "non-fatal" error at
+      // boot). Declare a system scope so the one-time init always runs.
+      const { runWithSystemTenantScope } = await import('../db/tenantStore');
+      initPromise = runWithSystemTenantScope('audit:initialize', () =>
+        tamperProofLog!.initialize(),
+      ).catch(err => {
         logger.error('Failed to initialize tamper-proof audit table (non-fatal):', err);
       });
     }
