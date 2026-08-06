@@ -217,6 +217,16 @@ jobs:
       - name: Guardrails — client reachability from main.tsx (ratchet, may only shrink)
         run: npm run ci:check-client-reachability
 
+      # The server-side counterpart, and the one that cost the most. Six bootstrap
+      # files loaded their routers as `import(c.mod)` with a runtime string;
+      # esbuild cannot resolve those, so 112 route families and all 13 regional
+      # blueprints were absent from dist/index.js while the boot log reported each
+      # as mounted. This builds the real bundle and asks the metafile, so a fix
+      # that regresses is caught before it ships rather than by a 404 in
+      # production. ~40s — too slow for the unit suite, which is why it is a step.
+      - name: Guardrails — every registered route + blueprint reaches the bundle
+        run: npm run ci:check-bundle-reachability
+
       # tsconfig's include does not cover tests/, so `tsc --noEmit` has never
       # looked at a test file. This is the piece of that coverage that matters:
       # a test importing a module that no longer exists cannot run at all.

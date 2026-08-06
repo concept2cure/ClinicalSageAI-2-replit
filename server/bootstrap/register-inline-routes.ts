@@ -202,7 +202,7 @@ export async function registerInlineLitCommerceRoutes({
       continue;
     }
     app.use(entry.path, entry.router as never);
-    console.log(`✅ ${entry.name} routes mounted successfully`);
+    console.info(`✅ ${entry.name} routes mounted successfully`);
   }
 
   // Stability routes.
