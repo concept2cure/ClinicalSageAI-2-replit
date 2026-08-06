@@ -73,23 +73,145 @@ const GUARDED = [
   'server/services/regulatory/sectionBlueprintCatalog.ts',
 ];
 
-/** Source with comments stripped, so prose describing the bug cannot trip the check. */
-function code(rel: string): string {
-  return fs
-    .readFileSync(path.resolve(ROOT, rel), 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '');
+/**
+ * Strip comments, and ONLY comments.
+ *
+ * ── Why this is a state machine and not two regexes ───────────────────────────
+ * It used to be `.replace(/\/\*[\s\S]*?\*\//g, '')`. register-inline-routes.ts
+ * line 788 contains the characters `/*` inside ordinary prose, which opened a
+ * 13,294-character false "comment" spanning lines 788-1061 — and this guard
+ * reported that file clean while a quarter of it was invisible. Twelve route
+ * families lived in the hidden region, loaded by `await import(modPath)`, absent
+ * from the bundle, 404ing in production behind twelve v2 surfaces that sat
+ * silently on their fixtures.
+ *
+ * Blanking a string to spaces is not enough either: `import('pdfkit' as any)`
+ * would collapse to `import( as any)` and be reported as computed. A string
+ * literal is replaced by an empty quote pair so the character after `(` still
+ * says "this is a literal".
+ *
+ * A template literal carrying a substitution is deliberately NOT treated as a
+ * literal. `` import(`../routes/${name}`) `` is a computed specifier that
+ * esbuild cannot resolve either, so it is rewritten to an identifier and caught.
+ *
+ * The self-check below pins all of that. This function has been wrong twice; it
+ * does not get trusted on inspection any more.
+ */
+export function stripCommentsAndLiterals(src: string): string {
+  const out: string[] = [];
+  let i = 0;
+  const n = src.length;
+  while (i < n) {
+    const c = src[i];
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      i += 1;
+      const body: string[] = [];
+      let interpolated = false;
+      while (i < n) {
+        if (src[i] === '\\') {
+          i += 2;
+          continue;
+        }
+        if (src[i] === quote) {
+          i += 1;
+          break;
+        }
+        if (quote === '`' && src[i] === '$' && src[i + 1] === '{') {
+          interpolated = true;
+          let depth = 1;
+          i += 2;
+          const start = i;
+          while (i < n && depth > 0) {
+            if (src[i] === '{') depth += 1;
+            else if (src[i] === '}') depth -= 1;
+            i += 1;
+          }
+          body.push(src.slice(start, i - 1));
+          continue;
+        }
+        if (src[i] === '\n') body.push('\n');
+        i += 1;
+      }
+      out.push(interpolated ? `INTERPOLATED${body.join('')}` : `${quote}${body.join('')}${quote}`);
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      const end = src.indexOf('*/', i + 2);
+      const stop = end < 0 ? n : end + 2;
+      // Newlines preserved so reported line numbers stay true.
+      out.push(src.slice(i, stop).replace(/[^\n]/g, ' '));
+      i = stop;
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '/') {
+      const end = src.indexOf('\n', i);
+      const stop = end < 0 ? n : end;
+      out.push(' '.repeat(stop - i));
+      i = stop;
+      continue;
+    }
+    out.push(c);
+    i += 1;
+  }
+  return out.join('');
 }
+
+const COMPUTED_IMPORT = /\bimport\(\s*([^'"`\s)][^)]*)\)/g;
+
+function computedImportsIn(src: string): string[] {
+  return [...stripCommentsAndLiterals(src).matchAll(COMPUTED_IMPORT)]
+    .map((m) => m[1].trim())
+    .filter((a) => a !== '' && a !== 'import.meta.url');
+}
+
+function code(rel: string): string {
+  return fs.readFileSync(path.resolve(ROOT, rel), 'utf8');
+}
+
+describe('the guard can see the whole file', () => {
+  /*
+   * The instrument is tested before its findings are believed. This guard has
+   * been wrong twice — once flagging its own explanatory comment, once blinded
+   * to 273 lines by a `/*` inside prose — and in both cases the failure was
+   * silent: a green test over a file it could not read.
+   */
+  const CASES: Array<[string, number, string]> = [
+    ["await import('x')", 0, 'a plain literal is not computed'],
+    ['await import(v)', 1, 'a bare variable is computed'],
+    ["await import('pdfkit' as any)", 0, 'a literal with a type assertion is still a literal'],
+    ['/* prose mentioning /*) inside */ await import(v)', 1, 'a nested-looking comment does not swallow code'],
+    ["const s = 'has /* inside'; await import(v)", 1, 'a /* inside a STRING does not open a comment'],
+    ["// await import(v)\nawait import('y')", 0, 'a commented-out offender is not reported'],
+    ['await import(`../routes/${n}`)', 1, 'a template with a substitution is computed'],
+  ];
+
+  it.each(CASES)('%s', (src, expected) => {
+    expect(computedImportsIn(src)).toHaveLength(expected);
+  });
+
+  it('sees the whole of the largest bootstrap file', () => {
+    // The specific regression. The old stripper reduced this file to 73% of its
+    // real length; a line count is the cheapest way to notice that happening
+    // again, whatever the cause.
+    const raw = code('server/bootstrap/register-inline-routes.ts');
+    const stripped = stripCommentsAndLiterals(raw);
+    expect(stripped.split('\n').length).toBe(raw.split('\n').length);
+    // A sentinel from deep inside the previously-invisible region. An
+    // IDENTIFIER, not a path string: string literals are blanked to an empty
+    // quote pair by design, so `path: '/api/cmc-changes'` would fail here for
+    // the wrong reason. (It did, on the first run — the sentinel was wrong, not
+    // the stripper.)
+    expect(stripped).toContain('cmcChangesRoutes');
+  });
+});
 
 describe('route registration reaches the production bundle', () => {
   it('no guarded file imports a module by computed specifier', () => {
-    // `import(` not immediately followed by a quote — i.e. a computed specifier.
-    // Comments are stripped first, a lesson from a source guard that flagged its
-    // own explanatory comment.
     const offenders: string[] = [];
     for (const rel of GUARDED) {
-      for (const m of code(rel).matchAll(/\bimport\(\s*([^'"`\s)][^)]*)\)/g)) {
-        offenders.push(`${rel}: import(${m[1].trim()})`);
+      for (const arg of computedImportsIn(code(rel))) {
+        offenders.push(`${rel}: import(${arg})`);
       }
     }
 

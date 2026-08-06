@@ -92,6 +92,20 @@ import deviceCockpit from '../routes/device-cockpit.js';
 import globalMarkets from '../routes/global-markets.js';
 import workspaceConfig from '../routes/workspace-config.routes.js';
 import reportOsInsights from '../routes/report-os-insights.js';
+import indChecklistRoutes from '../routes/ind-checklist.routes.js';
+import programJourneyRoutes from '../routes/program-journey.routes.js';
+import marketAccessRoutes from '../routes/market-access.routes.js';
+import shadowReviewRoutes from '../routes/shadow-review.routes.js';
+import labelingPiRoutes from '../routes/labeling-pi.routes.js';
+import protocolDevRoutes from '../routes/protocol-dev.routes.js';
+import researchAdminRoutes from '../routes/research-admin.routes.js';
+import investigatorBrochureRoutes from '../routes/investigator-brochure.routes.js';
+import nonclinicalSummaryRoutes from '../routes/nonclinical-summary.routes.js';
+import maaModule1Routes from '../routes/maa-module1.routes.js';
+import labelingSmpcRoutes from '../routes/labeling-smpc.routes.js';
+import cmcChangesRoutes from '../routes/cmc-changes.routes.js';
+
+import { mountAll } from './mount-routes.js';
 
 
 export interface InlineRouteContext {
@@ -903,28 +917,44 @@ export async function registerInlineAiWorkflowRoutes({
 
   // Wave-3 batch: org-scoped instance-list reads, each on its own sub-prefix,
   // feeding a registered v2 surface that fails closed to its fixture.
-  for (const [prefix, modPath, label] of [
-    ['/api/ind-checklist', '../routes/ind-checklist.routes', 'IND checklist'],
-    ['/api/program-journey', '../routes/program-journey.routes', 'Program journey'],
-    ['/api/market-access', '../routes/market-access.routes', 'Market access'],
-    ['/api/shadow-review', '../routes/shadow-review.routes', 'Shadow review'],
-    ['/api/labeling-pi', '../routes/labeling-pi.routes', 'Labeling PI'],
-    ['/api/protocol-dev', '../routes/protocol-dev.routes', 'Protocol dev'],
-    ['/api/research-admin', '../routes/research-admin.routes', 'Research admin'],
-    ['/api/investigator-brochure', '../routes/investigator-brochure.routes', "Investigator's Brochure"],
-    ['/api/nonclinical-summary', '../routes/nonclinical-summary.routes', 'Nonclinical M2.6/M4'],
-    ['/api/maa-module1', '../routes/maa-module1.routes', 'MAA Module 1'],
-    ['/api/labeling-smpc', '../routes/labeling-smpc.routes', 'EU SmPC labeling'],
-    ['/api/cmc-changes', '../routes/cmc-changes.routes', 'CMC change control'],
-  ] as const) {
-    try {
-      const mod = await import(modPath);
-      app.use(prefix, authMiddleware, mod.default);
-      console.info(`✅ ${label} route mounted (${prefix})`);
-    } catch (error) {
-      console.error(`❌ Failed to mount ${label} route:`, error);
-    }
-  }
+  //
+  // These twelve were the last holdout of the variable-specifier defect, and the
+  // hardest to see. They were loaded as `await import(modPath)` from a tuple
+  // loop, so esbuild resolved none of them and all twelve 404d in production
+  // while twelve v2 surfaces sat on their fixtures with no error anywhere.
+  //
+  // The guard that should have caught this did not, and the reason is worth
+  // recording: it stripped comments with a `/\*[\s\S]*?\*/` regex, and line 788
+  // of this file contains the characters `/*` inside prose. That opened a
+  // 13,294-character false comment spanning lines 788-1061 — this block among
+  // them. The guard reported clean on a file it could not see a quarter of.
+  // server/bootstrap/__tests__/routes-reach-the-bundle.test.ts now strips
+  // comments with a state machine that knows about strings, and self-checks
+  // against that exact case before it reports anything.
+  mountAll(
+    app,
+    [
+      { path: '/api/ind-checklist', router: indChecklistRoutes, name: 'IND checklist' },
+      { path: '/api/program-journey', router: programJourneyRoutes, name: 'Program journey' },
+      // Second router on /api/market-access. server/routes/market-access.ts is
+      // mounted by register-advanced-platform-routes (CPT/HCPCS coding and the
+      // coverage dossier); this one serves the instance-list reads the
+      // MarketAccess surface calls. Express tries them in mount order and the
+      // path sets do not overlap, so both are reachable — but the collision is
+      // real and belongs in a comment rather than in someone's afternoon.
+      { path: '/api/market-access', router: marketAccessRoutes, name: 'Market access (instance reads)' },
+      { path: '/api/shadow-review', router: shadowReviewRoutes, name: 'Shadow review' },
+      { path: '/api/labeling-pi', router: labelingPiRoutes, name: 'Labeling PI' },
+      { path: '/api/protocol-dev', router: protocolDevRoutes, name: 'Protocol dev' },
+      { path: '/api/research-admin', router: researchAdminRoutes, name: 'Research admin' },
+      { path: '/api/investigator-brochure', router: investigatorBrochureRoutes, name: "Investigator's Brochure" },
+      { path: '/api/nonclinical-summary', router: nonclinicalSummaryRoutes, name: 'Nonclinical M2.6/M4' },
+      { path: '/api/maa-module1', router: maaModule1Routes, name: 'MAA Module 1' },
+      { path: '/api/labeling-smpc', router: labelingSmpcRoutes, name: 'EU SmPC labeling' },
+      { path: '/api/cmc-changes', router: cmcChangesRoutes, name: 'CMC change control' },
+    ],
+    authMiddleware,
+  );
 
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
