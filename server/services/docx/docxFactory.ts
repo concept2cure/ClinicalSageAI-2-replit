@@ -661,3 +661,128 @@ export async function generateRegulatory(
     filename,
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STYLED DOCUMENT RENDERER
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// A presentation-neutral document model rendered to DOCX bytes. It exists so
+// callers that need colored/emphasised inline runs (which DocxSection's
+// plain-string paragraphs cannot express) can still produce their document
+// WITHOUT importing the `docx` package themselves — every `docx` primitive stays
+// inside this approved runtime (scripts/ci/check-docx-runtime-canonicality.mjs).
+//
+// The caller owns all wording and styling decisions by building the model; this
+// function only maps the model onto docx primitives. The same model can be
+// rendered to other targets (e.g. an HTML fallback for the PDF converter) by the
+// caller, so labels and colors are defined once at the call site rather than per
+// output format.
+
+/** An inline run of text with optional emphasis. `color` is a hex string, no '#'. */
+export interface StyledRun {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  /** Hex color without '#', e.g. 'b45309'. Defaults to the body ink color. */
+  color?: string;
+  /** Font size in half-points (docx convention). Defaults to the body size. */
+  size?: number;
+}
+
+/** A block-level element. `heading` and `paragraph` carry runs; `rule`/`spacer` do not. */
+export interface StyledBlock {
+  kind: 'heading' | 'paragraph' | 'rule' | 'spacer';
+  runs?: StyledRun[];
+}
+
+export interface StyledDocModel {
+  /** Used only for the filename and PDF metadata; not rendered as a cover page. */
+  title: string;
+  /** Centered footer label; page numbers are appended automatically. */
+  footerLabel: string;
+  blocks: StyledBlock[];
+}
+
+function styledRuns(runs: StyledRun[] | undefined, style: DocxStyle): TextRun[] {
+  return (runs ?? []).map(
+    (r) =>
+      new TextRun({
+        text: r.text,
+        bold: r.bold,
+        italics: r.italic,
+        font: style.fonts.body,
+        size: r.size ?? style.fontSizes.body,
+        color: r.color ?? style.colors.textDark,
+      })
+  );
+}
+
+/**
+ * Render a StyledDocModel to DOCX bytes. Pair with convertDocxToPdf() for the
+ * canonical, deterministic, audit-bound PDF path.
+ */
+export async function renderStyledDocx(
+  model: StyledDocModel,
+  style: DocxStyle = DEFAULT_DOCX_STYLE,
+): Promise<Buffer> {
+  const children: Paragraph[] = model.blocks.map((block) => {
+    switch (block.kind) {
+      case 'rule':
+        return new Paragraph({
+          border: {
+            bottom: { style: BorderStyle.SINGLE, size: 6, color: style.colors.borderGray, space: 1 },
+          },
+          spacing: { before: 60, after: 160 },
+        });
+      case 'spacer':
+        return new Paragraph({ spacing: { after: 120 } });
+      case 'heading':
+        return new Paragraph({
+          children: styledRuns(block.runs, style),
+          spacing: { before: 240, after: 100 },
+        });
+      case 'paragraph':
+      default:
+        return new Paragraph({
+          children: styledRuns(block.runs, style),
+          spacing: { after: 80, line: style.lineSpacing },
+        });
+    }
+  });
+
+  const footerRuns: TextRun[] = [
+    new TextRun({
+      text: `${model.footerLabel}  ·  `,
+      font: style.fonts.body,
+      size: style.fontSizes.footer,
+      color: style.colors.textMuted,
+    }),
+    new TextRun({
+      children: ['Page ', PageNumber.CURRENT, ' of ', PageNumber.TOTAL_PAGES],
+      font: style.fonts.body,
+      size: style.fontSizes.footer,
+      color: style.colors.textMuted,
+    }),
+  ];
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: style.margins,
+            pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL },
+          },
+        },
+        footers: {
+          default: new Footer({
+            children: [new Paragraph({ children: footerRuns, alignment: AlignmentType.CENTER })],
+          }),
+        },
+        children,
+      },
+    ],
+  });
+
+  return Packer.toBuffer(doc);
+}
