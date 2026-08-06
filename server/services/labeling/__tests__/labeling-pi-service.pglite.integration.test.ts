@@ -9,6 +9,9 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 let pglite: PGlite;
 const pool = {
@@ -17,7 +20,21 @@ const pool = {
     return { rows: r.rows as unknown[], rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length };
   },
 };
-vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
+// upsertLabelingPiSection now opens its own transaction (pool.connect) to commit
+// the section text and its author lineage together; PGlite is one connection, so
+// the "client" wraps its query.
+vi.mock('../../../db', () => ({
+  pool: {
+    query: (s: string, p?: unknown[]) => pool.query(s, p),
+    connect: async () => ({ query: (s: string, p?: unknown[]) => pool.query(s, p), release: () => undefined }),
+  },
+  db: {},
+}));
+
+function migration(rel: string): string {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  return fs.readFileSync(path.resolve(here, '../../../../', rel), 'utf8');
+}
 
 import {
   upsertLabelingPiSection, listLabelingPiSections, getLabelingPiSection,
@@ -39,9 +56,18 @@ CREATE UNIQUE INDEX uq_labeling_pi_sections_org_section
   ON labeling_pi_sections (organization_id, section_no) WHERE deleted_at IS NULL;
 `;
 
-beforeAll(async () => { pglite = new PGlite(); await pglite.exec(DDL); }, 60_000);
+beforeAll(async () => {
+  pglite = new PGlite();
+  // The gate FKs/reads against the span-lineage schema; organizations must exist
+  // for its FK, and both tenants are used by the isolation cases.
+  await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
+  await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG},'a'), (${OTHER},'b');`);
+  await pglite.exec(DDL);
+  await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
+  await pglite.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
+}, 90_000);
 afterAll(async () => { await pglite.close(); });
-beforeEach(async () => { await pglite.exec(`DELETE FROM labeling_pi_sections;`); });
+beforeEach(async () => { await pglite.exec(`DELETE FROM labeling_pi_sections; DELETE FROM document_span_lineage;`); });
 
 describe('labeling-pi-service', () => {
   it('records sections and lists them in USPI document order (HL, BW, then numeric)', async () => {

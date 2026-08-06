@@ -23,6 +23,7 @@
  * @module server/services/labeling/labeling-pi-service
  */
 import { pool } from '../../db';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 
 // Runtime validation sets for the display classifiers the surface keys off:
 // `status` drives the section tree's state dot + stage styling (data-st) and
@@ -156,29 +157,54 @@ export async function upsertLabelingPiSection(orgId: number, input: UpsertLabeli
   }
   const content = normalizeContent(input.content);
   const negotiation = normalizeNegotiation(input.negotiation);
+  // Canonical rendered text for lineage: heading + body paragraphs — exactly
+  // what the USPI surface renders (hl/warn are display flags, not prose). The
+  // JSONB is structured, so we derive the flat text the gate detects spans over.
+  const canonicalText = content === null ? null : [content.heading, ...content.body].join('\n\n');
+  const actor = String(input.createdBy ?? 'system');
 
-  const { rows } = await pool.query<LabelingPiSectionRow>(
-    `INSERT INTO labeling_pi_sections (
-       organization_id, section_no, label, status, flag, program, content, negotiation, created_by
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9)
-     ON CONFLICT (organization_id, section_no) WHERE deleted_at IS NULL
-     DO UPDATE SET
-       label = EXCLUDED.label,
-       status = EXCLUDED.status,
-       flag = EXCLUDED.flag,
-       program = EXCLUDED.program,
-       content = EXCLUDED.content,
-       negotiation = EXCLUDED.negotiation,
-       updated_at = now()
-     RETURNING ${SELECT_COLS}`,
-    [
-      orgId, input.sectionNo, input.label, status, input.flag ?? null, input.program ?? null,
-      content === null ? null : JSON.stringify(content),
-      negotiation === null ? null : JSON.stringify(negotiation),
-      input.createdBy ?? null,
-    ],
-  );
-  return rows[0];
+  // The label section text and its author lineage commit together in one
+  // transaction (same gate as authoring/protocol/biosketch/q-sub), or roll back
+  // together — a label section is never persisted without provenance.
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query<LabelingPiSectionRow>(
+      `INSERT INTO labeling_pi_sections (
+         organization_id, section_no, label, status, flag, program, content, negotiation, created_by
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9)
+       ON CONFLICT (organization_id, section_no) WHERE deleted_at IS NULL
+       DO UPDATE SET
+         label = EXCLUDED.label,
+         status = EXCLUDED.status,
+         flag = EXCLUDED.flag,
+         program = EXCLUDED.program,
+         content = EXCLUDED.content,
+         negotiation = EXCLUDED.negotiation,
+         updated_at = now()
+       RETURNING ${SELECT_COLS}`,
+      [
+        orgId, input.sectionNo, input.label, status, input.flag ?? null, input.program ?? null,
+        content === null ? null : JSON.stringify(content),
+        negotiation === null ? null : JSON.stringify(negotiation),
+        input.createdBy ?? null,
+      ],
+    );
+    await enforceAuthorLineage(
+      client,
+      orgId,
+      { documentTable: 'labeling_pi_sections', documentId: String(rows[0].id) },
+      canonicalText,
+      actor,
+    );
+    await client.query('COMMIT');
+    return rows[0];
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /**

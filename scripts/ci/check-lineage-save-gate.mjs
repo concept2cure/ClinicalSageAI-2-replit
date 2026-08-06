@@ -76,6 +76,10 @@ const GUARDED = [
     file: 'server/routes/q-sub.ts',
     why: 'PUT /:id/sections/:sectionKey writes device Q-Sub section prose (q_sub_section_bodies.content)',
   },
+  {
+    file: 'server/services/labeling/labeling-pi-service.ts',
+    why: 'upsertLabelingPiSection writes USPI label prose (labeling_pi_sections.content JSONB → heading + body derived text)',
+  },
 ];
 
 /**
