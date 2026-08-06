@@ -460,6 +460,72 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
     }
 
+    // ── Retrieval embedding for program-scoped (UUID) uploads ──────────────
+    //
+    // The numeric-workspace path above embeds inside its governed-artifact
+    // block, but that block is skipped for the UUID id-space because
+    // concept2cure_artifacts.project_id is an INTEGER. The Data Room (ProjectHome)
+    // opens a `regulatory_programs` UUID, so EVERY upload a real customer makes
+    // there took the UUID path: it got a canonical source identity but its
+    // extracted text was never embedded — read once, used for a word count, then
+    // dropped from the retrieval corpus. That is the foundational gap behind the
+    // whole "ingest the sponsor's source data and cite it back" premise: with no
+    // atom + embedding, the content is not retrievable by RAG and cannot be cited
+    // in authoring.
+    //
+    // Embed here so program uploads join the corpus too. lumen_data_atoms is
+    // org-scoped (no project column) with `tags` for finer scoping, so the atom
+    // carries a `program:<uuid>` tag for program-scoped retrieval and is keyed to
+    // the canonical source id for idempotency (re-uploading the same file resolves
+    // the same source, so the guarded insert is a no-op rather than a duplicate).
+    if (
+      projectScope.programId != null &&
+      extractionMethod && // only real extracted content, never the filename placeholder
+      extractedText.trim().length > 0 &&
+      Number.isFinite(numericOrgId) &&
+      numericOrgId > 0
+    ) {
+      try {
+        const atomSourceId = sourceId != null ? `cre_source:${sourceId}` : `upload:${fileId}`;
+        const boundedContent = extractedText.substring(0, 16000);
+        const atomResult = await pool.query(
+          `INSERT INTO lumen_data_atoms
+             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
+           SELECT $1, 'chat_upload', $2, 'source_document', $3, $4, $5::text[], 0.85, 'active'
+            WHERE NOT EXISTS (
+              SELECT 1 FROM lumen_data_atoms
+               WHERE organization_id = $1 AND source_id = $2
+            )
+           RETURNING id`,
+          [
+            numericOrgId,
+            atomSourceId,
+            fileName,
+            boundedContent,
+            ['source', 'chat_upload', `program:${projectScope.programId}`],
+          ]
+        );
+        if (atomResult.rows.length > 0) {
+          const { getEmbeddingService } = await import(
+            '../../services/enhancedEmbeddingService.js'
+          );
+          const embeddingService = getEmbeddingService(pool);
+          await embeddingService.embedAtom(atomResult.rows[0].id);
+          logger.info('Program-scoped upload embedded into retrieval corpus', {
+            fileId,
+            sourceId,
+            atomId: atomResult.rows[0].id,
+            programId: projectScope.programId,
+          });
+        }
+      } catch (embedErr: any) {
+        logger.warn('Program-scoped upload embedding failed (non-fatal)', {
+          err: embedErr?.message,
+          fileId,
+        });
+      }
+    }
+
     res.json({
       fileId,
       message: 'File uploaded successfully',
