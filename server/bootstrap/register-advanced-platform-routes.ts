@@ -81,81 +81,79 @@ export async function registerAdvancedPlatformRoutes({
     const auditIntegConfig = [
       {
         path: '/api/audit-services',
-        mod: '../routes/audit-services.js',
+        load: () => import('../routes/audit-services.js'),
         name: 'Audit Services (figures, export, traceability, keywords)',
       },
       {
         path: '/api/integration-test',
-        mod: '../routes/integration-test',
+        load: () => import('../routes/integration-test'),
         name: 'Integration Test (dev/QA)',
       },
-      {
-        path: '/api/integrations',
-        mod: '../routes/enterprise-integrations.ts',
-        name: 'Enterprise Integrations (Medidata, Veeva, Adobe)',
-      },
-      {
-        path: '/api/connectors',
-        mod: '../routes/connector-library.ts',
-        name: 'Connector Library (catalog, toggle, guides)',
-      },
+      // Removed: /api/integrations (enterprise-integrations) and /api/connectors
+      // (connector-library). Neither route module exists anywhere in the repo —
+      // no .ts, .js, or other implementation, and no client caller. Under the
+      // former variable dynamic-import these failed silently as ERR_MODULE_
+      // NOT_FOUND at runtime (caught by Promise.allSettled), so /api/integrations
+      // and /api/connectors advertised Medidata/Veeva/Adobe integrations and a
+      // connector catalog that never had a backend. Converting to a literal
+      // import surfaced them at build time; cut rather than left as dead config.
       {
         path: '/api/diagnostics-performance',
-        mod: '../routes/diagnostics-performance.ts',
+        load: () => import('../routes/diagnostics-performance'),
         name: 'Diagnostics Performance (CLSI analytical + clinical)',
       },
       {
         path: '/api/device-classification',
-        mod: '../routes/device-classification.ts',
+        load: () => import('../routes/device-classification'),
         name: 'Device Classification (IMDRF SaMD + IEC 62304)',
       },
       {
         path: '/api/substantial-equivalence',
-        mod: '../routes/substantial-equivalence.ts',
+        load: () => import('../routes/substantial-equivalence'),
         name: 'Substantial Equivalence (FDA 510(k) SE flowchart)',
       },
       {
         path: '/api/cybersecurity-524b',
-        mod: '../routes/cybersecurity-524b.ts',
+        load: () => import('../routes/cybersecurity-524b'),
         name: 'Premarket Cybersecurity (FDA §524B SBOM + readiness)',
       },
       {
         path: '/api/human-factors',
-        mod: '../routes/human-factors.ts',
+        load: () => import('../routes/human-factors'),
         name: 'Human Factors (IEC 62366-1)',
       },
       {
         path: '/api/postmarket-surveillance',
-        mod: '../routes/postmarket-surveillance.ts',
+        load: () => import('../routes/postmarket-surveillance'),
         name: 'Post-market Surveillance (openFDA MAUDE + recalls)',
       },
       {
         path: '/api/udi-ivdr',
-        mod: '../routes/udi-ivdr.ts',
+        load: () => import('../routes/udi-ivdr'),
         name: 'UDI/GUDID + EU IVDR Performance Evaluation',
       },
       {
         path: '/api/market-access',
-        mod: '../routes/market-access.ts',
+        load: () => import('../routes/market-access'),
         name: 'Market Access (CPT/HCPCS coding + coverage dossier)',
       },
       {
         path: '/api/companion-diagnostics',
-        mod: '../routes/companion-diagnostics.ts',
+        load: () => import('../routes/companion-diagnostics'),
         name: 'Companion Diagnostics (drug↔Dx co-development)',
       },
       {
         path: '/api/spl-fhir',
-        mod: '../routes/spl-fhir.ts',
+        load: () => import('../routes/spl-fhir'),
         name: 'Interoperability (LOINC + SPL + FHIR)',
       },
       {
         path: '/api/submission-readiness',
-        mod: '../routes/submission-readiness.ts',
+        load: () => import('../routes/submission-readiness'),
         name: 'Submission Readiness (capstone scorecard)',
       },
     ] as const;
-    const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
+    const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => c.load()));
     auditIntegResults.forEach((r, i) => {
       // Fence the test/QA-only integration-test harness out of production (#848).
       if (auditIntegConfig[i].path === '/api/integration-test' && !testRoutesEnabled) {
@@ -174,17 +172,17 @@ export async function registerAdvancedPlatformRoutes({
   // ── Advanced AI & Compliance (parallelized) ──
   {
     const advancedConfig = [
-      { path: '/api/realtime-collab', mod: '../routes/realtime-collab', name: 'Real-time Collaboration' },
-      { path: '/api/graphrag', mod: '../routes/graphrag', name: 'GraphRAG' },
-      { path: '/api/ana-cortex-ft', mod: '../routes/ana-cortex-ft', name: 'AnA Intelligence Fine-Tuning' },
-      { path: '/api/compliance', mod: '../routes/global-compliance.js', name: 'Global Regulatory Compliance' },
-      { path: '/api/agent-swarm', mod: '../routes/agent-swarm', name: 'Agent Swarm' },
-      { path: '/api/real-world-evidence', mod: '../routes/real-world-evidence', name: 'Real-World Evidence' },
-      { path: '/api/regulatory-digital-twin', mod: '../routes/regulatory-digital-twin', name: 'Regulatory Digital Twin' },
-      { path: '/api/submission-twin', mod: '../routes/submission-twin', name: 'Submission Twin' },
-      { path: '/api/cro', mod: '../routes/cro', name: 'CRO Management' },
+      { path: '/api/realtime-collab', load: () => import('../routes/realtime-collab'), name: 'Real-time Collaboration' },
+      { path: '/api/graphrag', load: () => import('../routes/graphrag'), name: 'GraphRAG' },
+      { path: '/api/ana-cortex-ft', load: () => import('../routes/ana-cortex-ft'), name: 'AnA Intelligence Fine-Tuning' },
+      { path: '/api/compliance', load: () => import('../routes/global-compliance.js'), name: 'Global Regulatory Compliance' },
+      { path: '/api/agent-swarm', load: () => import('../routes/agent-swarm'), name: 'Agent Swarm' },
+      { path: '/api/real-world-evidence', load: () => import('../routes/real-world-evidence'), name: 'Real-World Evidence' },
+      { path: '/api/regulatory-digital-twin', load: () => import('../routes/regulatory-digital-twin'), name: 'Regulatory Digital Twin' },
+      { path: '/api/submission-twin', load: () => import('../routes/submission-twin'), name: 'Submission Twin' },
+      { path: '/api/cro', load: () => import('../routes/cro'), name: 'CRO Management' },
     ] as const;
-    const advancedResults = await Promise.allSettled(advancedConfig.map(c => import(c.mod)));
+    const advancedResults = await Promise.allSettled(advancedConfig.map(c => c.load()));
     advancedResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(advancedConfig[i].path, authenticateToken, r.value.default);
@@ -231,21 +229,21 @@ export async function registerAdvancedPlatformRoutes({
     const taskConfig = [
       {
         path: '/api/task-management',
-        mod: '../routes/taskManagement.routes',
+        load: () => import('../routes/taskManagement.routes'),
         name: 'Task Management',
       },
       {
         path: '/api/unified-tasks',
-        mod: '../routes/unifiedTasks.routes',
+        load: () => import('../routes/unifiedTasks.routes'),
         name: 'Unified Tasks',
       },
       {
         path: '/api/approval-workflows',
-        mod: '../routes/approval-workflow',
+        load: () => import('../routes/approval-workflow'),
         name: 'Approval Workflows',
       },
     ] as const;
-    const taskResults = await Promise.allSettled(taskConfig.map(c => import(c.mod)));
+    const taskResults = await Promise.allSettled(taskConfig.map(c => c.load()));
     taskResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(taskConfig[i].path, authenticateToken, r.value.default);
@@ -259,20 +257,20 @@ export async function registerAdvancedPlatformRoutes({
   // ── Branding, Annotations, Lineage (parallelized) ──
   {
     const workflowConfig = [
-      { path: '/api/client-branding', mod: '../routes/client-branding', name: 'Client Branding' },
+      { path: '/api/client-branding', load: () => import('../routes/client-branding'), name: 'Client Branding' },
       {
         path: '/api/inline-annotations',
-        mod: '../routes/inline-annotations',
+        load: () => import('../routes/inline-annotations'),
         name: 'Inline Annotations',
       },
       {
         path: '/api/decision-lineage',
-        mod: '../routes/decision-lineage',
+        load: () => import('../routes/decision-lineage'),
         name: 'Decision Lineage',
       },
-      { path: '/api/data-lineage', mod: '../routes/data-lineage', name: 'Data Lineage' },
+      { path: '/api/data-lineage', load: () => import('../routes/data-lineage'), name: 'Data Lineage' },
     ] as const;
-    const workflowResults = await Promise.allSettled(workflowConfig.map(c => import(c.mod)));
+    const workflowResults = await Promise.allSettled(workflowConfig.map(c => c.load()));
     workflowResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(workflowConfig[i].path, authenticateToken, r.value.default);
@@ -286,15 +284,15 @@ export async function registerAdvancedPlatformRoutes({
   // ── Workspace + Chat + Conversation OS (parallelized) ──
   {
     const wsConfig = [
-      { path: '/api', mod: '../routes/workspace-summary', name: 'Workspace Summary' },
-      { path: '/api', mod: '../routes/chat-actions', name: 'Chat Actions' },
+      { path: '/api', load: () => import('../routes/workspace-summary'), name: 'Workspace Summary' },
+      { path: '/api', load: () => import('../routes/chat-actions'), name: 'Chat Actions' },
       {
         path: '/api/conversation-os',
-        mod: '../routes/conversation-os',
+        load: () => import('../routes/conversation-os'),
         name: 'Conversation OS',
       },
     ] as const;
-    const wsResults = await Promise.allSettled(wsConfig.map(c => import(c.mod)));
+    const wsResults = await Promise.allSettled(wsConfig.map(c => c.load()));
     wsResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(wsConfig[i].path, authenticateToken, r.value.default);

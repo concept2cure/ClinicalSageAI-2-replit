@@ -22,22 +22,22 @@ export async function registerClinicalIntelRoutes({
   // inside each handler is a separate concern audited per-file.
   {
     const indConfig = [
-      { path: '/api/ind', mod: '../routes/ind', name: 'IND' },
-      { path: '/api/ind-wizard', mod: '../routes/ind-unified', name: 'IND Unified (Wizard)' },
-      { path: '/api/ind-templates', mod: '../routes/ind-templates', name: 'IND Templates' },
+      { path: '/api/ind', load: () => import('../routes/ind'), name: 'IND' },
+      { path: '/api/ind-wizard', load: () => import('../routes/ind-unified'), name: 'IND Unified (Wizard)' },
+      { path: '/api/ind-templates', load: () => import('../routes/ind-templates'), name: 'IND Templates' },
       {
         path: '/api/ind-submissions',
-        mod: '../routes/ind-submissions.routes',
+        load: () => import('../routes/ind-submissions.routes'),
         name: 'IND Submissions',
       },
-      { path: '/api/ind-database', mod: '../routes/ind-database.routes', name: 'IND Database' },
+      { path: '/api/ind-database', load: () => import('../routes/ind-database.routes'), name: 'IND Database' },
       {
         path: '/api/ind-automation',
-        mod: '../routes/ind_automation_routes',
+        load: () => import('../routes/ind_automation_routes'),
         name: 'IND Automation',
       },
     ] as const;
-    const indResults = await Promise.allSettled(indConfig.map(c => import(c.mod)));
+    const indResults = await Promise.allSettled(indConfig.map(c => c.load()));
     indResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(indConfig[i].path, authenticateToken, r.value.default);
@@ -88,30 +88,35 @@ export async function registerClinicalIntelRoutes({
   // ── Intelligence, CSR, Protocol, QC, Regulatory, Module Integration (parallelized) ──
   {
     const intelConfig = [
-      { path: '/api/intelligence', mod: '../routes/intelligence', name: 'Intelligence + RIM' },
-      { path: '/api/protocol', mod: '../routes/protocol_routes', name: 'Protocol', named: true },
-      { path: '/api/qc', mod: '../routes/qc.routes', name: 'QC' },
+      { path: '/api/intelligence', load: () => import('../routes/intelligence'), name: 'Intelligence + RIM' },
+      { path: '/api/protocol', load: () => import('../routes/protocol_routes'), name: 'Protocol', named: true },
+      { path: '/api/qc', load: () => import('../routes/qc.routes'), name: 'QC' },
       {
         path: '/api/module-integration',
-        mod: '../routes/moduleIntegrationRoutes',
+        load: () => import('../routes/moduleIntegrationRoutes'),
         name: 'Module Integration',
       },
-      { path: '/api/regulatory', mod: '../routes/regulatoryRoutes', name: 'Regulatory' },
+      { path: '/api/regulatory', load: () => import('../routes/regulatoryRoutes'), name: 'Regulatory' },
       {
         path: '/api/document-understanding',
-        mod: '../routes/document-understanding',
+        load: () => import('../routes/document-understanding'),
         name: 'Document Understanding',
       },
     ] as const;
-    const intelResults = await Promise.allSettled(intelConfig.map(c => import(c.mod)));
+    const intelResults = await Promise.allSettled(intelConfig.map(c => c.load()));
     intelResults.forEach((r, i) => {
       const cfg = intelConfig[i];
       if (r.status === 'fulfilled') {
         // protocol_routes exports { protocolRoutes } as named export
+        // r.value is a union of the config's module types; the runtime `named`
+        // flag selects the export but TS cannot narrow the union by it, and one
+        // member (protocol_routes) has no default export. Cast for the default
+        // branch — behavior is unchanged from when these were `any`-typed
+        // variable imports.
         const router =
           'named' in cfg && cfg.named
             ? (r.value as any).protocolRoutes
-            : r.value.default;
+            : (r.value as any).default;
         app.use(cfg.path, router);
         console.log(`✅ ${cfg.name} routes mounted at ${cfg.path}`);
       } else {

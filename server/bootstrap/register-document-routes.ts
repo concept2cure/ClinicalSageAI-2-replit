@@ -63,19 +63,19 @@ export async function registerDocumentRoutes({
   // handler runs; per-handler tenant scoping is a separate audit.
   {
     const ectdConfig = [
-      { path: '/api/coauthor', mod: '../routes/coauthor', name: 'eCTD Co-Author' },
-      { path: '/api/ectd-documents', mod: '../routes/ectd-documents', name: 'eCTD Documents' },
-      { path: '/api/ectd-compile', mod: '../routes/ectd-compile', name: 'eCTD Compile' },
-      { path: '/api/ectd/export', mod: '../routes/ectd-export', name: 'eCTD Export' },
-      { path: '/api/csr/jobs', mod: '../routes/csr-jobs', name: 'CSR Jobs' },
-      { path: '/api/charters', mod: '../routes/charters', name: 'Project Charters' },
+      { path: '/api/coauthor', load: () => import('../routes/coauthor'), name: 'eCTD Co-Author' },
+      { path: '/api/ectd-documents', load: () => import('../routes/ectd-documents'), name: 'eCTD Documents' },
+      { path: '/api/ectd-compile', load: () => import('../routes/ectd-compile'), name: 'eCTD Compile' },
+      { path: '/api/ectd/export', load: () => import('../routes/ectd-export'), name: 'eCTD Export' },
+      { path: '/api/csr/jobs', load: () => import('../routes/csr-jobs'), name: 'CSR Jobs' },
+      { path: '/api/charters', load: () => import('../routes/charters'), name: 'Project Charters' },
       {
         path: '/api/ectd-submissions',
-        mod: '../routes/ectd-submission-agent.routes',
+        load: () => import('../routes/ectd-submission-agent.routes'),
         name: 'eCTD Submission Agent',
       },
     ] as const;
-    const ectdResults = await Promise.allSettled(ectdConfig.map(c => import(c.mod)));
+    const ectdResults = await Promise.allSettled(ectdConfig.map(c => c.load()));
     ectdResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(ectdConfig[i].path, authenticateToken, r.value.default);
@@ -220,132 +220,132 @@ export async function registerDocumentRoutes({
   // ── Evidence, Content, Cognitive, BFF proxy (parallelized) ──
   {
     const evidenceConfig = [
-      { path: '/api/evidence', mod: '../routes/evidence.js', name: 'Evidence' },
+      { path: '/api/evidence', load: () => import('../routes/evidence.js'), name: 'Evidence' },
       // /api/evidence/ask is owned by registerInlinePlatformFacadesRoutes
       // (see docs/audits/ROUTE_OWNERSHIP.md). It was relocated out of this
       // slot when the handler was rebuilt against the canonical retrieval +
       // AI-gateway layer for Doc System Convergence Phase 4.
-      { path: '/api/evidence-search', mod: '../routes/evidence-search.js', name: 'Evidence Search' },
-      { path: '/api/content-plan', mod: '../routes/content-plan.js', name: 'Content Plan' },
-      { path: '/api/smart-blocks', mod: '../routes/smart-blocks.js', name: 'Smart Blocks' },
+      { path: '/api/evidence-search', load: () => import('../routes/evidence-search.js'), name: 'Evidence Search' },
+      { path: '/api/content-plan', load: () => import('../routes/content-plan.js'), name: 'Content Plan' },
+      { path: '/api/smart-blocks', load: () => import('../routes/smart-blocks.js'), name: 'Smart Blocks' },
       // Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every
       // endpoint returned hardcoded mock data and its services were never
       // implemented (no client/server dependents). Unregistered to shrink the AI
       // route surface; the real AI spine is `/api/ana-ri`. See docs/AI_CONSOLIDATION_PLAN.md.
       {
         path: '/api/evidence-management',
-        mod: '../routes/evidence-management.routes.js',
+        load: () => import('../routes/evidence-management.routes.js'),
         name: 'Evidence Management',
       },
       {
         path: '/api/evidence-fabric',
-        mod: '../routes/evidence-fabric.js',
+        load: () => import('../routes/evidence-fabric.js'),
         name: 'Evidence Fabric BFF',
       },
-      { path: '/api/docx-factory', mod: '../routes/docx-factory.js', name: 'DOCX Factory BFF' },
-      { path: '/api/knowledge-base', mod: '../routes/knowledge-base.js', name: 'Knowledge Base BFF' },
+      { path: '/api/docx-factory', load: () => import('../routes/docx-factory.js'), name: 'DOCX Factory BFF' },
+      { path: '/api/knowledge-base', load: () => import('../routes/knowledge-base.js'), name: 'Knowledge Base BFF' },
       {
         path: '/api/predicate-intelligence',
-        mod: '../routes/predicate-intelligence.js',
+        load: () => import('../routes/predicate-intelligence.js'),
         name: 'Predicate Intelligence BFF',
       },
       {
         path: '/api/regulatory-graph',
-        mod: '../routes/regulatory-graph.js',
+        load: () => import('../routes/regulatory-graph.js'),
         name: 'Regulatory Graph',
       },
       {
         path: '/api/change-propagation',
-        mod: '../routes/change-propagation.js',
+        load: () => import('../routes/change-propagation.js'),
         name: 'Change Propagation (governed fact change)',
       },
       {
         path: '/api/standards',
-        mod: '../routes/standards.js',
+        load: () => import('../routes/standards.js'),
         name: 'Standards Catalog',
       },
       {
         path: '/api/pccp',
-        mod: '../routes/pccp.js',
+        load: () => import('../routes/pccp.js'),
         name: 'AI/ML PCCP',
       },
       {
         path: '/api/gspr',
-        mod: '../routes/gspr-postmarket.js',
+        load: () => import('../routes/gspr-postmarket.js'),
         name: 'GSPR Catalog + Mappings',
       },
       {
         path: '/api/post-market',
-        mod: '../routes/post-market.js',
+        load: () => import('../routes/post-market.js'),
         name: 'Post-Market Documents',
       },
       {
         path: '/api/evidence-sufficiency',
-        mod: '../routes/evidence-sufficiency.js',
+        load: () => import('../routes/evidence-sufficiency.js'),
         name: 'Evidence Sufficiency',
       },
       {
         path: '/api/q-sub',
-        mod: '../routes/q-sub.js',
+        load: () => import('../routes/q-sub.js'),
         name: 'Q-Submissions (Pre-Sub / SIR / SRD)',
       },
       {
         path: '/api/capa-mdr',
-        mod: '../routes/capa-mdr.js',
+        load: () => import('../routes/capa-mdr.js'),
         name: 'CAPA + complaint + MDR / vigilance triage',
       },
       {
         path: '/api/design-risk',
-        mod: '../routes/design-risk.js',
+        load: () => import('../routes/design-risk.js'),
         name: 'Design controls (DHF) + Risk Management File (ISO 14971)',
       },
       {
         path: '/api/qms',
-        mod: '../routes/qms.js',
+        load: () => import('../routes/qms.js'),
         name: 'Quality Management System (document control, training, suppliers, audits)',
       },
       {
         path: '/api/ivd-lifecycle',
-        mod: '../routes/ivd-lifecycle.js',
+        load: () => import('../routes/ivd-lifecycle.js'),
         name: 'IVD lifecycle calculators (analytical, software, change, registration)',
       },
       {
         path: '/api/ivd-knowledge',
-        mod: '../routes/ivd-knowledge.js',
+        load: () => import('../routes/ivd-knowledge.js'),
         name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)',
       },
       {
         path: '/api/ivd-assessments',
-        mod: '../routes/ivd-assessments.js',
+        load: () => import('../routes/ivd-assessments.js'),
         name: 'IVD assessment persistence (saved calculator results + generated documents)',
       },
       {
         path: '/api/_ops/predicate-intelligence',
-        mod: '../routes/_ops-predicate-shadow.js',
+        load: () => import('../routes/_ops-predicate-shadow.js'),
         name: 'Predicate Intelligence — ops probes',
       },
       {
         path: '/api/tenant-export',
-        mod: '../routes/tenant-export.js',
+        load: () => import('../routes/tenant-export.js'),
         name: 'Tenant data export + attestation',
       },
       {
         path: '/api/ana-tool-policy',
-        mod: '../routes/ana-tool-policy.js',
+        load: () => import('../routes/ana-tool-policy.js'),
         name: 'AnA tool policy (per-tenant allow/deny)',
       },
       {
         path: '/api/ana',
-        mod: '../routes/ana-mdx-context.js',
+        load: () => import('../routes/ana-mdx-context.js'),
         name: 'AnA MDX context snapshot (UI consumption)',
       },
       {
         path: '/api/510k/projects',
-        mod: '../routes/k510-document-preview.js',
+        load: () => import('../routes/k510-document-preview.js'),
         name: '510(k) live document preview (assembled view + Markdown)',
       },
     ] as const;
-    const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => import(c.mod)));
+    const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => c.load()));
     evidenceResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(evidenceConfig[i].path, r.value.default);

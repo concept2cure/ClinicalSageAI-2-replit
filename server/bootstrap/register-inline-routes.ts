@@ -134,47 +134,47 @@ export async function registerInlineLitCommerceRoutes({
   app,
 }: InlineRouteContext): Promise<void> {
   const litIntConfig = [
-    { path: '/', mod: '../routes/license-routes.js', name: 'License Management' },
+    { path: '/', load: () => import('../routes/license-routes.js'), name: 'License Management' },
     {
       path: '/api/module-subscriptions',
-      mod: '../routes/module-subscriptions.js',
+      load: () => import('../routes/module-subscriptions.js'),
       name: 'Module Subscriptions',
     },
     {
       path: '/api/licensing',
-      mod: '../routes/licensing.js',
+      load: () => import('../routes/licensing.js'),
       name: 'Intelligent Licensing & EULA',
     },
-    { path: '/api/billing', mod: '../routes/billing.js', name: 'Billing' },
-    { path: '/api/deep-research', mod: '../routes/deep-research.js', name: 'Deep Research' },
+    { path: '/api/billing', load: () => import('../routes/billing.js'), name: 'Billing' },
+    { path: '/api/deep-research', load: () => import('../routes/deep-research.js'), name: 'Deep Research' },
     {
       path: '/api/intelligent-reports',
-      mod: '../routes/intelligent-reports.js',
+      load: () => import('../routes/intelligent-reports.js'),
       name: 'Intelligent Reports',
     },
     {
       path: '/api/safety-narratives',
-      mod: '../routes/safety-narrative.js',
+      load: () => import('../routes/safety-narrative.js'),
       name: 'Safety Narrative',
     },
     {
       path: '/api/statistical-defensibility',
-      mod: '../routes/statistical-defensibility.js',
+      load: () => import('../routes/statistical-defensibility.js'),
       name: 'Statistical Defensibility',
     },
     {
       path: '/api/conversation-health',
-      mod: '../routes/conversation-health.js',
+      load: () => import('../routes/conversation-health.js'),
       name: 'Conversation Health',
     },
-    { path: '/api/billing', mod: '../routes/billing-dashboard.js', name: 'Billing Dashboard' },
-    { path: '/api/report-os', mod: '../routes/report-os.js', name: 'Report OS' },
-    { path: '/api/device-cockpit', mod: '../routes/device-cockpit.js', name: 'Device Cockpit' },
-    { path: '/api/global-markets', mod: '../routes/global-markets.js', name: 'Global Markets' },
-    { path: '/api/workspace', mod: '../routes/workspace-config.routes.js', name: 'Workspace Config' },
-    { path: '/api/insights', mod: '../routes/report-os-insights.js', name: 'Insights' },
+    { path: '/api/billing', load: () => import('../routes/billing-dashboard.js'), name: 'Billing Dashboard' },
+    { path: '/api/report-os', load: () => import('../routes/report-os.js'), name: 'Report OS' },
+    { path: '/api/device-cockpit', load: () => import('../routes/device-cockpit.js'), name: 'Device Cockpit' },
+    { path: '/api/global-markets', load: () => import('../routes/global-markets.js'), name: 'Global Markets' },
+    { path: '/api/workspace', load: () => import('../routes/workspace-config.routes.js'), name: 'Workspace Config' },
+    { path: '/api/insights', load: () => import('../routes/report-os-insights.js'), name: 'Insights' },
   ] as const;
-  const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));
+  const litIntResults = await Promise.allSettled(litIntConfig.map(c => c.load()));
   litIntResults.forEach((r, i) => {
     if (r.status === 'fulfilled') {
       app.use(litIntConfig[i].path, r.value.default);
@@ -883,21 +883,21 @@ export async function registerInlineAiWorkflowRoutes({
   // Wave-3 batch: org-scoped instance-list reads, each on its own sub-prefix,
   // feeding a registered v2 surface that fails closed to its fixture.
   for (const [prefix, modPath, label] of [
-    ['/api/ind-checklist', '../routes/ind-checklist.routes', 'IND checklist'],
-    ['/api/program-journey', '../routes/program-journey.routes', 'Program journey'],
-    ['/api/market-access', '../routes/market-access.routes', 'Market access'],
-    ['/api/shadow-review', '../routes/shadow-review.routes', 'Shadow review'],
-    ['/api/labeling-pi', '../routes/labeling-pi.routes', 'Labeling PI'],
-    ['/api/protocol-dev', '../routes/protocol-dev.routes', 'Protocol dev'],
-    ['/api/research-admin', '../routes/research-admin.routes', 'Research admin'],
-    ['/api/investigator-brochure', '../routes/investigator-brochure.routes', "Investigator's Brochure"],
-    ['/api/nonclinical-summary', '../routes/nonclinical-summary.routes', 'Nonclinical M2.6/M4'],
-    ['/api/maa-module1', '../routes/maa-module1.routes', 'MAA Module 1'],
-    ['/api/labeling-smpc', '../routes/labeling-smpc.routes', 'EU SmPC labeling'],
-    ['/api/cmc-changes', '../routes/cmc-changes.routes', 'CMC change control'],
+    ['/api/ind-checklist', () => import('../routes/ind-checklist.routes'), 'IND checklist'],
+    ['/api/program-journey', () => import('../routes/program-journey.routes'), 'Program journey'],
+    ['/api/market-access', () => import('../routes/market-access.routes'), 'Market access'],
+    ['/api/shadow-review', () => import('../routes/shadow-review.routes'), 'Shadow review'],
+    ['/api/labeling-pi', () => import('../routes/labeling-pi.routes'), 'Labeling PI'],
+    ['/api/protocol-dev', () => import('../routes/protocol-dev.routes'), 'Protocol dev'],
+    ['/api/research-admin', () => import('../routes/research-admin.routes'), 'Research admin'],
+    ['/api/investigator-brochure', () => import('../routes/investigator-brochure.routes'), "Investigator's Brochure"],
+    ['/api/nonclinical-summary', () => import('../routes/nonclinical-summary.routes'), 'Nonclinical M2.6/M4'],
+    ['/api/maa-module1', () => import('../routes/maa-module1.routes'), 'MAA Module 1'],
+    ['/api/labeling-smpc', () => import('../routes/labeling-smpc.routes'), 'EU SmPC labeling'],
+    ['/api/cmc-changes', () => import('../routes/cmc-changes.routes'), 'CMC change control'],
   ] as const) {
     try {
-      const mod = await import(modPath);
+      const mod = await modPath();
       app.use(prefix, authMiddleware, mod.default);
       console.info(`✅ ${label} route mounted (${prefix})`);
     } catch (error) {

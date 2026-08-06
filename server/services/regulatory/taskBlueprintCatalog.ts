@@ -54,20 +54,20 @@ export async function getTaskBlueprint(registryIdOrLegacy: string): Promise<Task
  * Registry ID → dedicated blueprint module that exports `taskBlueprint`.
  * Kept in sync with `sectionBlueprintCatalog` (the same files export both).
  */
-const TASK_BLUEPRINT_FILES: Record<string, string> = {
-  US_IND: './registry/blueprints/usIndBlueprint.js',
-  US_NDA: './registry/blueprints/usNdaBlueprint.js',
-  US_BLA: './registry/blueprints/usBlaBlueprint.js',
-  EU_MAA: './registry/blueprints/euMaaBlueprint.js',
-  EU_CTA: './registry/blueprints/euCtaBlueprint.js',
-  CA_NDS: './registry/blueprints/canadaNdsBlueprint.js',
-  CA_CTA: './registry/blueprints/canadaCtaBlueprint.js',
-  JP_MKT_APPROVAL: './registry/blueprints/japanMaaBlueprint.js',
-  JP_CTN: './registry/blueprints/japanCtnBlueprint.js',
-  CN_CTA: './registry/blueprints/chinaCtaBlueprint.js',
-  AU_CTN: './registry/blueprints/australiaCtnBlueprint.js',
-  BR_DDCM: './registry/blueprints/brazilDdcmBlueprint.js',
-  IN_CT04: './registry/blueprints/indiaCtBlueprint.js',
+const TASK_BLUEPRINT_FILES: Record<string, () => Promise<any>> = {
+  US_IND: () => import('./registry/blueprints/usIndBlueprint.js'),
+  US_NDA: () => import('./registry/blueprints/usNdaBlueprint.js'),
+  US_BLA: () => import('./registry/blueprints/usBlaBlueprint.js'),
+  EU_MAA: () => import('./registry/blueprints/euMaaBlueprint.js'),
+  EU_CTA: () => import('./registry/blueprints/euCtaBlueprint.js'),
+  CA_NDS: () => import('./registry/blueprints/canadaNdsBlueprint.js'),
+  CA_CTA: () => import('./registry/blueprints/canadaCtaBlueprint.js'),
+  JP_MKT_APPROVAL: () => import('./registry/blueprints/japanMaaBlueprint.js'),
+  JP_CTN: () => import('./registry/blueprints/japanCtnBlueprint.js'),
+  CN_CTA: () => import('./registry/blueprints/chinaCtaBlueprint.js'),
+  AU_CTN: () => import('./registry/blueprints/australiaCtnBlueprint.js'),
+  BR_DDCM: () => import('./registry/blueprints/brazilDdcmBlueprint.js'),
+  IN_CT04: () => import('./registry/blueprints/indiaCtBlueprint.js'),
 };
 
 /** Registry IDs that have a dedicated, wired task blueprint. */
@@ -82,7 +82,7 @@ async function loadDedicatedBlueprint(registryId: string): Promise<TaskBlueprint
   if (!file) return null;
 
   try {
-    const mod = await import(file);
+    const mod = await file();
     return mod.taskBlueprint ?? null;
   } catch {
     return null;

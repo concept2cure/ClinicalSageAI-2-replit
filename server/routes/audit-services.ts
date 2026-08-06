@@ -22,8 +22,8 @@ const logger = createScopedLogger('audit-services');
 const router = Router();
 
 // Lazy-import services to avoid startup crashes if deps are missing
-async function getSvc<T>(path: string): Promise<T> {
-  return (await import(path)) as T;
+async function getSvc<T>(loader: () => Promise<unknown>): Promise<T> {
+  return (await loader()) as T;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -36,7 +36,7 @@ async function getSvc<T>(path: string): Promise<T> {
  */
 router.post('/figures/generate', async (req: Request, res: Response) => {
   try {
-    const { generateFigure } = await getSvc<any>('../services/figureGenerationService.js');
+    const { generateFigure } = await getSvc<any>(() => import('../services/figureGenerationService.js'));
     const { projectId, figureType, title, dataSource, options } = req.body;
     const user = (req as any).user;
 
@@ -67,7 +67,7 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
  */
 router.post('/figures/auto-insert', async (req: Request, res: Response) => {
   try {
-    const { autoInsertFigures } = await getSvc<any>('../services/figureGenerationService.js');
+    const { autoInsertFigures } = await getSvc<any>(() => import('../services/figureGenerationService.js'));
     const { projectId, sectionType, content } = req.body;
     const user = (req as any).user;
 
@@ -100,7 +100,7 @@ router.post('/figures/auto-insert', async (req: Request, res: Response) => {
  */
 router.post('/export/pdf', async (req: Request, res: Response) => {
   try {
-    const { generatePDF } = await getSvc<any>('../services/documentExportService.js');
+    const { generatePDF } = await getSvc<any>(() => import('../services/documentExportService.js'));
     const { projectId, title, options } = req.body;
     const user = (req as any).user;
 
@@ -139,9 +139,7 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
  */
 router.post('/export/ectd', async (req: Request, res: Response) => {
   try {
-    const { generateEctdPackage, validateEctdPackage } = await getSvc<any>(
-      '../services/ectdExportService.js'
-    );
+    const { generateEctdPackage, validateEctdPackage } = await getSvc<any>(() => import('../services/ectdExportService.js'));
     const { projectId, applicationNumber, sequenceNumber, region, submissionType, validateAfter } =
       req.body;
     const user = (req as any).user;
@@ -196,7 +194,7 @@ router.post('/export/ectd', async (req: Request, res: Response) => {
  */
 router.post('/traceability/map', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/sentenceTraceabilityService.js');
+    const svc = await getSvc<any>(() => import('../services/sentenceTraceabilityService.js'));
     const { documentId, content, projectId, persist = true } = req.body;
     const user = (req as any).user;
     const organizationId = Number(user?.organizationId);
@@ -235,7 +233,7 @@ router.post('/traceability/map', async (req: Request, res: Response) => {
  */
 router.post('/traceability/click-through', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/sentenceTraceabilityService.js');
+    const svc = await getSvc<any>(() => import('../services/sentenceTraceabilityService.js'));
     const { content, charOffset, projectId } = req.body;
     const user = (req as any).user;
     const organizationId = Number(user?.organizationId);
@@ -266,7 +264,7 @@ router.post('/traceability/click-through', async (req: Request, res: Response) =
  */
 router.post('/traceability/report', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/sentenceTraceabilityService.js');
+    const svc = await getSvc<any>(() => import('../services/sentenceTraceabilityService.js'));
     const { content, documentId, projectId } = req.body;
     const user = (req as any).user;
     const organizationId = Number(user?.organizationId);
@@ -299,7 +297,7 @@ router.post('/traceability/report', async (req: Request, res: Response) => {
  */
 router.post('/keywords/extract', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/keywordExtractionService.js');
+    const svc = await getSvc<any>(() => import('../services/keywordExtractionService.js'));
     const { content, linkSources } = req.body;
     const user = (req as any).user;
 
@@ -324,7 +322,7 @@ router.post('/keywords/extract', async (req: Request, res: Response) => {
  */
 router.post('/keywords/consistency', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/keywordExtractionService.js');
+    const svc = await getSvc<any>(() => import('../services/keywordExtractionService.js'));
     const { documents } = req.body;
     const user = (req as any).user;
 
@@ -358,7 +356,7 @@ router.post('/keywords/consistency', async (req: Request, res: Response) => {
  */
 router.post('/extraction/queue', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/autoExtractionPipeline.js');
+    const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
     const { fileName, fileContent, fileType, projectId, priority } = req.body;
     const user = (req as any).user;
 
@@ -389,7 +387,7 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
  */
 router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/autoExtractionPipeline.js');
+    const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
     const job = svc.getExtractionStatus(String(req.params.jobId));
 
     if (!job) {
@@ -408,7 +406,7 @@ router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
  */
 router.get('/extraction/project/:projectId', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/autoExtractionPipeline.js');
+    const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
     const jobs = svc.getProjectExtractionJobs(parseInt(String(req.params.projectId)));
     res.json({ success: true, jobs });
   } catch (error: any) {
@@ -426,7 +424,7 @@ router.get('/extraction/project/:projectId', async (req: Request, res: Response)
  */
 router.post('/confidence/compute', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/confidenceScoringEngine.js');
+    const svc = await getSvc<any>(() => import('../services/confidenceScoringEngine.js'));
     const { evidenceId } = req.body;
     const user = (req as any).user;
 
@@ -449,7 +447,7 @@ router.post('/confidence/compute', async (req: Request, res: Response) => {
  */
 router.post('/confidence/batch', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/confidenceScoringEngine.js');
+    const svc = await getSvc<any>(() => import('../services/confidenceScoringEngine.js'));
     const { limit, onlyUnscored } = req.body;
     const user = (req as any).user;
 
@@ -471,7 +469,7 @@ router.post('/confidence/batch', async (req: Request, res: Response) => {
  */
 router.post('/verification/verify-claim', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/confidenceScoringEngine.js');
+    const svc = await getSvc<any>(() => import('../services/confidenceScoringEngine.js'));
     const { claimText, sourceEvidenceIds, options } = req.body;
     const user = (req as any).user;
 
@@ -499,7 +497,7 @@ router.post('/verification/verify-claim', async (req: Request, res: Response) =>
  */
 router.post('/verification/batch-verify', async (req: Request, res: Response) => {
   try {
-    const svc = await getSvc<any>('../services/confidenceScoringEngine.js');
+    const svc = await getSvc<any>(() => import('../services/confidenceScoringEngine.js'));
     const { content, projectId } = req.body;
     const user = (req as any).user;
 

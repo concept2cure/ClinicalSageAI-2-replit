@@ -20,26 +20,26 @@ export async function registerProjectRoutes({ app, pool }: ProjectBootstrapConte
     const projectConfig = [
       {
         path: '/api/project-hierarchy',
-        mod: '../routes/project-hierarchy',
+        load: () => import('../routes/project-hierarchy'),
         name: 'Project Hierarchy (Pillar 1: 4-level tree)',
       },
       {
         path: '/api/project-rules',
-        mod: '../routes/project-rules',
+        load: () => import('../routes/project-rules'),
         name: 'Project Rules Engine (Pillar 2: configurable rules)',
       },
       {
         path: '/api/sentinel',
-        mod: '../routes/sentinel-routes',
+        load: () => import('../routes/sentinel-routes'),
         name: 'AI Sentinel (Pillar 3: proactive monitoring)',
       },
       {
         path: '/api/project-modules',
-        mod: '../routes/project-modules',
+        load: () => import('../routes/project-modules'),
         name: 'Project Module Integration (Pillar 4)',
       },
     ] as const;
-    const projectResults = await Promise.allSettled(projectConfig.map(c => import(c.mod)));
+    const projectResults = await Promise.allSettled(projectConfig.map(c => c.load()));
     projectResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(projectConfig[i].path, r.value.default || r.value);
@@ -82,13 +82,13 @@ export async function registerProjectRoutes({ app, pool }: ProjectBootstrapConte
     const qualityConfig = [
       {
         path: '/api/quality',
-        mod: '../routes/quality-management-api',
+        load: () => import('../routes/quality-management-api'),
         name: 'Quality Management API',
       },
-      { path: '/api/analytics', mod: '../routes/analytics-routes', name: 'Analytics' },
-      { path: '/api/planner', mod: '../routes/planner-routes', name: 'Planner' },
+      { path: '/api/analytics', load: () => import('../routes/analytics-routes'), name: 'Analytics' },
+      { path: '/api/planner', load: () => import('../routes/planner-routes'), name: 'Planner' },
     ] as const;
-    const qualityResults = await Promise.allSettled(qualityConfig.map(c => import(c.mod)));
+    const qualityResults = await Promise.allSettled(qualityConfig.map(c => c.load()));
     qualityResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(qualityConfig[i].path, r.value.default);

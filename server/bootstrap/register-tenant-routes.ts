@@ -10,15 +10,15 @@ export async function registerTenantRoutes({ app, pool }: TenantBootstrapContext
   // ── Tenants, Organizations, Clients (parallelized) ──
   {
     const tenantCoreConfig = [
-      { path: '/api/tenants', mod: '../routes/tenants-simple.js', name: 'Tenants' },
-      { path: '/api/organizations', mod: '../routes/organizations-routes.js', name: 'Organizations' },
-      { path: '/api/clients', mod: '../routes/clients-routes.js', name: 'Clients' },
-      { path: '/api/client-portal', mod: '../routes/client-portal.js', name: 'Client Portal' },
+      { path: '/api/tenants', load: () => import('../routes/tenants-simple.js'), name: 'Tenants' },
+      { path: '/api/organizations', load: () => import('../routes/organizations-routes.js'), name: 'Organizations' },
+      { path: '/api/clients', load: () => import('../routes/clients-routes.js'), name: 'Clients' },
+      { path: '/api/client-portal', load: () => import('../routes/client-portal.js'), name: 'Client Portal' },
       // AnA onboarding proposal ingest — read-only, writes nothing (P2).
-      { path: '/api/onboarding', mod: '../routes/onboarding-proposals.js', name: 'Onboarding Proposals' },
-      { path: '/api/tenant-users', mod: '../routes/tenant-users.js', name: 'Tenant Users' },
+      { path: '/api/onboarding', load: () => import('../routes/onboarding-proposals.js'), name: 'Onboarding Proposals' },
+      { path: '/api/tenant-users', load: () => import('../routes/tenant-users.js'), name: 'Tenant Users' },
     ] as const;
-    const tenantCoreResults = await Promise.allSettled(tenantCoreConfig.map(c => import(c.mod)));
+    const tenantCoreResults = await Promise.allSettled(tenantCoreConfig.map(c => c.load()));
     tenantCoreResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         app.use(tenantCoreConfig[i].path, r.value.default);
@@ -34,29 +34,29 @@ export async function registerTenantRoutes({ app, pool }: TenantBootstrapContext
     const tenantConfigRoutes = [
       {
         path: '/api/tenant-section-gating',
-        mod: '../routes/tenant-section-gating',
+        load: () => import('../routes/tenant-section-gating'),
         name: 'Tenant Section Gating',
       },
-      { path: '/api/tenant-config', mod: '../routes/tenant-config', name: 'Tenant Config' },
-      { path: '/api/tenant-stats', mod: '../routes/tenant-stats', name: 'Tenant Stats' },
+      { path: '/api/tenant-config', load: () => import('../routes/tenant-config'), name: 'Tenant Config' },
+      { path: '/api/tenant-stats', load: () => import('../routes/tenant-stats'), name: 'Tenant Stats' },
       {
         path: '/api/tenant-traceability',
-        mod: '../routes/tenant-traceability',
+        load: () => import('../routes/tenant-traceability'),
         name: 'Tenant Traceability',
       },
       {
         path: '/api/tenant-quality-validation',
-        mod: '../routes/tenant-quality-validation',
+        load: () => import('../routes/tenant-quality-validation'),
         name: 'Tenant Quality Validation',
       },
       {
         path: '/api/tenant-ctq-factors',
-        mod: '../routes/tenant-ctq-factors',
+        load: () => import('../routes/tenant-ctq-factors'),
         name: 'Tenant CTQ Factors',
       },
     ] as const;
     const tenantConfigResults = await Promise.allSettled(
-      tenantConfigRoutes.map(c => import(c.mod))
+      tenantConfigRoutes.map(c => c.load())
     );
     tenantConfigResults.forEach((r, i) => {
       if (r.status === 'fulfilled') {

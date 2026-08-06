@@ -31,19 +31,19 @@ import type { SectionBlueprint } from '../../../shared/regulatory/document-taxon
  * Keep in sync with `taskBlueprintCatalog`'s fileMap; the same files export
  * both a `sectionBlueprint` and a `taskBlueprint`.
  */
-const SECTION_BLUEPRINT_FILES: Record<string, string> = {
-  US_NDA: './registry/blueprints/usNdaBlueprint.js',
-  US_BLA: './registry/blueprints/usBlaBlueprint.js',
-  EU_MAA: './registry/blueprints/euMaaBlueprint.js',
-  EU_CTA: './registry/blueprints/euCtaBlueprint.js',
-  CA_NDS: './registry/blueprints/canadaNdsBlueprint.js',
-  CA_CTA: './registry/blueprints/canadaCtaBlueprint.js',
-  JP_MKT_APPROVAL: './registry/blueprints/japanMaaBlueprint.js',
-  JP_CTN: './registry/blueprints/japanCtnBlueprint.js',
-  CN_CTA: './registry/blueprints/chinaCtaBlueprint.js',
-  AU_CTN: './registry/blueprints/australiaCtnBlueprint.js',
-  BR_DDCM: './registry/blueprints/brazilDdcmBlueprint.js',
-  IN_CT04: './registry/blueprints/indiaCtBlueprint.js',
+const SECTION_BLUEPRINT_FILES: Record<string, () => Promise<any>> = {
+  US_NDA: () => import('./registry/blueprints/usNdaBlueprint.js'),
+  US_BLA: () => import('./registry/blueprints/usBlaBlueprint.js'),
+  EU_MAA: () => import('./registry/blueprints/euMaaBlueprint.js'),
+  EU_CTA: () => import('./registry/blueprints/euCtaBlueprint.js'),
+  CA_NDS: () => import('./registry/blueprints/canadaNdsBlueprint.js'),
+  CA_CTA: () => import('./registry/blueprints/canadaCtaBlueprint.js'),
+  JP_MKT_APPROVAL: () => import('./registry/blueprints/japanMaaBlueprint.js'),
+  JP_CTN: () => import('./registry/blueprints/japanCtnBlueprint.js'),
+  CN_CTA: () => import('./registry/blueprints/chinaCtaBlueprint.js'),
+  AU_CTN: () => import('./registry/blueprints/australiaCtnBlueprint.js'),
+  BR_DDCM: () => import('./registry/blueprints/brazilDdcmBlueprint.js'),
+  IN_CT04: () => import('./registry/blueprints/indiaCtBlueprint.js'),
 };
 
 /** Registry IDs that have a dedicated, wired section blueprint. */
@@ -72,7 +72,7 @@ export async function getSectionBlueprint(
   if (!file) return null;
 
   try {
-    const mod = (await import(file)) as { sectionBlueprint?: SectionBlueprint };
+    const mod = (await file()) as { sectionBlueprint?: SectionBlueprint };
     const blueprint = mod.sectionBlueprint ?? null;
     if (blueprint && Array.isArray(blueprint.sections) && blueprint.sections.length > 0) {
       blueprintCache.set(registryId, blueprint);
