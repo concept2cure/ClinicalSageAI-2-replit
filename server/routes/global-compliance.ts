@@ -19,6 +19,7 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth.js';
+import { recordArtifactProvenance } from '../services/provenance/artifact-provenance';
 
 const router = Router();
 router.use(authenticateToken);
@@ -573,9 +574,26 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
            metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
            updated_at = NOW()
        WHERE organization_id = $1 AND created_by_id = $2
-       RETURNING artifact_id`,
+       RETURNING id, artifact_id`,
       [orgId, userId]
     ).catch(() => ({ rows: [] as any[] }));
+
+    // Uniform provenance: GDPR erasure of artifact content is a 'transformation'
+    // event, per erased artifact. Best-effort — a mandated erasure must not fail
+    // because a provenance row could not be written.
+    for (const erased of (artifactsResult.rows as Array<{ id: number }>)) {
+      try {
+        await recordArtifactProvenance(client, {
+          artifactId: erased.id,
+          organizationId: orgId,
+          eventType: 'transformation',
+          eventAction: 'gdpr_erase',
+          actorId: typeof userId === 'number' ? userId : null,
+          details: { reason, gdprErased: true },
+          backendService: 'routes/global-compliance',
+        });
+      } catch { /* never block the mandated erasure on provenance */ }
+    }
 
     const commentsResult = await client.query(
       `UPDATE concept2cure_thread_comments

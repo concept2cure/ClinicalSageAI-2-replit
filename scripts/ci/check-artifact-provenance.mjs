@@ -33,12 +33,9 @@ const ROOT = process.cwd();
 
 // Producers that write artifact CONTENT but do not yet emit provenance. This
 // list may only shrink. Each entry is technical debt tracked toward uniform
-// provenance across every artifact producer.
-const BASELINE = new Set([
-  'server/routes/global-compliance.ts',
-  'server/services/ana/submission-chat-apply-rewrite.ts',
-  'server/services/autoExtractionPipeline.ts',
-]);
+// provenance across every artifact producer. Now EMPTY — every artifact
+// producer emits provenance; the guard fails on any new provenance-less writer.
+const BASELINE = new Set([]);
 
 // Writes artifact content (INSERT, content-setting UPDATE, or Drizzle insert).
 const WRITE_RE =
