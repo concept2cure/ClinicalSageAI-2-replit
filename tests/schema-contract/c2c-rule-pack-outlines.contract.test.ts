@@ -45,6 +45,10 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
 const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql');
 const OUTLINES = path.join(REPO_ROOT, 'migrations/20260804_phase9_rule_pack_outlines.sql');
+// The CTR 536/2014 outline for cta:ema arrives in its own migration because its
+// shape is not the CTD one the file above seeds. Applied here in the same order
+// the deploy path applies it (C2C_MIGRATION_FILES), so the test sees what ships.
+const CTA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260806_cta_ema_ctr536_outline.sql');
 
 const ORG = 7;
 const PROJECT = '11111111-2222-3333-4444-555555555555';
@@ -76,6 +80,7 @@ async function boot(withOutlines = true) {
   await pg.exec(fs.readFileSync(PREREQ, 'utf8'));
   await pg.exec(fs.readFileSync(SCHEMA, 'utf8'));
   if (withOutlines) await pg.exec(fs.readFileSync(OUTLINES, 'utf8'));
+  if (withOutlines) await pg.exec(fs.readFileSync(CTA_OUTLINE, 'utf8'));
 }
 
 const scaffold = (programType: string, primaryAgency: string) =>
@@ -152,25 +157,55 @@ describe('no live rule pack is a stub', () => {
     }
   }, 60_000);
 
-  // Recorded rather than skipped. cta:ema ships M1 plus a bare M2 and nothing
-  // else — thin by any reading. It is NOT fixed in the outlines migration
-  // because doing it properly means modelling CTR 536/2014's Part I / Part II
-  // and the IMPD, which is a different shape from the CTD packs and not
-  // something to improvise alongside them. Asserting the gap keeps it from
-  // going quiet: this test fails when someone gives cta a real outline, and the
-  // fix is to promote it into the dossier list above rather than delete it here.
-  it('records cta:ema as a known-thin pack awaiting a CTR 536/2014 outline', async () => {
+  /*
+   * cta:ema now carries the real CTR 536/2014 Annex I outline, so this asserts
+   * its SHAPE rather than recording a gap.
+   *
+   * Worth knowing why the previous version had to be replaced and not merely
+   * satisfied: it asserted `roots.length === 2`, meaning "M1 plus a bare M2".
+   * CTR 536/2014 also has exactly two top-level parts — Part I and Part II — so
+   * the real outline would have passed the thin-pack tripwire by coincidence and
+   * the guard would have gone quiet while appearing to hold. A count is a weak
+   * proxy for a shape.
+   *
+   * An EU clinical trial application is NOT a five-module CTD, which is why cta
+   * is excluded by name from the M1-M5 assertion above. Annex I splits the
+   * documentation by who assesses it: Part I (A-J), assessed jointly by the
+   * Member States concerned, covers the science and the product; Part II (K-R),
+   * assessed nationally, covers ethics, sites, insurance and data protection.
+   */
+  it('cta:ema carries the CTR 536/2014 Part I + Part II structure', async () => {
     const r = await pg.query<{ required_sections: any[] }>(
       `SELECT required_sections FROM c2c_rule_packs
         WHERE doc_type = 'cta' AND agency = 'ema' AND superseded_by IS NULL`,
     );
-    if (r.rows.length === 0) return; // pack removed entirely — not this test's business
-    const roots = r.rows[0].required_sections.filter((s: any) => s.parent_key === null);
-    expect(
-      roots.length,
-      'cta:ema now has more than two top-level parts — give it a real outline and move it ' +
-        'into the CTD dossier assertion above (or its own CTR-shaped one)',
-    ).toBe(2);
+    expect(r.rows.length, 'no live cta:ema pack').toBe(1);
+    const secs = r.rows[0].required_sections;
+    const keys = new Set(secs.map((x: any) => x.key));
+
+    // Both assessment parts, and each with content beneath it — a bare pair of
+    // parts is the placeholder shape this file exists to reject.
+    for (const part of ['PI', 'PII']) {
+      expect(keys.has(part), `${part} missing`).toBe(true);
+      expect(
+        secs.filter((x: any) => x.parent_key === part).length,
+        `${part} has no sections beneath it`,
+      ).toBeGreaterThan(3);
+    }
+
+    // The lettered set. Named individually because "there are 27 rows" would be
+    // satisfied by 27 of anything.
+    for (const letter of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'J']) {
+      expect(keys.has(letter), `Part I is missing ${letter}`).toBe(true);
+    }
+    for (const letter of ['K', 'L', 'M', 'N', 'O', 'R']) {
+      expect(keys.has(letter), `Part II is missing ${letter}`).toBe(true);
+    }
+
+    // The IMPD is the substantive half of Part I and carries its own quality
+    // split; without it the pack is an index rather than a dossier.
+    expect(keys.has('G.1.S') && keys.has('G.1.P'), 'the IMPD quality split is missing').toBe(true);
+    expect(secs.find((x: any) => x.key === 'G.1')?.parent_key).toBe('G');
   }, 60_000);
 
   it('covers all three biotech marketing pathways', async () => {
@@ -181,6 +216,49 @@ describe('no live rule pack is a stub', () => {
       );
       expect(Number(r.rows[0].n), `no live rule pack for ${dt}`).toBeGreaterThan(0);
     }
+  }, 60_000);
+});
+
+describe('scaffolding a CTA', () => {
+  /*
+   * The end-to-end payoff. A rule pack nobody can reach is the same as no pack,
+   * and until now `cta` was exactly that: a legal doc_type, mapped in
+   * PROGRAM_TO_DOC_TYPE, backed by a pack, and rejected by VALID_PROGRAM_TYPES
+   * at POST /api/c2c/projects. This drives the real service to prove a European
+   * clinical trial application now produces a real dossier rather than a 400.
+   */
+  beforeEach(() => boot());
+
+  it('writes the real CTR 536/2014 outline, both assessment parts', async () => {
+    const r = await scaffold('cta', 'EMA');
+
+    expect(r.skipped, `CTA scaffolding declined: ${JSON.stringify(r)}`).toBeUndefined();
+    expect(r.sectionCount, 'a CTA scaffolded to a placeholder-sized outline').toBeGreaterThan(20);
+
+    const rows = await pg.query<{ section_key: string }>(
+      `SELECT section_key FROM c2c_document_sections WHERE document_id = $1`,
+      [r.documentId],
+    );
+    const keys = new Set(rows.rows.map(x => x.section_key));
+
+    // Part I and Part II both scaffolded — the split that defines a CTR filing.
+    expect(keys.has('PI') && keys.has('PII'), 'an assessment part is missing').toBe(true);
+    // The IMPD, with its quality split — the substantive half of Part I.
+    expect(keys.has('G') && keys.has('G.1.S') && keys.has('G.1.P')).toBe(true);
+    // Part II's national items, which no CTD pack would produce.
+    expect(keys.has('L'), 'informed consent (L) missing').toBe(true);
+    expect(keys.has('R'), 'GDPR compliance (R) missing').toBe(true);
+  }, 60_000);
+
+  it('binds the document to the CTR pack version, not a CTD one', async () => {
+    const r = await scaffold('cta', 'EMA');
+    const doc = await pg.query<{ doc_type: string; agency: string; rule_pack_version: string }>(
+      `SELECT doc_type, agency, rule_pack_version FROM c2c_documents WHERE id = $1`,
+      [r.documentId],
+    );
+    expect(doc.rows[0].doc_type).toBe('cta');
+    expect(doc.rows[0].agency).toBe('ema');
+    expect(doc.rows[0].rule_pack_version).toBe('ctr-536-2014-annex-i-v1.0');
   }, 60_000);
 });
 
