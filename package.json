@@ -71,6 +71,7 @@
     "ci:unbacked-tables:write-baseline": "node scripts/ci/check-unbacked-tables.mjs --write-baseline",
     "ci:unreferenced-modules": "node scripts/ci/check-unreferenced-modules.mjs",
     "ci:lineage-save-gate": "node scripts/ci/check-lineage-save-gate.mjs",
+    "ci:artifact-provenance": "node scripts/ci/check-artifact-provenance.mjs",
     "ci:unreferenced-modules:strict": "node scripts/ci/check-unreferenced-modules.mjs --strict",
     "ci:unreferenced-modules:write-baseline": "node scripts/ci/check-unreferenced-modules.mjs --write-baseline",
     "test:schema-contract": "vitest run --config vitest.config.ts tests/schema-contract",

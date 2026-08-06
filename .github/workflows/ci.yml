@@ -104,6 +104,15 @@ jobs:
         # enlisted too. Verified to fail on each of those removed individually.
         run: npm run ci:lineage-save-gate
 
+      - name: Guardrails — every artifact producer emits a provenance event
+        # A write to concept2cure_artifacts is a document the platform builds;
+        # each must record a concept2cure_provenance_events row so the document's
+        # lifecycle is uniformly traceable. Baseline-based: a shrinking set of
+        # pre-existing producers is grandfathered, but no NEW producer may write
+        # artifact content without provenance, and baseline entries that become
+        # compliant must be removed. Debt can only go down.
+        run: npm run ci:artifact-provenance
+
       - name: Guardrails — no direct Pool construction in runtime code
         # Was enforced nowhere. Its scan list also named ten of server/'s ~35
         # directories, so server/src, server/bootstrap, server/lib and others

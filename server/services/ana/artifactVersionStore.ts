@@ -17,6 +17,7 @@
 import crypto from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { getPool } from '../../db';
+import { recordArtifactProvenance } from '../provenance/artifact-provenance';
 
 /**
  * Normalize a document title into a stable lookup slug: lowercase, trimmed, and
@@ -123,6 +124,24 @@ async function insertNewArtifact(
       ctx.now,
     ]
   );
+  // Uniform provenance: the birth of this document is a 'generation' event,
+  // recorded in the same transaction as the artifact + version so content and
+  // provenance commit together.
+  await recordArtifactProvenance(client, {
+    artifactId: artifactPk,
+    organizationId: input.organizationId,
+    eventType: 'generation',
+    eventAction: 'ai_generate',
+    actorId: ctx.userId,
+    details: {
+      source: 'ana_document_studio',
+      anaThreadId: input.anaThreadId,
+      documentType: input.documentType ?? null,
+      version: 1,
+      contentHash: ctx.contentHash,
+    },
+    backendService: 'artifactVersionStore',
+  });
   return {
     created: true,
     artifactId: artifactInsert.rows[0].artifact_id as string,
@@ -255,6 +274,24 @@ export async function upsertDocumentArtifactVersionTx(
       WHERE id = $5`,
     [nextVersion, input.content, contentHash, now, artifactPk]
   );
+
+  // Uniform provenance: a new version is an 'edit' event, in the same
+  // transaction as the version append.
+  await recordArtifactProvenance(client, {
+    artifactId: artifactPk,
+    organizationId: input.organizationId,
+    eventType: 'edit',
+    eventAction: 'ai_generate',
+    actorId: userId,
+    details: {
+      source: 'ana_document_studio',
+      anaThreadId: input.anaThreadId,
+      documentType: input.documentType ?? null,
+      version: nextVersion,
+      contentHash,
+    },
+    backendService: 'artifactVersionStore',
+  });
 
   return {
     created: true,
