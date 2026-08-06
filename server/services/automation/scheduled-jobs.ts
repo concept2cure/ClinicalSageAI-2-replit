@@ -17,6 +17,7 @@ import Queue from 'bull';
 import { createScopedLogger } from '../../utils/logger.js';
 import { runProactiveDigest } from '../digest/proactive-digest.js';
 import { parseDigestPreferences } from '../digest/digest-preferences.js';
+import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore';
 
 const log = createScopedLogger('scheduled-jobs');
 
@@ -275,7 +276,22 @@ export async function initScheduledJobs(redisUrl?: string): Promise<void> {
       }
 
       log.info(`Executing scheduled job: ${config.name} (${config.type})`);
-      const result = await handler(config);
+      // Every scheduled job is registered per-org (config.organizationId), and
+      // its handler reads/writes that org's data (e.g. proactive digest,
+      // platform maintenance). Run it in that org's tenant scope so the
+      // handler's pooled queries are permitted and correctly filtered under
+      // RLS_ENFORCE=on — otherwise the Bull worker context carries no scope and
+      // every handler's DB access fails closed.
+      const result = await runWithTenantScope(
+        {
+          tenantId: String(config.organizationId),
+          orgUuid: null,
+          role: null,
+          source: 'job',
+          caller: `scheduled-job:${config.type}`,
+        },
+        () => handler(config),
+      );
       log.info(
         `Scheduled job ${config.name} completed: ${result.itemsProcessed} processed, ${result.itemsFlagged} flagged in ${result.durationMs}ms`,
       );
@@ -443,8 +459,14 @@ export async function registerDefaultSchedulesForActiveOrgs(): Promise<number> {
   const { pool } = await import('../../db/runtime.js');
   let orgIds: number[] = [];
   try {
-    const { rows } = await pool.query<{ id: number }>(
-      `SELECT id FROM organizations WHERE status = 'active'`,
+    // Enumerating every active org belongs to no single tenant, so it runs in a
+    // system scope — otherwise this estate-wide read fails closed under
+    // RLS_ENFORCE=on and no org's default schedules (incl. the regulatory
+    // digest cron) ever register.
+    const { rows } = await runWithSystemTenantScope('scheduled-jobs:enumerate-orgs', () =>
+      pool.query<{ id: number }>(
+        `SELECT id FROM organizations WHERE status = 'active'`,
+      ),
     );
     orgIds = rows.map((r) => r.id);
   } catch (err) {

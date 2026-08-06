@@ -20,6 +20,7 @@ import { createScopedLogger } from '../../../utils/logger';
 import { isEntitled } from '../../entitlements/mdx-entitlements';
 import type { Tier } from '../../entitlements/types';
 import { listDueSubscriptions, markRun } from './subscription-service';
+import { runWithSystemTenantScope, runWithTenantScope } from '../../../db/tenantStore';
 import type { ReportSubscriptionRow } from '@shared/schema/report-os';
 
 const logger = createScopedLogger('report-subscription-sweep');
@@ -100,19 +101,45 @@ export async function planSweep(deps: SweepDeps): Promise<SweepSummary> {
  * Concrete sweep: pull due subscriptions from the DB and run the plan with the
  * real tier resolver + generator + cursor advance. `generateAndDeliver` is
  * injected so the heavy report pipeline stays decoupled and mockable.
+ *
+ * Tenant scoping (required under RLS_ENFORCE=on):
+ *   - The due-subscription scan spans every org, so it runs in a SYSTEM scope —
+ *     otherwise this estate-wide pooled read fails closed and no subscription
+ *     ever fires (silent in dev where enforcement is off, broken in prod).
+ *   - Each subscription's tier resolution, compute+deliver, and cursor advance
+ *     read and write that org's data, so they run in THAT ORG'S tenant scope
+ *     (least privilege — not a system/super-admin scope). `planSweep` stays
+ *     pure; the scoping is layered onto the injected deps here.
  */
 export async function sweepDueSubscriptions(
   now: Date,
   generateAndDeliver: (sub: ReportSubscriptionRow) => Promise<void>,
   resolveTier: (organizationId: number) => Promise<Tier>,
 ): Promise<SweepSummary> {
-  const due = await listDueSubscriptions(now);
+  const due = await runWithSystemTenantScope('report-sweep:scan', () =>
+    listDueSubscriptions(now),
+  );
+  const inOrgScope = <T>(organizationId: number, caller: string, fn: () => Promise<T>) =>
+    runWithTenantScope(
+      {
+        tenantId: String(organizationId),
+        orgUuid: null,
+        role: null,
+        source: 'job',
+        caller,
+      },
+      fn,
+    );
   return planSweep({
     due,
-    resolveTier,
-    generateAndDeliver,
+    resolveTier: (organizationId) =>
+      inOrgScope(organizationId, 'report-sweep:resolve-tier', () => resolveTier(organizationId)),
+    generateAndDeliver: (sub) =>
+      inOrgScope(sub.organizationId, 'report-sweep:generate-deliver', () => generateAndDeliver(sub)),
     onRan: async (sub) => {
-      await markRun(sub.id, sub.organizationId, now);
+      await inOrgScope(sub.organizationId, 'report-sweep:mark-run', () =>
+        markRun(sub.id, sub.organizationId, now),
+      );
     },
     onSkip: async (sub, reason) => {
       logger.info('scheduled report skipped (entitlement)', {

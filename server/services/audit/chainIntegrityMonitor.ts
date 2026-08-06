@@ -22,6 +22,7 @@
  */
 
 import { Pool } from 'pg';
+import { runWithSystemTenantScope } from '../../db/tenantStore';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -125,59 +126,67 @@ async function runCheck(): Promise<ChainMonitorStatus> {
       return _status;
     }
 
-    const { rows } = await _pool.query(
-      `SELECT id, organization_id, sequence_number, record_hash, previous_hash
-       FROM audit_events
-       ORDER BY organization_id, sequence_number ASC`
-    );
-
-    if (rows.length === 0) {
-      _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'healthy', totalEntries: 0, brokenLinks: 0, details: [] };
-      return _status;
-    }
-
-    const brokenDetails = findBrokenChainLinks(rows as AuditEventChainRow[]);
-    const isHealthy = brokenDetails.length === 0;
-
-    _status = {
-      lastCheckAt: new Date().toISOString(),
-      status: isHealthy ? 'healthy' : 'broken',
-      totalEntries: rows.length,
-      brokenLinks: brokenDetails.length,
-      details: brokenDetails.slice(0, 50),
-      intervalMs: _status.intervalMs,
-    };
-
-    if (!isHealthy) {
-      console.error(
-        `[ChainMonitor] CRITICAL: ${brokenDetails.length} broken link(s) detected in audit_events hash chain!`,
-        brokenDetails.slice(0, 5)
+    // The integrity scan reads EVERY org's audit_events chain (estate-wide
+    // SELECT) and, on failure, writes a system-originated audit event —
+    // platform-wide work owned by no single tenant. It runs in a system scope
+    // so the pooled queries are neither rejected as unscoped nor RLS-filtered
+    // under RLS_ENFORCE=on; without it this 21 CFR Part 11 §11.10(e) monitor
+    // silently never runs in production (the query fails closed every cycle).
+    return await runWithSystemTenantScope('audit:chain-integrity-monitor', async () => {
+      const { rows } = await _pool!.query(
+        `SELECT id, organization_id, sequence_number, record_hash, previous_hash
+         FROM audit_events
+         ORDER BY organization_id, sequence_number ASC`
       );
 
-      // Record the integrity failure as its own audit event
-      try {
-        // entity_id is INTEGER per the schema. Use 0 as a sentinel for
-        // system-originated events (the entity is the chain itself, not a
-        // domain row). entity_type carries the human-readable scope.
-        await _pool.query(
-          `INSERT INTO audit_events
-            (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-             user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-           VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
-                   'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
-          [
-            `Chain integrity check failed: ${brokenDetails.length} broken links detected`,
-            JSON.stringify({ brokenLinks: brokenDetails.slice(0, 20), totalEntries: rows.length }),
-          ]
-        );
-      } catch (logErr: any) {
-        console.error('[ChainMonitor] Failed to log integrity failure event:', logErr.message);
+      if (rows.length === 0) {
+        _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'healthy', totalEntries: 0, brokenLinks: 0, details: [] };
+        return _status;
       }
-    } else {
-      console.log(`[ChainMonitor] Chain integrity verified: ${rows.length} entries, all links intact`);
-    }
 
-    return _status;
+      const brokenDetails = findBrokenChainLinks(rows as AuditEventChainRow[]);
+      const isHealthy = brokenDetails.length === 0;
+
+      _status = {
+        lastCheckAt: new Date().toISOString(),
+        status: isHealthy ? 'healthy' : 'broken',
+        totalEntries: rows.length,
+        brokenLinks: brokenDetails.length,
+        details: brokenDetails.slice(0, 50),
+        intervalMs: _status.intervalMs,
+      };
+
+      if (!isHealthy) {
+        console.error(
+          `[ChainMonitor] CRITICAL: ${brokenDetails.length} broken link(s) detected in audit_events hash chain!`,
+          brokenDetails.slice(0, 5)
+        );
+
+        // Record the integrity failure as its own audit event
+        try {
+          // entity_id is INTEGER per the schema. Use 0 as a sentinel for
+          // system-originated events (the entity is the chain itself, not a
+          // domain row). entity_type carries the human-readable scope.
+          await _pool!.query(
+            `INSERT INTO audit_events
+              (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+               user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
+             VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
+                     'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
+            [
+              `Chain integrity check failed: ${brokenDetails.length} broken links detected`,
+              JSON.stringify({ brokenLinks: brokenDetails.slice(0, 20), totalEntries: rows.length }),
+            ]
+          );
+        } catch (logErr: any) {
+          console.error('[ChainMonitor] Failed to log integrity failure event:', logErr.message);
+        }
+      } else {
+        console.log(`[ChainMonitor] Chain integrity verified: ${rows.length} entries, all links intact`);
+      }
+
+      return _status;
+    });
   } catch (err: any) {
     console.error('[ChainMonitor] Check failed:', err.message);
     _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
