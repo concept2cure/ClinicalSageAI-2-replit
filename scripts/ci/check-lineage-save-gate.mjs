@@ -14,8 +14,14 @@
  * requires, in the same file:
  *
  *   1. a transaction (pool.connect + BEGIN/COMMIT/ROLLBACK)
- *   2. the lineage write enlisted in it (replaceAuthorSpans)
- *   3. the coverage assertion (assertLineageCoversContent)
+ *   2. the lineage gate enlisted in it, in EITHER form:
+ *        (a) direct — replaceAuthorSpans + assertLineageCoversContent, each
+ *            passed the transaction `client` as its final argument; OR
+ *        (b) the shared helper — enforceAuthorLineage(client, …), passed the
+ *            transaction `client` as its FIRST argument. When the helper form is
+ *            used, the helper module itself is verified to be a genuine gate
+ *            (it calls both primitives and threads its own `exec` into each), so
+ *            the indirection cannot silently hollow the gate out.
  *
  * A path that legitimately does not write prose can be removed from GUARDED,
  * which is a visible, reviewable change rather than a silent one.
@@ -76,62 +82,108 @@ function callArgs(src, name) {
   }
 }
 
-/** Whether some call to `name` passes `client` as its final argument. */
-function passesClient(src, name) {
+/** Split an argument string into its top-level (paren/brace-balanced) args. */
+function topLevelArgs(args) {
+  const out = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of args) {
+    if ('([{'.includes(ch)) depth++;
+    else if (')]}'.includes(ch)) depth--;
+    if (ch === ',' && depth === 0) {
+      out.push(cur);
+      cur = '';
+    } else cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+/** Whether some call to `name` passes `ident` as its FINAL argument. */
+function passesLastArg(src, name, ident) {
   return callArgs(src, name).some((args) => {
-    // Split only at top-level commas so object literals do not confuse the tail.
-    let depth = 0;
-    let last = '';
-    for (const ch of args) {
-      if ('([{'.includes(ch)) depth++;
-      else if (')]}'.includes(ch)) depth--;
-      if (ch === ',' && depth === 0) last = '';
-      else last += ch;
-    }
-    return last.trim() === 'client';
+    const parts = topLevelArgs(args);
+    return parts[parts.length - 1].trim() === ident;
   });
 }
 
-const REQUIRED = [
-  {
-    id: 'transaction',
-    test: (src) =>
-      src.includes('pool.connect()') &&
-      src.includes("client.query('BEGIN')") &&
-      src.includes("client.query('COMMIT')") &&
-      src.includes("client.query('ROLLBACK')"),
-    message:
-      'no transaction around the content write — content and lineage must commit together, ' +
-      'or a failed lineage write leaves saved text with no provenance',
-  },
-  {
-    id: 'lineage-write',
-    test: (src) => /replaceAuthorSpans\s*\(/.test(src),
-    message:
-      'no call to replaceAuthorSpans — nothing records where the saved text came from',
-  },
-  {
-    id: 'lineage-enlisted',
-    test: (src) => passesClient(src, 'replaceAuthorSpans'),
-    message:
-      'replaceAuthorSpans is not passed the transaction client — lineage written on the pool ' +
-      'is a separate commit that can fail on its own',
-  },
-  {
-    id: 'coverage-gate',
-    test: (src) => /assertLineageCoversContent\s*\(/.test(src),
-    message:
-      'no call to assertLineageCoversContent — nothing verifies the lineage actually covers ' +
-      'the content before it commits',
-  },
-  {
-    id: 'gate-enlisted',
-    test: (src) => passesClient(src, 'assertLineageCoversContent'),
-    message:
-      'assertLineageCoversContent is not passed the transaction client — it would read ' +
-      'committed state and miss what this save is about to write',
-  },
-];
+/** Whether some call to `name` passes `ident` as its FIRST argument. */
+function passesFirstArg(src, name, ident) {
+  return callArgs(src, name).some((args) => topLevelArgs(args)[0].trim() === ident);
+}
+
+/**
+ * The shared gate primitive. When a guarded path delegates to it, the guard
+ * verifies the helper itself is a genuine gate rather than trusting the name.
+ */
+const HELPER = {
+  file: 'server/services/clinical-regulatory-evidence/lineage-gate.ts',
+  fn: 'enforceAuthorLineage',
+};
+
+/** The helper genuinely gates: it calls both primitives and threads its own
+ *  `exec` (the caller's transaction client) into each. */
+function helperEnforcesGate() {
+  const abs = path.join(ROOT, HELPER.file);
+  if (!fs.existsSync(abs)) return false;
+  const src = fs.readFileSync(abs, 'utf8');
+  return (
+    /replaceAuthorSpans\s*\(/.test(src) &&
+    passesLastArg(src, 'replaceAuthorSpans', 'exec') &&
+    /assertLineageCoversContent\s*\(/.test(src) &&
+    passesLastArg(src, 'assertLineageCoversContent', 'exec')
+  );
+}
+
+const TRANSACTION = {
+  id: 'transaction',
+  test: (src) =>
+    src.includes('pool.connect()') &&
+    src.includes("client.query('BEGIN')") &&
+    src.includes("client.query('COMMIT')") &&
+    src.includes("client.query('ROLLBACK')"),
+  message:
+    'no transaction around the content write — content and lineage must commit together, ' +
+    'or a failed lineage write leaves saved text with no provenance',
+};
+
+/**
+ * Findings for the lineage gate in a guarded file: empty when enforced in
+ * either the direct or the helper form, otherwise the specific reason.
+ */
+function gateFindings(src) {
+  const direct =
+    /replaceAuthorSpans\s*\(/.test(src) &&
+    passesLastArg(src, 'replaceAuthorSpans', 'client') &&
+    /assertLineageCoversContent\s*\(/.test(src) &&
+    passesLastArg(src, 'assertLineageCoversContent', 'client');
+  if (direct) return [];
+
+  const usesHelper =
+    new RegExp(`${HELPER.fn}\\s*\\(`).test(src) && passesFirstArg(src, HELPER.fn, 'client');
+  if (usesHelper) {
+    if (helperEnforcesGate()) return [];
+    return [
+      {
+        id: 'helper-hollowed',
+        message:
+          `${HELPER.fn}(client, …) is used, but ${HELPER.file} no longer calls ` +
+          'replaceAuthorSpans + assertLineageCoversContent with its exec — the gate has been ' +
+          'hollowed out inside the helper',
+      },
+    ];
+  }
+
+  return [
+    {
+      id: 'lineage-gate',
+      message:
+        'neither the direct gate (replaceAuthorSpans + assertLineageCoversContent, each enlisted ' +
+        `on the transaction client) nor the shared helper ${HELPER.fn}(client, …) is present — ` +
+        'saved text would carry no record of where it came from',
+    },
+  ];
+}
 
 let failures = 0;
 
@@ -145,7 +197,10 @@ for (const target of GUARDED) {
   }
 
   const src = fs.readFileSync(abs, 'utf8');
-  const missing = REQUIRED.filter((r) => !r.test(src));
+  const missing = [
+    ...(TRANSACTION.test(src) ? [] : [TRANSACTION]),
+    ...gateFindings(src),
+  ];
 
   if (missing.length === 0) {
     console.log(`[ci:lineage-save-gate] ok  ${target.file}`);
