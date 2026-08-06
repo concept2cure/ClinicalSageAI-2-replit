@@ -72,6 +72,50 @@ export function runWithSystemTenantScope<T>(caller: string, fn: () => T): T {
 }
 
 /**
+ * Scope for work that runs BEFORE a tenant can be known — resolving an identity
+ * from an email address, verifying a password, exchanging a refresh token.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────────
+ * Pool instrumentation blocks any query issued with no tenant scope once
+ * RLS_ENFORCE=on. Authentication cannot satisfy that: there is no tenant until
+ * the user has been identified, which is the very query being blocked. And
+ * production permits ONLY RLS_ENFORCE=on (server/db/rlsEnforcement.ts — unset,
+ * invalid, `off` and `shadow` all refuse startup), so with enforcement on, the
+ * login user-lookup
+ *
+ *   select ... from "users" where "users"."email" = $1 limit $2
+ *
+ * was blocked and login returned 500 "Login failed". Confirmed against
+ * PostgreSQL 16: the block is logged one millisecond before the auth error, at
+ * enforcement "on", by tenant-rls-observability.
+ *
+ * ── Why NOT runWithSystemTenantScope ──────────────────────────────────────────
+ * That helper sets role `app_super_admin`, which satisfies the super-admin arm
+ * of every RLS policy. Handing unauthenticated request handling a policy bypass
+ * to fix an observability check would trade a broken login for a much worse
+ * problem.
+ *
+ * This scope deliberately carries NO role. It exists to say "this query is
+ * intentionally tenant-less", which is exactly what the instrumentation wants
+ * to distinguish from "somebody forgot". `public.users` carries no RLS policy
+ * (verified: relrowsecurity = false, zero rows in pg_policy), so the lookup
+ * succeeds on its own merits rather than by bypassing anything.
+ *
+ * That also makes the failure mode safe: if `users` is ever brought under a
+ * tenant policy, this scope will NOT bypass it. Login would start failing —
+ * loudly, and before any data crosses a tenant boundary — instead of silently
+ * returning another tenant's row.
+ *
+ * Nesting is safe: AsyncLocalStorage gives the innermost scope, so a request
+ * that goes on to authenticate runs its remaining work in the real tenant scope
+ * installed by the auth boundary.
+ */
+export function runWithPreAuthScope<T>(caller: string, fn: () => T): T {
+  if (!caller.trim()) throw new Error('runWithPreAuthScope: caller is required');
+  return runWithTenantScope({ tenantId: '0', role: null, source: 'request', caller }, fn);
+}
+
+/**
  * Read the active tenant scope, or `undefined` if none is set. Pool
  * instrumentation calls this on every query.
  */

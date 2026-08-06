@@ -50,6 +50,22 @@ const INFRASTRUCTURE_QUERIES = new Set<string>([
 function isInfrastructureQuery(text: string | undefined): boolean {
   if (!text) return false;
   if (INFRASTRUCTURE_QUERIES.has(text)) return true;
+  // The set above is written in upper case, but callers are not. The readiness
+  // probe in server/startup/inline-endpoints.ts issues `select 1` in lower
+  // case, so an exact, case-sensitive match missed it — and with
+  // RLS_ENFORCE=on (the only value production accepts) that liveness probe was
+  // blocked and /readyz reported the database "down" on a perfectly healthy
+  // connection.
+  //
+  // Case is normalised rather than the literal being added, because the same
+  // miss applies to every entry here. Surrounding whitespace goes too, for the
+  // same reason. Nothing else is relaxed: this stays an exact match on inert
+  // probes and the empty-value CLEAR variants, so an unscoped transaction open
+  // or a set_config carrying a real value is still surfaced.
+  const normalized = text.trim().toUpperCase();
+  for (const known of INFRASTRUCTURE_QUERIES) {
+    if (known.toUpperCase() === normalized) return true;
+  }
   return false;
 }
 

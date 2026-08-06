@@ -24,6 +24,7 @@ import { initializeProofDatabasePersistence } from '../../services/proof/databas
 import FeatureToggleService from '../services/featureToggleService';
 import { ensureCoreTables } from '../db/ensureCoreTables';
 import { setSchemaReadiness } from './readiness-state';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 /** Python backend is currently disabled (size optimization). Kept as a stub
  * so the graceful-shutdown handler can address it if it gets re-enabled. */
@@ -96,9 +97,17 @@ const SECURITY_CRITICAL_TABLES = [
  */
 export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
   try {
-    const client = await pool.connect();
+    // Connectivity and schema verification belong to no tenant. Under
+    // RLS_ENFORCE=on — the only value production accepts — pool.connect()
+    // without a declared scope fails closed with "[tenant-rls] FAIL-CLOSED:
+    // pool.connect requires an active tenant scope", which this catch reported
+    // as "database unreachable" and /readyz surfaced as database: "down" on a
+    // healthy connection. Declaring the scope states the intent instead.
+    await runWithSystemTenantScope('startup:verify-database-connection', async () => {
+      const client = await pool.connect();
+      client.release();
+    });
     console.log('✅ Database connection successful');
-    client.release();
   } catch (err: any) {
     console.error('❌ Database connection failed:', err.message);
     if (process.env.NODE_ENV === 'production') {
@@ -114,7 +123,11 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
   }
 
   try {
-    const result = await ensureCoreTables(process.env.DATABASE_URL);
+    // Schema verification is estate-wide, not tenant work — same reason the
+    // connectivity probe above declares a system scope.
+    const result = await runWithSystemTenantScope('startup:ensure-core-tables', async () =>
+      ensureCoreTables(process.env.DATABASE_URL)
+    );
     // A regulated subsystem that is partially or wholly absent fails readiness
     // even when the flat critical-table check passes — a database that cannot
     // run the authoring loop is not ready, and /readyz must say so rather than

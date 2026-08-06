@@ -13,6 +13,7 @@ import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
 import { requireAccessTokenReason } from './middleware/tokenType';
+import { runWithPreAuthScope } from './db/tenantStore';
 
 const logger = createScopedLogger('auth');
 
@@ -140,18 +141,37 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
       const parsedUserId = parseFiniteInt(decoded.userId);
       const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
+      // This is the query that VERIFIES the token's tenant claim, so it cannot
+      // itself run inside that tenant's scope — the claim is untrusted until it
+      // returns. Pool instrumentation blocks unscoped queries once
+      // RLS_ENFORCE=on, and production accepts no other value, so without an
+      // explicit pre-auth scope this lookup was blocked and EVERY authenticated
+      // request failed with 401 "Invalid or expired token" while carrying a
+      // perfectly valid token.
+      //
+      // The scope grants no role and therefore no policy bypass; the query
+      // stays filtered by both userId and organizationId in its own WHERE
+      // clause. See runWithPreAuthScope.
       const membership =
         parsedUserId !== null && parsedOrganizationId !== null
-          ? await db
-              .select({ role: organizationUsers.role })
-              .from(organizationUsers)
-              .where(
-                and(
-                  eq(organizationUsers.userId, parsedUserId),
-                  eq(organizationUsers.organizationId, parsedOrganizationId)
+          ? // The callback MUST be async and MUST await inside the scope.
+            // Drizzle query builders are lazy thenables: returning one from a
+            // synchronous callback means the query does not start until the
+            // caller awaits it, which happens after run() has returned and the
+            // AsyncLocalStorage scope has already exited. Awaiting here starts
+            // the work inside the scope, so the continuation inherits it.
+            await runWithPreAuthScope('auth:verify-tenant-membership', async () =>
+              db
+                .select({ role: organizationUsers.role })
+                .from(organizationUsers)
+                .where(
+                  and(
+                    eq(organizationUsers.userId, parsedUserId),
+                    eq(organizationUsers.organizationId, parsedOrganizationId)
+                  )
                 )
-              )
-              .limit(1)
+                .limit(1)
+            )
           : [];
       if (membership.length === 0 || parsedUserId === null || parsedOrganizationId === null) {
         return res.status(401).json({ error: 'Invalid tenant membership' });

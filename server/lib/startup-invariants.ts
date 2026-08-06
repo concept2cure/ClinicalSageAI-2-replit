@@ -15,6 +15,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const log = createScopedLogger('startup-invariants');
 
@@ -107,13 +108,22 @@ export async function runStartupInvariants(): Promise<StartupInvariantReport> {
   const start = Date.now();
   const invariants: InvariantResult[] = [];
 
-  await Promise.all([
-    checkDb(invariants),
-    checkRevokedTokensTable(invariants),
-    checkArtifactIdColumn(invariants),
-    checkArtifactsTable(invariants),
-    checkRedis(invariants),
-  ]);
+  // These probes are estate-wide by nature — connectivity, and information_schema
+  // lookups for tables/columns that belong to no tenant. Under RLS_ENFORCE=on
+  // (the only value production accepts) pool instrumentation blocks any query
+  // with no declared scope, so every one of them failed and the boot report
+  // claimed the database was unreachable on a perfectly healthy connection.
+  // Declaring the scope makes them deliberate rather than accidental, which is
+  // the distinction the instrumentation exists to draw.
+  await runWithSystemTenantScope('startup:invariants', async () =>
+    Promise.all([
+      checkDb(invariants),
+      checkRevokedTokensTable(invariants),
+      checkArtifactIdColumn(invariants),
+      checkArtifactsTable(invariants),
+      checkRedis(invariants),
+    ])
+  );
 
   const criticalFailures = invariants.filter(i => !i.passed && i.severity === 'critical').length;
   const warnings = invariants.filter(i => !i.passed && i.severity === 'warning').length;
