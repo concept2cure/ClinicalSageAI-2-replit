@@ -49,6 +49,9 @@ const OUTLINES = path.join(REPO_ROOT, 'migrations/20260804_phase9_rule_pack_outl
 // shape is not the CTD one the file above seeds. Applied here in the same order
 // the deploy path applies it (C2C_MIGRATION_FILES), so the test sees what ships.
 const CTA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260806_cta_ema_ctr536_outline.sql');
+// anda:fda and ide:fda, plus the doc_type CHECK widening that makes either of
+// them insertable at all. Applied after CTA, in C2C_MIGRATION_FILES order.
+const ANDA_IDE = path.join(REPO_ROOT, 'migrations/20260806b_anda_ide_filing_types.sql');
 
 const ORG = 7;
 const PROJECT = '11111111-2222-3333-4444-555555555555';
@@ -59,8 +62,16 @@ const BIOTECH_PATHWAYS = ['bla', 'maa', 'jnda'] as const;
 let pg: PGlite;
 const client = () => ({ query: (sql: string, p?: unknown[]) => pg.query(sql, p as any[]) }) as any;
 
-/** Provision the schema. `withOutlines: false` is the pre-fix world. */
-async function boot(withOutlines = true) {
+/**
+ * Provision the schema. `withOutlines: false` is the pre-fix world.
+ *
+ * `withAndaIde` is separate rather than folded into `withOutlines` so the
+ * falsifiability case at the bottom can boot a database that has EVERY other
+ * outline and still watch an ANDA decline. Turning all of them off would prove
+ * only that the ANDA test needs some migration; leaving the rest on proves it
+ * needs THIS one.
+ */
+async function boot(withOutlines = true, withAndaIde = withOutlines) {
   pg = new PGlite();
   await pg.exec(`
     CREATE TABLE organizations (id serial PRIMARY KEY);
@@ -81,6 +92,7 @@ async function boot(withOutlines = true) {
   await pg.exec(fs.readFileSync(SCHEMA, 'utf8'));
   if (withOutlines) await pg.exec(fs.readFileSync(OUTLINES, 'utf8'));
   if (withOutlines) await pg.exec(fs.readFileSync(CTA_OUTLINE, 'utf8'));
+  if (withAndaIde) await pg.exec(fs.readFileSync(ANDA_IDE, 'utf8'));
 }
 
 const scaffold = (programType: string, primaryAgency: string) =>
@@ -117,10 +129,18 @@ describe('no live rule pack is a stub', () => {
   // diagnostic for the multi-module dossiers, where a bare M1-M5 with nothing
   // beneath it is precisely the placeholder shape this file exists to reject.
   it('every full CTD dossier pack carries all five modules, with content beneath them', async () => {
-    // `cta` is deliberately absent. An EU clinical trial application under
-    // CTR 536/2014 is a Part I / Part II submission built around an IMPD, not a
-    // five-module CTD, so demanding M1-M5 of it would be asserting the wrong
-    // shape. It is covered by its own test below.
+    // `cta`, `anda` and `ide` are deliberately absent, each for a reason the
+    // list has to state or it becomes a place to hide a thin pack:
+    //   • cta — an EU clinical trial application under CTR 536/2014 is a
+    //     Part I / Part II submission built around an IMPD, not a CTD.
+    //   • anda — a CTD, but a FOUR-module one. 21 CFR 314.94 has no Module 4;
+    //     substituting bioequivalence for nonclinical pharmacology and
+    //     toxicology is the whole premise of the abbreviated pathway, so
+    //     demanding M4 of it would demand the thing that makes it not an ANDA.
+    //   • ide — 21 CFR 812.20 defines a lettered set A-K in the regulation
+    //     itself. It is not a CTD at any module count.
+    // All three are covered by their own shape tests below, so exclusion here
+    // costs no coverage.
     const rows = await pg.query<{ doc_type: string; agency: string; required_sections: any[] }>(
       `SELECT doc_type, agency, required_sections FROM c2c_rule_packs
         WHERE superseded_by IS NULL AND doc_type IN ('ind','nda','bla','maa','jnda')`,
@@ -208,6 +228,92 @@ describe('no live rule pack is a stub', () => {
     expect(secs.find((x: any) => x.key === 'G.1')?.parent_key).toBe('G');
   }, 60_000);
 
+  /*
+   * An ANDA is a CTD with a hole in it, and the hole is the point. 21 CFR
+   * 314.94 requires Modules 1, 2, 3 and 5; there is no Module 4, because a
+   * generic application replaces nonclinical pharmacology and toxicology with a
+   * demonstration of bioequivalence to the reference listed drug.
+   *
+   * The failure this guards against is not an empty pack — "no pack is empty"
+   * already catches that — but a pack cloned from nda:fda and relabelled. Such
+   * a pack would be non-empty, correctly nested, five-module and completely
+   * wrong: it would ask a generics customer for a full nonclinical package they
+   * are not required to file and do not have, and it would omit the four items
+   * that actually decide an ANDA's fate. So the assertions below are the
+   * ANDA-specific ones, named individually.
+   */
+  it('anda:fda is a four-module CTD carrying the generic-specific sections', async () => {
+    const r = await pg.query<{ required_sections: any[] }>(
+      `SELECT required_sections FROM c2c_rule_packs
+        WHERE doc_type = 'anda' AND agency = 'fda' AND superseded_by IS NULL`,
+    );
+    expect(r.rows.length, 'no live anda:fda pack').toBe(1);
+    const secs = r.rows[0].required_sections;
+    const keys = new Set(secs.map((x: any) => x.key));
+
+    const roots = secs.filter((x: any) => x.parent_key === null).map((x: any) => x.key);
+    expect(roots, 'an ANDA has no Module 4').toEqual(['M1', 'M2', 'M3', 'M5']);
+    expect(keys.has('M4'), 'M4 present — this pack was cloned from an NDA').toBe(false);
+
+    // The four items an ANDA lives or dies on, none of which an NDA pack has.
+    // A cloned-from-nda pack passes every generic structural check and fails
+    // here, which is the only reason this test earns its place.
+    expect(keys.has('1.12.11'), 'the RLD basis for submission is missing').toBe(true);
+    expect(keys.has('1.14.3'), 'the side-by-side labeling comparison is missing').toBe(true);
+    expect(keys.has('1.15.2'), 'the Paragraph I-IV patent certification is missing').toBe(true);
+    expect(keys.has('5.3.1.2'), 'the bioequivalence study reports section is missing').toBe(true);
+
+    // Nesting, module by module — the same property the CTD test asserts, since
+    // excluding anda from that test must not exempt it from the rule.
+    for (const m of roots) {
+      expect(
+        secs.filter((x: any) => x.parent_key === m).length,
+        `${m} has nothing under it`,
+      ).toBeGreaterThan(0);
+    }
+  }, 60_000);
+
+  /*
+   * An IDE is the one pack in the table with no CTD ancestry at all. 21 CFR
+   * 812.20(b) enumerates its contents as a lettered list, and 812.25 and 812.27
+   * expand two of those letters into the substance of the submission: the
+   * investigational plan and the report of prior investigations.
+   *
+   * The specific wrong answer here is an IDE pack shaped like a 510(k) or a PMA
+   * — all three are CDRH device submissions and it is an easy substitution to
+   * make — so this asserts the lettered structure rather than a count.
+   */
+  it('ide:fda carries the 21 CFR 812.20 lettered set, not a device-CTD shape', async () => {
+    const r = await pg.query<{ required_sections: any[]; esubmit_channel: string }>(
+      `SELECT required_sections, esubmit_channel FROM c2c_rule_packs
+        WHERE doc_type = 'ide' AND agency = 'fda' AND superseded_by IS NULL`,
+    );
+    expect(r.rows.length, 'no live ide:fda pack').toBe(1);
+    const secs = r.rows[0].required_sections;
+    const keys = new Set(secs.map((x: any) => x.key));
+
+    for (const letter of ['A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J']) {
+      expect(keys.has(letter), `812.20 item ${letter} is missing`).toBe(true);
+    }
+    expect(secs.some((x: any) => x.key.startsWith('M')), 'an IDE has no CTD modules').toBe(false);
+
+    // The two letters the regulation expands into their own sections. A pack
+    // that stops at the letters is an index of the rule, not an outline of a
+    // submission — the exact hollow shape this file exists to reject.
+    expect(
+      secs.filter((x: any) => x.parent_key === 'C').length,
+      'the investigational plan (812.25) has no sections beneath it',
+    ).toBeGreaterThan(5);
+    expect(
+      secs.filter((x: any) => x.parent_key === 'B').length,
+      'the report of prior investigations (812.27) has no sections beneath it',
+    ).toBeGreaterThan(1);
+
+    // An IDE does not go through the eCTD gateway. Naming ESG here would be a
+    // false statement in a column the submission path reads.
+    expect(r.rows[0].esubmit_channel).toBe('CDRH-Portal');
+  }, 60_000);
+
   it('covers all three biotech marketing pathways', async () => {
     for (const dt of BIOTECH_PATHWAYS) {
       const r = await pg.query<{ n: number }>(
@@ -260,6 +366,105 @@ describe('scaffolding a CTA', () => {
     expect(doc.rows[0].agency).toBe('ema');
     expect(doc.rows[0].rule_pack_version).toBe('ctr-536-2014-annex-i-v1.0');
   }, 60_000);
+});
+
+describe('scaffolding an ANDA and an IDE', () => {
+  /*
+   * The end-to-end payoff, and a different failure from the CTA one.
+   *
+   * `cta` was rejected at the API boundary — a 400, visible immediately. `anda`
+   * and `ide` were ACCEPTED by VALID_PROGRAM_TYPES and then dropped silently:
+   * PROGRAM_TO_DOC_TYPE had no entry, resolveDocumentClass() returned null,
+   * scaffoldProjectDocuments() declined, and the customer got a project with an
+   * empty Vault and no error anywhere. A generics company's first ANDA looked
+   * created and contained nothing.
+   *
+   * So these assert `skipped` is undefined before anything else. That single
+   * field is the whole difference between the old behaviour and the new one,
+   * and every other assertion here is downstream of it.
+   */
+  beforeEach(() => boot());
+
+  it('an ANDA scaffolds the four-module outline, through the real service', async () => {
+    const r = await scaffold('anda', 'FDA');
+
+    expect(r.skipped, `ANDA scaffolding declined: ${JSON.stringify(r)}`).toBeUndefined();
+
+    const rows = await pg.query<{ section_key: string; parent_key: string | null }>(
+      `SELECT section_key, parent_key FROM c2c_document_sections WHERE document_id = $1`,
+      [r.documentId],
+    );
+    const keys = new Set(rows.rows.map((x) => x.section_key));
+    const roots = rows.rows.filter((x) => x.parent_key === null).map((x) => x.section_key);
+
+    expect(roots.sort()).toEqual(['M1', 'M2', 'M3', 'M5']);
+    // The generic-specific four again, this time proving they survived the trip
+    // through scaffoldProjectDocuments() rather than merely sitting in the pack.
+    for (const key of ['1.12.11', '1.14.3', '1.15.2', '5.3.1.2']) {
+      expect(keys.has(key), `the scaffolded ANDA is missing ${key}`).toBe(true);
+    }
+  }, 60_000);
+
+  it('an IDE scaffolds the lettered set, through the real service', async () => {
+    const r = await scaffold('ide', 'FDA');
+
+    expect(r.skipped, `IDE scaffolding declined: ${JSON.stringify(r)}`).toBeUndefined();
+
+    const keys = new Set(
+      (
+        await pg.query<{ section_key: string }>(
+          `SELECT section_key FROM c2c_document_sections WHERE document_id = $1`,
+          [r.documentId],
+        )
+      ).rows.map((x) => x.section_key),
+    );
+    // B.1 and C.3 are the two that carry the submission: the prior-investigations
+    // reports and the risk analysis. Both sit a level below their letter, so
+    // their presence also proves the nesting survived scaffolding.
+    for (const key of ['A', 'B', 'B.1', 'C', 'C.3', 'E', 'I']) {
+      expect(keys.has(key), `the scaffolded IDE is missing ${key}`).toBe(true);
+    }
+  }, 60_000);
+
+  /*
+   * The insert is the assertion. Before 20260806b widened
+   * c2c_documents_doc_type_check, writing either of these rows raised `violates
+   * check constraint` — so mapping anda/ide in PROGRAM_TO_DOC_TYPE without the
+   * widening would have moved the failure rather than fixed it: from a silently
+   * unscaffolded project to a loud one, later.
+   *
+   * Two tests rather than one loop, deliberately. scaffoldProjectDocuments() is
+   * idempotent per PROJECT — a second call against the same project returns
+   * `skipped: 'ALREADY_SCAFFOLDED'` and a null documentId, which is correct
+   * behaviour and which a loop over both filing types silently trips on. The
+   * first draft of this file was that loop; it failed on the second iteration
+   * with `Cannot read properties of undefined`, and the honest fix is separate
+   * cases with the fresh database `beforeEach` already provides, not a second
+   * project id threaded through to make the loop work.
+   */
+  const bindsTo = (docType: string, version: string) => async () => {
+    const r = await scaffold(docType, 'FDA');
+    const doc = await pg.query<{ doc_type: string; agency: string; rule_pack_version: string }>(
+      `SELECT doc_type, agency, rule_pack_version FROM c2c_documents WHERE id = $1`,
+      [r.documentId],
+    );
+    expect(doc.rows.length, `no governed document written for ${docType}`).toBe(1);
+    expect(doc.rows[0].doc_type).toBe(docType);
+    expect(doc.rows[0].agency).toBe('fda');
+    expect(doc.rows[0].rule_pack_version).toBe(version);
+  };
+
+  it(
+    'the ANDA binds to its own pack version, and to a doc_type the CHECK admits',
+    bindsTo('anda', 'fda-anda-21cfr314-94-v1.0'),
+    60_000,
+  );
+
+  it(
+    'the IDE binds to its own pack version, and to a doc_type the CHECK admits',
+    bindsTo('ide', 'fda-ide-21cfr812-20-v1.0'),
+    60_000,
+  );
 });
 
 describe('scaffolding a BLA', () => {
@@ -315,6 +520,18 @@ describe('the guard is falsifiable', () => {
     // This is the state the outlines migration exists to leave behind, and its
     // presence here is what stops the tests above from being self-satisfied.
     expect(r.skipped).toBeTruthy();
+    expect(r.sectionCount ?? 0).toBe(0);
+  }, 60_000);
+
+  it('with every outline EXCEPT 20260806b, an ANDA still declines', async () => {
+    // The isolating case. Everything else is applied — the CTD outlines, the
+    // CTR pack — so the only difference between this and the passing ANDA tests
+    // above is the one migration. Without it the pack is absent and the service
+    // fails closed, which is what makes those tests a demonstration rather than
+    // a description of whatever the database happened to contain.
+    await boot(true, false);
+    const r = await scaffold('anda', 'FDA');
+    expect(r.skipped, 'an ANDA scaffolded without its rule pack').toBe('NO_RULE_PACK');
     expect(r.sectionCount ?? 0).toBe(0);
   }, 60_000);
 });
