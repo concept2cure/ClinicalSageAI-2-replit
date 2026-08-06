@@ -190,6 +190,9 @@ jobs:
       - name: Guardrails — AI gateway bypass (no direct LLM clients)
         run: npm run ci:gateway-bypass
 
+      - name: Guardrails — dynamic imports are bundlable (no silent prod route drops)
+        run: npm run ci:bundlable-imports
+
       - name: Guardrails — jwt.verify pins algorithms (no alg-confusion)
         run: npm run ci:jwt-verify-pinned
 
