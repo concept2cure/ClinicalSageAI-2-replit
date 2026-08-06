@@ -21,6 +21,7 @@ import { createScopedLogger } from '../utils/logger';
 import { auditLogs } from '../../shared/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { computeAuditChainSealed, hashPayload } from './audit/chain.js';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 import { randomUUID } from 'crypto';
 
 const logger = createScopedLogger('audit-service');
@@ -151,7 +152,12 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
       // RLS_ENFORCE=on the pooled DDL would fail closed and leave the audit
       // subsystem uninitialized (observed as this exact "non-fatal" error at
       // boot). Declare a system scope so the one-time init always runs.
-      const { runWithSystemTenantScope } = await import('../db/tenantStore');
+      //
+      // Statically imported (not a dynamic `await import`): the extra microtask
+      // a dynamic import inserts here shifted the fire-and-forget constructor
+      // init one tick later, which was enough to leak its CREATE TABLE query
+      // into a test that mocks the pool and asserts no query on a 403. The
+      // static import matches the original timing and is bundlable.
       initPromise = runWithSystemTenantScope('audit:initialize', () =>
         tamperProofLog!.initialize(),
       ).catch(err => {
