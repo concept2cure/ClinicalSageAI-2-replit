@@ -63,6 +63,15 @@ const GUARDED = [
       'server/services/ana/AnaToolExecutor.ts', // update_protocol_section tool opens the transaction
     ],
   },
+  {
+    file: 'server/services/biosketch/biosketch-service.ts',
+    why: 'updateSectionTx writes NIH biosketch prose (biosketch_sections.content)',
+    transaction: 'caller',
+    txOwners: [
+      'server/routes/biosketch.ts', // governed() opens the transaction
+      'server/services/ana/AnaToolExecutor.ts', // update_biosketch_section tool opens the transaction
+    ],
+  },
 ];
 
 /**

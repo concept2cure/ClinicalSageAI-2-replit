@@ -10734,7 +10734,7 @@ registerToolHandler('update_biosketch_section', async (input, ctx) => {
   if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
   const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
   return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
-    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
+    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined }, ctx.userId!);
     return { sectionId };
   });
 });

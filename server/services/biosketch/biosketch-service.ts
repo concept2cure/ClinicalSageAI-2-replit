@@ -17,6 +17,7 @@ import {
   evaluateBiosketchCompleteness,
   type BiosketchCompletenessResult,
 } from './biosketch-logic';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -74,7 +75,7 @@ function assertEditable(status: string): void {
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; addressed?: boolean }): Promise<void> {
+export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; addressed?: boolean }, actorUserId: number): Promise<void> {
   const s = await client.query(
     `SELECT s.id, b.status AS bio_status, b.id AS bio_id FROM biosketch_sections s JOIN biosketches b ON b.id = s.biosketch_id
       WHERE s.id = $1 AND s.organization_id = $2 LIMIT 1`,
@@ -86,6 +87,10 @@ export async function updateSectionTx(client: Queryable, orgId: number, sectionI
     `UPDATE biosketch_sections SET content = COALESCE($3, content), addressed = COALESCE($4, addressed), updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [sectionId, orgId, input.content ?? null, input.addressed ?? null],
   );
+  // Prose gate: when this edit sets section content, record its author lineage
+  // and assert coverage in the caller's transaction. An addressed-only edit
+  // (content undefined/null) no-ops the gate, matching the COALESCE.
+  await enforceAuthorLineage(client, orgId, { documentTable: 'biosketch_sections', documentId: String(sectionId) }, input.content ?? null, String(actorUserId));
   await client.query(`UPDATE biosketches SET status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [s.rows[0].bio_id, orgId]);
 }
 
