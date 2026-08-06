@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { useLiveData, EmptyState, type DataState } from '../dataConnect';
+import { useLiveData, EmptyState, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -67,12 +67,59 @@ interface LiveInvoices {
   invoices: LiveInvoice[];
 }
 
+/* Loosely shaped on the wire for the same reason as the usage snapshot: a
+   skewed payload can carry a null balance, or no autoReload block at all.
+   Both panels guard their own slice and render an honest empty state rather
+   than dividing `undefined` by 100 and printing "$NaN". */
 interface LiveCredits {
-  balanceCents: number;
-  autoReload: { enabled: boolean; thresholdCents: number; topupCents: number };
+  balanceCents: number | null;
+  autoReload: { enabled: boolean; thresholdCents: number; topupCents: number } | null;
 }
 
+/* ── Shape guards — a 200 is not proof of a shape ──
+   All three panels crashed on a response that was merely plausible. A route
+   answering `{ data: [] }` unwraps to a bare `[]`, and `[]` is TRUTHY: it
+   walked past Panel's `!state.data` check, matched nothing the panel then
+   read, and `c.autoReload.topupCents` threw mid-render — so the user was told
+   the surface was broken when the truthful answer, already written three
+   lines up, was "we couldn't load this". `{}`, a 200 carrying `{ error }`,
+   and a JSON scalar all landed the same way.
+
+   Guarding the fetch routes those into each panel's existing error state.
+   The guards check key PRESENCE, not truthiness: a present-but-null field is
+   real data ("auto-reload isn't configured yet") and belongs in the panel's
+   empty state, so the member-level checks below handle it instead. ── */
+
+/** `{ plan, weekly, … }` — the usage snapshot. Deliberately only the two keys
+    that identify it: a partial snapshot missing `session`, or carrying a
+    non-array `weekly`, is a real degraded payload each panel already reports
+    as its own honest empty, and must not be inflated into a whole-surface
+    error. */
+const isUsageSnapshot: ShapeGuard<LiveUsageSnapshot> = hasKeys<LiveUsageSnapshot>('plan', 'weekly');
+
+/** `{ balanceCents, autoReload }` — the credit read. */
+const isCredits: ShapeGuard<LiveCredits> = hasKeys<LiveCredits>('balanceCents', 'autoReload');
+
+/** `{ invoices: [...] }` — presence isn't enough here: the panel maps over
+    `invoices` immediately, so the array itself is the contract. A non-array
+    `invoices` is a shape failure, not "no invoices yet", and saying the org
+    has no billing history when the payload was malformed is the same lie in
+    a quieter voice. */
+const isInvoices: ShapeGuard<LiveInvoices> = (value: unknown): value is LiveInvoices => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const rows = (value as { invoices?: unknown }).invoices;
+  return Array.isArray(rows) && rows.every((r) => r !== null && typeof r === 'object');
+};
+
 /* ── Helpers ── */
+
+/** A cents field from the wire → a real number, or null when the payload
+    didn't carry one. `null / 100` is 0, so a missing balance would otherwise
+    render as a confident "$0.00". */
+function cents(v: unknown): number | null {
+  const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : null;
+}
 
 function _fmt(n: number): string {
   if (n >= 1000000) return n / 1000000 + 'M';
@@ -196,7 +243,7 @@ function Panel<T>({
    both pointing to this component). The `surface.id` prop selects the
    initial tab. */
 
-export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
+export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
   const initTab =
     surface && surface.id === 'billing' ? 'billing' : 'usage';
   const [tab, setTab] = useState(initTab);
@@ -204,20 +251,30 @@ export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
   // Three org-scoped GETs behind /api/billing (billing-dashboard.ts), each a
   // real DB / Stripe read. No fixtures: every panel renders live data, an
   // honest empty, or an honest error.
-  const usageState = useLiveData<LiveUsageSnapshot>('/api/billing/usage/limits');
-  const invoicesState = useLiveData<LiveInvoices>('/api/billing/invoices');
-  const creditsState = useLiveData<LiveCredits>('/api/billing/credits');
+  const usageState = useLiveData<LiveUsageSnapshot>(
+    '/api/billing/usage/limits',
+    ['/api/billing/usage/limits'],
+    isUsageSnapshot,
+  );
+  const invoicesState = useLiveData<LiveInvoices>(
+    '/api/billing/invoices',
+    ['/api/billing/invoices'],
+    isInvoices,
+  );
+  const creditsState = useLiveData<LiveCredits>(
+    '/api/billing/credits',
+    ['/api/billing/credits'],
+    isCredits,
+  );
   const snap = usageState.data;
 
   // Real org tier drives the plan label + the rate-limit table highlight;
   // null while the snapshot is loading or unavailable (no fabricated tier).
   const tier = snap ? snap.plan : null;
 
-  const nav = (id: string) => {
-    try {
-      localStorage.setItem('c2c_open_surface', id);
-    } catch (_e) { /* noop */ }
-  };
+  /* Was a dead write to `c2c_open_surface`, a key with no reader — so "View
+     all plans" did nothing. The shell's `onNav` is what navigates. */
+  const nav = (id: string) => onNav(id);
 
   return (
     <div className="sp" style={{ maxWidth: 1000 }}>
@@ -366,11 +423,13 @@ export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
                 errorTitle="Couldn't load your balance"
                 errorHint="The credit balance didn't respond. Sign in and retry, or check the service is reachable."
                 emptyTitle="No balance yet"
+                // A balance the payload never carried is not a balance of zero.
+                isEmpty={(c) => cents(c.balanceCents) === null}
               >
                 {(c) => (
                   <>
                     <div>
-                      <div className="ub-bal-n">${(c.balanceCents / 100).toFixed(2)}</div>
+                      <div className="ub-bal-n">${(cents(c.balanceCents)! / 100).toFixed(2)}</div>
                       <div className="ub-bal-l">Current balance</div>
                     </div>
                     <button className="ub-buy">
@@ -389,11 +448,22 @@ export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
                 errorTitle="Couldn't load auto-reload"
                 errorHint="The auto-reload settings didn't respond. Sign in and retry, or check the service is reachable."
                 emptyTitle="No auto-reload settings yet"
+                // This is where the surface died: the shape guard above proves
+                // the KEY is there, not that it holds an object — and an org
+                // with no auto-reload row is a real state, not an error. So
+                // the block is checked here, and a missing one shows the
+                // panel's own empty rather than throwing on `.topupCents`.
+                isEmpty={(c) =>
+                  !c.autoReload ||
+                  cents(c.autoReload.topupCents) === null ||
+                  cents(c.autoReload.thresholdCents) === null
+                }
               >
                 {(c) => {
-                  const reloadTo = c.autoReload.topupCents / 100;
-                  const reloadAt = c.autoReload.thresholdCents / 100;
-                  const reloadOff = !c.autoReload.enabled;
+                  const reload = c.autoReload!;
+                  const reloadTo = cents(reload.topupCents)! / 100;
+                  const reloadAt = cents(reload.thresholdCents)! / 100;
+                  const reloadOff = !reload.enabled;
                   return (
                     <>
                       <div>

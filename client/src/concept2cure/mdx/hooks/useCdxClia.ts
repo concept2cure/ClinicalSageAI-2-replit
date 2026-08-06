@@ -19,6 +19,7 @@
  */
 
 import { useFetchJson } from './useFetchJson';
+import { firstArray } from '../lib/payloadShape';
 import { toDataState, type DataState } from '../lib/dataState';
 
 /* Server rows arrive snake_case (SELECT *); adapt to display shapes so
@@ -105,7 +106,9 @@ export function useCdxPairings(programId?: string | null): UseRowsResult<CdxPair
     ? `/api/mdx/cdx/pairings?device_program_id=${encodeURIComponent(programId)}`
     : '/api/mdx/cdx/pairings';
   const { data, loading, error, refresh } = useFetchJson<{ data?: Row[] }>(url);
-  const rows = data?.data ? data.data.map(adaptPairing) : null;
+  // `data?.data ?` proves a field is present, never that it is a LIST. A 200
+  // carrying `{ data: {} }` is truthy here and throws one `.map` later.
+  const rows = firstArray<Row>(data?.data)?.map(adaptPairing) ?? null;
   return { rows: toDataState(rows, loading, error), loading, error, refresh };
 }
 
@@ -114,6 +117,6 @@ export function useCliaCategorizations(programId?: string | null): UseRowsResult
     ? `/api/mdx/clia?program_id=${encodeURIComponent(programId)}`
     : '/api/mdx/clia';
   const { data, loading, error, refresh } = useFetchJson<{ data?: Row[] }>(url);
-  const rows = data?.data ? data.data.map(adaptClia) : null;
+  const rows = firstArray<Row>(data?.data)?.map(adaptClia) ?? null;
   return { rows: toDataState(rows, loading, error), loading, error, refresh };
 }

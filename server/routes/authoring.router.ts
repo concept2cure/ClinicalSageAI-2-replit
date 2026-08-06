@@ -1105,7 +1105,25 @@ router.post(
 // GET /api/authoring/docs?module=M3 - List documents by module
 router.get('/docs', async (req: Request, res: Response) => {
   try {
-    const { module = 'M3', product_code, status = 'draft', programId } = req.query;
+    /*
+     * `module` has NO default, and that is the fix.
+     *
+     * It used to read `module = 'M3'`, and the filter below applies whatever
+     * `module` holds — unconditionally. So a caller that deliberately sent no
+     * `module` got an M3-only list and no way to tell.
+     *
+     * The editor is exactly that caller, and says so in as many words
+     * (DocumentAuthoring.tsx:282): "No `module` filter. Every filter on this
+     * route is optional server-side, and pinning one hid the rest of the
+     * dossier behind a dropdown — the outline is what selects a section now,
+     * so the document list must span all modules for it to select into."
+     * Every filter on this route was optional except the one the client was
+     * counting on being optional.
+     *
+     * The POST default at :1182 is untouched — a new document does need a
+     * module, and M3 is a reasonable one to start from.
+     */
+    const { module, product_code, status = 'draft', programId } = req.query;
     const tenantId = getTenantId(req);
 
     let query = `

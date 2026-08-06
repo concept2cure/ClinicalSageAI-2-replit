@@ -10,10 +10,11 @@
  * (cancellation, refresh, error narrowing) stays in one place.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFetchJson } from '../../mdx/hooks/useFetchJson';
 import type { PdevActivityState, PdevWorkstream } from '../data/enums';
 import type {
+  PdevActivityView,
   PdevAiDraftResult,
   PdevContradiction,
   PdevContradictionsPayload,
@@ -28,6 +29,7 @@ import type {
   PdevProgramView,
   PdevProvenancePayload,
   PdevReadinessReport,
+  PdevReadinessSnapshotRow,
   PdevRegistryPayload,
   PdevWorkstreamRollup,
   PdevWorkflowPayload,
@@ -38,6 +40,59 @@ import type {
  *  hook pattern. */
 interface Envelope<T> {
   data: T;
+}
+
+/**
+ * `x ?? []` defends against a MISSING value, not against a value of the wrong
+ * TYPE — and the wrong type is what a version-skewed route actually sends. A
+ * 200 carrying `{ data: {} }` unwraps to `{}`, `{} ?? []` is `{}`, and the very
+ * next `.filter` / `.map` / `.length` throws mid-render, so the whole PDEV
+ * surface unwinds and the shell says "this surface didn't finish loading"
+ * instead of "we couldn't load this". Every adapter below therefore asks what
+ * the value IS before spreading, mapping or indexing it.
+ */
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+/** The `{ data: ... }` payload, or `undefined` when the body is not an
+ *  envelope at all. `'data' in rec` rather than a truthiness test, because a
+ *  payload of `null` is real ("nothing here yet") and must not read the same
+ *  as a proxy that replaced the body wholesale. */
+function payloadOf(body: unknown): unknown {
+  const rec = asRecord(body);
+  return rec && 'data' in rec ? rec.data : undefined;
+}
+
+/** An OPTIONAL list member: absent means empty, but present-and-not-a-list
+ *  means the payload is not what it claims and is reported, never coerced.
+ *  `(x ?? []).map` coerces, which is how `{}` reached `.map`. */
+function optionalArray<T>(value: unknown): T[] | null {
+  if (value === undefined || value === null) return [];
+  return Array.isArray(value) ? (value as T[]) : null;
+}
+
+/** A REQUIRED list member. Absence is not emptiness here: these routes always
+ *  send the key, so a body without it is a different payload wearing the same
+ *  content-type — reporting it as "0 activities" would invent a fact. */
+function requiredArray<T>(rec: Record<string, unknown>, key: string): T[] | null {
+  const value = rec[key];
+  return Array.isArray(value) ? (value as T[]) : null;
+}
+
+/** Lands in the caller's existing error branch, next to HTTP/network errors —
+ *  the point is that the user is told the load failed, not shown a blank
+ *  surface or a spinner that never resolves. */
+function shapeError(path: string): string {
+  return `unexpected response shape for ${path}`;
+}
+
+/** A body arrived but no adapter could make sense of it. `data === null` while
+ *  the request is still in flight, which must NOT read as a bad shape. */
+function shapeErrorIf(bodyArrived: boolean, adapted: unknown, path: string): string | null {
+  return bodyArrived && adapted === null ? shapeError(path) : null;
 }
 
 /** Cached at app boot per PHASE_7_INSTALL.md §2 — every surface reads
@@ -53,20 +108,94 @@ export function usePdevRegistry() {
   };
 }
 
+/** One row of the IND program selector list (`GET /api/regulatory-programs`). */
+export interface PdevIndProgramRow {
+  id: string;
+  code: string;
+  productName: string;
+  name: string;
+  programType: string;
+  status: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+/**
+ * The IND programs this org can track, already narrowed to live INDs.
+ *
+ * This lived in App.tsx as `(programsList?.data ?? []).filter(...)`, which is
+ * the line every PDEV surface came down on: the envelope's payload only has to
+ * arrive as an object rather than an array — one route returning `{ data: {} }`
+ * where it used to return a list — and `?? []` passes the object straight
+ * through to `.filter`. The list drives program selection, so every downstream
+ * fetch on the surface died with it. A body that is not a list is reported as
+ * a load failure, not silently rendered as "no IND programs yet".
+ */
+export function usePdevIndPrograms() {
+  const path = '/api/regulatory-programs';
+  const { data, loading, error, refresh } =
+    useFetchJson<Envelope<PdevIndProgramRow[]>>(path);
+  const body = data === null ? undefined : payloadOf(data);
+  const rows: PdevIndProgramRow[] | null = Array.isArray(body)
+    ? (body as PdevIndProgramRow[])
+    : null;
+  /* Memoized because App.tsx keys an effect off this list — a fresh array
+     every render would loop. */
+  const programs = useMemo(
+    () =>
+      (rows ?? []).filter(
+        (p) => !!p && p.programType === 'IND' && p.status !== 'archived',
+      ),
+    [rows],
+  );
+  return {
+    programs,
+    loading,
+    error: error ?? shapeErrorIf(data !== null, rows, path),
+    refresh,
+  };
+}
+
 /** Program-level unified view: program row + workstream rollups +
  *  per-activity state + latest readiness snapshots + correspondence
  *  counts. Pass `null` to disable the fetch (idle state) while parent
  *  values are unresolved. */
+function adaptProgramView(server: unknown): PdevProgramView | null {
+  // `data?.data ?? null` handed this straight to the surfaces, and every one of
+  // App.tsx's `program.view?.program.code` reads is guarded on the CONTAINER,
+  // not the member — `{}` is a perfectly good `view`, and `{}.program.code`
+  // throws. Same for `view.latestSnapshots.length` and Overview's
+  // `for (const r of workstreams)`. Prove the program row and the three lists
+  // exist before any surface is told this is a program view.
+  const rec = asRecord(server);
+  if (!rec || !asRecord(rec.program)) return null;
+  const workstreams = requiredArray<PdevWorkstreamRollup>(rec, 'workstreams');
+  const activities = requiredArray<PdevActivityView>(rec, 'activities');
+  const latestSnapshots = requiredArray<PdevReadinessSnapshotRow>(rec, 'latestSnapshots');
+  if (!workstreams || !activities || !latestSnapshots) return null;
+  return {
+    ...(rec as unknown as PdevProgramView),
+    workstreams,
+    activities,
+    latestSnapshots,
+  };
+}
+
 export function usePdevProgram(programId: string | null) {
   const url = programId
     ? `/api/pdev/programs/${encodeURIComponent(programId)}`
     : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<PdevProgramView>>(url);
+  const view = useMemo(
+    () => (data === null ? null : adaptProgramView(payloadOf(data))),
+    [data],
+  );
   return {
-    view: data?.data ?? null,
+    view,
     loading,
-    error,
+    // App.tsx already renders `pdev-page-error` for this — a bad shape is a
+    // failed load, and saying so beats a spinner that never resolves.
+    error: error ?? shapeErrorIf(data !== null, view, url ?? 'program'),
     refresh,
   };
 }
@@ -85,7 +214,16 @@ function adaptReadiness(
   server: ServerReadinessPayload | null,
   programId: string | null,
 ): PdevReadinessReport | null {
-  if (!server) return null;
+  // Null-checked AND shape-checked. `if (!server) return null` alone left
+  // `server.overall.readinessScore` to throw on any 200 whose body is not
+  // exactly the expected object — and the throw happens during render, so the
+  // whole PDEV surface comes down and shows nothing at all instead of the
+  // `pdev-page-error` branch App.tsx already has for precisely this.
+  //
+  // Third instance of the same pattern in the converged kits (see
+  // mdx/hooks/usePresub.ts, twice). An adapter that trusts the server's shape
+  // turns a bad payload into a blank screen with no message.
+  if (!server || typeof server !== 'object' || !server.overall) return null;
   return {
     programId: programId ?? '',
     overall: {
@@ -95,7 +233,7 @@ function adaptReadiness(
       blockingActivities: server.overall.blockingActivities,
       blockingResolved: server.overall.blockingResolved,
     },
-    byWorkstream: server.workstreams,
+    byWorkstream: Array.isArray(server.workstreams) ? server.workstreams : [],
     computedAt: new Date().toISOString(),
   };
 }
@@ -119,6 +257,17 @@ export function usePdevReadiness(programId: string | null) {
 
 /** Workstream drill payload — rollup metrics for the chosen workstream
  *  plus its activities (registry def + per-program state). */
+function adaptWorkstreamPayload(server: unknown): PdevWorkstreamPayload | null {
+  // Workstream.tsx reads `payload.activities` and immediately calls `.length`
+  // and `.filter` on it. Nothing between the socket and that call checked it
+  // was a list.
+  const rec = asRecord(server);
+  if (!rec) return null;
+  const activities = requiredArray<PdevActivityView>(rec, 'activities');
+  if (!activities) return null;
+  return { ...(rec as unknown as PdevWorkstreamPayload), activities };
+}
+
 export function usePdevWorkstream(
   programId: string | null,
   workstream: PdevWorkstream | null,
@@ -129,10 +278,14 @@ export function usePdevWorkstream(
       : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<PdevWorkstreamPayload>>(url);
+  const payload = useMemo(
+    () => (data === null ? null : adaptWorkstreamPayload(payloadOf(data))),
+    [data],
+  );
   return {
-    payload: data?.data ?? null,
+    payload,
     loading,
-    error,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'workstream'),
     refresh,
   };
 }
@@ -149,7 +302,21 @@ export function usePdevActivityEvidence(
       : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<PdevEvidencePayload>>(url);
-  return { payload: data?.data ?? null, loading, error, refresh };
+  // ActivityDetail writes `evidence.payload?.links.length` — the `?.` covers
+  // the payload and not `links`, so a payload without a list of links throws
+  // on the tab that is supposed to say "No evidence attached yet."
+  const payload = useMemo(() => {
+    if (data === null) return null;
+    const rec = asRecord(payloadOf(data));
+    const links = rec ? requiredArray<PdevEvidencePayload['links'][number]>(rec, 'links') : null;
+    return links ? { ...(rec as unknown as PdevEvidencePayload), links } : null;
+  }, [data]);
+  return {
+    payload,
+    loading,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'evidence'),
+    refresh,
+  };
 }
 
 interface ServerWorkflowPayload {
@@ -181,37 +348,52 @@ function adaptWorkflow(
   activityKey: string | null,
   programId: string | null,
 ): PdevWorkflowPayload | null {
-  if (!server) return null;
-  if (!server.workflowRunId) return { run: null };
+  // `if (!server)` let any object through, and `(server.checkpoints ?? []).map`
+  // below defends against a checkpoints field that is MISSING, not one that
+  // came back as an object — `{} ?? []` is `{}`, and `{}.map` throws. Same for
+  // each checkpoint's `approvals`.
+  if (!asRecord(server)) return null;
+  const run = server as ServerWorkflowPayload;
+  if (!run.workflowRunId) return { run: null };
+  const checkpoints = optionalArray<ServerWorkflowPayload['checkpoints'][number]>(
+    run.checkpoints,
+  );
+  if (!checkpoints) return null;
+  const adaptedCheckpoints = [];
+  for (const cp of checkpoints) {
+    const approvals = optionalArray<NonNullable<typeof cp.approvals>[number]>(cp.approvals);
+    if (!approvals) return null;
+    adaptedCheckpoints.push({
+      id: cp.id,
+      stepIndex: cp.stepIndex,
+      name: cp.name,
+      status: cp.status as never,
+      requiredRoles: optionalArray<string>(cp.requiredRoles) ?? [],
+      approvals: approvals.map((a) => ({
+        id: a.id,
+        approverUserId: a.approverUserId ?? null,
+        approverDisplay: a.approverDisplay ?? String(a.approverUserId ?? 'unknown'),
+        role: a.role ?? '',
+        decidedAt: a.decidedAt ?? '',
+        decision: a.decision ?? 'approve',
+        comment: a.comment ?? null,
+      })),
+    });
+  }
   return {
     run: {
-      runId: server.workflowRunId,
-      workflowType: server.workflowType ?? 'state_promotion',
+      runId: run.workflowRunId,
+      workflowType: run.workflowType ?? 'state_promotion',
       activityKey: activityKey ?? '',
       programId: programId ?? '',
-      targetState: (server.targetState ?? 'approved') as PdevWorkflowPayload['run'] extends infer R
+      targetState: (run.targetState ?? 'approved') as PdevWorkflowPayload['run'] extends infer R
         ? R extends { targetState: infer T }
           ? T
           : never
         : never,
-      status: (server.status ?? 'awaiting_approval') as never,
-      checkpoints: (server.checkpoints ?? []).map((cp) => ({
-        id: cp.id,
-        stepIndex: cp.stepIndex,
-        name: cp.name,
-        status: cp.status as never,
-        requiredRoles: cp.requiredRoles ?? [],
-        approvals: (cp.approvals ?? []).map((a) => ({
-          id: a.id,
-          approverUserId: a.approverUserId ?? null,
-          approverDisplay: a.approverDisplay ?? String(a.approverUserId ?? 'unknown'),
-          role: a.role ?? '',
-          decidedAt: a.decidedAt ?? '',
-          decision: a.decision ?? 'approve',
-          comment: a.comment ?? null,
-        })),
-      })),
-      createdAt: server.createdAt ?? new Date().toISOString(),
+      status: (run.status ?? 'awaiting_approval') as never,
+      checkpoints: adaptedCheckpoints,
+      createdAt: run.createdAt ?? new Date().toISOString(),
     },
   };
 }
@@ -226,10 +408,17 @@ export function usePdevActivityWorkflow(
       : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<ServerWorkflowPayload>>(url);
+  const payload = useMemo(
+    () =>
+      data === null
+        ? null
+        : adaptWorkflow(payloadOf(data) as ServerWorkflowPayload | null, activityKey, programId),
+    [data, activityKey, programId],
+  );
   return {
-    payload: adaptWorkflow(data?.data ?? null, activityKey, programId),
+    payload,
     loading,
-    error,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'workflow'),
     refresh,
   };
 }
@@ -244,7 +433,32 @@ export function usePdevActivityProvenance(
       : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<PdevProvenancePayload>>(url);
-  return { payload: data?.data ?? null, loading, error, refresh };
+  // The Provenance and Audit tabs read `payload.artifacts.length`,
+  // `.evidence.length`, `.lineage.length` and `.audit.length` off a payload
+  // whose only check was `payload &&` — four members, one container guard.
+  const payload = useMemo(() => {
+    if (data === null) return null;
+    const rec = asRecord(payloadOf(data));
+    if (!rec) return null;
+    const artifacts = requiredArray<PdevProvenancePayload['artifacts'][number]>(rec, 'artifacts');
+    const evidence = requiredArray<PdevProvenancePayload['evidence'][number]>(rec, 'evidence');
+    const lineage = requiredArray<PdevProvenancePayload['lineage'][number]>(rec, 'lineage');
+    const audit = requiredArray<PdevProvenancePayload['audit'][number]>(rec, 'audit');
+    if (!artifacts || !evidence || !lineage || !audit) return null;
+    return {
+      ...(rec as unknown as PdevProvenancePayload),
+      artifacts,
+      evidence,
+      lineage,
+      audit,
+    };
+  }, [data]);
+  return {
+    payload,
+    loading,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'provenance'),
+    refresh,
+  };
 }
 
 // ─── Workspace reads (IND assembly · FDA stream · Contradictions) ──────────
@@ -290,31 +504,44 @@ const IND_READINESS_THRESHOLD = 85;
 function adaptIndAssembly(
   server: ServerIndAssemblyPayload | null,
 ): PdevIndAssemblyPayload | null {
-  if (!server) return null;
+  // Shape-checked, not just null-checked — see adaptReadiness above. The
+  // top-level `modules` check was there; `m.documents.filter` one line down
+  // was not, so a module row without a document list still threw.
+  const rec = asRecord(server);
+  if (!rec || !Array.isArray(rec.modules)) return null;
+  const modules: PdevIndAssemblyPayload['modules'] = [];
+  for (const raw of rec.modules as unknown[]) {
+    const m = asRecord(raw) as unknown as ServerIndAssemblyModule | null;
+    if (!m) return null;
+    const documents = requiredArray<ServerIndAssemblyModule['documents'][number]>(
+      m as unknown as Record<string, unknown>,
+      'documents',
+    );
+    if (!documents) return null;
+    /* Per-module blockers — surface missing mandatory docs as blocker
+       strings so the kit's blockers feed renders something useful. */
+    const moduleBlockers = documents
+      .filter((d) => d && d.mandatoryForInd && !d.isPresent)
+      .map((d) => `${d.title} (${d.activityState})`);
+    modules.push({
+      id: m.module,
+      label: MODULE_LABELS[m.module],
+      readiness: m.moduleReadiness,
+      mandatory: {
+        present: m.presentMandatoryDocuments,
+        total: m.mandatoryDocuments,
+      },
+      total: {
+        present: m.presentDocuments,
+        total: m.totalDocuments,
+      },
+      blockers: moduleBlockers,
+    });
+  }
   return {
-    overallReadiness: server.overallReadiness,
+    overallReadiness: (server as ServerIndAssemblyPayload).overallReadiness,
     threshold: IND_READINESS_THRESHOLD,
-    modules: server.modules.map((m) => {
-      /* Per-module blockers — surface missing mandatory docs as blocker
-         strings so the kit's blockers feed renders something useful. */
-      const moduleBlockers = m.documents
-        .filter((d) => d.mandatoryForInd && !d.isPresent)
-        .map((d) => `${d.title} (${d.activityState})`);
-      return {
-        id: m.module,
-        label: MODULE_LABELS[m.module],
-        readiness: m.moduleReadiness,
-        mandatory: {
-          present: m.presentMandatoryDocuments,
-          total: m.mandatoryDocuments,
-        },
-        total: {
-          present: m.presentDocuments,
-          total: m.totalDocuments,
-        },
-        blockers: moduleBlockers,
-      };
-    }),
+    modules,
   };
 }
 
@@ -324,10 +551,17 @@ export function usePdevIndAssembly(programId: string | null) {
     : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<ServerIndAssemblyPayload>>(url);
+  const payload = useMemo(
+    () =>
+      data === null
+        ? null
+        : adaptIndAssembly(payloadOf(data) as ServerIndAssemblyPayload | null),
+    [data],
+  );
   return {
-    payload: adaptIndAssembly(data?.data ?? null),
+    payload,
     loading,
-    error,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'ind-assembly'),
     refresh,
   };
 }
@@ -351,8 +585,7 @@ interface ServerFdaStreamPayload {
   counts?: Record<string, number>;
 }
 
-function deriveStatus(item: ServerFdaInteractionItem): PdevFdaInteraction['status'] {
-  const meta = item.meta;
+function deriveStatus(meta: Record<string, unknown>): PdevFdaInteraction['status'] {
   if (meta.rolledIn === true) return 'closed';
   if (typeof meta.fdaResponse === 'string' && meta.fdaResponse.trim()) return 'responded';
   if (typeof meta.status === 'string') {
@@ -367,21 +600,33 @@ function deriveStatus(item: ServerFdaInteractionItem): PdevFdaInteraction['statu
 function adaptFdaInteractions(
   server: ServerFdaStreamPayload | null,
 ): PdevFdaStreamPayload | null {
-  if (!server) return null;
-  return {
-    interactions: server.items.map((item) => ({
+  // Shape-checked, not just null-checked — see adaptReadiness above. `items`
+  // was checked; `item.meta.blocker` inside the map was not, and an item
+  // without `meta` throws there just as loudly.
+  const rec = asRecord(server);
+  if (!rec) return null;
+  const items = requiredArray<ServerFdaInteractionItem>(rec, 'items');
+  if (!items) return null;
+  const interactions: PdevFdaStreamPayload['interactions'] = [];
+  for (const raw of items) {
+    const item = asRecord(raw) as unknown as ServerFdaInteractionItem | null;
+    if (!item) return null;
+    const meta = item.meta == null ? {} : asRecord(item.meta);
+    if (!meta) return null;
+    interactions.push({
       id: `${item.kind}:${item.sourceId}`,
       when: item.at,
       kind: item.kind,
       title: item.title,
       summary: item.summary ?? '',
-      status: deriveStatus(item),
-      blocker: item.meta.blocker === true,
-      rolled: item.meta.rolledIn === true,
+      status: deriveStatus(meta),
+      blocker: meta.blocker === true,
+      rolled: meta.rolledIn === true,
       proposedKey: null,
       confidence: null,
-    })),
-  };
+    });
+  }
+  return { interactions };
 }
 
 export function usePdevFdaInteractions(programId: string | null) {
@@ -390,10 +635,17 @@ export function usePdevFdaInteractions(programId: string | null) {
     : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<ServerFdaStreamPayload>>(url);
+  const payload = useMemo(
+    () =>
+      data === null
+        ? null
+        : adaptFdaInteractions(payloadOf(data) as ServerFdaStreamPayload | null),
+    [data],
+  );
   return {
-    payload: adaptFdaInteractions(data?.data ?? null),
+    payload,
     loading,
-    error,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'fda-interactions'),
     refresh,
   };
 }
@@ -404,7 +656,24 @@ export function usePdevFdaProposals(programId: string | null) {
     : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<PdevFdaProposalsPayload>>(url);
-  return { payload: data?.data ?? null, loading, error, refresh };
+  // FdaStream.tsx writes `proposals?.proposals.filter(…) ?? []`, which reads as
+  // doubly guarded and is not: the `?.` covers the payload, the `?? []` covers
+  // the whole expression, and neither covers a `proposals` member that came
+  // back as something other than a list.
+  const payload = useMemo(() => {
+    if (data === null) return null;
+    const rec = asRecord(payloadOf(data));
+    const proposals = rec
+      ? requiredArray<PdevFdaProposalsPayload['proposals'][number]>(rec, 'proposals')
+      : null;
+    return proposals ? { ...(rec as unknown as PdevFdaProposalsPayload), proposals } : null;
+  }, [data]);
+  return {
+    payload,
+    loading,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'fda-proposals'),
+    refresh,
+  };
 }
 
 /** Server payload from /contradictions. The engine returns `findings`
@@ -439,9 +708,17 @@ function objectLabel(o?: { id?: string; label?: string | null }): string {
 function adaptContradictions(
   server: ServerContradictionsPayload | null,
 ): PdevContradictionsPayload | null {
-  if (!server) return null;
+  // `(server.findings ?? []).map` — the `?? []` reads as a guard and only
+  // covers an ABSENT findings field. A body that arrived as `{}` or as a
+  // findings object rather than a list walked straight into `.map`, and the
+  // Contradictions surface then indexes `payload.contradictions[0]`.
+  const rec = asRecord(server);
+  if (!rec) return null;
+  const findings = requiredArray<ServerContradictionFinding>(rec, 'findings');
+  if (!findings) return null;
+  if (findings.some((f) => !asRecord(f))) return null;
   return {
-    contradictions: (server.findings ?? []).map((f) => ({
+    contradictions: findings.map((f) => ({
       id: f.id,
       severity: f.severity,
       type: f.contradictionType,
@@ -462,10 +739,17 @@ export function usePdevContradictions(programId: string | null) {
     : null;
   const { data, loading, error, refresh } =
     useFetchJson<Envelope<ServerContradictionsPayload>>(url);
+  const payload = useMemo(
+    () =>
+      data === null
+        ? null
+        : adaptContradictions(payloadOf(data) as ServerContradictionsPayload | null),
+    [data],
+  );
   return {
-    payload: adaptContradictions(data?.data ?? null),
+    payload,
     loading,
-    error,
+    error: error ?? shapeErrorIf(data !== null, payload, url ?? 'contradictions'),
     refresh,
   };
 }

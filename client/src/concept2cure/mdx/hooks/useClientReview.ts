@@ -19,7 +19,8 @@
  */
 
 import { useFetchJson } from './useFetchJson';
-import { toDataState, type DataState } from '../lib/dataState';
+import { type DataState } from '../lib/dataState';
+import { isRecord, shapeMismatch, toRowsState } from '../lib/payloadShape';
 import type {
   ClientReviewGroups,
   ClientReviewState,
@@ -110,18 +111,38 @@ export function useClientReview(
 
   const { data, loading, error, refresh } = useFetchJson<ClientReviewPayload>(url);
 
-  const state = (rows: ClientReviewTask[] | undefined): DataState<ClientReviewTask[]> =>
-    toDataState(rows ?? null, loading, error, { idleReason: IDLE });
+  /*
+   * `data?.data.groups.client_action_required` — three dereferences behind one
+   * `?.`, which only ever guarded the first. The route always sends
+   * `{ data: { groups, counts, total } }`, but a 200 that isn't that (an error
+   * body, a bare list, `{}`) made `.groups` a read off `undefined` and threw
+   * during render — the room reported itself broken rather than reporting a
+   * response it couldn't read. A body without `groups` is a failed load, and
+   * every group already renders that state through DataGate; the counts fall
+   * back to zeros rather than being invented.
+   */
+  const payload = isRecord(data) && isRecord(data.data) ? data.data : null;
+  const groups = payload && isRecord(payload.groups) ? payload.groups : null;
+  const failed = error ?? (data != null && groups === null ? shapeMismatch(url ?? '') : null);
+
+  const state = (rows: unknown): DataState<ClientReviewTask[]> =>
+    toRowsState<ClientReviewTask>(rows, loading, failed, {
+      source: url ?? '',
+      idleReason: IDLE,
+    });
 
   return {
-    actionRequired: state(data?.data.groups.client_action_required),
-    visible: state(data?.data.groups.client_visible),
-    authorityReady: state(data?.data.groups.authority_ready),
-    counts: data?.data.counts ?? ZERO_COUNTS,
-    total: data?.data.total ?? 0,
+    actionRequired: state(groups?.client_action_required),
+    visible: state(groups?.client_visible),
+    authorityReady: state(groups?.authority_ready),
+    counts:
+      payload && isRecord(payload.counts)
+        ? (payload.counts as Record<ClientReviewState, number>)
+        : ZERO_COUNTS,
+    total: payload && typeof payload.total === 'number' ? payload.total : 0,
     scope: data?.meta?.scope ?? 'organization',
     loading,
-    error,
+    error: failed,
     refresh,
   };
 }

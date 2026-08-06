@@ -45,8 +45,11 @@ import '../styles/project-home-v2.css';
 
 interface GatewayInfo { region?: string; gateway?: string; name?: string; configured?: boolean; environment?: string; [k: string]: unknown; }
 interface Transmittal {
-  id: number; region: string; gateway: string; format?: string | null; submission_type?: string | null;
-  transmission_id?: string | null; status: string; error_class?: string | null; error_message?: string | null;
+  // region/status are declared nullable because the log genuinely serves rows
+  // that have them null — a narrowed SELECT, or a row written before its gateway
+  // replied. The render guards below exist for those rows, not for a bad envelope.
+  id: number; region?: string | null; gateway?: string | null; format?: string | null; submission_type?: string | null;
+  transmission_id?: string | null; status?: string | null; error_class?: string | null; error_message?: string | null;
   submitted_at?: string | null; ack_received_at?: string | null; completed_at?: string | null;
 }
 
@@ -228,9 +231,13 @@ export function GatewayTransmittals(_props: SurfaceViewProps) {
               <tbody>{rows.map((t) => (
                 <tr key={t.id}>
                   <td className="mono">#{t.id}</td>
-                  <td>{t.region.toUpperCase()} / {t.gateway}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
+                  {/* region is nullable on partially-migrated transmittal rows; the gateways
+                      table above already renders the same field the same way when it is absent. */}
+                  <td>{String(t.region ?? '—').toUpperCase()} / {t.gateway}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
                   <td className="mono" style={{ fontSize: 12 }}>{t.transmission_id ?? '—'}</td>
-                  <td><span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>
+                  {/* status is likewise nullable (a row written before its gateway replied);
+                      no chip is honest, an invented tone is not — same guard as error_message below. */}
+                  <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
                     {t.error_message && <div style={{ fontSize: 11, color: 'var(--c2c-err,#b42318)' }}>{t.error_message}</div>}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{t.submitted_at ? new Date(t.submitted_at).toLocaleString() : '—'}</td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>

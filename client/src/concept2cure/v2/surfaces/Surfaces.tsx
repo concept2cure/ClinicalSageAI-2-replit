@@ -56,7 +56,25 @@ export function Home({
   const send = () => {
     const t = draft.trim();
     if (!t) return;
-    onAsk(t);
+    /*
+     * Seed the thread, do not `onAsk`.
+     *
+     * `onAsk` pushes into the SHELL's conversation and opens the shell's AnA
+     * rail — but the destination, `conversation-thread`, is registered
+     * `ownsConversation: true`, so the rail this question was sent to is the
+     * one surface that never draws it.
+     * And `ConversationThread` runs its own `useAnaChat` keyed off
+     * `window.C2C_CONVO`, which nothing here was writing. Net effect: you typed
+     * a question into the product's front door, landed on an EMPTY
+     * conversation screen, and the answer streamed into a hidden rail — to
+     * reappear, unbidden, the next time you opened a surface that does draw it.
+     *
+     * `window.C2C_CONVO = { id: 'new', seed }` is the protocol the thread
+     * already implements (ConversationThread.tsx:300) and that ProjectHome
+     * already uses (ProjectHome.tsx:570). The seed is sent on mount, into the
+     * thread the user is actually looking at.
+     */
+    (window as any).C2C_CONVO = { id: 'new', seed: t };
     setDraft('');
     onNav('conversation-thread');
   };

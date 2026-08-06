@@ -1,15 +1,15 @@
 /**
- * PDEV module route entry — mirrors the MdxRoute pattern.
+ * PDEV entry point — imports the kit's stylesheet and renders one surface.
  *
- * Imports the kit's stylesheet (verbatim, with the inline `:root` block
- * stripped during port — canonical tokens come from
- * design-system/colors_and_type.css, imported once at the v2 client
- * root). Mount path is decided by the v2 router — this component is
- * route-agnostic.
+ * No longer a route. It was one, and the v2 `pdev` surface was a stub that
+ * navigated the browser to it, unmounting the shell so the kit could draw its
+ * own Rail, TopBar and AnA dock. `v2/surfaces/PdevSurfaces` mounts this inside
+ * the shell instead, once per destination.
  *
- * Behind feature flag `ENABLE_PDEV_SURFACE` (see client/src/flags/featureFlags.ts).
- * The host renderer should check the flag before importing this route to keep
- * the bundle slim when the flag is off.
+ * `nav` and `onNav` are required rather than optional: a surface that does not
+ * know which surface it is would silently fall back to the overview, which is
+ * how a mis-wired registry entry becomes a screen that looks fine and shows the
+ * wrong thing.
  */
 
 import * as React from 'react';
@@ -19,6 +19,6 @@ import './app.css';
 
 export interface PdevRouteProps extends PdevAppProps {}
 
-export default function PdevRoute(props: PdevRouteProps = {}) {
+export default function PdevRoute(props: PdevRouteProps) {
   return <PdevApp {...props} />;
 }

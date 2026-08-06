@@ -23,9 +23,6 @@ import { PdevApp } from '../../client/src/concept2cure/pdev/App';
 // The pdev-local ConfirmDialog.tsx was retired; all governed-action call sites
 // now use the shared GovernedConfirmDialog (see its module header).
 import { GovernedConfirmDialog } from '../../client/src/concept2cure/_shared/components/GovernedConfirmDialog';
-import { PdevRail } from '../../client/src/concept2cure/pdev/shell/Rail';
-import { PdevTopBar } from '../../client/src/concept2cure/pdev/shell/TopBar';
-import { PdevAnaDock } from '../../client/src/concept2cure/pdev/shell/AnaDock';
 
 const errorLog: unknown[] = [];
 let origError: typeof console.error;
@@ -78,32 +75,36 @@ function assertNoReactErrors() {
 }
 
 describe('PDEV Phase 7 surface smoke tests', () => {
+  // No PdevRail / PdevTopBar / PdevAnaDock cases. That chrome is deleted: the
+  // kit stopped being a second shell, so the v2 shell draws the rail, the
+  // topbar and the one AnA composer. What remains here is the kit's own
+  // surfaces, which is what it should have been testing.
   it('PdevApp mounts and shows the empty-state when no IND programs exist', () => {
     /* With fetch mocked to 404 across the board, the program list
        resolves to an empty array, and the surface should render the
        "No IND programs yet" empty state (or the loading state — both
        are valid initial states). The key bar: no React errors. */
-    render(<PdevApp />);
+    render(<PdevApp nav="overview" onNav={() => {}} />);
     assertNoReactErrors();
   });
 
   it('PdevApp mounts with an initial nav of cmc', () => {
-    render(<PdevApp initialNav="cmc" />);
+    render(<PdevApp nav="overview" onNav={() => {}} initialNav="cmc" />);
     assertNoReactErrors();
   });
 
   it('PdevApp mounts with an initial nav of ind_assembly', () => {
-    render(<PdevApp initialNav="ind_assembly" />);
+    render(<PdevApp nav="overview" onNav={() => {}} initialNav="ind_assembly" />);
     assertNoReactErrors();
   });
 
   it('PdevApp mounts with an initial nav of fda_interactions', () => {
-    render(<PdevApp initialNav="fda_interactions" />);
+    render(<PdevApp nav="overview" onNav={() => {}} initialNav="fda_interactions" />);
     assertNoReactErrors();
   });
 
   it('PdevApp mounts with an initial nav of contradictions', () => {
-    render(<PdevApp initialNav="contradictions" />);
+    render(<PdevApp nav="overview" onNav={() => {}} initialNav="contradictions" />);
     assertNoReactErrors();
   });
 
@@ -137,62 +138,7 @@ describe('PDEV Phase 7 surface smoke tests', () => {
     assertNoReactErrors();
   });
 
-  it('PdevRail renders with an empty program list', () => {
-    render(
-      <PdevRail
-        activeNav="overview"
-        setActiveNav={() => {}}
-        collapsed={false}
-        setCollapsed={() => {}}
-        program={null}
-        programs={[]}
-        switchProgram={() => {}}
-      />,
-    );
-    assertNoReactErrors();
-  });
 
-  it('PdevTopBar renders without program', () => {
-    render(
-      <PdevTopBar
-        hereLabel="Program dashboard"
-        program={null}
-        onOpenPalette={() => {}}
-      />,
-    );
-    assertNoReactErrors();
-  });
 
-  it('PdevAnaDock renders open state', () => {
-    render(
-      <PdevAnaDock
-        open={true}
-        setOpen={() => {}}
-        program={null}
-        readinessScore={0}
-        topBlocker={null}
-        activeNav="overview"
-        activity={null}
-        onSend={() => {}}
-      />,
-    );
-    assertNoReactErrors();
-  });
 
-  it('PdevAnaDock renders seam state when closed', () => {
-    const { container } = render(
-      <PdevAnaDock
-        open={false}
-        setOpen={() => {}}
-        program={null}
-        readinessScore={null}
-        topBlocker={null}
-        activeNav="overview"
-        activity={null}
-        onSend={() => {}}
-      />,
-    );
-    expect(container.querySelector('.pdev-ana-seam')).toBeTruthy();
-    assertNoReactErrors();
-  });
 });

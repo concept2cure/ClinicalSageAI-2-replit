@@ -30,6 +30,14 @@
   --ana: 380px;
   --ana-seam: 32px;
 
+  /* Fixed near-black for shadow tinting. Declared here because the shell USES it
+     (admin-access.css) while the only other declaration in the app graph is
+     mdx/app.css — so v2 was borrowing a token from the MDX kit and rendering
+     pure #000 through the fallback whenever that kit was not loaded. Not
+     --text-100: that inverts to #faf9f5 in dark mode, and a shadow must stay
+     dark in both. */
+  --black: #141413;
+
   /* kit elevation — canonical --shadow-* are Claude-flat (0-alpha); the kit
      menus/modals carry their own warm shadows (≤ .14 alpha, per kit README) */
   --v2-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / .04);
@@ -909,6 +917,21 @@
 .c2c-v2 .tb-cmdk .kbd{font-family:var(--font-mono);font-size:10px;padding:1px 5px;border:1px solid var(--border);border-radius:4px;color:var(--text-400);}
 .c2c-v2 .tb-btn{width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-400);font-size:17px;}
 .c2c-v2 .tb-btn:hover{background:var(--bg-200);color:var(--text-100);}
+/* Engaged state for a .tb-btn that toggles something.
+
+   It had none, and two shipping filters relied on it. `K510Surface.tsx:200`
+   and `CerSurface.tsx:112` each render a funnel button that filters a list
+   ("selected only" / "included only") and appended a state class that no rule
+   anywhere styled — at HEAD or on the base branch. Pressing the filter changed
+   the list and left the button that did it looking exactly as before, so the
+   only way to tell whether the filter was on was to hover for the tooltip.
+
+   Values are the shell's existing engaged-state language, not a new one:
+   `--accent-000` fill with `--accent-200` text, as .tb-tog.on, .tb-chip.on,
+   .cl-tog.on and .tb-dep-opt.on all use. Those carry a border too; .tb-btn has
+   none, so it takes the fill and the text colour only. */
+.c2c-v2 .tb-btn.on{background:var(--accent-000);color:var(--accent-200);}
+.c2c-v2 .tb-btn.on:hover{background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .rail-logo[data-on="true"]{background:var(--bg-200);}
 .c2c-v2 .tb-org{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 6px;border-radius:var(--radius-lg);transition:background var(--dur);}
 .c2c-v2 .tb-org:hover{background:var(--bg-100);}
@@ -1172,7 +1195,12 @@
 
 /* floating launcher — present on every surface */
 .c2c-v2 .cl-fab-wrap{position:fixed;right:22px;bottom:22px;z-index:70;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
-.c2c-v2.shell[data-ana-open="true"] .cl-fab-wrap{right:calc(var(--ana-w,400px) + 22px);}
+/* --ana is the dock column width (see the grid at .c2c-v2.shell). This read
+   --ana-w, which is defined nowhere in the repo, so it always fell back to
+   400px against a 380px dock and parked the launcher 20px inside the page
+   instead of flush against it. Using the real token also means the FAB now
+   tracks the dock if that width ever changes. */
+.c2c-v2.shell[data-ana-open="true"] .cl-fab-wrap{right:calc(var(--ana) + 22px);}
 .c2c-v2 .cl-fab{width:50px;height:50px;border-radius:50%;background:var(--accent-100);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--v2-shadow-lg);transition:transform .16s ease,background .16s ease;}
 .c2c-v2 .cl-fab .ico{font-size:21px;}
 .c2c-v2 .cl-fab:hover{background:var(--accent-200);transform:translateY(-1px);}
@@ -1266,6 +1294,29 @@
 .c2c-v2 .cl-toast-ic{width:18px;height:18px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;}
 .c2c-v2 .cl-toast-t b{font-weight:700;}
 .c2c-v2 .cl-toast-go{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.14);color:var(--bg-000);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;}
+
+/* The confirmation toast six surfaces raise after an action.
+
+   `Risk.tsx:426`, `Labeling.tsx:438`, `HumanFactors.tsx:259`,
+   `DesignControls.tsx:295`, `CommunicationCenter.tsx:839` and
+   `AdminSurfaces.tsx:1524` all render `.pdev-toast`, and its ONLY definition
+   was `v2/styles/misc-surfaces-v2.css:110` — a stylesheet no file imports, so
+   never handed to the bundler and absent from every built asset. Ten other
+   toast classes ship and work (.cl-toast, .de-toast, .sn-toast, …); this one
+   did not. On all six surfaces the confirmation rendered as a bare line of
+   body text at the bottom of the document flow instead of a floating pill.
+
+   The rules are copied from that orphan with ONE deliberate change: z-index
+   1300 becomes 90, matching `.cl-toast` directly above — the shell's own
+   bottom-centre toast, same position, same fill. 1300 is a kit value from a
+   stacking scale that no longer exists; the shell's overlays run 40–90 and its
+   modals 200–1000, so 1300 put a transient confirmation above every dialog
+   and e-signature modal in the product.
+
+   Only these two rules are lifted. `misc-surfaces-v2.css` is 348 of 349 rules
+   UNSCOPED, so importing it wholesale would bleed across the shell. */
+.c2c-v2 .pdev-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--text-100);color:var(--bg-000);font-size:13px;font-weight:600;padding:11px 18px;border-radius:10px;display:flex;align-items:center;gap:8px;z-index:90;box-shadow:0 8px 28px rgba(0,0,0,.24);}
+.c2c-v2 .pdev-toast svg{width:15px;height:15px;}
 .c2c-v2 .cl-toast-go:hover{background:rgba(255,255,255,.24);}
 .c2c-v2 .cl-toast-go .ico{font-size:13px;}
 @media(max-width:600px){.c2c-v2 .cl-frow, .c2c-v2 .cl-frow:has(.cl-field:nth-child(3)){grid-template-columns:1fr;}}
@@ -2614,3 +2665,4 @@
 .c2c-v2 .esign-field input:focus, .c2c-v2 .esign-field select:focus{border-color:var(--accent-100);}
 .c2c-v2 .esign-manifest{font-size:11px;color:var(--text-400);line-height:1.5;background:var(--bg-100);border-radius:var(--radius-md);padding:10px 12px;}
 .c2c-v2 .esign-f{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border);}
+

@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { saveToAuthoring } from '../authoringHandoff';
 import {
   specRowsFromApi,
   specCreateBody,
@@ -112,24 +114,23 @@ function C2CToast({ msg }: { msg: string }) {
   return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
 }
 
-function mdToHtml(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (s: string) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  const lines = md.split('\n'); let html = ''; let i = 0;
-  while (i < lines.length) {
-    const ln = lines[i];
-    if (/^#{1,6}\s/.test(ln)) { const lv = ln.match(/^#+/)![0].length; html += `<h${lv}>${inline(ln.replace(/^#+\s/, ''))}</h${lv}>`; i++; continue; }
-    if (/^---\s*$/.test(ln)) { html += '<hr/>'; i++; continue; }
-    if (/^\|/.test(ln)) { const rows: string[] = []; while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; }
-      const cells = (r: string) => r.split('|').slice(1, -1).map(c => c.trim());
-      let t = '<table><thead><tr>'; cells(rows[0]).forEach(c => t += `<th>${inline(c)}</th>`); t += '</tr></thead><tbody>';
-      for (let r = 2; r < rows.length; r++) { t += '<tr>'; cells(rows[r]).forEach(c => t += `<td>${inline(c)}</td>`); t += '</tr>'; } t += '</tbody></table>'; html += t; continue; }
-    if (/^[-*]\s/.test(ln)) { let ul = '<ul>'; while (i < lines.length && /^[-*]\s/.test(lines[i])) { ul += `<li>${inline(lines[i].replace(/^[-*]\s/, ''))}</li>`; i++; } ul += '</ul>'; html += ul; continue; }
-    if (ln.trim() === '') { i++; continue; }
-    html += `<p>${inline(ln)}</p>`; i++;
-  }
-  return html;
-}
+/* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
+   codebase's one audited markdown-to-HTML path -- see
+   components/ana/renderSafeMarkdown.ts.
+
+   This file used to carry its own 13-line `mdToHtml`: a regex approximation of
+   markdown whose first act was a hand-rolled `&`/`<`/`>` escape. Two other
+   surfaces carried the same function, two of the three byte-identical. Three
+   copies of an escaper feeding three `dangerouslySetInnerHTML` sinks is three
+   places to get HTML escaping right and three places for one to drift, in a
+   product where the text being rendered is a document the user wrote or
+   uploaded.
+
+   The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
+   markdown parser and then reduces the result to an explicit tag/attribute
+   allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
+   removed rather than depended upon never to arrive -- and it is already
+   covered by its own tests, which the hand-rolled copies never were. */
 
 /* ── Governed §11.50 e-sign form config ──
    MOCK ACTION (flag): submitting this form captures a signature UI but does NOT
@@ -149,7 +150,7 @@ function signForm(target: string): C2CFormConfig {
 }
 
 /* ── Cross-surface navigation helpers ── */
-function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ } onNav && onNav(id); }
+function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { onNav && onNav(id); }
 function cmcCtx(label: string) { try { if ((window as any).C2C) (window as any).C2C.setContext({ entityType: 'cmc', entityId: label, entityLabel: label }); } catch (_e) { /* noop */ } }
 function cmcTask(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('task'); } catch (_e) { /* noop */ } }
 function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('collab'); } catch (_e) { /* noop */ } }
@@ -759,6 +760,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
   const [markets, setMarkets] = useState(['fda', 'ema']);
   const [desc, setDesc] = useState('');
   const [result, setResult] = useState<CmcChangeResult | null>(null);
+  const [toast, fireToast] = useToast();
   const toggle = (id: string) => setMarkets((m) => m.includes(id) ? m.filter((x) => x !== id) : [...m, id]);
   const ct = CMC_CHANGE_TYPES.find((c) => c.id === type)!;
   const simulate = () => { if (!desc.trim() || !markets.length) return; setResult({ type: ct, markets: [...markets], desc: desc.trim(), paths: markets.map((m) => ({ m, label: CMC_MARKETS.find((x) => x[0] === m)![1], path: filingPath(type, ct.risk, m) })) }); };
@@ -776,6 +778,38 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
     r.paths.forEach((p) => { s += `| ${p.label} | ${p.path[0]} | ${p.path[1]} |\n`; });
     s += `\n## 4. Comparability Requirement\n\n${compBy}\n\n## 5. Supporting Data Expected\n\n- Side-by-side release testing (pre/post change) against the approved specification\n- Stability commitment on the first post-change ${r.type.risk === 'low' ? 'batch' : 'batches'} (ICH Q1A)\n- Updated §3.2.S / §3.2.P sections and, where applicable, method (re)validation\n\n## 6. Recommendation\n\n${rec}\n\n---\n*Generated from the CMC change model (SUPAC / ICH Q12 rules). Route through change control and e-signature before implementation.*\n`;
     return s;
+  };
+
+  /*
+   * "Open in editor" — a real handoff. See the long note on the same handler in
+   * Biostatistics.tsx. This inline onClick wrote {title, md} into
+   * localStorage['c2c_biostat_doc'] and navigated; nothing has ever read that
+   * key, so the assessment did not travel and the editor opened on whatever it
+   * would have opened on anyway.
+   *
+   * The payload is CONTENT, not an id, so it is created rather than referenced:
+   * POST the document, POST the section holding the memo, then navigate. On any
+   * failure we stay put with the assessment still on screen and say why.
+   */
+  const openingRef = useRef(false);
+  const [opening, setOpening] = useState(false);
+  const openEditor = async (r: CmcChangeResult) => {
+    if (openingRef.current) return; // a second click must not create a second document
+    const title = 'Regulatory Change Impact Assessment';
+    openingRef.current = true; setOpening(true);
+    try {
+      // A CMC change assessment is quality documentation — Module 3.
+      const res = await saveToAuthoring({
+        title, module: 'M3', code: 'regulatory_change_impact_assessment',
+        content: memoMd(r), subject: 'the assessment',
+      });
+      // Navigate only on a clean write — see authoringHandoff.
+      if (!res.ok) { fireToast(res.message); return; }
+      if (nav) nav('document-authoring');
+      else fireToast(res.message);
+    } finally {
+      openingRef.current = false; setOpening(false);
+    }
   };
 
   return (
@@ -805,14 +839,15 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
               <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC -- ICH Q12 -- draft</span></div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="bs-da" onClick={() => ask('Refine the change-control assessment and draft the comparability protocol for: ' + result.desc)}>{I.sparkles} Refine with AnA</button>
-                <button className="bs-da primary" onClick={() => { try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: 'Regulatory Change Impact Assessment', md: memoMd(result) })); } catch (_e) { /* noop */ } nav && nav('document-authoring'); }}>{I.penLine} Open in editor</button>
+                <button className="bs-da primary" onClick={() => void openEditor(result)} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
               </div>
             </div>
-            <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: mdToHtml(memoMd(result)) }} /></div>
+            <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(memoMd(result)) }} /></div>
           </div>
           <CmPush label={'Change-control package -- ' + result.type.label} nav={nav} bar />
         </div>
       )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

@@ -3,7 +3,8 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
-import type { SurfaceViewProps } from '../surfaceViews';
+import { SignoffList } from '../SignoffList';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
@@ -22,6 +23,21 @@ function toTurn(m: AnaChatMessage): CtTurn {
     answer: m.text || undefined,
     thinking: m.thinking || undefined,
     grounding: grounding.length ? grounding : undefined,
+    /*
+     * These two were dropped, and dropping them lost a 21 CFR 11.50 gate.
+     *
+     * A turn that executes a governed action carries `executedActions`, and one
+     * that is BLOCKED awaiting a signature carries `pendingSignoffs`. Mapping
+     * only text/thinking/grounding rendered such a turn as an ordinary answer:
+     * no signature prompt, and no sign that the mutation was waiting on one.
+     *
+     * It mattered less when this surface was reached only by the Home composer.
+     * `ownsConversation` surfaces now route ⌘K questions here, so this is a
+     * destination for asks that can carry governed actions — and the rail, the
+     * other place the prompt is drawn, is by definition not on screen.
+     */
+    executedActions: m.executedActions?.length ? m.executedActions : undefined,
+    pendingSignoffs: m.pendingSignoffs?.length ? m.pendingSignoffs : undefined,
   };
 }
 
@@ -111,6 +127,30 @@ function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProp
             <span className="ct-ground-l">Grounded in</span>
             {turn.grounding.map((g, i) => (<span key={i} className="ct-ground-chip" data-ok={g.ok}>{g.ok ? I.check : I.alertTriangle} {g.src}</span>))}
           </div>
+        )}
+        {turn.executedActions && (
+          <div className="ana-msg-executed">
+            {turn.executedActions.map((a, i) => (
+              <span
+                key={i}
+                className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
+                title={a.error || a.label}
+              >
+                {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
+              </span>
+            ))}
+          </div>
+        )}
+        {/* The §11.50 prompt. Rendered here for the same reason RbmSurfaces
+            renders it in its own dock: a surface that owns the conversation
+            owns the signature gate too, because the shell's rail — the other
+            place this is drawn — is not on screen. */}
+        {turn.pendingSignoffs && turn.pendingSignoffs.length > 0 && (
+          <SignoffList
+            signoffs={turn.pendingSignoffs}
+            className="ana-msg-signoffs"
+            doneClassName="ana-signoff-done"
+          />
         )}
       </div>
     </div>
@@ -259,7 +299,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav }: SurfaceViewProps) {
+export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation; the default is a fresh conversation.
   const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
@@ -367,10 +407,10 @@ export function ConversationThread({ onNav }: SurfaceViewProps) {
           <div className="ct-composer-wrap">
             <div className="ct-composer">
               <button className="ct-comp-attach" title="Attach a document for AnA to use">{I.paperclip}</button>
-              <textarea rows={1} placeholder="Reply to AnA -- ask, or request a draft..." value={draft}
+              <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA -- ask, or request a draft..." value={draft}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
-              <button className="ct-comp-send" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
+              <button className="ct-comp-send" aria-label="Send message to AnA" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
             </div>
             <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>

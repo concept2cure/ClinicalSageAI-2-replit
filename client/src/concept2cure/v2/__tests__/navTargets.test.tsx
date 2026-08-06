@@ -46,12 +46,21 @@ const allowed = new Set<string>([
  * literal. Each captures the target id in group 1.
  *   onNav('x') / nav('x') / open('x') / C2C.open('x')  — imperative nav/bridge
  *   setSurface('x'                                       — context bridge
- *   setItem('c2c_open_surface', 'x')                     — localStorage nav bridge
+ *
+ * A third pattern used to scan `setItem('c2c_open_surface', 'x')`, described
+ * as a "localStorage nav bridge". It was not a bridge: the key had fourteen
+ * writers and has never had a reader, in any file, in any commit. The writes
+ * are deleted, so the pattern is too.
+ *
+ * Removing it costs no coverage, and that was checked rather than assumed:
+ * the three targets it contributed — `usage`, `document-authoring`,
+ * `submission-center` — are each also matched by the first pattern at the same
+ * call sites, and the first pattern alone yields 25 distinct targets against
+ * the scanner's own `>5` floor below.
  */
 const PATTERNS: RegExp[] = [
   /(?<![A-Za-z])(?:onNav|nav|open)\(\s*'([a-z0-9-]+)'/g,
   /setSurface\(\s*'([a-z0-9-]+)'/g,
-  /c2c_open_surface'\s*,\s*'([a-z0-9-]+)'/g,
 ];
 
 function sourceFiles(): string[] {

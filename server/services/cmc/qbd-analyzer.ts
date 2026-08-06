@@ -18,6 +18,7 @@
 
 import { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
+import { loadProjectStabilityStudies } from './stability-source';
 import {
   extractParameterNames, extractImpurityNames, extractCharacterizationAttrs,
   extractCppEntries, extractCppFromPayload,
@@ -63,11 +64,20 @@ export interface CppItem {
   source: 'process_record' | 'source_object';
 }
 
+/** The named inputs the analyzer reads. */
+export type QbdInputKey =
+  | 'specs' | 'methods' | 'stability' | 'processes' | 'drugSubs' | 'sourceObjects';
+
 export interface QbdAnalysisResult {
   projectId: string;
   organizationId: number;
   cqas: CqaItem[];
   cpps: CppItem[];
+  /**
+   * Row counts per input. A count is only meaningful when the corresponding
+   * input is absent from `unevaluatedInputs`; otherwise it is `0` because the
+   * read failed, not because the project has no such records.
+   */
   inputs: {
     specificationCount: number;
     methodCount: number;
@@ -76,6 +86,14 @@ export interface QbdAnalysisResult {
     processCount: number;
     cmcSourceObjectCount: number;
   };
+  /**
+   * Inputs that could not be read, with the reason. Non-empty means this
+   * analysis is partial: CQAs/CPPs derived from those inputs are missing, and
+   * their absence from the lists is not evidence they do not exist.
+   */
+  unevaluatedInputs: Array<{ input: QbdInputKey; reason: string }>;
+  /** True when `unevaluatedInputs` is non-empty. */
+  partial: boolean;
   gaps: string[];
   analyzedAt: string;
 }
@@ -94,9 +112,14 @@ export async function analyzeQbdFromSources(
   const pool = getPool();
   const projectIdParam = String(projectId);
 
-  // Run every read in parallel; failures fall through to empty arrays.
-  const [specs, methods, stability, processes, drugSubs, sourceObjects] = await Promise.all([
-    safeQuery(pool, `
+  // Reads that fail are recorded here rather than collapsing into an
+  // indistinguishable empty array. "No stability studies recorded" and "the
+  // stability read failed" are different facts; only the first is a gap.
+  const unavailable: Partial<Record<QbdInputKey, string>> = {};
+
+  // Run every read in parallel.
+  const [specs, methods, stabilityResult, processes, drugSubs, sourceObjects] = await Promise.all([
+    safeQuery(pool, unavailable, 'specs', `
       SELECT material_type AS "materialType",
              material_name AS "materialName",
              test_parameters AS "testParameters",
@@ -104,7 +127,7 @@ export async function analyzeQbdFromSources(
       FROM quality_specifications
       WHERE project_id = $1::text::uuid
     `, [projectIdParam]),
-    safeQuery(pool, `
+    safeQuery(pool, unavailable, 'methods', `
       SELECT method_name AS "methodName",
              method_type AS "methodType",
              purpose,
@@ -112,17 +135,12 @@ export async function analyzeQbdFromSources(
       FROM analytical_methods
       WHERE project_id = $1::text::uuid
     `, [projectIdParam]),
-    safeQuery(pool, `
-      SELECT study_name AS "studyName",
-             study_type AS "studyType",
-             storage_condition AS "storageCondition",
-             duration,
-             status,
-             results
-      FROM stability_studies
-      WHERE project_id = $1::text::uuid
-    `, [projectIdParam]),
-    safeQuery(pool, `
+    // Stability comes from the canonical project-scoped source-object store.
+    // `public.stability_studies` has no `project_id` column (it is org-scoped)
+    // and no `study_name` / `storage_condition` / `results` columns, so the
+    // query this replaced could never succeed. See stability-source.ts.
+    loadProjectStabilityStudies(pool, orgId, projectIdParam),
+    safeQuery(pool, unavailable, 'processes', `
       SELECT process_name AS "processName",
              process_type AS "processType",
              process_steps AS "processSteps",
@@ -131,14 +149,14 @@ export async function analyzeQbdFromSources(
       FROM manufacturing_processes
       WHERE project_id = $1::text::uuid
     `, [projectIdParam]),
-    safeQuery(pool, `
+    safeQuery(pool, unavailable, 'drugSubs', `
       SELECT substance_name AS "substanceName",
              impurities,
              characterization_data AS "characterizationData"
       FROM drug_substances
       WHERE project_id = $1::text::uuid
     `, [projectIdParam]),
-    safeQuery(pool, `
+    safeQuery(pool, unavailable, 'sourceObjects', `
       SELECT source_type AS "sourceType",
              source_payload AS "sourcePayload"
       FROM cmc_source_objects
@@ -146,6 +164,11 @@ export async function analyzeQbdFromSources(
         AND project_id::text = $2
     `, [orgId, projectIdParam]),
   ]);
+
+  if (!stabilityResult.available) {
+    unavailable.stability = stabilityResult.reason;
+  }
+  const stability = stabilityResult.studies as unknown as Array<Record<string, unknown>>;
 
   // ── Derive CQAs ────────────────────────────────────────────────────────
   const cqaMap = new Map<string, CqaItem>();
@@ -289,21 +312,42 @@ export async function analyzeQbdFromSources(
 
   // ── Gap analysis ───────────────────────────────────────────────────────
   const gaps: string[] = [];
-  if (specs.length === 0) gaps.push('No quality specifications recorded — CQA derivation is incomplete.');
-  if (methods.length === 0) gaps.push('No analytical methods recorded — CQAs may not be testable.');
-  if (stability.length === 0) gaps.push('No stability studies recorded — shelf-life CQAs cannot be evaluated.');
-  if (processes.length === 0) gaps.push('No manufacturing processes recorded — CPP list is empty.');
+
+  // Only assert "none recorded" for inputs we actually read. For an input that
+  // failed to load, say so — an empty list there is unknown, not empty.
+  const gapIfEmpty = (key: QbdInputKey, rows: unknown[], label: string, gapText: string) => {
+    const reason = unavailable[key];
+    if (reason) {
+      gaps.push(`Cannot evaluate ${label}: input could not be read (${reason}). This is not a finding of absence.`);
+      return;
+    }
+    if (rows.length === 0) gaps.push(gapText);
+  };
+
+  gapIfEmpty('specs', specs, 'quality specifications',
+    'No quality specifications recorded — CQA derivation is incomplete.');
+  gapIfEmpty('methods', methods, 'analytical methods',
+    'No analytical methods recorded — CQAs may not be testable.');
+  gapIfEmpty('stability', stability, 'stability studies',
+    'No stability studies recorded — shelf-life CQAs cannot be evaluated.');
+  gapIfEmpty('processes', processes, 'manufacturing processes',
+    'No manufacturing processes recorded — CPP list is empty.');
 
   const unlinkedCqas = cqas.filter(c => !c.methodLinked);
   if (unlinkedCqas.length > 0) {
     gaps.push(`${unlinkedCqas.length} CQA(s) lack a validated analytical method (ICH Q2(R1) gap).`);
   }
 
+  const unevaluatedInputs = Object.entries(unavailable)
+    .map(([input, reason]) => ({ input: input as QbdInputKey, reason: String(reason) }));
+
   log.info('QbD analysis complete', {
     projectId,
     cqaCount: cqas.length,
     cppCount: cpps.length,
     gapCount: gaps.length,
+    partial: unevaluatedInputs.length > 0,
+    unevaluatedInputs: unevaluatedInputs.map(u => u.input),
   });
 
   return {
@@ -319,6 +363,8 @@ export async function analyzeQbdFromSources(
       processCount: processes.length,
       cmcSourceObjectCount: sourceObjects.length,
     },
+    unevaluatedInputs,
+    partial: unevaluatedInputs.length > 0,
     gaps,
     analyzedAt: new Date().toISOString(),
   };
@@ -326,8 +372,17 @@ export async function analyzeQbdFromSources(
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/**
+ * Run a read, recording the reason into `unavailable` if it fails.
+ *
+ * The empty array returned on failure is a placeholder so the rest of the
+ * analysis can proceed — it is NOT a result. Callers must consult
+ * `unavailable[input]` before drawing any conclusion from its emptiness.
+ */
 async function safeQuery(
   pool: ReturnType<typeof getPool>,
+  unavailable: Partial<Record<QbdInputKey, string>>,
+  input: QbdInputKey,
   sql: string,
   params: unknown[],
 ): Promise<Array<Record<string, unknown>>> {
@@ -335,9 +390,12 @@ async function safeQuery(
     const { rows } = await pool.query(sql, params);
     return rows;
   } catch (err) {
-    log.warn('QbD analyzer query failed', {
-      error: err instanceof Error ? err.message : String(err),
+    const detail = err instanceof Error ? err.message : String(err);
+    log.warn('QbD analyzer query failed — marking input as not evaluable', {
+      input,
+      error: detail,
     });
+    unavailable[input] = detail;
     return [];
   }
 }

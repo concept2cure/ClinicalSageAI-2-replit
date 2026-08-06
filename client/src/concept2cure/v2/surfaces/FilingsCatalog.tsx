@@ -14,7 +14,6 @@ import {
   FILINGS_TAXONOMY,
   FILING_WF_SURFACE,
   FILING_WF_LABEL,
-  FILING_WF_PATHWAY,
   FILING_LOOP_ARCHETYPE,
   FILING_LOOP,
 } from '../fixtures/filings-catalog-data';
@@ -49,7 +48,6 @@ function FilingDetail({
   const arch = FILING_LOOP_ARCHETYPE[it.wf];
   const loop = arch ? FILING_LOOP[arch] : null;
   const goSurf = (surf: string) => {
-    try { localStorage.setItem('c2c_open_surface', surf); } catch (_e) { /* noop */ }
     onNav(surf);
     onClose();
   };
@@ -159,8 +157,18 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
   const segObj = TAX.find((s) => s.seg === seg) || TAX[0] || { cats: [] as any[] };
 
   const startFiling = (it: FilingItem) => {
-    const pw = FILING_WF_PATHWAY[it.wf];
-    if (pw) localStorage.setItem('C2C_PATHWAY', pw);
+    /*
+     * `localStorage.setItem('C2C_PATHWAY', pw)` used to run here, first.
+     *
+     * `C2C_PATHWAY` has exactly one writer — this line — and has never had a
+     * reader, in any file, in any commit. That alone makes it dead. What made
+     * it worth removing rather than leaving is that it was the one storage
+     * write in this component with no `try/catch` (compare `goSurf` at :52,
+     * same file, which wraps), and it ran BEFORE `onNav`. Anywhere
+     * localStorage throws — Safari private browsing, storage disabled, quota —
+     * the whole handler threw and no filing started at all. A dead write was
+     * gating a live navigation.
+     */
     const surf = FILING_WF_SURFACE[it.wf];
     if (surf && onNav) onNav(surf);
     else if (onAsk) onAsk('Start a ' + it.n + ' -- set up the document structure and required sections');
@@ -175,7 +183,7 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
         <div className="fc-sub">Search {total} filing types, or browse by area. Each opens its build workflow.</div>
         <div className="fc-search">
           <span className="fc-search-ic">{I.search}</span>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, authority, or pathway -- CSR, 510(k), EMA..." autoFocus />
+          <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search filings" placeholder="Search by name, authority, or pathway -- CSR, 510(k), EMA..." autoFocus />
           {q && <button className="fc-search-x" onClick={() => setQ('')}>{I.close}</button>}
         </div>
       </div>

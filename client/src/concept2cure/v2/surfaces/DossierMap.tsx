@@ -21,14 +21,17 @@ import '../styles/project-home-v2.css';
  * printed as "M{m}"). `label` is the canonical CTD module title. `pct` is the
  * derived completeness (complete sections / total, rounded) and `tone` is derived
  * from it ('ok' / 'warn' / 'idle') — never a stored number, never fabricated.
- * `sections` is the module's distinct tracked section labels.
+ * `sections` is the module's distinct tracked section labels — nullable on the
+ * same terms as `label` / `pct` / `tone`: a module row rolled up before its
+ * section labels are readable (a narrowed SELECT, a partially migrated row)
+ * arrives without it.
  */
 interface DossierModule {
   m: string;
   label: string | null;
   pct: number | null;
   tone: string | null;
-  sections: string[];
+  sections: string[] | null;
 }
 
 /* ── Inline helpers ── */
@@ -127,11 +130,18 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
                 <div className="dmod-bar">
                   <div className="dmod-bar-f" data-tone={m.tone ?? undefined} style={{ width: (m.pct ?? 0) + '%' }} />
                 </div>
-                <div className="dmod-sec">
-                  {m.sections.map((s) => (
-                    <span key={s} className="dmod-chip">{s}</span>
-                  ))}
-                </div>
+                {/* A module whose row carries no section labels renders no chip
+                    strip — the same reading as `pct` above, which draws no chip
+                    when the roll-up has nothing to state. The bare `.map` here
+                    was the asymmetry: it threw on the row its guarded siblings
+                    handled. */}
+                {m.sections && (
+                  <div className="dmod-sec">
+                    {m.sections.map((s) => (
+                      <span key={s} className="dmod-chip">{s}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { connected, useLiveData, EmptyState } from '../dataConnect';
+import { connected, useLiveData, EmptyState, hasKeys } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 import '../styles/project-home-v2.css';
@@ -161,7 +161,17 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   // honest empty, honest error — never a fixture. useLiveData unwraps the
   // { data } envelope, so `spine` is the { program, standard, tree } object
   // directly (not `.data.data`).
-  const spineState = useLiveData<DossierSpine>('/api/batch-draft/spine');
+  //
+  // The guard is what makes `spine.tree` below safe to write without a second
+  // check. A route returning `{ data: [] }` unwraps to a TRUTHY `[]`, which
+  // passes `spine ? …` and leaves `tree` undefined for `bdFlatten` to throw on.
+  // Rejecting it routes into the `spineState.error` branch this surface already
+  // renders, which is the accurate thing to show either way.
+  const spineState = useLiveData<DossierSpine>(
+    '/api/batch-draft/spine',
+    ['/api/batch-draft/spine'],
+    hasKeys<DossierSpine>('program', 'standard', 'tree'),
+  );
   const spine = spineState.data;
   // useLiveData returns a fresh null while loading and on error; fall back to a
   // module-level constant so the memos below keep a stable input (loop-safety).

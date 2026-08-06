@@ -105,7 +105,6 @@ function currentProjectId(): string | null {
 export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
   const open = (id: string) => {
-    try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     if (onNav) onNav(id);
   };
 

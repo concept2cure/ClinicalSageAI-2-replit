@@ -208,6 +208,52 @@ jobs:
       - name: Guardrails — PDF runtime canonicality (approved entry points only)
         run: npm run ci:check-pdf-runtime
 
+      - name: Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
+        run: npm run ci:check-shell-css-collisions
+
+      - name: Guardrails — phantom design tokens (ratchet, may only shrink)
+        run: npm run ci:check-phantom-tokens
+
+      - name: Guardrails — client reachability from main.tsx (ratchet, may only shrink)
+        run: npm run ci:check-client-reachability
+
+      # The server-side counterpart, and the one that cost the most. Six bootstrap
+      # files loaded their routers as `import(c.mod)` with a runtime string;
+      # esbuild cannot resolve those, so 112 route families and all 13 regional
+      # blueprints were absent from dist/index.js while the boot log reported each
+      # as mounted. This builds the real bundle and asks the metafile, so a fix
+      # that regresses is caught before it ships rather than by a 404 in
+      # production. ~40s — too slow for the unit suite, which is why it is a step.
+      - name: Guardrails — every registered route + blueprint reaches the bundle
+        run: npm run ci:check-bundle-reachability
+
+      # The direction nobody was asking. `audit:orphaned-endpoints` finds server
+      # routes nobody calls; this finds CLIENT CALLS with no server route, which
+      # is the one that costs a customer something. Asking it the first time
+      # found twelve surfaces whose endpoints 404d while the UI showed fixture
+      # data and no error.
+      - name: Guardrails — every client /api call has a server route
+        run: npm run ci:check-client-api-calls
+
+      # tsconfig's include does not cover tests/, so `tsc --noEmit` has never
+      # looked at a test file. This is the piece of that coverage that matters:
+      # a test importing a module that no longer exists cannot run at all.
+      - name: Guardrails — every local import in every test file resolves
+        run: npm run ci:check-test-imports
+
+      # A stylesheet nothing imports is never handed to the bundler, so it
+      # styles nothing on any surface. Ratchet at the measured 17; may only
+      # shrink, by deleting a dead sheet or restoring a missing import.
+      - name: Guardrails — orphaned stylesheets (ratchet, may only shrink)
+        run: npm run ci:check-orphaned-stylesheets
+
+      # A test file whose name matches no include glob is not reported as
+      # skipped — it is not reported at all, so the suite goes green and the
+      # file looks like coverage indefinitely. client/src/__tests__/
+      # FileContext.test.jsx had never run once, covering live code.
+      - name: Guardrails — every test file is reachable by a runner
+        run: npm run ci:check-unrun-tests
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 

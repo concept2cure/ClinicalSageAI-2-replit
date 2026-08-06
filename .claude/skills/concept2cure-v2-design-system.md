@@ -12,6 +12,38 @@ description: >
   asks to build, style, or redesign any TrialSage UI element.
 ---
 
+> ## ⛔ SUPERSEDED — do not build from the token values in this file
+>
+> **The authority for shipped UI is `design-system/colors_and_type.css`**, routed by
+> `design-system/CLAUDE.md`, which states: *"This project owns the Concept2Cure.RI UI …
+> Older instructions … that contradict this file are **superseded**. This file is the
+> floor."* By that document's own rule, the palette and type scale below are superseded.
+>
+> They are not a variant of the shipped system — they are a different system, and
+> following them produces UI that cannot match anything in the product:
+>
+> | | this file | shipped (`colors_and_type.css`) |
+> |---|---|---|
+> | Token namespace | `--ts-primary-*`, `--ts-accent-*` | `--bg-*`, `--text-*`, `--accent-main-*` |
+> | Primary | deep teal `#14b89a` | terracotta `#d97757` — *"THE brand color"* |
+> | Canvas | white `#ffffff` / slate `#f8fafc` | warm cream `#faf9f5` |
+> | Sidebar | dark `#0f172a` | cream (`--sidebar`) |
+> | Body size | 15px | 13px |
+> | Font | `'Söhne'`, `'DM Sans'` | `system-ui` stack + `Lora` for prose |
+>
+> **`--ts-*` tokens are declared exactly zero times in `client/src`.** Every rule below
+> that references one resolves to nothing. This file has been loading on every session
+> and pointing at a design system that was never built, which is a direct cause of the
+> hardcoded-colour drift now measured across the surfaces.
+>
+> **What is still useful here:** the structural guidance — spacing rhythm, component
+> anatomy, motion discipline, the anti-pattern list. Read it for *shape*, never for
+> *values*. For any colour, font or size, go to `design-system/colors_and_type.css`.
+>
+> Enforcement: `tests/ui/token-authority.test.ts` pins which four files may declare
+> tokens; `npm run ci:check-phantom-tokens` fails a build that references a token
+> declared nowhere — which is what every `--ts-*` reference below would be.
+
 # TrialSage Design System
 
 Enterprise-grade visual identity for TrialSage.AI — a regulatory intelligence platform

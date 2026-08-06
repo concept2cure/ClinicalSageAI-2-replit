@@ -10,6 +10,41 @@ description: >
   frontend development task.
 ---
 
+> ## ⛔ STALE — every file path below is fictional
+>
+> This skill opens by saying *"Before creating ANY new React component, check this
+> registry. The #1 source of technical debt in this repo is duplicate components built
+> because the developer didn't know the original existed."* That diagnosis is right. The
+> registry itself is now the largest single cause of it.
+>
+> **All 20 module paths it lists were checked against the tree: 20 of 20 do not exist.**
+> `pages/Dashboard.tsx`, `pages/ECTDBuilder.tsx`, `components/domain/StatusBadge.tsx`,
+> `components/shared/EmptyState.tsx` — none of them. The directory layout it describes
+> (`components/domain/`, `components/layout/`, `components/charts/`, `pages/`) is not the
+> layout of this repo. It also names `ZenApp.tsx` as "The Router" six times; ZenApp was
+> deleted in Phase 7 and `client/src/concept2cure/router/ZenRouter.tsx` is the router.
+>
+> So an agent follows the instruction, looks for the component, cannot find it, and
+> builds a new one. That is the loop this file was written to break.
+>
+> **Where things actually are:**
+>
+> | | real location |
+> |---|---|
+> | Router | `client/src/concept2cure/router/ZenRouter.tsx` → `v2/V2App.tsx` |
+> | Surface registry (route id → component) | `client/src/concept2cure/v2/surfaceViews.ts` |
+> | Surface implementations | `client/src/concept2cure/v2/surfaces/` (127 `.tsx`) |
+> | Shared v2 primitives | `v2/icons.tsx`, `v2/C2CForm.tsx`, `v2/AnswerLead.tsx`, `v2/dataConnect.tsx` |
+> | AnA chat hook | `client/src/concept2cure/components/ana/useAnaChat.ts` |
+> | Design tokens | `design-system/colors_and_type.css` |
+>
+> **The honest state of the component layer:** there is no shared Button, Card, Badge,
+> Table, Modal, Input or Tabs. The v2 shell imports `client/src/components/ui/` (76
+> shadcn primitives) **zero times**, and its entire shared UI layer is ~516 lines across
+> four modules serving 127 surfaces — which is why there are 1,461 inline `style={{…}}`
+> objects in `v2/`. Do not read the inventory below as a description of what exists.
+
+
 # Component Registry — Frontend Module Map
 
 Before creating ANY new React component, check this registry. The #1 source of

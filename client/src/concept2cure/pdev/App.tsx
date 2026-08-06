@@ -22,11 +22,6 @@
  */
 
 import * as React from 'react';
-import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import { useAnaChat } from '../components/ana/useAnaChat';
-import { PdevRail } from './shell/Rail';
-import { PdevTopBar } from './shell/TopBar';
-import { PdevAnaDock, type PdevAnaDockMessage } from './shell/AnaDock';
 import { PdevOverview } from './surfaces/Overview';
 import { PdevWorkstreamSurface } from './surfaces/Workstream';
 import { PdevActivityDetail } from './surfaces/ActivityDetail';
@@ -40,6 +35,7 @@ import {
   usePdevFdaInteractions,
   usePdevFdaProposals,
   usePdevIndAssembly,
+  usePdevIndPrograms,
   usePdevProgram,
   usePdevReadiness,
   usePdevReadinessSnapshot,
@@ -52,7 +48,6 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../_shared/components/GovernedConfirmDialog';
-import { PDEV_COMMANDS } from './data/pdevCommands';
 
 const HERE_LABEL: Record<string, string> = {
   overview: 'Program dashboard',
@@ -67,54 +62,61 @@ const HERE_LABEL: Record<string, string> = {
 
 const READINESS_THRESHOLD_DEFAULT = 85;
 
-interface IndProgramRow {
-  id: string;
-  code: string;
-  productName: string;
-  name: string;
-  programType: string;
-  status: string;
-  metadata?: Record<string, unknown> | null;
-}
-
-interface IndProgramListPayload {
-  data: IndProgramRow[];
-}
-
 export interface PdevAppProps {
-  /** Initial nav id from a deep-link. */
-  initialNav?: string;
+  /** Which surface to render — the shell's surface id, supplied by the registry. */
+  nav: string;
+  /** Navigate to another surface id. The shell owns navigation. */
+  onNav: (id: string) => void;
   initialProgramId?: string | null;
-  /** AnA gateway adapter. The dock collects prompts; routing them to
-   *  the real chat surface is the host app's responsibility. */
-  onAskAna?: (
+  /**
+   * Hand a prompt to the shell's one conversation. REQUIRED — not optional.
+   *
+   * It was optional, with a local `useAnaChat` fallback behind it. That made
+   * the second conversation one dropped prop away, so the type now says what
+   * the architecture says: this kit collects prompts, the shell answers them.
+   */
+  onAskAna: (
     text: string,
     context: { programCode: string | null; activityKey: string | null },
   ) => void;
 }
 
 export function PdevApp({
-  initialNav,
+  nav,
+  onNav,
   initialProgramId,
   onAskAna,
 }: PdevAppProps) {
   // ── IND program list ──────────────────────────────────────────────
-  const { data: programsList, loading: programsLoading } =
-    useFetchJson<IndProgramListPayload>('/api/regulatory-programs');
-  const indPrograms = React.useMemo(
-    () =>
-      (programsList?.data ?? []).filter(
-        (p) => p.programType === 'IND' && p.status !== 'archived',
-      ),
-    [programsList],
-  );
+  // This was an inline `(programsList?.data ?? []).filter(...)`. A single route
+  // answering `{ data: {} }` instead of `{ data: [...] }` made that `?? []` a
+  // no-op — the object is not nullish — and `.filter` threw during render,
+  // taking every PDEV surface down with it. The hook decides whether the body
+  // is a list before anyone iterates it, and says so when it is not.
+  const {
+    programs: indPrograms,
+    loading: programsLoading,
+    error: programsError,
+  } = usePdevIndPrograms();
   const [programId, setProgramId] = React.useState<string | null>(
     initialProgramId ?? null,
   );
+  /**
+   * Follow the shell's project selection.
+   *
+   * The kit's rail carried a program switcher; it went with the rail, and for a
+   * while nothing replaced it — this module pinned itself to `indPrograms[0]`
+   * and ignored the project every other v2 surface was showing. `window.C2C_PROJECT`
+   * is that shared selection (see v2/surfaces/ProjectHome.tsx), so PDEV now
+   * follows it when it names an IND program this org has, and falls back to the
+   * first only when it does not.
+   */
   React.useEffect(() => {
-    if (programId === null && indPrograms.length > 0) {
-      setProgramId(indPrograms[0].id);
-    }
+    if (indPrograms.length === 0) return;
+    const selected = typeof window !== 'undefined' ? window.C2C_PROJECT?.id : undefined;
+    const match = selected ? indPrograms.find((p) => String(p.id) === String(selected)) : undefined;
+    const next = match?.id ?? (programId === null ? indPrograms[0].id : null);
+    if (next && next !== programId) setProgramId(next);
   }, [programId, indPrograms]);
 
   const projectIdForProgram = React.useMemo(() => {
@@ -125,9 +127,12 @@ export function PdevApp({
   }, [programId, indPrograms]);
 
   // ── Navigation + sheet state ──────────────────────────────────────
-  const [activeNav, setActiveNav] = React.useState<string>(initialNav ?? 'overview');
-  const [collapsed, setCollapsed] = React.useState(false);
-  const [anaOpen, setAnaOpen] = React.useState(true);
+  // `activeNav` is the shell's surface id, not state this module keeps, and
+  // rail-collapse / AnA-open are gone with the rail and the dock. The v2 shell
+  // owns all three; a second copy here is what let this module draw a second
+  // rail beside the shell's and run a second AnA conversation.
+  const activeNav = nav;
+  const setActiveNav = React.useCallback((id: string) => onNav(id), [onNav]);
   const [activeActivity, setActiveActivity] =
     React.useState<PdevActivityView | null>(null);
   const [aiDraftFor, setAiDraftFor] = React.useState<{
@@ -164,55 +169,35 @@ export function PdevApp({
   );
 
   // ── AnA bridge ────────────────────────────────────────────────────
-  // When the host doesn't override onAskAna, route through a local
-  // useAnaChat instance against /api/ana-ri/stream. The PDEV workstream,
-  // active program code, and active activity go into module_context so
-  // the orchestrator can ground its response. Streaming history surfaces
-  // in the AnA conversation panel (Phase 8) — the dock here only collects
-  // the prompt.
+  // `onAskAna` is REQUIRED, and hands the prompt to the shell's one
+  // conversation. There is no local fallback.
+  //
+  // There was one: a second `useAnaChat` instance, with its own module_context,
+  // reached whenever `onAskAna` was absent. When this kit had its own AnA dock
+  // that made sense. It has not since the convergence — `PdevSurfaces.tsx:78`
+  // always supplies `onAskAna`, nothing renders `anaChat.messages`, and
+  // `useAnaChat` opens no thread on mount, so the instance was inert. Inert is
+  // not harmless: it was a live second conversation sitting behind a single
+  // `if (onAskAna)`, and one dropped prop would have re-forked the thread
+  // silently, which is the exact failure this branch exists to make impossible.
+  //
+  // `tests/ui/one-shell.test.ts` now asserts that `useAnaChat` is instantiated
+  // only by the shell and by the two surfaces that own a named conversation.
   const programCodeForAna = program.view?.program.code ?? null;
   const activityKeyForAna = activeActivity?.registry.key ?? null;
-  const anaChat = useAnaChat({
-    projectId: programId,
-    projectName: programCodeForAna,
-    screenName: `PDEV · ${activeNav}`,
-    submissionType: 'IND',
-    moduleContext: {
-      workstream: 'pdev',
-      activeNav,
-      programCode: programCodeForAna,
-      activityKey: activityKeyForAna,
-    },
-  });
   const askAna = React.useCallback(
     (text: string) => {
       if (!text) return;
-      if (onAskAna) {
-        onAskAna(text, {
-          programCode: programCodeForAna,
-          activityKey: activityKeyForAna,
-        });
-      } else {
-        void anaChat.send(text);
-      }
-      setAnaOpen(true);
+      onAskAna(text, {
+        programCode: programCodeForAna,
+        activityKey: activityKeyForAna,
+      });
+      // No `setAnaOpen` — the shell's AnA rail is the only one, and it opens
+      // itself when a prompt arrives.
     },
-    [onAskAna, anaChat, programCodeForAna, activityKeyForAna],
+    [onAskAna, programCodeForAna, activityKeyForAna],
   );
 
-  // Adapt useAnaChat messages to the dock's transcript shape. Skipped when
-  // the host owns AnA (onAskAna present) — then the host renders history.
-  const dockMessages: PdevAnaDockMessage[] = React.useMemo(() => {
-    if (onAskAna) return [];
-    return anaChat.messages.map((m) => ({
-      role: m.role === 'assistant' ? ('ana' as const) : ('user' as const),
-      body: m.text || (m.streaming ? m.statusPhase || 'Routing…' : ''),
-      when: m.sentAt
-        ? new Date(m.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-        : 'just now',
-      streaming: m.streaming,
-    }));
-  }, [onAskAna, anaChat.messages]);
 
   // Refresh data after a mutation completes (state change, evidence
   // attach/detach, workflow decisions, FDA rollups, compile, etc.).
@@ -263,14 +248,21 @@ export function PdevApp({
   };
 
   // ── Render: choose surface ───────────────────────────────────────
+  /* A load that failed says so. The alternative — the empty state below, or a
+     spinner that never resolves — tells the user there is nothing here, which
+     is a claim about their program rather than about the request. */
+  const loadFailed = (detail: string, heading = "Couldn't load this program") => (
+    <div className="pdev-page-error">
+      <h2>{heading}</h2>
+      <p className="pdev-page-error-detail">{detail}</p>
+    </div>
+  );
+
   let surface: React.ReactNode;
-  if (program.error) {
-    surface = (
-      <div className="pdev-page-error">
-        <h2>Couldn't load this program</h2>
-        <p className="pdev-page-error-detail">{program.error}</p>
-      </div>
-    );
+  if (programsError) {
+    surface = loadFailed(programsError, "Couldn't load IND programs");
+  } else if (program.error) {
+    surface = loadFailed(program.error);
   } else if (!programId && !programsLoading && indPrograms.length === 0) {
     surface = (
       <div className="pdev-empty-state">
@@ -300,7 +292,9 @@ export function PdevApp({
       />
     );
   } else if (workstreamId) {
-    if (workstream.loading || !workstream.payload) {
+    if (workstream.error) {
+      surface = loadFailed(workstream.error, `Couldn't load ${workstreamId}`);
+    } else if (workstream.loading || !workstream.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading {workstreamId}…</p>
@@ -318,7 +312,9 @@ export function PdevApp({
       );
     }
   } else if (activeNav === 'ind_assembly') {
-    if (assembly.loading || !assembly.payload) {
+    if (assembly.error) {
+      surface = loadFailed(assembly.error, "Couldn't load IND assembly");
+    } else if (assembly.loading || !assembly.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading IND assembly…</p>
@@ -337,7 +333,12 @@ export function PdevApp({
       );
     }
   } else if (activeNav === 'fda_interactions') {
-    if (fdaStream.loading || !fdaStream.payload) {
+    if (fdaStream.error || fdaProposals.error) {
+      surface = loadFailed(
+        fdaStream.error ?? fdaProposals.error ?? '',
+        "Couldn't load FDA interactions",
+      );
+    } else if (fdaStream.loading || !fdaStream.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading FDA interactions…</p>
@@ -356,7 +357,9 @@ export function PdevApp({
       );
     }
   } else if (activeNav === 'contradictions') {
-    if (contradictions.loading || !contradictions.payload) {
+    if (contradictions.error) {
+      surface = loadFailed(contradictions.error, "Couldn't load contradictions");
+    } else if (contradictions.loading || !contradictions.payload) {
       surface = (
         <div className="pdev-loading-state" aria-busy="true">
           <p>Loading contradictions…</p>
@@ -380,55 +383,22 @@ export function PdevApp({
     );
   }
 
+  /*
+   * `.pdev-shell` is the scope every rule in app.css hangs off, so the class
+   * survives even though the shell does not — without it these surfaces render
+   * as unstyled markup. `data-surface` drops the shell's grid: the host draws
+   * the rail, the topbar and the AnA rail now.
+   *
+   * `.pdev-page` / `.pdev-page-inner` are the kit's content measure (max-width
+   * 1400, 20/28px padding), not chrome, so they stay too.
+   *
+   * Sheets render as siblings of the page — they are modals over the canvas.
+   */
   return (
-    <div
-      className="pdev-shell"
-      data-collapsed={collapsed || undefined}
-      data-ana-open={anaOpen || undefined}
-    >
-      <PdevRail
-        activeNav={activeNav}
-        setActiveNav={(id) => {
-          setActiveNav(id);
-          setActiveActivity(null);
-        }}
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        program={program.view?.program ?? null}
-        programs={indPrograms.map((p) => ({
-          id: p.id,
-          code: p.code,
-          productName: p.productName || p.name,
-        }))}
-        switchProgram={(id) => {
-          setProgramId(id);
-          setActiveActivity(null);
-        }}
-      />
-      <main className="pdev-main">
-        <PdevTopBar
-          hereLabel={HERE_LABEL[activeNav] ?? 'PDEV'}
-          program={program.view?.program ?? null}
-          onOpenPalette={() => askAna('Open command palette')}
-        />
-        <div className="pdev-page">
-          <div className="pdev-page-inner">{surface}</div>
-        </div>
-      </main>
-      <PdevAnaDock
-        open={anaOpen}
-        setOpen={setAnaOpen}
-        program={program.view?.program ?? null}
-        readinessScore={effectiveReadiness}
-        topBlocker={topBlocker}
-        activeNav={activeNav}
-        activity={activeActivity}
-        onSend={askAna}
-        isStreaming={!onAskAna && anaChat.isStreaming}
-        messages={dockMessages}
-        projectId={projectIdForProgram != null ? String(projectIdForProgram) : undefined}
-        commands={PDEV_COMMANDS}
-      />
+    <div className="pdev-shell" data-surface="true">
+      <div className="pdev-page">
+        <div className="pdev-page-inner">{surface}</div>
+      </div>
 
       {activeActivity && programId && (
         <PdevActivityDetail

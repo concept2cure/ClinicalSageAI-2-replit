@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, useLiveRows, type DataState } from '../dataConnect';
+import { EmptyState, isRowsWith, useLiveData, useLiveRows, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
@@ -61,6 +61,42 @@ interface NcSummary {
    loading. `useLiveRows` returns a fresh [] on every render until it resolves,
    which would otherwise thrash the re-seed effect in `useRows`. */
 const EMPTY_STUDIES: NcStudy[] = [];
+
+/* A 200 from /api/nonclinical-summary was taken as proof of an NcSummary, and it
+   is not. `{ data: [] }` unwraps to a bare `[]` — TRUTHY — so it sailed past the
+   `summary ? …` header check and past `if (!state.data)` in SummaryBody, then
+   died on `summary.send.risk` with "Cannot read properties of undefined". `{}`,
+   an envelope with no payload, a 200 carrying an error body, and a JSON scalar
+   all died the same way, for the same reason: the guards asked whether there was
+   a payload, never whether it was this payload.
+
+   Key PRESENCE is not enough here either — `send: null` passes an `in` check and
+   crashes on `.risk` identically — so the three members this surface actually
+   dereferences are checked for kind. That is the route's real contract: the M2.6
+   / M4 / SEND projection is computed even for an org with zero studies (the ICH
+   M4S skeleton), so `m26`/`m4`/`send` are always present and never null on a
+   response that came from it. Anything else is a different endpoint answering,
+   and belongs in the error panel SummaryBody already renders — not in a crash. */
+function isNcSummary(value: unknown): value is NcSummary {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const s = value as Partial<NcSummary>;
+  return (
+    Array.isArray(s.m26) &&
+    Array.isArray(s.m4) &&
+    !!s.send &&
+    typeof s.send === 'object' &&
+    Array.isArray(s.send.missingDomains) &&
+    typeof s.send.risk === 'string'
+  );
+}
+
+/* GET /api/nonclinical/studies returns the bare display-shaped array. Without a
+   guard `useLiveRows` flattens ANY non-array 200 to zero rows, so `{ data: {} }`
+   or a proxy's login page rendered "No nonclinical studies yet" — a claim about
+   the org's GLP registry that nothing verified. An empty array still passes (a
+   registry with no studies is a real answer); a body that is not the row
+   contract lands in the error branch below. */
+const STUDY_ROWS = isRowsWith<NcStudy>('id', 'type', 'send');
 
 /* ── Inline shared kit helpers (not yet ported as modules) ── */
 
@@ -277,10 +313,14 @@ function SummaryBody({
 
 export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
-  const open = (id: string) => {
-    try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
-  };
-  const liveStudies = useLiveRows<NcStudy>('/api/nonclinical/studies');
+  /* Was a dead write to `c2c_open_surface`, a key with no reader — so every
+     Module 4 placement row was a button that did nothing. */
+  const open = (id: string) => onNav(id);
+  const liveStudies = useLiveRows<NcStudy>(
+    '/api/nonclinical/studies',
+    ['/api/nonclinical/studies'],
+    STUDY_ROWS,
+  );
   // `useLiveRows` synthesizes a FRESH [] every render whenever it has no array
   // to return (while loading AND on a failed load); feed the optimistic-row
   // store a STABLE empty seed in those states so the re-seed effect below
@@ -294,8 +334,14 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   // (server nonclinical-summary.routes.ts → m26-m4-view.ts). useLiveData unwraps
   // the `{ data }` success envelope, so the payload is the NcSummary object
   // directly (not `.data.data`): a real object, an honest empty, or an honest
-  // error — never a fixture.
-  const summaryState = useLiveData<NcSummary>('/api/nonclinical-summary');
+  // error — never a fixture. `isNcSummary` is what makes the third case reachable
+  // for a 200 that is not the projection; without it the cast was a lie and the
+  // subtree threw instead (see the guard above).
+  const summaryState = useLiveData<NcSummary>(
+    '/api/nonclinical-summary',
+    ['/api/nonclinical-summary'],
+    isNcSummary,
+  );
   const summary = summaryState.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();

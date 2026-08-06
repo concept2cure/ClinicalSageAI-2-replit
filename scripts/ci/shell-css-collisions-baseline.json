@@ -1,0 +1,30 @@
+{
+  "_comment": "Class names a stylesheet can apply OUTSIDE its own shell — i.e. defined in a selector whose first compound is not a shell root (.mdx-shell/.pdev-shell/.c2c-v2/.qms-shell). Vite appends each shell CSS chunk to <head> and never removes it, so two unscoped definitions both go live once a user visits two shells in a session and the later one wins. This list may only SHRINK.",
+  "_generated": "2026-08-04",
+  "_note": "Was 284 before mdx/*.css was scoped under .mdx-shell. The remainder are v2 utility classes that are not prefixed with .c2c-v2, several of them in orphaned stylesheets.",
+  "collisions": [
+    "err",
+    "ghost",
+    "here",
+    "ico",
+    "lbl",
+    "low",
+    "mono",
+    "num",
+    "ok",
+    "on",
+    "pdev-btn",
+    "pdev-empty",
+    "pdev-sheet",
+    "primary",
+    "sep",
+    "small",
+    "sub",
+    "tone-err",
+    "tone-warn",
+    "unit",
+    "user",
+    "val",
+    "warn"
+  ]
+}

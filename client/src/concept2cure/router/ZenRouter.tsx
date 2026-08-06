@@ -22,12 +22,10 @@ import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
-import MdxRoute from '../mdx/MdxRoute';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
 // API ship here; route registrations are added back when the designed UI lands.
-import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
   useAuth as usePortalAuth,
@@ -44,19 +42,24 @@ import {
 // Lazy so auth entry pages never download the app chunk (or its stylesheet).
 const V2App = lazy(() => import('../v2/V2App'));
 
-// PDEV kit — Phase 7 Pharmaceutical Development workstream. Mirrors the MDX
-// module pattern: its own top-level route so the kit's Rail/TopBar/AnaDock own
-// the whole viewport, kept out of the v2 shell to avoid a double-rail. Gated
-// on `ENABLE_PDEV_SURFACE` at render time — off ↔ redirects back to the shell.
-const PdevRoute = lazy(() => import('../pdev/PdevRoute'));
+/* `<ProjectProvider>` used to wrap this. It was an 863-line reducer holding
+   activeProjectId / activeConversationId / activeArtifactId and persisting to
+   localStorage['concept2cure_state'] — and `useProject`, its only way out, had
+   ZERO consumers: two mentions in the whole repository, both inside its own
+   file. So `activeProjectId` was null for every session no matter what the
+   user opened, and the provider's one remaining effect was a mount-time write
+   of {"projects":[],"conversations":[],"artifacts":[]} that nothing read.
 
+   `window.C2C_PROJECT` is the live selection — it carries the real
+   `regulatory_programs` UUID and is read by 14+ non-test files. Wiring this up
+   instead of deleting it would have meant migrating all of them off a working,
+   DB-backed channel onto a browser-minted UUID space (ProjectContext.tsx:337
+   minted its own). */
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
-    <ProjectProvider>
-      <Suspense fallback={<ZenLoadingScreen />}>
-        <V2App />
-      </Suspense>
-    </ProjectProvider>
+    <Suspense fallback={<ZenLoadingScreen />}>
+      <V2App />
+    </Suspense>
   </ProtectedRoute>
 );
 
@@ -159,15 +162,17 @@ export const ZenRouter: React.FC = () => {
   // shell must persist across in-app navigations. Rendering it inside the
   // location-keyed <Switch>/<AnimatePresence> below would remount the whole
   // shell on every nav (dropping palette/AnA/scroll state and replaying the
-  // enter animation). Auth entry routes and the standalone MDX module keep
-  // the legacy transition switch.
+  // enter animation). Auth entry routes keep the legacy transition switch, as
+  // do the two retired kit paths — they must fall through to the Switch for
+  // their redirects to fire, after which the shell owns the location again.
   const uiV2AuthRoute =
     /^\/(concept2cure\/)?(login|signup|password-reset)(\/|\?|$)/.test(location);
+  // `/concept2cure/mdx` and `/concept2cure/pdev` used to be excluded here so
+  // they could fall through to the Switch and mount a second application. Both
+  // are ordinary shell surfaces now, so the shell owns them like every other
+  // path — `pdev` resolves directly, `mdx` through DEEP_LINK_ALIASES.
   const uiV2Owns =
-    !uiV2AuthRoute &&
-    !location.startsWith('/concept2cure/mdx') &&
-    !location.startsWith('/concept2cure/pdev') &&
-    (location === '/' || location.startsWith('/concept2cure'));
+    !uiV2AuthRoute && (location === '/' || location.startsWith('/concept2cure'));
   if (uiV2Owns) {
     return (
       <PortalAuthProvider>
@@ -221,41 +226,6 @@ export const ZenRouter: React.FC = () => {
           <Route path="/billing">{() => <Redirect to="/concept2cure" />}</Route>
           <Route path="/billing/success">{() => <Redirect to="/concept2cure" />}</Route>
           <Route path="/billing/canceled">{() => <Redirect to="/concept2cure" />}</Route>
-
-          {/* MDX (Medical Device & Diagnostic) module — Phase 2 design-system
-              port. Mounted before the ZenApp catch-all so this surface is
-              reachable while the legacy ZenApp continues to handle home,
-              project detail, and other surfaces. */}
-          <Route path="/concept2cure/mdx">
-            {() => (
-              <ProtectedRoute>
-                <PageTransition>
-                  <MdxRoute />
-                </PageTransition>
-              </ProtectedRoute>
-            )}
-          </Route>
-
-          {/* PDEV (Pharmaceutical Development) module — Phase 7 design-system
-              port. Same mount pattern as MDX: the kit owns its own Rail /
-              TopBar / AnaDock, so keep it out of the v2 shell (double-rail
-              otherwise). Gated on ENABLE_PDEV_SURFACE — flag off redirects
-              back to the shell home. */}
-          <Route path="/concept2cure/pdev">
-            {() =>
-              isFeatureEnabled('ENABLE_PDEV_SURFACE') ? (
-                <ProtectedRoute>
-                  <PageTransition>
-                    <Suspense fallback={<ZenLoadingScreen />}>
-                      <PdevRoute />
-                    </Suspense>
-                  </PageTransition>
-                </ProtectedRoute>
-              ) : (
-                <Redirect to="/concept2cure" />
-              )
-            }
-          </Route>
 
           {/* App routes — /, /concept2cure and every surface/project deep link —
               are owned by the ui-v2 fast path above this Switch (the shell must

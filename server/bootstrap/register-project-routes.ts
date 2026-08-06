@@ -1,5 +1,24 @@
+/**
+ * Project-tree, quality and analytics routes.
+ *
+ * The seven routers below were loaded as `config.map(c => import(c.mod))` with a
+ * runtime string. esbuild cannot resolve that, so all seven were absent from
+ * dist/index.js and 404d in production while `Promise.allSettled` reduced the
+ * failure to a console.error. Static now, for the reasons written out at length
+ * in register-tenant-routes.ts.
+ */
+
 import type { Express } from 'express';
 import type { Pool } from 'pg';
+
+import { mountAll } from './mount-routes.js';
+import projectHierarchy from '../routes/project-hierarchy.js';
+import projectRules from '../routes/project-rules.js';
+import sentinelRoutes from '../routes/sentinel-routes.js';
+import projectModules from '../routes/project-modules.js';
+import qualityManagementApi from '../routes/quality-management-api.js';
+import analyticsRoutes from '../routes/analytics-routes.js';
+import plannerRoutes from '../routes/planner-routes.js';
 
 export interface ProjectBootstrapContext {
   app: Express;
@@ -15,40 +34,29 @@ export async function registerProjectRoutes({ app, pool }: ProjectBootstrapConte
     console.error('Failed to mount project routes:', error);
   }
 
-  // ── Project Hierarchy, Rules, Sentinel, Modules (parallelized) ──
-  {
-    const projectConfig = [
-      {
-        path: '/api/project-hierarchy',
-        mod: '../routes/project-hierarchy',
-        name: 'Project Hierarchy (Pillar 1: 4-level tree)',
-      },
-      {
-        path: '/api/project-rules',
-        mod: '../routes/project-rules',
-        name: 'Project Rules Engine (Pillar 2: configurable rules)',
-      },
-      {
-        path: '/api/sentinel',
-        mod: '../routes/sentinel-routes',
-        name: 'AI Sentinel (Pillar 3: proactive monitoring)',
-      },
-      {
-        path: '/api/project-modules',
-        mod: '../routes/project-modules',
-        name: 'Project Module Integration (Pillar 4)',
-      },
-    ] as const;
-    const projectResults = await Promise.allSettled(projectConfig.map(c => import(c.mod)));
-    projectResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(projectConfig[i].path, r.value.default || r.value);
-        console.log(`✅ ${projectConfig[i].name} routes mounted`);
-      } else {
-        console.error(`❌ Failed to mount ${projectConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Project Hierarchy, Rules, Sentinel, Modules ──
+  mountAll(app, [
+    {
+      path: '/api/project-hierarchy',
+      router: projectHierarchy,
+      name: 'Project Hierarchy (Pillar 1: 4-level tree)',
+    },
+    {
+      path: '/api/project-rules',
+      router: projectRules,
+      name: 'Project Rules Engine (Pillar 2: configurable rules)',
+    },
+    {
+      path: '/api/sentinel',
+      router: sentinelRoutes,
+      name: 'AI Sentinel (Pillar 3: proactive monitoring)',
+    },
+    {
+      path: '/api/project-modules',
+      router: projectModules,
+      name: 'Project Module Integration (Pillar 4)',
+    },
+  ]);
 
   // ── Sentinel Background Scheduler (Pillar 3) ──
   try {
@@ -77,27 +85,12 @@ export async function registerProjectRoutes({ app, pool }: ProjectBootstrapConte
     console.error('Failed to initialize memory consolidation scheduler:', error);
   }
 
-  // ── Quality, Analytics, Planner (parallelized) ──
-  {
-    const qualityConfig = [
-      {
-        path: '/api/quality',
-        mod: '../routes/quality-management-api',
-        name: 'Quality Management API',
-      },
-      { path: '/api/analytics', mod: '../routes/analytics-routes', name: 'Analytics' },
-      { path: '/api/planner', mod: '../routes/planner-routes', name: 'Planner' },
-    ] as const;
-    const qualityResults = await Promise.allSettled(qualityConfig.map(c => import(c.mod)));
-    qualityResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(qualityConfig[i].path, r.value.default);
-        console.log(`✅ ${qualityConfig[i].name} routes mounted`);
-      } else {
-        console.error(`❌ Failed to mount ${qualityConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Quality, Analytics, Planner ──
+  mountAll(app, [
+    { path: '/api/quality', router: qualityManagementApi, name: 'Quality Management API' },
+    { path: '/api/analytics', router: analyticsRoutes, name: 'Analytics' },
+    { path: '/api/planner', router: plannerRoutes, name: 'Planner' },
+  ]);
 
   console.log('✅ Project + Quality route family registered');
 }

@@ -334,9 +334,3 @@
 .c2c-v2 .crl-strip-n{font-size:17px;font-weight:700;font-family:var(--font-mono);}
 .c2c-v2 .crl-strip-n.is-verified{color:var(--success);}
 .c2c-v2 .crl-strip-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-400);margin-top:2px;}
-
-/* ── Study design evidence dock (7 accordions appended to the intel panel). ── */
-.c2c-v2 .crl-ev-divider{display:flex;align-items:center;gap:8px;padding:14px 2px 8px;margin-top:6px;border-top:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;}
-.c2c-v2 .crl-ev-empty{font-size:11px;color:var(--text-400);line-height:1.5;padding:8px 10px;}
-.c2c-v2 .crl-trace-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);font-size:12px;font-weight:500;color:var(--text-200);margin-top:10px;}
-.c2c-v2 .crl-trace-btn:hover{border-color:var(--border-strong);background:var(--bg-050);}

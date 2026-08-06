@@ -197,7 +197,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               </div>
               <div className="actions">
                 <button
-                  className={`tb-btn${showSelectedOnly ? ' active' : ''}`}
+                  className={`tb-btn${showSelectedOnly ? ' on' : ''}`}
                   title={showSelectedOnly ? 'Show all candidates' : 'Show selected only'}
                   onClick={() => setShowSelectedOnly(s => !s)}
                 >

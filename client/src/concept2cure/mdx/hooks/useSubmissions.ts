@@ -17,6 +17,7 @@ import type {
   SubmissionStage,
 } from '../data/workbench';
 import { useFetchJson } from './useFetchJson';
+import { firstArray, shapeMismatch } from '../lib/payloadShape';
 import { FAMILY_TO_SUBMISSION_PATHWAY } from '../../../../../shared/constants/mdx';
 
 interface ServerPackage {
@@ -88,7 +89,13 @@ function deriveTone(stage: Submission['stage'], status: Submission['status']): S
 function adaptPackage(p: ServerPackage): Submission {
   const status = deriveStatus(p.status, p.metadata);
   const stage  = deriveStage(p.status, p.metadata);
-  const pathway = (FAMILY_TO_SUBMISSION_PATHWAY[p.packageFamily.toLowerCase()] ?? p.packageFamily) as Submission['pathway'];
+  /* `packageFamily` is declared `string`, and the shape guard on the list only
+     proves the envelope is a list of objects — a package row that predates the
+     family column, or comes back from a narrowed SELECT, carries none, and the
+     lookup below dereferenced it and took the whole submission centre down on
+     an otherwise well-formed 200. No family means no pathway to claim. */
+  const family = typeof p.packageFamily === 'string' ? p.packageFamily : '';
+  const pathway = (FAMILY_TO_SUBMISSION_PATHWAY[family.toLowerCase()] ?? family) as Submission['pathway'];
   const code = (p.metadata && typeof p.metadata.programCode === 'string'
     ? (p.metadata.programCode as string)
     : null) ?? `pkg-${p.id}`;
@@ -109,7 +116,10 @@ function adaptPackage(p: ServerPackage): Submission {
     stage,
     status,
     title:    p.title,
-    target:   pathway.startsWith('EU') ? 'NB · TÜV' : 'FDA · ESG',
+    /* The receiving authority follows from the family; with no family there is
+       nothing to derive it from, so it is left unstated the way formatTarget
+       leaves an absent target date. */
+    target:   family ? (pathway.startsWith('EU') ? 'NB · TÜV' : 'FDA · ESG') : '—',
     bytes,
     files:    fileCount,
     cover:    p.metadata?.cover === 'signed' ? 'signed' : 'draft',
@@ -128,6 +138,8 @@ export interface UseSubmissionsResult {
   error: string | null;
 }
 
+const PACKAGES_PATH = '/api/submission-ops/packages';
+
 /**
  * List submission packages from /api/submission-ops/packages and adapt
  * each c2cSubmissionPackages row into the kit's Submission shape. The
@@ -136,12 +148,19 @@ export interface UseSubmissionsResult {
  * row selection.
  */
 export function useSubmissions(): UseSubmissionsResult {
-  const { data, loading, error } = useFetchJson<ListPayload>('/api/submission-ops/packages');
-  const submissions = useMemo(
-    () => (data ? data.data.map(adaptPackage) : null),
-    [data],
-  );
-  return { submissions, loading, error };
+  const { data, loading, error } = useFetchJson<ListPayload>(PACKAGES_PATH);
+  /*
+   * `data ? data.data.map(...)` — `data` only says a body came back, and the
+   * `ListPayload` annotation is a cast, not something the route is held to. Any
+   * 200 that isn't `{ data: [...] }` threw at `.map` inside useMemo and took the
+   * pipeline down mid-render. Reporting it keeps "we couldn't read the package
+   * list" distinct from "you have no packages in flight", which on this surface
+   * is the difference between a broken page and an empty pipeline.
+   */
+  const rows = Array.isArray(data?.data) ? data.data : null;
+  const failed = error ?? (data != null && rows === null ? shapeMismatch(PACKAGES_PATH) : null);
+  const submissions = useMemo(() => (rows ? rows.map(adaptPackage) : null), [rows]);
+  return { submissions, loading, error: failed };
 }
 
 /* ─── Per-package detail (gate + activity log) ─────────────────────── */
@@ -220,7 +239,13 @@ export function useSubmissionDetail(packageId: string | null): UseSubmissionDeta
         let log: SubmissionLogEntry[] | null = null;
         if (milestonesRes.status === 'fulfilled' && milestonesRes.value.ok) {
           const j = (await milestonesRes.value.json()) as MilestonePayload;
-          const rows = j.data ?? j.milestones ?? [];
+          /* `j.data ?? j.milestones ?? []` stepped past null and undefined but
+             not past a `data` field holding an object, which then failed at
+             `.slice`. Only a real list becomes an activity log. */
+          const rows = firstArray<{ id: number; title: string; status: string; createdAt: string; ownerName: string | null }>(
+            j.data,
+            j.milestones,
+          ) ?? [];
           log = rows
             .slice(0, 10)
             .map((r) => ({

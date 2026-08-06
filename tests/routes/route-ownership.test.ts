@@ -158,7 +158,26 @@ describe('Phase 6 — Route ownership invariants', () => {
   });
 
   describe('register-inline-routes.ts content stays within its family scope', () => {
-    it('imports only from ../routes/, ../services/, ../middleware/, ../auth*, or ../betaRouteManifest', () => {
+    /*
+     * `./mount-routes.js` is allowed, and it is the only sibling that is.
+     *
+     * The rule exists to stop a registrar growing business logic — it must
+     * mount routers, not implement them. A sibling import is normally exactly
+     * that smell, which is why the original allowlist had no `./` entry at all
+     * and why this guard failed the moment mount-routes.ts was added.
+     *
+     * mount-routes.ts is the opposite case: it is the shared mounting mechanism
+     * every registrar now uses, extracted precisely so the six copies of
+     * `config.map(c => import(c.mod))` could not drift apart again. Each of
+     * those copies loaded its routers by variable specifier, which esbuild
+     * cannot resolve, so 124 route families were absent from dist/index.js and
+     * 404d in production while the boot log reported them mounted. Forbidding
+     * the helper would push the duplication straight back.
+     *
+     * Named exactly rather than by a `./` prefix, so the next sibling import
+     * still has to justify itself here.
+     */
+    it('imports only from ../routes/, ../services/, ../middleware/, ../auth*, ../betaRouteManifest, or ./mount-routes.js', () => {
       const source = readFileSync(INLINE_ROUTES, 'utf-8');
       const imports = source.match(/^import\s[^;]+;/gm) ?? [];
       const relativeImports = imports
@@ -174,7 +193,8 @@ describe('Phase 6 — Route ownership invariants', () => {
         p.startsWith('../middleware/') ||
         p.startsWith('../auth') ||
         p.startsWith('../betaRouteManifest') ||
-        p.startsWith('../src/routes/'); // stability router lives under src/routes/
+        p.startsWith('../src/routes/') || // stability router lives under src/routes/
+        p === './mount-routes.js'; // the shared mounting mechanism — see above
 
       const violations = relativeImports.filter(p => !allowed(p));
       expect(

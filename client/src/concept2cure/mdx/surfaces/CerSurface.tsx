@@ -109,7 +109,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
               </div>
               <div className="actions">
                 <button
-                  className={`tb-btn${includedOnly ? ' active' : ''}`}
+                  className={`tb-btn${includedOnly ? ' on' : ''}`}
                   title={includedOnly ? 'Show all signals' : 'Show included only'}
                   onClick={() => setIncludedOnly(v => !v)}
                 >

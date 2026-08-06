@@ -211,11 +211,33 @@ export interface UseMdxProgramsResult {
  */
 export function useMdxPrograms(): UseMdxProgramsResult {
   const { data, loading, error, refresh } = useFetchJson<ListPayload>('/api/regulatory-programs');
+  /*
+   * `data ? data.data.map(...) : null` — the `data ?` check only proved a body
+   * arrived, and `ListPayload` was a cast, not a promise the route had to keep.
+   * A 200 carrying `{}`, `{ data: null }`, `{ data: {} }`, a bare array or an
+   * error body all reach here as a truthy `data` whose `.data` is not a list, so
+   * `.map` threw inside useMemo during render. Every device surface pays for it,
+   * not just the portfolio: MdxSurfaceHost calls this hook before it switches on
+   * `nav`, so the throw unwinds the whole canvas and the user is told the surface
+   * "didn't finish loading" when the truth was that the programs list came back
+   * in a shape we don't read.
+   *
+   * A body that is not `{ data: [...] }` is now reported as the load failure it
+   * is — the portfolio already renders `role="alert"` for that, and the
+   * program-scoped surfaces already handle "no program" — rather than being
+   * flattened into an empty portfolio, which would read as "you have no
+   * programs" and is a different lie.
+   */
+  const rows = Array.isArray(data?.data) ? data.data : null;
+  const shapeError =
+    data != null && rows === null
+      ? 'unexpected response shape for /api/regulatory-programs'
+      : null;
   const programs = useMemo(
-    () => (data ? data.data.map(rowToKit).filter((p): p is Program => p !== null) : null),
-    [data],
+    () => (rows ? rows.map(rowToKit).filter((p): p is Program => p !== null) : null),
+    [rows],
   );
-  return { programs, loading, error, refresh };
+  return { programs, loading, error: error ?? shapeError, refresh };
 }
 
 /* ─── Per-program detail (raw server shape, unadapted) ──────────────────

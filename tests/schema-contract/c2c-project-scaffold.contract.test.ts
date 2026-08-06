@@ -148,14 +148,46 @@ describe('scaffolding an IND', () => {
 });
 
 describe('it fails closed rather than guessing', () => {
-  it.each(['ivd', 'device', 'ide', 'biologic', 'anda'])(
-    'skips %s — accepted by the wizard but no doc_type and no pack', async (programType) => {
+  /*
+   * `ide` and `anda` used to be in this list. They are not any more, and the
+   * distinction is the point of the list.
+   *
+   * They were unmapped for a fixable reason — no doc_type CHECK value and no
+   * seeded pack — which migrations/20260806b supplies. The three that remain are
+   * unmapped for an UNfixable one: none of them names a pathway. "device" could
+   * be a 510(k), a De Novo, a PMA or an IDE; "ivd" and "biologic" are product
+   * classes, not submissions. There is no outline to write for them because
+   * there is no single submission they denote, and guessing one files a
+   * customer's product down the wrong pathway. That is a question for the wizard
+   * to ask, not a gap in PROGRAM_TO_DOC_TYPE.
+   *
+   * So this list is now closed rather than merely incomplete, and shrinking it
+   * further means answering that product question first.
+   */
+  it.each(['ivd', 'device', 'biologic'])(
+    'skips %s — the wizard accepts it but it names no pathway', async (programType) => {
       const r = await run({ programType });
       expect(r.skipped).toBe('UNMAPPED_PROGRAM_TYPE');
       expect(r.documentId).toBeNull();
       expect(r.detail).toContain(programType);
       const n = await pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM c2c_documents`);
       expect(Number(n.rows[0].n)).toBe(0); // nothing half-written
+    }, 60_000);
+
+  it.each(['anda', 'ide'])(
+    'skips %s on a database without its pack — mapped is not the same as seeded', async (programType) => {
+      // This suite boots the schema migration ONLY, so anda:fda and ide:fda are
+      // absent here even though PROGRAM_TO_DOC_TYPE now maps them. That is the
+      // interesting state: a mapping without a pack must still decline, because
+      // inserting the document anyway would need a rule_pack_version the
+      // composite FK cannot satisfy. The failure mode moves from
+      // UNMAPPED_PROGRAM_TYPE to NO_RULE_PACK — both fail closed, and neither
+      // writes a row.
+      const r = await run({ programType });
+      expect(r.skipped).toBe('NO_RULE_PACK');
+      expect(r.documentId).toBeNull();
+      const n = await pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM c2c_documents`);
+      expect(Number(n.rows[0].n)).toBe(0);
     }, 60_000);
 
   it('skips an agency with no CHECK value instead of violating the constraint', async () => {

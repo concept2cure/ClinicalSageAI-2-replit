@@ -26,31 +26,56 @@
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 import type { SectionBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
 
+import * as usNda from './registry/blueprints/usNdaBlueprint.js';
+import * as usBla from './registry/blueprints/usBlaBlueprint.js';
+import * as euMaa from './registry/blueprints/euMaaBlueprint.js';
+import * as euCta from './registry/blueprints/euCtaBlueprint.js';
+import * as canadaNds from './registry/blueprints/canadaNdsBlueprint.js';
+import * as canadaCta from './registry/blueprints/canadaCtaBlueprint.js';
+import * as japanMaa from './registry/blueprints/japanMaaBlueprint.js';
+import * as japanCtn from './registry/blueprints/japanCtnBlueprint.js';
+import * as chinaCta from './registry/blueprints/chinaCtaBlueprint.js';
+import * as australiaCtn from './registry/blueprints/australiaCtnBlueprint.js';
+import * as brazilDdcm from './registry/blueprints/brazilDdcmBlueprint.js';
+import * as indiaCt from './registry/blueprints/indiaCtBlueprint.js';
+
 /**
- * Registry ID → dedicated blueprint module that exports `sectionBlueprint`.
- * Keep in sync with `taskBlueprintCatalog`'s fileMap; the same files export
- * both a `sectionBlueprint` and a `taskBlueprint`.
+ * Registry ID → its dedicated section blueprint.
+ *
+ * ── Why these are static imports ──────────────────────────────────────────────
+ * The module header above describes wiring these authored blueprints into the
+ * runtime path so Canada, Japan, China, Brazil, India, Australia, the EU and the
+ * US NDA/BLA would stop falling back to one generic CTD outline. The wiring was
+ * `import(file)` with a runtime specifier, which esbuild cannot resolve — so all
+ * twelve modules were absent from dist/index.js, every import rejected, the
+ * `catch { return null }` swallowed it in silence, and every region fell back to
+ * the generic CTD outline exactly as before.
+ *
+ * The gap the header claims to close was therefore still open in production, and
+ * the code that claimed to close it is the reason it looked closed. Static now,
+ * so the bundler and the type checker both have to agree the blueprint exists.
+ *
+ * Keep in sync with `taskBlueprintCatalog`; the same files export both a
+ * `sectionBlueprint` and a `taskBlueprint`.
  */
-const SECTION_BLUEPRINT_FILES: Record<string, string> = {
-  US_NDA: './registry/blueprints/usNdaBlueprint.js',
-  US_BLA: './registry/blueprints/usBlaBlueprint.js',
-  EU_MAA: './registry/blueprints/euMaaBlueprint.js',
-  EU_CTA: './registry/blueprints/euCtaBlueprint.js',
-  CA_NDS: './registry/blueprints/canadaNdsBlueprint.js',
-  CA_CTA: './registry/blueprints/canadaCtaBlueprint.js',
-  JP_MKT_APPROVAL: './registry/blueprints/japanMaaBlueprint.js',
-  JP_CTN: './registry/blueprints/japanCtnBlueprint.js',
-  CN_CTA: './registry/blueprints/chinaCtaBlueprint.js',
-  AU_CTN: './registry/blueprints/australiaCtnBlueprint.js',
-  BR_DDCM: './registry/blueprints/brazilDdcmBlueprint.js',
-  IN_CT04: './registry/blueprints/indiaCtBlueprint.js',
+const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
+  US_NDA: usNda.sectionBlueprint,
+  US_BLA: usBla.sectionBlueprint,
+  EU_MAA: euMaa.sectionBlueprint,
+  EU_CTA: euCta.sectionBlueprint,
+  CA_NDS: canadaNds.sectionBlueprint,
+  CA_CTA: canadaCta.sectionBlueprint,
+  JP_MKT_APPROVAL: japanMaa.sectionBlueprint,
+  JP_CTN: japanCtn.sectionBlueprint,
+  CN_CTA: chinaCta.sectionBlueprint,
+  AU_CTN: australiaCtn.sectionBlueprint,
+  BR_DDCM: brazilDdcm.sectionBlueprint,
+  IN_CT04: indiaCt.sectionBlueprint,
 };
 
 /** Registry IDs that have a dedicated, wired section blueprint. */
 export const DEDICATED_SECTION_BLUEPRINT_IDS: readonly string[] =
-  Object.keys(SECTION_BLUEPRINT_FILES);
-
-const blueprintCache = new Map<string, SectionBlueprint>();
+  Object.keys(SECTION_BLUEPRINTS);
 
 /**
  * Get the dedicated section blueprint for a registry entry, if one exists.
@@ -58,34 +83,25 @@ const blueprintCache = new Map<string, SectionBlueprint>();
  * fall back to `getSectionBlueprintForEntry` from project-bootstrap).
  *
  * Accepts a registry ID or a legacy submission type.
+ *
+ * The empty-sections check is kept. It is no longer defending against a failed
+ * load — that cannot happen now — but against a blueprint that exists and is
+ * hollow, which is a different defect and one this codebase has shipped before.
+ * Returning null there sends the caller to the generic fallback, which is worse
+ * than the right outline and better than an empty one.
  */
 export async function getSectionBlueprint(
   registryIdOrLegacy: string,
 ): Promise<SectionBlueprint | null> {
   const registryId = resolveRegistryId(registryIdOrLegacy) || registryIdOrLegacy;
-
-  if (blueprintCache.has(registryId)) {
-    return blueprintCache.get(registryId)!;
-  }
-
-  const file = SECTION_BLUEPRINT_FILES[registryId];
-  if (!file) return null;
-
-  try {
-    const mod = (await import(file)) as { sectionBlueprint?: SectionBlueprint };
-    const blueprint = mod.sectionBlueprint ?? null;
-    if (blueprint && Array.isArray(blueprint.sections) && blueprint.sections.length > 0) {
-      blueprintCache.set(registryId, blueprint);
-      return blueprint;
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  const blueprint = SECTION_BLUEPRINTS[registryId];
+  if (!blueprint) return null;
+  if (!Array.isArray(blueprint.sections) || blueprint.sections.length === 0) return null;
+  return blueprint;
 }
 
 /** True when the registry ID/legacy type resolves to a dedicated section blueprint. */
 export function hasDedicatedSectionBlueprint(registryIdOrLegacy: string): boolean {
   const registryId = resolveRegistryId(registryIdOrLegacy) || registryIdOrLegacy;
-  return registryId in SECTION_BLUEPRINT_FILES;
+  return registryId in SECTION_BLUEPRINTS;
 }

@@ -79,10 +79,14 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
   const nMissing = result ? result.missingFields.length : 0;
 
-  /* Answer-first lead -- context-aware to the real queue and clocks */
+  /* Answer-first lead -- context-aware to the real queue and clocks.
+     `event` is typed required on SaeCase but is a joined sub-record on the wire:
+     a case row whose event facts haven't landed yet arrives with it absent, so
+     every read of it here and below is `?.` — the same allowance the composer
+     already makes (`input.event || {}`). */
   const lead = useMemo(() => {
     if (!sel || cases.length === 0) return null;
-    const serious = cases.filter((c) => (c.event.seriousnessCriteria || []).length).length;
+    const serious = cases.filter((c) => (c.event?.seriousnessCriteria || []).length).length;
     const soonest = cases.slice().sort((a, b) => a.dueDays - b.dueDays)[0];
     const urgent = soonest && soonest.dueDays <= 3;
     return {
@@ -114,7 +118,9 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
   const toggleCrit = (crit: string) => {
     if (!sel) return;
-    const cur = sel.event.seriousnessCriteria || [];
+    /* Same absent-`event` allowance as the render below — a case selected before
+       its event facts landed has no criteria to toggle off, only on. */
+    const cur = sel.event?.seriousnessCriteria || [];
     setField('event.seriousnessCriteria', cur.includes(crit) ? cur.filter((x) => x !== crit) : cur.concat([crit]));
   };
 
@@ -159,7 +165,11 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           <div className="sn-sec">Case queue</div>
           <div className="sn-queue">
             {cases.map((c) => {
-              const serious = (c.event.seriousnessCriteria || []).length > 0;
+              /* A queue row with no `event` yet is not evidence of non-seriousness,
+                 but "Non-serious" is what the existing chip says for an empty
+                 criteria list, and inventing a third state here would assert more
+                 than the row supports. Guarded so the row renders either way. */
+              const serious = (c.event?.seriousnessCriteria || []).length > 0;
               const miss = composeSafetyNarrative(c).missingFields.length;
               return (
                 <button key={c.id} className="sn-case" data-on={c.id === sel.id || undefined} onClick={() => setSelId(c.id)}>
@@ -167,7 +177,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="mono sn-case-id">{c.id}</span>
                     <span className={'sn-chip ' + (serious ? 'err' : 'idle')}>{serious ? 'Serious' : 'Non-serious'}</span>
                   </div>
-                  <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} -- {c.event.term}</div>
+                  <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} -- {c.event?.term}</div>
                   <div className="sn-case-meta">
                     <span className="sn-case-drug">{c.studyDrug}</span>
                     <span className={'sn-due ' + (c.dueDays <= 3 ? 'urgent' : '')}>{c.due}</span>
@@ -179,32 +189,37 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           </div>
 
           <div className="sn-sec">Structured case -- {sel.id}</div>
+          {/* Every read below is of the case's `event` sub-record, which a row can
+              arrive without (see the lead memo). The empty-string / empty-array
+              fallbacks were already here for the individual fields; the `?.` extends
+              the same allowance to the container, so a case with no event facts yet
+              renders as blank inputs to fill rather than taking the surface down. */}
           <div className="sn-fields">
             <div className="sn-f2">
               <label className="sn-fl">
                 Severity
-                <input className="sn-fi" value={sel.event.severity || ''} placeholder="e.g. grade 3 (severe)" onChange={(e) => setField('event.severity', e.target.value)} />
+                <input className="sn-fi" value={sel.event?.severity || ''} placeholder="e.g. grade 3 (severe)" onChange={(e) => setField('event.severity', e.target.value)} />
               </label>
               <label className="sn-fl">
                 Study day
-                <input className="sn-fi" value={sel.event.dayOnStudy || ''} onChange={(e) => setField('event.dayOnStudy', e.target.value)} />
+                <input className="sn-fi" value={sel.event?.dayOnStudy || ''} onChange={(e) => setField('event.dayOnStudy', e.target.value)} />
               </label>
             </div>
             <label className="sn-fl">
               Action taken with study drug
-              <input className="sn-fi" value={sel.event.actionTaken || ''} placeholder="e.g. study drug permanently discontinued" onChange={(e) => setField('event.actionTaken', e.target.value)} />
+              <input className="sn-fi" value={sel.event?.actionTaken || ''} placeholder="e.g. study drug permanently discontinued" onChange={(e) => setField('event.actionTaken', e.target.value)} />
             </label>
             <div className="sn-f2">
               <label className="sn-fl">
                 Causality (investigator)
-                <select className="sn-fi" value={sel.event.causality || ''} onChange={(e) => setField('event.causality', e.target.value)}>
+                <select className="sn-fi" value={sel.event?.causality || ''} onChange={(e) => setField('event.causality', e.target.value)}>
                   <option value="">-- not assessed --</option>
                   {CAUSALITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </label>
               <label className="sn-fl">
                 Outcome
-                <select className="sn-fi" value={sel.event.outcome || ''} onChange={(e) => setField('event.outcome', e.target.value)}>
+                <select className="sn-fi" value={sel.event?.outcome || ''} onChange={(e) => setField('event.outcome', e.target.value)}>
                   <option value="">-- unknown --</option>
                   {OUTCOMES.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
@@ -214,7 +229,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
               Seriousness criteria
               <div className="sn-crits">
                 {CRITERIA.map((c) => (
-                  <button key={c} className="sn-crit" data-on={(sel.event.seriousnessCriteria || []).includes(c) || undefined} onClick={() => toggleCrit(c)}>{c}</button>
+                  <button key={c} className="sn-crit" data-on={(sel.event?.seriousnessCriteria || []).includes(c) || undefined} onClick={() => toggleCrit(c)}>{c}</button>
                 ))}
               </div>
             </div>
@@ -231,7 +246,10 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <span className="cm-doc-prov">{sel.studyId} -- {result.serious ? 'Serious' : 'Non-serious'} -- {result.narrative.split(/\s+/).length} words</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="bs-da" onClick={() => ask('Review this SAE narrative for ' + sel.id + ' (' + sel.event.term + ') and flag any medical-review or consistency issues before I file it.')}>
+                {/* Parenthetical only when there is a term to put in it — same
+                    shape as the lead's studyId aside, and it keeps the literal
+                    "undefined" out of the prompt when the event is absent. */}
+                <button className="bs-da" onClick={() => ask('Review this SAE narrative for ' + sel.id + (sel.event?.term ? ' (' + sel.event?.term + ')' : '') + ' and flag any medical-review or consistency issues before I file it.')}>
                   {I.sparkles} Review with AnA
                 </button>
                 {/* MOCK ACTION (flagged): no case-narrative version-write endpoint
@@ -306,7 +324,6 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
           <div className="sn-hand">
             <button className="sn-hb" onClick={() => {
-              try { localStorage.setItem('c2c_open_surface', 'submission-center'); } catch (_e) { /* noop */ }
               onNav('submission-center');
               ask('Transmit ' + sel.id + ' as an E2B(R3) ICSR to the FDA gateway.');
             }}>

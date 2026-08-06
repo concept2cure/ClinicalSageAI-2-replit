@@ -134,6 +134,7 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
               ref={fileRef}
               type="file"
               accept=".pdf,.doc,.docx,.txt,.md"
+              aria-label="Upload a document"
               className="opr-field-input"
               onChange={(e) => {
                 const f = e.target.files?.[0];

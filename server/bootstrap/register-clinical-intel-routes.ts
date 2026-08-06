@@ -1,6 +1,29 @@
+/**
+ * IND, intelligence, CSR and protocol routes.
+ *
+ * The twelve routers loaded through `config.map(c => import(c.mod))` below were
+ * all absent from dist/index.js — esbuild cannot resolve a variable specifier —
+ * so the entire IND family 404d in production while the boot log said it had
+ * mounted. Static now; the reasoning is written out in ./mount-routes.ts.
+ */
+
 import express from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
+import { mountAll } from './mount-routes.js';
+
+import indRoutes from '../routes/ind.js';
+import indUnified from '../routes/ind-unified.js';
+import indTemplates from '../routes/ind-templates.js';
+import indSubmissions from '../routes/ind-submissions.routes.js';
+import indDatabase from '../routes/ind-database.routes.js';
+import indAutomation from '../routes/ind_automation_routes.js';
+import intelligence from '../routes/intelligence.js';
+import { protocolRoutes } from '../routes/protocol_routes.js';
+import qcRoutes from '../routes/qc.routes.js';
+import moduleIntegrationRoutes from '../routes/moduleIntegrationRoutes.js';
+import regulatoryRoutes from '../routes/regulatoryRoutes.js';
+import documentUnderstanding from '../routes/document-understanding.js';
 
 export interface ClinicalIntelBootstrapContext {
   app: express.Express;
@@ -20,33 +43,18 @@ export async function registerClinicalIntelRoutes({
   // backstop: even if an individual router file forgets to add its own
   // auth (and most do), the bootstrap forces it. Tenant isolation
   // inside each handler is a separate concern audited per-file.
-  {
-    const indConfig = [
-      { path: '/api/ind', mod: '../routes/ind', name: 'IND' },
-      { path: '/api/ind-wizard', mod: '../routes/ind-unified', name: 'IND Unified (Wizard)' },
-      { path: '/api/ind-templates', mod: '../routes/ind-templates', name: 'IND Templates' },
-      {
-        path: '/api/ind-submissions',
-        mod: '../routes/ind-submissions.routes',
-        name: 'IND Submissions',
-      },
-      { path: '/api/ind-database', mod: '../routes/ind-database.routes', name: 'IND Database' },
-      {
-        path: '/api/ind-automation',
-        mod: '../routes/ind_automation_routes',
-        name: 'IND Automation',
-      },
-    ] as const;
-    const indResults = await Promise.allSettled(indConfig.map(c => import(c.mod)));
-    indResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(indConfig[i].path, authenticateToken, r.value.default);
-        console.log(`✅ ${indConfig[i].name} routes mounted (auth-gated)`);
-      } else {
-        console.error(`❌ Failed to mount ${indConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  mountAll(
+    app,
+    [
+      { path: '/api/ind', router: indRoutes, name: 'IND (auth-gated)' },
+      { path: '/api/ind-wizard', router: indUnified, name: 'IND Unified / Wizard (auth-gated)' },
+      { path: '/api/ind-templates', router: indTemplates, name: 'IND Templates (auth-gated)' },
+      { path: '/api/ind-submissions', router: indSubmissions, name: 'IND Submissions (auth-gated)' },
+      { path: '/api/ind-database', router: indDatabase, name: 'IND Database (auth-gated)' },
+      { path: '/api/ind-automation', router: indAutomation, name: 'IND Automation (auth-gated)' },
+    ],
+    authenticateToken,
+  );
 
   // ── Documents Gateway (unified + intelligence) ──
   // sourceLinks was removed with the `source_citations` table it fronted: the
@@ -85,40 +93,19 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount RTM export routes:', error);
   }
 
-  // ── Intelligence, CSR, Protocol, QC, Regulatory, Module Integration (parallelized) ──
-  {
-    const intelConfig = [
-      { path: '/api/intelligence', mod: '../routes/intelligence', name: 'Intelligence + RIM' },
-      { path: '/api/protocol', mod: '../routes/protocol_routes', name: 'Protocol', named: true },
-      { path: '/api/qc', mod: '../routes/qc.routes', name: 'QC' },
-      {
-        path: '/api/module-integration',
-        mod: '../routes/moduleIntegrationRoutes',
-        name: 'Module Integration',
-      },
-      { path: '/api/regulatory', mod: '../routes/regulatoryRoutes', name: 'Regulatory' },
-      {
-        path: '/api/document-understanding',
-        mod: '../routes/document-understanding',
-        name: 'Document Understanding',
-      },
-    ] as const;
-    const intelResults = await Promise.allSettled(intelConfig.map(c => import(c.mod)));
-    intelResults.forEach((r, i) => {
-      const cfg = intelConfig[i];
-      if (r.status === 'fulfilled') {
-        // protocol_routes exports { protocolRoutes } as named export
-        const router =
-          'named' in cfg && cfg.named
-            ? (r.value as any).protocolRoutes
-            : r.value.default;
-        app.use(cfg.path, router);
-        console.log(`✅ ${cfg.name} routes mounted at ${cfg.path}`);
-      } else {
-        console.error(`❌ Failed to mount ${cfg.name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Intelligence, CSR, Protocol, QC, Regulatory, Module Integration ──
+  //
+  // protocol_routes exports { protocolRoutes } rather than a default. The old
+  // form carried a `named: true` flag and picked the export at runtime; a named
+  // static import says the same thing at compile time, and gets checked.
+  mountAll(app, [
+    { path: '/api/intelligence', router: intelligence, name: 'Intelligence + RIM' },
+    { path: '/api/protocol', router: protocolRoutes, name: 'Protocol' },
+    { path: '/api/qc', router: qcRoutes, name: 'QC' },
+    { path: '/api/module-integration', router: moduleIntegrationRoutes, name: 'Module Integration' },
+    { path: '/api/regulatory', router: regulatoryRoutes, name: 'Regulatory' },
+    { path: '/api/document-understanding', router: documentUnderstanding, name: 'Document Understanding' },
+  ]);
 
   // ── Citation Verification ──
   //

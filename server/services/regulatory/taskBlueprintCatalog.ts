@@ -12,6 +12,20 @@ import { getTaskBlueprintForEntry } from '../../../shared/regulatory/project-boo
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import type { TaskBlueprint, MilestoneDefinition } from '../../../shared/regulatory/document-taxonomy.js';
 
+import * as usInd from './registry/blueprints/usIndBlueprint.js';
+import * as usNda from './registry/blueprints/usNdaBlueprint.js';
+import * as usBla from './registry/blueprints/usBlaBlueprint.js';
+import * as euMaa from './registry/blueprints/euMaaBlueprint.js';
+import * as euCta from './registry/blueprints/euCtaBlueprint.js';
+import * as canadaNds from './registry/blueprints/canadaNdsBlueprint.js';
+import * as canadaCta from './registry/blueprints/canadaCtaBlueprint.js';
+import * as japanMaa from './registry/blueprints/japanMaaBlueprint.js';
+import * as japanCtn from './registry/blueprints/japanCtnBlueprint.js';
+import * as chinaCta from './registry/blueprints/chinaCtaBlueprint.js';
+import * as australiaCtn from './registry/blueprints/australiaCtnBlueprint.js';
+import * as brazilDdcm from './registry/blueprints/brazilDdcmBlueprint.js';
+import * as indiaCt from './registry/blueprints/indiaCtBlueprint.js';
+
 // ─── Blueprint Registry ───────────────────────────────────────────────────────
 
 /**
@@ -51,42 +65,54 @@ export async function getTaskBlueprint(registryIdOrLegacy: string): Promise<Task
 }
 
 /**
- * Registry ID → dedicated blueprint module that exports `taskBlueprint`.
+ * Registry ID → its dedicated task blueprint.
+ *
+ * ── Why these are static imports ──────────────────────────────────────────────
+ * This was a `Record<string, string>` of module paths loaded as `import(file)`
+ * with a runtime specifier. esbuild cannot resolve those, so none of the 13
+ * blueprint modules was in dist/index.js — verified from esbuild's metafile,
+ * 13/13 absent. In production the import rejected, the `catch { return null }`
+ * below swallowed it without even a console line, and every region fell through
+ * to DEFAULT_TASK_BLUEPRINT.
+ *
+ * The result was a platform that sells thirteen regional pathways and shipped
+ * one generic three-milestone plan for all of them. Silent by construction: a
+ * caller asking for the Japan CTN blueprint got a well-formed blueprint back,
+ * just not the Japanese one.
+ *
  * Kept in sync with `sectionBlueprintCatalog` (the same files export both).
  */
-const TASK_BLUEPRINT_FILES: Record<string, string> = {
-  US_IND: './registry/blueprints/usIndBlueprint.js',
-  US_NDA: './registry/blueprints/usNdaBlueprint.js',
-  US_BLA: './registry/blueprints/usBlaBlueprint.js',
-  EU_MAA: './registry/blueprints/euMaaBlueprint.js',
-  EU_CTA: './registry/blueprints/euCtaBlueprint.js',
-  CA_NDS: './registry/blueprints/canadaNdsBlueprint.js',
-  CA_CTA: './registry/blueprints/canadaCtaBlueprint.js',
-  JP_MKT_APPROVAL: './registry/blueprints/japanMaaBlueprint.js',
-  JP_CTN: './registry/blueprints/japanCtnBlueprint.js',
-  CN_CTA: './registry/blueprints/chinaCtaBlueprint.js',
-  AU_CTN: './registry/blueprints/australiaCtnBlueprint.js',
-  BR_DDCM: './registry/blueprints/brazilDdcmBlueprint.js',
-  IN_CT04: './registry/blueprints/indiaCtBlueprint.js',
+const TASK_BLUEPRINTS: Record<string, TaskBlueprint> = {
+  US_IND: usInd.taskBlueprint,
+  US_NDA: usNda.taskBlueprint,
+  US_BLA: usBla.taskBlueprint,
+  EU_MAA: euMaa.taskBlueprint,
+  EU_CTA: euCta.taskBlueprint,
+  CA_NDS: canadaNds.taskBlueprint,
+  CA_CTA: canadaCta.taskBlueprint,
+  JP_MKT_APPROVAL: japanMaa.taskBlueprint,
+  JP_CTN: japanCtn.taskBlueprint,
+  CN_CTA: chinaCta.taskBlueprint,
+  AU_CTN: australiaCtn.taskBlueprint,
+  BR_DDCM: brazilDdcm.taskBlueprint,
+  IN_CT04: indiaCt.taskBlueprint,
 };
 
 /** Registry IDs that have a dedicated, wired task blueprint. */
 export const DEDICATED_TASK_BLUEPRINT_IDS: readonly string[] =
-  Object.keys(TASK_BLUEPRINT_FILES);
+  Object.keys(TASK_BLUEPRINTS);
 
 /**
- * Try to load a dedicated blueprint file for the given registry ID.
+ * The dedicated blueprint for a registry ID, or null when it has none.
+ *
+ * Still async: the signature is part of this module's contract and several
+ * callers await it. Nothing is loaded here any more — the blueprints are
+ * ordinary module-scope values — so there is also nothing left to fail, which
+ * is why the swallowing try/catch is gone rather than kept "just in case". A
+ * catch that can only hide a programming error is not resilience.
  */
 async function loadDedicatedBlueprint(registryId: string): Promise<TaskBlueprint | null> {
-  const file = TASK_BLUEPRINT_FILES[registryId];
-  if (!file) return null;
-
-  try {
-    const mod = await import(file);
-    return mod.taskBlueprint ?? null;
-  } catch {
-    return null;
-  }
+  return TASK_BLUEPRINTS[registryId] ?? null;
 }
 
 // ─── Default Blueprint ────────────────────────────────────────────────────────
