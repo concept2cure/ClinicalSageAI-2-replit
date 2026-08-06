@@ -506,6 +506,12 @@ function getNextMonthStart() {
   return nextMonth.toISOString().split('T')[0];
 }
 
+// Every named export above is mirrored here. getActiveLicenseForOrganization
+// was the one omission, and because a missing key destructures to `undefined`
+// rather than raising, the only symptom was
+// "getActiveLicenseForOrganization is not a function" thrown at call time from
+// server/routes/projects-management.ts — i.e. a 500 on the product's primary
+// entity, surfacing far from the cause. Keep this object exhaustive.
 export default {
   checkSubmissionQuota,
   checkProjectQuota,
@@ -517,4 +523,5 @@ export default {
   enforceProjectQuota,
   enforceUserQuota,
   getLicenseForOrganization,
+  getActiveLicenseForOrganization,
 };

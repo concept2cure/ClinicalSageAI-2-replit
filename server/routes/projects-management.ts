@@ -3,13 +3,17 @@ import { z } from 'zod';
 import { db } from '../db';
 import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
-import quotaEnforcementService from '../services/quotaEnforcementService.js';
+// Named import, not a destructure off the default export: the default object
+// exposes getLicenseForOrganization, NOT getActiveLicenseForOrganization, so
+// `const { getActiveLicenseForOrganization } = quotaEnforcementService` bound
+// undefined and every handler below threw
+// "getActiveLicenseForOrganization is not a function" at call time.
+import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('projects-management');
-const { getActiveLicenseForOrganization } = quotaEnforcementService;
 
 const router = Router();
 
