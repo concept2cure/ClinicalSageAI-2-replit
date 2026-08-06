@@ -99,6 +99,7 @@
     "ci:check-phantom-tokens": "node scripts/ci/check-phantom-tokens.mjs",
     "ci:check-client-reachability": "node scripts/ci/check-client-reachability.mjs",
     "ci:check-bundle-reachability": "node scripts/ci/check-bundle-reachability.mjs",
+    "ci:check-client-api-calls": "node scripts/ci/check-client-api-calls-resolve.mjs",
     "ci:check-test-imports": "node scripts/ci/check-test-imports.mjs",
     "ci:check-orphaned-stylesheets": "node scripts/ci/check-orphaned-stylesheets.mjs",
     "ci:check-unrun-tests": "node scripts/ci/check-unrun-tests.mjs",

@@ -227,6 +227,14 @@ jobs:
       - name: Guardrails — every registered route + blueprint reaches the bundle
         run: npm run ci:check-bundle-reachability
 
+      # The direction nobody was asking. `audit:orphaned-endpoints` finds server
+      # routes nobody calls; this finds CLIENT CALLS with no server route, which
+      # is the one that costs a customer something. Asking it the first time
+      # found twelve surfaces whose endpoints 404d while the UI showed fixture
+      # data and no error.
+      - name: Guardrails — every client /api call has a server route
+        run: npm run ci:check-client-api-calls
+
       # tsconfig's include does not cover tests/, so `tsc --noEmit` has never
       # looked at a test file. This is the piece of that coverage that matters:
       # a test importing a module that no longer exists cannot run at all.
