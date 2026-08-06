@@ -22,6 +22,7 @@ import { getGateway } from '../ai-gateway/gateway';
 import type { PriorLeaf } from '../ectd/lifecycle-operator.js';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
+import { recordArtifactProvenance } from '../provenance/artifact-provenance';
 import { searchPubmed } from '../integrations/pubmed-client.js';
 import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
 import { searchConnectedRepositories } from '../integrations/connector-search.js';
@@ -14169,6 +14170,20 @@ registerToolHandler('approve_import', async (input, ctx) => {
           [ins.rows[0].id, f.id],
         );
         createdCount++;
+        // Uniform provenance: an imported file is a 'source_input' event — the
+        // artifact was born from an uploaded document. Best-effort so a
+        // provenance hiccup never fails the import.
+        try {
+          await recordArtifactProvenance(pool, {
+            artifactId: ins.rows[0].id,
+            organizationId: ctx.organizationId,
+            eventType: 'source_input',
+            eventAction: 'import',
+            actorId: ctx.userId,
+            details: { importJobId: jobId, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
+            backendService: 'ana/AnaToolExecutor:import',
+          });
+        } catch { /* import provenance is best-effort */ }
       } catch {
         /* per-file error already swallowed; surface count below. */
       }
@@ -17947,6 +17962,17 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
          VALUES ($1, $2, 1, $3, $4, $5, $6)`,
         [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
       );
+      // Uniform provenance: a vault document authored by AnA is a 'generation'
+      // event, in the same transaction as the artifact + version.
+      await recordArtifactProvenance(client, {
+        artifactId: ins.rows[0].id,
+        organizationId: ctx.organizationId,
+        eventType: 'generation',
+        eventAction: 'ai_generate',
+        actorId: ctx.userId,
+        details: { source: 'ana_tool', reason, ctdSection: ctd, version: 1 },
+        backendService: 'ana/AnaToolExecutor:save_document_to_vault',
+      });
       // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
       // the same transaction as the artifact + immutable version. It used to be
       // a post-COMMIT `try { auditLog(...) } catch { /* never block on audit */ }`
@@ -18021,6 +18047,16 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [doc.id, ctx.organizationId, nextVersion, content, hash, reason, ctx.userId],
       );
+      // Uniform provenance: a new vault version is an 'edit' event, same txn.
+      await recordArtifactProvenance(client, {
+        artifactId: doc.id,
+        organizationId: ctx.organizationId,
+        eventType: 'edit',
+        eventAction: 'ai_generate',
+        actorId: ctx.userId,
+        details: { source: 'ana_tool', reason, version: nextVersion },
+        backendService: 'ana/AnaToolExecutor:vault_update',
+      });
       // C2C-AUDIT-001: atomic Part 11 audit — see save_document_to_vault.
       await recordGovernedAction(client, {
         orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
