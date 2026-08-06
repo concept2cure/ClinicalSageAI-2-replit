@@ -53,7 +53,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
     const compiled = composeModule3FromCanonicalSources(sourceObjects as any);
 
     for (const section of compiled) {
-      await client.query(
+      const secRes = await client.query(
         `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
          VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,null,'draft')
          ON CONFLICT (organization_id, project_id, section_key)
@@ -63,6 +63,25 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
          JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
          section.narrativeDraft, createSourceHash(section.structuredPayload)]
       );
+      // Persist derivation lineage: which source objects this section was
+      // compiled from, at what source hash. The convergence/OS compile routes
+      // record this; this AnA build-all path wrote the narrative but silently
+      // dropped the provenance, so a section built here traced back to nothing.
+      // Refreshed in the same transaction (delete-then-insert, org-scoped).
+      const sectionId = secRes.rows[0]?.id;
+      if (sectionId) {
+        await client.query(
+          `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
+          [sectionId, orgId]
+        );
+        for (const lin of section.lineage) {
+          await client.query(
+            `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
+             VALUES ($1, $2, $3, $4)`,
+            [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
+          );
+        }
+      }
     }
     await client.query('COMMIT');
 
@@ -142,16 +161,45 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   const section = allComposed.find(s => s.sectionKey === sectionKey);
   if (!section) return { success: false, action: 'module3_build_section', message: `Section ${sectionKey} not found in composition rules` };
 
-  // Upsert compiled section
-  await pool.query(
-    `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, approval_state)
-     VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,'draft')
-     ON CONFLICT (organization_id, project_id, section_key)
-     DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()`,
-    [orgId, projectId, section.sectionKey, section.sectionPath,
-     JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
-     section.narrativeDraft, createSourceHash(section.structuredPayload)]
-  );
+  // Upsert compiled section + its derivation lineage in one transaction: the
+  // narrative and the record of which source objects it was compiled from
+  // commit together, at parity with the convergence/OS routes and build-all.
+  // This path previously wrote the narrative on a bare pool.query with no
+  // lineage, so a single-section build traced back to nothing.
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const secRes = await client.query(
+      `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, approval_state)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,'draft')
+       ON CONFLICT (organization_id, project_id, section_key)
+       DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()
+       RETURNING id`,
+      [orgId, projectId, section.sectionKey, section.sectionPath,
+       JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
+       section.narrativeDraft, createSourceHash(section.structuredPayload)]
+    );
+    const sectionId = secRes.rows[0]?.id;
+    if (sectionId) {
+      await client.query(
+        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
+        [sectionId, orgId]
+      );
+      for (const lin of section.lineage) {
+        await client.query(
+          `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
+           VALUES ($1, $2, $3, $4)`,
+          [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
+        );
+      }
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 
   // Bridge to governed artifact
   let bridgedArtifact: { artifactId: string; isNew: boolean } | null = null;
