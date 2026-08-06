@@ -40,11 +40,28 @@ const ROOT = process.cwd();
  * Add a surface here when it starts writing document text. The list is the
  * enforcement perimeter — a surface absent from it is unguarded by definition,
  * so absence should be a deliberate, reviewed choice.
+ *
+ * Per-entry `transaction`:
+ *   - 'inline' (default): the file opens its own transaction (pool.connect +
+ *     BEGIN/COMMIT/ROLLBACK) around the write, verified in-file.
+ *   - 'caller': the write lives in a service function that runs inside a
+ *     transaction opened by its caller (the file receives a `client`). The gate
+ *     must still be enlisted on that `client`; the transaction itself is
+ *     verified in each `txOwners` file instead.
  */
 const GUARDED = [
   {
     file: 'server/routes/authoring.router.ts',
-    why: 'PATCH /sections/:sectionId writes authored section content',
+    why: 'POST /sections (create) and PATCH /sections/:sectionId (save) write authored section content',
+  },
+  {
+    file: 'server/services/protocol-development/protocol-development-service.ts',
+    why: 'updateSectionTx / updateSynopsisTx write protocol prose (protocol_sections.content, protocol_documents.synopsis)',
+    transaction: 'caller',
+    txOwners: [
+      'server/routes/protocol-development.ts', // governed() opens the transaction
+      'server/services/ana/AnaToolExecutor.ts', // update_protocol_section tool opens the transaction
+    ],
   },
 ];
 
@@ -138,7 +155,10 @@ function helperEnforcesGate() {
 const TRANSACTION = {
   id: 'transaction',
   test: (src) =>
-    src.includes('pool.connect()') &&
+    // `.connect()` matches both `pool.connect()` and `getPool().connect()`; the
+    // BEGIN/COMMIT/ROLLBACK trio confirms it is an actual transaction, not just
+    // a checked-out connection.
+    src.includes('.connect()') &&
     src.includes("client.query('BEGIN')") &&
     src.includes("client.query('COMMIT')") &&
     src.includes("client.query('ROLLBACK')"),
@@ -197,10 +217,28 @@ for (const target of GUARDED) {
   }
 
   const src = fs.readFileSync(abs, 'utf8');
-  const missing = [
-    ...(TRANSACTION.test(src) ? [] : [TRANSACTION]),
-    ...gateFindings(src),
-  ];
+
+  // Transaction: verified in-file by default, or in each txOwner when the write
+  // is a service function running inside the caller's transaction.
+  const txFindings = [];
+  if (target.transaction === 'caller') {
+    for (const owner of target.txOwners ?? []) {
+      const ownerAbs = path.join(ROOT, owner);
+      if (!fs.existsSync(ownerAbs) || !TRANSACTION.test(fs.readFileSync(ownerAbs, 'utf8'))) {
+        txFindings.push({
+          id: 'transaction-owner',
+          message:
+            `the caller ${owner} does not open a transaction (pool.connect + BEGIN/COMMIT/ROLLBACK) — ` +
+            'the gate is enlisted on a client that must come from one, or content and lineage can ' +
+            'commit separately',
+        });
+      }
+    }
+  } else if (!TRANSACTION.test(src)) {
+    txFindings.push(TRANSACTION);
+  }
+
+  const missing = [...txFindings, ...gateFindings(src)];
 
   if (missing.length === 0) {
     console.log(`[ci:lineage-save-gate] ok  ${target.file}`);
