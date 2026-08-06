@@ -457,6 +457,21 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260520_ana_failure_learning.sql',
   'db/migrations/20260520_document_templates.sql',
   'db/migrations/20260520_regulatory_intelligence_layer.sql',
+  // Nonclinical study-summary display fields (duration_label, key_finding,
+  // finding_class). This file was in the tree but in NO list — neither wired
+  // here nor recorded as deliberately unwired — so it was silently never
+  // applied, which is precisely the "merged ≠ applied" gap this set exists to
+  // close. server/services/nonclinical/nonclinical-service.ts selects
+  // s.duration_label and s.key_finding in two statements, and Postgres rejects
+  // an unknown column at plan time, so GET /api/nonclinical/studies returned
+  // 500 "column s.duration_label does not exist" on every request against a
+  // correctly provisioned database.
+  //
+  // Safe to wire: the migration is additive, nullable, non-destructive, wrapped
+  // in `IF to_regclass(...) IS NOT NULL` and uses ADD COLUMN IF NOT EXISTS, so
+  // it is a no-op on a schema that predates the table and idempotent everywhere
+  // else. Ordered after 20260610_nonclinical_send.sql creates the table.
+  'db/migrations/20260716_nonclinical_display.sql',
   'db/migrations/20260717_agency_meetings_store.sql',
   'db/migrations/20260717_design_controls_store.sql',
   'db/migrations/20260717_evidence_asks_store.sql',
