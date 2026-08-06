@@ -3,17 +3,21 @@ import { z } from 'zod';
 import { db } from '../db';
 import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
-// Named import, not a destructure off the default export: the default object
-// exposes getLicenseForOrganization, NOT getActiveLicenseForOrganization, so
-// `const { getActiveLicenseForOrganization } = quotaEnforcementService` bound
-// undefined and every handler below threw
-// "getActiveLicenseForOrganization is not a function" at call time.
-import { getActiveLicenseForOrganization } from '../services/quotaEnforcementService.js';
+import quotaEnforcementService from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('projects-management');
+
+// Destructured off the default export. getActiveLicenseForOrganization is a
+// named export of the (untyped .js) service, but its ambient type only surfaces
+// a default, so a named import fails typecheck. The runtime bug this once hid —
+// the function being absent from the default object, so this bound `undefined`
+// and every handler threw "getActiveLicenseForOrganization is not a function" —
+// is fixed at the source: the default export in quotaEnforcementService.js is
+// now exhaustive and includes it.
+const { getActiveLicenseForOrganization } = quotaEnforcementService;
 
 const router = Router();
 

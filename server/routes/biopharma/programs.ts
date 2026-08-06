@@ -192,7 +192,7 @@ router.get('/meetings', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
-  if (!UUID_RE.test(req.params.id)) return send404(res);
+  if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
     const { rows } = await pool.query(
