@@ -38,10 +38,8 @@ const BASELINE = new Set([
   'server/routes/chat/upload.ts',
   'server/routes/global-compliance.ts',
   'server/routes/ind-forms.routes.ts',
-  'server/routes/mdx-imports.ts',
   'server/services/ana/submission-chat-apply-rewrite.ts',
   'server/services/autoExtractionPipeline.ts',
-  'server/services/contradiction-consequence-service.ts',
 ]);
 
 // Writes artifact content (INSERT, content-setting UPDATE, or Drizzle insert).

@@ -17,6 +17,7 @@
  * @module server/services/provenance/artifact-provenance
  */
 import crypto from 'node:crypto';
+import { concept2cureProvenanceEvents } from '../../../shared/schema';
 
 /** Minimal executor: a pg Pool/PoolClient, or any {query} — lets the caller
  *  enlist the provenance write in the same transaction as the artifact write. */
@@ -92,5 +93,40 @@ export async function recordArtifactProvenance(
       input.ipAddress ?? null,
     ],
   );
+  return eventId;
+}
+
+/**
+ * Drizzle-executor sibling of {@link recordArtifactProvenance}, with the SAME
+ * input contract, for producers that write the artifact via Drizzle
+ * (db.insert / tx.insert) rather than raw SQL. Pass the Drizzle `db` OR a
+ * transaction handle `tx` so the provenance row commits with the artifact.
+ * `db` is typed loosely to accept both without coupling to Drizzle's generics.
+ */
+export async function recordArtifactProvenanceDrizzle(
+  // Drizzle db or tx. Typed `any` to accept both NodePgDatabase and a
+  // transaction handle without coupling to Drizzle's parameterized generics.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any,
+  input: ArtifactProvenanceInput,
+): Promise<string> {
+  const eventId = `prov_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+  await db.insert(concept2cureProvenanceEvents).values({
+    eventId,
+    artifactId: input.artifactId,
+    artifactVersionId: input.artifactVersionId ?? null,
+    organizationId: input.organizationId,
+    eventType: input.eventType,
+    eventAction: input.eventAction,
+    actorId: input.actorId ?? null,
+    actorName: input.actorName ?? null,
+    actorEmail: input.actorEmail ?? null,
+    details: input.details ?? {},
+    sourceArtifactId: input.sourceArtifactId ?? null,
+    sourceDescription: input.sourceDescription ?? null,
+    backendRoute: input.backendRoute ?? null,
+    backendService: input.backendService ?? null,
+    ipAddress: input.ipAddress ?? null,
+  });
   return eventId;
 }
