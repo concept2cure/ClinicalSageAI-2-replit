@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-05T04:47:46.190Z",
+  "generatedAt": "2026-08-06T02:17:09.617Z",
   "git": {
-    "sha": "f018695d1ac2be39d5f58f138041f751a1d9fa24",
-    "branch": "claude/ana-transparency-audit-ceryhv"
+    "sha": "bcf6ba6831cec9b4d6231b413300317f88b98b29",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -1130,8 +1130,8 @@
         "basename": "assemblyline.test",
         "count": 2,
         "paths": [
-          "server/test/__tests__/assemblyLine.test.ts",
-          "server/test/assemblyLine.test.ts"
+          "server/__tests__/assemblyLine.test.ts",
+          "server/test/__tests__/assemblyLine.test.ts"
         ]
       },
       {
@@ -2090,8 +2090,8 @@
         "basename": "test-assembly.routes.test",
         "count": 2,
         "paths": [
-          "server/test/__tests__/test-assembly.routes.test.ts",
-          "server/test/test-assembly.routes.test.ts"
+          "server/__tests__/test-assembly.routes.test.ts",
+          "server/test/__tests__/test-assembly.routes.test.ts"
         ]
       },
       {
@@ -2274,7 +2274,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 101077
+        "bytes": 102844
       }
     ],
     "largeFilesByLines": [
@@ -2368,7 +2368,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2521
+        "lines": 2548
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2444,7 +2444,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2005
+        "lines": 2011
       },
       {
         "file": "server/routes/report-os.ts",
@@ -2612,14 +2612,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
