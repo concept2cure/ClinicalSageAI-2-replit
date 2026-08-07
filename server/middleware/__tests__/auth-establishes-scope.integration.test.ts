@@ -13,10 +13,19 @@
  * A downstream handler therefore observes an active tenant scope; an
  * unauthenticated request is rejected before any handler runs; and a revoked
  * member is rejected without a scope ever opening.
+ *
+ * ── Why the middleware is invoked directly, not mounted on an Express route ────
+ * Both are plain `(req, res, next)` functions; `next` IS the downstream handler,
+ * so calling them directly and reading `getTenantScope()` inside `next` is a
+ * faithful test of their contract. Mounting the REAL authMiddleware (which runs
+ * a DB authorization lookup) on `app.get(...)` additionally trips CodeQL
+ * `js/missing-rate-limiting` — it reads the test fixture as a real, unthrottled
+ * authorization endpoint. Global-gate ROUTING (which paths reach authMiddleware)
+ * is covered separately by api-auth-gate.test.ts; this file only pins the
+ * scope-establishment contract, for which the route mount adds nothing.
  */
 
-import express, { type NextFunction, type Request, type Response } from 'express';
-import request from 'supertest';
+import type { NextFunction, Request, Response } from 'express';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // --- Mocks shared by both middlewares -----------------------------------------
@@ -58,15 +67,68 @@ const AUTH_TS_MODULE = '../auth.ts';
 const importRealMiddlewareAuth = (): Promise<any> =>
   import(/* @vite-ignore */ AUTH_TS_MODULE);
 
-// Records the scope the handler sees, so each test can assert on it.
-let observedScope: ReturnType<typeof getTenantScope> = undefined;
-const probe = (_req: Request, res: Response) => {
-  observedScope = getTenantScope();
-  res.json({ scoped: !!observedScope, tenantId: observedScope?.tenantId ?? null });
-};
+type Middleware = (req: Request, res: Response, next: NextFunction) => unknown;
+
+interface DriveResult {
+  /** HTTP status the middleware set, or 200 if it fell through to next(). */
+  status: number;
+  /** True when the downstream handler ran inside an active tenant scope. */
+  scoped: boolean;
+  /** tenantId the downstream handler observed, or null when unscoped. */
+  tenantId: string | null;
+  /** True when next() (the downstream handler) was reached at all. */
+  reachedHandler: boolean;
+}
+
+/**
+ * Drive a middleware exactly as Express would: build a request, hand it a
+ * response double and a `next` that stands in for the downstream handler, and
+ * resolve once the middleware either answers on the response OR calls next.
+ * The scope is read inside `next`, which is where a real handler would see it.
+ */
+function drive(mw: Middleware, authorization?: string): Promise<DriveResult> {
+  return new Promise((resolve) => {
+    let status = 200;
+    let settled = false;
+    let reachedHandler = false;
+    let scoped = false;
+    let tenantId: string | null = null;
+
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      resolve({ status, scoped, tenantId, reachedHandler });
+    };
+
+    const res = {
+      status(code: number) { status = code; return res; },
+      json() { settle(); return res; },
+      send() { settle(); return res; },
+      // establishRequestTenantScope registers release on finish/close; never
+      // emitted here, and the lazy client never acquired, so it is a no-op.
+      on() { return res; },
+      set() { return res; },
+    } as unknown as Response;
+
+    const req = {
+      method: 'GET',
+      path: '/probe',
+      headers: authorization ? { authorization } : {},
+    } as unknown as Request;
+
+    const next: NextFunction = () => {
+      reachedHandler = true;
+      const scope = getTenantScope();
+      scoped = !!scope;
+      tenantId = scope?.tenantId ?? null;
+      settle();
+    };
+
+    mw(req, res, next);
+  });
+}
 
 beforeEach(() => {
-  observedScope = undefined;
   membershipRows = [{ role: 'editor', orgUuid: null }];
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
   // orgMembership keeps a module-level TTL cache; clear it so a member decision
@@ -77,61 +139,56 @@ beforeEach(() => {
 describe('authenticateToken opens a tenant scope on the member path', () => {
   it('a valid token yields an active scope for the downstream handler', async () => {
     const { authenticateToken } = await importRealMiddlewareAuth();
-    const app = express();
-    app.get('/probe', authenticateToken, probe);
 
-    const res = await request(app).get('/probe').set('Authorization', 'Bearer x');
+    const r = await drive(authenticateToken, 'Bearer x');
 
-    expect(res.status).toBe(200);
-    expect(res.body.scoped).toBe(true);
-    expect(res.body.tenantId).toBe('2');
+    expect(r.status).toBe(200);
+    expect(r.reachedHandler).toBe(true);
+    expect(r.scoped).toBe(true);
+    expect(r.tenantId).toBe('2');
   });
 
   it('no token → 401 and the handler never runs (no scope)', async () => {
     const { authenticateToken } = await importRealMiddlewareAuth();
-    const app = express();
-    app.get('/probe', authenticateToken, probe);
 
-    const res = await request(app).get('/probe');
+    const r = await drive(authenticateToken);
 
-    expect(res.status).toBe(401);
-    expect(observedScope).toBeUndefined();
+    expect(r.status).toBe(401);
+    expect(r.reachedHandler).toBe(false);
+    expect(r.scoped).toBe(false);
   });
 
   it('a revoked member → 403 and the handler never runs (no scope)', async () => {
     membershipRows = []; // organization_users row gone → revoked
     const { authenticateToken } = await importRealMiddlewareAuth();
-    const app = express();
-    app.get('/probe', authenticateToken, probe);
 
-    const res = await request(app).get('/probe').set('Authorization', 'Bearer x');
+    const r = await drive(authenticateToken, 'Bearer x');
 
-    expect(res.status).toBe(403);
-    expect(observedScope).toBeUndefined();
+    expect(r.status).toBe(403);
+    expect(r.reachedHandler).toBe(false);
+    expect(r.scoped).toBe(false);
   });
 });
 
 describe('authMiddleware (global /api gate) opens a tenant scope', () => {
   it('a valid token yields an active scope for the downstream handler', async () => {
     const { authMiddleware } = await import('../../auth');
-    const app = express();
-    app.get('/probe', authMiddleware as any, probe);
 
-    const res = await request(app).get('/probe').set('Authorization', 'Bearer x');
+    const r = await drive(authMiddleware as unknown as Middleware, 'Bearer x');
 
-    expect(res.status).toBe(200);
-    expect(res.body.scoped).toBe(true);
-    expect(res.body.tenantId).toBe('2');
+    expect(r.status).toBe(200);
+    expect(r.reachedHandler).toBe(true);
+    expect(r.scoped).toBe(true);
+    expect(r.tenantId).toBe('2');
   });
 
   it('no token → 401 and the handler never runs (no scope)', async () => {
     const { authMiddleware } = await import('../../auth');
-    const app = express();
-    app.get('/probe', authMiddleware as any, probe);
 
-    const res = await request(app).get('/probe');
+    const r = await drive(authMiddleware as unknown as Middleware);
 
-    expect(res.status).toBe(401);
-    expect(observedScope).toBeUndefined();
+    expect(r.status).toBe(401);
+    expect(r.reachedHandler).toBe(false);
+    expect(r.scoped).toBe(false);
   });
 });
