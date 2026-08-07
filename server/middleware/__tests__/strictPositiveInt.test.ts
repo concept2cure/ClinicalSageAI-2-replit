@@ -75,7 +75,14 @@ describe('requireTenantContext bootstrap scope contract', () => {
       'const resolvedRole = membership[0].role',
       membershipDecision
     );
-    const downstreamScope = source.indexOf('role: resolvedRole || null', resolvedRole);
+    // The downstream request scope + request DB client are now established by
+    // the shared establishRequestTenantScope helper (extracted so the auth
+    // boundary and requireTenantContext share ONE implementation). It must run
+    // AFTER membership/role resolution, which this ordering pins.
+    const downstreamScope = source.indexOf(
+      'establishRequestTenantScope(req, res, next)',
+      resolvedRole
+    );
 
     expect(bootstrapIndex).toBeGreaterThan(-1);
     expect(tenantLookup).toBeGreaterThan(bootstrapIndex);

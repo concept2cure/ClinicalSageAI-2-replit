@@ -11,6 +11,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
+import { establishRequestTenantScope } from './establishRequestTenantScope';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -157,7 +158,15 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // SECURITY (M1): the organizationId claim was minted at login; re-check
     // that the membership row still exists so a revoked user loses access
     // within the cache TTL instead of the full token lifetime.
-    enforceOrgMembership(req, res, next);
+    //
+    // Only AFTER membership is confirmed (enforceOrgMembership calls this next
+    // on the member path) do we open the tenant scope + attach the request DB
+    // client, so the downstream handler runs inside a real RLS boundary instead
+    // of the historical bare next() that fail-closed every DB touch under
+    // RLS_ENFORCE=on. Revoked/indeterminate members are answered by
+    // enforceOrgMembership and never reach this callback. Idempotent; honours
+    // the SYSTEM carve-outs. See establishRequestTenantScope.
+    enforceOrgMembership(req, res, () => establishRequestTenantScope(req, res, next));
   } catch (error) {
     return res.status(401).json({
       error: { code: 'AUTH_002', message: 'Invalid or expired token' },
