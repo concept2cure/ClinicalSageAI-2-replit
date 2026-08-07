@@ -52,6 +52,30 @@ function read(rel: string): string {
   return stripComments(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'));
 }
 
+/**
+ * Return the argument-list text of the `app.use('<mount>', ...)` call for a
+ * mount prefix (from the opening paren to its matching close), or null. Uses
+ * plain string search + paren matching — deliberately NOT a RegExp built from
+ * `mount`, which would require escaping the mount's `/` (and any future
+ * metacharacter) and is exactly the incomplete-escaping pattern CodeQL flags.
+ */
+function mountCallArgs(src: string, mount: string): string | null {
+  const needle = `app.use('${mount}'`;
+  const start = src.indexOf(needle);
+  if (start === -1) return null;
+  const parenStart = src.indexOf('(', start);
+  let depth = 0;
+  for (let i = parenStart; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '(') depth++;
+    else if (ch === ')') {
+      depth--;
+      if (depth === 0) return src.slice(parenStart + 1, i);
+    }
+  }
+  return null;
+}
+
 describe('RLS auth-boundary invariant', () => {
   // ── 1. The lever is wired at every request-path entry point ─────────────────
   const LEVER = 'establishRequestTenantScope';
@@ -146,11 +170,10 @@ describe('RLS auth-boundary invariant', () => {
   for (const mount of SYSTEM_MOUNTS) {
     it(`${mount} is mounted behind establishRequestSystemScope (cross-tenant carve-out)`, () => {
       const src = read('server/bootstrap/register-platform-routes.ts');
-      const needle = new RegExp(
-        `app\\.use\\(\\s*['"]${mount.replace(/[/]/g, '\\/')}['"]\\s*,\\s*establishRequestSystemScope`,
-      );
+      const args = mountCallArgs(src, mount);
+      expect(args, `app.use('${mount}', ...) not found in register-platform-routes.ts`).not.toBeNull();
       expect(
-        needle.test(src),
+        args!.includes('establishRequestSystemScope'),
         `${mount} must be mounted with establishRequestSystemScope so its cross-tenant reads ` +
           `run under the system scope, not the caller's org (or fail closed)`,
       ).toBe(true);
