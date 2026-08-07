@@ -441,7 +441,9 @@ class MemoryLockStore {
     sectionId: string | undefined,
     opts: { lockType?: DocumentLock['lockType']; durationMs?: number; reason?: string; lockedByLabel?: string },
     takeover: boolean
-  ): { lock: DocumentLock; previousHolderLabel?: string } | { conflict: DocumentLock } {
+  ):
+    | { lock: DocumentLock; previousHolder?: { id: string; label: string } }
+    | { conflict: DocumentLock } {
     const existing = this.locks.get(lockKey);
     if (existing && existing.lockedBy !== userId && existing.expiresAt > new Date() && !takeover) {
       return { conflict: existing };
@@ -748,7 +750,16 @@ function auditLockEvent(params: {
       userId,
       command: params.command,
       target: `document:${params.documentId}${params.sectionId ? `:${params.sectionId}` : ''}`,
-      reason: params.reason ?? undefined,
+      // The ledger requires a reason string; supply the command's default when
+      // the caller gave none (mirrors task-audit's defaultReason pattern).
+      reason:
+        params.reason && params.reason.trim()
+          ? params.reason.trim()
+          : params.command === 'collab.lock_takeover'
+            ? 'Section lock takeover via realtime-collab API'
+            : params.command === 'collab.lock_release'
+              ? 'Section lock released via realtime-collab API'
+              : 'Section lock acquired via realtime-collab API',
       payload: params.payload ?? {},
       domain: 'collab',
       surface: 'realtime-collab-api',
