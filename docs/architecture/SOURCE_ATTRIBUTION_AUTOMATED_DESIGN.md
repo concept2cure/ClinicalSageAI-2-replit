@@ -104,18 +104,36 @@ the canonical source registry are **two different registries**:
 
 Nothing at retrieval time maps one to the other. So Phase 2 is not "add two
 fields to the return shape" — it is **establish and carry a resolvable link from
-a retrieved chunk back to its `cre_evidence_sources.id`**. Candidate links to
-evaluate (each needs verification against the ingestion flow): a Data Room upload
-creates both a `cre_evidence_sources` row and the artifact/atoms, and
-`cre_evidence_sources.provenance->>'fileUploadId'` already records the upload —
-so the join likely runs source ← fileUploadId → upload → artifact → atom, and the
-ingestion path should stamp the `cre_evidence_sources.id` onto the atom
-(`source_id` or a new column) at index time so retrieval can return it directly.
-Until that link exists, automated span attribution has no honest
-`cre_evidence_sources` id to record, which is why the mechanism (Phases 1 & 3a)
-is complete and correct while the live wiring is not yet done. This is a
-foundational data-model step, best done as its own change with its own tests, not
-folded into an unrelated PR.
+a retrieved chunk back to its `cre_evidence_sources.id`**.
+
+✅ **The link, now verified in code (2026-08-07).** An earlier draft of this doc
+guessed the join ran source ← `provenance->>'fileUploadId'` → upload → artifact →
+atom. The actual link is **more direct**: a Data Room upload that creates a
+canonical source records the artifact id on the source's *metadata*.
+`routes/chat/upload.ts` uses the **same** artifact id for the atom's `source_id`
+(the `lumen_data_atoms` INSERT) and the source's `metadata.artifactId` (the
+`createSource` call). So:
+
+```
+cre_evidence_sources.metadata->>'artifactId'  ===  lumen_data_atoms.source_id
+```
+
+This is implemented and proven end-to-end against the spine migration in
+`server/services/clinical-regulatory-evidence/retrieval-source-link.ts`
+(`resolveEvidenceSourceIdsByArtifact`) +
+`__tests__/retrieval-source-link.pglite.integration.test.ts`. It is **honest by
+construction**: an atom whose upload never created a canonical source — e.g. the
+`routes/concept2cure.ts` data-room path, which writes atoms but no
+`cre_evidence_sources` — resolves to **nothing**, so no span can cite a source
+that does not exist. And it is tenant-scoped (`organization_id` on the join).
+
+Resolving at read time (rather than stamping the id onto the atom at index time)
+was chosen deliberately: it covers atoms that **already** exist, needs no
+migration or re-ingest, and cannot drift from the source registry. An index-time
+stamp remains a valid later optimization but is not required for correctness. The
+remaining Phase 2 work is purely to **carry** this resolved id through the
+retrieval return shape into generation; the honesty-critical part — the link
+itself — is done.
 
 ---
 
@@ -130,13 +148,26 @@ content. No DB, no model trust — pure string logic. Unit-tested exhaustively
 multi-source). This is the keystone and has no honesty risk.
 
 **Phase 2 — retrieval carries a resolvable `cre_evidence_sources` id.**
-The prerequisite, and the real work (see the cross-registry gap in §3): stamp the
-`cre_evidence_sources.id` onto Data Room atoms at index time (via the
-`fileUploadId` link on `cre_evidence_sources.provenance`), then extend the
-`enhancedEmbeddingService` / `advancedRAGPipeline` return shape to surface it
-alongside `sourceType`. Additive to the return shape; existing callers ignore the
-new fields. Contract-tested, with a fixture proving a retrieved Data Room chunk
-resolves to the same `cre_evidence_sources.id` a manual citation would use.
+The prerequisite, and the real work (see the cross-registry gap in §3).
+- **2a — the resolvable link (DONE, 2026-08-07).** Verified the join is
+  `cre_evidence_sources.metadata->>'artifactId' = lumen_data_atoms.source_id`
+  (not the assumed `fileUploadId` chain) and shipped
+  `resolveEvidenceSourceIdsByArtifact` (`retrieval-source-link.ts`), org-scoped
+  and honest (no source ⇒ no id), proven against the spine migration in
+  `retrieval-source-link.pglite.integration.test.ts`.
+- **2c — both link forms (DONE, 2026-08-07).** The resolver also handles the
+  program-scoped Data Room form where the atom's `source_id` is
+  `'cre_source:<id>'` (upload.ts:505) — the embedded id is VERIFIED to exist and
+  be org-owned before it is returned, never trusted blind. So the two real link
+  forms (numeric-workspace `metadata.artifactId` and UUID-workspace
+  `cre_source:<id>`) both resolve; only the `concept2cure.ts` data_room_upload
+  path (which creates no canonical source) stays honestly silent.
+- **2b — carry it through retrieval (next).** Extend the
+  `enhancedEmbeddingService` / `advancedRAGPipeline` return shape to surface the
+  resolved `cre_evidence_sources.id` alongside `sourceType`, calling the 2a
+  resolver for `data_room_upload` / `chat_upload` chunks. Additive to the return
+  shape; existing destructured callers ignore the new fields. Contract-tested end
+  to end (retrieved Data Room chunk → the same id a manual citation would use).
 
 **Phase 3 — wire one generation path end to end.**
 Pick the authoring section-drafting path (co-located with `citeSource` in

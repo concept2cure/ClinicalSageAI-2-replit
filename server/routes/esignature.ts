@@ -50,6 +50,7 @@ function resolveUserRole(req: Request): string {
 
 async function loadUserPasswordHash(userId: number): Promise<string | null> {
   try {
+    // tenant-isolation-safe: re-auth self-lookup — userId is the authenticated user's own session id (resolveUserId, never client-supplied); users is a global identity keyed by PK.
     const result = await pool.query(
       `SELECT password_hash FROM users WHERE id = $1 LIMIT 1`,
       [userId]
@@ -268,6 +269,7 @@ router.post('/sign', async (req: Request, res: Response) => {
   let signerName: string = session.name ?? '';
   let signerEmail: string = session.email ?? '';
   try {
+    // tenant-isolation-safe: signer self-lookup — userId is the authenticated user's own session id; denormalises signer_name/email onto the signature row for Part 11 offline audit.
     const u = await pool.query(
       `SELECT name, email FROM users WHERE id = $1 LIMIT 1`,
       [userId]

@@ -334,6 +334,7 @@ async function checkAuditChainIntegrity(pool: Pool): Promise<SecurityCheckResult
 async function checkAuditEventCoverage(pool: Pool): Promise<SecurityCheckResult> {
   const start = Date.now();
   try {
+    // tenant-isolation-safe: platform-wide security self-test — estate-wide audit-event coverage aggregate (all orgs) run under runWithSystemTenantScope('security-self-test'); org-scoping would defeat the coverage check.
     const { rows } = await pool.query<{ event_type: string; count: string }>(
       `SELECT event_type, COUNT(*)::text AS count
        FROM audit_events

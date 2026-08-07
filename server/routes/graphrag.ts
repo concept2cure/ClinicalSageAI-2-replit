@@ -24,6 +24,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { clampGraphRagBounds } from './graphrag-util.js';
+import { getPool } from '../db';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -539,12 +540,24 @@ function hybridRank(
 const router = Router();
 
 /**
+ * Resolve the pg pool for a request. The router is mounted without a
+ * per-request pool injection, and nothing ever sets `req.pool` / `req.app.pool`
+ * — so both were always undefined and every route 500'd on `pool.query` of
+ * undefined. Fall back to the canonical instrumented pool (which carries RLS
+ * tenant scoping when a scope is active on the request) while still honoring an
+ * explicit injection if a test or caller provides one.
+ */
+function resolvePool(req: Request): Pool {
+  return (req as any).pool || (req.app as any).pool || getPool();
+}
+
+/**
  * POST /query
  * Execute a GraphRAG query with hybrid retrieval
  */
 router.post('/query', async (req: Request, res: Response) => {
   const startTime = Date.now();
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const pool: Pool = resolvePool(req);
   const body: GraphRAGQuery = req.body;
 
   if (!body.query) return res.status(400).json({ error: 'query is required' });
@@ -672,7 +685,7 @@ router.post('/query', async (req: Request, res: Response) => {
  * Ingest a document into the knowledge graph
  */
 router.post('/ingest', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const pool: Pool = resolvePool(req);
   const body: IngestionRequest = req.body;
 
   if (!body.documentId || !body.content) {
@@ -762,7 +775,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
  * Get the local neighborhood of an entity (1-hop)
  */
 router.get('/entities/:entityId/neighborhood', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const pool: Pool = resolvePool(req);
   const { entityId } = req.params as { entityId: string };
   const maxHops = parseInt(req.query.hops as string) || 1;
   const entityTypes = req.query.types
@@ -794,7 +807,7 @@ router.get('/entities/:entityId/neighborhood', async (req: Request, res: Respons
  * List all detected communities in the knowledge graph
  */
 router.get('/communities', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const pool: Pool = resolvePool(req);
   const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
 
   try {
@@ -862,7 +875,7 @@ router.get('/communities', async (req: Request, res: Response) => {
  * Trace all citations from/to a document
  */
 router.get('/citation-trace/:documentId', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const pool: Pool = resolvePool(req);
   const { documentId } = req.params;
   const depth = parseInt(req.query.depth as string) || 2;
 
@@ -922,7 +935,7 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
  * GraphRAG service health check
  */
 router.get('/health', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const pool: Pool = resolvePool(req);
 
   let graphNodesCount = 0;
   let graphEdgesCount = 0;

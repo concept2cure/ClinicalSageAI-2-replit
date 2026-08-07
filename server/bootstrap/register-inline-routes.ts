@@ -19,6 +19,7 @@ import express, { type Express, type Request, type Response } from 'express';
 import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
+import { requireTenantContext } from '../middleware/tenantContext.js';
 import { sanitizeAskAnaInput } from '../routes/ask-ana-utils';
 import { mountBetaSafeRoutes } from '../betaRouteManifest';
 import { csrSearchService } from '../services/csr-search-service';
@@ -1113,8 +1114,14 @@ export function registerInlineSubmissionWorkflowRoutes({
      multiple routers at the same /api/mdx prefix keeps the kit's URL
      space coherent without consolidating into a single mega-router.
      Each module owns its own audit + tenant-scope. */
-  app.use('/api/mdx', mdxAnaDraftsRoutes);
-  app.use('/api/mdx', mdxVaultRoutes);
+  // mdxAnaDrafts + mdxVault query the global pool (concept2cure_artifacts,
+  // ana drafts) with no tenant scope of their own — mounted with no auth here,
+  // they fail closed under RLS_ENFORCE=on (and read org from req.user, which
+  // nothing was populating). requireTenantContext authenticates, establishes the
+  // AsyncLocalStorage tenant scope so those queries are permitted, and populates
+  // req.user/req.tenantContext the handlers already read.
+  app.use('/api/mdx', requireTenantContext, mdxAnaDraftsRoutes);
+  app.use('/api/mdx', requireTenantContext, mdxVaultRoutes);
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
