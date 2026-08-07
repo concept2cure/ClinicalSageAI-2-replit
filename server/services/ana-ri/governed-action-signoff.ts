@@ -103,6 +103,7 @@ export async function verifySignerCredentials(
 export const defaultSignoffDeps: SignoffVerificationDeps = {
   loadPasswordHash: async (userId) => {
     try {
+      // tenant-isolation-safe: re-auth self-lookup — userId is the signer's own id (verifySignerCredentials verifies the actor against their own credentials); users is a global identity.
       const result = await pool.query(`SELECT password_hash FROM users WHERE id = $1 LIMIT 1`, [userId]);
       return result.rows[0]?.password_hash || null;
     } catch {

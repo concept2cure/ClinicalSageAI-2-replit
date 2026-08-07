@@ -435,6 +435,7 @@ router.post('/legacy', async (req, res) => {
     if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
 
     // Check if user already exists
+    // tenant-isolation-safe: pre-membership identity resolution — users is a global identity keyed by email (org membership lives in organization_users); caller is org-admin-gated by authorizeOrgAccess above, and cross-org membership requires a consented invitation below.
     const existingUserQuery = 'SELECT id FROM users WHERE email = $1';
     const existingUserResult = await pool.query(existingUserQuery, [validatedData.email]);
 
@@ -504,6 +505,7 @@ router.post('/legacy', async (req, res) => {
       });
     } else {
       // Create new user
+      // tenant-isolation-safe: user creation is org-less by design — a users row is a global identity; org membership is created separately via organization_users. Gated by org-admin authorizeOrgAccess above.
       const createUserQuery = `
         INSERT INTO users (email, name, title, department, password_hash, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())

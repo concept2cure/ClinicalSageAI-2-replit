@@ -1104,6 +1104,7 @@ export async function checkDossierReadiness(
 export async function loadUserContext(ctx: CommandContext): Promise<CommandResult> {
   try {
     // User profile
+    // tenant-isolation-safe: actor self-lookup — ctx.userId is the authenticated AnA actor's own id; users is a global identity keyed by PK. (The projects read just below IS org-scoped.)
     const userResult = await pool.query(
       `SELECT id, email, name, title, department, preferences FROM users WHERE id = $1`,
       [ctx.userId]

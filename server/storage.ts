@@ -2149,6 +2149,7 @@ export class DatabaseStorage {
     if (!pool) return undefined;
 
     try {
+      // tenant-isolation-safe: users is a global identity keyed by PK; org membership lives in organization_users. Foundational identity accessor, not a tenant-scoped data read.
       const result = await query('SELECT * FROM users WHERE id = $1', [id]);
       return result.rows[0];
     } catch (error) {
@@ -2161,6 +2162,7 @@ export class DatabaseStorage {
     if (!pool) return undefined;
 
     try {
+      // tenant-isolation-safe: login/auth path — pre-tenant-resolution lookup by unique username; users is a global identity, not org-scoped.
       const result = await query('SELECT * FROM users WHERE username = $1', [username]);
       return result.rows[0];
     } catch (error) {
@@ -2176,6 +2178,7 @@ export class DatabaseStorage {
 
     try {
       const { username, password, email, role, name, subscribed } = userData;
+      // tenant-isolation-safe: user creation is org-less by design — a users row is a global identity; org membership is created separately via organization_users.
       const result = await query(
         'INSERT INTO users (username, password, email, role, name, subscribed) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
         [username, password, email, role, name, subscribed]
@@ -2211,6 +2214,7 @@ export class DatabaseStorage {
 
       values.push(id); // Add ID as the last parameter
 
+      // tenant-isolation-safe: users is a global identity keyed by PK; profile mutation targets a single identity row by id, not tenant-scoped data.
       const result = await query(
         `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
         values
@@ -2227,6 +2231,7 @@ export class DatabaseStorage {
     if (!pool) return false;
 
     try {
+      // tenant-isolation-safe: users is a global identity keyed by PK; deletion targets a single identity row by id, not tenant-scoped data.
       const result = await query('DELETE FROM users WHERE id = $1', [id]);
       return result.rowCount > 0;
     } catch (error) {

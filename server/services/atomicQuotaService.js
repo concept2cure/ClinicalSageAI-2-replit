@@ -169,6 +169,7 @@ export async function atomicCreateUser(organizationId, userData) {
     }
 
     // Check if user already exists
+    // tenant-isolation-safe: pre-membership identity resolution — users is a global identity keyed by email; org membership lives in organization_users and cross-org joins require a consented invitation (below).
     const existingUserResult = await client.query('SELECT id FROM users WHERE email = $1', [
       userData.email,
     ]);
@@ -255,6 +256,7 @@ export async function atomicCreateUser(organizationId, userData) {
       };
     } else {
       // Create new user
+      // tenant-isolation-safe: user creation is org-less by design — a users row is a global identity; org membership is added separately via organization_users after the quota check above.
       const createUserResult = await client.query(
         `INSERT INTO users (email, name, title, department, status, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
