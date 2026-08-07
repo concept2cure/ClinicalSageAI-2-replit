@@ -18,8 +18,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
+import rateLimit from 'express-rate-limit';
 import { authenticateToken } from '../middleware/auth';
-import { createRateLimiter } from '../middleware/rateLimiter';
 import { createScopedLogger } from '../utils/logger';
 import { pool } from '../db';
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
@@ -46,8 +46,18 @@ import { Q_SUB_TYPES, Q_SUB_STAGES } from '../../shared/schema/q-sub';
 const router = Router();
 const log = createScopedLogger('q-sub-routes');
 router.use(authenticateToken);
-// Rate-limit every q-sub handler (all perform authenticated DB access).
-router.use(createRateLimiter());
+// Rate-limit every q-sub handler (all perform authenticated DB access). Uses
+// express-rate-limit directly (recognized by CodeQL's missing-rate-limiting
+// query); generous window for interactive submission editing.
+router.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: { code: 'RATE_LIMIT', message: 'Too many requests. Please try again later.' } },
+  }),
+);
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
