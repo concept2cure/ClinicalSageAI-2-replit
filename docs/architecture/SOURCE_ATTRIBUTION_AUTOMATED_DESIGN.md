@@ -155,6 +155,13 @@ The prerequisite, and the real work (see the cross-registry gap in §3).
   `resolveEvidenceSourceIdsByArtifact` (`retrieval-source-link.ts`), org-scoped
   and honest (no source ⇒ no id), proven against the spine migration in
   `retrieval-source-link.pglite.integration.test.ts`.
+- **2c — both link forms (DONE, 2026-08-07).** The resolver also handles the
+  program-scoped Data Room form where the atom's `source_id` is
+  `'cre_source:<id>'` (upload.ts:505) — the embedded id is VERIFIED to exist and
+  be org-owned before it is returned, never trusted blind. So the two real link
+  forms (numeric-workspace `metadata.artifactId` and UUID-workspace
+  `cre_source:<id>`) both resolve; only the `concept2cure.ts` data_room_upload
+  path (which creates no canonical source) stays honestly silent.
 - **2b — carry it through retrieval (next).** Extend the
   `enhancedEmbeddingService` / `advancedRAGPipeline` return shape to surface the
   resolved `cre_evidence_sources.id` alongside `sourceType`, calling the 2a

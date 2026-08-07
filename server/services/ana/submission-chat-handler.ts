@@ -395,20 +395,19 @@ export async function enrichChunksWithArtifactMetadata(
   // resolver filters organization_id, taken here from the project's own
   // artifacts (all share one org via loadProjectArtifacts).
   //
-  // Coverage note (precise — see routes/chat/upload.ts): the ONLY atom whose
-  // raw source_id is the metadata.artifactId join key is the numeric-workspace
-  // ("Path A") chat_upload (source_id = artId, source metadata.artifactId =
-  // artId). The Data Room UUID ("Path B") chat_upload writes
-  // source_id = 'cre_source:<id>' with metadata.artifactId = null, and the
-  // concept2cure.ts data_room_upload path writes atoms with NO cre_evidence_sources
-  // at all — so neither resolves via this join. AND the projectId-scoped
-  // submission-chat retrieval filter admits source_type IN
-  // ('artifact','data_room_upload') and excludes chat_upload entirely. Net:
-  // resolution is legitimately silent for essentially all current atoms on this
-  // path. This wiring is correct and ready the moment a resolvable atom flows;
-  // populating it broadly is a separate, deliberate choice — widen the retrieval
-  // filter to admit chat_upload AND either have the Data Room paths create
-  // canonical sources or extend the resolver to parse the 'cre_source:<id>' form.
+  // Coverage note (precise — see routes/chat/upload.ts). The resolver now covers
+  // BOTH real link forms: the numeric-workspace ("Path A") chat_upload
+  // (source_id = artId ↔ cre_evidence_sources.metadata.artifactId) and the Data
+  // Room UUID ("Path B") chat_upload (source_id = 'cre_source:<id>', resolved by
+  // the resolver's form-2 direct embed). The concept2cure.ts data_room_upload
+  // path still writes atoms with NO cre_evidence_sources, so it correctly
+  // resolves to nothing. The ONE remaining lever is retrieval: the projectId-
+  // scoped submission-chat filter admits source_type IN
+  // ('artifact','data_room_upload') and excludes chat_upload entirely — so no
+  // resolvable atom reaches this boundary yet, and resolution is legitimately
+  // silent here. This wiring is correct and ready the moment a chat_upload atom
+  // flows; widening that filter is a separate, deliberate retrieval-behaviour
+  // change (it affects what the model retrieves), not folded in here.
   const orgId = Number(projectArtifacts[0]?.organization_id);
   const rawSourceIds = Array.from(
     new Set(

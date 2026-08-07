@@ -118,3 +118,40 @@ describe('resolveEvidenceSourceIdsByArtifact — the Phase 2 cross-registry link
     expect(await resolveEvidenceSourceId(ORG_A, null, pool)).toBeNull();
   });
 });
+
+describe('resolveEvidenceSourceIdsByArtifact — the cre_source:<id> direct-embed form (2c)', () => {
+  it('resolves cre_source:<id> to that id when it exists and is org-owned', async () => {
+    const key = `cre_source:${idA1}`;
+    const map = await resolveEvidenceSourceIdsByArtifact(ORG_A, [key], pool);
+    expect(map.get(key)).toBe(idA1);
+    expect(await resolveEvidenceSourceId(ORG_A, key, pool)).toBe(idA1);
+  });
+
+  it('does NOT resolve cre_source:<id> for a missing source (honest — id never trusted blind)', async () => {
+    const map = await resolveEvidenceSourceIdsByArtifact(ORG_A, ['cre_source:99999999'], pool);
+    expect(map.size).toBe(0);
+  });
+
+  it("is tenant-scoped: org A cannot resolve org B's source via cre_source:<id>", async () => {
+    const key = `cre_source:${idB3}`;
+    const map = await resolveEvidenceSourceIdsByArtifact(ORG_A, [key], pool);
+    expect(map.has(key)).toBe(false);
+    // ...but org B resolves its own.
+    expect(await resolveEvidenceSourceId(ORG_B, key, pool)).toBe(idB3);
+  });
+
+  it('ignores a malformed cre_source:<non-numeric> (never resolved)', async () => {
+    expect((await resolveEvidenceSourceIdsByArtifact(ORG_A, ['cre_source:abc'], pool)).size).toBe(0);
+  });
+
+  it('resolves a mixed batch of BOTH link forms in one call', async () => {
+    const map = await resolveEvidenceSourceIdsByArtifact(
+      ORG_A,
+      ['art-1', `cre_source:${idA2}`, 'cre_source:99999999', 'art-does-not-exist'],
+      pool,
+    );
+    expect(map.get('art-1')).toBe(idA1);
+    expect(map.get(`cre_source:${idA2}`)).toBe(idA2);
+    expect(map.size).toBe(2);
+  });
+});

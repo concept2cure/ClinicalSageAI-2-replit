@@ -74,20 +74,64 @@ export async function resolveEvidenceSourceIdsByArtifact(
   ];
   if (ids.length === 0) return out;
 
-  const { rows } = await exec.query<{ artifact_id: string | null; id: number }>(
-    `SELECT (metadata->>'artifactId') AS artifact_id, id
-       FROM cre_evidence_sources
-      WHERE organization_id = $1
-        AND metadata->>'artifactId' = ANY($2::text[])`,
-    [orgId, ids],
-  );
+  // Two link forms exist, both keyed off lumen_data_atoms.source_id (see
+  // routes/chat/upload.ts + routes/concept2cure.ts):
+  //   (1) an artifact-id string, linked via cre_evidence_sources
+  //       .metadata->>'artifactId' (numeric-workspace uploads);
+  //   (2) the direct-embed form 'cre_source:<id>' where <id> IS the canonical
+  //       cre_evidence_sources.id (program-scoped Data Room uploads,
+  //       upload.ts:505). Even here the id is VERIFIED to exist + be org-owned
+  //       before it is returned — the embedded number is never trusted blind.
+  const CRE_SOURCE_RE = /^cre_source:(\d+)$/;
+  const byArtifactId: string[] = [];
+  const directByNumericId = new Map<number, string>(); // cre_evidence_sources.id → original key
+  for (const s of ids) {
+    const m = CRE_SOURCE_RE.exec(s);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isInteger(n) && n > 0) directByNumericId.set(n, s);
+      // a malformed 'cre_source:<non-numeric>' is treated as a plain artifact
+      // id below (it will simply not match) — never resolved.
+      else byArtifactId.push(s);
+    } else {
+      byArtifactId.push(s);
+    }
+  }
 
-  for (const r of rows) {
-    // Defensive: if two sources improbably claim the same artifact id, the first
-    // (lowest id — see ORDER-free scan; ties are astronomically unlikely and
-    // either row is a correct citation of the same upload) wins deterministically.
-    if (r.artifact_id && !out.has(r.artifact_id)) {
-      out.set(r.artifact_id, Number(r.id));
+  // Form (1): metadata.artifactId join.
+  if (byArtifactId.length > 0) {
+    const { rows } = await exec.query<{ artifact_id: string | null; id: number }>(
+      `SELECT (metadata->>'artifactId') AS artifact_id, id
+         FROM cre_evidence_sources
+        WHERE organization_id = $1
+          AND metadata->>'artifactId' = ANY($2::text[])`,
+      [orgId, byArtifactId],
+    );
+    for (const r of rows) {
+      // Defensive: if two sources improbably claim the same artifact id, the
+      // first row wins deterministically — either is a correct citation of the
+      // same upload.
+      if (r.artifact_id && !out.has(r.artifact_id)) {
+        out.set(r.artifact_id, Number(r.id));
+      }
+    }
+  }
+
+  // Form (2): 'cre_source:<id>' — verify each embedded id exists AND belongs to
+  // this org before mapping it. A 'cre_source:<id>' pointing at a missing or
+  // cross-tenant source resolves to nothing (honest silence, no cross-tenant leak).
+  if (directByNumericId.size > 0) {
+    const wantedIds = [...directByNumericId.keys()];
+    const { rows } = await exec.query<{ id: number }>(
+      `SELECT id
+         FROM cre_evidence_sources
+        WHERE organization_id = $1
+          AND id = ANY($2::int[])`,
+      [orgId, wantedIds],
+    );
+    for (const r of rows) {
+      const key = directByNumericId.get(Number(r.id));
+      if (key && !out.has(key)) out.set(key, Number(r.id));
     }
   }
 
