@@ -1,11 +1,19 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type { PlatformBootstrapContext } from './types';
 import { runWithPreAuthScope } from '../db/tenantStore';
+import { establishRequestSystemScope } from '../middleware/establishRequestTenantScope';
 import cspReportRouter from '../routes/csp-report';
 import adminSecurityRouter from '../routes/admin-security';
 import { CSP_REPORT_URI } from '../middleware/enterprise-security';
 
 export async function registerPlatformRoutes({ app, pool, authMiddleware }: PlatformBootstrapContext) {
+  // Pre-auth scope: work that runs BEFORE a tenant can be known — resolving an
+  // identity, verifying a password/IdP response. Carries no role, so it grants
+  // no policy bypass; it exists so the pre-auth user-lookup is not blocked by
+  // the fail-closed pool guard under RLS_ENFORCE=on. Declared once here and
+  // shared by the auth family (/api/auth, /api/v1/auth) and enterprise auth.
+  const preAuthScope: RequestHandler = (req, _res, next) =>
+    runWithPreAuthScope(`auth:${req.method} ${req.path}`, next);
   // CSP violation reporting — must match the report-uri set on the policy.
   // Mounted on the platform router so it's available before any auth-gated
   // routes need it, and so it survives the validateTenantContext skip list.
@@ -135,8 +143,6 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
       // see runWithPreAuthScope. Requests that go on to authenticate get the
       // real tenant scope installed by the auth boundary, which nests inside
       // this one and wins.
-      const preAuthScope: RequestHandler = (req, _res, next) =>
-        runWithPreAuthScope(`auth:${req.method} ${req.path}`, next);
       app.use('/api/auth', preAuthScope, authRouter);
       app.use('/api/v1/auth', preAuthScope, authRouter);
     }
@@ -165,7 +171,11 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const setupModule = await import('../routes/setup');
     const setupRouter = setupModule.default;
     if (setupRouter && (typeof setupRouter === 'function' || (setupRouter as any).handle)) {
-      app.use('/api/setup', setupRouter);
+      // First-run install runs before any tenant exists, and this mount sits
+      // BEFORE the global /api gate, so nothing else opens a scope. Give it the
+      // system scope so its bootstrap writes are not blocked by the fail-closed
+      // pool guard under RLS_ENFORCE=on.
+      app.use('/api/setup', establishRequestSystemScope, setupRouter);
     }
   } catch (error) {
     console.error('❌ Failed to mount setup routes:', error);
@@ -175,7 +185,12 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const authEnterpriseModule = await import('../routes/authEnterprise');
     const authEnterpriseRouter = authEnterpriseModule.default;
     if (authEnterpriseRouter && (typeof authEnterpriseRouter === 'function' || (authEnterpriseRouter as any).handle)) {
-      app.use('/api/auth/enterprise', authEnterpriseRouter);
+      // Enterprise auth resolves an identity/tenant before a JWT exists, exactly
+      // like /api/auth and /api/auth/sso. It sits before the global /api gate and
+      // declared no scope of its own (audit NEEDS_VERIFY #1), so its pre-tenant
+      // lookups fail closed under RLS_ENFORCE=on. Make the pre-auth scope
+      // explicit rather than relying on fragile cross-mount inheritance.
+      app.use('/api/auth/enterprise', preAuthScope, authEnterpriseRouter);
     }
   } catch (error) {
     console.error('❌ Failed to mount enterprise auth routes:', error);
@@ -197,7 +212,11 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const scimModule = await import('../routes/scim');
     const scimRouter = scimModule.default;
     if (scimRouter && (typeof scimRouter === 'function' || (scimRouter as any).handle)) {
-      app.use('/scim/v2', scimRouter);
+      // SCIM provisions users/groups ACROSS a tenant with its own bearer-token
+      // auth, mounted outside /api so the global gate never runs. It reads
+      // cross-org config tables; the system scope is the correct boundary (a
+      // per-user scope would misattribute it). See SYSTEM_SCOPE_PREFIXES.
+      app.use('/scim/v2', establishRequestSystemScope, scimRouter);
     }
   } catch {
     console.warn('⚠️ SCIM routes not mounted - continuing without SCIM provisioning');
@@ -208,7 +227,9 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const scimAdminModule = await import('../routes/admin/scim-tenants');
     const scimAdminRouter = scimAdminModule.default;
     if (scimAdminRouter && (typeof scimAdminRouter === 'function' || (scimAdminRouter as any).handle)) {
-      app.use('/api/admin/scim-tenants', scimAdminRouter);
+      // Super-admin console over cross-org SCIM token config, mounted before the
+      // global gate. System scope; see SYSTEM_SCOPE_PREFIXES.
+      app.use('/api/admin/scim-tenants', establishRequestSystemScope, scimAdminRouter);
     }
   } catch {
     console.warn('⚠️ SCIM tenant admin routes not mounted');
@@ -220,7 +241,12 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const auditSiemModule = await import('../routes/admin/audit-siem');
     const auditSiemRouter = auditSiemModule.default;
     if (auditSiemRouter && (typeof auditSiemRouter === 'function' || (auditSiemRouter as any).handle)) {
-      app.use('/api/admin/audit', auditSiemRouter);
+      // SIEM audit feed, mounted before the global gate. The router itself
+      // filters the audit trail by the caller's org in its SQL WHERE clause, so
+      // the system scope does not broaden what it returns; it only lets the
+      // (correctly org-filtered) query run at all under RLS_ENFORCE=on. See
+      // SYSTEM_SCOPE_PREFIXES.
+      app.use('/api/admin/audit', establishRequestSystemScope, auditSiemRouter);
     }
   } catch {
     console.warn('⚠️ SIEM audit feed routes not mounted');
@@ -231,7 +257,9 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const scimIpModule = await import('../routes/admin/scim-ip-allowlist');
     const scimIpRouter = scimIpModule.default;
     if (scimIpRouter && (typeof scimIpRouter === 'function' || (scimIpRouter as any).handle)) {
-      app.use('/api/admin/scim-ip-allowlist', scimIpRouter);
+      // Super-admin console over the cross-org SCIM source-IP allowlist, mounted
+      // before the global gate. System scope; see SYSTEM_SCOPE_PREFIXES.
+      app.use('/api/admin/scim-ip-allowlist', establishRequestSystemScope, scimIpRouter);
     }
   } catch {
     console.warn('⚠️ SCIM IP allowlist admin routes not mounted');

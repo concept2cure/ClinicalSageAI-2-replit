@@ -10,12 +10,13 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
-import { db, getPool } from '../db';
+import { db } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { organizations, organizationUsers } from '../../shared/schema';
 import { runWithTenantScope } from '../db/tenantStore';
 import { createScopedLogger } from '../utils/logger';
-import { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient';
+import { type RequestDbClient } from './lazyRequestDbClient';
+import { establishRequestTenantScope } from './establishRequestTenantScope';
 
 export { LazyRequestDbClient, type RequestDbClient } from './lazyRequestDbClient';
 
@@ -285,41 +286,15 @@ export async function requireTenantContext(req: Request, res: Response, next: Ne
     req.userId = req.user.id;
     req.tenantId = req.user.tenantId;
 
-    // Lazy: do not acquire a pooled client up front. The wrapper acquires on
-    // first `.query()` call and runs the RLS session vars on that connection,
-    // so requests that never touch the DB don't tie up a pool slot.
-    const lazy = new LazyRequestDbClient(getPool(), async (client) => {
-      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [
-        organizationId,
-      ]);
-      await client.query("SELECT set_config('app.current_user_role', $1, false)", [resolvedRole]);
-      await client.query("SELECT set_config('app.current_org_id', $1, false)", [
-        organizationUuid || '',
-      ]);
-    });
-
-    req.dbClient = lazy;
-    const release = () => {
-      req.dbClient = null;
-      void lazy.release();
-    };
-    res.on('finish', release);
-    res.on('close', release);
-
-    // Establish a tenant AsyncLocalStorage scope for the rest of the request.
-    // Pool instrumentation reads this on every query so we can count which
-    // queries run without a tenant boundary — the gap that would silently
-    // turn into "zero rows" once RLS is enabled in PR B.
-    return runWithTenantScope(
-      {
-        tenantId: organizationId,
-        orgUuid: organizationUuid || null,
-        role: resolvedRole || null,
-        source: 'request',
-        caller: req.path,
-      },
-      () => next()
-    );
+    // Open the tenant AsyncLocalStorage scope + attach the request-scoped DB
+    // client for the rest of the request. This is the SAME establishment the
+    // auth-middleware boundary now performs, extracted so there is exactly one
+    // implementation (see establishRequestTenantScope). req.user / req.tenantContext
+    // were populated above, so the helper reads the resolved org id, role and
+    // uuid from them. The helper is idempotent: when this middleware runs behind
+    // the global `/api` gate — whose authMiddleware already opened the scope — it
+    // is a no-op pass-through rather than a second, conflicting scope.
+    return establishRequestTenantScope(req, res, next);
   } catch (error) {
     return res.status(401).json({
       error: 'Authentication required',

@@ -14,6 +14,7 @@ import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
 import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
+import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
 
 const logger = createScopedLogger('auth');
 
@@ -207,7 +208,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         userId: parsedUserId,
         role: resolvedRole,
       };
-      return next();
+      // Open the tenant scope (and attach a request-scoped DB client) for the
+      // rest of the request, rather than a bare next(). This is the global
+      // `/api` gate's authMiddleware, so this single line establishes the RLS
+      // scope for essentially every authenticated `/api` route — the fix for
+      // the fail-closed 500s catalogued in the RLS route-layer audit. Idempotent
+      // and honours the SYSTEM carve-outs; see establishRequestTenantScope.
+      return establishRequestTenantScope(req, res, next);
     } catch (error) {
       logger.error('Authentication error', error);
       return res.status(401).json({ error: 'Invalid or expired token' });
