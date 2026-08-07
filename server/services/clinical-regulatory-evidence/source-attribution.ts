@@ -43,7 +43,12 @@
  */
 
 import { detectSpans, type SpanGranularity } from '../sentenceTraceabilityService';
-import type { SpanUsage } from './span-lineage.service';
+import {
+  recordSourceSpan,
+  type SpanUsage,
+  type DocumentRef,
+  type Queryable,
+} from './span-lineage.service';
 
 /** A retrieved source, carrying its canonical identity and the text it contributed. */
 export interface RetrievedSource {
@@ -202,4 +207,72 @@ export function quotedCoverage(generatedText: string, spans: AttributedSpan[]): 
   }
 
   return total === 0 ? 0 : Math.round((covered / total) * 100);
+}
+
+export interface RecordSourceSpansResult {
+  /** Source spans written or re-resolved. */
+  recorded: number;
+  /** Distinct sources those spans cite. */
+  distinctSources: number;
+  /** Percent of non-whitespace content verifiably quoted from a source. */
+  coverage: number;
+  /** The attributions, in document order — the same set returned by the pure pass. */
+  spans: AttributedSpan[];
+}
+
+/**
+ * The persistence bridge: compute the verified attributions and record them.
+ *
+ * This is the one function a generation path calls after drafting content from
+ * retrieved sources. It runs the pure {@link attributeQuotedSpans} over the
+ * output and writes each verified quote as a `cre_evidence_source` span via
+ * recordSourceSpan — passing `exec` so the lineage enlists in the SAME
+ * transaction as the content, which is what makes "content does not persist
+ * without its provenance" an invariant rather than a hope.
+ *
+ * It records ONLY source spans. Author lineage for the remaining (original or
+ * paraphrased) text and the coverage gate (assertLineageCoversContent) stay the
+ * caller's responsibility, exactly as they are for manually-authored content —
+ * this function adds the automatic, verifiable half and no more.
+ *
+ * recordSourceSpan verifies each source is visible to the tenant and throws if
+ * it is not; that throw is deliberately not swallowed, because a citation to a
+ * source the document's tenant cannot see is a real defect, not noise. A caller
+ * running inside the content transaction therefore fails closed.
+ *
+ * Idempotent per (document, span, source): recording the same draft twice
+ * re-resolves rather than duplicating, so re-generation converges.
+ */
+export async function attributeAndRecordSourceSpans(
+  orgId: number,
+  ref: DocumentRef,
+  generatedText: string,
+  sources: RetrievedSource[],
+  opts: AttributeOptions & { createdBy?: string | null } = {},
+  exec?: Queryable,
+): Promise<RecordSourceSpansResult> {
+  const spans = attributeQuotedSpans(generatedText, sources, opts);
+
+  for (const s of spans) {
+    await recordSourceSpan(
+      orgId,
+      {
+        ...ref,
+        charStart: s.charStart,
+        charEnd: s.charEnd,
+        spanText: s.spanText,
+        sourceId: s.sourceId,
+        usage: s.usage,
+        createdBy: opts.createdBy ?? null,
+      },
+      exec,
+    );
+  }
+
+  return {
+    recorded: spans.length,
+    distinctSources: new Set(spans.map((s) => s.sourceId)).size,
+    coverage: quotedCoverage(generatedText, spans),
+    spans,
+  };
 }
