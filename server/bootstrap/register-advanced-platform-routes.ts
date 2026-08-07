@@ -1,6 +1,40 @@
 import type { Express } from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
+import { mountAll } from './mount-routes.js';
+
+import auditServices from '../routes/audit-services.js';
+import integrationTest from '../routes/integration-test.js';
+import diagnosticsPerformance from '../routes/diagnostics-performance.js';
+import deviceClassification from '../routes/device-classification.js';
+import substantialEquivalence from '../routes/substantial-equivalence.js';
+import cybersecurity524b from '../routes/cybersecurity-524b.js';
+import humanFactors from '../routes/human-factors.js';
+import postmarketSurveillance from '../routes/postmarket-surveillance.js';
+import udiIvdr from '../routes/udi-ivdr.js';
+import marketAccess from '../routes/market-access.js';
+import companionDiagnostics from '../routes/companion-diagnostics.js';
+import splFhir from '../routes/spl-fhir.js';
+import submissionReadiness from '../routes/submission-readiness.js';
+import realtimeCollab from '../routes/realtime-collab.js';
+import graphrag from '../routes/graphrag.js';
+import anaCortexFt from '../routes/ana-cortex-ft.js';
+import globalCompliance from '../routes/global-compliance.js';
+import agentSwarm from '../routes/agent-swarm.js';
+import realWorldEvidence from '../routes/real-world-evidence.js';
+import regulatoryDigitalTwin from '../routes/regulatory-digital-twin.js';
+import submissionTwin from '../routes/submission-twin.js';
+import cro from '../routes/cro.js';
+import taskManagement from '../routes/taskManagement.routes.js';
+import unifiedTasks from '../routes/unifiedTasks.routes.js';
+import approvalWorkflow from '../routes/approval-workflow.js';
+import clientBranding from '../routes/client-branding.js';
+import inlineAnnotations from '../routes/inline-annotations.js';
+import decisionLineage from '../routes/decision-lineage.js';
+import dataLineage from '../routes/data-lineage.js';
+import workspaceSummary from '../routes/workspace-summary.js';
+import chatActions from '../routes/chat-actions.js';
+import conversationOs from '../routes/conversation-os.js';
 
 // SECURITY: nearly every router mounted here is tenant-scoped — task
 // management, approvals, branding, lineage, workspace projects. The
@@ -76,122 +110,63 @@ export async function registerAdvancedPlatformRoutes({
     console.error('Failed to mount notification routes:', error);
   }
 
-  // ── Audit, Testing, Integrations (parallelized) ──
-  {
-    const auditIntegConfig = [
-      {
-        path: '/api/audit-services',
-        load: () => import('../routes/audit-services.js'),
-        name: 'Audit Services (figures, export, traceability, keywords)',
-      },
-      {
-        path: '/api/integration-test',
-        load: () => import('../routes/integration-test'),
-        name: 'Integration Test (dev/QA)',
-      },
-      // Removed: /api/integrations (enterprise-integrations) and /api/connectors
-      // (connector-library). Neither route module exists anywhere in the repo —
-      // no .ts, .js, or other implementation, and no client caller. Under the
-      // former variable dynamic-import these failed silently as ERR_MODULE_
-      // NOT_FOUND at runtime (caught by Promise.allSettled), so /api/integrations
-      // and /api/connectors advertised Medidata/Veeva/Adobe integrations and a
-      // connector catalog that never had a backend. Converting to a literal
-      // import surfaced them at build time; cut rather than left as dead config.
-      {
-        path: '/api/diagnostics-performance',
-        load: () => import('../routes/diagnostics-performance'),
-        name: 'Diagnostics Performance (CLSI analytical + clinical)',
-      },
-      {
-        path: '/api/device-classification',
-        load: () => import('../routes/device-classification'),
-        name: 'Device Classification (IMDRF SaMD + IEC 62304)',
-      },
-      {
-        path: '/api/substantial-equivalence',
-        load: () => import('../routes/substantial-equivalence'),
-        name: 'Substantial Equivalence (FDA 510(k) SE flowchart)',
-      },
-      {
-        path: '/api/cybersecurity-524b',
-        load: () => import('../routes/cybersecurity-524b'),
-        name: 'Premarket Cybersecurity (FDA §524B SBOM + readiness)',
-      },
-      {
-        path: '/api/human-factors',
-        load: () => import('../routes/human-factors'),
-        name: 'Human Factors (IEC 62366-1)',
-      },
-      {
-        path: '/api/postmarket-surveillance',
-        load: () => import('../routes/postmarket-surveillance'),
-        name: 'Post-market Surveillance (openFDA MAUDE + recalls)',
-      },
-      {
-        path: '/api/udi-ivdr',
-        load: () => import('../routes/udi-ivdr'),
-        name: 'UDI/GUDID + EU IVDR Performance Evaluation',
-      },
-      {
-        path: '/api/market-access',
-        load: () => import('../routes/market-access'),
-        name: 'Market Access (CPT/HCPCS coding + coverage dossier)',
-      },
-      {
-        path: '/api/companion-diagnostics',
-        load: () => import('../routes/companion-diagnostics'),
-        name: 'Companion Diagnostics (drug↔Dx co-development)',
-      },
-      {
-        path: '/api/spl-fhir',
-        load: () => import('../routes/spl-fhir'),
-        name: 'Interoperability (LOINC + SPL + FHIR)',
-      },
-      {
-        path: '/api/submission-readiness',
-        load: () => import('../routes/submission-readiness'),
-        name: 'Submission Readiness (capstone scorecard)',
-      },
-    ] as const;
-    const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => c.load()));
-    auditIntegResults.forEach((r, i) => {
-      // Fence the test/QA-only integration-test harness out of production (#848).
-      if (auditIntegConfig[i].path === '/api/integration-test' && !testRoutesEnabled) {
-        console.log('⛔ /api/integration-test not mounted (test routes fenced in this environment)');
-        return;
-      }
-      if (r.status === 'fulfilled') {
-        app.use(auditIntegConfig[i].path, authenticateToken, r.value.default);
-        console.log(`✅ ${auditIntegConfig[i].name} routes mounted`);
-      } else {
-        console.error(`❌ Failed to mount ${auditIntegConfig[i].name} routes:`, r.reason);
-      }
-    });
+  // ── Audit, Testing, Device/IVD lifecycle ──
+  //
+  // /api/integrations and /api/connectors used to be listed here, pointing at
+  // '../routes/enterprise-integrations.ts' and '../routes/connector-library.ts'.
+  // Neither file exists anywhere in the repository and no client calls either
+  // path. Under the old dynamic-import form that was invisible: the import
+  // rejected, `Promise.allSettled` logged it, and the boot continued. A static
+  // import of a missing module is a BUILD error, so they are removed rather than
+  // left to fail — and their removal is the first time the absence has been
+  // stated anywhere.
+  mountAll(
+    app,
+    [
+      { path: '/api/audit-services', router: auditServices, name: 'Audit Services (figures, export, traceability, keywords)' },
+      { path: '/api/diagnostics-performance', router: diagnosticsPerformance, name: 'Diagnostics Performance (CLSI analytical + clinical)' },
+      { path: '/api/device-classification', router: deviceClassification, name: 'Device Classification (IMDRF SaMD + IEC 62304)' },
+      { path: '/api/substantial-equivalence', router: substantialEquivalence, name: 'Substantial Equivalence (FDA 510(k) SE flowchart)' },
+      { path: '/api/cybersecurity-524b', router: cybersecurity524b, name: 'Premarket Cybersecurity (FDA §524B SBOM + readiness)' },
+      { path: '/api/human-factors', router: humanFactors, name: 'Human Factors (IEC 62366-1)' },
+      { path: '/api/postmarket-surveillance', router: postmarketSurveillance, name: 'Post-market Surveillance (openFDA MAUDE + recalls)' },
+      { path: '/api/udi-ivdr', router: udiIvdr, name: 'UDI/GUDID + EU IVDR Performance Evaluation' },
+      { path: '/api/market-access', router: marketAccess, name: 'Market Access (CPT/HCPCS coding + coverage dossier)' },
+      { path: '/api/companion-diagnostics', router: companionDiagnostics, name: 'Companion Diagnostics (drug↔Dx co-development)' },
+      { path: '/api/spl-fhir', router: splFhir, name: 'Interoperability (LOINC + SPL + FHIR)' },
+      { path: '/api/submission-readiness', router: submissionReadiness, name: 'Submission Readiness (capstone scorecard)' },
+    ],
+    authenticateToken,
+  );
+
+  // The test/QA-only integration-test harness stays fenced out of production
+  // (#848). Kept as its own conditional mount rather than an entry with a skip
+  // branch inside the loop: a fence you have to read the loop body to see is a
+  // fence that gets refactored away.
+  if (testRoutesEnabled) {
+    mountAll(app, [
+      { path: '/api/integration-test', router: integrationTest, name: 'Integration Test (dev/QA)' },
+    ], authenticateToken);
+  } else {
+    console.info('⛔ /api/integration-test not mounted (test routes fenced in this environment)');
   }
 
-  // ── Advanced AI & Compliance (parallelized) ──
-  {
-    const advancedConfig = [
-      { path: '/api/realtime-collab', load: () => import('../routes/realtime-collab'), name: 'Real-time Collaboration' },
-      { path: '/api/graphrag', load: () => import('../routes/graphrag'), name: 'GraphRAG' },
-      { path: '/api/ana-cortex-ft', load: () => import('../routes/ana-cortex-ft'), name: 'AnA Intelligence Fine-Tuning' },
-      { path: '/api/compliance', load: () => import('../routes/global-compliance.js'), name: 'Global Regulatory Compliance' },
-      { path: '/api/agent-swarm', load: () => import('../routes/agent-swarm'), name: 'Agent Swarm' },
-      { path: '/api/real-world-evidence', load: () => import('../routes/real-world-evidence'), name: 'Real-World Evidence' },
-      { path: '/api/regulatory-digital-twin', load: () => import('../routes/regulatory-digital-twin'), name: 'Regulatory Digital Twin' },
-      { path: '/api/submission-twin', load: () => import('../routes/submission-twin'), name: 'Submission Twin' },
-      { path: '/api/cro', load: () => import('../routes/cro'), name: 'CRO Management' },
-    ] as const;
-    const advancedResults = await Promise.allSettled(advancedConfig.map(c => c.load()));
-    advancedResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(advancedConfig[i].path, authenticateToken, r.value.default);
-        console.log(`✅ ${advancedConfig[i].name} routes mounted`);
-      } else {
-        console.error(`❌ Failed to mount ${advancedConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Advanced AI & Compliance ──
+  mountAll(
+    app,
+    [
+      { path: '/api/realtime-collab', router: realtimeCollab, name: 'Real-time Collaboration' },
+      { path: '/api/graphrag', router: graphrag, name: 'GraphRAG' },
+      { path: '/api/ana-cortex-ft', router: anaCortexFt, name: 'AnA Intelligence Fine-Tuning' },
+      { path: '/api/compliance', router: globalCompliance, name: 'Global Regulatory Compliance' },
+      { path: '/api/agent-swarm', router: agentSwarm, name: 'Agent Swarm' },
+      { path: '/api/real-world-evidence', router: realWorldEvidence, name: 'Real-World Evidence' },
+      { path: '/api/regulatory-digital-twin', router: regulatoryDigitalTwin, name: 'Regulatory Digital Twin' },
+      { path: '/api/submission-twin', router: submissionTwin, name: 'Submission Twin' },
+      { path: '/api/cro', router: cro, name: 'CRO Management' },
+    ],
+    authenticateToken,
+  );
 
   // ── 21 CFR Part 11 Compliance (needs pool for audit persistence) ──
   try {
@@ -224,84 +199,39 @@ export async function registerAdvancedPlatformRoutes({
     console.error('❌ Failed to mount Mission Control routes:', error);
   }
 
-  // ── Task Management + Approvals (parallelized) ──
-  {
-    const taskConfig = [
-      {
-        path: '/api/task-management',
-        load: () => import('../routes/taskManagement.routes'),
-        name: 'Task Management',
-      },
-      {
-        path: '/api/unified-tasks',
-        load: () => import('../routes/unifiedTasks.routes'),
-        name: 'Unified Tasks',
-      },
-      {
-        path: '/api/approval-workflows',
-        load: () => import('../routes/approval-workflow'),
-        name: 'Approval Workflows',
-      },
-    ] as const;
-    const taskResults = await Promise.allSettled(taskConfig.map(c => c.load()));
-    taskResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(taskConfig[i].path, authenticateToken, r.value.default);
-        console.log(`✅ ${taskConfig[i].name} routes mounted`);
-      } else {
-        console.error(`❌ Failed to mount ${taskConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Task Management + Approvals ──
+  mountAll(
+    app,
+    [
+      { path: '/api/task-management', router: taskManagement, name: 'Task Management' },
+      { path: '/api/unified-tasks', router: unifiedTasks, name: 'Unified Tasks' },
+      { path: '/api/approval-workflows', router: approvalWorkflow, name: 'Approval Workflows' },
+    ],
+    authenticateToken,
+  );
 
-  // ── Branding, Annotations, Lineage (parallelized) ──
-  {
-    const workflowConfig = [
-      { path: '/api/client-branding', load: () => import('../routes/client-branding'), name: 'Client Branding' },
-      {
-        path: '/api/inline-annotations',
-        load: () => import('../routes/inline-annotations'),
-        name: 'Inline Annotations',
-      },
-      {
-        path: '/api/decision-lineage',
-        load: () => import('../routes/decision-lineage'),
-        name: 'Decision Lineage',
-      },
-      { path: '/api/data-lineage', load: () => import('../routes/data-lineage'), name: 'Data Lineage' },
-    ] as const;
-    const workflowResults = await Promise.allSettled(workflowConfig.map(c => c.load()));
-    workflowResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(workflowConfig[i].path, authenticateToken, r.value.default);
-        console.log(`✅ ${workflowConfig[i].name} routes mounted`);
-      } else {
-        console.error(`❌ Failed to mount ${workflowConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Branding, Annotations, Lineage ──
+  mountAll(
+    app,
+    [
+      { path: '/api/client-branding', router: clientBranding, name: 'Client Branding' },
+      { path: '/api/inline-annotations', router: inlineAnnotations, name: 'Inline Annotations' },
+      { path: '/api/decision-lineage', router: decisionLineage, name: 'Decision Lineage' },
+      { path: '/api/data-lineage', router: dataLineage, name: 'Data Lineage' },
+    ],
+    authenticateToken,
+  );
 
-  // ── Workspace + Chat + Conversation OS (parallelized) ──
-  {
-    const wsConfig = [
-      { path: '/api', load: () => import('../routes/workspace-summary'), name: 'Workspace Summary' },
-      { path: '/api', load: () => import('../routes/chat-actions'), name: 'Chat Actions' },
-      {
-        path: '/api/conversation-os',
-        load: () => import('../routes/conversation-os'),
-        name: 'Conversation OS',
-      },
-    ] as const;
-    const wsResults = await Promise.allSettled(wsConfig.map(c => c.load()));
-    wsResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(wsConfig[i].path, authenticateToken, r.value.default);
-        console.log(`✅ ${wsConfig[i].name} routes mounted`);
-      } else {
-        console.error(`❌ Failed to mount ${wsConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Workspace + Chat + Conversation OS ──
+  mountAll(
+    app,
+    [
+      { path: '/api', router: workspaceSummary, name: 'Workspace Summary' },
+      { path: '/api', router: chatActions, name: 'Chat Actions' },
+      { path: '/api/conversation-os', router: conversationOs, name: 'Conversation OS' },
+    ],
+    authenticateToken,
+  );
 
   // ── Workspace Projects (inline handlers — use pool directly) ──
   // authenticateToken runs first to populate req.user; the handler's

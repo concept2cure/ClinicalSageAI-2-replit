@@ -69,6 +69,28 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
   // 5. Firecrawl webhooks — raw-body-safe, must come BEFORE the global JSON parser.
   app.use('/api/firecrawl-webhooks', firecrawlWebhooksRoutes);
 
+  /*
+   * 5b. Stripe webhooks, for the same reason and by the same rule.
+   *
+   * `stripe.webhooks.constructEvent` verifies a signature over the EXACT bytes
+   * Stripe sent, so it needs the raw body and throws "Webhook payload must be
+   * provided as a string or a Buffer" on a parsed object.
+   *
+   * `server/routes/billing.ts` does ask for a raw body — its route is declared
+   * `router.post('/webhooks/stripe', raw({ type: 'application/json' }), …)`. That
+   * is too late to help: the billing router is mounted by
+   * register-inline-routes.ts, which runs after this file, so `express.json()`
+   * below has already consumed the stream and set `req._body`. The route's own
+   * `raw()` then short-circuits, and every webhook fails signature verification —
+   * silently, because a webhook that 400s looks the same from here as one that
+   * was never sent.
+   *
+   * Mounting the parser for this path BEFORE the JSON parser makes `req.body` a
+   * Buffer, after which both `express.json()` and the route's `raw()` skip it.
+   * Scoped to the webhook prefix, so the rest of `/api/billing` still gets JSON.
+   */
+  app.use('/api/billing/webhooks', express.raw({ type: 'application/json' }));
+
   // 6. Body parsers. Concept2Cure routes get 50MB for base64 document bodies.
   app.use('/api/concept2cure', express.json({ limit: '50mb' }));
   app.use('/api', express.json({ limit: '2mb' }));

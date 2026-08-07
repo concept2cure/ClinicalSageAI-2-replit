@@ -23,6 +23,7 @@
 import { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { analyzeQbdFromSources, type CqaItem, type CppItem } from './qbd-analyzer';
+import { loadProjectStabilityStudies } from './stability-source';
 
 const log = createScopedLogger('cmc-control-strategy');
 
@@ -64,6 +65,22 @@ export interface StabilityMonitoringPlan {
   testParameters: string[];
   timePoints: string[];
   ichBasis: string[];
+  /**
+   * Provenance of the conditions and time points above.
+   *
+   * - `project_data`  — read from the project's recorded stability studies.
+   * - `ich_default`   — the project has no recorded stability studies; the
+   *                     values are generic ICH Q1A(R2) defaults.
+   * - `not_evaluated` — the stability inputs could not be read at all; the
+   *                     values are generic ICH Q1A(R2) defaults and we do not
+   *                     know what the project has recorded.
+   *
+   * Only `project_data` may be presented as this project's stability program.
+   * The other two are templates, and `note` says so.
+   */
+  derivedFrom: 'project_data' | 'ich_default' | 'not_evaluated';
+  /** Present whenever `derivedFrom !== 'project_data'`. */
+  note?: string;
 }
 
 // ─── Generator ───────────────────────────────────────────────────────────────
@@ -130,18 +147,34 @@ export async function generateControlStrategy(
   }
 
   // ── Stability monitoring
-  if (stabilityPlan.testParameters.length === 0) {
+  // The plan's conditions are only this project's program when
+  // derivedFrom === 'project_data'. Otherwise they are a generic ICH template,
+  // and both the gap list and the control element must say so rather than
+  // describing a monitoring program that was never recorded.
+  if (stabilityPlan.derivedFrom === 'not_evaluated') {
+    gaps.push(
+      `Cannot evaluate the stability program: ${stabilityPlan.note} `
+      + 'This is not a finding that the program is absent.',
+    );
+  } else if (stabilityPlan.derivedFrom === 'ich_default') {
+    gaps.push('No stability studies recorded — ICH Q1A(R2) stability program not defined.');
+  } else if (stabilityPlan.testParameters.length === 0) {
     gaps.push('No stability test parameters recorded — ICH Q1A(R2) stability program not defined.');
   }
   stabilityPlan.ichBasis.forEach(c => citations.add(c));
+
+  const stabilityIsProjectData = stabilityPlan.derivedFrom === 'project_data';
   controlElements.push({
     controlType: 'stability_monitoring',
-    description: `Long-term and accelerated stability monitoring program.`,
+    description: stabilityIsProjectData
+      ? 'Long-term and accelerated stability monitoring program.'
+      : 'Long-term and accelerated stability monitoring program (PROPOSED TEMPLATE — not derived from recorded project data).',
     acceptanceCriterion: 'Within registered specification at every time point through proposed shelf life',
     performedBy: 'Stability program',
     ichBasis: stabilityPlan.ichBasis,
-    justification:
-      `Stability-indicating attributes monitored at ${stabilityPlan.longTermCondition} long-term and ${stabilityPlan.acceleratedCondition} accelerated per ICH Q1A(R2).`,
+    justification: stabilityIsProjectData
+      ? `Stability-indicating attributes monitored at ${stabilityPlan.longTermCondition} long-term and ${stabilityPlan.acceleratedCondition} accelerated per ICH Q1A(R2).`
+      : `${stabilityPlan.note} Proposed conditions are ${stabilityPlan.longTermCondition} long-term and ${stabilityPlan.acceleratedCondition} accelerated per ICH Q1A(R2); they must be confirmed against the project's actual stability program before use.`,
   });
 
   // ── Raw material controls — if drug substance specs exist
@@ -236,52 +269,70 @@ function matchMethodForCqa(cqa: CqaItem, methods: MethodRecord[]): MethodRecord 
   return null;
 }
 
+/**
+ * Load the project's stability monitoring plan.
+ *
+ * This previously queried `stability_studies` for `storage_condition`,
+ * `time_points`, `test_parameters` and `study_type` filtered on `project_id`.
+ * That query could never succeed: the provisioned `public.stability_studies`
+ * has no `project_id` column (it is org-scoped) and no `storage_condition`
+ * column. Every call therefore hit the catch and returned the generic ICH
+ * template below — which the generated control strategy then presented as the
+ * project's stability program, complete with conditions nobody had recorded.
+ *
+ * Now the studies come from the canonical project-scoped source-object store,
+ * and when the plan is NOT derived from project data the returned object says
+ * so via `derivedFrom` + `note` instead of passing a template off as fact.
+ */
 async function loadStabilityPlan(orgId: number, projectId: string): Promise<StabilityMonitoringPlan> {
   const pool = getPool();
-  const fallback: StabilityMonitoringPlan = {
+
+  // Generic ICH Q1A(R2) conditions — a template, not this project's program.
+  const template = {
     longTermCondition: '25°C / 60% RH',
     acceleratedCondition: '40°C / 75% RH',
-    testParameters: [],
+    testParameters: [] as string[],
     timePoints: ['0', '3', '6', '9', '12', '18', '24 months'],
     ichBasis: ['ICH Q1A(R2)'],
   };
-  try {
-    const { rows } = await pool.query<{
-      storageCondition: string | null;
-      duration: string | null;
-      timePoints: string | null;
-      testParameters: string | null;
-      studyType: string | null;
-    }>(`
-      SELECT storage_condition AS "storageCondition",
-             duration,
-             time_points AS "timePoints",
-             test_parameters AS "testParameters",
-             study_type AS "studyType"
-      FROM stability_studies
-      WHERE project_id = $1::text::uuid
-    `, [projectId]);
 
-    if (rows.length === 0) return fallback;
+  const result = await loadProjectStabilityStudies(pool, orgId, projectId);
 
-    const longTerm = rows.find(r => String(r.studyType ?? '').toLowerCase().includes('long'))?.storageCondition;
-    const accelerated = rows.find(r => String(r.studyType ?? '').toLowerCase().includes('accel'))?.storageCondition;
-    const testParameters = rows.flatMap(r => parseList(r.testParameters));
-    const timePoints = rows.flatMap(r => parseList(r.timePoints));
-
+  if (!result.available) {
     return {
-      longTermCondition: longTerm ?? fallback.longTermCondition,
-      acceleratedCondition: accelerated ?? fallback.acceleratedCondition,
-      testParameters: Array.from(new Set(testParameters)).slice(0, 20),
-      timePoints: Array.from(new Set(timePoints)).slice(0, 20),
-      ichBasis: ['ICH Q1A(R2)', 'ICH Q1E'],
+      ...template,
+      derivedFrom: 'not_evaluated',
+      note:
+        `Stability inputs could not be read (${result.reason}). The conditions and time points `
+        + 'shown are generic ICH Q1A(R2) values, NOT this project\'s recorded stability program, '
+        + 'which is unknown.',
     };
-  } catch (err) {
-    log.warn('Failed to load stability plan', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return fallback;
   }
+
+  if (result.studies.length === 0) {
+    return {
+      ...template,
+      derivedFrom: 'ich_default',
+      note:
+        'No stability studies are recorded for this project. The conditions and time points shown '
+        + 'are generic ICH Q1A(R2) values offered as a starting template, not a recorded program.',
+    };
+  }
+
+  const studies = result.studies;
+  const longTerm = studies.find(s => s.studyType.toLowerCase().includes('long'))?.storageCondition;
+  const accelerated = studies.find(s => s.studyType.toLowerCase().includes('accel'))?.storageCondition;
+  const testParameters = studies.flatMap(s => parseList(s.testParameters));
+  const timePoints = studies.flatMap(s => parseList(s.timePoints));
+
+  return {
+    longTermCondition: longTerm || template.longTermCondition,
+    acceleratedCondition: accelerated || template.acceleratedCondition,
+    testParameters: Array.from(new Set(testParameters)).slice(0, 20),
+    timePoints: Array.from(new Set(timePoints)).slice(0, 20),
+    ichBasis: ['ICH Q1A(R2)', 'ICH Q1E'],
+    derivedFrom: 'project_data',
+  };
 }
 
 function parseList(s: string | null | undefined): string[] {

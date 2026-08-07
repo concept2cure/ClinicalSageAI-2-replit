@@ -23,6 +23,7 @@
  */
 
 import { useFetchJson } from './useFetchJson';
+import { firstArray } from '../lib/payloadShape';
 import { toDataState, type DataState } from '../lib/dataState';
 
 /* ─── rbm-summary shape (mdx-rbm.ts:1291, `{ data }` envelope) ────── */
@@ -114,7 +115,10 @@ export function useRbqm(programId: string | null): UseRbqmResult {
 
   const idleReason = 'Select a project or a study to see its risk-based monitoring.';
 
-  const attentionRows = a.data?.data ? orderAttention(a.data.data) : null;
+  // orderAttention sorts, so a non-array payload throws here the same way a
+  // `.map` would. Same guard, same reason.
+  const attentionRowsRaw = firstArray<AttentionItem>(a.data?.data);
+  const attentionRows = attentionRowsRaw ? orderAttention(attentionRowsRaw) : null;
 
   return {
     summary: toDataState(s.data?.data ?? null, s.loading, s.error, { idleReason }),

@@ -54,7 +54,11 @@ function fail(status: number) {
 
 const noop = () => {};
 const mount = () =>
-  render(<ClientPortal surface={{ id: 'client-portal' } as any} onAsk={noop} onNav={noop} segment="biopharma" />);
+  // No `onAsk`. `client-portal` is `ownsConversation: true`, and the union in
+  // surfaceViews narrows its component to props without it — so passing one is
+  // now a type error rather than a prop that silently goes nowhere. This line
+  // failing is how the guard proved it bites.
+  render(<ClientPortal surface={{ id: 'client-portal' } as any} onNav={noop} segment="biopharma" />);
 
 afterEach(() => {
   cleanup();

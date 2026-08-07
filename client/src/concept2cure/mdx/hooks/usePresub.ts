@@ -121,11 +121,34 @@ function adaptQuestion(q: ServerQSubQuestionDto): PresubQuestion {
   };
 }
 
-function adaptDetail(d: ServerQSubDetail): PresubDetail {
+/**
+ * Adapt the server's Q-Sub detail, without trusting its shape.
+ *
+ * This read `d.questions.map(...)` and `d.timeline.map(...)` directly. Any 200
+ * response whose body is not exactly `{ data: { summary, questions, timeline } }`
+ * therefore threw `Cannot read properties of undefined (reading 'map')` — and
+ * because the throw happens in a `useMemo` during render, `PreSubManager` and
+ * everything under it comes down with it.
+ *
+ * `SurfaceBoundary` catches it, so the blast radius is one surface showing
+ * `SurfaceDegraded` rather than the whole shell. But "degraded" is what this
+ * product shows when something is genuinely broken, and a detail endpoint
+ * returning no questions is not broken — it is a Q-Sub package with no questions
+ * logged yet, which `PreSubManager` already has an empty state for.
+ *
+ * Found by the visual-QA capture: `device-presub` was the one converged surface
+ * that serialized to zero bytes once its data resolved. The existing mount test
+ * cannot see it — it asserts synchronously, while the surface is still drawing
+ * its loading state, which is before the crash.
+ */
+function adaptDetail(d: ServerQSubDetail | null | undefined): PresubDetail | null {
+  if (!d || typeof d !== 'object') return null;
   return {
     summary:   d.summary,
-    questions: d.questions.map(adaptQuestion),
-    timeline:  d.timeline.map((t) => ({ when: t.when, who: t.who, what: t.what })),
+    questions: Array.isArray(d.questions) ? d.questions.map(adaptQuestion) : [],
+    timeline:  Array.isArray(d.timeline)
+      ? d.timeline.map((t) => ({ when: t.when, who: t.who, what: t.what }))
+      : [],
   };
 }
 
@@ -179,8 +202,15 @@ export function usePresubList(): UsePresubListResult {
   const { data, loading, error, refresh } = useFetchJson<ListPayload>('/api/q-sub');
   /* Server shape is structurally identical to PresubListRow — assert
      through a single typed bridge rather than copying field-by-field. */
+  /*
+   * `data.data.rows.map(...)` — unguarded, and this one runs on mount rather
+   * than on selection, so any 200 whose body is not exactly
+   * `{ data: { rows: [...] } }` took the whole surface down before it drew
+   * anything. Same defect as `adaptDetail` below; this was the crash the
+   * visual-QA capture actually hit.
+   */
   const list = useMemo<PresubListRow[] | null>(
-    () => (data ? data.data.rows.map((r) => ({
+    () => (Array.isArray(data?.data?.rows) ? data.data.rows.map((r) => ({
       id:          r.id,
       qNumber:     r.qNumber,
       type:        r.type,

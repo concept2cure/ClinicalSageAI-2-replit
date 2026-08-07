@@ -52,7 +52,6 @@ const ALWAYS_SKIP = [
   'client/src/components/navigation',
   'client/src/components/timeline',
   'client/src/components/predicate',
-  'client/src/toast.css',
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────────

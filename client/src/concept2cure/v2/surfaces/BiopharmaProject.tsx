@@ -290,6 +290,26 @@ function RegulatoryPanel({
   );
 }
 
+/**
+ * CSR workflow — the ICH E3 build board.
+ *
+ * `onAsk` here is the house pattern, not misfiled navigation. "Open CSR §11 in
+ * the editor" reads like a sentence because it IS one: the request goes to ANA,
+ * which opens the section with the surrounding context, rather than to `onNav`,
+ * which would only change the URL. `RegulatoryWorkspace` below (line ~500) does
+ * the same thing with the same phrasing on its own row buttons.
+ *
+ * What was wrong was the registration. This surface used to claim the rail's
+ * column — the flag then spelled `hideAna`, now `ownsConversation` — so
+ * the shell drew no rail, every one of these asks went into a column this
+ * screen never rendered, and `ask()` persisted `anaOpen` on the way past, so
+ * the question reappeared, answered, on the next surface that did draw a rail.
+ * `RegulatoryWorkspace`, the actual 3-pane substrate in this same file, never
+ * claimed it. A board capped at 1100px had no business doing so either.
+ * `csr-workflow` is registered `{ component: CsrWorkflow, full: true }` now,
+ * which is what keeps it on the SurfaceView arm that still carries `onAsk`. The
+ * claim is gone; the phrasing is unchanged.
+ */
 export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
   // Live ICH E3 CSR build board (GET /api/csr-workflow/board → { success,
   // data: { program, sections, ... } }). Fixture-free (GA real-data standard):

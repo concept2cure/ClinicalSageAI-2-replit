@@ -21,7 +21,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { EmptyState } from '../dataConnect';
+import { EmptyState, hasKeys, isRowsWith, type ShapeGuard } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
@@ -37,15 +37,70 @@ interface CvCodeRow { code: string; description: string; }
 interface CvList { id: string; shortName: string; oid: string; codes: CvCodeRow[]; }
 type SpecVersions = Record<EctdVersion, Record<string, string>>;
 
-async function readJson<T = any>(path: string): Promise<{ ok: boolean; status: number; body: T | null }> {
+/**
+ * A 200 used to be cast straight to `T` and handed to the panels. It is not the
+ * same thing as being a `T`: every wrong-but-plausible body a proxy or a version
+ * skew can produce — `{ data: [] }`, `{}`, a bare array, a JSON scalar — is
+ * TRUTHY, so it sailed past the `!body` checks below, then `list.codes` read as
+ * `undefined` and `filteredCodes.length` threw during render. The whole surface
+ * went to "didn't finish loading" for what was really "the server answered with
+ * something we don't understand".
+ *
+ * So the shape is checked HERE, once, for all three fetches. A body that isn't
+ * the declared shape comes back `ok: false`, which is the branch each panel
+ * already routes into its error panel.
+ */
+async function readJson<T>(
+  path: string,
+  isShape: ShapeGuard<T>,
+): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
     const res = await apiRequest('GET', path);
-    const body = (await res.json().catch(() => null)) as T | null;
-    return { ok: res.ok, status: res.status, body };
+    const body = (await res.json().catch(() => null)) as unknown;
+    if (!res.ok) return { ok: false, status: res.status, body: null };
+    if (!isShape(body)) return { ok: false, status: res.status, body: null };
+    return { ok: true, status: res.status, body };
   } catch {
     return { ok: false, status: 0, body: null };
   }
 }
+
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * `/qualification/spec-versions` answers a map keyed by eCTD version. Both keys
+ * are required because the selector offers exactly those two versions — a body
+ * carrying neither cannot serve this panel, whatever else it holds. A version
+ * present-but-null is left alone: that is a real "nothing qualified yet" and
+ * renders as the empty state, not as an error.
+ */
+const isSpecVersions: ShapeGuard<SpecVersions> = (v): v is SpecVersions => {
+  if (!isRecord(v)) return false;
+  const rec = v;
+  return (['v3.2.2', 'v4.0'] as const).every((k) => k in rec && (rec[k] == null || isRecord(rec[k])));
+};
+
+/**
+ * `/controlled-vocab` answers `{ regionalIgOid, v4: [...], v3: [...] }`. Both
+ * members are dereferenced as arrays (`.length`, `.map`), and `?.` on the
+ * container never covered that — `listing?.v4` is fine and `listing.v4.map` is
+ * not, when `v4` came back as an object or absent entirely.
+ */
+const isCvListing: ShapeGuard<CvListingResponse> = (v): v is CvListingResponse =>
+  hasKeys<CvListingResponse>('v4', 'v3')(v) &&
+  isRowsWith('id', 'codeCount')(v.v4) &&
+  isRowsWith('id', 'codeCount')(v.v3);
+
+/** `/controlled-vocab/:listId` answers one genericode list; `codes` is what the table walks. */
+const isCvList: ShapeGuard<CvList> = (v): v is CvList =>
+  hasKeys<CvList>('codes')(v) && isRowsWith<CvCodeRow>('code', 'description')(v.codes);
+
+/** Code-list ids arrive camelCase. A row that lost its id renders blank instead of throwing. */
+const humanize = (id: unknown) => String(id ?? '').replace(/([A-Z])/g, ' $1');
+
+/** Only strings can be lowercased; a row with a null code must not kill the filter. */
+const lower = (s: unknown) => (typeof s === 'string' ? s.toLowerCase() : '');
 
 /** Friendly label for a v4.0 code-list id. */
 const V4_LABELS: Record<string, string> = {
@@ -81,8 +136,8 @@ export function PublishingCenter(_props: SurfaceViewProps) {
     (async () => {
       setLoadState('loading');
       const [s, l] = await Promise.all([
-        readJson<SpecVersions>('/api/ectd/qualification/spec-versions'),
-        readJson<CvListingResponse>('/api/ectd/controlled-vocab'),
+        readJson('/api/ectd/qualification/spec-versions', isSpecVersions),
+        readJson('/api/ectd/controlled-vocab', isCvListing),
       ]);
       if (!live) return;
       if (!s.ok || !l.ok || !s.body || !l.body) { setLoadState('error'); return; }
@@ -93,7 +148,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
 
   const loadList = useCallback(async (listId: string) => {
     setListState('loading'); setList(null);
-    const { ok, body } = await readJson<CvList>(`/api/ectd/controlled-vocab/${encodeURIComponent(listId)}`);
+    const { ok, body } = await readJson(`/api/ectd/controlled-vocab/${encodeURIComponent(listId)}`, isCvList);
     if (!ok || !body) { setListState('error'); return; }
     setList(body); setListState('ready');
   }, []);
@@ -105,10 +160,13 @@ export function PublishingCenter(_props: SurfaceViewProps) {
 
   const specRows = specs ? Object.entries(specs[version] ?? {}) : [];
   const filteredCodes = useMemo(() => {
-    if (!list) return [];
+    // `list` is only ever a guarded CvList now, so `codes` is an array — but the
+    // memo returned `list.codes` unchecked, and that undefined was what reached
+    // `filteredCodes.length` in the render below and unwound the whole surface.
+    if (!list || !Array.isArray(list.codes)) return [];
     const q = filter.trim().toLowerCase();
     if (!q) return list.codes;
-    return list.codes.filter((c) => c.code.toLowerCase().includes(q) || c.description.toLowerCase().includes(q));
+    return list.codes.filter((c) => lower(c.code).includes(q) || lower(c.description).includes(q));
   }, [list, filter]);
 
   return (
@@ -143,7 +201,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
           {loadState === 'loading' ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.book} title="Loading spec versions…" /></div>
           ) : loadState === 'error' ? (
-            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="GET /api/ectd/qualification/spec-versions didn’t respond. Sign in to your tenant and retry." /></div>
+            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="GET /api/ectd/qualification/spec-versions didn’t respond, or answered in a shape this panel can’t read. Sign in to your tenant and retry." /></div>
           ) : specRows.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" /></div>
           ) : (
@@ -171,7 +229,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
                 </p>
                 <table className="reg-tbl"><thead><tr><th>Coded-attribute list</th><th style={{ textAlign: 'right' }}>Codes</th></tr></thead>
                   <tbody>{listing.v3.map((l) => (
-                    <tr key={l.id}><td style={{ fontWeight: 600 }}>{l.id.replace(/([A-Z])/g, ' $1')}</td><td style={{ textAlign: 'right' }}>{l.codeCount}</td></tr>
+                    <tr key={l.id}><td style={{ fontWeight: 600 }}>{humanize(l.id)}</td><td style={{ textAlign: 'right' }}>{l.codeCount}</td></tr>
                   ))}</tbody></table>
               </>
             ) : (
@@ -181,12 +239,13 @@ export function PublishingCenter(_props: SurfaceViewProps) {
             <>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
                 <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Code list</label>
-                <select className="c2c-input" style={{ height: 30, minWidth: 260 }} value={selectedList} onChange={(e) => setSelectedList(e.target.value)}>
+                <select aria-label="Controlled vocabulary list" className="c2c-input" style={{ height: 30, minWidth: 260 }} value={selectedList} onChange={(e) => setSelectedList(e.target.value)}>
                   {(listing?.v4 ?? []).map((l) => (
                     <option key={l.id} value={l.id}>{V4_LABELS[l.id] ?? l.id} ({l.codeCount})</option>
                   ))}
                 </select>
                 <input
+                  aria-label="Filter codes"
                   className="c2c-input" style={{ height: 30, marginLeft: 'auto', minWidth: 200 }}
                   placeholder="Filter codes…" value={filter} onChange={(e) => setFilter(e.target.value)}
                 />
@@ -194,7 +253,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
               {listState === 'loading' ? (
                 <EmptyState icon={I.book} title="Loading codes…" />
               ) : listState === 'error' ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load this code list" hint="GET /api/ectd/controlled-vocab/:listId didn’t respond." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load this code list" hint="GET /api/ectd/controlled-vocab/:listId didn’t respond, or answered in a shape this panel can’t read." />
               ) : !list || filteredCodes.length === 0 ? (
                 <EmptyState icon={I.book} title={filter ? 'No codes match your filter' : 'No codes'} />
               ) : (

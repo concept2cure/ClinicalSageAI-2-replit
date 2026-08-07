@@ -611,6 +611,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
           <div className="tl-edit" style={{ marginTop: 0 }}>
             <span className="tl-edit-ic">{I.sparkles}</span>
             <input
+              aria-label="Claim to check against precedent"
               className="tl-edit-in"
               placeholder='Paste a claim to check against precedent -- e.g. "14-day wear with no fingerstick calibration"'
               value={claim}
@@ -621,6 +622,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
             />
             <button
               className="tl-edit-go"
+              aria-label="Check this claim against precedent"
               onClick={checkClaim}
               disabled={!claim.trim() || claimBusy}
             >

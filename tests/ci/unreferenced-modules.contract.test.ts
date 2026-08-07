@@ -68,38 +68,60 @@ describe('resolution quirk 1 — .js specifiers naming .ts files', () => {
   });
 });
 
-describe('resolution quirk 2 — routers mounted from a manifest of thunks', () => {
-  // server/bootstrap/register-advanced-platform-routes.ts mounts these from a
-  // config manifest whose entries carry a loader thunk, e.g.
-  // { path: '/api', load: () => import('../routes/chat-actions') }.
-  //
-  // These used to use a bare string ({ mod: '../routes/chat-actions' }) with no
-  // `import` keyword, which is why this quirk existed: the module was invisible
-  // to the import-based unreferenced-modules checker. They were converted to
-  // literal-import thunks so esbuild can bundle them for production (fix: bundle
-  // the ~127 route mounts esbuild was silently dropping in prod), which also
-  // makes the reference visible. The assertion now pins the thunk form.
-  const manifestMounted = [
+describe('resolution quirk 2 — routers mounted from a manifest of path strings', () => {
+  /*
+   * The premise this block was written against has CHANGED, and the guard it
+   * carried for exactly that possibility is what caught it.
+   *
+   * register-advanced-platform-routes.ts used to mount these by string —
+   * `{ path: '/api', mod: '../routes/chat-actions' }` — with no `import` keyword
+   * anywhere near them, which is why the scanner learned to read manifests. That
+   * form is gone: a variable specifier is invisible to esbuild, so every one of
+   * those routers was absent from dist/index.js and 404d in production. They are
+   * static imports now (see server/bootstrap/mount-routes.ts), and the scanner
+   * sees them the ordinary way.
+   *
+   * The manifest matcher is KEPT rather than deleted. It costs nothing, it is
+   * the reason chat-actions was not deleted as dead once already, and the idiom
+   * is one `mod:` away from returning. What is not kept is the assertion that
+   * the manifest form is still in use — that would now be asserting something
+   * false to protect something true.
+   */
+  const formerlyManifestMounted = [
     'server/routes/chat-actions.ts',
     'server/routes/workspace-summary.ts',
   ];
 
-  it('the manifest form is still how these mount (guards against a stale premise)', () => {
+  it('the manifest form is no longer used for route registration', () => {
+    // The inverse of the original assertion, and the reason for it: a `mod:`
+    // manifest in a registrar means a router that will not be in the bundle.
+    // scripts/ci/check-bundle-reachability.mjs is the primary guard; this keeps
+    // the premise of THIS file honest about which resolution path is live.
     const src = fs.readFileSync(
       path.join(REPO_ROOT, 'server/bootstrap/register-advanced-platform-routes.ts'),
       'utf8',
     );
-    expect(src).toMatch(/load:\s*\(\)\s*=>\s*import\('\.\.\/routes\/chat-actions'\)/);
-    expect(src).toMatch(/load:\s*\(\)\s*=>\s*import\('\.\.\/routes\/workspace-summary'\)/);
+    expect(src).not.toMatch(/mod:\s*'\.\.\/routes\//);
+    expect(src).toContain("from '../routes/chat-actions.js'");
+    expect(src).toContain("from '../routes/workspace-summary.js'");
   });
 
-  it.each(manifestMounted)('does not call %s dead', (mod) => {
+  it.each(formerlyManifestMounted)('does not call %s dead', (mod) => {
     expect(unreferenced.has(mod)).toBe(false);
   });
 
-  it('resolves a manifest string to the same key as an import would', () => {
+  it('still resolves a manifest string to the same key as an import would', () => {
+    // The matcher itself, exercised directly now that no live manifest does it
+    // for us. Without this the capability would rot unnoticed and the false
+    // positive it prevents would come back the next time someone writes a
+    // manifest — in a loader that is not a route registrar, where the manifest
+    // form is fine.
     const referenced = collectReferencedPaths();
     expect(referenced.has('server/routes/chat-actions')).toBe(true);
+    expect(
+      stripModuleExtension('server/routes/chat-actions'),
+      'the manifest form and the import form must produce one key',
+    ).toBe(stripModuleExtension('server/routes/chat-actions.js'));
   });
 });
 

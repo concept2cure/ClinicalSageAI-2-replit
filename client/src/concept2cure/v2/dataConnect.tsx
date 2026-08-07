@@ -206,11 +206,86 @@ export interface DataResult<T> {
   status: number;
 }
 
+/* ── Shape guards ──────────────────────────────────────────────────────────────
+ *
+ * `liveGetOrNull<T>` casts the parsed body to `T`. That cast is a promise the
+ * network cannot keep: a 200 is only evidence that *something* came back.
+ *
+ * The failure this exists for is specific and was observed. A route that returns
+ * `{ data: [] }` where the surface expects `{ program, tree }` unwraps to a bare
+ * `[]`, and `[]` is TRUTHY — so it walks straight past every `if (!data) return`
+ * guard the surface already wrote, satisfies no field it then reads, and the
+ * first `data.tree.map(...)` throws inside `useMemo` during render. React unwinds
+ * the subtree, `SurfaceBoundary` catches it, and the user is told "this surface
+ * didn't finish loading" — when the honest, already-written answer was "we
+ * couldn't load this".
+ *
+ * One envelope change, one proxy returning a login page with status 200, one
+ * feature flag flipping a route's return type, and a surface goes from "empty
+ * state" to "crashed" with no code change of its own.
+ *
+ * Passing a guard converts that crash into the error branch the surface already
+ * has. The cost is one argument at the call site and zero new UI, because every
+ * one of these surfaces already renders `<EmptyState tone="error">` when the
+ * fetch fails — this just makes "the fetch returned nonsense" reach the same
+ * branch as "the fetch failed", which is what the user needed to know either way.
+ *
+ * Guards are OPT-IN. A blanket rule cannot work here: `useLiveRows` legitimately
+ * calls `useLiveData<T[]>`, so "an array is the wrong shape" is true for some
+ * callers and false for others. Only the call site knows.
+ */
+
+/** A runtime check that a 200 body is the shape the caller asked for. */
+export type ShapeGuard<T> = (value: unknown) => value is T;
+
+/**
+ * The payload is a non-array object carrying every one of these keys.
+ *
+ * Keys are checked with `in`, not truthiness — a present-but-null field is a
+ * legitimate payload ("no program selected yet"), and rejecting it would turn a
+ * real empty state into a fabricated error.
+ */
+export function hasKeys<T>(...keys: string[]): ShapeGuard<T> {
+  return (value: unknown): value is T => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    return keys.every((k) => k in (value as Record<string, unknown>));
+  };
+}
+
+/**
+ * The payload is an array, and — if non-empty — its first row carries every one
+ * of these keys.
+ *
+ * An EMPTY array passes: zero rows is the honest empty state, not a shape
+ * failure. Checking only the first row mirrors `matchesShape` above; it is a
+ * contract check, not validation of every record.
+ */
+export function isRowsWith<T>(...keys: string[]): ShapeGuard<T[]> {
+  return (value: unknown): value is T[] => {
+    if (!Array.isArray(value)) return false;
+    if (value.length === 0) return true;
+    const row = value[0];
+    if (!row || typeof row !== 'object') return false;
+    return keys.every((k) => k in (row as Record<string, unknown>));
+  };
+}
+
+/** The message a shape rejection produces. Exported so tests assert on one string. */
+export const shapeMismatch = (path: string) => `unexpected response shape for ${path}`;
+
 /**
  * Fixture-free single GET. Unwraps the `{ data }` success envelope, returns
  * `null` (no fixture) on any non-OK / 204 / network failure. Never throws.
+ *
+ * With `guard`, a 200 whose body is not the expected shape is reported as an
+ * error rather than handed to the caller as a lie about `T` — see the block
+ * comment above. A null/absent payload is NOT guarded: that is the honest empty
+ * state, and a guard must never convert "nothing here yet" into "broken".
  */
-export async function liveGetOrNull<T>(path: string): Promise<DataResult<T>> {
+export async function liveGetOrNull<T>(
+  path: string,
+  guard?: ShapeGuard<T>,
+): Promise<DataResult<T>> {
   try {
     const res = await apiRequest('GET', path);
     if (!res.ok) {
@@ -220,7 +295,11 @@ export async function liveGetOrNull<T>(path: string): Promise<DataResult<T>> {
       return { data: null, status: 204 };
     }
     const body = (await res.json()) as unknown;
-    return { data: unwrapEnvelope(body) as T, status: res.status };
+    const payload = unwrapEnvelope(body);
+    if (guard && payload != null && !guard(payload)) {
+      return { data: null, error: shapeMismatch(path), status: res.status };
+    }
+    return { data: payload as T, status: res.status };
   } catch (e) {
     return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
   }
@@ -287,12 +366,18 @@ export interface DataState<T> {
 export function useLiveData<T>(
   path: string | null,
   deps: React.DependencyList = [path],
+  guard?: ShapeGuard<T>,
 ): DataState<T> {
   const [state, setState] = React.useState<DataState<T>>({
     data: null,
     loading: Boolean(path),
     empty: false,
   });
+  // `guard` is deliberately not a dependency. It is read through a ref so an
+  // inline arrow at the call site cannot re-trigger the fetch on every render,
+  // while a guard that genuinely changes still applies to the next load.
+  const guardRef = React.useRef(guard);
+  guardRef.current = guard;
   React.useEffect(() => {
     let cancelled = false;
     if (!path) {
@@ -300,7 +385,7 @@ export function useLiveData<T>(
       return undefined;
     }
     setState((s) => ({ ...s, loading: true }));
-    liveGetOrNull<T>(path).then((r) => {
+    liveGetOrNull<T>(path, guardRef.current).then((r) => {
       if (cancelled) return;
       const isEmpty =
         !r.error &&
@@ -332,8 +417,12 @@ export interface ListState<T> {
 export function useLiveRows<T>(
   path: string | null,
   deps: React.DependencyList = [path],
+  guard?: ShapeGuard<T[]>,
 ): ListState<T> {
-  const st = useLiveData<T[]>(path, deps);
+  const st = useLiveData<T[]>(path, deps, guard);
+  // Without a guard a non-array 200 is silently flattened to zero rows, which
+  // renders as "nothing here yet" — an empty state that is not true. Pass
+  // `isRowsWith(...)` to have that reported as the error it is.
   const rows = Array.isArray(st.data) ? st.data : [];
   return {
     rows,

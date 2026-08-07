@@ -140,7 +140,13 @@ describe('DocumentAuthoring — the Sources rail', () => {
     expect(screen.getByText(/Ask what changed/)).toBeTruthy();
   });
 
-  it('asks AnA what changed rather than redrafting on the spot', async () => {
+  /*
+   * This used to assert that the button called the shell's `onAsk`. The editor
+   * is registered `ownsConversation: true` — it needs the rail's column for its
+   * own third track — so that call went into a rail this screen never renders.
+   * The ask opens the editor's own AnA pane now; the prompt is unchanged.
+   */
+  it('asks AnA what changed, in the editor’s own pane, rather than redrafting on the spot', async () => {
     mockApi({ sections: () => ok({ sources: [citation({ state: 'changed' })] }) });
     const p = props();
     render(<DocumentAuthoring {...p} />);
@@ -148,10 +154,11 @@ describe('DocumentAuthoring — the Sources rail', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
     fireEvent.click(await screen.findByText(/Ask what changed/));
 
-    expect(p.onAsk).toHaveBeenCalledTimes(1);
-    const prompt = String(p.onAsk.mock.calls[0][0]);
-    expect(prompt).toMatch(/no longer matches/);
-    expect(prompt).toMatch(/Do not rewrite it yet/);
+    // The pane opens with the question in it — not a rail somewhere else.
+    const pane = await screen.findByLabelText(/AnA — document authoring/);
+    await waitFor(() => expect(pane.textContent).toMatch(/no longer matches/));
+    expect(pane.textContent).toMatch(/Do not rewrite it yet/);
+    expect(p.onAsk).not.toHaveBeenCalled();
   });
 
   it('makes no claim about a citation with no recorded checksum', async () => {

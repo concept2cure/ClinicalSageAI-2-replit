@@ -251,7 +251,6 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         : live.rows,
     );
     if (live.rows[0]) setSel((cur) => cur || live.rows[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live.loading, live.rows]);
   const [tab, setTab] = useState('preview');
   const [uploading, setUploading] = useState(false);
@@ -405,7 +404,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
           {I.upload || I.plus} Upload a form
         </button>
         <input
-          ref={fileRef} type="file" accept=".docx,.pdf" style={{ display: 'none' }}
+          ref={fileRef} type="file" aria-label="Upload a template document" accept=".docx,.pdf" style={{ display: 'none' }}
           onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
         />
       </div>
@@ -497,24 +496,30 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         </div>
 
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">{sel.name}</span><span className="s">{(sel.sourceFileType || 'template').toUpperCase()} - {sel.docTypes.join(' - ')}</span></div>
+          {/* docTypes / spec are columns a hand-built or partially-migrated row
+              can arrive without; the sibling reads above already tolerate that
+              (sourceFileType, extractionWarnings), and these now do too. */}
+          <div className="pj-card-h"><span className="t">{sel.name}</span><span className="s">{(sel.sourceFileType || 'template').toUpperCase()}{sel.docTypes && sel.docTypes.length ? ' - ' + sel.docTypes.join(' - ') : ''}</span></div>
           <div className="pj-card-b">
             <div className="reg-tabs" style={{ marginTop: 0 }}>
               {TABS.map(([id, lb]) => (
                 <button key={id} className={'reg-tab' + (tab === id ? ' on' : '')} onClick={() => setTab(id)}>
-                  {lb}{id === 'fields' && sel.spec.formFields && sel.spec.formFields.length ? ' - ' + sel.spec.formFields.length : ''}
+                  {lb}{id === 'fields' && sel.spec && sel.spec.formFields && sel.spec.formFields.length ? ' - ' + sel.spec.formFields.length : ''}
                 </button>
               ))}
             </div>
 
-            {tab === 'preview' && (
+            {/* A row with no spec has nothing to draw a sheet from, and the one
+                thing this surface must not do is fall back to DEFAULT_SPEC —
+                that would show the user page geometry the template never had. */}
+            {tab === 'preview' && sel.spec && (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '18px 0' }}>
                 <SpecPreview spec={sel.spec} />
               </div>
             )}
-            {tab === 'spec' && <SpecTab spec={sel.spec} />}
+            {tab === 'spec' && sel.spec && <SpecTab spec={sel.spec} />}
             {tab === 'fields' && (
-              sel.spec.formFields && sel.spec.formFields.length ? (
+              sel.spec && sel.spec.formFields && sel.spec.formFields.length ? (
                 <div className="sp-list">
                   {sel.spec.formFields.map((f, i) => (
                     <div key={i} className="sp-row">
@@ -527,7 +532,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
               ) : <div className="scaf-note">No form fields detected in this template.</div>
             )}
             {tab === 'styles' && (
-              sel.spec.namedStyles && sel.spec.namedStyles.length ? (
+              sel.spec && sel.spec.namedStyles && sel.spec.namedStyles.length ? (
                 <div className="sp-list">
                   {sel.spec.namedStyles.map((s, i) => (
                     <div key={i} className="sp-row">
@@ -548,7 +553,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
                 </div>
                 <div className="pj-seclbl">Recovered from</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {([['document.xml', 'page + margins'], ['styles.xml', 'fonts, sizes, colours'], ['theme1.xml', 'font references'], ['header*.xml', 'header + logo'], ['footer*.xml', 'footer + page numbers'], ['media/*', sel.spec.brand.logo && sel.spec.brand.logo.present ? 'logo bytes' : '—']] as [string, string][]).map(([f, d], i) => (
+                  {([['document.xml', 'page + margins'], ['styles.xml', 'fonts, sizes, colours'], ['theme1.xml', 'font references'], ['header*.xml', 'header + logo'], ['footer*.xml', 'footer + page numbers'], ['media/*', sel.spec && sel.spec.brand.logo && sel.spec.brand.logo.present ? 'logo bytes' : '—']] as [string, string][]).map(([f, d], i) => (
                     <span key={i} className="cv-ep" title={d}>{f}</span>
                   ))}
                 </div>

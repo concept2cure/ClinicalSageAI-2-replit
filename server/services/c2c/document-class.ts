@@ -29,13 +29,21 @@
 /**
  * program_type (lowercase, as projects.ts normalises it) → c2c_documents.doc_type.
  *
- * Deliberately partial. ivd / device / ide / biologic / anda are accepted by
- * VALID_PROGRAM_TYPES but have no doc_type CHECK value and no seeded rule pack.
- * They fail closed rather than being mapped to a near neighbour.
+ * Still deliberately partial. ivd / device / biologic remain unmapped, and that
+ * is a product decision rather than a gap: none of the three names a pathway.
+ * "device" could be a 510(k), a De Novo, a PMA or an IDE, and those are four
+ * different submissions with four different outlines — guessing one would file a
+ * customer's product down the wrong pathway, which is materially worse than
+ * declining. They fail closed until the wizard asks the question that resolves
+ * them.
+ *
+ * anda and ide were in that list for the wrong reason: they name their pathway
+ * exactly, and were unmapped only because no CHECK value and no pack existed.
+ * migrations/20260806b supplies both, so they are mapped here.
  */
 export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
-  ind: 'ind', cta: 'cta', nda: 'nda', bla: 'bla', maa: 'maa', jnda: 'jnda',
-  '510k': 'k510', de_novo: 'denovo', pma: 'pma', cer: 'cer',
+  ind: 'ind', cta: 'cta', nda: 'nda', anda: 'anda', bla: 'bla', maa: 'maa', jnda: 'jnda',
+  '510k': 'k510', de_novo: 'denovo', pma: 'pma', ide: 'ide', cer: 'cer',
 };
 
 /**

@@ -16,7 +16,8 @@
  */
 
 import { useFetchJson } from './useFetchJson';
-import { toDataState, type DataState } from '../lib/dataState';
+import { type DataState } from '../lib/dataState';
+import { isRecord, shapeMismatch, toRowsState } from '../lib/payloadShape';
 import type {
   UDI_DEVICES,
   UDI_ISSUES,
@@ -66,18 +67,32 @@ export function useUdi(programId?: string | null): UseUdiResult {
     : '/api/mdx/udi/summary';
   const { data, loading, error, refresh } = useFetchJson<UdiPayload>(url);
 
-  const state = <T,>(rows: T | undefined): DataState<T> =>
-    toDataState(rows ?? null, loading, error);
+  /*
+   * `data?.data.devices` — the `?.` covered the envelope and nothing inside it.
+   * Any 200 whose body is not `{ data: { … } }` (an error body, a bare array, a
+   * scalar, `{}`) left `data.data` undefined, and reading `.devices` off it threw
+   * during render, so the surface reported itself broken instead of reporting a
+   * response it couldn't read. A body that isn't the envelope is a failed load,
+   * and every panel already renders that state through DataGate.
+   */
+  const panels = isRecord(data) && isRecord(data.data) ? data.data : null;
+  const failed = error ?? (data != null && panels === null ? shapeMismatch(url) : null);
+
+  /* Per panel: absent still means idle (a payload that omits one panel keeps the
+     other four), but present-and-not-a-list is the shape failure that used to
+     surface as a `.map` crash inside the table. */
+  const state = <T,>(rows: unknown): DataState<T[]> =>
+    toRowsState<T>(rows, loading, failed, { source: url });
 
   return {
-    devices: state(data?.data.devices),
-    labels: state(data?.data.labels),
-    symbols: state(data?.data.symbols),
-    issues: state(data?.data.issues),
-    mri: state(data?.data.mri),
+    devices: state<DeviceRow>(panels?.devices),
+    labels: state<LabelRow>(panels?.labels),
+    symbols: state<SymbolRow>(panels?.symbols),
+    issues: state<IssueRow>(panels?.issues),
+    mri: state<MriRow>(panels?.mri),
     scope: data?.meta?.scope ?? 'organization',
     loading,
-    error,
+    error: failed,
     refresh,
   };
 }

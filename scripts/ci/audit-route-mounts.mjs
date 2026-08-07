@@ -66,7 +66,6 @@ const ALLOWLIST = {
     '/api/projects',
     '/api/csr',
     '/api/templates',
-    '/api/atoms',
     '/api/reports',
   ]),
   // Canonical shared gateway prefix intentionally mounted by many modules.
@@ -85,7 +84,6 @@ const ROUTE_OWNERS = [
   { prefix: '/api/projects', owner: 'Workspace / Projects', contact: 'server/routes/projects*.ts' },
   { prefix: '/api/documents', owner: 'Document Systems', contact: 'server/routes/document*.ts' },
   { prefix: '/api/templates', owner: 'Template Systems', contact: 'server/routes/templates*.ts' },
-  { prefix: '/api/atoms', owner: 'Knowledge / Atoms', contact: 'server/routes/atoms*.ts' },
   { prefix: '/api/csr', owner: 'CSR Builder', contact: 'server/routes/csr*.ts' },
 ];
 

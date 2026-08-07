@@ -20,6 +20,7 @@
  */
 
 import { useFetchJson } from './useFetchJson';
+import { firstArray } from '../lib/payloadShape';
 import { toDataState, type DataState } from '../lib/dataState';
 
 /* ─── Server row shapes (snake_case, as SELECT * returns them) ────── */
@@ -158,7 +159,9 @@ export function useClinicalStudies(programId?: string | null): UseClinicalStudie
     : '/api/mdx/clinical-studies';
   const { data, loading, error, refresh } = useFetchJson<ListPayload>(url);
 
-  const rows = data?.data ? data.data.map(adaptStudy) : null;
+  // See useCdxClia: the truthiness test admits any non-null value, including
+  // the `{}` that a version-skewed route sends where a list belongs.
+  const rows = firstArray<RawStudy>(data?.data)?.map(adaptStudy) ?? null;
 
   return {
     studies: toDataState(rows, loading, error),

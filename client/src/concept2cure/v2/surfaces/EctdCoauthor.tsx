@@ -13,19 +13,39 @@
  *   • structural validation (POST …/validate) and ICH M4 compliance
  *     (GET …/compliance) are computed on the server from that document and its
  *     sections;
- *   • the AnA pane routes every typed question to the real AnA surface
- *     (/api/ana-ri/stream) via onAsk — it never drafts or reports tool calls
- *     on its own.
+ *   • the AnA pane runs the real streaming assistant (/api/ana-ri/stream) on
+ *     this surface, grounded to the selected document — it never drafts or
+ *     reports tool calls on its own.
  *
  * No fixture, no "Sample data" pill, no fabricated provenance/audit id, no
  * local stand-in. An org with no documents sees an honest empty affordance.
+ *
+ * ── The pane that could not answer ───────────────────────────────────────────
+ * This surface is registered `ownsConversation: true`, so the shell does not
+ * draw its AnA rail here. The pane nevertheless forwarded every question to
+ * that rail through `onAsk` and kept a local `thread` array that only ever
+ * received `role: 'user'` — `setThread` is called once in the whole file and
+ * appends nothing else. So the renderer's `m.role === 'ai'` branch was
+ * unreachable by construction, the empty state promised the question "opens in
+ * AnA, where the answer is generated and traced" while nothing opened, and the
+ * answer streamed into a column this screen never draws — surfacing later,
+ * unbidden, on the next surface that does.
+ *
+ * The pane runs its own named conversation now (`useAnaChat`, screen
+ * `ectd-coauthor`), the third of the surface docks recorded in
+ * tests/ui/one-shell.test.ts. The user's turn and AnA's answer land in the pane
+ * they were typed into, and a governed command comes back as the real §11.50
+ * sign-off rather than vanishing.
  */
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
+import { useAnaChat } from '../../components/ana/useAnaChat';
+import { SignoffList } from '../SignoffList';
+import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
-import type { SurfaceViewProps } from '../surfaceViews';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ectd-v2.css';
 
@@ -44,13 +64,6 @@ interface CoauthorDoc {
   updatedAt?: string | null;
   createdAt?: string | null;
   createdBy?: string | null;
-}
-
-/** A turn in the AnA hand-off pane. Only user turns are ever appended here —
- *  the answer is generated and traced in the real AnA surface, not inline. */
-interface EctdThreadMessage {
-  role: 'user' | 'ai';
-  text?: string;
 }
 
 interface ValidationFinding {
@@ -147,10 +160,36 @@ function runComplianceAction(docId: number): Promise<ComplianceResult | null> {
     .catch(() => null);
 }
 
+/** The REAL Part 11 sign-off prompts AnA returned for governed commands issued
+ *  from this pane, each resolving through GovernedActionSignoff
+ *  (POST /api/ana-ri/governed-action) to the server's confirmation. Rendered
+ *  here because a §11.50 gate that has nowhere to draw is a gate that silently
+ *  does not exist — the exact failure this surface is being fixed for. */
+function EctdSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
+  return (
+    <SignoffList
+      signoffs={signoffs}
+      style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}
+      doneClassName="ec-empty"
+    />
+  );
+}
+
+/** The project currently in context, the same runtime channel every
+ *  project-aware surface reads. Grounds the pane's conversation on the open
+ *  program instead of answering blind. */
+function readProjectId(): string | undefined {
+  try {
+    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+    return p && p.id != null ? String(p.id) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /* ---- Component ---- */
 
-export function EctdCoauthor({ onAsk, onNav: _onNav }: SurfaceViewProps) {
-  const ask = onAsk;
+export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
   const live = connected();
 
   const [docs, setDocs] = useState<CoauthorDoc[]>([]);
@@ -161,7 +200,6 @@ export function EctdCoauthor({ onAsk, onNav: _onNav }: SurfaceViewProps) {
   const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [focus, setFocus] = useState(false);
   const [tab, setTab] = useState<'document' | 'validation' | 'compliance'>('document');
-  const [thread, setThread] = useState<EctdThreadMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState('');
   const [validation, setValidation] = useState<ValidationResult | null>(null);
@@ -207,6 +245,24 @@ export function EctdCoauthor({ onAsk, onNav: _onNav }: SurfaceViewProps) {
 
   const activeDoc = useMemo(() => docs.find((d) => d.id === activeId) || null, [docs, activeId]);
   const activeRef = activeDoc ? activeDoc.moduleNumber || activeDoc.title : '';
+
+  /* The pane's own named conversation — the REAL streaming assistant, grounded
+     on the document the user has open so "tighten this" means this section. */
+  const moduleContext = useMemo(
+    () => ({
+      surface: 'ectd-coauthor',
+      coauthorDocumentId: activeDoc?.id ?? null,
+      moduleNumber: activeDoc?.moduleNumber ?? null,
+      documentTitle: activeDoc?.title ?? null,
+    }),
+    [activeDoc?.id, activeDoc?.moduleNumber, activeDoc?.title],
+  );
+  const anaChat = useAnaChat({
+    screenName: 'ectd-coauthor',
+    projectId: readProjectId(),
+    moduleContext,
+  });
+  const turns = anaChat.messages;
 
   /* Validation + compliance are per-document — clear stale results when the
      active document changes so another document's report is never shown. */
@@ -269,17 +325,19 @@ export function EctdCoauthor({ onAsk, onNav: _onNav }: SurfaceViewProps) {
 
   const send = () => {
     const q = draft.trim();
-    if (!q) return;
-    // Hand the question to the real AnA surface rather than answering it here.
-    // This pane shows the user's turn, then routes to AnA where the answer is
-    // generated and traced — it never manufactures an assistant reply or a
-    // completed tool chip. (Until this pane consumes /api/ana-ri/stream inline,
-    // routing to AnA is the only honest behaviour.)
-    setThread((t) => [...t, { role: 'user', text: q }]);
+    if (!q || anaChat.isStreaming) return;
+    // Answered HERE, in the pane it was typed into. The turn streams from
+    // /api/ana-ri/stream with this document as module context; nothing is
+    // manufactured locally and no completed tool chip is invented.
     setDraft('');
-    ask?.(q + (activeRef ? ' (eCTD §' + activeRef + ')' : ''));
-    setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, 60);
+    void anaChat.send(q + (activeRef ? ' (eCTD §' + activeRef + ')' : ''));
   };
+
+  /* Keep the newest turn in view as tokens arrive. */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [turns.length, anaChat.isStreaming]);
 
   const artTitle = activeDoc ? activeDoc.title : 'eCTD Co-Author';
   const artMeta = activeDoc
@@ -311,7 +369,7 @@ export function EctdCoauthor({ onAsk, onNav: _onNav }: SurfaceViewProps) {
       {/* eCTD tree */}
       <aside className="ec-tree">
         <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1--5</span></div>
-        <div className="ec-tree-search">{I.search}<input placeholder="Find section..." onChange={() => { /* noop */ }} /></div>
+        <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." onChange={() => { /* noop */ }} /></div>
         {loading ? (
           <div className="ec-empty">Loading eCTD documents…</div>
         ) : error ? (
@@ -352,22 +410,46 @@ export function EctdCoauthor({ onAsk, onNav: _onNav }: SurfaceViewProps) {
         <div className="ec-intel-head"><b>AnA</b><span className="hint">co-authoring &sect;{activeRef || '—'} -- {live ? 'live' : 'bound to dossier'}</span></div>
         <div className="ec-intel-scroll" ref={scrollRef}>
           <div className="ec-thread">
-            {thread.length === 0 && (
-              <div className="ec-empty">Ask a question about {activeRef ? '§' + activeRef : 'this dossier'} and it opens in AnA, where the answer is generated and traced. This pane does not draft on its own.</div>
+            {turns.length === 0 && (
+              <div className="ec-empty">
+                Ask about {activeRef ? '§' + activeRef : 'this dossier'} — AnA answers here,
+                grounded on the document you have open. Every turn is saved to your
+                organization's governed conversation store.
+              </div>
             )}
-            {thread.map((m, i) => m.role === 'user'
-              ? <div key={i} className="ec-msg-user">{m.text}</div>
-              : <div key={i} className="ec-msg-ai"><span className="ec-avatar">AnA</span><div className="ec-body"><p>{m.text}</p></div></div>
-            )}
+            {turns.map((m, i) => m.role === 'user' ? (
+              <div key={i} className="ec-msg-user">{m.text}</div>
+            ) : (
+              <div key={i} className="ec-msg-ai">
+                <span className="ec-avatar">AnA</span>
+                <div className="ec-body">
+                  {/* While the reply streams the server's status phase stands in
+                      until the first token lands — never a fabricated sentence. */}
+                  <p>{m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}</p>
+                  {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {m.executedActions.map((a, ai) => (
+                        <span key={ai} className="ec-chip" title={a.error || a.label}>
+                          {a.error ? (I.alertTriangle || I.x) : I.check} {a.label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
+                    <EctdSignoffs signoffs={m.pendingSignoffs} />
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         <div className="ec-intel-foot">
           <div className="ec-composer">
-            <textarea rows={1} placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
+            <textarea rows={1} aria-label="Filter capabilities" placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
               onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <div className="ec-composer-row">
               <span className="ec-chip">{I.paperclip || I.plus} Sources</span>
-              <button className="ec-send" disabled={!draft.trim()} onClick={send}>{I.arrowUp || I.arrowRight || '→'}</button>
+              <button className="ec-send" aria-label="Send message to AnA" disabled={!draft.trim() || anaChat.isStreaming} onClick={send}>{I.arrowUp || I.arrowRight || '→'}</button>
             </div>
           </div>
         </div>

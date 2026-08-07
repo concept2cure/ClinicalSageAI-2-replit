@@ -9,7 +9,7 @@
  * surfaces compile; this proves they actually mount.
  *
  * Surfaces render under the same provider tree the live shell gives them
- * (main.tsx QueryClientProvider + ZenRouter AuthProvider/ProjectProvider);
+ * (main.tsx QueryClientProvider + ZenRouter AuthProvider);
  * offline, their queries degrade to the fixtures each surface already ships.
  */
 import React from 'react';
@@ -22,7 +22,6 @@ import {
   type UiSurface,
 } from '@shared/constants/ui-surface-registry';
 import { AuthProvider } from '@/services/portal/authService';
-import { ProjectProvider } from '../../context/ProjectContext';
 import { SURFACE_VIEWS } from '../surfaceViews';
 import { Home } from '../surfaces/Surfaces';
 
@@ -35,7 +34,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
-        <ProjectProvider>{children}</ProjectProvider>
+        {children}
       </AuthProvider>
     </QueryClientProvider>
   );

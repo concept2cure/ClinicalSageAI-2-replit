@@ -78,9 +78,14 @@ function toWhen(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
 }
 
-/** Stable folder id from the server's family bucket ('Module 2' → 'module-2'). */
-function familyId(family: string): string {
-  return family.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+/** Stable folder id from the server's family bucket ('Module 2' → 'module-2').
+ *  Empty when the row has no family. `family` is declared `string`, but the
+ *  artifact column is nullable and a row that arrives without it took the whole
+ *  vault down here on a response whose envelope was perfectly well-formed — the
+ *  shape guards upstream see a list of objects and let it through. An artifact
+ *  with no family belongs to no folder; it is not a crash. */
+function familyId(family: string | null | undefined): string {
+  return (family ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 /**
@@ -93,15 +98,23 @@ export function selectVaultFiles(
 ): VaultFile[] | null {
   const rows = payload?.data;
   if (!Array.isArray(rows)) return null;
-  return rows.map((r) => ({
-    id: r.artifactId || String(r.id),
+  return rows.map((r, i) => ({
+    // `String(r.id)` on an absent id yields the literal string "undefined", so
+    // every identity-less row collides on one key — React then drops or
+    // duplicates rendered rows, and in a document vault a silently missing row
+    // is the worst outcome available. A per-row synthetic id keeps every row
+    // visible and distinct; it is not persisted anywhere.
+    id: r.artifactId || (r.id != null ? String(r.id) : `unidentified-${i}`),
     name: r.title,
     kind: r.category || r.type,
     type: (r.type || '').toLowerCase(),
     size: '—',
     prog: r.ctdSection ? `CTD ${r.ctdSection}` : r.family,
     folder: familyId(r.family),
-    ver: `v${r.version}`,
+    // "vundefined" is a version label that asserts a version the row does not
+    // have. '—' is this file's existing idiom for a value it cannot supply
+    // (see `size` above, and `note` in selectVaultVersions).
+    ver: r.version != null ? `v${r.version}` : '—',
     versions: r.version,
     status: toStatus(r.status, r.lockedAt),
     updated: toWhen(r.updatedAt),
@@ -117,7 +130,9 @@ export function selectVaultFiles(
  *  'Module 2', 'working-files' → 'Working files'). */
 export function deriveVaultFolders(files: VaultFile[]): VaultFolder[] {
   const buckets = new Map<string, number>();
-  for (const f of files) buckets.set(f.folder, (buckets.get(f.folder) ?? 0) + 1);
+  /* Files whose family was absent carry no folder id; they stay in the root
+     bucket rather than collecting under an unnamed folder in the rail. */
+  for (const f of files) if (f.folder) buckets.set(f.folder, (buckets.get(f.folder) ?? 0) + 1);
   const folders: VaultFolder[] = [
     { id: 'root', label: 'All artifacts', count: files.length, parent: null, active: true },
   ];
@@ -152,7 +167,7 @@ export function selectVaultVersions(
   const rows = payload?.data;
   if (!Array.isArray(rows)) return null;
   return rows.map((r, i) => ({
-    v: `v${r.version_number}`,
+    v: r.version_number != null ? `v${r.version_number}` : '—',
     when: toWhen(r.created_at),
     author: r.created_by_id != null ? `User #${r.created_by_id}` : 'system',
     note: r.change_summary || (r.content_hash ? `Content hash ${r.content_hash.slice(0, 8)}…` : '—'),

@@ -1,7 +1,10 @@
 /**
- * ui-v2 surface additions — the 48 surfaces the Concept2Cure.RI design kit
- * (design_handoff_c2c_v2_ui_replacement) adds on top of the 33 canonical
- * surfaces. Split out of ui-surface-registry.ts (kept both files under the
+ * ui-v2 surface additions — the surfaces the Concept2Cure.RI design kit
+ * (design_handoff_c2c_v2_ui_replacement) adds on top of the canonical set in
+ * ui-surface-registry.ts. (The count is deliberately not written down here: it
+ * said "48 on top of 33" long after both halves had grown past those numbers,
+ * and a stale count in a header is a small lie that costs a reader a grep.)
+ * Split out of ui-surface-registry.ts (kept both files under the
  * repo-health 1,500-line gate); the main file spreads UI_V2_SURFACES into
  * UI_SURFACES so every consumer and selector is unchanged.
  *
@@ -84,6 +87,30 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Canonical taxonomy of 113 filing types across pharma/biotech, device, IVD, cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER).',
+  },
+  {
+    // Routable but unregistered until now. `/concept2cure/client-portal` is
+    // where auth/redirectUtils.ts sends a `client_user` / `client_admin` after
+    // login (CLIENT_FALLBACK), and `surfaceIdFromLocation` carries the segment
+    // through unaliased — so `getSurface('client-portal')` returned undefined
+    // and V2App's fallback ctxSurface labelled the whole screen "Home". Every
+    // external client landed on a breadcrumb reading
+    // "Concept2Cure.RI › Biotech & Pharma › Home".
+    id: 'client-portal',
+    label: 'Client portal (external view)',
+    navTier: 'global',
+    layoutMode: 'client-portal',
+    group: 'workspace',
+    icon: 'building',
+    uiKit: 'home',
+    apiPrefixes: ['/api/client-portal'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The read-only workspace a CRO/sponsor shares with its external client. Fixture-free: every value comes from GET /api/client-portal/overview (mounted in register-tenant-routes.ts, tested in server/routes/__tests__/client-portal.test.ts), which resolves the caller\'s client workspace server-side from the verified JWT and returns only that workspace\'s programs, shared deliverables and updates. Renders without the internal AnA rail — a client sees their partner\'s shared view, not the internal assistant.',
   },
 
   // ─── ui-v2 additions: project ─────────────────────────────────────────────
@@ -342,6 +369,206 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'The MDX workstream — one door. Programs portfolio with classification + 510(k)/PMA/CER/De Novo pathway tabs, predicate intelligence, eSTAR/Annex XIV editors. Built in the MDX kit.',
+  },
+  /* ── The device kit's own destinations ──
+     These twelve were surfaces the kit rendered but the product could not
+     route to. `mdx/App.tsx` drew a second rail with fifteen entries; only five
+     had v2 ids, so PMA, software lifecycle, UDI, post-market vigilance,
+     device engineering, pre-submission and the validation blockers view — some
+     1,900 lines against live endpoints — were reachable by nothing a user
+     could click, and `pre-sub` only if localStorage happened to hold it. The
+     second rail is gone; these are how the shell reaches what it drew. */
+  {
+    id: 'device-pma',
+    label: 'PMA submissions',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'shieldCheck',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/regulatory-programs'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'PMA module status and trial metrics over the program read-model. Had no v2 entry point before the kit shell was retired.',
+  },
+  {
+    id: 'device-clinical-studies',
+    label: 'Device clinical studies',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'stethoscope',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/mdx', '/api/study-design'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Study list, detail, summaries, archetypes and RBM attention. Six endpoints; distinct from clinical-ops, which is the drug-trial operations surface.',
+  },
+  {
+    id: 'device-software',
+    label: 'Software lifecycle',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'code',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/mdx'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'IEC 62304 software lifecycle and completeness summary. The only implementation in the product.',
+  },
+  {
+    id: 'device-engineering',
+    label: 'Device engineering',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'wrench',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/mdx'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Program-scoped engineering rollup. Distinct from design-controls and human-factors, which are org-scoped registers.',
+  },
+  {
+    id: 'device-udi',
+    label: 'UDI & device identification',
+    navTier: 'specialist',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'barcode',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/mdx'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'UDI/GUDID summary and document catalog. The only UDI surface; labeling itself lives on the labeling surface.',
+  },
+  {
+    id: 'device-postmarket',
+    label: 'Post-market vigilance',
+    navTier: 'specialist',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'shieldAlert',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/mdx', '/api/capa-mdr'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Device MDR/MAUDE vigilance and CAPA triage. A different regulatory regime from pv-cockpit, which is drug pharmacovigilance.',
+  },
+  {
+    id: 'device-presub',
+    label: 'Pre-submission (Q-Sub)',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'messageSquare',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/q-sub'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Q-Sub meeting manager. Previously reachable only through a persisted localStorage value — no rail, tab or palette entry existed.',
+  },
+  {
+    id: 'device-vault',
+    label: 'Device artifact vault',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'vault',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/mdx'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Reads the mdx_vault store with per-artifact version history. Named separately from `vault` because the two read different document stores; converging the stores is a backend decision, and until it is made two names are honest and one is not.',
+  },
+  {
+    id: 'device-tasks',
+    label: 'Device submission workload',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'clipboardList',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/submission-ops'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'The submission-ops workload slice. Deliberately NOT called "Tasks" — task-board is the task board, and two rail entries with the same name is the defect this convergence removed.',
+  },
+  {
+    id: 'device-validation',
+    label: 'Submission blockers',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'shieldAlert',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/submission-ops'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Open blockers across programs. The only blockers view in the product.',
+  },
+  {
+    id: 'device-submission',
+    label: 'Device submission packages',
+    navTier: 'project',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'rocket',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/submission-ops'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Package readiness and milestones from submission-ops. submission-center is the eCTD sequence dispatch surface — a later lifecycle stage over different endpoints.',
+  },
+  {
+    id: 'device-analytics',
+    label: 'Device pathway analytics',
+    navTier: 'specialist',
+    layoutMode: 'section-workspace',
+    group: 'device',
+    icon: 'barChart3',
+    uiKit: 'mdx',
+    apiPrefixes: ['/api/mdx'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Pathway-scoped device analytics. insights and report-engine answer protocol and report-run questions instead.',
   },
   {
     id: 'protocol-dev',
@@ -678,6 +905,164 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'kit-only',
     compliance: [PART11, A11Y, TONE],
     notes: 'IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement. Structured data entry for studies.',
+  },
+
+  /* ── PDEV → IND sub-surfaces ───────────────────────────────────────────────
+   *
+   * `pdev` was registered; its seven destinations were not. All seven ship as
+   * SURFACE_VIEWS entries (surfaceViews.ts) rendering PdevSurfaces, and none is
+   * a DEEP_LINK_ALIAS — so `surfaceIdFromLocation` handed V2App an id that
+   * `getSurface` could not resolve, and the fallback ctxSurface labelled every
+   * one of them "Home". Four are reached by a click today (the Overview's
+   * workstream cards call `onSelectWorkstream` → `pdev-cmc` /
+   * `pdev-nonclinical` / `pdev-clinical` / `pdev-regulatory`, PdevSurfaces.tsx
+   * maps the kit's nav vocabulary back to surface ids); the other three had no
+   * in-app entry point at all once the kit's own rail was removed, because ⌘K
+   * ranks off THIS registry (Shell.tsx CmdK → UI_SURFACES) and they were absent
+   * from it. Registering them is what makes them reachable.
+   *
+   * Family shape mirrors the device-* family: shared `layoutMode` (the kit host
+   * they all mount), shared `group`/`uiKit`, distinct label/icon/prefixes.
+   *
+   * readiness `routes-ready` is claimed, not assumed. /api/pdev is mounted
+   * unconditionally and auth-gated (register-regulatory-routes.ts — no feature
+   * flag, unlike crl-library's ENABLE_CLINICAL_REGULATORY_GRAPH); every route
+   * below was read in server/routes/pdev/pdev-routes.ts; the services behind
+   * them carry nine dedicated suites in server/services/pdev/__tests__/ plus a
+   * pglite integration test for the view assembler; and the client binds them
+   * live in pdev/hooks/usePdevData.ts with no fixture fallback
+   * (v2/__tests__/pdevIndNoFixtures.test.tsx). The parent `pdev` entry in
+   * ui-surface-registry.ts still reads `kit-only` with a note about a prototype
+   * in ui_kits/pdev; that is now stale but is a claim about the Overview
+   * surface, so it is left for a separate, evidenced pass rather than flipped
+   * here as a side effect.
+   *
+   * anaToolFamilies are the real tool names from PDEV_COMMAND_METADATA
+   * (server/services/ana-ri/pdev-command-handlers.ts), which command-executor.ts
+   * spreads into the live ANA tool table — not aspirational names.
+   */
+  {
+    id: 'pdev-cmc',
+    label: 'PDEV CMC workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'beaker',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The CMC slice of the closed-enum PDEV → IND activity registry: each activity with its state, evidence links and provenance, drilled from GET /api/pdev/programs/:id/workstreams/cmc. State changes go through the existing auditService hash chain. Distinct from the `cmc` surface (CTD Module 3 authoring) — this is IND-readiness activity tracking, not the dossier section.',
+  },
+  {
+    id: 'pdev-nonclinical',
+    label: 'PDEV nonclinical workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'microscope',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The nonclinical slice of the PDEV → IND activity registry, drilled from GET /api/pdev/programs/:id/workstreams/nonclinical. Distinct from the `nonclinical` surface (CTD Module 4 / SEND authoring) — this tracks IND-enabling activity state, evidence and provenance.',
+  },
+  {
+    id: 'pdev-clinical',
+    label: 'PDEV clinical workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'stethoscope',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The clinical slice of the PDEV → IND activity registry, drilled from GET /api/pdev/programs/:id/workstreams/clinical. Distinct from `clinical-ops` (studies, sites, DSMB, deviations) — this tracks the IND-readiness activities and their evidence.',
+  },
+  {
+    id: 'pdev-regulatory',
+    label: 'PDEV regulatory workstream',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'shieldCheck',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs', '/api/pdev/registry'],
+    anaToolFamilies: ['pdev.program.workstream', 'pdev.activity.set_state', 'pdev.activity.ai_draft'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'The regulatory slice of the PDEV → IND activity registry, drilled from GET /api/pdev/programs/:id/workstreams/regulatory. Activity state, attached evidence and the provenance trace behind each item.',
+  },
+  {
+    id: 'pdev-ind-assembly',
+    label: 'IND assembly readiness',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'rocket',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs'],
+    anaToolFamilies: ['pdev.program.ind_assembly', 'pdev.ind_assembly.compile'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Module 1–5 IND assembly readiness from GET /api/pdev/programs/:id/ind-assembly, with a governed compile (POST .../ind-assembly/compile). Named "readiness" deliberately, per the route\'s own doc comment — it reports what is ready to assemble and is NOT eCTD publishing; ectd-compile and ectd-publishing own that.',
+  },
+  {
+    id: 'pdev-contradictions',
+    label: 'Contradictions registry',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'alertTriangle',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs'],
+    anaToolFamilies: ['pdev.program.contradictions'],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Read-side adapter over the existing contradiction engine, scoped to a PDEV program (GET /api/pdev/programs/:id/contradictions). Not a second engine — the same findings the `inconsistency` surface reads, framed against the IND program. Had no in-app entry point before this entry: the kit rail that used to link it was removed in the one-shell convergence.',
+  },
+  {
+    id: 'pdev-fda-interactions',
+    label: 'FDA interactions',
+    navTier: 'project',
+    layoutMode: 'pdev',
+    group: 'submission',
+    icon: 'messageSquare',
+    uiKit: 'pdev',
+    apiPrefixes: ['/api/pdev/programs'],
+    anaToolFamilies: [
+      'pdev.program.fda_interactions',
+      'pdev.fda_feedback.proposals',
+      'pdev.fda_feedback.apply',
+    ],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes:
+      'Chronological FDA touchpoint stream for one IND program (q_submissions family + fda_communications) via GET /api/pdev/programs/:id/fda-interactions, with AnA-derived feedback proposals and a governed apply (POST .../fda-feedback/apply). Program-scoped and IND-specific; `agency-meetings` is the cross-program meeting manager.',
   },
 
   // ─── ui-v2 additions: specialist ─────────────────────────────────────────────

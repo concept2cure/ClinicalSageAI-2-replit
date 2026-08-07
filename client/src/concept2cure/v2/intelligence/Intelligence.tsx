@@ -9,6 +9,24 @@
  * never redefine them (kit non-negotiable).
  */
 import React from 'react';
+
+/* The surface's own stylesheet.
+
+   It existed, fully written and correctly scoped — 83 rules, every one under
+   `.c2c-v2` — and no file in the repository imported it, on this branch or on
+   the base. A stylesheet nobody imports is never handed to the bundler, so 49
+   of the classes this file renders (`cap-card`, `cap-demo`, `cap-tool-row`,
+   `cap-ped`, …) resolved to nothing and `intelligence-catalog` shipped as
+   unstyled stacked divs. `scripts/ci/check-orphaned-stylesheets.mjs` is what
+   surfaced it.
+
+   This is the only one of the seventeen orphans that can simply be imported.
+   The rest are between 96% and 100% UNSCOPED — `research-v2.css` alone carries
+   410 bare selectors including a global `[data-tone="ai"]` that would repaint
+   every element with a `data-tone` anywhere in the app. Those need scoping
+   first, which is a change with visual consequences and belongs in its own PR.
+   This one is already scoped, so it costs one line. */
+import '../styles/intelligence-v2.css';
 import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
 import {
@@ -247,7 +265,7 @@ export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
       <div className="ev-search cap-filter">
         <span className="ico">{I.search}</span>
         <input
-          placeholder="Filter domains and tools…"
+          aria-label="Filter domains and tools" placeholder="Filter domains and tools…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

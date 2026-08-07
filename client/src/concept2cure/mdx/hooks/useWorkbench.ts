@@ -33,6 +33,7 @@ import type {
 } from '../data/workbench';
 import type { Program } from '../data/programs';
 import { useFetchJson } from './useFetchJson';
+import { firstArray, isRecord, shapeMismatch } from '../lib/payloadShape';
 import {
   STATUS_TO_TASK_COL,
   TYPE_TO_TASK_KIND,
@@ -122,23 +123,30 @@ export interface UseWorkbenchTasksResult {
   error: string | null;
 }
 
+const WORKLOAD_PATH = '/api/submission-ops/workload';
+
 /**
  * Fetch the cross-program task list from /api/submission-ops/workload
  * (returns c2c_project_work_items rows) and adapt each row into the
  * kit's Task shape (Kanban). Derives 4 KPI cards from the same list.
  */
 export function useWorkbenchTasks(): UseWorkbenchTasksResult {
-  const { data, loading, error } = useFetchJson<WorkloadPayload>('/api/submission-ops/workload');
-  const tasks = useMemo(() => {
-    if (!data) return null;
-    const list = data.data ?? data.workload ?? data.rows ?? [];
-    return list.map(adaptTask);
-  }, [data]);
+  const { data, loading, error } = useFetchJson<WorkloadPayload>(WORKLOAD_PATH);
+  /*
+   * `data.data ?? data.workload ?? data.rows ?? []` — `??` only steps past
+   * null/undefined, so a `data` field holding `{}` (or a 200 that is a scalar,
+   * or an error body) won the chain and took the board down at `list.map`. The
+   * fallback to `[]` had the quieter half of the same bug: a body we couldn't
+   * read rendered as an empty Kanban, which says "you have no work".
+   */
+  const rows = firstArray<ServerWorkItem>(data?.data, data?.workload, data?.rows);
+  const failed = error ?? (data != null && rows === null ? shapeMismatch(WORKLOAD_PATH) : null);
+  const tasks = useMemo(() => (rows ? rows.map(adaptTask) : null), [rows]);
   return {
     tasks,
     metrics: tasks ? deriveTaskMetrics(tasks) : null,
     loading,
-    error,
+    error: failed,
   };
 }
 
@@ -204,16 +212,25 @@ export interface UseWorkbenchTemplatesResult {
  */
 export function useWorkbenchTemplates(): UseWorkbenchTemplatesResult {
   const { data, loading, error } = useFetchJson<TemplatesPayload>('/api/templates');
-  const templates = useMemo(() => {
-    if (!data) return null;
-    const list = data.templates ?? data.data ?? [
-      ...(data.ind ?? []),
-      ...(data.document ?? []),
-      ...(data.ectd ?? []),
-    ];
-    return list.map(adaptTemplate);
+  /*
+   * Same chain as the task board, plus a spread: `[...(data.ind ?? [])]` throws
+   * "is not iterable" the moment `ind` is an object rather than a list, which is
+   * one envelope change away. Only the fields that are actually arrays are read,
+   * and a body carrying none of them is reported instead of rendering as an
+   * empty template library.
+   */
+  const rows = useMemo<ServerTemplate[] | null>(() => {
+    if (data == null) return null;
+    const direct = firstArray<ServerTemplate>(data.templates, data.data);
+    if (direct) return direct;
+    const grouped = [data.ind, data.document, data.ectd].filter(
+      (part): part is ServerTemplate[] => Array.isArray(part),
+    );
+    return grouped.length ? grouped.flat() : null;
   }, [data]);
-  return { templates, loading, error };
+  const failed = error ?? (data != null && rows === null ? shapeMismatch('/api/templates') : null);
+  const templates = useMemo(() => (rows ? rows.map(adaptTemplate) : null), [rows]);
+  return { templates, loading, error: failed };
 }
 
 /* ─── Validation ───────────────────────────────────────────────────── */
@@ -264,6 +281,8 @@ export interface UseWorkbenchValidationResult {
   error:    string | null;
 }
 
+const BLOCKERS_PATH = '/api/submission-ops/blockers';
+
 /**
  * Fetch cross-program blockers from /api/submission-ops/blockers and
  * join with the live program list (passed in by the caller — usually
@@ -272,12 +291,16 @@ export interface UseWorkbenchValidationResult {
  * fetch + the supplied program array.
  */
 export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidationResult {
-  const { data, loading, error } = useFetchJson<BlockersPayload>('/api/submission-ops/blockers');
-  const rules = useMemo(() => {
-    if (!data) return null;
-    const list = data.data ?? data.blockers ?? data.rows ?? [];
-    return list.map(adaptBlockerToRule);
-  }, [data]);
+  const { data, loading, error } = useFetchJson<BlockersPayload>(BLOCKERS_PATH);
+  /* `data.data ?? data.blockers ?? data.rows ?? []` again — `{ data: {} }` is a
+     truthy non-list that walked the chain and threw at `list.map`, taking the
+     validation center down before it drew a single rule. */
+  const blockers = firstArray<ServerBlocker>(data?.data, data?.blockers, data?.rows);
+  const failed = error ?? (data != null && blockers === null ? shapeMismatch(BLOCKERS_PATH) : null);
+  const rules = useMemo(
+    () => (blockers ? blockers.map(adaptBlockerToRule) : null),
+    [blockers],
+  );
 
   const validationPrograms = useMemo<ValidationProgram[] | null>(() => {
     if (!rules) return null;
@@ -320,7 +343,7 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
     ];
   }, [rules, validationPrograms]);
 
-  return { programs: validationPrograms, rules, summary, loading, error };
+  return { programs: validationPrograms, rules, summary, loading, error: failed };
 }
 
 /* ─── Unified work (all three tracking systems) ───────────────────────── */
@@ -368,8 +391,13 @@ export interface UseUnifiedWorkResult {
  * from a system it does not read. Exported for unit testing.
  */
 export function workNotOnTheBoard(summary: UnifiedWorkSummaryView | null): number {
-  if (!summary) return 0;
-  return summary.bySource.schedule + summary.bySource.filing;
+  /* `summary.bySource.schedule` — the null check covered `summary` and not
+     `bySource`, so a summary that arrived without its per-source breakdown threw
+     here rather than reporting nothing off-board. */
+  const bySource = summary?.bySource;
+  if (!bySource || typeof bySource !== 'object') return 0;
+  const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+  return n(bySource.schedule) + n(bySource.filing);
 }
 
 export function useUnifiedWork(projectId?: number): UseUnifiedWorkResult {
@@ -381,9 +409,11 @@ export function useUnifiedWork(projectId?: number): UseUnifiedWorkResult {
     items: UnifiedWorkItemView[];
     summary: UnifiedWorkSummaryView;
   }>(url);
+  /* Only a list is handed on as items — a `{ items: {} }` body used to reach the
+     caller as something truthy that is not iterable. */
   return {
-    items: data?.items ?? null,
-    summary: data?.summary ?? null,
+    items: firstArray<UnifiedWorkItemView>(data?.items),
+    summary: isRecord(data?.summary) ? (data.summary as UnifiedWorkSummaryView) : null,
     loading,
     error,
   };

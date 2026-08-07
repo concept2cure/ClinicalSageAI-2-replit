@@ -1,7 +1,54 @@
+/**
+ * eCTD, evidence, device-lifecycle and IVD routes.
+ *
+ * The 33 routers previously loaded through `config.map(c => import(c.mod))` were
+ * all absent from dist/index.js — esbuild cannot resolve a variable specifier —
+ * so the eCTD compiler, the whole evidence layer, the QMS/CAPA/design-risk stack
+ * and every IVD route 404d in production while the boot log said each had
+ * mounted successfully. Static now; the reasoning is in ./mount-routes.ts.
+ */
+
 import type { Request, Response } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
+import { mountAll } from './mount-routes.js';
+
+import coauthor from '../routes/coauthor.js';
+import ectdDocuments from '../routes/ectd-documents.js';
+import ectdCompile from '../routes/ectd-compile.js';
+import ectdExport from '../routes/ectd-export.js';
+import csrJobs from '../routes/csr-jobs.js';
+import charters from '../routes/charters.js';
+import ectdSubmissionAgent from '../routes/ectd-submission-agent.routes.js';
+import evidence from '../routes/evidence.js';
+import evidenceSearch from '../routes/evidence-search.js';
+import contentPlan from '../routes/content-plan.js';
+import smartBlocks from '../routes/smart-blocks.js';
+import evidenceManagement from '../routes/evidence-management.routes.js';
+import evidenceFabric from '../routes/evidence-fabric.js';
+import docxFactory from '../routes/docx-factory.js';
+import knowledgeBase from '../routes/knowledge-base.js';
+import predicateIntelligence from '../routes/predicate-intelligence.js';
+import regulatoryGraph from '../routes/regulatory-graph.js';
+import changePropagation from '../routes/change-propagation.js';
+import standards from '../routes/standards.js';
+import pccp from '../routes/pccp.js';
+import gsprPostmarket from '../routes/gspr-postmarket.js';
+import postMarket from '../routes/post-market.js';
+import evidenceSufficiency from '../routes/evidence-sufficiency.js';
+import qSub from '../routes/q-sub.js';
+import capaMdr from '../routes/capa-mdr.js';
+import designRisk from '../routes/design-risk.js';
+import qms from '../routes/qms.js';
+import ivdLifecycle from '../routes/ivd-lifecycle.js';
+import ivdKnowledge from '../routes/ivd-knowledge.js';
+import ivdAssessments from '../routes/ivd-assessments.js';
+import opsPredicateShadow from '../routes/_ops-predicate-shadow.js';
+import tenantExport from '../routes/tenant-export.js';
+import anaToolPolicy from '../routes/ana-tool-policy.js';
+import anaMdxContext from '../routes/ana-mdx-context.js';
+import k510DocumentPreview from '../routes/k510-document-preview.js';
 
 export interface DocumentBootstrapContext {
   app: express.Express;
@@ -62,28 +109,23 @@ export async function registerDocumentRoutes({
   // Mounted with authenticateToken so the JWT is required before any
   // handler runs; per-handler tenant scoping is a separate audit.
   {
-    const ectdConfig = [
-      { path: '/api/coauthor', load: () => import('../routes/coauthor'), name: 'eCTD Co-Author' },
-      { path: '/api/ectd-documents', load: () => import('../routes/ectd-documents'), name: 'eCTD Documents' },
-      { path: '/api/ectd-compile', load: () => import('../routes/ectd-compile'), name: 'eCTD Compile' },
-      { path: '/api/ectd/export', load: () => import('../routes/ectd-export'), name: 'eCTD Export' },
-      { path: '/api/csr/jobs', load: () => import('../routes/csr-jobs'), name: 'CSR Jobs' },
-      { path: '/api/charters', load: () => import('../routes/charters'), name: 'Project Charters' },
-      {
-        path: '/api/ectd-submissions',
-        load: () => import('../routes/ectd-submission-agent.routes'),
-        name: 'eCTD Submission Agent',
-      },
-    ] as const;
-    const ectdResults = await Promise.allSettled(ectdConfig.map(c => c.load()));
-    ectdResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(ectdConfig[i].path, authenticateToken, r.value.default);
-        console.log(`✅ ${ectdConfig[i].name} routes mounted (auth-gated)`);
-      } else {
-        console.error(`❌ Failed to mount ${ectdConfig[i].name} routes:`, r.reason);
-      }
-    });
+    mountAll(
+      app,
+      [
+        { path: '/api/coauthor', router: coauthor, name: 'eCTD Co-Author (auth-gated)' },
+        { path: '/api/ectd-documents', router: ectdDocuments, name: 'eCTD Documents (auth-gated)' },
+        { path: '/api/ectd-compile', router: ectdCompile, name: 'eCTD Compile (auth-gated)' },
+        { path: '/api/ectd/export', router: ectdExport, name: 'eCTD Export (auth-gated)' },
+        { path: '/api/csr/jobs', router: csrJobs, name: 'CSR Jobs (auth-gated)' },
+        { path: '/api/charters', router: charters, name: 'Project Charters (auth-gated)' },
+        {
+          path: '/api/ectd-submissions',
+          router: ectdSubmissionAgent,
+          name: 'eCTD Submission Agent (auth-gated)',
+        },
+      ],
+      authenticateToken,
+    );
 
     // Second mount from the ectd-export module: the leaf-level preflight
     // validator lives in the same file but needs the URL prefix `/api/ectd`
@@ -217,144 +259,45 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Document Data Center routes:', error);
   }
 
-  // ── Evidence, Content, Cognitive, BFF proxy (parallelized) ──
-  {
-    const evidenceConfig = [
-      { path: '/api/evidence', load: () => import('../routes/evidence.js'), name: 'Evidence' },
-      // /api/evidence/ask is owned by registerInlinePlatformFacadesRoutes
-      // (see docs/audits/ROUTE_OWNERSHIP.md). It was relocated out of this
-      // slot when the handler was rebuilt against the canonical retrieval +
-      // AI-gateway layer for Doc System Convergence Phase 4.
-      { path: '/api/evidence-search', load: () => import('../routes/evidence-search.js'), name: 'Evidence Search' },
-      { path: '/api/content-plan', load: () => import('../routes/content-plan.js'), name: 'Content Plan' },
-      { path: '/api/smart-blocks', load: () => import('../routes/smart-blocks.js'), name: 'Smart Blocks' },
-      // Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every
-      // endpoint returned hardcoded mock data and its services were never
-      // implemented (no client/server dependents). Unregistered to shrink the AI
-      // route surface; the real AI spine is `/api/ana-ri`. See docs/AI_CONSOLIDATION_PLAN.md.
-      {
-        path: '/api/evidence-management',
-        load: () => import('../routes/evidence-management.routes.js'),
-        name: 'Evidence Management',
-      },
-      {
-        path: '/api/evidence-fabric',
-        load: () => import('../routes/evidence-fabric.js'),
-        name: 'Evidence Fabric BFF',
-      },
-      { path: '/api/docx-factory', load: () => import('../routes/docx-factory.js'), name: 'DOCX Factory BFF' },
-      { path: '/api/knowledge-base', load: () => import('../routes/knowledge-base.js'), name: 'Knowledge Base BFF' },
-      {
-        path: '/api/predicate-intelligence',
-        load: () => import('../routes/predicate-intelligence.js'),
-        name: 'Predicate Intelligence BFF',
-      },
-      {
-        path: '/api/regulatory-graph',
-        load: () => import('../routes/regulatory-graph.js'),
-        name: 'Regulatory Graph',
-      },
-      {
-        path: '/api/change-propagation',
-        load: () => import('../routes/change-propagation.js'),
-        name: 'Change Propagation (governed fact change)',
-      },
-      {
-        path: '/api/standards',
-        load: () => import('../routes/standards.js'),
-        name: 'Standards Catalog',
-      },
-      {
-        path: '/api/pccp',
-        load: () => import('../routes/pccp.js'),
-        name: 'AI/ML PCCP',
-      },
-      {
-        path: '/api/gspr',
-        load: () => import('../routes/gspr-postmarket.js'),
-        name: 'GSPR Catalog + Mappings',
-      },
-      {
-        path: '/api/post-market',
-        load: () => import('../routes/post-market.js'),
-        name: 'Post-Market Documents',
-      },
-      {
-        path: '/api/evidence-sufficiency',
-        load: () => import('../routes/evidence-sufficiency.js'),
-        name: 'Evidence Sufficiency',
-      },
-      {
-        path: '/api/q-sub',
-        load: () => import('../routes/q-sub.js'),
-        name: 'Q-Submissions (Pre-Sub / SIR / SRD)',
-      },
-      {
-        path: '/api/capa-mdr',
-        load: () => import('../routes/capa-mdr.js'),
-        name: 'CAPA + complaint + MDR / vigilance triage',
-      },
-      {
-        path: '/api/design-risk',
-        load: () => import('../routes/design-risk.js'),
-        name: 'Design controls (DHF) + Risk Management File (ISO 14971)',
-      },
-      {
-        path: '/api/qms',
-        load: () => import('../routes/qms.js'),
-        name: 'Quality Management System (document control, training, suppliers, audits)',
-      },
-      {
-        path: '/api/ivd-lifecycle',
-        load: () => import('../routes/ivd-lifecycle.js'),
-        name: 'IVD lifecycle calculators (analytical, software, change, registration)',
-      },
-      {
-        path: '/api/ivd-knowledge',
-        load: () => import('../routes/ivd-knowledge.js'),
-        name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)',
-      },
-      {
-        path: '/api/ivd-assessments',
-        load: () => import('../routes/ivd-assessments.js'),
-        name: 'IVD assessment persistence (saved calculator results + generated documents)',
-      },
-      {
-        path: '/api/_ops/predicate-intelligence',
-        load: () => import('../routes/_ops-predicate-shadow.js'),
-        name: 'Predicate Intelligence — ops probes',
-      },
-      {
-        path: '/api/tenant-export',
-        load: () => import('../routes/tenant-export.js'),
-        name: 'Tenant data export + attestation',
-      },
-      {
-        path: '/api/ana-tool-policy',
-        load: () => import('../routes/ana-tool-policy.js'),
-        name: 'AnA tool policy (per-tenant allow/deny)',
-      },
-      {
-        path: '/api/ana',
-        load: () => import('../routes/ana-mdx-context.js'),
-        name: 'AnA MDX context snapshot (UI consumption)',
-      },
-      {
-        path: '/api/510k/projects',
-        load: () => import('../routes/k510-document-preview.js'),
-        name: '510(k) live document preview (assembled view + Markdown)',
-      },
-    ] as const;
-    const evidenceResults = await Promise.allSettled(evidenceConfig.map(c => c.load()));
-    evidenceResults.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        app.use(evidenceConfig[i].path, r.value.default);
-        console.log(`✅ ${evidenceConfig[i].name} routes mounted successfully`);
-      } else {
-        console.error(`❌ Failed to mount ${evidenceConfig[i].name} routes:`, r.reason);
-      }
-    });
-  }
+  // ── Evidence, Content, device lifecycle, IVD, BFF proxies ──
+  mountAll(app, [
+    { path: '/api/evidence', router: evidence, name: 'Evidence' },
+    // /api/evidence/ask is owned by registerInlinePlatformFacadesRoutes
+    // (see docs/audits/ROUTE_OWNERSHIP.md). It was relocated out of this
+    // slot when the handler was rebuilt against the canonical retrieval +
+    // AI-gateway layer for Doc System Convergence Phase 4.
+    { path: '/api/evidence-search', router: evidenceSearch, name: 'Evidence Search' },
+    { path: '/api/content-plan', router: contentPlan, name: 'Content Plan' },
+    { path: '/api/smart-blocks', router: smartBlocks, name: 'Smart Blocks' },
+    // Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every
+    // endpoint returned hardcoded mock data and its services were never
+    // implemented (no client/server dependents). Unregistered to shrink the AI
+    // route surface; the real AI spine is `/api/ana-ri`. See docs/AI_CONSOLIDATION_PLAN.md.
+    { path: '/api/evidence-management', router: evidenceManagement, name: 'Evidence Management' },
+    { path: '/api/evidence-fabric', router: evidenceFabric, name: 'Evidence Fabric BFF' },
+    { path: '/api/docx-factory', router: docxFactory, name: 'DOCX Factory BFF' },
+    { path: '/api/knowledge-base', router: knowledgeBase, name: 'Knowledge Base BFF' },
+    { path: '/api/predicate-intelligence', router: predicateIntelligence, name: 'Predicate Intelligence BFF' },
+    { path: '/api/regulatory-graph', router: regulatoryGraph, name: 'Regulatory Graph' },
+    { path: '/api/change-propagation', router: changePropagation, name: 'Change Propagation (governed fact change)' },
+    { path: '/api/standards', router: standards, name: 'Standards Catalog' },
+    { path: '/api/pccp', router: pccp, name: 'AI/ML PCCP' },
+    { path: '/api/gspr', router: gsprPostmarket, name: 'GSPR Catalog + Mappings' },
+    { path: '/api/post-market', router: postMarket, name: 'Post-Market Documents' },
+    { path: '/api/evidence-sufficiency', router: evidenceSufficiency, name: 'Evidence Sufficiency' },
+    { path: '/api/q-sub', router: qSub, name: 'Q-Submissions (Pre-Sub / SIR / SRD)' },
+    { path: '/api/capa-mdr', router: capaMdr, name: 'CAPA + complaint + MDR / vigilance triage' },
+    { path: '/api/design-risk', router: designRisk, name: 'Design controls (DHF) + Risk Management File (ISO 14971)' },
+    { path: '/api/qms', router: qms, name: 'Quality Management System (document control, training, suppliers, audits)' },
+    { path: '/api/ivd-lifecycle', router: ivdLifecycle, name: 'IVD lifecycle calculators (analytical, software, change, registration)' },
+    { path: '/api/ivd-knowledge', router: ivdKnowledge, name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)' },
+    { path: '/api/ivd-assessments', router: ivdAssessments, name: 'IVD assessment persistence (saved calculator results + generated documents)' },
+    { path: '/api/_ops/predicate-intelligence', router: opsPredicateShadow, name: 'Predicate Intelligence — ops probes' },
+    { path: '/api/tenant-export', router: tenantExport, name: 'Tenant data export + attestation' },
+    { path: '/api/ana-tool-policy', router: anaToolPolicy, name: 'AnA tool policy (per-tenant allow/deny)' },
+    { path: '/api/ana', router: anaMdxContext, name: 'AnA MDX context snapshot (UI consumption)' },
+    { path: '/api/510k/projects', router: k510DocumentPreview, name: '510(k) live document preview (assembled view + Markdown)' },
+  ]);
 
   // ── SE Matrix + Defense Packet ──
   try {
@@ -382,16 +325,14 @@ export async function registerDocumentRoutes({
     }
   }
 
-  // ── Collaboration Center (510(k) activity tracking) ──
-  if (EXPERIMENTAL_ROUTES_ENABLED) {
-    try {
-      const collaborationModule = await import('../routes/collaboration');
-      app.use('/api/collaboration', collaborationModule.default);
-      console.log('✅ Collaboration Center API routes mounted (510(k) team activity tracking)');
-    } catch (error) {
-      console.error('❌ Failed to mount Collaboration Center routes:', error);
-    }
-  }
+  // Collaboration Center: removed. `GET /api/collaboration/team` and
+  // `/activities` selected `.from(users).limit(N)` with NO organization filter,
+  // returning every user in the database — name, email, title, department,
+  // last-login — across every tenant. Nothing called either: the one UI that
+  // names them (v2/surfaces/CollabLauncher.tsx) is deliberately fixture-backed,
+  // because live rows are keyed by numeric user id while its pickers key on
+  // short-ids. A cross-tenant read with no caller is deleted, not scoped.
+
 
   // ── CERV2 Sections + Versions ──
   try {
@@ -446,14 +387,11 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Trial Corpus routes:', error);
   }
 
-  // ── Content Atoms ──
-  try {
-    const atomsModule = await import('../routes/atoms.js');
-    app.use('/api/atoms', atomsModule.default);
-    console.log('✅ Content Atoms API routes mounted');
-  } catch (error) {
-    console.error('❌ Failed to mount Atoms routes:', error);
-  }
+  // Content Atoms: removed. The router aliased `leaves` — the eCTD leaf table
+  // read by submission-orchestrator — and exposed full CRUD including DELETE
+  // over it. It was tenant-scoped, so not a disclosure, but it was an unused
+  // write surface onto submission content. No caller anywhere.
+
 
   // ── Workflow API ──
   try {

@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
+import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import '../styles/project-home-v2.css';
 
@@ -215,21 +217,23 @@ function parseProtocol(text: string): ParsedProtocol {
 
 /* ── Tiny markdown -> HTML ── */
 
-function mdToHtml(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (s: string) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  const lines = md.split('\n'); let html = ''; let i = 0;
-  while (i < lines.length) {
-    const l = lines[i];
-    if (/^#{1,6}\s/.test(l)) { const n = (l.match(/^(#+)/) || ['', '#'])[1].length; html += `<h${n}>${inline(l.replace(/^#+\s*/, ''))}</h${n}>`; }
-    else if (/^---/.test(l)) html += '<hr/>';
-    else if (/^\s*-\s/.test(l)) { html += '<ul>'; while (i < lines.length && /^\s*-\s/.test(lines[i])) { html += `<li>${inline(lines[i].replace(/^\s*-\s*/, ''))}</li>`; i++; } html += '</ul>'; continue; }
-    else if (/^\s*\d+\.\s/.test(l)) { html += '<ol>'; while (i < lines.length && /^\s*\d+\.\s/.test(lines[i])) { html += `<li>${inline(lines[i].replace(/^\s*\d+\.\s*/, ''))}</li>`; i++; } html += '</ol>'; continue; }
-    else if (l.trim()) html += `<p>${inline(l)}</p>`;
-    i++;
-  }
-  return html;
-}
+/* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
+   codebase's one audited markdown-to-HTML path -- see
+   components/ana/renderSafeMarkdown.ts.
+
+   This file used to carry its own 13-line `mdToHtml`: a regex approximation of
+   markdown whose first act was a hand-rolled `&`/`<`/`>` escape. Two other
+   surfaces carried the same function, two of the three byte-identical. Three
+   copies of an escaper feeding three `dangerouslySetInnerHTML` sinks is three
+   places to get HTML escaping right and three places for one to drift, in a
+   product where the text being rendered is a document the user wrote or
+   uploaded.
+
+   The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
+   markdown parser and then reduces the result to an explicit tag/attribute
+   allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
+   removed rather than depended upon never to arrive -- and it is already
+   covered by its own tests, which the hand-rolled copies never were. */
 
 /* ── Inline toast helper ── */
 
@@ -285,13 +289,43 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       : docType === 'statistical' ? genStatisticalInsights(a)
         : genIndReadiness(a);
   }, [analysis, docType, docDef]);
-  const html = useMemo(() => analysis ? mdToHtml(md) : '', [md, analysis]);
+  const html = useMemo(() => analysis ? renderSafeMarkdown(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;
 
-  const openEditor = () => {
-    try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: docDef?.label, md })); } catch (_e) { /* noop */ }
-    fireToast((docDef?.label || 'Document') + ' -- opened in editor');
-    onNav && onNav('document-authoring');
+  /*
+   * "Open in editor" — a real handoff. See the long note on the same handler in
+   * Biostatistics.tsx for the full reasoning; in short: this wrote {title, md}
+   * to localStorage['c2c_biostat_doc'], a key with no reader in any file in any
+   * commit, so the analysis never travelled and the editor opened on whatever it
+   * would have opened on anyway.
+   *
+   * The payload is CONTENT, not an id, so honouring it means creating the row:
+   * POST the document, POST the section holding the prose, then navigate. Both
+   * writes are awaited; a failure keeps you here with the analysis on screen and
+   * an honest reason, because navigating away from work that was not saved is
+   * the same defect this replaces.
+   */
+  const openingRef = useRef(false);
+  const [opening, setOpening] = useState(false);
+  const openEditor = async () => {
+    if (openingRef.current) return; // a second click must not create a second document
+    const title = docDef?.label || 'Protocol analysis';
+    if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.'); return; }
+    openingRef.current = true; setOpening(true);
+    try {
+      // Protocol-derived analysis files under Module 5; the server would
+      // default to M3.
+      const r = await saveToAuthoring({
+        title, module: 'M5', code: docDef?.id || 'protocol_analysis',
+        content: md, subject: 'the analysis',
+      });
+      // Navigate only on a clean write — see authoringHandoff.
+      if (!r.ok) { fireToast(r.message); return; }
+      if (onNav) onNav('document-authoring');
+      else fireToast(r.message);
+    } finally {
+      openingRef.current = false; setOpening(false);
+    }
   };
 
   return (
@@ -311,7 +345,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
           headline={<>I read the {a.phase && a.phase !== 'Unknown' ? <>Phase {a.phase} </> : null}{a.indication && a.indication !== 'Unspecified' ? <>{a.indication.toLowerCase()} </> : null}protocol and drafted your <b>{docDef?.label}</b> -- {a.risk_factors.length ? <><b>{a.risk_factors.length} design {a.risk_factors.length === 1 ? 'risk' : 'risks'}</b> to address</> : <>the design looks sound on the parameters I could read</>}.</>}
           body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below -- power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text -- add it and the power analysis will fill in.</>}</>}
           reassure="Everything is drafted as a real document, not a chart -- read it, adjust, and send it to the editor."
-          action={{ label: 'Open in document editor', onClick: openEditor, alt: { label: 'Re-analyze', onClick: analyze } }}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Re-analyze', onClick: analyze } }}
           secondary="Or switch documents and re-run below."
         />
       ) : (
@@ -330,7 +364,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card ra-input">
           <div className="pj-card-h"><span className="t">Protocol</span><span className="s">paste or edit</span></div>
           <div className="pj-card-b">
-            <textarea className="ra-ta" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis -- title, indication, phase, sample size, duration, primary endpoint..." />
+            <textarea className="ra-ta" aria-label="Protocol synopsis" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis -- title, indication, phase, sample size, duration, primary endpoint..." />
             <div className="ra-actions">
               <button className="sp-primary" onClick={analyze} disabled={busy}>{I.sparkles} {busy ? 'Analyzing...' : 'Analyze protocol'}</button>
               {analysis && (
@@ -356,7 +390,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
               <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{analysis.source === 'live' ? '/api/analytics' : 'Ported generator -- offline'} -- draft</span></div>
               <div className="bs-doc-bar-a">
                 <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ' for this protocol')}>{I.sparkles} Refine</button>
-                <button className="bs-da primary" onClick={openEditor}>{I.penLine} Open in editor</button>
+                <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
               </div>
             </div>
             <div className="bs-doc-page"><div className="bs-doc-render" dangerouslySetInnerHTML={{ __html: html }} /></div>

@@ -639,6 +639,30 @@ export const C2C_MIGRATION_FILES = [
   // is tenant-scoped (organization_id). Added after the sweep it would be
   // created but never isolated.
   'db/migrations/20260803_document_span_lineage.sql',
+
+  // ── Rule-pack outlines: the five stubs replaced with real trees ────────────
+  // 20260529_phase9_backfill seeded nda/bla/maa/jnda/denovo as five top-level
+  // rows apiece and said the full outlines would land "in a later kit". They
+  // never did, so a biotech org creating its BLA — the segment's headline
+  // pathway — was scaffolded a five-node dossier by scaffoldProjectDocuments()
+  // and the Vault tree, the outline endpoint and the authoring canvas all
+  // faithfully rendered those five nodes.
+  //
+  // Data-only: INSERTs the full packs as NEW versions and marks the stubs
+  // superseded, so documents already built against 'ich-m4-v2.0' keep the pack
+  // they were actually built from (Part 11) while new projects get the real
+  // outline. Wrapped in a to_regclass guard, so on a database that never had
+  // the Phase 9 schema it raises a NOTICE and skips rather than aborting the
+  // deploy — the same bare-CI-safe pattern 20260529 uses.
+  'migrations/20260804_phase9_rule_pack_outlines.sql',
+  'migrations/20260806_cta_ema_ctr536_outline.sql',
+  // Widens the c2c_documents doc_type CHECK to admit 'anda' and 'ide' and seeds
+  // both packs. The widening is a strict superset of the previous IN-list, so no
+  // existing row can be invalidated by it — which is why it needs no backfill
+  // and is safe to re-apply. Same to_regclass guard as the two above; the CHECK
+  // half additionally uses DROP CONSTRAINT IF EXISTS, because on a drizzle-push
+  // database the table exists while the named constraint does not.
+  'migrations/20260806b_anda_ide_filing_types.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { useLiveData, EmptyState } from '../dataConnect';
-import type { SurfaceViewProps } from '../surfaceViews';
+import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
+import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/auth-entry.css';
 
 /* ════ ClientPortal — the read-only view a CRO's client sees ════
@@ -23,6 +23,28 @@ interface CpData {
   programs: CpProgram[]; deliverables: CpDeliverable[]; updates: CpUpdate[];
 }
 
+/* The overview's three lists ARE this surface: `cp.programs.length`,
+   `cp.deliverables.map(...)` and `cp.updates.length` all run unconditionally once
+   the fetch reports done, so they are what a 200 has to prove it carries.
+
+   What got through before: the overview route answering `{ data: [] }` — an
+   envelope that lost its object — unwraps to a bare `[]`, and `[]` is TRUTHY, so
+   it walked past `if (loading || !cp)` and `cp.programs.length` threw during
+   render. The client was then told their portal was broken by the boundary,
+   instead of the "We couldn't load your workspace" panel this file already draws
+   thirty lines below. `{}`, a 200 carrying `{ error }`, a bare array and a JSON
+   scalar all landed the same way — six of the seven skews in the probe.
+
+   `hasKeys` alone would not close it: it checks presence, so `programs: null`
+   still passes and still throws on `.length`. A null list is not the
+   "nothing selected yet" case that presence-checking exists to protect — this
+   surface has nothing to render without the arrays — so the arrays are required
+   here, and anything else lands in the error branch as the failed load it is. */
+function isCpOverview(v: unknown): v is CpData {
+  if (!hasKeys<CpData>('programs', 'deliverables', 'updates')(v)) return false;
+  return Array.isArray(v.programs) && Array.isArray(v.deliverables) && Array.isArray(v.updates);
+}
+
 const CP_T: Record<string, string> = { shared: 'ai', review: 'warn', approved: 'ok', active: 'ai', final: 'ok', released: 'ok', signed: 'ok' };
 
 /** Relative "2 d ago" from the ISO timestamps the overview returns; a blank or
@@ -40,7 +62,7 @@ function ago(v: string): string {
   return `${Math.round(days / 7)} wk ago`;
 }
 
-export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
+export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
   const [ctxOpen, setCtxOpen] = useState(true);
   // Forward ?clientWorkspaceId= so CRO staff can preview a specific client, and
   // a multi-workspace client can pick one. The backend still authorizes it
@@ -54,18 +76,20 @@ export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
     wsId && /^\d+$/.test(wsId)
       ? `/api/client-portal/overview?clientWorkspaceId=${wsId}`
       : '/api/client-portal/overview';
-  const { data: cp, loading, error } = useLiveData<CpData>(path);
+  const { data: cp, loading, error } = useLiveData<CpData>(path, [path], isCpOverview);
 
   // Loading / unavailable — render the branded shell with an honest state, never
   // a fabricated workspace. A 401/403 means this portal isn't shared with the
   // caller's account; anything else is a genuine load failure.
   if (loading || !cp) {
-    const notShared = !!error && /\b40[13]\b/.test(error);
+    // Match the status where liveGetOrNull writes it — at the front of
+    // `HTTP 401 <path>` — not anywhere in the string. The old `\b40[13]\b` also
+    // matched the PATH, so `?clientWorkspaceId=403` turned any failure on that
+    // workspace, shape rejection included, into "isn't shared with your account":
+    // a specific accusation about permissions built out of a workspace id.
+    const notShared = !!error && /^HTTP 40[13]\b/.test(error);
     return (
       <div className="cp">
-        <header className="cp-top">
-          <div className="cp-brand"><b>Concept2Cure<span>.RI</span></b><span className="cp-tag">Client workspace</span></div>
-        </header>
         <div className="cp-body">
           {loading ? (
             <EmptyState
@@ -106,26 +130,37 @@ export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
         </div>
       )}
 
-      <header className="cp-top">
-        <div className="cp-brand"><b>Concept2Cure<span>.RI</span></b><span className="cp-tag">Client workspace</span></div>
-        <div className="cp-top-r">
-          <span className="cp-org">{cp.cro ? <>{cp.cro} {'→'} </> : null}{cp.client}</span>
-          <span className="avatar" style={{ width: 28, height: 28 }}>
-            {cp.user.split(' ').map(x => x[0]).join('').slice(0, 2)}
-          </span>
-        </div>
-      </header>
+      {/* No `cp-top` header.
 
+          It drew a sticky 54px bar with the product wordmark, a "Client
+          workspace" tag, the CRO→client pair and an avatar — beneath the
+          shell's own 48px TopBar, which already carries a breadcrumb, an org
+          switcher and the same person's avatar. `client-portal` is registered
+          `ownsConversation: true`, and that zeroes the AnA column ONLY — V2App
+          renders `<Rail>` and `<TopBar>` outside that condition, on every
+          surface. So this surface showed two top bars, two avatars for one user
+          and the wordmark twice, on a screen whose own copy calls itself "the
+          read-only portal your client sees — no internal tools".
+
+          The one thing `cp-top` carried that nothing else did is `cp.client`.
+          It moves to the hero eyebrow below. */}
       <div className="cp-body">
         <div className="cp-hero">
           <div>
-            <div className="ph-eyebrow">Welcome{cp.user ? `, ${cp.user.split(' ').slice(-1)[0]}` : ''}</div>
+            <div className="ph-eyebrow">
+              Welcome{cp.user ? `, ${cp.user.split(' ').slice(-1)[0]}` : ''}
+              {cp.client ? ` · ${cp.client}` : ''}
+            </div>
             <h1 className="ph-title" style={{ fontSize: 26 }}>
               Your programs{cp.cro ? ` with ${cp.cro}` : ''}
             </h1>
             <div className="ph-sub">A read-only view of everything your regulatory partner is building for you — status, shared deliverables, and what needs your input.</div>
           </div>
-          <button className="btn primary" onClick={() => onAsk('Ask a question')}>{I.sparkles} Ask a question</button>
+          {/* No "Ask a question" button. It passed its own LABEL as the
+              question — `onAsk('Ask a question')` — into a rail this surface
+              does not draw, so the literal string "Ask a question" was sent to
+              the assistant and the answer appeared later on some other screen.
+              A client portal has no assistant by design (surfaceViews.ts:140). */}
         </div>
 
         {cp.programs.length === 0 && (
@@ -139,7 +174,13 @@ export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
             <div key={p.id} className="cp-card">
               <div className="cp-card-top">
                 <span className="rd-chip tone-ai">{p.pathway}</span>
-                <span className={`rd-chip tone-${CP_T[p.status]}`}>{p.status}</span>
+                {/* `|| 'ai'` — the same fallback the deliverables row at :174
+                    already has. CP_T only maps a few statuses; projects.status
+                    legitimately carries on-hold, completed and archived
+                    (shared/schema.ts), and without a fallback those render as
+                    `tone-undefined`, which matches no rule and ships an
+                    unstyled chip. */}
+                <span className={`rd-chip tone-${CP_T[p.status] || 'ai'}`}>{p.status}</span>
               </div>
               <div className="cp-card-t">{p.title}</div>
               <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>

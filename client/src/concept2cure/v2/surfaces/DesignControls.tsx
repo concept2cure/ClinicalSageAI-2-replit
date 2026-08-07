@@ -98,7 +98,6 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const [inputs, setInputs] = useState<DcInput[]>([]);
   useEffect(() => {
     if (!live.loading && !live.error) setInputs(live.rows);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live.loading, live.error, live.rows]);
 
   const [form, setForm] = useState(false);

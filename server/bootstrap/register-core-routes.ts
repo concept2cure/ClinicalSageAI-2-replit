@@ -13,7 +13,6 @@ import cmcBlueprintRoutes from '../api/cmc/blueprintRoutes';
 import cmcAggregatorRoutes from '../api/cmc/index.js';
 import cmcCoreRoutes from '../api/cmc/routes';
 import cmcSpecificationRoutes from '../api/cmc/specificationRoutes';
-import cmcStabilityRoutes from '../api/cmc/stabilityRoutes';
 import cmcBatchRecordRoutes from '../api/cmc/batchRecordRoutes';
 import cmcWorkflowRoutes from '../api/cmc/workflowRoutes';
 import cmcModule3OperatingSystemRoutes from '../api/cmc/module3OperatingSystemRoutes';
@@ -68,7 +67,14 @@ export function registerCoreRoutes({
     app.use('/api/cmc', cmcProjectRoutes);
     app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
     app.use('/api/cmc/specifications', cmcSpecificationRoutes);
-    app.use('/api/cmc/stability', cmcStabilityRoutes);
+    /* `/api/cmc/stability` is gone. Its four handlers could not write: the
+       INSERT named project_id, tenant_id, study_name, storage_condition,
+       started_date and results, none of which exist on the provisioned
+       `public.stability_studies` — that column set belongs to
+       shared/cmc-schema.ts, which drizzle.config.ts never provisions. Every
+       call 500'd or returned empty. No caller remained after the client
+       sweep, and the capability is served by the 74-endpoint GxP router at
+       /api/stability and by /api/cmc/stability-studies. */
     app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
     app.use('/api/cmc/workflows', cmcWorkflowRoutes);
     app.use('/api/cmc/module3-os', cmcModule3OperatingSystemRoutes);

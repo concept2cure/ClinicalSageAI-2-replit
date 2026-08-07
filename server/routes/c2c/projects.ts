@@ -83,7 +83,12 @@ const WS_CASE = `CASE
  *  but conventional set (drug/biologic/device/ivd). */
 const VALID_PROGRAM_TYPES = new Set([
   '510k', 'de_novo', 'pma', 'ivd', 'device', 'cer', 'ide',
-  'ind', 'bla', 'biologic', 'nda', 'maa', 'jnda', 'anda',
+  // 'cta' was mapped in PROGRAM_TO_DOC_TYPE and backed by a rule pack, but was
+  // missing here — so the API rejected the one European filing a biotech running
+  // trials needs most. Opened now that cta:ema carries a real CTR 536/2014
+  // outline (migrations/20260806); opening it against the previous two-node pack
+  // would have shipped the hollow dossier this codebase spent a migration ending.
+  'ind', 'cta', 'bla', 'biologic', 'nda', 'maa', 'jnda', 'anda',
 ]);
 const VALID_PRODUCT_TYPES = new Set(['drug', 'biologic', 'device', 'ivd']);
 

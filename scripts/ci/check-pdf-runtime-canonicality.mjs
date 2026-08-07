@@ -81,6 +81,30 @@ const APPROVED = new Set([
   'server/services/ind-forms/ind-form-fill-service.ts',
   'server/services/ind-forms/ind-form-reconstruct.ts',
   'server/services/templates/templateExtractor.ts',
+  // Data Origins report (landed 2026-08-04). Renders a provenance report for a
+  // selected passage — there is no DOCX source for pdf-converter.ts to convert,
+  // it is composed from lineage rows directly.
+  //
+  // WHAT MAKES ITS OUTPUT REPRODUCIBLE — and what does not.
+  // This entry first claimed the bytes were safe because they go through the
+  // converter's makeDeterministic(). That was not sufficient and the file was
+  // in fact non-deterministic while the claim stood. makeDeterministic()
+  // rewrites INLINE `/CreationDate (D:…)` literals, which is what LibreOffice
+  // and Puppeteer emit; pdfkit writes the Info dictionary as indirect object
+  // references (`/CreationDate 17 0 R`), so the pattern never matched and the
+  // wall-clock timestamp survived every render.
+  //
+  // What actually makes it stable is that the date is fixed at CONSTRUCTION:
+  // `info.CreationDate`/`ModDate` are derived from `report.generatedAt`, so
+  // there is no varying value left to rewrite. makeDeterministic() is still
+  // applied, for the trailer /ID that pdfkit genuinely randomises.
+  //
+  // Held by __tests__/data-origins-pdf.determinism.test.ts, which asserts both
+  // that every date in the file equals the one derived from the report AND that
+  // two renders separated by a real clock tick are byte-identical. A provenance
+  // artefact whose hash changed on every print would be the one document in the
+  // platform least able to afford it.
+  'server/services/clinical-regulatory-evidence/data-origins-pdf.ts',
 ]);
 
 const PDF_LIB_IMPORT = /from\s+['"](pdfkit|pdf-lib)['"]/;

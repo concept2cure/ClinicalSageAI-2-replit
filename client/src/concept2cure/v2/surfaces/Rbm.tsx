@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import type { SurfaceViewProps } from '../surfaceViews';
+import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
@@ -65,7 +65,13 @@ const LINK_ICONS: Record<string, string> = {
    "Sample data" tag is gone rather than merely hidden.
    ════════════════════════════════════════════════════════════════════ */
 
-export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
+/* `onAsk` is deliberately absent. RBM owns its conversation — the dock at
+   `RbmSurfaces.tsx` runs its own study-scoped `useAnaChat`, and what it passes
+   down as `onAsk={askAna}` is that local sender, not the shell's. The prop was
+   destructured here and never read, which is exactly the shape the union
+   exists to forbid: a surface that hides the rail while still holding the
+   handle that writes into it. */
+export function Rbm({ onNav }: OwnedSurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);

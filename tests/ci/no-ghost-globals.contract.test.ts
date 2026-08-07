@@ -30,6 +30,34 @@
  * nothing, whose output nobody can act on. It is worse than a missing feature
  * because the fallback path makes it look deliberate.
  *
+ * ── The same defect wearing a storage key ─────────────────────────────────────
+ * A ghost does not have to live on `window`. Three "Open in editor" buttons
+ * (Biostatistics, ReportEngine, CmcModule) wrote `{title, md}` into
+ * localStorage['c2c_biostat_doc'] and navigated to `document-authoring`. Nothing
+ * has ever read that key — no getItem, in any file, in any commit — so the named
+ * document never travelled and the editor opened on whatever it would have
+ * opened on anyway. Two of the three also toasted "opened in editor" for that
+ * non-event (deleted in f018695, leaving a button that navigated and claimed
+ * nothing).
+ *
+ * That key is now gone, and the buttons do the work the note was pretending to
+ * do: POST /api/authoring/docs, POST /api/authoring/sections with the markdown
+ * body, and only then navigate — the same two endpoints AuthoringCreateExport
+ * already uses. ELIMINATED_STORAGE below keeps the shortcut from coming back;
+ * the `hands off through the governed store` block keeps the POSTs from being
+ * deleted while the navigation stays.
+ *
+ * ── The boundary of this contract, stated plainly ─────────────────────────────
+ * Everything here is guaranteed by NAME. `readersOf` is only ever called with
+ * keys from the lists below, so a channel nobody has listed — a new
+ * `window.C2C_DOC`, say — is invisible to this file until someone adds it. That
+ * is why the "Open in editor" fix introduces NO runtime channel at all: the
+ * editor already selects the most recently updated draft in scope (GET
+ * /api/authoring/docs orders by d.updated_at DESC; DocumentAuthoring's loadDocs
+ * takes the first row), so a document created a moment earlier is the one it
+ * opens. A sender that wrote an id nothing consumed would be the original defect
+ * again, and this contract could not have caught it.
+ *
  * ── Why the fix was a port, not a polyfill ────────────────────────────────────
  * Assigning `window.C2C_API` would have been the smaller diff and the wrong one.
  * dataConnect.tsx's own header states the rule: the kit's global "collapses onto"
@@ -96,6 +124,18 @@ const FENCED: Record<string, string[]> = {
   __C2C_DOC_ID: ['client/src/concept2cure/v2/surfaces/BatchDraft.tsx'],
 };
 
+/**
+ * Storage keys that are now fully gone. A write is as much a regression as a
+ * read: the whole point of retiring `c2c_biostat_doc` is that a write with no
+ * reader is a lie about where the user's work went.
+ */
+const ELIMINATED_STORAGE = ['c2c_biostat_doc'];
+
+const storageUsesOf = (key: string, verb: 'setItem' | 'getItem') =>
+  FILES.filter(f =>
+    new RegExp(`(?:local|session)Storage\\.${verb}\\(\\s*['"\`]${key}['"\`]`).test(codeOf(f)),
+  ).map(f => path.relative(REPO_ROOT, f)).sort();
+
 const readersOf = (ghost: string) =>
   FILES.filter(f => {
     const code = codeOf(f);
@@ -135,6 +175,75 @@ describe('eliminated ghosts stay eliminated', () => {
       new RegExp(`\\.${ghost}\\s*=[^=]`).test(codeOf(f)),
     ).map(f => path.relative(REPO_ROOT, f));
     expect(writers).toEqual([]);
+  });
+});
+
+describe('eliminated storage notes stay eliminated', () => {
+  it.each(ELIMINATED_STORAGE)('%s is never written', (key) => {
+    const writers = storageUsesOf(key, 'setItem');
+    expect(writers, `${key} is written again by: ${writers.join(', ')}`).toEqual([]);
+  });
+
+  it.each(ELIMINATED_STORAGE)('%s is never read either — it stays a non-thing', (key) => {
+    // It never had a reader. Adding one would resurrect the shortcut instead of
+    // the handoff: a document that exists only in this browser's localStorage is
+    // not in the governed store, has no revision, and no audit row.
+    const readers = storageUsesOf(key, 'getItem');
+    expect(readers, `${key} is read by: ${readers.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('the "Open in editor" buttons hand off through the governed store', () => {
+  /*
+   * The reverse regression this guards: deleting the POSTs and keeping the
+   * navigation gives back a button that changes screens and saves nothing. A
+   * surface must create the document AND the section that holds its markdown —
+   * a document with no section is an empty file with a title.
+   *
+   * This used to grep each surface for the two URL literals. That check was
+   * tied to the duplication rather than to the property: the sequence lived
+   * three times, so it asserted the strings appeared three times. Now that it
+   * lives once in `authoringHandoff.ts`, the same assertion would demand the
+   * copies be put back.
+   *
+   * So it is split. The URLs are checked where they are; the surfaces are
+   * checked for the thing that actually protects the user's work — that they
+   * route through the shared handoff and do NOT navigate unless it succeeded.
+   * `authoringHandoff.spec.ts` covers the failure semantics behaviourally, with
+   * a mocked transport, which is a stronger check than any source scan.
+   */
+  const HANDOFF = 'client/src/concept2cure/v2/authoringHandoff.ts';
+  const senders = [
+    'client/src/concept2cure/v2/surfaces/Biostatistics.tsx',
+    'client/src/concept2cure/v2/surfaces/ReportEngine.tsx',
+    'client/src/concept2cure/v2/surfaces/CmcModule.tsx',
+  ];
+
+  it('the shared handoff POSTs a document and a section', () => {
+    const code = codeOf(path.join(REPO_ROOT, HANDOFF));
+    expect(code, 'the handoff navigates to the editor without creating a document')
+      .toMatch(/'\/api\/authoring\/docs'/);
+    expect(code, 'the handoff creates a document but never a section to hold the text')
+      .toMatch(/'\/api\/authoring\/sections'/);
+  });
+
+  it.each(senders)('%s hands off through saveToAuthoring', (file) => {
+    const code = codeOf(path.join(REPO_ROOT, file));
+    expect(code, `${file} no longer routes its "Open in editor" through the governed handoff`)
+      .toMatch(/\bsaveToAuthoring\s*\(/);
+  });
+
+  it.each(senders)('%s does not navigate when the handoff failed', (file) => {
+    const code = codeOf(path.join(REPO_ROOT, file));
+    // The early return on a failed handoff. Without it the surface would send
+    // the user to an editor holding a document whose text never saved — the
+    // exact way work gets lost, and the reason the result is a union rather
+    // than a thrown error.
+    expect(
+      code,
+      `${file} calls saveToAuthoring but has no early return on failure — ` +
+        'it can navigate away from unsaved work',
+    ).toMatch(/if\s*\(\s*!\s*\w+\.ok\s*\)/);
   });
 });
 

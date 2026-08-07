@@ -160,7 +160,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Submission package id</label>
           <input className="c2c-input" style={{ height: 30, width: 120 }} inputMode="numeric" value={pkgInput}
-            onChange={(e) => setPkgInput(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') applyPkg(); }} placeholder="e.g. 1024" />
+            onChange={(e) => setPkgInput(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') applyPkg(); }} aria-label="Package size" placeholder="e.g. 1024" />
           <button className="nda-open" onClick={applyPkg} disabled={!pkgInput}>{I.search} Load</button>
           {pkg != null && (
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>

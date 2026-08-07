@@ -302,6 +302,55 @@ export function resolveSpanAt(spans: SentenceSpan[], offset: number): SentenceSp
 }
 
 /**
+ * Protects the dot inside a decimal — 3.14, p<0.001, the `2.3` of `Section 2.3`
+ * — from being read as a sentence terminator.
+ *
+ * The captures only re-emit the digits either side, so the substitution means
+ * exactly "this dot becomes a sentinel". WHICH dots qualify is decided by the
+ * global scan's leftmost-match/lastIndex alternation rather than by a simple
+ * digit-dot-digit test: in `1.2.3` only the FIRST dot is protected, because the
+ * first match consumes through `2` and the scan resumes past it.
+ *
+ * A factory rather than a shared constant, so each use gets its own lastIndex —
+ * exactly as the inline literals beside it in `protectedPatterns` do. Exported
+ * so the equivalence test binds to the pattern actually in use rather than to a
+ * copy of it that could drift.
+ *
+ * THE `(?<!\d)` GUARD
+ * A performance guard. Without it the leading `\d+` is retried at every offset
+ * inside a digit run, and each retry walks the rest of that run looking for a
+ * `.` that is not there — quadratic in the run length. Section content is
+ * attacker-influenced (anyone who can PATCH a section controls this string), and
+ * a pasted 160,000-digit run held the request thread for 36 s. Guarded, the same
+ * input costs about 1 ms.
+ *
+ * It cannot change what matches. Every match of the unguarded pattern already
+ * begins where no digit precedes it: `\d+` is greedy, so a match always ends at
+ * the end of a maximal digit run and leaves lastIndex on a non-digit; and were a
+ * match to begin at p with a digit at p-1, the engine would have found the
+ * longer match at p-1 first. Asserted rather than argued — see
+ * sentenceTraceabilityService.decimal-regex.test.ts, which runs this exported
+ * pattern against a frozen copy of the unguarded one over 1.86M strings.
+ *
+ * WHY THE QUANTIFIERS WERE NOT SIMPLY BOUNDED
+ * `\d{1,16}` is not equivalent. On `5.<17 digits>.5` the bounded scan stops mid
+ * run, resumes inside it, and protects a second dot the original never examines;
+ * on `555.<21 digits>` it truncates the match. Every finite bound has the same
+ * defect for runs longer than itself, so there is no bound to derive from the
+ * data — and lot numbers, accession numbers and pasted spreadsheet columns run
+ * past any of them.
+ *
+ * WHY EXACTNESS MATTERS EVEN THOUGH THIS PATTERN IS CURRENTLY INERT
+ * As the splitter stands, no dot this pattern protects could have split anyway:
+ * a matched dot is always followed by a digit, and the split rule below requires
+ * whitespace after the terminator. Removing the pattern outright changes no
+ * sentence (measured over 407k inputs). It is kept because that inertness is a
+ * property of the split rule, not of the pattern — loosen the rule and this
+ * becomes load-bearing for every span offset the lineage system records.
+ */
+export const decimalProtectionPattern = (): RegExp => /(?<!\d)(\d+)\.(\d+)/g;
+
+/**
  * Rule-based sentence splitter that handles regulatory text edge cases.
  */
 function splitIntoSentences(text: string): string[] {
@@ -310,7 +359,7 @@ function splitIntoSentences(text: string): string[] {
     [/\b(Dr|Mr|Mrs|Ms|Prof|Sr|Jr|Inc|Corp|Ltd|Co|vs|etc|approx)\./gi, '$1\u0000'],
     [/\b(e\.g|i\.e|cf|al|Fig|Tab|Ref|Sec|Vol|No|Rev)\./gi, '$1\u0000'],
     [/\b(U\.S|E\.U|ICH|FDA|EMA|WHO)\./gi, '$1\u0000'],
-    [/(\d+)\.(\d+)/g, '$1\u0001$2'], // Decimal numbers
+    [decimalProtectionPattern(), '$1\u0001$2'], // Decimal numbers
     [/([A-Z])\.([A-Z])\./g, '$1\u0000$2\u0000'], // Initials like U.S.A.
   ];
 

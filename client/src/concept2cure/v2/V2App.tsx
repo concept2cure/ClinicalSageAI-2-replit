@@ -39,6 +39,44 @@ import './styles/app-v2.css';
 // surface has them, matching the kit's index.html global load.
 import './styles/journey-v2.css';
 import './styles/coverage-v2.css';
+/*
+ * Six more family sheets that were written, scoped, and imported by NOTHING.
+ *
+ * `scripts/ci/check-orphaned-stylesheets.mjs` found them: a stylesheet no file
+ * imports is never handed to the bundler, so it cannot style anything on any
+ * surface. These six carry the layout for surfaces that ship today, and the
+ * consequences were visible:
+ *
+ *   authoring-v2   `.ed{display:grid;grid-template-columns:220px minmax(420px,1fr)}`
+ *                  is the DOCUMENT EDITOR's root. `.ed-tree` and `.ed-doc` ship
+ *                  from elsewhere, but the container that puts them side by
+ *                  side did not — so the tree and the canvas stacked vertically.
+ *   research-v2    `.pd-*` / `.pg-*` — ProtocolDev, ResearchAdmin,
+ *                  InvestigatorBrochure, MaaCockpit, SmpcLabeling.
+ *   misc-surfaces  `.pdev-toast` and 350 more — Vault, RegChange, Evidence,
+ *                  AdminSurfaces, CommunicationCenter, DesignControls.
+ *   device-v2      `.dv-*` — HumanFactors.
+ *   pathway-core / pathway-panels   `.aa-*`, `.ap-*`, `.aud-*`, `.dd-*`.
+ *
+ * They load here rather than per-surface because each spans several surfaces,
+ * which is the same reason journey-v2 and coverage-v2 load here.
+ *
+ * Safe to import as-is: every one is already wrapped in `.c2c-v2 { … }` via CSS
+ * nesting. I first measured them as "96-100% unscoped" and said so — that was
+ * wrong, and wrong in the dangerous direction: the check read selectors line by
+ * line and never saw the enclosing block, which is exactly the mistake that
+ * would have justified rewriting 1,600 rules that needed no rewriting.
+ *
+ * `editor-core.css` and `editor-panels.css` are still orphaned and are NOT here
+ * — they carry no `.c2c-v2` wrapper, so importing them would bleed. They need
+ * scoping first.
+ */
+import './styles/authoring-v2.css';
+import './styles/research-v2.css';
+import './styles/misc-surfaces-v2.css';
+import './styles/device-v2.css';
+import './styles/pathway-core-v2.css';
+import './styles/pathway-panels-v2.css';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -146,6 +184,13 @@ export function V2App() {
     nav('home');
   };
 
+  const view = SURFACE_VIEWS[activeId];
+  /* True when the SURFACE has taken the rail's column and answers questions
+     itself (or deliberately offers none) — see surfaceViews.ts. The shell must
+     not render a rail here, and must not write to one either. */
+  const ownsConversation = Boolean(view?.ownsConversation);
+  const isFull = Boolean(view?.full);
+
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -153,15 +198,19 @@ export function V2App() {
         e.preventDefault();
         setCmdkOpen((o) => !o);
       }
-      if (mod && e.key === '\\') {
+      /* ⌘\ toggles the rail — but `set` PERSISTS, and on a surface that owns
+         the conversation there is no rail to toggle. Un-guarded, this wrote
+         anaOpen:true to localStorage from a screen that shows nothing happening
+         and opened the rail on the next surface that draws one. Same leak as
+         `ask()` below, through a different door. */
+      if (mod && e.key === '\\' && !ownsConversation) {
         e.preventDefault();
         set('anaOpen', !prefs.anaOpen);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefs.anaOpen]);
+  }, [prefs.anaOpen, ownsConversation]);
 
   const surface: UiSurface | undefined = activeId === 'home' ? undefined : getSurface(activeId);
   const ctxSurface: UiSurface =
@@ -183,14 +232,55 @@ export function V2App() {
       notes: 'Home opens with the segment pathway chips and the composer. Ports in the surface phase.',
     } as UiSurface);
 
+  /* Hand a question to the surface that owns the shell's conversation.
+     `window.C2C_CONVO = { id:'new', seed }` then navigate: the protocol
+     ConversationThread implements (ConversationThread.tsx:300) and that Home
+     (Surfaces.tsx:76) and ProjectHome (ProjectHome.tsx:576) already use.
+
+     `convoEpoch` exists because `setLocation` to the location you are already
+     on is a no-op in wouter, and ConversationThread reads the seed ON MOUNT. On
+     that one surface, seeding without a remount would leave the question parked
+     on `window` to be consumed the next time the thread mounted — reintroducing
+     the very ambush this change removes. The epoch is part of the surface's
+     React key, so the seed is always read by a mount that happens now. */
+  const [convoEpoch, setConvoEpoch] = React.useState(0);
+  const startShellConversation = React.useCallback(
+    (seed: string) => {
+      try {
+        (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = {
+          id: 'new',
+          seed,
+        };
+      } catch {
+        /* non-fatal: the thread opens empty rather than seeded */
+      }
+      setConvoEpoch((n) => n + 1);
+      nav('conversation-thread');
+    },
+    [nav]
+  );
+
   /* AnA ask — routes to the REAL streaming assistant (/api/ana-ri/stream via
      useAnaChat). The [Agent] prefix (rail agent toggle) is a task hint the
      server's agentic tool loop handles, so we strip it and stream a grounded
      reply. Governed action execution stays reachable via the action chips
-     (onAct → §11.50 e-sign). No fabricated/sample reply is ever shown. */
+     (onAct → §11.50 e-sign). No fabricated/sample reply is ever shown.
+
+     THE GUARD. Surfaces that own the conversation no longer receive this
+     function at all (the SurfaceView union removes `onAsk` from their props),
+     but ⌘K and its action chips are shell-level and reach every surface. On a
+     screen with no rail this used to `set('anaOpen', true)` — which persists to
+     localStorage — and stream the answer into a column that screen never draws:
+     nothing visible here, and your question waiting for you, opened, on the
+     next surface that does draw one. The question goes to the surface that
+     shows it instead. */
   const ask = (text: string) => {
     const clean = text.replace(/^\[Agent\]\s*/i, '').trim();
     if (!clean) return;
+    if (ownsConversation) {
+      startShellConversation(clean);
+      return;
+    }
     if (!prefs.anaOpen) set('anaOpen', true);
     void anaChat.send(clean);
   };
@@ -206,15 +296,22 @@ export function V2App() {
     ask(a?.label ?? id.replace(/_/g, ' '));
   };
 
-  const view = SURFACE_VIEWS[activeId];
-  const hideAna = Boolean(view?.hideAna);
-  const isFull = Boolean(view?.full);
+  /* The surface's mount identity. Only `conversation-thread` varies within one
+     id — see `startShellConversation` above. */
+  const bodyKey =
+    activeId === 'conversation-thread' ? `${activeId}#${convoEpoch}` : activeId;
+
   let body: React.ReactNode;
   if (activeId === 'home') {
     body = <Home onNav={nav} onAsk={ask} segment={prefs.segment} />;
+  } else if (view?.ownsConversation) {
+    /* Narrowed by the union: this component's props do not include `onAsk`, so
+       there is no way to hand it a rail that is not being rendered. */
+    const V = view.component;
+    body = <V key={bodyKey} surface={ctxSurface} onNav={nav} segment={prefs.segment} />;
   } else if (view) {
     const V = view.component;
-    body = <V surface={ctxSurface} onAsk={ask} onNav={nav} segment={prefs.segment} />;
+    body = <V key={bodyKey} surface={ctxSurface} onAsk={ask} onNav={nav} segment={prefs.segment} />;
   } else {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
@@ -238,8 +335,11 @@ export function V2App() {
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
       data-collapsed={prefs.railCollapsed}
-      data-ana-open={hideAna ? false : prefs.anaOpen}
-      data-editor={hideAna || undefined}
+      data-ana-open={ownsConversation ? false : prefs.anaOpen}
+      /* The DOM attribute keeps its name: `.shell[data-editor="true"]` is what
+         app-v2.css:846 and authoring-v2.css:13 key the zero-width rail column
+         off, and those stylesheets are outside this change. */
+      data-editor={ownsConversation || undefined}
     >
       <Rail
         activeId={activeId}
@@ -261,10 +361,10 @@ export function V2App() {
           }}
         />
         <div className={isFull ? 'page page-full' : 'page'}>
-          <SurfaceBoundary resetKey={activeId}>{body}</SurfaceBoundary>
+          <SurfaceBoundary resetKey={bodyKey}>{body}</SurfaceBoundary>
         </div>
       </main>
-      {!hideAna && (
+      {!ownsConversation && (
         <AnaRail
           open={prefs.anaOpen}
           setOpen={(v) => set('anaOpen', v)}

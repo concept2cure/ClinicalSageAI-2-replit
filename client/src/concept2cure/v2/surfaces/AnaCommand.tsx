@@ -250,7 +250,6 @@ function useLivePost<T>(path: string, projectId: number | null, enabled = true):
         setState({ data: null, loading: false, empty: false, error: e instanceof Error ? e.message : String(e) });
       });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, projectId, enabled]);
   return state;
 }

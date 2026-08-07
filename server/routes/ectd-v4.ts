@@ -156,7 +156,12 @@ export function createEctdV4Router(): Router {
   router.get('/controlled-vocab/:listId', (req, res) => {
     if (requireTenant(req, res) == null) return;
     const listId = req.params.listId as V4ListId;
-    if (!(listId in V4_CODE_LISTS)) {
+    // hasOwnProperty, not `in`: `in` walks the prototype chain, so
+    // /controlled-vocab/__proto__ (or /constructor, /toString) answered 200
+    // with a nonsense body instead of 404. Not reachable from the UI — the
+    // client only ever sends an id the server itself supplied — so this is
+    // hardening, not an outage. The route is public API surface all the same.
+    if (!Object.prototype.hasOwnProperty.call(V4_CODE_LISTS, listId)) {
       res.status(404).json({ error: `Unknown v4.0 code list "${listId}"` });
       return;
     }

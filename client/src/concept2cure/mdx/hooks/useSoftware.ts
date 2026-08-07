@@ -17,6 +17,7 @@
 
 import { useFetchJson } from './useFetchJson';
 import { toDataState, type DataState } from '../lib/dataState';
+import { isRecord, shapeMismatch } from '../lib/payloadShape';
 
 /** The IEC 62304 / FDA-2023-guidance deliverable kinds. */
 export type ItemKind =
@@ -133,15 +134,33 @@ export function useSoftware(programId: string | null): UseSoftwareResult {
   const list = useFetchJson<ListPayload>(listUrl);
   const sum = useFetchJson<SummaryPayload>(summaryUrl);
 
-  const items = list.data?.data ? list.data.data.map(adaptItem) : null;
+  /*
+   * `list.data?.data ? list.data.data.map(...)` — the truthiness test proved a
+   * `data` field existed, not that it held rows. `{ data: {} }` and any 200 whose
+   * envelope carries a scalar passed it and threw at `.map` during render, so a
+   * response we couldn't read reported itself as a broken surface. A non-list
+   * payload is a failed load, which `items` already renders through DataGate.
+   */
+  const rows = Array.isArray(list.data?.data) ? list.data.data : null;
+  const listFailed =
+    list.error ?? (list.data != null && rows === null ? shapeMismatch(listUrl) : null);
+  const items = rows ? rows.map(adaptItem) : null;
+  /* Same on the summary side: the completeness score is an object, and a list or
+     a scalar arriving there would be handed to the panel as though it were one. */
+  const summary = isRecord(sum.data?.data) ? (sum.data.data as SoftwareSummary) : null;
+  const sumFailed =
+    sum.error ??
+    (sum.data != null && sum.data.data != null && summary === null
+      ? shapeMismatch(summaryUrl ?? '')
+      : null);
 
   return {
-    items: toDataState(items, list.loading, list.error),
-    summary: toDataState(sum.data?.data ?? null, sum.loading, sum.error, {
+    items: toDataState(items, list.loading, listFailed),
+    summary: toDataState(summary, sum.loading, sumFailed, {
       idleReason: 'Select a project to see its IEC 62304 deliverable completeness.',
     }),
     loading: list.loading || sum.loading,
-    error: list.error ?? sum.error,
+    error: listFailed ?? sumFailed,
     refresh: () => {
       list.refresh();
       sum.refresh();

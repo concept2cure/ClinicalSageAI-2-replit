@@ -38,8 +38,6 @@ import { EngineeringSurface } from '../../client/src/concept2cure/mdx/surfaces/E
 import { UdiSurface } from '../../client/src/concept2cure/mdx/surfaces/UdiSurface';
 import { PostmarketSurface } from '../../client/src/concept2cure/mdx/surfaces/PostmarketSurface';
 import { AnalyticsSurface } from '../../client/src/concept2cure/mdx/surfaces/AnalyticsSurface';
-import { MemorySurface } from '../../client/src/concept2cure/mdx/surfaces/MemorySurface';
-import { AdminSurface } from '../../client/src/concept2cure/mdx/surfaces/AdminSurface';
 
 import type { Program } from '../../client/src/concept2cure/mdx/data/programs';
 
@@ -125,6 +123,10 @@ function assertNoReactErrors() {
   }
 }
 
+// No MemorySurface / AdminSurface cases. The kit's AnA Memory surface was
+// retired for v2 `ana-memory` (same /api/mdx/ana/memory endpoint, write-capable),
+// and its admin surface was never imported by the kit's own app — admin is
+// product-level, on v2 `admin-console`.
 describe('design-system surface smoke tests', () => {
   it('DocumentsPanel renders an empty doc list without error', () => {
     const { container } = render(<DocumentsPanel docs={[]} />);
@@ -172,15 +174,5 @@ describe('design-system surface smoke tests', () => {
     assertNoReactErrors();
   });
 
-  it('MemorySurface renders', () => {
-    const { getByText } = render(<MemorySurface onAskAna={askAna} />);
-    expect(getByText('AnA memory')).toBeTruthy();
-    assertNoReactErrors();
-  });
 
-  it('AdminSurface renders members tab by default', () => {
-    const { getByText } = render(<AdminSurface onAskAna={askAna} />);
-    expect(getByText('Admin and access')).toBeTruthy();
-    assertNoReactErrors();
-  });
 });

@@ -1,0 +1,7 @@
+{
+  "$comment": "Client files unreachable from client/src/main.tsx. This list may only SHRINK. Adding an entry means new code was written that the browser cannot load — that is a regression, not a fix. Regenerate with --write-baseline ONLY after removing entries. Type-only imports are counted as reachable, so the real dead set is larger than this.",
+  "$entry": "client/src/main.tsx",
+  "$generated": "2026-08-04",
+  "count": 0,
+  "modules": []
+}

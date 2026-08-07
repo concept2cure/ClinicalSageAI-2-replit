@@ -128,7 +128,6 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = useState('ctd');
   const ask = onAsk;
   const open = (id: string) => {
-    try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     onNav && onNav(id);
   };
   /* Real rows — the org's CTD module (M1–M5) readiness, assembled from the real

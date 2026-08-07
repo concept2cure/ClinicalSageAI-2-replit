@@ -19,7 +19,74 @@
    no .zen-* class name appeared in any source file in the repository. It is
    deleted rather than left loading. tests/ui/token-authority.test.ts pins both
    facts so neither can come back silently. */
-@import "tailwindcss";
+/* ─── Tailwind, scanning the CLIENT and nothing else ──────────────────────────
+   `source(none)` turns OFF Tailwind v4's automatic source detection, and the
+   two `@source` lines put back exactly what the browser ships.
+
+   Automatic detection walks the whole project root minus .gitignore, and that
+   is not a theoretical over-reach here — the shipped stylesheet contained
+   thirty-four rules harvested from this repository's own tooling, among them
+
+       .\[ci\:no-dev-auth-in-prod\]   .\[ci\:jwt-verify-pinned\]
+       .\[ci\:password-hygiene\]      .\[ci\:rls-allowlist-sync\]
+       .\[ci\:tenant-isolation\]      .\[ci\:client-reachability\]
+
+   — the console prefixes of scripts/ci/*.mjs, read as Tailwind arbitrary
+   properties and compiled into a public asset. A named list of the repo's
+   security guardrails was being served to every visitor. `.\[ci\:test-imports\]`
+   is in that set, which dates it: adding a CI script an hour ago changed the
+   production CSS.
+
+   The same scan is where `.bg-gray-200`, `.text-gray-500` and `.bg-black/20`
+   came from — no file under client/src uses any of those three. Scoping
+   detection to the client removed 200 selectors and 13,991 bytes (10.2%) from
+   this stylesheet and added none; each of the 200 was checked against the
+   scanned sources, and the two apparent hits were artefacts of a looser
+   tokeniser than Tailwind's own (`sticky` in a code comment, `blur` inside
+   `backdropFilter: 'blur(12px)'`).
+
+   Two further consequences, both quiet: any edit to a doc or a script could
+   change the production CSS hash and bust every client's cache, and
+   `tailwind.config.ts`'s `content: [...]` array has been dead since the v4
+   upgrade — v4 does not read a JS config without an explicit `@config`, so
+   anyone reading that file has had a false model of what gets scanned.
+
+   ── The theme, and why `@config` is now here ──────────────────────────────
+   v4 also stops reading the config's THEME without `@config`, and that theme is
+   115 hex values remapping fifteen colour families to "Anthropic warm". It was
+   inert: `.bg-black/20` compiled to `#0003`, Tailwind's stock black, not the
+   config's `#141413`.
+
+   The first measurement of the blast radius said nil, and that was wrong —
+   `git grep -E` does not honour `\b` as I assumed, so a search for palette
+   utilities under client/src returned zero and I wrote it down as fact. A
+   proper walk finds 31 distinct utilities across four files: the three auth
+   entry pages and the error boundary. They are precisely the surfaces that
+   render OUTSIDE the v2 shell, and they use ZERO design-system custom
+   properties — they are styled entirely in Tailwind utilities, saturated with
+   `stone-*`, which only makes sense against the warm remap. They were authored
+   for this palette, and the v4 migration silently substituted another one.
+
+   So `@config` is added, and both risks were checked by building rather than by
+   reasoning:
+
+     · source scoping SURVIVES it. `source(none)` + the two `@source` lines
+       still win, and the `.\[ci\:…\]` rules stay out of the bundle. (The
+       config's own `content` array happens to name the same two globs, so
+       there was nothing to fight over.)
+     · the palette actually lands. `bg-stone-50` is now `#faf9f5` not stock
+       oklch; `bg-blue-50` `#edf3f8` (Anthropic blue) not stock cool blue;
+       `text-emerald-600` `#647746` and `bg-green-100` `#e4ebd8` (earthy green)
+       not stock emerald. Zero stock `--color-*-NNN: oklch(…)` tokens remain.
+
+   Cost: the entry stylesheet goes 123,298 → 140,690 bytes, because utilities
+   now compile to the config's literals. That is the price of the signup and
+   login screens rendering in the palette they were designed against instead of
+   Tailwind's defaults. */
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "./**/*.{js,jsx,ts,tsx}";
+@config "../../tailwind.config.ts";
 
 /* ─── Global token-name shim ──────────────────────────────────────
    Canonical names the brand accent --accent-main-{000,100,200} and the
@@ -34,6 +101,14 @@
   --accent-000: var(--accent-main-000);
   --accent-100: var(--accent-main-100);
   --accent-200: var(--accent-main-200);
+
+  /* Shadow base for the kits' warm elevation. Canonical --shadow-* are
+     Claude-flat (0-alpha); the kit menus and modals mix their own shadow from a
+     near-black at low alpha. NOT --text-100: that inverts to #faf9f5 in dark
+     mode and a shadow has to stay dark in both. Both v2 and the device kit read
+     it, so it is declared once here rather than twice in stylesheets that can
+     load independently and disagree. */
+  --black: #141413;
 
   --dur: var(--dur-normal);
 

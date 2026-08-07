@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
+import { saveToAuthoring } from '../authoringHandoff';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -461,24 +463,23 @@ const BiostatDocs = (() => {
 })();
 
 /* ─── Tiny markdown -> HTML for the document canvas ─── */
-function mdToHtml(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (s: string) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  const lines = md.split('\n'); let html = ''; let i = 0;
-  while (i < lines.length) {
-    const ln = lines[i];
-    if (/^#{1,6}\s/.test(ln)) { const lv = ln.match(/^#+/)![0].length; html += `<h${lv}>${inline(ln.replace(/^#+\s/, ''))}</h${lv}>`; i++; continue; }
-    if (/^---\s*$/.test(ln)) { html += '<hr/>'; i++; continue; }
-    if (/^\|/.test(ln)) { const rows: string[] = []; while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; }
-      const cells = (r: string) => r.split('|').slice(1, -1).map(c => c.trim());
-      let t = '<table><thead><tr>'; cells(rows[0]).forEach(c => t += `<th>${inline(c)}</th>`); t += '</tr></thead><tbody>';
-      for (let r = 2; r < rows.length; r++) { t += '<tr>'; cells(rows[r]).forEach(c => t += `<td>${inline(c)}</td>`); t += '</tr>'; } t += '</tbody></table>'; html += t; continue; }
-    if (/^[-*]\s/.test(ln)) { let ul = '<ul>'; while (i < lines.length && /^[-*]\s/.test(lines[i])) { ul += `<li>${inline(lines[i].replace(/^[-*]\s/, ''))}</li>`; i++; } ul += '</ul>'; html += ul; continue; }
-    if (ln.trim() === '') { i++; continue; }
-    html += `<p>${inline(ln)}</p>`; i++;
-  }
-  return html;
-}
+/* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
+   codebase's one audited markdown-to-HTML path -- see
+   components/ana/renderSafeMarkdown.ts.
+
+   This file used to carry its own 13-line `mdToHtml`: a regex approximation of
+   markdown whose first act was a hand-rolled `&`/`<`/`>` escape. Two other
+   surfaces carried the same function, two of the three byte-identical. Three
+   copies of an escaper feeding three `dangerouslySetInnerHTML` sinks is three
+   places to get HTML escaping right and three places for one to drift, in a
+   product where the text being rendered is a document the user wrote or
+   uploaded.
+
+   The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
+   markdown parser and then reduces the result to an explicit tag/attribute
+   allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
+   removed rather than depended upon never to arrive -- and it is already
+   covered by its own tests, which the hand-rolled copies never were. */
 
 /* ── Design presets (deterministic engine inputs — not stored data) ── */
 
@@ -526,7 +527,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   // an honest empty state, or an honest failed-load state — never a fixture.
   const govDocs = useLiveRows<BiostatPlan>('/api/ana-biostats/governed-documents');
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
-  const usePreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
+  const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
   const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch (_e) { return null; } }, [input]);
   const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch (_e) { return null; } }, [input, res]);
@@ -534,7 +535,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const reg = useMemo(() => regCustom(input), [input]);
   const docDef = BiostatDocs.byId(docType);
   const md = useMemo(() => { try { return res && jud && docDef ? docDef.gen(input, res, jud, dom, reg) : ''; } catch (e: unknown) { return '# Error\n\n' + (e instanceof Error ? e.message : String(e)); } }, [input, res, jud, dom, reg, docType, docDef]);
-  const html = useMemo(() => mdToHtml(md), [md]);
+  const html = useMemo(() => renderSafeMarkdown(md), [md]);
 
   const isDiag = input.clientTrack === 'diagnostics_ivd';
   const isSurv = input.endpointType === 'time_to_event';
@@ -542,7 +543,65 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const isNI = input.studyType === 'non_inferiority';
   const n = res ? (res.adjustedTotal || res.sampleSize.total) : 0;
 
-  const openEditor = () => { try { localStorage.setItem('c2c_biostat_doc', JSON.stringify({ title: docDef?.label, md })); } catch (_e) { /* noop */ } fireToast((docDef?.label || 'Document') + ' -> opened in editor'); onNav && onNav('document-authoring'); };
+  /*
+   * "Open in editor" — a real handoff, at last.
+   *
+   * WHAT IT USED TO BE. `localStorage.setItem('c2c_biostat_doc', {title, md})`
+   * followed by a navigation. Nothing in this repository has ever read that key
+   * — no getItem, in any file, in any commit — so the editor opened on whatever
+   * it would have opened on anyway and the named document never travelled. Two
+   * surfaces also fired "opened in editor" toasts for that non-event; those were
+   * deleted in f018695, leaving a button that navigated and claimed nothing.
+   *
+   * WHY IT COULD NOT BE "RECONNECTED". The payload is CONTENT — a title and a
+   * markdown body — not an identifier. There is no row to point at, so honouring
+   * the intent means CREATING one: POST the document, POST the section that
+   * holds the prose, and only then navigate. That is what happens below, through
+   * the same two endpoints AuthoringCreateExport's createDoc/createSection
+   * already use (the governed authoring store: tenant-scoped, JWT-attributed,
+   * and the section create writes a genesis revision plus a Part 11 audit row
+   * server-side).
+   *
+   * WHY NO RUNTIME CHANNEL. The editor does not need to be told which document
+   * to open. DocumentAuthoring mounts fresh on navigation (V2App keys the body
+   * by surface id), its loadDocs lists `status=draft` scoped to
+   * window.C2C_PROJECT — and GET /api/authoring/docs orders by
+   * `d.updated_at DESC` — then it selects the first row and that row's first
+   * section. A document created a moment ago IS the most recently updated draft,
+   * and the create below sets the same project scope, so the editor lands on it.
+   * Writing a window.C2C_DOC that nothing reads would repeat the exact defect
+   * this replaces.
+   *
+   * FAILURE. Nothing is announced that did not happen and nothing is lost. If
+   * the document create fails we do NOT navigate — the draft stays on screen
+   * with an honest reason. If the document is created but its text fails to
+   * save, we do not navigate either: leaving for an editor that would show an
+   * empty document is the same silent loss wearing a different hat.
+   */
+  const openingRef = useRef(false);
+  const [opening, setOpening] = useState(false);
+  const openEditor = async () => {
+    if (openingRef.current) return; // a second click must not create a second document
+    const title = docDef?.label || 'Statistical document';
+    if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.'); return; }
+    openingRef.current = true; setOpening(true);
+    try {
+      // Statistical documentation files under Module 5; the server would
+      // default to M3.
+      const r = await saveToAuthoring({
+        title, module: 'M5', code: docDef?.id || 'statistical_document',
+        content: md, subject: 'the document',
+      });
+      // Navigate only on a clean write. On a half-failure the document exists
+      // but is empty, so going there would show the user an editor without
+      // their work — stay put and say so.
+      if (!r.ok) { fireToast(r.message); return; }
+      if (onNav) onNav('document-authoring');
+      else fireToast(r.message);
+    } finally {
+      openingRef.current = false; setOpening(false);
+    }
+  };
   const attach = () => { fireToast((docDef?.label || 'Document') + ' attached to dossier'); ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section'); };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
@@ -564,7 +623,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
           body={<>Everything below is written, not just calculated -- the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
           reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section -- better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
-          action={{ label: 'Open in document editor', onClick: openEditor, alt: { label: 'Attach to dossier', onClick: attach } }}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Attach to dossier', onClick: attach } }}
           secondary="Or pick a different document and adjust the design on the left."
         />
       )}
@@ -590,7 +649,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Study design</span><span className="s">document rewrites live</span></div>
             <div className="pj-card-b" style={{ padding: 12 }}>
-              <div className="bs-presets">{Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => usePreset(k)}>{p.label}</button>)}</div>
+              <div className="bs-presets">{Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}</div>
               <div className="bs-fields">
                 <label className="bs-f"><span>Track</span><select value={input.clientTrack} onChange={(e) => set('clientTrack', e.target.value)}>{['biotech_pharma', 'medical_device', 'diagnostics_ivd'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' / ')}</option>)}</select></label>
                 <label className="bs-f"><span>Agency</span><select value={input.regulatoryBody} onChange={(e) => set('regulatoryBody', e.target.value)}>{['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'].map((x) => <option key={x}>{x}</option>)}</select></label>
@@ -623,7 +682,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
             <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{live ? '/api/ana-biostats' : 'Deterministic engine'} -- v1.0.0 -- draft</span></div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
-              <button className="bs-da primary" onClick={openEditor}>{I.penLine} Open in editor</button>
+              <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
             </div>
           </div>
           <div className="bs-doc-page">

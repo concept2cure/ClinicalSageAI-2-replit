@@ -406,17 +406,33 @@ export async function replaceAuthorSpans(
 
   let written = 0;
   for (const s of spans) {
-    await recordAuthorSpan(orgId, {
-      ...ref,
-      charStart: s.charStart,
-      charEnd: s.charEnd,
-      spanText: s.spanText,
-      usage: s.usage,
-      assertedBy: p.assertedBy,
-      assertedAt: p.assertedAt,
-      signatureId: p.signatureId ?? null,
-      createdBy: p.createdBy ?? p.assertedBy,
-    });
+    // `exec` MUST be forwarded. It was not, and the omission was invisible:
+    // recordAuthorSpan fell back to `defaultExec` — the pool — so the span
+    // INSERTs ran on a different connection from the caller's transaction while
+    // the retire UPDATE below correctly used `exec`. Half the operation was
+    // transactional and half was not.
+    //
+    // In the happy path nothing looked wrong: the pool statements autocommit,
+    // so the surrounding transaction still read them back and
+    // assertLineageCoversContent passed. The damage was on the failure path —
+    // a refused save rolled the CONTENT back and left the spans committed,
+    // pointing at text that was never persisted. That is the exact failure the
+    // gate exists to prevent, hiding inside the gate.
+    await recordAuthorSpan(
+      orgId,
+      {
+        ...ref,
+        charStart: s.charStart,
+        charEnd: s.charEnd,
+        spanText: s.spanText,
+        usage: s.usage,
+        assertedBy: p.assertedBy,
+        assertedAt: p.assertedAt,
+        signatureId: p.signatureId ?? null,
+        createdBy: p.createdBy ?? p.assertedBy,
+      },
+      exec,
+    );
     written++;
   }
 

@@ -215,8 +215,13 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       {/* artifact picker */}
       <div className="dl-picker">
         {graphs.map((x, i) => {
-          const locked = x.nodes.some((n) => n.action === 'locked');
-          const pend = x.nodes.some(
+          // A trail row can arrive without its `nodes` — an unassembled graph or
+          // a narrowed SELECT — and the two derivations below walk them. The
+          // adopted graph already defaults the same field this way a few lines
+          // up; the picker was reading it raw, which is the asymmetry.
+          const xNodes = (x && x.nodes) || [];
+          const locked = xNodes.some((n) => n.action === 'locked');
+          const pend = xNodes.some(
             (n) => n.regulatory && n.regulatory.signatureStatus === 'pending',
           );
           return (
@@ -273,7 +278,12 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                   {i > 0 && (
                     <div className="dl-edge">
                       <span className="dl-edge-rel">
-                        {parentEdge ? parentEdge.relationship.replace(/_/g, ' ') : 'preceded'}
+                        {/* An edge can carry no `relationship` (nullable column);
+                            the existing 'preceded' fallback is the honest reading
+                            of "these two are ordered but the link isn't named". */}
+                        {parentEdge && parentEdge.relationship
+                          ? parentEdge.relationship.replace(/_/g, ' ')
+                          : 'preceded'}
                       </span>
                     </div>
                   )}

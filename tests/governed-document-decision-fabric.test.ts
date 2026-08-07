@@ -775,47 +775,22 @@ describe('Governed Document Evaluator — Full Integration', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════
-// 9. Workspace Consequence Integration
+// 9. Workspace Consequence Integration — REMOVED
 // ═══════════════════════════════════════════════════════════════════════
-
-describe.skip('Workspace Consequence Integration', () => {
-  // documentConsequence helper was removed in the design-system port;
-  // workspace consequence rows now compose directly in
-  // GovernedDocumentPanel. Re-enable when the Phase 3 workbench ships
-  // its shared row builder.
-  it('DocumentConsequenceRow supports governedFabric state', async () => {
-    // Import the workspace types to verify the interface exists
-    const { buildDocumentConsequenceRows } = await import(
-      '../client/src/concept2cure/components/workspace/documentConsequence'
-    );
-
-    const rows = buildDocumentConsequenceRows({
-      artifacts: [
-        {
-          id: 'art-1',
-          title: 'Test Doc',
-          version: 1,
-          status: 'draft',
-          metadata: { source: 'compute' },
-        },
-      ],
-      computeJobs: [],
-      proposals: [],
-      fabricStateMap: {
-        'art-1': {
-          decisionId: 'dec-1',
-          outcome: 'allow',
-          readiness: 'review_ready',
-          readinessScore: 45,
-          blockerCount: 0,
-          warningCount: 1,
-        },
-      },
-    });
-
-    expect(rows.length).toBe(1);
-    expect(rows[0].governedFabric).toBeTruthy();
-    expect(rows[0].governedFabric!.outcome).toBe('allow');
-    expect(rows[0].governedFabric!.readiness).toBe('review_ready');
-  });
-});
+//
+// A `describe.skip('Workspace Consequence Integration')` block used to sit
+// here, importing `buildDocumentConsequenceRows` from
+// `client/src/concept2cure/components/workspace/documentConsequence`. Its own
+// comment recorded that the helper "was removed in the design-system port" and
+// that the block should be re-enabled "when the Phase 3 workbench ships its
+// shared row builder".
+//
+// It is removed rather than left skipped because the import named a path that
+// does not exist anywhere in the tree — not under a different name, not in
+// another directory. A skipped test whose subject is gone is not a placeholder
+// for future work; it is a claim that a helper exists, held in a form that can
+// never be checked. `scripts/ci/check-test-imports.mjs` now reports exactly
+// this shape, and the honest resolution is deletion.
+//
+// When the Phase 3 workbench does ship a shared row builder, the test to write
+// is against that builder, not against this one's remembered signature.

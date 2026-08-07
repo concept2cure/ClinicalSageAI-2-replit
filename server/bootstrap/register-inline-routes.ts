@@ -77,6 +77,36 @@ import fdaFormsRoutes from '../routes/fda-forms.routes';
 import fieldSyncRoutes from '../routes/fieldSync.routes';
 import contentAssemblyRoutes from '../routes/contentAssembly.routes';
 import { createMiscInlineRoutes } from '../routes/misc-inline-routes';
+import licenseRoutes from '../routes/license-routes.js';
+import moduleSubscriptions from '../routes/module-subscriptions.js';
+import licensing from '../routes/licensing.js';
+import billing from '../routes/billing.js';
+import deepResearch from '../routes/deep-research.js';
+import intelligentReports from '../routes/intelligent-reports.js';
+import safetyNarrative from '../routes/safety-narrative.js';
+import statisticalDefensibility from '../routes/statistical-defensibility.js';
+import conversationHealth from '../routes/conversation-health.js';
+import billingDashboard from '../routes/billing-dashboard.js';
+import reportOs from '../routes/report-os.js';
+import deviceCockpit from '../routes/device-cockpit.js';
+import globalMarkets from '../routes/global-markets.js';
+import workspaceConfig from '../routes/workspace-config.routes.js';
+import reportOsInsights from '../routes/report-os-insights.js';
+import indChecklistRoutes from '../routes/ind-checklist.routes.js';
+import programJourneyRoutes from '../routes/program-journey.routes.js';
+import marketAccessRoutes from '../routes/market-access.routes.js';
+import shadowReviewRoutes from '../routes/shadow-review.routes.js';
+import labelingPiRoutes from '../routes/labeling-pi.routes.js';
+import protocolDevRoutes from '../routes/protocol-dev.routes.js';
+import researchAdminRoutes from '../routes/research-admin.routes.js';
+import investigatorBrochureRoutes from '../routes/investigator-brochure.routes.js';
+import nonclinicalSummaryRoutes from '../routes/nonclinical-summary.routes.js';
+import maaModule1Routes from '../routes/maa-module1.routes.js';
+import labelingSmpcRoutes from '../routes/labeling-smpc.routes.js';
+import cmcChangesRoutes from '../routes/cmc-changes.routes.js';
+
+import { mountAll } from './mount-routes.js';
+
 
 export interface InlineRouteContext {
   app: Express;
@@ -133,56 +163,61 @@ export async function registerInlineAnaIntelligenceRoutes({
 export async function registerInlineLitCommerceRoutes({
   app,
 }: InlineRouteContext): Promise<void> {
-  const litIntConfig = [
-    { path: '/', load: () => import('../routes/license-routes.js'), name: 'License Management' },
-    {
-      path: '/api/module-subscriptions',
-      load: () => import('../routes/module-subscriptions.js'),
-      name: 'Module Subscriptions',
-    },
-    {
-      path: '/api/licensing',
-      load: () => import('../routes/licensing.js'),
-      name: 'Intelligent Licensing & EULA',
-    },
-    { path: '/api/billing', load: () => import('../routes/billing.js'), name: 'Billing' },
-    { path: '/api/deep-research', load: () => import('../routes/deep-research.js'), name: 'Deep Research' },
-    {
-      path: '/api/intelligent-reports',
-      load: () => import('../routes/intelligent-reports.js'),
-      name: 'Intelligent Reports',
-    },
-    {
-      path: '/api/safety-narratives',
-      load: () => import('../routes/safety-narrative.js'),
-      name: 'Safety Narrative',
-    },
+  /*
+   * Static imports, deliberately — and this is not a style preference.
+   *
+   * These fifteen were loaded as `litIntConfig.map(c => import(c.mod))`, a
+   * dynamic import with a VARIABLE specifier. esbuild cannot resolve that at
+   * build time, so it bundled none of them: `node scripts/build-server.mjs`
+   * followed by esbuild's own metafile reports 15/15 absent from dist/index.js.
+   * At runtime the specifier '../routes/billing.js' then resolves relative to
+   * dist/, where nothing exists, and the import rejects.
+   *
+   * `Promise.allSettled` swallowed that into a console.error and the server
+   * started normally — so `npm run start` came up healthy with the entire
+   * commercial layer (licensing, module subscriptions, billing, billing
+   * dashboard) and a large part of the product (report-os, deep research,
+   * intelligent reports, device cockpit, global markets, safety narratives)
+   * simply not mounted. Every request to them 404s.
+   *
+   * The literal-specifier dynamic imports elsewhere in this file are fine:
+   * esbuild resolves those statically. Only the variable form is invisible to
+   * it, which is exactly why this failed silently for so long — the code reads
+   * identically to the working cases three functions away.
+   */
+  const litIntRoutes: ReadonlyArray<{ path: string; router: unknown; name: string }> = [
+    { path: '/', router: licenseRoutes, name: 'License Management' },
+    { path: '/api/module-subscriptions', router: moduleSubscriptions, name: 'Module Subscriptions' },
+    { path: '/api/licensing', router: licensing, name: 'Intelligent Licensing & EULA' },
+    { path: '/api/billing', router: billing, name: 'Billing' },
+    { path: '/api/deep-research', router: deepResearch, name: 'Deep Research' },
+    { path: '/api/intelligent-reports', router: intelligentReports, name: 'Intelligent Reports' },
+    { path: '/api/safety-narratives', router: safetyNarrative, name: 'Safety Narrative' },
     {
       path: '/api/statistical-defensibility',
-      load: () => import('../routes/statistical-defensibility.js'),
+      router: statisticalDefensibility,
       name: 'Statistical Defensibility',
     },
-    {
-      path: '/api/conversation-health',
-      load: () => import('../routes/conversation-health.js'),
-      name: 'Conversation Health',
-    },
-    { path: '/api/billing', load: () => import('../routes/billing-dashboard.js'), name: 'Billing Dashboard' },
-    { path: '/api/report-os', load: () => import('../routes/report-os.js'), name: 'Report OS' },
-    { path: '/api/device-cockpit', load: () => import('../routes/device-cockpit.js'), name: 'Device Cockpit' },
-    { path: '/api/global-markets', load: () => import('../routes/global-markets.js'), name: 'Global Markets' },
-    { path: '/api/workspace', load: () => import('../routes/workspace-config.routes.js'), name: 'Workspace Config' },
-    { path: '/api/insights', load: () => import('../routes/report-os-insights.js'), name: 'Insights' },
-  ] as const;
-  const litIntResults = await Promise.allSettled(litIntConfig.map(c => c.load()));
-  litIntResults.forEach((r, i) => {
-    if (r.status === 'fulfilled') {
-      app.use(litIntConfig[i].path, r.value.default);
-      console.log(`✅ ${litIntConfig[i].name} routes mounted successfully`);
-    } else {
-      console.error(`❌ Failed to mount ${litIntConfig[i].name} routes:`, r.reason);
+    { path: '/api/conversation-health', router: conversationHealth, name: 'Conversation Health' },
+    { path: '/api/billing', router: billingDashboard, name: 'Billing Dashboard' },
+    { path: '/api/report-os', router: reportOs, name: 'Report OS' },
+    { path: '/api/device-cockpit', router: deviceCockpit, name: 'Device Cockpit' },
+    { path: '/api/global-markets', router: globalMarkets, name: 'Global Markets' },
+    { path: '/api/workspace', router: workspaceConfig, name: 'Workspace Config' },
+    { path: '/api/insights', router: reportOsInsights, name: 'Insights' },
+  ];
+
+  for (const entry of litIntRoutes) {
+    if (!entry.router) {
+      // A module that resolved but exported no default is the same outcome as
+      // one that never loaded, and used to be reported the same way. Keep it
+      // loud rather than mounting `undefined`.
+      console.error(`❌ ${entry.name} has no default export — not mounted`);
+      continue;
     }
-  });
+    app.use(entry.path, entry.router as never);
+    console.info(`✅ ${entry.name} routes mounted successfully`);
+  }
 
   // Stability routes.
   try {
@@ -882,28 +917,44 @@ export async function registerInlineAiWorkflowRoutes({
 
   // Wave-3 batch: org-scoped instance-list reads, each on its own sub-prefix,
   // feeding a registered v2 surface that fails closed to its fixture.
-  for (const [prefix, modPath, label] of [
-    ['/api/ind-checklist', () => import('../routes/ind-checklist.routes'), 'IND checklist'],
-    ['/api/program-journey', () => import('../routes/program-journey.routes'), 'Program journey'],
-    ['/api/market-access', () => import('../routes/market-access.routes'), 'Market access'],
-    ['/api/shadow-review', () => import('../routes/shadow-review.routes'), 'Shadow review'],
-    ['/api/labeling-pi', () => import('../routes/labeling-pi.routes'), 'Labeling PI'],
-    ['/api/protocol-dev', () => import('../routes/protocol-dev.routes'), 'Protocol dev'],
-    ['/api/research-admin', () => import('../routes/research-admin.routes'), 'Research admin'],
-    ['/api/investigator-brochure', () => import('../routes/investigator-brochure.routes'), "Investigator's Brochure"],
-    ['/api/nonclinical-summary', () => import('../routes/nonclinical-summary.routes'), 'Nonclinical M2.6/M4'],
-    ['/api/maa-module1', () => import('../routes/maa-module1.routes'), 'MAA Module 1'],
-    ['/api/labeling-smpc', () => import('../routes/labeling-smpc.routes'), 'EU SmPC labeling'],
-    ['/api/cmc-changes', () => import('../routes/cmc-changes.routes'), 'CMC change control'],
-  ] as const) {
-    try {
-      const mod = await modPath();
-      app.use(prefix, authMiddleware, mod.default);
-      console.info(`✅ ${label} route mounted (${prefix})`);
-    } catch (error) {
-      console.error(`❌ Failed to mount ${label} route:`, error);
-    }
-  }
+  //
+  // These twelve were the last holdout of the variable-specifier defect, and the
+  // hardest to see. They were loaded as `await import(modPath)` from a tuple
+  // loop, so esbuild resolved none of them and all twelve 404d in production
+  // while twelve v2 surfaces sat on their fixtures with no error anywhere.
+  //
+  // The guard that should have caught this did not, and the reason is worth
+  // recording: it stripped comments with a `/\*[\s\S]*?\*/` regex, and line 788
+  // of this file contains the characters `/*` inside prose. That opened a
+  // 13,294-character false comment spanning lines 788-1061 — this block among
+  // them. The guard reported clean on a file it could not see a quarter of.
+  // server/bootstrap/__tests__/routes-reach-the-bundle.test.ts now strips
+  // comments with a state machine that knows about strings, and self-checks
+  // against that exact case before it reports anything.
+  mountAll(
+    app,
+    [
+      { path: '/api/ind-checklist', router: indChecklistRoutes, name: 'IND checklist' },
+      { path: '/api/program-journey', router: programJourneyRoutes, name: 'Program journey' },
+      // Second router on /api/market-access. server/routes/market-access.ts is
+      // mounted by register-advanced-platform-routes (CPT/HCPCS coding and the
+      // coverage dossier); this one serves the instance-list reads the
+      // MarketAccess surface calls. Express tries them in mount order and the
+      // path sets do not overlap, so both are reachable — but the collision is
+      // real and belongs in a comment rather than in someone's afternoon.
+      { path: '/api/market-access', router: marketAccessRoutes, name: 'Market access (instance reads)' },
+      { path: '/api/shadow-review', router: shadowReviewRoutes, name: 'Shadow review' },
+      { path: '/api/labeling-pi', router: labelingPiRoutes, name: 'Labeling PI' },
+      { path: '/api/protocol-dev', router: protocolDevRoutes, name: 'Protocol dev' },
+      { path: '/api/research-admin', router: researchAdminRoutes, name: 'Research admin' },
+      { path: '/api/investigator-brochure', router: investigatorBrochureRoutes, name: "Investigator's Brochure" },
+      { path: '/api/nonclinical-summary', router: nonclinicalSummaryRoutes, name: 'Nonclinical M2.6/M4' },
+      { path: '/api/maa-module1', router: maaModule1Routes, name: 'MAA Module 1' },
+      { path: '/api/labeling-smpc', router: labelingSmpcRoutes, name: 'EU SmPC labeling' },
+      { path: '/api/cmc-changes', router: cmcChangesRoutes, name: 'CMC change control' },
+    ],
+    authMiddleware,
+  );
 
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and

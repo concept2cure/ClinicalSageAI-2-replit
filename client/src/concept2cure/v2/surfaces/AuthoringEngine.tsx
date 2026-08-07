@@ -128,7 +128,6 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
   const sys = AE_SYSTEMS.find((s) => s.id === sel) || AE_SYSTEMS[0];
   const ask = onAsk;
   const open = (id: string) => {
-    try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     onNav && onNav(id);
   };
   const tabs: [string, string][] = [
