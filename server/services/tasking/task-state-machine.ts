@@ -30,6 +30,20 @@ export const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   cancelled: ['pending'],
 };
 
+/**
+ * Statuses a task may be CREATED in. Terminal statuses are excluded: creating
+ * a task directly as `completed` skipped the approval sign-off ceremony
+ * entirely (the gate only runs on transitions), so an API client could mint an
+ * already-completed approval-gated task with no PIN, meaning or reason.
+ * Work must be created as live work and then transitioned.
+ */
+export const CREATABLE_TASK_STATUSES = [
+  'pending',
+  'in-progress',
+  'review',
+  'blocked',
+] as const satisfies readonly TaskStatus[];
+
 export function isLegalTransition(from: string, to: string): boolean {
   if (from === to) return true;
   const allowed = TASK_TRANSITIONS[from as TaskStatus];

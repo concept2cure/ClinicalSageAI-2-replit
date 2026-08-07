@@ -881,16 +881,18 @@ async function mirrorProjectTaskToUnified(
     moduleType?: string;
   }
 ): Promise<void> {
+  const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${projectTaskId}`;
   try {
-    await pool.query(
+    const result = await pool.query(
       `INSERT INTO unified_tasks
          (task_id, organization_id, project_id, module_type, title, description,
           assignee_id, priority, due_date, status, source_entity_type,
           source_entity_id, created_by_id, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', 'project_task', $10, $11, NOW(), NOW())
-       ON CONFLICT (task_id) DO NOTHING`,
+       ON CONFLICT (task_id) DO NOTHING
+       RETURNING task_id`,
       [
-        `TASK-PT-${ctx.organizationId}-${projectTaskId}`,
+        mirroredTaskId,
         ctx.organizationId,
         params.projectId,
         params.moduleType || 'general',
@@ -903,6 +905,42 @@ async function mirrorProjectTaskToUnified(
         ctx.userId,
       ]
     );
+    // A row landing in the canonical regulated task table is a governed
+    // create, whoever wrote it: record the same `task.create` lineage the
+    // tasking routes record, and tell the assignee, so an AnA-created task is
+    // not a task with no audit trail and no notification. Skipped on a
+    // conflict (idempotent re-run wrote nothing).
+    if (result.rowCount) {
+      const [{ auditTaskAction }, { notifyTaskEvent }] = await Promise.all([
+        import('../tasking/task-audit.js'),
+        import('../tasking/task-side-effects.js'),
+      ]);
+      await auditTaskAction({
+        orgId: ctx.organizationId,
+        userId: ctx.userId,
+        command: 'task.create',
+        taskId: mirroredTaskId,
+        payload: {
+          moduleType: params.moduleType || 'general',
+          title: params.title,
+          priority: params.priority || 'medium',
+          status: 'pending',
+          sourceEntityType: 'project_task',
+          sourceEntityId: String(projectTaskId),
+        },
+        reason: 'Task created by AnA and mirrored to the canonical task board',
+      });
+      if (params.assigneeId && params.assigneeId !== ctx.userId) {
+        notifyTaskEvent({
+          organizationId: ctx.organizationId,
+          recipientUserId: params.assigneeId,
+          category: 'task_assigned',
+          title: `Task assigned: ${params.title}`,
+          body: params.description || null,
+          taskId: mirroredTaskId,
+        });
+      }
+    }
   } catch (err) {
     console.warn(
       '[ana-ri] unified_tasks mirror failed (non-fatal):',

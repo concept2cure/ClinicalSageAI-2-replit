@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiCall, apiErrorText } from '../apiCall';
 import { useDialog } from '../useDialog';
 import { SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI } from '../fixtures/collab-data';
 
@@ -176,21 +176,6 @@ function clAvatar(name: string): string {
   return (name || '?').split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
 }
 
-/** Readable message from an API error body (string | ZodIssue[] | object). */
-function fmtApiError(body: unknown, fallback: string): string {
-  const e = (body as { error?: unknown } | null)?.error;
-  if (!e) return fallback;
-  if (typeof e === 'string') return e;
-  if (Array.isArray(e)) {
-    const msgs = e
-      .map(issue => (issue && typeof issue === 'object' && 'message' in issue
-        ? String((issue as { message: unknown }).message)
-        : null))
-      .filter(Boolean);
-    if (msgs.length) return msgs.join(' · ');
-  }
-  return fallback;
-}
 
 /* ── Quick task — the real unified_tasks create, context pre-filled ── */
 
@@ -228,8 +213,8 @@ function QuickTask({ ctx: surfaceCtx, projects, assignees, onClose, onCreated }:
     setErr('');
     const due = new Date();
     due.setDate(due.getDate() + (Number.isFinite(f.dueDays) ? f.dueDays : 0));
-    try {
-      const res = await apiRequest('POST', '/api/tasks/tasks', {
+    {
+      const res = await apiCall<{ data?: { taskId?: string; assigneeName?: string } }>('POST', '/api/tasks/tasks', {
         title: f.title.trim(),
         description: f.note.trim() || undefined,
         moduleType: f.moduleType,
@@ -245,13 +230,12 @@ function QuickTask({ ctx: surfaceCtx, projects, assignees, onClose, onCreated }:
         sourceEntityType: surfaceCtx.entityType || undefined,
         sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId || undefined,
       });
-      const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.data?.taskId) {
-        setErr(fmtApiError(body, 'Could not create the task.'));
+      if (!res.ok || !res.body?.data?.taskId) {
+        setErr(apiErrorText(res, 'Could not create the task.'));
         setBusy(false);
         return;
       }
-      const who = body.data.assigneeName
+      const who = res.body.data.assigneeName
         || assignees.find(a => a.id === f.assignee)?.name
         || 'the least-loaded member';
       onCreated({ kind: 'task', text: `Task created and assigned to ${who}.` });
@@ -261,9 +245,6 @@ function QuickTask({ ctx: surfaceCtx, projects, assignees, onClose, onCreated }:
       } else {
         onClose();
       }
-    } catch {
-      setErr('Network error while creating the task.');
-      setBusy(false);
     }
   };
 
@@ -378,17 +359,16 @@ function CollabDiscuss({ ctx: surfaceCtx, assignees, onClose, onCreated }: Colla
     if (!body.trim() || !recipient || busy) return;
     setBusy(true);
     setErr('');
-    try {
-      const res = await apiRequest('POST', '/api/tasks/messages', {
+    {
+      const res = await apiCall('POST', '/api/tasks/messages', {
         recipientUserId: Number(recipient.id),
         message: body.trim(),
         about: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel || undefined,
         sourceEntityType: surfaceCtx.entityType || undefined,
         sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId || undefined,
       });
-      const resBody = await res.json().catch(() => null);
       if (!res.ok) {
-        setErr(fmtApiError(resBody, 'Could not send the message.'));
+        setErr(apiErrorText(res, 'Could not send the message.'));
         setBusy(false);
         return;
       }
@@ -396,7 +376,7 @@ function CollabDiscuss({ ctx: surfaceCtx, assignees, onClose, onCreated }: Colla
       if (makeTask) {
         const due = new Date();
         due.setDate(due.getDate() + 3);
-        const taskRes = await apiRequest('POST', '/api/tasks/tasks', {
+        const taskRes = await apiCall<{ data?: { taskId?: string } }>('POST', '/api/tasks/tasks', {
           title: body.trim().slice(0, 90),
           description: body.trim(),
           moduleType: surfaceCtx.moduleType || 'Regulatory',
@@ -408,10 +388,9 @@ function CollabDiscuss({ ctx: surfaceCtx, assignees, onClose, onCreated }: Colla
           sourceEntityType: surfaceCtx.entityType || undefined,
           sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId || undefined,
         });
-        const taskBody = await taskRes.json().catch(() => null);
-        if (!taskRes.ok || !taskBody?.data?.taskId) {
+        if (!taskRes.ok || !taskRes.body?.data?.taskId) {
           // The message went through; say so honestly rather than failing both.
-          onCreated({ kind: 'msg', text: `Message sent to ${recipient.name} — but the linked task failed: ${fmtApiError(taskBody, 'unknown error')}` });
+          onCreated({ kind: 'msg', text: `Message sent to ${recipient.name} — but the linked task failed: ${apiErrorText(taskRes, 'unknown error')}` });
           onClose();
           return;
         }
@@ -420,9 +399,6 @@ function CollabDiscuss({ ctx: surfaceCtx, assignees, onClose, onCreated }: Colla
         onCreated({ kind: 'msg', text: `Message sent to ${recipient.name}.` });
       }
       onClose();
-    } catch {
-      setErr('Network error while sending.');
-      setBusy(false);
     }
   };
 

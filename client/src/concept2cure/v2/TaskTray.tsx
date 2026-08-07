@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { I } from './icons';
 import { useLiveData, useLiveRows } from './dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiCall } from './apiCall';
 import { useDialog } from './useDialog';
 
 /* ================================================================
@@ -107,10 +107,9 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
   const badge = (work?.total ?? 0) + (unread.data?.unread ?? 0);
 
   const markRead = async (id: number) => {
-    try {
-      await apiRequest('POST', `/api/mdx/notifications/${id}/read`);
-      setRefreshKey(k => k + 1);
-    } catch { /* the row stays unread; nothing fabricated */ }
+    const res = await apiCall('POST', `/api/mdx/notifications/${id}/read`);
+    // A failed mark-read leaves the row unread — nothing is fabricated.
+    if (res.ok) setRefreshKey(k => k + 1);
   };
 
   const go = (surface: string) => {

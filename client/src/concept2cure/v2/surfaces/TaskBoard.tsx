@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiCall, apiErrorText } from '../apiCall';
 import { useAuth } from '@/services/portal/authService';
 import { useDialog } from '../useDialog';
 import { AnswerLead } from '../AnswerLead';
@@ -111,21 +111,6 @@ function initials(name: string): string {
   return (name || '?').split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
 }
 
-/** Readable message from an API error body (string | ZodIssue[] | object). */
-function fmtApiError(body: unknown, fallback: string): string {
-  const e = (body as { error?: unknown } | null)?.error;
-  if (!e) return fallback;
-  if (typeof e === 'string') return e;
-  if (Array.isArray(e)) {
-    const msgs = e
-      .map(issue => (issue && typeof issue === 'object' && 'message' in issue
-        ? String((issue as { message: unknown }).message)
-        : null))
-      .filter(Boolean);
-    if (msgs.length) return msgs.join(' · ');
-  }
-  return fallback;
-}
 
 
 /* ── Main surface ── */
@@ -255,30 +240,24 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     const progress = status === 'completed' ? 100 : t.progress;
     setOverrides(o => ({ ...o, [t.taskId]: { status, progress } }));
     setActionErr('');
-    try {
-      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), {
-        status,
-        progress,
-      });
-      if (res.ok) {
-        setAnnounce(`"${t.title}" moved to ${(BOARD_COLS.find(c => c.id === status) || { label: status }).label}.`);
-        // The override stays until the refetched rows arrive (cleared by the
-        // rows effect above) — no flicker back to the old column.
-        setReloadKey(k => k + 1);
-      } else {
-        const body = await res.json().catch(() => null);
-        setOverrides(o => { const { [t.taskId]: _drop, ...rest } = o; return rest; });
-        if (res.status === 428 && body?.code === 'ESIGN_REQUIRED') {
-          // Approval-gated completion: run the signature ceremony, then retry.
-          setSignReq({ t, status, progress });
-        } else {
-          setActionErr(fmtApiError(body, `Couldn't move "${t.title}".`));
-        }
-      }
-    } catch {
-      setOverrides(o => { const { [t.taskId]: _drop, ...rest } = o; return rest; });
-      setActionErr(`Couldn't move "${t.title}" — network error.`);
+    const res = await apiCall('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), {
+      status,
+      progress,
+    });
+    if (res.ok) {
+      setAnnounce(`"${t.title}" moved to ${(BOARD_COLS.find(c => c.id === status) || { label: status }).label}.`);
+      // The override stays until the refetched rows arrive (cleared by the
+      // rows effect above) — no flicker back to the old column.
+      setReloadKey(k => k + 1);
+      return;
     }
+    setOverrides(o => { const { [t.taskId]: _drop, ...rest } = o; return rest; });
+    if (res.status === 428 && (res.body as { code?: string } | null)?.code === 'ESIGN_REQUIRED') {
+      // Approval-gated completion: run the signature ceremony, then retry.
+      setSignReq({ t, status, progress });
+      return;
+    }
+    setActionErr(apiErrorText(res, `Couldn't move "${t.title}".`));
   };
 
   // New task → the real persisted create (POST /api/tasks/tasks), then the
@@ -287,31 +266,23 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     payload: TaskCreateBody,
     dependsOn: string[],
   ): Promise<{ ok: boolean; error?: string }> => {
-    try {
-      const res = await apiRequest('POST', '/api/tasks/tasks', payload);
-      const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.data?.taskId) {
-        return { ok: false, error: fmtApiError(body, 'Could not create the task.') };
-      }
-      const newTaskId = String(body.data.taskId);
-      for (const dep of dependsOn) {
-        try {
-          await apiRequest('POST', '/api/tasks/tasks/dependencies', {
-            predecessorTaskId: dep,
-            successorTaskId: newTaskId,
-            dependencyType: 'finish-to-start',
-          });
-        } catch {
-          /* a failed dependency link never blocks the created task */
-        }
-      }
-      setReloadKey(k => k + 1);
-      setCreating(false);
-      setAnnounce(`Task created: ${payload.title}.`);
-      return { ok: true };
-    } catch {
-      return { ok: false, error: 'Network error while creating the task.' };
+    const res = await apiCall<{ data?: { taskId?: string } }>('POST', '/api/tasks/tasks', payload);
+    if (!res.ok || !res.body?.data?.taskId) {
+      return { ok: false, error: apiErrorText(res, 'Could not create the task.') };
     }
+    const newTaskId = String(res.body.data.taskId);
+    for (const dep of dependsOn) {
+      // A failed dependency link never blocks the created task.
+      await apiCall('POST', '/api/tasks/tasks/dependencies', {
+        predecessorTaskId: dep,
+        successorTaskId: newTaskId,
+        dependencyType: 'finish-to-start',
+      });
+    }
+    setReloadKey(k => k + 1);
+    setCreating(false);
+    setAnnounce(`Task created: ${payload.title}.`);
+    return { ok: true };
   };
 
   const stats = useMemo(() => {
@@ -668,25 +639,19 @@ function ESignTaskModal({ req, onClose, onSigned }: {
     if (busy || !pin || reason.trim().length < 3) return;
     setBusy(true);
     setErr('');
-    try {
-      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
-        status: req.status,
-        progress: req.progress,
-        reason: reason.trim(),
-        signature: { pin, meaning },
-      });
-      const body = await res.json().catch(() => null);
-      if (res.ok) {
-        onSigned();
-      } else {
-        setErr(fmtApiError(body, 'The signature was not accepted.'));
-        setBusy(false);
-        setPin('');
-      }
-    } catch {
-      setErr('Network error — nothing was signed or completed.');
-      setBusy(false);
+    const res = await apiCall('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
+      status: req.status,
+      progress: req.progress,
+      reason: reason.trim(),
+      signature: { pin, meaning },
+    });
+    if (res.ok) {
+      onSigned();
+      return;
     }
+    setErr(apiErrorText(res, 'The signature was not accepted.'));
+    setBusy(false);
+    setPin(''); // never leave a rejected PIN in the field
   };
 
   return (
@@ -769,41 +734,28 @@ function TaskDetail({ t, byId, projLabel, ownerLabel, onClose, onAsk, onMove, on
     if (!confirmArchive) { setConfirmArchive(true); return; }
     if (archiving) return;
     setArchiving(true);
-    try {
-      const res = await apiRequest('DELETE', `/api/tasks/tasks/${encodeURIComponent(t.taskId)}`, {
-        reason: 'Archived from the task board',
-      });
-      const body = await res.json().catch(() => null);
-      if (res.ok) {
-        onNotice(`Archived "${t.title}". The record is retained in the audit trail.`);
-        onArchived();
-      } else {
-        onErr(fmtApiError(body, 'Could not archive the task.'));
-        setArchiving(false);
-        setConfirmArchive(false);
-      }
-    } catch {
-      onErr('Could not archive the task — network error.');
-      setArchiving(false);
-      setConfirmArchive(false);
+    const res = await apiCall('DELETE', `/api/tasks/tasks/${encodeURIComponent(t.taskId)}`, {
+      reason: 'Archived from the task board',
+    });
+    if (res.ok) {
+      onNotice(`Archived "${t.title}". The record is retained in the audit trail.`);
+      onArchived();
+      return;
     }
+    onErr(apiErrorText(res, 'Could not archive the task.'));
+    setArchiving(false);
+    setConfirmArchive(false);
   };
 
   const remind = async () => {
     if (reminding) return;
     setReminding(true);
-    try {
-      const res = await apiRequest('POST', `/api/tasks/tasks/${encodeURIComponent(t.taskId)}/notify`, {
-        message: `Reminder: "${t.title}" is ${overdue ? 'overdue' : 'waiting on you'}${t.due ? ` (due ${t.due})` : ''}.`,
-      });
-      const body = await res.json().catch(() => null);
-      if (res.ok) onNotice(`Reminder sent to ${ownerLabel(t.assignee)}.`);
-      else onErr(fmtApiError(body, 'Could not send the reminder.'));
-    } catch {
-      onErr('Could not send the reminder — network error.');
-    } finally {
-      setReminding(false);
-    }
+    const res = await apiCall('POST', `/api/tasks/tasks/${encodeURIComponent(t.taskId)}/notify`, {
+      message: `Reminder: "${t.title}" is ${overdue ? 'overdue' : 'waiting on you'}${t.due ? ` (due ${t.due})` : ''}.`,
+    });
+    if (res.ok) onNotice(`Reminder sent to ${ownerLabel(t.assignee)}.`);
+    else onErr(apiErrorText(res, 'Could not send the reminder.'));
+    setReminding(false);
   };
 
   return (
@@ -1093,23 +1045,21 @@ function WorkflowStart({ proj, projects, onClose, onDone }: WorkflowStartProps) 
     if (!tpl || busy) return;
     setBusy(true);
     setErr('');
-    try {
-      const res = await apiRequest('POST', `/api/tasks/tasks/from-template/${encodeURIComponent(tpl.templateId)}`, {
+    const res = await apiCall<{ success?: boolean; count?: number }>(
+      'POST',
+      `/api/tasks/tasks/from-template/${encodeURIComponent(tpl.templateId)}`,
+      {
         projectId: Number.isFinite(Number(project)) && Number(project) > 0 ? Number(project) : undefined,
         startDate: new Date().toISOString(),
         adjustDates: true,
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.success) {
-        setErr(fmtApiError(body, 'Could not start the workflow.'));
-        setBusy(false);
-        return;
-      }
-      onDone(Number(body.count) || (tpl.tasks?.length ?? 0), tpl.name);
-    } catch {
-      setErr('Network error while starting the workflow.');
+      },
+    );
+    if (!res.ok || !res.body?.success) {
+      setErr(apiErrorText(res, 'Could not start the workflow.'));
       setBusy(false);
+      return;
     }
+    onDone(Number(res.body.count) || (tpl.tasks?.length ?? 0), tpl.name);
   };
 
   return (

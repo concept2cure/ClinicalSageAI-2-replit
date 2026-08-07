@@ -5,7 +5,7 @@
  *
  * @module server/services/tasking/task-side-effects
  */
-import { and, eq, ne, inArray, sql } from 'drizzle-orm';
+import { and, eq, ne, or, isNull, inArray, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { unifiedTasks, taskDependencies } from '../../../shared/schema';
 import { createNotification } from '../notifications/notification-service';
@@ -95,10 +95,16 @@ export async function cascadeUnblockOnCompletion(
 
   // 2. task_dependencies DAG — wake blocked successors whose predecessors are
   //    now all complete. Successor rows are re-checked org-scoped before write.
+  // Only BLOCKING edges gate a successor. A non-blocking edge (is_blocking
+  // false — an informational "related to" link) must not hold a task blocked
+  // once every real blocker is done; the write schema already distinguishes
+  // them, so the read has to honour that. NULL reads as blocking (the column
+  // defaults true and legacy rows predate it).
+  const blockingEdge = or(isNull(taskDependencies.isBlocking), eq(taskDependencies.isBlocking, true));
   const successorEdges = await db
     .select({ successorTaskId: taskDependencies.successorTaskId })
     .from(taskDependencies)
-    .where(eq(taskDependencies.predecessorTaskId, completedTaskId));
+    .where(and(eq(taskDependencies.predecessorTaskId, completedTaskId), blockingEdge));
   for (const edge of successorEdges) {
     const [successor] = await db
       .select()
@@ -115,7 +121,7 @@ export async function cascadeUnblockOnCompletion(
     const predecessorEdges = await db
       .select({ predecessorTaskId: taskDependencies.predecessorTaskId })
       .from(taskDependencies)
-      .where(eq(taskDependencies.successorTaskId, successor.taskId));
+      .where(and(eq(taskDependencies.successorTaskId, successor.taskId), blockingEdge));
     const predecessorIds = predecessorEdges
       .map(e => e.predecessorTaskId)
       .filter(id => id !== completedTaskId);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiCall, apiErrorText } from '../apiCall';
 
 /* ================================================================
    Review threads — the compose side of the Phase-13 collaboration
@@ -72,10 +72,6 @@ function initials(name: string): string {
   return (name || '?').split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
 }
 
-function errText(body: unknown, fallback: string): string {
-  const e = (body as { error?: unknown } | null)?.error;
-  return typeof e === 'string' ? e : fallback;
-}
 
 export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void }) {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -98,56 +94,40 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
   const post = async () => {
     if (!sel || !body.trim() || busy) return;
     setBusy(true);
-    try {
-      const res = await apiRequest(
-        'POST',
-        `/api/concept2cure/review-threads/${encodeURIComponent(sel)}/comments`,
-        { body: body.trim(), kind: requestChanges ? 'request_changes' : 'comment' }
-      );
-      const resBody = await res.json().catch(() => null);
-      if (res.ok) {
-        setBody('');
-        setRequestChanges(false);
-        refresh();
-        onNotice(requestChanges ? 'Changes requested — the author has been notified.' : 'Comment posted.');
-      } else {
-        onNotice(errText(resBody, 'Could not post the comment.'));
-      }
-    } catch {
-      onNotice('Could not post the comment — network error.');
-    } finally {
-      setBusy(false);
+    const res = await apiCall(
+      'POST',
+      `/api/concept2cure/review-threads/${encodeURIComponent(sel)}/comments`,
+      { body: body.trim(), kind: requestChanges ? 'request_changes' : 'comment' }
+    );
+    if (res.ok) {
+      setBody('');
+      setRequestChanges(false);
+      refresh();
+      onNotice(requestChanges ? 'Changes requested — the author has been notified.' : 'Comment posted.');
+    } else {
+      onNotice(apiErrorText(res, 'Could not post the comment.'));
     }
+    setBusy(false);
   };
 
   const resolveThread = async (threadId: string) => {
-    try {
-      const res = await apiRequest('POST', `/api/concept2cure/review-threads/${encodeURIComponent(threadId)}/resolve`, {});
-      const resBody = await res.json().catch(() => null);
-      if (res.ok) {
-        if (sel === threadId) setSel(null);
-        refresh();
-        onNotice('Thread resolved — the linked work item is closed.');
-      } else {
-        onNotice(errText(resBody, 'Could not resolve the thread.'));
-      }
-    } catch {
-      onNotice('Could not resolve the thread — network error.');
+    const res = await apiCall('POST', `/api/concept2cure/review-threads/${encodeURIComponent(threadId)}/resolve`, {});
+    if (res.ok) {
+      if (sel === threadId) setSel(null);
+      refresh();
+      onNotice('Thread resolved — the linked work item is closed.');
+    } else {
+      onNotice(apiErrorText(res, 'Could not resolve the thread.'));
     }
   };
 
   const resolveTask = async (taskId: string, title: string) => {
-    try {
-      const res = await apiRequest('POST', `/api/concept2cure/review-tasks/${encodeURIComponent(taskId)}/resolve`, {});
-      const resBody = await res.json().catch(() => null);
-      if (res.ok) {
-        refresh();
-        onNotice(`Resolved: ${title}`);
-      } else {
-        onNotice(errText(resBody, 'Could not resolve the task.'));
-      }
-    } catch {
-      onNotice('Could not resolve the task — network error.');
+    const res = await apiCall('POST', `/api/concept2cure/review-tasks/${encodeURIComponent(taskId)}/resolve`, {});
+    if (res.ok) {
+      refresh();
+      onNotice(`Resolved: ${title}`);
+    } else {
+      onNotice(apiErrorText(res, 'Could not resolve the task.'));
     }
   };
 

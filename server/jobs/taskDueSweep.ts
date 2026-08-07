@@ -18,7 +18,7 @@
  * @module server/jobs/taskDueSweep
  */
 
-import { and, eq, isNull, isNotNull, inArray, lt, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, isNotNull, inArray, lt, or, sql } from 'drizzle-orm';
 import { createScopedLogger } from '../utils/logger.js';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 
@@ -105,9 +105,21 @@ export async function runTaskDueSweep(): Promise<TaskDueSweepSummary> {
             isNotNull(unifiedTasks.dueDate),
             // Only rows inside the window are candidates; far-future rows
             // never leave the index.
-            lt(unifiedTasks.dueDate, new Date(now + DUE_SOON_WINDOW_MS))
+            lt(unifiedTasks.dueDate, new Date(now + DUE_SOON_WINDOW_MS)),
+            // Already-handled rows are excluded IN SQL, not after the limit.
+            // Filtering markers in JS let a batch of stamped rows consume the
+            // whole limit forever, starving unnotified tasks beyond it.
+            //   · an overdue-notified task is finished with the sweep;
+            //   · a due-soon-notified task still deserves its overdue notice,
+            //     so it stays a candidate once its due date has passed.
+            sql`${unifiedTasks.metadata} ->> 'overdueNotifiedAt' IS NULL`,
+            or(
+              lt(unifiedTasks.dueDate, new Date(now)),
+              sql`${unifiedTasks.metadata} ->> 'dueSoonNotifiedAt' IS NULL`
+            )
           )
         )
+        .orderBy(asc(unifiedTasks.dueDate))
         .limit(500);
     } catch {
       return summary; // unprovisioned / transient — zero work, retry next tick
@@ -129,8 +141,11 @@ export async function runTaskDueSweep(): Promise<TaskDueSweepSummary> {
           [marker]: new Date(now).toISOString(),
         };
         // Stamp BEFORE notifying: a duplicate suppression beats a duplicate
-        // notification if the process dies between the two.
-        await db
+        // notification if the process dies between the two. The guarded UPDATE
+        // is also the concurrency arbiter — with two replicas (or overlapping
+        // sweeps) both can pass the read, but only ONE update affects a row.
+        // The loser MUST NOT notify, so the result is checked, not ignored.
+        const stamped = await db
           .update(unifiedTasks)
           .set({ metadata: nextMetadata, updatedAt: new Date() })
           .where(
@@ -140,7 +155,9 @@ export async function runTaskDueSweep(): Promise<TaskDueSweepSummary> {
               // Concurrency guard: only stamp if still unstamped.
               sql`COALESCE(${unifiedTasks.metadata} ->> ${marker}, '') = ''`
             )
-          );
+          )
+          .returning({ taskId: unifiedTasks.taskId });
+        if (!stamped.length) continue; // another sweep claimed this notification
 
         notifyTaskEvent({
           organizationId: row.organizationId,

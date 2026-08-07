@@ -21,6 +21,7 @@ import {
 import {
   TASK_STATUSES,
   TASK_TRANSITIONS,
+  CREATABLE_TASK_STATUSES,
   isLegalTransition,
   type TaskStatus,
 } from '../services/tasking/task-state-machine';
@@ -45,6 +46,8 @@ function getActorUserId(req: Request): number | null {
 }
 
 const taskStatusSchema = z.enum(TASK_STATUSES);
+// Creation cannot mint a terminal status — see CREATABLE_TASK_STATUSES.
+const creatableStatusSchema = z.enum(CREATABLE_TASK_STATUSES);
 
 const jsonPrimitiveSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 type JsonValue = z.infer<typeof jsonPrimitiveSchema> | { [key: string]: JsonValue } | JsonValue[];
@@ -83,9 +86,11 @@ const createTaskSchema = z.object({
   taskType: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
   // Initial board column chosen in the create form (real column). Defaults to
-  // 'pending' when omitted; constrained to the status domain (free text let a
-  // create mint a status no view could render — assessment D23).
-  status: taskStatusSchema.optional(),
+  // 'pending' when omitted; constrained to the CREATABLE domain — free text let
+  // a create mint a status no view could render (assessment D23), and a
+  // terminal status let it mint an already-completed approval-gated task
+  // without the sign-off ceremony (the gate only runs on transitions).
+  status: creatableStatusSchema.optional(),
   assigneeId: z.number().optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -545,16 +550,34 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
     // when the org has none, so "Start workflow" works with zero seeding
     // (assessment D9/D10). Built-ins carry no DB row, so usage stats are only
     // bumped for stored templates below.
-    const [storedTemplate] = await storage.db
-      .select()
-      .from(taskTemplates)
-      .where(
-        and(
-          eq(taskTemplates.templateId, templateId),
-          eq(taskTemplates.organizationId, organizationId)
+    // The table read is guarded the same way GET /templates guards it: on an
+    // install where task_templates was never provisioned, an advertised
+    // built-in must still instantiate rather than falling into the catch-all
+    // 500 (the list endpoint offers built-ins in exactly that situation).
+    // Shape shared by a stored row and a built-in catalog entry — the fields
+    // the instantiation below reads.
+    let storedTemplate:
+      | {
+          templateId: string;
+          name: string;
+          tasks: unknown;
+          dependencies?: unknown;
+        }
+      | undefined;
+    try {
+      [storedTemplate] = await storage.db
+        .select()
+        .from(taskTemplates)
+        .where(
+          and(
+            eq(taskTemplates.templateId, templateId),
+            eq(taskTemplates.organizationId, organizationId)
+          )
         )
-      )
-      .limit(1);
+        .limit(1);
+    } catch (err: any) {
+      if (err?.code !== '42P01') throw err;
+    }
 
     const builtin = storedTemplate ? null : getBuiltinWorkflowTemplate(templateId);
     const template = storedTemplate ?? builtin;
