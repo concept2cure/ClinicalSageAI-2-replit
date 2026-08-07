@@ -26,11 +26,21 @@
  *     org-scoped through its PK). For the v1 of this gate, we keep that
  *     out of the safe-list — better to add an org filter explicitly.
  *
- * Allowlist:
- *   - Files that legitimately do cross-tenant reads (admin tools, schema
- *     migrations, system jobs that rebuild indexes, ingestion workers
- *     that operate on system-owned data).
+ * Allowlist (file-level):
+ *   - Files that legitimately do cross-tenant reads end to end (admin tools,
+ *     schema migrations/bootstrap, system jobs that rebuild indexes, ingestion
+ *     workers that operate on system-owned data).
  *   - Test files.
+ *
+ * Inline suppression (per-query):
+ *   - A single query the scanner can't prove safe — tenant scope from RLS
+ *     session context (withTenantContext / runWithSystemTenantScope), a
+ *     dynamically interpolated `${orgFilter}`, or a genuinely global identity/
+ *     idempotency key — may be marked at the call site with a comment
+ *     `// tenant-isolation-safe: <reason>`. The reason is mandatory. Prefer this
+ *     over allowlisting a whole file when the file ALSO holds genuinely
+ *     tenant-scoped queries the gate must keep watching. See
+ *     scripts/ci/lib/inline-suppression.mjs.
  *
  * Mode:
  *   - Default: report findings to stderr, exit 0. (We're learning the
@@ -50,6 +60,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { extractStringLiterals } from './lib/extract-string-literals.mjs';
+import { collectSuppressions, suppressionFor } from './lib/inline-suppression.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -137,6 +148,11 @@ const ALLOWLIST_FILES = new Set([
   // Schema setup / migrations / DDL — operates on the schema itself.
   'server/db/runtime.ts',
   'server/db/bootstrap/index.ts',
+  // Bootstrap seed — runs at startup, pre-tenant, to seed the platform-owner org
+  // and its GA demo admin (a global users identity + its organization_users
+  // membership). System operation, no tenant request context. Same category as
+  // bootstrap/index.ts above.
+  'server/db/bootstrap/seed-default-org.ts',
   'server/db/ensureCoreTables.ts',
   'server/db/setupLumenCortex.ts',
   'server/db/setupLiterature.ts',
@@ -269,12 +285,16 @@ const SQL_KEYWORD_RE = /\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b/i;
 // can be unit-tested without executing this script's scan-and-exit flow.
 
 const findings = [];
+const suppressed = [];
 
 for (const file of walk(path.join(repoRoot, 'server'))) {
   const rel = path.relative(repoRoot, file).replaceAll(path.sep, '/');
   if (isAllowlistedFile(rel)) continue;
 
   const text = fs.readFileSync(file, 'utf8');
+  // Per-query suppression markers (`// tenant-isolation-safe: <reason>`) in
+  // this file, keyed by 1-based line number → justification.
+  const suppressions = collectSuppressions(text);
 
   // Iterate every SQL-shaped string literal in the file.
   for (const literal of extractStringLiterals(text)) {
@@ -303,6 +323,22 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
       .update(normalizeSqlForHash(sql))
       .digest('hex')
       .slice(0, 12);
+
+    // A per-query `// tenant-isolation-safe: <reason>` marker within the
+    // lookback window above this statement removes it from findings (it never
+    // enters the baseline) but is still recorded so reviewers can audit every
+    // suppression and its rationale.
+    const reason = suppressionFor(lineNumber, suppressions);
+    if (reason) {
+      suppressed.push({
+        file: rel,
+        line: lineNumber,
+        tables: Array.from(tableHits),
+        reason,
+      });
+      continue;
+    }
+
     findings.push({
       file: rel,
       line: lineNumber,
@@ -322,6 +358,7 @@ findings.sort((a, b) =>
 const summary = {
   generatedAt: new Date().toISOString(),
   totalFindings: findings.length,
+  totalSuppressed: suppressed.length,
   byFile: findings.reduce((acc, f) => {
     acc[f.file] = (acc[f.file] || 0) + 1;
     return acc;
@@ -329,36 +366,50 @@ const summary = {
 };
 
 if (stdoutJson) {
-  process.stdout.write(JSON.stringify({ summary, findings }, null, 2) + '\n');
+  process.stdout.write(JSON.stringify({ summary, findings, suppressed }, null, 2) + '\n');
 } else {
+  const suppressedNote =
+    suppressed.length > 0
+      ? ` (${suppressed.length} query(ies) inline-suppressed with justifications — ` +
+        "grep 'tenant-isolation-safe:' to audit)"
+      : '';
   if (findings.length === 0) {
-    console.log('[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter');
-    process.exit(0);
-  }
-  console.error(`[ci:tenant-isolation] ${strict ? 'FAIL' : 'WARN'} — ${findings.length} candidate violation(s):\n`);
-  const grouped = new Map();
-  for (const f of findings) {
-    if (!grouped.has(f.file)) grouped.set(f.file, []);
-    grouped.get(f.file).push(f);
-  }
-  for (const [file, items] of grouped) {
-    console.error(`  ${file}  (${items.length})`);
-    for (const item of items.slice(0, 3)) {
-      console.error(`    L${item.line}  tables=[${item.tables.join(',')}]`);
-      console.error(`      ${item.preview}`);
+    console.log(
+      '[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter' +
+        suppressedNote
+    );
+    // In the terminal baseline modes, fall through so the empty result is
+    // snapshotted / compared. In the plain default mode, exit clean here.
+    if (!writeBaseline && !strictNoRegression) process.exit(0);
+  } else {
+    console.error(
+      `[ci:tenant-isolation] ${strict ? 'FAIL' : 'WARN'} — ${findings.length} candidate violation(s)${suppressedNote}:\n`
+    );
+    const grouped = new Map();
+    for (const f of findings) {
+      if (!grouped.has(f.file)) grouped.set(f.file, []);
+      grouped.get(f.file).push(f);
     }
-    if (items.length > 3) {
-      console.error(`    … ${items.length - 3} more`);
+    for (const [file, items] of grouped) {
+      console.error(`  ${file}  (${items.length})`);
+      for (const item of items.slice(0, 3)) {
+        console.error(`    L${item.line}  tables=[${item.tables.join(',')}]`);
+        console.error(`      ${item.preview}`);
+      }
+      if (items.length > 3) {
+        console.error(`    … ${items.length - 3} more`);
+      }
+      console.error('');
     }
-    console.error('');
+    console.error(
+      `Total: ${findings.length} candidate(s). These are RAW SQL queries against ` +
+        'known tenant-scoped tables that don\'t reference an org_id / tenant_id / ' +
+        'workspace_id in the same statement. Each one is either a real tenant-' +
+        'isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the ' +
+        'call site, or belongs in the file allowlist with a one-line justification ' +
+        '(admin tool / schema migration / pre-tenant-resolution auth).'
+    );
   }
-  console.error(
-    `Total: ${findings.length} candidate(s). These are RAW SQL queries against ` +
-      'known tenant-scoped tables that don\'t reference an org_id / tenant_id / ' +
-      'workspace_id in the same statement. Each one is either a real tenant-' +
-      'isolation bug or needs to be added to the allowlist with a one-line ' +
-      'justification (admin tool / schema migration / pre-tenant-resolution auth).'
-  );
 }
 
 // ─── Baseline + no-regression mode ─────────────────────────────────────────
