@@ -154,8 +154,24 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const usersModule = await import('../routes/users');
     const usersRouter = usersModule.default;
     if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
-      app.use('/api/users', usersRouter);
-      app.use('/api/user', usersRouter);
+      // These mounts sit BEFORE the global /api gate, so the gate's
+      // authMiddleware (and the scope lever) never runs for them. The router is
+      // MIXED: pre-auth routes (/login, /register, /logout) alongside
+      // authenticated ones (/, /me, /:id, /me/preferences, …), and it verifies
+      // JWTs inline rather than via a mount middleware — so it opens no tenant
+      // scope of its own. Under RLS_ENFORCE=on the authenticated routes then
+      // failed closed (profile / preferences 500'd), while login stayed
+      // pre-auth. A pre-auth scope is the right boundary for the whole mount:
+      // it clears the fail-closed guard, carries no role (no policy bypass),
+      // and is safe here because every table this router touches is RLS-policy-
+      // free under 0021 — users (no policy), organizations (no organization_id
+      // column → not policied), organization_users (0021 allowlist), and
+      // notification_preferences (keyed on user_id only, no org column). So the
+      // app-level WHERE clauses do the filtering and a tenant-less scope neither
+      // empties a read nor violates a write. Mirrors /api/auth and
+      // /api/auth/enterprise, which are pre-auth-scoped for the same reason.
+      app.use('/api/users', preAuthScope, usersRouter);
+      app.use('/api/user', preAuthScope, usersRouter);
     }
   } catch (error) {
     console.error('❌ Failed to mount users routes:', error);
