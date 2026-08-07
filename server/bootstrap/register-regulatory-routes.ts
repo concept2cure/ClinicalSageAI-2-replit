@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
+import { requireTenantContext } from '../middleware/tenantContext.js';
 
 export interface RegulatoryBootstrapContext {
   app: express.Express;
@@ -244,7 +245,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── Review board (approval/QC pipeline read-model) ──
   try {
     const reviewBoardModule = await import('../routes/review-board-routes');
-    app.use('/api/review', authenticateToken, reviewBoardModule.default());
+    app.use('/api/review', authenticateToken, requireTenantContext, reviewBoardModule.default());
     console.log('✅ Review board routes mounted (GET /api/review/board)');
   } catch (error) {
     console.error('❌ Failed to mount Review board routes:', error);
@@ -271,7 +272,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── Task management board (cross-project task read-model) ──
   try {
     const taskBoardModule = await import('../routes/taskBoard.routes');
-    app.use('/api/task-management', authenticateToken, taskBoardModule.default());
+    app.use('/api/task-management', authenticateToken, requireTenantContext, taskBoardModule.default());
     console.log('✅ Task management board route mounted (GET /api/task-management/board)');
   } catch (error) {
     console.error('❌ Failed to mount Task management board routes:', error);
@@ -298,7 +299,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── IVD completeness (IVDR technical-documentation readiness) ──
   try {
     const ivdCompletenessModule = await import('../routes/ivd-completeness-routes');
-    app.use('/api/ivd-completeness', authenticateToken, ivdCompletenessModule.default());
+    app.use('/api/ivd-completeness', authenticateToken, requireTenantContext, ivdCompletenessModule.default());
     console.log('✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)');
   } catch (error) {
     console.error('❌ Failed to mount IVD completeness routes:', error);
@@ -307,7 +308,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // ── Batch draft (multi-section drafting spine read-model) ──
   try {
     const batchDraftModule = await import('../routes/batch-draft-routes');
-    app.use('/api/batch-draft', authenticateToken, batchDraftModule.default());
+    app.use('/api/batch-draft', authenticateToken, requireTenantContext, batchDraftModule.default());
     console.log('✅ Batch draft route mounted (GET /api/batch-draft/spine)');
   } catch (error) {
     console.error('❌ Failed to mount Batch draft routes:', error);
