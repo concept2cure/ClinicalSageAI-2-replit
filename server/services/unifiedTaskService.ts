@@ -7,7 +7,7 @@
  */
 
 import { db } from '../db';
-import { eq, desc, and, or, like, inArray, sql } from 'drizzle-orm';
+import { eq, and, or, sql } from 'drizzle-orm';
 import * as schema from '../../shared/schema';
 import { generateUUID } from '../utils/id-generator';
 
@@ -179,14 +179,44 @@ class UnifiedTaskService {
     }
 
     const filteredQuery = conditions.length > 0 ? baseQuery.where(and(...conditions)) : baseQuery;
+    // Semantic priority order — `priority` is a text column, so desc() sorted
+    // it ALPHABETICALLY (medium → low → high → critical). Rank explicitly,
+    // then soonest-due first with undated work last (assessment D16).
     const orderedQuery = filteredQuery.orderBy(
-      desc(schema.unifiedTasks.priority),
-      desc(schema.unifiedTasks.dueDate)
+      sql`CASE ${schema.unifiedTasks.priority}
+            WHEN 'critical' THEN 0
+            WHEN 'urgent'   THEN 1
+            WHEN 'high'     THEN 2
+            WHEN 'medium'   THEN 3
+            WHEN 'low'      THEN 4
+            ELSE 5
+          END`,
+      sql`${schema.unifiedTasks.dueDate} asc nulls last`
     );
     const limitedQuery = options?.limit ? orderedQuery.limit(options.limit) : orderedQuery;
     const offsetQuery = options?.offset ? limitedQuery.offset(options.offset) : limitedQuery;
 
     return await offsetQuery;
+  }
+
+  /**
+   * One task by business key (taskId) or numeric primary key, scoped to an
+   * organization. Replaces the previous pattern of fetching up to 2000 rows
+   * and .find()-ing the one (assessment D17).
+   */
+  async getOrgTaskById(organizationId: number, id: string): Promise<schema.UnifiedTask | null> {
+    const dbInstance = this.getDb();
+    const numeric = Number(id);
+    const idMatch =
+      Number.isInteger(numeric) && numeric > 0 && String(numeric) === id
+        ? or(eq(schema.unifiedTasks.taskId, id), eq(schema.unifiedTasks.id, numeric))
+        : eq(schema.unifiedTasks.taskId, id);
+    const rows = await dbInstance
+      .select()
+      .from(schema.unifiedTasks)
+      .where(and(eq(schema.unifiedTasks.organizationId, organizationId), idMatch))
+      .limit(1);
+    return rows[0] ?? null;
   }
 
   /**

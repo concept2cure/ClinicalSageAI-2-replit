@@ -8,6 +8,7 @@ import express from 'express';
 // vi.hoisted keeps the spies available to the hoisted vi.mock factory.
 const m = vi.hoisted(() => ({
   getAllUnifiedTasks: vi.fn(),
+  getOrgTaskById: vi.fn(),
   updateTaskStatus: vi.fn(),
   getTasksByModule: vi.fn(),
   createUnifiedTask: vi.fn(),
@@ -61,16 +62,18 @@ describe('unifiedTasks routes — tenant isolation', () => {
   });
 
   it("PATCH /:id/status blocks mutating another org's task (404) and does not write", async () => {
-    m.getAllUnifiedTasks.mockResolvedValue([{ id: 1, taskId: 'TASK-A', organizationId: 2 }]);
+    // The org-scoped lookup finds nothing for the caller's org.
+    m.getOrgTaskById.mockResolvedValue(null);
     const res = await request(makeApp(2))
       .patch('/api/regulatory/tasks/TASK-OTHER/status')
       .send({ status: 'completed' });
     expect(res.status).toBe(404);
+    expect(m.getOrgTaskById).toHaveBeenCalledWith(2, 'TASK-OTHER');
     expect(m.updateTaskStatus).not.toHaveBeenCalled();
   });
 
   it('PATCH /:id/status updates a task that belongs to the caller org', async () => {
-    m.getAllUnifiedTasks.mockResolvedValue([{ id: 1, taskId: 'TASK-A', organizationId: 2 }]);
+    m.getOrgTaskById.mockResolvedValue({ id: 1, taskId: 'TASK-A', organizationId: 2, status: 'pending' });
     m.updateTaskStatus.mockResolvedValue({ id: 1, taskId: 'TASK-A', status: 'completed' });
     const res = await request(makeApp(2))
       .patch('/api/regulatory/tasks/TASK-A/status')

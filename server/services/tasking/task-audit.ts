@@ -17,7 +17,12 @@
 import { pool } from '../../db.js';
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
 
-export type TaskAuditCommand = 'task.create' | 'task.transition' | 'task.link';
+export type TaskAuditCommand =
+  | 'task.create'
+  | 'task.transition'
+  | 'task.link'
+  | 'task.assign'
+  | 'task.notify';
 
 export interface AuditTaskActionParams {
   /** Verified-JWT org id (the caller's tenant). */
@@ -41,6 +46,10 @@ function defaultReason(command: TaskAuditCommand): string {
       return 'Task status changed via tasking API';
     case 'task.link':
       return 'Task linked via tasking API';
+    case 'task.assign':
+      return 'Task assigned via tasking API';
+    case 'task.notify':
+      return 'Task notification sent via tasking API';
     default:
       return 'Task mutation via tasking API';
   }

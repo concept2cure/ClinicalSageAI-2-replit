@@ -859,6 +859,71 @@ export async function listArtifacts(
 // 3. TASK MANAGEMENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Mirror an AnA-created project task into the canonical org board
+ * (unified_tasks) so a task created in chat is visible on the Task Board —
+ * previously AnA wrote project_tasks alone and the board read unified_tasks,
+ * so "create a task" produced work nothing surfaced (assessment finding 3).
+ * Best-effort: a mirror failure never fails the create. The unified-work view
+ * excludes sourceEntityType='project_task' rows so the task is never counted
+ * twice; the mirror carries a deterministic task_id so re-runs are idempotent.
+ */
+async function mirrorProjectTaskToUnified(
+  ctx: CommandContext,
+  projectTaskId: number,
+  params: {
+    projectId: number;
+    title: string;
+    description?: string;
+    assigneeId?: number;
+    priority?: string;
+    dueDate?: string;
+    moduleType?: string;
+  }
+): Promise<void> {
+  try {
+    await pool.query(
+      `INSERT INTO unified_tasks
+         (task_id, organization_id, project_id, module_type, title, description,
+          assignee_id, priority, due_date, status, source_entity_type,
+          source_entity_id, created_by_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', 'project_task', $10, $11, NOW(), NOW())
+       ON CONFLICT (task_id) DO NOTHING`,
+      [
+        `TASK-PT-${ctx.organizationId}-${projectTaskId}`,
+        ctx.organizationId,
+        params.projectId,
+        params.moduleType || 'general',
+        params.title,
+        params.description || '',
+        params.assigneeId || null,
+        params.priority || 'medium',
+        params.dueDate || null,
+        String(projectTaskId),
+        ctx.userId,
+      ]
+    );
+  } catch (err) {
+    console.warn(
+      '[ana-ri] unified_tasks mirror failed (non-fatal):',
+      err instanceof Error ? err.message : err
+    );
+  }
+}
+
+/** project_tasks status → unified_tasks status, for the mirror. */
+function mirrorStatus(raw: unknown): string | null {
+  const v = String(raw ?? '').trim().toLowerCase();
+  if (!v) return null;
+  if (v === 'todo' || v === 'pending') return 'pending';
+  if (v === 'in-progress' || v === 'in_progress') return 'in-progress';
+  if (v === 'review') return 'review';
+  if (v === 'done' || v === 'completed') return 'completed';
+  if (v === 'blocked') return 'blocked';
+  if (v === 'cancelled') return 'cancelled';
+  return null;
+}
+
 /** Create a task in a project */
 export async function createTask(
   ctx: CommandContext,
@@ -892,6 +957,7 @@ export async function createTask(
       ]
     );
     const task = result.rows[0];
+    await mirrorProjectTaskToUnified(ctx, task.id, params);
     const priorityLabel =
       params.priority && params.priority !== 'medium' ? `, priority: ${params.priority}` : '';
     const dueLabel = params.dueDate ? `, due: ${params.dueDate}` : '';
@@ -965,6 +1031,34 @@ export async function updateTask(
         message: `Task ${params.taskId} was not found for this project/organization; nothing was updated.`,
       };
     }
+
+    // Keep the canonical-board mirror in step (best-effort; see createTask).
+    try {
+      const mirrorSets: string[] = [];
+      const mirrorVals: unknown[] = [String(params.taskId), ctx.organizationId];
+      let mi = 3;
+      const u = params.updates as Record<string, unknown>;
+      const newStatus = mirrorStatus(u.status);
+      if (newStatus) { mirrorSets.push(`status = $${mi++}`); mirrorVals.push(newStatus); }
+      if (typeof u.name === 'string' && u.name) { mirrorSets.push(`title = $${mi++}`); mirrorVals.push(u.name); }
+      if (typeof u.priority === 'string' && u.priority) { mirrorSets.push(`priority = $${mi++}`); mirrorVals.push(u.priority); }
+      if (mirrorSets.length) {
+        mirrorSets.push('updated_at = NOW()');
+        await pool.query(
+          `UPDATE unified_tasks SET ${mirrorSets.join(', ')}
+           WHERE source_entity_type = 'project_task'
+             AND source_entity_id = $1
+             AND organization_id = $2`,
+          mirrorVals
+        );
+      }
+    } catch (err) {
+      console.warn(
+        '[ana-ri] unified_tasks mirror update failed (non-fatal):',
+        err instanceof Error ? err.message : err
+      );
+    }
+
     return {
       success: true,
       action: 'update_task',

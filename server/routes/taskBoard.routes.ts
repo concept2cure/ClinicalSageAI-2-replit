@@ -91,6 +91,13 @@ interface TaskBoardItem {
   source: string;
   due: string;
   /**
+   * Machine-readable due date (ISO 8601) or null. The humanised `due` string
+   * above is kept for display compat, but clients must not parse it — it is
+   * server-locale English and UTC-day based (assessment D21). Overdue logic
+   * belongs on this field.
+   */
+  dueDateIso: string | null;
+  /**
    * Real `lifecycle_phase` column (LIFECYCLE_PHASES domain, shared/schema.ts:
    * strategy … postmarket); null when the task has never been phased.
    */
@@ -245,6 +252,7 @@ export default function createTaskBoardRoutes(): Router {
           attachments: jsonArrayLength(row.attachments),
           source: mapSource(row.sourceEntityType),
           due: humanizeDue(row.dueDate, status),
+          dueDateIso: row.dueDate ? new Date(row.dueDate).toISOString() : null,
           phase: row.lifecyclePhase ?? null,
           blocked,
           estimatedHours: row.estimatedHours ?? null,

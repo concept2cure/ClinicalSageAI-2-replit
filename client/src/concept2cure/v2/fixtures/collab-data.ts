@@ -139,7 +139,9 @@ export const CL_TYPE: Record<string, string> = {
 
 /* ── Priority levels ── */
 
-export const CL_PRI: string[] = ['low', 'medium', 'high', 'urgent', 'critical'];
+// The server's priority domain (createTaskSchema). 'urgent' was offered here
+// but rejected by the API with a raw ZodIssue array (assessment D6).
+export const CL_PRI: string[] = ['low', 'medium', 'high', 'critical'];
 
 /* ── Re-exports for consumer convenience ── */
 

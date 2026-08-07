@@ -7,7 +7,6 @@
 
 import { Router, Request, Response } from 'express';
 import unifiedTaskService, { MODULE_CONFIG } from '../services/unifiedTaskService';
-import { storage } from '../storage';
 import { z } from 'zod';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { auditTaskAction } from '../services/tasking/task-audit';
@@ -65,10 +64,10 @@ function requireOrgId(req: Request, res: Response): number | null {
  * Find a single task by taskId/id, scoped to the caller's org, so the by-id
  * read/mutation paths cannot touch another tenant's task. Returns null when the
  * id is not present in the caller's org (the caller then responds 404).
+ * Single indexed lookup — previously fetched up to 2000 rows and .find()'d.
  */
 async function findOrgTask(org: number, id: string) {
-  const tasks = await unifiedTaskService.getAllUnifiedTasks({ organizationId: org, limit: 2000 });
-  return tasks.find((t) => t.taskId === id || t.id === parseInt(id)) ?? null;
+  return unifiedTaskService.getOrgTaskById(org, id);
 }
 
 /**

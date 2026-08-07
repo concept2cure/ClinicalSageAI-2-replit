@@ -236,10 +236,29 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // ROOM MANAGER — In-memory Yjs room tracking
 // ---------------------------------------------------------------------------
 
+/**
+ * Presence TTL. The heartbeat PUTs awareness every 20s; a member not heard
+ * from in this window is evicted from the roster. Without this, `lastSeen`
+ * was written and never read — a closed laptop stayed in every roster
+ * forever (assessment D26), and the client comment claiming "the server also
+ * expires idle members" was wrong. Now it is true.
+ */
+const PRESENCE_TTL_MS = 90 * 1000;
+
 class YjsRoomManager {
   private rooms: Map<string, CollabRoom> = new Map();
   private userColors: Map<string, string> = new Map();
   private colorIndex = 0;
+
+  /** Drop members whose lastSeen exceeds the TTL. Runs on every read path. */
+  private pruneIdle(room: CollabRoom): void {
+    const cutoff = Date.now() - PRESENCE_TTL_MS;
+    const before = room.connectedUsers.length;
+    room.connectedUsers = room.connectedUsers.filter(u => u.lastSeen.getTime() >= cutoff);
+    if (room.connectedUsers.length !== before) {
+      room.lastActivity = new Date();
+    }
+  }
 
   getOrCreateRoom(
     roomKey: string,
@@ -273,6 +292,7 @@ class YjsRoomManager {
   ): CollabUser | null {
     const room = this.rooms.get(roomKey);
     if (!room) return null;
+    this.pruneIdle(room);
 
     // Assign a persistent color
     if (!this.userColors.has(user.userId)) {
@@ -317,16 +337,21 @@ class YjsRoomManager {
   }
 
   getRoom(roomKey: string): CollabRoom | undefined {
-    return this.rooms.get(roomKey);
+    const room = this.rooms.get(roomKey);
+    if (room) this.pruneIdle(room);
+    return room;
   }
 
   getAllRooms(): CollabRoom[] {
-    return Array.from(this.rooms.values());
+    const rooms = Array.from(this.rooms.values());
+    rooms.forEach(room => this.pruneIdle(room));
+    return rooms;
   }
 
   updateAwareness(roomKey: string, userId: string, update: Partial<AwarenessUpdate>): void {
     const room = this.rooms.get(roomKey);
     if (!room) return;
+    this.pruneIdle(room);
     const user = room.connectedUsers.find(u => u.userId === userId);
     if (user) {
       if (update.cursor) user.cursor = update.cursor;
@@ -570,6 +595,15 @@ router.put('/rooms/:documentId/awareness', (req: Request, res: Response) => {
     focusedField,
   });
   const room = roomManager.getRoom(roomKey);
+  // A heartbeat from a member the idle sweep evicted (laptop slept, tab
+  // resumed) re-joins them rather than leaving their own roster without them.
+  if (room && !room.connectedUsers.some(u => u.userId === actor.userId)) {
+    roomManager.addUser(roomKey, {
+      userId: actor.userId,
+      displayName: actor.label,
+      email: actor.email,
+    });
+  }
   res.json({ success: true, connectedUsers: room?.connectedUsers || [] });
 });
 

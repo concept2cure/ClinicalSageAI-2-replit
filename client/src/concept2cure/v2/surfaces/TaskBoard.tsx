@@ -1,49 +1,47 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/services/portal/authService';
+import { useDialog } from '../useDialog';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
-import {
-  TB_MOD, TB_COLS, TB_TYPE, TB_SRC, TB_PROJECTS, TB_TEAM, TB_OPTIMAL,
-  TB_WORKFLOWS,
-  type TaskSource,
-} from '../fixtures/task-board-data';
+import { TB_MOD, TB_TYPE, TB_SRC, type TaskSource } from '../fixtures/task-board-data';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
-   Task Board -- the org-wide unifiedTasks board served by
-   /api/task-management. Org-scoped by design; filter to a project
-   below. Tasks from sections, the pyramid engine, the legacy WBS and
-   modules are surfaced here with their origin store labelled.
+   Task Board — the org-wide task board (unified_tasks read-model).
 
-   Registers as both "task-board" and "tasks" in SURFACE_VIEWS.
+   GA pass (collaboration/tasking assessment):
+     · Projects, assignees and the current user are LIVE — the board no
+       longer filters against fixture slugs that matched nothing
+       (D1/D2/D3).
+     · Blocked is a real column; card moves run an explicit transition
+       map and surface the server's state-machine answer (D4/D5).
+     · Moves are optimistic with revert-on-failure (D15).
+     · Overdue is computed from the machine-readable dueDateIso, not by
+       parsing an English label (D21).
+     · Start workflow lists REAL templates (GET /api/tasks/templates)
+       and instantiates them server-side (D9/D10).
+     · Keyboard + screen-reader access: focusable cards, dialog
+       semantics, labelled controls, live announcements (D30–D34).
+     · Engineering internals are dev-only (D37–D39).
    ═══════════════════════════════════════════════════════════════════ */
 
-/**
- * Display row for the org-wide unifiedTasks board. Mirrors the server
- * TaskBoardItem shape returned by GET /api/task-management/board
- * (server/routes/taskBoard.routes.ts). impactScore / phase / estimatedHours are
- * REAL nullable columns and render null-safe (never fabricated); the backend
- * returns numeric FK ids (stringified) for project / assignee / assignedBy and
- * does NOT return blockedReason / assignmentType (client-only, optional).
- */
+/** Display row served by GET /api/task-management/board. */
 interface TaskItem {
   taskId: string;
   title: string;
-  /** Real project FK as a string; '' when unattached. Does NOT match the
-   *  TB_PROJECTS slugs — see the projects/roster follow-up flag. */
+  /** Project FK as a string; '' when unattached. */
   project: string;
   moduleType: string;
   taskType: string;
   status: string;
   priority: string;
-  /** Real assignee user-id FK as a string; '' when unassigned. */
+  /** Assignee user-id FK as a string; '' when unassigned. */
   assignee: string;
-  /** Real assigned-by user-id FK as a string; '' when unknown. */
   assignedBy: string;
   progress: number;
-  /** 0-10 submission impact; null when never scored (real nullable column). */
   impactScore: number | null;
   criticalPath: boolean;
   regulatoryImpact: boolean;
@@ -54,84 +52,203 @@ interface TaskItem {
   comments: number;
   attachments: number;
   source: string;
+  /** Humanised label for display only — never parsed. */
   due: string;
-  /**
-   * Real `unified_tasks.lifecycle_phase` column (LIFECYCLE_PHASES domain,
-   * shared/schema.ts: strategy … postmarket); null when never set.
-   */
+  /** Machine-readable due date; the only overdue signal. */
+  dueDateIso: string | null;
   phase: string | null;
   blocked?: boolean;
   blockedReason?: string;
   estimatedHours?: number | null;
-  assignmentType?: string;
 }
 
-function tbAvatar(id: string): string {
-  const p = TB_TEAM[id] || { n: '?' };
-  return (p.n || '?').split(' ').map(s => s[0]).join('').slice(0, 2);
+/** Real org project (GET /api/projects — bare row array). */
+interface ProjectOpt { id: number; name: string }
+/** Real assignable org member (GET /api/task-management/assignees). */
+interface AssigneeOpt { id: string; name: string }
+
+/* ── Board columns — blocked is a first-class column, so blocked work is
+      visible on the board instead of vanishing from every column (D4). ── */
+const BOARD_COLS = [
+  { id: 'pending', label: 'To do', tone: 'idle' },
+  { id: 'in-progress', label: 'In progress', tone: 'ai' },
+  { id: 'review', label: 'In review', tone: 'warn' },
+  { id: 'blocked', label: 'Blocked', tone: 'err' },
+  { id: 'completed', label: 'Done', tone: 'ok' },
+] as const;
+
+/* ── Explicit transition maps — index arithmetic over a column array sent
+      "advance" on a blocked task to pending (D5). Mirrors the server's
+      state machine so a legal click never 409s. ── */
+const ADVANCE: Record<string, string | null> = {
+  pending: 'in-progress',
+  'in-progress': 'review',
+  review: 'completed',
+  blocked: 'in-progress',
+  completed: null,
+  cancelled: 'pending',
+};
+const RETREAT: Record<string, string | null> = {
+  pending: null,
+  'in-progress': 'pending',
+  review: 'in-progress',
+  blocked: 'pending',
+  completed: 'review',
+  cancelled: null,
+};
+
+const PRIORITIES = ['low', 'medium', 'high', 'critical'];
+
+const DEV = Boolean(import.meta.env?.DEV);
+
+function isOverdue(t: TaskItem): boolean {
+  if (!t.dueDateIso || t.status === 'completed' || t.status === 'cancelled') return false;
+  const due = new Date(t.dueDateIso).getTime();
+  return Number.isFinite(due) && due < Date.now();
 }
+
+function initials(name: string): string {
+  return (name || '?').split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
+}
+
+/** Readable message from an API error body (string | ZodIssue[] | object). */
+function fmtApiError(body: unknown, fallback: string): string {
+  const e = (body as { error?: unknown } | null)?.error;
+  if (!e) return fallback;
+  if (typeof e === 'string') return e;
+  if (Array.isArray(e)) {
+    const msgs = e
+      .map(issue => (issue && typeof issue === 'object' && 'message' in issue
+        ? String((issue as { message: unknown }).message)
+        : null))
+      .filter(Boolean);
+    if (msgs.length) return msgs.join(' · ');
+  }
+  return fallback;
+}
+
 
 /* ── Main surface ── */
 
 export function TaskBoard({ onAsk }: SurfaceViewProps) {
-  /* Org-wide unifiedTasks board — REAL, org-scoped read model
-     (GET /api/task-management/board -> server/routes/taskBoard.routes.ts: a real
-     drizzle query over unified_tasks + task_dependencies). Real rows, an honest
-     empty state, or an honest error state — never the fixture. The old window.C2C
-     in-browser store was seeded from the TB_TASKS fixture (CollabLauncher.tsx),
-     so reading it presented fixture data as the board; that read is retired here.
-     New task now POSTs the real persisted create (POST /api/tasks/tasks) with a
-     real project + assignee and the board refetches, so created tasks appear
-     live. Start workflow / Move still write to the in-browser window.C2C store
-     only (flagged for the actions pass) and do not persist. */
+  const { user } = useAuth();
+  const myId = user?.id ? String(user.id) : null;
+
   const [reloadKey, setReloadKey] = useState(0);
   const liveTasks = useLiveRows<TaskItem>('/api/task-management/board', [
     '/api/task-management/board',
     reloadKey,
   ]);
-  const tasks: TaskItem[] = liveTasks.rows;
+  const projects = useLiveRows<ProjectOpt>('/api/projects');
+  const assignees = useLiveRows<AssigneeOpt>('/api/task-management/assignees');
 
-  const [view, setView] = useState('board');
+  // Optimistic overlay: a move applies instantly, the PATCH confirms it, a
+  // failure reverts it and explains itself (D15). Overrides live until a fresh
+  // authoritative fetch replaces the rows, so a confirmed move never flickers
+  // back to its old column while the refetch is in flight.
+  //
+  // The clear-on-fresh-rows effect MUST bail to the same state object when
+  // there is nothing to clear: useLiveRows returns a fresh [] identity on
+  // every render while loading, so `setOverrides({})` unconditionally would
+  // re-render forever (the hook's documented fresh-[] identity trap).
+  const [overrides, setOverrides] = useState<Record<string, Partial<TaskItem>>>({});
+  useEffect(() => {
+    setOverrides(o => (Object.keys(o).length ? {} : o));
+  }, [liveTasks.rows]);
+  const tasks: TaskItem[] = useMemo(
+    () => liveTasks.rows.map(t => (overrides[t.taskId] ? { ...t, ...overrides[t.taskId] } : t)),
+    [liveTasks.rows, overrides]
+  );
+
+  const [view, setView] = useState(() => sessionStorage.getItem('tb.view') || 'board');
   const [proj, setProj] = useState<string>(() => {
-    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch (_e) { return 'all'; }
+    try { return (window as any).C2C_TASK_FILTER || sessionStorage.getItem('tb.proj') || 'all'; }
+    catch (_e) { return 'all'; }
   });
-  const [mine, setMine] = useState(false);
-  const [mod, setMod] = useState('all');
+  const [mine, setMine] = useState(() => sessionStorage.getItem('tb.mine') === '1');
+  const [mod, setMod] = useState(() => sessionStorage.getItem('tb.mod') || 'all');
   const [sel, setSel] = useState<TaskItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [wf, setWf] = useState(false);
+  const [actionErr, setActionErr] = useState('');
+  const [announce, setAnnounce] = useState('');
 
-  const modules = useMemo(() => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))], [tasks]);
+  useEffect(() => { sessionStorage.setItem('tb.view', view); }, [view]);
+  useEffect(() => { sessionStorage.setItem('tb.proj', proj); }, [proj]);
+  useEffect(() => { sessionStorage.setItem('tb.mine', mine ? '1' : '0'); }, [mine]);
+  useEffect(() => { sessionStorage.setItem('tb.mod', mod); }, [mod]);
+
+  // A stale project filter (removed project, legacy slug) must not silently
+  // filter the whole board to nothing.
+  useEffect(() => {
+    if (proj === 'all' || !projects.rows.length) return;
+    if (!projects.rows.some(p => String(p.id) === proj)) setProj('all');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects.rows]);
+
+  // Live owner roster — names and avatars come from the org's real members,
+  // not a fixture keyed on short-ids that matched nothing (D3).
+  const ownerName = useCallback(
+    (id: string) => (id && assignees.rows.find(a => a.id === id)?.name) || '',
+    [assignees.rows]
+  );
+  const ownerLabel = useCallback(
+    (id: string) => ownerName(id) || 'Unassigned',
+    [ownerName]
+  );
+
+  const modules = useMemo(
+    () => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))],
+    [tasks]
+  );
   const list = tasks.filter(t =>
     (proj === 'all' || t.project === proj) &&
-    (!mine || t.assignee === 'jc') &&
+    (!mine || (myId != null && t.assignee === myId)) &&
     (mod === 'all' || t.moduleType === mod) &&
     t.status !== 'cancelled'
   );
   const byCol = (id: string) => list.filter(t => t.status === id);
   const byId = (id: string) => tasks.find(t => t.taskId === id);
 
-  // Move a card between columns -> the real persisted status update
-  // (PATCH /api/tasks/tasks/:taskId), then refetch so the board reflects it.
+  useEffect(() => {
+    if (!liveTasks.loading && !liveTasks.error) {
+      setAnnounce(`Task board loaded — ${list.length} task${list.length === 1 ? '' : 's'} shown.`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveTasks.loading, liveTasks.error, reloadKey]);
+
+  // Move a card along the explicit transition map — optimistic, persisted via
+  // PATCH /api/tasks/tasks/:taskId, reverted with the server's own message on
+  // failure (the server runs the same state machine).
   const move = async (t: TaskItem, dir: number) => {
-    const order = TB_COLS.map(c => c.id);
-    const i = order.indexOf(t.status);
-    const ni = Math.max(0, Math.min(order.length - 1, i + dir));
-    if (ni === i) return;
-    const status = order[ni];
+    const status = dir > 0 ? ADVANCE[t.status] : RETREAT[t.status];
+    if (!status) return;
     const progress = status === 'completed' ? 100 : t.progress;
+    setOverrides(o => ({ ...o, [t.taskId]: { status, progress } }));
+    setActionErr('');
     try {
-      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), { status, progress });
-      if (res.ok) setReloadKey((k) => k + 1);
+      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), {
+        status,
+        progress,
+      });
+      if (res.ok) {
+        setAnnounce(`"${t.title}" moved to ${(BOARD_COLS.find(c => c.id === status) || { label: status }).label}.`);
+        // The override stays until the refetched rows arrive (cleared by the
+        // rows effect above) — no flicker back to the old column.
+        setReloadKey(k => k + 1);
+      } else {
+        const body = await res.json().catch(() => null);
+        setOverrides(o => { const { [t.taskId]: _drop, ...rest } = o; return rest; });
+        setActionErr(fmtApiError(body, `Couldn't move "${t.title}".`));
+      }
     } catch {
-      /* leave the board as-is on a failed move */
+      setOverrides(o => { const { [t.taskId]: _drop, ...rest } = o; return rest; });
+      setActionErr(`Couldn't move "${t.title}" — network error.`);
     }
   };
 
-  // New task -> the real persisted create. POST /api/tasks/tasks inserts an
-  // org-scoped unified_tasks row (creator-attributed) and returns it with its
-  // real taskId; selected predecessors are then linked into the real dependency
-  // DAG (best-effort). The board refetches so the created task appears live.
+  // New task → the real persisted create (POST /api/tasks/tasks), then the
+  // selected predecessors are linked into the dependency DAG.
   const create = async (
     payload: TaskCreateBody,
     dependsOn: string[],
@@ -140,7 +257,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('POST', '/api/tasks/tasks', payload);
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.data?.taskId) {
-        return { ok: false, error: body && body.error ? String(body.error) : 'Could not create the task.' };
+        return { ok: false, error: fmtApiError(body, 'Could not create the task.') };
       }
       const newTaskId = String(body.data.taskId);
       for (const dep of dependsOn) {
@@ -154,8 +271,9 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           /* a failed dependency link never blocks the created task */
         }
       }
-      setReloadKey((k) => k + 1);
+      setReloadKey(k => k + 1);
       setCreating(false);
+      setAnnounce(`Task created: ${payload.title}.`);
       return { ok: true };
     } catch {
       return { ok: false, error: 'Network error while creating the task.' };
@@ -175,7 +293,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     });
     return {
       total: list.length, open: open.length,
-      blocked: list.filter(t => t.blocked).length,
+      blocked: list.filter(t => t.blocked || t.status === 'blocked').length,
       crit: list.filter(t => t.criticalPath).length,
       reg: list.filter(t => t.regulatoryImpact).length,
       appr: list.filter(t => t.approvalRequired && t.approvalStatus === 'pending').length,
@@ -199,29 +317,38 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   }, [list]);
 
   const SRC = (s: string): TaskSource => TB_SRC[s] || TB_SRC.unified;
-  const projLabel = (id: string) => (TB_PROJECTS.find(p => p.id === id) || { label: id }).label;
+  const projLabel = (id: string) =>
+    (projects.rows.find(p => String(p.id) === id) || { name: id ? `Project ${id}` : 'No project' }).name;
 
-  /* Answer-first lead -- computed from live task state */
-  const overdue = list.filter(t => /overdue/.test(t.due) && t.status !== 'completed');
+  /* Answer-first lead — computed from live task state */
+  const overdue = list.filter(t => isOverdue(t));
   const workload = Object.entries(stats.byAsg || {}).map(([k, v]) => ({ k, open: v.open })).sort((a, b) => b.open - a.open);
-  const heaviest = workload[0];
+  const heaviest = workload.find(w => w.k); // skip unassigned '' bucket for the narrative
   const critOpen = critChain.filter(t => t.status !== 'completed');
-  const critBlocked = critChain.find(t => t.blocked);
+  const critBlocked = critChain.find(t => t.blocked || t.status === 'blocked');
   const milestone = critChain[critChain.length - 1];
 
   return (
     <div className="page-inner tb">
+      <div aria-live="polite" className="sr-only">{announce}</div>
       <div className="ph">
         <div>
-          <div className="ph-eyebrow">Project -- collaboration</div>
+          <div className="ph-eyebrow">Project — collaboration</div>
           <h1 className="ph-title">Task board</h1>
-          <div className="ph-sub">The org-wide <code>unifiedTasks</code> board served by <code>/api/task-management</code>. Org-scoped by design -- filter to a project below. Tasks from sections, the pyramid engine, the legacy WBS and modules are surfaced here with their origin store labelled.</div>
+          <div className="ph-sub">Every task across your organization — from documents, submissions, workflows and modules — with owners, dependencies and the critical path in one place. Filter to a project below.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
           <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
         </div>
       </div>
+
+      {actionErr && (
+        <div className="tb-alert" role="alert">
+          {I.alertTriangle} <span>{actionErr}</span>
+          <button onClick={() => setActionErr('')} aria-label="Dismiss error">{I.close}</button>
+        </div>
+      )}
 
       {liveTasks.loading ? (
         <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
@@ -230,27 +357,27 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the task board"
-          hint="The org-wide unifiedTasks board didn't respond. These are the organization's tasks from GET /api/task-management/board — sign in and retry, or check the service is reachable."
+          hint="Your organization's tasks didn't load. Check your connection and retry, or sign in again."
         />
       ) : liveTasks.empty ? (
         <EmptyState
           icon={I.checkSquare}
           title="No tasks on the board yet"
-          hint="This is the org-wide unifiedTasks board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
+          hint="Create a task, or start a workflow from a template to lay out a whole submission's work in one step."
         />
       ) : (
       <>
       <AnswerLead
         tone={critBlocked || overdue.length ? 'urgent' : 'calm'}
-        eyebrow="What is on the critical path -- and what needs you first"
+        eyebrow="What is on the critical path — and what needs you first"
         headline={critBlocked
           ? <>Your path to {milestone ? <b>"{milestone.title}"</b> : 'the milestone'} is <b>blocked</b> at "{critBlocked.title}".</>
           : critOpen.length
             ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
-            : <>The critical path is clear -- nothing open is blocking the milestone right now.</>}
+            : <>The critical path is clear — nothing open is blocking the milestone right now.</>}
         body={critBlocked
-          ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{(TB_TEAM[heaviest.k] || { n: '' }).n} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{(TB_TEAM[heaviest.k] || { n: '' }).n} is the busiest at {heaviest.open} open tasks -- workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
+          ? <>{critBlocked.blockedReason || 'It is blocked'} — nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{ownerLabel(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
+          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{ownerLabel(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending.</> : null}</>}
         reassure={critBlocked || overdue.length ? "I will help you unblock the path and rebalance the team, one step at a time." : "You are on track. I will flag the moment anything threatens the milestone."}
         action={{
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : 'Start a workflow from a template',
@@ -260,72 +387,83 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         secondary="Or work the board, critical path, and analytics below."
       />
 
-      {/* Provenance strip -- the 7-table fragmentation made visible (Gap 1) */}
-      <div className="tb-src">
-        <span className="tb-src-h">Task sources</span>
-        {Object.keys(TB_SRC).map(k => {
-          const n = list.filter(t => t.source === k).length;
-          return (
-            <span key={k} className="tb-src-chip" data-src={k} title={TB_SRC[k].t}>
-              <b>{TB_SRC[k].l}</b> {n}<em>{TB_SRC[k].t}</em>
-            </span>
-          );
-        })}
-        <span className="tb-src-note">unified via <code>crossModuleTaskLinks</code> -- no single reconciliation store</span>
-      </div>
+      {/* Provenance strip — dev-only engineering view of task origins (D39) */}
+      {DEV && (
+        <div className="tb-src">
+          <span className="tb-src-h">Task sources</span>
+          {Object.keys(TB_SRC).map(k => {
+            const n = list.filter(t => t.source === k).length;
+            return (
+              <span key={k} className="tb-src-chip" data-src={k} title={TB_SRC[k].t}>
+                <b>{TB_SRC[k].l}</b> {n}<em>{TB_SRC[k].t}</em>
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {/* Filters + views */}
       <div className="tb-bar">
         <div className="tb-filters">
-          <select className="tb-sel" value={proj} onChange={e => setProj(e.target.value)}>
-            <option value="all">All projects (org-scoped)</option>
-            {TB_PROJECTS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+          <select className="tb-sel" value={proj} onChange={e => setProj(e.target.value)} aria-label="Filter by project">
+            <option value="all">All projects</option>
+            {projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
           </select>
-          <select className="tb-sel" value={mod} onChange={e => setMod(e.target.value)}>
+          <select className="tb-sel" value={mod} onChange={e => setMod(e.target.value)} aria-label="Filter by module">
             {modules.map(m => <option key={m} value={m}>{m === 'all' ? 'All modules' : m}</option>)}
           </select>
-          <button className={`tb-chip${mine ? ' on' : ''}`} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
+          {myId != null && (
+            <button className={`tb-chip${mine ? ' on' : ''}`} aria-pressed={mine} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
+          )}
         </div>
-        <div className="seg tb-views">
+        <div className="seg tb-views" role="tablist" aria-label="Board views">
           {([['board', 'Board'], ['path', 'Critical path'], ['analytics', 'Analytics'], ['table', 'Table']] as const).map(([v, l]) => (
-            <button key={v} className={`seg-b${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{l}</button>
+            <button key={v} role="tab" aria-selected={view === v} className={`seg-b${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
         </div>
       </div>
 
       {view === 'board' && (
-        <div className="tb-kanban">
-          {TB_COLS.map(col => {
+        <div className="tb-kanban" data-cols="5">
+          {BOARD_COLS.map(col => {
             const items = byCol(col.id);
             return (
-              <div key={col.id} className="tb-col">
+              <div key={col.id} className="tb-col" role="group" aria-label={`${col.label} — ${items.length} task${items.length === 1 ? '' : 's'}`}>
                 <div className="tb-col-h"><span className="kdot" data-tone={col.tone} /><span>{col.label}</span><span className="kn">{items.length}</span></div>
                 <div className="tb-col-b">
                   {items.map(t => (
-                    <div key={t.taskId} className="tb-card" data-blocked={t.blocked || undefined} onClick={() => setSel(t)}>
+                    <div
+                      key={t.taskId}
+                      className="tb-card"
+                      data-blocked={t.blocked || t.status === 'blocked' || undefined}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${t.title} — ${col.label}, ${t.priority} priority${t.due ? ', due ' + t.due : ''}`}
+                      onClick={() => setSel(t)}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(t); } }}
+                    >
                       <div className="tb-card-top">
                         <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
-                        {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
-                        {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
+                        {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}<span className="sr-only">On critical path</span></span>}
+                        {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}<span className="sr-only">Regulatory impact</span></span>}
                       </div>
                       <div className="tb-card-title">{t.title}</div>
-                      {t.blocked && <div className="tb-blocked">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
+                      {(t.blocked || t.status === 'blocked') && <div className="tb-blocked">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
                       <div className="tb-card-meta">
-                        <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
+                        <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType] || t.taskType}</span>
                         <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
-                        {t.approvalRequired && <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval -- pending' : 'needs approval'}</span>}
+                        {t.approvalRequired && <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval — pending' : 'needs approval'}</span>}
                       </div>
                       {t.progress > 0 && t.progress < 100 && <div className="tb-prog"><span style={{ width: t.progress + '%' }} /></div>}
                       <div className="tb-card-foot">
-                        <span className="tb-src-tag" data-src={t.source} title={SRC(t.source).t}>{SRC(t.source).l}</span>
-                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream -- ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
+                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream — ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
                         {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
-                        <span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
-                        <span className="tb-av" title={(TB_TEAM[t.assignee] || { n: '' }).n}>{tbAvatar(t.assignee)}</span>
+                        <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
+                        <span className="tb-av" title={ownerLabel(t.assignee)}>{initials(ownerLabel(t.assignee))}</span>
                       </div>
                       <div className="tb-move" onClick={e => e.stopPropagation()}>
-                        <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back">{I.left}</button>
-                        <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance">{I.chevRight}</button>
+                        <button disabled={!RETREAT[t.status]} onClick={() => move(t, -1)} aria-label={`Move "${t.title}" back`} title="Move back">{I.left}</button>
+                        <button disabled={!ADVANCE[t.status]} onClick={() => move(t, 1)} aria-label={`Advance "${t.title}"`} title="Advance">{I.chevRight}</button>
                       </div>
                     </div>
                   ))}
@@ -339,22 +477,25 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'path' && (
         <div className="tb-path">
-          <div className="tb-path-h">Critical path -- {critChain.length} tasks -- computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
+          <div className="tb-path-h">Critical path — {critChain.length} tasks, ordered by dependency</div>
           {critChain.map((t, i) => (
-            <div key={t.taskId} className="tb-path-row" data-status={t.status} onClick={() => setSel(t)}>
+            <div key={t.taskId} className="tb-path-row" data-status={t.status} role="button" tabIndex={0}
+              onClick={() => setSel(t)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(t); } }}>
               <div className="tb-path-rail"><span className="tb-path-dot" data-status={t.status} />{i < critChain.length - 1 && <span className="tb-path-line" />}</div>
               <div className="tb-path-card">
                 <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">
-                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{(TB_TEAM[t.assignee] || { n: '' }).n}</span><span className="tb-dot">--</span>
-                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
-                  {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
-                  <span className="sp" /><span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
+                  <span>{t.phase || '—'}</span><span className="tb-dot">·</span><span>{ownerLabel(t.assignee)}</span><span className="tb-dot">·</span>
+                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">·</span><span>impact {t.impactScore ?? '—'}/10</span>
+                  {(t.blocked || t.status === 'blocked') && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
+                  <span className="sp" /><span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                 </div>
-                {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' -- ')}</div>}
+                {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' — ')}</div>}
               </div>
             </div>
           ))}
+          {!critChain.length && <EmptyState icon={I.zap} title="No critical-path tasks" hint="Flag tasks as critical path (or start a workflow) and the dependency chain appears here." />}
         </div>
       )}
 
@@ -376,19 +517,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               })}
             </div>
             <div className="tb-an-card">
-              <div className="tb-an-h">Team productivity</div>
+              <div className="tb-an-h">Team workload</div>
               {Object.keys(stats.byAsg).map(k => (
-                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(k)}</span>{(TB_TEAM[k] || { n: '' }).n}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
+                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{initials(ownerLabel(k))}</span>{ownerLabel(k)}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
               ))}
-              <div className="tb-an-foot">Workload-balanced auto-assign via <code>getOptimalAssignee()</code></div>
-            </div>
-            <div className="tb-an-card">
-              <div className="tb-an-h">Automation</div>
-              <div className="tb-an-auto"><b>24</b> trigger event types -- <b>9</b> action types defined in <code>project-rules</code>.</div>
-              <div className="tb-an-auto-rules">
-                <span>task_overdue -&gt; escalate</span><span>review_completed -&gt; advance_stage</span><span>approval_rejected -&gt; create_task</span><span>deadline_approaching -&gt; send_notification</span>
-              </div>
-              <div className="tb-an-foot" data-warn="true">{I.alertTriangle} Rules are stored; the background executor is not yet wired.</div>
+              <div className="tb-an-foot">Auto-assign balances new work toward the least-loaded member.</div>
             </div>
           </div>
         </div>
@@ -396,37 +529,71 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'table' && (
         <div className="ctable tb-table">
-          <div className="ct-head" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }}><div>Task ID</div><div>Title</div><div>Module</div><div>Status</div><div>Priority</div><div>Owner</div><div>Due</div></div>
+          <div className="ct-head" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 110px 84px' }}><div>Task ID</div><div>Title</div><div>Module</div><div>Status</div><div>Priority</div><div>Owner</div><div>Due</div></div>
           {list.map(t => (
-            <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
+            <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 110px 84px' }} onClick={() => setSel(t)}>
               <div className="ct-strong mono" style={{ fontSize: 10.5 }}>{t.taskId}</div>
-              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}</div>
+              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{(t.blocked || t.status === 'blocked') && <span className="tb-flag blk inline">{I.alertTriangle}</span>}</div>
               <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
-              <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
+              <div style={{ fontSize: 11 }}>{(BOARD_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
-              <div style={{ fontSize: 11 }}>{(TB_TEAM[t.assignee] || { n: '' }).n}</div>
-              <div style={{ fontSize: 11, color: /overdue/.test(t.due) ? 'var(--error)' : 'var(--text-400)' }}>{t.due}</div>
+              <div style={{ fontSize: 11 }}>{ownerLabel(t.assignee)}</div>
+              <div style={{ fontSize: 11, color: isOverdue(t) ? 'var(--error)' : 'var(--text-400)' }}>{t.due}</div>
             </button>
           ))}
         </div>
       )}
 
-      {/* Honest engineering reality (forensic report gaps) */}
-      <details className="tb-gaps">
-        <summary>Engineering reality -- backend status</summary>
-        <ul>
-          <li><b>Canonical store</b> is <code>unifiedTasks</code> (8 indexes). Section tasks live in <code>projectTasks</code> (own state machine); pyramid tasks are <b>in-memory only</b> (no persistence table); legacy WBS in <code>project_tasks</code>. No reconciliation service -- origin shown per card.</li>
-          <li><b>Audit:</b> <code>task-audit.ts</code> (writes the Part-11 <code>c2c_ana_actions</code> ledger) is coded but <b>not called</b> from task mutation handlers -- task creates/transitions are currently unaudited.</li>
-          <li><b>Notifications:</b> stub only (<code>io.to('tasks').emit</code> commented out). Section assignments notify; unified tasks do not.</li>
-          <li><b>Route note:</b> client <code>taskingService.ts</code> targets <code>/api/regulatory/tasks/*</code> while routes mount at <code>/api/task-management/*</code> (path reconciliation pending).</li>
-        </ul>
-      </details>
+      {/* Engineering status — dev builds only (D37) */}
+      {DEV && (
+        <details className="tb-gaps">
+          <summary>Engineering status (dev only)</summary>
+          <ul>
+            <li>Reads GET /api/task-management/board (unified_tasks). Mutations via /api/tasks/* — audited (task-audit → c2c_ana_actions) with the status state machine + unblock cascade server-side.</li>
+            <li>Notifications fire on assignment / blocked / completion (notification-service → mdx_notifications), surfaced in the Task Tray.</li>
+            <li>Origin stores other than unified_tasks (projectTasks, project_tasks) are merged read-only in /api/submission-ops/unified-work.</li>
+          </ul>
+        </details>
+      )}
       </>
       )}
 
-      {creating && <TaskCreate proj={proj} tasks={tasks} onClose={() => setCreating(false)} onCreate={create} />}
-      {wf && <WorkflowStart proj={proj} onClose={() => setWf(false)} onInstantiate={(tasks) => { tasks.forEach(t => (window as any).C2C && (window as any).C2C.addTask(t)); setWf(false); setView('path'); }} />}
-      {sel && <TaskDetail t={sel} byId={byId} projLabel={projLabel} onClose={() => setSel(null)} onAsk={onAsk} onMove={move} />}
+      {creating && (
+        <TaskCreate
+          proj={proj}
+          tasks={tasks}
+          projects={projects.rows}
+          assignees={assignees.rows}
+          onClose={() => setCreating(false)}
+          onCreate={create}
+        />
+      )}
+      {wf && (
+        <WorkflowStart
+          proj={proj}
+          projects={projects.rows}
+          onClose={() => setWf(false)}
+          onDone={(n, name) => {
+            setWf(false);
+            setReloadKey(k => k + 1);
+            setAnnounce(`${n} tasks created from "${name}".`);
+            setView('board');
+          }}
+        />
+      )}
+      {sel && (
+        <TaskDetail
+          t={sel}
+          byId={byId}
+          projLabel={projLabel}
+          ownerLabel={ownerLabel}
+          onClose={() => setSel(null)}
+          onAsk={onAsk}
+          onMove={move}
+          onErr={setActionErr}
+          onNotice={setAnnounce}
+        />
+      )}
     </div>
   );
 }
@@ -437,73 +604,99 @@ interface TaskDetailProps {
   t: TaskItem;
   byId: (id: string) => TaskItem | undefined;
   projLabel: (id: string) => string;
+  ownerLabel: (id: string) => string;
   onClose: () => void;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
+  onErr: (msg: string) => void;
+  onNotice: (msg: string) => void;
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove }: TaskDetailProps) {
-  const src = TB_SRC[t.source] || TB_SRC.unified;
-  const owner = TB_TEAM[t.assignee] || { n: '?', t: '' };
+function TaskDetail({ t, byId, projLabel, ownerLabel, onClose, onAsk, onMove, onErr, onNotice }: TaskDetailProps) {
+  const ref = useDialog(onClose);
+  const [reminding, setReminding] = useState(false);
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
+  const overdue = isOverdue(t);
+
+  const remind = async () => {
+    if (reminding) return;
+    setReminding(true);
+    try {
+      const res = await apiRequest('POST', `/api/tasks/tasks/${encodeURIComponent(t.taskId)}/notify`, {
+        message: `Reminder: "${t.title}" is ${overdue ? 'overdue' : 'waiting on you'}${t.due ? ` (due ${t.due})` : ''}.`,
+      });
+      const body = await res.json().catch(() => null);
+      if (res.ok) onNotice(`Reminder sent to ${ownerLabel(t.assignee)}.`);
+      else onErr(fmtApiError(body, 'Could not send the reminder.'));
+    } catch {
+      onErr('Could not send the reminder — network error.');
+    } finally {
+      setReminding(false);
+    }
+  };
+
   return (
     <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail" onClick={e => e.stopPropagation()}>
+      <div className="tb-detail" role="dialog" aria-modal="true" aria-label={`Task: ${t.title}`} tabIndex={-1} ref={ref} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
-          <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Close task details">{I.close}</button>
         </div>
         <div className="tb-detail-chips">
           <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
-          <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
+          <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType] || t.taskType}</span>
           <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
           {t.criticalPath && <span className="tb-flag crit lg">{I.zap} critical path</span>}
           {t.regulatoryImpact && <span className="tb-flag reg lg">{I.shieldCheck} regulatory</span>}
         </div>
-        {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
+        {(t.blocked || t.status === 'blocked') && <div className="tb-blocked lg">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
         <div className="tb-detail-grid">
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
           <div><label>Phase</label><span>{t.phase || '—'}</span></div>
-          <div><label>Owner</label><span>{owner.n} -- {owner.t}</span></div>
-          <div><label>Assigned by</label><span>{(TB_TEAM[t.assignedBy] || { n: '' }).n || '--'}</span></div>
+          <div><label>Owner</label><span>{ownerLabel(t.assignee)}</span></div>
+          <div><label>Assigned by</label><span>{ownerLabel(t.assignedBy) === 'Unassigned' ? '—' : ownerLabel(t.assignedBy)}</span></div>
           <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
-          <div><label>Due</label><span style={{ color: /overdue/.test(t.due) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
-          <div><label>Origin store</label><span>{src.l} -- <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
+          <div><label>Due</label><span style={{ color: overdue ? 'var(--error)' : 'inherit' }}>{t.due || '—'}</span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
+          <div><label>Estimated</label><span>{t.estimatedHours != null ? `${t.estimatedHours}h` : '—'}</span></div>
         </div>
         {t.approvalRequired && (
           <div className="tb-detail-sec">
             <div className="tb-detail-sec-h">Approval checkpoint <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus.replace('_', ' ')}</span></div>
-            <div className="tb-detail-note">HITL gate (<code>approvalCheckpoints</code>) -- 21 CFR 11 e-signature required to clear. Quorum/role-based gate types supported.</div>
+            <div className="tb-detail-note">This task cannot complete without a recorded approval.</div>
           </div>
         )}
         {(t.dependsOn.length > 0 || t.blocks.length > 0) && (
           <div className="tb-detail-sec">
-            <div className="tb-detail-sec-h">Dependencies <code>taskDependencies</code></div>
+            <div className="tb-detail-sec-h">Dependencies</div>
             {t.dependsOn.map(d => <div key={d} className="tb-dep-row up">{I.arrowUp} depends on <b>{dep(d)}</b></div>)}
             {t.blocks.map(d => <div key={d} className="tb-dep-row dn">{I.arrowRight} blocks <b>{dep(d)}</b></div>)}
           </div>
         )}
         <div className="tb-detail-sec">
           <div className="tb-detail-sec-h">Audit</div>
-          <div className="tb-detail-note" data-warn="true">{I.alertTriangle} <code>task-audit.ts</code> is coded but not yet wired to this mutation path -- this change would not be written to the <code>c2c_ana_actions</code> ledger.</div>
+          <div className="tb-detail-note">Changes to this task — creation, status moves, links and assignments — are recorded in the governed audit ledger.</div>
         </div>
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
+          {t.assignee && (
+            <button className="btn ghost" disabled={reminding} onClick={remind}>{I.bell || I.messageSquare} {reminding ? 'Sending…' : 'Send reminder'}</button>
+          )}
           <span className="sp" />
-          <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
-          <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+          <button className="btn ghost" disabled={!RETREAT[t.status]} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
+          <button className="btn primary" disabled={!ADVANCE[t.status]} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── New task intake -- unifiedTasks shape, POST /api/task-management/tasks ── */
+/* ── New task intake — persists via POST /api/tasks/tasks ── */
 
 /** POST body for the real create — mirrors server createTaskSchema. */
 interface TaskCreateBody {
   title: string;
+  description?: string;
   moduleType: string;
   taskType: string;
   status: string;
@@ -516,22 +709,20 @@ interface TaskCreateBody {
   regulatoryImpact: boolean;
   approvalRequired: boolean;
 }
-/** Real org project (from GET /api/projects — a bare row array). */
-interface ProjectOpt { id: number; name: string }
-/** Real assignable org member (from GET /api/task-management/assignees). */
-interface AssigneeOpt { id: string; name: string }
 
 interface TaskCreateProps {
   onClose: () => void;
   onCreate: (payload: TaskCreateBody, dependsOn: string[]) => Promise<{ ok: boolean; error?: string }>;
   proj: string;
-  /** Live board rows — the dependency picker's candidate tasks (real data from
-   *  /api/task-management/board, not the retired TB_TASKS fixture). */
+  /** Live board rows — the dependency picker's candidates. */
   tasks: TaskItem[];
+  projects: ProjectOpt[];
+  assignees: AssigneeOpt[];
 }
 
 interface CreateForm {
   title: string;
+  description: string;
   project: string;
   moduleType: string;
   taskType: string;
@@ -543,39 +734,38 @@ interface CreateForm {
   regulatoryImpact: boolean;
   approvalRequired: boolean;
   dueDays: number;
-  phase: string;
   dependsOn: string[];
+  depQuery: string;
 }
 
-function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
-  // Real org projects + assignable members for the pickers (never fixtures).
-  const projects = useLiveRows<ProjectOpt>('/api/projects');
-  const assignees = useLiveRows<AssigneeOpt>('/api/task-management/assignees');
-
+function TaskCreate({ onClose, onCreate, proj, tasks, projects, assignees }: TaskCreateProps) {
+  const ref = useDialog(onClose);
   const [f, setF] = useState<CreateForm>({
-    title: '', project: proj && proj !== 'all' ? proj : '', moduleType: 'Clinical', taskType: 'deliverable',
+    title: '', description: '', project: proj && proj !== 'all' ? proj : '', moduleType: 'Clinical', taskType: 'deliverable',
     status: 'pending', priority: 'high', assignee: 'auto', impactScore: 6,
     criticalPath: false, regulatoryImpact: true, approvalRequired: false,
-    dueDays: 7, phase: '', dependsOn: [],
+    dueDays: 7, dependsOn: [], depQuery: '',
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const set = <K extends keyof CreateForm>(k: K, v: CreateForm[K]) => setF(p => ({ ...p, [k]: v }));
 
   // Default the project picker to the first real project once the list loads,
-  // and never leave it on a stale non-matching id (e.g. a legacy filter slug).
+  // and never leave it on a stale non-matching id.
   useEffect(() => {
-    if (!projects.rows.length) return;
-    const ids = projects.rows.map((p) => String(p.id));
-    if (!f.project || !ids.includes(f.project)) set('project', String(projects.rows[0].id));
+    if (!projects.length) return;
+    const ids = projects.map(p => String(p.id));
+    if (!f.project || !ids.includes(f.project)) set('project', String(projects[0].id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects.rows]);
+  }, [projects]);
 
-  const allTasks = tasks;
   const toggleDep = (id: string) => set('dependsOn', f.dependsOn.includes(id) ? f.dependsOn.filter(x => x !== id) : [...f.dependsOn, id]);
+  const depCandidates = tasks
+    .filter(t => t.status !== 'completed' && t.status !== 'cancelled')
+    .filter(t => t.project === f.project || f.dependsOn.includes(t.taskId))
+    .filter(t => !f.depQuery || t.title.toLowerCase().includes(f.depQuery.toLowerCase()))
+    .slice(0, 30);
 
-  // Build the real create body and hand it to the parent, which POSTs it and
-  // links the selected predecessors. No fabricated id — the server assigns it.
   const doCreate = async () => {
     if (!f.title.trim() || busy) return;
     setBusy(true);
@@ -584,6 +774,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
     due.setDate(due.getDate() + (Number.isFinite(f.dueDays) ? f.dueDays : 0));
     const body: TaskCreateBody = {
       title: f.title.trim(),
+      description: f.description.trim() || undefined,
       moduleType: f.moduleType,
       taskType: f.taskType,
       status: f.status,
@@ -606,134 +797,195 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
 
   return (
     <div className="tb-detail-bd tb-create-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
+      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="New task" tabIndex={-1} ref={ref} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks -- new</span><h3>New task</h3></div>
-          <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
+          <div><h3>New task</h3></div>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Close new task form">{I.close}</button>
         </div>
         <div className="tb-form">
           <div className="tb-field full"><label>Title<i>*</i></label><input type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset" /></div>
+          <div className="tb-field full"><label>Description <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>— optional</span></label><textarea rows={2} value={f.description} onChange={e => set('description', e.target.value)} placeholder="Context for the assignee…" /></div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Project</label><select value={f.project} onChange={e => set('project', e.target.value)}>{projects.rows.length ? projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
-            <div className="tb-field"><label>Module</label><select value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+            <div className="tb-field"><label>Project</label><select value={f.project} onChange={e => set('project', e.target.value)}>{projects.length ? projects.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
+            <div className="tb-field"><label>Module</label><select value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).filter(m => !m.includes(' ') && m !== 'general').map(m => <option key={m} value={m}>{m}</option>)}</select></div>
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label>Task type</label><select value={f.taskType} onChange={e => set('taskType', e.target.value)}>{Object.keys(TB_TYPE).map(t => <option key={t} value={t}>{TB_TYPE[t]}</option>)}</select></div>
-            <div className="tb-field"><label>Priority</label><select value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'urgent', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+            <div className="tb-field"><label>Priority</label><select value={f.priority} onChange={e => set('priority', e.target.value)}>{PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Status</label><select value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
-            <div className="tb-field"><label>Assignee</label><select value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto -- optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+            <div className="tb-field"><label>Status</label><select value={f.status} onChange={e => set('status', e.target.value)}>{BOARD_COLS.filter(c => c.id !== 'completed' && c.id !== 'blocked').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
+            <div className="tb-field"><label>Assignee</label><select value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — least-loaded member</option>{assignees.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Impact score -- {f.impactScore}/10</label><input type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
+            <div className="tb-field"><label>Impact score — {f.impactScore}/10</label><input type="range" min="0" max="10" value={f.impactScore} aria-label="Impact score" onChange={e => set('impactScore', +e.target.value)} /></div>
             <div className="tb-field"><label>Due in (days)</label><input type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} /></div>
           </div>
           <div className="tb-field full"><label>Flags</label>
             <div className="tb-toggles">
-              <button type="button" className={`tb-tog${f.criticalPath ? ' on' : ''}`} onClick={() => set('criticalPath', !f.criticalPath)}><span className="ico">{I.zap}</span>Critical path</button>
-              <button type="button" className={`tb-tog${f.regulatoryImpact ? ' on' : ''}`} onClick={() => set('regulatoryImpact', !f.regulatoryImpact)}><span className="ico">{I.shieldCheck}</span>Regulatory impact</button>
-              <button type="button" className={`tb-tog${f.approvalRequired ? ' on' : ''}`} onClick={() => set('approvalRequired', !f.approvalRequired)}><span className="ico">{I.checkSquare}</span>Approval required</button>
+              <button type="button" className={`tb-tog${f.criticalPath ? ' on' : ''}`} aria-pressed={f.criticalPath} onClick={() => set('criticalPath', !f.criticalPath)}><span className="ico">{I.zap}</span>Critical path</button>
+              <button type="button" className={`tb-tog${f.regulatoryImpact ? ' on' : ''}`} aria-pressed={f.regulatoryImpact} onClick={() => set('regulatoryImpact', !f.regulatoryImpact)}><span className="ico">{I.shieldCheck}</span>Regulatory impact</button>
+              <button type="button" className={`tb-tog${f.approvalRequired ? ' on' : ''}`} aria-pressed={f.approvalRequired} onClick={() => set('approvalRequired', !f.approvalRequired)}><span className="ico">{I.checkSquare}</span>Approval required</button>
             </div>
           </div>
-          <div className="tb-field full"><label>Depends on <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- taskDependencies DAG</span></label>
+          <div className="tb-field full"><label>Depends on <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>— open tasks in this project</span></label>
+            {depCandidates.length > 6 || f.depQuery ? (
+              <input type="text" value={f.depQuery} onChange={e => set('depQuery', e.target.value)} placeholder="Filter tasks…" aria-label="Filter dependency candidates" style={{ marginBottom: 6 }} />
+            ) : null}
             <div className="tb-dep-pick">
-              {allTasks.filter(t => t.project === f.project).slice(0, 6).map(t => (
-                <button type="button" key={t.taskId} className={`tb-dep-opt${f.dependsOn.includes(t.taskId) ? ' on' : ''}`} onClick={() => toggleDep(t.taskId)} title={t.title}>
+              {depCandidates.map(t => (
+                <button type="button" key={t.taskId} className={`tb-dep-opt${f.dependsOn.includes(t.taskId) ? ' on' : ''}`} aria-pressed={f.dependsOn.includes(t.taskId)} onClick={() => toggleDep(t.taskId)} title={t.title}>
                   {f.dependsOn.includes(t.taskId) ? I.check : I.plus}<span>{t.title}</span>
                 </button>
               ))}
+              {!depCandidates.length && <span style={{ fontSize: 11, color: 'var(--text-400)' }}>No open tasks in this project yet.</span>}
             </div>
           </div>
-          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> -- balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
-          {err && <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
+          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the least-loaded member of your organization and notifies them.</span></div>}
+          {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
         <div className="tb-detail-f">
-          <div className="tb-endpoint" title="Persists an org-scoped unified_tasks row"><b>POST</b> /api/tasks/tasks</div>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating...' : 'Create task'}</button>
+          <button className="btn primary" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating…' : 'Create task'}</button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Workflow templates (taskTemplates) -- from-template instantiation ── */
+/* ── Workflow templates — real list + real instantiation ── */
+
+interface ServerTemplateTask {
+  id?: string;
+  title: string;
+  moduleType?: string;
+  taskType?: string;
+  priority?: string;
+  dayOffset?: number;
+  duration?: number;
+  estimatedHours?: number;
+}
+interface ServerTemplate {
+  templateId: string;
+  name: string;
+  description?: string;
+  category?: string;
+  builtin?: boolean;
+  tasks: ServerTemplateTask[];
+  dependencies?: Array<{ predecessor: string; successor: string }>;
+  milestones?: string[];
+  regulatoryRequirements?: string[];
+}
 
 interface WorkflowStartProps {
   proj: string;
+  projects: ProjectOpt[];
   onClose: () => void;
-  onInstantiate: (tasks: TaskItem[]) => void;
+  onDone: (createdCount: number, templateName: string) => void;
 }
 
-function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
-  const initProj = (proj && proj !== 'all') ? proj : 'bx204';
-  const [tid, setTid] = useState(TB_WORKFLOWS[0].templateId);
-  const [project, setProject] = useState(initProj);
-  const [autoAssign, setAutoAssign] = useState(true);
-  const tpl = TB_WORKFLOWS.find(t => t.templateId === tid) || TB_WORKFLOWS[0];
-  const totalHours = tpl.tasks.reduce((a, t) => a + (t.estimatedHours || 8), 0);
-  const span = Math.max(...tpl.tasks.map(t => (t.dayOffset || 0) + (t.duration || 0)));
+function WorkflowStart({ proj, projects, onClose, onDone }: WorkflowStartProps) {
+  const ref = useDialog(onClose);
+  const templates = useLiveRows<ServerTemplate>('/api/tasks/templates');
+  const [tid, setTid] = useState('');
+  const [project, setProject] = useState(proj && proj !== 'all' ? proj : '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
-  const instantiate = () => {
-    const idMap: Record<string, string> = {};
-    tpl.tasks.forEach(t => { idMap[t.id] = 'C2C-TASK-' + (2300 + Math.floor(Math.random() * 699)); });
-    const blocksOf = (taskTemplateId: string) => tpl.dependencies.filter(([p]) => p === taskTemplateId).map(([, s]) => idMap[s]);
-    const depsOf = (taskTemplateId: string) => tpl.dependencies.filter(([, s]) => s === taskTemplateId).map(([p]) => idMap[p]);
-    const onCrit = new Set<string>();
-    tpl.dependencies.forEach(([p, s]) => { onCrit.add(p); onCrit.add(s); });
-    const tasks: TaskItem[] = tpl.tasks.map(t => ({
-      taskId: idMap[t.id], title: t.title, project, moduleType: t.moduleType,
-      taskType: t.taskType || 'deliverable', status: 'pending', priority: t.priority || 'medium',
-      assignee: autoAssign ? (TB_OPTIMAL[t.moduleType] || 'jc') : 'jc', assignedBy: 'sm', progress: 0,
-      impactScore: t.priority === 'critical' ? 9 : t.priority === 'high' ? 7 : 5,
-      criticalPath: onCrit.has(t.id), regulatoryImpact: true,
-      approvalRequired: t.taskType === 'milestone', approvalStatus: 'not_started',
-      dependsOn: depsOf(t.id), blocks: blocksOf(t.id), comments: 0, attachments: 0,
-      source: 'template', due: 'in ' + ((t.dayOffset || 0) + (t.duration || 0)) + ' days', phase: tpl.name,
-      estimatedHours: t.estimatedHours, assignmentType: autoAssign ? 'auto' : 'manual',
-    }));
-    onInstantiate(tasks);
+  useEffect(() => {
+    if (templates.rows.length && !templates.rows.some(t => t.templateId === tid)) {
+      setTid(templates.rows[0].templateId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templates.rows]);
+  useEffect(() => {
+    if (!projects.length) return;
+    const ids = projects.map(p => String(p.id));
+    if (!project || !ids.includes(project)) setProject(String(projects[0].id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects]);
+
+  const tpl = templates.rows.find(t => t.templateId === tid) || null;
+  const totalHours = (tpl?.tasks ?? []).reduce((a, t) => a + (t.estimatedHours || 8), 0);
+  const span = tpl?.tasks?.length ? Math.max(...tpl.tasks.map(t => (t.dayOffset || 0) + (t.duration || 0))) : 0;
+
+  const instantiate = async () => {
+    if (!tpl || busy) return;
+    setBusy(true);
+    setErr('');
+    try {
+      const res = await apiRequest('POST', `/api/tasks/tasks/from-template/${encodeURIComponent(tpl.templateId)}`, {
+        projectId: Number.isFinite(Number(project)) && Number(project) > 0 ? Number(project) : undefined,
+        startDate: new Date().toISOString(),
+        adjustDates: true,
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        setErr(fmtApiError(body, 'Could not start the workflow.'));
+        setBusy(false);
+        return;
+      }
+      onDone(Number(body.count) || (tpl.tasks?.length ?? 0), tpl.name);
+    } catch {
+      setErr('Network error while starting the workflow.');
+      setBusy(false);
+    }
   };
 
   return (
     <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
+      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Start a workflow" tabIndex={-1} ref={ref} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates -- from-template</span><h3>Start a workflow</h3></div>
-          <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
+          <div><h3>Start a workflow</h3></div>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Close workflow form">{I.close}</button>
         </div>
         <div className="tb-form">
-          <div className="tb-frow">
-            <div className="tb-field"><label>Workflow template</label><select value={tid} onChange={e => setTid(e.target.value)}>{TB_WORKFLOWS.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
-            <div className="tb-field"><label>Project</label><select value={project} onChange={e => setProject(e.target.value)}>{TB_PROJECTS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
-          </div>
-          <div className="wf-meta">
-            <span><b>{tpl.tasks.length}</b> tasks</span><span className="tb-dot">--</span><span><b>{span}</b>-day span</span><span className="tb-dot">--</span><span><b>{totalHours}</b>h effort</span><span className="tb-dot">--</span><span><b>{tpl.dependencies.length}</b> dependencies</span>
-          </div>
-          <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- dependency-linked, date-offset</span></label>
-            <div className="wf-tasks">
-              {tpl.tasks.map((t, i) => (
-                <div key={t.id} className="wf-task">
-                  <span className="wf-task-n">{i + 1}</span>
-                  <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
-                  <span className="wf-task-t">{t.title}</span>
-                  <span className="wf-task-d">day +{t.dayOffset} -- {t.duration}d</span>
-                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="wf-reqs">
-            <div><span className="wf-reqs-l">Regulatory basis</span>{tpl.regulatoryRequirements.map(r => <span key={r} className="wf-tag">{r}</span>)}</div>
-            <div><span className="wf-reqs-l">Milestones</span>{tpl.milestones.map(r => <span key={r} className="wf-tag ok">{r}</span>)}</div>
-          </div>
-          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (getOptimalAssignee)</button>
+          {templates.loading ? (
+            <div className="scaf-note" style={{ padding: '12px 4px' }}>Loading workflow templates…</div>
+          ) : templates.error ? (
+            <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>Couldn't load workflow templates. Retry, or create tasks individually.</span></div>
+          ) : !templates.rows.length ? (
+            <div className="tb-auto-note"><span className="ico">{I.info}</span><span>No workflow templates are available yet.</span></div>
+          ) : (
+            <>
+              <div className="tb-frow">
+                <div className="tb-field"><label>Workflow template</label><select value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}{t.builtin ? ' (standard)' : ''}</option>)}</select></div>
+                <div className="tb-field"><label>Project</label><select value={project} onChange={e => setProject(e.target.value)}>{projects.length ? projects.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
+              </div>
+              {tpl && (
+                <>
+                  {tpl.description && <div style={{ fontSize: 11.5, color: 'var(--text-400)', margin: '2px 0 6px' }}>{tpl.description}</div>}
+                  <div className="wf-meta">
+                    <span><b>{tpl.tasks.length}</b> tasks</span><span className="tb-dot">·</span><span><b>{span}</b>-day span</span><span className="tb-dot">·</span><span><b>{totalHours}</b>h effort</span><span className="tb-dot">·</span><span><b>{tpl.dependencies?.length ?? 0}</b> dependencies</span>
+                  </div>
+                  <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>— dependency-linked, date-offset from today</span></label>
+                    <div className="wf-tasks">
+                      {tpl.tasks.map((t, i) => (
+                        <div key={t.id ?? i} className="wf-task">
+                          <span className="wf-task-n">{i + 1}</span>
+                          <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType ?? ''] || '#888' } as React.CSSProperties}>{t.moduleType ?? 'general'}</span>
+                          <span className="wf-task-t">{t.title}</span>
+                          <span className="wf-task-d">day +{t.dayOffset ?? 0} · {t.duration ?? 1}d</span>
+                          <span className={`tb-pri pri-${t.priority ?? 'medium'}`}>{t.priority ?? 'medium'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {(tpl.regulatoryRequirements?.length || tpl.milestones?.length) ? (
+                    <div className="wf-reqs">
+                      {tpl.regulatoryRequirements?.length ? <div><span className="wf-reqs-l">Regulatory basis</span>{tpl.regulatoryRequirements.map(r => <span key={r} className="wf-tag">{r}</span>)}</div> : null}
+                      {tpl.milestones?.length ? <div><span className="wf-reqs-l">Milestones</span>{tpl.milestones.map(r => <span key={r} className="wf-tag ok">{r}</span>)}</div> : null}
+                    </div>
+                  ) : null}
+                </>
+              )}
+              {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
+            </>
+          )}
         </div>
         <div className="tb-detail-f">
-          <div className="tb-endpoint" title="Target endpoint — not yet wired to this button"><b>POST</b> /tasks/from-template/{tid} <em>(not yet wired)</em></div>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" onClick={instantiate}>{I.plus} Create {tpl.tasks.length} tasks</button>
+          <button className="btn primary" disabled={!tpl || busy || !templates.rows.length} onClick={instantiate}>{I.plus} {busy ? 'Creating…' : tpl ? `Create ${tpl.tasks.length} tasks` : 'Create tasks'}</button>
         </div>
       </div>
     </div>

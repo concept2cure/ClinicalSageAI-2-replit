@@ -359,6 +359,8 @@ export function V2App() {
             const s = getSegment(id);
             if (s?.defaultSurface) nav(s.defaultSurface);
           }}
+          onNav={nav}
+          onAsk={ask}
         />
         <div className={isFull ? 'page page-full' : 'page'}>
           <SurfaceBoundary resetKey={bodyKey}>{body}</SurfaceBoundary>

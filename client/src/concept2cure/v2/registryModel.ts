@@ -108,7 +108,9 @@ export const RAIL_EXPLORE = [
 /** Quick access (targets resolve to surface ids) */
 export const RAIL_QUICK = [
   { id: 'recent', label: 'Recent Documents', icon: 'clock', target: 'document-authoring' },
-  { id: 'tasks', label: 'My Tasks', icon: 'checkSquare', target: 'tasks', count: 12 },
+  // No hardcoded count — the live "what needs me" number lives in the top-bar
+  // Task Tray (GET /api/task-management/my-work), never a constant (D40).
+  { id: 'tasks', label: 'My Tasks', icon: 'checkSquare', target: 'tasks' },
   { id: 'starred', label: 'Starred Items', icon: 'star', target: 'projects' },
 ];
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */

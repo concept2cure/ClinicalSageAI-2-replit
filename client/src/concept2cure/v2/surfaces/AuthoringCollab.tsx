@@ -29,6 +29,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthToken } from '@/utils/authToken';
 import { useAuth } from '@/services/portal/authService';
 
 interface RoomUser { userId: string; displayName?: string; email?: string; }
@@ -102,8 +103,20 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     })();
     return () => {
       cancelled = true;
-      // Best-effort leave; the server also expires idle members.
-      void apiRequest('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`).catch(() => {});
+      // Best-effort leave with keepalive so a navigation/tab-close actually
+      // reaches the server (a plain fetch is usually cancelled mid-unload —
+      // assessment D29). The server's idle sweep (90s TTL) is the backstop.
+      try {
+        const token = getAuthToken();
+        void fetch(`/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`, {
+          method: 'DELETE',
+          keepalive: true,
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }).catch(() => {});
+      } catch {
+        void apiRequest('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`).catch(() => {});
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId, sectionId, projectId, userId]);
@@ -117,6 +130,9 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     if (!joined || !userId) return;
     let cancelled = false;
     const beat = async () => {
+      // A hidden tab does not claim presence — the server's idle sweep then
+      // ages it out honestly instead of a background tab looking "present".
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const res = await apiRequest('PUT', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/awareness`, {
           sectionId: sectionId || undefined, focusedField: sectionId || null, isTyping: false,
@@ -129,7 +145,11 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     };
     void beat();
     const t = setInterval(() => { void beat(); }, 20000);
-    return () => { cancelled = true; clearInterval(t); };
+    // Coming back to the tab re-claims presence immediately (the server
+    // re-joins an evicted member on heartbeat).
+    const onVis = () => { if (!document.hidden) void beat(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { cancelled = true; clearInterval(t); document.removeEventListener('visibilitychange', onVis); };
   }, [joined, userId, documentId, sectionId]);
 
   const myLock = locks.find((l) => l.mine === true && (l.sectionId ?? null) === (sectionId ?? null));
