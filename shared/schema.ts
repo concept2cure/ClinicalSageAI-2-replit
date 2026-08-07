@@ -7213,6 +7213,10 @@ export const crossModuleTaskLinks = pgTable(
     id: serial('id').primaryKey(),
     linkId: text('link_id').notNull().unique(),
 
+    // Owning tenant (20260807_task_graph_org_columns.sql) — see the note on
+    // taskDependencies.organizationId.
+    organizationId: integer('organization_id'),
+
     // Source Task
     sourceTaskId: text('source_task_id')
       .notNull()
@@ -7587,6 +7591,12 @@ export const taskDependencies = pgTable(
   {
     id: serial('id').primaryKey(),
     dependencyId: text('dependency_id').notNull().unique(),
+
+    // Owning tenant (20260807_task_graph_org_columns.sql). Nullable: legacy
+    // rows whose endpoints validated same-org at write time are backfilled
+    // from the predecessor task; endpoint-id scoping remains the primary
+    // isolation (assessment D20 — this is defense in depth).
+    organizationId: integer('organization_id'),
 
     // Task References
     predecessorTaskId: text('predecessor_task_id')

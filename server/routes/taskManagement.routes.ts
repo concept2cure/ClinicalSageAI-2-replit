@@ -503,6 +503,7 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
             if (taskIdMapping[depTitle] && taskIdMapping[task.title]) {
               await storage.db.insert(taskDependencies).values({
                 dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
+                organizationId,
                 predecessorTaskId: taskIdMapping[depTitle],
                 successorTaskId: taskIdMapping[task.title],
                 dependencyType: 'finish-to-start',
@@ -645,6 +646,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
         if (taskIdMapping[dep.predecessor] && taskIdMapping[dep.successor]) {
           await storage.db.insert(taskDependencies).values({
             dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
+            organizationId,
             predecessorTaskId: taskIdMapping[dep.predecessor],
             successorTaskId: taskIdMapping[dep.successor],
             dependencyType: dep.type || 'finish-to-start',
@@ -836,6 +838,7 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
       .insert(taskDependencies)
       .values({
         dependencyId,
+        organizationId,
         ...validatedData,
         status: 'active',
       })

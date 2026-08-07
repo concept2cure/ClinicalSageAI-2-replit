@@ -716,6 +716,10 @@ export const C2C_MIGRATION_FILES = [
   // (tenant_id) — MUST stay ABOVE the tenant-isolation sweep so its RLS policy
   // is attached.
   'db/migrations/20260807_collab_section_locks.sql',
+  // Tenant column on the task graph tables (task_dependencies /
+  // cross_module_task_links) with backfill from the endpoint tasks — the
+  // tables join the RLS regime via the sweep below (assessment D20).
+  'db/migrations/20260807_task_graph_org_columns.sql',
 
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 

@@ -160,13 +160,23 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     [liveTasks.rows, overrides]
   );
 
-  const [view, setView] = useState(() => sessionStorage.getItem('tb.view') || 'board');
+  // Board state is shareable: URL query params win on load (a forwarded link
+  // opens exactly the view the sender saw), then the session's own last state.
+  // Defaults stay OUT of the URL so unshared navigation keeps clean links.
+  const readParam = (k: string): string | null => {
+    try { return new URLSearchParams(window.location.search).get(k); } catch { return null; }
+  };
+  const [view, setView] = useState(() => readParam('tb_view') || sessionStorage.getItem('tb.view') || 'board');
   const [proj, setProj] = useState<string>(() => {
-    try { return (window as any).C2C_TASK_FILTER || sessionStorage.getItem('tb.proj') || 'all'; }
-    catch (_e) { return 'all'; }
+    try {
+      return readParam('tb_proj') || (window as any).C2C_TASK_FILTER || sessionStorage.getItem('tb.proj') || 'all';
+    } catch (_e) { return 'all'; }
   });
-  const [mine, setMine] = useState(() => sessionStorage.getItem('tb.mine') === '1');
-  const [mod, setMod] = useState(() => sessionStorage.getItem('tb.mod') || 'all');
+  const [mine, setMine] = useState(() => {
+    const p = readParam('tb_mine');
+    return p != null ? p === '1' : sessionStorage.getItem('tb.mine') === '1';
+  });
+  const [mod, setMod] = useState(() => readParam('tb_mod') || sessionStorage.getItem('tb.mod') || 'all');
   const [sel, setSel] = useState<TaskItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [wf, setWf] = useState(false);
@@ -180,6 +190,22 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   useEffect(() => { sessionStorage.setItem('tb.proj', proj); }, [proj]);
   useEffect(() => { sessionStorage.setItem('tb.mine', mine ? '1' : '0'); }, [mine]);
   useEffect(() => { sessionStorage.setItem('tb.mod', mod); }, [mod]);
+
+  // Mirror non-default state into the URL (replaceState — no history spam) so
+  // the current board view is copyable from the address bar.
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const setOrDrop = (k: string, v: string | null) => {
+        if (v == null || v === '') url.searchParams.delete(k); else url.searchParams.set(k, v);
+      };
+      setOrDrop('tb_view', view === 'board' ? null : view);
+      setOrDrop('tb_proj', proj === 'all' ? null : proj);
+      setOrDrop('tb_mod', mod === 'all' ? null : mod);
+      setOrDrop('tb_mine', mine ? '1' : null);
+      window.history.replaceState(window.history.state, '', url.toString());
+    } catch (_e) { /* no URL surface (tests) — session persistence still holds */ }
+  }, [view, proj, mod, mine]);
 
   // A stale project filter (removed project, legacy slug) must not silently
   // filter the whole board to nothing.

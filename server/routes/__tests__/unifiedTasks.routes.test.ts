@@ -73,17 +73,51 @@ describe('unifiedTasks routes — tenant isolation', () => {
   });
 
   it('PATCH /:id/status updates a task that belongs to the caller org', async () => {
-    m.getOrgTaskById.mockResolvedValue({ id: 1, taskId: 'TASK-A', organizationId: 2, status: 'pending' });
+    // 'review' → 'completed' is a legal transition; no approval gate → no e-sign.
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1, taskId: 'TASK-A', organizationId: 2, status: 'review',
+      title: 'Freeze gate', approvalRequired: false, approvalStatus: null,
+    });
     m.updateTaskStatus.mockResolvedValue({ id: 1, taskId: 'TASK-A', status: 'completed' });
     const res = await request(makeApp(2))
       .patch('/api/regulatory/tasks/TASK-A/status')
       .send({ status: 'completed' });
     expect(res.status).toBe(200);
-    expect(m.updateTaskStatus).toHaveBeenCalledWith('TASK-A', 'completed', undefined);
+    expect(m.updateTaskStatus).toHaveBeenCalledWith('TASK-A', 'completed', undefined, {
+      manifestation: null,
+    });
     // The mutation writes a transparent lineage record.
     expect(m.auditTaskAction).toHaveBeenCalledWith(
       expect.objectContaining({ command: 'task.transition', taskId: 'TASK-A', orgId: 2 }),
     );
+  });
+
+  it('PATCH /:id/status runs the state machine — an illegal move 409s without writing', async () => {
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1, taskId: 'TASK-A', organizationId: 2, status: 'pending',
+      title: 'Draft', approvalRequired: false, approvalStatus: null,
+    });
+    const res = await request(makeApp(2))
+      .patch('/api/regulatory/tasks/TASK-A/status')
+      .send({ status: 'completed' }); // pending cannot skip straight to completed
+    expect(res.status).toBe(409);
+    expect(m.updateTaskStatus).not.toHaveBeenCalled();
+    expect(m.auditTaskAction).not.toHaveBeenCalled();
+  });
+
+  it('PATCH /:id/status demands the e-sign ceremony on approval-gated completion (428)', async () => {
+    // This router previously completed gated tasks with no signature — the
+    // ceremony was one URL away from optional. Now both routers gate.
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1, taskId: 'TASK-A', organizationId: 2, status: 'review',
+      title: 'Submission gate', approvalRequired: true, approvalStatus: 'pending',
+    });
+    const res = await request(makeApp(2))
+      .patch('/api/regulatory/tasks/TASK-A/status')
+      .send({ status: 'completed' }); // no signature
+    expect(res.status).toBe(428);
+    expect(res.body.code).toBe('ESIGN_REQUIRED');
+    expect(m.updateTaskStatus).not.toHaveBeenCalled();
   });
 
   it('POST /unified forces the JWT org onto the created task', async () => {

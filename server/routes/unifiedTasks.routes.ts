@@ -10,6 +10,17 @@ import unifiedTaskService, { MODULE_CONFIG } from '../services/unifiedTaskServic
 import { z } from 'zod';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { auditTaskAction } from '../services/tasking/task-audit';
+import {
+  TASK_STATUSES,
+  TASK_TRANSITIONS,
+  isLegalTransition,
+  type TaskStatus,
+} from '../services/tasking/task-state-machine';
+import { requireTaskSignoff } from '../services/tasking/task-signoff';
+import {
+  notifyTaskEvent,
+  cascadeUnblockOnCompletion,
+} from '../services/tasking/task-side-effects';
 
 const router = Router();
 
@@ -364,10 +375,10 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     const id = String(req.params.id);
     const { status, userId } = req.body;
 
-    if (!status) {
+    if (!status || !(TASK_STATUSES as readonly string[]).includes(String(status))) {
       return res.status(400).json({
         success: false,
-        error: 'status is required',
+        error: `status is required and must be one of: ${TASK_STATUSES.join(', ')}`,
       });
     }
 
@@ -377,16 +388,83 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Task not found' });
     }
 
-    const updatedTask = await unifiedTaskService.updateTaskStatus(id, status, userId);
+    // Same gates as /api/tasks — this router previously accepted any string
+    // and completed approval-gated tasks with no signature, so the ceremony
+    // was one URL away from being optional (GA bypass closure).
+    if (!isLegalTransition(existing.status, String(status))) {
+      return res.status(409).json({
+        success: false,
+        error: `A task in "${existing.status}" cannot move to "${status}".`,
+        from: existing.status,
+        allowed: TASK_TRANSITIONS[existing.status as TaskStatus] ?? [],
+      });
+    }
+
+    const actorId = Number((req as any).user?.id);
+    const signoff = await requireTaskSignoff({
+      organizationId: org,
+      task: existing,
+      toStatus: String(status),
+      actor: {
+        userId: Number.isFinite(actorId) && actorId > 0 ? actorId : null,
+        email:
+          typeof (req as any).userEmail === 'string'
+            ? (req as any).userEmail
+            : ((req as any).user?.email ?? null),
+        name: (req as any).userName ?? (req as any).user?.name ?? null,
+      },
+      signature: req.body?.signature,
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
+    if (signoff.required && !signoff.ok) {
+      return res.status(signoff.status).json({
+        success: false,
+        code: signoff.code,
+        error: signoff.error,
+      });
+    }
+    const manifestation = signoff.required && signoff.ok ? signoff.manifestation : null;
+
+    const updatedTask = await unifiedTaskService.updateTaskStatus(id, status, userId, {
+      manifestation,
+    });
 
     await auditTaskAction({
       orgId: org,
       userId: (req as any).user?.id,
       command: 'task.transition',
       taskId: id,
-      payload: { from: (existing as any).status, to: status },
+      payload: {
+        from: (existing as any).status,
+        to: status,
+        ...(manifestation
+          ? {
+              signature: {
+                signedByName: manifestation.signedByName,
+                meaning: manifestation.meaning,
+                signedAt: manifestation.signedAt,
+                method: manifestation.method,
+              },
+            }
+          : {}),
+      },
       reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
     });
+
+    // Completion wakes dependents and tells the people affected — the same
+    // side-effects the /api/tasks path runs.
+    if (String(status) === 'completed' && existing.status !== 'completed') {
+      await cascadeUnblockOnCompletion(org, existing.taskId);
+      if (existing.createdById && existing.createdById !== actorId) {
+        notifyTaskEvent({
+          organizationId: org,
+          recipientUserId: existing.createdById,
+          category: 'task_completed',
+          title: `Completed: ${existing.title}`,
+          taskId: existing.taskId,
+        });
+      }
+    }
 
     res.json({
       success: true,

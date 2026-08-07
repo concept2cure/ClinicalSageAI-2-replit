@@ -265,11 +265,12 @@ class UnifiedTaskService {
       throw new Error('One or both tasks not found');
     }
 
-    // Create the link
+    // Create the link (tenant-stamped from the validated source task, D20)
     const link = await dbInstance
       .insert(schema.crossModuleTaskLinks)
       .values({
         linkId,
+        organizationId: sourceTask[0].organizationId,
         sourceTaskId: input.sourceTaskId,
         sourceModule: sourceTask[0].moduleType,
         targetTaskId: input.targetTaskId,
@@ -745,9 +746,32 @@ class UnifiedTaskService {
   }
 
   /**
-   * Update task status
+   * Update task status.
+   *
+   * The unblock cascade is NOT run here — callers run the shared, org-scoped
+   * cascade (services/tasking/task-side-effects.cascadeUnblockOnCompletion),
+   * which covers both linkage systems and notifies. The private version this
+   * method used to call matched blockedBy across EVERY organization.
+   *
+   * `opts.manifestation` is the verified §11.50 sign-off record for an
+   * approval-gated completion — appended to approvalHistory with the gate
+   * marked approved.
    */
-  async updateTaskStatus(taskId: string, status: string, userId?: number) {
+  async updateTaskStatus(
+    taskId: string,
+    status: string,
+    userId?: number,
+    opts?: {
+      manifestation?: {
+        signedById: number | null;
+        signedByName: string;
+        meaning: string;
+        reason: string;
+        signedAt: string;
+        method: string;
+      } | null;
+    }
+  ) {
     const dbInstance = this.getDb();
     const updates: any = { status, updatedAt: new Date() };
 
@@ -761,52 +785,26 @@ class UnifiedTaskService {
       updates.lastModifiedBy = userId;
     }
 
+    if (opts?.manifestation) {
+      const rows = await dbInstance
+        .select({ approvalHistory: schema.unifiedTasks.approvalHistory })
+        .from(schema.unifiedTasks)
+        .where(eq(schema.unifiedTasks.taskId, taskId))
+        .limit(1);
+      const prior = Array.isArray(rows[0]?.approvalHistory)
+        ? (rows[0]!.approvalHistory as unknown[])
+        : [];
+      updates.approvalStatus = 'approved';
+      updates.approvalHistory = [...prior, opts.manifestation];
+    }
+
     const result = await dbInstance
       .update(schema.unifiedTasks)
       .set(updates)
       .where(eq(schema.unifiedTasks.taskId, taskId))
       .returning();
 
-    // Check for dependent tasks to update
-    if (status === 'completed') {
-      await this.updateDependentTasks(taskId);
-    }
-
     return result[0];
-  }
-
-  private async updateDependentTasks(completedTaskId: string) {
-    const dbInstance = this.getDb();
-    // Find tasks blocked by this one
-    const blockedTasks = await dbInstance
-      .select()
-      .from(schema.unifiedTasks)
-      .where(sql`${completedTaskId} = ANY(${schema.unifiedTasks.blockedBy})`);
-
-    for (const task of blockedTasks) {
-      // Remove from blockedBy array
-      const newBlockedBy = task.blockedBy?.filter(id => id !== completedTaskId) || [];
-
-      // If no more blockers, update status to in-progress
-      if (newBlockedBy.length === 0 && task.status === 'blocked') {
-        await dbInstance
-          .update(schema.unifiedTasks)
-          .set({
-            blockedBy: newBlockedBy,
-            status: 'in-progress',
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.unifiedTasks.taskId, task.taskId));
-      } else {
-        await dbInstance
-          .update(schema.unifiedTasks)
-          .set({
-            blockedBy: newBlockedBy,
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.unifiedTasks.taskId, task.taskId));
-      }
-    }
   }
 }
 

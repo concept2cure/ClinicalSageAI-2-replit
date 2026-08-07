@@ -34,6 +34,7 @@ import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
 import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
 import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
+import { startTaskDueSweep } from './jobs/taskDueSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -254,6 +255,11 @@ async function startServer() {
     // and flagging goals. Self-guards in tests; disable with
     // SCHEDULE_OF_EVENTS_SWEEP_DISABLED=true.
     startScheduleOfEventsSweep();
+
+    // Tasking: notify assignees once at due-soon (48h) and once at overdue —
+    // idempotent via task metadata markers. Self-guards in tests; disable with
+    // TASK_DUE_SWEEP_DISABLED=true.
+    startTaskDueSweep();
   });
 }
 
