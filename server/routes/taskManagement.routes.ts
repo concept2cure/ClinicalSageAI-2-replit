@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { and, eq, or, ne, lt, desc, asc, inArray, sql, count, avg } from 'drizzle-orm';
+import { and, eq, or, ne, lt, desc, asc, inArray, isNull, sql, count, avg } from 'drizzle-orm';
 import {
   unifiedTasks,
   taskTemplates,
@@ -18,6 +18,22 @@ import {
   BUILTIN_WORKFLOW_TEMPLATES,
   getBuiltinWorkflowTemplate,
 } from '../services/tasking/workflow-templates';
+import {
+  TASK_STATUSES,
+  TASK_TRANSITIONS,
+  isLegalTransition,
+  type TaskStatus,
+} from '../services/tasking/task-state-machine';
+import {
+  notifyTaskEvent,
+  cascadeUnblockOnCompletion,
+  wouldCreateDependencyCycle,
+} from '../services/tasking/task-side-effects';
+import { requireTaskSignoff } from '../services/tasking/task-signoff';
+import {
+  calculateCriticalPath,
+  getOptimalAssignee,
+} from '../services/tasking/task-planning';
 
 const router = Router();
 const storage = { db };
@@ -28,224 +44,7 @@ function getActorUserId(req: Request): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-// ── Status state machine ────────────────────────────────────────────────────
-//
-// `unified_tasks.status` was free text: any string was accepted, statuses the
-// board has no column for could be minted, and completed → pending was one
-// PATCH away with no record of intent (assessment D4/D5/D23). The domain and
-// its legal transitions are now explicit. Same-status writes (progress-only
-// updates) always pass; completed → in-progress/review is a deliberate,
-// audited reopen.
-
-export const TASK_STATUSES = [
-  'pending',
-  'in-progress',
-  'review',
-  'completed',
-  'blocked',
-  'cancelled',
-] as const;
-export type TaskStatus = (typeof TASK_STATUSES)[number];
-
-const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  pending: ['in-progress', 'review', 'blocked', 'cancelled'],
-  'in-progress': ['pending', 'review', 'completed', 'blocked', 'cancelled'],
-  review: ['in-progress', 'completed', 'blocked', 'cancelled'],
-  completed: ['review', 'in-progress'], // audited reopen only
-  blocked: ['pending', 'in-progress', 'review', 'cancelled'],
-  cancelled: ['pending'],
-};
-
 const taskStatusSchema = z.enum(TASK_STATUSES);
-
-export function isLegalTransition(from: string, to: string): boolean {
-  if (from === to) return true;
-  const allowed = TASK_TRANSITIONS[from as TaskStatus];
-  // An unknown stored status (legacy row) may move to any known status so old
-  // rows can be repaired through the UI rather than being stuck forever.
-  if (!allowed) return (TASK_STATUSES as readonly string[]).includes(to);
-  return allowed.includes(to as TaskStatus);
-}
-
-// ── Notifications ───────────────────────────────────────────────────────────
-//
-// Task events now produce real notifications (assessment D13/D14) through the
-// shared notification service (mdx_notifications). Fire-and-forget: a failed
-// notification never fails the mutation it describes.
-
-function notifyTaskEvent(params: {
-  organizationId: number;
-  recipientUserId: number | null | undefined;
-  category: 'task_assigned' | 'task_blocked' | 'task_completed' | 'task_update' | 'collaboration';
-  severity?: 'info' | 'warning' | 'critical';
-  title: string;
-  body?: string | null;
-  taskId?: string;
-}): void {
-  const recipient = Number(params.recipientUserId);
-  if (!Number.isFinite(recipient) || recipient <= 0) return;
-  void createNotification({
-    organizationId: params.organizationId,
-    recipientUserId: recipient,
-    category: params.category,
-    severity: params.severity ?? 'info',
-    title: params.title,
-    body: params.body ?? null,
-    resourceType: params.taskId ? 'unified_task' : null,
-    resourceId: params.taskId ?? null,
-    actionUrl: null,
-    metadata: {},
-  }).catch(err => {
-    console.warn('[tasking] notification failed (non-fatal):', err?.message ?? err);
-  });
-}
-
-// ── Completion cascade ──────────────────────────────────────────────────────
-//
-// Completing a task now unblocks its dependents on THIS write path too — the
-// cascade previously lived only behind /api/regulatory/tasks/:id/status, so
-// board moves left dependents blocked forever (assessment D12). Org-scoped on
-// every read and write; covers both linkage systems (the blockedBy[] arrays
-// and the task_dependencies DAG).
-
-async function cascadeUnblockOnCompletion(
-  organizationId: number,
-  completedTaskId: string
-): Promise<void> {
-  // 1. blockedBy[] arrays — remove the completed task; wake fully-unblocked rows.
-  const blockedRows = await storage.db
-    .select()
-    .from(unifiedTasks)
-    .where(
-      and(
-        eq(unifiedTasks.organizationId, organizationId),
-        sql`${completedTaskId} = ANY(${unifiedTasks.blockedBy})`
-      )
-    );
-  for (const row of blockedRows) {
-    const remaining = (row.blockedBy ?? []).filter(id => id !== completedTaskId);
-    await storage.db
-      .update(unifiedTasks)
-      .set({
-        blockedBy: remaining,
-        ...(remaining.length === 0 && row.status === 'blocked'
-          ? { status: 'in-progress' as string }
-          : {}),
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(unifiedTasks.taskId, row.taskId),
-          eq(unifiedTasks.organizationId, organizationId)
-        )
-      );
-    if (remaining.length === 0 && row.status === 'blocked') {
-      notifyTaskEvent({
-        organizationId,
-        recipientUserId: row.assigneeId,
-        category: 'task_update',
-        title: `Unblocked: ${row.title}`,
-        body: 'Every task blocking this one is complete — it is ready to work.',
-        taskId: row.taskId,
-      });
-    }
-  }
-
-  // 2. task_dependencies DAG — wake blocked successors whose predecessors are
-  //    now all complete. Successor rows are re-checked org-scoped before write.
-  const successorEdges = await storage.db
-    .select({ successorTaskId: taskDependencies.successorTaskId })
-    .from(taskDependencies)
-    .where(eq(taskDependencies.predecessorTaskId, completedTaskId));
-  for (const edge of successorEdges) {
-    const [successor] = await storage.db
-      .select()
-      .from(unifiedTasks)
-      .where(
-        and(
-          eq(unifiedTasks.taskId, edge.successorTaskId),
-          eq(unifiedTasks.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    if (!successor || successor.status !== 'blocked') continue;
-
-    const predecessorEdges = await storage.db
-      .select({ predecessorTaskId: taskDependencies.predecessorTaskId })
-      .from(taskDependencies)
-      .where(eq(taskDependencies.successorTaskId, successor.taskId));
-    const predecessorIds = predecessorEdges
-      .map(e => e.predecessorTaskId)
-      .filter(id => id !== completedTaskId);
-    let allDone = true;
-    if (predecessorIds.length) {
-      const open = await storage.db
-        .select({ taskId: unifiedTasks.taskId })
-        .from(unifiedTasks)
-        .where(
-          and(
-            eq(unifiedTasks.organizationId, organizationId),
-            inArray(unifiedTasks.taskId, predecessorIds),
-            ne(unifiedTasks.status, 'completed')
-          )
-        );
-      allDone = open.length === 0;
-    }
-    if (allDone) {
-      await storage.db
-        .update(unifiedTasks)
-        .set({ status: 'pending', updatedAt: new Date() })
-        .where(
-          and(
-            eq(unifiedTasks.taskId, successor.taskId),
-            eq(unifiedTasks.organizationId, organizationId)
-          )
-        );
-      notifyTaskEvent({
-        organizationId,
-        recipientUserId: successor.assigneeId,
-        category: 'task_update',
-        title: `Unblocked: ${successor.title}`,
-        body: 'All of its predecessor tasks are complete.',
-        taskId: successor.taskId,
-      });
-    }
-  }
-}
-
-// ── Dependency cycle guard ──────────────────────────────────────────────────
-//
-// The DAG had no acyclicity check (assessment D19): linking A→B and B→A was
-// accepted, after which the critical-path walk relied on its visited-set to
-// avoid spinning. Walk successors from the proposed edge's successor; if the
-// predecessor is reachable, the edge closes a cycle. Bounded for safety.
-
-async function wouldCreateDependencyCycle(
-  predecessorTaskId: string,
-  successorTaskId: string
-): Promise<boolean> {
-  if (predecessorTaskId === successorTaskId) return true;
-  const seen = new Set<string>([successorTaskId]);
-  let frontier = [successorTaskId];
-  let hops = 0;
-  while (frontier.length && hops < 2000) {
-    const edges = await storage.db
-      .select({ successorTaskId: taskDependencies.successorTaskId })
-      .from(taskDependencies)
-      .where(inArray(taskDependencies.predecessorTaskId, frontier));
-    const next: string[] = [];
-    for (const e of edges) {
-      hops++;
-      if (e.successorTaskId === predecessorTaskId) return true;
-      if (!seen.has(e.successorTaskId)) {
-        seen.add(e.successorTaskId);
-        next.push(e.successorTaskId);
-      }
-    }
-    frontier = next;
-  }
-  return false;
-}
 
 const jsonPrimitiveSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 type JsonValue = z.infer<typeof jsonPrimitiveSchema> | { [key: string]: JsonValue } | JsonValue[];
@@ -361,140 +160,8 @@ const createAutomationSchema = z.object({
   smartAssignment: jsonValueSchema.optional(),
 });
 
-// Helper function to calculate critical path
-async function calculateCriticalPath(projectId: number, organizationId: number) {
-  try {
-    // Get all tasks and dependencies for the project
-    const tasks = await storage.db
-      .select()
-      .from(unifiedTasks)
-      .where(
-        and(
-          eq(unifiedTasks.organizationId, organizationId),
-          eq(unifiedTasks.projectId, projectId)
-        )
-      );
-
-    const taskIds = tasks.map((t) => t.taskId);
-    const dependencies = taskIds.length
-      ? await storage.db
-          .select()
-          .from(taskDependencies)
-          .where(
-            or(
-              inArray(taskDependencies.predecessorTaskId, taskIds),
-              inArray(taskDependencies.successorTaskId, taskIds)
-            )
-          )
-      : [];
-
-    // Build adjacency list
-    const graph: Record<string, { task: any; successors: string[]; duration: number }> = {};
-    tasks.forEach((task: any) => {
-      const duration = task.estimatedHours || 8; // Default 8 hours
-      graph[task.taskId] = {
-        task,
-        successors: [],
-        duration,
-      };
-    });
-
-    dependencies.forEach((dep: any) => {
-      if (graph[dep.predecessorTaskId]) {
-        graph[dep.predecessorTaskId].successors.push(dep.successorTaskId);
-      }
-    });
-
-    // Topological sort with longest path calculation
-    const visited = new Set<string>();
-    const criticalPath: string[] = [];
-    let maxDuration = 0;
-
-    function dfs(nodeId: string, path: string[], totalDuration: number) {
-      if (!graph[nodeId]) return;
-
-      visited.add(nodeId);
-      const node = graph[nodeId];
-      const currentDuration = totalDuration + node.duration;
-
-      if (node.successors.length === 0) {
-        if (currentDuration > maxDuration) {
-          maxDuration = currentDuration;
-          criticalPath.length = 0;
-          criticalPath.push(...path, nodeId);
-        }
-        return;
-      }
-
-      node.successors.forEach(successor => {
-        if (!visited.has(successor)) {
-          dfs(successor, [...path, nodeId], currentDuration);
-        }
-      });
-    }
-
-    // Find all root nodes (no predecessors)
-    const rootNodes = tasks.filter(
-      (task: any) => !dependencies.some((dep: any) => dep.successorTaskId === task.taskId)
-    );
-
-    rootNodes.forEach((root: any) => {
-      visited.clear();
-      dfs(root.taskId, [], 0);
-    });
-
-    return {
-      criticalPath,
-      totalDuration: maxDuration,
-      tasks: criticalPath.map(taskId => graph[taskId]?.task),
-    };
-  } catch (error) {
-    console.error('Error calculating critical path:', error);
-    throw error;
-  }
-}
-
-// Helper function for workload balancing
-async function getOptimalAssignee(organizationId: number, _taskData: any) {
-  try {
-    // Get all users in the organization and their current active workload.
-    // Users belong to an org via organizationUsers; the left join to
-    // unifiedTasks only counts active (pending/in-progress) assignments.
-    const workloadQuery = await storage.db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        activeTaskCount: count(unifiedTasks.id),
-        totalHours: sql<number>`coalesce(sum(coalesce(${unifiedTasks.estimatedHours}, 8)), 0)`,
-      })
-      .from(users)
-      .innerJoin(organizationUsers, eq(organizationUsers.userId, users.id))
-      .leftJoin(
-        unifiedTasks,
-        and(
-          eq(unifiedTasks.assigneeId, users.id),
-          inArray(unifiedTasks.status, ['pending', 'in-progress'])
-        )
-      )
-      .where(eq(organizationUsers.organizationId, organizationId))
-      .groupBy(users.id, users.name, users.email);
-
-    // Sort by workload (ascending)
-    const sortedByWorkload = workloadQuery.sort((a, b) => {
-      const aHours = Number(a.totalHours || 0);
-      const bHours = Number(b.totalHours || 0);
-      return aHours - bHours;
-    });
-
-    // Return user with lowest workload
-    return sortedByWorkload[0];
-  } catch (error) {
-    console.error('Error finding optimal assignee:', error);
-    return null;
-  }
-}
-
+// Critical-path + workload-balancing helpers live in
+// services/tasking/task-planning (extracted for the repo-health line gate).
 // Create single task
 router.post('/tasks', async (req: Request, res: Response) => {
   try {
@@ -589,6 +256,14 @@ const updateTaskStatusSchema = z.object({
   status: taskStatusSchema,
   progress: z.number().min(0).max(100).optional(),
   reason: z.string().max(1000).optional(),
+  // The e-signature ceremony for approval-gated completion. The PIN is used
+  // for verification only — it is never logged, audited, or echoed back.
+  signature: z
+    .object({
+      pin: z.string().min(4).max(64),
+      meaning: z.string().max(40),
+    })
+    .optional(),
 });
 router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
   try {
@@ -606,7 +281,13 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
     const [existing] = await storage.db
       .select()
       .from(unifiedTasks)
-      .where(and(eq(unifiedTasks.taskId, taskId), eq(unifiedTasks.organizationId, organizationId)))
+      .where(
+        and(
+          eq(unifiedTasks.taskId, taskId),
+          eq(unifiedTasks.organizationId, organizationId),
+          isNull(unifiedTasks.deletedAt)
+        )
+      )
       .limit(1);
     if (!existing) {
       return res.status(404).json({ success: false, error: 'Task not found' });
@@ -621,8 +302,37 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
       });
     }
 
+    // Approval-gated completion demands the §11.50 signature ceremony —
+    // PIN-verified identity, stated meaning, reason. 428 tells the client to
+    // run the ceremony; nothing is written until it verifies.
+    const signoff = await requireTaskSignoff({
+      organizationId,
+      task: existing,
+      toStatus: parsed.status,
+      actor: {
+        userId: actorUserId,
+        email: typeof (req as any).userEmail === 'string'
+          ? (req as any).userEmail
+          : ((req as any).user?.email ?? null),
+        name: (req as any).userName ?? (req as any).user?.name ?? null,
+      },
+      signature: parsed.signature,
+      reason: parsed.reason,
+    });
+    if (signoff.required && !signoff.ok) {
+      return res.status(signoff.status).json({
+        success: false,
+        code: signoff.code,
+        error: signoff.error,
+      });
+    }
+    const manifestation = signoff.required && signoff.ok ? signoff.manifestation : null;
+
     const isDone = parsed.status === 'completed';
     const progress = parsed.progress ?? (isDone ? 100 : undefined);
+    const priorHistory = Array.isArray(existing.approvalHistory)
+      ? (existing.approvalHistory as unknown[])
+      : [];
     const [updated] = await storage.db
       .update(unifiedTasks)
       .set({
@@ -630,6 +340,12 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
         progress,
         completionPercentage: progress,
         completedAt: isDone ? new Date() : existing.status === 'completed' ? null : undefined,
+        ...(manifestation
+          ? {
+              approvalStatus: 'approved',
+              approvalHistory: [...priorHistory, manifestation],
+            }
+          : {}),
         lastModifiedBy: actorUserId ?? undefined,
         updatedAt: new Date(),
       })
@@ -646,7 +362,22 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
         userId: actorUserId,
         command: 'task.transition',
         taskId,
-        payload: { from: existing.status, to: parsed.status, progress: progress ?? null },
+        payload: {
+          from: existing.status,
+          to: parsed.status,
+          progress: progress ?? null,
+          // Signature manifestation (never the PIN) rides the governed record.
+          ...(manifestation
+            ? {
+                signature: {
+                  signedByName: manifestation.signedByName,
+                  meaning: manifestation.meaning,
+                  signedAt: manifestation.signedAt,
+                  method: manifestation.method,
+                },
+              }
+            : {}),
+        },
         reason: parsed.reason,
       });
 
@@ -972,6 +703,7 @@ router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => 
     const conditions = [
       eq(unifiedTasks.organizationId, organizationId),
       eq(unifiedTasks.moduleType, moduleId),
+      isNull(unifiedTasks.deletedAt),
     ];
     if (status) {
       conditions.push(eq(unifiedTasks.status, status));
@@ -1261,9 +993,13 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
     const baseCondition = projectId
       ? and(
           eq(unifiedTasks.organizationId, organizationId),
-          eq(unifiedTasks.projectId, projectId)
+          eq(unifiedTasks.projectId, projectId),
+          isNull(unifiedTasks.deletedAt)
         )
-      : eq(unifiedTasks.organizationId, organizationId);
+      : and(
+          eq(unifiedTasks.organizationId, organizationId),
+          isNull(unifiedTasks.deletedAt)
+        );
 
     // Task statistics
     const [taskStats] = await storage.db
@@ -1439,7 +1175,13 @@ router.post('/tasks/:taskId/notify', async (req: Request, res: Response) => {
     const [task] = await storage.db
       .select()
       .from(unifiedTasks)
-      .where(and(eq(unifiedTasks.taskId, taskId), eq(unifiedTasks.organizationId, organizationId)))
+      .where(
+        and(
+          eq(unifiedTasks.taskId, taskId),
+          eq(unifiedTasks.organizationId, organizationId),
+          isNull(unifiedTasks.deletedAt)
+        )
+      )
       .limit(1);
     if (!task) {
       return res.status(404).json({ success: false, error: 'Task not found' });
@@ -1575,6 +1317,64 @@ router.post('/messages', async (req: Request, res: Response) => {
   }
 });
 
+// ── Archive (soft delete) ───────────────────────────────────────────────────
+//
+// The ONLY removal verb for a task — stamps deleted_at/deleted_by instead of
+// destroying the row (Part 11 retention, assessment D24). Archived rows leave
+// every read model; the tombstone and its governed ledger record remain.
+const archiveTaskSchema = z.object({
+  reason: z.string().max(1000).optional(),
+});
+router.delete('/tasks/:taskId', async (req: Request, res: Response) => {
+  try {
+    const taskId = String(req.params.taskId);
+    const parsed = archiveTaskSchema.parse(req.body ?? {});
+    const actorUserId = getActorUserId(req);
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+
+    const [archived] = await storage.db
+      .update(unifiedTasks)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: actorUserId ?? undefined,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(unifiedTasks.taskId, taskId),
+          eq(unifiedTasks.organizationId, organizationId),
+          isNull(unifiedTasks.deletedAt)
+        )
+      )
+      .returning({ taskId: unifiedTasks.taskId, title: unifiedTasks.title });
+
+    if (!archived) {
+      return res.status(404).json({ success: false, error: 'Task not found' });
+    }
+
+    await auditTaskAction({
+      orgId: organizationId,
+      userId: actorUserId,
+      command: 'task.delete',
+      taskId,
+      payload: { title: archived.title, softDelete: true },
+      reason: parsed.reason,
+    });
+
+    return res.json({ success: true, archived: true, taskId });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.errors });
+    }
+    console.error('Error archiving task:', error);
+    return res.status(500).json({ success: false, error: 'Failed to archive task' });
+  }
+});
+
 // ── My work — the Task Tray read-model ──────────────────────────────────────
 //
 // One org-scoped answer to "what is assigned to me right now" from the
@@ -1600,7 +1400,8 @@ router.get('/my-work', async (req: Request, res: Response) => {
         and(
           eq(unifiedTasks.organizationId, organizationId),
           eq(unifiedTasks.assigneeId, actorUserId),
-          inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked'])
+          inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
+          isNull(unifiedTasks.deletedAt)
         )
       )
       .orderBy(sql`${unifiedTasks.dueDate} asc nulls last`)

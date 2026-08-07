@@ -155,6 +155,45 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
   const myLock = locks.find((l) => l.mine === true && (l.sectionId ?? null) === (sectionId ?? null));
   const otherLock = locks.find((l) => l.mine !== true && (l.sectionId ?? null) === (sectionId ?? null));
 
+  // Two-step takeover of another author's lock (server audits it and notifies
+  // them). First click arms; second click within the window commits.
+  const [confirmTakeover, setConfirmTakeover] = useState(false);
+  useEffect(() => {
+    if (!confirmTakeover) return;
+    const t = setTimeout(() => setConfirmTakeover(false), 4000);
+    return () => clearTimeout(t);
+  }, [confirmTakeover]);
+
+  const takeover = useCallback(async () => {
+    if (!confirmTakeover) { setConfirmTakeover(true); return; }
+    setConfirmTakeover(false);
+    try {
+      const res = await apiRequest('POST', '/api/realtime-collab/locks', {
+        documentId, sectionId: sectionId || undefined,
+        lockType: 'section-edit', takeover: true,
+        reason: 'Took over a stale section lock from the authoring canvas',
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        fireToast('Couldn’t take over the lock — ' + (body?.error ?? `HTTP ${res.status}`) + '.');
+        return;
+      }
+      fireToast('Lock taken over — the previous holder has been notified.');
+      void loadLocks();
+    } catch (e) {
+      fireToast('Couldn’t take over — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  }, [confirmTakeover, documentId, sectionId, loadLocks, fireToast]);
+
+  /** Minutes until a lock expires — the chip's honesty about staleness. */
+  const expiresIn = (iso?: string): string => {
+    if (!iso) return '';
+    const ms = new Date(iso).getTime() - Date.now();
+    if (!Number.isFinite(ms) || ms <= 0) return ' (expired)';
+    const min = Math.ceil(ms / 60000);
+    return ` · ${min} min left`;
+  };
+
   const acquire = useCallback(async () => {
     if (!userId) return;
     try {
@@ -204,7 +243,20 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
         </div>
       )}
       {otherLock ? (
-        <span className="rd-chip tone-warn" title={otherLock.reason || ''}>{I.lock} locked by {otherLock.lockedByLabel || 'another author'}</span>
+        <>
+          <span className="rd-chip tone-warn" title={otherLock.reason || ''}>
+            {I.lock} locked by {otherLock.lockedByLabel || 'another author'}{expiresIn(otherLock.expiresAt)}
+          </span>
+          <button
+            className="btn ghost"
+            style={{ height: 30, ...(confirmTakeover ? { color: 'var(--error)', borderColor: 'var(--error)' } : {}) }}
+            onClick={takeover}
+            title="Take over this lock — the holder is notified and the takeover is audited"
+            aria-label={confirmTakeover ? 'Confirm lock takeover' : 'Take over the section lock'}
+          >
+            {confirmTakeover ? 'Confirm takeover' : 'Take over'}
+          </button>
+        </>
       ) : myLock ? (
         <button className="btn ghost" style={{ height: 30 }} onClick={release} title="Release your section lock">
           {I.lock} Unlock

@@ -27,7 +27,7 @@
  * @module server/services/unified-work/unified-work-view
  */
 
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { projectTasks, c2cProjectWorkItems, unifiedTasks } from '../../../shared/schema';
 import { estarSubmissions } from '../../../shared/schema/estar-submission';
@@ -372,11 +372,13 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
             eq(unifiedTasks.organizationId, organizationId),
             eq(unifiedTasks.projectId, projectId),
             inArray(unifiedTasks.status, openStatuses),
+            isNull(unifiedTasks.deletedAt),
             notAMirror,
           )
         : and(
             eq(unifiedTasks.organizationId, organizationId),
             inArray(unifiedTasks.status, openStatuses),
+            isNull(unifiedTasks.deletedAt),
             notAMirror,
           ),
     )

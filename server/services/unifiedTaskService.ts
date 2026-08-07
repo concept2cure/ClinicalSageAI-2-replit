@@ -158,7 +158,8 @@ class UnifiedTaskService {
     const dbInstance = this.getDb();
     const baseQuery = dbInstance.select().from(schema.unifiedTasks);
 
-    const conditions = [];
+    // Archived rows are invisible to every read model (soft delete, D24).
+    const conditions = [sql`${schema.unifiedTasks.deletedAt} IS NULL`];
     if (options?.organizationId) {
       conditions.push(eq(schema.unifiedTasks.organizationId, options.organizationId));
     }
@@ -214,7 +215,13 @@ class UnifiedTaskService {
     const rows = await dbInstance
       .select()
       .from(schema.unifiedTasks)
-      .where(and(eq(schema.unifiedTasks.organizationId, organizationId), idMatch))
+      .where(
+        and(
+          eq(schema.unifiedTasks.organizationId, organizationId),
+          sql`${schema.unifiedTasks.deletedAt} IS NULL`,
+          idMatch
+        )
+      )
       .limit(1);
     return rows[0] ?? null;
   }
@@ -302,7 +309,10 @@ class UnifiedTaskService {
    */
   async getUnifiedDashboardMetrics(organizationId: number, projectId?: number) {
     const dbInstance = this.getDb();
-    const baseConditions = [eq(schema.unifiedTasks.organizationId, organizationId)];
+    const baseConditions = [
+      eq(schema.unifiedTasks.organizationId, organizationId),
+      sql`${schema.unifiedTasks.deletedAt} IS NULL`,
+    ];
     if (projectId) {
       baseConditions.push(eq(schema.unifiedTasks.projectId, projectId));
     }

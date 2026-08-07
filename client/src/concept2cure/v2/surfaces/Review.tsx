@@ -19,6 +19,7 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
 import { STATUS_TONE, ESIGN_MEANINGS } from '../fixtures/review-data';
+import { ReviewThreadsPane } from './ReviewThreads';
 import '../styles/project-home-v2.css';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
@@ -272,6 +273,9 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           hint="When a document for your organization enters an approval workflow, it appears here with its queue, threaded comments and multi-step sign-off."
           icon={I.shieldCheck}
         />
+        {/* Threads can exist even when no document is on the approval board. */}
+        <ReviewThreadsPane onNotice={fireToast} />
+        <C2CToast msg={toast} />
       </div>
     );
   }
@@ -545,6 +549,10 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </div>
       </div>
+
+      {/* Real, persisted review threads (Phase-13 backend) — assigned to the
+          signed-in reviewer, with reply / request-changes / resolve in place. */}
+      <ReviewThreadsPane onNotice={fireToast} />
 
       <C2CToast msg={toast} />
     </div>

@@ -172,6 +172,9 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const [wf, setWf] = useState(false);
   const [actionErr, setActionErr] = useState('');
   const [announce, setAnnounce] = useState('');
+  /** A completion the server answered 428 ESIGN_REQUIRED for — the pending
+   *  signature ceremony (approval-gated task). */
+  const [signReq, setSignReq] = useState<{ t: TaskItem; status: string; progress: number } | null>(null);
 
   useEffect(() => { sessionStorage.setItem('tb.view', view); }, [view]);
   useEffect(() => { sessionStorage.setItem('tb.proj', proj); }, [proj]);
@@ -239,7 +242,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       } else {
         const body = await res.json().catch(() => null);
         setOverrides(o => { const { [t.taskId]: _drop, ...rest } = o; return rest; });
-        setActionErr(fmtApiError(body, `Couldn't move "${t.title}".`));
+        if (res.status === 428 && body?.code === 'ESIGN_REQUIRED') {
+          // Approval-gated completion: run the signature ceremony, then retry.
+          setSignReq({ t, status, progress });
+        } else {
+          setActionErr(fmtApiError(body, `Couldn't move "${t.title}".`));
+        }
       }
     } catch {
       setOverrides(o => { const { [t.taskId]: _drop, ...rest } = o; return rest; });
@@ -592,8 +600,112 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           onMove={move}
           onErr={setActionErr}
           onNotice={setAnnounce}
+          onArchived={() => { setSel(null); setReloadKey(k => k + 1); }}
         />
       )}
+      {signReq && (
+        <ESignTaskModal
+          req={signReq}
+          onClose={() => setSignReq(null)}
+          onSigned={() => {
+            setSignReq(null);
+            setReloadKey(k => k + 1);
+            setAnnounce(`Signed and completed "${signReq.t.title}".`);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── E-signature ceremony — approval-gated task completion (§11.50) ──
+   Triggered by the server's 428 ESIGN_REQUIRED. This is a REAL signature: the
+   PIN is verified server-side against the same credential store + lockout
+   policy as document sealing, and the manifestation (name, time, meaning) is
+   appended to the task's approval history and the governed audit ledger. */
+
+const SIGN_MEANINGS = ['APPROVED', 'REVIEWED', 'RESPONSIBILITY', 'AUTHORSHIP'] as const;
+
+function ESignTaskModal({ req, onClose, onSigned }: {
+  req: { t: TaskItem; status: string; progress: number };
+  onClose: () => void;
+  onSigned: () => void;
+}) {
+  const ref = useDialog(onClose);
+  const [meaning, setMeaning] = useState<string>('APPROVED');
+  const [reason, setReason] = useState('');
+  const [pin, setPin] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const sign = async () => {
+    if (busy || !pin || reason.trim().length < 3) return;
+    setBusy(true);
+    setErr('');
+    try {
+      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
+        status: req.status,
+        progress: req.progress,
+        reason: reason.trim(),
+        signature: { pin, meaning },
+      });
+      const body = await res.json().catch(() => null);
+      if (res.ok) {
+        onSigned();
+      } else {
+        setErr(fmtApiError(body, 'The signature was not accepted.'));
+        setBusy(false);
+        setPin('');
+      }
+    } catch {
+      setErr('Network error — nothing was signed or completed.');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="tb-detail-bd" onClick={onClose}>
+      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Electronic signature required" tabIndex={-1} ref={ref} onClick={e => e.stopPropagation()}>
+        <div className="tb-detail-h">
+          <div><h3>{I.lock} Sign to complete</h3></div>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Cancel signing">{I.close}</button>
+        </div>
+        <div className="tb-form">
+          <div className="tb-detail-note" style={{ marginBottom: 8 }}>
+            <b>{req.t.title}</b> is approval-gated. Completing it applies your electronic
+            signature — your identity is verified with your signing PIN, and your printed
+            name, the date and time, and the meaning below are recorded with the task and
+            in the audit ledger (21 CFR Part 11 §11.50).
+          </div>
+          <div className="tb-frow">
+            <div className="tb-field"><label>Meaning of signature</label>
+              <select value={meaning} onChange={e => setMeaning(e.target.value)}>
+                {SIGN_MEANINGS.map(m => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
+              </select>
+            </div>
+            <div className="tb-field"><label>Signing PIN<i>*</i></label>
+              <input
+                type="password"
+                autoComplete="off"
+                value={pin}
+                onChange={e => setPin(e.target.value)}
+                placeholder="Your signing PIN"
+                aria-label="Signing PIN"
+              />
+            </div>
+          </div>
+          <div className="tb-field full"><label>Reason for sign-off<i>*</i></label>
+            <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Reviewed the deliverable against the acceptance criteria" />
+          </div>
+          {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
+        </div>
+        <div className="tb-detail-f">
+          <button className="btn ghost" onClick={onClose}>Cancel — leave incomplete</button>
+          <button className="btn primary" disabled={busy || !pin || reason.trim().length < 3} onClick={sign}>
+            {I.shieldCheck} {busy ? 'Verifying…' : 'Sign & complete'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -610,13 +722,46 @@ interface TaskDetailProps {
   onMove: (t: TaskItem, dir: number) => void;
   onErr: (msg: string) => void;
   onNotice: (msg: string) => void;
+  onArchived: () => void;
 }
 
-function TaskDetail({ t, byId, projLabel, ownerLabel, onClose, onAsk, onMove, onErr, onNotice }: TaskDetailProps) {
+function TaskDetail({ t, byId, projLabel, ownerLabel, onClose, onAsk, onMove, onErr, onNotice, onArchived }: TaskDetailProps) {
   const ref = useDialog(onClose);
   const [reminding, setReminding] = useState(false);
+  // Two-step archive: first click arms, second click within the window commits.
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  useEffect(() => {
+    if (!confirmArchive) return;
+    const id = setTimeout(() => setConfirmArchive(false), 4000);
+    return () => clearTimeout(id);
+  }, [confirmArchive]);
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
   const overdue = isOverdue(t);
+
+  const archive = async () => {
+    if (!confirmArchive) { setConfirmArchive(true); return; }
+    if (archiving) return;
+    setArchiving(true);
+    try {
+      const res = await apiRequest('DELETE', `/api/tasks/tasks/${encodeURIComponent(t.taskId)}`, {
+        reason: 'Archived from the task board',
+      });
+      const body = await res.json().catch(() => null);
+      if (res.ok) {
+        onNotice(`Archived "${t.title}". The record is retained in the audit trail.`);
+        onArchived();
+      } else {
+        onErr(fmtApiError(body, 'Could not archive the task.'));
+        setArchiving(false);
+        setConfirmArchive(false);
+      }
+    } catch {
+      onErr('Could not archive the task — network error.');
+      setArchiving(false);
+      setConfirmArchive(false);
+    }
+  };
 
   const remind = async () => {
     if (reminding) return;
@@ -682,6 +827,15 @@ function TaskDetail({ t, byId, projLabel, ownerLabel, onClose, onAsk, onMove, on
           {t.assignee && (
             <button className="btn ghost" disabled={reminding} onClick={remind}>{I.bell || I.messageSquare} {reminding ? 'Sending…' : 'Send reminder'}</button>
           )}
+          <button
+            className="btn ghost"
+            style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
+            disabled={archiving}
+            onClick={archive}
+            aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
+          >
+            {archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}
+          </button>
           <span className="sp" />
           <button className="btn ghost" disabled={!RETREAT[t.status]} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
           <button className="btn primary" disabled={!ADVANCE[t.status]} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>

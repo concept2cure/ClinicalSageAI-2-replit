@@ -1,15 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-// The router module reaches for the db at import; stub the facade so the pure
-// state machine can be imported without a database (same isolation pattern as
-// the sibling route tests).
-vi.mock('../../db', () => ({ db: {}, pool: { query: vi.fn() } }));
-vi.mock('../../services/tasking/task-audit', () => ({ auditTaskAction: vi.fn() }));
-vi.mock('../../services/notifications/notification-service', () => ({
-  createNotification: vi.fn().mockResolvedValue(1),
-}));
-
-import { isLegalTransition, TASK_STATUSES } from '../taskManagement.routes';
+import {
+  isLegalTransition,
+  TASK_STATUSES,
+} from '../../services/tasking/task-state-machine';
 
 /**
  * The status state machine (assessment D4/D5/D23). Free-text status let any

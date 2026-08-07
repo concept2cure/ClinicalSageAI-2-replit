@@ -706,6 +706,17 @@ export const C2C_MIGRATION_FILES = [
   // the public sweep (disjoint schemas); ordered BEFORE it so the integer-keyed
   // sweep stays the final entry — ledger C-33 requires the sweep to run last
   // (asserted by tenant-isolation-sweep.contract.test.ts).
+  // ── Collaboration & tasking GA (assessment D24/D25) ────────────────────────
+  // Soft delete on the canonical task store: additive nullable tombstone
+  // columns; every read-model filters deleted_at IS NULL; archive replaces
+  // hard delete (Part 11 retention).
+  'db/migrations/20260807_unified_tasks_soft_delete.sql',
+  // Durable section locks: the process-local lock Map becomes a shared table
+  // so restarts don't drop locks and replicas can't double-grant. Tenant-keyed
+  // (tenant_id) — MUST stay ABOVE the tenant-isolation sweep so its RLS policy
+  // is attached.
+  'db/migrations/20260807_collab_section_locks.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

@@ -53,7 +53,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { asc, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requestDb } from '../db/requestDb';
@@ -183,10 +183,13 @@ export default function createTaskBoardRoutes(): Router {
     try {
       const db = requestDb(req);
 
+      // Soft-deleted (archived) rows never reach the board (D24).
       const rows = await db
         .select()
         .from(unifiedTasks)
-        .where(eq(unifiedTasks.organizationId, organizationId))
+        .where(
+          and(eq(unifiedTasks.organizationId, organizationId), isNull(unifiedTasks.deletedAt))
+        )
         .orderBy(asc(unifiedTasks.dueDate));
 
       const taskIds = rows.map(row => row.taskId);
