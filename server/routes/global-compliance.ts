@@ -578,23 +578,6 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
       [orgId, userId]
     ).catch(() => ({ rows: [] as any[] }));
 
-    // Uniform provenance: GDPR erasure of artifact content is a 'transformation'
-    // event, per erased artifact. Best-effort — a mandated erasure must not fail
-    // because a provenance row could not be written.
-    for (const erased of (artifactsResult.rows as Array<{ id: number }>)) {
-      try {
-        await recordArtifactProvenance(client, {
-          artifactId: erased.id,
-          organizationId: orgId,
-          eventType: 'transformation',
-          eventAction: 'gdpr_erase',
-          actorId: typeof userId === 'number' ? userId : null,
-          details: { reason, gdprErased: true },
-          backendService: 'routes/global-compliance',
-        });
-      } catch { /* never block the mandated erasure on provenance */ }
-    }
-
     const commentsResult = await client.query(
       `UPDATE concept2cure_thread_comments
        SET body = '[REDACTED PER GDPR ART.17]',
@@ -616,6 +599,26 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
     ).catch(() => undefined);
 
     await client.query('COMMIT');
+
+    // Uniform provenance: record the Art.17 erasure of each artifact as a
+    // 'transformation' event — AFTER commit, on the pool, best-effort. A mandated
+    // erasure must never be blocked or rolled back because a provenance row could
+    // not be written, and a failed write inside the transaction would have
+    // poisoned it; recording here keeps the erasure unconditional.
+    for (const erased of (artifactsResult.rows as Array<{ id?: number }>)) {
+      if (typeof erased.id !== 'number') continue;
+      try {
+        await recordArtifactProvenance(pool, {
+          artifactId: erased.id,
+          organizationId: orgId,
+          eventType: 'transformation',
+          eventAction: 'gdpr_erase',
+          actorId: typeof userId === 'number' ? userId : null,
+          details: { reason, gdprErased: true },
+          backendService: 'routes/global-compliance',
+        });
+      } catch { /* erasure is already committed; provenance is best-effort */ }
+    }
 
     return res.json({
       success: true,

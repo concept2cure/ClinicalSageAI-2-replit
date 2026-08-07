@@ -19,10 +19,12 @@ import { fileURLToPath } from 'node:url';
 
 let pglite: PGlite;
 const pool = {
-  query: async (sql: string, params?: unknown[]) => {
+  // Generic query so this test pool satisfies the service's `Queryable` when
+  // passed explicitly as the transaction exec (attributeAndRecordSourceSpans).
+  query: async <R = any>(sql: string, params?: unknown[]): Promise<{ rows: R[]; rowCount: number }> => {
     const r = await pglite.query(sql, params as unknown[]);
     return {
-      rows: r.rows as unknown[],
+      rows: r.rows as R[],
       rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length,
     };
   },

@@ -97,6 +97,52 @@ export async function recordArtifactProvenance(
 }
 
 /**
+ * Best-effort provenance from INSIDE a raw-pg transaction, without poisoning it.
+ *
+ * {@link recordArtifactProvenance} throws on failure so an in-transaction caller
+ * fails CLOSED — content and provenance commit together or roll back together.
+ * That is the right contract when provenance is mandatory. But some producers
+ * want the opposite: the content write (a GDPR erasure, a user's rewrite, an
+ * import) must succeed even if the provenance row cannot be written. Wrapping
+ * recordArtifactProvenance in a bare try/catch does NOT achieve that inside a
+ * transaction — the failed INSERT has already aborted the transaction, so every
+ * later statement on that connection fails too and the catch only hides it.
+ *
+ * This wraps the write in a SAVEPOINT: a failure rolls back just the provenance
+ * write and the caller's transaction survives intact. If the caller is NOT in a
+ * transaction (SAVEPOINT is illegal outside one), the write is its own implicit
+ * transaction and a plain attempt cannot poison anything, so we fall back to
+ * that. Returns the event id, or null when the provenance write was rolled back.
+ *
+ * Raw-pg only (SAVEPOINT is SQL text). Drizzle-tx callers that want best-effort
+ * should emit AFTER the transaction commits, on the base `db`.
+ */
+export async function recordArtifactProvenanceBestEffort(
+  exec: ProvenanceExec,
+  input: ArtifactProvenanceInput,
+): Promise<string | null> {
+  const sp = `c2c_prov_sp_${crypto.randomBytes(6).toString('hex')}`;
+  try {
+    await exec.query(`SAVEPOINT ${sp}`);
+  } catch {
+    // Not inside a transaction block — a plain write is self-contained.
+    try {
+      return await recordArtifactProvenance(exec, input);
+    } catch {
+      return null;
+    }
+  }
+  try {
+    const id = await recordArtifactProvenance(exec, input);
+    await exec.query(`RELEASE SAVEPOINT ${sp}`);
+    return id;
+  } catch {
+    await exec.query(`ROLLBACK TO SAVEPOINT ${sp}`).catch(() => {});
+    return null;
+  }
+}
+
+/**
  * Drizzle-executor sibling of {@link recordArtifactProvenance}, with the SAME
  * input contract, for producers that write the artifact via Drizzle
  * (db.insert / tx.insert) rather than raw SQL. Pass the Drizzle `db` OR a

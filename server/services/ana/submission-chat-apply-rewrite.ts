@@ -19,7 +19,7 @@
 import crypto from 'node:crypto';
 import { getPool } from '../../db/runtime.js';
 import { saveChatMessage } from '../chat-thread-helpers.js';
-import { recordArtifactProvenance } from '../provenance/artifact-provenance';
+import { recordArtifactProvenanceBestEffort } from '../provenance/artifact-provenance';
 import {
   getProposalById,
   markProposalApplied,
@@ -641,19 +641,18 @@ export async function applyRewrite(
     );
 
     // Uniform provenance: a submission-chat rewrite is an 'edit' event, in the
-    // rewrite transaction. Best-effort so a provenance hiccup never blocks the
-    // rewrite the user requested.
-    try {
-      await recordArtifactProvenance(client, {
-        artifactId: row.id,
-        organizationId: input.organizationId,
-        eventType: 'edit',
-        eventAction: 'rewrite',
-        actorId: input.userId,
-        details: { source: 'submission_chat_rewrite', version: newVersion, threadId: input.threadId ?? null },
-        backendService: 'ana/submission-chat-apply-rewrite',
-      });
-    } catch { /* rewrite provenance is best-effort */ }
+    // rewrite transaction. Best-effort via SAVEPOINT so a provenance hiccup rolls
+    // back only itself — it never blocks the rewrite nor poisons the transaction
+    // the e-signature step below runs in.
+    await recordArtifactProvenanceBestEffort(client, {
+      artifactId: row.id,
+      organizationId: input.organizationId,
+      eventType: 'edit',
+      eventAction: 'rewrite',
+      actorId: input.userId,
+      details: { source: 'submission_chat_rewrite', version: newVersion, threadId: input.threadId ?? null },
+      backendService: 'ana/submission-chat-apply-rewrite',
+    });
 
     // ── 3. Optional Part 11 e-signature, bound to the NEW version row.
     // The signature hash combines meaning + signer + timestamp + content
