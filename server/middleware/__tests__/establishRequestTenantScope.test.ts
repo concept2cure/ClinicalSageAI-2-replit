@@ -20,7 +20,12 @@ import {
   isSystemScopedPath,
   SYSTEM_SCOPE_PREFIXES,
 } from '../establishRequestTenantScope';
-import { getTenantScope, runWithTenantScope } from '../../db/tenantStore';
+import {
+  getTenantScope,
+  runWithTenantScope,
+  runWithPreAuthScope,
+  runWithSystemTenantScope,
+} from '../../db/tenantStore';
 
 function makeReq(overrides: Record<string, any> = {}): any {
   return {
@@ -124,6 +129,78 @@ describe('establishRequestTenantScope', () => {
     expect(scopeInside?.tenantId).toBe('0');
     expect(scopeInside?.role).toBe('app_super_admin');
     expect(req.dbClient).toBeTruthy();
+  });
+
+  // ── Regression: P1 review findings on scope-KIND-aware idempotency ───────────
+
+  it('REPLACES a pre-auth placeholder scope with the caller org once authenticated', () => {
+    // The /api/auth/enterprise electronic-signature flow: the mount opens a
+    // pre-auth scope (tenantId 0, no role), then authMiddleware succeeds and this
+    // helper runs. The coarse "any active scope is idempotent" check left tenant
+    // work running under tenantId 0 (RLS-denied). It must install the real scope.
+    const req = makeReq({
+      baseUrl: '/api/auth/enterprise',
+      path: '/electronic-signature',
+      user: { organizationId: '42', role: 'editor' },
+    });
+    const res = makeRes();
+    let scopeInside: any;
+
+    runWithPreAuthScope('auth:POST /api/auth/enterprise/electronic-signature', () =>
+      establishRequestTenantScope(req, res as any, () => { scopeInside = getTenantScope(); }),
+    );
+
+    expect(scopeInside?.tenantId).toBe('42'); // NOT '0' (the pre-auth placeholder)
+    expect(scopeInside?.role).toBe('editor');
+    expect(req.dbClient).toBeTruthy();
+  });
+
+  it('leaves the pre-auth placeholder untouched when there is no verified tenant yet', () => {
+    // A genuinely pre-auth request (login/refresh): no numeric org on req.user.
+    // We must NOT fabricate a per-user scope; the pre-auth placeholder stands.
+    const req = makeReq({ baseUrl: '/api/auth', path: '/login', user: undefined });
+    const res = makeRes();
+    let scopeInside: any;
+
+    runWithPreAuthScope('auth:POST /api/auth/login', () =>
+      establishRequestTenantScope(req, res as any, () => { scopeInside = getTenantScope(); }),
+    );
+
+    expect(scopeInside?.tenantId).toBe('0'); // pre-auth placeholder preserved
+    expect(scopeInside?.role).toBeNull();
+    expect(req.dbClient).toBeUndefined();
+  });
+
+  it('forces the system scope on a system path even when a per-user scope opened first', () => {
+    // The global gate may open a per-user scope before a system-prefixed router
+    // runs. The system carve-out must still win — a per-user scope would restrict
+    // the cross-tenant admin console to the caller's org.
+    const req = makeReq({ baseUrl: '/api/admin/master', path: '/orgs', user: { organizationId: '7', role: 'admin' } });
+    const res = makeRes();
+    let scopeInside: any;
+
+    runWithTenantScope(
+      { tenantId: '7', role: 'admin', source: 'request', caller: 'gate' },
+      () => establishRequestTenantScope(req, res as any, () => { scopeInside = getTenantScope(); }),
+    );
+
+    expect(scopeInside?.tenantId).toBe('0');
+    expect(scopeInside?.role).toBe('app_super_admin');
+    expect(req.dbClient).toBeTruthy();
+  });
+
+  it('is idempotent on a system path already under the system scope', () => {
+    const req = makeReq({ baseUrl: '/api/tenant-export', path: '/', user: { organizationId: '7', role: 'admin' } });
+    const res = makeRes();
+    let scopeInside: any;
+
+    runWithSystemTenantScope('system:GET /api/tenant-export', () =>
+      establishRequestTenantScope(req, res as any, () => { scopeInside = getTenantScope(); }),
+    );
+
+    expect(scopeInside?.tenantId).toBe('0');
+    expect(scopeInside?.role).toBe('app_super_admin');
+    expect(req.dbClient).toBeUndefined(); // not re-attached — already system-scoped
   });
 });
 

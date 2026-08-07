@@ -18,10 +18,21 @@
  * `authenticateToken` (mountAll groups), and `requireTenantContext` (which
  * reuses the same tail so there is exactly one implementation).
  *
- * ── Idempotent by construction ────────────────────────────────────────────────
- * If a scope is already active (a self-scoped mount, or an upstream auth
- * middleware that already ran this) or `req.dbClient` is already set, the helper
- * is a pass-through. Nesting therefore never clobbers a more-specific scope.
+ * ── Idempotent, but scope-KIND aware ──────────────────────────────────────────
+ * If a REAL per-user scope is already active (a self-scoped mount, the gate, or
+ * `requireTenantContext`) or `req.dbClient` is set, the helper is a pass-through
+ * — it never clobbers an authoritative scope. But the check is deliberately not
+ * "any active scope wins": the two tenantId-'0' PLACEHOLDER scopes are handled
+ * by kind, not treated as final —
+ *   - a pre-auth scope (`runWithPreAuthScope`, no role) opened on an auth mount
+ *     is REPLACED once a verified identity exists, so authenticated tenant work
+ *     runs under the caller's org rather than tenantId '0';
+ *   - a system route is routed to the system scope even if a per-user or
+ *     pre-auth scope opened first, so cross-tenant consoles are never restricted
+ *     to the caller's org.
+ * (Both were P1 review findings — the coarse "any active scope is idempotent"
+ * check silently left e-signatures pre-auth-scoped and could shadow admin
+ * carve-outs.)
  *
  * ── Two scope flavours ────────────────────────────────────────────────────────
  *  - per-user (`establishRequestTenantScope`): the caller's org. The default.
@@ -36,7 +47,12 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { PoolClient } from 'pg';
 import { getPool } from '../db';
-import { getTenantScope, runWithTenantScope, runWithSystemTenantScope } from '../db/tenantStore';
+import {
+  getTenantScope,
+  runWithTenantScope,
+  runWithSystemTenantScope,
+  type TenantScope,
+} from '../db/tenantStore';
 import { LazyRequestDbClient } from './lazyRequestDbClient';
 import { createScopedLogger } from '../utils/logger';
 
@@ -85,6 +101,27 @@ function fullPath(req: Request): string {
 export function isSystemScopedPath(req: Request): boolean {
   const path = fullPath(req);
   return SYSTEM_SCOPE_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
+}
+
+/**
+ * The cross-tenant system scope: tenantId '0' AND the super-admin role. Only
+ * `runWithSystemTenantScope` / `establishRequestSystemScope` produce this shape.
+ */
+function isSystemScope(scope: TenantScope | undefined): boolean {
+  return !!scope && scope.tenantId === '0' && scope.role === 'app_super_admin';
+}
+
+/**
+ * A REAL per-tenant scope — a genuine caller-org scope, established by the auth
+ * boundary or `requireTenantContext`. Distinguished from the two placeholder
+ * shapes that also use tenantId '0': the pre-auth scope (`runWithPreAuthScope`,
+ * no role) and the system scope (super-admin role). A pre-auth placeholder is
+ * deliberately NOT "real": it is opened before an identity is known and MUST be
+ * replaced by the caller's actual scope once authentication succeeds, or tenant
+ * work would run under tenantId '0' and be RLS-denied/misattributed.
+ */
+function isRealTenantScope(scope: TenantScope | undefined): boolean {
+  return !!scope && scope.tenantId !== '0';
 }
 
 /**
@@ -165,23 +202,38 @@ export function establishRequestTenantScope(
   res: Response,
   next: NextFunction,
 ): void {
-  // Idempotent: never clobber an already-active scope / client.
-  if (getTenantScope() || req.dbClient) {
-    next();
+  const active = getTenantScope();
+
+  // Cross-tenant consoles must run under the SYSTEM scope — decided BEFORE any
+  // idempotency return, so a system route is never left running under a per-user
+  // or pre-auth scope that happened to open first (e.g. a per-user scope from
+  // the global gate). If a system scope is already active, keep it.
+  if (isSystemScopedPath(req)) {
+    if (isSystemScope(active)) {
+      next();
+      return;
+    }
+    establishRequestSystemScope(req, res, next);
     return;
   }
 
-  // Cross-tenant consoles must not be constrained to the caller's org.
-  if (isSystemScopedPath(req)) {
-    establishRequestSystemScope(req, res, next);
+  // Idempotent for the real case: a genuine per-user scope (from the gate or
+  // requireTenantContext) or an already-attached request client is authoritative
+  // — do not clobber it. A pre-auth PLACEHOLDER scope (tenantId '0', no role) is
+  // intentionally excluded here: it must be replaced once we have a verified
+  // identity, or authenticated tenant work (e.g. the /api/auth/enterprise
+  // electronic-signature path, mounted under runWithPreAuthScope) would execute
+  // under tenantId '0' and be RLS-denied/misattributed.
+  if (req.dbClient || isRealTenantScope(active)) {
+    next();
     return;
   }
 
   const tenantId = resolveTenantId(req);
   if (tenantId === null) {
-    // Platform-level / pre-auth identity: no tenant to scope to. Do not
-    // fabricate one; downstream guards still apply and an unscoped DB touch
-    // fails closed, which is correct.
+    // Platform-level / still-pre-auth identity: no tenant to scope to. Do not
+    // fabricate one; leave any pre-auth placeholder as-is. Downstream guards
+    // still apply and an unscoped DB touch fails closed, which is correct.
     next();
     return;
   }
