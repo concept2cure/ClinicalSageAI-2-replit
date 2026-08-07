@@ -82,12 +82,40 @@ Data Room upload ──► cre_evidence_sources (canonical id + checksum)
                      document_span_lineage  ──►  getSelectionOrigins / Data Origins panel + PDF
 ```
 
-The one structural change in retrieval: the canonical search return shape
-currently drops `source_id`/`source_type` (see `enhancedEmbeddingService.ts`
+The structural change in retrieval: the canonical search return shape currently
+drops `source_id`/`source_type` (see `enhancedEmbeddingService.ts`
 `searchHybrid`/`searchAtoms` — they map to `{id, content, title, score}`). Those
-two fields must be threaded through so generation knows the canonical source
-identity of each chunk it was given. For `source_type='data_room_upload'`,
-`source_id` resolves to a `cre_evidence_sources` row.
+two fields must be threaded through so generation knows the source identity of
+each chunk it was given.
+
+⚠️ **The cross-registry gap (the real Phase 2 blocker — verified in code, not
+assumed).** An earlier draft of this doc assumed a `data_room_upload` atom's
+`source_id` *is* a `cre_evidence_sources.id`. It is not. The retrieval corpus and
+the canonical source registry are **two different registries**:
+
+- **`lumen_data_atoms`** (what RAG retrieves): a `data_room_upload` atom is
+  written with `source_id = concept2cure_artifacts.artifact_id` — a **string
+  artifact id** (see `projects/contextual-ingest.ts`, `routes/chat/upload.ts`).
+  `project_knowledge_search` returns a `documentId` from this — an artifact/atom
+  identity.
+- **`cre_evidence_sources`** (what `document_span_lineage` cites): the Data Room
+  canonical registry, integer ids, checksums, staleness. This is what the
+  verified-quote span must reference.
+
+Nothing at retrieval time maps one to the other. So Phase 2 is not "add two
+fields to the return shape" — it is **establish and carry a resolvable link from
+a retrieved chunk back to its `cre_evidence_sources.id`**. Candidate links to
+evaluate (each needs verification against the ingestion flow): a Data Room upload
+creates both a `cre_evidence_sources` row and the artifact/atoms, and
+`cre_evidence_sources.provenance->>'fileUploadId'` already records the upload —
+so the join likely runs source ← fileUploadId → upload → artifact → atom, and the
+ingestion path should stamp the `cre_evidence_sources.id` onto the atom
+(`source_id` or a new column) at index time so retrieval can return it directly.
+Until that link exists, automated span attribution has no honest
+`cre_evidence_sources` id to record, which is why the mechanism (Phases 1 & 3a)
+is complete and correct while the live wiring is not yet done. This is a
+foundational data-model step, best done as its own change with its own tests, not
+folded into an unrelated PR.
 
 ---
 
@@ -101,10 +129,14 @@ content. No DB, no model trust — pure string logic. Unit-tested exhaustively
 (exact match, whitespace/punctuation normalization, overlaps, no-match,
 multi-source). This is the keystone and has no honesty risk.
 
-**Phase 2 — retrieval carries source identity.**
-Extend `enhancedEmbeddingService` (and the `advancedRAGPipeline` layer) return
-shape to include `sourceId` and `sourceType`. Additive; existing callers ignore
-the new fields. Contract-tested.
+**Phase 2 — retrieval carries a resolvable `cre_evidence_sources` id.**
+The prerequisite, and the real work (see the cross-registry gap in §3): stamp the
+`cre_evidence_sources.id` onto Data Room atoms at index time (via the
+`fileUploadId` link on `cre_evidence_sources.provenance`), then extend the
+`enhancedEmbeddingService` / `advancedRAGPipeline` return shape to surface it
+alongside `sourceType`. Additive to the return shape; existing callers ignore the
+new fields. Contract-tested, with a fixture proving a retrieved Data Room chunk
+resolves to the same `cre_evidence_sources.id` a manual citation would use.
 
 **Phase 3 — wire one generation path end to end.**
 Pick the authoring section-drafting path (co-located with `citeSource` in
