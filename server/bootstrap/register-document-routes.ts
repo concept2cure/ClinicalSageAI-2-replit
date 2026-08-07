@@ -12,6 +12,7 @@ import type { Request, Response } from 'express';
 import express from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
+import { requireTenantContext } from '../middleware/tenantContext.js';
 import { mountAll } from './mount-routes.js';
 
 import coauthor from '../routes/coauthor.js';
@@ -337,7 +338,13 @@ export async function registerDocumentRoutes({
   // ── CERV2 Sections + Versions ──
   try {
     const cerv2SectionsModule = await import('../routes/cerv2-sections');
-    app.use('/api/cerv2-sections', cerv2SectionsModule.default);
+    // requireTenantContext establishes the AsyncLocalStorage tenant scope for
+    // the request (and req.dbClient). Without it, the router's queries run on
+    // the global pool with no active scope and fail closed under RLS_ENFORCE=on
+    // (the fail-closed guard in poolInstrumentation) — a 500 on every call. The
+    // router keeps its per-route authMiddleware; this runs first and wraps the
+    // downstream handlers in the tenant scope.
+    app.use('/api/cerv2-sections', requireTenantContext, cerv2SectionsModule.default);
     console.log('✅ CERV2 Sections API routes mounted (510(k) section tree navigation)');
   } catch (error) {
     console.error('❌ Failed to mount CERV2 Sections routes:', error);
