@@ -22,6 +22,15 @@
  */
 
 import { Pool } from 'pg';
+import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { createScopedLogger } from '../../utils/logger';
+import {
+  recordBackgroundJobRun,
+  registerBackgroundJob,
+  BACKGROUND_JOB,
+} from '../background-jobs-metrics';
+
+const logger = createScopedLogger('ChainMonitor');
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -111,7 +120,7 @@ let _status: ChainMonitorStatus = {
 async function runCheck(): Promise<ChainMonitorStatus> {
   // Prevent overlapping checks
   if (_checkInProgress) {
-    console.log('[ChainMonitor] Previous check still running, skipping this cycle');
+    logger.info('previous check still running, skipping this cycle');
     return _status;
   }
   _checkInProgress = true;
@@ -122,65 +131,87 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     // wedging the monitor — every later cycle saw "check in progress".)
     if (!_pool) {
       _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
+      recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, {
+        ok: false,
+        error: 'database pool unavailable',
+      });
       return _status;
     }
 
-    const { rows } = await _pool.query(
-      `SELECT id, organization_id, sequence_number, record_hash, previous_hash
-       FROM audit_events
-       ORDER BY organization_id, sequence_number ASC`
-    );
-
-    if (rows.length === 0) {
-      _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'healthy', totalEntries: 0, brokenLinks: 0, details: [] };
-      return _status;
-    }
-
-    const brokenDetails = findBrokenChainLinks(rows as AuditEventChainRow[]);
-    const isHealthy = brokenDetails.length === 0;
-
-    _status = {
-      lastCheckAt: new Date().toISOString(),
-      status: isHealthy ? 'healthy' : 'broken',
-      totalEntries: rows.length,
-      brokenLinks: brokenDetails.length,
-      details: brokenDetails.slice(0, 50),
-      intervalMs: _status.intervalMs,
-    };
-
-    if (!isHealthy) {
-      console.error(
-        `[ChainMonitor] CRITICAL: ${brokenDetails.length} broken link(s) detected in audit_events hash chain!`,
-        brokenDetails.slice(0, 5)
+    // The integrity scan reads EVERY org's audit_events chain (estate-wide
+    // SELECT) and, on failure, writes a system-originated audit event —
+    // platform-wide work owned by no single tenant. It runs in a system scope
+    // so the pooled queries are neither rejected as unscoped nor RLS-filtered
+    // under RLS_ENFORCE=on; without it this 21 CFR Part 11 §11.10(e) monitor
+    // silently never runs in production (the query fails closed every cycle).
+    const outcome = await runWithSystemTenantScope('audit:chain-integrity-monitor', async () => {
+      const { rows } = await _pool!.query(
+        `SELECT id, organization_id, sequence_number, record_hash, previous_hash
+         FROM audit_events
+         ORDER BY organization_id, sequence_number ASC`
       );
 
-      // Record the integrity failure as its own audit event
-      try {
-        // entity_id is INTEGER per the schema. Use 0 as a sentinel for
-        // system-originated events (the entity is the chain itself, not a
-        // domain row). entity_type carries the human-readable scope.
-        await _pool.query(
-          `INSERT INTO audit_events
-            (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-             user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-           VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
-                   'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
-          [
-            `Chain integrity check failed: ${brokenDetails.length} broken links detected`,
-            JSON.stringify({ brokenLinks: brokenDetails.slice(0, 20), totalEntries: rows.length }),
-          ]
-        );
-      } catch (logErr: any) {
-        console.error('[ChainMonitor] Failed to log integrity failure event:', logErr.message);
+      if (rows.length === 0) {
+        _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'healthy', totalEntries: 0, brokenLinks: 0, details: [] };
+        return _status;
       }
-    } else {
-      console.log(`[ChainMonitor] Chain integrity verified: ${rows.length} entries, all links intact`);
-    }
 
-    return _status;
+      const brokenDetails = findBrokenChainLinks(rows as AuditEventChainRow[]);
+      const isHealthy = brokenDetails.length === 0;
+
+      _status = {
+        lastCheckAt: new Date().toISOString(),
+        status: isHealthy ? 'healthy' : 'broken',
+        totalEntries: rows.length,
+        brokenLinks: brokenDetails.length,
+        details: brokenDetails.slice(0, 50),
+        intervalMs: _status.intervalMs,
+      };
+
+      if (!isHealthy) {
+        logger.error('CRITICAL: broken link(s) detected in audit_events hash chain', {
+          brokenLinks: brokenDetails.length,
+          sample: brokenDetails.slice(0, 5),
+        });
+
+        // Record the integrity failure as its own audit event
+        try {
+          // entity_id is INTEGER per the schema. Use 0 as a sentinel for
+          // system-originated events (the entity is the chain itself, not a
+          // domain row). entity_type carries the human-readable scope.
+          await _pool!.query(
+            `INSERT INTO audit_events
+              (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+               user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
+             VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
+                     'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
+            [
+              `Chain integrity check failed: ${brokenDetails.length} broken links detected`,
+              JSON.stringify({ brokenLinks: brokenDetails.slice(0, 20), totalEntries: rows.length }),
+            ]
+          );
+        } catch (logErr: any) {
+          logger.error('failed to log integrity failure event', { err: logErr?.message });
+        }
+      } else {
+        logger.info('chain integrity verified — all links intact', { entries: rows.length });
+      }
+
+      return _status;
+    });
+    // The JOB ran successfully iff the scan completed (status healthy|broken);
+    // 'broken' is a data-integrity alarm, not a liveness failure — the monitor
+    // did its work. A thrown error (status 'error') is the liveness failure and
+    // is recorded in the catch below.
+    recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, {
+      ok: outcome.status !== 'error',
+      processed: outcome.totalEntries,
+    });
+    return outcome;
   } catch (err: any) {
-    console.error('[ChainMonitor] Check failed:', err.message);
+    logger.error('check failed', { err: err?.message });
     _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
+    recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, { ok: false, error: err?.message });
     return _status;
   } finally {
     _checkInProgress = false;
@@ -195,14 +226,15 @@ async function runCheck(): Promise<ChainMonitorStatus> {
  */
 export function startChainMonitor(pool: Pool, intervalMs: number = DEFAULT_INTERVAL_MS): void {
   if (_monitorTimer) {
-    console.warn('[ChainMonitor] Already running — stopping previous instance');
+    logger.warn('already running — stopping previous instance');
     stopChainMonitor();
   }
 
   _pool = pool;
   _status.intervalMs = intervalMs;
+  registerBackgroundJob(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR);
 
-  console.log(`[ChainMonitor] Starting audit chain integrity monitor (interval: ${intervalMs / 1000}s)`);
+  logger.info('starting audit chain integrity monitor', { intervalSeconds: intervalMs / 1000 });
 
   // Run first check after a short delay (let the server finish starting)
   setTimeout(() => {
@@ -222,7 +254,7 @@ export function stopChainMonitor(): void {
   if (_monitorTimer) {
     clearInterval(_monitorTimer);
     _monitorTimer = null;
-    console.log('[ChainMonitor] Stopped');
+    logger.info('stopped');
   }
 }
 

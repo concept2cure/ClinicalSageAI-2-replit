@@ -22,6 +22,7 @@ import {
 import { pool } from '../db';
 import { detectArchive } from '../services/legacy-importer/detector';
 import auditService from '../services/auditService';
+import { recordArtifactProvenanceBestEffort } from '../services/provenance/artifact-provenance';
 
 const router = Router();
 const log = createScopedLogger('mdx-imports');
@@ -316,6 +317,18 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
           [artifactRes.rows[0].id, f.id],
         );
         created++;
+        // Uniform provenance: an imported file is a 'source_input' event, in the
+        // same transaction. Best-effort via SAVEPOINT so a provenance failure
+        // rolls back only itself and never poisons the import transaction.
+        await recordArtifactProvenanceBestEffort(client, {
+          artifactId: artifactRes.rows[0].id,
+          organizationId: orgId,
+          eventType: 'source_input',
+          eventAction: 'import',
+          actorId: userId,
+          details: { importJobId: id, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
+          backendService: 'routes/mdx-imports',
+        });
       } catch (innerErr: unknown) {
         await client.query(
           `UPDATE import_job_files SET status = 'error', error_message = $1 WHERE id = $2`,

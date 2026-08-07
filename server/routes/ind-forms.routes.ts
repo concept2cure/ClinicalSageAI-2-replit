@@ -62,6 +62,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { projects, concept2cureArtifacts } from '@shared/schema';
 import auditService from '../services/auditService';
+import { recordArtifactProvenanceDrizzle } from '../services/provenance/artifact-provenance';
 
 const logger = createScopedLogger('ind-forms-routes');
 const router = Router();
@@ -271,7 +272,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     const artifactId = `artifact_indform_${formId.replace(/^FDA_/, '').toLowerCase()}_${crypto.randomUUID()}`;
     const ready = built.missingRequired.length === 0;
 
-    await db.insert(concept2cureArtifacts).values({
+    const formIns = await db.insert(concept2cureArtifacts).values({
       artifactId,
       projectId,
       organizationId: ctx.organizationId,
@@ -290,7 +291,25 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
         ready,
         missingRequired: built.missingRequired,
       },
-    });
+    }).returning({ id: concept2cureArtifacts.id });
+
+    // Uniform provenance: a generated FDA form artifact is a 'generation' event.
+    // Best-effort: the insert above is not in a transaction.
+    try {
+      if (typeof formIns[0]?.id === 'number') {
+        await recordArtifactProvenanceDrizzle(db, {
+          artifactId: formIns[0].id,
+          organizationId: ctx.organizationId,
+          eventType: 'generation',
+          eventAction: 'form_build',
+          actorId: ctx.userId,
+          details: { formId, ready },
+          backendService: 'routes/ind-forms',
+        });
+      }
+    } catch (provErr) {
+      logger.warn('ind-form provenance event failed', { err: provErr instanceof Error ? provErr.message : String(provErr) });
+    }
 
     // Part 11 audit event for the governed creation. Best-effort: the artifact
     // row already carries provenance (createdById, contentHash, timestamps), so a
@@ -387,11 +406,15 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
       };
     });
 
-    // All-or-nothing: persist every investigator form, or none.
+    // All-or-nothing: persist every investigator form, or none. Provenance is
+    // emitted AFTER this commits (see below), never inside the tx — a failed
+    // provenance write poisons a Postgres/Drizzle transaction, so recording it
+    // in-tx would make an audit-row hiccup roll back the forms themselves.
+    const persistedForProvenance: Array<{ id: number; investigatorName: string; ready: boolean }> = [];
     if (rows.length > 0) {
       await db.transaction(async (tx) => {
         for (const r of rows) {
-          await tx.insert(concept2cureArtifacts).values({
+          const formTxIns = await tx.insert(concept2cureArtifacts).values({
             artifactId: r.artifactId,
             projectId,
             organizationId: ctx.organizationId,
@@ -412,9 +435,32 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
               investigatorIndex: r.idx,
               investigatorName: r.investigatorName,
             },
-          });
+          }).returning({ id: concept2cureArtifacts.id });
+          if (typeof formTxIns[0]?.id === 'number') {
+            persistedForProvenance.push({ id: formTxIns[0].id, investigatorName: r.investigatorName, ready: r.ready });
+          }
         }
       });
+    }
+
+    // Uniform provenance: a generated FDA form artifact is a 'generation' event.
+    // Best-effort, on db (own implicit tx per write) after the forms are committed,
+    // so a provenance failure can neither poison the artifact transaction nor fail
+    // the creation the user requested.
+    for (const p of persistedForProvenance) {
+      try {
+        await recordArtifactProvenanceDrizzle(db, {
+          artifactId: p.id,
+          organizationId: ctx.organizationId,
+          eventType: 'generation',
+          eventAction: 'form_build',
+          actorId: ctx.userId,
+          details: { formId, investigatorName: p.investigatorName, ready: p.ready },
+          backendService: 'routes/ind-forms',
+        });
+      } catch (provErr) {
+        logger.warn('ind-form (investigator) provenance event failed', { err: provErr instanceof Error ? provErr.message : String(provErr) });
+      }
     }
 
     // Part 11 audit event per governed artifact. Best-effort (see /:formId/artifact):

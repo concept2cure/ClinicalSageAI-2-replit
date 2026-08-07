@@ -138,8 +138,8 @@ router.patch('/sections/:id', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = sectionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
-    await updateSectionTx(client, orgId, id, parsed.data);
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    await updateSectionTx(client, orgId, id, parsed.data, userId);
     recordBiosketchSectionUpdated();
     return { target: `biosketch-section:${id}`, payload: { addressed: parsed.data.addressed }, body: { id } };
   });

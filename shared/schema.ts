@@ -5653,8 +5653,11 @@ export const concept2cureProvenanceEvents = pgTable(
     backendService: text('backend_service'), // e.g. "knowledge-base", "shadow-service", "concept2cure"
     // Network context
     ipAddress: varchar('ip_address', { length: 45 }),
+    // Append-only by policy: a provenance event is immutable, so it carries only
+    // a creation time. (The table has no updated_at column — the raw-SQL primitive
+    // never wrote one; a Drizzle `updatedAt` here made every Drizzle-based emit
+    // INSERT a non-existent column and fail, silently, under best-effort.)
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
   },
   table => ({
     artifactIdx: index('c2c_prov_artifact_idx').on(table.artifactId),

@@ -87,6 +87,13 @@ CREATE TABLE concept2cure_artifact_versions (
   id serial PRIMARY KEY, artifact_id int, organization_id int, version int, content text,
   content_hash text, change_description text, created_by_id int, created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE concept2cure_provenance_events (
+  id serial PRIMARY KEY, event_id text NOT NULL UNIQUE, artifact_id int NOT NULL, artifact_version_id int,
+  organization_id int NOT NULL, event_type text NOT NULL, event_action text NOT NULL, actor_id int,
+  actor_name text, actor_email text, details jsonb NOT NULL DEFAULT '{}', source_artifact_id int,
+  source_description text, backend_route text, backend_service text, ip_address varchar(45),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 -- audit_logs shaped exactly as recordGovernedAction writes it (matches
 -- scripts/db-verify/00_bootstrap_base.sql); the migration below then adds the
 -- chain columns idempotently.

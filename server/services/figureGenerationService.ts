@@ -14,6 +14,7 @@
  */
 
 import { pool } from '../db.js';
+import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 
@@ -577,11 +578,11 @@ function computeFigureConfidence(
 
 async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest): Promise<void> {
   try {
-    await pool.query(
+    const figRes = await pool.query<{ id: number }>(
       `INSERT INTO concept2cure_artifacts (
         project_id, organization_id, user_id, title, content, content_type, status,
         metadata, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING id`,
       [
         request.projectId,
         request.organizationId,
@@ -603,6 +604,21 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
         }),
       ]
     );
+    // Uniform provenance: a generated figure is a 'generation' event.
+    await recordArtifactProvenance(pool, {
+      artifactId: figRes.rows[0].id,
+      organizationId: request.organizationId,
+      eventType: 'generation',
+      eventAction: 'figure_generate',
+      actorId: request.userId,
+      details: {
+        figureId: figure.id,
+        figureType: figure.figureType,
+        confidence: figure.confidence,
+        sourceIds: figure.sourceData.map(s => s.sourceId),
+      },
+      backendService: 'figureGenerationService',
+    });
   } catch (error) {
     console.warn('[FigureService] Failed to store figure:', error);
   }

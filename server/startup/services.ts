@@ -24,6 +24,7 @@ import { initializeProofDatabasePersistence } from '../../services/proof/databas
 import FeatureToggleService from '../services/featureToggleService';
 import { ensureCoreTables } from '../db/ensureCoreTables';
 import { setSchemaReadiness } from './readiness-state';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 /** Python backend is currently disabled (size optimization). Kept as a stub
  * so the graceful-shutdown handler can address it if it gets re-enabled. */
@@ -43,14 +44,49 @@ export function startPythonBackend(): Promise<null> {
  *
  * Kept as an explicit list, not a prefix match, so adding a table to
  * IMPORTANT_TABLES is a deliberate decision about whether it belongs here.
+ *
+ * ── Why the list changed ──────────────────────────────────────────────────────
+ * It previously named auth_users, auth_refresh_tokens, roles, permissions and
+ * user_roles. None of those five exist, and none of them are reachable:
+ *
+ *   • No wired migration creates them. Their only DDL is in
+ *     db/migrations/_consolidated/, a tree scripts/db/migration-set.mjs
+ *     quarantines on purpose (ledger C-29 Class 3 — its creators redefine
+ *     users/tenants with TEXT keys the integer-keyed RLS model cannot police).
+ *   • No application code queries them. The only references anywhere in
+ *     server/ are this list and its twin in ensureCoreTables.
+ *
+ * So the gate demanded tables that nothing provisions and nothing uses, and
+ * /readyz answered 503 forever. Reproduced on a database provisioned by BOTH
+ * sanctioned installers — scripts/db/install-fresh.mjs (767 tables) followed by
+ * scripts/db/deploy-migrate.mjs (127/127 files) — where /api/health returned
+ * 200 while /readyz reported "security-critical tables missing: auth_users,
+ * auth_refresh_tokens, roles, permissions, user_roles". Behind a readiness
+ * probe that service never receives traffic.
+ *
+ * A gate that cannot go green is not strict, it is broken — and worse, it was
+ * silent about the tables authentication ACTUALLY depends on, none of which it
+ * listed. Those, verified by reading the query sites rather than assuming:
+ *
+ *   users, organizations        resolved on every authenticated request
+ *                               (already covered by CRITICAL_TABLES)
+ *   organization_users          org membership and role claim — server/routes/
+ *                               auth.ts reads it for every login and token issue
+ *   platform_role_grants        the server-side RBAC check —
+ *                               server/middleware/requirePlatformAdmin.ts,
+ *                               requireBusinessAdmin.ts
+ *   revoked_tokens              token revocation; without it a logged-out or
+ *                               compromised token keeps working, which is the
+ *                               exact failure this gate should refuse to serve
+ *   licenses, audit_logs        entitlement enforcement and the Part 11 record
+ *
+ * That set is both satisfiable and load-bearing, so the probe now means
+ * something in both directions.
  */
 const SECURITY_CRITICAL_TABLES = [
-  'auth_users',
-  'auth_refresh_tokens',
-  'roles',
-  'permissions',
-  'user_roles',
   'organization_users',
+  'platform_role_grants',
+  'revoked_tokens',
   'licenses',
   'audit_logs',
 ];
@@ -61,9 +97,17 @@ const SECURITY_CRITICAL_TABLES = [
  */
 export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
   try {
-    const client = await pool.connect();
+    // Connectivity and schema verification belong to no tenant. Under
+    // RLS_ENFORCE=on — the only value production accepts — pool.connect()
+    // without a declared scope fails closed with "[tenant-rls] FAIL-CLOSED:
+    // pool.connect requires an active tenant scope", which this catch reported
+    // as "database unreachable" and /readyz surfaced as database: "down" on a
+    // healthy connection. Declaring the scope states the intent instead.
+    await runWithSystemTenantScope('startup:verify-database-connection', async () => {
+      const client = await pool.connect();
+      client.release();
+    });
     console.log('✅ Database connection successful');
-    client.release();
   } catch (err: any) {
     console.error('❌ Database connection failed:', err.message);
     if (process.env.NODE_ENV === 'production') {
@@ -79,7 +123,11 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
   }
 
   try {
-    const result = await ensureCoreTables(process.env.DATABASE_URL);
+    // Schema verification is estate-wide, not tenant work — same reason the
+    // connectivity probe above declares a system scope.
+    const result = await runWithSystemTenantScope('startup:ensure-core-tables', async () =>
+      ensureCoreTables(process.env.DATABASE_URL)
+    );
     // A regulated subsystem that is partially or wholly absent fails readiness
     // even when the flat critical-table check passes — a database that cannot
     // run the authoring loop is not ready, and /readyz must say so rather than
@@ -119,15 +167,19 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
     } else if (missingSecurityTables.length > 0) {
       // Auth / RBAC / licensing tables. These are classified "important"
       // rather than "critical" by ensureCoreTables, so the flat critical check
-      // above passes without them — but a database with no `auth_users`,
-      // `roles`, `permissions` or `user_roles` cannot authenticate or
-      // authorize anybody. Serving traffic in that state means every request
-      // either fails or, worse, takes an unauthenticated path. That is not
-      // degraded, it is down.
+      // above passes without them — but a database with no `organization_users`
+      // or `platform_role_grants` cannot resolve membership or authorize
+      // anybody, and one with no `revoked_tokens` keeps honouring tokens that
+      // were logged out or compromised. Serving traffic in that state means
+      // every request either fails or, worse, takes an unauthenticated path.
+      // That is not degraded, it is down.
       const detail = `security-critical tables missing: ${missingSecurityTables.join(', ')}`;
       setSchemaReadiness('missing', detail);
       console.error(`❌ CRITICAL: ${detail}`);
-      console.error('   Auth, RBAC and licensing cannot function. Run: npm run db:push');
+      console.error(
+        '   Auth, RBAC and licensing cannot function. Run: node scripts/db/install-fresh.mjs',
+      );
+      console.error('   on a fresh database, then node scripts/db/deploy-migrate.mjs.');
     } else if (result.success) {
       // Remaining "important" tables are module surfaces (CERV2 sections,
       // templates, assembly docs). Their absence breaks those modules but not

@@ -11,6 +11,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema, ZodError } from 'zod';
 import { createScopedLogger } from '../utils/logger';
+import { setRequestQuery } from '../utils/expressQuery';
 
 const logger = createScopedLogger('api-validation');
 
@@ -71,7 +72,8 @@ export function validate(options: ValidationOptions) {
           res.status(400).json(formatZodErrors(result.error));
           return;
         }
-        req.query = result.data as any;
+        // req.query is getter-only in Express 5 — see setRequestQuery.
+        setRequestQuery(req, result.data);
       }
 
       // Validate params

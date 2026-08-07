@@ -20,6 +20,7 @@
  */
 
 import { pool } from '../db.js';
+import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
@@ -610,11 +611,11 @@ async function storeExtractedArtifacts(
     );
   }
 
-  await pool.query(
+  const mainIns = await pool.query<{ id: number }>(
     `INSERT INTO concept2cure_artifacts (
       artifact_id, project_id, organization_id, type, category,
       title, content, content_hash, status, metadata, created_by_id, version, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, 1, NOW(), NOW())`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, 1, NOW(), NOW()) RETURNING id`,
     [
       mainId,
       job.projectId,
@@ -650,6 +651,18 @@ async function storeExtractedArtifacts(
       job.userId,
     ]
   );
+  // Uniform provenance: extracted-from-upload document is a 'source_input' event.
+  try {
+    await recordArtifactProvenance(pool, {
+      artifactId: mainIns.rows[0].id,
+      organizationId: job.organizationId,
+      eventType: 'source_input',
+      eventAction: 'auto_extract',
+      actorId: job.userId,
+      details: { extractionJobId: job.id, sourceFileId: job.fileId, documentType: metadata.documentType, kind: 'document' },
+      backendService: 'autoExtractionPipeline',
+    });
+  } catch { /* extraction provenance is best-effort */ }
   artifacts.push({ artifactId: null, type: metadata.documentType, title: job.fileName });
 
   // Store extracted tables as separate artifacts
@@ -701,11 +714,11 @@ async function storeExtractedArtifacts(
       );
     }
 
-    await pool.query(
+    const tableIns = await pool.query<{ id: number }>(
       `INSERT INTO concept2cure_artifacts (
         artifact_id, project_id, organization_id, type, category,
         title, content, content_hash, status, metadata, created_by_id, version, created_at, updated_at
-      ) VALUES ($1, $2, $3, 'table', 'extracted', $4, $5, $6, 'draft', $7, $8, 1, NOW(), NOW())`,
+      ) VALUES ($1, $2, $3, 'table', 'extracted', $4, $5, $6, 'draft', $7, $8, 1, NOW(), NOW()) RETURNING id`,
       [
         tableId,
         job.projectId,
@@ -737,6 +750,17 @@ async function storeExtractedArtifacts(
         job.userId,
       ]
     );
+    try {
+      await recordArtifactProvenance(pool, {
+        artifactId: tableIns.rows[0].id,
+        organizationId: job.organizationId,
+        eventType: 'source_input',
+        eventAction: 'auto_extract',
+        actorId: job.userId,
+        details: { extractionJobId: job.id, sourceDocumentId: mainId, kind: 'table' },
+        backendService: 'autoExtractionPipeline',
+      });
+    } catch { /* extraction provenance is best-effort */ }
     artifacts.push({ artifactId: null, type: 'table', title: table.title });
   }
 
@@ -793,11 +817,11 @@ async function storeExtractedArtifacts(
         );
       }
 
-      await pool.query(
+      const sectionIns = await pool.query<{ id: number }>(
         `INSERT INTO concept2cure_artifacts (
           artifact_id, project_id, organization_id, type, category,
           title, content, content_hash, status, metadata, created_by_id, ctd_section, version, created_at, updated_at
-        ) VALUES ($1, $2, $3, 'section', 'extracted', $4, $5, $6, 'draft', $7, $8, $9, 1, NOW(), NOW())`,
+        ) VALUES ($1, $2, $3, 'section', 'extracted', $4, $5, $6, 'draft', $7, $8, $9, 1, NOW(), NOW()) RETURNING id`,
         [
           sectionId,
           job.projectId,
@@ -831,6 +855,17 @@ async function storeExtractedArtifacts(
           section.code,
         ]
       );
+      try {
+        await recordArtifactProvenance(pool, {
+          artifactId: sectionIns.rows[0].id,
+          organizationId: job.organizationId,
+          eventType: 'source_input',
+          eventAction: 'auto_extract',
+          actorId: job.userId,
+          details: { extractionJobId: job.id, sourceDocumentId: mainId, ctdSection: section.code, kind: 'section' },
+          backendService: 'autoExtractionPipeline',
+        });
+      } catch { /* extraction provenance is best-effort */ }
       artifacts.push({
         artifactId: null,
         type: 'section',

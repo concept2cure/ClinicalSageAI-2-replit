@@ -243,7 +243,7 @@ export class TamperProofAuditLog {
       const entryId = uuidv4();
       const timestamp = new Date();
       const contentHash = this.computeHash(
-        JSON.stringify(
+        TamperProofAuditLog.stringifyForHash(
           TamperProofAuditLog.buildContentData({
             eventType,
             action,
@@ -367,26 +367,38 @@ export class TamperProofAuditLog {
       // client context would falsely fail (and, conversely, those fields would
       // not actually be covered by the integrity check). Shared via
       // buildContentData so the writer and verifier can never drift.
+      //
+      // The row's `details` arrives here re-keyed by Postgres (jsonb canonical
+      // order), which is why the bytes are produced by stringifyForHash rather
+      // than JSON.stringify — see canonicalize() for the failure it fixes.
+      const contentData = TamperProofAuditLog.buildContentData({
+        eventType: row.event_type,
+        action: row.action,
+        details: row.details,
+        timestamp: row.event_timestamp,
+        userId: row.user_id,
+        userName: row.user_name,
+        sessionId: row.session_id,
+        correlationId: row.correlation_id,
+        resourceType: row.resource_type,
+        resourceId: row.resource_id,
+        ipAddress: row.ip_address,
+        userAgent: row.user_agent,
+      });
+
       const expectedContentHash = this.computeHash(
-        JSON.stringify(
-          TamperProofAuditLog.buildContentData({
-            eventType: row.event_type,
-            action: row.action,
-            details: row.details,
-            timestamp: row.event_timestamp,
-            userId: row.user_id,
-            userName: row.user_name,
-            sessionId: row.session_id,
-            correlationId: row.correlation_id,
-            resourceType: row.resource_type,
-            resourceId: row.resource_id,
-            ipAddress: row.ip_address,
-            userAgent: row.user_agent,
-          }),
-        ),
+        TamperProofAuditLog.stringifyForHash(contentData),
       );
 
-      if (row.content_hash !== expectedContentHash) {
+      // Rows written before the canonicalization fix carry a hash over the
+      // non-canonical bytes. Accept those too, so this fix does not itself
+      // report every historical entry as tampered.
+      const matchesContentHash =
+        row.content_hash === expectedContentHash ||
+        row.content_hash ===
+          this.computeHash(TamperProofAuditLog.legacyStringifyForVerify(contentData));
+
+      if (!matchesContentHash) {
         return {
           valid: false,
           entriesVerified,
@@ -573,6 +585,76 @@ export class TamperProofAuditLog {
       if (v !== undefined && v !== null) out[k] = v;
     }
     return out;
+  }
+
+  /**
+   * Serialize content data to the exact bytes that get hashed.
+   *
+   * WHY THIS IS NOT `JSON.stringify`
+   * `details` is a jsonb column. Postgres does not store jsonb as the text it
+   * received — it parses it and re-serializes object keys in its own canonical
+   * order (shortest key first, then bytewise). So the object the writer holds in
+   * memory and the object the verifier reads back are equal in VALUE but differ
+   * in KEY ORDER, and JSON.stringify is order-sensitive. Every entry whose
+   * `details` had two or more keys not already in Postgres' order therefore
+   * hashed one way on write and a different way on read, and verifyChain()
+   * reported the untampered row as "Content tampered".
+   *
+   * That is not a cosmetic failure: audit_chain_integrity is a critical check in
+   * the security self-test, so a correct, untampered chain failed it — and in
+   * production that check blocks boot. Observed on a freshly provisioned
+   * database whose chain contained exactly one entry, written by the verifier
+   * itself ({entriesVerified, startSequence, endSequence, verifiedAt} — four
+   * keys, insertion order ≠ jsonb order).
+   *
+   * The fix is to hash a representation that is invariant under key reordering:
+   * recursively sort object keys before serializing. Arrays keep their order
+   * (order is semantic there); scalars are untouched. Both the writer and the
+   * verifier go through this one function, so the round trip through jsonb can
+   * no longer change the bytes being hashed.
+   *
+   * `buildContentData`'s fixed top-level key order is kept rather than relied
+   * upon — it is what makes the pre-fix format reproducible for
+   * `legacyStringifyForVerify` below.
+   */
+  private static canonicalize(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map((v) => TamperProofAuditLog.canonicalize(v));
+    if (value && typeof value === 'object' && !(value instanceof Date)) {
+      const src = value as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      for (const key of Object.keys(src).sort()) {
+        // Drop nullish for the same reason buildContentData does: `undefined` at
+        // write time and `null` read back from Postgres must serialize alike.
+        if (src[key] !== undefined && src[key] !== null) {
+          out[key] = TamperProofAuditLog.canonicalize(src[key]);
+        }
+      }
+      return out;
+    }
+    return value;
+  }
+
+  /** The bytes hashed for an entry's content hash. Order-invariant. */
+  static stringifyForHash(contentData: Record<string, unknown>): string {
+    return JSON.stringify(TamperProofAuditLog.canonicalize(contentData));
+  }
+
+  /**
+   * The pre-canonicalization serialization, retained ONLY so verifyChain() can
+   * still validate rows written before this fix.
+   *
+   * Entries written by the old code hashed `JSON.stringify(contentData)` with
+   * whatever key order the writer's object happened to have. For the subset
+   * where that order already matched Postgres' jsonb order (single-key details,
+   * or details that were already canonical) the stored hash is legitimate and
+   * must keep verifying — otherwise this fix would itself report every historical
+   * row as tampered, which is the same false alarm in the opposite direction.
+   *
+   * This weakens nothing: both forms are deterministic functions of the same
+   * content, so an attacker who edits a persisted field still fails both.
+   */
+  private static legacyStringifyForVerify(contentData: Record<string, unknown>): string {
+    return JSON.stringify(contentData);
   }
 
   private computeHash(data: string): string {

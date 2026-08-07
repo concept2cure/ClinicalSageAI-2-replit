@@ -16,6 +16,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { recordArtifactProvenanceDrizzle } from './provenance/artifact-provenance';
 import type { ContradictionFinding, ConsequenceType } from './contradiction-engine-service.js';
 import type { ConsequencePath, ContradictionDecisionLink } from '../../shared/types/contradiction-architecture.js';
 import type { FormalDecisionRecord, DecisionReceipt } from '../../shared/types/decision-architecture.js';
@@ -404,6 +405,26 @@ class ContradictionConsequenceService {
           },
         },
       } as any).returning({ id: concept2cureArtifacts.id });
+
+      // Uniform provenance: a contradiction memo is generated content →
+      // 'generation'. Best-effort: the insert above is not in a transaction, so
+      // a provenance failure must not orphan an already-committed memo.
+      const memoArtifactId = result[0]?.id;
+      if (typeof memoArtifactId === 'number') {
+        try {
+          await recordArtifactProvenanceDrizzle(db, {
+            artifactId: memoArtifactId,
+            organizationId,
+            eventType: 'generation',
+            eventAction: 'contradiction_memo',
+            actorId: Number.isFinite(createdByNumeric) ? createdByNumeric : null,
+            details: { contradictionFindingId: finding.id, contradictionType: finding.contradictionType, severity: finding.severity },
+            backendService: 'contradiction-consequence-service',
+          });
+        } catch (provErr: any) {
+          log.warn('contradiction memo provenance event failed (non-fatal)', { error: provErr?.message });
+        }
+      }
 
       return String(result[0]?.id || `memo_${finding.id}_${Date.now()}`);
     } catch (err: any) {

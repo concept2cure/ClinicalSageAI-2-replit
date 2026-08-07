@@ -11,6 +11,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
+import { setRequestQuery } from '../utils/expressQuery';
 import { eq, and, desc, asc, sql, count, or, ilike } from 'drizzle-orm';
 import { evidenceObjects, evidenceLinks } from '../../shared/schema/programs';
 import { getSecureOrgId } from '../utils/tenantContext';
@@ -20,6 +21,29 @@ import { createScopedLogger } from '../utils/logger.js';
 const logger = createScopedLogger('evidence');
 
 const router = Router();
+
+/**
+ * evidence_objects.id is uuid, so a non-UUID path segment makes Postgres raise
+ * 22P02 (invalid input syntax for type uuid) and the handler returns 500 for
+ * what is really "no such record".
+ *
+ * This is not hypothetical tidying: the Evidence surface POSTs to
+ * /api/evidence/ask, which lives in a different router. Any GET that reaches
+ * /api/evidence/ask — a crawler, a prefetch, a mistyped link — falls through to
+ * `/:id` here, binds id='ask', and 500s. A 404 is both the correct answer and
+ * the one that keeps a bad path out of the error budget.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const requireUuidId = (req: Request, res: Response, next: NextFunction) => {
+  if (!UUID_RE.test(String(req.params.id))) {
+    return res.status(404).json({
+      success: false,
+      error: { code: 'NOT_FOUND', message: `Evidence object ${req.params.id} not found` },
+    });
+  }
+  next();
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION SCHEMAS
@@ -132,7 +156,8 @@ const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next
 const validateQuery =
   (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
     try {
-      req.query = schema.parse(req.query) as any;
+      // req.query is getter-only in Express 5 — see setRequestQuery.
+      setRequestQuery(req, schema.parse(req.query));
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -418,7 +443,7 @@ router.get('/stats', async (req: Request, res: Response) => {
  * GET /api/evidence/:id
  * Get a single evidence object by ID
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', requireUuidId, async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const orgId = getSecureOrgId(req);
@@ -613,7 +638,7 @@ router.patch('/:id', validateBody(updateEvidenceSchema), async (req: Request, re
  * DELETE /api/evidence/:id
  * Delete an evidence object
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireUuidId, async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const orgId = getSecureOrgId(req);
@@ -661,7 +686,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
  * POST /api/evidence/:id/verify
  * Verify an evidence object
  */
-router.post('/:id/verify', async (req: Request, res: Response) => {
+router.post('/:id/verify', requireUuidId, async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const { approved, comments } = req.body;
@@ -721,7 +746,7 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
  * GET /api/evidence/:id/links
  * Get all links for an evidence object
  */
-router.get('/:id/links', async (req: Request, res: Response) => {
+router.get('/:id/links', requireUuidId, async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const orgId = getSecureOrgId(req);

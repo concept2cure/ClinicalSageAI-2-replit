@@ -19,12 +19,10 @@ import { createScopedLogger } from '../utils/logger';
 // document belongs to. See server/services/c2c/governed-document-binding.ts.
 import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
 // Span lineage: every span of an authored document must trace to where it came
-// from. See server/services/clinical-regulatory-evidence/span-lineage.service.ts.
-import {
-  assertLineageCoversContent,
-  replaceAuthorSpans,
-} from '../services/clinical-regulatory-evidence/span-lineage.service';
-import { detectSpans } from '../services/sentenceTraceabilityService';
+// from. The gate is factored into one helper so every authored-content write
+// (interactive save AND section create) applies the identical rule.
+// See server/services/clinical-regulatory-evidence/lineage-gate.ts.
+import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -1486,13 +1484,50 @@ router.post('/sections', async (req: Request, res: Response) => {
         .json({ success: false, error: 'Document is FROZEN/APPROVED; cannot add sections' });
     }
 
-    const result = await pool.query(
-      `INSERT INTO authoring_sections
-       (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), $7)
-       RETURNING *`,
-      [sectionId, doc_id, code, title, content, order_index, tenantId]
-    );
+    // Create + lineage commit together, exactly like the interactive save gate:
+    // a section created WITH authored content records its provenance in the same
+    // transaction or is not created at all. An empty structural scaffold (the
+    // default content='') no-ops the gate. Until now this path wrote authored
+    // content with no lineage — the one write that most needs it, since it is
+    // where a section's text first enters the record.
+    const client = await pool.connect();
+    let result: { rows: any[] };
+    try {
+      await client.query('BEGIN');
+      result = await client.query(
+        `INSERT INTO authoring_sections
+         (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), $7)
+         RETURNING *`,
+        [sectionId, doc_id, code, title, content, order_index, tenantId]
+      );
+      await enforceAuthorLineage(
+        client,
+        tenantId,
+        { documentTable: 'authoring_sections', documentId: sectionId },
+        content,
+        createdBy,
+      );
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      logger.error('Section create refused — content and lineage rolled back together', {
+        sectionId,
+        tenantId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'LINEAGE_REQUIRED',
+          message:
+            'The section was not created: its data lineage could not be recorded. ' +
+            'Saving content without provenance is not permitted.',
+        },
+      });
+    } finally {
+      client.release();
+    }
 
     // Genesis revision: this content, by this author.
     await createRevision(sectionId, content, createdBy, tenantId);
@@ -1626,29 +1661,19 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       await client.query('BEGIN');
       result = await client.query(updateQuery, values);
 
-      if (content !== undefined && typeof content === 'string' && content.length > 0) {
-        const spans = detectSpans(content, 'clause').map(s => ({
-          charStart: s.charStart,
-          charEnd: s.charEnd,
-          spanText: s.text,
-        }));
-        const ref = {
-          documentTable: 'authoring_sections',
-          // req.params is typed `string | string[]`; document_id is the join key
-          // every later read depends on, so coerce rather than let an array
-          // stringify itself into one.
-          documentId: String(sectionId),
-        };
-
-        await replaceAuthorSpans(tenantId, ref, spans, {
-          assertedBy: updatedByUser,
-          createdBy: updatedByUser,
-        }, client);
-
-        // Ask the database what it is about to commit, rather than trusting that
-        // the writer not throwing means the rows say what they should.
-        await assertLineageCoversContent(tenantId, ref, content, client);
-      }
+      // The lineage gate: record an author span per clause and assert coverage,
+      // in this transaction, so content and provenance commit together. Empty /
+      // undefined content (a metadata-only update) is a no-op inside the helper.
+      // req.params is typed `string | string[]`; document_id is the join key
+      // every later read depends on, so coerce rather than let an array
+      // stringify itself into one.
+      await enforceAuthorLineage(
+        client,
+        tenantId,
+        { documentTable: 'authoring_sections', documentId: String(sectionId) },
+        content,
+        updatedByUser,
+      );
 
       await client.query('COMMIT');
     } catch (err) {

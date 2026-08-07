@@ -20,6 +20,37 @@ const router = Router();
 
 const BIOPHARMA_TYPES = ['IND', 'NDA', 'BLA', 'MAA', 'JNDA', 'DE_NOVO'];
 
+/**
+ * The program columns this router exposes, mapped from the canonical
+ * `regulatory_programs` shape (shared/schema/programs.ts) to the field names the
+ * client already reads (ProjectHeader.tsx / ProjectDetail.tsx).
+ *
+ * Every handler here previously selected `p.sponsor_name`, `p.lead_indication`,
+ * `p.filing_date`, `p.pdufa_date` and `p.completion_percentage` — none of which
+ * exist on that table, and none of which have ever existed. So every request to
+ * this router failed with `column p.sponsor_name does not exist` and returned
+ * 500. The names below are the real ones; the aliases keep the wire contract
+ * unchanged, since the client types all five as nullable and renders them
+ * conditionally.
+ *
+ * `pdufa_date` has no column and no equivalent — it is FDA's action date, which
+ * is not `approval_date` and is not derivable from anything stored. It is
+ * selected as NULL rather than aliased onto a near-miss: the client already
+ * hides the chip when it is null, and quietly rendering a different date under
+ * a PDUFA label is worse than rendering nothing.
+ */
+const PROGRAM_FIELDS = `
+  p.id, p.code, p.name, p.program_type, p.status,
+  o.name                     AS sponsor_name,
+  p.indication               AS lead_indication,
+  p.actual_submission_date   AS filing_date,
+  NULL::timestamp            AS pdufa_date,
+  p.progress_percent         AS completion_percentage,
+  p.target_agencies, p.created_at, p.updated_at`;
+
+/** Postgres raises 22P02 when a non-UUID is cast to uuid; treat as "not found". */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function resolveOrgId(req: Request): number | null {
   const r = req as any;
   const raw = r.tenantId ?? r.organizationId ?? r.user?.organizationId;
@@ -69,10 +100,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const { rows } = await pool.query(
       `SELECT
-         p.id, p.code, p.name, p.program_type, p.status,
-         p.sponsor_name, p.lead_indication, p.created_at, p.updated_at,
-         p.target_agencies, p.filing_date, p.pdufa_date,
-         p.completion_percentage,
+         ${PROGRAM_FIELDS},
          (
            SELECT json_build_object(
              'todo',    COUNT(*) FILTER (WHERE ds.status = 'todo'),
@@ -87,6 +115,7 @@ router.get('/', async (req: Request, res: Response) => {
            WHERE d.project_id = p.id
          ) AS section_counts
        FROM regulatory_programs p
+       LEFT JOIN organizations o ON o.id = p.organization_id
        WHERE ${conditions.join(' AND ')}
        ORDER BY p.updated_at DESC NULLS LAST
        LIMIT $${params.length + 1}`,
@@ -100,20 +129,76 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// ── GET /api/biopharma/meetings ───────────────────────────────────────────────
+//
+// Upcoming FDA / EMA / PMDA meeting milestones for the caller's biopharma
+// programs. `within` param: '30d' | '60d' | '90d' (default '90d').
+//
+// MUST stay ABOVE `/:id`. Express matches in registration order, so with
+// `/:id` first this handler was unreachable: a request for /api/biopharma/
+// meetings bound `id = 'meetings'` and fell into the single-program handler,
+// where the uuid cast failed. The route was documented and mounted but could
+// never have returned a meeting.
+
+router.get('/meetings', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+
+  const days = parseInt(String((req.query as any).within ?? '90d'), 10) || 90;
+
+  try {
+    // Milestones live in `program_milestones`, one row per milestone. The
+    // previous query unnested `p.milestones`, a jsonb column that does not exist
+    // on regulatory_programs — and then swallowed the resulting error and
+    // returned `{meetings: []}`, so the calendar rendered permanently empty and
+    // looked like "no meetings scheduled" rather than a broken query.
+    const { rows } = await pool.query(
+      `SELECT
+         p.id   AS program_id,
+         p.code,
+         p.name AS program_name,
+         p.program_type,
+         p.target_agencies,
+         json_build_object(
+           'id',          m.id,
+           'name',        m.name,
+           'description', m.description,
+           'category',    m.category,
+           'status',      m.status,
+           'target_date', m.target_date,
+           'actual_date', m.actual_date
+         ) AS milestone
+       FROM program_milestones m
+       JOIN regulatory_programs p ON p.id = m.program_id
+       WHERE p.organization_id = $1
+         AND p.program_type = ANY($2::text[])
+         AND (m.category ILIKE '%meeting%' OR m.name ILIKE '%meeting%')
+         AND m.target_date IS NOT NULL
+         AND m.target_date::date BETWEEN CURRENT_DATE AND CURRENT_DATE + $3::int
+       ORDER BY m.target_date ASC
+       LIMIT 200`,
+      [orgId, BIOPHARMA_TYPES, days],
+    );
+
+    return res.json({ meetings: rows });
+  } catch (err: unknown) {
+    console.error('[biopharma/meetings] GET /meetings', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ── GET /api/biopharma/programs/:id ──────────────────────────────────────────
 
 router.get('/:id', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
+  if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
     const { rows } = await pool.query(
       `SELECT
-         p.id, p.code, p.name, p.program_type, p.status,
-         p.sponsor_name, p.lead_indication, p.description,
-         p.target_agencies, p.filing_date, p.pdufa_date,
-         p.completion_percentage, p.created_at, p.updated_at,
-         p.team_members, p.tags,
+         ${PROGRAM_FIELDS},
+         p.description, p.team_members, p.tags,
          (
            SELECT json_agg(json_build_object(
              'id', d.id, 'title', d.title, 'doc_type', d.doc_type,
@@ -124,6 +209,7 @@ router.get('/:id', async (req: Request, res: Response) => {
            WHERE d.project_id = p.id AND d.org_id = $2
          ) AS documents
        FROM regulatory_programs p
+       LEFT JOIN organizations o ON o.id = p.organization_id
        WHERE p.id = $1
          AND p.organization_id = $2
          AND p.program_type = ANY($3::text[])
@@ -136,49 +222,6 @@ router.get('/:id', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     console.error('[biopharma/programs] GET /:id', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ── GET /api/biopharma/meetings ───────────────────────────────────────────────
-//
-// Returns upcoming FDA / EMA / PMDA meeting milestones from
-// regulatory_programs.milestones filtered to meeting-type entries.
-// `within` param: '30d' | '60d' | '90d' (default '90d')
-
-router.get('/meetings', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return send403(res);
-
-  const within = String((req.query as any).within ?? '90d');
-  const days = parseInt(within, 10) || 90;
-
-  try {
-    const { rows } = await pool.query(
-      `SELECT
-         p.id AS program_id, p.code, p.name AS program_name,
-         p.program_type, p.target_agencies,
-         m.value AS milestone
-       FROM regulatory_programs p,
-            jsonb_array_elements(
-              CASE WHEN p.milestones IS NOT NULL
-                   THEN p.milestones::jsonb
-                   ELSE '[]'::jsonb
-              END
-            ) AS m(value)
-       WHERE p.organization_id = $1
-         AND p.program_type = ANY($2::text[])
-         AND (m.value ->> 'type') ILIKE '%meeting%'
-         AND (m.value ->> 'target_date')::date BETWEEN CURRENT_DATE AND CURRENT_DATE + $3::int
-       ORDER BY (m.value ->> 'target_date')::date ASC
-       LIMIT 200`,
-      [orgId, BIOPHARMA_TYPES, days],
-    );
-
-    return res.json({ meetings: rows });
-  } catch (err: unknown) {
-    // milestones column may be absent or non-jsonb on some schemas.
-    console.error('[biopharma/meetings] GET /meetings', err);
-    return res.json({ meetings: [] });
   }
 });
 

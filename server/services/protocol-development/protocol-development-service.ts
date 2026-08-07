@@ -18,6 +18,7 @@ import {
   type ProtocolKind,
   type CompletenessResult,
 } from './protocol-development-logic';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -76,15 +77,20 @@ function assertEditable(status: string): void {
   if (status === 'finalized' || status === 'superseded') throw new ProtocolDevError('INVALID_STATE', `Protocol is ${status}; create a new version to edit.`);
 }
 
-export async function updateSynopsisTx(client: Queryable, orgId: number, docId: number, synopsis: string): Promise<void> {
+export async function updateSynopsisTx(client: Queryable, orgId: number, docId: number, synopsis: string, actorUserId: number): Promise<void> {
   const doc = await loadDoc(client, orgId, docId);
   assertEditable(doc.status);
   await client.query(`UPDATE protocol_documents SET synopsis = $3, status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [docId, orgId, synopsis]);
+  // Prose gate: the synopsis is authored protocol text — record its author
+  // lineage and assert coverage in this transaction, so content and provenance
+  // commit together (the caller opens the transaction; see routes/protocol-
+  // development.ts governed() and AnaToolExecutor).
+  await enforceAuthorLineage(client, orgId, { documentTable: 'protocol_documents', documentId: String(docId) }, synopsis, String(actorUserId));
 }
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string }): Promise<void> {
+export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string }, actorUserId: number): Promise<void> {
   if (input.status && !['not_started', 'draft', 'complete'].includes(input.status)) throw new ProtocolDevError('BAD_INPUT', `Invalid status "${input.status}".`);
   const sec = await client.query(
     `SELECT s.id, d.status AS doc_status, d.id AS doc_id FROM protocol_sections s JOIN protocol_documents d ON d.id = s.protocol_document_id
@@ -97,6 +103,11 @@ export async function updateSectionTx(client: Queryable, orgId: number, sectionI
     `UPDATE protocol_sections SET content = COALESCE($3, content), status = COALESCE($4, status), updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [sectionId, orgId, input.content ?? null, input.status ?? null],
   );
+  // Prose gate: when this edit sets section content, record its author lineage
+  // and assert coverage in this transaction. A status-only edit (content
+  // undefined/null) no-ops the gate inside the helper, matching the COALESCE
+  // that leaves content unchanged.
+  await enforceAuthorLineage(client, orgId, { documentTable: 'protocol_sections', documentId: String(sectionId) }, input.content ?? null, String(actorUserId));
   await client.query(`UPDATE protocol_documents SET status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [sec.rows[0].doc_id, orgId]);
 }
 

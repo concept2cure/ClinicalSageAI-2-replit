@@ -19,6 +19,11 @@ import type { Tier } from '../../entitlements/types';
 import { computeInitialRun } from '../orchestrator';
 import { decideDelivery } from './delivery';
 import { sweepDueSubscriptions } from './worker';
+import {
+  recordBackgroundJobRun,
+  registerBackgroundJob,
+  BACKGROUND_JOB,
+} from '../../background-jobs-metrics';
 import type { DeliveryChannel } from './types';
 import type { ReportSubscriptionRow } from '@shared/schema/report-os';
 import type { ReportScope } from '@shared/schema/report-os';
@@ -90,15 +95,30 @@ export async function initSubscriptionSweep(redisUrl?: string): Promise<void> {
     queue = new Queue('c2c-report-subscription-sweep', redis, {
       defaultJobOptions: { removeOnComplete: 100, removeOnFail: 50, attempts: 2 },
     });
+    registerBackgroundJob(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP);
     queue.process(async () => {
-      const summary = await sweepDueSubscriptions(new Date(), generateAndDeliver, resolveTier);
-      log.info('subscription sweep complete', {
-        scanned: summary.scanned,
-        ran: summary.ran,
-        skippedEntitlement: summary.skippedEntitlement,
-        failed: summary.failed,
-      });
-      return summary;
+      try {
+        const summary = await sweepDueSubscriptions(new Date(), generateAndDeliver, resolveTier);
+        log.info('subscription sweep complete', {
+          scanned: summary.scanned,
+          ran: summary.ran,
+          skippedEntitlement: summary.skippedEntitlement,
+          failed: summary.failed,
+        });
+        // Heartbeat: the sweep ran. `processed` is the number of subscriptions
+        // actually fired this tick. A per-subscription failure is isolated
+        // inside planSweep and does not fail the tick — only a scan-level
+        // throw (e.g. the estate-wide read failing closed) does, and that is
+        // recorded as a failure below.
+        recordBackgroundJobRun(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP, {
+          ok: true,
+          processed: summary.ran,
+        });
+        return summary;
+      } catch (err) {
+        recordBackgroundJobRun(BACKGROUND_JOB.REPORT_SUBSCRIPTION_SWEEP, { ok: false, error: err });
+        throw err;
+      }
     });
     queue.on('error', (err) => log.error(`sweep queue error: ${err.message}`));
     await queue.add({}, { repeat: { cron: SWEEP_CRON } });

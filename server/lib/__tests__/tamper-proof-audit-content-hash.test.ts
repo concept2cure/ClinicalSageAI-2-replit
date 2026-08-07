@@ -45,6 +45,29 @@ interface StoredRow {
 }
 
 /**
+ * Re-key an object the way Postgres re-keys a `jsonb` value: keys are stored
+ * shortest-first, then bytewise, NOT in the order they were written.
+ *
+ * This matters because `details` is a jsonb column. The original FakePool
+ * round-tripped it with `JSON.parse`, which preserves insertion order — so the
+ * fake agreed with the writer's key order in a way real Postgres never does,
+ * and the suite passed green while every multi-key entry failed verification on
+ * an actual database. Emulating the reordering here is what makes these tests
+ * able to see that class of defect at all.
+ */
+function jsonbReorder<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(jsonbReorder) as unknown as T;
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    const src = value as Record<string, unknown>;
+    const keys = Object.keys(src).sort((a, b) => (a.length - b.length) || (a < b ? -1 : a > b ? 1 : 0));
+    const out: Record<string, unknown> = {};
+    for (const k of keys) out[k] = jsonbReorder(src[k]);
+    return out as unknown as T;
+  }
+  return value;
+}
+
+/**
  * Minimal in-memory stand-in for a pg Pool that supports exactly the queries
  * TamperProofAuditLog.log()/verifyChain() issue: the FOR UPDATE tail lookup,
  * the INSERT, BEGIN/COMMIT/ROLLBACK, and the ORDER BY sequence_number scan.
@@ -73,7 +96,8 @@ class FakePool {
         user_id: user_id ?? null, user_name: user_name ?? null, session_id: session_id ?? null,
         correlation_id: correlation_id ?? null, resource_type: resource_type ?? null,
         resource_id: resource_id ?? null, action,
-        details: typeof details === 'string' ? JSON.parse(details) : details,
+        // jsonb, not text: Postgres hands this back re-keyed, so the fake must too.
+        details: jsonbReorder(typeof details === 'string' ? JSON.parse(details) : details),
         previous_hash, content_hash, chain_hash, signature: signature ?? null,
         ip_address: ip_address ?? null, user_agent: user_agent ?? null,
       });
@@ -141,6 +165,74 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
   it('still verifies an entry written WITHOUT optional client context', async () => {
     const { log } = newLog();
     await log.log('SYSTEM_STARTUP', 'boot', {}, {});
+    const result = await log.verifyChain();
+    expect(result.valid).toBe(true);
+  });
+
+  /**
+   * Regression for the defect that made audit_chain_integrity fail on a fresh
+   * database with a single, untampered entry — and therefore blocked boot in
+   * production, where that self-test check is critical.
+   *
+   * `details` is jsonb, so Postgres returns its keys shortest-first rather than
+   * in write order. Hashing with plain JSON.stringify made the writer's bytes
+   * and the verifier's bytes differ for any details object with two or more
+   * keys, and the row was reported as "Content tampered".
+   *
+   * The details shape below is the exact one that surfaced it: the entry
+   * verifyChain() writes about itself.
+   */
+  it('verifies an entry whose details keys are reordered by jsonb storage', async () => {
+    const { log, pool } = newLog();
+    await log.log(
+      'AUDIT_VERIFICATION_PASSED',
+      'Audit chain verification completed successfully',
+      { entriesVerified: 0, startSequence: 1, endSequence: 9, verifiedAt: '2026-08-06T01:00:45.794Z' },
+      { correlationId: 'verify-1' },
+    );
+
+    // Guard the guard: if the fake ever stops reordering, this test would pass
+    // for the wrong reason and the defect could return unseen.
+    // Shortest key first, then bytewise: verifiedAt(10) < endSequence(11) <
+    // startSequence(13) < entriesVerified(15) — i.e. nothing like write order.
+    expect(Object.keys(pool.rows[0].details as Record<string, unknown>)).toEqual([
+      'verifiedAt',
+      'endSequence',
+      'startSequence',
+      'entriesVerified',
+    ]);
+
+    const result = await log.verifyChain();
+    expect(result.invalidReason).toBeUndefined();
+    expect(result.valid).toBe(true);
+  });
+
+  it('detects tampering with details even though key order is normalized', async () => {
+    const { log, pool } = newLog();
+    await log.log(
+      'RECORD_UPDATED',
+      'Updated record',
+      { field: 'dose', from: '10mg', to: '20mg' },
+      { userId: 'u-3' },
+    );
+
+    // Reordering keys must NOT be treated as tampering; changing a value must.
+    (pool.rows[0].details as Record<string, unknown>).to = '200mg';
+
+    const result = await log.verifyChain();
+    expect(result.valid).toBe(false);
+    expect(result.invalidReason).toMatch(/content_hash mismatch/i);
+  });
+
+  it('verifies nested objects regardless of the order jsonb returns them in', async () => {
+    const { log } = newLog();
+    await log.log(
+      'DOCUMENT_SIGNED',
+      'Signature applied',
+      { signature: { meaning: 'approval', signedBy: 'u-9', reason: 'QA release' }, sectionCount: 12 },
+      { userId: 'u-9', resourceType: 'document', resourceId: 'doc-1' },
+    );
+
     const result = await log.verifyChain();
     expect(result.valid).toBe(true);
   });

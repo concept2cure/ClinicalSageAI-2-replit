@@ -129,15 +129,19 @@ describe('boot always records a schema-readiness verdict', () => {
   describe('security-load-bearing tables', () => {
     it('missing auth/RBAC tables → missing, does NOT serve', async () => {
       // These are classified "important", not "critical", so the flat critical
-      // check passes without them. A database that cannot resolve a user or a
-      // role has no safe behaviour available to it.
+      // check passes without them. A database that cannot resolve org
+      // membership, a role grant, or a token revocation has no safe behaviour
+      // available to it. The table names here must be the real load-bearing set
+      // (server/startup/services.ts SECURITY_CRITICAL_TABLES) — the earlier
+      // auth_users/roles/user_roles were phantom names no migration creates, so
+      // the gate keyed on them could never fire.
       ensureCoreTables.mockResolvedValue(
-        clean({ missingImportant: ['auth_users', 'roles', 'user_roles'] })
+        clean({ missingImportant: ['organization_users', 'platform_role_grants', 'revoked_tokens'] })
       );
       await verifyDatabaseConnection(okPool);
       expect(getSchemaReadiness()).toBe('missing');
       expect(isSchemaReadinessServing()).toBe(false);
-      expect(getSchemaReadinessDetail()).toContain('auth_users');
+      expect(getSchemaReadinessDetail()).toContain('organization_users');
     });
 
     it('missing only non-essential module tables → degraded, serves but names them', async () => {
@@ -152,7 +156,7 @@ describe('boot always records a schema-readiness verdict', () => {
 
     it('auth tables outrank module tables when both are absent', async () => {
       ensureCoreTables.mockResolvedValue(
-        clean({ missingImportant: ['cerv2_510k_sections', 'permissions'] })
+        clean({ missingImportant: ['cerv2_510k_sections', 'revoked_tokens'] })
       );
       await verifyDatabaseConnection(okPool);
       expect(getSchemaReadiness()).toBe('missing');

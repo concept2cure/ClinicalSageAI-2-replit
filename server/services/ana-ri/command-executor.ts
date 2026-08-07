@@ -17,6 +17,7 @@
 import { getPool } from '../../db';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
+import { recordArtifactProvenanceBestEffort } from '../provenance/artifact-provenance';
 
 // Lazy pool access. Acquiring the pool at module load (`getPool()` at
 // top level) throws "Database connection not available" when this module
@@ -1343,10 +1344,29 @@ export async function erasePersonalData(
            metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
            updated_at = NOW()
        WHERE organization_id = $1 AND created_by_id = $2
-       RETURNING artifact_id`,
+       RETURNING id, artifact_id`,
         [ctx.organizationId, dataSubjectId]
       )
       .catch(() => ({ rows: [] as any[] }));
+
+    // Uniform provenance: erasing an artifact's content is a lifecycle
+    // 'transformation' event, recorded per erased artifact in this transaction.
+    // Best-effort — a GDPR Art. 17 erasure is legally mandated and must not fail
+    // because a provenance row could not be written.
+    // Best-effort via SAVEPOINT: a failed provenance write rolls back only
+    // itself, so it can neither block the legally-mandated erasure nor poison the
+    // transaction the subsequent redaction statements run in.
+    for (const erased of (artResult.rows as Array<{ id: number }>)) {
+      await recordArtifactProvenanceBestEffort(client, {
+        artifactId: erased.id,
+        organizationId: ctx.organizationId,
+        eventType: 'transformation',
+        eventAction: 'gdpr_erase',
+        actorId: ctx.userId,
+        details: { reason, gdprErased: true, dataSubjectId: String(dataSubjectId) },
+        backendService: 'ana-ri/command-executor',
+      });
+    }
 
     const commentResult = await client
       .query(

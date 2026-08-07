@@ -1,0 +1,116 @@
+# Background Jobs — Prometheus Alertmanager rules
+#
+# Companion to server/services/background-jobs-metrics.ts, which emits the
+# metrics referenced here via /api/metrics. Each unattended worker records a
+# heartbeat on every tick (success AND failure), so a worker that silently
+# stops — the failure mode that motivated this file, an RLS-scoped background
+# job failing closed in production — surfaces as a growing gap between now()
+# and its last successful run.
+#
+# The `job` label values MUST match the BACKGROUND_JOB constants in
+# background-jobs-metrics.ts exactly.
+#
+# Two rule groups:
+#   1. background_jobs.health  — a critical worker has not SUCCEEDED within its
+#      expected window (the silent-outage detector)
+#   2. background_jobs.errors  — a worker is actively erroring (last run failed,
+#      or a nonzero failure rate)
+#
+# Loaded by the Prometheus rules_files config. Path convention follows
+# infra/alerts/orchestrator.yml.
+
+groups:
+  - name: background_jobs.health
+    interval: 30s
+    rules:
+
+      # AUDIT CHAIN MONITOR STALE — the 21 CFR Part 11 §11.10(e) hash-chain
+      # integrity monitor (5-min cadence) has not completed a successful scan
+      # in 15 minutes. Either it is wedged or its estate-wide read is failing
+      # closed. While it is down, tampering with the audit_events chain would
+      # go undetected — a compliance hazard, so this pages.
+      - alert: AuditChainMonitorStale
+        expr: |
+          time() - background_job_last_success_timestamp_seconds{job="audit-chain-monitor"} > 900
+        for: 1m
+        labels:
+          severity: critical
+          subsystem: background_jobs
+          page: "true"
+        annotations:
+          summary: "Audit chain integrity monitor has not succeeded in 15m"
+          description: |
+            background_job_last_success_timestamp_seconds for
+            job="audit-chain-monitor" is more than 15 minutes old. The Part 11
+            audit-chain integrity monitor is not running. Check that the worker
+            has an active tenant scope (RLS_ENFORCE=on fails closed on unscoped
+            queries) and that the DB pool is reachable.
+
+      # REPORT SUBSCRIPTION SWEEP STALE — the scheduled-report sweep (10-min
+      # cadence) has not fired in 30 minutes. Customers on scheduled reports
+      # stop receiving them silently. Ticket, not page.
+      - alert: ReportSubscriptionSweepStale
+        expr: |
+          time() - background_job_last_success_timestamp_seconds{job="report-subscription-sweep"} > 1800
+        for: 5m
+        labels:
+          severity: warning
+          subsystem: background_jobs
+        annotations:
+          summary: "Report subscription sweep has not run in 30m"
+          description: |
+            Scheduled reports are not being delivered. Verify Redis is reachable
+            and the sweep's estate-wide scan is running in a system scope.
+
+      # BACKGROUND JOB NEVER STARTED — a registered worker exposes a heartbeat
+      # series but has never recorded a successful run since process start.
+      # `== 0` is the sentinel this module emits for "no success yet". Long
+      # `for:` tolerates cold-start warmup on the slowest (daily) jobs.
+      - alert: BackgroundJobNeverSucceeded
+        expr: |
+          background_job_last_success_timestamp_seconds == 0
+        for: 30m
+        labels:
+          severity: warning
+          subsystem: background_jobs
+        annotations:
+          summary: "Background job {{ $labels.job }} has never succeeded since boot"
+          description: |
+            job="{{ $labels.job }}" registered a heartbeat but has not recorded
+            a single successful run in 30 minutes. It is likely wedged from its
+            first tick (commonly a lost tenant scope failing closed).
+
+  - name: background_jobs.errors
+    interval: 30s
+    rules:
+
+      # LAST RUN FAILED — the most recent tick of a worker errored. Sustained
+      # (not a single transient) via `for`.
+      - alert: BackgroundJobLastRunFailed
+        expr: |
+          background_job_up == 0
+        for: 10m
+        labels:
+          severity: warning
+          subsystem: background_jobs
+        annotations:
+          summary: "Background job {{ $labels.job }} last run failed"
+          description: |
+            background_job_up{job="{{ $labels.job }}"} has been 0 for 10 minutes
+            — every recent tick failed. See /api/health/jobs for the truncated
+            last-error string.
+
+      # ELEVATED FAILURE RATE — a worker is failing repeatedly even if the odd
+      # tick succeeds.
+      - alert: BackgroundJobFailureRate
+        expr: |
+          increase(background_job_runs_total{outcome="failure"}[15m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          subsystem: background_jobs
+        annotations:
+          summary: "Background job {{ $labels.job }} failing repeatedly ({{ $value }} in 15m)"
+          description: |
+            More than 3 failed runs for job="{{ $labels.job }}" in the last 15
+            minutes. Investigate the worker's DB access and tenant scope.

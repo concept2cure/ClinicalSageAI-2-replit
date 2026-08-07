@@ -22,6 +22,7 @@ import { getGateway } from '../ai-gateway/gateway';
 import type { PriorLeaf } from '../ectd/lifecycle-operator.js';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
+import { recordArtifactProvenance } from '../provenance/artifact-provenance';
 import { searchPubmed } from '../integrations/pubmed-client.js';
 import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
 import { searchConnectedRepositories } from '../integrations/connector-search.js';
@@ -7853,26 +7854,47 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
     if (own.rows.length === 0) {
       return JSON.stringify({ error: 'Q-Sub not found in this organization.' });
     }
-    const { rows } = await pool.query(
-      `INSERT INTO q_sub_section_bodies (
-         q_submission_id, organization_id, section_key, content,
-         draft_source, drafted_at, drafted_summary
-       ) VALUES ($1, $2, $3, $4, 'ana', NOW(), NULLIF($5, ''))
-       ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
-         content         = EXCLUDED.content,
-         draft_source    = 'ana',
-         drafted_at      = NOW(),
-         drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
-         accepted_at     = NULL,
-         accepted_by     = NULL,
-         updated_at      = NOW()
-       RETURNING id, section_key, draft_source, drafted_at`,
-      [qSubId, ctx.organizationId, sectionKey, content, note],
-    );
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
-    });
+    // Authored regulatory prose: content and its author lineage commit together
+    // in one transaction (same gate as the human PUT route), so an AnA-drafted
+    // section body is never persisted without provenance.
+    const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const { rows } = await client.query(
+        `INSERT INTO q_sub_section_bodies (
+           q_submission_id, organization_id, section_key, content,
+           draft_source, drafted_at, drafted_summary
+         ) VALUES ($1, $2, $3, $4, 'ana', NOW(), NULLIF($5, ''))
+         ON CONFLICT (q_submission_id, section_key) DO UPDATE SET
+           content         = EXCLUDED.content,
+           draft_source    = 'ana',
+           drafted_at      = NOW(),
+           drafted_summary = COALESCE(EXCLUDED.drafted_summary, q_sub_section_bodies.drafted_summary),
+           accepted_at     = NULL,
+           accepted_by     = NULL,
+           updated_at      = NOW()
+         RETURNING id, section_key, draft_source, drafted_at`,
+        [qSubId, ctx.organizationId, sectionKey, content, note],
+      );
+      await enforceAuthorLineage(
+        client,
+        ctx.organizationId,
+        { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
+        content,
+        String(ctx.userId ?? 'system'),
+      );
+      await client.query('COMMIT');
+      return JSON.stringify({
+        ok: true, ...rows[0],
+        message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
+      });
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw txErr;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     return JSON.stringify({
       error: `write_q_sub_section failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -10734,7 +10756,7 @@ registerToolHandler('update_biosketch_section', async (input, ctx) => {
   if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
   const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
   return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
-    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
+    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined }, ctx.userId!);
     return { sectionId };
   });
 });
@@ -11080,7 +11102,7 @@ registerToolHandler('update_protocol_section', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined });
+    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined }, ctx.userId);
     await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
     return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
@@ -14148,6 +14170,20 @@ registerToolHandler('approve_import', async (input, ctx) => {
           [ins.rows[0].id, f.id],
         );
         createdCount++;
+        // Uniform provenance: an imported file is a 'source_input' event — the
+        // artifact was born from an uploaded document. Best-effort so a
+        // provenance hiccup never fails the import.
+        try {
+          await recordArtifactProvenance(pool, {
+            artifactId: ins.rows[0].id,
+            organizationId: ctx.organizationId,
+            eventType: 'source_input',
+            eventAction: 'import',
+            actorId: ctx.userId,
+            details: { importJobId: jobId, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
+            backendService: 'ana/AnaToolExecutor:import',
+          });
+        } catch { /* import provenance is best-effort */ }
       } catch {
         /* per-file error already swallowed; surface count below. */
       }
@@ -17926,6 +17962,17 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
          VALUES ($1, $2, 1, $3, $4, $5, $6)`,
         [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
       );
+      // Uniform provenance: a vault document authored by AnA is a 'generation'
+      // event, in the same transaction as the artifact + version.
+      await recordArtifactProvenance(client, {
+        artifactId: ins.rows[0].id,
+        organizationId: ctx.organizationId,
+        eventType: 'generation',
+        eventAction: 'ai_generate',
+        actorId: ctx.userId,
+        details: { source: 'ana_tool', reason, ctdSection: ctd, version: 1 },
+        backendService: 'ana/AnaToolExecutor:save_document_to_vault',
+      });
       // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
       // the same transaction as the artifact + immutable version. It used to be
       // a post-COMMIT `try { auditLog(...) } catch { /* never block on audit */ }`
@@ -18000,6 +18047,16 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [doc.id, ctx.organizationId, nextVersion, content, hash, reason, ctx.userId],
       );
+      // Uniform provenance: a new vault version is an 'edit' event, same txn.
+      await recordArtifactProvenance(client, {
+        artifactId: doc.id,
+        organizationId: ctx.organizationId,
+        eventType: 'edit',
+        eventAction: 'ai_generate',
+        actorId: ctx.userId,
+        details: { source: 'ana_tool', reason, version: nextVersion },
+        backendService: 'ana/AnaToolExecutor:vault_update',
+      });
       // C2C-AUDIT-001: atomic Part 11 audit — see save_document_to_vault.
       await recordGovernedAction(client, {
         orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',

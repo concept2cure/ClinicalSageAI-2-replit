@@ -144,8 +144,8 @@ router.patch('/documents/:id/synopsis', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = synopsisSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
-    await updateSynopsisTx(client, orgId, id, parsed.data.synopsis);
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    await updateSynopsisTx(client, orgId, id, parsed.data.synopsis, userId);
     return { target: `protocol-document:${id}`, body: { id } };
   });
 });
@@ -158,8 +158,8 @@ router.patch('/sections/:id', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = sectionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
-    await updateSectionTx(client, orgId, id, parsed.data);
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    await updateSectionTx(client, orgId, id, parsed.data, userId);
     recordProtocolSectionUpdated();
     return { target: `protocol-section:${id}`, payload: { status: parsed.data.status }, body: { id } };
   });

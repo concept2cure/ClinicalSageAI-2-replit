@@ -4,6 +4,7 @@
  */
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema } from 'zod';
+import { setRequestQuery } from '../utils/expressQuery';
 
 /**
  * Validate request body against a Zod schema
@@ -39,7 +40,8 @@ export const validateQuery = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedData = await schema.parseAsync(req.query);
-      req.query = validatedData;
+      // req.query is getter-only in Express 5 — see setRequestQuery.
+      setRequestQuery(req, validatedData);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

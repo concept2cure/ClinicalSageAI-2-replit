@@ -169,6 +169,49 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
     }
   });
 
+  // Human-readable background-jobs health: each unattended worker's last-run /
+  // last-success heartbeat plus a staleness verdict. Guarded like the other
+  // observability endpoints — the heartbeat error strings are truncated and
+  // non-sensitive, but the surface still reveals internal job topology.
+  app.get('/api/health/jobs', requireMetricsAuth, async (_req: Request, res: Response) => {
+    try {
+      const { getBackgroundJobHeartbeats } = await import('../services/background-jobs-metrics.js');
+      const now = Date.now();
+      // Staleness threshold per job: generous multiples of each worker's cadence
+      // so a healthy idle worker never reads as stale. Unknown jobs default to 1h.
+      const MAX_AGE_MS: Record<string, number> = {
+        'audit-chain-monitor': 15 * 60 * 1000,      // 5-min cadence
+        'report-subscription-sweep': 30 * 60 * 1000, // 10-min cadence
+        'scheduled-jobs': 26 * 60 * 60 * 1000,       // slowest default is daily
+        'submission-chat-sweep': 90 * 60 * 1000,     // 1-hour cadence
+        'sentinel-scan': 90 * 60 * 1000,             // per-org, configurable
+      };
+      const heartbeats = getBackgroundJobHeartbeats().map((h) => {
+        const maxAge = MAX_AGE_MS[h.name] ?? 60 * 60 * 1000;
+        const stale = h.lastSuccessAt == null ? true : now - h.lastSuccessAt > maxAge;
+        return {
+          ...h,
+          lastRunAt: h.lastRunAt != null ? new Date(h.lastRunAt).toISOString() : null,
+          lastSuccessAt: h.lastSuccessAt != null ? new Date(h.lastSuccessAt).toISOString() : null,
+          staleThresholdMs: maxAge,
+          stale,
+        };
+      });
+      const anyStale = heartbeats.some((h) => h.stale);
+      // 200 with status:'degraded' (not 503) — a stale background job is an ops
+      // alert, not a request-serving outage. Empty list => no workers registered
+      // yet (e.g. Redis-less dev), reported as healthy rather than degraded.
+      res.status(200).json({
+        status: heartbeats.length === 0 ? 'healthy' : anyStale ? 'degraded' : 'healthy',
+        jobs: heartbeats,
+        ts: new Date(now).toISOString(),
+      });
+    } catch (err: any) {
+      logger.error('Background-jobs health check failed', { err: err?.message ?? String(err) });
+      res.status(500).json({ status: 'error' });
+    }
+  });
+
   app.get('/api/metrics', requireMetricsAuth, async (_req: Request, res: Response) => {
     try {
       const memUsage = process.memoryUsage();
@@ -536,6 +579,17 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         }
       } catch {
         /* scheduler not loaded yet — skip */
+      }
+
+      // Background-jobs heartbeats — liveness of unattended workers (sweeps,
+      // cron/queue processors, the audit-chain monitor). A worker that fails
+      // closed under RLS_ENFORCE=on stops silently; these metrics + the
+      // infra/alerts/background-jobs.yml rules turn that into a page.
+      try {
+        const { renderBackgroundJobsMetrics } = await import('../services/background-jobs-metrics.js');
+        lines.push(...renderBackgroundJobsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
       }
 
       // prom-client metrics — CER job SLO metrics (server/metrics.js, custom

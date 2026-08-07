@@ -24,6 +24,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db.js';
+import { setRequestQuery } from '../utils/expressQuery.js';
 import { regulatoryPrograms } from '../../shared/schema/programs.js';
 import { authenticateToken } from '../middleware/auth.js';
 import auditService from '../services/auditService.js';
@@ -551,7 +552,8 @@ router.post('/programs/:programId/suggestions', requireConfigured, async (req, r
   // Inject programId into body and query for downstream middleware/proxy
   const programId = req.params.programId;
   req.body = { ...req.body, program_id: programId };
-  req.query = { ...req.query, program_id: programId };
+  // req.query is getter-only in Express 5 — see setRequestQuery.
+  setRequestQuery(req, { ...req.query, program_id: programId });
   // Run through program access check then forward to suggest
   requireProgramAccess(req, res, async () => {
     try {

@@ -1,5 +1,6 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type { PlatformBootstrapContext } from './types';
+import { runWithPreAuthScope } from '../db/tenantStore';
 import cspReportRouter from '../routes/csp-report';
 import adminSecurityRouter from '../routes/admin-security';
 import { CSP_REPORT_URI } from '../middleware/enterprise-security';
@@ -122,8 +123,22 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     const authModule = await import('../routes/auth');
     const authRouter = authModule.default;
     if (authRouter && (typeof authRouter === 'function' || (authRouter as any).handle)) {
-      app.use('/api/auth', authRouter);
-      app.use('/api/v1/auth', authRouter);
+      // Authentication runs BEFORE a tenant can be known: the query that
+      // resolves an identity from an email address is the one that would
+      // establish the tenant. Pool instrumentation blocks unscoped queries once
+      // RLS_ENFORCE=on, and production permits ONLY `on`, so without this the
+      // login user-lookup was blocked and every login returned 500.
+      //
+      // Declaring the scope here — rather than per query — keeps the whole
+      // pre-auth surface (login, dev-login, signup, refresh, MFA, password
+      // reset) consistent. It carries no role, so it grants no policy bypass;
+      // see runWithPreAuthScope. Requests that go on to authenticate get the
+      // real tenant scope installed by the auth boundary, which nests inside
+      // this one and wins.
+      const preAuthScope: RequestHandler = (req, _res, next) =>
+        runWithPreAuthScope(`auth:${req.method} ${req.path}`, next);
+      app.use('/api/auth', preAuthScope, authRouter);
+      app.use('/api/v1/auth', preAuthScope, authRouter);
     }
   } catch (error) {
     console.error('❌ Failed to mount auth routes:', error);

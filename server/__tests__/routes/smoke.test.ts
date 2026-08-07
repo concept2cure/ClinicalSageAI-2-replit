@@ -273,8 +273,10 @@ describe('Stage 4: Backend beta contract smoke net', () => {
       'utf8'
     );
 
-    // Auth lives in platform registrar.
-    expect(platformRoutes).toContain("app.use('/api/auth', authRouter)");
+    // Auth lives in platform registrar. It is mounted behind preAuthScope so
+    // the pre-tenant identity/token queries can run under RLS_ENFORCE=on (see
+    // register-platform-routes.ts and server/db/tenantStore.ts).
+    expect(platformRoutes).toContain("app.use('/api/auth', preAuthScope, authRouter)");
 
     // Canonical concept2cure routes.
     expect(c2cRoutes).toContain("app.use('/api/concept2cure'");

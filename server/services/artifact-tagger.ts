@@ -15,6 +15,7 @@
  */
 
 import { getPool } from '../db/runtime.js';
+import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
 
 export interface TagArtifactParams {
@@ -213,7 +214,7 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
              (project_id, organization_id, title, content, status, ctd_section,
               version, created_by, metadata)
            VALUES ($1, $2, $3, $4, $5, $6, 1, $7, $8)
-           RETURNING artifact_id`,
+           RETURNING id, artifact_id`,
           [
             projectId,
             organizationId,
@@ -247,6 +248,17 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
         );
         resultArtifactId = insertResult.rows[0].artifact_id;
         isNew = true;
+        // Uniform provenance: a governed tagged artifact is a 'generation'
+        // event, in the same transaction as the artifact insert.
+        await recordArtifactProvenance(client, {
+          artifactId: insertResult.rows[0].id,
+          organizationId,
+          eventType: 'generation',
+          eventAction: 'tag',
+          actorId: userId ?? null,
+          details: { source, sectionCode, clientTrack: governedResolution.contract.clientTrack },
+          backendService: 'artifact-tagger',
+        });
       }
     }
 

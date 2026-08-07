@@ -12,6 +12,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
 import { db } from '../db';
+import { setRequestQuery } from '../utils/expressQuery';
 import { cerProjects } from '@shared/schema';
 
 const router = Router();
@@ -136,7 +137,8 @@ const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next
 const validateQuery =
   (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
     try {
-      req.query = schema.parse(req.query) as any;
+      // req.query is getter-only in Express 5 — see setRequestQuery.
+      setRequestQuery(req, schema.parse(req.query));
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

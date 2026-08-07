@@ -183,4 +183,35 @@ describe('createAuthBoundary', () => {
     expect(next).toHaveBeenCalledTimes(2); // both passed through
     expect(warn).toHaveBeenCalledTimes(1); // deduped to once per method+path
   });
+
+  it('warn mode ALSO installs tenant execution context after a successful auth', () => {
+    // Regression: the mode governs only how auth FAILURE is handled. A
+    // successfully authenticated request must get the same tenant execution
+    // context (runWithTenantScope) in warn mode as in enforce mode — otherwise,
+    // with RLS_ENFORCE=on, its pooled queries run unscoped and fail closed
+    // (observed as 500s on every authenticated route in warn+RLS-on envs).
+    process.env.AUTH_BOUNDARY_MODE = 'warn';
+    const order: string[] = [];
+    const authenticate: RequestHandler = (req, _res, next) => {
+      order.push('authenticate');
+      req.user = { id: 7, userId: 7, organizationId: 42, role: 'member' };
+      next();
+    };
+    const establishTenantContext = vi.fn((_req, _res, next) => {
+      order.push('tenant-context');
+      next();
+    });
+    const warn = vi.fn();
+    const next = vi.fn(() => order.push('route')) as unknown as NextFunction;
+
+    createAuthBoundary({ authenticate, establishTenantContext, logger: { warn } })(
+      mockReq({ baseUrl: '/api', path: '/documents' }),
+      mockRes(),
+      next
+    );
+
+    expect(order).toEqual(['authenticate', 'tenant-context', 'route']);
+    expect(establishTenantContext).toHaveBeenCalledTimes(1);
+    expect(warn).not.toHaveBeenCalled(); // success path does not warn
+  });
 });

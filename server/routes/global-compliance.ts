@@ -19,6 +19,7 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth.js';
+import { recordArtifactProvenance } from '../services/provenance/artifact-provenance';
 
 const router = Router();
 router.use(authenticateToken);
@@ -573,7 +574,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
            metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
            updated_at = NOW()
        WHERE organization_id = $1 AND created_by_id = $2
-       RETURNING artifact_id`,
+       RETURNING id, artifact_id`,
       [orgId, userId]
     ).catch(() => ({ rows: [] as any[] }));
 
@@ -598,6 +599,26 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
     ).catch(() => undefined);
 
     await client.query('COMMIT');
+
+    // Uniform provenance: record the Art.17 erasure of each artifact as a
+    // 'transformation' event — AFTER commit, on the pool, best-effort. A mandated
+    // erasure must never be blocked or rolled back because a provenance row could
+    // not be written, and a failed write inside the transaction would have
+    // poisoned it; recording here keeps the erasure unconditional.
+    for (const erased of (artifactsResult.rows as Array<{ id?: number }>)) {
+      if (typeof erased.id !== 'number') continue;
+      try {
+        await recordArtifactProvenance(pool, {
+          artifactId: erased.id,
+          organizationId: orgId,
+          eventType: 'transformation',
+          eventAction: 'gdpr_erase',
+          actorId: typeof userId === 'number' ? userId : null,
+          details: { reason, gdprErased: true },
+          backendService: 'routes/global-compliance',
+        });
+      } catch { /* erasure is already committed; provenance is best-effort */ }
+    }
 
     return res.json({
       success: true,
