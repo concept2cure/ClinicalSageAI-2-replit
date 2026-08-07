@@ -14,49 +14,21 @@
  * section of the document rather than a footnote, and the coverage figure is on
  * the first page next to the title.
  *
- * WHY THIS ROUTES THROUGH THE CANONICAL CONVERTER
- * This file used to build the PDF directly with pdfkit. New PDF entry points
- * must instead go through server/services/pdf-converter.ts so every exported PDF
- * is deterministic and audit-bound — the SHA-256 of the bytes is a stable
- * artifact id (see the converter's header and
- * scripts/ci/check-pdf-runtime-canonicality.mjs). So the report is built ONCE as
- * a presentation-neutral model and rendered two ways:
- *
- *   • to DOCX via docxFactory.renderStyledDocx (the approved `docx` runtime),
- *     which the converter turns into a deterministic PDF via LibreOffice;
- *   • to HTML, passed as the converter's puppeteer fallback so the export still
- *     works in environments without LibreOffice — the resilience the old
- *     dependency-free pdfkit path had, preserved rather than dropped.
- *
- * Labels and colors are therefore defined once, here, and consumed by both
- * renderers.
+ * pdfkit, matching the renderers already in server/services/authoring.
  *
  * @module server/services/clinical-regulatory-evidence/data-origins-pdf
  */
 
-import {
-  renderStyledDocx,
-  type StyledBlock,
-  type StyledDocModel,
-  type StyledRun,
-} from '../docx/docxFactory';
-import { convertDocxToPdf } from '../pdf-converter';
+import PDFDocument from 'pdfkit';
 
+import { makeDeterministic } from '../pdf-converter';
 import type { SelectionOrigins, SpanLineageRow } from './span-lineage.service';
 
-// Hex colors (no '#') shared by both renderers.
-const INK = '111827';
-const MUTED = '6b7280';
-const WARN = 'b45309';
-const OK = '047857';
-
-// Sizes in half-points (docx convention); the HTML renderer converts to px.
-const SIZE_TITLE = 40;
-const SIZE_SECTION = 22;
-const SIZE_COVERAGE = 24;
-const SIZE_BODY = 20;
-const SIZE_SMALL = 18;
-const SIZE_TINY = 16;
+const INK = '#111827';
+const MUTED = '#6b7280';
+const RULE = '#e5e7eb';
+const WARN = '#b45309';
+const OK = '#047857';
 
 /** Human label for a provenance kind — no jargon in a document a reviewer reads. */
 function originLabel(row: SpanLineageRow): string {
@@ -105,170 +77,225 @@ export interface DataOriginsPdfMeta {
 }
 
 /**
- * Build the presentation-neutral document model — the single source of truth for
- * both the DOCX and the HTML fallback. Mirrors the original pdfkit layout:
- * title block, coverage up front, selected text, per-origin detail, and the
- * unattributed-ranges section printed as prominently as the sources.
+ * The document date, fixed from the report's own content.
+ *
+ * `report.generatedAt` is supplied by the caller and already printed on page 1,
+ * so binding the PDF's CreationDate to it makes the bytes a pure function of
+ * the report: the same report always produces the same file, a report generated
+ * at a different moment correctly produces a different one.
+ *
+ * The fallback is the epoch, deliberately, and NOT `new Date()`. A clock-based
+ * fallback would silently reintroduce non-determinism on exactly the path least
+ * likely to be exercised — a report with a missing or malformed timestamp.
  */
-function buildModel(report: SelectionOrigins, meta: DataOriginsPdfMeta): StyledDocModel {
-  const blocks: StyledBlock[] = [];
-  const para = (runs: StyledRun[]) => blocks.push({ kind: 'paragraph', runs });
-  const heading = (text: string) =>
-    blocks.push({ kind: 'heading', runs: [{ text, bold: true, color: INK, size: SIZE_SECTION }] });
-
-  // ── Title block ────────────────────────────────────────────────────────────
-  blocks.push({ kind: 'heading', runs: [{ text: 'Data Origins', bold: true, color: INK, size: SIZE_TITLE }] });
-  para([{ text: meta.documentTitle || `${report.documentTable} · ${report.documentId}`, color: MUTED, size: SIZE_BODY }]);
-  para([
-    {
-      text: `Characters ${report.selection.charStart}–${report.selection.charEnd} · generated ${new Date(
-        report.generatedAt,
-      ).toUTCString()}`,
-      color: MUTED,
-      size: SIZE_BODY,
-    },
-  ]);
-  if (meta.requestedBy) para([{ text: `Requested by ${meta.requestedBy}`, color: MUTED, size: SIZE_BODY }]);
-
-  // Coverage stated up front — the first thing a reviewer should see.
-  blocks.push({ kind: 'spacer' });
-  const coverageColor = report.coveragePercent === 100 ? OK : WARN;
-  para([
-    {
-      text: `${report.coveragePercent}% of the selected text has recorded origins`,
-      bold: true,
-      color: coverageColor,
-      size: SIZE_COVERAGE,
-    },
-  ]);
-  para([
-    {
-      text:
-        `${report.counts.total} origin${report.counts.total === 1 ? '' : 's'} · ` +
-        `${report.counts.fromSources} from Data Room sources · ` +
-        `${report.counts.authorAsserted} author assertion${report.counts.authorAsserted === 1 ? '' : 's'}` +
-        (report.counts.stale > 0 ? ` · ${report.counts.stale} against changed sources` : ''),
-      color: MUTED,
-      size: SIZE_SMALL,
-    },
-  ]);
-
-  blocks.push({ kind: 'rule' });
-
-  // ── The selected text ────────────────────────────────────────────────────
-  if (report.selection.text) {
-    heading('Selected text');
-    para([{ text: report.selection.text, italic: true, color: INK, size: SIZE_BODY }]);
-  }
-
-  // ── Origins ────────────────────────────────────────────────────────────────
-  heading('Origins');
-  if (report.origins.length === 0) {
-    para([{ text: 'No recorded origin for any part of this selection.', color: WARN, size: SIZE_BODY }]);
-  }
-  for (const row of report.origins) {
-    para([{ text: originLabel(row), bold: true, color: INK, size: SIZE_BODY }]);
-
-    const bits: string[] = [`characters ${row.charStart}–${row.charEnd}`, usageLabel(row.usage)];
-    if (row.sourceLocator) bits.push(row.sourceLocator);
-    if (row.assertedBy) bits.push(`by ${row.assertedBy}`);
-    if (row.confidence !== null && row.confidence !== undefined) {
-      bits.push(`confidence ${Math.round(row.confidence * 100)}%`);
-    }
-    para([{ text: bits.join('  ·  '), color: MUTED, size: SIZE_SMALL }]);
-
-    const state = stateLabel(row.state);
-    if (state && row.state !== 'current') {
-      para([{ text: state.text, bold: true, color: state.color, size: SIZE_SMALL }]);
-    }
-    if (row.payloadSha256) {
-      para([
-        { text: `source content hash when cited: ${row.payloadSha256.slice(0, 32)}`, color: MUTED, size: SIZE_TINY },
-      ]);
-    }
-    blocks.push({ kind: 'spacer' });
-  }
-
-  // ── What has no origin ───────────────────────────────────────────────────
-  blocks.push({ kind: 'rule' });
-  heading('Unattributed ranges');
-  if (report.uncovered.length === 0) {
-    para([{ text: 'None — every character of the selection has a recorded origin.', color: OK, size: SIZE_BODY }]);
-  } else {
-    para([
-      {
-        text:
-          `${report.uncovered.length} range${report.uncovered.length === 1 ? '' : 's'} of the selection ` +
-          'have no recorded origin:',
-        color: WARN,
-        size: SIZE_BODY,
-      },
-    ]);
-    for (const gap of report.uncovered) {
-      para([{ text: `• characters ${gap.charStart}–${gap.charEnd}`, color: MUTED, size: SIZE_SMALL }]);
-    }
-  }
-
-  return { title: 'Data Origins', footerLabel: `Data Origins · ${report.documentId}`, blocks };
-}
-
-const escapeHtml = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-/** Render the model to a self-contained HTML string for the converter's fallback. */
-function modelToHtml(model: StyledDocModel): string {
-  const runsToHtml = (runs: StyledRun[] | undefined): string =>
-    (runs ?? [])
-      .map((r) => {
-        const styles = [
-          `color:#${r.color ?? INK}`,
-          `font-size:${(r.size ?? SIZE_BODY) / 2}pt`,
-          r.bold ? 'font-weight:700' : '',
-          r.italic ? 'font-style:italic' : '',
-        ]
-          .filter(Boolean)
-          .join(';');
-        return `<span style="${styles}">${escapeHtml(r.text)}</span>`;
-      })
-      .join('');
-
-  const body = model.blocks
-    .map((block) => {
-      switch (block.kind) {
-        case 'rule':
-          return '<hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0" />';
-        case 'spacer':
-          return '<div style="height:8px"></div>';
-        case 'heading':
-          return `<div style="margin:14px 0 6px">${runsToHtml(block.runs)}</div>`;
-        case 'paragraph':
-        default:
-          return `<p style="margin:0 0 5px;line-height:1.4">${runsToHtml(block.runs)}</p>`;
-      }
-    })
-    .join('\n');
-
-  return (
-    `<!DOCTYPE html><html><head><meta charset="utf-8" />` +
-    `<style>@page{size:letter;margin:54pt}body{font-family:Helvetica,Arial,sans-serif;color:#${INK}}</style>` +
-    `<title>${escapeHtml(model.title)}</title></head><body>${body}</body></html>`
-  );
+function documentDate(generatedAt: unknown): Date {
+  const t = typeof generatedAt === 'string' ? Date.parse(generatedAt) : NaN;
+  return Number.isFinite(t) ? new Date(t) : new Date(0);
 }
 
 /**
  * Render the report. Returns the finished PDF bytes.
  *
- * Deterministic apart from the generation timestamp, which the caller supplies
- * via the report itself — two renders of the same report differ only where the
- * report does. Determinism of the PDF envelope (metadata, id) is guaranteed by
- * convertDocxToPdf's makeDeterministic step.
+ * DETERMINISM — why it is set here rather than stripped afterwards
+ * A provenance report whose own SHA-256 changes every time it is printed cannot
+ * be filed, cited, or bound to an audit chain. Of everything this platform
+ * emits, it is the one document least able to afford an unstable hash.
+ *
+ * The first attempt relied on `makeDeterministic()` from the canonical
+ * converter, which rewrites `/CreationDate (D:…)` and `/ModDate (D:…)` in
+ * place. That works for LibreOffice and Puppeteer, which write those values
+ * inline. pdfkit does not: it emits them as INDIRECT objects —
+ *
+ *     17 0 obj
+ *     (D:20260804142510Z)
+ *     endobj
+ *     14 0 obj
+ *     << /Producer 15 0 R /Creator 16 0 R /CreationDate 17 0 R >>
+ *     endobj
+ *
+ * so the pattern never matches and the timestamp survives. The failure was
+ * invisible locally, where two renders land in the same second, and only showed
+ * up on a loaded CI runner that straddled a second boundary. `makeDeterministic`
+ * had appeared to work because it DOES normalise the trailer /ID.
+ *
+ * Setting the date at construction removes the whole class of problem: there is
+ * no varying value to rewrite. `makeDeterministic()` is still applied, for the
+ * /ID that pdfkit genuinely randomises per render.
  */
-export async function renderDataOriginsPdf(
+export function renderDataOriginsPdf(
   report: SelectionOrigins,
   meta: DataOriginsPdfMeta = {},
 ): Promise<Buffer> {
-  const model = buildModel(report, meta);
-  const docx = await renderStyledDocx(model);
-  const { pdf } = await convertDocxToPdf(docx, { fallbackHtml: modelToHtml(model) });
-  return pdf;
+  // pdfkit ships no type definitions, so the constructor and the drawing API
+  // are reached through `any` — the same pattern documentExportService and
+  // cerGenerator already use for this dependency. Kept to one place here.
+  const stamp = documentDate(report.generatedAt);
+  const doc: any = new (PDFDocument as any)({
+    size: 'LETTER',
+    margin: 54,
+    bufferPages: true,
+    info: { CreationDate: stamp, ModDate: stamp },
+  });
+
+  const chunks: Buffer[] = [];
+  doc.on('data', (c: Buffer) => chunks.push(c));
+
+  const done = new Promise<Buffer>((resolve, reject) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+  });
+
+  const W = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+  /** Full-width hairline at the current cursor. */
+  const rule = () => {
+    doc.moveTo(doc.x, doc.y).lineTo(doc.x + W, doc.y).strokeColor(RULE).stroke();
+  };
+
+  // ── Title block ───────────────────────────────────────────────────────────
+  doc.fillColor(INK).font('Helvetica-Bold').fontSize(20).text('Data Origins');
+  doc.moveDown(0.2);
+  doc
+    .font('Helvetica')
+    .fontSize(10)
+    .fillColor(MUTED)
+    .text(meta.documentTitle || `${report.documentTable} · ${report.documentId}`);
+  doc.text(
+    `Characters ${report.selection.charStart}–${report.selection.charEnd} · generated ${new Date(
+      report.generatedAt,
+    ).toUTCString()}`,
+  );
+  if (meta.requestedBy) doc.text(`Requested by ${meta.requestedBy}`);
+
+  // Coverage stated up front — the first thing a reviewer should see.
+  doc.moveDown(0.8);
+  const coverageColor = report.coveragePercent === 100 ? OK : WARN;
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(12)
+    .fillColor(coverageColor)
+    .text(`${report.coveragePercent}% of the selected text has recorded origins`);
+  doc
+    .font('Helvetica')
+    .fontSize(9)
+    .fillColor(MUTED)
+    .text(
+      `${report.counts.total} origin${report.counts.total === 1 ? '' : 's'} · ` +
+        `${report.counts.fromSources} from Data Room sources · ` +
+        `${report.counts.authorAsserted} author assertion${report.counts.authorAsserted === 1 ? '' : 's'}` +
+        (report.counts.stale > 0 ? ` · ${report.counts.stale} against changed sources` : ''),
+    );
+
+  doc.moveDown(0.6);
+  rule();
+  doc.moveDown(0.8);
+
+  // ── The selected text ─────────────────────────────────────────────────────
+  if (report.selection.text) {
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(INK).text('Selected text');
+    doc.moveDown(0.3);
+    doc
+      .font('Helvetica-Oblique')
+      .fontSize(10)
+      .fillColor(INK)
+      .text(report.selection.text, { width: W, align: 'left' });
+    doc.moveDown(0.8);
+  }
+
+  // ── Origins ───────────────────────────────────────────────────────────────
+  doc.font('Helvetica-Bold').fontSize(11).fillColor(INK).text('Origins');
+  doc.moveDown(0.4);
+
+  if (report.origins.length === 0) {
+    doc
+      .font('Helvetica')
+      .fontSize(10)
+      .fillColor(WARN)
+      .text('No recorded origin for any part of this selection.');
+    doc.moveDown(0.5);
+  }
+
+  for (const row of report.origins) {
+    if (doc.y > doc.page.height - doc.page.margins.bottom - 90) doc.addPage();
+
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(INK).text(originLabel(row));
+
+    const bits: string[] = [
+      `characters ${row.charStart}–${row.charEnd}`,
+      usageLabel(row.usage),
+    ];
+    if (row.sourceLocator) bits.push(row.sourceLocator);
+    if (row.assertedBy) bits.push(`by ${row.assertedBy}`);
+    if (row.confidence !== null && row.confidence !== undefined) {
+      bits.push(`confidence ${Math.round(row.confidence * 100)}%`);
+    }
+    doc.font('Helvetica').fontSize(9).fillColor(MUTED).text(bits.join('  ·  '));
+
+    const state = stateLabel(row.state);
+    if (state && row.state !== 'current') {
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(state.color).text(state.text);
+    }
+    if (row.payloadSha256) {
+      doc
+        .font('Helvetica')
+        .fontSize(8)
+        .fillColor(MUTED)
+        .text(`source content hash when cited: ${row.payloadSha256.slice(0, 32)}`);
+    }
+    doc.moveDown(0.6);
+  }
+
+  // ── What has no origin ────────────────────────────────────────────────────
+  // Printed as its own section: a report that lists only what it found reads as
+  // complete, and this is the part a reviewer most needs.
+  doc.moveDown(0.2);
+  rule();
+  doc.moveDown(0.8);
+
+  doc.font('Helvetica-Bold').fontSize(11).fillColor(INK).text('Unattributed ranges');
+  doc.moveDown(0.3);
+
+  if (report.uncovered.length === 0) {
+    doc
+      .font('Helvetica')
+      .fontSize(10)
+      .fillColor(OK)
+      .text('None — every character of the selection has a recorded origin.');
+  } else {
+    doc
+      .font('Helvetica')
+      .fontSize(10)
+      .fillColor(WARN)
+      .text(
+        `${report.uncovered.length} range${report.uncovered.length === 1 ? '' : 's'} of the selection ` +
+          'have no recorded origin:',
+      );
+    doc.moveDown(0.2);
+    for (const gap of report.uncovered) {
+      doc
+        .font('Helvetica')
+        .fontSize(9)
+        .fillColor(MUTED)
+        .text(`• characters ${gap.charStart}–${gap.charEnd}`);
+    }
+  }
+
+  // ── Footer on every page ──────────────────────────────────────────────────
+  const range = doc.bufferedPageRange();
+  for (let i = range.start; i < range.start + range.count; i++) {
+    doc.switchToPage(i);
+    doc
+      .font('Helvetica')
+      .fontSize(8)
+      .fillColor(MUTED)
+      .text(
+        `Data Origins · ${report.documentId} · page ${i - range.start + 1} of ${range.count}`,
+        doc.page.margins.left,
+        doc.page.height - doc.page.margins.bottom + 12,
+        { width: W, align: 'center' },
+      );
+  }
+
+  doc.end();
+  return done.then(makeDeterministic);
 }

@@ -19,6 +19,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
 import { authenticateToken } from '../middleware/auth';
+import { createRateLimiter } from '../middleware/rateLimiter';
 import { createScopedLogger } from '../utils/logger';
 import { pool } from '../db';
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
@@ -45,6 +46,8 @@ import { Q_SUB_TYPES, Q_SUB_STAGES } from '../../shared/schema/q-sub';
 const router = Router();
 const log = createScopedLogger('q-sub-routes');
 router.use(authenticateToken);
+// Rate-limit every q-sub handler (all perform authenticated DB access).
+router.use(createRateLimiter());
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;

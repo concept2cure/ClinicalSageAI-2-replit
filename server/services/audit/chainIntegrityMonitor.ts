@@ -23,11 +23,14 @@
 
 import { Pool } from 'pg';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { createScopedLogger } from '../../utils/logger';
 import {
   recordBackgroundJobRun,
   registerBackgroundJob,
   BACKGROUND_JOB,
 } from '../background-jobs-metrics';
+
+const logger = createScopedLogger('ChainMonitor');
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -117,7 +120,7 @@ let _status: ChainMonitorStatus = {
 async function runCheck(): Promise<ChainMonitorStatus> {
   // Prevent overlapping checks
   if (_checkInProgress) {
-    console.log('[ChainMonitor] Previous check still running, skipping this cycle');
+    logger.info('previous check still running, skipping this cycle');
     return _status;
   }
   _checkInProgress = true;
@@ -166,10 +169,10 @@ async function runCheck(): Promise<ChainMonitorStatus> {
       };
 
       if (!isHealthy) {
-        console.error(
-          `[ChainMonitor] CRITICAL: ${brokenDetails.length} broken link(s) detected in audit_events hash chain!`,
-          brokenDetails.slice(0, 5)
-        );
+        logger.error('CRITICAL: broken link(s) detected in audit_events hash chain', {
+          brokenLinks: brokenDetails.length,
+          sample: brokenDetails.slice(0, 5),
+        });
 
         // Record the integrity failure as its own audit event
         try {
@@ -188,10 +191,10 @@ async function runCheck(): Promise<ChainMonitorStatus> {
             ]
           );
         } catch (logErr: any) {
-          console.error('[ChainMonitor] Failed to log integrity failure event:', logErr.message);
+          logger.error('failed to log integrity failure event', { err: logErr?.message });
         }
       } else {
-        console.log(`[ChainMonitor] Chain integrity verified: ${rows.length} entries, all links intact`);
+        logger.info('chain integrity verified — all links intact', { entries: rows.length });
       }
 
       return _status;
@@ -206,7 +209,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     });
     return outcome;
   } catch (err: any) {
-    console.error('[ChainMonitor] Check failed:', err.message);
+    logger.error('check failed', { err: err?.message });
     _status = { ..._status, lastCheckAt: new Date().toISOString(), status: 'error' };
     recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, { ok: false, error: err?.message });
     return _status;
@@ -223,7 +226,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
  */
 export function startChainMonitor(pool: Pool, intervalMs: number = DEFAULT_INTERVAL_MS): void {
   if (_monitorTimer) {
-    console.warn('[ChainMonitor] Already running — stopping previous instance');
+    logger.warn('already running — stopping previous instance');
     stopChainMonitor();
   }
 
@@ -231,7 +234,7 @@ export function startChainMonitor(pool: Pool, intervalMs: number = DEFAULT_INTER
   _status.intervalMs = intervalMs;
   registerBackgroundJob(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR);
 
-  console.log(`[ChainMonitor] Starting audit chain integrity monitor (interval: ${intervalMs / 1000}s)`);
+  logger.info('starting audit chain integrity monitor', { intervalSeconds: intervalMs / 1000 });
 
   // Run first check after a short delay (let the server finish starting)
   setTimeout(() => {
@@ -251,7 +254,7 @@ export function stopChainMonitor(): void {
   if (_monitorTimer) {
     clearInterval(_monitorTimer);
     _monitorTimer = null;
-    console.log('[ChainMonitor] Stopped');
+    logger.info('stopped');
   }
 }
 
