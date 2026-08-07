@@ -35,6 +35,7 @@ import {
   emit as emitMetric,
   countCitationMix,
 } from './submission-chat-metrics.js';
+import { resolveEvidenceSourceIdsByArtifact } from '../clinical-regulatory-evidence/retrieval-source-link.js';
 
 // Cross-encoder relevance threshold for retrieval — matches the chat default
 // so submission-chat doesn't surface lower-quality matches than the section
@@ -279,6 +280,16 @@ export interface RetrievedChunk {
   artifactId: string;
   sectionCode: string | null;
   pageRef: string | null;
+  /**
+   * The canonical cre_evidence_sources.id backing this chunk, when the atom's
+   * upload created one (resolved via the Phase 2 cross-registry link —
+   * cre_evidence_sources.metadata->>'artifactId' === lumen_data_atoms.source_id).
+   * `undefined` when the chunk's upload has no canonical source (honest silence),
+   * which is the current state for most retrieved atoms — see the coverage note
+   * on enrichChunksWithArtifactMetadata. A generation path uses this to build
+   * source-attribution's RetrievedSource[] (which needs cre_evidence_sources.id).
+   */
+  evidenceSourceId?: number;
 }
 
 /**
@@ -371,6 +382,56 @@ export async function enrichChunksWithArtifactMetadata(
   const artifactByExternalId = new Map<string, ArtifactRow>();
   for (const a of projectArtifacts) artifactByExternalId.set(a.artifact_id, a);
 
+  // Phase 2 source-attribution link: resolve each atom's raw source_id (the
+  // artifact-id string) to its canonical cre_evidence_sources.id, so a
+  // generation path can build source-attribution's RetrievedSource[]. The
+  // resolver keys on lumen_data_atoms.source_id === cre_evidence_sources
+  // .metadata->>'artifactId' (see retrieval-source-link.ts) — so we resolve on
+  // the RAW atom.sourceId, not the derived artifactId (they coincide for the
+  // resolvable upload types, but the raw value is the verified join key).
+  //
+  // Honest by construction: an atom whose upload created no canonical source
+  // resolves to nothing → evidenceSourceId stays undefined. Tenant-scoped: the
+  // resolver filters organization_id, taken here from the project's own
+  // artifacts (all share one org via loadProjectArtifacts).
+  //
+  // Coverage note (precise — see routes/chat/upload.ts). The resolver now covers
+  // BOTH real link forms: the numeric-workspace ("Path A") chat_upload
+  // (source_id = artId ↔ cre_evidence_sources.metadata.artifactId) and the Data
+  // Room UUID ("Path B") chat_upload (source_id = 'cre_source:<id>', resolved by
+  // the resolver's form-2 direct embed). The concept2cure.ts data_room_upload
+  // path still writes atoms with NO cre_evidence_sources, so it correctly
+  // resolves to nothing. The ONE remaining lever is retrieval: the projectId-
+  // scoped submission-chat filter admits source_type IN
+  // ('artifact','data_room_upload') and excludes chat_upload entirely — so no
+  // resolvable atom reaches this boundary yet, and resolution is legitimately
+  // silent here. This wiring is correct and ready the moment a chat_upload atom
+  // flows; widening that filter is a separate, deliberate retrieval-behaviour
+  // change (it affects what the model retrieves), not folded in here.
+  const orgId = Number(projectArtifacts[0]?.organization_id);
+  const rawSourceIds = Array.from(
+    new Set(
+      Array.from(atomById.values())
+        .map(a => a.sourceId)
+        .filter((s): s is string => typeof s === 'string' && s.length > 0),
+    ),
+  );
+  let evidenceSourceIdByRaw = new Map<string, number>();
+  if (Number.isInteger(orgId) && orgId > 0 && rawSourceIds.length > 0) {
+    try {
+      evidenceSourceIdByRaw = await resolveEvidenceSourceIdsByArtifact(orgId, rawSourceIds);
+    } catch (err) {
+      // Attribution is strictly additive: a resolver failure (e.g. the CRE
+      // evidence-source spine not applied in this schema state, or a transient
+      // DB error) must NEVER break retrieval. Degrade to no ids — honest
+      // silence — rather than throwing out of enrichment.
+      console.warn(
+        '[submission-chat] evidence-source resolution failed (non-fatal):',
+        (err as Error)?.message,
+      );
+    }
+  }
+
   return hits.map(hit => {
     const atom = atomById.get(hit.id);
     const artifact =
@@ -392,6 +453,9 @@ export async function enrichChunksWithArtifactMetadata(
       artifactId: artifact?.artifact_id ?? atom?.sourceId ?? hit.id,
       sectionCode: artifact?.ctd_section ?? null,
       pageRef,
+      evidenceSourceId: atom?.sourceId
+        ? evidenceSourceIdByRaw.get(atom.sourceId)
+        : undefined,
     };
   });
 }
