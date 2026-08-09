@@ -94,6 +94,32 @@ const ACCEPTED_GHSA_IDS = new Set([
   // Accepting this also clears the tsx/vite "transitive vulnerability" flags,
   // which are this same advisory surfaced through their bundled esbuild.
   'GHSA-gv7w-rqvm-qjhr', // esbuild binary-integrity RCE (build-time; dep bump pending)
+
+  // ── image-size — REAL exposure, accepted; NO fix is published ─────────────
+  // GHSA-w3rx-r6r6-pgpr (ICNS parser DoS) and GHSA-5p2g-fcmc-qvqq (JXL/HEIF
+  // parser DoS), vulnerable range <=2.0.2. This is NOT registry lag: the
+  // in-range copy IS installed. `npm ls image-size --all` shows exactly one
+  // copy, image-size@1.2.1, pulled ONLY by pptxgenjs@4.0.1 (which pins
+  // "image-size": "^1.2.1"). There is no version to bump to — the LATEST
+  // published image-size is 2.0.2, still inside the advisory range, and 2.x is
+  // outside pptxgenjs's ^1.2.1 range anyway, so an override cannot fix it.
+  //
+  // Accepted as a low, non-request-path DoS: image-size is used by pptxgenjs
+  // to read the dimensions of images being embedded into a generated PPTX deck
+  // — first-party content on the export path, not an endpoint that parses
+  // attacker-supplied ICNS/JXL/HEIF files. The failure mode is an infinite loop
+  // in a synchronous export job, not RCE or data exposure.
+  //
+  // Accepting these two ids also clears the separate pptxgenjs "transitive
+  // vulnerability via unaccepted dependency" flag — it is this same image-size
+  // advisory surfaced through pptxgenjs's dependency (see isPackageAccepted's
+  // transitive recursion below).
+  //
+  // Remove when image-size publishes a fixed version >2.0.2 AND pptxgenjs
+  // widens its range to accept it (or pptxgenjs is dropped/replaced). Re-check
+  // with `npm ls image-size --all`.
+  'GHSA-w3rx-r6r6-pgpr', // image-size ICNS parser DoS (export-path only; no fix published)
+  'GHSA-5p2g-fcmc-qvqq', // image-size JXL/HEIF parser DoS (export-path only; no fix published)
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {

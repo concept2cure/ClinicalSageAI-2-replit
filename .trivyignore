@@ -33,3 +33,19 @@ CVE-2026-45829
 # matching DoS) is genuinely fixed by the react-router-dom 7.18.1 bump.
 # TODO(security): adopt react-router 8.x in a dedicated upgrade PR, then drop this.
 GHSA-qwww-vcr4-c8h2
+
+# image-size CVE-2025-71329 (zero-valued size DoS) + CVE-2025-71330 (ICNS DoS),
+# vulnerable range <=2.0.2. The only installed copy is image-size@1.2.1, pulled
+# solely by pptxgenjs@4.0.1 (which pins "image-size": "^1.2.1"). NO fixed version
+# exists — the latest published image-size is 2.0.2, still in-range, and 2.x is
+# outside pptxgenjs's range — so this cannot be remediated by a bump/override
+# (Trivy reports no fixed version). Accepted as a low, non-request-path DoS:
+# image-size reads dimensions of images embedded into generated PPTX decks
+# (first-party export content), not an endpoint parsing attacker-supplied
+# ICNS/JXL/HEIF. Trivy scans package-lock.json separately from npm audit, so
+# these must be listed here IN ADDITION to the GHSA ids in ACCEPTED_GHSA_IDS
+# (scripts/ci/audit-with-allowlist.mjs).
+# TODO(security): drop when image-size ships a fix >2.0.2 and pptxgenjs widens
+# its range (or pptxgenjs is replaced). Re-check with `npm ls image-size --all`.
+CVE-2025-71329
+CVE-2025-71330
