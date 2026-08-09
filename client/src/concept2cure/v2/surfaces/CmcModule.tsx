@@ -413,6 +413,66 @@ function specErr(json: unknown, status: number): string {
   return j?.error || j?.details?.[0]?.message || j?.message || ('HTTP ' + status);
 }
 
+/* ── Analytical method (org-scoped GET /api/cmc/analytical-methods -> { success, data }) ──
+   The org-wide analytical method library (shared/schema.ts analyticalMethods):
+   methodCode / title / technique / purpose / status (development → validation →
+   validated → retired). Surfaced read-only beneath the specifications it backs, so the
+   tab's "no method / cannot approve" warnings point at a real, org-scoped inventory
+   rather than nothing. Real rows, an honest empty, or an honest error — never a fixture. */
+interface AnalyticalMethodApiRow {
+  id: number;
+  methodCode: string;
+  title: string;
+  technique: string | null;
+  purpose: string | null;
+  status: string | null;
+}
+
+function methodStatusTone(s: string | null): string {
+  const v = String(s || '').toLowerCase();
+  if (v === 'validated') return 'ok';
+  if (v === 'validation') return 'warn';
+  if (v === 'retired') return 'err';
+  return 'dim';
+}
+
+/* The analytical method library is org-scoped (no project needed), so it renders the
+   same inventory regardless of the project in context — it is the shared catalogue the
+   per-project specifications reference by method. */
+function CmMethodLibrary() {
+  const live = useLiveRows<AnalyticalMethodApiRow>('/api/cmc/analytical-methods');
+  const rows = live.rows;
+  const validated = rows.filter((r) => String(r.status || '').toLowerCase() === 'validated').length;
+  return (
+    <div className="pj-card" style={{ marginTop: 16 }}>
+      <div className="pj-card-h"><span className="t">Analytical method library</span><span className="s">organization-wide -- ICH Q2 -- {validated}/{rows.length} validated</span></div>
+      <div className="pj-card-b" style={{ padding: 0 }}>
+        {rows.length === 0 ? (
+          <div style={{ padding: 12 }}>
+            {live.loading ? (
+              <EmptyState icon={I.clipboardList} title="Loading analytical methods…" />
+            ) : live.error ? (
+              <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load analytical methods" hint="The org-scoped method library (GET /api/cmc/analytical-methods) didn’t respond. Sign in to your tenant and retry." />
+            ) : (
+              <EmptyState icon={I.clipboardList} title="No analytical methods yet" hint="Validated analytical procedures (HPLC, GC, UV-VIS, …) appear here as your organization records them. A specification cannot be approved until its method is validated (ICH Q2)." />
+            )}
+          </div>
+        ) : (
+          <table className="reg-tbl"><thead><tr><th>Code</th><th>Method</th><th>Technique</th><th>Purpose</th><th>Status</th></tr></thead>
+          <tbody>{rows.map((r) => (
+            <tr key={r.id}>
+              <td className="mono" style={{ fontWeight: 600 }}>{r.methodCode}</td>
+              <td>{r.title}</td>
+              <td>{r.technique || '--'}</td>
+              <td>{r.purpose || '--'}</td>
+              <td><span className={'rd-chip tone-' + methodStatusTone(r.status)}>{r.status || 'development'}</span></td>
+            </tr>))}</tbody></table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: the specifications workbench is bound to the governed
      quality_specifications table (server/api/cmc/specificationRoutes.ts,
@@ -564,6 +624,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         </div>
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved specifications -> §3.2.S.4.1'} nav={nav} bar /></div>}
       </div>
+      <CmMethodLibrary />
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
       {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />
