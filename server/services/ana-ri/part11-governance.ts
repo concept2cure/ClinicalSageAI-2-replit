@@ -28,6 +28,12 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   'revert_to_version',
   'create_milestone',
   'update_milestone',
+  // A task status change mirrors into unified_tasks — the canonical regulated
+  // task record — so it alters the record exactly as update_milestone does, and
+  // belongs at the same reason-for-change tier. Deliberately NOT in the e-sign
+  // set below: the per-task approval gate (services/tasking/task-signoff) is
+  // what demands a manifested signature, and only for approval-gated tasks.
+  'update_task',
   'update_artifact_status',
   'freeze_document',
   'sign_document',

@@ -271,17 +271,37 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       return { ok: false, error: apiErrorText(res, 'Could not create the task.') };
     }
     const newTaskId = String(res.body.data.taskId);
+    // A failed dependency link never blocks the created task — but it must not
+    // be silent either. Discarding these results meant that when every link
+    // failed (e.g. an environment where task_dependencies.organization_id has
+    // not been applied yet, so the route 400s on 42703), the board still
+    // announced an unqualified "Task created" while the task landed with no
+    // predecessors: never in Blocked, never gating, never cascaded to.
+    const failed: string[] = [];
     for (const dep of dependsOn) {
-      // A failed dependency link never blocks the created task.
-      await apiCall('POST', '/api/tasks/tasks/dependencies', {
+      const link = await apiCall('POST', '/api/tasks/tasks/dependencies', {
         predecessorTaskId: dep,
         successorTaskId: newTaskId,
         dependencyType: 'finish-to-start',
       });
+      if (!link.ok) failed.push(dep);
     }
     setReloadKey(k => k + 1);
     setCreating(false);
-    setAnnounce(`Task created: ${payload.title}.`);
+    if (failed.length) {
+      const noun = dependsOn.length === 1 ? 'dependency' : 'dependencies';
+      setActionErr(
+        `Task created, but ${failed.length} of ${dependsOn.length} ${noun} could not be linked. Add them from the task's detail panel.`,
+      );
+      setAnnounce(
+        `Task created: ${payload.title} — ${failed.length} dependency link${failed.length === 1 ? '' : 's'} failed.`,
+      );
+    } else {
+      setAnnounce(`Task created: ${payload.title}.`);
+    }
+    // Still ok: the task itself persisted. Returning ok:false would keep the
+    // modal open and invite a duplicate create; the partial failure is surfaced
+    // through the existing role="alert" banner instead.
     return { ok: true };
   };
 
@@ -301,7 +321,9 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       blocked: list.filter(t => t.blocked || t.status === 'blocked').length,
       crit: list.filter(t => t.criticalPath).length,
       reg: list.filter(t => t.regulatoryImpact).length,
-      appr: list.filter(t => t.approvalRequired && t.approvalStatus === 'pending').length,
+      // Anything gated and not yet approved. `=== 'pending'` was always zero:
+      // nothing writes that value (see task-signoff.ts for the real gate).
+      appr: list.filter(t => t.approvalRequired && t.approvalStatus !== 'approved').length,
       byMod, byPri, byAsg,
     };
   }, [list]);
@@ -355,7 +377,13 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {liveTasks.loading ? (
+      {/* First load only. `useLiveData` raises `loading` on every refetch and
+          preserves the previous rows, so gating on `loading` alone blanked the
+          whole board into this spinner after each move/create/archive —
+          unmounting the focused Advance button and dropping focus to <body>
+          (a keyboard regression), and hiding the optimistic overlay that is
+          meant to hold the card in its new column until the refetch lands. */}
+      {liveTasks.loading && !liveTasks.rows.length ? (
         <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
       ) : liveTasks.error ? (
         <EmptyState

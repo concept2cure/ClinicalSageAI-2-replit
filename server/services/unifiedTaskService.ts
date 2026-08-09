@@ -364,7 +364,12 @@ class UnifiedTaskService {
         and(
           ...baseConditions,
           eq(schema.unifiedTasks.approvalRequired, true),
-          eq(schema.unifiedTasks.approvalStatus, 'pending')
+          // NULL-safe "not yet approved". `= 'pending'` was structurally zero
+          // (the column is nullable with no default and nothing writes that
+          // value), which permanently credited the approvals component of the
+          // submission-readiness score a full 100 and made the
+          // "N tasks awaiting approval" critical alert unreachable.
+          sql`${schema.unifiedTasks.approvalStatus} IS DISTINCT FROM 'approved'`
         )
       );
 
@@ -770,6 +775,16 @@ class UnifiedTaskService {
         signedAt: string;
         method: string;
       } | null;
+      /** Tenant of the caller. ANDed into the WHERE as defence in depth. */
+      organizationId?: number;
+      /**
+       * Status the caller read before deciding this transition was legal.
+       * Supplied => the UPDATE is a compare-and-set: it matches only while the
+       * row still holds that status, so two concurrent transitions cannot both
+       * commit. Returns undefined when the race is lost, which the caller must
+       * treat as "nothing happened" and NOT audit.
+       */
+      expectedStatus?: string;
     }
   ) {
     const dbInstance = this.getDb();
@@ -781,27 +796,48 @@ class UnifiedTaskService {
       updates.progress = 100;
     }
 
+    // Reopening a completed task retires its signature. The manifestation in
+    // approvalHistory attests to the record as it stood at first completion;
+    // once the task is reopened and edited that attestation is stale, so the
+    // gate must close again. Leaving approvalStatus='approved' let a signed
+    // task be reopened, changed, and re-completed forever with no new PIN,
+    // meaning or reason — and rendered "approved" while it sat in progress.
+    // completedAt is cleared for the same reason (the sibling route does this;
+    // this path did not).
+    if (opts?.expectedStatus === 'completed' && status !== 'completed') {
+      updates.completedAt = null;
+      updates.approvalStatus = 'pending';
+    }
+
     if (userId) {
       updates.lastModifiedBy = userId;
     }
 
+    // Appended in the UPDATE itself rather than read-then-written: two
+    // concurrent sign-offs each reading the same prior array would write
+    // [...same, mine] and silently drop one verified §11.50 manifestation
+    // while its ledger entry persisted. approval_history is `json`, so the
+    // concat casts through jsonb and back. Set AFTER the reopen branch so an
+    // actual signature always wins over the reset.
     if (opts?.manifestation) {
-      const rows = await dbInstance
-        .select({ approvalHistory: schema.unifiedTasks.approvalHistory })
-        .from(schema.unifiedTasks)
-        .where(eq(schema.unifiedTasks.taskId, taskId))
-        .limit(1);
-      const prior = Array.isArray(rows[0]?.approvalHistory)
-        ? (rows[0]!.approvalHistory as unknown[])
-        : [];
       updates.approvalStatus = 'approved';
-      updates.approvalHistory = [...prior, opts.manifestation];
+      updates.approvalHistory = sql`(COALESCE(${schema.unifiedTasks.approvalHistory}, '[]'::json)::jsonb || ${JSON.stringify([opts.manifestation])}::jsonb)::json`;
     }
 
     const result = await dbInstance
       .update(schema.unifiedTasks)
       .set(updates)
-      .where(eq(schema.unifiedTasks.taskId, taskId))
+      .where(
+        and(
+          eq(schema.unifiedTasks.taskId, taskId),
+          ...(opts?.organizationId !== undefined
+            ? [eq(schema.unifiedTasks.organizationId, opts.organizationId)]
+            : []),
+          ...(opts?.expectedStatus !== undefined
+            ? [eq(schema.unifiedTasks.status, opts.expectedStatus)]
+            : [])
+        )
+      )
       .returning();
 
     return result[0];

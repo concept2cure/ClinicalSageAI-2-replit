@@ -425,15 +425,41 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     }
     const manifestation = signoff.required && signoff.ok ? signoff.manifestation : null;
 
-    const updatedTask = await unifiedTaskService.updateTaskStatus(id, status, userId, {
+    // `id` may be the numeric primary key — findOrgTask resolves either form —
+    // but the write is keyed on task_id, so passing the path param through
+    // matched ZERO rows while the audit entry, the cascade and the 200 all
+    // still fired: a governed ledger record asserting a transition that never
+    // happened. Always write with the resolved business key.
+    const updatedTask = await unifiedTaskService.updateTaskStatus(existing.taskId, status, userId, {
       manifestation,
+      organizationId: org,
+      expectedStatus: existing.status,
     });
+
+    // Nothing below may run unless the row actually changed. The expectedStatus
+    // compare-and-set also lands here: a concurrent transition that beat us
+    // leaves updatedTask undefined, and reporting that as 404 would misread a
+    // lost race as a missing task.
+    if (!updatedTask) {
+      const stillThere = await findOrgTask(org, id);
+      if (!stillThere) {
+        return res.status(404).json({ success: false, error: 'Task not found' });
+      }
+      return res.status(409).json({
+        success: false,
+        code: 'CONFLICT_STALE',
+        error: 'This task changed while your request was in flight. Reload and try again.',
+        from: stillThere.status,
+      });
+    }
 
     await auditTaskAction({
       orgId: org,
       userId: (req as any).user?.id,
       command: 'task.transition',
-      taskId: id,
+      // The resolved business key, so this entry chains to the task's other
+      // lineage records rather than landing under `task:<numeric pk>`.
+      taskId: existing.taskId,
       payload: {
         from: (existing as any).status,
         to: status,

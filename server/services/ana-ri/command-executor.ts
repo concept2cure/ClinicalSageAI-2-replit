@@ -1071,24 +1071,85 @@ export async function updateTask(
     }
 
     // Keep the canonical-board mirror in step (best-effort; see createTask).
+    //
+    // A status change here mutates the canonical regulated table, so it carries
+    // the same obligations the HTTP routes carry — the create mirror above
+    // already states the rule ("a row landing in the canonical regulated task
+    // table is a governed create, whoever wrote it"), and this path was the
+    // half that had not been brought up to it: no ledger entry, no state
+    // machine, no completion stamp, no unblock cascade, and no tombstone guard.
     try {
-      const mirrorSets: string[] = [];
-      const mirrorVals: unknown[] = [String(params.taskId), ctx.organizationId];
-      let mi = 3;
+      const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${params.taskId}`;
       const u = params.updates as Record<string, unknown>;
       const newStatus = mirrorStatus(u.status);
-      if (newStatus) { mirrorSets.push(`status = $${mi++}`); mirrorVals.push(newStatus); }
-      if (typeof u.name === 'string' && u.name) { mirrorSets.push(`title = $${mi++}`); mirrorVals.push(u.name); }
-      if (typeof u.priority === 'string' && u.priority) { mirrorSets.push(`priority = $${mi++}`); mirrorVals.push(u.priority); }
-      if (mirrorSets.length) {
-        mirrorSets.push('updated_at = NOW()');
-        await pool.query(
-          `UPDATE unified_tasks SET ${mirrorSets.join(', ')}
-           WHERE source_entity_type = 'project_task'
-             AND source_entity_id = $1
-             AND organization_id = $2`,
-          mirrorVals
-        );
+
+      // Current mirrored row, so the transition can be validated and the ledger
+      // entry can name the status it moved from. `deleted_at IS NULL` keeps an
+      // archived Part 11 tombstone from being silently re-written.
+      const currentRes = await pool.query(
+        `SELECT status FROM unified_tasks
+         WHERE source_entity_type = 'project_task'
+           AND source_entity_id = $1
+           AND organization_id = $2
+           AND deleted_at IS NULL`,
+        [String(params.taskId), ctx.organizationId]
+      );
+      const current = currentRes.rows[0];
+
+      if (current) {
+        const fromStatus = String(current.status);
+        // Same domain rules as the routes: AnA must not be able to drive a
+        // transition the HTTP path answers with a 409 (e.g. pending→completed).
+        if (newStatus && newStatus !== fromStatus) {
+          const { isLegalTransition } = await import('../tasking/task-state-machine.js');
+          if (!isLegalTransition(fromStatus, newStatus)) {
+            return {
+              success: false,
+              action: 'update_task',
+              message: `A task in "${fromStatus}" cannot move to "${newStatus}".`,
+            };
+          }
+        }
+
+        const mirrorSets: string[] = [];
+        const mirrorVals: unknown[] = [String(params.taskId), ctx.organizationId];
+        let mi = 3;
+        if (newStatus) { mirrorSets.push(`status = $${mi++}`); mirrorVals.push(newStatus); }
+        if (typeof u.name === 'string' && u.name) { mirrorSets.push(`title = $${mi++}`); mirrorVals.push(u.name); }
+        if (typeof u.priority === 'string' && u.priority) { mirrorSets.push(`priority = $${mi++}`); mirrorVals.push(u.priority); }
+        if (newStatus === 'completed') {
+          mirrorSets.push('completed_at = NOW()', 'progress = 100', 'completion_percentage = 100');
+        }
+        if (mirrorSets.length) {
+          mirrorSets.push('updated_at = NOW()');
+          const mirrored = await pool.query(
+            `UPDATE unified_tasks SET ${mirrorSets.join(', ')}
+             WHERE source_entity_type = 'project_task'
+               AND source_entity_id = $1
+               AND organization_id = $2
+               AND deleted_at IS NULL`,
+            mirrorVals
+          );
+
+          if (mirrored.rowCount && newStatus && newStatus !== fromStatus) {
+            const [{ auditTaskAction }, { cascadeUnblockOnCompletion }] = await Promise.all([
+              import('../tasking/task-audit.js'),
+              import('../tasking/task-side-effects.js'),
+            ]);
+            await auditTaskAction({
+              orgId: ctx.organizationId,
+              userId: ctx.userId,
+              command: 'task.transition',
+              taskId: mirroredTaskId,
+              payload: { from: fromStatus, to: newStatus },
+              reason: 'Task status changed by AnA',
+            });
+            // Completing a task wakes its dependents on every write path.
+            if (newStatus === 'completed') {
+              await cascadeUnblockOnCompletion(ctx.organizationId, mirroredTaskId);
+            }
+          }
+        }
       }
     } catch (err) {
       console.warn(

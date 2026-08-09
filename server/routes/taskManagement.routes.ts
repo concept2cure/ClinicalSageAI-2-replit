@@ -13,6 +13,7 @@ import {
 } from '../../shared/schema';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { auditTaskAction } from '../services/tasking/task-audit';
+import { loadTaskAnalytics } from '../services/tasking/task-analytics';
 import { createNotification } from '../services/notifications/notification-service';
 import {
   BUILTIN_WORKFLOW_TEMPLATES,
@@ -335,30 +336,59 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
 
     const isDone = parsed.status === 'completed';
     const progress = parsed.progress ?? (isDone ? 100 : undefined);
-    const priorHistory = Array.isArray(existing.approvalHistory)
-      ? (existing.approvalHistory as unknown[])
-      : [];
+    const isReopen = existing.status === 'completed' && parsed.status !== 'completed';
     const [updated] = await storage.db
       .update(unifiedTasks)
       .set({
         status: parsed.status,
         progress,
         completionPercentage: progress,
-        completedAt: isDone ? new Date() : existing.status === 'completed' ? null : undefined,
+        completedAt: isDone ? new Date() : isReopen ? null : undefined,
+        // Reopening retires the signature. The stored manifestation attests to
+        // the record as it stood at first completion; once the task is reopened
+        // and worked on, that attestation is stale, so the gate has to close
+        // again. Without this, a task signed once could be reopened, changed
+        // and re-completed indefinitely with no new PIN, meaning or reason —
+        // and it rendered "approved" the whole time it sat back in progress.
+        ...(isReopen ? { approvalStatus: 'pending' as string } : {}),
+        // Placed after the reopen reset so a real signature always wins.
+        // Appended in SQL rather than read-then-written: two concurrent
+        // sign-offs each reading the same prior array would write
+        // [...same, mine] and silently drop one verified §11.50 manifestation
+        // while its ledger entry persisted. approval_history is `json`, so the
+        // concat casts through jsonb and back.
         ...(manifestation
           ? {
               approvalStatus: 'approved',
-              approvalHistory: [...priorHistory, manifestation],
+              approvalHistory: sql`(COALESCE(${unifiedTasks.approvalHistory}, '[]'::json)::jsonb || ${JSON.stringify([manifestation])}::jsonb)::json`,
             }
           : {}),
         lastModifiedBy: actorUserId ?? undefined,
         updatedAt: new Date(),
       })
-      .where(and(eq(unifiedTasks.taskId, taskId), eq(unifiedTasks.organizationId, organizationId)))
+      // Compare-and-set on the status we read above. The state machine
+      // constrains what each request BELIEVES the row holds, not what it
+      // actually holds, and the PIN bcrypt comparison sits between the read and
+      // this write — a window of order-100ms. Without this predicate two
+      // concurrent transitions both pass isLegalTransition and both commit.
+      .where(
+        and(
+          eq(unifiedTasks.taskId, taskId),
+          eq(unifiedTasks.organizationId, organizationId),
+          eq(unifiedTasks.status, existing.status)
+        )
+      )
       .returning();
 
     if (!updated) {
-      return res.status(404).json({ success: false, error: 'Task not found' });
+      // The row was there a moment ago (we read it), so an empty result means
+      // the status moved under us. Reporting that as 404 would misread a lost
+      // race as a missing task.
+      return res.status(409).json({
+        success: false,
+        code: 'CONFLICT_STALE',
+        error: 'This task changed while your request was in flight. Reload and try again.',
+      });
     }
 
     if (existing.status !== parsed.status) {
@@ -1014,83 +1044,8 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
-
-    // Base condition: scope to org, and optionally to a project.
-    const baseCondition = projectId
-      ? and(
-          eq(unifiedTasks.organizationId, organizationId),
-          eq(unifiedTasks.projectId, projectId),
-          isNull(unifiedTasks.deletedAt)
-        )
-      : and(
-          eq(unifiedTasks.organizationId, organizationId),
-          isNull(unifiedTasks.deletedAt)
-        );
-
-    // Task statistics
-    const [taskStats] = await storage.db
-      .select({
-        totalTasks: count(unifiedTasks.id),
-        completedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'completed')`,
-        inProgressTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'in-progress')`,
-        blockedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'blocked')`,
-        pendingTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'pending')`,
-        avgCompletion: avg(unifiedTasks.completionPercentage),
-      })
-      .from(unifiedTasks)
-      .where(baseCondition);
-
-    // Tasks by module
-    const tasksByModule = await storage.db
-      .select({ moduleType: unifiedTasks.moduleType, count: count(unifiedTasks.id) })
-      .from(unifiedTasks)
-      .where(baseCondition)
-      .groupBy(unifiedTasks.moduleType);
-
-    // Tasks by priority
-    const tasksByPriority = await storage.db
-      .select({ priority: unifiedTasks.priority, count: count(unifiedTasks.id) })
-      .from(unifiedTasks)
-      .where(baseCondition)
-      .groupBy(unifiedTasks.priority);
-
-    // Overdue tasks
-    const [overdueTasks] = await storage.db
-      .select({ count: count(unifiedTasks.id) })
-      .from(unifiedTasks)
-      .where(
-        and(
-          baseCondition,
-          lt(unifiedTasks.dueDate, new Date()),
-          ne(unifiedTasks.status, 'completed')
-        )
-      );
-
-    // Team productivity (top performers)
-    const teamProductivity = await storage.db
-      .select({
-        name: users.name,
-        totalTasks: count(unifiedTasks.id),
-        completedTasks: sql<number>`count(*) filter (where ${unifiedTasks.status} = 'completed')`,
-        avgCompletion: avg(unifiedTasks.completionPercentage),
-      })
-      .from(unifiedTasks)
-      .innerJoin(users, eq(unifiedTasks.assigneeId, users.id))
-      .where(baseCondition)
-      .groupBy(users.id, users.name)
-      .orderBy(sql`count(*) filter (where ${unifiedTasks.status} = 'completed') desc`)
-      .limit(10);
-
-    res.json({
-      success: true,
-      data: {
-        taskStats,
-        tasksByModule,
-        tasksByPriority,
-        overdueTasks: overdueTasks?.count || 0,
-        teamProductivity,
-      },
-    });
+    const data = await loadTaskAnalytics(organizationId, projectId);
+    res.json({ success: true, data });
   } catch (error) {
     console.error('Error fetching task analytics:', error);
     res.status(500).json({
@@ -1464,7 +1419,12 @@ router.get('/my-work', async (req: Request, res: Response) => {
         dueSoon: items.filter(i => i.dueSoon).length,
         blocked: items.filter(i => i.blocked).length,
         approvalsPending: items.filter(
-          i => i.approvalRequired && i.approvalStatus === 'pending'
+          // Mirrors the gate's own definition (task-signoff.ts): anything
+          // approval-gated that is not yet approved still needs a signature.
+          // Testing === 'pending' made this structurally zero — approval_status
+          // is nullable with no default and no write path ever sets 'pending'
+          // (only 'approved'), so the count never left 0.
+          i => i.approvalRequired && i.approvalStatus !== 'approved'
         ).length,
       },
     });

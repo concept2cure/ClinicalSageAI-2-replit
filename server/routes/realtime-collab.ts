@@ -512,23 +512,35 @@ class MemoryLockStore {
  */
 class DurableLockManager {
   private fallback = new MemoryLockStore();
-  /** Sticky memory mode: unprovisioned table, no pool, or a failed first touch. */
+  /** Sticky memory mode: unprovisioned table, or no pool at all. */
   private useFallback = false;
-  /** True once any statement has succeeded — after that, only 42P01 demotes. */
-  private probed = false;
 
   private isMissingTable(err: unknown): boolean {
     return typeof err === 'object' && err !== null && (err as { code?: string }).code === '42P01';
   }
 
-  /** Decide whether this error demotes us to the in-memory fallback. */
+  /**
+   * Decide whether this error demotes us to the in-memory fallback.
+   *
+   * ONLY an unprovisioned table (42P01) does. Demotion is permanent for the
+   * process and invisible to every other replica, so a broad rule turns a
+   * transient blip into lasting cross-replica split-brain: two authors each
+   * hold "the" lock on the same section, in a Part 11 surface whose entire
+   * purpose is that they cannot. A statement timeout (57014), an admin
+   * shutdown (57P01), too-many-clients (53300), a reset pooled socket — and,
+   * before it was fixed, the takeover path's own 23505 — must surface as the
+   * 500 the route handlers already render, not silently unseat mutual
+   * exclusion. Absent pool / DATABASE_URL is handled at the `!pool` guards.
+   */
   private demoteOn(err: unknown): boolean {
-    if (this.isMissingTable(err)) return true;
-    // Before the first successful statement, ANY infrastructure failure
-    // (no DATABASE_URL, connection refused, instrumented-pool guard) means
-    // this process runs memory locks — exactly the old behaviour — instead
-    // of turning every lock action into a 500.
-    return !this.probed;
+    return this.isMissingTable(err);
+  }
+
+  /** What this process is actually using, for /health. */
+  get storageMode(): string {
+    return this.useFallback
+      ? 'in-memory fallback (per process; not durable, not shared across replicas)'
+      : 'durable (collab_section_locks)';
   }
 
   private rowToLock(r: Record<string, unknown>): DocumentLock {
@@ -576,22 +588,40 @@ class DurableLockManager {
     const expiresAt = new Date(Date.now() + (args.durationMs ?? 30 * 60 * 1000));
     try {
       if (takeover) {
-        // One atomic statement: capture the live holder, displace them, insert
-        // the new lock. No client checkout — the instrumented pool's tenant
-        // scoping applies as on any other query.
+        // One atomic statement: capture the live holder, then overwrite the row.
+        // No client checkout — the instrumented pool's tenant scoping applies as
+        // on any other query.
+        //
+        // This MUST be an upsert, not DELETE-then-INSERT. Every sub-statement of
+        // a single statement shares one command id, and the unique-index probe
+        // runs under SnapshotDirty, where a tuple deleted by the same command is
+        // still seen as live. A `DELETE … ` CTE therefore does NOT clear the way
+        // for the INSERT: the INSERT raises 23505 against UNIQUE(lock_key) on
+        // every takeover of an existing row — which is the only case takeover
+        // exists for. Ordering the CTEs or referencing `del` would not help.
+        //
+        // Unlike the non-takeover branch below, there is deliberately NO
+        // `WHERE locked_by = EXCLUDED.locked_by OR expires_at <= NOW()` guard on
+        // the DO UPDATE: displacing a live foreign holder is the whole point.
+        // `prior` is read-only and evaluates against the pre-command snapshot,
+        // so it still reports the displaced holder after the row is overwritten.
         const result = await pool.query(
           `WITH prior AS (
              SELECT locked_by, locked_by_label, expires_at
              FROM collab_section_locks
-             WHERE lock_key = $4 AND tenant_id = $1
-           ), del AS (
-             DELETE FROM collab_section_locks
              WHERE lock_key = $4 AND tenant_id = $1
            )
            INSERT INTO collab_section_locks
              (tenant_id, document_id, section_id, lock_key, locked_by, locked_by_label,
               lock_type, reason, locked_at, expires_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),$9)
+           ON CONFLICT (lock_key) DO UPDATE SET
+             locked_by = EXCLUDED.locked_by,
+             locked_by_label = EXCLUDED.locked_by_label,
+             lock_type = EXCLUDED.lock_type,
+             reason = EXCLUDED.reason,
+             locked_at = NOW(),
+             expires_at = EXCLUDED.expires_at
            RETURNING *,
              (SELECT locked_by FROM prior)       AS prev_locked_by,
              (SELECT locked_by_label FROM prior) AS prev_locked_by_label,
@@ -602,7 +632,6 @@ class DurableLockManager {
             opts.reason ?? null, expiresAt,
           ]
         );
-        this.probed = true;
         const row = result.rows[0];
         const stolen =
           row.prev_locked_by != null &&
@@ -637,7 +666,6 @@ class DurableLockManager {
           opts.reason ?? null, expiresAt,
         ]
       );
-      this.probed = true;
       if (result.rows[0]) return { lock: this.rowToLock(result.rows[0]) };
 
       // Live lock held by someone else — surface the holder for the 409.
@@ -682,11 +710,11 @@ class DurableLockManager {
          RETURNING id`,
         [lockKey, tenantId, userId]
       );
-      this.probed = true;
       return (result.rowCount ?? 0) > 0;
     } catch (err) {
       if (this.demoteOn(err)) {
         this.useFallback = true;
+        console.warn('[realtime-collab] lock table unprovisioned on release — per-process lock fallback');
         return this.fallback.release(lockKey, userId);
       }
       throw err;
@@ -702,7 +730,6 @@ class DurableLockManager {
          WHERE tenant_id = $1 AND document_id = $2 AND expires_at > NOW()`,
         [tenantId, documentId]
       );
-      this.probed = true;
       // Opportunistic reap of long-expired rows for this document.
       void pool
         .query(
@@ -715,6 +742,7 @@ class DurableLockManager {
     } catch (err) {
       if (this.demoteOn(err)) {
         this.useFallback = true;
+        console.warn('[realtime-collab] lock table unprovisioned on list — per-process lock fallback');
         return this.fallback.list(tenantId, documentId);
       }
       throw err;
@@ -1090,7 +1118,7 @@ router.get('/health', (req: Request, res: Response) => {
     // `part11AuditTrail: true`, `offlineSync: true` and
     // `conflictResolution: 'automatic-crdt'` from a router that does none of
     // those things.
-    storage: 'in-memory (per process; not durable across restarts)',
+    storage: lockManager.storageMode,
     activeRooms: stats?.totalRooms ?? null,
     connectedUsers: stats?.totalUsers ?? null,
   });

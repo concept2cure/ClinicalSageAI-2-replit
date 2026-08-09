@@ -38,7 +38,7 @@ describe('requireTaskSignoff — when a signature is (not) required', () => {
     expect(r).toEqual({ required: false });
   });
 
-  it('not required when the gate is already approved (re-completion after reopen)', async () => {
+  it('not required while the gate still reads approved', async () => {
     const r = await requireTaskSignoff({
       organizationId: 2,
       task: { ...gatedTask, approvalStatus: 'approved' },
@@ -46,6 +46,22 @@ describe('requireTaskSignoff — when a signature is (not) required', () => {
       actor,
     });
     expect(r).toEqual({ required: false });
+  });
+
+  // The reopen carve-out this test used to assert is gone. Reopening a
+  // completed task now RESETS approvalStatus to 'pending' at the write sites
+  // (taskManagement.routes / unifiedTaskService), because the stored
+  // manifestation attests to the record as it stood at first completion. So
+  // re-completion after a reopen arrives here with 'pending', not 'approved',
+  // and must run the ceremony again.
+  it('required again after a reopen has retired the signature', async () => {
+    const r = await requireTaskSignoff({
+      organizationId: 2,
+      task: { ...gatedTask, approvalStatus: 'pending' },
+      toStatus: 'completed',
+      actor,
+    });
+    expect(r).toMatchObject({ required: true, ok: false, status: 428, code: 'ESIGN_REQUIRED' });
   });
 
   it('428 ESIGN_REQUIRED when completing the gate without a signature', async () => {

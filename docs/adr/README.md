@@ -25,6 +25,7 @@ An Architecture Decision Record (ADR) is a document that captures an important a
 | [ADR-0008](0008-canonical-contradiction-and-overlay-stores.md) | Canonical contradiction and overlay stores | Proposed | 2026-07-24 |
 | [ADR-0009](0009-resolution-receipt-persistence.md)     | Resolution receipt persistence     | Proposed | 2026-07-24 |
 | [ADR-0010](0010-schema-contract-test-tier.md)          | Schema-contract test tier          | Proposed | 2026-07-24 |
+| [ADR-0011](0011-canonical-work-and-conversation-stores.md) | Canonical work and conversation stores | Proposed | 2026-08-09 |
 
 > ADR-0006 … ADR-0010 arise from the WO-00 architecture conflict audit
 > (`docs/architecture/C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md`). **ADR-0006 must be

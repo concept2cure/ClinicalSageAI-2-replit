@@ -173,7 +173,10 @@ function TrayPanel({
   );
   const reviewTasks = queue?.tasks ?? [];
   const reviewThreads = queue?.threads ?? [];
-  const approvalsFromBoard = assigned.filter(t => t.approvalRequired && t.approvalStatus === 'pending');
+  // "Not yet approved", not "== pending": approval_status is nullable with no
+  // default and nothing writes 'pending', so the old predicate meant this
+  // group could never list a task.
+  const approvalsFromBoard = assigned.filter(t => t.approvalRequired && t.approvalStatus !== 'approved');
 
   return (
     <>
