@@ -104,18 +104,36 @@ the canonical source registry are **two different registries**:
 
 Nothing at retrieval time maps one to the other. So Phase 2 is not "add two
 fields to the return shape" — it is **establish and carry a resolvable link from
-a retrieved chunk back to its `cre_evidence_sources.id`**. Candidate links to
-evaluate (each needs verification against the ingestion flow): a Data Room upload
-creates both a `cre_evidence_sources` row and the artifact/atoms, and
-`cre_evidence_sources.provenance->>'fileUploadId'` already records the upload —
-so the join likely runs source ← fileUploadId → upload → artifact → atom, and the
-ingestion path should stamp the `cre_evidence_sources.id` onto the atom
-(`source_id` or a new column) at index time so retrieval can return it directly.
-Until that link exists, automated span attribution has no honest
-`cre_evidence_sources` id to record, which is why the mechanism (Phases 1 & 3a)
-is complete and correct while the live wiring is not yet done. This is a
-foundational data-model step, best done as its own change with its own tests, not
-folded into an unrelated PR.
+a retrieved chunk back to its `cre_evidence_sources.id`**.
+
+✅ **The link, now verified in code (2026-08-07).** An earlier draft of this doc
+guessed the join ran source ← `provenance->>'fileUploadId'` → upload → artifact →
+atom. The actual link is **more direct**: a Data Room upload that creates a
+canonical source records the artifact id on the source's *metadata*.
+`routes/chat/upload.ts` uses the **same** artifact id for the atom's `source_id`
+(the `lumen_data_atoms` INSERT) and the source's `metadata.artifactId` (the
+`createSource` call). So:
+
+```
+cre_evidence_sources.metadata->>'artifactId'  ===  lumen_data_atoms.source_id
+```
+
+This is implemented and proven end-to-end against the spine migration in
+`server/services/clinical-regulatory-evidence/retrieval-source-link.ts`
+(`resolveEvidenceSourceIdsByArtifact`) +
+`__tests__/retrieval-source-link.pglite.integration.test.ts`. It is **honest by
+construction**: an atom whose upload never created a canonical source — e.g. the
+`routes/concept2cure.ts` data-room path, which writes atoms but no
+`cre_evidence_sources` — resolves to **nothing**, so no span can cite a source
+that does not exist. And it is tenant-scoped (`organization_id` on the join).
+
+Resolving at read time (rather than stamping the id onto the atom at index time)
+was chosen deliberately: it covers atoms that **already** exist, needs no
+migration or re-ingest, and cannot drift from the source registry. An index-time
+stamp remains a valid later optimization but is not required for correctness. The
+remaining Phase 2 work is purely to **carry** this resolved id through the
+retrieval return shape into generation; the honesty-critical part — the link
+itself — is done.
 
 ---
 
@@ -130,23 +148,70 @@ content. No DB, no model trust — pure string logic. Unit-tested exhaustively
 multi-source). This is the keystone and has no honesty risk.
 
 **Phase 2 — retrieval carries a resolvable `cre_evidence_sources` id.**
-The prerequisite, and the real work (see the cross-registry gap in §3): stamp the
-`cre_evidence_sources.id` onto Data Room atoms at index time (via the
-`fileUploadId` link on `cre_evidence_sources.provenance`), then extend the
-`enhancedEmbeddingService` / `advancedRAGPipeline` return shape to surface it
-alongside `sourceType`. Additive to the return shape; existing callers ignore the
-new fields. Contract-tested, with a fixture proving a retrieved Data Room chunk
-resolves to the same `cre_evidence_sources.id` a manual citation would use.
+The prerequisite, and the real work (see the cross-registry gap in §3).
+- **2a — the resolvable link (DONE, 2026-08-07).** Verified the join is
+  `cre_evidence_sources.metadata->>'artifactId' = lumen_data_atoms.source_id`
+  (not the assumed `fileUploadId` chain) and shipped
+  `resolveEvidenceSourceIdsByArtifact` (`retrieval-source-link.ts`), org-scoped
+  and honest (no source ⇒ no id), proven against the spine migration in
+  `retrieval-source-link.pglite.integration.test.ts`.
+- **2c — both link forms (DONE, 2026-08-07).** The resolver also handles the
+  program-scoped Data Room form where the atom's `source_id` is
+  `'cre_source:<id>'` (upload.ts:505) — the embedded id is VERIFIED to exist and
+  be org-owned before it is returned, never trusted blind. So the two real link
+  forms (numeric-workspace `metadata.artifactId` and UUID-workspace
+  `cre_source:<id>`) both resolve; only the `concept2cure.ts` data_room_upload
+  path (which creates no canonical source) stays honestly silent.
+- **2b — carry it through retrieval (DONE via #1285).** `searchHybrid` /
+  `searchSimilar` now attach the raw `sourceId` / `sourceType` to every retrieved
+  atom (additive; existing destructured callers ignore them), via a best-effort
+  lookup that leaves the search queries untouched and degrades to `null` on
+  failure. The RESOLVED `cre_evidence_sources.id` is produced by the 2a resolver
+  **at the generation boundary** — which holds the numeric `orgId` the resolver
+  needs — not inside `searchHybrid`, which only has the org UUID. This is what the
+  submission-chat boundary already does (#1278) and what the Phase 3 generation
+  path does next. Unit-tested (enrichment merge, null-for-missing atoms,
+  best-effort degradation when the lookup fails, `searchSimilar` parity).
 
-**Phase 3 — wire one generation path end to end.**
-Pick the authoring section-drafting path (co-located with `citeSource` in
-`authoring.router.ts`). After a section is drafted from retrieved sources, run
-Phase 1's primitive over the output and persist the verified source spans **in
-the same transaction as the section content**, then call
-`assertLineageCoversContent` so content never commits with incomplete lineage —
-identical to how `enforceAuthorLineage` already gates author spans. Author spans
-cover the remainder. PGlite integration test proves: drafted section → Data
-Origins panel returns real source spans with `state='current'`.
+**Phase 3 — wire one generation path end to end (design corrected 2026-08-09; needs a persistence-point decision).**
+
+The authoring section-drafting path is the target (co-located with `citeSource`
+in `authoring.router.ts`). But the obvious wiring — "record verified spans in the
+same transaction as the section content, in `PATCH /sections/:id`" — does NOT
+work, verified in code:
+
+- Verifying a quote needs the **source's text**. `cre_evidence_sources` has no
+  full-text column; a source's content lives chunked in `lumen_data_atoms` and is
+  assembled only at RETRIEVAL time. So at the manual save (`PATCH /sections/:id`)
+  the section's cited-source ids are available but their **content is not** —
+  there is nothing to match the generated text against.
+- The content AND (via #1285) the source identity are both in hand at exactly one
+  place: **draft generation** (`POST /sections/:sectionId/ai/draft`), which
+  retrieves the chunks it drafts from. But that endpoint *returns* the draft; it
+  does not persist it, and the user may edit before saving.
+
+So Phase 3 must record at a **draft-accept persistence point** — the moment a
+generated draft (with the chunks that back it) becomes section content. Two ways
+to introduce it (a product/UX decision, which is why this phase is on hold):
+
+  **a. Persist-on-accept (recommended).** `ai/draft` returns a short-lived draft
+  keyed to its retrieved chunks (content + resolved `cre_evidence_sources.id`); a
+  new `POST /sections/:id/ai/draft/accept` writes the section content AND, in the
+  same transaction, runs Phase 1 over it against those chunks
+  (`attributeAndRecordSourceSpans`) then `assertLineageCoversContent`. Author
+  spans cover the remainder. Re-verifying verbatim at accept time means an
+  edited-away quote simply stops matching — the citation can never go stale.
+
+  **b. Draft-writes-directly (flagged).** `ai/draft` gains an opt-in
+  `persist: true` that writes the section and records spans inline. Simpler, but
+  it turns a pure generator into a writer.
+
+Either way the record is honest: only quotes still present in the saved text are
+attributed, and `assertLineageCoversContent` makes the save fail **closed** if
+lineage is incomplete — exactly as `enforceAuthorLineage` already gates author
+spans. PGlite integration test proves: accept a draft whose sentences are
+verbatim in a retrieved source → Data Origins panel returns real
+`cre_evidence_source` spans with `state='current'`; author spans cover the rest.
 
 **Phase 4 — layer model-asserted paraphrase (optional, marked as assertion).**
 Structured-output generation that tags spans with the source id they derived

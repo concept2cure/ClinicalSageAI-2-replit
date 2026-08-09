@@ -660,6 +660,7 @@ export async function getSubscriptionStatus(organizationId: number): Promise<Sub
  */
 export async function processWebhookEvent(event: Stripe.Event): Promise<void> {
   // Idempotency check
+  // tenant-isolation-safe: keyed on Stripe's globally-unique event_id (webhook idempotency) — there is no tenant request context; the org is derived from the event and stored on INSERT below. Runs under runWithSystemTenantScope('stripe-webhook').
   const existing = await pool.query(
     `SELECT id FROM stripe_events WHERE event_id = $1`,
     [event.id]
@@ -700,12 +701,14 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<void> {
     }
 
     // Mark as processed
+    // tenant-isolation-safe: keyed on Stripe's globally-unique event_id (idempotency), system-scoped webhook — same rationale as the idempotency SELECT above.
     await pool.query(
       `UPDATE stripe_events SET processed = true WHERE event_id = $1`,
       [event.id]
     );
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
+    // tenant-isolation-safe: keyed on Stripe's globally-unique event_id (idempotency), system-scoped webhook — same rationale as the idempotency SELECT above.
     await pool.query(
       `UPDATE stripe_events SET error = $1 WHERE event_id = $2`,
       [errMsg, event.id]

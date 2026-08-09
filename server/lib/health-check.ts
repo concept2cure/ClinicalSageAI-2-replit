@@ -144,7 +144,17 @@ export class HealthCheckService {
     const startTime = Date.now();
     
     try {
-      const result = await this.pool.query('SELECT 1 as check, NOW() as time');
+      // Probe with a query that pool instrumentation treats as infrastructure.
+      // Under RLS_ENFORCE=on (the only value production accepts) any
+      // non-infrastructure statement issued outside a tenant scope fails closed
+      // — and a K8s/LB health probe legitimately runs with no tenant. The
+      // former probe `SELECT 1 as check, NOW() as time` is not in
+      // INFRASTRUCTURE_QUERIES (the aliases defeat the exact-match exemption),
+      // so it was blocked and the catch below reported the database "unhealthy"
+      // on a perfectly healthy connection — a false 503 on /health/full and
+      // /health/ready. `SELECT NOW()` is already exempt and still round-trips
+      // to the server, giving us both liveness and the server clock.
+      const result = await this.pool.query('SELECT NOW()');
       const latencyMs = Date.now() - startTime;
 
       // Check connection pool status
@@ -159,7 +169,7 @@ export class HealthCheckService {
         latencyMs,
         message: 'Database connection successful',
         details: {
-          serverTime: result.rows[0]?.time,
+          serverTime: result.rows[0]?.now,
           pool: poolStatus
         }
       };

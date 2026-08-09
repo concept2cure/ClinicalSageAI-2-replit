@@ -12,6 +12,7 @@ import type { Express } from 'express';
 import type { Pool } from 'pg';
 
 import { mountAll } from './mount-routes.js';
+import { requireTenantContext } from '../middleware/tenantContext.js';
 import projectHierarchy from '../routes/project-hierarchy.js';
 import projectRules from '../routes/project-rules.js';
 import sentinelRoutes from '../routes/sentinel-routes.js';
@@ -86,8 +87,15 @@ export async function registerProjectRoutes({ app, pool }: ProjectBootstrapConte
   }
 
   // ── Quality, Analytics, Planner ──
+  // Quality's handlers use getDb(req) === requestDb(req), which needs
+  // req.dbClient — established only by requireTenantContext. Mounted without it,
+  // every quality query threw MissingRequestDbContextError (→ 500) under
+  // RLS_ENFORCE=on. Gate it so the request-scoped client (and tenant scope) are
+  // present. Analytics/Planner keep their existing mount (separate audit).
   mountAll(app, [
     { path: '/api/quality', router: qualityManagementApi, name: 'Quality Management API' },
+  ], requireTenantContext);
+  mountAll(app, [
     { path: '/api/analytics', router: analyticsRoutes, name: 'Analytics' },
     { path: '/api/planner', router: plannerRoutes, name: 'Planner' },
   ]);

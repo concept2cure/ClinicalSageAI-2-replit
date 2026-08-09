@@ -752,6 +752,7 @@ export class AdvancedRAGPipeline {
           let texts: string[];
           if (doc.atomType === 'vault_chunk') {
             texts = await withTenantContext(this.pool, organizationUuid, async client => {
+              // tenant-isolation-safe: RLS-scoped — withTenantContext sets app.current_org_id; vault.document_chunks is org-filtered by its RLS policy (fails closed with no org context).
               const { rows } = await client.query<{ chunk_text: string | null }>(
                 `SELECT chunk_text FROM vault.document_chunks
                  WHERE document_id = $1 AND chunk_index BETWEEN $2 AND $3
@@ -880,6 +881,7 @@ export class AdvancedRAGPipeline {
     });
 
     return withTenantContext(this.pool, organizationUuid, async client => {
+      // tenant-isolation-safe: RLS-scoped — withTenantContext sets app.current_org_id; vault.documents/document_chunks are org-filtered by RLS policy (fails closed with no org context).
       const { rows: denseRows } = await client.query<VaultChunkRow>(
         `
         SELECT
@@ -916,6 +918,7 @@ export class AdvancedRAGPipeline {
       const lexParams: Array<string | number | Date> = [query, limit];
       const lexFilter = buildDocFilterClause(filters, lexParams, VAULT_FILTER_COLUMNS);
       try {
+        // tenant-isolation-safe: RLS-scoped — same withTenantContext (app.current_org_id) as the dense arm above; vault.* are org-filtered by RLS policy.
         const { rows: lexRows } = await client.query<VaultChunkRow>(
           `
           SELECT
@@ -998,6 +1001,7 @@ export class AdvancedRAGPipeline {
       embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
     });
 
+    // tenant-isolation-safe: org filter is interpolated via ${orgFilter} (AND d.organization_id = $N) when organizationId is supplied — the static scanner can't see interpolated predicates; single-tenant callers must pass organizationId (see method doc).
     const { rows: denseRows } = await this.pool.query<VaultChunkRow>(
       `
         SELECT
@@ -1038,6 +1042,7 @@ export class AdvancedRAGPipeline {
     const lexFilter = buildDocFilterClause(filters, lexParams, RAG_FILTER_COLUMNS);
     let lexical: RetrievedDocument[];
     try {
+      // tenant-isolation-safe: org filter is interpolated via ${lexOrgFilter} (AND d.organization_id = $N) when organizationId is supplied — mirrors the dense arm; the static scanner can't see interpolated predicates.
       const { rows: lexRows } = await this.pool.query<VaultChunkRow>(
         `
         SELECT

@@ -354,6 +354,56 @@ export class EnhancedEmbeddingService {
    * legitimately need cross-tenant search should add an explicit method
    * with its own access checks.
    */
+  /**
+   * Enrich retrieved atoms with their canonical source identity
+   * (`lumen_data_atoms.source_id` / `source_type`).
+   *
+   * The search paths deliberately do NOT carry these: `search_atoms_hybrid`'s
+   * RETURNS TABLE omits them, and the two hybrid branches pass the function's
+   * positional args in different orders — so both search queries are left
+   * byte-for-byte untouched and the identity is attached in a separate,
+   * best-effort lookup instead. Source attribution (Phase 2/3) needs the raw
+   * `source_id` (an artifact-id string for `data_room_upload` atoms) to resolve
+   * a chunk back to its `cre_evidence_sources.id`; carrying it here is the
+   * structural change that unblocks that, additively — existing callers
+   * destructure named fields and ignore the two new ones.
+   *
+   * Best-effort by design: if the lookup fails, every row gets
+   * `sourceId=sourceType=null` and retrieval is unaffected — a missing source
+   * identity means "not attributable", which is honest, never a broken search.
+   * The `id::text = ANY($1::text[])` match is type-agnostic so it holds whether
+   * `lumen_data_atoms.id` is an integer or a uuid.
+   */
+  private async attachSourceIdentity<T extends { id: string | number }>(
+    rows: T[]
+  ): Promise<Array<T & { sourceId: string | null; sourceType: string | null }>> {
+    const ids = rows.map(r => r.id).filter(v => v !== null && v !== undefined);
+    let meta = new Map<string, { sourceId: string | null; sourceType: string | null }>();
+    if (ids.length > 0) {
+      try {
+        const { rows: metaRows } = await this.pool.query(
+          `SELECT id, source_id, source_type FROM lumen_data_atoms WHERE id::text = ANY($1::text[])`,
+          [ids.map(String)]
+        );
+        meta = new Map(
+          metaRows.map((m: any) => [
+            String(m.id),
+            { sourceId: m.source_id ?? null, sourceType: m.source_type ?? null },
+          ])
+        );
+      } catch (error) {
+        console.warn(
+          '[enhancedEmbeddingService] source-identity enrichment failed (non-fatal); results carry null source ids:',
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    }
+    return rows.map(r => {
+      const md = meta.get(String(r.id));
+      return { ...r, sourceId: md?.sourceId ?? null, sourceType: md?.sourceType ?? null };
+    });
+  }
+
   async searchSimilar(
     query: string,
     limit = 10,
@@ -371,6 +421,8 @@ export class EnhancedEmbeddingService {
       title: string;
       similarity: number;
       atomType: string;
+      sourceId: string | null;
+      sourceType: string | null;
     }>
   > {
     if (!organizationUuid) {
@@ -424,13 +476,15 @@ export class EnhancedEmbeddingService {
       params
     );
 
-    return rows.map(row => ({
-      id: row.id,
-      content: row.content,
-      title: row.title,
-      similarity: parseFloat(row.similarity),
-      atomType: row.atom_type,
-    }));
+    return this.attachSourceIdentity(
+      rows.map(row => ({
+        id: row.id,
+        content: row.content,
+        title: row.title,
+        similarity: parseFloat(row.similarity),
+        atomType: row.atom_type,
+      }))
+    );
   }
 
   /**
@@ -452,6 +506,8 @@ export class EnhancedEmbeddingService {
       score: number;
       semanticScore: number;
       keywordScore: number;
+      sourceId: string | null;
+      sourceType: string | null;
     }>
   > {
     // Generate query embedding
@@ -507,14 +563,16 @@ export class EnhancedEmbeddingService {
       rows = allRows;
     }
 
-    return rows.map((row: any) => ({
-      id: row.id,
-      content: row.content,
-      title: row.title,
-      score: parseFloat(row.combined_score),
-      semanticScore: parseFloat(row.semantic_score),
-      keywordScore: parseFloat(row.keyword_score),
-    }));
+    return this.attachSourceIdentity(
+      rows.map((row: any) => ({
+        id: row.id,
+        content: row.content,
+        title: row.title,
+        score: parseFloat(row.combined_score),
+        semanticScore: parseFloat(row.semantic_score),
+        keywordScore: parseFloat(row.keyword_score),
+      }))
+    );
   }
 
   /**

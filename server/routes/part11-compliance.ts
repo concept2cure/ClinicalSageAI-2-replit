@@ -328,6 +328,7 @@ async function verifySignerPassword(pool: Pool, signerId: string, password: stri
   }
 
   try {
+    // tenant-isolation-safe: re-auth self-lookup — signerId is derived from the authenticated user and a client-supplied signerId is rejected unless it matches (§11.200(a)(2)); users is a global identity.
     const result = await pool.query(
       `SELECT password_hash
        FROM users
