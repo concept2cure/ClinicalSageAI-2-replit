@@ -640,6 +640,16 @@ export const C2C_MIGRATION_FILES = [
   // created but never isolated.
   'db/migrations/20260803_document_span_lineage.sql',
 
+  // ── Draft-accept store for automated span-level source attribution ──────────
+  // Parks an AI draft's retrieved chunks (content + resolved cre_evidence_sources
+  // .id) so the accept endpoint can re-verify quotes VERBATIM against them inside
+  // the section-content transaction (SOURCE_ATTRIBUTION_AUTOMATED_DESIGN.md Phase
+  // 3a). Tenant-scoped (organization_id); it declares RLS inline AND sits above
+  // the sweep — belt and suspenders — for the same reason document_span_lineage
+  // must precede the sweep: added after it, the table would exist but never be
+  // isolated on an already-provisioned database.
+  'db/migrations/20260809_authoring_ai_draft_candidates.sql',
+
   // ── Rule-pack outlines: the five stubs replaced with real trees ────────────
   // 20260529_phase9_backfill seeded nda/bla/maa/jnda/denovo as five top-level
   // rows apiece and said the full outlines would land "in a later kit". They
