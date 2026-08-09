@@ -1053,6 +1053,45 @@ export async function updateTask(
       return { success: false, action: 'update_task', message: 'No valid fields to update.' };
     }
 
+    // Read the canonical mirror BEFORE writing anything. The status domain has
+    // to be enforced ahead of the project_tasks write, not after it: rejecting
+    // afterwards would leave project_tasks already mutated while telling the
+    // caller nothing happened, and the two tables would disagree.
+    const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${params.taskId}`;
+    const requestedStatus = mirrorStatus((params.updates as Record<string, unknown>).status);
+    let mirrorFrom: string | null = null;
+    try {
+      const currentRes = await pool.query(
+        `SELECT status FROM unified_tasks
+         WHERE source_entity_type = 'project_task'
+           AND source_entity_id = $1
+           AND organization_id = $2
+           AND deleted_at IS NULL`,
+        [String(params.taskId), ctx.organizationId]
+      );
+      mirrorFrom = currentRes.rows[0] ? String(currentRes.rows[0].status) : null;
+    } catch (err) {
+      // No mirror row readable (unprovisioned column, transient): fall through
+      // and treat this as an unmirrored task, exactly as before.
+      console.warn(
+        '[ana-ri] unified_tasks mirror read failed (non-fatal):',
+        err instanceof Error ? err.message : err
+      );
+    }
+
+    // Same domain rules as the routes: AnA must not drive a transition the HTTP
+    // path answers with a 409 (e.g. pending → completed).
+    if (mirrorFrom && requestedStatus && requestedStatus !== mirrorFrom) {
+      const { isLegalTransition } = await import('../tasking/task-state-machine.js');
+      if (!isLegalTransition(mirrorFrom, requestedStatus)) {
+        return {
+          success: false,
+          action: 'update_task',
+          message: `A task in "${mirrorFrom}" cannot move to "${requestedStatus}".`,
+        };
+      }
+    }
+
     setClauses.push('updated_at = NOW()');
     const setSql = setClauses.join(', ');
     const result = await pool.query(
@@ -1079,38 +1118,13 @@ export async function updateTask(
     // half that had not been brought up to it: no ledger entry, no state
     // machine, no completion stamp, no unblock cascade, and no tombstone guard.
     try {
-      const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${params.taskId}`;
       const u = params.updates as Record<string, unknown>;
-      const newStatus = mirrorStatus(u.status);
+      const newStatus = requestedStatus;
 
-      // Current mirrored row, so the transition can be validated and the ledger
-      // entry can name the status it moved from. `deleted_at IS NULL` keeps an
-      // archived Part 11 tombstone from being silently re-written.
-      const currentRes = await pool.query(
-        `SELECT status FROM unified_tasks
-         WHERE source_entity_type = 'project_task'
-           AND source_entity_id = $1
-           AND organization_id = $2
-           AND deleted_at IS NULL`,
-        [String(params.taskId), ctx.organizationId]
-      );
-      const current = currentRes.rows[0];
-
-      if (current) {
-        const fromStatus = String(current.status);
-        // Same domain rules as the routes: AnA must not be able to drive a
-        // transition the HTTP path answers with a 409 (e.g. pending→completed).
-        if (newStatus && newStatus !== fromStatus) {
-          const { isLegalTransition } = await import('../tasking/task-state-machine.js');
-          if (!isLegalTransition(fromStatus, newStatus)) {
-            return {
-              success: false,
-              action: 'update_task',
-              message: `A task in "${fromStatus}" cannot move to "${newStatus}".`,
-            };
-          }
-        }
-
+      // Only mirror onto a row we actually read above. `deleted_at IS NULL` is
+      // repeated on the write so an archived Part 11 tombstone is never
+      // silently re-written.
+      if (mirrorFrom !== null) {
         const mirrorSets: string[] = [];
         const mirrorVals: unknown[] = [String(params.taskId), ctx.organizationId];
         let mi = 3;
@@ -1131,7 +1145,8 @@ export async function updateTask(
             mirrorVals
           );
 
-          if (mirrored.rowCount && newStatus && newStatus !== fromStatus) {
+          // Governed lineage only for a status change that actually landed.
+          if (mirrored.rowCount && newStatus && newStatus !== mirrorFrom) {
             const [{ auditTaskAction }, { cascadeUnblockOnCompletion }] = await Promise.all([
               import('../tasking/task-audit.js'),
               import('../tasking/task-side-effects.js'),
@@ -1141,7 +1156,7 @@ export async function updateTask(
               userId: ctx.userId,
               command: 'task.transition',
               taskId: mirroredTaskId,
-              payload: { from: fromStatus, to: newStatus },
+              payload: { from: mirrorFrom, to: newStatus },
               reason: 'Task status changed by AnA',
             });
             // Completing a task wakes its dependents on every write path.
