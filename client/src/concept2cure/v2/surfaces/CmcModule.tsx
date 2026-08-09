@@ -571,24 +571,98 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   );
 }
 
-/* ═══════════ Stability -- shelf-life projection ═══════════ */
+/* ═══════════ Stability -- study register + shelf-life projection ═══════════ */
+
+/* ── Stability study (org-scoped GET /api/cmc/stability-studies -> { success, data }) ──
+   useLiveRows unwraps the { success, data } envelope, so each row is the display
+   object directly. This is the REAL, org-scoped stability register (shared/schema.ts
+   stabilityStudies): studyTitle / productName / studyType / storageConditions (a code
+   array) / duration (months) / status. The ICH Q1E shelf-life PROJECTION is a separate
+   concern — it needs a normalized per-timepoint measurement series with acceptance
+   limits, which this register does not carry — so the studies are surfaced for real and
+   the projection is left as an explicit "connect a time-series" note, never fabricated. */
+interface StabilityStudyApiRow {
+  id: number;
+  studyTitle: string | null;
+  productName: string;
+  studyType: string | null;
+  storageConditions: string[] | null;
+  duration: number | null;
+  status: string | null;
+}
+
+const STAB_STORAGE_LABEL: Record<string, string> = {
+  LT: 'Long-term', ACC: 'Accelerated', INT: 'Intermediate', REF: 'Refrigerated', STR: 'Stress',
+};
+function stabStorage(codes: string[] | null): string {
+  if (!Array.isArray(codes) || codes.length === 0) return '--';
+  return codes.map((c) => STAB_STORAGE_LABEL[c] || c).join(', ');
+}
+function stabStatusTone(s: string | null): string {
+  const v = String(s || '').toUpperCase();
+  if (v === 'ACTIVE' || v === 'COMPLETED') return 'ok';
+  if (v === 'PAUSED' || v === 'ON-HOLD') return 'warn';
+  if (v === 'CANCELLED') return 'err';
+  return 'dim';
+}
 
 function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  /* DATA: fixture removed (was CMC_STAB_SEED, a fabricated aggregate time-series).
-     No faithful org-scoped stability series is available: GET /api/cmc/module3-board
-     returns stability:null, and GET /api/cmc/stability-studies returns study
-     metadata (title / product / storage conditions / duration / status), NOT a
-     measurement time-series with limits — so the ICH Q1E projection cannot be
-     sourced without fabricating the points. The deterministic linear-fit projection
-     and chart were removed with the fixture; honest empty until a stability-series
-     backend is connected. */
+  /* REAL slice: the stability register is bound to the org-scoped stability_studies
+     table (GET /api/cmc/stability-studies, server/api/cmc/routes.ts). Each row is a
+     real study surfaced as itself, an honest empty, or an honest error — never a
+     fixture. The ICH Q1E shelf-life PROJECTION is deliberately NOT drawn from this
+     register: it requires a per-timepoint measurement series against acceptance
+     limits, which this schema does not hold, and inventing the points would be
+     dishonest for a regulated shelf-life claim. So the studies are shown for real and
+     the projection is an explicit "needs a time-series source" note. */
+  const live = useLiveRows<StabilityStudyApiRow>('/api/cmc/stability-studies');
+  const rows = live.rows;
+  const active = rows.filter((r) => String(r.status || '').toUpperCase() === 'ACTIVE').length;
+  const longTerm = rows.filter((r) => String(r.studyType || '').toLowerCase().includes('long')).length;
+  const accel = rows.filter((r) => String(r.studyType || '').toLowerCase().includes('accel')).length;
   return (
     <div className="cm-body">
-      <CmHead title="Stability program" meta="ICH Q1A(R2) / Q1E -- shelf-life projection from long-term data" ask={ask} suggest={CMC_SUGGEST.stability} />
+      <CmHead title="Stability program" meta="ICH Q1A(R2) / Q1E -- long-term and accelerated studies" ask={ask} suggest={CMC_SUGGEST.stability} />
+      {rows.length > 0 && (
+        <div className="cm-kpis">
+          <Kpi l="Studies" v={rows.length} />
+          <Kpi l="Active" v={active} tone={active ? 'ok' : undefined} />
+          <Kpi l="Long-term" v={longTerm} />
+          <Kpi l="Accelerated" v={accel} />
+        </div>
+      )}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Stability & shelf-life projection</span><span className="s">ICH Q1E</span></div>
+        <div className="pj-card-h"><span className="t">Stability register</span><span className="s">{rows.length} studies -- ICH Q1A(R2)</span></div>
+        <div className="pj-card-b" style={{ padding: 0 }}>
+          {rows.length === 0 ? (
+            <div style={{ padding: 12 }}>
+              {live.loading ? (
+                <EmptyState icon={I.barChart} title="Loading stability studies…" />
+              ) : live.error ? (
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register (GET /api/cmc/stability-studies) didn’t respond. Sign in to your tenant and retry." />
+              ) : (
+                <EmptyState icon={I.barChart} title="No stability studies yet" hint="Long-term, accelerated and stress studies appear here with their storage conditions, duration and status once recorded for your organization." />
+              )}
+            </div>
+          ) : (
+            <table className="reg-tbl"><thead><tr><th>Study</th><th>Product</th><th>Type</th><th>Storage</th><th>Duration</th><th>Status</th></tr></thead>
+            <tbody>{rows.map((r) => (
+              <tr key={r.id}>
+                <td style={{ fontWeight: 600 }}>{r.studyTitle || <span className="cm-meta">Untitled study</span>}</td>
+                <td>{r.productName}</td>
+                <td>{r.studyType || '--'}</td>
+                <td>{stabStorage(r.storageConditions)}</td>
+                <td>{r.duration != null ? r.duration + ' mo' : '--'}</td>
+                <td><span className={'rd-chip tone-' + stabStatusTone(r.status)}>{r.status || 'draft'}</span></td>
+              </tr>))}</tbody></table>
+          )}
+        </div>
+        {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Stability register -> §3.2.S.7'} nav={nav} bar /></div>}
+      </div>
+      <div className="pj-card" style={{ marginTop: 16 }}>
+        <div className="pj-card-h"><span className="t">Shelf-life projection</span><span className="s">ICH Q1E</span></div>
         <div className="pj-card-b">
-          <EmptyState icon={I.barChart} title="No stability data yet" hint="Long-term stability results and the ICH Q1E shelf-life projection appear here once a stability-series data source is connected for your organization." />
+          <EmptyState icon={I.barChart} title="Projection needs a measurement time-series" hint="The ICH Q1E regression projects shelf life from timepoint measurements against acceptance limits. This register carries study metadata, not the per-timepoint series — connect a stability-results source to compute the projection here. In the meantime, ask AnA to draft the §3.2.S.7 stability summary from what is recorded." />
         </div>
         <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'§3.2.S.7 stability summary'} nav={nav} bar /></div>
       </div>
