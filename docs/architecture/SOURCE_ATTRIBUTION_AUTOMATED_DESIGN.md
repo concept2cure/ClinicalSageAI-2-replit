@@ -162,22 +162,56 @@ The prerequisite, and the real work (see the cross-registry gap in §3).
   forms (numeric-workspace `metadata.artifactId` and UUID-workspace
   `cre_source:<id>`) both resolve; only the `concept2cure.ts` data_room_upload
   path (which creates no canonical source) stays honestly silent.
-- **2b — carry it through retrieval (next).** Extend the
-  `enhancedEmbeddingService` / `advancedRAGPipeline` return shape to surface the
-  resolved `cre_evidence_sources.id` alongside `sourceType`, calling the 2a
-  resolver for `data_room_upload` / `chat_upload` chunks. Additive to the return
-  shape; existing destructured callers ignore the new fields. Contract-tested end
-  to end (retrieved Data Room chunk → the same id a manual citation would use).
+- **2b — carry it through retrieval (DONE via #1285).** `searchHybrid` /
+  `searchSimilar` now attach the raw `sourceId` / `sourceType` to every retrieved
+  atom (additive; existing destructured callers ignore them), via a best-effort
+  lookup that leaves the search queries untouched and degrades to `null` on
+  failure. The RESOLVED `cre_evidence_sources.id` is produced by the 2a resolver
+  **at the generation boundary** — which holds the numeric `orgId` the resolver
+  needs — not inside `searchHybrid`, which only has the org UUID. This is what the
+  submission-chat boundary already does (#1278) and what the Phase 3 generation
+  path does next. Unit-tested (enrichment merge, null-for-missing atoms,
+  best-effort degradation when the lookup fails, `searchSimilar` parity).
 
-**Phase 3 — wire one generation path end to end.**
-Pick the authoring section-drafting path (co-located with `citeSource` in
-`authoring.router.ts`). After a section is drafted from retrieved sources, run
-Phase 1's primitive over the output and persist the verified source spans **in
-the same transaction as the section content**, then call
-`assertLineageCoversContent` so content never commits with incomplete lineage —
-identical to how `enforceAuthorLineage` already gates author spans. Author spans
-cover the remainder. PGlite integration test proves: drafted section → Data
-Origins panel returns real source spans with `state='current'`.
+**Phase 3 — wire one generation path end to end (design corrected 2026-08-09; needs a persistence-point decision).**
+
+The authoring section-drafting path is the target (co-located with `citeSource`
+in `authoring.router.ts`). But the obvious wiring — "record verified spans in the
+same transaction as the section content, in `PATCH /sections/:id`" — does NOT
+work, verified in code:
+
+- Verifying a quote needs the **source's text**. `cre_evidence_sources` has no
+  full-text column; a source's content lives chunked in `lumen_data_atoms` and is
+  assembled only at RETRIEVAL time. So at the manual save (`PATCH /sections/:id`)
+  the section's cited-source ids are available but their **content is not** —
+  there is nothing to match the generated text against.
+- The content AND (via #1285) the source identity are both in hand at exactly one
+  place: **draft generation** (`POST /sections/:sectionId/ai/draft`), which
+  retrieves the chunks it drafts from. But that endpoint *returns* the draft; it
+  does not persist it, and the user may edit before saving.
+
+So Phase 3 must record at a **draft-accept persistence point** — the moment a
+generated draft (with the chunks that back it) becomes section content. Two ways
+to introduce it (a product/UX decision, which is why this phase is on hold):
+
+  **a. Persist-on-accept (recommended).** `ai/draft` returns a short-lived draft
+  keyed to its retrieved chunks (content + resolved `cre_evidence_sources.id`); a
+  new `POST /sections/:id/ai/draft/accept` writes the section content AND, in the
+  same transaction, runs Phase 1 over it against those chunks
+  (`attributeAndRecordSourceSpans`) then `assertLineageCoversContent`. Author
+  spans cover the remainder. Re-verifying verbatim at accept time means an
+  edited-away quote simply stops matching — the citation can never go stale.
+
+  **b. Draft-writes-directly (flagged).** `ai/draft` gains an opt-in
+  `persist: true` that writes the section and records spans inline. Simpler, but
+  it turns a pure generator into a writer.
+
+Either way the record is honest: only quotes still present in the saved text are
+attributed, and `assertLineageCoversContent` makes the save fail **closed** if
+lineage is incomplete — exactly as `enforceAuthorLineage` already gates author
+spans. PGlite integration test proves: accept a draft whose sentences are
+verbatim in a retrieved source → Data Origins panel returns real
+`cre_evidence_source` spans with `state='current'`; author spans cover the rest.
 
 **Phase 4 — layer model-asserted paraphrase (optional, marked as assertion).**
 Structured-output generation that tags spans with the source id they derived
