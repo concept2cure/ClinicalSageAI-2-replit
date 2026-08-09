@@ -890,6 +890,63 @@ function filingPath(changeType: string, risk: string, mkt: string): string[] {
   return map[mkt] || ['Assess locally', 'Region rule not modelled'];
 }
 
+/* ── CMC change-control record (org-scoped GET /api/cmc/change-control -> { success, data }) ──
+   The real change-control register (shared/schema.ts cmcChangeControl): changeNumber /
+   changeType / description / regulatoryFiling / status. The simulator computes a what-if
+   filing path over canonical rules; this register shows the changes actually logged for
+   the organization, so the tab reflects real change-control state and not only a
+   calculator. Real rows, an honest empty, or an honest error — never a fixture. */
+interface ChangeControlApiRow {
+  id: number;
+  changeNumber: string;
+  changeType: string | null;
+  description: string | null;
+  regulatoryFiling: string | null;
+  status: string | null;
+}
+
+function changeStatusTone(s: string | null): string {
+  const v = String(s || '').toLowerCase();
+  if (v === 'approved' || v === 'implemented' || v === 'closed') return 'ok';
+  if (v === 'in_review' || v === 'in-review' || v === 'review' || v === 'pending') return 'warn';
+  if (v === 'rejected') return 'err';
+  return 'dim';
+}
+
+function CmChangeRegister() {
+  const live = useLiveRows<ChangeControlApiRow>('/api/cmc/change-control');
+  const rows = live.rows;
+  const open = rows.filter((r) => !['approved', 'implemented', 'closed', 'rejected'].includes(String(r.status || '').toLowerCase())).length;
+  return (
+    <div className="pj-card" style={{ marginTop: 16 }}>
+      <div className="pj-card-h"><span className="t">Change-control register</span><span className="s">organization-wide -- {open} open -- ICH Q12</span></div>
+      <div className="pj-card-b" style={{ padding: 0 }}>
+        {rows.length === 0 ? (
+          <div style={{ padding: 12 }}>
+            {live.loading ? (
+              <EmptyState icon={I.gitBranch} title="Loading change-control records…" />
+            ) : live.error ? (
+              <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load change-control records" hint="The org-scoped change-control register (GET /api/cmc/change-control) didn’t respond. Sign in to your tenant and retry." />
+            ) : (
+              <EmptyState icon={I.gitBranch} title="No change-control records yet" hint="Logged CMC changes — with their type, filing category and status — appear here. Use the simulator above to model a change before you raise it." />
+            )}
+          </div>
+        ) : (
+          <table className="reg-tbl"><thead><tr><th>Change</th><th>Type</th><th>Description</th><th>Filing</th><th>Status</th></tr></thead>
+          <tbody>{rows.map((r) => (
+            <tr key={r.id}>
+              <td className="mono" style={{ fontWeight: 600 }}>{r.changeNumber}</td>
+              <td>{r.changeType || '--'}</td>
+              <td>{r.description || '--'}</td>
+              <td>{r.regulatoryFiling || <span className="cm-meta">not set</span>}</td>
+              <td><span className={'rd-chip tone-' + changeStatusTone(r.status)}>{r.status || 'draft'}</span></td>
+            </tr>))}</tbody></table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const [type, setType] = useState('api_supplier_change');
   const [markets, setMarkets] = useState(['fda', 'ema']);
@@ -967,6 +1024,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
           </div>
         </div>
       </div>
+      <CmChangeRegister />
       {result && (
         <div className="cm-change-out">
           <div className="cm-doc">
