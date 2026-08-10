@@ -2,10 +2,15 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
-  TB_MOD, TB_COLS, TB_TYPE, TB_SRC, TB_PROJECTS, TB_TEAM, TB_OPTIMAL,
+  // TB_PROJECTS (three invented programmes) is gone — the board, the project
+  // filter, the detail label and the workflow picker all read the org's real
+  // programmes from GET /api/projects now. What remains here is configuration:
+  // module colours, status column definitions, type labels and source labels.
+  TB_MOD, TB_COLS, TB_TYPE, TB_SRC, TB_TEAM, TB_OPTIMAL,
   TB_WORKFLOWS,
   type TaskSource,
 } from '../fixtures/task-board-data';
@@ -91,6 +96,21 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   ]);
   const tasks: TaskItem[] = liveTasks.rows;
 
+  /* The org's REAL programmes, for the project filter below. This filter used to
+     be driven by TB_PROJECTS — three invented programmes ("BX-204 -- NDA 212345",
+     "OR-902 Spinal Implant", "IV-415 Companion Dx") shown to every tenant as
+     their own. Worse, it could never work: the board emits `project` as the
+     stringified numeric projects.id (taskBoard.routes.ts), so selecting a fixture
+     slug matched zero rows and silently emptied the board. The same endpoint was
+     already being read by the create modal fifty lines below. */
+  const projectOpts = useLiveRows<ProjectOpt>('/api/projects');
+
+  /* "My tasks" needs the signed-in user's real id. It used to compare against
+     the fixture short-id 'jc', which no real row can carry — so the filter
+     returned an empty board for every user of the product. */
+  const { user } = useAuth();
+  const myId = user?.id != null ? String(user.id) : '';
+
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
     try { return (window as any).C2C_TASK_FILTER || 'all'; } catch (_e) { return 'all'; }
@@ -104,7 +124,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const modules = useMemo(() => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))], [tasks]);
   const list = tasks.filter(t =>
     (proj === 'all' || t.project === proj) &&
-    (!mine || t.assignee === 'jc') &&
+    (!mine || (myId !== '' && t.assignee === myId)) &&
     (mod === 'all' || t.moduleType === mod) &&
     t.status !== 'cancelled'
   );
@@ -199,7 +219,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   }, [list]);
 
   const SRC = (s: string): TaskSource => TB_SRC[s] || TB_SRC.unified;
-  const projLabel = (id: string) => (TB_PROJECTS.find(p => p.id === id) || { label: id }).label;
+  /* Resolve a task's project id to the org's real programme name. This used to
+     look the id up in TB_PROJECTS, whose invented slugs (bx204/or902/iv415) can
+     never match a real numeric projects.id — so it always fell through to
+     rendering the bare id. */
+  const projLabel = (id: string) =>
+    projectOpts.rows.find(p => String(p.id) === String(id))?.name ?? id;
 
   /* Answer-first lead -- computed from live task state */
   const overdue = list.filter(t => /overdue/.test(t.due) && t.status !== 'completed');
@@ -279,7 +304,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <div className="tb-filters">
           <select className="tb-sel" value={proj} onChange={e => setProj(e.target.value)}>
             <option value="all">All projects (org-scoped)</option>
-            {TB_PROJECTS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+            {projectOpts.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
           </select>
           <select className="tb-sel" value={mod} onChange={e => setMod(e.target.value)}>
             {modules.map(m => <option key={m} value={m}>{m === 'all' ? 'All modules' : m}</option>)}
@@ -619,7 +644,12 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label>Task type</label><select value={f.taskType} onChange={e => set('taskType', e.target.value)}>{Object.keys(TB_TYPE).map(t => <option key={t} value={t}>{TB_TYPE[t]}</option>)}</select></div>
-            <div className="tb-field"><label>Priority</label><select value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'urgent', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+            {/* Exactly the server's accepted vocabulary. createTaskSchema
+                (taskManagement.routes.ts) validates priority against
+                z.enum(['low','medium','high','critical']), so the 'urgent'
+                option this picker used to offer was a guaranteed HTTP 400: the
+                task simply failed to create for anyone who chose it. */}
+            <div className="tb-field"><label>Priority</label><select value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label>Status</label><select value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
@@ -667,7 +697,12 @@ interface WorkflowStartProps {
 }
 
 function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
-  const initProj = (proj && proj !== 'all') ? proj : 'bx204';
+  // Real org programmes for the picker; the default is whatever the board is
+  // already filtered to, and otherwise nothing — it used to hard-default to the
+  // fixture slug 'bx204' ("BX-204 -- NDA 212345"), a programme that exists in no
+  // customer's tenant.
+  const projects = useLiveRows<ProjectOpt>('/api/projects');
+  const initProj = (proj && proj !== 'all') ? proj : '';
   const [tid, setTid] = useState(TB_WORKFLOWS[0].templateId);
   const [project, setProject] = useState(initProj);
   const [autoAssign, setAutoAssign] = useState(true);
@@ -706,7 +741,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
         <div className="tb-form">
           <div className="tb-frow">
             <div className="tb-field"><label>Workflow template</label><select value={tid} onChange={e => setTid(e.target.value)}>{TB_WORKFLOWS.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
-            <div className="tb-field"><label>Project</label><select value={project} onChange={e => setProject(e.target.value)}>{TB_PROJECTS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+            <div className="tb-field"><label>Project</label><select value={project} onChange={e => setProject(e.target.value)}><option value="">Select a programme…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
           </div>
           <div className="wf-meta">
             <span><b>{tpl.tasks.length}</b> tasks</span><span className="tb-dot">--</span><span><b>{span}</b>-day span</span><span className="tb-dot">--</span><span><b>{totalHours}</b>h effort</span><span className="tb-dot">--</span><span><b>{tpl.dependencies.length}</b> dependencies</span>
