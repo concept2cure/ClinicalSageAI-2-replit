@@ -20,7 +20,10 @@
  */
 
 import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger.js';
 import type { Request, Response, NextFunction } from 'express';
+
+const logger = createScopedLogger('license-manager');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -429,6 +432,15 @@ export function requireTier(minimumTier: string) {
 
 /**
  * Check user quota (max projects).
+ *
+ * NOTE ON SCOPE: this counts the legacy integer-keyed `projects` table. The
+ * shipped UI does not create rows there — the v2 wizard and the program
+ * workbench create `regulatory_programs` — so for any org on the current UI
+ * this returns currentCount 0 and never trips. It is kept unchanged because
+ * entitlements-service.ts and the module-subscriptions route surface its
+ * numbers in usage panels and their expectations are built on this shape.
+ * For enforcement on a create path, call checkProgramQuota below, which counts
+ * the live entity and fails closed.
  */
 export async function checkProjectQuota(organizationId: number): Promise<{
   withinQuota: boolean;
@@ -454,6 +466,95 @@ export async function checkProjectQuota(organizationId: number): Promise<{
   } catch {
     return { withinQuota: true, currentCount: 0, maxAllowed: 10 }; // Fail-open on quota check
   }
+}
+
+/** Default seats when an organization has no explicit entitlement recorded. */
+const DEFAULT_MAX_PROGRAMS = 10;
+
+export interface ProgramQuota {
+  withinQuota: boolean;
+  currentCount: number;
+  maxAllowed: number;
+  /** True when the entitlement is the codebase's negative "unlimited" sentinel. */
+  unlimited: boolean;
+}
+
+/**
+ * Check the licensed program quota for an organization.
+ *
+ * The enforceable counterpart to checkProjectQuota: it counts
+ * regulatory_programs, the entity the shipped UI actually creates, excluding
+ * soft-deleted and archived rows so a closed-out program stops holding a seat.
+ *
+ * A quota check that fails open is not a control. checkProjectQuota returns
+ * { withinQuota: true, ... } from its catch, so a dropped connection or an RLS
+ * denial silently grants unlimited programs — the one moment the check matters
+ * most is the moment it stops working. Here an unreadable count denies.
+ *
+ * Three cases this has to get right, because each one is a way to be badly
+ * wrong in production rather than merely imprecise:
+ *
+ *   max_projects < 0   UNLIMITED. billing.ts:91 documents `-1 = unlimited` and
+ *                      the enterprise tiers use it. Read naively, `-1` is a
+ *                      truthy entitlement and `count < -1` is never true, so
+ *                      the highest-paying tier would be the only one that could
+ *                      never create a project again.
+ *   max_projects = 0   ZERO seats — a suspended org or an expired trial. `|| `
+ *                      treats it as absent and hands back the default 10, which
+ *                      is the fail-open shape this function exists to remove.
+ *                      Only NULL means "not recorded".
+ *   42P01              NOT a quota decision. The store is not provisioned; the
+ *                      caller owns that contract (503 PENDING_STORE). Swallowing
+ *                      it as a denial makes that documented response unreachable
+ *                      and reports a missing table as a billing problem.
+ */
+export async function checkProgramQuota(organizationId: number): Promise<ProgramQuota> {
+  let licenseRows: Array<{ max_projects: number | null }>;
+  let countRows: Array<{ cnt: number }>;
+
+  try {
+    const [licenseResult, countResult] = await Promise.all([
+      pool.query(`SELECT max_projects FROM organizations WHERE id = $1`, [organizationId]),
+      pool.query(
+        // Archived and soft-deleted programs do not hold a seat. The refusal
+        // this count produces tells the user to "archive a program or raise the
+        // plan limit", so archiving has to actually release one — otherwise the
+        // error names a remedy that does nothing.
+        `SELECT COUNT(*)::int AS cnt FROM regulatory_programs
+          WHERE organization_id = $1 AND deleted_at IS NULL AND status <> 'archived'`,
+        [organizationId]
+      ),
+    ]);
+    licenseRows = licenseResult.rows;
+    countRows = countResult.rows;
+  } catch (error) {
+    if ((error as { code?: string })?.code === '42P01') throw error;
+    logger.error('Program quota check failed — denying create (fail-closed)', {
+      organizationId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { withinQuota: false, currentCount: 0, maxAllowed: 0, unlimited: false };
+  }
+
+  const orgRow = licenseRows[0];
+  if (!orgRow) {
+    logger.error('Program quota check found no organization row — denying create', {
+      organizationId,
+    });
+    return { withinQuota: false, currentCount: 0, maxAllowed: 0, unlimited: false };
+  }
+
+  const currentCount = Number(countRows[0]?.cnt ?? 0);
+  const raw = orgRow.max_projects;
+  const maxAllowed = raw == null ? DEFAULT_MAX_PROGRAMS : Number(raw);
+  const unlimited = maxAllowed < 0;
+
+  return {
+    withinQuota: unlimited || currentCount < maxAllowed,
+    currentCount,
+    maxAllowed,
+    unlimited,
+  };
 }
 
 /**

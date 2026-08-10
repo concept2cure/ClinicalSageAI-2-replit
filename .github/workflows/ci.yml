@@ -220,6 +220,19 @@ jobs:
       - name: Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
         run: npm run ci:check-shell-css-collisions
 
+      # Same selector defined twice unconditionally in one file: the later rule
+      # wins silently. jsdom applies no stylesheet, so a component test asserts
+      # a correct DOM while the pixels are wrong — no other gate here sees it.
+      - name: Guardrails — CSS selector shadowing (allowlist, may only shrink)
+        run: npm run ci:check-css-selector-shadowing
+
+      # A literal `tone-*` class with no CSS rule renders an unstyled chip.
+      # Same blind spot as above: jsdom applies no stylesheet, so a component
+      # test passes while the chip has no appearance. A prose warning was tried
+      # first and was copied past twice.
+      - name: Guardrails — chip tones must have a CSS rule
+        run: npm run ci:check-chip-tones
+
       - name: Guardrails — phantom design tokens (ratchet, may only shrink)
         run: npm run ci:check-phantom-tokens
 
@@ -235,6 +248,24 @@ jobs:
       # production. ~40s — too slow for the unit suite, which is why it is a step.
       - name: Guardrails — every registered route + blueprint reaches the bundle
         run: npm run ci:check-bundle-reachability
+
+      # The level below the mount audit. Two routers sharing an app.use prefix is
+      # legitimate composition, but if both define the same method+path Express
+      # keeps the first and the second is unreachable — the same silence that hid
+      # six duplicate ops endpoints, one layer deeper. 10 prefixes here carry more
+      # than one router; this asserts none of them collides.
+      - name: Guardrails — no route defined twice under a shared prefix
+        run: npm run ci:check-route-collisions
+
+      # A rule pack is the outline a customer's submission gets built against,
+      # and they do not all have the same standing: ICH M4 is a harmonised
+      # standard, 21 CFR 814.20(b) enumerates its own contents, and a UK device
+      # outline is a reasoned construction because UK MDR 2002 enumerates
+      # nothing. The table asserted all of them with equal authority until
+      # migrations/20260810c. This keeps a newly seeded pack from going back to
+      # saying nothing about where it came from.
+      - name: Guardrails — every rule pack declares what it was built from
+        run: npm run ci:check-rule-pack-provenance
 
       # The direction nobody was asking. `audit:orphaned-endpoints` finds server
       # routes nobody calls; this finds CLIENT CALLS with no server route, which

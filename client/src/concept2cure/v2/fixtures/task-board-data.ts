@@ -148,7 +148,9 @@ export const TB_TEAM: Record<string, TeamMember> = {
   qa: { n: 'QA', t: 'Quality' },
 };
 
-/* ── Optimal assignee per module (getOptimalAssignee) ── */
+/* ── Default assignee per module. A constant lookup, not a computation.
+     The real getOptimalAssignee() (taskManagement.routes.ts:229) does balance
+     workload, but server-side; nothing here calls it. ── */
 export const TB_OPTIMAL: Record<string, string> = {
   Biostatistics: 'mw',
   Safety: 'rn',

@@ -52,6 +52,10 @@ const CTA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260806_cta_ema_ctr536_out
 // anda:fda and ide:fda, plus the doc_type CHECK widening that makes either of
 // them insertable at all. Applied after CTA, in C2C_MIGRATION_FILES order.
 const ANDA_IDE = path.join(REPO_ROOT, 'migrations/20260806b_anda_ide_filing_types.sql');
+// pma:fda's real 21 CFR 814.20 tree, replacing the six-node stub 20260528 seeded.
+const PMA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260810_pma_fda_814_20_outline.sql');
+// EU MDR 2017/745 and IVDR 2017/746, plus the doc_type widening they need.
+const EU_DEVICE = path.join(REPO_ROOT, 'migrations/20260810b_eu_mdr_ivdr_outlines.sql');
 
 const ORG = 7;
 const PROJECT = '11111111-2222-3333-4444-555555555555';
@@ -93,6 +97,8 @@ async function boot(withOutlines = true, withAndaIde = withOutlines) {
   if (withOutlines) await pg.exec(fs.readFileSync(OUTLINES, 'utf8'));
   if (withOutlines) await pg.exec(fs.readFileSync(CTA_OUTLINE, 'utf8'));
   if (withAndaIde) await pg.exec(fs.readFileSync(ANDA_IDE, 'utf8'));
+  if (withOutlines) await pg.exec(fs.readFileSync(PMA_OUTLINE, 'utf8'));
+  if (withOutlines) await pg.exec(fs.readFileSync(EU_DEVICE, 'utf8'));
 }
 
 const scaffold = (programType: string, primaryAgency: string) =>
@@ -314,6 +320,116 @@ describe('no live rule pack is a stub', () => {
     expect(r.rows[0].esubmit_channel).toBe('CDRH-Portal');
   }, 60_000);
 
+  /*
+   * pma:fda slipped between this file's two existing rules for two years.
+   *
+   * "no pack is empty" passes at six sections. The five-module CTD assertion
+   * queries doc_type IN ('ind','nda','bla','maa','jnda') and pma is not listed —
+   * correctly, because a PMA is not a CTD. So the pack was neither empty nor in
+   * scope, and six flat placeholder sections sat live under the most demanding
+   * submission the FDA accepts.
+   *
+   * The shape is asserted, not the count, for the same reason as anda and cta: a
+   * count is satisfied by 67 of anything, and the realistic wrong answer here is
+   * not an empty pack but the old stub with more rows bolted on.
+   */
+  it('pma:fda carries the 21 CFR 814.20 tree, not the six-node stub', async () => {
+    const r = await pg.query<{ required_sections: any[]; version: string }>(
+      `SELECT required_sections, version FROM c2c_rule_packs
+        WHERE doc_type = 'pma' AND agency = 'fda' AND superseded_by IS NULL`,
+    );
+    expect(r.rows.length, 'no live pma:fda pack').toBe(1);
+    const secs = r.rows[0].required_sections;
+    const keys = new Set(secs.map((x: any) => x.key));
+
+    // The stub is gone, not merely outnumbered.
+    expect(r.rows[0].version).not.toBe('fda-pma-2024');
+
+    // Nesting is the whole difference. The stub was six roots and zero children.
+    const roots = secs.filter((x: any) => x.parent_key === null);
+    expect(roots.length, 'pma has no top-level structure').toBeGreaterThan(8);
+    expect(
+      secs.length - roots.length,
+      'pma is still flat — every section is a root, which is the stub shape',
+    ).toBeGreaterThan(40);
+
+    // The parts of 814.20(b) a reviewer looks for, named individually because
+    // "there are 67 rows" would be satisfied by 67 of anything.
+    for (const key of ['B', 'C', 'D', 'F', 'G', 'H', 'K']) {
+      expect(keys.has(key), `814.20(b) section ${key} is missing`).toBe(true);
+    }
+    // The four that decide a PMA: SSED indications, QSR conformance,
+    // biocompatibility, and effectiveness against the primary endpoint.
+    expect(keys.has('B.1'), 'SSED indications for use missing').toBe(true);
+    expect(keys.has('D.3'), '21 CFR 820 / ISO 13485 conformance missing').toBe(true);
+    expect(keys.has('F.1'), 'ISO 10993 biocompatibility missing').toBe(true);
+    expect(keys.has('G.4'), 'effectiveness against the primary endpoint missing').toBe(true);
+
+    // Optionality is real: a Class III device with no software or sterile barrier
+    // must not be handed mandatory sterilisation and cybersecurity sections.
+    const optional = secs.filter((x: any) => x.mandatory === false).map((x: any) => x.key);
+    expect(optional, 'every section is mandatory — optionality was flattened').toContain('D.4');
+    expect(optional).toContain('C.5');
+  }, 60_000);
+
+  /*
+   * mdr:ema and ivdr:ema — the EU device and diagnostics segment.
+   *
+   * Thirteen registry rows offered these and every one scaffolded a US NDA. The
+   * shape is asserted rather than the count because the realistic wrong answer
+   * is not an empty pack but the CTD spine relabelled: an MDR technical file has
+   * no modules, and an IVDR one lives or dies on analytical and clinical
+   * performance sections that appear in no CTD.
+   */
+  it('mdr:ema carries MDR Annex II + III, not a CTD', async () => {
+    const r = await pg.query<{ required_sections: any[]; esubmit_channel: string }>(
+      `SELECT required_sections, esubmit_channel FROM c2c_rule_packs
+        WHERE doc_type = 'mdr' AND agency = 'ema' AND superseded_by IS NULL`,
+    );
+    expect(r.rows.length, 'no live mdr:ema pack').toBe(1);
+    const secs = r.rows[0].required_sections;
+    const keys = new Set(secs.map((x: any) => x.key));
+
+    expect(secs.some((x: any) => /^M[1-5]$/.test(x.key)), 'an MDR file has no CTD modules').toBe(false);
+    expect(keys.has('II') && keys.has('III'), 'Annex II or III missing').toBe(true);
+    // The GSPR checklist and the clinical evaluation report are what a Notified
+    // Body opens first; risk management under ISO 14971 is the spine of both.
+    expect(keys.has('II.4.a'), 'GSPR checklist missing').toBe(true);
+    expect(keys.has('II.6.1.g'), 'clinical evaluation report (Annex XIV A) missing').toBe(true);
+    expect(keys.has('II.5.a'), 'ISO 14971 risk management file missing').toBe(true);
+    expect(keys.has('III.3'), 'PMCF plan (Annex XIV B) missing').toBe(true);
+    expect(keys.has('IV.1'), 'EU declaration of conformity missing').toBe(true);
+    expect(r.rows[0].esubmit_channel).toBe('EUDAMED');
+
+    // Class-dependent items must be optional — a Class I device needs no
+    // Notified Body certificate and no SSCP.
+    const optional = secs.filter((x: any) => x.mandatory === false).map((x: any) => x.key);
+    expect(optional).toContain('IV.2');
+    expect(optional).toContain('IV.4');
+  }, 60_000);
+
+  it('ivdr:ema carries the analytical and clinical performance evidence an IVD turns on', async () => {
+    const r = await pg.query<{ required_sections: any[] }>(
+      `SELECT required_sections FROM c2c_rule_packs
+        WHERE doc_type = 'ivdr' AND agency = 'ema' AND superseded_by IS NULL`,
+    );
+    expect(r.rows.length, 'no live ivdr:ema pack').toBe(1);
+    const secs = r.rows[0].required_sections;
+    const keys = new Set(secs.map((x: any) => x.key));
+
+    expect(secs.some((x: any) => /^M[1-5]$/.test(x.key)), 'an IVDR file has no CTD modules').toBe(false);
+    // The half that distinguishes an IVDR file from an MDR one. Named
+    // individually because "there are 55 rows" is satisfied by 55 of anything.
+    expect(keys.has('II.6.1.a'), 'limit of detection / quantitation missing').toBe(true);
+    expect(keys.has('II.6.1.b'), 'interference and cross-reactivity missing').toBe(true);
+    expect(keys.has('II.6.1.e'), 'metrological traceability of calibrators missing').toBe(true);
+    expect(keys.has('II.6.2.a'), 'scientific validity missing').toBe(true);
+    expect(keys.has('II.6.2.c'), 'Annex XIII performance evaluation report missing').toBe(true);
+    expect(keys.has('III.3'), 'PMPF plan (Annex XIII B) missing').toBe(true);
+    // Class D reference-laboratory testing applies to Class D only.
+    expect(secs.filter((x: any) => x.mandatory === false).map((x: any) => x.key)).toContain('IV.6');
+  }, 60_000);
+
   it('covers all three biotech marketing pathways', async () => {
     for (const dt of BIOTECH_PATHWAYS) {
       const r = await pg.query<{ n: number }>(
@@ -465,6 +581,67 @@ describe('scaffolding an ANDA and an IDE', () => {
     bindsTo('ide', 'fda-ide-21cfr812-20-v1.0'),
     60_000,
   );
+});
+
+describe('scaffolding an EU MDR and an EU IVDR', () => {
+  /*
+   * The end-to-end payoff for the EU device and diagnostics segment.
+   *
+   * Thirteen registry rows offered these filing types and every one produced a
+   * 71-section US NDA, because their tuples had no pathwayKey and programTypeFor
+   * fell through to `pw === 'ctd'`. Client routing fixed that but left them on
+   * 'device'/'ivd', which are deliberately unmapped — honest, and unsellable.
+   * These assert the whole chain now works: program type accepted, doc_type
+   * legal, pack seeded, real service scaffolds the real tree.
+   */
+  beforeEach(() => boot());
+
+  it('an EU MDR technical file scaffolds Annex II + III, not a CTD', async () => {
+    const r = await scaffold('mdr', 'EMA');
+    expect(r.skipped, `MDR scaffolding declined: ${JSON.stringify(r)}`).toBeUndefined();
+
+    const keys = new Set(
+      (await pg.query<{ section_key: string }>(
+        `SELECT section_key FROM c2c_document_sections WHERE document_id = $1`, [r.documentId],
+      )).rows.map((x) => x.section_key),
+    );
+    expect(keys.has('II') && keys.has('III'), 'an annex is missing').toBe(true);
+    expect(keys.has('II.4.a'), 'GSPR checklist missing').toBe(true);
+    expect(keys.has('II.6.1.g'), 'clinical evaluation report missing').toBe(true);
+    expect([...keys].some((k) => /^M[1-5]$/.test(k)), 'CTD modules leaked into an MDR file').toBe(false);
+  }, 60_000);
+
+  it('an EU IVDR technical file scaffolds its performance evidence', async () => {
+    const r = await scaffold('ivdr', 'EMA');
+    expect(r.skipped, `IVDR scaffolding declined: ${JSON.stringify(r)}`).toBeUndefined();
+
+    const keys = new Set(
+      (await pg.query<{ section_key: string }>(
+        `SELECT section_key FROM c2c_document_sections WHERE document_id = $1`, [r.documentId],
+      )).rows.map((x) => x.section_key),
+    );
+    // Analytical + clinical performance: the two things an IVD is judged on and
+    // that no CTD contains.
+    expect(keys.has('II.6.1.a'), 'limit of detection missing').toBe(true);
+    expect(keys.has('II.6.2.c'), 'performance evaluation report missing').toBe(true);
+  }, 60_000);
+
+  it('both bind to their own pack and to a doc_type the widened CHECK admits', async () => {
+    for (const [pt, ver] of [
+      ['mdr', 'eu-mdr-2017-745-annex-ii-v1.0'],
+      ['ivdr', 'eu-ivdr-2017-746-annex-ii-v1.0'],
+    ] as const) {
+      await boot();
+      const r = await scaffold(pt, 'EMA');
+      const doc = await pg.query<{ doc_type: string; agency: string; rule_pack_version: string }>(
+        `SELECT doc_type, agency, rule_pack_version FROM c2c_documents WHERE id = $1`,
+        [r.documentId],
+      );
+      expect(doc.rows.length, `no document written for ${pt}`).toBe(1);
+      expect(doc.rows[0].doc_type).toBe(pt);
+      expect(doc.rows[0].rule_pack_version).toBe(ver);
+    }
+  }, 60_000);
 });
 
 describe('scaffolding a BLA', () => {

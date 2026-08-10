@@ -663,6 +663,26 @@ export const C2C_MIGRATION_FILES = [
   // half additionally uses DROP CONSTRAINT IF EXISTS, because on a drizzle-push
   // database the table exists while the named constraint does not.
   'migrations/20260806b_anda_ide_filing_types.sql',
+  // pma:fda was six flat sections from 20260528 and never revisited — the same
+  // hollow-outline defect 20260804 fixed for five other packs. Replaces it with
+  // the real 21 CFR 814.20(b) tree as a NEW version and supersedes the stub, so
+  // documents already built against fda-pma-2024 keep the pack they were built
+  // from. Same to_regclass guard as its three siblings.
+  'migrations/20260810_pma_fda_814_20_outline.sql',
+  // EU MDR 2017/745 and IVDR 2017/746 technical documentation. Widens the
+  // doc_type CHECK for 'mdr' and 'ivdr' (a strict superset, so no existing row
+  // can be invalidated) and seeds both packs. Thirteen EU device and diagnostics
+  // filing types were scaffolding US NDAs before this.
+  'migrations/20260810b_eu_mdr_ivdr_outlines.sql',
+  // Records what each rule pack was built FROM. Every outline in the table was
+  // presented to a filer with identical authority, but an ICH M4 spine, a
+  // transcription of 21 CFR 814.20(b) and a reasoned construction against a
+  // regulation that enumerates nothing are three different kinds of claim.
+  // Backfills the conservative value first so an unenumerated pack under-claims,
+  // and marks every pack 'unreviewed' — including the FDA ones, because none has
+  // had a regulatory professional's sign-off. Must run AFTER the pack seeds
+  // above so the backfill sees them. Same to_regclass guard as its siblings.
+  'migrations/20260810c_rule_pack_provenance.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

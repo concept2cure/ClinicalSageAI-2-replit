@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -23,7 +23,27 @@ import '../styles/project-home-v2.css';
    POST/GET /api/deep-research/jobs (launch + poll). No fabricated fields;
    credits is null (rendered "—") when the usage/license tables are unreadable. */
 interface DrCredits { remaining: number; limit: number; tier: string | null }
-interface DrBoard { credits: DrCredits | null }
+/**
+ * GET /api/deep-research/board.
+ *
+ * `connectors` / `connectorCount` / `configuredCount` were missing from this
+ * type, so the response's real per-org connector status was parsed and thrown
+ * away. The surface then invented its own: `configured: !c.creds` — true for
+ * every connector that does not require credentials — which is a fact about the
+ * CATALOG, not about this organisation. Every org saw the same "N of 18
+ * connectors configured", and a connector nobody had set up rendered "ready".
+ *
+ * The server has had the real answer all along: deep-research-board.routes.ts
+ * builds these three from getConnectorCatalog(orgId) and maps each row into
+ * exactly this client shape (category→cat, requiredTier→tier,
+ * requiresCredentials→creds, description→desc).
+ */
+interface DrBoard {
+  credits: DrCredits | null;
+  connectors?: ConnectorState[];
+  connectorCount?: number;
+  configuredCount?: number;
+}
 interface DrResult { title?: string; conn?: string; source?: string; meta?: string; date?: string; url?: string }
 interface DrRunJob {
   id: number;
@@ -61,8 +81,12 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
 
   const [tab, setTab] = useState<'research' | 'connectors'>('research');
+  /* Seeded NOT configured, then replaced by the org's real status when the board
+     arrives. The old seed was `configured: !c.creds`, which asserted that every
+     credential-free connector was already set up for this org — a claim the
+     client had no basis for. Unknown must read as not configured. */
   const [conn, setConn] = useState<ConnectorState[]>(
-    DR_CONN.map((c) => ({ ...c, configured: !c.creds })),
+    DR_CONN.map((c) => ({ ...c, configured: false })),
   );
   const [query, setQuery] = useState(
     'Precedent accelerated approvals for RTK-X inhibitors on an ORR endpoint',
@@ -87,6 +111,15 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   // fabricated 42/60 placeholder.
   const board = useLiveData<DrBoard>('/api/deep-research/board');
   const credits = board.data?.credits ?? null;
+
+  /* Adopt the org's real connector status once the board resolves. Falls back to
+     the static catalog (all not-configured) if the endpoint degrades — the route
+     fails closed to the static catalog by design, so an unreadable table shows
+     an honest "not configured" rather than an invented "ready". */
+  const boardConnectors = board.data?.connectors;
+  useEffect(() => {
+    if (boardConnectors && boardConnectors.length > 0) setConn(boardConnectors);
+  }, [boardConnectors]);
 
   const toggle = (id: string) =>
     setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -136,7 +169,9 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       res = await apiRequest('POST', '/api/deep-research/jobs', {
         query: { indication: query },
         connectorIds: sel,
-        depth: depth === 'exhaustive' ? 'comprehensive' : 'standard',
+        // Sent verbatim: DEPTHS keys are the engine's own depth values now, so
+        // there is no translation step in which a price can diverge from a cost.
+        depth,
       });
     } catch (e) {
       setPhase('idle');
@@ -177,7 +212,8 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   };
 
   const cats = [...new Set(DR_CONN.map((c) => c.cat))];
-  const configuredCount = conn.filter((c) => c.configured).length;
+  /* Prefer the server's own count; fall back to counting what we hold. */
+  const configuredCount = board.data?.configuredCount ?? conn.filter((c) => c.configured).length;
 
   const doConnect = (c: ConnectorState) => {
     if (!c.creds) {

@@ -36,6 +36,39 @@ import {
   replaceAuthorSpans,
   assertLineageCoversContent,
 } from '../../services/clinical-regulatory-evidence/span-lineage.service.js';
+import {
+  normalizeRulePackProvenance,
+  rulePackProvenanceSelectSql,
+} from '../../../shared/rule-pack-provenance.js';
+
+/** The raw column names `rulePackProvenanceSelectSql` puts on a row. */
+const RAW_PROVENANCE_COLUMNS = new Set([
+  'source_basis',
+  'confidence',
+  'review_status',
+  'governing_rule',
+  'uncertainties',
+]);
+
+/**
+ * Replace the five raw provenance columns on a rule-pack row with one
+ * normalised `provenance` object.
+ *
+ * The raw columns are dropped rather than carried alongside. If both shapes
+ * were emitted, a consumer could read the un-normalised value and bypass the
+ * conservative default — which is the whole protection, because a database
+ * that has not yet taken 20260810c returns NULL for all five and a client
+ * treating NULL as "no constraint" would render an unattested outline as an
+ * unqualified one.
+ */
+function withRulePackProvenance(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (!RAW_PROVENANCE_COLUMNS.has(k)) out[k] = v;
+  }
+  out.provenance = normalizeRulePackProvenance(row);
+  return out;
+}
 
 /**
  * The canonical plain text of a c2c section, for lineage purposes.
@@ -205,14 +238,15 @@ router.get('/rule-packs', async (req: Request, res: Response) => {
 
     const { rows } = await pool.query(
       `SELECT doc_type, agency, version, label, required_sections,
-              esubmit_channel, effective_from
-       FROM c2c_rule_packs
+              esubmit_channel, effective_from,
+              ${rulePackProvenanceSelectSql('rp')}
+       FROM c2c_rule_packs rp
        WHERE ${conditions.join(' AND ')}
        ORDER BY doc_type, agency`,
       params,
     );
 
-    return res.json({ rulePacks: rows });
+    return res.json({ rulePacks: rows.map(withRulePackProvenance) });
   } catch (err: unknown) {
     console.error('[c2c/documents] GET /rule-packs', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -259,7 +293,8 @@ router.get('/:id/outline', async (req: Request, res: Response) => {
   try {
     const docRes = await pool.query(
       `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
-              d.status, d.readiness, rp.required_sections
+              d.status, d.readiness, rp.required_sections,
+              ${rulePackProvenanceSelectSql('rp')}
        FROM c2c_documents d
        JOIN c2c_rule_packs rp
          ON rp.doc_type = d.doc_type AND rp.agency = d.agency
@@ -320,6 +355,10 @@ router.get('/:id/outline', async (req: Request, res: Response) => {
         agency:   doc.agency,
         status:   doc.status,
         readiness: doc.readiness,
+        // What the tree below was built FROM. The editor navigates by this
+        // outline, so this is the one place a filer is guaranteed to be
+        // looking when the answer matters.
+        provenance: normalizeRulePackProvenance(doc),
       },
       outline,
     });

@@ -234,8 +234,16 @@ export const VERIFICATION_LABEL: Record<VerificationState, string> = {
 /**
  * Chip tone per verification state, on the existing `rd-chip tone-*` vocabulary.
  * Only tones that actually exist in the stylesheets are used — `ok`, `warn`,
- * `err`, `idle`, `ai`. (`tone-dim` appears in PrecedentEngine.tsx but has no CSS
- * rule behind it, so it renders as an unstyled base chip; don't copy it.)
+ * `err`, `idle`, `ai`.
+ *
+ * This note used to end "`tone-dim` appears in PrecedentEngine.tsx but has no
+ * CSS rule behind it … don't copy it." It was then copied twice more, into
+ * DocumentAuthoring.tsx, so all three rendered as unstyled chips — measured in
+ * Chromium as transparent background with near-black body text, beside
+ * `tone-idle`'s muted `#e8e6dc`. All three now use `tone-idle`, and
+ * `ci:check-chip-tones` fails the build on any literal tone with no rule,
+ * because a comment asking people not to repeat a mistake demonstrably is not
+ * an enforcement mechanism.
  */
 export const VERIFICATION_TONE: Record<VerificationState, 'ok' | 'warn' | 'err' | 'idle'> = {
   source_verified: 'ok',

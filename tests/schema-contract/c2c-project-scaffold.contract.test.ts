@@ -198,6 +198,46 @@ describe('it fails closed rather than guessing', () => {
     expect(r.documentId).toBeNull();
   }, 60_000);
 
+  /*
+   * A mapped agency with no pack must DECLINE, not borrow another country's.
+   *
+   * AGENCY_FALLBACKS used to be ['ich', 'fda']. No pack exists for hc, nmpa, tga
+   * or mfds, so a Health Canada NDS fell through to the FDA pack — and because
+   * scaffold-project-documents.ts writes the RESOLVED agency into c2c_documents
+   * rather than the project's, the customer got a row asserting `agency: 'fda'`,
+   * bound to ich-m4-v2.1, titled "… — NDA × FDA · 505(b)(1) · eCTD M1–M5", with
+   * 71 US sections, while their programme said Health Canada.
+   *
+   * In a Part 11 table that is worse than a wrong outline: the record states the
+   * wrong agency. This is the near-neighbour substitution document-class.ts
+   * forbids in its own header, and it is why 'fda' was removed from the list.
+   *
+   * Asserted on Health Canada specifically because it is mapped (AGENCY_TO_CODE
+   * has HC and HEALTH_CANADA) — so this is NOT the unmapped-agency case above.
+   * It reaches the pack lookup, finds nothing, and must stop there.
+   */
+  it('a mapped agency with no pack declines instead of borrowing the US one', async () => {
+    const r = await run({ primaryAgency: 'Health Canada' });
+    expect(r.skipped, 'Health Canada silently received a US pack').toBe('NO_RULE_PACK');
+    expect(r.documentId).toBeNull();
+    const n = await pg.query<{ n: number }>(`SELECT count(*)::int AS n FROM c2c_documents`);
+    expect(Number(n.rows[0].n), 'a document was written for an agency with no pack').toBe(0);
+  }, 60_000);
+
+  it('US filings are untouched — fda is matched directly, never as a fallback', async () => {
+    // The control that makes the change above safe to ship. The caller iterates
+    // [agency, ...AGENCY_FALLBACKS], so an FDA project matches on the first pass
+    // and never consults the fallback list at all. If this breaks, removing
+    // 'fda' from the fallbacks broke something it should not have.
+    const r = await run({ primaryAgency: 'FDA' });
+    expect(r.skipped).toBeUndefined();
+    expect(r.documentId).toBeTruthy();
+    const doc = await pg.query<{ agency: string }>(
+      `SELECT agency FROM c2c_documents WHERE id = $1`, [r.documentId!],
+    );
+    expect(doc.rows[0].agency).toBe('fda');
+  }, 60_000);
+
   it('never invents a rule_pack_version — the composite FK would reject it', async () => {
     const r = await run();
     const doc = await pg.query<any>(

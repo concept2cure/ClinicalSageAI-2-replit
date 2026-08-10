@@ -1,28 +1,40 @@
 /**
- * Admin surface DISPLAY CONFIG and types.
+ * Admin surface CONFIGURATION and response types. No fixture data.
  *
- * What remains here is configuration, not data about anything real:
- *   AUDIT_KINDS       the filter taxonomy the server's deriveKind() mirrors
+ * What is left, and why each earns its place:
+ *   AUDIT_KINDS       the audit-kind filter taxonomy the server's deriveKind() mirrors
  *   PLATFORM_SERVICES the static platform-capability catalog
- *   ARTIFACT_FMT      the format -> label display map
- * plus the interfaces AdminSurfaces imports as types.
+ *   ARTIFACT_FMT      a format → label display map
+ *   the interfaces    the shape the real endpoints return, imported as types
  *
- * The fixture DATA constants are gone: AUDIT_LOG, APPS_CATALOG, APP_LICENSE,
- * APP_TIER_RANK, ARTIFACTS and AC_GRANTS. AdminSurfaces had already stopped
- * reading them — it renders real persisted data, an honest empty state, or an
- * honest error state — so they sat here unreferenced.
+ * ── What was removed, and why ─────────────────────────────────────────────────
+ * Six data constants: AUDIT_LOG, APPS_CATALOG, APP_LICENSE, APP_TIER_RANK,
+ * ARTIFACTS and AC_GRANTS. None was imported anywhere. Every reference to them
+ * outside this file was a COMMENT, and two of those comments said the surface
+ * renders "no APPS_CATALOG / APP_LICENSE fallback" — the code had already moved
+ * on and the constants stayed behind.
  *
- * AUDIT_LOG is worth naming specifically. It was twenty fabricated 21 CFR
- * Part 11 audit entries: invented actors, a plausible record/previous hash
- * chain terminating at 'genesis', e-signature meanings (APPROVAL,
- * AUTHORIZATION, VERIFICATION, AUTHORSHIP), internal IP addresses, and events
- * like "Submission sealed -- AIC #001, SHA-256 manifest signed". Nothing
- * rendered it, but a fabricated signed-and-chained audit trail is the single
- * most dangerous thing that could sit in a regulated codebase waiting for
- * someone to wire it up "temporarily". It is deleted rather than left dormant.
+ * AUDIT_LOG is the one that mattered. It held twenty fabricated 21 CFR Part 11
+ * §11.10(e) audit records: a hash chain terminating at 'genesis', e-signature
+ * meanings (APPROVAL, AUTHORSHIP, VERIFICATION, AUTHORIZATION), named actors,
+ * source IPs and signing reasons. Fabricated compliance evidence is the worst
+ * thing in a regulated product to leave lying in the tree, because the day
+ * something imports it, what renders is an inspection artifact that never
+ * happened.
  *
- * Do NOT re-port the data constants from the kit. The real sources are the
- * audit-trail ledger routes and the module/licence catalog in the database.
+ * The real ledger already exists and is mounted: GET /api/audit-trail
+ * (server/routes/audit-trail-ledger.routes.ts, registered at
+ * register-regulatory-routes.ts:266) serves the org-scoped `audit_events` table
+ * whose SHA-256 chain is populated by the trg_audit_events_hash_chain trigger.
+ * Its own header sets the standard this constant violated: "hash = the REAL
+ * stored record_hash (full SHA-256 hex, never truncated or fabricated)".
+ * AUDIT_LOG's hashes were fabricated AND truncated — 'a3f7c0…e8d1'.
+ *
+ * AdminSurfaces.tsx already said all of this: "The fixture DATA constants
+ * (audit log, apps catalog, app license, artifacts and access grants) were
+ * removed — every surface below now renders real persisted data, an honest
+ * empty state, or an honest error state." True of the surface, not of this
+ * file. Now true of both.
  */
 
 /* ---- Interfaces ---- */
@@ -105,6 +117,8 @@ export interface AcGrant {
   _new?: boolean;
 }
 
+/* ---- Audit trail -- immutable hash-chained ledger (21 CFR Part 11 ss11.10(e)) ---- */
+
 export const AUDIT_KINDS: AuditKind[] = [
   { id: 'all', label: 'All' },
   { id: 'esign', label: 'E-sign' },
@@ -115,6 +129,9 @@ export const AUDIT_KINDS: AuditKind[] = [
   { id: 'validation', label: 'Validation' },
   { id: 'admin', label: 'Admin' },
 ];
+
+/* ---- Apps catalog ---- */
+
 export const PLATFORM_SERVICES: PlatformService[] = [
   { name: 'RIM -- Regulatory Intelligence Model', icon: 'database', desc: 'The non-LLM judgment layer that accumulates regulatory precedent over time and powers every app\'s recommendations.' },
   { name: 'Evidence retrieval (RAG)', icon: 'search', desc: 'Grounds answers and drafts in the corpus and returns cited source chunks. Runs inside authoring, evidence and chat.' },
@@ -128,9 +145,13 @@ export const PLATFORM_SERVICES: PlatformService[] = [
   { name: 'Connectors', icon: 'network', desc: 'ClinicalTrials.gov, FAERS/MAUDE, EUDAMED, EHR/FHIR, DMS -- feed evidence and deep research.' },
 ];
 
+/* ---- Artifacts Center ---- */
+
 export const ARTIFACT_FMT: Record<string, ArtifactFormat> = {
   docx: { label: 'DOCX', tone: 'ai', action: 'Open to edit' },
   pdf: { label: 'PDF', tone: 'err', action: 'Download' },
   xlsx: { label: 'XLSX', tone: 'ok', action: 'Download' },
   pptx: { label: 'PPTX', tone: 'warn', action: 'Download' },
 };
+
+/* ---- Admin console -- access grants ---- */
