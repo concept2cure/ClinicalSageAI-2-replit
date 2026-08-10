@@ -1085,6 +1085,12 @@
 .c2c-v2 .bd-pick-bar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; }
 .c2c-v2 .bd-pick-n{ font-size:12.5px; font-weight:600; color:var(--text-200); }
 .c2c-v2 .bd-pick-actions{ display:flex; align-items:center; gap:8px; }
+/* Framework picker + the line stating what the run will actually do. The prose
+   is authored to the chosen framework's expectations, and nothing on the
+   document records a filing type, so the choice is made visible rather than
+   guessed. */
+.c2c-v2 .bd-fw{ font:inherit; font-size:12px; color:var(--text-100); background:var(--bg-000); border:1px solid var(--border-strong); border-radius:8px; padding:8px 10px; cursor:pointer; }
+.c2c-v2 .bd-fw-note{ margin-top:8px; font-size:11.5px; line-height:1.5; color:var(--text-300); }
 .c2c-v2 .bd-ghost{ font:inherit; font-size:12px; font-weight:500; color:var(--text-300); background:none; border:1px solid var(--border); border-radius:8px; padding:7px 12px; cursor:pointer; }
 .c2c-v2 .bd-ghost:hover{ background:var(--bg-100); color:var(--text-100); }
 .c2c-v2 .bd-ghost.sm{ padding:5px 10px; font-size:11.5px; }
@@ -1154,6 +1160,9 @@
 .c2c-v2 .bd-chip.sample{ background:color-mix(in srgb,var(--warning) 13%,transparent); color:var(--warning); }
 .c2c-v2 .bd-card-acts{ display:flex; align-items:center; gap:7px; }
 .c2c-v2 .bd-accepted-note{ font-size:10.5px; color:var(--text-400); }
+/* A failed acceptance write. Reads as a failure, not as quiet metadata — the
+   card still shows Accept, and the user has to know why it is still there. */
+.c2c-v2 .bd-accepted-note.err{ color:var(--danger, #b42318); margin-right:auto; }
 @media (max-width:760px){ .c2c-v2 .bd-cards{ grid-template-columns:1fr; } .c2c-v2 .bd-pick-item{ grid-template-columns:22px 52px 1fr; } .c2c-v2 .bd-pick-item .bd-status, .c2c-v2 .bd-pick-item .bd-pick-pct{ display:none; } }
 
 /* ════════ DMS cross-connector search (vault-sources.jsx · SOW S6 · #8/#9) ════════ */
@@ -1338,6 +1347,9 @@
 .c2c-v2 .dl-fw-name{ font-size:11.5px; font-weight:600; color:var(--text-100); }
 .c2c-v2 .dl-fw-sec{ font-size:10px; color:var(--text-400); line-height:1.4; }
 .c2c-v2 .dl-cta{ font:inherit; font-size:12px; font-weight:600; color:#fff; background:var(--accent-200); border:none; border-radius:9px; padding:10px 14px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+/* Says where a binding §11 signature actually happens. The button beside this
+   used to read "Route for signature" while only opening the assistant. */
+.c2c-v2 .dl-sign-note{ margin-top:8px; font-size:11.5px; line-height:1.5; color:var(--text-300); }
 .c2c-v2 .dl-cta:hover{ background:var(--accent-100); }
 .c2c-v2 .dl-cta svg{ width:14px; height:14px; }
 .c2c-v2 .dl-export{ background:var(--bg-000); border:1px solid var(--border); border-radius:11px; padding:13px 14px; }

@@ -177,6 +177,22 @@ export const C2C_MIGRATION_FILES = [
   //
   // MUST precede the re-key below, which indexes the tables this creates.
   'db/migrations/20260401_cmc_convergence_os.sql',
+  // ── Schedule of events tenant-scoped uniqueness (added 2026-07-28) ────────
+  // SECURITY. project_schedule_of_events had a unique constraint on (project_id)
+  // alone — org-blind. generateProjectSchedule() upserted with
+  // `ON CONFLICT (project_id) DO UPDATE SET`, matching any tenant's row, and
+  // the DO UPDATE SET did not reset organization_id. A cross-org attacker could
+  // regenerate another org's schedule with new dates and regulatory milestones.
+  // This migration is the fix: (organization_id, project_id) arbiter + composite
+  // FK to projects(id, organization_id) for structural consistency.
+  //
+  // Must be on this durable path: the migration was written into db/migrations
+  // but WAS NOT on this list, so it never shipped to production databases.
+  // Landing without this entry would make the code's `ON CONFLICT
+  // (organization_id, project_id)` reference a constraint that does not exist:
+  // "there is no unique or exclusion constraint matching the ON CONFLICT
+  // specification" (42P10). Every upsert would fail.
+  'db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql',
   // ── CMC Module 3 tenant-scoped uniqueness (added 2026-07-28) ──────────────
   // SECURITY. cmc_module3_sections and cmc_source_objects were unique on keys
   // that omit organization_id (migrations/0016:22, migrations/0017:102,107).
@@ -376,6 +392,13 @@ export const C2C_MIGRATION_FILES = [
   // Work items: source_ref for string/UUID-keyed sources (correspondence
   // issues), so those rows stop sharing the (source_type, source_id=0) key.
   'migrations/20260730_work_item_source_ref.sql',
+  // C2C work items source uniqueness: enforce dedup key via constraint.
+  // upsertProjectWorkItem uses read-then-write (SELECT then INSERT/UPDATE),
+  // which is racy: concurrent requests can both see no row, both try to INSERT,
+  // and one fails. A unique constraint on (org_id, source_type, source_id)
+  // prevents both rows from landing and lets the code switch to INSERT ... ON
+  // CONFLICT for atomicity. Self-guarding: errors if duplicates exist.
+  'db/migrations/20260810_c2c_work_items_source_uniqueness.sql',
 
   // ── Deploy-dead creators, wired (ledger C-32) ────────────────────────────
   // Five files that CREATE tables live server code queries, but that sat on no
@@ -701,6 +724,15 @@ export const C2C_MIGRATION_FILES = [
   //     guard bug C-35 fixed. Left unwired because nothing needs it.
   //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and wired above; its
   //     UUID-vs-serial atom-key conflict was the defect, not an ordering gap.
+
+  // ── Performance indexes on hot-path tables (added 2026-08-10) ────────────────
+  // Indexes on the 30 most-queried tables targeting organization_id (tenant
+  // isolation), projectId (project-scoped queries), status+type (common filters),
+  // and createdAt DESC (pagination). All use CREATE INDEX CONCURRENTLY IF NOT
+  // EXISTS for idempotent application. This file was written into migrations/ but
+  // WAS NOT on this list, so it was never applied to production databases despite
+  // being essential for query performance. Landing it here closes that gap.
+  'migrations/20260331_performance_indexes.sql',
 
   // ── unified_documents / workflow_document_versions (ledger C-29, #1239/#1242) ──
   // Both tables are defined in Drizzle (shared/schema/unified_workflow.ts) but

@@ -132,8 +132,23 @@ for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
  * backtrack one character to satisfy the assertion, so `INSERT INTO users (id…)`
  * silently yields a table named `user`. It produced 400+ off-by-one phantoms.
  */
+/**
+ * `FOR UPDATE` / `FOR NO KEY UPDATE` are ROW-LOCKING clauses, not statements
+ * that write a table. Without the lookbehind, `SELECT … FOR UPDATE OF c`
+ * matched the `UPDATE` alternative and yielded a phantom table named `of`,
+ * failing the Lint job on valid, idiomatic SQL.
+ *
+ * The lookbehind is deliberately narrow — it suppresses ONLY an `UPDATE`
+ * preceded by `FOR`, which is never a table update. Adding 'of' to
+ * NOT_A_TABLE would also have silenced it, but that is the weaker fix: it
+ * treats the symptom and would additionally hide a genuine reference to a
+ * table actually named `of`.
+ *
+ * Third phantom-table variant this pattern has had to absorb; see the note
+ * above about the two earlier ones.
+ */
 const REF_RE =
-  /\b(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
+  /\b(?<!FOR\s)(?<!FOR\s{2})(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
 
 /** SQL keywords and set-returning functions that follow FROM/JOIN but are not tables. */
 const NOT_A_TABLE = new Set([

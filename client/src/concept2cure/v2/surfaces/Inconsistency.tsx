@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -114,13 +115,13 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     : null;
 
   // MOCK-ACTION FLAGS (deferred to the actions pass — real endpoints exist):
-  //  1. "Refresh findings" button — re-reads this read-model board. Triggering a
-  //     fresh DETECTION scan (POST /api/governed-intelligence/contradictions/scan/
-  //     :projectId, contradictionEngineService.scanProject) is NOT wired here.
-  //  2. resolve(f) — optimistic local review-state flip; the real transition is
-  //     POST /api/governed-intelligence/contradictions/:id/review. Not wired, so
-  //     the copy no longer claims an audit-trail write occurred.
-  //  3. reopen(f) — optimistic local review-state flip; same real endpoint.
+  //  1. "Re-scan findings" button — WIRED. Runs the real detection scan (POST
+  //     /api/governed-intelligence/contradictions/scan/:projectId,
+  //     contradictionEngineService.scanProject) and then re-reads the board.
+  //  2. resolve(f) — WIRED. Real awaited POST /api/governed-intelligence/
+  //     contradictions/:id/review; the local row moves only after the server
+  //     confirms the transition.
+  //  3. reopen(f) — WIRED, same endpoint with reviewState 'unresolved'.
   //  4. propagate(v) — "change value everywhere" across the dossier has no single
   //     persisted backing here; the trigger is also unreachable while findings
   //     carry a null factId. Kept guarded + flagged; copy softened.
@@ -156,11 +157,124 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
   /* Resolve one finding WITH AnA — optimistic local flip only (see flag #2). */
-  const resolve = (f: GiFinding) => {
-    setFindings(fs => fs.map(x => x.id === f.id ? { ...x, reviewState: 'approved_resolution', resolvedBy: 'AnA + you', resolvedAt: new Date().toISOString() } : x));
-    fireToast('Marked "' + f.title + '" resolved in this view -- routing to the governed review workflow is not yet wired');
+  /**
+   * Review-state transitions — REAL, awaited, org-scoped writes.
+   *
+   * Both of these used to be optimistic local flips: the row changed colour,
+   * the promotion gate recomputed off it, and nothing was recorded. Reload and
+   * a resolved contradiction was open again — on a surface whose whole purpose
+   * is to say whether the dossier is clean enough to promote.
+   *
+   * POST /api/governed-intelligence/contradictions/:id/review
+   * (server/routes/assumption-decision-contradiction.ts:247, mounted with
+   * authenticateToken at server/bootstrap/register-governance-routes.ts:38)
+   * calls contradictionEngineService.transitionReviewState(findingId, orgId,
+   * reviewState, userId, notes). The board these rows come from is served by the
+   * SAME service, so `f.id` is the id that endpoint expects — the two are not
+   * separate id spaces — and 'approved_resolution' / 'unresolved' are both
+   * members of its ReviewState union.
+   *
+   * The local row is updated only after the server confirms, and a failure says
+   * so and leaves the finding where it was. A contradiction that silently
+   * appears resolved is exactly the failure this surface exists to prevent.
+   */
+  const [pendingId, setPendingId] = useState<string>('');
+
+  const transition = async (
+    f: GiFinding,
+    reviewState: 'approved_resolution' | 'unresolved',
+    apply: (x: GiFinding) => GiFinding,
+    okMsg: string,
+  ) => {
+    if (pendingId) return;
+    setPendingId(f.id);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/governed-intelligence/contradictions/' + encodeURIComponent(f.id) + '/review',
+        { reviewState },
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          res.status === 404
+            ? 'That finding is no longer on the board — refresh to see the current state.'
+            : 'Couldn’t update "' + f.title + '" — ' +
+              ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
+              '. Nothing was changed.',
+        );
+        return;
+      }
+      setFindings(fs => fs.map(x => (x.id === f.id ? apply(x) : x)));
+      fireToast(okMsg);
+    } catch (e) {
+      fireToast('Couldn’t reach the contradiction service — ' + (e instanceof Error ? e.message : 'request failed') + '. Nothing was changed.');
+    } finally {
+      setPendingId('');
+    }
   };
-  const reopen = (f: GiFinding) => setFindings(fs => fs.map(x => x.id === f.id ? { ...x, reviewState: 'unresolved', resolvedBy: null } : x));
+
+  /**
+   * "Refresh findings" — a REAL detection scan, then a re-read.
+   *
+   * This button only ever bumped a counter, re-reading the same read-model
+   * board. Nothing re-detected, so a contradiction introduced since the last
+   * scan stayed invisible however many times it was pressed — on the surface
+   * that decides whether the dossier is clean enough to promote, and under a
+   * label ("AnA is checking...") that says detection is happening.
+   *
+   * POST /api/governed-intelligence/contradictions/scan/:projectId
+   * (assumption-decision-contradiction.ts:235) runs
+   * contradictionEngineService.scanProject(orgId, projectId) — drift, decision
+   * and jurisdiction detection — then the board is re-read to show the result.
+   *
+   * It takes the SAME projectId the board read already uses, under the same
+   * constraint: the read route rejects a non-numeric id with 400 ("A valid
+   * numeric projectId is required"), so if the board loaded, this resolves too.
+   *
+   * A failed scan does not pretend: it says the re-detection did not run, and
+   * still re-reads the board so the button remains useful.
+   */
+  const [scanning, setScanning] = useState(false);
+  const runScan = async () => {
+    if (!projectId || scanning) return;
+    setScanning(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/governed-intelligence/contradictions/scan/' + encodeURIComponent(projectId),
+      );
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        fireToast(
+          'Re-detection didn’t run — ' +
+            ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
+            '. Showing the last known findings.',
+        );
+      }
+    } catch (e) {
+      fireToast('Couldn’t reach the contradiction engine — ' + (e instanceof Error ? e.message : 'request failed') + '. Showing the last known findings.');
+    } finally {
+      setScanning(false);
+      setRefresh(n => n + 1);
+    }
+  };
+
+  const resolve = (f: GiFinding) =>
+    transition(
+      f,
+      'approved_resolution',
+      x => ({ ...x, reviewState: 'approved_resolution', resolvedBy: 'AnA + you', resolvedAt: new Date().toISOString() }),
+      'Resolved "' + f.title + '" — recorded against the finding.',
+    );
+
+  const reopen = (f: GiFinding) =>
+    transition(
+      f,
+      'unresolved',
+      x => ({ ...x, reviewState: 'unresolved', resolvedBy: null }),
+      'Re-opened "' + f.title + '" — recorded against the finding.',
+    );
 
   const gate: GiPromotionGate = giPromotionGate(findings, reg);
   const total = findings.length;
@@ -182,7 +296,30 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
         ? 'Nothing in the governed record contradicts anything else. This filing is ready to promote into the submission sequence.'
         : 'Every governed cross-reference AnA checks on a ' + filingLabel + ' dossier is consistent -- nothing stands between this filing and a clean submission.',
       reassure: 'This is what submission-ready looks like. I\'ll keep watching as new content lands.',
-      action: { label: 'Promote to submission sequence', onClick: () => open('submission-center') },
+      /* NAVIGATION, and the label now says so. It used to read "Promote to
+         submission sequence" on a control that only opens another surface —
+         the same overclaim as the old "Route for signature".
+
+         NOT WIRED, deliberately, and this is the reason so nobody re-runs the
+         investigation. Two routes look like they promote, and both fail:
+
+         • regulatorySubmissions `POST /projects/:id/sequences` — the URL says
+           projects and sequences, and its own error string says "Failed to
+           create submission sequence". It does neither: `:id` is resolved by
+           loadSubmissionByParam (a SUBMISSION id), and the row it inserts is a
+           `stageGates`, not a sequence. Wrong entity and wrong artifact, behind
+           a name that reads exactly right.
+         • submissions `POST /:id/sequences` — genuinely creates an eCTD
+           sequence via createSequence({ submissionId: id }), but takes a
+           SUBMISSION id.
+
+         This surface holds `projectId` (a projects.id — the same one the board
+         read and the contradiction scan use) and no submission id. Bridging
+         project → submission is not a wiring detail: a programme can carry an
+         IND, an NDA and supplements at once, so WHICH submission a clean
+         dossier promotes into is a product decision. Guessing it would file
+         against the wrong application. */
+      action: { label: 'Open the submission centre', onClick: () => open('submission-center') },
     };
     if (gate.blocked) {
       const b = gate.blocking[0];
@@ -258,7 +395,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           <h1 className="sp-title">{prog ? progCode + ' -- path to a clean filing' : 'Cross-document inconsistency'}</h1>
           <p className="sp-state">{prog ? <>{prog.name}{prog.stage ? <> {I.dot} {prog.stage}</> : null}. </> : null}AnA continuously scans every governed record -- sections, specs, data and labeling -- for anything that contradicts anything else, and clears it with you before it can reach a reviewer.</p>
         </div>
-        <button className="sp-primary" onClick={() => setRefresh(n => n + 1)} disabled={boardState.loading || !projectId}>{boardState.loading ? I.rotateCcw : I.sparkles} {boardState.loading ? 'AnA is checking...' : 'Refresh findings'}</button>
+        <button className="sp-primary" onClick={() => void runScan()} disabled={boardState.loading || scanning || !projectId}>{(boardState.loading || scanning) ? I.rotateCcw : I.sparkles} {scanning ? 'AnA is checking...' : boardState.loading ? 'Loading findings...' : 'Re-scan findings'}</button>
       </div>
 
       {!projectId ? (
@@ -375,8 +512,8 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                     <span>Consequence {I.dot} {String(f.consequenceType || '').replace(/_/g, ' ')}</span>
                   </div>
                   <div className="gi-find-actions">
-                    {!done && <button className="sp-primary gi-resolve" onClick={() => resolve(f)}>{I.check} Resolve with AnA</button>}
-                    {done && <button className="sp-ask" onClick={() => reopen(f)}>{I.undo} Re-open</button>}
+                    {!done && <button className="sp-primary gi-resolve" onClick={() => void resolve(f)} disabled={pendingId === f.id}>{I.check} {pendingId === f.id ? 'Recording…' : 'Resolve with AnA'}</button>}
+                    {done && <button className="sp-ask" onClick={() => void reopen(f)} disabled={pendingId === f.id}>{I.undo} {pendingId === f.id ? 'Recording…' : 'Re-open'}</button>}
                     {/* factId is a documented null on every live finding, so this
                         "change value everywhere" affordance stays hidden until the
                         findings table carries a real fact linkage. */}

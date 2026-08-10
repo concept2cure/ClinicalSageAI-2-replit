@@ -56,7 +56,7 @@ interface ProgramRow {
 
 /** GET /api/c2c/projects/:id/team → { team: [...] } (project_members ∪ users). */
 interface TeamRow {
-  user_id: number;
+  user_id: number | null;
   role: string | null;
   name: string | null;
   email: string | null;

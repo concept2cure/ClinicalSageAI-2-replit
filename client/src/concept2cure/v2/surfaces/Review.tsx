@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -204,6 +205,10 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const [delegating, setDelegating] = useState(false);
   const [delTo, setDelTo] = useState('');
   const [delReason, setDelReason] = useState('');
+  // Change-request write state. `requesting` guards a double submit; `requestErr`
+  // is what makes a failure visible instead of the dialog silently staying open.
+  const [requesting, setRequesting] = useState(false);
+  const [requestErr, setRequestErr] = useState('');
   const [toast, fireToast] = useToast();
 
   // Live, org-scoped review board — GET /api/review/board → { success, data }.
@@ -288,20 +293,59 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     onNav('document-authoring');
   };
 
-  const doReject = () => {
-    if (!reason.trim()) return;
-    setItemState(item.id, 'changes-requested');
-    setThread((t) => [{
-      id: 'rj' + Date.now(),
-      author: meName,
-      role: meRole,
-      when: 'just now',
-      state: 'open',
-      body: 'Changes requested: ' + reason.trim(),
-    }, ...t]);
-    setRejecting(false);
-    setReason('');
-    fireToast('Changes requested · author notified');
+  /**
+   * Request changes — POST /api/review/workflows/:workflowId/change-request.
+   *
+   * This used to set local state, append a local thread entry, and fire the
+   * toast "Changes requested · author notified". Nothing was written and nobody
+   * was notified; the disclosure directly under the textarea said so, which made
+   * the toast a claim the surface itself contradicted.
+   *
+   * `item.id` IS the document_workflows id the route takes — the board is built
+   * from that table (server/routes/review-board-routes.ts). The route derives
+   * the document from the workflow server-side, so the change request cannot be
+   * pointed at a document the reviewer is not reviewing.
+   *
+   * The row is moved and the thread entry added ONLY after the write returns.
+   * The approval step stays pending, which is what the server does and what the
+   * copy now says: `approval_status` has no "changes requested" member, and
+   * writing 'rejected' would terminate the workflow the reviewer is trying to
+   * keep alive.
+   */
+  const doReject = async () => {
+    const text = reason.trim();
+    if (!text || requesting) return;
+    setRequesting(true);
+    setRequestErr('');
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/review/workflows/' + encodeURIComponent(item.id) + '/change-request',
+        { reason: text },
+      );
+      const body = await res.json().catch(() => null);
+      const payload = body as { success?: boolean; error?: string } | null;
+      if (!res.ok || !payload || payload.success !== true) {
+        setRequestErr(payload?.error || 'Could not record the change request (HTTP ' + res.status + ').');
+        return;
+      }
+      setItemState(item.id, 'changes-requested');
+      setThread((t) => [{
+        id: 'rj' + Date.now(),
+        author: meName,
+        role: meRole,
+        when: 'just now',
+        state: 'open',
+        body: 'Changes requested: ' + text,
+      }, ...t]);
+      setRejecting(false);
+      setReason('');
+      fireToast('Change request recorded on the document');
+    } catch (e) {
+      setRequestErr(e instanceof Error ? e.message : 'Could not reach the review service.');
+    } finally {
+      setRequesting(false);
+    }
   };
 
   const doDelegate = () => {
@@ -426,29 +470,35 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 onChange={(e) => setReason(e.target.value)}
                 autoFocus
               />
-              {/* The placeholder here used to read "(recorded against the document
-                  + author notified)". Neither happens: doReject sets local state
-                  and appends a local thread entry — there is no write and no
-                  notification. That is the same session-only behaviour the
-                  e-signature modal above already discloses, so it is disclosed the
-                  same way rather than claimed away in a placeholder.
+              {/* WIRED — POST /api/review/workflows/:workflowId/change-request.
+                  It is still NOT wired to POST /api/approval-workflows/:id/reject,
+                  which is real and mounted but calls processApproval({ action:
+                  'reject' }) and TERMINATES the workflow. Nor to the concept2cure
+                  reviews/submit route, which does have an explicit
+                  'request_changes' decision but addresses an artifact inside a
+                  project — a different id space from the document_workflows /
+                  unified_documents ids this board is built from.
 
-                  It is deliberately NOT wired to POST /api/approval-workflows/:id/
-                  reject, which is real and mounted. That route calls
-                  processApproval({ action: 'reject' }) and answers "Workflow
-                  rejected" — a terminal decision on the approval workflow.
-                  "Request changes" is a request to revise, not a rejection, and
-                  ApprovalOrchestrator accepts only 'approve' | 'reject', so there
-                  is no correct action to send. Escalating a revision request into
-                  a recorded rejection of a governed workflow would be a worse
-                  error than recording nothing. */}
+                  The note below states the two things that are true and would
+                  otherwise be assumed away: the approval step stays pending
+                  (approval_status is an enum of pending|approved|rejected — there
+                  is no changes-requested member, and 'rejected' would end the
+                  workflow), and there is still no notification. */}
               <div className="rv-reject-note">
-                Recorded in this session only — the change request is not yet
-                written against the document and the author is not notified.
+                Recorded as a comment on the document and in the workflow history.
+                Your approval step stays pending — it is a request to revise, not a
+                decision. The author is not notified automatically.
               </div>
+              {requestErr && (
+                <div className="rv-reject-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>
+                  Not recorded — {requestErr}
+                </div>
+              )}
               <div className="rv-reject-row">
-                <button className="btn ghost" onClick={() => { setRejecting(false); setReason(''); }}>Cancel</button>
-                <button className="btn primary" disabled={!reason.trim()} onClick={doReject}>{I.close} Request changes</button>
+                <button className="btn ghost" disabled={requesting} onClick={() => { setRejecting(false); setReason(''); setRequestErr(''); }}>Cancel</button>
+                <button className="btn primary" disabled={!reason.trim() || requesting} onClick={() => { void doReject(); }}>
+                  {I.close} {requesting ? 'Recording…' : requestErr ? 'Retry' : 'Request changes'}
+                </button>
               </div>
             </div>
           )}

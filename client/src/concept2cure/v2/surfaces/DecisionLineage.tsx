@@ -451,23 +451,45 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
             ))}
           </div>
 
+          {/* The control below is named for what it does: it opens the assistant
+              with the request. It does not route anything to a signer, and is
+              deliberately not wired to either candidate endpoint.
+
+              POST /api/decision-lineage/record is real and mounted, but it
+              RECORDS a decision into the tamper-evident GxP lineage chain (it
+              carries a `requiresSignature` flag; it does not dispatch a
+              signature, notify a signer, or create a signing task). Calling it
+              here would write an entry into a regulated audit chain asserting a
+              routing that never happened — worse than doing nothing, and not
+              undoable the way a UI state is.
+
+              The binding signature path is real elsewhere: POST
+              /api/authoring/docs/:docId/e-sign writes authoring_signatures
+              against a frozen document version. It needs an authoring docId,
+              which this surface does not hold — its rows carry rootEntityId /
+              artifactLabel for the lineage graph, not authoring document ids. So
+              the honest thing is to say where signing happens rather than to
+              guess an id into a §11 write. */}
           {pendingSig && (
+            <>
             <button
               className="dl-cta"
               onClick={() => {
-                // FLAG (mock action): routes to the AnA composer via onAsk; it
-                // does NOT call a real e-signature / record endpoint
-                // (/api/esignature or /api/decision-lineage/record). Left for the
-                // actions pass — not half-wired.
                 ask(
-                  'Route the ' +
+                  'Prepare the ' +
                     (g?.artifactLabel || 'artifact') +
-                    ' for the final Part-11 electronic signature to lock the record.',
+                    ' for the final Part-11 electronic signature: confirm the lineage is complete, then tell me what is needed to sign it in the authoring workspace.',
                 );
               }}
             >
-              {I.penLine} Route for signature
+              {I.penLine} Prepare for signature with AnA
             </button>
+            <div className="dl-sign-note">
+              Opens the assistant — nothing is routed to a signer from here. A
+              binding 21 CFR §11 signature is applied in the authoring workspace,
+              where it is PIN-verified and sealed against a frozen version.
+            </div>
+            </>
           )}
 
           <div className="dl-export">
