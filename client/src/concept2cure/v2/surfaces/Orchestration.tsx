@@ -336,9 +336,14 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     }
   }, [runsMapped]);
 
-  // Approval gates — persisted approval_checkpoints. Local state so approve /
-  // reject can update optimistically (FLAGGED mock actions); seeded from live.
-  const cpsState = useLiveData<unknown>(connected() ? '/api/orchestration/checkpoints' : null, []);
+  // Approval gates — persisted approval_checkpoints. Bumped after a decision is
+  // recorded so the gate is RE-READ from the server rather than patched locally:
+  // quorum and status are the server's to decide.
+  const [cpsReloadKey, setCpsReloadKey] = useState(0);
+  const cpsState = useLiveData<unknown>(
+    connected() ? '/api/orchestration/checkpoints' : null,
+    [cpsReloadKey],
+  );
   const cpsMapped = useMemo(
     () => (!cpsState.loading && !cpsState.error ? mapCps(cpsState.data) : null),
     [cpsState.loading, cpsState.error, cpsState.data],
@@ -400,20 +405,73 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
        paused, and "Replay" silently re-labelled a completed, audited run as
        running. /api/orchestration exposes execute and cancel only — there is no
        pause/resume/retry route to call.
-     - `decide` used to write the decision into local state with `when: 'just
-       now'`, a FABRICATED timestamp, and the row then rendered "✓ Approved".
-       server/routes/orchestration-checkpoints.ts defines `router.get('/')` and
-       nothing else: the checkpoint store is READ-ONLY, so there is no write path
-       for a gate decision. In a 21 CFR Part 11 product, an approval control that
-       displays a completed, timestamped approval while recording nothing is the
-       most dangerous affordance on this surface — the decision must be captured
-       by a governed, signed, audited path or not appear to have been taken at
-       all.
-     These controls are therefore rendered disabled with a visible reason, rather
-     than removed: the gate and its pending approvers are real and worth showing,
-     and hiding the control would hide the fact that a decision is outstanding. */
+     - `decide` is now WIRED to POST /api/orchestration/checkpoints/:id/decision.
+       It used to write the decision into local state with `when: 'just now'`, a
+       FABRICATED timestamp, and the row then rendered "✓ Approved" while the
+       checkpoint store was read-only — a completed, timestamped approval that
+       existed nowhere. That was the most dangerous affordance on this surface,
+       because the gate is what stands between a proposal and a protected action.
+       The server now owns the decision: tenant re-checked through the owning
+       workflow_run, required_approver_roles enforced, quorum counted, a second
+       decision from the same approver refused, decidedAt taken from the database
+       clock, and an audit_events row written in the same transaction. It is NOT
+       a §11.50 signature and the on-screen copy says so.
+     The RUN controls below stay disabled with a visible reason, rather than
+     removed: the run is real and worth showing, and hiding the control would
+     hide the fact that no pause/resume path exists. */
   const UNWIRED_RUN = 'Not available yet — /api/orchestration exposes execute and cancel only.';
-  const UNWIRED_GATE = 'Gate decisions are not recorded from this surface yet — the checkpoint store is read-only, and an approval must be captured by a governed, signed path.';
+
+  /**
+   * Record this user's decision on a gate — POST /api/orchestration/checkpoints/:id/decision.
+   *
+   * `c.id` IS approval_checkpoints.id: the list this surface renders comes from
+   * GET /api/orchestration/checkpoints, which selects that column directly.
+   *
+   * The server owns every part of this that matters — it re-checks the tenant
+   * through the owning workflow_run, enforces required_approver_roles, counts
+   * the quorum, refuses a second decision from the same approver, and stamps
+   * decidedAt from the database clock. Nothing here is optimistic: the gate is
+   * re-read from the server after a successful write, so the decision the user
+   * sees is the decision that was stored.
+   *
+   * NOT a 21 CFR §11.50 electronic signature, and the copy below says so.
+   */
+  const [gateBusy, setGateBusy] = useState<string | null>(null);
+  const [gateErr, setGateErr] = useState<Record<string, string>>({});
+  const [rejectingGate, setRejectingGate] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const decide = async (checkpointId: string, decision: 'approved' | 'rejected', comment?: string) => {
+    if (gateBusy) return;
+    setGateBusy(checkpointId);
+    setGateErr((e) => ({ ...e, [checkpointId]: '' }));
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/orchestration/checkpoints/' + encodeURIComponent(checkpointId) + '/decision',
+        { decision, ...(comment ? { comment } : {}) },
+      );
+      const body = await res.json().catch(() => null);
+      const payload = body as { data?: { statusChanged?: boolean }; error?: string } | null;
+      if (!res.ok || !payload?.data) {
+        setGateErr((e) => ({ ...e, [checkpointId]: payload?.error || 'Could not record the decision (HTTP ' + res.status + ').' }));
+        return;
+      }
+      setRejectingGate(null);
+      setRejectReason('');
+      // Re-read rather than patching local state: quorum and status are the
+      // server's to decide, and this surface has been wrong about them before.
+      setCpsReloadKey((k) => k + 1);
+      cpsSeedRef.current = null;
+    } catch (err) {
+      setGateErr((e) => ({
+        ...e,
+        [checkpointId]: err instanceof Error ? err.message : 'Could not reach the orchestration service.',
+      }));
+    } finally {
+      setGateBusy(null);
+    }
+  };
 
   const pendingGates = cps.filter((c) => {
     // Live rows carry the persisted gate status; older rows without one infer
@@ -662,13 +720,77 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                     ) : a.decision === 'rejected' ? (
                       <span className="orch-mini no">{I.close} Rejected</span>
                     ) : (
-                      <div className="orch-appr-acts">
-                        <button className="orch-mini ok" disabled title={UNWIRED_GATE}>Approve</button>
-                        <button className="orch-mini no" disabled title={UNWIRED_GATE}>Reject</button>
-                      </div>
+                      <span className="orch-mini">{String(a.decision).replace(/_/g, ' ')}</span>
                     )}
                   </div>
                 ))}
+
+                {/* The decision control belongs to the GATE, not to a row.
+                    It used to render inside the approver loop, which meant a
+                    gate with no decisions yet showed no way to act at all —
+                    `approvers` is derived from the `approvals` array, i.e. from
+                    decisions ALREADY recorded, not from who still owes one. */}
+                {c.gateType !== 'auto_on_pass' && (c.status === 'proposed' || c.status === 'awaiting_review') && (
+                  <div className="orch-gate-act">
+                    {rejectingGate === c.id ? (
+                      <>
+                        <input
+                          className="orch-gate-reason"
+                          placeholder="Why is this gate being rejected?"
+                          value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value)}
+                          autoFocus
+                        />
+                        <button
+                          className="orch-mini"
+                          disabled={gateBusy === c.id}
+                          onClick={() => { setRejectingGate(null); setRejectReason(''); }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="orch-mini no"
+                          disabled={!rejectReason.trim() || gateBusy === c.id}
+                          onClick={() => { void decide(c.id, 'rejected', rejectReason.trim()); }}
+                        >
+                          {gateBusy === c.id ? 'Recording…' : 'Record rejection'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="orch-mini ok"
+                          disabled={gateBusy === c.id}
+                          onClick={() => { void decide(c.id, 'approved'); }}
+                        >
+                          {gateBusy === c.id ? 'Recording…' : 'Approve'}
+                        </button>
+                        <button
+                          className="orch-mini no"
+                          disabled={gateBusy === c.id}
+                          onClick={() => { setRejectingGate(c.id); setRejectReason(''); }}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+                {gateErr[c.id] && (
+                  <div className="orch-note err" role="alert">
+                    {I.alertTriangle}<span>Not recorded — {gateErr[c.id]}</span>
+                  </div>
+                )}
+                {c.gateType !== 'auto_on_pass' && (c.status === 'proposed' || c.status === 'awaiting_review') && (
+                  <div className="orch-note">
+                    {I.shieldCheck}
+                    <span>
+                      Your decision is recorded against this gate, attributed to you and written to
+                      the audit trail. It is <b>not</b> a 21 CFR §11.50 electronic signature.
+                      {c.gateType === 'quorum' ? ' The gate closes only once the required number of approvals is reached.' : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}

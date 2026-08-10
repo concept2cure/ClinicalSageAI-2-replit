@@ -410,6 +410,13 @@
 .c2c-v2 .orch-appr-n{font-size:12px;font-weight:500;color:var(--text-100);}
 .c2c-v2 .orch-appr-r{font-size:10px;color:var(--text-400);}
 .c2c-v2 .orch-appr-acts{margin-left:auto;display:flex;gap:6px;}
+/* Gate-level decision row. Sits on the checkpoint, not on an approver row —
+   a gate with no decisions recorded yet still needs a way to act. */
+.c2c-v2 .orch-gate-act{display:flex;gap:6px;align-items:center;padding:8px 0 2px;flex-wrap:wrap;}
+.c2c-v2 .orch-gate-reason{flex:1 1 220px;min-width:180px;font-size:11.5px;padding:5px 8px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .orch-note.err{color:var(--danger, #b42318);}
+.c2c-v2 .orch-note.err .ico{color:var(--danger, #b42318);}
+.c2c-v2 .orch-mini:disabled{opacity:.55;cursor:not-allowed;}
 .c2c-v2 .orch-mini{font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-300);}
 .c2c-v2 .orch-mini.ok{color:var(--success);border-color:var(--success-muted);}
 .c2c-v2 .orch-mini.no{color:var(--error);border-color:var(--error-muted);}
