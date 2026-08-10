@@ -69,6 +69,8 @@ import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { DocCanvas } from './EditorCanvas';
+import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
+
 import { useFilingOutline, findSectionForNode } from '../useFilingOutline';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
@@ -643,6 +645,13 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
     : 'Draft this section from the linked section evidence.';
 
+  // What the filing outline was built FROM, in the words the filer sees.
+  // Null only when there is no governed document, in which case there is no
+  // outline to qualify either.
+  const provenance = filing.document
+    ? describeRulePackProvenance(filing.document.provenance)
+    : null;
+
   return (
     <div className="ed" data-comments={rail != null || undefined}>
       {/* ── Left: document + section tree ── */}
@@ -666,6 +675,24 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
             </select>
           </div>
         </div>
+
+        {/* ── What the outline below was built FROM ──
+            Until this shipped, a tree transcribed from 21 CFR 814.20(b) and a
+            tree constructed by reasoning about a regulation with no enumerated
+            annex rendered identically, so a filer could not tell which one
+            they were drafting against. The provenance columns recorded the
+            difference; this is where it becomes visible. */}
+        {provenance && filing.tree.length > 0 && (
+          <div className="ed-prov">
+            <div className="ed-prov-h">
+              <span className="ed-prov-chip" data-tone={provenance.tone}>
+                {provenance.headline}
+              </span>
+              <span className="ed-prov-l">outline basis</span>
+            </div>
+            <p className="ed-prov-d">{provenance.detail}</p>
+          </div>
+        )}
 
         {/* ── The governed filing outline, when this project has one ──
             Derived from (doc_type × agency) via c2c_rule_packs, so a BLA shows
