@@ -731,7 +731,7 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
                     {node.label}
                   </span>
                   {node.mandatory && !bound && (
-                    <span className="rd-chip tone-dim" style={{ marginLeft: 'auto' }} title="Required by the rule pack">
+                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }} title="Required by the rule pack">
                       required
                     </span>
                   )}
@@ -776,7 +776,7 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
                   >
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
-                    <span className="rd-chip tone-dim" style={{ marginLeft: 'auto' }}>{num(d.section_count)}</span>
+                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>{num(d.section_count)}</span>
                   </button>
                   {open && (
                     sectionsState === 'loading' ? (

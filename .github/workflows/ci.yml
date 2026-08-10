@@ -226,6 +226,13 @@ jobs:
       - name: Guardrails — CSS selector shadowing (allowlist, may only shrink)
         run: npm run ci:check-css-selector-shadowing
 
+      # A literal `tone-*` class with no CSS rule renders an unstyled chip.
+      # Same blind spot as above: jsdom applies no stylesheet, so a component
+      # test passes while the chip has no appearance. A prose warning was tried
+      # first and was copied past twice.
+      - name: Guardrails — chip tones must have a CSS rule
+        run: npm run ci:check-chip-tones
+
       - name: Guardrails — phantom design tokens (ratchet, may only shrink)
         run: npm run ci:check-phantom-tokens
 
