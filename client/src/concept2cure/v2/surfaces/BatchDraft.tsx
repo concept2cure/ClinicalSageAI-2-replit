@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveData, EmptyState, hasKeys } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 import '../styles/project-home-v2.css';
@@ -156,6 +157,22 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const docId: string | null = (typeof window !== 'undefined' && (window as any).__C2C_DOC_ID) || null;
   const canLive = !!(docId && connected());
 
+  /* The regulatory framework the drafts are authored against. Deliberately
+     starts EMPTY: nothing on the document records a filing type, so any preset
+     would be a guess presented as a fact. The user states it once per run and
+     sees it on screen before anything is drafted. Values are exactly
+     DocumentDraftRequest['framework'] (AnaDocumentDraftingService.ts:244). */
+  const [framework, setFramework] = useState('');
+  const FRAMEWORKS: Array<[string, string]> = [
+    ['ich_clinical', 'ICH / CTD clinical'],
+    ['fda_510k', 'FDA 510(k)'],
+    ['fda_pma', 'FDA PMA'],
+    ['eu_mdr', 'EU MDR'],
+    ['cer_clinical_evaluation', 'Clinical Evaluation Report'],
+    ['general_regulatory', 'General regulatory'],
+  ];
+  const frameworkLabel = FRAMEWORKS.find(([v]) => v === framework)?.[1] ?? '';
+
   // ── DATA: the draftable section spine is the org's persisted eCTD Co-Author
   // documents (GET /api/batch-draft/spine → coauthor_documents). Real data,
   // honest empty, honest error — never a fixture. useLiveData unwraps the
@@ -212,6 +229,9 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const startRef = useRef<Record<string, number>>({});
 
   const selList = todo.filter((s) => sel.has(s.num));
+  // The service refuses more than 20 requests per batch; refuse it here with a
+  // reason instead of sending a request that will 400.
+  const overBatchCap = selList.length > 20;
   const toggle = (num: string) => {
     setSel((p) => {
       const n = new Set(p);
@@ -231,8 +251,102 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
      "Sample" cards on a setTimeout (bdSample) — fake streaming, not a real
      draft. A real drafting service exists (server ana batch-draft-sections);
      wiring it is the actions pass — left intact and flagged, not half-wired. */
+  /**
+   * Real batch drafting — POST /api/claude/batch.
+   *
+   * Until now this only ever produced sample cards. It dispatches through
+   * `window.C2C_AUTHORING.batchDraft`, a runtime channel this repo never
+   * provides, so the `else` branch below always ran: fabricated prose on a
+   * setTimeout. Honestly labelled "Sample", but it meant a headline authoring
+   * capability had never once produced a real draft.
+   *
+   * The service is real and purpose-built — ana-intelligence.ts:360, "Batch
+   * draft multiple document sections", capped at 20 requests with server-side
+   * concurrency, mounted behind authenticateToken + weeklyRequestLimit.
+   *
+   * WHY A FRAMEWORK PICKER RATHER THAN A DERIVED VALUE. DocumentDraftRequest
+   * REQUIRES `framework`, and it decides the regulatory expectations the prose
+   * is authored against. The only nearby value on this surface was `agency`,
+   * derived from `segment` — a browser-local view toggle defaulting to
+   * 'biotech' that this codebase elsewhere warns can be wrong for the tenant.
+   * Nothing on the document carries a filing type either: coauthor_documents
+   * has no submission/filing/region column, and ectd_modules none, so
+   * `submissionType` cannot be supplied from the spine today.
+   *
+   * Inferring the framework from a UI preference would produce confident,
+   * plausible regulatory prose written to the WRONG expectations — harder to
+   * catch than a blank card, and worse than the sample it replaces. So the
+   * framework is chosen explicitly and shown on screen before anything is
+   * spent. When the document does start carrying a filing type, that becomes
+   * the default here and this picker becomes the override.
+   */
+  const runLive = async () => {
+    const init: Record<string, CardState> = {};
+    selList.forEach((s) => {
+      init[s.num] = { state: 'drafting', html: '', model: null, latencyMs: null, sample: false, accepted: false, error: null };
+    });
+    setCards(init);
+    setPhase('drafting');
+    const started = Date.now();
+
+    try {
+      const res = await apiRequest('POST', '/api/claude/batch', {
+        // The endpoint caps a batch at 20; the picker is capped to match so the
+        // request is refused here with a reason rather than 400ing server-side.
+        requests: selList.map((s) => ({
+          framework,
+          sectionType: '§' + s.num + ' ' + s.title,
+          instructions:
+            'Draft §' + s.num + ' (' + s.title + ') for this submission. ' +
+            'Structure it to the expectations of the selected framework, state quantitative results with their ' +
+            'confidence intervals, carry a citation marker back to source data for each substantive claim, and ' +
+            'flag anything the current evidence does not support rather than asserting it.',
+          existingContent: s.preview || undefined,
+        })),
+        concurrency: 3,
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg = (body as { error?: string } | null)?.error || 'Drafting failed (HTTP ' + res.status + ').';
+        setCards((c) => {
+          const next = { ...c };
+          selList.forEach((s) => { next[s.num] = { ...next[s.num], state: 'error', error: msg }; });
+          return next;
+        });
+        setPhase('review');
+        return;
+      }
+      const results = ((body as { data?: { results?: unknown[] } } | null)?.data?.results ?? []) as Array<{
+        content?: string; model?: string; latencyMs?: number; error?: string;
+      }>;
+      setCards((c) => {
+        const next = { ...c };
+        selList.forEach((s, i) => {
+          const r = results[i];
+          next[s.num] = r && r.content
+            ? { ...next[s.num], state: 'done', html: r.content, sample: false, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
+            : { ...next[s.num], state: 'error', error: (r && r.error) || 'No draft returned for this section.' };
+        });
+        return next;
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not reach the drafting service.';
+      setCards((c) => {
+        const next = { ...c };
+        selList.forEach((s) => { next[s.num] = { ...next[s.num], state: 'error', error: msg }; });
+        return next;
+      });
+    } finally {
+      setPhase('review');
+    }
+  };
+
   const run = () => {
     if (!selList.length) return;
+    // Real drafting whenever the service is reachable and a framework has been
+    // stated. Everything else still falls through to the labelled sample path.
+    if (connected() && framework) { void runLive(); return; }
+
     const init: Record<string, CardState> = {};
     selList.forEach((s) => {
       init[s.num] = { state: 'queued', html: '', model: null, latencyMs: null, sample: !canLive, accepted: false, error: null };
@@ -442,11 +556,42 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
             <div className="bd-pick-actions">
               <button className="bd-ghost" onClick={() => { setSel(new Set(todo.map((s) => s.num))); }}>Select all {todo.length}</button>
               <button className="bd-ghost" onClick={() => { setSel(new Set()); }}>Clear</button>
-              <button className="bd-primary" disabled={!selList.length} onClick={run}>
+              {/* Stated, not inferred — see runLive(). Nothing on the document
+                  records a filing type, so a preset here would be a guess shown
+                  as a fact, and the prose would be authored to the wrong
+                  regulatory expectations. */}
+              <select
+                className="bd-fw"
+                value={framework}
+                onChange={(e) => setFramework(e.target.value)}
+                aria-label="Regulatory framework to draft against"
+              >
+                <option value="">Framework…</option>
+                {FRAMEWORKS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+              <button
+                className="bd-primary"
+                disabled={!selList.length || overBatchCap || (connected() && !framework)}
+                onClick={run}
+                title={
+                  overBatchCap ? 'Select 20 sections or fewer — the drafting service takes 20 per batch.'
+                    : connected() && !framework ? 'Choose the regulatory framework these sections are drafted against.'
+                      : undefined
+                }
+              >
                 {I.sparkles} Draft {selList.length} section{selList.length === 1 ? '' : 's'} in parallel
               </button>
             </div>
           </div>
+          {overBatchCap ? (
+            <div className="bd-fw-note">Select 20 sections or fewer — the drafting service takes 20 per batch.</div>
+          ) : connected() && !framework ? (
+            <div className="bd-fw-note">Choose a regulatory framework — the drafts are written to its expectations, and nothing on this document records a filing type to infer it from.</div>
+          ) : connected() && framework ? (
+            <div className="bd-fw-note">Drafting {selList.length} section{selList.length === 1 ? '' : 's'} against <b>{frameworkLabel}</b> expectations.</div>
+          ) : (
+            <div className="bd-fw-note">Not connected to the drafting service — these will be labelled sample drafts, not AnA output.</div>
+          )}
           <div className="bd-pick-list">
             {todo.map((s) => {
               const on = sel.has(s.num);
