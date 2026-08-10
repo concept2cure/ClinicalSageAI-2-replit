@@ -32,10 +32,13 @@
  * in 07b1569). Measured before the bar was set: 1 unconditional duplicate in
  * the whole surface, and it was the bug above.
  *
- * Comments are stripped with a character state machine, not a regex. A
- * `/\*[\s\S]*?\*​/` pattern opened a false comment on a `/*` inside prose
- * earlier in this repo's history and hid 273 lines of a file from a different
- * guard; that is not repeated here.
+ * Comments are stripped with a character state machine, not a regex. A lazy
+ * block-comment pattern (slash-star, dot-star-lazy, star-slash) opened a false
+ * comment on a comment-opening sequence inside prose earlier in this repo's
+ * history and hid 273 lines of a file from a different guard; that is not
+ * repeated here. The pattern is spelled out in words on purpose — writing it
+ * literally here would either close this comment or need an invisible
+ * character to stop it, and an invisible character in source is its own trap.
  *
  * Exit codes: 0 = clean, 1 = shadowing found.
  * Usage:
@@ -128,6 +131,26 @@ export function parseRules(src) {
   let buf = '';
   let line = 1;
   let bufStartLine = 1;
+  let declBuf = '';
+
+  /**
+   * Record the pending declaration on the innermost STYLE rule.
+   *
+   * Declarations are captured because "which rule wins" cannot be answered from
+   * source order alone — see `winnerOf`. An `!important` on the earlier rule
+   * inverts it.
+   */
+  const flushDecl = () => {
+    const d = declBuf.trim();
+    declBuf = '';
+    const frame = stack[stack.length - 1];
+    if (!d || !frame || frame.isAtRule || !frame.rule) return;
+    const colon = d.indexOf(':');
+    if (colon <= 0) return;
+    const prop = d.slice(0, colon).trim().toLowerCase();
+    const value = d.slice(colon + 1).trim();
+    frame.rule.decls.push({ prop, important: /!\s*important\s*$/i.test(value) });
+  };
 
   for (let i = 0; i < text.length; i += 1) {
     const c = text[i];
@@ -137,34 +160,40 @@ export function parseRules(src) {
     if (c === '{') {
       const prelude = buf.trim();
       const isAtRule = prelude.startsWith('@');
-      const frame = { prelude, isAtRule, line: bufStartLine };
+      const frame = { prelude, isAtRule, line: bufStartLine, rule: null };
 
       if (!isAtRule && prelude.length > 0) {
         const ancestors = stack.filter((f) => !f.isAtRule).map((f) => normalizeSelector(f.prelude));
         const selector = normalizeSelector(prelude);
-        rules.push({
+        frame.rule = {
           selector,
           path: [...ancestors, selector].join(' | '),
           line: bufStartLine,
           conditional: stack.some((f) => f.isAtRule),
-        });
+          decls: [],
+        };
+        rules.push(frame.rule);
       }
 
       stack.push(frame);
       buf = '';
+      declBuf = '';
       bufStartLine = line;
       continue;
     }
 
     if (c === '}') {
+      flushDecl();
       stack.pop();
       buf = '';
+      declBuf = '';
       bufStartLine = line;
       continue;
     }
 
     if (c === ';') {
       // A declaration, or a block-less at-statement (@import, @charset).
+      flushDecl();
       buf = '';
       bufStartLine = line;
       continue;
@@ -172,12 +201,44 @@ export function parseRules(src) {
 
     if (buf === '' && /\s/.test(c)) {
       bufStartLine = line;
-      continue;
+    } else {
+      buf += c;
     }
-    buf += c;
+    declBuf += c;
   }
 
   return rules;
+}
+
+/**
+ * Which of two same-specificity rules actually renders, per property.
+ *
+ * Source order decides only when neither side is `!important`. An `!important`
+ * declaration on the EARLIER rule beats a normal declaration on the later one,
+ * so "the last definition wins" is not a safe thing for this gate to print —
+ * `.c2c-v2 .lp-doc` in app-v2.css is precisely that case, and the rendered
+ * result is a blend of both rules that neither one states on its own.
+ * Confirmed in Chromium rather than reasoned about.
+ */
+export function winnerOf(occurrences) {
+  const [earlier, ...rest] = occurrences;
+  const later = rest[rest.length - 1];
+  if (!later) return { kind: 'single', importantProps: [] };
+
+  const laterProps = new Set(later.decls.map((d) => d.prop));
+  const importantProps = earlier.decls
+    .filter((d) => d.important && laterProps.has(d.prop))
+    .map((d) => d.prop);
+
+  if (importantProps.length === 0) return { kind: 'later-wins', importantProps: [] };
+
+  // The later rule still renders anything it declares that the earlier rule did
+  // NOT mark !important — including properties the earlier rule never set at
+  // all. Only when every one of its declarations is beaten does it contribute
+  // nothing. `.lp-doc` is the split case (it still supplies border-radius and
+  // overflow); `.lp-page.hl` is the total case (its gradient never renders).
+  const laterContributes = [...laterProps].some((p) => !importantProps.includes(p));
+  return { kind: laterContributes ? 'split' : 'earlier-wins', importantProps };
 }
 
 /** Selector paths defined more than once in one file. */
@@ -190,7 +251,12 @@ export function findShadowing(src, { includeConditional = false } = {}) {
   }
   return [...byPath.entries()]
     .filter(([, occ]) => occ.length > 1)
-    .map(([p, occ]) => ({ path: p, lines: occ.map((o) => o.line), conditional: occ.some((o) => o.conditional) }));
+    .map(([p, occ]) => ({
+      path: p,
+      lines: occ.map((o) => o.line),
+      conditional: occ.some((o) => o.conditional),
+      ...winnerOf(occ),
+    }));
 }
 
 /* ── Self-checks ─────────────────────────────────────────────────────────────
@@ -249,6 +315,31 @@ function selfCheck() {
       css: `.c2c-v2 {\n  .a{color:red;}\n  /* a comment\n     spanning lines */\n  .a{color:blue;}\n}`,
       expect: (f) => f.length === 1 && f[0].lines[0] === 2 && f[0].lines[1] === 5,
     },
+    // The three below are the correction: "the last definition wins" is only
+    // true absent !important. app-v2.css contains both other cases, and an
+    // earlier version of this gate printed the wrong winner for them.
+    {
+      name: 'plain duplicate: the later rule wins',
+      css: `.c2c-v2 { .a{color:red;} .a{color:blue;} }`,
+      expect: (f) => f.length === 1 && f[0].kind === 'later-wins',
+    },
+    {
+      name: '!important on the EARLIER rule inverts it — the later renders nothing',
+      css: `.c2c-v2 { .a{background:#fff!important;} .a{background:linear-gradient(red,blue);} }`,
+      expect: (f) => f.length === 1 && f[0].kind === 'earlier-wins'
+        && f[0].importantProps.includes('background'),
+    },
+    {
+      name: 'partial !important is a SPLIT — the render is a blend of both rules',
+      css: `.c2c-v2 { .a{background:#eee!important;padding:0;} .a{background:#fff;overflow:hidden;} }`,
+      expect: (f) => f.length === 1 && f[0].kind === 'split'
+        && f[0].importantProps.includes('background'),
+    },
+    {
+      name: '!important on the LATER rule does not invert anything',
+      css: `.c2c-v2 { .a{color:red;} .a{color:blue!important;} }`,
+      expect: (f) => f.length === 1 && f[0].kind === 'later-wins',
+    },
   ];
 
   const failed = [];
@@ -262,6 +353,18 @@ function selfCheck() {
     if (!ok) failed.push(c.name);
   }
   return failed;
+}
+
+/** One sentence naming which rule actually renders. Never assumes source order. */
+function describeWinner(v) {
+  switch (v.kind) {
+    case 'earlier-wins':
+      return `the EARLIER one wins — it marks ${v.importantProps.join(', ')} !important, so the later rule renders nothing.`;
+    case 'split':
+      return `SPLIT — the earlier rule wins ${v.importantProps.join(', ')} via !important and the later wins the rest, so the rendered result is a blend neither rule states.`;
+    default:
+      return 'the later one wins, silently.';
+  }
 }
 
 function walk(dir, acc = []) {
@@ -361,9 +464,19 @@ function main() {
   }
 
   if (newly.length === 0) {
+    // Surface the ones where source order is NOT the answer. These are the
+    // entries a human should look at first, and computing them here rather
+    // than storing a triage means the list cannot go stale against the CSS.
+    const inverted = found.filter((v) => v.kind !== 'later-wins');
     console.log(
       `[css-shadowing] OK — ${files.length} stylesheets, ${found.length} known shadowed selector(s), 0 new.`,
     );
+    if (inverted.length > 0) {
+      console.log(`  ${inverted.length} where !important means the LATER rule is not the winner:`);
+      for (const v of inverted) {
+        console.log(`    · ${v.file}  ${v.path}  lines ${v.lines.join(', ')} — ${describeWinner(v)}`);
+      }
+    }
     process.exit(0);
   }
 
@@ -371,11 +484,16 @@ function main() {
   for (const v of newly) {
     console.error(`  ✗ ${v.file}`);
     console.error(`      ${v.path}`);
-    console.error(`      defined at lines ${v.lines.join(' and ')} — the later one wins, silently.`);
+    console.error(`      defined at lines ${v.lines.join(' and ')} — ${describeWinner(v)}`);
     console.error('      Rename one, or scope the override under @media if it is meant to be conditional.\n');
   }
   console.error('  This is invisible to jsdom tests: the DOM is right and the pixels are not.');
   process.exit(1);
 }
 
-main();
+// Only gate when run directly. This module exports its parser so other tools
+// (and its own tests) can import it; without this guard an `import` would run
+// the whole scan and process.exit() out from under the importer.
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main();
+}
