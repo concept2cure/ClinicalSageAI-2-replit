@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -117,10 +118,10 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   //  1. "Refresh findings" button — re-reads this read-model board. Triggering a
   //     fresh DETECTION scan (POST /api/governed-intelligence/contradictions/scan/
   //     :projectId, contradictionEngineService.scanProject) is NOT wired here.
-  //  2. resolve(f) — optimistic local review-state flip; the real transition is
-  //     POST /api/governed-intelligence/contradictions/:id/review. Not wired, so
-  //     the copy no longer claims an audit-trail write occurred.
-  //  3. reopen(f) — optimistic local review-state flip; same real endpoint.
+  //  2. resolve(f) — WIRED. Real awaited POST /api/governed-intelligence/
+  //     contradictions/:id/review; the local row moves only after the server
+  //     confirms the transition.
+  //  3. reopen(f) — WIRED, same endpoint with reviewState 'unresolved'.
   //  4. propagate(v) — "change value everywhere" across the dossier has no single
   //     persisted backing here; the trigger is also unreachable while findings
   //     carry a null factId. Kept guarded + flagged; copy softened.
@@ -156,11 +157,78 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
   /* Resolve one finding WITH AnA — optimistic local flip only (see flag #2). */
-  const resolve = (f: GiFinding) => {
-    setFindings(fs => fs.map(x => x.id === f.id ? { ...x, reviewState: 'approved_resolution', resolvedBy: 'AnA + you', resolvedAt: new Date().toISOString() } : x));
-    fireToast('Marked "' + f.title + '" resolved in this view -- routing to the governed review workflow is not yet wired');
+  /**
+   * Review-state transitions — REAL, awaited, org-scoped writes.
+   *
+   * Both of these used to be optimistic local flips: the row changed colour,
+   * the promotion gate recomputed off it, and nothing was recorded. Reload and
+   * a resolved contradiction was open again — on a surface whose whole purpose
+   * is to say whether the dossier is clean enough to promote.
+   *
+   * POST /api/governed-intelligence/contradictions/:id/review
+   * (server/routes/assumption-decision-contradiction.ts:247, mounted with
+   * authenticateToken at server/bootstrap/register-governance-routes.ts:38)
+   * calls contradictionEngineService.transitionReviewState(findingId, orgId,
+   * reviewState, userId, notes). The board these rows come from is served by the
+   * SAME service, so `f.id` is the id that endpoint expects — the two are not
+   * separate id spaces — and 'approved_resolution' / 'unresolved' are both
+   * members of its ReviewState union.
+   *
+   * The local row is updated only after the server confirms, and a failure says
+   * so and leaves the finding where it was. A contradiction that silently
+   * appears resolved is exactly the failure this surface exists to prevent.
+   */
+  const [pendingId, setPendingId] = useState<string>('');
+
+  const transition = async (
+    f: GiFinding,
+    reviewState: 'approved_resolution' | 'unresolved',
+    apply: (x: GiFinding) => GiFinding,
+    okMsg: string,
+  ) => {
+    if (pendingId) return;
+    setPendingId(f.id);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/governed-intelligence/contradictions/' + encodeURIComponent(f.id) + '/review',
+        { reviewState },
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          res.status === 404
+            ? 'That finding is no longer on the board — refresh to see the current state.'
+            : 'Couldn’t update "' + f.title + '" — ' +
+              ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
+              '. Nothing was changed.',
+        );
+        return;
+      }
+      setFindings(fs => fs.map(x => (x.id === f.id ? apply(x) : x)));
+      fireToast(okMsg);
+    } catch (e) {
+      fireToast('Couldn’t reach the contradiction service — ' + (e instanceof Error ? e.message : 'request failed') + '. Nothing was changed.');
+    } finally {
+      setPendingId('');
+    }
   };
-  const reopen = (f: GiFinding) => setFindings(fs => fs.map(x => x.id === f.id ? { ...x, reviewState: 'unresolved', resolvedBy: null } : x));
+
+  const resolve = (f: GiFinding) =>
+    transition(
+      f,
+      'approved_resolution',
+      x => ({ ...x, reviewState: 'approved_resolution', resolvedBy: 'AnA + you', resolvedAt: new Date().toISOString() }),
+      'Resolved "' + f.title + '" — recorded against the finding.',
+    );
+
+  const reopen = (f: GiFinding) =>
+    transition(
+      f,
+      'unresolved',
+      x => ({ ...x, reviewState: 'unresolved', resolvedBy: null }),
+      'Re-opened "' + f.title + '" — recorded against the finding.',
+    );
 
   const gate: GiPromotionGate = giPromotionGate(findings, reg);
   const total = findings.length;
@@ -375,8 +443,8 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                     <span>Consequence {I.dot} {String(f.consequenceType || '').replace(/_/g, ' ')}</span>
                   </div>
                   <div className="gi-find-actions">
-                    {!done && <button className="sp-primary gi-resolve" onClick={() => resolve(f)}>{I.check} Resolve with AnA</button>}
-                    {done && <button className="sp-ask" onClick={() => reopen(f)}>{I.undo} Re-open</button>}
+                    {!done && <button className="sp-primary gi-resolve" onClick={() => void resolve(f)} disabled={pendingId === f.id}>{I.check} {pendingId === f.id ? 'Recording…' : 'Resolve with AnA'}</button>}
+                    {done && <button className="sp-ask" onClick={() => void reopen(f)} disabled={pendingId === f.id}>{I.undo} {pendingId === f.id ? 'Recording…' : 'Re-open'}</button>}
                     {/* factId is a documented null on every live finding, so this
                         "change value everywhere" affordance stays hidden until the
                         findings table carries a real fact linkage. */}
