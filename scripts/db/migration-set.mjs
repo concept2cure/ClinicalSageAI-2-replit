@@ -663,6 +663,12 @@ export const C2C_MIGRATION_FILES = [
   // half additionally uses DROP CONSTRAINT IF EXISTS, because on a drizzle-push
   // database the table exists while the named constraint does not.
   'migrations/20260806b_anda_ide_filing_types.sql',
+  // pma:fda was six flat sections from 20260528 and never revisited — the same
+  // hollow-outline defect 20260804 fixed for five other packs. Replaces it with
+  // the real 21 CFR 814.20(b) tree as a NEW version and supersedes the stub, so
+  // documents already built against fda-pma-2024 keep the pack they were built
+  // from. Same to_regclass guard as its three siblings.
+  'migrations/20260810_pma_fda_814_20_outline.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

@@ -52,6 +52,8 @@ const CTA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260806_cta_ema_ctr536_out
 // anda:fda and ide:fda, plus the doc_type CHECK widening that makes either of
 // them insertable at all. Applied after CTA, in C2C_MIGRATION_FILES order.
 const ANDA_IDE = path.join(REPO_ROOT, 'migrations/20260806b_anda_ide_filing_types.sql');
+// pma:fda's real 21 CFR 814.20 tree, replacing the six-node stub 20260528 seeded.
+const PMA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260810_pma_fda_814_20_outline.sql');
 
 const ORG = 7;
 const PROJECT = '11111111-2222-3333-4444-555555555555';
@@ -93,6 +95,7 @@ async function boot(withOutlines = true, withAndaIde = withOutlines) {
   if (withOutlines) await pg.exec(fs.readFileSync(OUTLINES, 'utf8'));
   if (withOutlines) await pg.exec(fs.readFileSync(CTA_OUTLINE, 'utf8'));
   if (withAndaIde) await pg.exec(fs.readFileSync(ANDA_IDE, 'utf8'));
+  if (withOutlines) await pg.exec(fs.readFileSync(PMA_OUTLINE, 'utf8'));
 }
 
 const scaffold = (programType: string, primaryAgency: string) =>
@@ -312,6 +315,58 @@ describe('no live rule pack is a stub', () => {
     // An IDE does not go through the eCTD gateway. Naming ESG here would be a
     // false statement in a column the submission path reads.
     expect(r.rows[0].esubmit_channel).toBe('CDRH-Portal');
+  }, 60_000);
+
+  /*
+   * pma:fda slipped between this file's two existing rules for two years.
+   *
+   * "no pack is empty" passes at six sections. The five-module CTD assertion
+   * queries doc_type IN ('ind','nda','bla','maa','jnda') and pma is not listed —
+   * correctly, because a PMA is not a CTD. So the pack was neither empty nor in
+   * scope, and six flat placeholder sections sat live under the most demanding
+   * submission the FDA accepts.
+   *
+   * The shape is asserted, not the count, for the same reason as anda and cta: a
+   * count is satisfied by 67 of anything, and the realistic wrong answer here is
+   * not an empty pack but the old stub with more rows bolted on.
+   */
+  it('pma:fda carries the 21 CFR 814.20 tree, not the six-node stub', async () => {
+    const r = await pg.query<{ required_sections: any[]; version: string }>(
+      `SELECT required_sections, version FROM c2c_rule_packs
+        WHERE doc_type = 'pma' AND agency = 'fda' AND superseded_by IS NULL`,
+    );
+    expect(r.rows.length, 'no live pma:fda pack').toBe(1);
+    const secs = r.rows[0].required_sections;
+    const keys = new Set(secs.map((x: any) => x.key));
+
+    // The stub is gone, not merely outnumbered.
+    expect(r.rows[0].version).not.toBe('fda-pma-2024');
+
+    // Nesting is the whole difference. The stub was six roots and zero children.
+    const roots = secs.filter((x: any) => x.parent_key === null);
+    expect(roots.length, 'pma has no top-level structure').toBeGreaterThan(8);
+    expect(
+      secs.length - roots.length,
+      'pma is still flat — every section is a root, which is the stub shape',
+    ).toBeGreaterThan(40);
+
+    // The parts of 814.20(b) a reviewer looks for, named individually because
+    // "there are 67 rows" would be satisfied by 67 of anything.
+    for (const key of ['B', 'C', 'D', 'F', 'G', 'H', 'K']) {
+      expect(keys.has(key), `814.20(b) section ${key} is missing`).toBe(true);
+    }
+    // The four that decide a PMA: SSED indications, QSR conformance,
+    // biocompatibility, and effectiveness against the primary endpoint.
+    expect(keys.has('B.1'), 'SSED indications for use missing').toBe(true);
+    expect(keys.has('D.3'), '21 CFR 820 / ISO 13485 conformance missing').toBe(true);
+    expect(keys.has('F.1'), 'ISO 10993 biocompatibility missing').toBe(true);
+    expect(keys.has('G.4'), 'effectiveness against the primary endpoint missing').toBe(true);
+
+    // Optionality is real: a Class III device with no software or sterile barrier
+    // must not be handed mandatory sterilisation and cybersecurity sections.
+    const optional = secs.filter((x: any) => x.mandatory === false).map((x: any) => x.key);
+    expect(optional, 'every section is mandatory — optionality was flattened').toContain('D.4');
+    expect(optional).toContain('C.5');
   }, 60_000);
 
   it('covers all three biotech marketing pathways', async () => {
