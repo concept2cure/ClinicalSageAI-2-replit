@@ -110,7 +110,17 @@ const REGISTRY_SOURCE: Record<string, Record<string, RegistryTuple[]>> = {
     ],
     investigational: [
       ['us_ind', 'Investigational New Drug Application (IND)', 'FDA', 'US', 'eCTD', 'M1–M5', 'eCTD', 'Application to begin clinical trials; 30-day review.', 'ind'],
-      ['eu_cta', 'Clinical Trial Application (CTA)', 'EMA', 'EU', 'eCTD', 'M1–M5', 'eCTD', 'EU CTR 536/2014 via CTIS portal.'],
+      // The 9th slot is the pathwayKey, and its absence is not cosmetic:
+      // Projects.tsx:130 substitutes 'ctd' for a missing key, and
+      // programTypeFor() turns pw === 'ctd' into 'nda'. So this row used to
+      // create a US NDA — scaffolding the 71-section marketing dossier — for a
+      // customer who asked for an EU clinical trial application.
+      //
+      // The format columns were wrong too, and said so in their own description:
+      // a CTR 536/2014 CTA is a Part I / Part II submission filed through CTIS,
+      // not an eCTD M1-M5 dossier. They now match migrations/20260806, which
+      // seeds cta:ema with the real Annex I outline.
+      ['eu_cta', 'Clinical Trial Application (CTA)', 'EMA', 'EU', 'CTR Annex I', 'Part I–II', 'CTIS', 'EU CTR 536/2014 via CTIS portal.', 'cta'],
       ['ctn_au', 'Clinical Trial Notification (CTN)', 'TGA', 'AU', 'eCTD', '—', 'eCTD', 'TGA notification before commencing a clinical trial.'],
       ['cta_hc', 'Clinical Trial Application', 'Health Canada', 'CA', 'eCTD', 'M1–M5', 'eCTD', 'Health Canada CTA under Food and Drug Regulations.'],
       ['ctn_jp', 'Clinical Trial Notification', 'PMDA', 'JP', 'CTD', 'M1–M5', 'CTD', 'PMDA clinical trial notification.'],

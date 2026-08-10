@@ -91,7 +91,7 @@ const TA_LIST: { id: string; label: string; group: string }[] = [
 
 /** Map a chosen registry template + segment → a canonical program_type the
  *  backend accepts (server VALID_PROGRAM_TYPES) and WS_CASE buckets. */
-function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
+export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   const id = (sel?.id ?? '').toLowerCase();
   const pw = (sel?.pathway ?? '').toLowerCase();
   if (id.includes('510k')) return '510k';
@@ -103,6 +103,22 @@ function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   if (id.includes('bla') || pw === 'bla') return 'bla';
   if (id.includes('maa') || pw === 'maa') return 'maa';
   if (id.includes('anda') || pw === 'anda') return 'anda';
+  // MUST precede the 'nda' line below. A missing pathwayKey defaults to 'ctd'
+  // (line 130), and `pw === 'ctd'` returns 'nda' — which is how every
+  // clinical-trial application in the registry became a US marketing
+  // application. 'eu_cta' now carries pathwayKey 'cta' and lands here, so it
+  // scaffolds the CTR 536/2014 Annex I outline seeded by migrations/20260806
+  // instead of the 71-section NDA dossier.
+  //
+  // Still mis-mapped, deliberately: cta_hc, cta_nmpa, ctn_au and ctn_jp remain
+  // 'nda' because there is no cta pack for hc / nmpa / tga / pmda. Giving them
+  // pathwayKey 'cta' would make resolveDocumentClass produce (cta, hc), which
+  // no c2c_rule_packs row satisfies, so the composite FK would send the scaffold
+  // down NO_RULE_PACK and the customer would get no document at all. That is
+  // arguably the more honest failure, but it is a product decision and it needs
+  // the packs first. The contract test pins the current behaviour so the choice
+  // stays visible rather than becoming folklore.
+  if (id === 'eu_cta' || pw === 'cta') return 'cta';
   if (id.includes('nda') || pw === 'ctd') return 'nda';
   if (id.includes('ind') || pw === 'ind') return 'ind';
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
