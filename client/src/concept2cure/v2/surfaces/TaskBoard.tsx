@@ -769,7 +769,16 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
     <div className="tb-detail-bd" onClick={onClose}>
       <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates -- from-template</span><h3>Start a workflow</h3></div>
+          {/*
+            Was `taskTemplates -- from-template`. Every other modal in this file
+            uses that slot to name where its data really comes from
+            (`unifiedTasks -- new`, the row's own taskId), so this read as the
+            same kind of claim — and both halves were wrong. task_templates IS a
+            real table (shared/schema.ts:7233), but nothing here reads it: the
+            options below are TB_WORKFLOWS, a client constant. And no
+            `from-template` route exists server-side at all.
+          */}
+          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>built-in templates -- not read from task_templates</span><h3>Start a workflow</h3></div>
           <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
         </div>
         <div className="tb-form">
@@ -779,6 +788,13 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
           </div>
           <div className="wf-meta">
             <span><b>{tpl.tasks.length}</b> tasks</span><span className="tb-dot">--</span><span><b>{span}</b>-day span</span><span className="tb-dot">--</span><span><b>{totalHours}</b>h effort</span><span className="tb-dot">--</span><span><b>{tpl.dependencies.length}</b> dependencies</span>
+          </div>
+          {/* The span and effort figures are the template's own default
+              offsets and hours summed up — not an estimate for this programme,
+              this team or this scope. Saying so costs a line and stops a
+              starter template reading as a plan. */}
+          <div className="tb-endpoint" style={{ marginTop: 4 }}>
+            Built-in starter template. The day span and hours are the template's defaults, not an estimate for this programme.
           </div>
           <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- dependency-linked, date-offset</span></label>
             <div className="wf-tasks">
