@@ -44,6 +44,11 @@
 export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
   ind: 'ind', cta: 'cta', nda: 'nda', anda: 'anda', bla: 'bla', maa: 'maa', jnda: 'jnda',
   '510k': 'k510', de_novo: 'denovo', pma: 'pma', ide: 'ide', cer: 'cer',
+  // EU MDR / IVDR technical documentation. Mapped for the same reason anda and
+  // ide are and device/ivd are not: each names ONE dossier structure, enumerated
+  // by the Regulation itself (MDR Annex II+III, IVDR Annex II+III). There is
+  // nothing to guess. migrations/20260810b supplies both packs.
+  mdr: 'mdr', ivdr: 'ivdr',
 };
 
 /**

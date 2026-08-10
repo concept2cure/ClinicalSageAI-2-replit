@@ -110,14 +110,12 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   // scaffolds the CTR 536/2014 Annex I outline seeded by migrations/20260806
   // instead of the 71-section NDA dossier.
   //
-  // Still mis-mapped, deliberately: cta_hc, cta_nmpa, ctn_au and ctn_jp remain
-  // 'nda' because there is no cta pack for hc / nmpa / tga / pmda. Giving them
-  // pathwayKey 'cta' would make resolveDocumentClass produce (cta, hc), which
-  // no c2c_rule_packs row satisfies, so the composite FK would send the scaffold
-  // down NO_RULE_PACK and the customer would get no document at all. That is
-  // arguably the more honest failure, but it is a product decision and it needs
-  // the packs first. The contract test pins the current behaviour so the choice
-  // stays visible rather than becoming folklore.
+  // cta_hc, cta_nmpa, ctn_au and ctn_jp reach this line too. There is still no
+  // cta pack for hc / nmpa / tga / pmda, so resolveDocumentClass produces
+  // (cta, hc), no c2c_rule_packs row satisfies it, and the scaffold declines with
+  // NO_RULE_PACK. That is deliberate: declining is honest, filing a Canadian
+  // trial application as a US marketing application is not. They become sellable
+  // when those four packs exist, and nothing else has to change here.
   if (id === 'eu_cta' || pw === 'cta') return 'cta';
   // 'device' and 'ivd' are accepted by the API (projects.ts VALID_PROGRAM_TYPES)
   // and deliberately UNMAPPED in PROGRAM_TO_DOC_TYPE, so they fail closed: the
@@ -130,6 +128,10 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   // Reaching here therefore produces an empty Vault, which is only honest if the
   // customer is TOLD. The wizard surfaces meta.scaffoldSkipped for exactly that
   // reason; the two changes are not separable.
+  // MDR/IVDR before the generic device/ivd fallbacks: an EU technical file has a
+  // real pack and must reach it, while a bare 'device' still fails closed.
+  if (pw === 'mdr') return 'mdr';
+  if (pw === 'ivdr') return 'ivdr';
   if (pw === 'device') return 'device';
   if (pw === 'ivd') return 'ivd';
   if (id.includes('nda') || pw === 'ctd') return 'nda';

@@ -89,6 +89,10 @@ const VALID_PROGRAM_TYPES = new Set([
   // outline (migrations/20260806); opening it against the previous two-node pack
   // would have shipped the hollow dossier this codebase spent a migration ending.
   'ind', 'cta', 'bla', 'biologic', 'nda', 'maa', 'jnda', 'anda',
+  // EU MDR / IVDR technical documentation. Thirteen registry rows offered these
+  // and every one created a US NDA, because the API had no value for them to
+  // land on. Backed by real packs as of migrations/20260810b.
+  'mdr', 'ivdr',
 ]);
 const VALID_PRODUCT_TYPES = new Set(['drug', 'biologic', 'device', 'ivd']);
 

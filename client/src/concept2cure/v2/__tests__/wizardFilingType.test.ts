@@ -100,17 +100,42 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
     },
   );
 
-  it.each(['eu_mdr_i', 'eu_mdr_iia', 'eu_mdr_iib', 'eu_mdr_iii', 'uk_ukca',
-           'pmda_shonin', 'nmpa_device', 'tga_device', 'hc_mdl', 'br_device'])(
-    '%s is a device filing and fails closed rather than becoming an NDA',
+  /*
+   * EU MDR and IVDR now have REAL packs (migrations/20260810b), so they route to
+   * their own doc_types and scaffold Annex II + III rather than failing closed.
+   * That is the difference between honest and sellable, and it is why these are
+   * asserted apart from the device/ivd rows below.
+   */
+  it.each(['eu_mdr_i', 'eu_mdr_iia', 'eu_mdr_iib', 'eu_mdr_iii', 'eu_sig_change', 'eu_clin_inv'])(
+    '%s routes to the EU MDR technical file',
+    (id) => {
+      expect(programTypeFor(selFor(id), 'biotech')).toBe('mdr');
+    },
+  );
+
+  it.each(['eu_ivdr_a', 'eu_ivdr_b', 'eu_ivdr_cd', 'cdx_ivdr_d', 'ivdr_perf_study',
+           'ivdr_pmpf', 'ivd_pms_plan'])(
+    '%s routes to the EU IVDR technical file',
+    (id) => {
+      expect(programTypeFor(selFor(id), 'biotech')).toBe('ivdr');
+    },
+  );
+
+  /*
+   * These still fail closed, and correctly. A Japanese Shonin, a Health Canada
+   * device licence and a UKCA registration each name a jurisdiction's device
+   * approval, not one enumerated dossier structure — unlike MDR Annex II, there
+   * is no single shape to seed. They decline visibly rather than borrowing one.
+   */
+  it.each(['uk_ukca', 'pmda_shonin', 'nmpa_device', 'tga_device', 'hc_mdl', 'br_device'])(
+    '%s is a device filing with no defined pack and fails closed',
     (id) => {
       expect(programTypeFor(selFor(id), 'biotech')).toBe('device');
     },
   );
 
-  it.each(['eu_ivdr_a', 'eu_ivdr_b', 'eu_ivdr_cd', 'cdx_ivdr_d', 'ivdr_perf_study',
-           'pmda_ivd', 'nmpa_ivd', 'tga_ivd', 'hc_ivd', 'ivd_vigilance'])(
-    '%s is an IVD filing and fails closed rather than becoming an NDA',
+  it.each(['pmda_ivd', 'nmpa_ivd', 'tga_ivd', 'hc_ivd', 'ivd_vigilance'])(
+    '%s is an IVD filing with no defined pack and fails closed',
     (id) => {
       expect(programTypeFor(selFor(id), 'biotech')).toBe('ivd');
     },
@@ -137,7 +162,7 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
     expect(deviceish.length, 'the segment filter matched nothing — has the field been renamed?')
       .toBeGreaterThan(40);
 
-    const DRUG_MARKETING = new Set(['nda', 'bla', 'maa', 'anda', 'jnda']);
+    const DRUG_MARKETING = new Set(['nda', 'bla', 'maa', 'anda', 'jnda', 'cta', 'ind']);
     const wrong = deviceish
       .map((e) => [e.id, programTypeFor(selFor(e.id), 'biotech')] as const)
       .filter(([, pt]) => DRUG_MARKETING.has(pt))

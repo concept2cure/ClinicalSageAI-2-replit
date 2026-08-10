@@ -669,6 +669,11 @@ export const C2C_MIGRATION_FILES = [
   // documents already built against fda-pma-2024 keep the pack they were built
   // from. Same to_regclass guard as its three siblings.
   'migrations/20260810_pma_fda_814_20_outline.sql',
+  // EU MDR 2017/745 and IVDR 2017/746 technical documentation. Widens the
+  // doc_type CHECK for 'mdr' and 'ivdr' (a strict superset, so no existing row
+  // can be invalidated) and seeds both packs. Thirteen EU device and diagnostics
+  // filing types were scaffolding US NDAs before this.
+  'migrations/20260810b_eu_mdr_ivdr_outlines.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing
