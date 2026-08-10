@@ -195,8 +195,20 @@ describe('a draft belongs to one document, even when sections share a number', (
     const buttons = container.querySelectorAll('.bd-card-acts .bd-primary');
     expect(buttons.length).toBe(2);
     fireEvent.click(buttons[0]);
-    await waitFor(() => expect(acceptCalls().length).toBe(1));
-    fireEvent.click(container.querySelectorAll('.bd-card-acts .bd-primary')[0]);
+
+    // Wait for the first card to be ACCEPTED, not merely for its request to
+    // have been sent. `acceptCalls().length === 1` is true the moment the POST
+    // goes out, while the card is still `saving` and still rendering its own
+    // (now disabled) Accept button. Re-querying `[0]` at that point can return
+    // the FIRST card again, so the click lands on a disabled button, the count
+    // never reaches 2, and the test times out. It passed locally eight runs in
+    // a row and failed on CI's slower timing — waiting on the state that
+    // actually removes the first button makes it deterministic.
+    await waitFor(() => expect(container.querySelectorAll('.bd-card.accepted').length).toBe(1));
+
+    const remaining = container.querySelectorAll('.bd-card-acts .bd-primary');
+    expect(remaining.length, 'the accepted card still offers an Accept button').toBe(1);
+    fireEvent.click(remaining[0]);
     await waitFor(() => expect(acceptCalls().length).toBe(2));
 
     const targets = acceptCalls().map(r => r.url.replace(/^.*\/documents\//, '').replace('/accept', ''));
