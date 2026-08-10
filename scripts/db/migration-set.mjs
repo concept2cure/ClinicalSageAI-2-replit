@@ -760,6 +760,19 @@ export const C2C_MIGRATION_FILES = [
   // (asserted by tenant-isolation-sweep.contract.test.ts).
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
+  // authoring_reviews — the document review/approval ledger. Three endpoints
+  // (list reviews, submit a verdict, request review from named reviewers) have
+  // always addressed a table that exists in no migration, no schema file and no
+  // runtime DDL helper, so every one of them was an unconditional 42P01.
+  // Guarded on authoring_documents and listed after the authoring bundle, so it
+  // no-ops with a NOTICE rather than aborting the set where that is absent.
+  //
+  // MUST precede the sweep below: a table created after it gets no RLS policy,
+  // and under RLS_ENFORCE=on that means one org can read another's review
+  // verdicts. The sweep is the whole reason this entry is here and not at the
+  // end of the list.
+  'migrations/20260728_authoring_reviews.sql',
+
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and
   // policies only the tables that exist at that moment. Every table added by the
@@ -770,6 +783,7 @@ export const C2C_MIGRATION_FILES = [
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
+
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

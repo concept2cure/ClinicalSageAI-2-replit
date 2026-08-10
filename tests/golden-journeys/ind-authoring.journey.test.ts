@@ -146,6 +146,14 @@ beforeAll(async () => {
       // and refuses to commit one without the other, so this table is now a
       // prerequisite for the authoring spine, not an optional extra.
       'db/migrations/20260803_document_span_lineage.sql',
+      // Comment threading + author identity. The comment READ path
+      // (GET /documents/:id/comments) has always selected user_name,
+      // user_email, parent_comment_id and position_data, so this migration is
+      // already load-bearing for a route the editor calls; the write path now
+      // populates the same columns instead of leaving every comment attributed
+      // to a raw actor id. It is on the durable apply path
+      // (C2C_MIGRATION_FILES) — this list was simply behind it.
+      'migrations/20260728_authoring_comments_threading.sql',
     ],
   });
   h.db = jdb.db;
