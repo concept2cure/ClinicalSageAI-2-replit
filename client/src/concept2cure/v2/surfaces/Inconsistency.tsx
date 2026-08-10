@@ -296,7 +296,30 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
         ? 'Nothing in the governed record contradicts anything else. This filing is ready to promote into the submission sequence.'
         : 'Every governed cross-reference AnA checks on a ' + filingLabel + ' dossier is consistent -- nothing stands between this filing and a clean submission.',
       reassure: 'This is what submission-ready looks like. I\'ll keep watching as new content lands.',
-      action: { label: 'Promote to submission sequence', onClick: () => open('submission-center') },
+      /* NAVIGATION, and the label now says so. It used to read "Promote to
+         submission sequence" on a control that only opens another surface —
+         the same overclaim as the old "Route for signature".
+
+         NOT WIRED, deliberately, and this is the reason so nobody re-runs the
+         investigation. Two routes look like they promote, and both fail:
+
+         • regulatorySubmissions `POST /projects/:id/sequences` — the URL says
+           projects and sequences, and its own error string says "Failed to
+           create submission sequence". It does neither: `:id` is resolved by
+           loadSubmissionByParam (a SUBMISSION id), and the row it inserts is a
+           `stageGates`, not a sequence. Wrong entity and wrong artifact, behind
+           a name that reads exactly right.
+         • submissions `POST /:id/sequences` — genuinely creates an eCTD
+           sequence via createSequence({ submissionId: id }), but takes a
+           SUBMISSION id.
+
+         This surface holds `projectId` (a projects.id — the same one the board
+         read and the contradiction scan use) and no submission id. Bridging
+         project → submission is not a wiring detail: a programme can carry an
+         IND, an NDA and supplements at once, so WHICH submission a clean
+         dossier promotes into is a product decision. Guessing it would file
+         against the wrong application. */
+      action: { label: 'Open the submission centre', onClick: () => open('submission-center') },
     };
     if (gate.blocked) {
       const b = gate.blocking[0];
