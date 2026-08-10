@@ -325,4 +325,137 @@ Do not build: resource/capacity management, time and budget tracking, MS Project
 
 ---
 
-*Findings verified by direct source reading. Every `file:line` citation was opened and confirmed. A parallel multi-agent audit is in progress; its results will be merged into this document.*
+
+
+---
+
+## Appendix A — Findings from a partial parallel audit (unverified)
+
+**Status: triage queue, not findings.** Read this section differently from the rest of the
+document. Everything above was traced end-to-end by hand. Everything below came from a
+parallel multi-agent audit that was **stopped after 5 of 10 dimensions**, before its
+adversarial verification stage ran. These claims have *not* been checked, and the body of this
+report is itself a record of how often an unverified first pass is wrong — five corrections,
+four of them in the same direction.
+
+They are recorded because discarding 58 plausible P0/P1 leads would be worse
+than publishing them with a clear warning. Each needs the same end-to-end verification the
+findings above got before it is treated as real or estimated.
+
+### A.1 The one lead verified so far
+
+**Client-supplied `organizationId` overrides the authenticated tenant** —
+`server/api/cmc/projectRoutes.ts:487`:
+
+```js
+const organizationId =
+  Number(req.body?.organizationId) ||
+  (Number.isFinite(orgIdFromAuth) ? orgIdFromAuth : 0);
+```
+
+The request body wins over the JWT-derived org. This directly contradicts the doctrine the
+codebase states for itself in `utils/tenantContext.ts` — *"Organization ID must come from the
+verified JWT token, NOT from user-supplied headers"* — and `projectId` is taken from the URL
+with no ownership check.
+
+**The agent filed this as a P0 cross-tenant write. That overstates it, and the correction
+matters.** `regulatory_documents` carries `organization_id`, so migration
+`0021_enable_rls_everywhere.sql` covers it, and the policy is `FOR ALL … USING (…) WITH CHECK
+(…)` — the `WITH CHECK` arm blocks an INSERT carrying another tenant's org id. In production,
+where `RLS_ENFORCE=on` is required to boot, the write fails at the database.
+
+So the accurate finding is narrower and still real: **the application layer has no tenant
+control on this path and actively prefers attacker-supplied input; RLS is the only thing
+stopping it.** `RLS_ENFORCE` defaults to *off* outside production, so the cross-tenant write
+does succeed in dev and staging. Rated **P1** — a defense-in-depth failure with non-production
+exposure, not a production breach.
+
+### A.2 Unverified P0-severity claims (15)
+
+| Sev | Category | Claim | Cited evidence |
+|---|---|---|---|
+| P0 | completeness | The PM UI is read-only apart from project creation — no edit, delete, member, or milestone mutation exists | Grep of `apiRequest('POST'|'PATCH'|'DELETE'|'PUT'` and `liveMutateOrNull` across Projects.tsx, ProjectHome.tsx, Biopharm |
+| P0 | correctness | POST /api/project-rules is unconditionally broken — INSERT targets a column that does not exist | server/routes/project-rules.ts:159-168 inserts into `max_executions_per_day`, and the PATCH field map at server/routes/p |
+| P0 | correctness | Two incompatible project id-spaces are surfaced through one selection channel; the numeric-keyed surfaces can never resolve a project chosen from the portfolio | `GET /api/c2c/projects` projects `p.id::text` from `regulatory_programs` whose PK is `uuid('id')` (server/routes/c2c/pro |
+| P0 | correctness | UUID-to-integer join in the project team endpoint, swallowed by a bare catch — team list is permanently empty | server/routes/c2c/projects.ts:456-467: `JOIN regulatory_programs rp ON rp.id = pm.project_id` where `regulatory_programs |
+| P0 | data-model | Four mutually incompatible "project" entities with cross-wired child tables | `projects` int-serial PK at shared/schema.ts:5235-5237; `cer_projects` int-serial PK at shared/schema.ts:3332-3335; `reg |
+| P0 | data-model | Hard project delete against 28 FKs declared with no ON DELETE behaviour | server/routes/projects-management.ts:359 `await db.delete(projects).where(eq(projects.id, projectId));` — no transaction |
+| P0 | data-model | Selected project lives only in a mutable window global — deep links and reloads silently lose it | Projects.tsx:389 `window.C2C_PROJECT = { id: pr.id, ... }` is the sole write for the list flow (also Projects.tsx:166 fo |
+| P0 | dependency | No durable migration path for any project-management table — the deploy applier contains zero PM migrations | migrations/meta/_journal.json contains exactly one entry (`0000_sweet_joseph`), so drizzle's runtime migrate() replays o |
+| P0 | performance | GET /api/c2c/projects/:id/activity scans the tenant's whole audit_logs table with an unindexable jsonb predicate | server/routes/c2c/projects.ts:599-609 — `SELECT ... FROM audit_logs al WHERE al.tenant_id = $2 AND (al.resource_id = $1  |
+| P0 | performance | GET /api/projects and /api/project-hierarchy/flat return SELECT * over the wide projects table with no pagination, including the unbounded settings blob | server/routes/projects-management.ts:72-82 — `db.select().from(projects).where(eq(projects.organizationId, organizationI |
+| P0 | security | Client-supplied organizationId overrides authenticated tenant on POST /api/cmc/projects/:projectId/documents | server/api/cmc/projectRoutes.ts:486-489: `const orgIdFromAuth = Number(getOrgId(req)); const organizationId = Number(req |
+| P0 | tenancy | Cross-tenant IDOR in CMC drug-product sub-resources: mutations keyed on productId alone | server/api/cmc/projectRoutes.ts:687-707 `router.put('/projects/:projectId/drug-products/:productId')` does `db.update(dr |
+| P0 | tenancy | Cross-tenant IDOR: GET/PUT /projects/:projectId/cmc and GET /projects/:projectId/context read and write another tenant's project | server/routes/concept2cure.ts:13970-13976 GET /projects/:projectId/cmc: `db.select().from(projects).where(eq(projects.id |
+| P0 | tenancy | Cross-tenant IDOR: project task endpoints in concept2cure.ts have no org scoping at all | server/routes/concept2cure.ts:13161-13168 `router.get('/projects/:projectId/tasks')` builds `db.select().from(projectTas |
+| P0 | tenancy | Nine project-management tables have no tenant column and therefore receive no RLS policy at all | migrations/0021_enable_rls_everywhere.sql:79-99 selects only tables whose information_schema.columns include `organizati |
+
+### A.3 Unverified P1-severity claims (43)
+
+| Sev | Category | Claim | Cited evidence |
+|---|---|---|---|
+| P1 | correctness | 'Filing < 60 days' KPI on the portfolio is always zero — the client regexes a date string the server never emits | Projects.tsx:383 `{ l: 'Filing < 60 days', n: String(projects.filter(p => /days/.test(p.due)).length), … }`. The server  |
+| P1 | correctness | AnA's create_project writes a column that does not exist and omits two NOT NULL columns | server/services/ana-ri/command-executor.ts:259-262 `INSERT INTO projects (organization_id, name, description, status, su |
+| P1 | correctness | DELETE /api/projects/:projectId cannot delete any non-empty project — FK NO ACTION surfaces as an opaque 500 | server/routes/projects-management.ts:348 performs a hard `db.delete(projects).where(eq(projects.id, projectId))` with no |
+| P1 | correctness | Five aggregate GET endpoints in project-sections are unreachable — shadowed by router.get('/:code') registered first | server/routes/project-sections.ts:263 registers `router.get('/:code', ...)`. Registered AFTER it, and therefore never ma |
+| P1 | correctness | Project creation is not transactional — sections, intelligence profile and initial thread are fire-and-forget after the 201 | server/routes/concept2cure.ts:2226-2340: the project row is inserted and the response object is built (line 2195), then  |
+| P1 | correctness | Rollup counts tasks from `unified_tasks` while every PM writer uses `project_tasks` — progress/health numbers are structurally wrong | server/services/project-rollup-service.ts:176-187 aggregates total/completed/blocked/overdue FROM `unified_tasks`. The P |
+| P1 | correctness | Rules-engine `create_task` action is dead on arrival — INSERT omits two NOT NULL columns | server/services/rules-engine/actions/index.ts:54-72 inserts into `unified_tasks` with columns (title, description, prior |
+| P1 | correctness | Schedule-of-events upsert names a unique constraint the migration does not create | server/services/projects/schedule-of-events/service.ts:396 `ON CONFLICT (organization_id, project_id) DO UPDATE`. db/mig |
+| P1 | correctness | Six GET routes are permanently unreachable due to Express declaration-order shadowing | Express 5 (package.json:308 "express": "^5.2.1") matches routes in declaration order. server/routes/project-sections.ts: |
+| P1 | correctness | Start-workflow and Quick-task write to an in-browser store and never persist | TaskBoard.tsx:428 `onInstantiate={(tasks) => { tasks.forEach(t => (window as any).C2C && (window as any).C2C.addTask(t)) |
+| P1 | correctness | TaskBoard's project filter is a hardcoded 3-project fixture that cannot match real task rows | TaskBoard.tsx:282 populates the project `<select>` from `TB_PROJECTS`, defined in fixtures/task-board-data.ts:134-139 as |
+| P1 | correctness | Work-item dedup is a read-then-write race with no supporting unique constraint; the source_ref column added to fix it is dead | server/routes/concept2cure.ts:16487-16498 SELECTs on (sourceType, sourceId, orgId) then branches to UPDATE or INSERT. sh |
+| P1 | correctness | regulatory_programs carries a deleted_at that is never written and is filtered by only some readers | shared/schema/programs.ts:99 declares `deletedAt: timestamp('deleted_at')`. Grep across server/ finds no `UPDATE regulat |
+| P1 | data-model | No project lifecycle state machine — status is free text and the only 'blocking' mechanism cannot block | shared/schema.ts:5254 `status: text('status').default('planning').notNull()` — no CHECK, no enum, comment only. Write pa |
+| P1 | data-model | Project knowledge document manifest stored as an unbounded JSON array inside projects.settings, rewritten in full on every upload | server/routes/concept2cure.ts:4507-4530 — `normalizeKnowledge(settings)` → `documents: [...knowledge.documents, document |
+| P1 | data-model | Relational data modelled as json blobs, using `json` rather than `jsonb` | Team membership lives in a blob: shared/schema/programs.ts:88 `teamMembers: json('team_members').$type<TeamMember[]>()`  |
+| P1 | data-model | Same entity returned in snake_case by writes and camelCase by reads on /api/projects | GET /api/projects (server/routes/projects-management.ts:70-90) returns Drizzle rows → camelCase (organizationId, clientW |
+| P1 | data-model | Two incompatible task status vocabularies on the same entity within one router | server/routes/concept2cure.ts:13191 (POST /projects/:projectId/tasks) validates `status: z.enum(['todo','in-progress','r |
+| P1 | data-model | project_milestones has two rival physical shapes; the Drizzle model matches neither reconciled shape | db/migrations/20260730_project_milestones_reconciliation.sql:4-28 documents it verbatim: the 0000 baseline/shared/schema |
+| P1 | performance | All ~106 v2 surfaces are statically imported into one chunk — no code splitting for PM surfaces | client/src/concept2cure/v2/surfaceViews.ts has 88 top-level static `import { X } from './surfaces/...'` statements (line |
+| P1 | performance | GET /api/c2c/projects/:id/vault-structure and GET /api/c2c/project-vault/:id issue one section query per document (N+1) | server/routes/c2c/projects.ts:687-695 — `for (const d of docsRes.rows) { const secRes = await pool.query('SELECT section |
+| P1 | performance | GET /api/project-hierarchy/:id/tree and /:id/rollup perform a bulk UPDATE of projects.metadata on every read | server/services/project-rollup-service.ts:158 calls `this.persistRollups(nodeMap, organizationId)` from inside `getTree( |
+| P1 | performance | GET /api/project-hierarchy/programs is an N+1: one COUNT query per program row | server/routes/project-hierarchy.ts:70-89 — `db.select().from(projects)` (no LIMIT, no column list) then `await Promise.a |
+| P1 | performance | Materialized-path descendant queries cannot use the path index | server/services/project-rollup-service.ts:100-108 `WHERE ... (p.path LIKE $2 || '/%' OR p.path = $2 OR p.parent_project_ |
+| P1 | performance | No caching layer of any kind on PM reads; the repo's cache modules are dead code | server/cache/tenantCache.ts is a bounded LRU with TTL and invalidation, but `grep getFromCache|storeInCache|invalidateCa |
+| P1 | performance | No data-fetching cache, dedup, retry, or cancellation — every navigation refetches the whole project workspace | Grep for `useQuery|QueryClientProvider|invalidateQueries` across client/src/concept2cure/v2 (excluding __tests__) return |
+| P1 | performance | No pagination on any PM list endpoint except rule execution logs | Unpaginated with no LIMIT: GET /api/projects (projects-management.ts:72), GET /api/project-hierarchy/flat (project-hiera |
+| P1 | performance | No pagination on any project list endpoint — unbounded result sets | GET /api/projects returns every project for the org with no LIMIT (server/routes/projects-management.ts:70-80). GET /api |
+| P1 | performance | Org-wide readiness recomputes two identical org-scoped alert summaries once per project | server/services/ana/org-readiness-overview.ts:294-324 loops every project in the org through `getProjectReadinessAggrega |
+| P1 | performance | ProjectRollupService.recomputePaths recurses one project at a time with 3 sequential queries per node | server/services/project-rollup-service.ts:389-429 — per node it runs `SELECT id, parent_project_id`, optionally `SELECT  |
+| P1 | performance | Synchronous PDF/DOCX text extraction and AI embedding on the upload request path | server/routes/concept2cure.ts:4296 — `const extracted = await extractUploadedText(file.buffer, file.mimetype, safeOrigin |
+| P1 | performance | The performance-index migration is never applied and would fail if it were | migrations/20260331_performance_indexes.sql is absent from scripts/db/migration-set.mjs (0 hits). Its statements also re |
+| P1 | performance | assembleProjectKnowledgeCorpus fetches every knowledge atom with no LIMIT before truncating to a 160 KB budget | server/services/projects/retrieval-mode.ts:158-168 — `SELECT a.title, a.content FROM lumen_data_atoms a WHERE a.organiza |
+| P1 | performance | computeReadinessScore runs twice per GET /api/project-home/:projectId | server/routes/project-home-routes.ts:171-176 runs `Promise.allSettled([computeReadinessScore(svcCtx), generateNextAction |
+| P1 | performance | project_tasks has zero indexes on any provisioned database | shared/schema.ts:6830-6865 declares `projectTasks` with no third argument — no index callback at all. migrations/0000_sw |
+| P1 | performance | v2 data layer has no caching, deduplication, or request coalescing; ProjectHome fires 7 uncoordinated requests per open | client/src/concept2cure/v2/dataConnect.tsx:366-401 — `useLiveData` is a bare `React.useEffect` + `liveGetOrNull(path)` + |
+| P1 | security | Destructive project operations are gated on read-level permission; `canEditProject` is imported and never called | server/services/project-sharing-access.ts:118/130/143 define canUseProject / canEditProject / canManageProject. server/r |
+| P1 | security | Project membership and visibility are not enforced by any router except concept2cure.ts | server/services/project-sharing-access.ts implements visibility ('private'|'org_public'), share roles ('owner'|'edit'|'u |
+| P1 | ux | Four distinct error envelopes across the PM API; two routers leak raw internal error text | Shapes in use: `{error: string}` (server/routes/projects-management.ts:96, project-hierarchy.ts:97, project-modules.ts:9 |
+| P1 | ux | HTTP status never reaches the UI, so 403 / 404 / 500 / offline all render the same 'sign in and retry' message | queryClient.ts:63-73 — `apiRequest` THROWS `ApiRequestError` for every non-OK status except 401. dataConnect.tsx:290-293 |
+| P1 | ux | Lifecycle stage tracker emits invalid ARIA (tablist with non-tab children) and encodes stage state in colour alone | ProjectHome.tsx:132 `<div className="pj-lc" role="tablist" aria-label="Project lifecycle">` whose children (ProjectHome. |
+| P1 | ux | No focus trap anywhere in v2; the New-Project wizard modal has no dialog semantics, no Escape, and no focus management | Projects.tsx:187-188 `<div className="esign-bd" onClick={onClose}><div className="esign-modal" onClick={e => e.stopPropa |
+| P1 | ux | Progress bars and section status dots carry no accessible value — status is colour and width only | Projects.tsx:469-471 and :495-497 render `<div className="ph-bar-track"><div className="ph-bar-fill" data-tone={…} style |
+
+### A.4 What to do with this
+
+Three of these overlap findings already confirmed in the body (the id-space fork, the
+uuid/integer team join, the absence of route-level code splitting), which is mild corroboration
+that the run was not producing noise. Several others — the `POST /api/project-rules` insert
+naming a non-existent column, the Express declaration-order shadowing that makes six GETs
+unreachable, the rollup counting `unified_tasks` while every writer uses `project_tasks` — are
+concrete and cheap to verify, and would be genuine defects if true.
+
+The tenancy cluster in A.2 deserves attention first, and the same calibration as A.1: check
+whether RLS already covers each path before rating it, because on this codebase it usually
+does, and the difference between "exploitable" and "app-layer control missing" is the whole
+finding.
+
+---
+
+*Findings in the body were verified by direct source reading; every `file:line` citation was
+opened and confirmed. Five claims from the first pass were wrong and are corrected in place
+rather than removed — four of them wrong in the same direction, crediting the codebase with
+less than it had. Appendix A holds unverified leads from a parallel run that was stopped early;
+they are triage, not findings.*
