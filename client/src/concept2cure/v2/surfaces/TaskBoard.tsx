@@ -13,7 +13,9 @@ import {
   // TB_WORKFLOWS and TB_OPTIMAL are gone: the workflow picker reads real
   // templates from GET /api/task-management/templates, and assignment is the
   // server's auto-assign step rather than a fixture lookup table.
-  TB_MOD, TB_COLS, TB_TYPE, TB_SRC, TB_TEAM,
+  // TB_TEAM is gone: assignee names come from the org's real roster
+  // (GET /api/task-management/assignees), keyed by the users.id the board emits.
+  TB_MOD, TB_COLS, TB_TYPE, TB_SRC,
   type TaskSource,
 } from '../fixtures/task-board-data';
 import '../styles/project-home-v2.css';
@@ -73,9 +75,33 @@ interface TaskItem {
   assignmentType?: string;
 }
 
-function tbAvatar(id: string): string {
-  const p = TB_TEAM[id] || { n: '?' };
-  return (p.n || '?').split(' ').map(s => s[0]).join('').slice(0, 2);
+/**
+ * Live assignee roster, id -> display name.
+ *
+ * The board returns `assignee` as the numeric users.id stringified
+ * (taskBoard.routes.ts: `assignee: row.assigneeId != null ? String(row.assigneeId) : ''`),
+ * but every name on this surface used to be resolved through TB_TEAM, a fixture
+ * keyed by short codes ('jc', 'mw', 'am'). TB_TEAM['42'] is undefined, so on
+ * real data EVERY task rendered a blank owner and a '?' avatar — the fixture
+ * was not showing wrong names, it was showing none.
+ *
+ * The org's real roster already had an endpoint: GET
+ * /api/task-management/assignees returns { id: String(users.id), name }, the
+ * same id space the board emits. A context keeps the two components that need
+ * it (the board and TaskDetail) reading one resolved map.
+ */
+const RosterCtx = React.createContext<Record<string, string>>({});
+
+/** Display name for an assignee id; '' when the roster has no such member. */
+function useName(id: string | undefined | null): string {
+  const roster = React.useContext(RosterCtx);
+  return (id && roster[id]) || '';
+}
+
+function tbAvatar(id: string, roster: Record<string, string>): string {
+  const n = roster[id] || '';
+  if (!n) return '?';
+  return n.split(' ').map(s => s[0]).filter(Boolean).join('').slice(0, 2).toUpperCase();
 }
 
 /* ── Main surface ── */
@@ -106,6 +132,15 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      slug matched zero rows and silently emptied the board. The same endpoint was
      already being read by the create modal fifty lines below. */
   const projectOpts = useLiveRows<ProjectOpt>('/api/projects');
+  /* The org's real assignable members. An empty or failed roster degrades to
+     ids resolving to '—' / '?', which is what the fixture already produced —
+     never a fabricated name. */
+  const assignees = useLiveRows<{ id: string; name: string }>('/api/task-management/assignees');
+  const roster = useMemo(() => {
+    const m: Record<string, string> = {};
+    assignees.rows.forEach((a) => { if (a && a.id) m[String(a.id)] = a.name || ''; });
+    return m;
+  }, [assignees.rows]);
 
   /* "My tasks" needs the signed-in user's real id. It used to compare against
      the fixture short-id 'jc', which no real row can carry — so the filter
@@ -284,6 +319,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const milestone = critChain[critChain.length - 1];
 
   return (
+    <RosterCtx.Provider value={roster}>
     <div className="page-inner tb">
       <div className="ph">
         <div>
@@ -323,8 +359,8 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
             : <>The critical path is clear -- nothing open is blocking the milestone right now.</>}
         body={critBlocked
-          ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{(TB_TEAM[heaviest.k] || { n: '' }).n} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{(TB_TEAM[heaviest.k] || { n: '' }).n} is the busiest at {heaviest.open} open tasks -- workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
+          ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{roster[heaviest.k] || 'The busiest assignee'} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
+          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{roster[heaviest.k] || 'The busiest assignee'} is the busiest at {heaviest.open} open tasks -- workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
         reassure={critBlocked || overdue.length ? "I will help you unblock the path and rebalance the team, one step at a time." : "You are on track. I will flag the moment anything threatens the milestone."}
         action={{
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : 'Start a workflow from a template',
@@ -404,7 +440,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                         {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream -- ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
                         {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
                         <span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
-                        <span className="tb-av" title={(TB_TEAM[t.assignee] || { n: '' }).n}>{tbAvatar(t.assignee)}</span>
+                        <span className="tb-av" title={roster[t.assignee] || 'Unassigned'}>{tbAvatar(t.assignee, roster)}</span>
                       </div>
                       <div className="tb-move" onClick={e => e.stopPropagation()}>
                         <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back">{I.left}</button>
@@ -429,7 +465,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               <div className="tb-path-card">
                 <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">
-                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{(TB_TEAM[t.assignee] || { n: '' }).n}</span><span className="tb-dot">--</span>
+                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{roster[t.assignee] || '—'}</span><span className="tb-dot">--</span>
                   <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
                   {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
                   <span className="sp" /><span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
@@ -461,7 +497,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             <div className="tb-an-card">
               <div className="tb-an-h">Team productivity</div>
               {Object.keys(stats.byAsg).map(k => (
-                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(k)}</span>{(TB_TEAM[k] || { n: '' }).n}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
+                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(k, roster)}</span>{roster[k] || '—'}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
               ))}
               <div className="tb-an-foot">Workload-balanced auto-assign via <code>getOptimalAssignee()</code></div>
             </div>
@@ -487,7 +523,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
-              <div style={{ fontSize: 11 }}>{(TB_TEAM[t.assignee] || { n: '' }).n}</div>
+              <div style={{ fontSize: 11 }}>{roster[t.assignee] || '—'}</div>
               <div style={{ fontSize: 11, color: /overdue/.test(t.due) ? 'var(--error)' : 'var(--text-400)' }}>{t.due}</div>
             </button>
           ))}
@@ -525,6 +561,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       )}
       {sel && <TaskDetail t={sel} byId={byId} projLabel={projLabel} onClose={() => setSel(null)} onAsk={onAsk} onMove={move} />}
     </div>
+    </RosterCtx.Provider>
   );
 }
 
@@ -541,7 +578,11 @@ interface TaskDetailProps {
 
 function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
-  const owner = TB_TEAM[t.assignee] || { n: '?', t: '' };
+  /* Name only. TB_TEAM also carried a job title ('Reg Affairs', 'Biostat'),
+     which the roster endpoint does not return — inventing one would be the same
+     class of fabrication this replaces, so the Owner row shows the name alone. */
+  const ownerName = useName(t.assignee);
+  const assignedByName = useName(t.assignedBy);
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
   return (
     <div className="tb-detail-bd" onClick={onClose}>
@@ -561,8 +602,8 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove }: TaskDetailPr
         <div className="tb-detail-grid">
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
           <div><label>Phase</label><span>{t.phase || '—'}</span></div>
-          <div><label>Owner</label><span>{owner.n} -- {owner.t}</span></div>
-          <div><label>Assigned by</label><span>{(TB_TEAM[t.assignedBy] || { n: '' }).n || '--'}</span></div>
+          <div><label>Owner</label><span>{ownerName || 'Unassigned'}</span></div>
+          <div><label>Assigned by</label><span>{assignedByName || '--'}</span></div>
           <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
           <div><label>Due</label><span style={{ color: /overdue/.test(t.due) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
           <div><label>Origin store</label><span>{src.l} -- <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
