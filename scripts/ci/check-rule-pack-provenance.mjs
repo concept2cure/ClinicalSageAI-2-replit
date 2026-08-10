@@ -289,7 +289,13 @@ for (const name of fs.readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).
     if (/\bCHECK\s*\(|CREATE\s+(OR\s+REPLACE\s+)?VIEW|CONSTRAINT\b/i.test(stmt)) continue;
     if (!REVIEWED_ASSIGNMENT.test(stmt)) continue;
 
-    const missing = ATTRIBUTION_FIELDS.filter((f) => !new RegExp(f, 'i').test(stmt));
+    // Substring match, not `new RegExp(f)`. These are fixed column identifiers
+    // with no metacharacters, so building a regex from them bought nothing and
+    // tripped Semgrep's detect-non-literal-regexp rule. Not exploitable — the
+    // values are hardcoded above, never input — but a dynamic regex that gains
+    // nothing is worth deleting rather than annotating.
+    const haystack = stmt.toLowerCase();
+    const missing = ATTRIBUTION_FIELDS.filter((f) => !haystack.includes(f));
     if (missing.length > 0) {
       unattributed.push({ file: path.relative(ROOT, file), missing });
     }
