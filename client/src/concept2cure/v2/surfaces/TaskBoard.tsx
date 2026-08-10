@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -10,8 +10,9 @@ import {
   // filter, the detail label and the workflow picker all read the org's real
   // programmes from GET /api/projects now. What remains here is configuration:
   // module colours, status column definitions, type labels and source labels.
-  TB_MOD, TB_COLS, TB_TYPE, TB_SRC, TB_TEAM, TB_OPTIMAL,
-  TB_WORKFLOWS,
+  // TB_TEAM / TB_OPTIMAL / TB_WORKFLOWS are gone: names come from the org
+  // roster, and workflow templates from GET /api/task-management/templates.
+  TB_MOD, TB_COLS, TB_TYPE, TB_SRC,
   type TaskSource,
 } from '../fixtures/task-board-data';
 import '../styles/project-home-v2.css';
@@ -482,7 +483,21 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       )}
 
       {creating && <TaskCreate proj={proj} tasks={tasks} onClose={() => setCreating(false)} onCreate={create} />}
-      {wf && <WorkflowStart proj={proj} onClose={() => setWf(false)} onInstantiate={(tasks) => { tasks.forEach(t => (window as any).C2C && (window as any).C2C.addTask(t)); setWf(false); setView('path'); }} />}
+      {/* The tasks are already persisted by the time this fires, so the board is
+          RELOADED rather than handed client-built rows through window.C2C.addTask
+          — a runtime channel that only ever updated local state. */}
+      {wf && (
+        <WorkflowStart
+          proj={proj}
+          onClose={() => setWf(false)}
+          onInstantiate={(createdCount) => {
+            setWf(false);
+            setReloadKey((k) => k + 1);
+            setView('path');
+            onAsk && onAsk('Created ' + createdCount + ' task' + (createdCount === 1 ? '' : 's') + ' from the workflow template.');
+          }}
+        />
+      )}
       {sel && <TaskDetail t={sel} byId={byId} projLabel={projLabel} onClose={() => setSel(null)} onAsk={onAsk} onMove={move} nameOf={nameOf} />}
     </div>
   );
@@ -727,114 +742,189 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
 interface WorkflowStartProps {
   proj: string;
   onClose: () => void;
-  onInstantiate: (tasks: TaskItem[]) => void;
+  /** Called with the COUNT the server actually created — the tasks themselves
+   *  are already persisted, so the board reloads rather than being handed
+   *  client-built rows. */
+  onInstantiate: (createdCount: number) => void;
+}
+
+/** GET /api/task-management/templates render contract. */
+interface WorkflowTemplate {
+  templateId: string;
+  name: string;
+  description: string | null;
+  category: string;
+  isDefault: boolean;
+  usageCount: number;
+  taskCount: number;
+  dependencyCount: number;
+  spanDays: number;
+  estimatedHours: number;
+  tasks: Array<{ id: string; title: string; moduleType: string; priority: string; dayOffset: number; duration: number }>;
+  tasksTruncated: boolean;
 }
 
 function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
-  // Real org programmes for the picker; the default is whatever the board is
-  // already filtered to, and otherwise nothing — it used to hard-default to the
-  // fixture slug 'bx204' ("BX-204 -- NDA 212345"), a programme that exists in no
-  // customer's tenant.
+  /* Real org templates. The picker used to be populated from TB_WORKFLOWS, a
+     fixture constant, and `instantiate` fabricated the entire task set in the
+     browser: ids from 'C2C-TASK-' + Math.random(), assignees defaulting to the
+     fixture identity 'jc', due dates as "in N days" strings, and nothing
+     persisted — the tasks vanished on reload, and the footer said so
+     ("not yet wired").
+
+     The write half already existed and is thorough:
+     POST /api/task-management/tasks/from-template/:templateId inserts real
+     unified_tasks with server-generated ids, dates computed from each
+     definition's dayOffset/duration, task_dependencies from the template,
+     provenance (sourceEntityType 'taskTemplate') and createdById from the
+     session. The only missing piece was a way to LIST templates, which is now
+     GET /api/task-management/templates. */
+  const templates = useLiveRows<WorkflowTemplate>('/api/task-management/templates');
   const projects = useLiveRows<ProjectOpt>('/api/projects');
   const initProj = (proj && proj !== 'all') ? proj : '';
-  const [tid, setTid] = useState(TB_WORKFLOWS[0].templateId);
+  const [tid, setTid] = useState('');
   const [project, setProject] = useState(initProj);
   const [autoAssign, setAutoAssign] = useState(true);
-  const tpl = TB_WORKFLOWS.find(t => t.templateId === tid) || TB_WORKFLOWS[0];
-  const totalHours = tpl.tasks.reduce((a, t) => a + (t.estimatedHours || 8), 0);
-  const span = Math.max(...tpl.tasks.map(t => (t.dayOffset || 0) + (t.duration || 0)));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
-  const instantiate = () => {
-    const idMap: Record<string, string> = {};
-    tpl.tasks.forEach(t => { idMap[t.id] = 'C2C-TASK-' + (2300 + Math.floor(Math.random() * 699)); });
-    const blocksOf = (taskTemplateId: string) => tpl.dependencies.filter(([p]) => p === taskTemplateId).map(([, s]) => idMap[s]);
-    const depsOf = (taskTemplateId: string) => tpl.dependencies.filter(([, s]) => s === taskTemplateId).map(([p]) => idMap[p]);
-    const onCrit = new Set<string>();
-    tpl.dependencies.forEach(([p, s]) => { onCrit.add(p); onCrit.add(s); });
-    const tasks: TaskItem[] = tpl.tasks.map(t => ({
-      taskId: idMap[t.id], title: t.title, project, moduleType: t.moduleType,
-      taskType: t.taskType || 'deliverable', status: 'pending', priority: t.priority || 'medium',
-      assignee: autoAssign ? (TB_OPTIMAL[t.moduleType] || 'jc') : 'jc', assignedBy: 'sm', progress: 0,
-      impactScore: t.priority === 'critical' ? 9 : t.priority === 'high' ? 7 : 5,
-      criticalPath: onCrit.has(t.id), regulatoryImpact: true,
-      approvalRequired: t.taskType === 'milestone', approvalStatus: 'not_started',
-      dependsOn: depsOf(t.id), blocks: blocksOf(t.id), comments: 0, attachments: 0,
-      source: 'template', due: 'in ' + ((t.dayOffset || 0) + (t.duration || 0)) + ' days', phase: tpl.name,
-      estimatedHours: t.estimatedHours, assignmentType: autoAssign ? 'auto' : 'manual',
-    }));
-    onInstantiate(tasks);
+  // Seed the selection once templates resolve; never clobber a later choice.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (seeded.current || !templates.rows.length) return;
+    seeded.current = true;
+    const preferred = templates.rows.find(t => t.isDefault) || templates.rows[0];
+    setTid(preferred.templateId);
+  }, [templates.rows]);
+
+  const tpl = templates.rows.find(t => t.templateId === tid) || null;
+
+  /**
+   * Instantiate — POST /api/task-management/tasks/from-template/:templateId.
+   *
+   * `templateId` comes from the list route above, so it is by construction the
+   * id this endpoint takes. `projectId` is the real projects.id already used by
+   * the picker. Nothing is invented here: ids, dates and dependencies are all
+   * the server's.
+   */
+  const instantiate = async () => {
+    if (!tpl || busy) return;
+    if (!project) { setErr('Choose a programme — the tasks are created against it.'); return; }
+    setBusy(true);
+    setErr('');
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/task-management/tasks/from-template/' + encodeURIComponent(tpl.templateId),
+        {
+          projectId: Number(project),
+          startDate: new Date().toISOString(),
+          adjustDates: true,
+        },
+      );
+      const body = await res.json().catch(() => null);
+      const payload = body as { success?: boolean; data?: { tasks?: unknown[] }; error?: string } | null;
+      if (!res.ok || payload?.success !== true) {
+        setErr(payload?.error || 'Could not create the tasks (HTTP ' + res.status + ').');
+        return;
+      }
+      const created = Array.isArray(payload.data?.tasks) ? payload.data!.tasks!.length : tpl.taskCount;
+
+      /* Auto-assign is a SEPARATE governed step; the instantiate route takes no
+         assignee. It runs against the ids that were just created, and a failure
+         here is reported without pretending the tasks were not created — they
+         were. */
+      if (autoAssign) {
+        const ids = (payload.data?.tasks ?? [])
+          .map(t => (t as { taskId?: string })?.taskId)
+          .filter((x): x is string => typeof x === 'string' && x.length > 0);
+        if (ids.length) {
+          try {
+            await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids });
+          } catch {
+            setErr(created + ' tasks were created, but auto-assignment failed — assign them on the board.');
+          }
+        }
+      }
+      onInstantiate(created);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not reach the task service.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="tb-detail-bd" onClick={onClose}>
       <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          {/*
-            Was `taskTemplates -- from-template`. Every other modal in this file
-            uses that slot to name where its data really comes from
-            (`unifiedTasks -- new`, the row's own taskId), so this read as the
-            same kind of claim — and both halves were wrong. task_templates IS a
-            real table (shared/schema.ts:7233), but nothing here reads it: the
-            options below are TB_WORKFLOWS, a client constant. And no
-            `from-template` route exists server-side at all.
-          */}
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>built-in templates -- not read from task_templates</span><h3>Start a workflow</h3></div>
+          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates -- from-template</span><h3>Start a workflow</h3></div>
           <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
         </div>
+
+        {templates.loading ? (
+          <div className="tb-form"><div className="scaf-note">Loading workflow templates…</div></div>
+        ) : templates.error ? (
+          <div className="tb-form">
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load workflow templates"
+              hint={templates.error}
+            />
+          </div>
+        ) : !templates.rows.length ? (
+          <div className="tb-form">
+            <EmptyState
+              icon={I.layers}
+              title="No workflow templates yet"
+              hint="Workflow templates define a reusable set of dependency-linked, date-offset tasks. None are configured for this organization, so there is nothing to start from."
+            />
+          </div>
+        ) : (
         <div className="tb-form">
           <div className="tb-frow">
-            <div className="tb-field"><label>Workflow template</label><select value={tid} onChange={e => setTid(e.target.value)}>{TB_WORKFLOWS.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
+            <div className="tb-field"><label>Workflow template</label><select value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
             <div className="tb-field"><label>Project</label><select value={project} onChange={e => setProject(e.target.value)}><option value="">Select a programme…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
           </div>
-          <div className="wf-meta">
-            <span><b>{tpl.tasks.length}</b> tasks</span><span className="tb-dot">--</span><span><b>{span}</b>-day span</span><span className="tb-dot">--</span><span><b>{totalHours}</b>h effort</span><span className="tb-dot">--</span><span><b>{tpl.dependencies.length}</b> dependencies</span>
-          </div>
-          {/* The span and effort figures are the template's own default
-              offsets and hours summed up — not an estimate for this programme,
-              this team or this scope. Saying so costs a line and stops a
-              starter template reading as a plan. */}
-          <div className="tb-endpoint" style={{ marginTop: 4 }}>
-            Built-in starter template. The day span and hours are the template's defaults, not an estimate for this programme.
-          </div>
-          <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- dependency-linked, date-offset</span></label>
-            <div className="wf-tasks">
-              {tpl.tasks.map((t, i) => (
-                <div key={t.id} className="wf-task">
-                  <span className="wf-task-n">{i + 1}</span>
-                  <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
-                  <span className="wf-task-t">{t.title}</span>
-                  <span className="wf-task-d">day +{t.dayOffset} -- {t.duration}d</span>
-                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
+          {tpl && (
+            <>
+              <div className="wf-meta">
+                <span><b>{tpl.taskCount}</b> tasks</span><span className="tb-dot">--</span>
+                <span><b>{tpl.spanDays}</b>-day span</span><span className="tb-dot">--</span>
+                <span><b>{tpl.estimatedHours}</b>h effort</span><span className="tb-dot">--</span>
+                <span><b>{tpl.dependencyCount}</b> dependencies</span>
+              </div>
+              {tpl.description && <div className="scaf-note" style={{ padding: '2px 0 6px' }}>{tpl.description}</div>}
+              <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- dependency-linked, date-offset</span></label>
+                <div className="wf-tasks">
+                  {tpl.tasks.map((t, i) => (
+                    <div key={t.id || i} className="wf-task">
+                      <span className="wf-task-n">{i + 1}</span>
+                      <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
+                      <span className="wf-task-t">{t.title}</span>
+                      <span className="wf-task-d">day +{t.dayOffset} -- {t.duration}d</span>
+                      <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
+                    </div>
+                  ))}
+                  {tpl.tasksTruncated && (
+                    <div className="scaf-note">Showing the first {tpl.tasks.length} of {tpl.taskCount} tasks — all {tpl.taskCount} are created.</div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="wf-reqs">
-            <div><span className="wf-reqs-l">Regulatory basis</span>{tpl.regulatoryRequirements.map(r => <span key={r} className="wf-tag">{r}</span>)}</div>
-            <div><span className="wf-reqs-l">Milestones</span>{tpl.milestones.map(r => <span key={r} className="wf-tag ok">{r}</span>)}</div>
-          </div>
-          {/* Was "Workload-balanced auto-assign (getOptimalAssignee)". The real
-              getOptimalAssignee (taskManagement.routes.ts:229) does balance
-              workload, but it runs server-side on a persisted create; this modal
-              never posts, so what it applies is TB_OPTIMAL — a fixed per-module
-              default. */}
-          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Auto-assign a default owner per module</button>
+              </div>
+            </>
+          )}
+          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (a separate step, after the tasks are created)</button>
+          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>{err}</div>}
         </div>
+        )}
+
         <div className="tb-detail-f">
-          {/*
-            This button said "Create N tasks", closed the modal and switched to
-            the path view — and nothing appeared. It writes to the in-browser
-            window.C2C store, which the board stopped reading when it moved to
-            the live GET /api/task-management/board. So the primary action of
-            this modal reported success by navigating and produced no row a user
-            could find. The label and the notice now say what actually happens.
-            The real fix is to post these through the same path TaskCreate uses
-            (POST /api/tasks/tasks); until then it must not claim to create.
-          */}
-          <div className="tb-endpoint" title="Target endpoint — not yet wired to this button"><b>POST</b> /tasks/from-template/{tid} <em>(not yet wired)</em></div>
-          <div className="tb-endpoint">These tasks are not saved. They exist in this browser session only and will not appear on the board.</div>
-          <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" onClick={instantiate}>{I.plus} Draft {tpl.tasks.length} tasks (not saved)</button>
+          <div className="tb-endpoint"><b>POST</b> /tasks/from-template/{tid || '…'}</div>
+          <button className="btn ghost" disabled={busy} onClick={onClose}>Cancel</button>
+          <button className="btn primary" disabled={!tpl || !project || busy} onClick={() => { void instantiate(); }}>
+            {I.plus} {busy ? 'Creating…' : tpl ? 'Create ' + tpl.taskCount + ' tasks' : 'Create tasks'}
+          </button>
         </div>
       </div>
     </div>

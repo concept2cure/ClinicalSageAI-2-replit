@@ -410,6 +410,13 @@
 .c2c-v2 .orch-appr-n{font-size:12px;font-weight:500;color:var(--text-100);}
 .c2c-v2 .orch-appr-r{font-size:10px;color:var(--text-400);}
 .c2c-v2 .orch-appr-acts{margin-left:auto;display:flex;gap:6px;}
+/* Gate-level decision row. Sits on the checkpoint, not on an approver row —
+   a gate with no decisions recorded yet still needs a way to act. */
+.c2c-v2 .orch-gate-act{display:flex;gap:6px;align-items:center;padding:8px 0 2px;flex-wrap:wrap;}
+.c2c-v2 .orch-gate-reason{flex:1 1 220px;min-width:180px;font-size:11.5px;padding:5px 8px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .orch-note.err{color:var(--danger, #b42318);}
+.c2c-v2 .orch-note.err .ico{color:var(--danger, #b42318);}
+.c2c-v2 .orch-mini:disabled{opacity:.55;cursor:not-allowed;}
 .c2c-v2 .orch-mini{font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-300);}
 .c2c-v2 .orch-mini.ok{color:var(--success);border-color:var(--success-muted);}
 .c2c-v2 .orch-mini.no{color:var(--error);border-color:var(--error-muted);}
@@ -522,6 +529,10 @@
 /* table */
 .c2c-v2 .tb-table .mono{font-family:var(--font-mono);}
 /* gaps disclosure */
+/* Inline failure notice on the task board — e.g. an auto-balance that did not
+   reassign anything. Shown where the action was taken, so a failed write is
+   never mistaken for a completed one. */
+.c2c-v2 .tb-note{display:flex;gap:7px;align-items:flex-start;margin:10px 0 0;font-size:12px;line-height:1.5;}
 .c2c-v2 .tb-gaps{margin-top:22px;border-top:1px solid var(--border);padding-top:14px;}
 .c2c-v2 .tb-gaps summary{font-size:11.5px;font-weight:600;color:var(--text-300);cursor:pointer;}
 .c2c-v2 .tb-gaps ul{margin:11px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:7px;}
