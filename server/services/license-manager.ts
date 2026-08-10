@@ -20,7 +20,10 @@
  */
 
 import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger.js';
 import type { Request, Response, NextFunction } from 'express';
+
+const logger = createScopedLogger('license-manager');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -418,6 +421,15 @@ export function requireTier(minimumTier: string) {
 
 /**
  * Check user quota (max projects).
+ *
+ * NOTE ON SCOPE: this counts the legacy integer-keyed `projects` table. The
+ * shipped UI does not create rows there — the v2 wizard and the program
+ * workbench create `regulatory_programs` — so for any org on the current UI
+ * this returns currentCount 0 and never trips. It is kept unchanged because
+ * entitlements-service.ts and the module-subscriptions route surface its
+ * numbers in usage panels and their expectations are built on this shape.
+ * For enforcement on a create path, call checkProgramQuota below, which counts
+ * the live entity and fails closed.
  */
 export async function checkProjectQuota(organizationId: number): Promise<{
   withinQuota: boolean;
@@ -442,6 +454,52 @@ export async function checkProjectQuota(organizationId: number): Promise<{
     };
   } catch {
     return { withinQuota: true, currentCount: 0, maxAllowed: 10 }; // Fail-open on quota check
+  }
+}
+
+/**
+ * Check the licensed program quota for an organization.
+ *
+ * This is the enforceable counterpart to checkProjectQuota: it counts
+ * regulatory_programs, the entity the shipped UI actually creates, excluding
+ * soft-deleted rows so an archived program does not keep consuming a seat.
+ *
+ * A quota check that fails open is not a control. checkProjectQuota returns
+ * { withinQuota: true, currentCount: 0, maxAllowed: 10 } from its catch, so a
+ * dropped connection or an RLS denial silently grants unlimited programs — the
+ * one moment the check matters most is the moment it stops working. Here an
+ * unreadable count or entitlement denies the create and is logged, so the
+ * failure surfaces as a support ticket rather than as unbilled capacity.
+ */
+export async function checkProgramQuota(organizationId: number): Promise<{
+  withinQuota: boolean;
+  currentCount: number;
+  maxAllowed: number;
+}> {
+  try {
+    const [licenseResult, countResult] = await Promise.all([
+      pool.query(`SELECT max_projects FROM organizations WHERE id = $1`, [organizationId]),
+      pool.query(
+        `SELECT COUNT(*)::int AS cnt FROM regulatory_programs
+          WHERE organization_id = $1 AND deleted_at IS NULL`,
+        [organizationId]
+      ),
+    ]);
+
+    const maxAllowed = licenseResult.rows[0]?.max_projects || 10;
+    const currentCount = countResult.rows[0]?.cnt ?? 0;
+
+    return {
+      withinQuota: currentCount < maxAllowed,
+      currentCount,
+      maxAllowed,
+    };
+  } catch (error) {
+    logger.error('Program quota check failed — denying create (fail-closed)', {
+      organizationId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { withinQuota: false, currentCount: 0, maxAllowed: 0 };
   }
 }
 
