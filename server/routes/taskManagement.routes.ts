@@ -884,6 +884,109 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Cap on the per-template task preview returned by the list route. A template
+ * is a workflow, not a dossier; anything past this is shown as a truncation
+ * notice rather than silently dropped.
+ */
+const MAX_TEMPLATE_TASK_PREVIEW = 50;
+
+/**
+ * GET /api/task-management/templates — the org's workflow templates.
+ *
+ * The write half of this feature already existed and is thorough:
+ * POST /tasks/from-template/:templateId inserts real unified_tasks with
+ * server-generated ids, dates derived from each definition's dayOffset /
+ * duration, task_dependencies from the template, provenance via
+ * sourceEntityType 'taskTemplate', and createdById from the actor.
+ *
+ * Nothing could ENUMERATE templates, though, so the "Start a workflow" picker
+ * on the TaskBoard was populated from a fixture constant and its instantiate
+ * button fabricated the whole task set client-side — random ids
+ * ('C2C-TASK-' + Math.random()), fixture assignees, and no persistence at all.
+ * A template list is the one missing piece between that and the real route.
+ *
+ * Read-only, org-scoped, and returns the SHAPE the picker needs rather than the
+ * whole row: `tasks` and `dependencies` are large json blobs the client does not
+ * render, so only their counts are sent. Inactive templates are excluded —
+ * is_active exists precisely so a template can be retired without deleting the
+ * history of what it produced.
+ */
+router.get('/templates', async (req: Request, res: Response) => {
+  try {
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+
+    const rows = await storage.db
+      .select()
+      .from(taskTemplates)
+      .where(
+        and(
+          eq(taskTemplates.organizationId, organizationId),
+          eq(taskTemplates.isActive, true)
+        )
+      )
+      .orderBy(taskTemplates.name);
+
+    const data = rows.map(t => {
+      const defs = Array.isArray(t.tasks) ? (t.tasks as any[]) : [];
+      const deps = Array.isArray(t.dependencies) ? (t.dependencies as any[]) : [];
+      // Span and effort are derived from the SAME fields the instantiate route
+      // uses (dayOffset / duration / estimatedHours), so the preview cannot
+      // disagree with what actually gets created.
+      const span = defs.reduce(
+        (max, d) => Math.max(max, Number(d?.dayOffset ?? 0) + Number(d?.duration ?? 0)),
+        0,
+      );
+      const estimatedHours = defs.reduce((sum, d) => sum + Number(d?.estimatedHours ?? 0), 0);
+      return {
+        templateId: t.templateId,
+        name: t.name,
+        description: t.description ?? null,
+        category: t.category,
+        submissionType: t.submissionType ?? null,
+        milestone: t.milestone ?? null,
+        isDefault: t.isDefault ?? false,
+        version: t.version ?? 1,
+        usageCount: t.usageCount ?? 0,
+        taskCount: defs.length,
+        dependencyCount: deps.length,
+        /** Days from start to the last task's end; 0 when no definition carries
+         *  timing. Not fabricated — 0 means the template says nothing. */
+        spanDays: span,
+        /** Sum of estimatedHours across definitions; 0 when none carry it. */
+        estimatedHours,
+        /**
+         * A TRIMMED preview of what instantiating creates — the fields the
+         * picker renders, and nothing else. This matters because the route
+         * below writes real unified_tasks rows: the user should be able to see
+         * what is about to be created before it is. Descriptions and any custom
+         * template payload are deliberately excluded to keep the list small.
+         */
+        tasks: defs.slice(0, MAX_TEMPLATE_TASK_PREVIEW).map(d => ({
+          id: String(d?.id ?? ''),
+          title: String(d?.title ?? ''),
+          moduleType: String(d?.moduleType ?? 'general'),
+          priority: String(d?.priority ?? 'medium'),
+          dayOffset: Number(d?.dayOffset ?? 0),
+          duration: Number(d?.duration ?? 0),
+        })),
+        /** True when the preview above was truncated, so the UI can say so
+         *  rather than quietly showing fewer tasks than it will create. */
+        tasksTruncated: defs.length > MAX_TEMPLATE_TASK_PREVIEW,
+      };
+    });
+
+    return res.json({ success: true, data, meta: { count: data.length } });
+  } catch (error) {
+    console.error('Error listing task templates:', error);
+    return res.status(500).json({ success: false, error: 'Failed to list task templates' });
+  }
+});
+
 // Create task template
 router.post('/templates', async (req: Request, res: Response) => {
   try {
