@@ -522,6 +522,10 @@
 /* table */
 .c2c-v2 .tb-table .mono{font-family:var(--font-mono);}
 /* gaps disclosure */
+/* Inline failure notice on the task board — e.g. an auto-balance that did not
+   reassign anything. Shown where the action was taken, so a failed write is
+   never mistaken for a completed one. */
+.c2c-v2 .tb-note{display:flex;gap:7px;align-items:flex-start;margin:10px 0 0;font-size:12px;line-height:1.5;}
 .c2c-v2 .tb-gaps{margin-top:22px;border-top:1px solid var(--border);padding-top:14px;}
 .c2c-v2 .tb-gaps summary{font-size:11.5px;font-weight:600;color:var(--text-300);cursor:pointer;}
 .c2c-v2 .tb-gaps ul{margin:11px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:7px;}

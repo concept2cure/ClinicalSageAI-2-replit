@@ -111,6 +111,53 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const { user } = useAuth();
   const myId = user?.id != null ? String(user.id) : '';
 
+  /**
+   * "Auto-balance assignments" — a REAL rebalance.
+   *
+   * This typed a question into the AI rail and changed nothing, while the copy
+   * beside it named a specific overloaded colleague and the analytics footer
+   * read "Workload-balanced auto-assign via getOptimalAssignee()". It was the
+   * only affordance labelled as performing the rebalance, and pressing it moved
+   * no work.
+   *
+   * POST /api/tasks/tasks/auto-assign (taskManagement.routes.ts:727, mounted at
+   * register-core-routes.ts:118) resolves getOptimalAssignee per task and
+   * UPDATEs unifiedTasks, org-scoped on both the select and the update. It takes
+   * real unified_tasks.taskId strings, which is exactly what the board carries
+   * (taskBoard.routes.ts:227 emits `taskId: row.taskId` straight from the table).
+   *
+   * It rebalances the OPEN tasks currently in view, so the user can see what
+   * changed, and refetches so the assignee avatars reflect the new owners.
+   *
+   * The handler iterates `taskIds` with no validation, so an absent or non-array
+   * body throws into its 500 branch — the empty case is therefore refused here
+   * rather than sent.
+   */
+  const [balErr, setBalErr] = useState('');
+  const [balancing, setBalancing] = useState(false);
+  const autoBalance = async (ids: string[]) => {
+    if (balancing) return;
+    if (ids.length === 0) {
+      setBalErr('Nothing to rebalance — there are no open tasks in this view.');
+      return;
+    }
+    setBalancing(true);
+    setBalErr('');
+    try {
+      const res = await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setBalErr((body && (body as { error?: string }).error) || `Could not rebalance (HTTP ${res.status}). Nothing was reassigned.`);
+        return;
+      }
+      setReloadKey((k) => k + 1);
+    } catch {
+      setBalErr('Network error while rebalancing. Nothing was reassigned.');
+    } finally {
+      setBalancing(false);
+    }
+  };
+
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
     try { return (window as any).C2C_TASK_FILTER || 'all'; } catch (_e) { return 'all'; }
@@ -280,10 +327,19 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         action={{
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : 'Start a workflow from a template',
           onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
-          alt: { label: 'Auto-balance assignments', onClick: () => onAsk && onAsk('Rebalance open task assignments by workload using getOptimalAssignee') },
+          alt: {
+            label: balancing ? 'Rebalancing…' : 'Auto-balance assignments',
+            onClick: () => void autoBalance(list.filter(t => t.status !== 'completed').map(t => t.taskId)),
+          },
         }}
         secondary="Or work the board, critical path, and analytics below."
       />
+
+      {balErr && (
+        <div className="tb-note" role="alert" style={{ color: 'var(--error)' }}>
+          {I.alertTriangle} {balErr}
+        </div>
+      )}
 
       {/* Provenance strip -- the 7-table fragmentation made visible (Gap 1) */}
       <div className="tb-src">
