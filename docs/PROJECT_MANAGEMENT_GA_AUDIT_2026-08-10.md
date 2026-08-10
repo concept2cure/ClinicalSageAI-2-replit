@@ -8,13 +8,13 @@
 
 ## 1. Verdict
 
-**Not GA-ready. Estimated 62 engineer-days to a defensible commercial GA, 145 to a competitive one.**
+**Not GA-ready. Estimated 69 engineer-days to a defensible commercial GA, 140 to a competitive one.**
 
 The platform has genuinely strong engineering foundations — a default-deny auth boundary, fail-closed RLS, transactional writes, a zero-error typecheck baseline, 22 CI workflows. Those are real and hard-won.
 
 But the project-management capability specifically is split across **two disjoint project identity spaces**, and the richer of the two is unreachable from the shipped UI. The consequence is not cosmetic: the features a buyer is purchasing (tasks, milestones, hierarchy, scheduling, rules) exist as ~54 tested endpoints that no user can reach, while the surface users *do* reach is missing team rosters, activity history, audit trail, notifications, and access control — each for a separately verifiable reason.
 
-The single most important sentence in this report: **project-level access control is currently non-functional, and every project is readable by every member of the organization.** That is a P0 for a multi-tenant GxP product and is detailed in §4.2.
+The single most important sentence in this report: **on the live project API, per-project authorization is never invoked — any authenticated org member can read, modify and delete any project in their organization.** The access-control system that would prevent this is real and correct; it is simply bound to the other project entity and never called. That is a P0 for a multi-tenant GxP product and is detailed in §4.2.
 
 | Dimension | Score | Note |
 |---|---|---|
@@ -42,8 +42,11 @@ Stated first because a careless audit would get these wrong, and because the rem
 - **Transactional project creation.** `server/routes/c2c/projects.ts:236-266` wraps the program insert and document scaffold in one transaction, with a `SAVEPOINT`-correct retry on unique-code collision.
 - **Clean typecheck.** `.typecheck-baseline.json` is at `errorCount: 0`, ratcheted down from 2,598 with the history preserved.
 - **Honest empty states.** `ProjectHome.tsx:31-36` renders `EmptyState` for slices with no reachable backend "rather than a fabricated fixture." The code documents its own gaps accurately — this audit largely confirms comments the authors already wrote.
+- **A tamper-proof Part 11 audit interceptor.** `server/startup/audit-trail.ts` HMAC-chains an entry for every mutating `/api` request, with a documented operator runbook. Its default-off posture is a GA gap (§4.4); the mechanism itself is good.
+- **Proactive milestone monitoring.** `jobs/scheduleOfEventsSweep.ts` re-assesses schedule health, opens recovery tasks and fires slip alerts on a timer. It is real and running (§4.5).
+- **CI that already hunts this class of bug.** `.github/workflows/ci.yml:48-80` runs guards for duplicate DDL across both migration lineages, golden-journey migration reachability, and "server SQL references a table no APPLIER creates" — with justification baselines. This audit had to correct itself twice against those guards; they are doing real work.
 
-This is not a codebase that needs rescuing. It needs one architectural decision resolved and its consequences swept up.
+This is not a codebase that needs rescuing. It needs one architectural decision resolved and its consequences swept up. A striking amount of the "missing" functionality turns out to be built, tested, and pointed at the wrong entity.
 
 ---
 
@@ -94,33 +97,59 @@ Covered in §3. 60 orphaned endpoints including all hierarchy, rules, module-int
 **Impact:** The differentiated PM capability cannot be demonstrated, sold, or used.
 **Fix:** Pick one id-space and converge (§7, W1). **Effort: 30 d.**
 
-#### 4.2 Project access control fails open — every project is org-public
-This is the most serious finding in the audit. Four verified links:
+#### 4.2 The live project API performs no per-project authorization
+The access-control system is real, correct, and bound to the wrong entity.
 
-1. **The tables were never migrated.** `project_members` and `project_visibility_settings` are defined in `shared/schema.ts:5306` and `:5345` but created by **zero migrations** — `grep -c "project_members" migrations/0000_sweet_joseph.sql` returns `0`, and no other migration creates either table. (By contrast `project_tasks` and `project_workflow_stages` *are* created in `0000_sweet_joseph.sql`.)
-2. **Reads soft-degrade.** `server/routes/concept2cure.ts:1288-1291` catches the resulting `42P01` via `isMissingTableError(error)` and returns `fallback`. `server/routes/c2c/projects.ts:456-468` does the same with a bare `catch { return res.json({ team: [] }); }`.
-3. **The fallback defaults to public.** `server/services/project-sharing-access.ts:96-103` — when `settings.projectSharing` is absent, it returns `{ visibility: 'org_public', legacyFallbackApplied: true }`.
-4. **`org_public` short-circuits every check.** `project-sharing-access.ts:125` — `if (sharing.visibility === 'org_public') return true;` in `canUseProject`, before any membership test.
+`server/services/project-sharing-access.ts` implements a coherent three-role model (`owner`/`edit`/`use`) with `canUseProject`, `canEditProject`, `canManageProject`, backed by `project_members` and `project_visibility_settings`. `server/routes/concept2cure.ts:1243` loads it from those tables, and `:2136` inserts `visibility: 'private'` when a project is created. That machinery works.
 
-**Impact:** On any database provisioned from migrations, private projects do not exist. Every member of an organization can read every project. The org boundary still holds (RLS is sound), so this is intra-tenant — but for a CRO hosting competing sponsors, a blinded study, or an M&A-sensitive program, this is a deal-breaker and a probable contractual breach.
-**Fix:** Write the migrations, remove the fail-open fallback, default to `private`, add a boot-time assertion that both tables exist. **Effort: 8 d.**
+It is keyed on `projects.id` (`integer`). The shipped UI operates entirely on `regulatory_programs` (`uuid`) — and **all 13 endpoints in `server/routes/c2c/projects.ts` contain zero calls to `canUseProject`, `canEditProject`, `canManageProject`, or `loadProjectSharingState`.** Every handler gates on one predicate only:
+
+```sql
+SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1
+```
+
+That is an organization check, not an authorization check.
+
+**Impact:** Any authenticated member of an organization can read, modify and delete any program in that organization — including `POST /:id/evidence` and `DELETE /:id/evidence/:evId` (`c2c/projects.ts:510`, `:557`), which mutate the pinned-evidence set feeding AI generation. There is no private project on the live path, because the code that would make one private is never called. The org boundary itself holds — RLS is sound, and this is strictly intra-tenant — but for a CRO hosting competing sponsors, a blinded study, or an M&A-sensitive program, it is a deal-breaker.
+
+**Fix:** Bind the existing sharing service to the live entity — this falls out of 4.1 and should not be solved twice. Until then, an interim membership check on the c2c routes is ~3 d of the 8. **Effort: 8 d.**
+
+> **Correction.** An earlier draft of this finding claimed `project_members` and `project_visibility_settings` are created by no migration. That was wrong on two counts, and both corrections are recorded here rather than quietly dropped. The tables *are* defined in `db/migrations/20260401_project_sharing_visibility.sql` — a second migration lineage under `db/` that the first pass did not search. That file is not in `C2C_MIGRATION_FILES` (`scripts/db/migration-set.mjs`), so `deploy-migrate` does not apply it; but `scripts/ci/migration-reachability-baseline.json` lists "the drizzle push surface (pgTable/pgView in shared/)" among its durable apply paths, and both tables are declared as `pgTable` in `shared/schema.ts`. They are therefore created, the CI reachability guard correctly does not flag them, and the fail-open `42P01` path described in that draft is not the live behaviour. The severity is unchanged, but the mechanism is entirely different — the defect is a missing authorization call, not a missing table.
 
 #### 4.3 Team roster is permanently empty, silently
-`server/routes/c2c/projects.ts:459-464` joins `project_members pm JOIN regulatory_programs rp ON rp.id = pm.project_id`. `rp.id` is `uuid`; `pm.project_id` is `integer` referencing `projects.id`. Postgres raises `42883 operator does not exist: uuid = integer` — and even before that, the table does not exist (`42P01`). The query also selects `pm.added_at`, which is not a column on `project_members` (`shared/schema.ts:5345` has `created_at`/`accepted_at`). All three errors land in the same bare `catch` and return `{ team: [] }`.
-**Impact:** The team panel on Project Home shows nobody, for everybody, forever, with no error surfaced. Collaboration is invisible.
-**Fix:** Falls out of 4.2 once the id-space is settled. **Effort: 3 d.**
+`server/routes/c2c/projects.ts:459-464` joins `project_members pm JOIN regulatory_programs rp ON rp.id = pm.project_id`. `rp.id` is `uuid` (`shared/schema/programs.ts:45`); `pm.project_id` is `integer` referencing `projects.id` (`shared/schema.ts:5345`, and identically in `db/migrations/20260401_project_sharing_visibility.sql:39`). Postgres raises `42883 operator does not exist: uuid = integer`. The query also selects `pm.added_at`, which is not a column on that table under either definition — both have `created_at`/`accepted_at`. Both errors land in the same bare `catch { return res.json({ team: [] }); }`.
+**Impact:** The team panel on Project Home shows nobody, for everybody, forever, with no error surfaced. Collaboration is invisible. The `catch` was written to absorb a missing table (`:453` — "may not exist in all environments") and instead absorbs a permanent schema mismatch.
+**Fix:** Falls out of 4.1 once the id-space is settled; narrow the `catch` so the next mismatch is not swallowed. **Effort: 3 d.**
 
-#### 4.4 No audit trail on the live project path — 21 CFR Part 11 gap
-`server/routes/c2c/projects.ts` contains **zero** audit writes (no `INSERT INTO audit_logs`, no `insert(auditEvents)`) — verified by grep across the file and `scaffold-project-documents.ts`. It *reads* `audit_logs` at `:603` to render an activity feed.
-By contrast `projects-management.ts` — the orphaned router — audit-logs correctly at `:277`, `:365`, `:452`.
-**Impact:** Project creation, update, and document scaffolding on the path users actually use produce no audit record. The Project Home activity feed is consequently always empty. For a platform selling into GxP, an unauditable record-creating action is a finding in any customer audit or inspection.
-**Fix:** Add audit writes inside the existing creation transaction; backfill the activity read. **Effort: 6 d.**
+#### 4.4 The Part 11 audit trail is default-off, and production may boot without it
+A global tamper-proof audit interceptor exists and is well built. `server/startup/audit-trail.ts` writes an HMAC-chained entry for **every mutating `/api` request** (`POST`/`PUT`/`PATCH`/`DELETE`), explicitly against 21 CFR Part 11 §11.10(e), with a documented operator runbook. `/api/c2c/projects` is not in its skip list, so project mutations *are* covered when it runs.
+
+The gap is the posture, not the mechanism. It is gated on `AUDIT_TRAIL_ENABLED=true` and is **default-off**, because the chain needs `audit.tamper_proof_log` and `AUDIT_HMAC_SECRET` provisioned first. `server/startup/audit-enforcement.ts:59` warns loudly on a production boot with the trail inactive but **only fails closed when `AUDIT_REQUIRE_ENFORCE=true`** — the module says so itself: "Default behaviour is unchanged (warn, do not block boot)."
+
+The same codebase already models the correct answer one file over: `db/rlsEnforcement.ts:93` **refuses to boot** production without `RLS_ENFORCE=on`. The audit trail deliberately stops short of that.
+
+**Impact:** A production environment can run, indefinitely and by default, with no Part 11 audit trail — surfaced only as a boot warning. For GA that provisioning must be a launch gate, not a runbook step, and the enforcement posture should match RLS's.
+
+**Secondary, and separate:** `server/routes/c2c/projects.ts` writes no *domain* audit rows — no `INSERT INTO audit_logs`, no `insert(auditEvents)` — while `GET /:id/activity` (`:603`) reads `audit_logs`. The tamper-proof interceptor writes to a different store (`audit.tamper_proof_log`), so it does not feed that query. The Project Home activity feed is therefore empty regardless of the flag. The orphaned `projects-management.ts` does write domain audit rows correctly at `:277`, `:365`, `:452`.
+
+**Fix:** Provision the audit tables and set `AUDIT_REQUIRE_ENFORCE=true` for production; add domain audit writes inside the existing creation transaction to populate the activity feed. **Effort: 6 d.**
+
+> **Correction.** An earlier draft asserted there was "no audit trail on the live project path." That was wrong: the global interceptor covers it. The finding as it now stands is about the default-off posture and the empty activity feed, both of which were verified after re-reading `server/startup/audit-trail.ts` and `audit-enforcement.ts`.
 
 ### P1 — blocks a competitive GA
 
-#### 4.5 No notification or reminder system
-No due-date alerting, assignment notification, escalation, or digest exists anywhere. `nodemailer@9.0.1` is a dependency; nothing in `server/jobs/`, `server/workers/`, or `workers/` connects a project date to it — the only "due" logic is `server/jobs/regulatoryHorizonScan.ts:49`, which schedules source scans.
-**Impact:** A project tool that never tells anyone anything. Users must open the app to discover a slipped date. This is table stakes and its absence is immediately obvious in a demo. **Effort: 12 d.**
+#### 4.5 Proactive milestone monitoring exists, runs at boot, and reaches nobody
+This is the clearest illustration of what the id-space fork costs.
+
+`server/jobs/scheduleOfEventsSweep.ts` is a real, well-built proactive monitor. It is started at boot (`server/index.ts:256`) and periodically "re-assesses milestone health, marks slips / at-risk items, opens recovery & mitigation tasks, fires alerts, flags goals whose target dates have passed, and refreshes AnA's narrative" via `reviewScheduleHealth()`, reusing the platform's task and notification tables. `server/services/notifications/notification-service.ts` backs it.
+
+It reads `project_schedule_of_events WHERE organization_id = $1 AND project_id = $2` (`schedule-of-events/service.ts:168`) and writes to `project_tasks` (`:719`) — both keyed on the **integer** `projects.id`. The shipped UI's projects live in `regulatory_programs`. Its API, `/api/project-schedule-of-events`, has **zero client consumers**.
+
+**Impact:** A user of the product receives no due-date alert, no slip warning, and no escalation — not because the capability is missing, but because it is watching a set of projects the UI cannot create. Every project the wizard makes is invisible to it.
+
+**Fix:** Rebinding, not building — this closes with 4.1 rather than as separate work. **Effort: 4 d** (down from a 12 d build).
+
+> **Correction.** An earlier draft claimed "no notification or reminder system exists anywhere." That was wrong; it exists and is scheduled. The defect is what it is bound to.
 
 #### 4.6 Project quota is not enforced, counts the wrong table, and fails open
 Three independent defects in one control:
@@ -138,9 +167,13 @@ Three independent defects in one control:
 `GET /api/c2c/projects` (`c2c/projects.ts:129-146`) selects all org programs `ORDER BY p.updated_at DESC` with no `LIMIT` and no pagination. `GET /api/projects` (`projects-management.ts:70-84`) does the same over `projects`.
 **Impact:** Response size and latency grow linearly with tenant size; no client-side virtualization compensates (`react-window` is a dependency but is imported nowhere in `client/src`). **Effort: 4 d.**
 
-#### 4.9 No code splitting — all 106 surfaces bundled eagerly
-`client/src/concept2cure/v2/surfaceViews.ts` has 88 static imports and no `React.lazy` or dynamic `import()` anywhere in it or `V2App.tsx`.
-**Impact:** Every user downloads all 106 surfaces to see one. With 203 production dependencies this is the dominant first-paint cost. **Effort: 5 d.**
+#### 4.9 Application code is not route-split, though vendor code is
+`vite.config.ts:59` defines a considered `manualChunks` strategy splitting `vendor-react`, `vendor-tanstack`, `vendor-charts` and Radix out of the main bundle. That part is done well.
+
+What is missing is route-level splitting of application code: `client/src/concept2cure/v2/surfaceViews.ts` has 88 static imports and no `React.lazy` or dynamic `import()` anywhere in it or `V2App.tsx`.
+**Impact:** Every user downloads all 106 surfaces to see one. Vendor chunking caps the dependency cost but not the application cost, which grows with every surface added. **Effort: 5 d.**
+
+> **Correction.** An earlier draft said "no code splitting." Vendor chunking is configured; route-level splitting is not.
 
 #### 4.10 `recomputePaths` is N+1 and non-transactional
 `server/services/project-rollup-service.ts:405-429` — per node: one query for the parent path, one `UPDATE`, one query for children, then a serial recursive call per child. No transaction wraps the traversal.
@@ -172,7 +205,7 @@ Three independent defects in one control:
 | Templates | **Partial** | `scaffold-project-documents.ts` scaffolds docs from rule packs |
 | Approvals / e-signature | **Partial** | e-sign exists platform-wide; not bound to project plan items |
 | Comments / @mentions | **Absent** | — |
-| Notifications | **Absent** | §4.5 |
+| Notifications & slip alerting | **Built, unreachable** | `jobs/scheduleOfEventsSweep.ts`, started at `index.ts:256`, watching the orphaned id-space (§4.5) |
 | Reporting / portfolio rollup | **Partial** | `report-os.ts` schema exists; `project-rollup-service.ts` is orphaned |
 | Cross-project search | **Absent** | — |
 | Time / budget tracking | **Schema only** | `projects.budget`, `projectTasks.estimatedHours` — never read |
@@ -194,7 +227,7 @@ Three independent defects in one control:
 | J3 | Invite teammates, set roles | **Broken** | §4.2 + §4.3 — roster always empty; no invite/accept flow; all projects org-public |
 | J4 | Daily: what's due, who owns what | **Broken** | Task board reads a different project table than the portfolio (§3) |
 | J5 | Document work, review, sign-off | **Partial** | Doc scaffold works; review routing not bound to project plan |
-| J6 | Track milestones; date slips | **Broken** | Milestone stack orphaned; nothing propagates or alerts (§4.5) |
+| J6 | Track milestones; date slips | **Broken** | Milestone stack and its proactive slip-alerting sweep both orphaned — they run, but watch projects the UI cannot create (§4.5) |
 | J7 | Status reporting / portfolio | **Partial** | Portfolio list renders; rollup service orphaned; no export |
 | J8 | Close-out / archive | **Absent** | No archive on the live path (§4.13) |
 
@@ -205,12 +238,12 @@ Three independent defects in one control:
 ## 7. Path to GA
 
 ### W0 — Stop the bleeding (1 week, 1 engineer)
-Prevents new damage and closes the two findings that are unacceptable in any shipped state.
-- 4.2 — migrate `project_members` / `project_visibility_settings`; default `private`; delete the fail-open fallback; boot-time table assertion.
+Prevents new damage and closes the findings that are unacceptable in any shipped state.
+- 4.2 — add an interim membership gate to the 13 `c2c/projects.ts` handlers, so authorization exists on the live path before the id-space work lands. Mutating routes (`POST`/`DELETE /:id/evidence`) first.
 - 4.7 — fail fast in production instead of falling back to `MemStorage`.
 - 4.12 — patch or re-justify the 2 high vulnerabilities.
 
-**Exit:** A project created private is invisible to a non-member, proven by an integration test against a real Postgres. Production refuses to boot without a database.
+**Exit:** A non-member is refused on every `c2c/projects` route, proven by an integration test against a real Postgres. Production refuses to boot without a database.
 
 ### W1 — Resolve the id-space (4 weeks, 2 engineers)
 The decision everything else waits on. **Recommendation: converge on `regulatory_programs` (UUID)** — it is what the UI, the vault, the document scaffold, and 22 client call sites already use; migrating it to `serial` would break live data and the eCTD/vault linkage. Re-key the PM stack's `project_id` columns to `uuid` and repoint the orphaned routers.
@@ -235,14 +268,16 @@ The decision everything else waits on. **Recommendation: converge on `regulatory
 
 | Wave | Engineer-days | 3 engineers | 6 engineers |
 |---|---:|---:|---:|
-| W0 | 11 | 1 wk | 1 wk |
-| W1 | 51 | 4 wks | 2 wks |
-| W2 | 50 | 4 wks | 2 wks |
-| W3 | 33 | 3 wks | 1.5 wks |
-| **Total** | **145** | **12 wks** | **6.5 wks** |
+| W0 — Stop the bleeding | 11 | 1 wk | 1 wk |
+| W1 — Resolve the id-space | 58 | 4 wks | 2 wks |
+| W2 — Product completeness | 38 | 3 wks | 1.5 wks |
+| W3 — Commercial polish | 33 | 3 wks | 1.5 wks |
+| **Total** | **140** | **11 wks** | **6 wks** |
 
-- **Minimum defensible GA** = W0 + W1 = **62 d** (~5 wks at 3 engineers). Ships an honest, coherent, auditable project tool with working access control.
-- **Competitive GA** = W0–W3 = **145 d** (~12 wks at 3 engineers).
+- **Minimum defensible GA** = W0 + W1 = **69 d** (~5 wks at 3 engineers). Ships an honest, coherent, auditable project tool with working access control and live milestone alerting.
+- **Competitive GA** = W0–W3 = **140 d** (~11 wks at 3 engineers).
+
+W1 carries more than the first estimate and W2 less, because three capabilities first scored as absent — proactive milestone monitoring, the notification service, and the sharing/ACL model — turned out to be built already and bound to the orphaned id-space. Reconnecting them is W1 work. **The single id-space decision is now worth roughly 40% of the total remaining effort**, which is the strongest argument for spiking it first.
 
 ### Scope cuts for v1
 Do not build: resource/capacity management, time and budget tracking, MS Project / Smartsheet / Jira integration, mobile-native, offline. Position as "regulatory program management," not "a PM tool" — competing with Smartsheet on generic PM features is not winnable and not what the buyer wants. The differentiator is submission back-planning bound to the eCTD dossier, which W2 delivers.
@@ -272,6 +307,7 @@ Do not build: resource/capacity management, time and budget tracking, MS Project
 |---|---|---|---|
 | Id-space migration corrupts live tenant data | M | H | Dual-write + backfill + shadow-read before cutover; no destructive step until parity is proven |
 | §4.2 already breached a customer confidentiality term | L | H | Legal review; check access logs for cross-project reads before remediation lands |
+| Further findings rest on a mistaken mechanism, as §4.2 did | M | M | Every P0/P1 above was re-verified against both migration lineages and the CI reachability baseline after that correction |
 | 60 orphaned endpoints hide more broken assumptions | H | M | Re-point incrementally with a contract test per router |
 | W1 estimate optimistic — id-space touches 20+ files | M | H | Timebox a 3-day spike before committing the date |
 | Fixing fail-open ACL locks users out of their own projects | M | M | Backfill owner/creator as `owner` member before flipping the default |
