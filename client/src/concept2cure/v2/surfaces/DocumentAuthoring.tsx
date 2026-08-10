@@ -71,7 +71,7 @@ import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { DocCanvas } from './EditorCanvas';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
-import { useFilingOutline, findSectionForNode } from '../useFilingOutline';
+import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 
@@ -735,7 +735,13 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
                       required
                     </span>
                   )}
-                  {node.has_content && <span className="ed-dot" data-s="ok" title={node.status} />}
+                  {/* Asked of BOTH stores. node.has_content reads the governed
+                      c2c_document_sections; this editor writes authoring_sections,
+                      so on its own the dot could never light for anything drafted
+                      here. See nodeHasDraft. */}
+                  {nodeHasDraft(node, bound) && (
+                    <span className="ed-dot" data-s="ok" title={node.status} />
+                  )}
                 </button>
               );
             })}

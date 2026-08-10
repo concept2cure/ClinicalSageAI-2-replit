@@ -22,6 +22,7 @@ import {
   buildOutlineTree,
   flattenOutline,
   findSectionForNode,
+  nodeHasDraft,
   type FilingOutlineRow,
 } from '../useFilingOutline';
 
@@ -137,5 +138,37 @@ describe('binding an outline node to the section that holds its text', () => {
     expect(findSectionForNode(sections, '')).toBeNull();
     expect(findSectionForNode(sections, 'null')).toBeNull();
     expect(findSectionForNode(sections, undefined as unknown as string)).toBeNull();
+  });
+});
+
+
+describe('the draft indicator is asked of BOTH stores', () => {
+  // has_content is computed from the GOVERNED store (c2c_document_sections).
+  // The editor that renders this tree writes the OTHER one (authoring_sections)
+  // via PATCH /api/authoring/sections/:id. Reading only the node's flag meant
+  // the dot could never light for anything drafted in that editor — a progress
+  // indicator blind to the editor it sits inside.
+  const node = (has_content: boolean) => ({ has_content });
+
+  it('lights for text authored in THIS editor, which the governed flag cannot see', () => {
+    expect(nodeHasDraft(node(false), { content: 'The investigational product…' })).toBe(true);
+  });
+
+  it('still lights for text written through the governed path', () => {
+    // Drafted by the mdx dossier editor or AnA — no authored section here yet.
+    expect(nodeHasDraft(node(true), null)).toBe(true);
+  });
+
+  it('stays dark when neither store has anything', () => {
+    expect(nodeHasDraft(node(false), null)).toBe(false);
+    expect(nodeHasDraft(node(false), { content: null })).toBe(false);
+    expect(nodeHasDraft(node(false), { content: '' })).toBe(false);
+  });
+
+  it('does not count whitespace as a draft', () => {
+    // Matches the server-side predicate the governed flag comes from
+    // (server/services/c2c/section-content.ts), so the two sides of the OR
+    // agree about what "written" means.
+    expect(nodeHasDraft(node(false), { content: '   \n\t ' })).toBe(false);
   });
 });

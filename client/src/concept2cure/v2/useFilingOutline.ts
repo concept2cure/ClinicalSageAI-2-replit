@@ -229,3 +229,36 @@ export function findSectionForNode<T extends { code?: string | null }>(
   if (!sectionKey) return null;
   return sections.find((s) => typeof s.code === 'string' && s.code === sectionKey) ?? null;
 }
+
+/**
+ * Does this outline node have a draft anywhere?
+ *
+ * ── Why the node's own flag is not the answer ─────────────────────────────────
+ * `has_content` arrives on the outline row and is computed from
+ * `c2c_document_sections.content` — the GOVERNED store. The editor that renders
+ * this tree writes the OTHER one: DocumentAuthoring saves through
+ * `PATCH /api/authoring/sections/:id` into `authoring_sections`, and lists from
+ * `GET /api/authoring/docs/:id/sections`.
+ *
+ * So `node.has_content` could never become true from anything done in this
+ * editor. Someone could draft ten sections here and every one of them would keep
+ * reporting no content on the tree they navigate by — a progress indicator blind
+ * to the editor it sits inside. The two stores are bound at document level but
+ * not at section level (see findSectionForNode above), which is exactly why the
+ * question has to be asked of both.
+ *
+ * Answering from both is honest in every direction: text written here shows,
+ * text written through the governed path (the mdx dossier editor, AnA drafting)
+ * still shows, and a section with nothing anywhere stays blank. Reading only the
+ * authored side would have swapped one blind spot for the mirror image of it.
+ *
+ * Whitespace is not a draft, which matches the server-side predicate the
+ * governed flag comes from (server/services/c2c/section-content.ts).
+ */
+export function nodeHasDraft(
+  node: Pick<FilingOutlineRow, 'has_content'>,
+  section: { content?: string | null } | null,
+): boolean {
+  const authored = typeof section?.content === 'string' && section.content.trim().length > 0;
+  return authored || node.has_content === true;
+}
