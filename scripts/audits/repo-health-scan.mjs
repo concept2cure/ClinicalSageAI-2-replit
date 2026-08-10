@@ -466,8 +466,10 @@ function computeDelta(current, baseline) {
   const baselineSummary = baseline.summary ?? {};
   return {
     duplicateBasenames: safe(currentSummary.duplicateBasenames) - safe(baselineSummary.duplicateBasenames),
-    contentDuplicateGroups:
-      safe(currentSummary.contentDuplicateGroups) - safe(baselineSummary.contentDuplicateGroups),
+    // null, not a number, when the baseline predates this dimension. See below.
+    contentDuplicateGroups: Number.isFinite(baselineSummary.contentDuplicateGroups)
+      ? safe(currentSummary.contentDuplicateGroups) - safe(baselineSummary.contentDuplicateGroups)
+      : null,
     largeFilesByBytes: safe(currentSummary.largeFilesByBytes) - safe(baselineSummary.largeFilesByBytes),
     largeFilesByLines: safe(currentSummary.largeFilesByLines) - safe(baselineSummary.largeFilesByLines),
   };
@@ -488,10 +490,23 @@ function stripVolatileFields(report) {
  * Basename drift is deliberately absent here as well as from the strict gate.
  * Adding a second `types.ts` to a new module is correct TypeScript, and failing
  * a PR for it would teach people to route around this scan.
+ *
+ * ── A null delta is "cannot compare", and must not fail ───────────────────────
+ * computeDelta returns null for contentDuplicateGroups when the committed
+ * baseline predates that dimension. Treating an absent field as 0 is a guess,
+ * not a comparison, and it produced a real false failure: the commit that
+ * introduced this gate did not update the baseline in the same commit, so for
+ * two commits the current count (6) was compared against a field that did not
+ * exist, read as 0, and reported as a regression of +6. Nothing had regressed —
+ * the dimension simply had no prior value.
+ *
+ * `null > 0` is false in JS, so the comparison below already behaves correctly;
+ * it is written explicitly so nobody "fixes" it back into safe(undefined).
  */
 function hasRegression(delta) {
   if (!delta) return false;
-  return delta.contentDuplicateGroups > 0 || delta.largeFilesByBytes > 0 || delta.largeFilesByLines > 0;
+  const grew = (d) => typeof d === 'number' && d > 0;
+  return grew(delta.contentDuplicateGroups) || grew(delta.largeFilesByBytes) || grew(delta.largeFilesByLines);
 }
 
 /**
@@ -574,7 +589,13 @@ function main() {
   if (report.comparison) {
     console.log(`- baseline: ${report.comparison.baseline}`);
     // Printed first because it is the dimension the no-regression gate acts on.
-    console.log(`- delta content-duplicate groups: ${report.comparison.delta.contentDuplicateGroups}`);
+    console.log(
+      `- delta content-duplicate groups: ${
+        report.comparison.delta.contentDuplicateGroups === null
+          ? 'n/a (baseline predates this dimension — not compared)'
+          : report.comparison.delta.contentDuplicateGroups
+      }`,
+    );
     console.log(`- delta duplicate basenames: ${report.comparison.delta.duplicateBasenames}`);
     console.log(`- delta files over byte threshold: ${report.comparison.delta.largeFilesByBytes}`);
     console.log(`- delta files over line threshold: ${report.comparison.delta.largeFilesByLines}`);
