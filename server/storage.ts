@@ -2,7 +2,9 @@
  * Storage Interface for Concept2Cure
  *
  * Provides a unified storage interface with both in-memory and database implementations.
- * The system automatically falls back to in-memory storage if no database is available.
+ * Outside production the system falls back to in-memory storage if no database is
+ * available; in production that fallback is a hard boot failure — see
+ * `assertDatabaseStorageForProduction` at the bottom of this file.
  */
 import { createScopedLogger } from './utils/logger';
 import { pool, query, transaction, db } from './db';
@@ -4379,14 +4381,69 @@ export class DatabaseStorage {
   }
 }
 
+/**
+ * In-memory-storage production guardrail.
+ *
+ * The selection below resolves to MemStorage whenever the pg pool failed to
+ * initialize. `server/db/runtime.ts` sets `pool = null` in exactly two cases:
+ * `getDatabaseUrl()` is falsy, or constructing the pool throws synchronously —
+ * which includes `assertRlsEnforcementForProduction()` rejecting the RLS
+ * posture. Its `testConnection` probe only LOGS on failure and never reassigns
+ * `pool`, so an unreachable host still yields a live pool object. MemStorage holds
+ * projects, projectTasks, projectModules and projectWorkflowStages in plain
+ * arrays (see the class above), so a single mistyped DATABASE_URL produced an
+ * app that passed its health check, accepted writes, ACKed them, and lost every
+ * one of them on the next restart — behind one `logger.warn`. For a 21 CFR
+ * Part 11 system that is strictly worse than being down: the records never
+ * reach a database, the audit trail has nothing to attach to, and afterwards
+ * there is no way to enumerate what was lost.
+ *
+ * Production therefore refuses to boot, matching this repo's established
+ * fail-closed idiom (`assertRlsEnforcementForProduction`,
+ * server/db/rlsEnforcement.ts). There is deliberately NO opt-out flag: unlike
+ * the audit-trail and AI-governance postures — where the permissive default is
+ * a legitimate rollout state and the flag opts IN to fail-closed — serving
+ * production traffic from process memory is never a valid state, so there is
+ * nothing to opt out of. Non-production keeps MemStorage and says plainly that
+ * the data is ephemeral.
+ *
+ * @returns whether a real database pool is available.
+ * @throws in production when no pool was initialized.
+ */
+export function assertDatabaseStorageForProduction(
+  hasPool: boolean,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (hasPool) return true;
+
+  const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
+  if (!isProduction) return false;
+
+  throw new Error(
+    '[storage] FAIL-CLOSED: REFUSING TO BOOT because no database connection pool was ' +
+      'initialized in production. Either DATABASE_URL is unset or malformed, or pool ' +
+      'construction threw — which includes RLS_ENFORCE failing its production check ' +
+      '(see server/db/runtime.ts; an unreachable host does NOT land here, since pg ' +
+      'connects lazily). Booting would silently fall ' +
+      'back to in-memory storage, which keeps every project, task, module, workflow stage ' +
+      'and document in process memory and discards all of it on restart while the app ' +
+      'reports success. Fix DATABASE_URL and restart.'
+  );
+}
+
 // Determine which storage implementation to use based on database availability
 let storage: IStorage;
 
-if (pool) {
+if (assertDatabaseStorageForProduction(Boolean(pool))) {
   logger.info('Using database storage implementation');
   storage = new DatabaseStorage() as unknown as IStorage;
 } else {
-  logger.warn('Database not available, using in-memory storage');
+  logger.warn(
+    '⚠️  Database not available — using EPHEMERAL in-memory storage. Nothing is ' +
+      'persisted: every project, task, document and submission written from here lives ' +
+      'in process memory only and is LOST on restart. Set DATABASE_URL to use the ' +
+      'database. (Production refuses to boot in this state.)'
+  );
   storage = new MemStorage() as unknown as IStorage;
 }
 
