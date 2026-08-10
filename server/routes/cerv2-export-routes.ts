@@ -5,11 +5,11 @@
  * POST /api/cerv2/export/docx  – single combined DOCX for any doc type
  * POST /api/cerv2/export/zip   – full submission pack (per-section PDFs + attachments)
  * POST /api/cerv2/export/ai-to-editor – convert AI section map → TipTap editor JSON
- * GET  /api/cerv2/export/sample/:docType        – sample PDF export (dev only, opt-in)
- * GET  /api/cerv2/export/sample/:docType/docx   – sample DOCX export (dev only, opt-in)
- * GET  /api/cerv2/export/sample/:docType/zip    – sample ZIP export (dev only, opt-in)
- * GET  /api/cerv2/export/sample/:docType/json   – sample editor JSON (dev only, opt-in)
  * GET  /api/cerv2/export/health               – health check
+ *
+ * Every route that emits a document renders REAL authored content behind
+ * authMiddleware + requireEditorAccess. The four GET /sample/:docType* routes
+ * that rendered placeholder documents are gone — see the note where they were.
  */
 
 import { Router, Request, Response } from 'express';
@@ -25,7 +25,6 @@ import {
   renderCombinedDocx,
 } from '../export/renderers';
 import { PassThrough } from 'stream';
-// mockVault lazy-imported only inside sample routes (never loaded in production)
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 
@@ -51,16 +50,9 @@ const exportRateLimiter = rateLimit({
 
 router.use(['/pdf', '/docx', '/zip'], exportRateLimiter);
 
-function isSampleExportEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production' && process.env.ENABLE_CERV2_SAMPLE_EXPORTS === 'true';
-}
-
-function denySampleExportRoute(res: Response): Response {
-  return res.status(404).json({
-    error: 'Sample export routes are disabled',
-    code: 'CERV2_SAMPLE_EXPORT_DISABLED',
-  });
-}
+// isSampleExportEnabled() and denySampleExportRoute() were removed with the
+// routes they guarded. ENABLE_CERV2_SAMPLE_EXPORTS is now read nowhere and can
+// be dropped from any environment that still sets it.
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
 const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
@@ -460,155 +452,24 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
   }
 });
 
-// ── GET /sample/:docType ───────────────────────────────────────────────────────
-// Export simulation using sample data for local development verification.
-router.get('/sample/:docType', async (req: Request, res: Response) => {
-  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-  try {
-    const docType = String(req.params.docType);
-    if (!validDocTypes.includes(docType as any)) {
-      return res.status(400).json({
-        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-      });
-    }
-
-    const { mockVault } = await import('../services/mockVault');
-    const mockContent = mockVault.getMockEditorJson(docType);
-    const pdfBuffer = await renderCombinedPdf(docType, mockContent);
-
-    const filename = sanitizeFilename(`${docType}_sample_export`) + '.pdf';
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(pdfBuffer);
-  } catch (err: any) {
-    logger.error('Sample export error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: 'Sample export failed', message: err.message });
-  }
-});
-
-// ── GET /sample/:docType/zip ───────────────────────────────────────────────────
-router.get('/sample/:docType/zip', async (req: Request, res: Response) => {
-  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-  try {
-    const docType = String(req.params.docType);
-    if (!validDocTypes.includes(docType as any)) {
-      return res.status(400).json({
-        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-      });
-    }
-
-    const { mockVault } = await import('../services/mockVault');
-    const mockContent = mockVault.getMockEditorJson(docType);
-    const title = sanitizeFilename(`${docType}_sample`);
-
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${title}_export.zip"`);
-
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.on('error', err => {
-      logger.error('Sample ZIP error', { err: err instanceof Error ? err.message : String(err) });
-      if (!res.headersSent) res.status(500).end();
-    });
-    archive.pipe(res);
-
-    // Combined outputs
-    const [combinedPdf, combinedDocx] = await Promise.all([
-      renderCombinedPdf(docType, mockContent),
-      renderCombinedDocx(docType, mockContent),
-    ]);
-    archive.append(combinedPdf, { name: `${title}_Combined.pdf` });
-    archive.append(combinedDocx, { name: `${title}_Combined.docx` });
-
-    // Metadata JSON
-    const mockDoc = mockVault.list(docType)[0];
-    if (mockDoc) {
-      archive.append(
-        JSON.stringify(
-          {
-            id: mockDoc.id,
-            documentType: mockDoc.documentType,
-            title: mockDoc.title,
-            version: mockDoc.version,
-            exportedAt: new Date().toISOString(),
-            generator: 'Concept2Cure CERV2 Sample Export',
-          },
-          null,
-          2
-        ),
-        { name: 'metadata.json' }
-      );
-    }
-
-    await archive.finalize();
-  } catch (err: any) {
-    logger.error('Sample ZIP error', { err: err instanceof Error ? err.message : String(err) });
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Sample ZIP failed', message: err.message });
-    }
-  }
-});
-
-// ── GET /sample/:docType/docx ──────────────────────────────────────────────────
-// Phase 7.4: sample DOCX export using sample vault data
-router.get('/sample/:docType/docx', async (req: Request, res: Response) => {
-  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-  try {
-    const docType = String(req.params.docType);
-    if (!validDocTypes.includes(docType as any)) {
-      return res.status(400).json({
-        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-      });
-    }
-
-    const { mockVault } = await import('../services/mockVault');
-    const mockContent = mockVault.getMockEditorJson(docType);
-    const docxBuffer = await renderCombinedDocx(docType, mockContent);
-
-    const filename = sanitizeFilename(`${docType}_sample_export`) + '.docx';
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(docxBuffer);
-  } catch (err: any) {
-    logger.error('Sample DOCX error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: 'Sample DOCX export failed', message: err.message });
-  }
-});
-
-// ── GET /sample/:docType/json ──────────────────────────────────────────────────
-// Phase 7.4: Return raw sample editor JSON for client-side inspection or re-export.
-router.get('/sample/:docType/json', async (req: Request, res: Response) => {
-  if (!isSampleExportEnabled()) return denySampleExportRoute(res);
-  try {
-    const docType = String(req.params.docType);
-    if (!validDocTypes.includes(docType as any)) {
-      return res.status(400).json({
-        error: `Invalid docType. Valid: ${validDocTypes.join(', ')}`,
-      });
-    }
-
-    const { mockVault } = await import('../services/mockVault');
-    const mockContent = mockVault.getMockEditorJson(docType);
-    const mockDoc = mockVault.list(docType)[0];
-
-    return res.json({
-      docType,
-      editorJson: mockContent,
-      meta: mockDoc
-        ? {
-            id: mockDoc.id,
-            title: mockDoc.title,
-            version: mockDoc.version,
-          }
-        : null,
-    });
-  } catch (err: any) {
-    logger.error('Sample JSON error', { err: err instanceof Error ? err.message : String(err) });
-    res.status(500).json({ error: 'Sample JSON retrieval failed', message: err.message });
-  }
-});
+// The four GET /sample/:docType* routes were REMOVED, along with the
+// mockVault service they were the only consumer of.
+//
+// They rendered PDF, DOCX, ZIP and editor-JSON exports from an in-memory
+// placeholder store — documents titled "510(k) Submission – Content Pending"
+// whose body was a single "[Content not available]" paragraph. The store held
+// no fabricated regulatory text and the routes were already fail-closed twice
+// over (NODE_ENV !== 'production' AND ENABLE_CERV2_SAMPLE_EXPORTS === 'true',
+// with mockVault itself throwing outside development/test), so nothing false
+// was ever served.
+//
+// They are gone anyway. A regulated product should not carry a code path whose
+// purpose is to emit a document that looks like a submission and is not one,
+// however well guarded — the guard is one environment variable away from being
+// wrong, and an exported file outlives the process that made it. The governed
+// exports above (POST /pdf, /docx, /zip, /ectd) render real authored content
+// behind authMiddleware + requireEditorAccess, and are the only way to get a
+// document out of this service.
 
 // ── POST /ai-to-editor ────────────────────────────────────────────────────────
 // Phase 7.4: Convert AI-populated section map into TipTap editor JSON for export.
@@ -835,10 +696,6 @@ router.get('/health', (_req: Request, res: Response) => {
       'POST /zip',
       'POST /ectd',
       'POST /ai-to-editor',
-      'GET  /sample/:docType',
-      'GET  /sample/:docType/docx',
-      'GET  /sample/:docType/zip',
-      'GET  /sample/:docType/json',
       'GET  /health',
     ],
     supportedDocTypes: [...validDocTypes],

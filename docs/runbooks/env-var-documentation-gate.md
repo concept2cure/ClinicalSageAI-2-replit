@@ -53,9 +53,12 @@ machine-readable list is `docs/reports/env-var-docs-baseline.json`.
 The ratchet has run twice so far, prioritising the vars where being
 undocumented is most dangerous:
 
-1. The prod-unsafe development toggles (`ALLOW_DEV_AUTH`, `ALLOW_MOCK_VAULT`,
-   `ALLOW_EXTENSION_DDL`, `ALLOW_FALLBACK_EMBEDDINGS`) — a toggle that silently
-   weakens auth/storage/DB safety is the worst thing to leave undocumented.
+1. The prod-unsafe development toggles (`ALLOW_DEV_AUTH`, `ALLOW_EXTENSION_DDL`,
+   `ALLOW_FALLBACK_EMBEDDINGS`) — a toggle that silently weakens
+   auth/storage/DB safety is the worst thing to leave undocumented.
+   (`ALLOW_MOCK_VAULT` was in this list until `server/services/mockVault.ts`
+   and the four `GET /api/cerv2/export/sample/:docType*` routes were removed.
+   Documenting a prod-unsafe toggle is second best; not having one is better.)
 2. The audit-integrity & attestation crypto (`AUDIT_HMAC_SECRET`,
    `AUDIT_EXPORT_SIGNING_KEY`, `AUDIT_ATTESTATION_KEY` + `_ID`/`_PREV`/`_PREV_ID`
    — all fail-closed in production per 21 CFR Part 11), the internal
