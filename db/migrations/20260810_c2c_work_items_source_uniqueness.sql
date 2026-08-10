@@ -21,13 +21,26 @@ BEGIN;
 DO $$
 DECLARE
   constraint_exists boolean;
+  table_exists boolean;
   violating_rows integer;
 BEGIN
+  -- Check if the table exists
+  SELECT EXISTS(
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'c2c_project_work_items'
+  ) INTO table_exists;
+
+  IF NOT table_exists THEN
+    RAISE NOTICE '[20260810] table c2c_project_work_items does not exist; skipping';
+    RETURN;
+  END IF;
+
   -- Check if the constraint already exists
   SELECT EXISTS(
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'c2c_pwi_org_source_type_source_id_unique'
-      AND conrelid = 'public.c2c_project_work_items'::regclass
+    SELECT 1 FROM information_schema.constraint_column_usage
+    WHERE table_schema = 'public'
+      AND table_name = 'c2c_project_work_items'
+      AND constraint_name = 'c2c_pwi_org_source_type_source_id_unique'
   ) INTO constraint_exists;
 
   IF constraint_exists THEN
