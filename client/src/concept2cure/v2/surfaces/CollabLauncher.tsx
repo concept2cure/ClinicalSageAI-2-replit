@@ -18,9 +18,19 @@ import {
        moduleSource, projectId, taskType, priority, assigneeId,
        dueDate, estimatedHours, dependencies[], tags[].
      - Polymorphic origin: sourceEntityType + sourceEntityId.
-     - Auto-assign: getOptimalAssignee() (workload-balanced).
      - Honest gaps: task-audit.ts coded but unwired; notifications
-       stubbed.
+       stubbed; the assignee roster below is sample data.
+
+   NOT true of THIS form, despite what this header used to say:
+   "Auto-assign: getOptimalAssignee() (workload-balanced)".
+   getOptimalAssignee IS real — taskManagement.routes.ts:229 queries the
+   organisation's users, sums their active estimated hours and returns the
+   lowest. But this form never reaches it: create() never POSTs, and
+   optimalFor() returns CL_OPTIMAL[m], a static map from module name to a
+   fixed short-id. The server balances workload; this form does not call
+   the server. The header described the server's behaviour as though it
+   were this form's, and that framing was copied into other comments and
+   into a string the user reads.
 
    This module owns ONE shared store (C2C) so a task created from
    the editor, a submission, a safety case or the board all land in
@@ -124,12 +134,24 @@ let ctx: C2CContext = {
 
 export const C2C = {
   // Fixture-backed option-sources for the QuickTask / CollabDiscuss forms, which
-  // are MOCK actions (create()/send() never POST). Backends they SHOULD read are
-  // REAL -- team: GET /api/collaboration/team (users), projects: GET /api/projects
-  // -- but live team rows are keyed by NUMERIC user id while the pickers, avatars
-  // and auto-assign (CL_OPTIMAL) are keyed on fixture SHORT-IDS (jc/mw/...) defined
-  // in shared fixture files this file can't edit; going live here would break
-  // auto-assign. Left NOT half-wired for the actions pass; not presented as live.
+  // are MOCK actions (create()/send() never POST).
+  //
+  // The comment here used to say the backends these SHOULD read "are REAL --
+  // team: GET /api/collaboration/team (users), projects: GET /api/projects".
+  // Half of that was false: /api/projects is mounted
+  // (register-project-routes.ts:33), but /api/collaboration/team does not
+  // exist -- no route defines it and no /api/collaboration prefix is mounted
+  // anywhere in server/bootstrap or server/startup. It was never a backend
+  // waiting to be wired; it was a path someone wrote down.
+  //
+  // The rest still holds: any real roster is keyed by numeric user id while
+  // these pickers, avatars and CL_OPTIMAL are keyed on fixture short-ids
+  // (jc/mw/...), so this cannot be switched over without changing that key.
+  //
+  // It also used to end "not presented as live". That is a claim about the
+  // SCREEN, and a code comment cannot satisfy it -- a user opening the form saw
+  // seven named colleagues and nothing telling them otherwise. The pickers now
+  // carry a visible note; see SAMPLE_ROSTER_NOTE below.
   team: TB_TEAM as Record<string, TeamMember>,
   projects: TB_PROJECTS as ProjectEntry[],
   mod: CL_MOD,
@@ -266,6 +288,37 @@ function clAvatar(id: string): string {
   return (p.n || '?').split(' ').map(s => s[0]).join('').slice(0, 2);
 }
 
+/**
+ * Says out loud that the people in the assignee pickers are not real.
+ *
+ * C2C.team is TB_TEAM: seven invented colleagues — "J. Chen — Reg Affairs",
+ * "S. Marchetti — Reg lead" and five more — defined in
+ * fixtures/task-board-data.ts. They are published into the shared C2C context,
+ * which this module's own header describes as available from every surface, so
+ * the same fabricated roster is what a user picks from anywhere in the product.
+ *
+ * The code already knew. C2C's comment ended "not presented as live", and the
+ * Discuss form already warned that the message is not persisted. Neither
+ * reaches the point: a user who reads "this message will not be sent" concludes
+ * the send is broken, not that the colleague they addressed it to was invented.
+ * The gap between "the action is stubbed" and "these people do not exist" is
+ * where someone assigns a regulatory task to a name and waits for an answer.
+ *
+ * A code comment is not a disclosure. This is the version the user can read.
+ * It goes away when the roster comes from a real backend — which today does not
+ * exist: /api/collaboration/team is defined nowhere and mounted nowhere.
+ */
+function SampleRosterNote() {
+  return (
+    <div className="cl-warn">
+      <span className="ico">{I.alertTriangle}</span>
+      The people listed here are sample data, not your organisation. No directory
+      is connected yet, so these names do not correspond to anyone who can receive
+      an assignment.
+    </div>
+  );
+}
+
 /* ── Quick task -- unifiedTasks intake, context pre-filled ── */
 
 function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTaskProps) {
@@ -363,9 +416,17 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       </div>
       {f.assignee === 'auto' && (
         <div className="cl-note">
-          <span className="ico">{I.sparkles}</span>Auto-assign resolves to <b>{whoName}</b> for <b>{f.moduleType}</b> -- workload-balanced via <code>getOptimalAssignee()</code>.
+          {/*
+            This said "workload-balanced via getOptimalAssignee()". There is no
+            such function in this repo, and nothing is balanced: CL_OPTIMAL is a
+            static map from module name to a fixed short-id. Telling a user their
+            assignment came from a workload calculation that does not exist is
+            worse than telling them nothing.
+          */}
+          <span className="ico">{I.sparkles}</span>Auto-assign uses a fixed default of <b>{whoName}</b> for <b>{f.moduleType}</b>. It does not consider workload.
         </div>
       )}
+      <SampleRosterNote />
       <div className="cl-field"><label>Flags</label>
         <div className="cl-toggles">
           <button type="button" className={`cl-tog${f.criticalPath ? ' on' : ''}`} onClick={() => set('criticalPath', !f.criticalPath)}>
@@ -438,6 +499,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
           ))}
         </div>
       </div>
+      <SampleRosterNote />
       <div className="cl-field"><label>Message</label>
         <textarea rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
           placeholder={'@' + (C2C.team[to] || { n: '' }).n + ' -- share context, ask a question, or route this for action...'} />

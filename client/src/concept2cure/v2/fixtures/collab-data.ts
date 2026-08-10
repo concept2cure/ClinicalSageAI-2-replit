@@ -9,7 +9,10 @@
  *   - SURFACE_CTX maps every surface ID to its default module type,
  *     noun (for placeholder text), and entity type.
  *   - Module palette: superset of the board's, covering every surface.
- *   - Optimal assignees: workload-balanced via getOptimalAssignee().
+ *   - Optimal assignees: a FIXED per-module default. NOT the output of
+ *     getOptimalAssignee() — that function is real (taskManagement.routes.ts:229,
+ *     lowest active estimated-hours in the org) but lives server-side and is
+ *     never called from here. This constant only looks like its result.
  */
 import {
   TB_MOD, TB_TEAM, TB_PROJECTS, TB_OPTIMAL,
@@ -114,7 +117,7 @@ export const CL_MOD: Record<string, string> = {
   Intelligence:    '#5a7a6b',
 };
 
-/* ── Optimal assignee per module (getOptimalAssignee, workload-balanced) ── */
+/* ── Default assignee per module. A constant lookup, not a computation. ── */
 
 export const CL_OPTIMAL: Record<string, string> = {
   ...TB_OPTIMAL,
