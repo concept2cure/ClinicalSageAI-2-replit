@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-10T15:31:53.951Z",
+  "generatedAt": "2026-08-10T15:46:13.354Z",
   "git": {
-    "sha": "8b7a407b1d8dfdf25885437b5493e6d199e170e3",
-    "branch": "claude/ana-transparency-audit-ceryhv"
+    "sha": "8c3faf614edc1c20171cb2ce966d279958c58bee",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2140,12 +2140,12 @@
         "bytes": 341829
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "bytes": 224093
-      },
-      {
         "file": "server/statistics-service.ts",
         "bytes": 220035
+      },
+      {
+        "file": "server/routes/authoring.router.ts",
+        "bytes": 198162
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2270,12 +2270,12 @@
         "lines": 6893
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "lines": 6210
-      },
-      {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
         "lines": 5560
+      },
+      {
+        "file": "server/routes/authoring.router.ts",
+        "lines": 5435
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2587,15 +2587,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "contentDuplicateGroups": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

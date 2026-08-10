@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-08-10T15:31:53.951Z
-Branch: claude/ana-transparency-audit-ceryhv
-SHA: 8b7a407b1d8dfdf25885437b5493e6d199e170e3
+Generated: 2026-08-10T15:46:13.354Z
+Branch: concept2cure-v2
+SHA: 8c3faf614edc1c20171cb2ce966d279958c58bee
 
 ## Summary
 
@@ -11,10 +11,6 @@ SHA: 8b7a407b1d8dfdf25885437b5493e6d199e170e3
 - Files over byte threshold: 33
 - Files over line threshold: 83
 - Machine-managed mirrors held out of the duplicate scan: design-system/
-- Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: 0
-- Delta files over byte threshold: 0
-- Delta files over line threshold: 0
 
 ## Owner Summary
 
