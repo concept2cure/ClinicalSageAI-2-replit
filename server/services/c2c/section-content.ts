@@ -97,3 +97,58 @@ export function sectionHasContentSql(column = 'content'): string {
      END`
   );
 }
+
+/**
+ * The canonical plain text of a section body, for span lineage.
+ *
+ * ── Why this lives beside the SQL predicate ───────────────────────────────────
+ * Both answer the same question — "what is this section's body?" — and the whole
+ * reason the predicate exists is that three copies of that answer drifted from
+ * the editor. This is the fourth place that has to agree, so it is here rather
+ * than somewhere else.
+ *
+ * It was somewhere else, and it had the same defect. sectionPlainText in
+ * server/routes/c2c/documents.ts read only `content.paragraphs`, so for the
+ * shape the editor actually saves — `{ text: "…" }` — it returned the empty
+ * string. The section save gates its whole lineage block on
+ * `plain.trim().length > 0`, so for every section a user typed into, the gate
+ * that exists to guarantee "content and its provenance commit together or
+ * neither does" silently did neither: the text committed, and not one span was
+ * recorded. A later coverage report reads real rows for other write paths,
+ * returns a figure, and says nothing about those sections — partial provenance
+ * reading as complete, which is the failure that gate was written to prevent.
+ *
+ * ── Stability is a correctness property here ──────────────────────────────────
+ * Spans are recorded as half-open character ranges against the string this
+ * returns and later VERIFIED against the string this returns. A second
+ * serialisation, or a changed one, shifts every offset after the change and
+ * makes provenance point at the wrong words. So the `{paragraphs}` branch below
+ * is byte-for-byte what it always was; the other shapes are additive, and each
+ * one previously produced '' — no lineage rows exist against them to invalidate.
+ *
+ * Key precedence matches contentToBody (client/src/concept2cure/mdx/hooks/
+ * useDossier.ts:80-99), so the server and the reader never disagree about which
+ * key wins when a row carries more than one.
+ *
+ * `xml` is deliberately absent: contentToBody cannot render it either, so it
+ * stays out of both. That leaves an `{xml}` section reporting has_content with
+ * no lineage — an honest gap, recorded here rather than papered over with a
+ * serialisation nothing can display.
+ */
+export function sectionPlainText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (!content || typeof content !== 'object') return '';
+  const c = content as Record<string, unknown>;
+
+  if (Array.isArray(c.paragraphs)) {
+    // Unchanged from the original: non-string or absent text contributes
+    // nothing rather than the four characters of "undefined".
+    return (c.paragraphs as unknown[])
+      .map((p) => (p && typeof p === 'object' ? (p as { text?: unknown }).text : undefined))
+      .filter((t): t is string => typeof t === 'string')
+      .join('\n\n');
+  }
+  if (typeof c.markdown === 'string') return c.markdown;
+  if (typeof c.text === 'string') return c.text;
+  return '';
+}

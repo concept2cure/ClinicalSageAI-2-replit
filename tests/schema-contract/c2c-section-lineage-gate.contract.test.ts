@@ -200,9 +200,62 @@ describe('the jsonb -> text serialisation is single-valued', () => {
     expect(out).not.toContain('undefined');
   });
 
-  it('returns empty for shapes that carry no paragraphs', () => {
-    for (const v of [null, undefined, {}, { paragraphs: null }, { paragraphs: 'x' }, 5, 'str']) {
+  it('returns empty only for shapes that carry no body at all', () => {
+    for (const v of [null, undefined, {}, { paragraphs: null }, { paragraphs: 'x' }, 5]) {
       expect(sectionPlainText(v)).toBe('');
     }
   });
+
+  it('serialises every shape the reader accepts, not just paragraphs', () => {
+    // This is the defect the gate could not see. The editor saves
+    // `{ text: … }` (useSectionSave.ts:89) and the serialiser read only
+    // `paragraphs`, so it returned '' — and the route gates its whole lineage
+    // block on `plain.trim().length > 0`. Every section a user typed into
+    // committed with ZERO spans recorded, from a gate whose entire purpose is
+    // that content and provenance commit together or neither does.
+    expect(sectionPlainText({ text: 'Typed by a person.' })).toBe('Typed by a person.');
+    expect(sectionPlainText({ markdown: '## Heading' })).toBe('## Heading');
+    expect(sectionPlainText('legacy bare string')).toBe('legacy bare string');
+  });
+
+  it('paragraph serialisation is byte-identical to what it always was', () => {
+    // Spans already recorded against `{paragraphs}` content are verified against
+    // this string later. A changed join, or a changed skip rule, shifts every
+    // offset after the change and makes existing provenance point at the wrong
+    // words — so widening the OTHER shapes must not touch this one.
+    expect(sectionPlainText({ paragraphs: [{ text: 'One.' }, { text: 'Two.' }] }))
+      .toBe('One.\n\nTwo.');
+  });
+
+  it('precedence matches the reader when a row carries more than one key', () => {
+    // contentToBody (useDossier.ts:80-99) checks paragraphs, then markdown,
+    // then text. Server and reader disagreeing about which key wins is how the
+    // has_content defect happened in the first place.
+    expect(sectionPlainText({ paragraphs: [{ text: 'P' }], markdown: 'M', text: 'T' })).toBe('P');
+    expect(sectionPlainText({ markdown: 'M', text: 'T' })).toBe('M');
+  });
+});
+
+describe('the lineage gate now actually runs for the shape the editor saves', () => {
+  it('a { text } save records spans and satisfies the coverage assertion', async () => {
+    // Before the serialiser was widened this content produced plain === '',
+    // the route skipped the block entirely, and the save committed with no
+    // provenance. Now it takes the same path `{paragraphs}` content takes.
+    const content = {
+      text: 'The investigational product was administered once daily. '
+          + 'No dose-limiting toxicity was observed at any level.',
+    };
+    const plain = sectionPlainText(content);
+    expect(plain.trim().length).toBeGreaterThan(0);
+
+    await saveLikeTheRoute(content);
+    await expect(assertLineageCoversContent(ORG, REF, plain, exec())).resolves.toBeUndefined();
+
+    const { rows } = await pg.query(
+      `SELECT count(*)::int AS n FROM document_span_lineage
+        WHERE organization_id = $1 AND document_id = $2 AND deleted_at IS NULL`,
+      [ORG, REF.documentId],
+    );
+    expect((rows[0] as { n: number }).n).toBeGreaterThan(0);
+  }, 60_000);
 });

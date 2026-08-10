@@ -49,6 +49,12 @@ import { stripComments } from '../ui/_strip-comments';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
 const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql');
+// The section save writes content and its span lineage in ONE transaction and
+// refuses to commit either alone, so this table is a prerequisite for the save
+// rather than an optional extra. It only became one for `{ text }` content when
+// sectionPlainText was widened to serialise the shape the editor actually
+// sends — before that the route skipped the lineage block for every real save.
+const LINEAGE = path.join(REPO_ROOT, 'db/migrations/20260803_document_span_lineage.sql');
 const SAVE_HOOK = path.join(REPO_ROOT, 'client/src/concept2cure/mdx/hooks/useSectionSave.ts');
 
 const ORG = 7;
@@ -84,6 +90,9 @@ beforeEach(async () => {
   pg = new PGlite();
   await pg.exec(`
     CREATE TABLE organizations (id serial PRIMARY KEY);
+    -- Seeded explicitly: document_span_lineage.organization_id carries an FK to
+    -- this table, so the org under test has to be the one that exists.
+    INSERT INTO organizations (id) VALUES (${ORG});
     CREATE TABLE users (id serial PRIMARY KEY);
     CREATE TABLE regulatory_programs (id uuid PRIMARY KEY);
     CREATE TABLE audit_logs (
@@ -96,6 +105,7 @@ beforeEach(async () => {
   `);
   await pg.exec(fs.readFileSync(PREREQ, 'utf8'));
   await pg.exec(fs.readFileSync(SCHEMA, 'utf8'));
+  await pg.exec(fs.readFileSync(LINEAGE, 'utf8'));
 
   await pg.query(`INSERT INTO regulatory_programs (id) VALUES ($1)`, [PROJECT]);
   const pack = await pg.query<{ version: string }>(

@@ -123,6 +123,14 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
       'migrations/20260728_authoring_comments_threading.sql',
+      // The router's own tables (templates/tokens/export_history/…), moved out
+      // of retired runtime DDL into this migration by the canonical-spine
+      // refactor — so it is now their only definition.
+      'db/migrations/20260730_authoring_runtime_ddl.sql',
+      // The section save writes content and its span lineage in one
+      // transaction and refuses to commit one without the other, so this table
+      // is a prerequisite for the authoring spine rather than an optional extra.
+      'db/migrations/20260803_document_span_lineage.sql',
       // The subject of this file. Applied from the SAME path production uses,
       // so a column that exists here exists there.
       'migrations/20260728_authoring_reviews.sql',
