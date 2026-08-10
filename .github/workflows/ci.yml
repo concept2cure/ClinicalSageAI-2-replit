@@ -236,6 +236,14 @@ jobs:
       - name: Guardrails — every registered route + blueprint reaches the bundle
         run: npm run ci:check-bundle-reachability
 
+      # The level below the mount audit. Two routers sharing an app.use prefix is
+      # legitimate composition, but if both define the same method+path Express
+      # keeps the first and the second is unreachable — the same silence that hid
+      # six duplicate ops endpoints, one layer deeper. 10 prefixes here carry more
+      # than one router; this asserts none of them collides.
+      - name: Guardrails — no route defined twice under a shared prefix
+        run: npm run ci:check-route-collisions
+
       # The direction nobody was asking. `audit:orphaned-endpoints` finds server
       # routes nobody calls; this finds CLIENT CALLS with no server route, which
       # is the one that costs a customer something. Asking it the first time
