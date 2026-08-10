@@ -11,16 +11,6 @@
 
 /* ── Types ── */
 
-export interface IndlProgram {
-  code: string;
-  drugName: string;
-  productName: string;
-  indication: string;
-  sponsorName: string;
-  submissionType: string;
-  targetReceiptOffsetDays: number;
-}
-
 export interface IndlForm {
   id: string;
   title: string;
@@ -107,15 +97,29 @@ export interface IndlClockState {
 
 /* ── Fixture data ── */
 
-export const INDL_PROGRAM: IndlProgram = {
-  code: 'BX-301',
-  drugName: 'BX-301',
-  productName: 'BX-301 (anti-BCMA mAb)',
-  indication: 'Relapsed/refractory multiple myeloma',
-  sponsorName: 'Concept2Cure',
-  submissionType: 'IND',
-  targetReceiptOffsetDays: 14,
-};
+/*
+ * INDL_PROGRAM is gone, and with it the IndlProgram type.
+ *
+ * It described an invented drug programme — code and drugName 'BX-301',
+ * productName 'BX-301 (anti-BCMA mAb)', indication 'Relapsed/refractory
+ * multiple myeloma', sponsor 'Concept2Cure' — and it existed for exactly one
+ * purpose: two deliverable `ask` strings concatenated it at module load into
+ *
+ *   "Assemble the IND cover letter (m1.2) for the BX-301 IND."
+ *   "Assemble the Pre-IND briefing book for BX-301 (anti-BCMA mAb)."
+ *
+ * Those are not labels. IndLifecycle.tsx:551 passes `d.ask` to the shell's
+ * onAsk, which pushes it into the AnA conversation as a USER message and
+ * renders it in the rail. So clicking "Assemble" on either card put an invented
+ * product, indication and modality into the customer's own words, addressed to
+ * the assistant, in a regulatory workspace where the next thing produced is a
+ * submission document.
+ *
+ * The fix is what the other four deliverables in this list already do: say
+ * "this IND" and "this program" and let the conversation carry the real
+ * context. Nothing else in the repo referenced INDL_PROGRAM, so removing it
+ * costs nothing — it was invented content whose only job was to be spoken.
+ */
 
 export const INDL_FORMS: IndlForm[] = [
   { id: 'FDA_1571', title: 'Form FDA 1571', label: 'IND Application', ref: '21 CFR 312.23(a)(1)', done: true },
@@ -169,13 +173,13 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
     id: 'cover-letter', title: 'IND Cover Letter', placement: 'eCTD m1.2', ref: '21 CFR 312.23(a)(1)', ai: true, group: 'file',
     route: 'POST /api/ind-lifecycle/cover-letter',
     desc: 'Introduces the IND, summarizes contents, and highlights key points for the FDA reviewer.',
-    ask: 'Assemble the IND cover letter (m1.2) for the ' + INDL_PROGRAM.drugName + ' IND.',
+    ask: 'Assemble the IND cover letter (m1.2) for this IND.',
   },
   {
     id: 'briefing-book', title: 'Pre-IND Briefing Book', placement: 'Meeting package', ref: 'FDA Type B (Pre-IND)', ai: true, group: 'file',
     route: 'POST /api/ind-lifecycle/briefing-book',
     desc: 'FDA meeting briefing book -- background, questions, and sponsor positions for the Pre-IND meeting.',
-    ask: 'Assemble the Pre-IND briefing book for ' + INDL_PROGRAM.productName + '.',
+    ask: 'Assemble the Pre-IND briefing book for this program.',
   },
   {
     id: 'loa', title: 'Letter of Authorization', placement: 'eCTD m1.4.1', ref: '21 CFR 312.23(b)', ai: false, group: 'file',

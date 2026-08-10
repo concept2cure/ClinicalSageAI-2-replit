@@ -1,5 +1,48 @@
 #!/usr/bin/env node
+/**
+ * Repo health scan — duplication and file-size debt.
+ *
+ * ── Why the duplicate dimension changed ───────────────────────────────────────
+ * This scan used to gate on DUPLICATE BASENAMES, and `--strict` demanded zero of
+ * them. That gate could never pass, and not because the work was outstanding:
+ * the tree carries 95 files named `index`, 48 named `types`, 31 named `app`.
+ * Those are `server/config/index.ts`, `server/auth/index.ts`,
+ * `server/middleware/index.ts` — barrel files and module-local type files, which
+ * is how TypeScript is written. Driving that count to zero would mean giving
+ * every barrel a globally unique name and breaking every import that depends on
+ * directory resolution. The gate demanded a state that is worse code.
+ *
+ * So the nightly job was permanently red over a number nobody could act on, and
+ * a permanently-red gate is a gate everyone learns to scroll past.
+ *
+ * Content duplication is the defect that dimension was gesturing at. Two files
+ * with byte-identical contents at different paths is unambiguously wrong: one of
+ * them gets a fix and the other silently does not. It is measurable without a
+ * threshold argument, and — once the findings below are cleared — its honest
+ * target is zero.
+ *
+ * ── Why machine-managed mirrors are excluded ──────────────────────────────────
+ * 84 of the 91 content-duplicate groups measured at the time of this change were
+ * inside `design-system/`, which docs/design-system-sync.md declares a READ-ONLY
+ * mirror of an external canonical project: scripts/sync-design-system.sh replaces
+ * the whole directory atomically on every sync. Duplication in there is
+ * upstream's structure, it is reproduced verbatim on the next sync, and any edit
+ * this repo makes is destroyed. Gating on it would rebuild exactly the
+ * permanently-red gate this change exists to remove.
+ *
+ * The exclusion keys on the `.sync-meta` stamp the sync script writes, not on a
+ * hardcoded path — so a second mirror is covered automatically, and a directory
+ * that stops being a mirror comes back into scope the moment the stamp goes.
+ *
+ * ── Why file size is a ceiling and not a zero ─────────────────────────────────
+ * The oversize findings are real (a 930KB `AnaToolExecutor.ts` is a genuine
+ * maintenance problem) but splitting them is weeks of work with real blast
+ * radius, so zero is not a near-term bar. They are gated as a downward-only
+ * ceiling recorded in package.json, per this repo's ratchet convention: the
+ * number is visible in the diff and can only be edited downward by a human.
+ */
 import { execFileSync } from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -7,6 +50,13 @@ const DEFAULT_OUTPUT = 'docs/reports/repo-health-scan-latest.json';
 const SCAN_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
 const DEFAULT_MAX_BYTES = 100_000;
 const DEFAULT_MAX_LINES = 1_500;
+
+/**
+ * Stamp written by scripts/sync-design-system.sh into every directory it owns.
+ * A directory carrying one is replaced wholesale on the next sync, so its
+ * contents are not this repo's to deduplicate.
+ */
+const MIRROR_STAMP = '.sync-meta';
 
 function runGit(args) {
   return execFileSync('git', args, {
@@ -25,6 +75,11 @@ function parseArgs(argv) {
     strictNoRegression: false,
     maxBytes: DEFAULT_MAX_BYTES,
     maxLines: DEFAULT_MAX_LINES,
+    // Downward-only ceilings for the size dimensions under --strict. Null means
+    // "do not gate on size", which is what the per-PR no-regression run wants —
+    // it compares against the baseline instead.
+    ceilingLargeBytes: null,
+    ceilingLargeLines: null,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -51,6 +106,19 @@ function parseArgs(argv) {
     } else if (arg === '--max-lines') {
       options.maxLines = Number(argv[i + 1]);
       i += 1;
+    } else if (arg === '--ceiling-large-bytes') {
+      options.ceilingLargeBytes = Number(argv[i + 1]);
+      i += 1;
+    } else if (arg === '--ceiling-large-lines') {
+      options.ceilingLargeLines = Number(argv[i + 1]);
+      i += 1;
+    }
+  }
+
+  for (const key of ['ceilingLargeBytes', 'ceilingLargeLines']) {
+    const value = options[key];
+    if (value !== null && (!Number.isInteger(value) || value < 0)) {
+      throw new Error(`Invalid --${key.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)} value: ${value}`);
     }
   }
 
@@ -71,6 +139,57 @@ function getTrackedFiles() {
     .split('\n')
     .map(f => f.trim())
     .filter(Boolean);
+}
+
+/**
+ * Directory prefixes owned by a sync script, derived from the tracked stamps
+ * rather than hardcoded. Returns e.g. ['design-system/'].
+ */
+function findManagedMirrors(files) {
+  return files
+    .filter(f => path.basename(f) === MIRROR_STAMP)
+    .map(f => {
+      const dir = path.dirname(f);
+      return dir === '.' ? '' : `${dir}/`;
+    })
+    .filter(Boolean)
+    .sort();
+}
+
+function isInsideMirror(file, mirrors) {
+  return mirrors.some(prefix => file.startsWith(prefix));
+}
+
+/**
+ * Groups of tracked source files whose bytes are identical.
+ *
+ * Exact bytes, deliberately — no whitespace normalisation and no similarity
+ * score. A near-duplicate detector needs a threshold, and a threshold is an
+ * argument rather than a finding. Byte equality has no false positives: the two
+ * files ARE the same file at two paths, and one of them will miss the next fix.
+ */
+function findContentDuplicates(files, mirrors) {
+  const byHash = new Map();
+
+  for (const file of files) {
+    if (!SCAN_EXTENSIONS.has(path.extname(file))) continue;
+    if (file.startsWith('dist/') || file.startsWith('coverage/') || file.includes('/node_modules/')) {
+      continue;
+    }
+    if (isInsideMirror(file, mirrors)) continue;
+
+    const abs = path.resolve(process.cwd(), file);
+    if (!fs.existsSync(abs)) continue;
+
+    const hash = crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex');
+    if (!byHash.has(hash)) byHash.set(hash, []);
+    byHash.get(hash).push(file);
+  }
+
+  return Array.from(byHash.entries())
+    .filter(([, paths]) => paths.length > 1)
+    .map(([hash, paths]) => ({ hash: hash.slice(0, 12), count: paths.length, paths: paths.slice().sort() }))
+    .sort((a, b) => b.count - a.count || a.paths[0].localeCompare(b.paths[0]));
 }
 
 function countLines(content) {
@@ -124,7 +243,13 @@ function classifyFiles(files, thresholds) {
   return { duplicates, largeByBytes, largeByLines };
 }
 
-function buildReport(findings, options) {
+/**
+ * Basenames are reported but never gated — see the header. Kept in the report
+ * because "31 files named app" is worth a human glance even though it is not a
+ * defect, and dropping the field would break the committed baseline's shape.
+ */
+
+function buildReport(findings, options, mirrors) {
   const sha = runGit(['rev-parse', 'HEAD']);
   const branch = runGit(['branch', '--show-current']);
   const generatedAt = new Date().toISOString();
@@ -135,14 +260,22 @@ function buildReport(findings, options) {
     thresholds: {
       maxBytes: options.maxBytes,
       maxLines: options.maxLines,
+      ceilingLargeBytes: options.ceilingLargeBytes,
+      ceilingLargeLines: options.ceilingLargeLines,
     },
+    // Recorded so a reader of the report can see WHICH paths were held out of
+    // the content-duplicate scan, rather than having to trust that some were.
+    managedMirrors: mirrors,
     summary: {
       duplicateBasenames: findings.duplicates.length,
+      contentDuplicateGroups: findings.contentDuplicates.length,
+      contentDuplicateFiles: findings.contentDuplicates.reduce((total, g) => total + g.count, 0),
       largeFilesByBytes: findings.largeByBytes.length,
       largeFilesByLines: findings.largeByLines.length,
     },
     findings: {
       duplicateBasenames: findings.duplicates,
+      contentDuplicates: findings.contentDuplicates,
       largeFilesByBytes: findings.largeByBytes,
       largeFilesByLines: findings.largeByLines,
     },
@@ -258,9 +391,24 @@ function writeMarkdownReport(outputPath, report) {
   lines.push('');
   lines.push('## Summary');
   lines.push('');
-  lines.push(`- Duplicate basenames: ${report.summary.duplicateBasenames}`);
+  lines.push(
+    `- Content-duplicate groups (gated): ${report.summary.contentDuplicateGroups} ` +
+      `(${report.summary.contentDuplicateFiles} files)`,
+  );
+  lines.push(`- Duplicate basenames (reported, not gated): ${report.summary.duplicateBasenames}`);
   lines.push(`- Files over byte threshold: ${report.summary.largeFilesByBytes}`);
   lines.push(`- Files over line threshold: ${report.summary.largeFilesByLines}`);
+  if (report.managedMirrors?.length) {
+    lines.push(`- Machine-managed mirrors held out of the duplicate scan: ${report.managedMirrors.join(', ')}`);
+  }
+  if (report.findings.contentDuplicates?.length) {
+    lines.push('');
+    lines.push('## Content Duplicates');
+    lines.push('');
+    for (const group of report.findings.contentDuplicates) {
+      lines.push(`- ${group.paths.join(' == ')}`);
+    }
+  }
   if (report.comparison) {
     lines.push(`- Baseline: ${report.comparison.baseline}`);
     lines.push(`- Delta duplicate basenames: ${report.comparison.delta.duplicateBasenames}`);
@@ -283,9 +431,16 @@ function writeMarkdownReport(outputPath, report) {
 
 function printSummary(outputPath, report) {
   console.log(`Repo health scan written: ${outputPath}`);
-  console.log(`- duplicate basenames: ${report.summary.duplicateBasenames}`);
+  console.log(
+    `- content-duplicate groups: ${report.summary.contentDuplicateGroups}` +
+      ` (${report.summary.contentDuplicateFiles} files)   [gated]`,
+  );
+  console.log(`- duplicate basenames: ${report.summary.duplicateBasenames}   [reported, not gated]`);
   console.log(`- files over byte threshold: ${report.summary.largeFilesByBytes}`);
   console.log(`- files over line threshold: ${report.summary.largeFilesByLines}`);
+  if (report.managedMirrors?.length) {
+    console.log(`- held out as machine-managed mirrors: ${report.managedMirrors.join(', ')}`);
+  }
 }
 
 function readBaseline(filePath) {
@@ -311,6 +466,10 @@ function computeDelta(current, baseline) {
   const baselineSummary = baseline.summary ?? {};
   return {
     duplicateBasenames: safe(currentSummary.duplicateBasenames) - safe(baselineSummary.duplicateBasenames),
+    // null, not a number, when the baseline predates this dimension. See below.
+    contentDuplicateGroups: Number.isFinite(baselineSummary.contentDuplicateGroups)
+      ? safe(currentSummary.contentDuplicateGroups) - safe(baselineSummary.contentDuplicateGroups)
+      : null,
     largeFilesByBytes: safe(currentSummary.largeFilesByBytes) - safe(baselineSummary.largeFilesByBytes),
     largeFilesByLines: safe(currentSummary.largeFilesByLines) - safe(baselineSummary.largeFilesByLines),
   };
@@ -327,18 +486,73 @@ function stripVolatileFields(report) {
   return clone;
 }
 
+/**
+ * Basename drift is deliberately absent here as well as from the strict gate.
+ * Adding a second `types.ts` to a new module is correct TypeScript, and failing
+ * a PR for it would teach people to route around this scan.
+ *
+ * ── A null delta is "cannot compare", and must not fail ───────────────────────
+ * computeDelta returns null for contentDuplicateGroups when the committed
+ * baseline predates that dimension. Treating an absent field as 0 is a guess,
+ * not a comparison, and it produced a real false failure: the commit that
+ * introduced this gate did not update the baseline in the same commit, so for
+ * two commits the current count (6) was compared against a field that did not
+ * exist, read as 0, and reported as a regression of +6. Nothing had regressed —
+ * the dimension simply had no prior value.
+ *
+ * `null > 0` is false in JS, so the comparison below already behaves correctly;
+ * it is written explicitly so nobody "fixes" it back into safe(undefined).
+ */
 function hasRegression(delta) {
   if (!delta) return false;
-  return delta.duplicateBasenames > 0 || delta.largeFilesByBytes > 0 || delta.largeFilesByLines > 0;
+  const grew = (d) => typeof d === 'number' && d > 0;
+  return grew(delta.contentDuplicateGroups) || grew(delta.largeFilesByBytes) || grew(delta.largeFilesByLines);
+}
+
+/**
+ * The strict gate. Returns the reasons it failed, so the operator is told what
+ * to do rather than just handed a non-zero exit.
+ */
+function strictFailures(report, options) {
+  const reasons = [];
+  const { summary } = report;
+
+  if (summary.contentDuplicateGroups > 0) {
+    reasons.push(
+      `${summary.contentDuplicateGroups} group(s) of byte-identical files ` +
+        `(${summary.contentDuplicateFiles} files). One copy will get the next fix and the ` +
+        `others will not. Delete the redundant copies, or extract the shared module:\n` +
+        report.findings.contentDuplicates
+          .map(g => `     ${g.paths.join('\n     ==  ')}`)
+          .join('\n'),
+    );
+  }
+
+  if (options.ceilingLargeBytes !== null && summary.largeFilesByBytes > options.ceilingLargeBytes) {
+    reasons.push(
+      `${summary.largeFilesByBytes} files exceed ${options.maxBytes} bytes, above the ceiling of ` +
+        `${options.ceilingLargeBytes}. The ceiling in package.json moves DOWN only.`,
+    );
+  }
+  if (options.ceilingLargeLines !== null && summary.largeFilesByLines > options.ceilingLargeLines) {
+    reasons.push(
+      `${summary.largeFilesByLines} files exceed ${options.maxLines} lines, above the ceiling of ` +
+        `${options.ceilingLargeLines}. The ceiling in package.json moves DOWN only.`,
+    );
+  }
+
+  return reasons;
 }
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const files = getTrackedFiles();
+  const mirrors = findManagedMirrors(files);
   const findings = classifyFiles(files, options);
+  findings.contentDuplicates = findContentDuplicates(files, mirrors);
   const baseline = readBaseline(options.baseline);
   const owners = readOwners(options.owners);
-  const report = buildReport(findings, options);
+  const report = buildReport(findings, options, mirrors);
   report.comparison = baseline
     ? {
         baseline: options.baseline,
@@ -374,20 +588,35 @@ function main() {
   printSummary(options.output, report);
   if (report.comparison) {
     console.log(`- baseline: ${report.comparison.baseline}`);
+    // Printed first because it is the dimension the no-regression gate acts on.
+    console.log(
+      `- delta content-duplicate groups: ${
+        report.comparison.delta.contentDuplicateGroups === null
+          ? 'n/a (baseline predates this dimension — not compared)'
+          : report.comparison.delta.contentDuplicateGroups
+      }`,
+    );
     console.log(`- delta duplicate basenames: ${report.comparison.delta.duplicateBasenames}`);
     console.log(`- delta files over byte threshold: ${report.comparison.delta.largeFilesByBytes}`);
     console.log(`- delta files over line threshold: ${report.comparison.delta.largeFilesByLines}`);
   }
 
-  if (options.strict || options.strictNoRegression) {
-    const failed = baseline
-      ? hasRegression(report.comparison?.delta)
-      : report.summary.duplicateBasenames > 0 ||
-        report.summary.largeFilesByBytes > 0 ||
-        report.summary.largeFilesByLines > 0;
-    if (failed) {
+  if (options.strictNoRegression && baseline) {
+    if (hasRegression(report.comparison?.delta)) {
+      console.error('\n❌ repo health regressed against the baseline.');
       process.exit(1);
     }
+    return;
+  }
+
+  if (options.strict) {
+    const reasons = strictFailures(report, options);
+    if (reasons.length > 0) {
+      console.error('\n❌ repo health strict gate failed:\n');
+      for (const reason of reasons) console.error(`   • ${reason}\n`);
+      process.exit(1);
+    }
+    console.log('\n✅ repo health strict gate passed.');
   }
 }
 

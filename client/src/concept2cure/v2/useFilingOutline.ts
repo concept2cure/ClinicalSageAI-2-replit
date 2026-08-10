@@ -26,6 +26,11 @@
  */
 import React from 'react';
 
+import {
+  normalizeRulePackProvenance,
+  type RulePackProvenance,
+} from '@shared/rule-pack-provenance';
+
 import { useLiveData } from './dataConnect';
 
 /** One row of `GET /api/c2c/documents/:id/outline`. */
@@ -61,8 +66,28 @@ interface DocumentsResponse {
 }
 
 interface OutlineResponse {
-  document: { id: string; title: string; doc_type: string; agency: string; status: string; readiness: number };
+  document: {
+    id: string;
+    title: string;
+    doc_type: string;
+    agency: string;
+    status: string;
+    readiness: number;
+    /** Absent when the server predates the provenance columns. */
+    provenance?: unknown;
+  };
   outline: FilingOutlineRow[];
+}
+
+/** The document, with provenance guaranteed present and in the vocabulary. */
+export interface FilingOutlineDocument {
+  id: string;
+  title: string;
+  doc_type: string;
+  agency: string;
+  status: string;
+  readiness: number;
+  provenance: RulePackProvenance;
 }
 
 /**
@@ -116,7 +141,7 @@ export type FilingOutlineReason =
 
 export interface FilingOutlineState {
   /** The governed document this outline belongs to, when one resolved. */
-  document: OutlineResponse['document'] | null;
+  document: FilingOutlineDocument | null;
   tree: FilingOutlineNode[];
   flat: FilingOutlineNode[];
   loading: boolean;
@@ -170,8 +195,14 @@ export function useFilingOutline(projectId: string | null): FilingOutlineState {
 
     const rows = outline.data?.outline ?? [];
     const tree = buildOutlineTree(rows);
+    const raw = outline.data?.document ?? null;
     return {
-      document: outline.data?.document ?? null,
+      // Normalised here as well as on the server, because a client can be
+      // newer than the API it is talking to. An older server omits
+      // `provenance` entirely, and the surface must show "basis undeclared"
+      // rather than crash or — far worse — render nothing and let the outline
+      // read as unqualified.
+      document: raw ? { ...raw, provenance: normalizeRulePackProvenance(raw.provenance) } : null,
       tree,
       flat: flattenOutline(tree),
       loading: false,

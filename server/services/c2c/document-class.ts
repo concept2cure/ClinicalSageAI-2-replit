@@ -44,6 +44,11 @@
 export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
   ind: 'ind', cta: 'cta', nda: 'nda', anda: 'anda', bla: 'bla', maa: 'maa', jnda: 'jnda',
   '510k': 'k510', de_novo: 'denovo', pma: 'pma', ide: 'ide', cer: 'cer',
+  // EU MDR / IVDR technical documentation. Mapped for the same reason anda and
+  // ide are and device/ivd are not: each names ONE dossier structure, enumerated
+  // by the Regulation itself (MDR Annex II+III, IVDR Annex II+III). There is
+  // nothing to guess. migrations/20260810b supplies both packs.
+  mdr: 'mdr', ivdr: 'ivdr',
 };
 
 /**
@@ -59,8 +64,33 @@ export const AGENCY_TO_CODE: Readonly<Record<string, string>> = {
   TGA: 'tga', NMPA: 'nmpa', MFDS: 'mfds', HC: 'hc', HEALTH_CANADA: 'hc',
 };
 
-/** Agencies to try, in order, when the project's own agency has no rule pack. */
-export const AGENCY_FALLBACKS = ['ich', 'fda'] as const;
+/**
+ * Agencies to try, in order, when the project's own agency has no rule pack.
+ *
+ * ── Why 'fda' is NOT in this list ─────────────────────────────────────────────
+ * It used to be, and it made this module violate the rule stated at the top of
+ * this file. No rule pack exists for hc, nmpa, tga or mfds, so a Health Canada
+ * NDS fell through to the FDA pack — and scaffold-project-documents.ts:158
+ * writes the RESOLVED agency into c2c_documents, not the project's. The customer
+ * got a document row asserting `agency: 'fda'`, bound to `ich-m4-v2.1`, titled
+ * "<product> — NDA × FDA · 505(b)(1) · eCTD M1–M5", with 71 US sections, while
+ * their programme said Health Canada. Same for China and Australia — an 8-item
+ * TGA clinical trial notification was served as a 71-section US marketing
+ * application.
+ *
+ * That is exactly the near-neighbour substitution the header forbids, and in a
+ * Part 11 table it is worse than a wrong outline: the record itself states the
+ * wrong agency. Removing 'fda' turns those cases into NO_RULE_PACK — visible,
+ * honest, and no artifact to mistake for a real dossier.
+ *
+ * 'ich' stays. ICH is not a jurisdiction; it is the harmonised CTD parent, and a
+ * document bound to it is honest about being the neutral baseline rather than
+ * some other country's submission.
+ *
+ * This costs US filings nothing. The caller iterates `[agency, ...FALLBACKS]`,
+ * so an FDA project matches 'fda' on the first pass and never reaches here.
+ */
+export const AGENCY_FALLBACKS = ['ich'] as const;
 
 export interface DocumentClass {
   docType: string;

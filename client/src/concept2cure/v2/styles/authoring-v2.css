@@ -22,6 +22,30 @@
   .ed-tree-h{padding:14px 16px;border-bottom:1px solid var(--border);}
   .ed-tree-t{font-size:12px;font-weight:600;}
   .ed-tree-m{font-size:10px;color:var(--text-400);margin-top:3px;}
+
+  /* ── Outline basis band ──
+     What the section tree below was built FROM. Inline rather than a tooltip:
+     a filer must not have to hover to learn that the outline they are drafting
+     against is a reasoned construction rather than a transcription. The tones
+     are keyed off review status first, so a faithful transcription nobody has
+     signed off still reads as neutral, never as green.
+
+     Named `ed-basis`, NOT `ed-prov`. `.ed-prov` is already taken further down
+     this file by the per-block hover tooltip — same specificity, defined
+     later, so it wins the cascade and would have rendered this band
+     `opacity:0; position:absolute; pointer-events:none`. Invisible, while
+     every jsdom test still passed, because jsdom applies no stylesheet.
+     `ci:check-css-selector-shadowing` now fails on that shape. */
+  .ed-basis{padding:10px 16px;border-bottom:1px solid var(--border);display:grid;gap:5px;}
+  .ed-basis-h{display:flex;align-items:center;gap:6px;}
+  .ed-basis-chip{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+  .ed-basis-chip[data-tone="ok"]{background:color-mix(in srgb, var(--success) 15%, transparent);color:var(--success);}
+  .ed-basis-chip[data-tone="idle"]{background:var(--bg-100);color:var(--text-400);}
+  .ed-basis-chip[data-tone="warn"]{background:color-mix(in srgb, var(--warning) 16%, transparent);color:var(--warning);}
+  .ed-basis-chip[data-tone="err"]{background:color-mix(in srgb, var(--error) 14%, transparent);color:var(--error);}
+  .ed-basis-l{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;}
+  .ed-basis-d{margin:0;font-size:10.5px;line-height:1.5;color:var(--text-300);}
+
   .ed-tree-scroll{flex:1;overflow-y:auto;padding:10px 8px;}
   .ed-vol{margin-bottom:10px;}
   .ed-vol-l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;padding:6px 8px;}

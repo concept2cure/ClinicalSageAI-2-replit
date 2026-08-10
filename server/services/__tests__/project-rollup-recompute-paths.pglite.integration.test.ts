@@ -35,6 +35,21 @@ import { ProjectRollupService } from '../project-rollup-service';
 const ORG_A = 100;
 const ORG_B = 200;
 
+/*
+ * recomputePaths takes (projectId, organizationId) — project FIRST.
+ *
+ * Every call below originally passed (ORG_A, projectId), reversed. With
+ * ORG_A = 100 that asked for project 100 inside organization 5, which matches
+ * no anchor row, so the recursive CTE updated nothing and every path stayed
+ * NULL. Three assertions failed on `expected null to be '5'`.
+ *
+ * The two that PASSED are the reason this is worth a comment. Both assert that
+ * paths are absent for another org, and they passed because NO path was ever
+ * computed for any org — vacuously green while the thing they exist to check
+ * was never exercised. project-hierarchy.ts:418 calls it correctly, so the
+ * service was fine; the test was the broken instrument.
+ */
+
 function migration(rel: string): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   return fs.readFileSync(path.resolve(here, '../../../../', rel), 'utf8');
@@ -94,7 +109,7 @@ describe('recomputePaths (PGlite integration)', () => {
     );
 
     const svc = new ProjectRollupService(exec as any);
-    await svc.recomputePaths(ORG_A, 5);
+    await svc.recomputePaths(5, ORG_A);
 
     expect(await getProjectPath(5, ORG_A)).toBe('5');
   });
@@ -106,7 +121,7 @@ describe('recomputePaths (PGlite integration)', () => {
     const svc = new ProjectRollupService(exec as any);
     // Reparent child[2] to root[1]; recompute from root[1]
     await exec.query(`UPDATE projects SET parent_project_id = 1 WHERE id = 2`);
-    await svc.recomputePaths(ORG_A, 1);
+    await svc.recomputePaths(1, ORG_A);
 
     expect(await getProjectPath(1, ORG_A)).toBe('1');
     expect(await getProjectPath(2, ORG_A)).toBe('1/2');
@@ -132,7 +147,7 @@ describe('recomputePaths (PGlite integration)', () => {
     // Reparent child[2] from root[1] to root[4]
     await exec.query(`UPDATE projects SET parent_project_id = 4 WHERE id = 2 AND organization_id = $1`, [ORG_A]);
     // Recompute from the new parent (root[4])
-    await svc.recomputePaths(ORG_A, 4);
+    await svc.recomputePaths(4, ORG_A);
 
     // Check that paths updated correctly
     expect(await getProjectPath(4, ORG_A)).toBe('4');
@@ -146,7 +161,7 @@ describe('recomputePaths (PGlite integration)', () => {
 
     const svc = new ProjectRollupService(exec as any);
     // Recompute org A's subtree starting from root[1]
-    await svc.recomputePaths(ORG_A, 1);
+    await svc.recomputePaths(1, ORG_A);
 
     // Org A paths should be correct
     expect(await getProjectPath(1, ORG_A)).toBe('1');
@@ -171,7 +186,7 @@ describe('recomputePaths (PGlite integration)', () => {
     );
 
     const svc = new ProjectRollupService(exec as any);
-    await svc.recomputePaths(ORG_A, 1);
+    await svc.recomputePaths(1, ORG_A);
 
     // Org A paths computed
     expect(await getProjectPath(1, ORG_A)).toBe('1');

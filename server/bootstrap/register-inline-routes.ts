@@ -792,7 +792,15 @@ export async function registerInlineAiWorkflowRoutes({
     const c2cDocsModule = await import('../routes/c2c/documents');
     app.get('/api/c2c/rule-packs', authMiddleware, (req, res, next) => {
       // Forward to the /rule-packs sub-route inside the documents router.
-      req.url = '/rule-packs';
+      //
+      // The query string has to be carried across. Express 5 defines
+      // `req.query` as a lazy getter that parses `req.url` at ACCESS time, and
+      // the handler does not read it until after this rewrite — so assigning a
+      // bare '/rule-packs' here silently discarded ?docType and ?agency and
+      // the endpoint answered with every rule pack instead of the filtered
+      // set. Silently: no error, just the wrong rows.
+      const q = req.url.indexOf('?');
+      req.url = q === -1 ? '/rule-packs' : `/rule-packs${req.url.slice(q)}`;
       c2cDocsModule.default(req, res, next);
     });
     console.info('✅ C2C Rule-packs route mounted (/api/c2c/rule-packs)');

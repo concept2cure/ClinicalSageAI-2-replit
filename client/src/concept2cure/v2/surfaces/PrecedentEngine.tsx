@@ -385,7 +385,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         {(saved.length > 0 || savedNote) && (
           <div className="pj-card-b" style={{ paddingTop: 0, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             {saved.map((s) => (
-              <span key={s.id} className="rd-chip tone-dim" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span key={s.id} className="rd-chip tone-idle" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <button style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
                   onClick={() => applySaved(s)} title="Load and run this saved query">
                   {s.label}
