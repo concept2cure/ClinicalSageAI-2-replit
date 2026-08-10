@@ -573,6 +573,8 @@ function main() {
   printSummary(options.output, report);
   if (report.comparison) {
     console.log(`- baseline: ${report.comparison.baseline}`);
+    // Printed first because it is the dimension the no-regression gate acts on.
+    console.log(`- delta content-duplicate groups: ${report.comparison.delta.contentDuplicateGroups}`);
     console.log(`- delta duplicate basenames: ${report.comparison.delta.duplicateBasenames}`);
     console.log(`- delta files over byte threshold: ${report.comparison.delta.largeFilesByBytes}`);
     console.log(`- delta files over line threshold: ${report.comparison.delta.largeFilesByLines}`);
