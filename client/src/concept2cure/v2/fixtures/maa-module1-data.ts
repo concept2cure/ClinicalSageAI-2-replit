@@ -1,14 +1,45 @@
 /**
- * Fixture for the MAA / Module-1 cockpit (non-US marketing-application admin).
+ * Region selector configuration for the MAA / Module-1 cockpit.
  *
- * Mirrors the deterministic backend requirements in
- * server/services/global-ri/regional-module1-requirements.ts so the surface
- * renders the region-accurate eCTD Module-1 checklist offline. The live surface
- * fetches GET /api/global-ri/module1/requirements/:market; this is the
- * fail-closed fallback (marked "Sample data").
+ * ── This file is not a fixture, despite living in fixtures/ ───────────────────
+ * Everything below is display configuration for the market chips — the six
+ * `RegulatoryMarket` codes the requirements engine models, plus the agency name
+ * and procedure shown beside each. No submission data, no readiness state, no
+ * checklist content. MaaCockpit gets all of that live from
+ * `GET /api/maa-module1/:market`.
+ *
+ * ── What was removed, and why ─────────────────────────────────────────────────
+ * This file previously also exported `MAA_REQUIREMENTS`: a complete, hand-copied
+ * transcription of the regional Module-1 checklists — the EU eAF and ERA, the
+ * Japanese 承認申請書 and 添付文書, Health Canada's HC/SC 3011 and CPID, and the
+ * rest — duplicating `REGIONAL_MODULE1_REQUIREMENTS` in
+ * server/services/global-ri/regional-module1-requirements.ts.
+ *
+ * Nothing imported it. It was a second copy of regulatory content with no
+ * consumer, which is the same trap that let the served design-system mirror
+ * drift 119 lines behind its canonical file without anyone noticing: the copy
+ * costs nothing to keep and nobody updates it, so the day something does start
+ * reading it, it is quietly wrong about which components an agency requires.
+ * Checked before deleting — it still matched the server exactly, so no
+ * behaviour depended on the difference. Removed while that was still true.
+ *
+ * If a client-side copy is ever genuinely needed, generate it from the server
+ * constant rather than retyping it.
+ *
+ * ── The header this replaces was false ────────────────────────────────────────
+ * It read: "The live surface fetches GET
+ * /api/global-ri/module1/requirements/:market; this is the fail-closed fallback
+ * (marked 'Sample data')." Three claims, none of them true any more. MaaCockpit
+ * calls `/api/maa-module1/:market` (MaaCockpit.tsx:43), never falls back to this
+ * module for data, and renders no "Sample data" marker — it shows an honest
+ * empty or failed-load state instead. The `/api/global-ri/module1/*` routes do
+ * exist and are mounted, but this surface is not what calls them.
  */
 
-/** One required regional Module-1 component (matches the server contract). */
+/**
+ * One required regional Module-1 component. Matches the server contract in
+ * regional-module1-requirements.ts; imported by MaaCockpit as a type only.
+ */
 export interface Module1Component {
   code: string;
   label: string;
@@ -17,7 +48,7 @@ export interface Module1Component {
 
 /** A supported non-US market + its display metadata. */
 export interface MaaMarket {
-  /** Backend RegulatoryMarket code (GET /module1/requirements/:market). */
+  /** Backend RegulatoryMarket code — the :market path param. */
   key: string;
   /** Short label for the region selector. */
   label: string;
@@ -26,7 +57,14 @@ export interface MaaMarket {
   procedure: string;
 }
 
-/** The non-US markets the Module-1 requirements service models. */
+/**
+ * The non-US markets the Module-1 requirements service models.
+ *
+ * `key` must stay in step with the `RegulatoryMarket` union in
+ * regional-module1-requirements.ts — a key with no server counterpart gives the
+ * user a chip that always fails to load. FDA is absent deliberately: this is the
+ * non-US marketing-application cockpit.
+ */
 export const MAA_MARKETS: MaaMarket[] = [
   { key: 'EMA', label: 'EU (EMA)', agency: 'European Medicines Agency', procedure: 'Centralised MAA' },
   { key: 'PMDA', label: 'Japan (PMDA)', agency: 'Pharmaceuticals and Medical Devices Agency', procedure: 'J-NDA' },
@@ -35,45 +73,3 @@ export const MAA_MARKETS: MaaMarket[] = [
   { key: 'HEALTH_CANADA', label: 'Canada (HC)', agency: 'Health Canada', procedure: 'NDS' },
   { key: 'NMPA', label: 'China (NMPA)', agency: 'National Medical Products Administration', procedure: 'NDA' },
 ];
-
-/** Required Module-1 components per market — mirrors the backend constant. */
-export const MAA_REQUIREMENTS: Record<string, Module1Component[]> = {
-  EMA: [
-    { code: 'eu_cover_letter', label: 'Cover letter', section: 'm1.0' },
-    { code: 'eu_eaf', label: 'Application form (electronic Application Form, eAF)', section: 'm1.2' },
-    { code: 'eu_product_information', label: 'Product information — SmPC, labelling, package leaflet (Annexes)', section: 'm1.3' },
-    { code: 'eu_expert_declarations', label: 'Information about the experts (expert declarations)', section: 'm1.4' },
-    { code: 'eu_era', label: 'Environmental risk assessment', section: 'm1.6' },
-    { code: 'eu_rmp', label: 'Risk Management Plan + PSMF summary', section: 'm1.8.2' },
-  ],
-  PMDA: [
-    { code: 'jp_application_form', label: 'Application form (承認申請書)', section: 'm1.2' },
-    { code: 'jp_product_information', label: 'Japanese product information / package insert (添付文書)', section: 'm1.3' },
-    { code: 'jp_gmp', label: 'GMP compliance documentation', section: 'm1.13' },
-    { code: 'jp_manufacturer_certificate', label: 'Certificate of the (foreign) manufacturer / accreditation', section: 'm1.2' },
-  ],
-  MHRA: [
-    { code: 'uk_cover_letter', label: 'Cover letter', section: 'm1.0' },
-    { code: 'uk_application_form', label: 'Application form (UK MA)', section: 'm1.2' },
-    { code: 'uk_product_information', label: 'Product information — SmPC, PIL, labelling', section: 'm1.3' },
-    { code: 'uk_rmp', label: 'UK Risk Management Plan', section: 'm1.8.2' },
-  ],
-  TGA: [
-    { code: 'au_cover_letter', label: 'Cover letter', section: 'm1.0' },
-    { code: 'au_application_form', label: 'Application form', section: 'm1.2' },
-    { code: 'au_product_information', label: 'Australian Product Information (PI)', section: 'm1.3.1' },
-    { code: 'au_cmi', label: 'Consumer Medicines Information (CMI)', section: 'm1.3.2' },
-    { code: 'au_labels', label: 'Draft Australian labels', section: 'm1.3.3' },
-  ],
-  HEALTH_CANADA: [
-    { code: 'ca_hc3011', label: 'Drug Submission Application Form (HC/SC 3011)', section: 'm1.2' },
-    { code: 'ca_cover_letter', label: 'Cover letter', section: 'm1.0' },
-    { code: 'ca_product_monograph', label: 'Draft Product Monograph (labeling)', section: 'm1.3' },
-    { code: 'ca_cpid', label: 'Certified Product Information Document (CPID)', section: 'm1.2' },
-  ],
-  NMPA: [
-    { code: 'cn_application_form', label: 'Application form (申请表)', section: 'm1.2' },
-    { code: 'cn_product_information', label: 'Chinese product information / labeling (说明书)', section: 'm1.3' },
-    { code: 'cn_certificates', label: 'Certificates (manufacturing, GMP, CPP)', section: 'm1.2' },
-  ],
-};

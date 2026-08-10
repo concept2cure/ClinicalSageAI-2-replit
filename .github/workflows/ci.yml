@@ -244,6 +244,16 @@ jobs:
       - name: Guardrails — no route defined twice under a shared prefix
         run: npm run ci:check-route-collisions
 
+      # A rule pack is the outline a customer's submission gets built against,
+      # and they do not all have the same standing: ICH M4 is a harmonised
+      # standard, 21 CFR 814.20(b) enumerates its own contents, and a UK device
+      # outline is a reasoned construction because UK MDR 2002 enumerates
+      # nothing. The table asserted all of them with equal authority until
+      # migrations/20260810c. This keeps a newly seeded pack from going back to
+      # saying nothing about where it came from.
+      - name: Guardrails — every rule pack declares what it was built from
+        run: npm run ci:check-rule-pack-provenance
+
       # The direction nobody was asking. `audit:orphaned-endpoints` finds server
       # routes nobody calls; this finds CLIENT CALLS with no server route, which
       # is the one that costs a customer something. Asking it the first time
