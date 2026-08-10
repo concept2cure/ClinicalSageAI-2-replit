@@ -220,6 +220,12 @@ jobs:
       - name: Guardrails — cross-shell CSS collisions (ratchet, may only shrink)
         run: npm run ci:check-shell-css-collisions
 
+      # Same selector defined twice unconditionally in one file: the later rule
+      # wins silently. jsdom applies no stylesheet, so a component test asserts
+      # a correct DOM while the pixels are wrong — no other gate here sees it.
+      - name: Guardrails — CSS selector shadowing (allowlist, may only shrink)
+        run: npm run ci:check-css-selector-shadowing
+
       - name: Guardrails — phantom design tokens (ratchet, may only shrink)
         run: npm run ci:check-phantom-tokens
 

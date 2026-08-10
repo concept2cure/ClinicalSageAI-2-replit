@@ -683,14 +683,14 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
             they were drafting against. The provenance columns recorded the
             difference; this is where it becomes visible. */}
         {provenance && filing.tree.length > 0 && (
-          <div className="ed-prov">
-            <div className="ed-prov-h">
-              <span className="ed-prov-chip" data-tone={provenance.tone}>
+          <div className="ed-basis">
+            <div className="ed-basis-h">
+              <span className="ed-basis-chip" data-tone={provenance.tone}>
                 {provenance.headline}
               </span>
-              <span className="ed-prov-l">outline basis</span>
+              <span className="ed-basis-l">outline basis</span>
             </div>
-            <p className="ed-prov-d">{provenance.detail}</p>
+            <p className="ed-basis-d">{provenance.detail}</p>
           </div>
         )}
 

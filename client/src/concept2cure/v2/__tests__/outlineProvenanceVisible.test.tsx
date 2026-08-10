@@ -103,7 +103,7 @@ afterEach(() => {
 /** The rendered basis band, once the outline has loaded. */
 async function bandText(): Promise<string> {
   const chip = await screen.findByText(/outline basis/i);
-  const band = chip.closest('.ed-prov');
+  const band = chip.closest('.ed-basis');
   expect(band).toBeTruthy();
   return band!.textContent ?? '';
 }
@@ -124,7 +124,7 @@ describe('the filing outline says what it was built from', () => {
     expect(text).toMatch(/Check it against the regulation/i);
     expect(text).toContain('UK MDR 2002');
 
-    const chip = document.querySelector('.ed-prov-chip') as HTMLElement;
+    const chip = document.querySelector('.ed-basis-chip') as HTMLElement;
     expect(chip.dataset.tone).toBe('warn');
   });
 
@@ -147,7 +147,7 @@ describe('the filing outline says what it was built from', () => {
     expect(text).toContain('Confirm module placement before filing.');
     expect(text).toMatch(/Not reviewed by a regulatory professional/i);
 
-    const chip = document.querySelector('.ed-prov-chip') as HTMLElement;
+    const chip = document.querySelector('.ed-basis-chip') as HTMLElement;
     expect(chip.dataset.tone).not.toBe('ok');
     expect(chip.dataset.tone).toBe('idle');
   });
@@ -162,7 +162,7 @@ describe('the filing outline says what it was built from', () => {
     expect(text).toMatch(/Basis undeclared/i);
     expect(text).toMatch(/Treat nothing in it as verified/i);
 
-    const chip = document.querySelector('.ed-prov-chip') as HTMLElement;
+    const chip = document.querySelector('.ed-basis-chip') as HTMLElement;
     expect(chip.dataset.tone).toBe('err');
   });
 
@@ -181,14 +181,14 @@ describe('the filing outline says what it was built from', () => {
     wire({ sourceBasis: 'reasoned_construction', confidence: 'low', reviewStatus: 'unreviewed', governingRule: null, uncertainties: null });
     const first = render(<DocumentAuthoring {...props()} />);
     const constructedText = await bandText();
-    const constructedTone = (document.querySelector('.ed-prov-chip') as HTMLElement).dataset.tone;
+    const constructedTone = (document.querySelector('.ed-basis-chip') as HTMLElement).dataset.tone;
     first.unmount();
 
     wire({ sourceBasis: 'harmonised_standard', confidence: 'high', reviewStatus: 'reviewed', governingRule: 'ICH M4', uncertainties: null });
     render(<DocumentAuthoring {...props()} />);
     await waitFor(async () => expect(await bandText()).toMatch(/ICH M4/));
     const reviewedText = await bandText();
-    const reviewedTone = (document.querySelector('.ed-prov-chip') as HTMLElement).dataset.tone;
+    const reviewedTone = (document.querySelector('.ed-basis-chip') as HTMLElement).dataset.tone;
 
     expect(reviewedText).not.toBe(constructedText);
     expect(reviewedTone).not.toBe(constructedTone);

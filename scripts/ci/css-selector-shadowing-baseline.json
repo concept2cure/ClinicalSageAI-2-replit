@@ -1,0 +1,29 @@
+{
+  "_comment": "Selectors defined twice unconditionally in one file. Editable only DOWNWARD, by a human: delete a line when the shadowing is fixed. Never append — a new entry means a new silent override.",
+  "knownShadowed": [
+    "client/src/concept2cure/mdx/app.css::.mdx-shell .estar-row",
+    "client/src/concept2cure/mdx/app.css::.mdx-shell .estar-row:hover",
+    "client/src/concept2cure/mdx/app.css::.mdx-shell .section-sub",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .ana-composer",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .cmdk-list",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .dj-stage-h",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .dj-stagepane",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .lp-bw",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .lp-doc",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .lp-doc-bar",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .lp-page.hl",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .pj-convo",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .pj-convo-t",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-ask",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-ask svg",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-ask:hover",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-eyebrow",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-mini",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-mini svg",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-mini:hover",
+    "client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .tb-cmdk .lbl",
+    "client/src/concept2cure/v2/styles/coverage-v2.css::.c2c-v2 .etmf-doc-body",
+    "client/src/concept2cure/v2/styles/coverage-v2.css::.c2c-v2 .lic-tier",
+    "client/src/concept2cure/v2/styles/journey-v2.css::.c2c-v2 .sp-primary"
+  ]
+}
