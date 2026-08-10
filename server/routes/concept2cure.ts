@@ -2224,8 +2224,8 @@ router.post('/projects', async (req: Request, res: Response) => {
       organizationId,
     });
 
-    // Post-creation: initialize intelligence profile and CTD sections (non-blocking)
-    Promise.allSettled([
+    // Post-creation: initialize intelligence profile and CTD sections (blocking)
+    await Promise.allSettled([
       // Create intelligence profile
       (async () => {
         try {
@@ -2378,7 +2378,7 @@ router.post('/projects', async (req: Request, res: Response) => {
           }
         }
       })(),
-    ]).catch(() => {}); // intentional: each task already logs its own failure; this is a non-blocking guard
+    ]).catch(() => {}); // guard: each task logs its own failure
 
     return sendSuccess(res.status(201), response);
   } catch (error: any) {
@@ -13191,7 +13191,7 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
     const taskSchema = z.object({
       name: z.string().min(1),
       description: z.string().optional(),
-      status: z.enum(['todo', 'in-progress', 'review', 'done', 'blocked']).default('todo'),
+      status: z.enum(['todo', 'in_progress', 'blocked', 'done']).default('todo'),
       priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
       moduleType: z.string().optional(),
       dueDate: z.string().optional(),
@@ -13259,7 +13259,7 @@ router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Respo
     const taskUpdateSchema = z.object({
       name: z.string().optional(),
       description: z.string().nullable().optional(),
-      status: z.enum(['pending', 'in_progress', 'completed', 'blocked']).optional(),
+      status: z.enum(['todo', 'in_progress', 'blocked', 'done']).optional(),
       priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
       moduleType: z.string().nullable().optional(),
       dueDate: z.string().nullable().optional(),
