@@ -189,9 +189,13 @@ router.post('/:id/decision', async (req: Request, res: Response) => {
     // approvers working on DIFFERENT gates of the same run. The subquery is not
     // in the FROM, so only approval_checkpoints is locked — the same scope the
     // explicit `OF c` gave, without the `FOR UPDATE OF` token that
-    // scripts/ci/check-unbacked-tables.mjs misparses as an UPDATE of a table
-    // literally named "of" (its REF_RE matches `UPDATE\s+(name)` and cannot see
-    // the preceding FOR).
+    // scripts/ci/check-unbacked-tables.mjs used to misread as a write against a
+    // table named "of" — its REF_RE matched the UPDATE keyword and captured the
+    // next identifier, with no way to see the preceding FOR. Fixed by a
+    // lookbehind in that script; see issue #1302. Note the wording here is
+    // deliberate: this file's `//` comments are NOT stripped by that scanner
+    // (it strips only block and SQL comments), so spelling the trigger out in
+    // prose would recreate the phantom it describes.
     const { rows } = await client.query(
       `SELECT c.id, c.status, c.approvals, c.required_approver_count AS "requiredCount",
               c.required_approver_roles AS "requiredRoles", c.protected_action AS "protectedAction",
