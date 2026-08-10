@@ -18,15 +18,21 @@
  *   document_comments           → threaded review comments
  *   users                       → name + title resolution
  *
- * HTTP + shaping only; no business writes. GET is idempotent and safe. Every
- * field that has no real server source is returned as a documented null (never
- * fabricated) — see the module caveats in the PR description.
+ * GET /board is HTTP + shaping only, idempotent and safe. Every field that has
+ * no real server source is returned as a documented null (never fabricated) —
+ * see the module caveats in the PR description.
+ *
+ * POST /workflows/:workflowId/change-request is the module's one write: a
+ * reviewer asking the author to revise. It records the request as a comment on
+ * the document and in workflow_history, and deliberately leaves the approval
+ * step pending — see the block comment on the route for why none of the three
+ * existing "reject"/"request changes" endpoints was the right thing to call.
  *
  * @module server/routes/review-board-routes
  */
 
 import { Router, Request, Response } from 'express';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 
 import { requestDb } from '../db/requestDb';
 import {
@@ -36,12 +42,18 @@ import {
   workflowTemplates,
   unifiedDocuments,
   workflowDocumentVersions,
+  workflowHistory,
   documentComments,
 } from '../../shared/schema/unified_workflow';
 import { users } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('review-board-routes');
+
+// Upper bound on a change-request reason. It is a request to revise, not the
+// revision — anything past this is a client bug, and the value is rendered back
+// into the review thread.
+const MAX_CHANGE_REQUEST_CHARS = 5_000;
 
 // ─── Display shape (mirrors client .../v2/fixtures/review-data.ts) ────────────
 
@@ -537,6 +549,180 @@ export default function createReviewBoardRoutes(): Router {
     } catch (error) {
       logger.error('review board error', { err: error instanceof Error ? error.message : String(error) });
       return res.status(500).json({ success: false, error: 'Failed to build review board' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST /api/review/workflows/:workflowId/change-request
+  //   body: { reason: string }
+  //
+  // A reviewer asks the author to revise, WITHOUT approving and without
+  // terminating the workflow.
+  //
+  // WHY THIS ROUTE EXISTS RATHER THAN A CALL TO AN EXISTING ONE. Three routes
+  // looked like they already did this. None of them does:
+  //
+  //   • POST /api/approval-workflows/:id/reject — real and mounted, but it calls
+  //     processApproval({ action: 'reject' }) and TERMINATES the workflow.
+  //     "Please revise §3.2.P.5" is not "this submission is rejected", and
+  //     escalating one into the other is worse than recording nothing.
+  //   • POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+  //     has exactly the right vocabulary — approve | request_changes | reject —
+  //     but it addresses a concept2cure ARTIFACT inside a PROJECT. This board is
+  //     built from document_workflows over unified_documents. Different id
+  //     spaces: the ids the surface holds are not the ids that route takes, and
+  //     integer ids that collide across two stores fail silently rather than
+  //     404ing.
+  //   • EvidenceManagementService.requestChanges addresses evidence FILES.
+  //
+  // WHAT THIS DOES, AND WHAT IT DELIBERATELY DOES NOT. It writes the change
+  // request as a comment on the document the workflow is running against, and
+  // records the act in workflow_history. It does NOT touch the reviewer's
+  // workflow_approvals row: `approval_status` is an enum of exactly
+  // ('pending','approved','rejected') — there is no "changes requested" member,
+  // and the honest reading of an unfinished review is the one already there,
+  // `pending`. Inventing a state by writing 'rejected' would terminate the very
+  // workflow the reviewer is trying to keep alive.
+  //
+  // The comment lands in the same document_comments table GET /board reads for
+  // its thread, so the request appears in the thread on the next load — a real
+  // round trip, not an optimistic local append.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  router.post('/workflows/:workflowId/change-request', async (req: Request, res: Response) => {
+    let orgId: number;
+    try {
+      orgId = getOrgId(req);
+    } catch {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
+
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authenticated user required' });
+    }
+
+    const workflowId = Number(req.params.workflowId);
+    if (!Number.isInteger(workflowId) || workflowId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid workflow id' });
+    }
+
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    if (!reason) {
+      return res.status(400).json({ success: false, error: 'reason is required' });
+    }
+    if (reason.length > MAX_CHANGE_REQUEST_CHARS) {
+      return res.status(413).json({
+        success: false,
+        error: `reason exceeds ${MAX_CHANGE_REQUEST_CHARS} characters`,
+      });
+    }
+
+    try {
+      const db = requestDb(req);
+
+      // The workflow carries the tenant AND the document. Reading documentId
+      // from here rather than from the body is what stops a caller pointing a
+      // change request at a document they can see the id of but not review.
+      const [wf] = await db
+        .select({
+          id: documentWorkflows.id,
+          documentId: documentWorkflows.documentId,
+          status: documentWorkflows.status,
+          currentStep: documentWorkflows.currentStep,
+        })
+        .from(documentWorkflows)
+        .where(
+          and(
+            eq(documentWorkflows.id, workflowId),
+            eq(documentWorkflows.organizationId, orgId)
+          )
+        )
+        .limit(1);
+
+      if (!wf) {
+        return res.status(404).json({ success: false, error: 'Workflow not found' });
+      }
+      if (wf.status !== 'active') {
+        // A completed or rejected workflow has nothing left to revise into.
+        return res.status(409).json({
+          success: false,
+          error: `Workflow is ${wf.status}; only an active workflow can take a change request`,
+        });
+      }
+
+      // Only someone the workflow is actually waiting on may do this. Without
+      // this check any authenticated member of the org could inject a change
+      // request into a governed review they have no part in.
+      const pendingSteps = await db
+        .select({
+          id: workflowApprovals.id,
+          stepOrder: workflowApprovals.stepOrder,
+          assignedTo: workflowApprovals.assignedTo,
+        })
+        .from(workflowApprovals)
+        .where(
+          and(
+            eq(workflowApprovals.workflowId, workflowId),
+            eq(workflowApprovals.status, 'pending')
+          )
+        );
+
+      // `assigned_to` holds user-id strings, role labels, or '*' (anyone) —
+      // the same token vocabulary GET /board resolves for display.
+      const mine = pendingSteps.find(s =>
+        (s.assignedTo || []).some(t => String(t) === userId || String(t) === '*')
+      );
+      if (!mine) {
+        return res.status(403).json({
+          success: false,
+          error: 'You are not an assigned reviewer on a pending step of this workflow',
+        });
+      }
+
+      const [comment] = await db
+        .insert(documentComments)
+        .values({
+          documentId: wf.documentId,
+          content: reason,
+          createdBy: userId,
+          metadata: {
+            kind: 'change_request',
+            workflowId,
+            stepOrder: mine.stepOrder,
+          },
+        })
+        .returning({ id: documentComments.id });
+
+      await db.insert(workflowHistory).values({
+        workflowId,
+        action: 'change_requested',
+        performedBy: userId,
+        details: { stepOrder: mine.stepOrder, commentId: comment.id, reasonChars: reason.length },
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          commentId: comment.id,
+          documentId: wf.documentId,
+          stepOrder: mine.stepOrder,
+          /** The approval step is deliberately left pending — see the block
+           *  comment above. Returned so the client states this rather than
+           *  implying the step advanced. */
+          approvalStatus: 'pending',
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === '42P01' || error?.code === '42703') {
+        logger.warn('review workflow tables not available; returning 503', { code: error.code });
+        return res.status(503).json({ success: false, error: 'REVIEW_TABLES_MISSING' });
+      }
+      logger.error('change request failed', {
+        workflowId,
+        err: error instanceof Error ? error.message : String(error),
+      });
+      return res.status(500).json({ success: false, error: 'Failed to record the change request' });
     }
   });
 
