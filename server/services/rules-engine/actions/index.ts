@@ -53,12 +53,14 @@ export class CreateTaskHandler implements ActionHandler {
 
       const result = await this.pool.query(
         `INSERT INTO unified_tasks (
-           title, description, priority, status, project_id,
-           assignee_id, due_date, created_by, module_type,
+           task_id, organization_id, title, description, priority, status, project_id,
+           assignee_id, due_date, created_by_id, module_type,
            metadata, created_at, updated_at
-         ) VALUES ($1, $2, $3, 'todo', $4, $5, $6, $7, $8, $9, NOW(), NOW())
+         ) VALUES ($1, $2, $3, $4, $5, 'todo', $6, $7, $8, $9, $10, $11, NOW(), NOW())
          RETURNING id, title`,
         [
+          uuidv4(),
+          payload.organizationId,
           this.interpolateTemplate(params.title || 'Auto-generated task', payload),
           this.interpolateTemplate(params.description || `Created by rule: ${rule.name}`, payload),
           params.priority || 'medium',
