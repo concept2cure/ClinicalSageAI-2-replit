@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { useLiveRows } from '../dataConnect';
+import { useLiveRows, liveGetOrNull } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import {
-  SURFACE_CTX, CL_MOD, CL_OPTIMAL, CL_TYPE, CL_PRI,
-  TB_TEAM, TB_PROJECTS,
+  SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
 } from '../fixtures/collab-data';
 
@@ -115,25 +115,90 @@ function emit(): void {
 let ctx: C2CContext = {
   surfaceId: 'home',
   surfaceLabel: 'Home',
-  project: TB_PROJECTS[0].id,
+  // No project until the shell reports one. This used to initialise to
+  // TB_PROJECTS[0].id — the fixture `bx204` / "BX-204 -- NDA 212345" — so every
+  // task opened stamped against an invented programme until something wrote a
+  // real one. getContext() reconciles this against window.C2C_PROJECT, which is
+  // the shell's real selection.
+  project: '',
   entityType: 'workspace',
   entityId: null,
   entityLabel: null,
   moduleType: 'Regulatory',
 };
 
+/* ── Live org directory ──────────────────────────────────────────────────────
+   These two lists used to be fixtures: TB_TEAM, a roster of seven invented
+   colleagues (J. Chen / M. Wei / A. Muller ...), and TB_PROJECTS, an invented
+   pipeline ("BX-204 -- NDA 212345", "OR-902 Spinal Implant", "IV-415 Companion
+   Dx"). The collaboration launcher is mounted on EVERY surface, so every user
+   of the platform opened this modal and was shown another company's org chart
+   and programme list as their own, with nothing marking it as sample data.
+
+   Both are now read from the real, org-scoped backends:
+     GET /api/task-management/assignees -> { success, data: [{ id, name }] }
+       users ⨝ organization_users on organizationId (taskBoard.routes.ts), so no
+       cross-org user can appear; fails closed to an empty roster.
+     GET /api/projects -> Project[] (bare array, projects-management.ts), scoped
+       by organizationId + clientWorkspaceId.
+
+   The old short-id keying (jc/mw/...) is gone: entries are keyed by the real
+   user id, which is what the pickers, avatars and any future assignment write
+   need to carry anyway. An empty directory renders an honest empty state --
+   never a fabricated stand-in. */
+
+let team: Record<string, TeamMember> = {};
+let projects: ProjectEntry[] = [];
+let dirState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+
+interface AssigneeRow { id: string; name: string }
+interface ProjectRow { id: number | string; name?: string; code?: string; projectType?: string; status?: string }
+
+/** Load the org directory once per session. Re-entrant-safe; emits on settle. */
+async function loadDirectory(): Promise<void> {
+  if (dirState === 'loading' || dirState === 'ready') return;
+  dirState = 'loading';
+  const [people, progs] = await Promise.all([
+    liveGetOrNull<{ data?: AssigneeRow[] } | AssigneeRow[]>('/api/task-management/assignees'),
+    liveGetOrNull<ProjectRow[]>('/api/projects'),
+  ]);
+
+  const peopleRows: AssigneeRow[] = Array.isArray(people.data)
+    ? people.data
+    : Array.isArray((people.data as { data?: AssigneeRow[] } | null)?.data)
+      ? ((people.data as { data: AssigneeRow[] }).data)
+      : [];
+  team = {};
+  for (const r of peopleRows) {
+    if (!r || r.id == null) continue;
+    // `t` is the secondary line the pickers show under a name. The assignees
+    // endpoint returns no title/role, so it is left blank rather than filled
+    // with an invented discipline.
+    team[String(r.id)] = { n: r.name || String(r.id), t: '' };
+  }
+
+  const progRows = Array.isArray(progs.data) ? progs.data : [];
+  projects = progRows
+    .filter((p) => p && p.id != null)
+    .map((p) => ({
+      id: String(p.id),
+      label: p.code ? `${p.name || p.code} -- ${p.code}` : (p.name || String(p.id)),
+      type: p.projectType || '',
+    }));
+
+  dirState = people.error || progs.error ? 'error' : 'ready';
+  emit();
+}
+
 export const C2C = {
-  // Fixture-backed option-sources for the QuickTask / CollabDiscuss forms, which
-  // are MOCK actions (create()/send() never POST). Backends they SHOULD read are
-  // REAL -- team: GET /api/collaboration/team (users), projects: GET /api/projects
-  // -- but live team rows are keyed by NUMERIC user id while the pickers, avatars
-  // and auto-assign (CL_OPTIMAL) are keyed on fixture SHORT-IDS (jc/mw/...) defined
-  // in shared fixture files this file can't edit; going live here would break
-  // auto-assign. Left NOT half-wired for the actions pass; not presented as live.
-  team: TB_TEAM as Record<string, TeamMember>,
-  projects: TB_PROJECTS as ProjectEntry[],
+  /* Real org roster and programme list — see the note above. Exposed as getters
+     so every existing `C2C.team` / `C2C.projects` read picks up the loaded
+     directory without threading state through the components. */
+  get team(): Record<string, TeamMember> { return team; },
+  get projects(): ProjectEntry[] { return projects; },
+  get directoryState(): 'idle' | 'loading' | 'ready' | 'error' { return dirState; },
+  loadDirectory,
   mod: CL_MOD,
-  optimal: CL_OPTIMAL,
 
   modColor(m: string): string {
     return CL_MOD[m] || '#888';
@@ -145,8 +210,23 @@ export const C2C = {
     subs.add(fn);
     return () => { subs.delete(fn); };
   },
-  optimalFor(m: string): string {
-    return CL_OPTIMAL[m] || 'jc';
+  /**
+   * No client-side "optimal assignee" any more.
+   *
+   * This used to read CL_OPTIMAL, a module -> fixture SHORT-ID map
+   * (Biostatistics -> 'mw', CMC -> 'qa', ...) that fell back to `'jc'`. Every
+   * one of those targets was an invented person, so on a real tenant the
+   * suggestion named someone who does not work there — and the `|| 'jc'`
+   * fallback meant it always named someone, however unrelated the module.
+   *
+   * Suggesting nobody is the honest answer for a picker that cannot compute a
+   * suggestion client-side. The server already owns this decision — it applies
+   * getOptimalAssignee when a task is created, and exposes POST
+   * /api/task-management/tasks/auto-assign — so the resolution belongs there,
+   * against the real roster, not here against a fixture.
+   */
+  optimalFor(_m: string): string {
+    return '';
   },
 
   /* Surface context -- App calls this on every navigation; surfaces may
@@ -225,7 +305,10 @@ export const C2C = {
       status: 'pending', progress: 0, comments: 0, attachments: 0,
       dependsOn: [], blocks: [], priority: 'high', taskType: 'action', impactScore: 6,
       criticalPath: false, regulatoryImpact: true, approvalRequired: false,
-      approvalStatus: 'not_started', assignedBy: 'jc', source: 'unified',
+      // assignedBy was hardcoded to 'jc' — a retired fixture short-id. The
+      // server attributes the creator from the authenticated session, so the
+      // client has nothing truthful to put here.
+      approvalStatus: 'not_started', assignedBy: '', source: 'unified',
       activity: [], title: '', project: '', moduleType: '', assignee: '', due: '', phase: '',
       ...task,
       taskId: id,
@@ -269,9 +352,12 @@ function clAvatar(id: string): string {
 /* ── Quick task -- unifiedTasks intake, context pre-filled ── */
 
 function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTaskProps) {
+  // `C2C.projects` is the live org list and can legitimately be empty (a new
+  // tenant, or a failed load). The old code indexed [0] unconditionally, which
+  // only ever worked because the list was a three-entry fixture.
   const projInit = surfaceCtx.project && surfaceCtx.project !== 'all'
     ? surfaceCtx.project
-    : C2C.projects[0].id;
+    : (C2C.projects[0]?.id ?? '');
 
   const [f, setF] = useState<QuickTaskForm>({
     title: '', project: projInit, moduleType: surfaceCtx.moduleType || 'Regulatory',
@@ -282,32 +368,99 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
   const set = <K extends keyof QuickTaskForm>(k: K, v: QuickTaskForm[K]) =>
     setF(p => ({ ...p, [k]: v }));
 
+  // Creation is a real, awaited write now, so it has real in-flight and failure
+  // states. Nothing is reported as created unless the server said so.
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState('');
+
   const who = f.assignee === 'auto' ? C2C.optimalFor(f.moduleType) : f.assignee;
   const whoName = (C2C.team[who] || { n: who }).n;
 
-  const create = (another: boolean) => {
-    if (!f.title.trim()) return;
-    // MOCK ACTION (flagged): optimistic in-session add only. Does NOT call the
-    // real POST /api/task-management/tasks (taskManagement.routes.ts -> inserts
-    // unifiedTasks with server-side getOptimalAssignee). Wire in the actions pass.
-    const t = C2C.addTask({
-      title: f.title.trim(), project: f.project, moduleType: f.moduleType,
-      taskType: f.taskType, priority: f.priority, assignee: who,
-      assignmentType: f.assignee === 'auto' ? 'auto' : 'manual',
-      criticalPath: f.criticalPath, regulatoryImpact: f.regulatoryImpact,
-      approvalRequired: f.approvalRequired,
-      approvalStatus: f.approvalRequired ? 'pending' : 'not_started',
-      due: f.dueDays <= 0 ? 'today' : ('in ' + f.dueDays + ' day' + (f.dueDays > 1 ? 's' : '')),
-      phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-      sourceEntityType: surfaceCtx.entityType,
-      sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
-      sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-      activity: f.note.trim()
-        ? [{ type: 'note', text: f.note.trim(), who: 'You', when: 'just now' }]
-        : [],
-    });
-    onCreated?.(t);
-    if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
+  /**
+   * REAL, awaited create against the org task store.
+   *
+   * This used to be an in-session add only: C2C.addTask minted a client-side id
+   * (`'C2C-TASK-' + Math.random()`) and pushed onto a module-level array, so the
+   * task existed nowhere but this tab and vanished on reload — while the modal
+   * closed as though the work had been assigned.
+   *
+   * It now POSTs to /api/tasks/tasks (server/routes/taskManagement.routes.ts,
+   * mounted at server/bootstrap/register-core-routes.ts:118 — the same path the
+   * task board's own create already uses) and adopts the SERVER's row, so the
+   * id shown in the toast is the real, persisted taskId. Nothing is added to the
+   * local store unless the write succeeded.
+   *
+   * Body maps onto createTaskSchema, which is stricter than this form:
+   *   - projectId and assigneeId are INTEGERS, so a non-numeric context id is
+   *     omitted rather than sent as a string the server would reject.
+   *   - assigneeId is omitted for "auto", which is what makes the server run
+   *     getOptimalAssignee against the org's real roster — a better answer than
+   *     any the client can compute.
+   */
+  const create = async (another: boolean) => {
+    if (!f.title.trim() || saving) return;
+    setSaving(true);
+    setSaveErr('');
+
+    const body: Record<string, unknown> = {
+      title: f.title.trim(),
+      moduleType: f.moduleType,
+      priority: f.priority,
+      taskType: f.taskType,
+    };
+    const projectIdNum = Number(f.project);
+    if (f.project !== '' && Number.isFinite(projectIdNum) && projectIdNum > 0) {
+      body.projectId = projectIdNum;
+    }
+    const assigneeIdNum = Number(who);
+    if (who !== '' && Number.isFinite(assigneeIdNum) && assigneeIdNum > 0) {
+      body.assigneeId = assigneeIdNum;
+    }
+    if (f.note.trim()) body.description = f.note.trim();
+    if (f.dueDays > 0) {
+      body.dueDate = new Date(Date.now() + f.dueDays * 86400000).toISOString();
+    }
+
+    try {
+      const res = await apiRequest('POST', '/api/tasks/tasks', body);
+      const json = await res.json().catch(() => null);
+      const serverTask = (json as { data?: Record<string, unknown> } | null)?.data;
+      if (!res.ok || !serverTask?.taskId) {
+        const reason = (json as { error?: string } | null)?.error;
+        setSaveErr(reason ? String(reason) : `Couldn’t create the task (HTTP ${res.status}). Nothing was saved.`);
+        return;
+      }
+      // Adopt the persisted row: real taskId, and the assignee the SERVER chose
+      // (which for "auto" is getOptimalAssignee's answer, not a client guess).
+      const t = C2C.addTask({
+        taskId: String(serverTask.taskId),
+        title: f.title.trim(),
+        project: f.project,
+        moduleType: f.moduleType,
+        taskType: f.taskType,
+        priority: f.priority,
+        assignee: serverTask.assigneeId != null ? String(serverTask.assigneeId) : who,
+        assignmentType: f.assignee === 'auto' ? 'auto' : 'manual',
+        criticalPath: f.criticalPath,
+        regulatoryImpact: f.regulatoryImpact,
+        approvalRequired: f.approvalRequired,
+        approvalStatus: f.approvalRequired ? 'pending' : 'not_started',
+        due: f.dueDays <= 0 ? 'today' : ('in ' + f.dueDays + ' day' + (f.dueDays > 1 ? 's' : '')),
+        phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+        sourceEntityType: surfaceCtx.entityType,
+        sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
+        sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+        activity: f.note.trim()
+          ? [{ type: 'note', text: f.note.trim(), who: 'You', when: 'just now' }]
+          : [],
+      });
+      onCreated?.(t);
+      if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
+    } catch (e) {
+      setSaveErr(e instanceof Error ? e.message : 'Couldn’t reach the task service. Nothing was saved.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -355,10 +508,17 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           </button>
           {Object.keys(C2C.team).map(k => (
             <button type="button" key={k} className={`cl-asg${f.assignee === k ? ' on' : ''}`}
-              onClick={() => set('assignee', k)} title={C2C.team[k].n + ' -- ' + C2C.team[k].t}>
+              onClick={() => set('assignee', k)} title={C2C.team[k].n}>
               <span className="cl-asg-av">{clAvatar(k)}</span>{C2C.team[k].n}
             </button>
           ))}
+          {Object.keys(C2C.team).length === 0 && (
+            <span className="cl-asg-empty">{C2C.directoryState === 'loading'
+              ? 'Loading your team…'
+              : C2C.directoryState === 'error'
+                ? 'Couldn’t load your team — the task can still be created unassigned.'
+                : 'No teammates yet — invite colleagues to assign work to them.'}</span>
+          )}
         </div>
       </div>
       {f.assignee === 'auto' && (
@@ -382,13 +542,22 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       <div className="cl-field"><label>Note <span className="cl-opt">-- optional</span></label>
         <textarea rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
       </div>
+      {/* The old banner here warned that this "Adds this to the in-session task
+          board only". That is no longer true — the task is persisted — so the
+          warning is gone rather than left to contradict the behaviour. What is
+          still honest to say is the residual backend gap. */}
       <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Adds this to the in-session task board only. Persisting to <code>unifiedTasks</code> via <code>POST /api/task-management/tasks</code> is not yet wired here; audit (<code>task-audit.ts</code>) and notifications are stubbed in the backend.
+        <span className="ico">{I.alertTriangle}</span>The task is saved to your org board. Assignee notifications and the task audit trail (<code>task-audit.ts</code>) are still stubbed server-side, so no one is emailed yet.
       </div>
+      {saveErr && (
+        <div className="cl-warn" role="alert">
+          <span className="ico">{I.alertTriangle}</span>{saveErr}
+        </div>
+      )}
       <div className="cl-foot">
-        <div className="cl-endpoint"><b>POST</b> /api/task-management/tasks</div>
-        <button className="btn ghost" onClick={() => create(true)} disabled={!f.title.trim()}>{I.plus} Create &amp; add another</button>
-        <button className="btn primary" onClick={() => create(false)} disabled={!f.title.trim()}>{I.check} Create task</button>
+        <div className="cl-endpoint"><b>POST</b> /api/tasks/tasks</div>
+        <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || saving}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
+        <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || saving}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
       </div>
     </div>
   );
@@ -432,10 +601,17 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         <div className="cl-assignees">
           {Object.keys(C2C.team).map(k => (
             <button type="button" key={k} className={`cl-asg${to === k ? ' on' : ''}`}
-              onClick={() => setTo(k)} title={C2C.team[k].t}>
+              onClick={() => setTo(k)} title={C2C.team[k].n}>
               <span className="cl-asg-av">{clAvatar(k)}</span>{C2C.team[k].n}
             </button>
           ))}
+          {Object.keys(C2C.team).length === 0 && (
+            <span className="cl-asg-empty">{C2C.directoryState === 'loading'
+              ? 'Loading your team…'
+              : C2C.directoryState === 'error'
+                ? 'Couldn’t load your team — retry, or continue without a recipient.'
+                : 'No teammates yet — invite colleagues to share this with them.'}</span>
+          )}
         </div>
       </div>
       <div className="cl-field"><label>Message</label>
@@ -477,6 +653,14 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   const openAcrossOrg = board.rows.filter(t => t.status !== 'completed').length;
 
   useEffect(() => C2C.subscribe(() => setTick(x => x + 1)), []);
+
+  // Load the real org directory (roster + programmes) the first time the
+  // launcher is actually opened, rather than on every app boot — it is only
+  // needed by these forms. loadDirectory is re-entrant-safe and emits when it
+  // settles, which re-renders through the subscription above.
+  useEffect(() => {
+    if (open || menuOpen) void C2C.loadDirectory();
+  }, [open, menuOpen]);
 
   useEffect(() => {
     const openH = (e: Event) => {
@@ -565,8 +749,10 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
       {toast && (
         <div className="cl-toast" role="status">
           <span className="cl-toast-ic">{I.check}</span>
+          {/* A task IS now persisted, so the toast reports the real, server-issued
+              taskId. The discuss action is still session-only and keeps saying so. */}
           {toast.type === 'task' && toast.t
-            ? <span className="cl-toast-t">Captured in this session -- <b>{toast.t.taskId}</b> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}. Not saved to the org board yet.</span>
+            ? <span className="cl-toast-t">Saved to the org board -- <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
             : <span className="cl-toast-t">Captured in this session -- not saved to the org board yet.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>

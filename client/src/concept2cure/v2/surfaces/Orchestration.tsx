@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -277,7 +278,10 @@ function useOrchProgram(): { pid: number; label: string } | null {
 
 /* ── Helpers ── */
 
-type CtrlTuple = [string, string, () => void, boolean];
+/** [label, icon, onClick, primary, busy?, disabledReason?] — a control with a
+    disabledReason is rendered disabled and explains itself on hover, rather
+    than pretending to act. */
+type CtrlTuple = [string, string, () => void, boolean, boolean?, string?];
 
 /* ════ Orchestration -- workflow runs & readiness ════ */
 
@@ -349,20 +353,67 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
   const sel = runs.find((x) => x.id === selId) || runs[0];
 
-  // FLAGGED MOCK ACTION — optimistic local-only run control. Real endpoints
-  // exist (POST /api/orchestration/cancel/:id; pause/resume/retry via the
-  // execution engine) but are not wired here yet; the status change is not
-  // persisted. Left for the actions pass, not half-wired.
+  const [runErr, setRunErr] = useState('');
+  const [busyRun, setBusyRun] = useState('');
+
   const setRunStatus = (id: string, st: string) =>
     setRuns((rs) => rs.map((x) => (x.id === id ? { ...x, status: st } : x)));
 
-  // FLAGGED MOCK ACTION — optimistic local-only approval decision. The
-  // approval_checkpoints store is real, but no write endpoint is wired here;
-  // the decision is not persisted. Left for the actions pass.
-  const decide = (cpId: string, who: string, decision: string) =>
-    setCps((cs) => cs.map((c) =>
-      c.id !== cpId ? c : { ...c, approvers: c.approvers.map((a) => (a.who === who ? { ...a, decision, when: 'just now' } : a)) },
-    ));
+  /**
+   * Cancel — a REAL, awaited write. POST /api/orchestration/cancel/:id
+   * (server/routes/orchestration.ts:187, mounted at register-inline-routes.ts:1067)
+   * cancels the workflow in the execution engine and returns { success: true },
+   * or 404 when the run is not cancellable.
+   *
+   * This used to be `setRunStatus(id, 'cancelled')` — a local relabel while the
+   * run carried on executing server-side. Showing a regulated workflow as
+   * "cancelled" when it is still running is worse than showing it as running,
+   * so the local state only changes after the server confirms.
+   */
+  const cancelRun = async (id: string) => {
+    if (busyRun) return;
+    setBusyRun(id);
+    setRunErr('');
+    try {
+      const res = await apiRequest('POST', `/api/orchestration/cancel/${encodeURIComponent(id)}`);
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setRunErr(
+          res.status === 404
+            ? `Run ${id} is no longer cancellable — it may have already finished.`
+            : `Couldn’t cancel run ${id}${(json as { error?: string } | null)?.error ? ` — ${(json as { error?: string }).error}` : ''}. Nothing changed.`,
+        );
+        return;
+      }
+      setRunStatus(id, 'cancelled');
+    } catch (e) {
+      setRunErr(e instanceof Error ? e.message : `Couldn’t reach the orchestration service. Run ${id} was not cancelled.`);
+    } finally {
+      setBusyRun('');
+    }
+  };
+
+  /* Pause / Resume / Retry / Replay and the approval decisions are NOT wired,
+     and are no longer pretended.
+     - The run controls used to call setRunStatus, relabelling a server-side run
+       locally: "Pause" left it executing, "Resume" un-paused something never
+       paused, and "Replay" silently re-labelled a completed, audited run as
+       running. /api/orchestration exposes execute and cancel only — there is no
+       pause/resume/retry route to call.
+     - `decide` used to write the decision into local state with `when: 'just
+       now'`, a FABRICATED timestamp, and the row then rendered "✓ Approved".
+       server/routes/orchestration-checkpoints.ts defines `router.get('/')` and
+       nothing else: the checkpoint store is READ-ONLY, so there is no write path
+       for a gate decision. In a 21 CFR Part 11 product, an approval control that
+       displays a completed, timestamped approval while recording nothing is the
+       most dangerous affordance on this surface — the decision must be captured
+       by a governed, signed, audited path or not appear to have been taken at
+       all.
+     These controls are therefore rendered disabled with a visible reason, rather
+     than removed: the gate and its pending approvers are real and worth showing,
+     and hiding the control would hide the fact that a decision is outstanding. */
+  const UNWIRED_RUN = 'Not available yet — /api/orchestration exposes execute and cancel only.';
+  const UNWIRED_GATE = 'Gate decisions are not recorded from this surface yet — the checkpoint store is read-only, and an approval must be captured by a governed, signed path.';
 
   const pendingGates = cps.filter((c) => {
     // Live rows carry the persisted gate status; older rows without one infer
@@ -372,13 +423,19 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     return dec.indexOf('pending') > -1 || dec.indexOf('blocked') > -1;
   });
 
+  /* Only Cancel and "Open gate" do anything real, so only they are enabled.
+     The unwired controls stay visible (the run state they belong to is real)
+     but are disabled and carry the reason on hover, instead of silently
+     relabelling a run that is still executing on the server. */
+  const noop = () => undefined;
   const ctrlsFor = (x: OrchRun): CtrlTuple[] => {
-    if (x.status === 'running') return [['Pause', 'pause', () => setRunStatus(x.id, 'paused'), false], ['Cancel', 'close', () => setRunStatus(x.id, 'cancelled'), false]];
-    if (x.status === 'paused') return [['Resume', 'play', () => setRunStatus(x.id, 'running'), true], ['Cancel', 'close', () => setRunStatus(x.id, 'cancelled'), false]];
-    if (x.status === 'failed') return [['Retry', 'rotateCw', () => setRunStatus(x.id, 'running'), true]];
+    const cancel: CtrlTuple = ['Cancel', 'close', () => void cancelRun(x.id), false, busyRun === x.id];
+    if (x.status === 'running') return [['Pause', 'pause', noop, false, false, UNWIRED_RUN], cancel];
+    if (x.status === 'paused') return [['Resume', 'play', noop, true, false, UNWIRED_RUN], cancel];
+    if (x.status === 'failed') return [['Retry', 'rotateCw', noop, true, false, UNWIRED_RUN]];
     if (x.status === 'awaiting_approval') return [['Open gate', 'shieldCheck', () => setView('approvals'), true]];
-    if (x.status === 'completed') return [['Replay', 'rotateCw', () => setRunStatus(x.id, 'running'), false]];
-    if (x.status === 'cancelled') return [['Retry', 'rotateCw', () => setRunStatus(x.id, 'running'), true]];
+    if (x.status === 'completed') return [['Replay', 'rotateCw', noop, false, false, UNWIRED_RUN]];
+    if (x.status === 'cancelled') return [['Retry', 'rotateCw', noop, true, false, UNWIRED_RUN]];
     return [];
   };
 
@@ -419,7 +476,12 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this program'))}>{I.sparkles} Ask AnA</button>
-          <button className="btn primary">{I.workflow} New run</button>
+          {/* This carried no onClick at all — pressing it did literally nothing,
+              not even local state. POST /api/orchestration/execute is real and
+              mounted, but it requires a templateId AND a projectId, i.e. a
+              template-selection step this surface does not have. Until that
+              exists the button says so rather than silently ignoring the click. */}
+          <button className="btn primary" disabled title="Starting a run needs a workflow template to be chosen first — not available from this surface yet.">{I.workflow} New run</button>
         </div>
       </div>
 
@@ -496,10 +558,19 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="orch-detail-m">{sel.id} {I.dot} {ORCH_SLABEL[sel.status]} {I.dot} started {sel.started} {I.dot} by {sel.by}</div>
               </div>
               <div className="orch-ctrls">
-                {ctrlsFor(sel).map(([lbl, ic, fn, pri], i) => (
-                  <button key={i} className={'orch-ctrl' + (pri ? ' pri' : '')} onClick={fn}>{I[ic]}{lbl}</button>
+                {ctrlsFor(sel).map(([lbl, ic, fn, pri, busy, why], i) => (
+                  <button
+                    key={i}
+                    className={'orch-ctrl' + (pri ? ' pri' : '')}
+                    onClick={fn}
+                    disabled={Boolean(why) || Boolean(busy)}
+                    title={why || undefined}
+                  >
+                    {I[ic]}{busy ? 'Cancelling…' : lbl}
+                  </button>
                 ))}
               </div>
+              {runErr && <div className="orch-note" role="alert">{I.alertTriangle} {runErr}</div>}
             </div>
             <div className="orch-sec-l">Steps</div>
             <div className="orch-steps">
@@ -592,8 +663,8 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                       <span className="orch-mini no">{I.close} Rejected</span>
                     ) : (
                       <div className="orch-appr-acts">
-                        <button className="orch-mini ok" onClick={() => decide(c.id, a.who, 'approved')}>Approve</button>
-                        <button className="orch-mini no" onClick={() => decide(c.id, a.who, 'rejected')}>Reject</button>
+                        <button className="orch-mini ok" disabled title={UNWIRED_GATE}>Approve</button>
+                        <button className="orch-mini no" disabled title={UNWIRED_GATE}>Reject</button>
                       </div>
                     )}
                   </div>
