@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
+import { useAuth } from '@/services/portal/authService';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   TB_MOD, TB_COLS, TB_TYPE, TB_SRC, TB_PROJECTS, TB_TEAM, TB_OPTIMAL,
@@ -66,9 +67,39 @@ interface TaskItem {
   assignmentType?: string;
 }
 
-function tbAvatar(id: string): string {
-  const p = TB_TEAM[id] || { n: '?' };
-  return (p.n || '?').split(' ').map(s => s[0]).join('').slice(0, 2);
+/** Initials for an already-resolved display name. '?' when there is no name. */
+function tbAvatar(name: string): string {
+  return (name || '?').split(' ').filter(Boolean).map(s => s[0]).join('').slice(0, 2) || '?';
+}
+
+/**
+ * Resolve a task's assignee id to a display name, from the org's real roster.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────────
+ * The board is live: GET /api/task-management/board returns `assignee` as
+ * `String(row.assigneeId)` — a numeric user-id FK, '' when unassigned
+ * (taskBoard.routes.ts:234). Every name on this surface was being looked up in
+ * TB_TEAM, which is keyed on FIXTURE short-ids ('jc', 'mw', 'sm'). So
+ * TB_TEAM['42'] was undefined and the surface rendered an empty string for
+ * every real assignee — on the cards, the list rows, the detail panel and the
+ * per-assignee workload table. Real tasks, nobody's name against them.
+ *
+ * The roster it should have used already existed and was already being fetched,
+ * just one component too low: TaskCreate reads GET /api/task-management/assignees
+ * for its picker. That endpoint is org-scoped exactly like getOptimalAssignee,
+ * so no cross-org user can appear.
+ *
+ * Unresolvable ids return 'Unknown' rather than a blank, because "assigned to
+ * someone this client cannot name" and "not assigned to anyone" are different
+ * facts and a filer should be able to tell them apart. Neither ever falls back
+ * to a fixture name.
+ */
+function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => string {
+  const byId = new Map(rows.map(r => [String(r.id), r.name]));
+  return (id) => {
+    if (id === null || id === undefined || id === '') return '';
+    return byId.get(String(id)) ?? 'Unknown';
+  };
 }
 
 /* ── Main surface ── */
@@ -91,6 +122,19 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   ]);
   const tasks: TaskItem[] = liveTasks.rows;
 
+  /* The org's real assignable members, so a live row's numeric assigneeId can
+     be shown as a person's name. Previously only TaskCreate fetched this, and
+     everything else read the TB_TEAM fixture — see makeNameOf above. */
+  const roster = useLiveRows<AssigneeOpt>('/api/task-management/assignees');
+  const nameOf = useMemo(() => makeNameOf(roster.rows), [roster.rows]);
+
+  /* The signed-in user's real id, for the "Mine" filter. That filter used to
+     read `t.assignee === 'jc'` — a FIXTURE short-id — so against the live board
+     (whose assignee is a numeric user-id FK) it matched nothing and "Mine"
+     showed an empty column set no matter how many tasks you owned. */
+  const { user } = useAuth();
+  const me = user?.id != null ? String(user.id) : null;
+
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
     try { return (window as any).C2C_TASK_FILTER || 'all'; } catch (_e) { return 'all'; }
@@ -104,7 +148,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const modules = useMemo(() => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))], [tasks]);
   const list = tasks.filter(t =>
     (proj === 'all' || t.project === proj) &&
-    (!mine || t.assignee === 'jc') &&
+    (!mine || (me !== null && t.assignee === me)) &&
     (mod === 'all' || t.moduleType === mod) &&
     t.status !== 'cancelled'
   );
@@ -249,8 +293,8 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
             : <>The critical path is clear -- nothing open is blocking the milestone right now.</>}
         body={critBlocked
-          ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{(TB_TEAM[heaviest.k] || { n: '' }).n} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{(TB_TEAM[heaviest.k] || { n: '' }).n} is the busiest at {heaviest.open} open tasks -- workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
+          ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
+          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks -- workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
         reassure={critBlocked || overdue.length ? "I will help you unblock the path and rebalance the team, one step at a time." : "You are on track. I will flag the moment anything threatens the milestone."}
         action={{
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : 'Start a workflow from a template',
@@ -321,7 +365,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                         {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream -- ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
                         {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
                         <span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
-                        <span className="tb-av" title={(TB_TEAM[t.assignee] || { n: '' }).n}>{tbAvatar(t.assignee)}</span>
+                        <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>
                       </div>
                       <div className="tb-move" onClick={e => e.stopPropagation()}>
                         <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back">{I.left}</button>
@@ -346,7 +390,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               <div className="tb-path-card">
                 <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">
-                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{(TB_TEAM[t.assignee] || { n: '' }).n}</span><span className="tb-dot">--</span>
+                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{nameOf(t.assignee)}</span><span className="tb-dot">--</span>
                   <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
                   {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
                   <span className="sp" /><span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
@@ -378,7 +422,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             <div className="tb-an-card">
               <div className="tb-an-h">Team productivity</div>
               {Object.keys(stats.byAsg).map(k => (
-                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(k)}</span>{(TB_TEAM[k] || { n: '' }).n}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
+                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(nameOf(k))}</span>{nameOf(k)}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
               ))}
               <div className="tb-an-foot">Workload-balanced auto-assign via <code>getOptimalAssignee()</code></div>
             </div>
@@ -404,7 +448,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
-              <div style={{ fontSize: 11 }}>{(TB_TEAM[t.assignee] || { n: '' }).n}</div>
+              <div style={{ fontSize: 11 }}>{nameOf(t.assignee)}</div>
               <div style={{ fontSize: 11, color: /overdue/.test(t.due) ? 'var(--error)' : 'var(--text-400)' }}>{t.due}</div>
             </button>
           ))}
@@ -426,7 +470,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {creating && <TaskCreate proj={proj} tasks={tasks} onClose={() => setCreating(false)} onCreate={create} />}
       {wf && <WorkflowStart proj={proj} onClose={() => setWf(false)} onInstantiate={(tasks) => { tasks.forEach(t => (window as any).C2C && (window as any).C2C.addTask(t)); setWf(false); setView('path'); }} />}
-      {sel && <TaskDetail t={sel} byId={byId} projLabel={projLabel} onClose={() => setSel(null)} onAsk={onAsk} onMove={move} />}
+      {sel && <TaskDetail t={sel} byId={byId} projLabel={projLabel} onClose={() => setSel(null)} onAsk={onAsk} onMove={move} nameOf={nameOf} />}
     </div>
   );
 }
@@ -440,11 +484,13 @@ interface TaskDetailProps {
   onClose: () => void;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
+  /** Resolves a real assignee id to a name; see makeNameOf. */
+  nameOf: (id: string | null | undefined) => string;
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove }: TaskDetailProps) {
+function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
-  const owner = TB_TEAM[t.assignee] || { n: '?', t: '' };
+  const owner = { n: nameOf(t.assignee) || '?', t: '' };
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
   return (
     <div className="tb-detail-bd" onClick={onClose}>
@@ -465,7 +511,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove }: TaskDetailPr
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
           <div><label>Phase</label><span>{t.phase || '—'}</span></div>
           <div><label>Owner</label><span>{owner.n} -- {owner.t}</span></div>
-          <div><label>Assigned by</label><span>{(TB_TEAM[t.assignedBy] || { n: '' }).n || '--'}</span></div>
+          <div><label>Assigned by</label><span>{nameOf(t.assignedBy) || '--'}</span></div>
           <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
           <div><label>Due</label><span style={{ color: /overdue/.test(t.due) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
           <div><label>Origin store</label><span>{src.l} -- <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
@@ -728,12 +774,27 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
             <div><span className="wf-reqs-l">Regulatory basis</span>{tpl.regulatoryRequirements.map(r => <span key={r} className="wf-tag">{r}</span>)}</div>
             <div><span className="wf-reqs-l">Milestones</span>{tpl.milestones.map(r => <span key={r} className="wf-tag ok">{r}</span>)}</div>
           </div>
-          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (getOptimalAssignee)</button>
+          {/* Was "Workload-balanced auto-assign (getOptimalAssignee)". The real
+      getOptimalAssignee (taskManagement.routes.ts:229) does balance workload,
+      but it runs server-side on a persisted create; this modal never posts, so
+      what it applies is TB_OPTIMAL — a fixed per-module default. */}
+          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Auto-assign a default owner per module</button>
         </div>
         <div className="tb-detail-f">
+          {/*
+            This button said "Create N tasks", closed the modal and switched to
+            the path view — and nothing appeared. It writes to the in-browser
+            window.C2C store, which the board stopped reading when it moved to
+            the live GET /api/task-management/board. So the primary action of
+            this modal reported success by navigating and produced no row a user
+            could find. The label and the notice now say what actually happens.
+            The real fix is to post these through the same path TaskCreate uses
+            (POST /api/tasks/tasks); until then it must not claim to create.
+          */}
           <div className="tb-endpoint" title="Target endpoint — not yet wired to this button"><b>POST</b> /tasks/from-template/{tid} <em>(not yet wired)</em></div>
+          <div className="tb-endpoint">These tasks are not saved. They exist in this browser session only and will not appear on the board.</div>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" onClick={instantiate}>{I.plus} Create {tpl.tasks.length} tasks</button>
+          <button className="btn primary" onClick={instantiate}>{I.plus} Draft {tpl.tasks.length} tasks (not saved)</button>
         </div>
       </div>
     </div>
