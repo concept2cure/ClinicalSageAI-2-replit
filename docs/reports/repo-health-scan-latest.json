@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-10T06:31:19.278Z",
+  "generatedAt": "2026-08-10T14:49:00.553Z",
   "git": {
-    "sha": "60f30f398595e1421fad99ab64463a1e6d128dab",
-    "branch": "claude/ana-transparency-audit-ceryhv"
+    "sha": "7b0d5b73a7743705d247287cce0df2fe65f1499b",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2587,15 +2587,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "contentDuplicateGroups": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
