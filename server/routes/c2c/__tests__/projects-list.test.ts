@@ -46,7 +46,27 @@ describe('GET /api/c2c/projects', () => {
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('regulatory_programs');
     expect(sql).toContain('progress_percent');
-    expect(params).toEqual([7]);
+    // Paged: org, then the default page size + 1 (the extra row is how hasMore
+    // is decided without a second COUNT(*)), then the offset.
+    expect(params).toEqual([7, 51, 0]);
+  });
+
+  it('clamps ?limit to its maximum and never issues an unbounded read', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    await request(appWith(7)).get('/api/c2c/projects?limit=100000&offset=5');
+    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('LIMIT $2 OFFSET $3');
+    expect(params).toEqual([7, 201, 5]);
+  });
+
+  it('reports hasMore and trims the extra probe row off the page', async () => {
+    const row = Object.fromEntries(KEYS.map((k) => [k, k === 'readiness' ? 0 : k === 'blocker' ? null : 'x']));
+    // Two rows back for a page size of one: the second exists only to prove
+    // there is more, and must not be served to the client.
+    query.mockResolvedValueOnce({ rows: [row, row] });
+    const res = await request(appWith(7)).get('/api/c2c/projects?limit=1');
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.meta).toMatchObject({ count: 1, limit: 1, offset: 0, hasMore: true });
   });
 
   it('fails closed to an empty envelope when the store is not provisioned', async () => {
