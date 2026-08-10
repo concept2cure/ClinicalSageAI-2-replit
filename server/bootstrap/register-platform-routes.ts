@@ -41,84 +41,27 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
   // Removed rather than left in place: a second definition of a safety probe is
   // a trap, not a fallback.
 
-  app.get('/api/health', async (_req: Request, res: Response) => {
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-  });
-
-  app.get('/api/health/full', async (_req: Request, res: Response) => {
-    try {
-      const { HealthCheckService } = await import('../lib/health-check.js');
-      const healthCheck = new HealthCheckService(pool);
-      const result = await healthCheck.checkFull();
-      const status = result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503;
-      res.status(status).json(result);
-    } catch (err: any) {
-      res.status(500).json({ status: 'error', message: err?.message });
-    }
-  });
-
-  app.get('/api/metrics', async (_req: Request, res: Response) => {
-    try {
-      const memUsage = process.memoryUsage();
-      const uptime = process.uptime();
-      const lines = [
-        '# HELP process_memory_heap_used_bytes Heap memory used',
-        '# TYPE process_memory_heap_used_bytes gauge',
-        `process_memory_heap_used_bytes ${memUsage.heapUsed}`,
-        '# HELP process_memory_rss_bytes Resident set size',
-        '# TYPE process_memory_rss_bytes gauge',
-        `process_memory_rss_bytes ${memUsage.rss}`,
-        '# HELP process_uptime_seconds Process uptime',
-        '# TYPE process_uptime_seconds gauge',
-        `process_uptime_seconds ${uptime}`,
-        '# HELP nodejs_active_handles Number of active handles',
-        '# TYPE nodejs_active_handles gauge',
-        `nodejs_active_handles ${(process as any)._getActiveHandles?.()?.length || 0}`,
-      ];
-
-      try {
-        const { pool } = await import('../db.js');
-        if (pool) {
-          lines.push('# HELP db_pool_total Total connections in pool');
-          lines.push('# TYPE db_pool_total gauge');
-          lines.push(`db_pool_total ${pool.totalCount || 0}`);
-          lines.push('# HELP db_pool_idle Idle connections');
-          lines.push('# TYPE db_pool_idle gauge');
-          lines.push(`db_pool_idle ${pool.idleCount || 0}`);
-          lines.push('# HELP db_pool_waiting Waiting requests');
-          lines.push('# TYPE db_pool_waiting gauge');
-          lines.push(`db_pool_waiting ${pool.waitingCount || 0}`);
-        }
-      } catch {}
-
-      res.set('Content-Type', 'text/plain; version=0.0.4');
-      res.send(lines.join('\n') + '\n');
-    } catch {
-      res.status(500).send('# Error collecting metrics\n');
-    }
-  });
-
-  app.get('/api/ai-gateway/health', async (_req: Request, res: Response) => {
-    try {
-      const { getGateway } = await import('../services/ai-gateway');
-      const gw = getGateway();
-      if (!gw) {
-        return res.status(503).json({ status: 'unavailable', message: 'AI Gateway not initialized' });
-      }
-      const providers = gw.getProviderHealth();
-      const enabled = gw.getEnabledProviders();
-      const healthyCount = providers.filter((p: any) => p.healthy).length;
-      res.json({
-        status: healthyCount > 0 ? 'healthy' : 'degraded',
-        providers,
-        enabledProviders: enabled,
-        healthyProviders: healthyCount,
-        totalProviders: providers.length,
-      });
-    } catch (err: any) {
-      res.status(500).json({ status: 'error', message: err?.message });
-    }
-  });
+  // /api/health, /api/health/full, /api/metrics and /api/ai-gateway/health are
+  // NOT registered here either, for exactly the reason spelled out above about
+  // /healthz and /readyz — and this file removed those two while leaving these
+  // four standing directly beneath the explanation.
+  //
+  // mountFastPathHealthEndpoints (server/index.ts:107) and
+  // mountDiagnosticEndpoints (server/index.ts:129) both run at MODULE level;
+  // startServer() is called at server/index.ts:260, so every definition that
+  // used to live here was permanently shadowed. Express keeps the first handler
+  // registered for a method+path.
+  //
+  // Shadowed is not harmless here. The surviving definitions in
+  // server/startup/inline-endpoints.ts are the HARDENED ones: /api/health/full
+  // and /api/metrics sit behind requireMetricsAuth, and /api/health/full logs
+  // its exception server-side instead of returning `message: err.message` —
+  // because a health-checker exception can carry DB DSN fragments, file paths
+  // and env var names. The copies removed from here had neither protection.
+  //
+  // So this was an unauthenticated, error-leaking pair of ops endpoints that
+  // became live the moment anyone reordered boot. A second definition of a
+  // safety probe is a trap, not a fallback.
 
   // NOTE: /api/time and /api/diag intentionally MOVED below the global auth
   // gate (see further down). Everything registered ABOVE the gate bypasses
@@ -333,15 +276,14 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
   // middleware chain as every other /api route; they remain reachable only
   // because they're explicitly allowlisted above. Both expose nothing beyond
   // a timestamp and a static liveness page.
-  app.get('/api/time', (_req: Request, res: Response) => {
-    const now = new Date();
-    res.json({ iso: now.toISOString(), epoch: now.getTime(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
-  });
-
-  app.get('/api/diag', (_req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'text/html');
-    res.send(`<!DOCTYPE html><html><head><title>Diag</title></head><body style="font-family:system-ui;padding:40px;background:#f0fdf4"><h1 style="color:#16a34a">✅ Server is alive</h1><p>If you see this, the Simple Browser can render HTML from this server.</p><p>Timestamp: ${new Date().toISOString()}</p><p><a href="/">← Go to main app</a></p></body></html>`);
-  });
+  // /api/time and /api/diag are likewise served from
+  // server/startup/inline-endpoints.ts (module level, so they win). The two
+  // definitions were byte-equivalent, so nothing changes by removing these.
+  //
+  // The gate-placement reasoning in the NOTE above is still correct and still
+  // matters — it just belongs to the surviving handlers now, not to these.
+  // Reasoning about the middleware position of a route Express never reaches
+  // is the kind of comment that reads as a guarantee and is not one.
 
   console.log('✅ Platform health/auth routes mounted');
 }

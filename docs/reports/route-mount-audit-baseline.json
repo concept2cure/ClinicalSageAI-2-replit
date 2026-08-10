@@ -1,42 +1,11 @@
 {
   "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
-  "generatedAt": "2026-07-30T02:55:49.580Z",
-  "mounts": 324,
-  "errors": 6,
+  "generatedAt": "2026-08-10T02:13:48.618Z",
+  "mounts": 317,
+  "errors": 0,
   "warnings": 8,
   "issues": {
-    "errors": [
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/api/health"
-      },
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/api/health/full"
-      },
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/api/metrics"
-      },
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/api/ai-gateway/health"
-      },
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/api/time"
-      },
-      {
-        "type": "duplicate-method-route",
-        "path": null,
-        "key": "get:/api/diag"
-      }
-    ],
+    "errors": [],
     "warnings": [
       {
         "type": "multi-use-prefix",
