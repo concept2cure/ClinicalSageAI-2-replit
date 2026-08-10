@@ -119,6 +119,19 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   // the packs first. The contract test pins the current behaviour so the choice
   // stays visible rather than becoming folklore.
   if (id === 'eu_cta' || pw === 'cta') return 'cta';
+  // 'device' and 'ivd' are accepted by the API (projects.ts VALID_PROGRAM_TYPES)
+  // and deliberately UNMAPPED in PROGRAM_TO_DOC_TYPE, so they fail closed: the
+  // project is created and no document is scaffolded. That is the intended
+  // outcome for a filing whose pathway is genuinely ambiguous — an EU MDR Class
+  // IIb technical file is not a 510(k), a De Novo, a PMA or an IDE, and this
+  // product cannot yet tell which. 33 registry rows previously fell past these
+  // lines into `pw === 'ctd'` and were filed as US NDAs instead.
+  //
+  // Reaching here therefore produces an empty Vault, which is only honest if the
+  // customer is TOLD. The wizard surfaces meta.scaffoldSkipped for exactly that
+  // reason; the two changes are not separable.
+  if (pw === 'device') return 'device';
+  if (pw === 'ivd') return 'ivd';
   if (id.includes('nda') || pw === 'ctd') return 'nda';
   if (id.includes('ind') || pw === 'ind') return 'ind';
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
@@ -177,6 +190,32 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
         return;
       }
       const j = await res.json();
+
+      // The server tells us when it created the project but declined to scaffold
+      // a governed document — POST /api/c2c/projects puts scaffoldSkipped and
+      // scaffoldDetail in the 201's `meta`. Nothing read it. The project was
+      // created, the wizard closed, and the customer arrived at a permanently
+      // empty Vault with no indication that anything had been declined.
+      //
+      // That silence is what made the fail-closed design dishonest in practice.
+      // Declining to guess a pathway is right — filing an EU MDR Class IIb
+      // technical file as a US NDA is worse than filing nothing — but only if
+      // the customer is told which of the two happened. Surfacing it is the
+      // other half of routing those 33 registry rows to their true program type.
+      const skipped = j?.meta?.scaffoldSkipped as string | undefined;
+      if (skipped) {
+        const detail = typeof j?.meta?.scaffoldDetail === 'string' ? j.meta.scaffoldDetail : '';
+        setError(
+          `Project created, but no submission dossier was started. ${detail} ` +
+            `You can add documents manually, or pick a filing type with a ` +
+            `defined pathway.`.replace(/\s+/g, ' '),
+        );
+        setCreating(false);
+        // Deliberately NOT navigating away. The project exists and is listed;
+        // dropping the user into an empty Vault is how this went unnoticed.
+        return;
+      }
+
       const created = (j?.data ?? {}) as Partial<ProjPortfolioEntry> & { id?: string };
       try {
         window.C2C_PROJECT = {

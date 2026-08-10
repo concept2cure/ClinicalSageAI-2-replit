@@ -40,7 +40,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { programTypeFor } from '../surfaces/Projects';
-import { getSubmissionTypeContext } from '../surfaces/RegistryBridge';
+import { getSubmissionTypeContext, GLOBAL_REGISTRY } from '../surfaces/RegistryBridge';
 
 /** Exactly what Projects.tsx:130 builds before calling programTypeFor. */
 function selFor(id: string) {
@@ -80,24 +80,52 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
   });
 
   /*
-   * The four rest-of-world clinical-trial applications STILL map to 'nda', and
-   * that is recorded here rather than fixed, because fixing it needs something
-   * this change does not have.
+   * The 33 rows that used to be filed as US NDAs.
    *
-   * Giving cta_hc a pathwayKey of 'cta' makes resolveDocumentClass produce
-   * (cta, hc). No c2c_rule_packs row satisfies that, so the composite FK sends
-   * the scaffold down NO_RULE_PACK and the customer gets no document at all.
-   * Declining is arguably more honest than filing a Canadian trial application
-   * as a US marketing application — this codebase says so explicitly in
-   * document-class.ts — but it is a product decision, and it needs cta packs for
-   * hc / nmpa / tga / pmda to exist first.
+   * Every one is a device, IVD or non-US clinical-trial application, and every
+   * one resolved to 'nda' because its tuple had no 9th element and
+   * `pathwayKey || 'ctd'` then matched `pw === 'ctd'`. An EU MDR Class III
+   * technical file and a TGA IVD inclusion were both being scaffolded as a
+   * 71-section US 505(b)(1) marketing dossier.
    *
-   * Pinned so the next person finds a failing expectation instead of folklore.
+   * 'device' and 'ivd' are accepted by the API and deliberately unmapped in
+   * PROGRAM_TO_DOC_TYPE, so they now fail closed — the project is created and no
+   * document is written. That is only honest because the wizard surfaces
+   * meta.scaffoldSkipped; the two changes ship together.
    */
-  it.each(['cta_hc', 'cta_nmpa', 'ctn_au', 'ctn_jp'])(
-    '%s is still mis-mapped to nda — no cta pack exists for its agency',
+  it.each(['ctn_au', 'cta_hc', 'ctn_jp', 'cta_nmpa'])(
+    '%s is a clinical trial application, not a marketing application',
     (id) => {
-      expect(programTypeFor(selFor(id), 'biotech')).toBe('nda');
+      expect(programTypeFor(selFor(id), 'biotech')).toBe('cta');
     },
   );
+
+  it.each(['eu_mdr_i', 'eu_mdr_iia', 'eu_mdr_iib', 'eu_mdr_iii', 'uk_ukca',
+           'pmda_shonin', 'nmpa_device', 'tga_device', 'hc_mdl', 'br_device'])(
+    '%s is a device filing and fails closed rather than becoming an NDA',
+    (id) => {
+      expect(programTypeFor(selFor(id), 'biotech')).toBe('device');
+    },
+  );
+
+  it.each(['eu_ivdr_a', 'eu_ivdr_b', 'eu_ivdr_cd', 'cdx_ivdr_d', 'ivdr_perf_study',
+           'pmda_ivd', 'nmpa_ivd', 'tga_ivd', 'hc_ivd', 'ivd_vigilance'])(
+    '%s is an IVD filing and fails closed rather than becoming an NDA',
+    (id) => {
+      expect(programTypeFor(selFor(id), 'biotech')).toBe('ivd');
+    },
+  );
+
+  it('no device or IVD registry row resolves to a drug marketing application', () => {
+    // The sweep, so a row added later cannot quietly rejoin the NDA bucket.
+    const ids = GLOBAL_REGISTRY.map((e) => e.id).filter((id) =>
+      /^(eu_mdr_|eu_ivdr_|cdx_|ivd_|ivdr_|pmda_ivd|nmpa_ivd|tga_ivd|hc_ivd|hc_mdl|uk_ukca|nmpa_device|tga_device|br_device|ch_device|pmda_shonin|pmda_nintei)/.test(id),
+    );
+    expect(ids.length, 'the device/IVD id sweep matched nothing').toBeGreaterThan(20);
+    const wrong = ids.filter((id) => {
+      const pt = programTypeFor(selFor(id), 'biotech');
+      return pt === 'nda' || pt === 'bla' || pt === 'maa';
+    });
+    expect(wrong, 'device/IVD rows resolving to a drug marketing application').toEqual([]);
+  });
 });
