@@ -196,3 +196,22 @@ export const C2C_SECTION_COMPLETE_STATUSES: ReadonlySet<string> = new Set(['appr
 export function sectionCompletionPct(status: string | null | undefined): number {
   return typeof status === 'string' && C2C_SECTION_COMPLETE_STATUSES.has(status) ? 100 : 0;
 }
+
+/**
+ * The complete-statuses as a SQL literal list, e.g. `'approved', 'locked'`.
+ *
+ * Rendered from the same constant the TypeScript path uses, so a query written
+ * against it cannot disagree with sectionCompletionPct or with the readiness
+ * trigger. Each value is re-validated as a bare lowercase identifier before it
+ * is interpolated — these are compile-time constants today and the guard is
+ * what keeps that from quietly becoming untrue.
+ */
+export function completeStatusSqlList(): string {
+  const values = [...C2C_SECTION_COMPLETE_STATUSES];
+  for (const v of values) {
+    if (!/^[a-z_][a-z0-9_]*$/.test(v)) {
+      throw new Error(`completeStatusSqlList: unsafe status value ${JSON.stringify(v)}`);
+    }
+  }
+  return values.map((v) => `'${v}'`).join(', ');
+}
