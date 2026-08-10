@@ -8,7 +8,7 @@
 
 ## 1. Verdict
 
-**Not GA-ready. Estimated 69 engineer-days to a defensible commercial GA, 140 to a competitive one.**
+**Not GA-ready. Estimated 67 engineer-days to a defensible commercial GA, 138 to a competitive one.**
 
 The platform has genuinely strong engineering foundations — a default-deny auth boundary, fail-closed RLS, transactional writes, a zero-error typecheck baseline, 22 CI workflows. Those are real and hard-won.
 
@@ -19,16 +19,16 @@ The single most important sentence in this report: **on the live project API, pe
 | Dimension | Score | Note |
 |---|---|---|
 | Security (tenant boundary) | 8/10 | Auth boundary + fail-closed RLS are excellent |
-| Security (intra-tenant ACL) | 2/10 | Project ACL fails open — §4.2 |
-| Data model | 3/10 | Two competing project entities; core tables never migrated |
+| Security (intra-tenant ACL) | 2/10 | ACL exists and is correct, but the live API never invokes it — §4.2 |
+| Data model | 3/10 | Two competing project entities on incompatible key types — §3 |
 | API surface | 4/10 | Well-built, but 81% unreachable |
 | Services / business logic | 5/10 | Real logic, wrong id-space |
 | Client UI | 5/10 | Honest, well-built, but thin over a broken backend |
 | User workflow | 3/10 | 4 of 8 core journeys break — §6 |
-| Performance | 5/10 | No pagination, no code splitting, N+1 in path recompute |
-| Dependencies | 6/10 | 270 deps, 31 vulns, clean typecheck |
+| Performance | 5/10 | Unbounded list, no route-level splitting, N+1 path recompute |
+| Dependencies | 6/10 | 270 deps; both high-severity findings correctly accepted (§4.12); clean typecheck |
 | Testing / CI | 6/10 | Strong CI, no project-lifecycle e2e |
-| Feature completeness | 3/10 | No Gantt, dependencies, notifications, reporting |
+| Feature completeness | 3/10 | No Gantt, no dependency/critical path, no reporting; alerting built but orphaned |
 | **Overall** | **~40%** | |
 
 ---
@@ -184,11 +184,19 @@ What is missing is route-level splitting of application code: `client/src/concep
 | # | Finding | Evidence | Effort |
 |---|---|---|---:|
 | 4.11 | No project-lifecycle e2e test | `tests/e2e/` has 15 specs; none covers create → invite → task → complete | 8 d |
-| 4.12 | 31 npm vulnerabilities (2 high) | `npm audit`: `image-size` (allowlisted in `.trivyignore`), `pptxgenjs` — both DoS | 2 d |
+| 4.12 | ~~31 npm vulnerabilities (2 high)~~ **Withdrawn** — already correctly accepted, see below | `.trivyignore:37-51` | 0 d |
 | 4.13 | No archive / close-out on the live path | `c2c/projects.ts` has no project `DELETE` or archive; only `projects-management.ts:329` does | 4 d |
 | 4.14 | Task data fragmented across 4 stores | `server/routes/taskBoard.routes.ts:133` names them: `projectTasks`, `project_tasks`, `crossModuleTaskLinks`, an in-memory pyramid | 10 d |
 | 4.15 | No Gantt, dependency graph, or critical path | `projectTasks.dependsOn` exists (`shared/schema.ts:6859`) with no engine reading it; no timeline library in `package.json` | 20 d |
 | 4.16 | Unused heavy dependency | `react-window` in `package.json:374`, imported nowhere in `client/src` | 0.5 d |
+
+> **4.12 withdrawn.** The first pass listed the two high-severity `npm audit` findings as work. They are already accepted, correctly, and the acceptance is better than this audit's summary of it.
+>
+> `.trivyignore:37-51` records that `image-size@1.2.1` is pulled solely by `pptxgenjs@4.0.1`, that **no fixed version exists** (the latest published `image-size` is 2.0.2, still in range, and 2.x is outside what `pptxgenjs` accepts), and that it is therefore not remediable by a bump or an override. `npm audit`'s own `fixAvailable` confirms this from the other direction: its proposed fix is `pptxgenjs@1.1.5`, `isSemVerMajor: true` — a *downgrade* across three majors, not a fix.
+>
+> The load-bearing part of any risk acceptance is the reachability claim, so it was checked rather than taken on trust. The note says `image-size` only reads dimensions of first-party images embedded into generated decks. It is in fact narrower than that: `server/services/pptxGenerator.ts` contains **no `addImage` call at all** — it builds decks from a title and markdown text (`:114`, `:269`), reached from `nanoBananaService.ts:223` and a `concept2cure.ts:12329` export route. No attacker-supplied image reaches the parser on this path, because no image does.
+>
+> The correct action is the one already taken: accept, document, and re-check when upstream moves. The existing `TODO(security)` names the exact condition. Patching this would have meant churning the lockfile to downgrade a working dependency across three major versions in exchange for nothing.
 
 ---
 
@@ -241,7 +249,7 @@ What is missing is route-level splitting of application code: `client/src/concep
 Prevents new damage and closes the findings that are unacceptable in any shipped state.
 - 4.2 — add an interim membership gate to the 13 `c2c/projects.ts` handlers, so authorization exists on the live path before the id-space work lands. Mutating routes (`POST`/`DELETE /:id/evidence`) first.
 - 4.7 — fail fast in production instead of falling back to `MemStorage`.
-- 4.12 — patch or re-justify the 2 high vulnerabilities.
+- ~~4.12 — patch or re-justify the 2 high vulnerabilities.~~ Withdrawn: already accepted with a sound, verified justification (see §4). No work.
 
 **Exit:** A non-member is refused on every `c2c/projects` route, proven by an integration test against a real Postgres. Production refuses to boot without a database.
 
@@ -270,14 +278,14 @@ The decision everything else waits on. Written up for approval as **[ADR-0011: C
 
 | Wave | Engineer-days | 3 engineers | 6 engineers |
 |---|---:|---:|---:|
-| W0 — Stop the bleeding | 11 | 1 wk | 1 wk |
+| W0 — Stop the bleeding | 9 | 1 wk | 1 wk |
 | W1 — Resolve the id-space | 58 | 4 wks | 2 wks |
 | W2 — Product completeness | 38 | 3 wks | 1.5 wks |
 | W3 — Commercial polish | 33 | 3 wks | 1.5 wks |
-| **Total** | **140** | **11 wks** | **6 wks** |
+| **Total** | **138** | **11 wks** | **6 wks** |
 
-- **Minimum defensible GA** = W0 + W1 = **69 d** (~5 wks at 3 engineers). Ships an honest, coherent, auditable project tool with working access control and live milestone alerting.
-- **Competitive GA** = W0–W3 = **140 d** (~11 wks at 3 engineers).
+- **Minimum defensible GA** = W0 + W1 = **67 d** (~5 wks at 3 engineers). Ships an honest, coherent, auditable project tool with working access control and live milestone alerting.
+- **Competitive GA** = W0–W3 = **138 d** (~11 wks at 3 engineers).
 
 W1 carries more than the first estimate and W2 less, because three capabilities first scored as absent — proactive milestone monitoring, the notification service, and the sharing/ACL model — turned out to be built already and bound to the orphaned id-space. Reconnecting them is W1 work. **The single id-space decision is now worth roughly 40% of the total remaining effort**, which is the strongest argument for spiking it first.
 
