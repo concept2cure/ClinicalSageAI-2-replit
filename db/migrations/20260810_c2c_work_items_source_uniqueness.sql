@@ -35,25 +35,42 @@
 
 BEGIN;
 
--- Idempotent constraint addition with exception handling.
--- If the constraint already exists, silently continue.
+-- Idempotent constraint addition: check existence before attempting to add.
 -- If duplicates exist, fail with a clear message.
 DO $$
+DECLARE
+  constraint_exists BOOLEAN;
 BEGIN
-  -- Try to add the constraint. If it already exists or duplicates block it, catch and handle.
-  ALTER TABLE c2c_project_work_items
-    ADD CONSTRAINT c2c_pwi_org_source_type_source_id_unique
-    UNIQUE (org_id, source_type, source_id);
+  -- Check if constraint already exists in information_schema
+  SELECT EXISTS(
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_schema = 'public'
+      AND table_name = 'c2c_project_work_items'
+      AND constraint_name = 'c2c_pwi_org_source_type_source_id_unique'
+  ) INTO constraint_exists;
 
-  RAISE NOTICE '[20260810] added unique constraint on (org_id, source_type, source_id)';
-EXCEPTION
-  WHEN duplicate_object THEN
+  IF constraint_exists THEN
     RAISE NOTICE '[20260810] constraint already exists; skipping';
-  WHEN unique_violation THEN
-    RAISE EXCEPTION
-      'c2c_project_work_items has rows with duplicate (org_id, source_type, source_id) keys. '
-      'These must be cleaned up manually before this migration can apply: '
-      'review the duplicates and decide which to keep/merge.';
+  ELSE
+    -- Check for duplicates before adding the constraint
+    IF EXISTS(
+      SELECT 1 FROM c2c_project_work_items
+      GROUP BY org_id, source_type, source_id
+      HAVING COUNT(*) > 1
+    ) THEN
+      RAISE EXCEPTION
+        'c2c_project_work_items has rows with duplicate (org_id, source_type, source_id) keys. '
+        'These must be cleaned up manually before this migration can apply: '
+        'review the duplicates and decide which to keep/merge.';
+    END IF;
+
+    -- Add the constraint
+    ALTER TABLE c2c_project_work_items
+      ADD CONSTRAINT c2c_pwi_org_source_type_source_id_unique
+      UNIQUE (org_id, source_type, source_id);
+
+    RAISE NOTICE '[20260810] added unique constraint on (org_id, source_type, source_id)';
+  END IF;
 END $$;
 
 COMMIT;
