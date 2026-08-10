@@ -4385,8 +4385,11 @@ export class DatabaseStorage {
  * In-memory-storage production guardrail.
  *
  * The selection below resolves to MemStorage whenever the pg pool failed to
- * initialize — `server/db/runtime.ts` sets `pool = null` when DATABASE_URL is
- * unset or the first `SELECT NOW()` fails, and keeps booting. MemStorage holds
+ * initialize. `server/db/runtime.ts` sets `pool = null` in exactly two cases:
+ * `getDatabaseUrl()` is falsy, or constructing the pool throws synchronously —
+ * which includes `assertRlsEnforcementForProduction()` rejecting the RLS
+ * posture. Its `testConnection` probe only LOGS on failure and never reassigns
+ * `pool`, so an unreachable host still yields a live pool object. MemStorage holds
  * projects, projectTasks, projectModules and projectWorkflowStages in plain
  * arrays (see the class above), so a single mistyped DATABASE_URL produced an
  * app that passed its health check, accepted writes, ACKed them, and lost every
@@ -4418,8 +4421,10 @@ export function assertDatabaseStorageForProduction(
 
   throw new Error(
     '[storage] FAIL-CLOSED: REFUSING TO BOOT because no database connection pool was ' +
-      'initialized in production. DATABASE_URL is unset, malformed, or names a server ' +
-      'this process cannot reach (see server/db/runtime.ts). Booting would silently fall ' +
+      'initialized in production. Either DATABASE_URL is unset or malformed, or pool ' +
+      'construction threw — which includes RLS_ENFORCE failing its production check ' +
+      '(see server/db/runtime.ts; an unreachable host does NOT land here, since pg ' +
+      'connects lazily). Booting would silently fall ' +
       'back to in-memory storage, which keeps every project, task, module, workflow stage ' +
       'and document in process memory and discards all of it on restart while the app ' +
       'reports success. Fix DATABASE_URL and restart.'

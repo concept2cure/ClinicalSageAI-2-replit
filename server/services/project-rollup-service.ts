@@ -391,9 +391,12 @@ export class ProjectRollupService {
     // issued, per node, a parent-path lookup, an UPDATE and a children query before recursing
     // serially into each child — O(n) sequential round trips on a deep move, and, because
     // nothing wrapped the traversal, a failure part-way through left `path` half-rewritten.
-    // Every ancestor/descendant lookup in this service keys off the materialized path (see
-    // the LIKE prefix scan in getTree), so a partial rewrite silently returns wrong subtrees
-    // until someone notices. A single statement is atomic, so either the whole subtree moves
+    // Lookups in this service key off the materialized path (the LIKE prefix scans at
+    // getTree and computeRelativeDepth), so a partial rewrite silently returns wrong
+    // subtrees until someone notices. Note getTree builds its prefix as
+    // `${root.path}/${root.id}`, which double-counts the root's own id under this format
+    // and already misses grandchildren — a pre-existing bug this change neither causes nor
+    // fixes; validateMove uses the format correctly. A single statement is atomic, so either the whole subtree moves
     // or none of it does; no explicit transaction is needed.
     //
     // The generated format has to match what the old walk produced byte for byte or existing

@@ -46,7 +46,7 @@ vi.mock('../../../services/c2c/scaffold-project-documents.js', () => ({
 // reason the scaffold is: these assertions are about the create route's
 // transaction and contract, and the quota has its own coverage in
 // license-manager. The deny path gets an explicit test at the end.
-const programQuota = vi.fn(async () => ({ withinQuota: true, currentCount: 0, maxAllowed: 10 }));
+const programQuota = vi.fn(async () => ({ withinQuota: true, currentCount: 0, maxAllowed: 10, unlimited: false }));
 vi.mock('../../../services/license-manager.js', () => ({
   checkProgramQuota: (...a: unknown[]) => programQuota(...(a as [])),
 }));
@@ -80,7 +80,8 @@ beforeEach(() => {
   scaffold.mockReset();
   scaffold.mockResolvedValue({ documentId: 'doc_test', sectionCount: 24 });
   programQuota.mockReset();
-  programQuota.mockResolvedValue({ withinQuota: true, currentCount: 0, maxAllowed: 10 });
+  programQuota.mockResolvedValue({ withinQuota: true, currentCount: 0, maxAllowed: 10, unlimited: false });
+  delete process.env.PROGRAM_QUOTA_MODE;
   // Default: BEGIN and COMMIT resolve; individual tests queue the rest.
   query.mockResolvedValue({ rows: [] });
 });
@@ -266,7 +267,10 @@ describe('POST /api/c2c/projects', () => {
   });
 
   it('refuses the create when the org is at its licensed program quota', async () => {
-    programQuota.mockResolvedValue({ withinQuota: false, currentCount: 10, maxAllowed: 10 });
+    // The quota ships in warn mode so it cannot retroactively lock out tenants
+    // already over a limit that was never enforced; enforce is what this asserts.
+    process.env.PROGRAM_QUOTA_MODE = 'enforce';
+    programQuota.mockResolvedValue({ withinQuota: false, currentCount: 10, maxAllowed: 10, unlimited: false });
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('QUOTA_EXCEEDED');

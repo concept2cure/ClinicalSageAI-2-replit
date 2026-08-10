@@ -28,8 +28,10 @@ import {
   type ScaffoldResult,
 } from '../../services/c2c/scaffold-project-documents.js';
 import {
+  canCreateProgram,
   canMutateProgram,
   resolveProgramAuthzMode,
+  resolveProgramQuotaMode,
 } from '../../services/c2c/program-access.js';
 import { checkProgramQuota } from '../../services/license-manager.js';
 import { computeAuditChainSealed, hashPayload } from '../../services/audit/chain.js';
@@ -204,8 +206,11 @@ function baseCodeFrom(productName: string, name: string): string {
 // Paged: ?limit= (default 50, max 200) and ?offset=. The read previously had no
 // LIMIT at all, so one org with a few thousand programs serialized its entire
 // portfolio into a single response on every render of the Projects surface.
-// meta.count keeps its existing meaning — rows in THIS response — because the
-// live client reads it that way; limit/offset/hasMore are additive.
+// meta.count means rows in THIS response. No client currently reads `meta` at
+// all — dataConnect's unwrapEnvelope returns `obj.data` and discards the rest —
+// so limit/offset/hasMore are there for the paging control the portfolio still
+// needs, not for something already consuming them. See the truncation note on
+// the handler below.
 
 router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
@@ -269,7 +274,14 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
-  if (!orgId) return send403(res);
+  // Creation is a mutation like any other, and it was gated on org membership
+  // alone — the exact shape this router's other handlers were fixed for. A
+  // `viewer` could create a regulated program, have an audit row and a
+  // scaffolded document written under their name, consume a licensed seat, and
+  // become its lead_user_id — permanently authorized to mutate its evidence.
+  // An unidentified caller could too: userId was read but never required.
+  if (!orgId || !userId) return send403(res);
+  if (!canCreateProgram({ orgRole: resolveOrgRole(req) })) return send403(res);
 
   const body = (req.body ?? {}) as Record<string, unknown>;
   const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
@@ -300,19 +312,45 @@ router.post('/', async (req: Request, res: Response) => {
     return send400(res, `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}`);
   }
 
-  // Licensed program count. The org's max_programs entitlement was sold and
-  // billed but never checked on this path — the wizard could create programs
-  // past the plan indefinitely. checkProgramQuota counts regulatory_programs
-  // and fails CLOSED, so an unreadable entitlement blocks the create rather
-  // than silently granting an unlimited one.
-  const quota = await checkProgramQuota(orgId);
+  // Licensed program count. The org's `max_projects` entitlement was sold and
+  // billed but never checked on this path, so the wizard could create programs
+  // past the plan indefinitely.
+  //
+  // It ships in WARN mode on purpose, and that is the opposite call from the
+  // authorization gate above. This quota has never been enforced, and the
+  // default entitlement is 10 (migrations/0000_sweet_joseph.sql) — which is also
+  // exactly the standard tier. Flipping it straight to enforce would lock every
+  // tenant already at or over ten out of creating anything, retroactively, for a
+  // limit they have been silently exceeding with the product's blessing. The
+  // risk of a few days of unbilled capacity is smaller than the risk of blocking
+  // paying customers from working. Set PROGRAM_QUOTA_MODE=enforce once the
+  // tenant distribution has been checked and entitlements reconciled.
+  let quota;
+  try {
+    quota = await checkProgramQuota(orgId);
+  } catch (e) {
+    // 42P01 is an unprovisioned store, not a quota decision — keep the
+    // documented PENDING_STORE contract rather than reporting a missing table
+    // as a billing refusal.
+    if ((e as { code?: string })?.code === '42P01') {
+      return res.status(503).json({ error: 'PENDING_STORE' });
+    }
+    throw e;
+  }
   if (!quota.withinQuota) {
-    return res.status(403).json({
-      error: 'QUOTA_EXCEEDED',
-      message:
-        `This organization has ${quota.currentCount} of ${quota.maxAllowed} licensed ` +
-        'programs. Archive a program or raise the plan limit to create another.',
-    });
+    if (resolveProgramQuotaMode() === 'enforce') {
+      return res.status(403).json({
+        error: 'QUOTA_EXCEEDED',
+        message:
+          `This organization has ${quota.currentCount} of ${quota.maxAllowed} licensed ` +
+          'programs. Archive a program or raise the plan limit to create another.',
+      });
+    }
+    logger.warn(
+      'Program quota exceeded but allowed (mode=warn). This create would be ' +
+        'refused in enforce mode.',
+      { orgId, currentCount: quota.currentCount, maxAllowed: quota.maxAllowed },
+    );
   }
 
   const targetAgencies = JSON.stringify([primaryAgency]);

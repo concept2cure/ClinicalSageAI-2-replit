@@ -36,7 +36,7 @@ describe('checkProgramQuota', () => {
     mockQuota(10, 3);
     const result = await checkProgramQuota(7);
 
-    expect(result).toEqual({ withinQuota: true, currentCount: 3, maxAllowed: 10 });
+    expect(result).toEqual({ withinQuota: true, currentCount: 3, maxAllowed: 10, unlimited: false });
     const counted = query.mock.calls.map((c) => String(c[0])).join('\n');
     expect(counted).toContain('FROM regulatory_programs');
     // The old check counted `projects`, which the v2 wizard never writes to, so
@@ -82,6 +82,39 @@ describe('checkProgramQuota', () => {
     await expect(checkProgramQuota(7)).resolves.toMatchObject({ maxAllowed: 10 });
   });
 
+  it('treats a negative entitlement as UNLIMITED, not as a limit of -1', async () => {
+    // billing.ts:91 documents `-1 = unlimited` and the enterprise tiers use it.
+    // Read naively, -1 is a truthy entitlement and `count < -1` is never true —
+    // so the highest-paying tier would be the only one that could never create
+    // another program. tenants-simple.ts passes -1 through unnormalized.
+    mockQuota(-1, 3);
+    await expect(checkProgramQuota(7)).resolves.toMatchObject({
+      withinQuota: true, currentCount: 3, unlimited: true,
+    });
+
+    query.mockReset();
+    mockQuota(-1, 100_000);
+    await expect(checkProgramQuota(7)).resolves.toMatchObject({ withinQuota: true });
+  });
+
+  it('honours a ZERO entitlement instead of defaulting it to 10', async () => {
+    // A suspended org or an expired trial is deliberately set to 0. `|| 10`
+    // treats that as "not recorded" and hands back the default — the fail-open
+    // shape this function exists to remove. Only NULL means unrecorded.
+    mockQuota(0, 0);
+    await expect(checkProgramQuota(7)).resolves.toMatchObject({
+      withinQuota: false, maxAllowed: 0,
+    });
+  });
+
+  it('RETHROWS an unprovisioned store rather than reporting it as a quota denial', async () => {
+    // 42P01 is not a billing decision. Swallowing it as withinQuota:false makes
+    // the caller's documented 503 PENDING_STORE unreachable and tells the user
+    // their plan is full when the table simply does not exist.
+    query.mockRejectedValue(Object.assign(new Error('relation missing'), { code: '42P01' }));
+    await expect(checkProgramQuota(7)).rejects.toMatchObject({ code: '42P01' });
+  });
+
   it('FAILS CLOSED when the count cannot be read', async () => {
     query.mockRejectedValue(new Error('missing tenant scope'));
     // The regression this guards: the predecessor returned withinQuota true
@@ -91,9 +124,15 @@ describe('checkProgramQuota', () => {
   });
 
   it('fails closed when the organization row is missing entirely', async () => {
+    // Both queries succeed; the org simply is not there. Previously this case
+    // fell through `rows[0]?.max_projects || 10` to the default entitlement and
+    // ALLOWED the create — and this test only appeared to cover it because it
+    // forced the COUNT query to reject instead.
     query
       .mockResolvedValueOnce({ rows: [] })
-      .mockRejectedValueOnce(new Error('no such org'));
-    await expect(checkProgramQuota(7)).resolves.toMatchObject({ withinQuota: false });
+      .mockResolvedValueOnce({ rows: [{ cnt: 0 }] });
+    await expect(checkProgramQuota(7)).resolves.toMatchObject({
+      withinQuota: false, maxAllowed: 0,
+    });
   });
 });

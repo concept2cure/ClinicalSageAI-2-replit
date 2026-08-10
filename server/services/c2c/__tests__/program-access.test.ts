@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canCreateProgram,
   canMutateProgram,
+  resolveProgramQuotaMode,
   resolveProgramAuthzMode,
 } from '../program-access.js';
 
@@ -83,6 +85,51 @@ describe('canMutateProgram', () => {
         program: { leadUserId: null },
       })
     ).toBe(false);
+  });
+});
+
+describe('canCreateProgram', () => {
+  it('denies read-only roles', () => {
+    // Creation writes a regulated record, scaffolds a document, consumes a
+    // licensed seat, and makes the creator the lead — permanently authorized
+    // over that program's evidence. A viewer could do all of it.
+    for (const role of ['viewer', 'VIEWER', 'readonly', 'read_only', 'guest', ' viewer ']) {
+      expect(canCreateProgram({ orgRole: role }), role).toBe(false);
+    }
+  });
+
+  it('allows ordinary and elevated roles', () => {
+    for (const role of ['member', 'manager', 'admin', 'owner', 'super_admin']) {
+      expect(canCreateProgram({ orgRole: role }), role).toBe(true);
+    }
+  });
+
+  it('allows an unrecognized role rather than locking it out', () => {
+    // Deny-list on purpose: organization_users.role is free text and tenants add
+    // their own, so an allow-list would turn every unenumerated role into a
+    // lockout. The guarantee here is narrower — an explicitly read-only role
+    // cannot write.
+    expect(canCreateProgram({ orgRole: 'regulatory_lead' })).toBe(true);
+    expect(canCreateProgram({ orgRole: null })).toBe(true);
+  });
+});
+
+describe('resolveProgramQuotaMode', () => {
+  it('defaults to WARN, unlike the authorization gate', () => {
+    // Asymmetric on purpose. The authz rule closes a hole nobody was entitled
+    // to use, so it enforces. The quota has never been enforced and its default
+    // entitlement equals the standard tier, so enforcing on deploy would
+    // retroactively lock out every tenant already over it.
+    expect(resolveProgramQuotaMode({} as NodeJS.ProcessEnv)).toBe('warn');
+    expect(resolveProgramQuotaMode({ PROGRAM_QUOTA_MODE: '' } as NodeJS.ProcessEnv)).toBe('warn');
+  });
+
+  it('honours an explicit enforce', () => {
+    expect(resolveProgramQuotaMode({ PROGRAM_QUOTA_MODE: 'ENFORCE' } as NodeJS.ProcessEnv)).toBe('enforce');
+  });
+
+  it('falls back to warn on an unrecognized value', () => {
+    expect(resolveProgramQuotaMode({ PROGRAM_QUOTA_MODE: 'off' } as NodeJS.ProcessEnv)).toBe('warn');
   });
 });
 
