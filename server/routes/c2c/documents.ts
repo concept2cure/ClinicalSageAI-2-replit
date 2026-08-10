@@ -41,13 +41,25 @@ import {
   rulePackProvenanceSelectSql,
 } from '../../../shared/rule-pack-provenance.js';
 
-/** The raw column names `rulePackProvenanceSelectSql` puts on a row. */
+/**
+ * The raw column names `rulePackProvenanceSelectSql` puts on a row.
+ *
+ * Must list every field that fragment selects. A field missing from this set
+ * survives onto the response beside the normalised object, which is the second
+ * un-guarded copy `withRulePackProvenance` exists to prevent — and the review
+ * fields are the ones where that would matter most, since `review_status` is
+ * the single value a filer is entitled to rely on.
+ */
 const RAW_PROVENANCE_COLUMNS = new Set([
   'source_basis',
   'confidence',
   'review_status',
   'governing_rule',
   'uncertainties',
+  'reviewed_by',
+  'reviewed_at',
+  'review_scope',
+  'effective_review_state',
 ]);
 
 /**

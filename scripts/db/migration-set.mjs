@@ -706,6 +706,17 @@ export const C2C_MIGRATION_FILES = [
   // had a regulatory professional's sign-off. Must run AFTER the pack seeds
   // above so the backfill sees them. Same to_regclass guard as its siblings.
   'migrations/20260810c_rule_pack_provenance.sql',
+  // 20260810c recorded WHETHER a pack was reviewed and set every one to
+  // 'unreviewed'. It did not constrain what a future write could claim: nothing
+  // stopped review_status='reviewed' with no record of who, when, or against
+  // what tree. 'reviewed' is the one value in this schema a filer is entitled
+  // to rely on, so an unattributed one would carry a professional's authority
+  // while representing nobody. This adds reviewed_by / reviewed_at /
+  // review_scope / reviewed_sections_sha, a CHECK that refuses an unattributed
+  // sign-off, a CHECK that refuses leaving a reviewer's name on a withdrawn
+  // one, and a view reporting reviewed-but-changed when the tree moves out from
+  // under an honest review. Marks nothing reviewed. Must run AFTER 20260810c.
+  'migrations/20260810d_rule_pack_review_attribution.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing

@@ -59,12 +59,18 @@ function appWith(org: number | null) {
  * is meant to require.
  */
 function withoutProvenanceReads(sql: string): string {
-  return sql.replace(/to_jsonb\(\w+\)\s*->>\s*'[a-z_]+'\s+AS\s+[a-z_]+/gi, '');
+  // Both forms are safe reads and both must be stripped before asserting:
+  //   to_jsonb(rp) ->> 'x' AS x     the select-list aliases
+  //   to_jsonb(rp) ->> 'x'          bare reads inside the review-state CASE
+  // Only the aliased form was stripped originally, so the CASE's own safe
+  // reads read as violations of the very rule they satisfy.
+  return sql.replace(/to_jsonb\(\w+\)\s*->>\s*'[a-z_]+'(\s+AS\s+[a-z_]+)?/gi, '');
 }
 
 beforeEach(() => query.mockReset());
 
-const RAW_COLUMNS = ['source_basis', 'confidence', 'review_status', 'governing_rule', 'uncertainties'];
+const RAW_COLUMNS = ['source_basis', 'confidence', 'review_status', 'governing_rule', 'uncertainties',
+  'reviewed_by', 'reviewed_at', 'review_scope'];
 
 describe('GET /api/c2c/rule-packs — provenance reaches the caller', () => {
   it('emits a normalised provenance object and no raw columns', async () => {
@@ -97,6 +103,8 @@ describe('GET /api/c2c/rule-packs — provenance reaches the caller', () => {
       reviewStatus: 'unreviewed',
       governingRule: '21 CFR 814.20(b) — Application contents',
       uncertainties: 'Confirm module placement before filing.',
+      reviewState: 'unreviewed',
+      review: { reviewedBy: null, reviewedAt: null, reviewScope: null },
     });
 
     // No second, un-normalised copy.
@@ -135,6 +143,8 @@ describe('GET /api/c2c/rule-packs — provenance reaches the caller', () => {
       reviewStatus: 'unreviewed',
       governingRule: null,
       uncertainties: null,
+      reviewState: 'unreviewed',
+      review: { reviewedBy: null, reviewedAt: null, reviewScope: null },
     });
   });
 
@@ -220,6 +230,8 @@ describe('GET /api/c2c/documents/:id/outline — provenance travels with the tre
       reviewStatus: 'unreviewed',
       governingRule: 'Regulation (EU) 2017/745 (MDR), Annex II',
       uncertainties: 'Notified Body expectations vary by device class.',
+      reviewState: 'unreviewed',
+      review: { reviewedBy: null, reviewedAt: null, reviewScope: null },
     });
     // The outline itself is unchanged by this.
     expect(res.body.outline).toHaveLength(1);

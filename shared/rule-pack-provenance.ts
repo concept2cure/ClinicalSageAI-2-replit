@@ -54,6 +54,28 @@ export type RulePackConfidence = 'high' | 'medium' | 'low' | 'unknown';
 /** Whether a regulatory professional has signed the outline off. */
 export type RulePackReviewStatus = 'unreviewed' | 'reviewed';
 
+/**
+ * What a sign-off is actually worth right now.
+ *
+ * `reviewed_but_changed` is the state that makes the other two trustworthy. A
+ * review attests to a specific section tree; if the tree is edited afterwards,
+ * the sign-off silently starts covering content nobody approved. Collapsing
+ * that into 'reviewed' would be the most damaging simplification available
+ * here, because it is the case where a filer is MOST likely to rely on the
+ * claim and LEAST likely to suspect it.
+ */
+export type RulePackReviewState = 'unreviewed' | 'reviewed_current' | 'reviewed_but_changed';
+
+/** Who signed an outline off, when, and to what extent. */
+export interface RulePackReview {
+  /** Named individual and credential. Never a team, never a system. */
+  reviewedBy: string | null;
+  /** ISO timestamp of the sign-off. */
+  reviewedAt: string | null;
+  /** What the reviewer actually attested to — rarely "everything". */
+  reviewScope: string | null;
+}
+
 export interface RulePackProvenance {
   sourceBasis: RulePackSourceBasis;
   confidence: RulePackConfidence;
@@ -62,6 +84,9 @@ export interface RulePackProvenance {
   governingRule: string | null;
   /** What specifically is not settled about this outline. */
   uncertainties: string | null;
+  /** Whether the sign-off, if any, still covers the tree on screen. */
+  reviewState: RulePackReviewState;
+  review: RulePackReview;
 }
 
 const SOURCE_BASIS_VALUES: readonly RulePackSourceBasis[] = [
@@ -88,7 +113,15 @@ export const UNDECLARED_PROVENANCE: Readonly<RulePackProvenance> = Object.freeze
   reviewStatus: 'unreviewed',
   governingRule: null,
   uncertainties: null,
+  reviewState: 'unreviewed',
+  review: Object.freeze({ reviewedBy: null, reviewedAt: null, reviewScope: null }),
 });
+
+const REVIEW_STATES: readonly RulePackReviewState[] = [
+  'unreviewed',
+  'reviewed_current',
+  'reviewed_but_changed',
+];
 
 function oneOf<T extends string>(values: readonly T[], raw: unknown, fallback: T): T {
   return typeof raw === 'string' && (values as readonly string[]).includes(raw) ? (raw as T) : fallback;
@@ -113,12 +146,50 @@ export function normalizeRulePackProvenance(raw: unknown): RulePackProvenance {
   const r = raw as Record<string, unknown>;
   const pick = (snake: string, camel: string) => (r[snake] !== undefined ? r[snake] : r[camel]);
 
+  const reviewStatus = oneOf(REVIEW_STATUS_VALUES, pick('review_status', 'reviewStatus'), 'unreviewed');
+
+  // Postgres returns the attribution as flat columns; this function emits it
+  // nested under `review`. Both shapes have to be readable, because the client
+  // re-normalises what the server already normalised — deliberately, so an
+  // older server that omits these fields still yields a safe value. Reading
+  // only the flat form would make that second pass silently drop the reviewer's
+  // name, turning a named sign-off into an anonymous one on its way to screen.
+  const nested = (r.review && typeof r.review === 'object' ? r.review : {}) as Record<string, unknown>;
+  const reviewPick = (snake: string, camel: string) => {
+    const top = pick(snake, camel);
+    return top !== undefined && top !== null ? top : nested[camel];
+  };
+  const review: RulePackReview = {
+    reviewedBy: text(reviewPick('reviewed_by', 'reviewedBy')),
+    reviewedAt: text(reviewPick('reviewed_at', 'reviewedAt')),
+    reviewScope: text(reviewPick('review_scope', 'reviewScope')),
+  };
+
+  // The database's own view is preferred when present, because only it can
+  // compare the stored digest against the current tree. Absent that — an older
+  // server, or a payload re-normalised on the client — a claimed 'reviewed'
+  // with no named reviewer is downgraded rather than believed: the CHECK that
+  // makes attribution mandatory lives in a migration a given database may not
+  // have taken, so the value alone is not evidence.
+  const declaredState = oneOf(REVIEW_STATES, pick('effective_review_state', 'reviewState'), null as never);
+  let reviewState: RulePackReviewState;
+  if (declaredState) reviewState = declaredState;
+  else if (reviewStatus === 'reviewed' && review.reviewedBy) reviewState = 'reviewed_current';
+  else reviewState = 'unreviewed';
+
   return {
     sourceBasis: oneOf(SOURCE_BASIS_VALUES, pick('source_basis', 'sourceBasis'), 'undeclared'),
     confidence: oneOf(CONFIDENCE_VALUES, pick('confidence', 'confidence'), 'unknown'),
-    reviewStatus: oneOf(REVIEW_STATUS_VALUES, pick('review_status', 'reviewStatus'), 'unreviewed'),
+    // An unattributed sign-off is not a sign-off. Reported as unreviewed rather
+    // than passed through, so a row written before the attribution CHECK
+    // existed cannot present as approved.
+    reviewStatus: reviewState === 'unreviewed' ? 'unreviewed' : reviewStatus,
     governingRule: text(pick('governing_rule', 'governingRule')),
     uncertainties: text(pick('uncertainties', 'uncertainties')),
+    reviewState,
+    review: reviewState === 'unreviewed'
+      ? { reviewedBy: null, reviewedAt: null, reviewScope: null }
+      : review,
   };
 }
 
@@ -171,10 +242,15 @@ const BASIS_DETAIL: Record<RulePackSourceBasis, string> = {
  * are different claims and only the first is being made here.
  */
 export function describeRulePackProvenance(p: RulePackProvenance): RulePackProvenanceSummary {
-  const reviewed = p.reviewStatus === 'reviewed';
+  const reviewed = p.reviewState === 'reviewed_current';
+  const drifted = p.reviewState === 'reviewed_but_changed';
 
   let tone: RulePackProvenanceTone;
   if (reviewed) tone = 'ok';
+  // Drift is toned 'err', not 'warn'. A stale sign-off is more dangerous than
+  // an absent one: the reader has a name and a date in front of them and no
+  // reason to doubt it, which is exactly when they stop checking.
+  else if (drifted) tone = 'err';
   else if (p.sourceBasis === 'undeclared') tone = 'err';
   else if (p.sourceBasis === 'reasoned_construction') tone = 'warn';
   else tone = 'idle';
@@ -182,15 +258,28 @@ export function describeRulePackProvenance(p: RulePackProvenance): RulePackProve
   const parts = [BASIS_DETAIL[p.sourceBasis]];
   if (p.governingRule) parts.push(`Governing rule: ${p.governingRule}.`);
   if (p.uncertainties) parts.push(p.uncertainties);
-  if (!reviewed) {
+
+  if (reviewed) {
+    const who = p.review.reviewedBy ?? 'a regulatory professional';
+    const when = p.review.reviewedAt ? ` on ${p.review.reviewedAt.slice(0, 10)}` : '';
+    parts.push(`Reviewed by ${who}${when}.`);
+    if (p.review.reviewScope) parts.push(`Scope of that review: ${p.review.reviewScope}.`);
+  } else if (drifted) {
+    const who = p.review.reviewedBy ?? 'a reviewer';
+    const when = p.review.reviewedAt ? ` on ${p.review.reviewedAt.slice(0, 10)}` : '';
+    parts.push(
+      `This outline was reviewed by ${who}${when}, but its sections have changed since. ` +
+        'That sign-off does not cover what you are looking at.',
+    );
+  } else {
     parts.push('Not reviewed by a regulatory professional.');
   }
 
-  return {
-    headline: reviewed ? `${BASIS_HEADLINE[p.sourceBasis]} · reviewed` : BASIS_HEADLINE[p.sourceBasis],
-    detail: parts.join(' '),
-    tone,
-  };
+  let headline = BASIS_HEADLINE[p.sourceBasis];
+  if (reviewed) headline = `${headline} · reviewed`;
+  else if (drifted) headline = 'Review out of date';
+
+  return { headline, detail: parts.join(' '), tone };
 }
 
 /**
@@ -211,13 +300,36 @@ export function rulePackProvenanceSelectSql(alias: string): string {
   if (!/^[a-z_][a-z0-9_]*$/i.test(alias)) {
     throw new Error(`rulePackProvenanceSelectSql: unsafe alias ${JSON.stringify(alias)}`);
   }
-  return [
+  const cols = [
     'source_basis',
     'confidence',
     'review_status',
     'governing_rule',
     'uncertainties',
+    'reviewed_by',
+    'reviewed_at',
+    'review_scope',
   ]
-    .map((col) => `to_jsonb(${alias}) ->> '${col}' AS ${col}`)
-    .join(',\n              ');
+    .map((col) => `to_jsonb(${alias}) ->> '${col}' AS ${col}`);
+
+  // Derived in SQL rather than read from a column, because the answer depends
+  // on comparing the digest stored at review time against the tree as it is
+  // NOW — which no stored column can stay correct about. Falls back to
+  // 'unreviewed' on a database that has not taken 20260810d, where both
+  // operands are absent and the review therefore cannot be substantiated.
+  cols.push(
+    `CASE\n` +
+      `                WHEN to_jsonb(${alias}) ->> 'review_status' IS DISTINCT FROM 'reviewed' THEN 'unreviewed'\n` +
+      // Must stay byte-identical to c2c_rule_pack_sections_digest() in
+      // migration 20260810d — including the COALESCE. If the two ever disagree
+      // about what was hashed, the view and this route would report different
+      // review states for the same row, and the quieter one would be believed.
+      `                WHEN to_jsonb(${alias}) ->> 'reviewed_sections_sha' IS NOT DISTINCT FROM\n` +
+      `                     encode(sha256(convert_to(COALESCE(${alias}.required_sections, '[]'::jsonb)::text, 'UTF8')), 'hex')\n` +
+      `                     THEN 'reviewed_current'\n` +
+      `                ELSE 'reviewed_but_changed'\n` +
+      `              END AS effective_review_state`,
+  );
+
+  return cols.join(',\n              ');
 }
