@@ -24,6 +24,27 @@
 -- client/src/concept2cure/v2/routing.ts), which is unique by construction, so
 -- the six-modules-one-path collision is now structurally impossible.
 --
+-- COMPLIANCE CONTROLS ARE NOT LICENSABLE. Two of the 86 apps the shell presents
+-- are deliberately NOT seeded into the catalog: 'audit-trail' and
+-- 'part11-console'. A catalog row is an entitlement toggle, and 21 CFR
+-- §11.10(e) requires a secure, computer-generated, time-stamped audit trail
+-- that users cannot switch off; the Part 11 console is how that compliance is
+-- evidenced. Neither may become something an organization can be sold without,
+-- or an admin can disable. `requireModule()` gates no route today, so a toggle
+-- would be cosmetic for now — but shipping a switch labelled "Audit trail" into
+-- an admin console is itself an audit finding, and the entitlement plumbing is
+-- the wrong place to discover that later.
+--
+-- Not seeding them does NOT remove the apps: both remain in the shell and fully
+-- reachable. It only means no entitlement row exists to gate them, so they are
+-- unconditionally available. They stay in the step-1 protected list below so a
+-- row added by some other path is never retired either.
+--
+-- The line drawn is "is this the mechanism by which Part 11 compliance is
+-- recorded or evidenced?". 'identity-console' (enterprise SSO / SCIM) is a
+-- genuine commercial add-on and IS seeded; 'qmp' and 'report-governance' are
+-- product features rather than the audit record itself, and are also seeded.
+--
 -- ENTITLEMENTS ARE NOT INVENTED. Every module is seeded UNRESTRICTED —
 -- metadata {"tiers": [], "industries": []} — which license-manager reads as
 -- available to every tier and every industry, and which getModuleCatalog
@@ -230,12 +251,10 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('submission-center', 'Submission Center', 'Framework-agnostic workspace map + error catalog already in shared. Package preview, eValidator pass, ESG send vs eSTAR export picker. See SUBMISSION_CENTER_API.md.', 'Submit & file', '/concept2cure/submission-center', 'rocket', 390, '{"tiers": [], "industries": []}'::json),
   ('submission-twin', 'Submission Twin', 'Living submission intelligence — readiness/fragility, narrative-drift alerts, simulated reviewer challenges, change-impact, keyed on a numeric package id (/api/submission-twin).', 'Submit & file', '/concept2cure/submission-twin', 'layers', 400, '{"tiers": [], "industries": []}'::json),
   ('agency-meetings', 'Agency meetings', 'Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice. Briefing book document + questions, minutes + commitments back to the dossier.', 'Review & govern', '/concept2cure/agency-meetings', 'users', 410, '{"tiers": [], "industries": []}'::json),
-  ('audit-trail', 'Audit trail', 'Log entries, filters, signed PDF export. Immutable-history visual per regulatory-compliance-ux.', 'Review & govern', '/concept2cure/audit-trail', 'scroll', 420, '{"tiers": [], "industries": []}'::json),
   ('device-tasks', 'Device submission workload', 'The submission-ops workload slice. Deliberately NOT called "Tasks" — task-board is the task board, and two rail entries with the same name is the defect this convergence removed.', 'Review & govern', '/concept2cure/device-tasks', 'clipboardList', 430, '{"tiers": [], "industries": []}'::json),
   ('dispatch-readiness', 'Dispatch readiness', 'The proven, deterministic last gate before transmit (dispatch-gate.ts). Composes structural validation + unacknowledged Shadow Review criticals + external eValidator; a client cannot talk it down (every input server-computed). Flags the cleared-but-never-reviewed blind spot. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.', 'Review & govern', '/concept2cure/dispatch-readiness', 'send', 440, '{"tiers": [], "industries": []}'::json),
   ('identity-console', 'Enterprise identity (SSO / SCIM)', 'SCIM provisioning tokens (issue-once/rotate/enable/revoke, §11.10(d) hash-only storage), SCIM IP allowlist, and the live SAML endpoint references for IdP configuration.', 'Review & govern', '/concept2cure/identity-console', 'lock', 450, '{"tiers": [], "industries": []}'::json),
   ('orchestration', 'Orchestration & readiness', 'Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.', 'Review & govern', '/concept2cure/orchestration', 'workflow', 460, '{"tiers": [], "industries": []}'::json),
-  ('part11-console', '21 CFR Part 11 console', 'Read-only compliance console: audit hash-chain integrity, §11.10 control status, SOC 2 control grid (/api/part11).', 'Review & govern', '/concept2cure/part11-console', 'lock', 470, '{"tiers": [], "industries": []}'::json),
   ('qmp', 'Quality management plans', 'Quality-management plan lifecycle (list/create/activate) + completeness/gate-level/risk-factor dashboard (/api/quality).', 'Review & govern', '/concept2cure/qmp', 'shieldCheck', 480, '{"tiers": [], "industries": []}'::json),
   ('quality', 'Quality & Assurance', 'Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records). Backed by /api/mdx/qms/*.', 'Review & govern', '/concept2cure/quality', 'shieldCheck', 490, '{"tiers": [], "industries": []}'::json),
   ('report-governance', 'Report governance', 'Sealed-report lifecycle: list, cryptographic integrity verify, provenance/attestation counts, seal and revoke with justification (/api/intelligent-reports).', 'Review & govern', '/concept2cure/report-governance', 'scroll', 500, '{"tiers": [], "industries": []}'::json),

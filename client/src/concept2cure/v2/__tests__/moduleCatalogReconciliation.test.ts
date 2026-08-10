@@ -30,6 +30,22 @@ const MIGRATION = path.resolve(
   '../../../../../db/migrations/20260810_reconcile_module_catalog.sql',
 );
 
+/**
+ * Apps that must never become entitlement-gated.
+ *
+ * A catalog row IS an entitlement toggle. 21 CFR §11.10(e) requires a secure,
+ * computer-generated, time-stamped audit trail that users cannot switch off,
+ * and the Part 11 console is how that compliance is evidenced — so neither may
+ * be something an organization can be sold without, or an admin can disable.
+ * They stay in the shell and fully reachable; they simply have no catalog row,
+ * so nothing can gate them.
+ *
+ * The line is "is this the mechanism by which Part 11 compliance is recorded or
+ * evidenced?" — 'identity-console' (enterprise SSO/SCIM) is a real commercial
+ * add-on, and 'qmp' / 'report-governance' are features, so all three ARE seeded.
+ */
+const NEVER_LICENSABLE = new Set(['audit-trail', 'part11-console']);
+
 /** Every app id the shell presents to a user, across every segment. */
 function shellAppIds(): Set<string> {
   const ids = new Set<string>();
@@ -60,8 +76,18 @@ describe('Apps catalog ↔ shell taxonomy', () => {
   const seeded = seededModuleIds(sql);
   const shell = shellAppIds();
 
-  it('seeds one catalog row per app the shell actually presents', () => {
-    expect(new Set(seeded)).toEqual(shell);
+  it('seeds one catalog row per app the shell presents, minus the compliance controls', () => {
+    const expected = new Set([...shell].filter((id) => !NEVER_LICENSABLE.has(id)));
+    expect(new Set(seeded)).toEqual(expected);
+  });
+
+  it('never makes a Part 11 compliance control licensable', () => {
+    // Regression guard for the real hazard: regenerating this seed straight from
+    // the shell's app list would silently re-introduce an "Audit trail" toggle.
+    for (const id of NEVER_LICENSABLE) {
+      expect(shell.has(id), `${id} should still be a real shell app`).toBe(true);
+      expect(seeded, `${id} must not be entitlement-gated`).not.toContain(id);
+    }
   });
 
   it('seeds no duplicate module ids (module_id is UNIQUE)', () => {
