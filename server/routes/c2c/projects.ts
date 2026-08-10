@@ -116,6 +116,54 @@ async function loadProgramForAuthz(
 }
 
 /**
+ * Write one hash-chained domain audit row for a program mutation.
+ *
+ * Takes the querier rather than reaching for the pool, so a caller inside a
+ * transaction passes its client and the audit row commits or rolls back with
+ * the change it describes. A mutation that left no audit trace is not a record
+ * a regulated tenant can defend.
+ *
+ * This is deliberately separate from the global tamper-proof interceptor in
+ * startup/audit-trail.ts. That one writes `audit.tamper_proof_log`; this writes
+ * `audit_logs`, the table GET /:id/activity reads — which is why that feed was
+ * empty for every project ever touched here. Columns and the seal follow the
+ * canonical write in services/auditService.ts.
+ */
+async function writeProgramAudit(
+  q: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  input: {
+    orgId: number;
+    userId: number | null;
+    programId: string;
+    action: string;
+    details: Record<string, unknown>;
+  },
+): Promise<void> {
+  const occurredAt = new Date().toISOString();
+  const target = `regulatory_program:${input.programId}`;
+  const payloadHash = hashPayload(input.details);
+  const { sha256Chain, hmacSeal } = await computeAuditChainSealed(q as never, {
+    action: input.action,
+    actor_id: input.userId,
+    target,
+    payload_hash: payloadHash,
+    occurred_at: occurredAt,
+  });
+  await q.query(
+    `INSERT INTO audit_logs
+       (id, tenant_id, user_id, action, table_name, record_id, actor_id, target,
+        target_type, target_id, payload_hash, sha256_chain, occurred_at, hmac_seal,
+        new_values)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::json)`,
+    [
+      randomUUID(), input.orgId, input.userId, input.action, 'regulatory_programs',
+      input.programId, input.userId, target, 'regulatory_program', input.programId,
+      payloadHash, sha256Chain, occurredAt, hmacSeal, JSON.stringify(input.details),
+    ],
+  );
+}
+
+/**
  * Authorize a MUTATING program route. Returns true when the handler may
  * continue; when it returns false the 403 has already been sent.
  *
@@ -213,6 +261,10 @@ router.get('/', async (req: Request, res: Response) => {
 
   const limit = boundedInt((req.query as any).limit, 50, 1, 200);
   const offset = boundedInt((req.query as any).offset, 0, 0, Number.MAX_SAFE_INTEGER);
+  // Archived programs are closed out, not deleted — they stay retrievable, but
+  // a portfolio that keeps showing finished submissions beside live ones is the
+  // reason nobody archives anything.
+  const includeArchived = String((req.query as any).includeArchived ?? '') === 'true';
 
   try {
     // Fetch one row beyond the page so hasMore is a fact, not a second COUNT(*)
@@ -232,9 +284,10 @@ router.get('/', async (req: Request, res: Response) => {
          FROM regulatory_programs p
          LEFT JOIN users u ON u.id = p.lead_user_id
         WHERE p.organization_id = $1 AND p.deleted_at IS NULL
+          AND ($4::boolean OR p.status <> 'archived')
         ORDER BY p.updated_at DESC
         LIMIT $2 OFFSET $3`,
-      [orgId, limit + 1, offset],
+      [orgId, limit + 1, offset, includeArchived],
     );
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -394,37 +447,19 @@ router.post('/', async (req: Request, res: Response) => {
       // the audit_logs table GET /:id/activity reads — which is why that feed
       // was empty for every project ever created here. Columns and the
       // hash-chain seal follow the canonical write in services/auditService.ts.
-      const occurredAt = new Date().toISOString();
-      const target = `regulatory_program:${newId}`;
-      const auditDetails = {
-        project_id: newId,
-        name,
-        code: createdCode,
-        program_type: programType,
-        product_type: productType,
-        primary_agency: primaryAgency,
-        created_via: 'v2-new-project-wizard',
-      };
-      const payloadHash = hashPayload(auditDetails);
-      const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client, {
+      await writeProgramAudit(client, {
+        orgId, userId, programId: newId,
         action: 'c2c.project.create',
-        actor_id: userId,
-        target,
-        payload_hash: payloadHash,
-        occurred_at: occurredAt,
+        details: {
+          project_id: newId,
+          name,
+          code: createdCode,
+          program_type: programType,
+          product_type: productType,
+          primary_agency: primaryAgency,
+          created_via: 'v2-new-project-wizard',
+        },
       });
-      await client.query(
-        `INSERT INTO audit_logs
-           (id, tenant_id, user_id, action, table_name, record_id, actor_id, target,
-            target_type, target_id, payload_hash, sha256_chain, occurred_at, hmac_seal,
-            new_values)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::json)`,
-        [
-          randomUUID(), orgId, userId, 'c2c.project.create', 'regulatory_programs', newId,
-          userId, target, 'regulatory_program', newId, payloadHash, sha256Chain, occurredAt,
-          hmacSeal, JSON.stringify(auditDetails),
-        ],
-      );
 
       await client.query('COMMIT');
     } catch (e) {
@@ -1080,6 +1115,120 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
     console.error('[c2c/projects] GET /:id/source-changes', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
+});
+
+// ── Close-out: archive / unarchive / soft-delete ──────────────────────────────
+//
+// A program had no end state. It could be created and worked, never closed —
+// so a tenant's portfolio only ever grew, finished submissions sat beside live
+// ones, and the licensed seat a finished program held could never be released.
+// `regulatory_programs` already carried the vocabulary for this (a `status`
+// including 'archived', an indexed column, and `deleted_at`); nothing wrote it.
+//
+// Archive is reversible and keeps the record. Delete is a soft delete: the row
+// stays for the audit trail and for any submission that references it, and only
+// stops being listed. Neither is a hard DELETE — a regulated tenant does not get
+// to make a program disappear, and the audit rows below would dangle if it did.
+
+/** Shared close-out body: authorize, mutate, audit, in one transaction. */
+async function transitionProgram(
+  req: Request,
+  res: Response,
+  opts: {
+    action: string;
+    /** SQL SET clause; $1 is the program id, $2 the org id. */
+    set: string;
+    /** Extra guard on the current row, e.g. only archive something not archived. */
+    precondition?: (row: { status: string; deleted_at: string | null }) => string | null;
+    details: (row: { status: string }) => Record<string, unknown>;
+  },
+): Promise<void> {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!userId || !orgId) { send403(res); return; }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Row-level lock: two concurrent close-outs would otherwise both read the
+    // old status and both write an audit row claiming they made the change.
+    const { rows } = await client.query(
+      `SELECT lead_user_id, status, deleted_at FROM regulatory_programs
+        WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+      [req.params.id, orgId],
+    );
+    if (rows.length === 0) { await client.query('ROLLBACK'); send404(res); return; }
+
+    const row = rows[0] as { lead_user_id: number | null; status: string; deleted_at: string | null };
+    if (!allowProgramMutation(req, res, { leadUserId: row.lead_user_id == null ? null : Number(row.lead_user_id) }, opts.action)) {
+      await client.query('ROLLBACK');
+      return;
+    }
+
+    const blocked = opts.precondition?.(row);
+    if (blocked) { await client.query('ROLLBACK'); send400(res, blocked); return; }
+
+    await client.query(
+      `UPDATE regulatory_programs SET ${opts.set}, updated_at = now()
+        WHERE id = $1 AND organization_id = $2`,
+      [req.params.id, orgId],
+    );
+    await writeProgramAudit(client, {
+      orgId, userId, programId: String(req.params.id),
+      action: opts.action,
+      details: opts.details(row),
+    });
+
+    await client.query('COMMIT');
+    res.json({ ok: true, projectId: String(req.params.id) });
+  } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => {});
+    if ((err as { code?: string })?.code === '42P01') {
+      res.status(503).json({ error: 'PENDING_STORE' });
+      return;
+    }
+    console.error(`[c2c/projects] ${opts.action}`, err);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  } finally {
+    client.release();
+  }
+}
+
+router.post('/:id/archive', async (req: Request, res: Response) => {
+  await transitionProgram(req, res, {
+    action: 'c2c.project.archive',
+    set: `status = 'archived'`,
+    precondition: (row) =>
+      row.deleted_at ? 'This program is deleted and cannot be archived.'
+      : row.status === 'archived' ? 'This program is already archived.'
+      : null,
+    details: (row) => ({ from_status: row.status, to_status: 'archived' }),
+  });
+});
+
+router.post('/:id/unarchive', async (req: Request, res: Response) => {
+  await transitionProgram(req, res, {
+    action: 'c2c.project.unarchive',
+    // Restores to 'active' rather than to whatever it was before: the prior
+    // status is not recorded on the row, and reconstructing it from the audit
+    // trail to pick a resume point would be guessing at intent.
+    set: `status = 'active'`,
+    precondition: (row) =>
+      row.deleted_at ? 'This program is deleted and cannot be unarchived.'
+      : row.status !== 'archived' ? 'This program is not archived.'
+      : null,
+    details: (row) => ({ from_status: row.status, to_status: 'active' }),
+  });
+});
+
+router.delete('/:id', async (req: Request, res: Response) => {
+  await transitionProgram(req, res, {
+    action: 'c2c.project.delete',
+    set: `deleted_at = now()`,
+    precondition: (row) => (row.deleted_at ? 'This program is already deleted.' : null),
+    details: (row) => ({ from_status: row.status, soft_delete: true }),
+  });
 });
 
 export default router;

@@ -49,6 +49,9 @@ describe('checkProgramQuota', () => {
     await checkProgramQuota(7);
     const counted = query.mock.calls.map((c) => String(c[0])).join('\n');
     expect(counted).toContain('deleted_at IS NULL');
+    // Archiving has to release a seat, because the refusal this count produces
+    // tells the user to archive something.
+    expect(counted).toContain("status <> 'archived'");
   });
 
   it('scopes both statements to the organization', async () => {

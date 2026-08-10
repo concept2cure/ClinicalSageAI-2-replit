@@ -480,8 +480,12 @@ export async function checkProgramQuota(organizationId: number): Promise<{
     const [licenseResult, countResult] = await Promise.all([
       pool.query(`SELECT max_projects FROM organizations WHERE id = $1`, [organizationId]),
       pool.query(
+        // Archived and soft-deleted programs do not hold a seat. The refusal
+        // this count produces tells the user to "archive a program or raise the
+        // plan limit", so archiving has to actually release one — otherwise the
+        // error names a remedy that does nothing.
         `SELECT COUNT(*)::int AS cnt FROM regulatory_programs
-          WHERE organization_id = $1 AND deleted_at IS NULL`,
+          WHERE organization_id = $1 AND deleted_at IS NULL AND status <> 'archived'`,
         [organizationId]
       ),
     ]);
