@@ -18,6 +18,10 @@ import { createScopedLogger } from '../utils/logger';
 // editing layer over it. This resolves which governed document an authored
 // document belongs to. See server/services/c2c/governed-document-binding.ts.
 import { resolveGovernedDocument } from '../services/c2c/governed-document-binding.js';
+import {
+  commitSectionToFiling,
+  type CommitSectionResult,
+} from '../services/c2c/commit-section-to-filing.js';
 // Span lineage: every span of an authored document must trace to where it came
 // from. The gate is factored into one helper so every authored-content write
 // (interactive save AND section create) applies the identical rule.
@@ -1657,6 +1661,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     // both helpers, which is a wider change than this gate needs.
     const client = await pool.connect();
     let result: { rows: any[] };
+    // Whether the text reached the filing, and when it did not, why. Reported
+    // on the response rather than dropped: an unbound save is legitimate, a
+    // silently unbound one is how the two stores drifted apart.
+    let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
       result = await client.query(updateQuery, values);
@@ -1674,6 +1682,31 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
         content,
         updatedByUser,
       );
+
+      // ── Commit the working copy into the filing ─────────────────────────────
+      // c2c_documents is the system of record; this store is the editing layer
+      // over it. Until now the editor most people use wrote only here, so the
+      // store that decides what the filing CONTAINS never saw the text anyone
+      // actually wrote — readiness never moved, and the Part 11 version ledger
+      // recorded nothing.
+      //
+      // In THIS transaction on purpose: the filing and the working copy move
+      // together or neither does, exactly like the lineage gate above. A throw
+      // rolls both back and the caller is told.
+      //
+      // Only when content changed, and only when the document is bound. An
+      // unbound document behaves exactly as it did, and nothing is created in
+      // the governed outline — that comes from the rule pack.
+      if (content !== undefined) {
+        governedCommit = await commitSectionToFiling({
+          client,
+          sectionId: String(sectionId),
+          content: String(content ?? ''),
+          actorId: String(updatedByUser),
+          tenantId,
+          reason: typeof req.body?.changeReason === 'string' ? req.body.changeReason : undefined,
+        });
+      }
 
       await client.query('COMMIT');
     } catch (err) {
@@ -1731,6 +1764,15 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       section: result.rows[0],
       message: 'Section updated successfully',
       revision_created: content !== undefined,
+      // Whether the text reached the filing. Present on every content save:
+      // an unbound save is legitimate, a silently unbound one is the drift.
+      ...(governedCommit
+        ? {
+            filing: governedCommit.committed
+              ? { committed: true, documentId: governedCommit.documentId, sectionKey: governedCommit.sectionKey }
+              : { committed: false, reason: governedCommit.reason },
+          }
+        : {}),
     });
   } catch (error) {
     console.error('Error updating section:', error);
