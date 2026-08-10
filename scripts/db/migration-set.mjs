@@ -392,6 +392,13 @@ export const C2C_MIGRATION_FILES = [
   // Work items: source_ref for string/UUID-keyed sources (correspondence
   // issues), so those rows stop sharing the (source_type, source_id=0) key.
   'migrations/20260730_work_item_source_ref.sql',
+  // C2C work items source uniqueness: enforce dedup key via constraint.
+  // upsertProjectWorkItem uses read-then-write (SELECT then INSERT/UPDATE),
+  // which is racy: concurrent requests can both see no row, both try to INSERT,
+  // and one fails. A unique constraint on (org_id, source_type, source_id)
+  // prevents both rows from landing and lets the code switch to INSERT ... ON
+  // CONFLICT for atomicity. Self-guarding: errors if duplicates exist.
+  'db/migrations/20260810_c2c_work_items_source_uniqueness.sql',
 
   // ── Deploy-dead creators, wired (ledger C-32) ────────────────────────────
   // Five files that CREATE tables live server code queries, but that sat on no
