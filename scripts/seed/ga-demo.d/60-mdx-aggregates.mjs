@@ -100,6 +100,12 @@ async function columnSet(client, table) {
   return new Set(rows.map((r) => r.column_name));
 }
 
+/* Resolve a user id for program leadership; fall back to admin. */
+async function resolveUserId(client, email, admin) {
+  const { rows } = await client.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
+  return rows[0]?.id ?? admin.id;
+}
+
 /* Run one part inside a SAVEPOINT so a failed statement (schema drift, an
    unexpected NOT NULL) rolls back only that part rather than aborting the
    orchestrator's whole transaction (Postgres 25P02). Returns the fn result,
@@ -145,11 +151,12 @@ const PROGRAMS = [
     status: 'complete',  phase: 'cleared',     priority: 'low',    submittedMonthsAgo: 5,    approvedMonthsAgo: 4 },
 ];
 
-async function seedPrograms(client, org) {
+async function seedPrograms(client, org, admin) {
   if (!(await tableExists(client, 'regulatory_programs'))) {
     console.log('   ⚠ regulatory_programs not found — skipping (portfolio/pace/program scoping will be empty)');
     return 0;
   }
+  const leadUserId = await resolveUserId(client, 'admin@concept2cure.pro', admin);
   let inserted = 0;
   for (const p of PROGRAMS) {
     const found = await client.query(
@@ -162,19 +169,19 @@ async function seedPrograms(client, org) {
         `INSERT INTO regulatory_programs (
            id, organization_id, name, code, description, program_type, product_type,
            device_class, regulatory_path, primary_agency, product_name, status, phase, priority,
-           actual_submission_date, approval_date, created_at, updated_at
+           actual_submission_date, approval_date, created_at, updated_at, lead_user_id
          ) VALUES (
            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
            CASE WHEN $15::int IS NULL THEN NULL ELSE NOW() - ($15 * interval '1 month') END,
            CASE WHEN $16::int IS NULL THEN NULL ELSE NOW() - ($16 * interval '1 month') END,
-           NOW(), NOW()
+           NOW(), NOW(), $17
          )
          ON CONFLICT DO NOTHING`,
         [
           p.id, org.id, p.name, p.code,
           `${p.name} — Concept2Cure demo program.`,
           p.programType, p.productType, p.deviceClass, p.path, p.agency, p.productName,
-          p.status, p.phase, p.priority, p.submittedMonthsAgo, p.approvedMonthsAgo,
+          p.status, p.phase, p.priority, p.submittedMonthsAgo, p.approvedMonthsAgo, leadUserId,
         ],
       );
       return true;
@@ -663,7 +670,7 @@ async function seedIvdrLegacyDetail(client, org, classIds) {
 /* ─── entrypoint ────────────────────────────────────────────────────────── */
 
 export default async function seed(client, { org, admin }) {
-  await seedPrograms(client, org);
+  await seedPrograms(client, org, admin);
   await seedSections(client, org, admin);
 
   const projectId = await resolveProjectId(client, org);

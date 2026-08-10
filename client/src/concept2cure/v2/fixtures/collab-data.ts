@@ -142,7 +142,12 @@ export const CL_TYPE: Record<string, string> = {
 
 /* ── Priority levels ── */
 
-export const CL_PRI: string[] = ['low', 'medium', 'high', 'urgent', 'critical'];
+/* Exactly the priorities the server accepts. createTaskSchema
+   (server/routes/taskManagement.routes.ts) validates priority against
+   z.enum(['low','medium','high','critical']), so the 'urgent' option this list
+   used to carry was a guaranteed HTTP 400 — the task simply failed to create
+   for anyone who chose it. Keep this in step with that enum. */
+export const CL_PRI: string[] = ['low', 'medium', 'high', 'critical'];
 
 /* ── Re-exports for consumer convenience ── */
 

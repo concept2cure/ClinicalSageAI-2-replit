@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-10T04:20:03.768Z",
+  "generatedAt": "2026-08-10T05:12:03.285Z",
   "git": {
-    "sha": "02a8f85086e0b77583fc8a72bf3055ab1facf8f2",
+    "sha": "eda4efe5bc87b4d6520514c661f7618dc3d01550",
     "branch": "claude/ana-transparency-audit-ceryhv"
   },
   "thresholds": {
@@ -2161,7 +2161,7 @@
       },
       {
         "file": "server/storage.ts",
-        "bytes": 142368
+        "bytes": 145493
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2287,7 +2287,7 @@
       },
       {
         "file": "server/storage.ts",
-        "lines": 4397
+        "lines": 4454
       },
       {
         "file": "server/services/intelligent-report-engine.ts",

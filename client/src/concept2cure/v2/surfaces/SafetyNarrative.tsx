@@ -322,15 +322,34 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
             )}
           </div>
 
+          {/* These two hand off to AnA and the Submission Center. They do NOT
+              themselves transmit or file anything, and are now labelled for what
+              they do.
+
+              The first read "Transmit as E2B ICSR" while its handler only
+              navigated and typed a sentence into the assistant. E2B(R3) ICSR
+              submission is a statutory safety-reporting obligation on an
+              expedited clock — the same clock this surface displays — so a
+              control that implies a case was transmitted when nothing left the
+              building is the most consequential mislabel on the surface.
+
+              It is not wired to POST /api/pharmacovigilance/icsr/generate,
+              despite that route being real and mounted, for two reasons: it
+              GENERATES an E2B document, it does not transmit one, so it would not
+              make this button's old promise true either; and it keys on an
+              `adverseEventId` from the pharmacovigilance store, whereas these
+              rows come from /api/safety-narratives/cases and carry case ids. The
+              two stores are not the same records, and guessing that they are is
+              how a safety report gets filed against the wrong case. */}
           <div className="sn-hand">
             <button className="sn-hb" onClick={() => {
               onNav('submission-center');
-              ask('Transmit ' + sel.id + ' as an E2B(R3) ICSR to the FDA gateway.');
+              ask('Prepare ' + sel.id + ' for E2B(R3) ICSR transmission to the FDA gateway: confirm the case is complete, then walk me through filing it.');
             }}>
-              {I.send || I.rocket} Transmit as E2B ICSR
+              {I.send || I.rocket} Prepare E2B transmission with AnA
             </button>
             <button className="sn-hb alt" onClick={() => ask('Roll ' + sel.id + ' into the aggregate safety narrative (ICH E3 section 12) for ' + sel.studyId + '.')}>
-              {I.layers || I.fileText} Add to aggregate (section 12)
+              {I.layers || I.fileText} Draft aggregate entry (section 12)
             </button>
           </div>
         </div>

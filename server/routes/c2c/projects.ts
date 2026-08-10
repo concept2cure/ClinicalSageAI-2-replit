@@ -19,6 +19,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import type { PoolClient } from 'pg';
@@ -27,6 +28,15 @@ import {
   type ScaffoldResult,
 } from '../../services/c2c/scaffold-project-documents.js';
 import {
+  canCreateProgram,
+  canMutateProgram,
+  resolveProgramAuthzMode,
+  resolveProgramQuotaMode,
+} from '../../services/c2c/program-access.js';
+import { checkProgramQuota } from '../../services/license-manager.js';
+import { computeAuditChainSealed, hashPayload } from '../../services/audit/chain.js';
+import { createScopedLogger } from '../../utils/logger.js';
+import {
   foldersForView,
   docKindsForView,
   filingTypesForView,
@@ -34,6 +44,7 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 
 const router = Router();
+const logger = createScopedLogger('c2c-projects');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -53,6 +64,21 @@ function resolveOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function resolveOrgRole(req: Request): string | null {
+  const r = req as any;
+  const raw = r.userRole ?? r.user?.role;
+  return typeof raw === 'string' && raw ? raw : null;
+}
+
+/** Parse a ?limit/?offset value: anything non-numeric falls back to `fallback`,
+ *  and the result is clamped into [min, max] so a caller cannot ask for an
+ *  unbounded page (or a negative OFFSET, which Postgres rejects). */
+function boundedInt(raw: unknown, fallback: number, min: number, max: number): number {
+  const n = parseInt(String(raw ?? ''), 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(n, min), max);
+}
+
 function send400(res: Response, msg: string) {
   return res.status(400).json({ error: msg });
 }
@@ -66,6 +92,62 @@ function send404(res: Response) {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The org-scoped existence check every :id route runs, but returning the one
+ * column an authorization decision needs. `SELECT 1 … WHERE organization_id`
+ * only ever proved tenancy; the lead is what tells us whether THIS caller may
+ * change THIS program (see services/c2c/program-access.ts).
+ *
+ * Returns null when the program does not exist in the caller's org — callers
+ * must keep answering 404 for that, exactly as before, so the response never
+ * distinguishes "not yours" from "not there".
+ */
+async function loadProgramForAuthz(
+  programId: string,
+  orgId: number,
+): Promise<{ leadUserId: number | null } | null> {
+  const { rows } = await pool.query(
+    `SELECT lead_user_id FROM regulatory_programs
+      WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+    [programId, orgId],
+  );
+  if (rows.length === 0) return null;
+  const leadUserId = (rows[0] as { lead_user_id: number | null }).lead_user_id;
+  return { leadUserId: leadUserId == null ? null : Number(leadUserId) };
+}
+
+/**
+ * Authorize a MUTATING program route. Returns true when the handler may
+ * continue; when it returns false the 403 has already been sent.
+ *
+ * Warn mode logs the denial and continues, mirroring the rollout idiom in
+ * middleware/authBoundary.ts: a tenant whose programs predate lead_user_id
+ * being meaningful can soak the rule and see who it would have rejected before
+ * it starts rejecting them.
+ */
+function allowProgramMutation(
+  req: Request,
+  res: Response,
+  program: { leadUserId: number | null },
+  route: string,
+): boolean {
+  const userId = resolveUserId(req);
+  const orgRole = resolveOrgRole(req);
+  if (canMutateProgram({ actor: { userId, orgRole }, program })) return true;
+
+  if (resolveProgramAuthzMode() === 'enforce') {
+    send403(res);
+    return false;
+  }
+
+  logger.warn(
+    'Program mutation allowed without authorization (mode=warn). ' +
+      'This request would be rejected in enforce mode.',
+    { route, programId: String(req.params.id), userId, orgRole, leadUserId: program.leadUserId },
+  );
+  return true;
+}
 
 /** Present a program_type as the portfolio workstream bucket.
  *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
@@ -124,12 +206,26 @@ function baseCodeFrom(productName: string, name: string): string {
 // (progress_percent → readiness, phase → stage, target_submission_date → due,
 // lead_user_id → lead). Fails closed to an empty envelope when the store is
 // not provisioned.
+//
+// Paged: ?limit= (default 50, max 200) and ?offset=. The read previously had no
+// LIMIT at all, so one org with a few thousand programs serialized its entire
+// portfolio into a single response on every render of the Projects surface.
+// meta.count means rows in THIS response. No client currently reads `meta` at
+// all — dataConnect's unwrapEnvelope returns `obj.data` and discards the rest —
+// so limit/offset/hasMore are there for the paging control the portfolio still
+// needs, not for something already consuming them. See the truncation note on
+// the handler below.
 
 router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
+  const limit = boundedInt((req.query as any).limit, 50, 1, 200);
+  const offset = boundedInt((req.query as any).offset, 0, 0, Number.MAX_SAFE_INTEGER);
+
   try {
+    // Fetch one row beyond the page so hasMore is a fact, not a second COUNT(*)
+    // over the same predicate.
     const { rows } = await pool.query(
       `SELECT p.id::text                                            AS id,
               p.name                                                AS title,
@@ -145,13 +241,22 @@ router.get('/', async (req: Request, res: Response) => {
          FROM regulatory_programs p
          LEFT JOIN users u ON u.id = p.lead_user_id
         WHERE p.organization_id = $1 AND p.deleted_at IS NULL
-        ORDER BY p.updated_at DESC`,
-      [orgId],
+        ORDER BY p.updated_at DESC
+        LIMIT $2 OFFSET $3`,
+      [orgId, limit + 1, offset],
     );
-    return res.json({ data: rows, meta: { count: rows.length } });
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    return res.json({
+      data: page,
+      meta: { count: page.length, limit, offset, hasMore },
+    });
   } catch (err: unknown) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.json({ data: [], meta: { count: 0, pendingStore: true } });
+      return res.json({
+        data: [],
+        meta: { count: 0, limit, offset, hasMore: false, pendingStore: true },
+      });
     }
     console.error('[c2c/projects] GET /', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -173,7 +278,14 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
-  if (!orgId) return send403(res);
+  // Creation is a mutation like any other, and it was gated on org membership
+  // alone — the exact shape this router's other handlers were fixed for. A
+  // `viewer` could create a regulated program, have an audit row and a
+  // scaffolded document written under their name, consume a licensed seat, and
+  // become its lead_user_id — permanently authorized to mutate its evidence.
+  // An unidentified caller could too: userId was read but never required.
+  if (!orgId || !userId) return send403(res);
+  if (!canCreateProgram({ orgRole: resolveOrgRole(req) })) return send403(res);
 
   const body = (req.body ?? {}) as Record<string, unknown>;
   const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
@@ -202,6 +314,47 @@ router.post('/', async (req: Request, res: Response) => {
   if (!productType) productType = productTypeForProgram(programType);
   if (!VALID_PRODUCT_TYPES.has(productType)) {
     return send400(res, `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}`);
+  }
+
+  // Licensed program count. The org's `max_projects` entitlement was sold and
+  // billed but never checked on this path, so the wizard could create programs
+  // past the plan indefinitely.
+  //
+  // It ships in WARN mode on purpose, and that is the opposite call from the
+  // authorization gate above. This quota has never been enforced, and the
+  // default entitlement is 10 (migrations/0000_sweet_joseph.sql) — which is also
+  // exactly the standard tier. Flipping it straight to enforce would lock every
+  // tenant already at or over ten out of creating anything, retroactively, for a
+  // limit they have been silently exceeding with the product's blessing. The
+  // risk of a few days of unbilled capacity is smaller than the risk of blocking
+  // paying customers from working. Set PROGRAM_QUOTA_MODE=enforce once the
+  // tenant distribution has been checked and entitlements reconciled.
+  let quota;
+  try {
+    quota = await checkProgramQuota(orgId);
+  } catch (e) {
+    // 42P01 is an unprovisioned store, not a quota decision — keep the
+    // documented PENDING_STORE contract rather than reporting a missing table
+    // as a billing refusal.
+    if ((e as { code?: string })?.code === '42P01') {
+      return res.status(503).json({ error: 'PENDING_STORE' });
+    }
+    throw e;
+  }
+  if (!quota.withinQuota) {
+    if (resolveProgramQuotaMode() === 'enforce') {
+      return res.status(403).json({
+        error: 'QUOTA_EXCEEDED',
+        message:
+          `This organization has ${quota.currentCount} of ${quota.maxAllowed} licensed ` +
+          'programs. Archive a program or raise the plan limit to create another.',
+      });
+    }
+    logger.warn(
+      'Program quota exceeded but allowed (mode=warn). This create would be ' +
+        'refused in enforce mode.',
+      { orgId, currentCount: quota.currentCount, maxAllowed: quota.maxAllowed },
+    );
   }
 
   const targetAgencies = JSON.stringify([primaryAgency]);
@@ -238,6 +391,9 @@ router.post('/', async (req: Request, res: Response) => {
 
   const client = await pool.connect();
   let newId: string;
+  // The code actually persisted — `base`, or the disambiguated retry code. The
+  // audit row below records what was written, not what was first attempted.
+  let createdCode = base;
   let scaffold: ScaffoldResult = { documentId: null, sectionCount: 0 };
   try {
     try {
@@ -252,7 +408,8 @@ router.post('/', async (req: Request, res: Response) => {
         if ((e as { code?: string })?.code === '23505') {
           await client.query('ROLLBACK');
           await client.query('BEGIN');
-          created = await insert(client, `${base}-${Date.now().toString(36).slice(-4).toUpperCase()}`);
+          createdCode = `${base}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+          created = await insert(client, createdCode);
         } else {
           throw e;
         }
@@ -268,6 +425,48 @@ router.post('/', async (req: Request, res: Response) => {
         client, orgId, userId, projectId: newId,
         programType, primaryAgency, productName,
       });
+
+      // Domain audit row for the creation, in the SAME transaction as the
+      // insert: a created program that left no audit trace is not a record a
+      // regulated tenant can defend, and rolling back the program is the only
+      // honest outcome if its audit row cannot be written.
+      //
+      // The global tamper-proof interceptor (startup/audit-trail.ts) does NOT
+      // cover this: it writes audit.tamper_proof_log, a different store from
+      // the audit_logs table GET /:id/activity reads — which is why that feed
+      // was empty for every project ever created here. Columns and the
+      // hash-chain seal follow the canonical write in services/auditService.ts.
+      const occurredAt = new Date().toISOString();
+      const target = `regulatory_program:${newId}`;
+      const auditDetails = {
+        project_id: newId,
+        name,
+        code: createdCode,
+        program_type: programType,
+        product_type: productType,
+        primary_agency: primaryAgency,
+        created_via: 'v2-new-project-wizard',
+      };
+      const payloadHash = hashPayload(auditDetails);
+      const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client, {
+        action: 'c2c.project.create',
+        actor_id: userId,
+        target,
+        payload_hash: payloadHash,
+        occurred_at: occurredAt,
+      });
+      await client.query(
+        `INSERT INTO audit_logs
+           (id, tenant_id, user_id, action, table_name, record_id, actor_id, target,
+            target_type, target_id, payload_hash, sha256_chain, occurred_at, hmac_seal,
+            new_values)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::json)`,
+        [
+          randomUUID(), orgId, userId, 'c2c.project.create', 'regulatory_programs', newId,
+          userId, target, 'regulatory_program', newId, payloadHash, sha256Chain, occurredAt,
+          hmacSeal, JSON.stringify(auditDetails),
+        ],
+      );
 
       await client.query('COMMIT');
     } catch (e) {
@@ -441,39 +640,83 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
 
 // ── GET /api/c2c/projects/:id/team ───────────────────────────────────────────
 //
-// Reads from `project_members` (Phase PR#601 sharing migration).
+// The roster comes from `regulatory_programs` itself: lead_user_id resolved
+// against `users`, plus whatever the wizard stored in team_members.
+//
+// It used to read `project_members` — and could never return a row. That table
+// keys on project_id INTEGER (projects.id), while this surface's :id is a
+// regulatory_programs UUID, so the join raised 42883 (operator does not exist:
+// uuid = integer) on every request; it also selected pm.added_at, a column the
+// table does not have (it has created_at / accepted_at). Both errors landed in
+// a bare `catch { team: [] }`, so the panel rendered "no members" forever with
+// nothing logged. project_members cannot hold membership for a uuid-keyed
+// program at all, so the fix is to stop pretending it does.
+//
+// team_members entries are surfaced name-only with a null user_id: the create
+// handler stores bare strings there (it filters the wizard payload to
+// `typeof m === 'string'`), and a name is not an identity — inventing a user id
+// or an email to fill the shape would be fabricating a person.
 
 router.get('/:id/team', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+    const { rows } = await pool.query(
+      `SELECT p.lead_user_id, p.team_members, u.name, u.email
+         FROM regulatory_programs p
+         LEFT JOIN users u ON u.id = p.lead_user_id
+        WHERE p.id = $1 AND p.organization_id = $2
+        LIMIT 1`,
       [req.params.id, orgId],
     );
-    if (check.rows.length === 0) return send404(res);
+    if (rows.length === 0) return send404(res);
 
-    // project_members may not exist in all environments (Phase 14 sharing migration).
-    // Soft-degrade to empty list if the table is absent.
-    try {
-      const { rows } = await pool.query(
-        `SELECT
-           pm.user_id, pm.role, pm.added_at,
-           u.name, u.email
-         FROM project_members pm
-         JOIN users u ON u.id = pm.user_id
-         JOIN regulatory_programs rp ON rp.id = pm.project_id AND rp.organization_id = $2
-         WHERE pm.project_id = $1
-         ORDER BY pm.added_at ASC`,
-        [req.params.id, orgId],
-      );
-      return res.json({ team: rows });
-    } catch {
+    const program = rows[0] as {
+      lead_user_id: number | null;
+      team_members: unknown;
+      name: string | null;
+      email: string | null;
+    };
+
+    const team: Array<{
+      user_id: number | null;
+      role: string | null;
+      name: string | null;
+      email: string | null;
+    }> = [];
+
+    if (program.lead_user_id != null) {
+      team.push({
+        user_id: Number(program.lead_user_id),
+        role: 'lead',
+        name: program.name ?? null,
+        email: program.email ?? null,
+      });
+    }
+
+    const named = Array.isArray(program.team_members) ? program.team_members : [];
+    for (const member of named) {
+      if (typeof member !== 'string') continue;
+      const memberName = member.trim();
+      if (!memberName) continue;
+      team.push({ user_id: null, role: null, name: memberName, email: null });
+    }
+
+    return res.json({ team });
+  } catch (err: unknown) {
+    // Only an undefined table degrades to an empty roster — that is a
+    // not-yet-provisioned store, not a failure. Anything else is a real error
+    // and is logged and reported; the previous silent swallow is what let the
+    // uuid/integer join fail unnoticed for the life of this endpoint.
+    if ((err as { code?: string })?.code === '42P01') {
       return res.json({ team: [] });
     }
-  } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/team', err);
+    logger.error('GET /:id/team failed', {
+      programId: String(req.params.id),
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as { code?: string })?.code ?? null,
+    });
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
@@ -534,11 +777,12 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
   }
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    // Pinned evidence is the set the AI generation path reads, so changing it
+    // is a mutation of the project's regulatory input — not something every
+    // member of the org is entitled to do just by being in the org.
+    const program = await loadProgramForAuthz(String(req.params.id), orgId);
+    if (!program) return send404(res);
+    if (!allowProgramMutation(req, res, program, 'POST /:id/evidence')) return;
 
     const { rows } = await pool.query(
       `INSERT INTO c2c_project_pinned_evidence
@@ -564,11 +808,9 @@ router.delete('/:id/evidence/:evId', async (req: Request, res: Response) => {
   if (!userId || !orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    const program = await loadProgramForAuthz(String(req.params.id), orgId);
+    if (!program) return send404(res);
+    if (!allowProgramMutation(req, res, program, 'DELETE /:id/evidence/:evId')) return;
 
     const del = await pool.query(
       `DELETE FROM c2c_project_pinned_evidence
@@ -600,13 +842,21 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     );
     if (check.rows.length === 0) return send404(res);
 
+    // Columns aliased from what audit_logs ACTUALLY has (table_name /
+    // record_id / new_values — see migrations/0000_sweet_joseph.sql plus the
+    // chain fields from 20260527_mutation_primitives.sql) to the names the
+    // client's ActivityRow reads. The projection previously named
+    // resource_type / resource_id / details, none of which are columns, so
+    // every request raised 42703 into the catch below and the feed rendered
+    // empty no matter how much audited activity a project had.
     const { rows } = await pool.query(
       `SELECT
-         al.id, al.action, al.resource_type, al.resource_id,
-         al.actor_id, al.details, al.occurred_at, al.ip_address
+         al.id, al.action, al.table_name AS resource_type, al.record_id AS resource_id,
+         COALESCE(al.actor_id, al.user_id) AS actor_id, al.new_values AS details,
+         al.occurred_at, al.ip_address
        FROM audit_logs al
        WHERE al.tenant_id = $2
-         AND (al.resource_id = $1 OR al.details->>'project_id' = $1)
+         AND (al.record_id = $1 OR al.new_values->>'project_id' = $1)
        ORDER BY al.occurred_at DESC NULLS LAST
        LIMIT $3`,
       [req.params.id, orgId, limit],

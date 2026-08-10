@@ -160,7 +160,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
          rule_id, organization_id, name, description,
          scope, scope_project_id, scope_template_id,
          trigger_event, conditions, actions,
-         priority, is_active, cooldown_minutes, max_executions_per_day,
+         priority, is_active, cooldown_minutes, max_executions,
          tags, metadata, created_at, updated_at
        ) VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
