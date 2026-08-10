@@ -1338,6 +1338,9 @@
 .c2c-v2 .dl-fw-name{ font-size:11.5px; font-weight:600; color:var(--text-100); }
 .c2c-v2 .dl-fw-sec{ font-size:10px; color:var(--text-400); line-height:1.4; }
 .c2c-v2 .dl-cta{ font:inherit; font-size:12px; font-weight:600; color:#fff; background:var(--accent-200); border:none; border-radius:9px; padding:10px 14px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+/* Says where a binding §11 signature actually happens. The button beside this
+   used to read "Route for signature" while only opening the assistant. */
+.c2c-v2 .dl-sign-note{ margin-top:8px; font-size:11.5px; line-height:1.5; color:var(--text-300); }
 .c2c-v2 .dl-cta:hover{ background:var(--accent-100); }
 .c2c-v2 .dl-cta svg{ width:14px; height:14px; }
 .c2c-v2 .dl-export{ background:var(--bg-000); border:1px solid var(--border); border-radius:11px; padding:13px 14px; }
