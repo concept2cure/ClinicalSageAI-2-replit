@@ -94,7 +94,7 @@ describe('recomputePaths (PGlite integration)', () => {
     );
 
     const svc = new ProjectRollupService(exec as any);
-    await svc.recomputePaths(ORG_A, 5);
+    await svc.recomputePaths(5, ORG_A);
 
     expect(await getProjectPath(5, ORG_A)).toBe('5');
   });
@@ -106,7 +106,7 @@ describe('recomputePaths (PGlite integration)', () => {
     const svc = new ProjectRollupService(exec as any);
     // Reparent child[2] to root[1]; recompute from root[1]
     await exec.query(`UPDATE projects SET parent_project_id = 1 WHERE id = 2`);
-    await svc.recomputePaths(ORG_A, 1);
+    await svc.recomputePaths(1, ORG_A);
 
     expect(await getProjectPath(1, ORG_A)).toBe('1');
     expect(await getProjectPath(2, ORG_A)).toBe('1/2');
@@ -132,7 +132,7 @@ describe('recomputePaths (PGlite integration)', () => {
     // Reparent child[2] from root[1] to root[4]
     await exec.query(`UPDATE projects SET parent_project_id = 4 WHERE id = 2 AND organization_id = $1`, [ORG_A]);
     // Recompute from the new parent (root[4])
-    await svc.recomputePaths(ORG_A, 4);
+    await svc.recomputePaths(4, ORG_A);
 
     // Check that paths updated correctly
     expect(await getProjectPath(4, ORG_A)).toBe('4');
@@ -146,7 +146,7 @@ describe('recomputePaths (PGlite integration)', () => {
 
     const svc = new ProjectRollupService(exec as any);
     // Recompute org A's subtree starting from root[1]
-    await svc.recomputePaths(ORG_A, 1);
+    await svc.recomputePaths(1, ORG_A);
 
     // Org A paths should be correct
     expect(await getProjectPath(1, ORG_A)).toBe('1');
@@ -171,7 +171,7 @@ describe('recomputePaths (PGlite integration)', () => {
     );
 
     const svc = new ProjectRollupService(exec as any);
-    await svc.recomputePaths(ORG_A, 1);
+    await svc.recomputePaths(1, ORG_A);
 
     // Org A paths computed
     expect(await getProjectPath(1, ORG_A)).toBe('1');
