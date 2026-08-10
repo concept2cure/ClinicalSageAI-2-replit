@@ -2224,8 +2224,8 @@ router.post('/projects', async (req: Request, res: Response) => {
       organizationId,
     });
 
-    // Post-creation: initialize intelligence profile and CTD sections (non-blocking)
-    Promise.allSettled([
+    // Post-creation: initialize intelligence profile and CTD sections (blocking)
+    await Promise.allSettled([
       // Create intelligence profile
       (async () => {
         try {
@@ -2378,7 +2378,7 @@ router.post('/projects', async (req: Request, res: Response) => {
           }
         }
       })(),
-    ]).catch(() => {}); // intentional: each task already logs its own failure; this is a non-blocking guard
+    ]).catch(() => {}); // guard: each task logs its own failure
 
     return sendSuccess(res.status(201), response);
   } catch (error: any) {
