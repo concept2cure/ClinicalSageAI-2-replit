@@ -23,6 +23,7 @@
  */
 
 import { apiRequest } from '@/lib/queryClient';
+import { unboundNotice } from './governanceNotice';
 
 export interface AuthoringHandoff {
   title: string;
@@ -78,7 +79,7 @@ export async function saveToAuthoring(h: AuthoringHandoff): Promise<AuthoringHan
       ...(programId ? { client_program_id: programId } : {}),
     });
     const dJson = (await dRes.json().catch(() => null)) as
-      | { document?: { id?: unknown }; error?: string }
+      | { document?: { id?: unknown }; governance?: unknown; error?: string }
       | null;
     if (!dRes.ok || !dJson?.document?.id) {
       return {
@@ -114,7 +115,15 @@ export async function saveToAuthoring(h: AuthoringHandoff): Promise<AuthoringHan
       docId,
       // Shown only when the host has no navigator wired: say where the work
       // went rather than appearing to do nothing.
-      message: `Saved to the authoring store as “${h.title}” — open Document authoring to edit it.`,
+      //
+      // Plus, when the server declined to bind the new document to the open
+      // project's governed filing, the reason it gave. The document is real and
+      // the text is saved either way — but "saved" and "saved into the filing
+      // you think you are writing" are different facts, and on a regulated
+      // surface conflating them is the drift this binding exists to prevent.
+      message:
+        `Saved to the authoring store as “${h.title}” — open Document authoring to edit it.` +
+        unboundNotice(dJson.governance),
     };
   } catch (e) {
     return {
