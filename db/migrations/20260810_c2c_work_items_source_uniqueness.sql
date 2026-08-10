@@ -1,3 +1,22 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Enforce C2C work-item dedup key via database constraint to prevent race conditions
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 5 (Drug substance / drug product / manufacturing)
+--   - Integrity Risk Addressed: Duplicate work items from concurrent upserts causing inconsistent audit trails
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - RLS policies must enforce program_id isolation where applicable.
+--   - Migration must be idempotent where possible (IF EXISTS / IF NOT EXISTS).
+-- =============================================================================
+--
 -- C2C work items: add unique constraint to prevent dedup race.
 --
 -- upsertProjectWorkItem uses a read-then-write pattern:
@@ -12,8 +31,7 @@
 -- to enforce dedup at the database level. Later, the code should switch to
 -- INSERT ... ON CONFLICT DO UPDATE to make it atomic.
 --
--- Idempotent: the constraint is added IF NOT EXISTS, and only if no rows
--- violate it (checked first). Safe to re-run on an existing database.
+-- Idempotent: the constraint is added via exception handling to safely skip if already present.
 
 BEGIN;
 
