@@ -246,7 +246,9 @@ Prevents new damage and closes the findings that are unacceptable in any shipped
 **Exit:** A non-member is refused on every `c2c/projects` route, proven by an integration test against a real Postgres. Production refuses to boot without a database.
 
 ### W1 — Resolve the id-space (4 weeks, 2 engineers)
-The decision everything else waits on. **Recommendation: converge on `regulatory_programs` (UUID)** — it is what the UI, the vault, the document scaffold, and 22 client call sites already use; migrating it to `serial` would break live data and the eCTD/vault linkage. Re-key the PM stack's `project_id` columns to `uuid` and repoint the orphaned routers.
+The decision everything else waits on. Written up for approval as **[ADR-0011: Canonical project identity space](adr/0011-canonical-project-identity-space.md)**, which gates execution behind a 3-day spike because the 30-day estimate has not been validated against the real column inventory.
+
+**Recommendation: converge on `regulatory_programs` (UUID)** — it is what the UI, the vault, the document scaffold, and 22 client call sites already use; migrating it to `serial` would break live data and the eCTD/vault linkage. Re-key the PM stack's `project_id` columns to `uuid` and repoint the orphaned routers.
 - 4.1 — re-key and reconnect hierarchy, rules, modules, sections, schedule-of-events.
 - 4.3 — team roster (falls out).
 - 4.4 — audit writes on the live path.
